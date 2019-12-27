@@ -32,3 +32,10 @@ tutorials/version_1/.DS_Store
 tutorials/version_1/*.mera
 tutorials/version_1/Untitled*
 tutorials/version_1/.ipynb_checkpoints/
+
+# test scripts
+testing/
+profiling/
+
+# others
+.DS_Store 
