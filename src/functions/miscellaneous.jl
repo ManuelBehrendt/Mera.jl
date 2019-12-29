@@ -270,3 +270,50 @@ function skiplines(file, nlines::Int)
     end
     return
 end
+
+
+# todo: test
+function getunit(dataobject, quantity::Symbol, vars::Array{Symbol,1}, units::Array{Symbol,1}; uname::Bool=false)
+    idx = findall(x->x==quantity, vars)
+    if length(idx) >= 1
+        idx = idx[1]
+        if  length(units) >= idx
+            unit = units[idx]
+        else
+            unit = :standard
+        end
+    else
+        unit = :standard
+    end
+
+    if unit == :standard
+        if uname == false
+            return 1.
+        else
+            return 1., unit
+        end
+    else
+        if uname == false
+            return getfield(dataobject.info.scale, unit)
+        else
+            return getfield(dataobject.info.scale, unit), unit
+        end
+    end
+
+end
+
+function getunit(dataobject::InfoType, unit::Symbol; uname::Bool=false)
+    if unit == :standard
+        if uname == false
+            return 1.
+        else
+            return 1., unit
+        end
+    else
+        if uname == false
+            return getfield(dataobject.scale, unit)
+        else
+            return getfield(dataobject.scale, unit), unit
+        end
+    end
+end

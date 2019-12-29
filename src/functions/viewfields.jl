@@ -191,7 +191,7 @@ function viewfields(object::DataSetType)
             printstyled(i, " ==> subfields: ", propertynames(object.scale), "\n", bold=true, color=:normal)
             println()
         elseif i == :used_descriptors
-            if object.info.use_hydro_descriptor == true
+            if object.info.descriptor.usehydro == true
                 println(i, "\t= ", getfield(object, i) )
             end
         else
@@ -202,7 +202,6 @@ function viewfields(object::DataSetType)
     println()
     return
 end
-
 
 
 
@@ -246,7 +245,7 @@ end
 
 """Get a detailed overview of all the fields from MERA composite types:
 ```julia
-viewfields(object)
+viewallfields(object)
 ```
 """
 function viewallfields(dataobject::InfoType)

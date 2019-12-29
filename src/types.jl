@@ -233,6 +233,16 @@ mutable struct InfoType
     InfoType() = new()
 end
 
+mutable struct LevelType
+  imin::Int
+  imax::Int
+  jmin::Int
+  jmax::Int
+  kmin::Int
+  kmax::Int
+end
+
+
 
 abstract type DataSetType end # Supertype of all the different dataset types
 

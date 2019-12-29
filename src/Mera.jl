@@ -23,12 +23,18 @@ using Statistics
 # external libraries
 using FortranFiles
 using JuliaDB
+using DataStructures
+using ElasticArrays
+using ProgressMeter
+using StatsBase
+using OnlineStats
 
 export
 
     getunit,
     getinfo,
     createpath,
+    gethydro,
 
 # data_overview
     printtime,
@@ -37,6 +43,8 @@ export
     namelist,
     viewallfields,
     storageoverview,
+    amroverview,
+    dataoverview,
 
 # miscellaneous
     viewmodule,
@@ -71,7 +79,12 @@ include("functions/overview.jl")
 include("read_data/RAMSES/filepaths.jl")
 include("read_data/RAMSES/getinfo.jl")
 include("functions/viewfields.jl")
+include("functions/checks.jl")
+include("functions/prepranges.jl")
 
+include("read_data/RAMSES/prepvariablelist.jl")
+include("read_data/RAMSES/gethydro.jl")
+include("read_data/RAMSES/readerhydro.jl")
 include("read_data/RAMSES/getclumps.jl")
 
 
