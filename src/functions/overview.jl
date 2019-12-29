@@ -13,6 +13,17 @@ function printtime(text::String="", verbose::Bool=verbose_mode)
 end
 
 
+function printtablememory(data, verbose::Bool)
+    if verbose
+        arg_value, arg_unit = usedmemory(data, false)
+        println("Memory used for data table :", arg_value, " ", arg_unit)
+        println("-------------------------------------------------------")
+        println()
+    end
+end
+
+
+
 """
 ### Get the memory that is used for an object in human-readable units
 ```julia
@@ -151,4 +162,202 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
     println("mtime: ", dataobject.mtime)
     println("ctime: ", dataobject.ctime)
 
+end
+
+
+"""
+### Get the number of cells and/or the CPUs per level
+```julia
+function overview_amr(dataobject::HydroDataType)
+return a JuliaDB table
+```
+"""
+function amroverview(dataobject::HydroDataType)
+
+    checkforAMR(dataobject)
+
+    # check if cpu column exists
+    fn = propertynames(dataobject.data.columns)
+    cpu_col = false
+    Ncols = 2
+    if  in(Symbol("cpu"), fn)
+        cpu_col = true
+        Ncols = 3
+    end
+    cells = zeros(Int, dataobject.lmax - dataobject.lmin + 1, Ncols)
+    cellsize = zeros(Float64, dataobject.lmax - dataobject.lmin + 1,1)
+
+    println("Counting...")
+    @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
+        if cpu_col
+         cpus_ilevel = length( unique( select( filter(p->p.level==ilevel, select(dataobject.data, (:level, :cpu) ) ), :cpu) ) )
+         cells[Int(ilevel-dataobject.lmin+1),3] = cpus_ilevel
+        end
+
+        cells[Int(ilevel-dataobject.lmin+1),1] = ilevel
+        cellsize[Int(ilevel-dataobject.lmin+1)] = dataobject.boxlen / 2^ilevel
+    end
+
+    cells_per_level = fit!(CountMap(Int), select(dataobject.data, (:level)) )
+    #Nlevels = length(cells_per_level.value.keys)
+    #for ilevel=1:(dataobject.lmax-dataobject.lmin)
+
+        #if ilevel <= Nlevels
+        for (ilevel,j) in enumerate(cells_per_level.value.keys)
+
+                cells[j-dataobject.lmin+1,2] = cells_per_level.value.vals[ilevel]
+            #else
+            #    cells[ilevel,2] = 0.
+
+        end
+    #end
+
+    if cpu_col
+        amr_hydro_table = table(cells[:,1], cells[:,2], cellsize[:], cells[:,3], names=[:level, :cells, :cellsize, :cpus])
+    else
+        amr_hydro_table = table(cells[:,1], cells[:,2], cellsize[:], names=[:level, :cells, :cellsize])
+    end
+
+    return amr_hydro_table
+
+end
+
+
+function checkforAMR(dataobject::DataSetType)
+    if dataobject.lmax == dataobject.lmin
+        error("[Mera]: Works only with AMR data!")
+    end
+end
+
+"""
+### Get the mass and min/max value of each variable in the database per level
+
+```julia
+function overview_data(dataobject::HydroDataType)
+return a JuliaDB table
+```
+"""
+function dataoverview(dataobject::HydroDataType)
+# todo: check for uniform grid
+
+    nvarh = dataobject.info.nvarh
+
+    cells_tot = 0
+    cells_masstot = 0
+    density_var = :rho
+    skip_vars = [:cpu, :level, :cx, :cy, :cz]
+    if dataobject.info.descriptor.usehydro == true
+        if haskey(dataobject.used_descriptors, 1)
+            density_var = dataobject.used_descriptors[1]
+        end
+    end
+    names_constr = [Symbol("level")]
+    fn = propertynames(dataobject.data.columns)
+    for i in fn
+        if !in(i, skip_vars)
+            if i == density_var
+                append!(names_constr, [Symbol("mass")] )
+            end
+            append!(names_constr, [Symbol("$(i)_min")] )
+            append!(names_constr, [Symbol("$(i)_max")] )
+
+        end
+    end
+
+
+
+    cells = Array{Any,2}(undef, (dataobject.lmax - dataobject.lmin + 1,length(names_constr) ) )
+    println("Calculating...")
+    @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
+        cell_iterator = 1
+        filtered_level = filter(p->p.level==ilevel, dataobject.data )
+
+        cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = ilevel
+        cell_iterator= cell_iterator + 1
+
+        for ifn in fn
+            if !in(ifn, skip_vars)
+                if ifn == density_var
+                    cells_msum = sum(select(filtered_level , density_var)) * (dataobject.boxlen / 2^ilevel)^3
+                    #todo: introduce humanize for mass
+                    #cells_masstot = cells_masstot + cells_msum
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = cells_msum
+                    cell_iterator= cell_iterator + 1
+                    if length(select(filtered_level, density_var)) != 0
+                        rho_minmax = reduce((min, max), filtered_level, select=density_var)
+                        rhomin= rho_minmax.min
+                        rhomax= rho_minmax.max
+                    else
+                        rhomin= 0.
+                        rhomax= 0.
+                    end
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = rhomin
+                    cell_iterator= cell_iterator + 1
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = rhomax
+                    cell_iterator= cell_iterator + 1
+
+                else
+                    if length(select(filtered_level, ifn)) != 0
+                        value_minmax = reduce((min, max), filtered_level, select=ifn)
+                        valuemin = value_minmax.min
+                        valuemax = value_minmax.max
+                    else
+                        valuemin = 0.
+                        valuemax = 0.
+                    end
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = valuemin
+                    cell_iterator= cell_iterator + 1
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = valuemax
+                    cell_iterator= cell_iterator + 1
+                end
+            end
+        end
+        #=
+        if in(:vx, fn)
+            vx_minmax = reduce((min, max), filtered_level, select=:vx)
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vx_minmax.min
+            cell_iterator= cell_iterator + 1
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vx_minmax.max
+            cell_iterator= cell_iterator + 1
+        end
+
+        if in(:vy, fn)
+            vy_minmax = reduce((min, max), filtered_level, select=:vy)
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vy_minmax.min
+            cell_iterator= cell_iterator + 1
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vy_minmax.max
+            cell_iterator= cell_iterator + 1
+        end
+
+        if in(:vz, fn)
+            vz_minmax = reduce((min, max), filtered_level, select=:vz)
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vz_minmax.min
+            cell_iterator= cell_iterator + 1
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vz_minmax.max
+            cell_iterator= cell_iterator + 1
+        end
+
+        if in(:p, fn)
+            p_minmax = reduce((min, max), filtered_level, select=:p)
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = p_minmax.min
+            cell_iterator= cell_iterator + 1
+            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = p_minmax.max
+
+        end
+
+        if nvarh > 5
+            for ivar=6:nvarh
+                if in(Symbol("var$ivar"), fn)
+                    nvar_minmax = reduce((min, max), filtered_level, select=Symbol("var$ivar"))
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator+ (ivar-6)] = nvar_minmax.min
+                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator+1+ (ivar-6)] = nvar_minmax.max
+                end
+            end
+        end
+        =#
+    end
+
+
+    hydro_overview_table = table( [cells[:, i ] for i = 1:length(names_constr)]..., names=[names_constr...] )
+    return hydro_overview_table
 end
