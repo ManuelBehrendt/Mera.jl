@@ -195,7 +195,6 @@ function gethydrodata( dataobject::InfoType,
         #println(Full_Path_Hydro_cpufile)
         f_hydro = FortranFile(hydropath)
 
-
         skiplines(f_hydro, 6)
 
         # Loop over levels
@@ -378,5 +377,5 @@ function loopovercellshydro(twotondim::Int,
         end
     end # End loop over cell
 
-    return vars_1D, pos_1D, cpus_1D 
+    return vars_1D, pos_1D, cpus_1D
 end

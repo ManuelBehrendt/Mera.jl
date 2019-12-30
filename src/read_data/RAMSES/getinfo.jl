@@ -179,8 +179,9 @@ function readamrfile1!(dataobject::InfoType)
     else
 
         f = FortranFile(dataobject.fnames.amr * "out00001")
-        read(f) # ncpu    = read(f, Int32)
-        read(f) # ndim    = read(f, Int32)
+        #read(f) # ncpu    = read(f, Int32)
+        #read(f) # ndim    = read(f, Int32)
+        skiplines(f, 2)
         dataobject.grid_info.nx, dataobject.grid_info.ny, dataobject.grid_info.nz = read(f, Int32,Int32,Int32 )
         dataobject.grid_info.nlevelmax = read(f, Int32)
         dataobject.grid_info.ngridmax  = read(f, Int32)
@@ -194,25 +195,7 @@ function readamrfile1!(dataobject::InfoType)
 end
 
 function readhydrofile1!(dataobject::InfoType)
-    hydro_files = false
-    nvarh = 0
-    variable_list = Symbol[]
-    if  isfile(dataobject.fnames.hydro * "out00001")
-        f_hydro = FortranFile(dataobject.fnames.hydro * "out00001")
-        read(f_hydro)
-        nvarh = read(f_hydro, Int32)
-        skiplines(f_hydro, 3)
-        dataobject.gamma = read(f_hydro, Float64)
-        close(f_hydro)
 
-        variable_list = [:rho,:vx,:vy,:vz,:p]
-        if nvarh > 5
-            for ivar=6:nvarh
-                append!(variable_list, [Symbol("var$ivar")])
-            end
-        end
-       hydro_files = true
-    end
 
     # read descriptor file
     descriptor_file = false
@@ -255,10 +238,35 @@ function readhydrofile1!(dataobject::InfoType)
         # descriptor variables not read
         end
         close(f)
-    else
-        variable_descriptor_list = variable_list
     end
 
+
+
+    #read header from first cpu file
+    hydro_files = false
+    nvarh = 0
+    variable_list = Symbol[]
+    if  isfile(dataobject.fnames.hydro * "out00001")
+        f_hydro = FortranFile(dataobject.fnames.hydro * "out00001")
+        skiplines(f_hydro, 1)
+        nvarh = read(f_hydro, Int32)
+        skiplines(f_hydro, 3)
+        ###skiplines(f_hydro, 3)
+        dataobject.gamma = read(f_hydro, Float64)
+        close(f_hydro)
+
+        variable_list = [:rho,:vx,:vy,:vz,:p]
+        if nvarh > 5
+            for ivar=6:nvarh
+                append!(variable_list, [Symbol("var$ivar")])
+            end
+        end
+       hydro_files = true
+    end
+
+    if !isfile(dataobject.fnames.hydro_descriptor)
+        variable_descriptor_list = variable_list
+    end
 
     dataobject.hydro            = hydro_files
     dataobject.nvarh            = nvarh
