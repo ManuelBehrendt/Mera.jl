@@ -298,11 +298,10 @@ end
 mutable struct ClumpDataType <: DataSetType
     data
     info::InfoType
-    lmin::Int
-    lmax::Int
     boxlen::Float64
     ranges::Array{Float64,1}
     selected_clumpvars::Array{Symbol,1}
+    used_descriptors::Dict{Any,Any}
     scale::ScalesType
     ClumpDataType() = new()
 end

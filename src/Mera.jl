@@ -35,6 +35,7 @@ export
     getinfo,
     createpath,
     gethydro,
+    getclumps,
 
 # data_overview
     printtime,
