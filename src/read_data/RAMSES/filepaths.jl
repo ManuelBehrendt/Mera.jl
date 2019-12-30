@@ -111,3 +111,17 @@ function getproc2string(path::String, icpu::Int32)
         return string(path, "out", icpu)
     end
 end
+
+function getproc2string(path::String, textfile::Bool, icpu::Int)
+    if icpu < 10
+        return string(path, "txt0000", icpu)
+    elseif icpu < 100 && icpu > 9
+        return string(path, "txt000", icpu)
+    elseif icpu < 1000 && icpu > 99
+        return string(path, "txt00", icpu)
+    elseif icpu < 10000 && icpu > 999
+        return string(path, "txt0", icpu)
+    elseif icpu < 100000 && icpu > 9999
+        return string(path, "txt", icpu)
+    end
+end

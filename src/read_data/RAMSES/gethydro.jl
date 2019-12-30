@@ -24,7 +24,7 @@ gethydro(   dataobject::InfoType;
             print_filenames::Bool=false,
             verbose::Bool=verbose_mode )
 ```
-#### Returns an object of type HydroDataType, containing the hydro-data table, the selected options and the simulation summary of the InfoType
+#### Returns an object of type HydroDataType, containing the hydro-data table, the selected options and the simulation ScaleType and summary of the InfoType
 ```julia
 return HydroDataType()
 
@@ -83,7 +83,7 @@ julia> gas = gethydro(    info,
 
 # Example 3:
 # give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
-# this is equivalent to center=[24.,24.,24.] in example 2
+# this is equivalent to center=[24.,24.,24.] in Example 2
 # the following combination is also possible: e.g. center=[:bc, 12., 34.], etc.
 julia> gas = gethydro(    info,
                           lmax=8,

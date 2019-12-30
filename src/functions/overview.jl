@@ -312,52 +312,38 @@ function dataoverview(dataobject::HydroDataType)
                 end
             end
         end
-        #=
-        if in(:vx, fn)
-            vx_minmax = reduce((min, max), filtered_level, select=:vx)
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vx_minmax.min
-            cell_iterator= cell_iterator + 1
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vx_minmax.max
-            cell_iterator= cell_iterator + 1
-        end
 
-        if in(:vy, fn)
-            vy_minmax = reduce((min, max), filtered_level, select=:vy)
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vy_minmax.min
-            cell_iterator= cell_iterator + 1
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vy_minmax.max
-            cell_iterator= cell_iterator + 1
-        end
-
-        if in(:vz, fn)
-            vz_minmax = reduce((min, max), filtered_level, select=:vz)
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vz_minmax.min
-            cell_iterator= cell_iterator + 1
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = vz_minmax.max
-            cell_iterator= cell_iterator + 1
-        end
-
-        if in(:p, fn)
-            p_minmax = reduce((min, max), filtered_level, select=:p)
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = p_minmax.min
-            cell_iterator= cell_iterator + 1
-            cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = p_minmax.max
-
-        end
-
-        if nvarh > 5
-            for ivar=6:nvarh
-                if in(Symbol("var$ivar"), fn)
-                    nvar_minmax = reduce((min, max), filtered_level, select=Symbol("var$ivar"))
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator+ (ivar-6)] = nvar_minmax.min
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator+1+ (ivar-6)] = nvar_minmax.max
-                end
-            end
-        end
-        =#
     end
 
 
     hydro_overview_table = table( [cells[:, i ] for i = 1:length(names_constr)]..., names=[names_constr...] )
     return hydro_overview_table
+end
+
+
+"""
+### Get the extrema of each variable in the database
+
+```julia
+function overview_data(dataobject::ClumpDataType)
+return a JuliaDB table
+```
+"""
+function dataoverview(dataobject::ClumpDataType)
+    fn = propertynames(dataobject.data.columns)
+    s = Series(Extrema())
+    Ncolumns = length(fn)
+    values = Array{Any}(undef, Ncolumns+1, 2)
+    values[1,1] = "min"
+    values[1,2] = "max"
+    for i = 1:Ncolumns
+        a = reduce(s, dataobject.data; select = fn[i])
+        values[i+1, 1] = a.stats[1].min
+        values[i+1, 2] = a.stats[1].max
+    end
+    column_names = [Symbol("extrema")]
+    append!(column_names, fn )
+
+    clump_overview_table = table( [values[k, : ] for k = 1:(Ncolumns+1) ]...,names=collect(column_names) )
+    return clump_overview_table
 end
