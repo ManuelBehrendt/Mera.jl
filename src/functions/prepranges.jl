@@ -27,14 +27,14 @@ function prepranges(    dataobject::InfoType,
     # check for :bc, :boxcenter
     Ncenter = length(center)
     if Ncenter  == 1
-        if occursin(:bc, center) || occursin(:boxcenter, center)
-            bc = dataobjec.boxlen / 2. * conv # use range_units
+        if in(:bc, center) || in(:boxcenter, center)
+            bc = dataobject.boxlen / 2. * selected_units # use range_units
             center = [bc, bc, bc]
         end
     else
         for i = 1:Ncenter
             if center[i] == :bc || center[i] == :boxcenter
-                bc = dataobjec.boxlen / 2. * conv # use range_units
+                bc = dataobject.boxlen / 2. * selected_units # use range_units
                 center[i] = bc
             end
         end

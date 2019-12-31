@@ -150,7 +150,7 @@ viewfields(clumps)
     
 
 
-For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "clumps.info" and the scaling relations from code to cgs units in "clumps.scale". The boxlength, the selected ranges and number of the clump variables are also retained.
+For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "clumps.info" and the scaling relations from code to cgs units in "clumps.scale". The box length, the selected ranges and number of the clump variables are also retained.
 
 Print the fields of an object (composite type) in a simple list:
 
@@ -198,7 +198,7 @@ data_overview = dataoverview(clumps)
 
 
 
-If the column list is relatively long, the table is typically represented by an overview. To access certain columns, use the *select* function. The representation ":mass_cl" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
+If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the *select* function. The representation ":mass_cl" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
 
 
 ```julia
@@ -261,11 +261,10 @@ select(data_overview, (:extrema, :index, :peak_x, :peak_y, :peak_z, :mass_cl) )
 
 
 ## Data Inspection
-The data is associated with the field *clumps.data* as a **JuliaDB** table (code units). All the loaded properties of each clump are arranged in one row which makes it easy to find, filter, map, aggregate, group the data, etc.
+The data is associated with the field *clumps.data* as a **JuliaDB** table (code units). Each row corresponds to a clump and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
 More information can be found in the MERA tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
 ### Table View
-Each row corresponds to a clump and its properties to the columns.
 The positions peak_x, peak_y,peak_z are the positions and should not be modified.
 
 

@@ -84,6 +84,7 @@ include("functions/checks.jl")
 include("functions/prepranges.jl")
 
 include("read_data/RAMSES/prepvariablelist.jl")
+include("read_data/RAMSES/hilbert3d.jl")
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/readerhydro.jl")
 include("read_data/RAMSES/getclumps.jl")
