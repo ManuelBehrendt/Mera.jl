@@ -68,6 +68,7 @@ Further features:
 ## Useful Information
 - [Official Julia website](https://julialang.org)
 - [Learning Julia](https://julialang.org/learning/)
+- [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
 - [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
 - Database framework used in Mera: [JuliaDB.jl](https://juliadb.org)
 - Interesting Packages: [JuliaAstro.jl](http://juliaastro.github.io), [JuliaObserver.com](https://juliaobserver.com)
