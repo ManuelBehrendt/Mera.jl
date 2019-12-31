@@ -33,21 +33,33 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         else
             if in(:cpu, hydrovar_buffer) || in(:varn1, hydrovar_buffer)
              read_cpu = true
+             filter!(e->e≠:cpu, hydrovar_buffer)
+             filter!(e->e≠:varn1, hydrovar_buffer)
             end
             if in(:rho, hydrovar_buffer) || in(:var1, hydrovar_buffer)
              append!(nvarh_list, 1)
+             filter!(e->e≠:rho, hydrovar_buffer)
+             filter!(e->e≠:var1, hydrovar_buffer)
             end
             if in(:vx, hydrovar_buffer) || in(:var2, hydrovar_buffer)
              append!(nvarh_list, 2)
+             filter!(e->e≠:vx, hydrovar_buffer)
+             filter!(e->e≠:var2, hydrovar_buffer)
             end
             if in(:vy, hydrovar_buffer) || in(:var3, hydrovar_buffer)
              append!(nvarh_list, 3)
+             filter!(e->e≠:vy, hydrovar_buffer)
+             filter!(e->e≠:var3, hydrovar_buffer)
             end
             if in(:vz, hydrovar_buffer) || in(:var4, hydrovar_buffer)
              append!(nvarh_list, 4)
+             filter!(e->e≠:vz, hydrovar_buffer)
+             filter!(e->e≠:var4, hydrovar_buffer)
             end
             if in(:p, hydrovar_buffer) || in(:var5, hydrovar_buffer)
              append!(nvarh_list, 5)
+             filter!(e->e≠:p, hydrovar_buffer)
+             filter!(e->e≠:var5, hydrovar_buffer)
             end
 
 
@@ -61,7 +73,12 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
             # end
 
             if length(hydrovar_buffer)>0
-             append!( nvarh_list, map(x->parse(Int, string(x)[4:end]), hydrovar_buffer) ) #for Symbols
+                for x in hydrovar_buffer
+                    if occursin("var")
+                        append!( nvarh_list, parse(Int, string(x)[4:end]) )
+                    end
+                end
+             #append!( nvarh_list, map(x->parse(Int, string(x)[4:end]), hydrovar_buffer) ) #for Symbols
              #append!( nvarh_list, map(x->parse(Int,x), hydrovar_buffer) ) #for Strings
             end
         end

@@ -9,7 +9,20 @@ using Mera
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
 ```
 
-    [0m[1m[Mera]: 2019-12-29T20:26:09.265[22m
+    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
+    └ @ Base loading.jl:1273
+
+
+    
+    *__   __ _______ ______   _______ 
+    |  |_|  |       |    _ | |   _   |
+    |       |    ___|   | || |  |_|  |
+    |       |   |___|   |_||_|       |
+    |       |    ___|    __  |       |
+    | ||_|| |   |___|   |  | |   _   |
+    |_|   |_|_______|___|  |_|__| |__|
+    
+    [0m[1m[Mera]: 2019-12-29T23:08:35.046[22m
     
     Code: RAMSES
     output [420] summary:
@@ -158,7 +171,7 @@ Read the AMR and the Hydro data from all files of the full box with all existing
 gas = gethydro(info, smallr=1e-30 / info.unit_d);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2019-12-29T20:38:58.819[22m
+    [0m[1m[Mera]: Get hydro data: 2019-12-29T23:08:45.54[22m
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
@@ -171,7 +184,7 @@ gas = gethydro(info, smallr=1e-30 / info.unit_d);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:52[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:00:45[39m
 
 
     Memory used for data table :85.94877052307129 MB
@@ -242,7 +255,7 @@ viewfields(gas)
     
 
 
-For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "gas.info" and the scaling relations from code to cgs units in "gas.scale". The minimum und maximum level of the loaded data, the boxlength, the selected ranges and number of the hydrovariables are also retained.
+For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "gas.info" and the scaling relations from code to cgs units in "gas.scale". The minimum and maximum level of the loaded data, the box length, the selected ranges and number of the hydro variables are retained.
 
 A minimum density or sound speed can be set for the loaded data (e.g. to overwrite negative densities) and is then represented by the fields smallr and smallc of the object *gas* (here). An example:
 
@@ -250,6 +263,27 @@ A minimum density or sound speed can be set for the loaded data (e.g. to overwri
 ```julia
 gas = gethydro(info, smallr=1.5e-8);
 ```
+
+    [0m[1m[Mera]: Get hydro data: 2019-12-29T23:09:34.046[22m
+    
+    Key vars=(:level, :cx, :cy, :cz)
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
+    
+    domain:
+    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
+    Reading data...
+
+
+    [32m100%|███████████████████████████████████████████████████| Time: 0:00:34[39m
+
+
+    Memory used for data table :85.94877052307129 MB
+    -------------------------------------------------------
+    
+
 
 Print the fields of an object (composite type) in a simple list:
 
@@ -292,7 +326,7 @@ overview_amr = amroverview(gas)
 
 
 
-Get some overview of the data associated with the object *gas*. The calculated information can be accessed from the object *data_overview* (here) in code units for further calculations:
+Get some overview of the data that is associated with the object *gas*. The calculated information can be accessed from the object *data_overview* (here) in code units for further calculations:
 
 
 ```julia
@@ -329,7 +363,7 @@ data_overview = dataoverview(gas)
 
 
 
-If the column list is relatively long, the table is typically represented by an overview. To access certain columns, use the *select* function. The representation ":mass" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
+If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the *select* function. The representation ":mass" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
 
 
 ```julia
@@ -347,7 +381,7 @@ select(data_overview, (:level,:mass, :rho_min, :rho_max ) )
     Table with 5 rows, 4 columns:
     level  mass      rho_min     rho_max
     ───────────────────────────────────────
-    6      1.07893   1.47746e-8  0.00611279
+    6      1.07894   1.5e-8      0.00611279
     7      0.880043  5.21814e-6  0.0201622
     8      2.29402   1.30505e-5  0.0927872
     9      2.95427   1.40099e-5  0.39797
@@ -366,7 +400,7 @@ column(data_overview, :mass) .* info.scale.Msol # '.*" corresponds to an element
 
 
     5-element Array{Float64,1}:
-     1.0786308903021374e9 
+     1.0786451433623521e9 
      8.79799184131516e8   
      2.2933832876377296e9 
      2.9534569318639927e9 
@@ -392,7 +426,7 @@ select(data_overview, (:level, :mass, :rho_min, :rho_max ) )
     Table with 5 rows, 4 columns:
     level  mass        rho_min     rho_max
     ─────────────────────────────────────────
-    6      1.07863e9   1.47746e-8  0.00611279
+    6      1.07865e9   1.5e-8      0.00611279
     7      8.79799e8   5.21814e-6  0.0201622
     8      2.29338e9   1.30505e-5  0.0927872
     9      2.95346e9   1.40099e-5  0.39797
@@ -401,12 +435,12 @@ select(data_overview, (:level, :mass, :rho_min, :rho_max ) )
 
 
 ## Data Inspection
-The data is associated with the field *gas.data* as a **JuliaDB** table (code units). All the loaded properties of each cell are arranged in one row which makes it easy to find, filter, map, aggregate, group the data, etc.
+The data is associated with the field *gas.data* as a **JuliaDB** table (code units).
+Each row corresponds to a cell and each column to a property which makes it easy to  find, filter, map, aggregate, group the data, etc.
 More information can be found in the **Mera** tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
 ### Table View
-Each row corresponds to a cell and its properties to the columns.
-The positions cx,cy,cz are the cell-numbers that correspond to a uniform 3D array for each level. E.g.: for level=8, the positions range from 1-256 for each dimension, for level=14, 1-16,384 while not all positions within this range exists due to the complex AMR structure. The integers cx,cy,cz are used to reconstruct the grid in many functions of **MERA** and should not be modified.
+The cell positions cx,cy,cz correspond to a uniform 3D array for each level. E.g., for level=8, the positions range from 1-256 for each dimension, for level=14, 1-16384 while not all positions within this range exist due to the complex AMR structure. The integers cx,cy,cz are used to reconstruct the grid in many functions of **MERA** and should not be modified.
 
 
 ```julia
@@ -445,19 +479,19 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
 
     Table with 1126532 rows, 5 columns:
     [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mrho
-    ────────────────────────────────
-    6      1    1    1    1.47746e-8
-    6      1    1    2    1.47746e-8
-    6      1    1    3    1.47746e-8
-    6      1    1    4    1.47746e-8
-    6      1    1    5    1.47746e-8
-    6      1    1    6    1.47746e-8
-    6      1    1    7    1.47746e-8
-    6      1    1    8    1.47746e-8
-    6      1    1    9    1.47746e-8
-    6      1    1    10   1.47746e-8
-    6      1    1    11   1.47746e-8
-    6      1    1    12   1.47746e-8
+    ───────────────────────────────
+    6      1    1    1    1.5e-8
+    6      1    1    2    1.5e-8
+    6      1    1    3    1.5e-8
+    6      1    1    4    1.5e-8
+    6      1    1    5    1.5e-8
+    6      1    1    6    1.5e-8
+    6      1    1    7    1.5e-8
+    6      1    1    8    1.5e-8
+    6      1    1    9    1.5e-8
+    6      1    1    10   1.5e-8
+    6      1    1    11   1.5e-8
+    6      1    1    12   1.5e-8
     ⋮
     10     822  507  516  0.0305045
     10     822  508  511  0.0551132
