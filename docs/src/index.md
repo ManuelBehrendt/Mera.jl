@@ -69,9 +69,10 @@ Further features:
 - [Official Julia website](https://julialang.org)
 - [Learning Julia](https://julialang.org/learning/)
 - [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
-- [JuliaDB.jl](https://juliadb.org)
-- Interesting Packages: [JuliaAstro.jl](http://juliaastro.github.io), [JuliaObserver](https://juliaobserver.com)
-
+- Database framework used in Mera: [JuliaDB.jl](https://juliadb.org)
+- Interesting Packages: [JuliaAstro.jl](http://juliaastro.github.io), [JuliaObserver.com](https://juliaobserver.com)
+- Use Matplotlib in Julia: [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl)
+- Call Python packages/functions from Julia: [PyCall.jl](https://github.com/JuliaPy/PyCall.jl)
 
 ## Contribute
 New ideas, feature requests or bug reports are very welcome.
