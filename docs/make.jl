@@ -12,7 +12,8 @@ makedocs(modules = [Mera],
                       "1-Data Inspection"   => Any[ "Hydro"   =>  "01_hydro_First_Inspection.md",
                                                     "Clumps"  =>  "01_clumps_First_Inspection.md"],
 
-                      "2-Load by Selection" => Any[ "Hydro"   =>  "02_hydro_Load_Selections.md"]
+                      "2-Load by Selection" => Any[ "Hydro"   =>  "02_hydro_Load_Selections.md",
+                                                    "Clumps"  => "02_clumps_Load_Selections.md"]
                       ]
 		 )
 
