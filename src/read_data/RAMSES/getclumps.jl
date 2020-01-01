@@ -35,7 +35,7 @@ julia> fieldnames(clumps)
 ##### Required:
 - **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
 ##### Predefined/Optional Keywords:
-- **`vars`:** ToDo
+- **`vars`:** Currently, the length of the loaded variable list can be modified *(see examples below).
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_units` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_units` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_units` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
@@ -46,8 +46,7 @@ julia> fieldnames(clumps)
 
 ### Defined Methods - function defined for different arguments
 getclumps(dataobject::InfoType; ...) # no given variables -> all variables loaded
-getclumps(dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
-getclumps(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
+getclumps(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # one or several given variables -> array needed
 
 
 
@@ -55,10 +54,10 @@ getclumps(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given var
 #### Examples
 ```julia
 # read simulation information
-julia> info = getinfo(output=420)
+julia> info = getinfo(420)
 
 # Example 1:
-# read clump data of all variables, full-box, all levels
+# read clump data of all variables, full-box
 julia> clumps = getclumps(info)
 
 # Example 2:
@@ -81,29 +80,47 @@ julia> clumps = getclumps(  info,
                             zrange=[-2.,2.],
                             center=[33., bc:, 10.],
                             range_units=:kpc )
+
+# Example 4:
+# Load less than the found 12 columns from the header of the clump files;
+# Pass an array with the variables to the keyword argument *vars*.
+# The order of the variables has to be consistent with the header in the clump files:
+julia> lumps = getclumps(info, [ :index, :lev, :parent, :ncell,
+                                 :peak_x, :peak_y, :peak_z ])
+
+# Example 5:
+# Load more than the found 12 columns from the header of the clump files.
+# E.g. the list can be extended with more names if there are more columns
+# in the data than given by the header in the files.
+# The order of the variables has to be consistent with the header in the clump files:
+julia> clumps = getclumps(info, [   :index, :lev, :parent, :ncell,
+                                    :peak_x, :peak_y, :peak_z,
+                                    Symbol("rho-"), Symbol("rho+"),
+                                    :rho_av, :mass_cl, :relevance,
+                                    :vx, :vy, :vz ])
 ...
 ```
 
 """
-function getclumps(dataobject::InfoType, var::Symbol;
-                    xrange::Array{<:Any,1}=[missing, missing],
-                    yrange::Array{<:Any,1}=[missing, missing],
-                    zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
-                    range_units::Symbol=:standard,
-                    print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode)
-
-    return  getclumps(dataobject, vars=[var],
-                    xrange=xrange,
-                    yrange=yrange,
-                    zrange=zrange,
-                    center=center,
-                    range_units=range_units,
-                    print_filenames=print_filenames,
-                    verbose=verbose)
-
-end
+# function getclumps(dataobject::InfoType, var::Symbol;
+#                     xrange::Array{<:Any,1}=[missing, missing],
+#                     yrange::Array{<:Any,1}=[missing, missing],
+#                     zrange::Array{<:Any,1}=[missing, missing],
+#                     center::Array{<:Any,1}=[0., 0., 0.],
+#                     range_units::Symbol=:standard,
+#                     print_filenames::Bool=false,
+#                     verbose::Bool=verbose_mode)
+#
+#     return  getclumps(dataobject, vars=[var],
+#                     xrange=xrange,
+#                     yrange=yrange,
+#                     zrange=zrange,
+#                     center=center,
+#                     range_units=range_units,
+#                     print_filenames=print_filenames,
+#                     verbose=verbose)
+#
+# end
 
 
 function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
