@@ -142,6 +142,149 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
         return nvarh_list, nvarh_i_list, nvarh_corr, read_cpu, used_descriptors
 
+
+
+
+    elseif datatype == :particles
+        nvarp = dataobject.nvarp # vx, vy, vz, mass, age
+
+        #:level, :x, :y, :z, :id, :cpu, :vx, :vy, :vz, :mass, :age]
+        # manage user selected variables
+        #-------------------------------------
+        nvarp_list=Int[]
+        ivar=1
+        read_cpu = false
+        particlesvar_buffer = copy(vars)
+        used_descriptors = Dict()
+        if particlesvar_buffer == [:all]
+            nvarp_list=[1,2,3,4,5]
+            # read_cpu = true
+            if in(:cpu, particlesvar_buffer) || in(:varn1, particlesvar_buffer)
+             read_cpu = true
+            end
+
+            if nvarp > 6
+                for ivar=6:nvarp
+                     append!(nvarp_list, [ivar])
+                end
+            end
+            # if dataobject.use_particles_descriptor == true
+            #     for (i,idvar) in enumerate(dataobject.particles_descriptor)
+            #         used_descriptors[i] = idvar
+            #     end
+            # end
+        else
+            if in(:cpu, particlesvar_buffer) || in(:varn1, particlesvar_buffer)
+             read_cpu = true
+             filter!(e->e≠:cpu, particlesvar_buffer)
+             filter!(e->e≠:varn1, particlesvar_buffer)
+            end
+            if in(:vx, particlesvar_buffer) || in(:var1, particlesvar_buffer)
+             append!(nvarp_list, 1)
+             filter!(e->e≠:vx, particlesvar_buffer)
+             filter!(e->e≠:var1, particlesvar_buffer)
+            end
+            if in(:vy, particlesvar_buffer) || in(:var2, particlesvar_buffer)
+             append!(nvarp_list, 2)
+             filter!(e->e≠:vy, particlesvar_buffer)
+             filter!(e->e≠:var2, particlesvar_buffer)
+            end
+            if in(:vz, particlesvar_buffer) || in(:var3, particlesvar_buffer)
+             append!(nvarp_list, 3)
+             filter!(e->e≠:vz, particlesvar_buffer)
+             filter!(e->e≠:var3, particlesvar_buffer)
+            end
+            if in(:mass, particlesvar_buffer) || in(:var4, particlesvar_buffer)
+             append!(nvarp_list, 4)
+             filter!(e->e≠:mass, particlesvar_buffer)
+             filter!(e->e≠:var4, particlesvar_buffer)
+            end
+            if in(:age, particlesvar_buffer) || in(:var5, particlesvar_buffer)
+             append!(nvarp_list, 5)
+             filter!(e->e≠:age, particlesvar_buffer)
+             filter!(e->e≠:var5, particlesvar_buffer)
+            end
+
+            # if dataobject.particles_descriptor != dataobject.particles_variable_list
+            #     for (ivar,idvar) in enumerate(dataobject.particles_descriptor)
+            #         if in(idvar, vars)
+            #             append!(nvarp_list, ivar)
+            #             used_descriptors[ivar] = idvar
+            #             filter!(e->e≠idvar, particlesvar_buffer)
+            #         end
+            #     end
+            # end
+
+            if length(particlesvar_buffer)>0
+                for x in particlesvar_buffer
+                    if occursin("var")
+                        append!( nvarh_list, parse(Int, string(x)[4:end]) )
+                    end
+                end
+
+             #append!( nvarp_list, map(x->parse(Int, string(x)[4:end]), particlesvar_buffer) ) #for Symbols
+            end
+        end
+
+        if length(nvarp_list) == 0
+            error("[Mera]: Simulation vars array is empty!")
+        end
+
+        #clean for double assignment
+        nvarp_list = unique(nvarp_list)
+
+        if maximum(nvarp_list) > maximum(nvarp)
+            error("[Mera]: Simulation maximum variable=$(maximum(nvarp)) < your maximum variable=$(maximum(nvarp_list))")
+        end
+
+
+        # create vector to use selected particlevars
+        nvarp = dataobject.nvarp
+        nvarp_corr = zeros(Int, nvarp )
+        nvarp_i_list=[]
+        for i =1:nvarp
+            if in(i,nvarp_list)
+                nvarp_corr[i] = findall(x -> x == i, nvarp_list)[1]
+                append!(nvarp_i_list, i)
+            end
+        end
+
+        nvarp_list_strings= Symbol[]
+        if read_cpu append!(nvarp_list_strings, [:cpu]) end
+        for i in nvarp_list
+            #if !haskey(used_descriptors, i)
+                if i < 6
+                    append!(nvarp_list_strings, [Symbol("$(indices_toparticlevariables[i])")])
+                elseif i > 5
+                    append!(nvarp_list_strings, [Symbol("var$i")])
+                end
+            #else
+            #    append!(nvarp_list_strings, [used_descriptors[i]])
+            #end
+        end
+
+
+        if verbose
+            if lmax != dataobject.levelmin # if AMR
+                println("Key vars=(:level, :x, :y, :z, :id)")
+            else # if uniform grid
+                println("Key vars=(:x, :y, :z, :id)")
+            end
+
+
+            if read_cpu
+                println("Using var(s)=$(tuple(-1, nvarp_list...)) = $(tuple(nvarp_list_strings...)) ")
+            else
+                println("Using var(s)=$(tuple(nvarp_list...)) = $(tuple(nvarp_list_strings...)) ")
+            end
+            println()
+        end
+        return nvarp_list, nvarp_i_list, nvarp_corr, read_cpu, used_descriptors
+
+
+
+
+
     end
 
 end
@@ -157,3 +300,12 @@ global indices_tovariables = SortedDict( -1 =>  "cpu",
                                           3 => "vy",
                                           4 => "vz",
                                           5 => "p")
+
+global indices_toparticlevariables = SortedDict( -1 =>  "cpu",
+                                      0 => "level" => 0,
+
+                                      1 => "vx",
+                                      2 => "vy",
+                                      3 => "vz",
+                                      4 => "mass",
+                                      5 => "age")

@@ -311,7 +311,7 @@ gas_c.data
 ## Select Spatial Ranges
 
 ### Use RAMSES Standard Notation
-Ranges correspond to the domain [0:1]^3 and are relate4d to the box corner at [0., 0., 0.] by default. Here, we limit the loading of the data to a maximum level of 8:
+Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default. Here, we limit the loading of the data to a maximum level of 8:
 
 
 ```julia
@@ -398,7 +398,7 @@ gas = gethydro(info, lmax=8,
     
 
 
-### Use Notation in physical units
+### Use notation in physical units
 In the following example the ranges are given in units "kpc", relative to the box corner [0., 0., 0.] (default):
 
 
