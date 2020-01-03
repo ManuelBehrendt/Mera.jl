@@ -249,7 +249,7 @@ abstract type DataSetType end # Supertype of all the different dataset types
 
 # exported
 mutable struct HydroDataType <: DataSetType
-    data::JuliaDB.AbstractIndexedTable #todo: check
+    data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
     lmax::Int
@@ -282,13 +282,14 @@ end
 
 # exported
 mutable struct PartDataType <: DataSetType
-    data::JuliaDB.AbstractIndexedTable #todo:check
+    data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
     lmax::Int
     boxlen::Float64
     ranges::Array{Float64,1}
     selected_partvars::Array{Symbol,1}
+    used_descriptors::Dict{Any,Any}
     scale::ScalesType
     PartDataType() = new()
 end

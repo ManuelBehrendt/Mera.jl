@@ -223,11 +223,73 @@ function amroverview(dataobject::HydroDataType)
 end
 
 
+
+"""
+### Get the number of particles and/or the CPUs per level
+```julia
+function overview_amr(dataobject::PartDataType)
+return a JuliaDB table
+```
+"""
+function amroverview(dataobject::PartDataType)
+
+    checkforAMR(dataobject)
+
+    # check if cpu column exists
+    fn = propertynames(dataobject.data.columns)
+    cpu_col = false
+    Ncols = 2
+    if  in(Symbol("cpu"), fn)
+        cpu_col = true
+        Ncols = 3
+    end
+
+    parts = zeros(Int, dataobject.lmax - dataobject.lmin + 1, Ncols)
+
+    part_tot = 0
+    part_masstot = 0
+    println("Counting...")
+    @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
+        if cpu_col
+            cpus_ilevel = length( unique( select( filter(p->p.level==ilevel, select(dataobject.data, (:level, :cpu) ) ), :cpu) ) )
+            parts[Int(ilevel-dataobject.lmin+1),3] = cpus_ilevel
+        end
+
+        parts[Int(ilevel-dataobject.lmin+1),1] = ilevel
+
+
+    end
+
+    part_per_level = fit!(CountMap(Int32), select(dataobject.data, (:level)) )
+    Nlevels = length(part_per_level.value.keys)
+    for ilevel=1:Nlevels
+        if ilevel <= Nlevels
+            parts[ilevel,2] = part_per_level.value.vals[ilevel]
+        else
+            parts[ilevel,2] = 0.
+        end
+    end
+
+    if cpu_col
+        amr_part_table = table(parts[:,1], parts[:,2], parts[:,3], names=[:level, :particles, :cpus])
+    else
+        amr_part_table = table(parts[:,1], parts[:,2], names=[:level, :particles])
+    end
+
+    return amr_part_table
+
+end
+
+
+
+
+
 function checkforAMR(dataobject::DataSetType)
     if dataobject.lmax == dataobject.lmin
         error("[Mera]: Works only with AMR data!")
     end
 end
+
 
 """
 ### Get the mass and min/max value of each variable in the database per level
@@ -346,4 +408,65 @@ function dataoverview(dataobject::ClumpDataType)
 
     clump_overview_table = table( [values[k, : ] for k = 1:(Ncolumns+1) ]...,names=collect(column_names) )
     return clump_overview_table
+end
+
+
+
+
+"""
+### Get the min/max value of each variable in the database per level
+
+```julia
+function overviewdata(dataobject::PartDataType)
+return a JuliaDB table
+```
+"""
+function dataoverview(dataobject::PartDataType)
+# todo: check for uniform grid
+
+    parts_tot = 0
+    parts_masstot = 0
+    skip_vars = [:cpu, :level]
+    fn = propertynames(dataobject.data.columns)
+    #fn = convert(Array{String,1}, fn) #todo delte
+    names_constr = [Symbol("level")]
+    for i in fn
+        if !in(i, skip_vars)
+            append!(names_constr, [Symbol("$(i)_min")] )
+            append!(names_constr, [Symbol("$(i)_max")] )
+
+        end
+    end
+
+
+    parts = Array{Any,2}(undef, (dataobject.lmax - dataobject.lmin + 1,length(names_constr) ) )
+    #@showprogress 1 "Searching..."
+    for ilevel=dataobject.lmin:dataobject.lmax
+        part_iterator = 1
+        filtered_level = filter(p->p.level==ilevel, dataobject.data )
+
+        parts[Int(ilevel-dataobject.lmin+1),part_iterator] = ilevel
+        part_iterator= part_iterator + 1
+
+        for ifn in fn
+            if !in(ifn, skip_vars)
+                if length(select(filtered_level, ifn)) != 0
+                    value_minmax = reduce((min, max), filtered_level, select=ifn)
+                    valuemin = value_minmax.min
+                    valuemax = value_minmax.max
+                else
+                    valuemin = 0.
+                    valuemax = 0.
+                end
+            parts[Int(ilevel-dataobject.lmin+1),part_iterator] = valuemin
+            part_iterator= part_iterator + 1
+            parts[Int(ilevel-dataobject.lmin+1),part_iterator] = valuemax
+            part_iterator= part_iterator + 1
+            end
+        end
+
+    end
+
+    particle_overview_table = table( [parts[:, i ] for i = 1:length(names_constr)]..., names=[names_constr...] )
+    return particle_overview_table
 end
