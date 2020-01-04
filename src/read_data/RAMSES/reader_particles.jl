@@ -118,7 +118,8 @@ function getparticledata( dataobject::InfoType,
 
 
     if read_cpu
-        pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = readpart( dataobject,
+        if dataobject.descriptor.pversion == 0
+            pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = readpart( dataobject,
                                      Nvarp=Nvarp, nvarp_corr=nvarp_corr,
                                      lmax=lmax,
                                      ranges=ranges,
@@ -131,10 +132,10 @@ function getparticledata( dataobject::InfoType,
 
 
 
-        return pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D
-    else
+            return pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D
 
-        pos_1D, vars_1D, identity_1D, levels_1D = readpart( dataobject,
+        elseif dataobject.descriptor.pversion > 0
+            pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D = readpart( dataobject,
                                      Nvarp=Nvarp, nvarp_corr=nvarp_corr,
                                      lmax=lmax,
                                      ranges=ranges,
@@ -145,11 +146,41 @@ function getparticledata( dataobject::InfoType,
                                      verbose=verbose,
                                      print_filenames=print_filenames )
 
-        return pos_1D, vars_1D, identity_1D, levels_1D
+
+
+            return  pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D
+        end # if pversion
+    else # if read_cpu
+        if dataobject.descriptor.pversion == 0
+            pos_1D, vars_1D, identity_1D, levels_1D = readpart( dataobject,
+                                     Nvarp=Nvarp, nvarp_corr=nvarp_corr,
+                                     lmax=lmax,
+                                     ranges=ranges,
+                                     cpu_list=cpu_list,
+                                     ncpu_read=ncpu_read,
+                                     stars=stars,
+                                     read_cpu=read_cpu,
+                                     verbose=verbose,
+                                     print_filenames=print_filenames )
+
+            return pos_1D, vars_1D, identity_1D, levels_1D
+
+        elseif dataobject.descriptor.pversion > 0
+            pos_1D, vars_1D, family_1D, tag_1D, levels_1D = readpart( dataobject,
+                                     Nvarp=Nvarp, nvarp_corr=nvarp_corr,
+                                     lmax=lmax,
+                                     ranges=ranges,
+                                     cpu_list=cpu_list,
+                                     ncpu_read=ncpu_read,
+                                     stars=stars,
+                                     read_cpu=read_cpu,
+                                     verbose=verbose,
+                                     print_filenames=print_filenames )
+
+            return pos_1D, vars_1D, family_1D, tag_1D, levels_1D
+        end # if pversion
     end
 end
-
-
 
 
 
@@ -186,7 +217,12 @@ function readpart(dataobject::InfoType;
 
     pos_1D = ElasticArray{Float64}(undef, 3, 0)
     if read_cpu cpus_1D = Array{Int}(undef, 0) end #zeros(Int, npart)
-    identity_1D  = Array{Int32}(undef, 0) #zeros(Int32, npart)
+    if dataobject.descriptor.pversion == 0
+        identity_1D  = Array{Int32}(undef, 0) #zeros(Int32, npart)
+    elseif dataobject.descriptor.pversion > 0
+        family_1D  = Array{Int8}(undef, 0) #zeros(Int32, npart)
+        tag_1D  = Array{Int8}(undef, 0) #zeros(Int32, npart)
+    end
     levels_1D =  Array{Int32}(undef, 0) #zeros(Int32, npart) #manu
 
 
@@ -218,7 +254,12 @@ function readpart(dataobject::InfoType;
            #     vars_1D_buffer = zeros(Float64, npart2, 4) #vx, vy, vz, mass
            # end
            vars_1D_buffer = zeros(Float64, Nvarp, npart2 )
-           identity_1D_buffer = zeros(Int32, npart2)
+           if dataobject.descriptor.pversion == 0
+               identity_1D_buffer = zeros(Int32, npart2)
+           elseif dataobject.descriptor.pversion > 0
+               family_1D_buffer = zeros(Int8, npart2)
+               tag_1D_buffer = zeros(Int8, npart2)
+           end
            levels_1D_buffer   = zeros(Int32, npart2)
 
            # Read position
@@ -257,16 +298,32 @@ function readpart(dataobject::InfoType;
                     skiplines(f_part, 1)
                 end
 
-                # Read identity, level, age
-                identity_1D_buffer[1:npart2] = read(f_part, (Int32, npart2) ) # identity
+
+                # Read identity
+                if dataobject.descriptor.pversion == 0
+                    identity_1D_buffer[1:npart2] = read(f_part, (Int32, npart2) ) # identity
+                    append!(identity_1D, identity_1D_buffer[pos_selected]) # identity
+                end
+
+                # Read level
                 levels_1D_buffer[1:npart2] = read(f_part, (Int32, npart2) ) # level
-
-
-                append!(identity_1D, identity_1D_buffer[pos_selected]) # identity
                 append!(levels_1D, levels_1D_buffer[pos_selected]) # level
 
+
+                # Read family, tag
+                if dataobject.descriptor.pversion > 0
+                    skiplines(f_part, 1) # skip identity
+                    family_1D_buffer[1:npart2] = read(f_part, (Int8, npart2) ) # family
+                    tag_1D_buffer[1:npart2] = read(f_part, (Int8, npart2) ) # tag
+
+                    append!(family_1D, family_1D_buffer[pos_selected]) # family
+                    append!(tag_1D, tag_1D_buffer[pos_selected]) # tag
+                end
+
+                # read age
                 if nstar>0 && nvarp_corr[5] != 0
                    #age = read(f_part, (Float64, npart2)
+                   #skiplines(f_part, 1)
                    vars_1D_buffer[nvarp_corr[5], 1:npart2] = read(f_part, (Float64, npart2) ) #age (birth)
                 elseif nstar>0 && nvarp_corr[5] == 0
                     skiplines(f_part, 1)
@@ -282,8 +339,16 @@ function readpart(dataobject::InfoType;
     end #for
 
     if read_cpu
-        return pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D
+        if dataobject.descriptor.pversion == 0
+            return pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D
+        elseif dataobject.descriptor.pversion > 0
+            return pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D
+        end
     else
-        return pos_1D, vars_1D, identity_1D, levels_1D
+        if dataobject.descriptor.pversion == 0
+            return pos_1D, vars_1D, identity_1D, levels_1D
+        elseif dataobject.descriptor.pversion > 0
+            return pos_1D, vars_1D, family_1D, tag_1D, levels_1D
+        end
     end
 end

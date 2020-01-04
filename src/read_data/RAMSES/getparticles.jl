@@ -75,11 +75,21 @@ function getparticles( dataobject::InfoType;
 
     # read particle-data of the selected variables
     if read_cpu
-        pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+        if dataobject.descriptor.pversion == 0
+            pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
                                          print_filenames, verbose, read_cpu)
+        elseif dataobject.descriptor.pversion > 0
+            pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+                                         print_filenames, verbose, read_cpu)
+        end
     else
-        pos_1D, vars_1D,identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+        if dataobject.descriptor.pversion == 0
+            pos_1D, vars_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
                                          print_filenames, verbose, read_cpu)
+        elseif dataobject.descriptor.pversion > 0
+            pos_1D, vars_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+                                         print_filenames, verbose, read_cpu)
+        end
     end
 
 
@@ -90,37 +100,73 @@ function getparticles( dataobject::InfoType;
 
 
     # prepare column names for the data table
-    names_constr = preptablenames_particles(dataobject.nvarp, nvarp_list, used_descriptors, read_cpu, lmax, dataobject.levelmin)
+    names_constr = preptablenames_particles(dataobject, dataobject.nvarp, nvarp_list, used_descriptors, read_cpu, lmax, dataobject.levelmin)
 
 
     if lmax != dataobject.levelmin # if AMR
-        Nkeys = [:level, :x, :y, :z, :id]
+        if dataobject.descriptor.pversion == 0
+            Nkeys = [:level, :x, :y, :z, :id]
+        elseif dataobject.descriptor.pversion > 0
+            Nkeys = [:level, :x, :y, :z, :family, :tag]
+        end
     else # if uniform grid
-        Nkeys = [:x, :y, :z, :id]
+        if dataobject.descriptor.pversion == 0
+            Nkeys = [:x, :y, :z, :id]
+        elseif dataobject.descriptor.pversion > 0
+            Nkeys = [:x, :y, :z, :family, :tag]
+        end
     end
 
     # create data table
     if read_cpu # read also cpu number related to particle
         if isamr
-            data = table( levels_1D[:],
+            if dataobject.descriptor.pversion == 0
+                data = table( levels_1D[:],
                     pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
-        else # if uniform grid
-            data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], cpus_1D[:],
+            elseif dataobject.descriptor.pversion > 0
+                data = table( levels_1D[:],
+                    pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+            end
+
+        else # if uniform grid
+            if dataobject.descriptor.pversion == 0
+                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], cpus_1D[:],
+                    [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+            elseif dataobject.descriptor.pversion > 0
+                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:], cpus_1D[:],
+                    [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+            end
         end
     else
         if isamr
-            data = table( levels_1D[:],
+            if dataobject.descriptor.pversion == 0
+                data = table( levels_1D[:],
                     pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
-        else # if uniform grid
-            data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:],
+            elseif dataobject.descriptor.pversion > 0
+                data = table( levels_1D[:],
+                    pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+            end
+        else # if uniform grid
+            if dataobject.descriptor.pversion == 0
+                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:],
+                    [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+            elseif dataobject.descriptor.pversion > 0
+                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:],
+                    [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+            end
+
         end
     end
 
@@ -141,20 +187,36 @@ function getparticles( dataobject::InfoType;
 end
 
 
-function preptablenames_particles(nvarp::Int, nvarp_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, lmax::Number, levelmin::Number)
+function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, lmax::Number, levelmin::Number)
 
     if read_cpu
         if lmax != levelmin # if AMR
-            names_constr = [:level, :x, :y, :z, :id, :cpu]
+            if dataobject.descriptor.pversion == 0
+                names_constr = [:level, :x, :y, :z, :id, :cpu]
+            elseif dataobject.descriptor.pversion > 0
+                names_constr = [:x, :y, :z, :family, :tag, :cpu]
+            end
         else # if uniform grid
-            names_constr = [:x, :y, :z, :id, :cpu]
+            if dataobject.descriptor.pversion == 0
+                names_constr = [:x, :y, :z, :id, :cpu]
+            elseif dataobject.descriptor.pversion > 0
+                names_constr = [:x, :y, :z, :family, :tag, :cpu]
+            end
         end
                     #, Symbol("x"), Symbol("y"), Symbol("z")
     else
         if lmax != levelmin # if AMR
-            names_constr = [:level, :x, :y, :z, :id]
+            if dataobject.descriptor.pversion == 0
+                names_constr = [:level, :x, :y, :z, :id]
+            elseif dataobject.descriptor.pversion > 0
+                names_constr = [:level, :x, :y, :z, :family, :tag]
+            end
         else # if uniform grid
-            names_constr = [:x, :y, :z, :id]
+            if dataobject.descriptor.pversion == 0
+                names_constr = [:x, :y, :z, :id]
+            elseif dataobject.descriptor.pversion > 0
+                names_constr = [:x, :y, :z, :family, :tag]
+            end
         end
     end
 
