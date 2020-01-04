@@ -266,9 +266,17 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
         if verbose
             if lmax != dataobject.levelmin # if AMR
-                println("Key vars=(:level, :x, :y, :z, :id)")
+                if dataobject.descriptor.pversion == 0
+                    println("Key vars=(:level, :x, :y, :z, :id)")
+                elseif dataobject.descriptor.pversion > 0
+                    println("Key vars=(:level, :x, :y, :z, :family, :tag)")
+                end
             else # if uniform grid
-                println("Key vars=(:x, :y, :z, :id)")
+                if dataobject.descriptor.pversion == 0
+                    println("Key vars=(:x, :y, :z, :id)")
+                elseif dataobject.descriptor.pversion > 0
+                    println("Key vars=(:x, :y, :z, :family, :tag)")
+                end
             end
 
 
