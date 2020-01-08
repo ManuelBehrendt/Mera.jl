@@ -148,7 +148,7 @@ function getparticledata( dataobject::InfoType,
 
 
 
-            return  pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D
+            return  pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D
         end # if pversion
     else # if read_cpu
         if dataobject.descriptor.pversion == 0
@@ -166,7 +166,7 @@ function getparticledata( dataobject::InfoType,
             return pos_1D, vars_1D, identity_1D, levels_1D
 
         elseif dataobject.descriptor.pversion > 0
-            pos_1D, vars_1D, family_1D, tag_1D, levels_1D = readpart( dataobject,
+            pos_1D, vars_1D, family_1D, identity_1D, tag_1D, levels_1D = readpart( dataobject,
                                      Nvarp=Nvarp, nvarp_corr=nvarp_corr,
                                      lmax=lmax,
                                      ranges=ranges,
@@ -177,7 +177,7 @@ function getparticledata( dataobject::InfoType,
                                      verbose=verbose,
                                      print_filenames=print_filenames )
 
-            return pos_1D, vars_1D, family_1D, tag_1D, levels_1D
+            return pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D
         end # if pversion
     end
 end
@@ -203,23 +203,17 @@ function readpart(dataobject::InfoType;
 
     fnames = createpath(dataobject.output, path)
 
-    # if stars
-    #     # to append multidim array
-    #     vars_1D = ElasticArray{Float64}(undef, 5, 0) #vx, vy, vz, mass, age
-    # else
-    #     # to append multidim array
-    #     vars_1D = ElasticArray{Float64}(undef, 4, 0) #vx, vy, vz, mass
-    # end
-
     vars_1D = ElasticArray{Float64}(undef, Nvarp, 0)
     r1, r2, r3, r4, r5, r6 = ranges .* boxlen
 
 
     pos_1D = ElasticArray{Float64}(undef, 3, 0)
     if read_cpu cpus_1D = Array{Int}(undef, 0) end #zeros(Int, npart)
-    if dataobject.descriptor.pversion == 0
-        identity_1D  = Array{Int32}(undef, 0) #zeros(Int32, npart)
-    elseif dataobject.descriptor.pversion > 0
+    identity_1D  = Array{Int32}(undef, 0) #zeros(Int32, npart)
+    #if dataobject.descriptor.pversion == 0
+
+    if dataobject.descriptor.pversion > 0
+        #identity_1D  = Array{Int32}(undef, 0) #zeros(Int32, npart)
         family_1D  = Array{Int8}(undef, 0) #zeros(Int32, npart)
         tag_1D  = Array{Int8}(undef, 0) #zeros(Int32, npart)
     end
@@ -246,20 +240,15 @@ function readpart(dataobject::InfoType;
 
        if npart2 != 0
            pos_1D_buffer = zeros(Float64, 3, npart2)
-           # if nstar>0
-           #     vn = 5
-           #     vars_1D_buffer = zeros(Float64, npart2, 5) #vx, vy, vz, mass, age
-           # else
-           #     vn = 4
-           #     vars_1D_buffer = zeros(Float64, npart2, 4) #vx, vy, vz, mass
-           # end
+
            vars_1D_buffer = zeros(Float64, Nvarp, npart2 )
-           if dataobject.descriptor.pversion == 0
-               identity_1D_buffer = zeros(Int32, npart2)
-           elseif dataobject.descriptor.pversion > 0
+
+           if dataobject.descriptor.pversion > 0
+
                family_1D_buffer = zeros(Int8, npart2)
                tag_1D_buffer = zeros(Int8, npart2)
            end
+           identity_1D_buffer = zeros(Int32, npart2)
            levels_1D_buffer   = zeros(Int32, npart2)
 
            # Read position
@@ -300,10 +289,10 @@ function readpart(dataobject::InfoType;
 
 
                 # Read identity
-                if dataobject.descriptor.pversion == 0
-                    identity_1D_buffer[1:npart2] = read(f_part, (Int32, npart2) ) # identity
-                    append!(identity_1D, identity_1D_buffer[pos_selected]) # identity
-                end
+                #if dataobject.descriptor.pversion == 0
+                identity_1D_buffer[1:npart2] = read(f_part, (Int32, npart2) ) # identity
+                append!(identity_1D, identity_1D_buffer[pos_selected]) # identity
+                #end
 
                 # Read level
                 levels_1D_buffer[1:npart2] = read(f_part, (Int32, npart2) ) # level
@@ -312,21 +301,45 @@ function readpart(dataobject::InfoType;
 
                 # Read family, tag
                 if dataobject.descriptor.pversion > 0
-                    skiplines(f_part, 1) # skip identity
+                    #skiplines(f_part, 1) # skip identity
                     family_1D_buffer[1:npart2] = read(f_part, (Int8, npart2) ) # family
                     tag_1D_buffer[1:npart2] = read(f_part, (Int8, npart2) ) # tag
 
                     append!(family_1D, family_1D_buffer[pos_selected]) # family
                     append!(tag_1D, tag_1D_buffer[pos_selected]) # tag
+
+
+                    # read birth
+                    if nstar>0 && nvarp_corr[7] != 0
+                       #birth = read(f_part, (Float64, npart2)
+                       #skiplines(f_part, 1)
+                       vars_1D_buffer[nvarp_corr[7], 1:npart2] = read(f_part, (Float64, npart2) ) #age (birth)
+                    elseif nstar>0 && nvarp_corr[7] == 0
+                        skiplines(f_part, 1)
+                    end
+
+                elseif dataobject.descriptor.pversion == 0
+                    # read birth
+                    if nstar>0 && nvarp_corr[5] != 0
+                       #birth = read(f_part, (Float64, npart2)
+                       #skiplines(f_part, 1)
+                       vars_1D_buffer[nvarp_corr[5], 1:npart2] = read(f_part, (Float64, npart2) ) #age (birth)
+                    elseif nstar>0 && nvarp_corr[5] == 0
+                        skiplines(f_part, 1)
+                    end
                 end
 
-                # read age
-                if nstar>0 && nvarp_corr[5] != 0
-                   #age = read(f_part, (Float64, npart2)
-                   #skiplines(f_part, 1)
-                   vars_1D_buffer[nvarp_corr[5], 1:npart2] = read(f_part, (Float64, npart2) ) #age (birth)
-                elseif nstar>0 && nvarp_corr[5] == 0
-                    skiplines(f_part, 1)
+
+
+
+
+                # read additional variables
+                if Nvarp>7
+                    for iN = 8:Nvarp
+                        if nvarp_corr[iN] != 0
+                            vars_1D_buffer[nvarp_corr[iN], 1:npart2] = read(f_part, (Float64, npart2) )
+                        end
+                    end
                 end
 
                 append!(vars_1D, vars_1D_buffer[:, pos_selected] )
@@ -342,13 +355,13 @@ function readpart(dataobject::InfoType;
         if dataobject.descriptor.pversion == 0
             return pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D
         elseif dataobject.descriptor.pversion > 0
-            return pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D
+            return pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D
         end
     else
         if dataobject.descriptor.pversion == 0
             return pos_1D, vars_1D, identity_1D, levels_1D
         elseif dataobject.descriptor.pversion > 0
-            return pos_1D, vars_1D, family_1D, tag_1D, levels_1D
+            return pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D
         end
     end
 end

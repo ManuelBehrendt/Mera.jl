@@ -85,6 +85,7 @@ mutable struct FileNamesType
     hydro_descriptor::String
     gravity::String
     particles::String
+    part_descriptor::String
     clumps::String
     timer::String
     header::String
