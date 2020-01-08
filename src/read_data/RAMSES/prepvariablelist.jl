@@ -146,9 +146,9 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
 
     elseif datatype == :particles
-        nvarp = dataobject.nvarp # vx, vy, vz, mass, age
+        nvarp = dataobject.nvarp # vx, vy, vz, mass, birth
 
-        #:level, :x, :y, :z, :id, :cpu, :vx, :vy, :vz, :mass, :age]
+        #:level, :x, :y, :z, :id, :cpu, :vx, :vy, :vz, :mass, :birth]
         # manage user selected variables
         #-------------------------------------
         nvarp_list=Int[]
@@ -157,14 +157,22 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         particlesvar_buffer = copy(vars)
         used_descriptors = Dict()
         if particlesvar_buffer == [:all]
-            nvarp_list=[1,2,3,4,5]
+            for invarp = 1:dataobject.nvarp
+                append!(nvarp_list,invarp)
+            end
+
             # read_cpu = true
             if in(:cpu, particlesvar_buffer) || in(:varn1, particlesvar_buffer)
              read_cpu = true
             end
 
-            if nvarp > 6
+
+            if nvarp > 5 && dataobject.descriptor.pversion <= 0
                 for ivar=6:nvarp
+                     append!(nvarp_list, [ivar])
+                end
+            elseif nvarp > 8 && dataobject.descriptor.pversion > 0
+                for ivar=9:nvarp
                      append!(nvarp_list, [ivar])
                 end
             end
@@ -199,10 +207,24 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
              filter!(e->e≠:mass, particlesvar_buffer)
              filter!(e->e≠:var4, particlesvar_buffer)
             end
-            if in(:age, particlesvar_buffer) || in(:var5, particlesvar_buffer)
-             append!(nvarp_list, 5)
-             filter!(e->e≠:age, particlesvar_buffer)
-             filter!(e->e≠:var5, particlesvar_buffer)
+            if in(:birth, particlesvar_buffer) || in(:var5, particlesvar_buffer) || in(:var7, particlesvar_buffer)
+
+                if dataobject.descriptor.pversion <= 0 || in(:var5, particlesvar_buffer)
+                    append!(nvarp_list, 5)
+                    filter!(e->e≠:var5, particlesvar_buffer)
+                elseif dataobject.descriptor.pversion > 0 || in(:var7, particlesvar_buffer)
+                    append!(nvarp_list, 7)
+                    filter!(e->e≠:var7, particlesvar_buffer)
+                end
+                filter!(e->e≠:birth, particlesvar_buffer)
+            end
+
+            if in(:metals, particlesvar_buffer) || in(:var8, particlesvar_buffer)
+                if dataobject.descriptor.pversion > 0
+                    append!(nvarp_list, 8)
+                    filter!(e->e≠:var8, particlesvar_buffer)
+                end
+                filter!(e->e≠:metals, particlesvar_buffer)
             end
 
             # if dataobject.particles_descriptor != dataobject.particles_variable_list
@@ -253,11 +275,19 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         if read_cpu append!(nvarp_list_strings, [:cpu]) end
         for i in nvarp_list
             #if !haskey(used_descriptors, i)
+            if dataobject.descriptor.pversion == 0
                 if i < 6
                     append!(nvarp_list_strings, [Symbol("$(indices_toparticlevariables[i])")])
                 elseif i > 5
                     append!(nvarp_list_strings, [Symbol("var$i")])
                 end
+            elseif dataobject.descriptor.pversion > 0
+                if i < 9 && i != 5 && i != 6
+                    append!(nvarp_list_strings, [Symbol("$(indices_toparticlevariables_v1[i])")])
+                elseif i > 8
+                    append!(nvarp_list_strings, [Symbol("var$i")])
+                end
+            end
             #else
             #    append!(nvarp_list_strings, [used_descriptors[i]])
             #end
@@ -265,25 +295,21 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
 
         if verbose
-            if lmax != dataobject.levelmin # if AMR
                 if dataobject.descriptor.pversion == 0
                     println("Key vars=(:level, :x, :y, :z, :id)")
                 elseif dataobject.descriptor.pversion > 0
-                    println("Key vars=(:level, :x, :y, :z, :family, :tag)")
+                    println("Key vars=(:level, :x, :y, :z, :id, :family, :tag)")
                 end
-            else # if uniform grid
-                if dataobject.descriptor.pversion == 0
-                    println("Key vars=(:x, :y, :z, :id)")
-                elseif dataobject.descriptor.pversion > 0
-                    println("Key vars=(:x, :y, :z, :family, :tag)")
-                end
-            end
+
 
 
             if read_cpu
                 println("Using var(s)=$(tuple(-1, nvarp_list...)) = $(tuple(nvarp_list_strings...)) ")
             else
-                println("Using var(s)=$(tuple(nvarp_list...)) = $(tuple(nvarp_list_strings...)) ")
+                nvarp_i_list_buffer = nvarp_i_list
+                filter!(x->x≠6,nvarp_i_list_buffer)
+                filter!(x->x≠5,nvarp_i_list_buffer)
+                println("Using var(s)=$(tuple(nvarp_i_list_buffer...)) = $(tuple(nvarp_list_strings...)) ")
             end
             println()
         end
@@ -301,7 +327,7 @@ end
 
 # index to variable assignment
 global indices_tovariables = SortedDict( -1 =>  "cpu",
-                                          0 => "level" => 0,
+                                          0 => "level",
 
                                           1 => "rho",
                                           2 => "vx",
@@ -309,11 +335,23 @@ global indices_tovariables = SortedDict( -1 =>  "cpu",
                                           4 => "vz",
                                           5 => "p")
 
-global indices_toparticlevariables = SortedDict( -1 =>  "cpu",
-                                      0 => "level" => 0,
+global indices_toparticlevariables = SortedDict(
+                                     -1 =>  "cpu",
+                                      0 => "level",
 
                                       1 => "vx",
                                       2 => "vy",
                                       3 => "vz",
                                       4 => "mass",
-                                      5 => "age")
+                                      5 => "birth")
+
+global indices_toparticlevariables_v1 = SortedDict(
+                                   -1 =>  "cpu",
+                                    0 => "level",
+
+                                    1 => "vx",
+                                    2 => "vy",
+                                    3 => "vz",
+                                    4 => "mass",
+                                    7 => "birth",
+                                    8 => "metallicity")

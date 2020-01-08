@@ -191,7 +191,7 @@ function viewfields(object::DataSetType)
             printstyled(i, " ==> subfields: ", propertynames(object.scale), "\n", bold=true, color=:normal)
             println()
         elseif i == :used_descriptors
-            if object.info.descriptor.usehydro == true
+            if object.info.descriptor.usehydro
                 println(i, "\t= ", getfield(object, i) )
             end
         else

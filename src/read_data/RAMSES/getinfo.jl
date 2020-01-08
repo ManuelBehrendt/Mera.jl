@@ -376,7 +376,7 @@ function readparticlesfile1!(dataobject::InfoType)
     dataobject.part_info.age_sn = 10. / dataobject.scale.Myr
     dataobject.part_info.f_w = 0.
 
-    # overwrite some default parameters with namelist file
+    # overwrite some default parameters from namelist file
     if dataobject.namelist
         keylist_header = keys(dataobject.namelist_content)
         for i in keylist_header
@@ -393,6 +393,66 @@ function readparticlesfile1!(dataobject::InfoType)
             end
 
         end
+    end
+
+
+    # read descriptor file
+    descriptor_file = false
+    variable_descriptor_list = Symbol[]
+    variable_types = String[]
+    dnvar = 0
+    version = 0
+    if  isfile(dataobject.fnames.part_descriptor)
+        descriptor_file = true
+        f = open(dataobject.fnames.part_descriptor)
+        lines = readlines(f)
+
+        # read descriptor version # > stable_18_09
+        version = parse(Int, rsplit(lines[1], ":" )[2])
+
+        # read descriptor variables
+        if version == 1
+            dnvar = length(lines)
+            for i = 3:dnvar
+                ivar = String(rsplit(lines[i], "," )[2])
+                itype = String(rsplit(lines[i], "," )[3])
+
+                ivar = strip(ivar)
+                itype = strip(itype)
+                append!(variable_descriptor_list, [Symbol(ivar)])
+                append!(variable_types, [itype])
+            end
+        else
+        # version not supported,
+        # descriptor variables not read
+        end
+        close(f)
+    end
+
+
+
+
+    dataobject.nvarp = 5
+    if version <= 0
+        dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :birth]
+    else
+
+        if in(:metallicity, variable_descriptor_list)
+            dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals]
+            dataobject.nvarp = 8
+        else
+            dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :family, :tag, :birth]
+            dataobject.nvarp = 7
+        end
+
+        # todo: automatic detection of more variables
+        #if (dnvar-3) > dataobject.nvarp + 7  # variables + (id,x,y,z,level,family,tag)
+        #    for invar = (dataobject.nvarp+7):(dnvar-3)
+        #        icount = invar - 3
+        #        append!(dataobject.particles_variable_list, [Symbol("var$icount")])
+        #        dataobject.nvarp = dataobject.nvarp + 1
+        #    end
+        #end
     end
 
 
@@ -414,26 +474,19 @@ function readparticlesfile1!(dataobject::InfoType)
 
 
     dataobject.particles  = part_files
-    #info.part_info  = part_info
     dataobject.headerfile = part_header
 
-
-    # todo: introduce new RAMSES version
-    dataobject.nvarp = 5
-    if version <= 0
-        dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :age]
-    else
-        #todo pos vel mass iord level family tag tform metal
-        dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :age]
-    end
-    # todo: use existing descriptor files
-
-
     dataobject.descriptor.pversion = version
-    dataobject.descriptor.particles = dataobject.particles_variable_list
-    dataobject.descriptor.ptypes = String[]
+    if version == 0
+        dataobject.descriptor.particles = dataobject.particles_variable_list
+        dataobject.descriptor.ptypes = String[]
+    elseif version > 0
+        dataobject.descriptor.particles = variable_descriptor_list
+        dataobject.descriptor.ptypes = variable_types
+    end
+
     dataobject.descriptor.useparticles=false
-    dataobject.descriptor.particlesfile=false
+    dataobject.descriptor.particlesfile=descriptor_file
     return dataobject
 end
 
@@ -652,6 +705,9 @@ function printsimoverview(info::InfoType, verbose::Bool)
 
         if info.particles
             println("particle variables: ", tuple(info.particles_variable_list...) )
+            if info.descriptor.particlesfile
+                println("particle-descriptor: ", tuple(info.descriptor.particles...) )
+            end
             if !info.clumps
                 println("-------------------------------------------------------")
             end

@@ -79,7 +79,7 @@ function getparticles( dataobject::InfoType;
             pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
                                          print_filenames, verbose, read_cpu)
         elseif dataobject.descriptor.pversion > 0
-            pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+            pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
                                          print_filenames, verbose, read_cpu)
         end
     else
@@ -87,7 +87,7 @@ function getparticles( dataobject::InfoType;
             pos_1D, vars_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
                                          print_filenames, verbose, read_cpu)
         elseif dataobject.descriptor.pversion > 0
-            pos_1D, vars_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+            pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
                                          print_filenames, verbose, read_cpu)
         end
     end
@@ -107,13 +107,13 @@ function getparticles( dataobject::InfoType;
         if dataobject.descriptor.pversion == 0
             Nkeys = [:level, :x, :y, :z, :id]
         elseif dataobject.descriptor.pversion > 0
-            Nkeys = [:level, :x, :y, :z, :family, :tag]
+            Nkeys = [:level, :x, :y, :z, :id, :family, :tag]
         end
     else # if uniform grid
         if dataobject.descriptor.pversion == 0
             Nkeys = [:x, :y, :z, :id]
         elseif dataobject.descriptor.pversion > 0
-            Nkeys = [:x, :y, :z, :family, :tag]
+            Nkeys = [:x, :y, :z, :id, :family, :tag]
         end
     end
 
@@ -126,8 +126,10 @@ function getparticles( dataobject::InfoType;
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             elseif dataobject.descriptor.pversion > 0
+                filter!(x->x≠6,nvarp_i_list)
+                filter!(x->x≠5,nvarp_i_list)
                 data = table( levels_1D[:],
-                    pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:], cpus_1D[:],
+                    pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             end
@@ -138,7 +140,9 @@ function getparticles( dataobject::InfoType;
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             elseif dataobject.descriptor.pversion > 0
-                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:], cpus_1D[:],
+                filter!(x->x≠6,nvarp_i_list)
+                filter!(x->x≠5,nvarp_i_list)
+                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             end
@@ -151,8 +155,10 @@ function getparticles( dataobject::InfoType;
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             elseif dataobject.descriptor.pversion > 0
+                filter!(x->x≠6,nvarp_i_list)
+                filter!(x->x≠5,nvarp_i_list)
                 data = table( levels_1D[:],
-                    pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:],
+                    pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             end
@@ -162,7 +168,9 @@ function getparticles( dataobject::InfoType;
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             elseif dataobject.descriptor.pversion > 0
-                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], family_1D[:], tag_1D[:],
+                filter!(x->x≠6,nvarp_i_list)
+                filter!(x->x≠5,nvarp_i_list)
+                data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
                     names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
             end
@@ -194,13 +202,13 @@ function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::
             if dataobject.descriptor.pversion == 0
                 names_constr = [:level, :x, :y, :z, :id, :cpu]
             elseif dataobject.descriptor.pversion > 0
-                names_constr = [:x, :y, :z, :family, :tag, :cpu]
+                names_constr = [:level, :x, :y, :z, :id, :family, :tag, :cpu]
             end
         else # if uniform grid
             if dataobject.descriptor.pversion == 0
                 names_constr = [:x, :y, :z, :id, :cpu]
             elseif dataobject.descriptor.pversion > 0
-                names_constr = [:x, :y, :z, :family, :tag, :cpu]
+                names_constr = [:x, :y, :z, :id, :family, :tag, :cpu]
             end
         end
                     #, Symbol("x"), Symbol("y"), Symbol("z")
@@ -209,13 +217,13 @@ function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::
             if dataobject.descriptor.pversion == 0
                 names_constr = [:level, :x, :y, :z, :id]
             elseif dataobject.descriptor.pversion > 0
-                names_constr = [:level, :x, :y, :z, :family, :tag]
+                names_constr = [:level, :x, :y, :z, :id, :family, :tag]
             end
         else # if uniform grid
             if dataobject.descriptor.pversion == 0
                 names_constr = [:x, :y, :z, :id]
             elseif dataobject.descriptor.pversion > 0
-                names_constr = [:x, :y, :z, :family, :tag]
+                names_constr = [:x, :y, :z, :id, :family, :tag]
             end
         end
     end
@@ -223,7 +231,8 @@ function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::
 
     for i=1:nvarp
         if in(i, nvarp_list)
-            if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
+            #if  length(used_descriptors) == 0 || !haskey(used_descriptors, i)
+            if dataobject.descriptor.pversion == 0
                 if i == 1
                     append!(names_constr, [Symbol("vx")] )
                 elseif i == 2
@@ -233,13 +242,30 @@ function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::
                 elseif i == 4
                     append!(names_constr, [Symbol("mass")] )
                 elseif i == 5
-                    append!(names_constr, [Symbol("age")] )
+                    append!(names_constr, [Symbol("birth")] )
                 elseif i > 5
                     append!(names_constr, [Symbol("var$i")] )
                 end
-            else append!(names_constr, [used_descriptors[i]] )
-
+            elseif dataobject.descriptor.pversion > 0
+                if i == 1
+                    append!(names_constr, [Symbol("vx")] )
+                elseif i == 2
+                    append!(names_constr, [Symbol("vy")] )
+                elseif i == 3
+                    append!(names_constr, [Symbol("vz")] )
+                elseif i == 4
+                    append!(names_constr, [Symbol("mass")] )
+                elseif i == 7
+                    append!(names_constr, [Symbol("birth")] )
+                elseif i == 8
+                    append!(names_constr, [Symbol("metals")] )
+                elseif i > 8
+                    append!(names_constr, [Symbol("var$i")] )
+                end
             end
+            #else append!(names_constr, [used_descriptors[i]] )
+
+            #end
         end
     end
 
