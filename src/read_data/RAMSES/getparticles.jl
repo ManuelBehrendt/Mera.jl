@@ -1,3 +1,99 @@
+"""
+#### Read the particle-data
+- select variables
+- limit to a maximum range
+- print the name of each data-file before reading it
+- toggle verbose mode
+
+
+```julia
+getparticles(       dataobject::InfoType;
+                    lmax::Number=dataobject.levelmax,
+                    vars::Array{Symbol,1}=[:all],
+                    stars::Bool=true,
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_units::Symbol=:standard,
+                    print_filenames::Bool=false,
+                    verbose::Bool=verbose_mode)
+```
+#### Returns an object of type PartDataType, containing the particle-data table, the selected and the simulation ScaleType and summary of the InfoType
+```julia
+return PartDataType()
+
+# get an overview of the returned fields:
+# e.g.:
+julia> info = getinfo(100)
+julia> particles  = getparticles(info)
+julia> viewfields(particles)
+#or:
+julia> fieldnames(particles)
+```
+
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
+##### Predefined/Optional Keywords:
+- **`lmax`:** not defined
+- **`stars`:** not defined
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_units` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_units` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_units` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_units`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_units`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`print_filenames`:** print on screen the current processed particle file of each CPU
+- **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+
+### Defined Methods - function defined for different arguments
+getparticles( dataobject::InfoType; ...) # no given variables -> all variables loaded
+getparticles( dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
+getparticles( dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
+
+
+#### Examples
+```julia
+# read simulation information
+julia> info = getinfo(420)
+
+# Example 1:
+# read particle data of all variables, full-box, all levels
+julia> particles = getparticles(info)
+
+# Example 2:
+# read particle data of all variables
+# data range 20x20x4 kpc; ranges are given in kpc relative to the box (here: 48 kpc) center at 24 kpc
+julia> particles = getparticles( info,
+                                  xrange=[-10., 10.],
+                                  yrange=[-10., 10.],
+                                  zrange=[-2., 2.],
+                                  center=[24., 24., 24.],
+                                  range_units=:kpc )
+
+# Example 3:
+# give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
+# this is equivalent to center=[24.,24.,24.] in Example 2
+# the following combination is also possible: e.g. center=[:bc, 12., 34.], etc.
+julia> particles = getparticles(    info,
+                                    xrange=[-10.,10.],
+                                    yrange=[-10.,10.],
+                                    zrange=[-2.,2.],
+                                    center=[33., bc:, 10.],
+                                    range_units=:kpc )
+
+# Example 4:
+# read particle data of the variables mass and the birth-time, full-box, all levels
+julia> particles = getparticles( info, [:mass, :birth] ) # use array for the variables
+
+# Example 5:
+# read particle data of the single variable mass, full-box, all levels
+julia> particles = getparticles( info, :mass ) # no array for a single variable needed
+...
+```
+
+"""
 function getparticles( dataobject::InfoType, var::Symbol;
                     lmax::Number=dataobject.levelmax,
                     stars::Bool=true,
@@ -61,7 +157,10 @@ function getparticles( dataobject::InfoType;
 
     printtime("Get particle data: ", verbose)
     checkfortype(dataobject, :particles)
-    checklevelmax(dataobject, lmax)
+
+    #Todo: limit to a given lmax
+    lmax=dataobject.levelmax # overwrite given lmax
+    #checklevelmax(dataobject, lmax)
     isamr = checkuniformgrid(dataobject, lmax)
     #time = dataobject.time
 
