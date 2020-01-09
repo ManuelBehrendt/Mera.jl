@@ -1,6 +1,6 @@
 """
 #### Read the leaf-cells of the hydro-data:
-- select variables,
+- select variables
 - limit to a maximum level
 - limit to a spatial range
 - set a minimum density or sound speed
