@@ -317,3 +317,64 @@ function getunit(dataobject::InfoType, unit::Symbol; uname::Bool=false)
         end
     end
 end
+
+
+
+
+#todo test all typess
+#todo adapt selected vars
+function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::HydroDataType)
+    hydrodata = HydroDataType()
+    hydrodata.data = data
+    hydrodata.info = dataobject.info
+    hydrodata.lmin = dataobject.lmin
+    hydrodata.lmax = dataobject.lmax
+    hydrodata.boxlen = dataobject.boxlen
+    hydrodata.ranges = dataobject.ranges
+    hydrodata.selected_hydrovars = dataobject.selected_hydrovars
+    hydrodata.used_descriptors = dataobject.used_descriptors
+    hydrodata.smallr = dataobject.smallr
+    hydrodata.smallc = dataobject.smallc
+    hydrodata.scale = dataobject.scale
+    return hydrodata
+end
+
+function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::PartDataType)
+    partdata = PartDataType()
+    partdata.data = data
+    partdata.info = dataobject.info
+    partdata.lmin = dataobject.lmin
+    partdata.lmax = dataobject.lmax
+    partdata.boxlen = dataobject.boxlen
+    partdata.ranges = dataobject.ranges
+    partdata.selected_partvars = dataobject.selected_partvars
+    partdata.used_descriptors = dataobject.used_descriptors
+    partdata.scale = dataobject.scale
+    return partdata
+end
+
+function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::GravDataType)
+    gravitydata = GravDataType()
+    gravitydata.data = data
+    gravitydata.info = dataobject.info
+    gravitydata.lmin = dataobject.lmin
+    gravitydata.lmax = dataobject.lmax
+    gravitydata.boxlen = dataobject.boxlen
+    gravitydata.ranges = dataobject.ranges
+    gravitydata.selected_gravvars = dataobject.selected_gravvars
+    gravitydata.scale = dataobject.scale
+    return gravitydata
+end
+
+function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::ClumpDataType)
+    clumpdata = ClumpDataType()
+    clumpdata.data = data
+    clumpdata.info = dataobject.info
+    clumpdata.boxlen = dataobject.boxlen
+    clumpdata.ranges = dataobject.ranges
+    clumpdata.selected_clumpvars = dataobject.selected_clumpvars
+    clumpdata.used_descriptors = dataobject.used_descriptors
+    clumpdata.scale = dataobject.scale
+    return clumpdata
+
+end
