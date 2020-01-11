@@ -25,6 +25,7 @@ using FortranFiles
 using JuliaDB
 using DataStructures
 using ElasticArrays
+using StructArrays
 using ProgressMeter
 using StatsBase
 using OnlineStats
@@ -48,6 +49,17 @@ export
     amroverview,
     dataoverview,
 
+# basic calcs
+    msum,
+    center_of_mass,
+    com,
+    bulk_velocity,
+    average_velocity,
+    average_mweighted,
+    getvar,
+    getmass,
+    wstat,
+
 # miscellaneous
     viewmodule,
     construct_datatype,
@@ -66,10 +78,16 @@ export
     DescriptorType,
 
     DataSetType,
+    ContainMassDataSetType,
+    HydroPartType,
     HydroDataType,
     GravDataType,
     PartDataType,
-    ClumpDataType
+    ClumpDataType,
+
+    MaskType,
+    MaskArrayType,
+    MaskArrayAbstractType
 
 
 verbose_mode = true
@@ -77,6 +95,13 @@ verbose_mode = true
 include("types.jl")
 include("functions/miscellaneous.jl")
 include("functions/overview.jl")
+include("functions/basic_calc.jl")
+
+include("functions/getvar.jl")
+include("functions/getvar_hydro.jl")
+include("functions/getvar_particles.jl")
+include("functions/getvar_clumps.jl")
+
 
 include("read_data/RAMSES/filepaths.jl")
 include("read_data/RAMSES/getinfo.jl")

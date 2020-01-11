@@ -244,12 +244,13 @@ mutable struct LevelType
 end
 
 
-
+# exported
 abstract type DataSetType end # Supertype of all the different dataset types
-
+abstract type ContainMassDataSetType <: DataSetType end # Data-sets that contain mass variables
+abstract type HydroPartType <: ContainMassDataSetType end # Data-sets that contain hydro and particle data
 
 # exported
-mutable struct HydroDataType <: DataSetType
+mutable struct HydroDataType <: HydroPartType
     data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
@@ -263,8 +264,6 @@ mutable struct HydroDataType <: DataSetType
     scale::ScalesType
     HydroDataType() = new()
 end
-
-
 
 
 
@@ -282,7 +281,7 @@ mutable struct GravDataType <: DataSetType
 end
 
 # exported
-mutable struct PartDataType <: DataSetType
+mutable struct PartDataType <: HydroPartType
     data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
@@ -297,7 +296,7 @@ end
 
 
 # exported
-mutable struct ClumpDataType <: DataSetType
+mutable struct ClumpDataType <: ContainMassDataSetType
     data
     info::InfoType
     boxlen::Float64
@@ -306,4 +305,21 @@ mutable struct ClumpDataType <: DataSetType
     used_descriptors::Dict{Any,Any}
     scale::ScalesType
     ClumpDataType() = new()
+end
+
+# exported
+MaskType = Union{Array{Bool,1},BitArray{1}}
+MaskArrayType = Union{ Array{Array{Bool,1},1}, Array{BitArray{1},1} }
+MaskArrayAbstractType = Union{ MaskArrayType, Array{AbstractArray{Bool,1},1} } # used for the combined center_of_mass function
+#HydroPartType = Union{HydroDataType, PartDataType}
+
+
+mutable struct WStatType
+    mean::Float64
+    median::Float64
+    std::Float64
+    skewness::Float64
+    kurtosis::Float64
+    min::Float64
+    max::Float64
 end

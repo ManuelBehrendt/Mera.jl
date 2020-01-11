@@ -31,3 +31,11 @@ function checkuniformgrid(dataobject::InfoType, lmax::Number)
     end
     return isamr
 end
+
+function checkuniformgrid(dataobject::DataSetType, lmax::Number)
+    isamr = true
+    if lmax == dataobject.info.levelmin
+        isamr = false
+    end
+    return isamr
+end
