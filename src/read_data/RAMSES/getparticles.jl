@@ -223,27 +223,27 @@ function getparticles( dataobject::InfoType;
                 data = table( levels_1D[:],
                     pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
                 data = table( levels_1D[:],
                     pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             end
 
         else # if uniform grid
             if dataobject.descriptor.pversion == 0
                 data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
                 data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             end
         end
     else
@@ -252,26 +252,26 @@ function getparticles( dataobject::InfoType;
                 data = table( levels_1D[:],
                     pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
                 data = table( levels_1D[:],
                     pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             end
         else # if uniform grid
             if dataobject.descriptor.pversion == 0
                 data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
                 data = table(pos_1D[1,:], pos_1D[2,:], pos_1D[3,:], identity_1D[:], family_1D[:], tag_1D[:],
                     [vars_1D[ nvarp_corr[i],: ] for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false ) #birth: time .- vars_1D[5, :]
+                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
             end
 
         end

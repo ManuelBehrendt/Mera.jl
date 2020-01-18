@@ -60,6 +60,10 @@ export
     getmass,
     wstat,
 
+#
+    projection,
+    remap,
+
 # miscellaneous
     viewmodule,
     construct_datatype,
@@ -102,7 +106,6 @@ include("functions/getvar_hydro.jl")
 include("functions/getvar_particles.jl")
 include("functions/getvar_clumps.jl")
 
-
 include("read_data/RAMSES/filepaths.jl")
 include("read_data/RAMSES/getinfo.jl")
 include("functions/viewfields.jl")
@@ -120,7 +123,8 @@ include("read_data/RAMSES/reader_particles.jl")
 
 include("read_data/RAMSES/getclumps.jl")
 
-
+include("functions/projection.jl")
+include("functions/projection_hydro.jl")
 
 println()
 println( "*__   __ _______ ______   _______ ")

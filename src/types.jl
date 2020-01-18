@@ -323,3 +323,23 @@ mutable struct WStatType
     min::Float64
     max::Float64
 end
+
+
+mutable struct HydroMapsType
+    maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_lmax::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    lmax_projected::Number
+    lmin::Int
+    lmax::Int
+    ranges::Array{Float64,1}
+    extent::Array{Float64,1}
+    cextent::Array{Float64,1}
+    ratio::Float64
+    boxlen::Float64
+    smallr::Float64
+    smallc::Float64
+    scale::ScalesType
+    info::InfoType
+end
