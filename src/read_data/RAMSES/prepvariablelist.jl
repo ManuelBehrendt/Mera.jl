@@ -157,8 +157,8 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         particlesvar_buffer = copy(vars)
         used_descriptors = Dict()
         if particlesvar_buffer == [:all]
-            for invarp = 1:dataobject.nvarp
-                append!(nvarp_list,invarp)
+            for invarp = 1:nvarp
+                append!(nvarp_list, invarp)
             end
 
             # read_cpu = true
@@ -271,6 +271,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
             end
         end
 
+
         nvarp_list_strings= Symbol[]
         if read_cpu append!(nvarp_list_strings, [:cpu]) end
         for i in nvarp_list
@@ -307,8 +308,10 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
                 println("Using var(s)=$(tuple(-1, nvarp_list...)) = $(tuple(nvarp_list_strings...)) ")
             else
                 nvarp_i_list_buffer = nvarp_i_list
-                filter!(x->x≠6,nvarp_i_list_buffer)
-                filter!(x->x≠5,nvarp_i_list_buffer)
+                if dataobject.descriptor.pversion > 0
+                    filter!(x->x≠6,nvarp_i_list_buffer)
+                    filter!(x->x≠5,nvarp_i_list_buffer)
+                end
                 println("Using var(s)=$(tuple(nvarp_i_list_buffer...)) = $(tuple(nvarp_list_strings...)) ")
             end
             println()
