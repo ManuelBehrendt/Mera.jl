@@ -39,6 +39,7 @@ julia> fieldnames(particles)
 ##### Predefined/Optional Keywords:
 - **`lmax`:** not defined
 - **`stars`:** not defined
+- **`var(s)`:** the selected particle variables in arbitrary order: :all (default), :cpu, :mass, :vx, :vy, :vz, :birth :metals, ... 
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_units` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_units` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_units` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
