@@ -1,3 +1,73 @@
+"""
+#### Project variables or derived quantities from the dataset:
+- overview the list of predefined quantities with: projection()
+- select variable(s) and their unit(s)
+- limit to a maximum range
+- select a coarser grid than the maximum resolution of the loaded data (maps with both resolutions are created)
+- give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
+- relate the coordinates to a direction (x,y,z)
+- select between mass (default) and volume weighting
+- select between average and summed-up values
+- pass a mask to exclude elements (cells/particles/...) from the calculation
+- toggle verbose mode
+
+
+
+```julia
+projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
+                        units::Array{Symbol,1}=[:standard],
+                        lmax::Number=dataobject.lmax,
+                        mask=[false],
+                        direction::Symbol=:z,
+                        plane_orientation::Symbol=:perpendicular,
+                        weighting::Bool=true,
+                        mode::Symbol=:weighting,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_units::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center_units::Symbol=:standard,
+                        verbose::Bool=verbose_mode)
+
+return HydroMapsType
+
+```
+
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "HydroDataType"
+- **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
+##### Predefined/Optional Keywords:
+- **`unit(s)`:** return the variable in given units
+- **`lmax`:** select the level of a coarser grid than the loaded data to create maps with larger grid size
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_units` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_units` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_units` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_units`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_units`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`weighting`:** select between mass weighting (true) and volume weighting (false)
+- **`mode`:** todo: select between :weighting the average or summing the data up with :sum
+- **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_units`; by default the box-center [0.5, 0.5, 0.5];
+- **`data_center_units`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`direction`:** select between: :x, :y, :z
+- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+
+
+### Defined Methods - function defined for different arguments
+
+projection( dataobject::HydroDataType, var::Symbol; ...) # one given variable
+projection( dataobject::HydroDataType, var::Symbol, unit::Symbol; ...) # one given variable with its unit
+projection( dataobject::HydroDataType, vars::Array{Symbol,1}; ...) # several given variables -> array needed
+projection( dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays
+projection( dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; ...)  # several given variables that have the same unit -> array for the variables and a single Symbol for the unit
+
+
+#### Examples
+...
+"""
 function projection(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Number=dataobject.lmax,
@@ -688,7 +758,7 @@ function remap(dataobject::HydroMapsType, lmax::Number; verbose::Bool=verbose_mo
 
     simlmax = dataobject.lmax
     lmax_projected = lmax
-    
+
     maps = dataobject.maps
     selected_vars= Symbol[]
     for k in keys(maps)

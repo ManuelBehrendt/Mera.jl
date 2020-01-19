@@ -66,13 +66,13 @@ return Array{Float64,1}
 #### Arguments
 ##### Required:
 - **`dataobject`:** needs to be of type: "DataSetType"
-- **`var`:** select a variable from the database or a predefined quantity (see getinfo())
+- **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
 ##### Predefined/Optional Keywords:
 - **`filtered_db`:** pass a filtered or manipulated database together with the corresponding DataSetType object (required argument)
 - **`center`:** in units given by argument `center_units`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`center_units`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** todo
-- **`unit`:** return the variable in given units
+- **`unit(s)`:** return the variable in given units
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
 
