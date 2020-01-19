@@ -125,6 +125,8 @@ include("read_data/RAMSES/getclumps.jl")
 
 include("functions/projection.jl")
 include("functions/projection_hydro.jl")
+include("functions/projection_particles.jl")
+
 
 println()
 println( "*__   __ _______ ______   _______ ")

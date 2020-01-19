@@ -343,3 +343,18 @@ mutable struct HydroMapsType
     scale::ScalesType
     info::InfoType
 end
+
+mutable struct PartMapsType
+    maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    lmin::Int
+    lmax::Int
+    ranges::Array{Float64,1}
+    extent::Array{Float64,1}
+    cextent::Array{Float64,1}
+    ratio::Float64
+    boxlen::Float64
+    scale::ScalesType
+    info::InfoType
+end
