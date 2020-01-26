@@ -302,6 +302,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         data_center = data_center ./ dataobject.boxlen .* selected_units
     end
 
+
+
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
     if verbose

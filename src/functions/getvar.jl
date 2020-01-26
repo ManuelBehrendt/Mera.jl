@@ -115,7 +115,8 @@ function getvar(   dataobject::DataSetType, var::Symbol;
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
-                    mask::MaskType=[false])
+                    mask::MaskType=[false],
+                    ref_time::Number=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
 
@@ -124,7 +125,7 @@ function getvar(   dataobject::DataSetType, var::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask )
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
 
 function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
@@ -132,7 +133,8 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
-                    mask::MaskType=[false])
+                    mask::MaskType=[false],
+                    ref_time::Number=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
 
@@ -141,7 +143,7 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask )
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1};
@@ -149,7 +151,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
-                    mask::MaskType=[false])
+                    mask::MaskType=[false],
+                    ref_time::Number=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
 
@@ -158,7 +161,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, vars, units, direction, center, mask )
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time )
 end
 
 
@@ -167,7 +170,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
-                    mask::MaskType=[false])
+                    mask::MaskType=[false],
+                    ref_time::Number=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
     units = fill(unit, length(vars)) # use given unit for all variables
@@ -177,7 +181,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, vars, units, direction, center, mask )
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time )
 end
 
 
@@ -188,7 +192,8 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
                     units::Array{Symbol,1}=[:standard],
-                    mask::MaskType=[false])
+                    mask::MaskType=[false],
+                    ref_time::Number=dataobject.info.time)
 
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
@@ -200,7 +205,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
     end
 
     #vars = unique(vars)
-    return get_data(dataobject, vars, units, direction, center, mask )
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time )
 end
 
 

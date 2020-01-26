@@ -18,7 +18,8 @@ makedocs(modules = [Mera],
                                                       "Clumps"     =>  "02_clumps_Load_Selections.md"],
                       "4-Basic Calculations"  => "04_multi_Basic_Calculations.md",
 
-                      "6-Projection"          => Any[ "Hydro"      =>  "06_hydro_Projection/06_hydro_Projection.md"]
+                      "6-Projection"          => Any[ "Hydro"      =>  "06_hydro_Projection/06_hydro_Projection.md",
+                                                      "Particles"  =>  "06_particles_Projection/06_particles_Projection.md"]
                       ]
 		 )
 

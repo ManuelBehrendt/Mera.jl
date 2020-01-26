@@ -3,7 +3,8 @@ function get_data(dataobject::PartDataType,
                 units::Array{Symbol,1},
                 direction::Symbol,
                 center::Array{<:Any,1},
-                mask::MaskType)
+                mask::MaskType,
+                ref_time::Number)
 
     vars_dict = Dict()
     #vars = unique(vars)
@@ -58,12 +59,20 @@ function get_data(dataobject::PartDataType,
             end
 
         # quantitties that are derived from the variables in the data table
+        elseif i == :vx2
+            selected_units = getunit(dataobject, :vx2, vars, units)
+            vars_dict[:vx2] =  (getvar(dataobject, :vx) .* selected_units ) .^2
+
+        elseif i == :vy2
+            selected_units = getunit(dataobject, :vy2, vars, units)
+            vars_dict[:vy2] =  (getvar(dataobject, :vy) .* selected_units ) .^2
+
         elseif i == :v
             selected_units = getunit(dataobject, :v, vars, units)
             vars_dict[:v] =  sqrt.(select(dataobject.data, :vx).^2 .+
                                    select(dataobject.data, :vy).^2 .+
                                    select(dataobject.data, :vz).^2 ) .* selected_units
-       elseif i == :v2
+        elseif i == :v2
            selected_units = getunit(dataobject, :v2, vars, units)
            vars_dict[:v2] = (select(dataobject.data, :vx).^2 .+
                                   select(dataobject.data, :vy).^2 .+
@@ -144,14 +153,27 @@ function get_data(dataobject::PartDataType,
 
         elseif i == :ekin
             selected_units = getunit(dataobject, :ekin, vars, units)
-            vars_dict[:ekin] =   0.5 .* getvar(dataobject, vars=[:mass])  .*
+            vars_dict[:ekin] =   0.5 .* getvar(dataobject, :mass)  .*
                                 (select(dataobject.data, :vx).^2 .+
                                 select(dataobject.data, :vy).^2 .+
                                 select(dataobject.data, :vz).^2 ) .* selected_units
+
+
+        elseif i == :age
+            selected_units = getunit(dataobject, :age, vars, units)
+            vars_dict[:age] = ( ref_time .- getvar(dataobject, :birth) ) .* selected_units
         end
 
 
     end
+
+
+
+
+    for i in keys(vars_dict)
+        vars_dict[i][isnan.(vars_dict[i])] .= 0
+    end
+
 
     if length(mask) > 1
         for i in keys(vars_dict)

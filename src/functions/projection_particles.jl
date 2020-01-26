@@ -38,6 +38,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             range_units::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
+                            ref_time::Number=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=units,
@@ -55,6 +56,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 range_units=range_units,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
+                                ref_time=ref_time,
                                 verbose=verbose)
 end
 
@@ -75,6 +77,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             range_units::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
+                            ref_time::Number=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=units,
@@ -92,6 +95,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 range_units=range_units,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
+                                ref_time=ref_time,
                                 verbose=verbose)
 end
 
@@ -112,6 +116,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             range_units::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
+                            ref_time::Number=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, [var], units=[unit],
@@ -129,6 +134,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 range_units=range_units,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
+                                ref_time=ref_time,
                                 verbose=verbose)
 end
 
@@ -149,6 +155,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             range_units::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
+                            ref_time::Number=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, [var], units=[unit],
@@ -166,6 +173,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 range_units=range_units,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
+                                ref_time=ref_time,
                                 verbose=verbose)
 end
 
@@ -185,6 +193,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             range_units::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
+                            ref_time::Number=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
@@ -202,6 +211,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 range_units=range_units,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
+                                ref_time=ref_time,
                                 verbose=verbose)
 end
 
@@ -222,6 +232,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             range_units::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
+                            ref_time::Number=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
 
@@ -246,6 +257,33 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     sd_names = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
 
+    # for velocity dispersion add necessary velocity components
+    # ========================================================
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+
+    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
+                          :σy => [:vy, :vy2],
+                          :σz => [:vz, :vz2],
+                          :σ  => [:v,  :v2],
+                          :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
+                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
+
+    for i in σcheck
+        idx = findall(x->x==i, selected_vars) #[1]
+        if length(idx) >= 1
+            selected_v = σ_to_v[i]
+            for j in selected_v
+                jdx = findall(x->x==j, selected_vars)
+                if length(jdx) == 0
+                    append!(selected_vars, [j])
+                end
+            end
+        end
+    end
+    # ========================================================
+
+
+
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject.info,range_units, verbose, xrange, yrange, zrange, center)
 
@@ -256,8 +294,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
 
 
-    dependencies_part_list, toderive_p1_list, toderive_p2_list, final_maps = vars_toprocess_particles( vars,
-                                                                            coordinates, selected_vars)
+    #dependencies_part_list, toderive_p1_list, toderive_p2_list, final_maps = vars_toprocess_particles( vars,
+    #                                                                        coordinates, selected_vars)
 
 
 
@@ -353,332 +391,226 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     maps = SortedDict( )
     maps_mode = SortedDict( )
     maps_unit = SortedDict( )
-    @showprogress 1 "" for i_var in dependencies_part_list
+    @showprogress 1 "" for i_var in selected_vars #dependencies_part_list
         #println(i_var)
 
+        if !in(i_var, σcheck) # exclude velocity dispersion symbols
 
-        if mode == :mass
+            if mode == :mass
 
 
-            if in(i_var, sd_names)
+                if in(i_var, sd_names)
 
-                h = fit(Histogram, ( select_data(dataobject.data, parttypes, var_a) ,
-                                    select_data(dataobject.data, parttypes, var_b) ),
-                                    weights( select_data(dataobject.data, parttypes, :mass) ) ,
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-                #=
+                    h = fit(Histogram, ( select_data(dataobject.data, parttypes, var_a) ,
+                                        select_data(dataobject.data, parttypes, var_b) ),
+                                        weights( select_data(dataobject.data, parttypes, :mass) ) ,
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+                    #=
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( select(dataobject.data, :mass) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+                                        =#
+
+                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+
+                    if selected_units != 1.
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_units
+                    else
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
+                    end
+                    maps_unit[Symbol( string(i_var)  )] = unit_name
+                    maps_mode[Symbol( string(i_var)  )] = :mass_weighted
+
+                elseif in(i_var, density_names)
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( select(dataobject.data, :mass) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+
+                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+
+                    if selected_units != 1.
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
+                    else
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
+                    end
+                    maps_unit[Symbol( string(i_var)  )] = unit_name
+                    maps_mode[Symbol( string(i_var)  )] = :mass_weighted
+
+                else
+
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time) .* select(dataobject.data, :mass) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+
+
+
+                    h_mass = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( select(dataobject.data, :mass) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+
+                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+
+                    if selected_units != 1.
+                        maps[Symbol(i_var)] = h.weights ./ h_mass.weights .* selected_units
+                    else
+                        maps[Symbol(i_var)] = h.weights ./ h_mass.weights
+                    end
+                    maps_unit[Symbol( string(i_var) )] = unit_name
+                    maps_mode[Symbol( string(i_var) )] = :mass_weighted
+                end
+
+
+
+            elseif mode == :volume
+
+
+                if in(i_var, sd_names)
+
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( select(dataobject.data, :mass) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+
+                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+
+                    if selected_units != 1.
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_units
+                    else
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
+                    end
+                    maps_unit[Symbol( string(i_var)  )] = unit_name
+                    maps_mode[Symbol( string(i_var)  )] = :volume_weighted
+
+                elseif in(i_var, density_names)
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( select(dataobject.data, :mass) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+
+                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+
+                    if selected_units != 1.
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
+                    else
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
+                    end
+                    maps_unit[Symbol( string(i_var)  )] = unit_name
+                    maps_mode[Symbol( string(i_var)  )] = :volume_weighted
+
+                else
+
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  ),
+                                        #weights( select(dataobject.data, Symbol(i_var)) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+
+
+                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+
+                    if selected_units != 1.
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
+                    else
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
+                    end
+
+
+                    maps_unit[Symbol( string(i_var)  )] = unit_name
+                    maps_mode[Symbol( string(i_var)  )] = :volume_weighted
+                end
+
+
+
+
+            elseif mode == :sum
                 h = fit(Histogram, (select(dataobject.data, var_a) ,
                                     select(dataobject.data, var_b) ),
-                                    weights( select(dataobject.data, :mass) ),
+                                    weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  ),
+                                    #weights( select(dataobject.data, Symbol(i_var)) ),
                                     closed=closed,
                                     (newrange1, newrange2) )
-                                    =#
 
                 selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
                 if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_units
+                    maps[Symbol(i_var)] = h.weights .* selected_units
                 else
-                    maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
+                    maps[Symbol(i_var)] = h.weights
                 end
                 maps_unit[Symbol( string(i_var)  )] = unit_name
-                maps_mode[Symbol( string(i_var)  )] = :mass_weighted
-
-            elseif in(i_var, density_names)
-                h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( select(dataobject.data, :mass) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-
-                selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
-                else
-                    maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
-                end
-                maps_unit[Symbol( string(i_var)  )] = unit_name
-                maps_mode[Symbol( string(i_var)  )] = :mass_weighted
-
-            else
-
-                h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( getvar(dataobject, i_var, center=data_center, direction=direction)  .* select(dataobject.data, :mass) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-
-
-
-                h_mass = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( select(dataobject.data, :mass) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-
-                selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights ./ h_mass.weights .* selected_units
-                else
-                    maps[Symbol(i_var)] = h.weights ./ h_mass.weights
-                end
-                maps_unit[Symbol( string(i_var) )] = unit_name
-                maps_mode[Symbol( string(i_var) )] = :mass_weighted
+                maps_mode[Symbol( string(i_var)  )] = :sum
             end
 
-
-
-        elseif mode == :volume
-
-
-            if in(i_var, sd_names)
-
-                h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( select(dataobject.data, :mass) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-
-                selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_units
-                else
-                    maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
-                end
-                maps_unit[Symbol( string(i_var)  )] = unit_name
-                maps_mode[Symbol( string(i_var)  )] = :volume_weighted
-
-            elseif in(i_var, density_names)
-                h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( select(dataobject.data, :mass) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-
-                selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
-                else
-                    maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
-                end
-                maps_unit[Symbol( string(i_var)  )] = unit_name
-                maps_mode[Symbol( string(i_var)  )] = :volume_weighted
-
-            else
-
-                h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( select(dataobject.data, Symbol(i_var)) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
-
-
-                selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
-                else
-                    maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
-                end
-
-
-                maps_unit[Symbol( string(i_var)  )] = unit_name
-                maps_mode[Symbol( string(i_var)  )] = :volume_weighted
-            end
-
-
-
-
-        elseif mode == :sum
-            h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                select(dataobject.data, var_b) ),
-                                weights( select(dataobject.data, Symbol(i_var)) ),
-                                closed=closed,
-                                (newrange1, newrange2) )
-
-            selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-            if selected_units != 1.
-                maps[Symbol(i_var)] = h.weights .* selected_units
-            else
-                maps[Symbol(i_var)] = h.weights
-            end
-            maps_unit[Symbol( string(i_var)  )] = unit_name
-            maps_mode[Symbol( string(i_var)  )] = :sum
         end
-
-
     end
 
 
 
+    # create velocity dispersion maps, after all other maps are created
+    counter = 0
+    for ivar in selected_vars
+        counter = counter + 1
 
+        if in(ivar, σcheck)
+            #for iσ in σcheck
+                selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
 
-        #extent = [minimum(select(dataobject.data, var_a)), maximum(select(dataobject.data, var_a)), minimum(select(dataobject.data, var_b)), maximum(select(dataobject.data, var_b)) ]
-        #ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+                    selected_v = σ_to_v[ivar]
+                    iv  = maps[selected_v[1]]
+                    iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
+                    iv2 = maps[selected_v[2]]
+                    iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
+                    if iv_unit == iv2_unit
+                        diff_iv = iv2 .- iv .^2
+                        diff_iv[ diff_iv .< 0. ] .= 0.
+                        if iv_unit == unit_name
+                            maps[Symbol(ivar)] = sqrt.( diff_iv )
+                        elseif iv_unit == :standard
+                            maps[Symbol(ivar)] = sqrt.( diff_iv )  .* selected_units
+                        elseif iv_unit == :km_s
+                            maps[Symbol(ivar)] = sqrt.( diff_iv )  ./ dataobject.info.scale.km_s
+                        end
+                    elseif iv_unit != iv2_unit
+                        if iv_unit == :km_s && unit_name == :standard
+                            iv = iv ./ dataobject.info.scale.km_s
+                        elseif iv_unit == :standard && unit_name == :km_s
+                            iv = iv .* dataobject.info.scale.km_s
+                        end
+                        if iv2_unit == :km_s && unit_name == :standard
+                            iv2 = iv2 ./ dataobject.info.scale.km_s.^2
+                        elseif iv2_unit == :standard && unit_name == :km_s
+                            iv2 = iv2 .* dataobject.info.scale.km_s.^2
+                        end
 
-    return PartMapsType(maps, maps_unit, maps_mode, dataobject.lmin, lmax, ranges, extent, extent_center, ratio, boxlen, dataobject.scale, dataobject.info)
+                        # overwrite NaN due to radius = 0
+                        #iv2 = iv2[isnan.(iv2)] .= 0
+                        #iv  = iv[isnan.(iv)] .= 0
+                        diff_iv = iv2 .- iv .^2
+                        diff_iv[ diff_iv .< 0. ] .= 0.
+                        maps[Symbol(ivar)] = sqrt.( diff_iv )
+                    end
 
-
-end
-
-
-
-
-
-function vars_toprocess_particles( vars, coordinates,
-                            selected_partvars )
-
-    dependencies_part_list=[]
-    toderive_p1_list=[]
-    toderive_p2_list=[]
-    final_maps = []
-
-
-
-    for i in vars
-
-            if haskey(variables_toderive_part_p1, i)  # is index partovar ?
-                append!(dependencies_part_list, variables_dependencies_particles[i] )
-                append!(toderive_p1_list, variables_toderive_part_p1[i] )
-            elseif haskey(variables_toderive_part_p2, i) && (coordinates == :cylindrical || coordinates == :spherical) # is index partovar ?
-                append!(dependencies_part_list, variables_dependencies_particles[i] )
-                append!(toderive_p2_list, variables_toderive_part_p2[i] )
-
-            end
-
-            if in( i, final_maps_toconstruct_p1 )  && coordinates == :cartesian
-                append!(final_maps, [i])
-            elseif in( i, final_maps_toconstruct_p2 )  && (coordinates == :cylindrical || coordinates == :spherical)
-                append!(final_maps, [i])
-            end
-
-        #end
-
+                    maps_unit[Symbol( string(ivar)  )] = unit_name
+                #end
+            #end
+        end
     end
 
 
 
-    dependencies_part_list = unique(dependencies_part_list)
+    return PartMapsType(maps, maps_unit, maps_mode, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, boxlen, dataobject.scale, dataobject.info)
 
-    toderive_p1_list = unique(toderive_p1_list)
-    toderive_p2_list = unique(toderive_p2_list)
-    final_maps = unique(final_maps)
-    return dependencies_part_list, toderive_p1_list, toderive_p2_list, final_maps
 
 end
-global variables_toderive_part_p1= SortedDict( :cpu => [:cpu],
-                                       :level => [:level],
-
-                                        :id   => [:id],
-                                        :rho => [:rho],
-                                        :ρ   => [:rho],
-                                        :density => [:rho],
-                                        :vx  => [:vx],
-                                        :vy  => [:vy],
-                                        :vz  => [:vz],
-                                        :vz2  => [:vz2],
-                                        :vϕ_cylinder  => [:vϕ_cylinder],
-                                        :vϕ_cylinder2  => [:vϕ_cylinder2],
-                                        :vr_cylinder  => [:vr_cylinder],
-                                        :vr_cylinder2  => [:vr_cylinder2],
-                                        :r_cylinder => [:r_cylinder],
-                                        :v  => [:v],
-                                        :v2  => [:v2],
-                                        :age   => [:age],
-                                        :birth   => [:birth],
-
-
-                                        :sd => [:mass],
-                                        :Σ => [:mass],
-                                        :surfacedensity => [:mass],
-                                        #"sd" => ["sd"],
-                                        :v  => [:v],
-                                        :ekin => [:mass, :v2],
-
-
-                                        :σ => [:v, :v2],
-                                        :σx => [:vx, :vx2],
-                                        :σy => [:vy, :vy2],
-                                        :σz => [:vz, :vz2],
-                                        :UV   => [:UV],
-                                        :I   => [:I],
-                                        :V   => [:V] )
-
-
-
-global variables_dependencies_particles = SortedDict(   :cpu => [:cpu],
-                                        :level => [:level],
-
-                                        :rho => [:rho],
-                                        :ρ   => [:rho],
-                                        :density => [:rho],
-                                        :vx  => [:vx],
-                                        :vy  => [:vy],
-                                        :vz  => [:vz],
-                                        :vz2  => [:vz2],
-                                        :v  => [:v],
-                                        :v2  => [:v2],
-                                        :p   => [:p],
-
-                                        :sd => [:sd],
-                                        :Σ => [:sd],
-                                        :surfacedensity => [:sd],
-                                        :v  => [:vx, :vy, :vz],
-                                        :vϕ_cylinder => [:vϕ_cylinder], #[:vx, :vy],
-                                        :vϕ_cylinder2 => [:vϕ_cylinder2], #[:vx, :vy],
-
-                                        :vr_cylinder => [:vr_cylinder], #[:vx, :vy],
-                                        :vr_cylinder2 => [:vr_cylinder2], #[:vx, :vy],
-                                        :r_cylinder => [:r_cylinder],
-
-                                        :vr  => [:vx, :vy],
-                                        :vθ => [:vx, :vy, :vz],
-
-                                        :σ  => [:vx, :vy, :vz],
-                                        :σx => [:vx],
-                                        :σy => [:vy],
-                                        :σz => [:vz],
-                                        :σr => [:vx, :vy],
-                                        :σϕ_cylinder => [:vx, :vy],
-                                        :σθ => [:vx, :vy, :vz],
-
-                                        :κ  => [:vx, :vy],
-
-                                        :ekin => [:mass, :vx, :vy, :vz],
-
-                                        :id   => [:id],
-
-                                        :age   => [:age],
-                                        :birth   => [:birth],
-
-                                        :σ => [:v, :v2],
-                                        :σx => [:vx, :vx2],
-                                        :σy => [:vy, :vy2],
-                                        :σz => [:vz, :vz2],
-                                        :UV   => [:UV],
-                                        :I   => [:I],
-                                        :V   => [:V] )
-
-
-global final_maps_toconstruct_p1 = [:sd, :surfacedensity, :σ, :ekin, :σ, :σx, :σy, :σz]
-
-global final_maps_toconstruct_p2 = [:sd, :surfacedensity, :σ, :ekin, :σ, :σx, :σy, :σz, :r, :σr, :σϕ, :σθ, :κ, :ϕ]
-
-# identify necessary maps to create; part 2x
-global variables_toderive_part_p2 = SortedDict(
-                                        #"sd" => ["sd"],
-                                        "κ" => ["vϕ"],
-
-                                        "vϕ" => ["vϕ"],
-                                        "vr" => ["vr"],
-                                        "vθ" => ["vθ"],
-
-                                        "σr" => ["vr", "vr2"],
-                                        "σϕ" => ["vϕ", "vϕ2"],
-                                        "σθ" => ["vθ", "vθ2"] )

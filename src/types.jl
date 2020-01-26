@@ -350,6 +350,7 @@ mutable struct PartMapsType
     maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     lmin::Int
     lmax::Int
+    ref_time::Number
     ranges::Array{Float64,1}
     extent::Array{Float64,1}
     cextent::Array{Float64,1}
