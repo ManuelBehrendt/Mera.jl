@@ -63,6 +63,8 @@ export
 #
     projection,
     remap,
+    subregion,
+    shellregion,
 
 # miscellaneous
     viewmodule,
@@ -126,6 +128,12 @@ include("read_data/RAMSES/getclumps.jl")
 include("functions/projection.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_particles.jl")
+
+include("functions/subregion.jl")
+include("functions/subregion_hydro.jl")
+
+include("functions/shellregion.jl")
+include("functions/shellregion_hydro.jl")
 
 
 println()
