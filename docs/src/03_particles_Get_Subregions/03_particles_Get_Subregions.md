@@ -931,7 +931,8 @@ cb = colorbar(im, label=labeltext);
 ![png](output_71_0.png)
 
 
-#### Spherical Shell: Pass the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
+#### Spherical Shell: 
+Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia

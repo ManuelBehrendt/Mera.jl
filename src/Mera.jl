@@ -58,6 +58,8 @@ export
     average_mweighted,
     getvar,
     getmass,
+    getpositions,
+    getextent,
     wstat,
 
 #
@@ -99,14 +101,17 @@ export
 verbose_mode = true
 
 include("types.jl")
+
 include("functions/miscellaneous.jl")
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
 
+# Get variables/quantities
 include("functions/getvar.jl")
 include("functions/getvar_hydro.jl")
 include("functions/getvar_particles.jl")
 include("functions/getvar_clumps.jl")
+# ============================================
 
 include("read_data/RAMSES/filepaths.jl")
 include("read_data/RAMSES/getinfo.jl")
@@ -117,6 +122,8 @@ include("functions/prepranges.jl")
 include("read_data/RAMSES/prepvariablelist.jl")
 include("read_data/RAMSES/hilbert3d.jl")
 
+
+# Data reader
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
 
@@ -128,14 +135,21 @@ include("read_data/RAMSES/getclumps.jl")
 include("functions/projection.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_particles.jl")
+# ============================================
 
+# Subregion
 include("functions/subregion.jl")
 include("functions/subregion_hydro.jl")
 include("functions/subregion_particles.jl")
+include("functions/subregion_clumps.jl")
+# ============================================
 
+# Shellregion
 include("functions/shellregion.jl")
 include("functions/shellregion_hydro.jl")
 include("functions/shellregion_particles.jl")
+include("functions/shellregion_clumps.jl")
+# ============================================
 
 println()
 println( "*__   __ _______ ______   _______ ")

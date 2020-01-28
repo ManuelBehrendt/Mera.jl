@@ -233,3 +233,135 @@ function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}
     end
     return center
 end
+
+
+
+
+function getmass(dataobject::HydroDataType;)
+
+    lmax = dataobject.lmax
+    boxlen = dataobject.boxlen
+    isamr = checkuniformgrid(dataobject, lmax)
+
+    #return select(dataobject.data, :rho) .* (dataobject.boxlen ./ 2. ^(select(dataobject.data, :level))).^3
+    if isamr
+        return select( dataobject.data, (:rho, :level)=>p->p.rho * (boxlen / 2^p.level)^3 )
+    else # if uniform grid
+        return select( dataobject.data, (:rho)=>p->p.rho * (boxlen / 2^lmax)^3 )
+    end
+end
+
+
+function getmass(dataobject::ClumpDataType;)
+    return getvar(dataobject, :mass)
+end
+
+
+
+
+
+
+
+
+function getpositions( dataobject::DataSetType, unit::Symbol;
+                        direction::Symbol=:z,
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center_units::Symbol=:standard                        )
+
+    positions = getvar(dataobject, [:x, :y, :z],
+                        center=center,
+                        center_units=center_units,
+                        direction=direction,
+                        units=[unit, unit, unit])
+
+    return positions[:x], positions[:y], positions[:z]
+end
+
+function getpositions( dataobject::DataSetType;
+                        unit::Symbol=:standard,
+                        direction::Symbol=:z,
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        center_units::Symbol=:standard)
+
+
+    positions = getvar(dataobject, [:x, :y, :z],
+                        center=center,
+                        center_units=center_units,
+                        direction=direction,
+                        units=[unit, unit, unit])
+
+    return positions[:x], positions[:y], positions[:z]
+end
+
+
+
+
+
+
+
+
+function getextent( dataobject::DataSetType, unit::Symbol;
+                     center::Array{<:Any,1}=[0., 0., 0.],
+                     center_units::Symbol=:standard,
+                     direction::Symbol=:z)
+
+    return  getextent( dataobject,
+                         center=center,
+                         center_units=center_units,
+                         direction=direction,
+                         unit=unit)
+end
+
+function getextent( dataobject::DataSetType;
+                     unit::Symbol=:standard,
+                     center::Array{<:Any,1}=[0., 0., 0.],
+                     center_units::Symbol=:standard,
+                     direction::Symbol=:z)
+
+    range = dataobject.ranges
+    boxlen = dataobject.boxlen
+
+
+
+    center = prepboxcenter(dataobject.info, center_units, center) # code units
+    center = center ./ dataobject.boxlen
+    #selected_units = 1.
+    # if center_units != :standard
+    #     selected_units = getunit(dataobject.info, center_units)
+    #     center = center ./ dataobject.boxlen .* selected_units
+    # end
+
+
+    selected_units = getunit(dataobject.info, unit)
+    xmin = ( range[1] - center[1] ) * boxlen * selected_units
+    xmax = ( range[2] - center[1] ) * boxlen * selected_units
+    ymin = ( range[3] - center[2] ) * boxlen * selected_units
+    ymax = ( range[4] - center[2] ) * boxlen * selected_units
+    zmin = ( range[5] - center[3] ) * boxlen * selected_units
+    zmax = ( range[6] - center[3] ) * boxlen * selected_units
+
+
+    if direction == :y
+        xmin_buffer = xmin
+        xmax_buffer = xmax
+
+        xmin= zmin
+        xmax= zmax
+        zmin= ymin
+        zmax= ymax
+        ymin= xmin_buffer
+        ymax= xmax_buffer
+
+    elseif direction == :x
+        xmin_buffer = xmin
+        xmax_buffer = xmax
+
+        xmin= zmin
+        xmax= zmax
+        zmin= xmin_buffer
+        zmax= xmax_buffer
+
+    end
+
+    return (xmin, xmax), (ymin ,ymax ), (zmin ,zmax )
+end
