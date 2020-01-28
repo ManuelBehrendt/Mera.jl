@@ -1,4 +1,3 @@
-
 # 3. Hydro: Get Sub-Regions of The Loaded Data
 
 ## Load the Data
@@ -7,7 +6,7 @@
 ```julia
 using Mera, PyPlot
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
-gas  = gethydro(info, lmax=10, smallr=1e-5); 
+gas  = gethydro(info, :rho, lmax=10, smallr=1e-5); 
 ```
 
     ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
@@ -157,7 +156,7 @@ gas_subregion = subregion( gas, :cuboid,
                             yrange=[-15., 15.], 
                             zrange=[-2., 2.], 
                             center=[:boxcenter], 
-                            range_units=:kpc);
+                            range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-26T19:09:50.615[22m
@@ -240,7 +239,7 @@ gas_subregion = subregion( gas, :cuboid,
                                     yrange=[-15., 15.],
                                     zrange=[-2., 2.], 
                                     center=[:boxcenter], 
-                                    range_units=:kpc, 
+                                    range_unit=:kpc, 
                                     inverse=true);
 ```
 
@@ -358,7 +357,7 @@ Select the ranges of the cylinder in the unit "kpc", relative to the given cente
 gas_subregion = subregion(  gas, :cylinder,
                             radius=3., 
                             height=2., 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[13., :bc, :bc]); # direction=:z, by default
 ```
 
@@ -480,7 +479,7 @@ cb = colorbar(im, label=labeltext);
 gas_subregion = subregion(  gas, :cylinder, 
                             radius=3., 
                             height=2., 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[13.,:bc,:bc], 
                             inverse=true); # direction=:z, by default
 ```
@@ -601,7 +600,7 @@ Select the radius of the sphere in the unit "kpc", relative to the given center 
 ```julia
 gas_subregion = subregion(  gas, :sphere, 
                             radius=10., 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[13.,:bc,:bc]);
 ```
 
@@ -673,7 +672,7 @@ cb = colorbar(im, label=labeltext);
 ```julia
 gas_subregion = subregion(  gas, :sphere, 
                             radius=10., 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[13.,:bc,:bc], 
                             inverse=true);
 ```
@@ -801,7 +800,7 @@ Pass the height of the cylinder and the inner/outer radius of the shell in the u
 gas_subregion = shellregion( gas, :cylinder, 
                             radius=[5., 10.], 
                             height=2., 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[:boxcenter]);
 ```
 
@@ -877,7 +876,7 @@ cb = colorbar(im, label=labeltext);
 gas_subregion = shellregion(gas, :cylinder, 
                             radius=[5., 10.], 
                             height=2., 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[:boxcenter], 
                             inverse=true);
 ```
@@ -1012,7 +1011,7 @@ cb = colorbar(im, label=labeltext);
 ```julia
 gas_subregion = shellregion(gas, :sphere, 
                             radius=[5., 10.], 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[24.,24.,24.]);
 ```
 
@@ -1089,7 +1088,7 @@ cb = colorbar(im, label=labeltext);
 ```julia
 gas_subregion = shellregion(gas, :sphere,
                             radius=[5., 10.], 
-                            range_units=:kpc, 
+                            range_unit=:kpc, 
                             center=[:boxcenter], 
                             inverse=true);
 ```

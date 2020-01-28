@@ -13,7 +13,7 @@ getclumps(  dataobject::InfoType;
             yrange::Array{<:Any,1}=[missing, missing],
             zrange::Array{<:Any,1}=[missing, missing],
             center::Array{<:Any,1}=[0., 0., 0.],
-            range_units::Symbol=:standard,
+            range_unit::Symbol=:standard,
             print_filenames::Bool=false,
             verbose::Bool=verbose_mode)
 ```
@@ -36,11 +36,11 @@ julia> fieldnames(clumps)
 - **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
 ##### Predefined/Optional Keywords:
 - **`vars`:** Currently, the length of the loaded variable list can be modified *(see examples below).
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_units` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_units` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_units` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_units`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_units`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`print_filenames`:** print on screen the current processed particle file of each CPU
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
 
@@ -68,7 +68,7 @@ julia> clumps = getclumps(    info,
                               yrange=[-10.,10.],
                               zrange=[-2.,2.],
                               center=[24., 24., 24.],
-                              range_units=:kpc )
+                              range_unit=:kpc )
 
 # Example 3:
 # give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
@@ -79,7 +79,7 @@ julia> clumps = getclumps(  info,
                             yrange=[-10.,10.],
                             zrange=[-2.,2.],
                             center=[33., bc:, 10.],
-                            range_units=:kpc )
+                            range_unit=:kpc )
 
 # Example 4:
 # Load less than the found 12 columns from the header of the clump files;
@@ -107,7 +107,7 @@ julia> clumps = getclumps(info, [   :index, :lev, :parent, :ncell,
 #                     yrange::Array{<:Any,1}=[missing, missing],
 #                     zrange::Array{<:Any,1}=[missing, missing],
 #                     center::Array{<:Any,1}=[0., 0., 0.],
-#                     range_units::Symbol=:standard,
+#                     range_unit::Symbol=:standard,
 #                     print_filenames::Bool=false,
 #                     verbose::Bool=verbose_mode)
 #
@@ -116,7 +116,7 @@ julia> clumps = getclumps(info, [   :index, :lev, :parent, :ncell,
 #                     yrange=yrange,
 #                     zrange=zrange,
 #                     center=center,
-#                     range_units=range_units,
+#                     range_unit=range_unit,
 #                     print_filenames=print_filenames,
 #                     verbose=verbose)
 #
@@ -128,7 +128,7 @@ function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
-                    range_units::Symbol=:standard,
+                    range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode)
 
@@ -138,7 +138,7 @@ function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
                     yrange=yrange,
                     zrange=zrange,
                     center=center,
-                    range_units=range_units,
+                    range_unit=range_unit,
                     print_filenames=print_filenames,
                     verbose=verbose)
 
@@ -153,7 +153,7 @@ function getclumps(dataobject::InfoType;
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
-                    range_units::Symbol=:standard,
+                    range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode)
 
@@ -165,7 +165,7 @@ function getclumps(dataobject::InfoType;
 
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject, range_units, verbose, xrange, yrange, zrange, center)
+    ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
     fnames = createpath(dataobject.output, dataobject.path)
 

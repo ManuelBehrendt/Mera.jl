@@ -35,7 +35,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            range_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
                             ref_time::Number=dataobject.info.time,
@@ -53,7 +53,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 yrange=yrange,
                                 zrange=zrange,
                                 center=center,
-                                range_units=range_units,
+                                range_unit=range_unit,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
                                 ref_time=ref_time,
@@ -74,7 +74,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            range_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
                             ref_time::Number=dataobject.info.time,
@@ -92,7 +92,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 yrange=yrange,
                                 zrange=zrange,
                                 center=center,
-                                range_units=range_units,
+                                range_unit=range_unit,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
                                 ref_time=ref_time,
@@ -113,7 +113,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            range_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
                             ref_time::Number=dataobject.info.time,
@@ -131,7 +131,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 yrange=yrange,
                                 zrange=zrange,
                                 center=center,
-                                range_units=range_units,
+                                range_unit=range_unit,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
                                 ref_time=ref_time,
@@ -152,7 +152,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            range_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
                             ref_time::Number=dataobject.info.time,
@@ -170,7 +170,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 yrange=yrange,
                                 zrange=zrange,
                                 center=center,
-                                range_units=range_units,
+                                range_unit=range_unit,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
                                 ref_time=ref_time,
@@ -190,7 +190,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            range_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
                             ref_time::Number=dataobject.info.time,
@@ -208,7 +208,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 yrange=yrange,
                                 zrange=zrange,
                                 center=center,
-                                range_units=range_units,
+                                range_unit=range_unit,
                                 data_center=data_center,
                                 data_center_units=data_center_units,
                                 ref_time=ref_time,
@@ -229,7 +229,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            range_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
                             ref_time::Number=dataobject.info.time,
@@ -249,7 +249,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     boxlen = dataobject.boxlen
     selected_vars = vars
-    ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
+    #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
     nbins = 2^lmax
@@ -285,7 +285,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_units, verbose, xrange, yrange, zrange, center)
+    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
     selected_units = 1.
     if data_center_units != :standard

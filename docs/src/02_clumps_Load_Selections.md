@@ -1,4 +1,3 @@
-
 # 2. Clumps: Load Selected Variables and Data Ranges
 
 ## Simulation Overview
@@ -321,7 +320,7 @@ clumps = getclumps(info,
                     xrange=[2.,22.], 
                     yrange=[2.,22.], 
                     zrange=[22.,26.], 
-                    range_units=:kpc); 
+                    range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get clump data: 2020-01-01T15:11:35.098[22m
@@ -338,7 +337,7 @@ clumps = getclumps(info,
     
 
 
-The possible physical length units for the keyword *range_units* are defined in the field *scale* : 
+The possible physical length units for the keyword *range_unit* are defined in the field *scale* : 
 
 
 ```julia
@@ -392,7 +391,7 @@ clumps = getclumps(info,
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[24.,24.,24.], 
-                    range_units=:kpc); 
+                    range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get clump data: 2020-01-01T15:13:13.16[22m
@@ -411,7 +410,7 @@ clumps = getclumps(info,
     
 
 
-Use the short notation for the box center :bc or :boxcenter for all in dimensions (x,y,z):
+Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):
 
 
 ```julia
@@ -420,7 +419,7 @@ clumps = getclumps(info,
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[:boxcenter], 
-                    range_units=:kpc); 
+                    range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get clump data: 2020-01-01T15:14:45.008[22m
@@ -446,7 +445,7 @@ clumps = getclumps(info,
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[:bc], 
-                    range_units=:kpc); 
+                    range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get clump data: 2020-01-01T15:14:52.572[22m
@@ -474,7 +473,7 @@ clumps = getclumps(info,
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[:bc, 24., :bc], 
-                    range_units=:kpc); 
+                    range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get clump data: 2020-01-01T15:15:29.407[22m

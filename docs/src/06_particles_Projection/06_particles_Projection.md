@@ -1,4 +1,3 @@
-
 # 6. Particles: Projections
 
 ## Load The Data
@@ -188,7 +187,7 @@ See also in the documentation for: load data by selection
 cv = (particles.boxlen / 2.) * particles.scale.kpc # provide the box-center in kpc
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                    center=[cv,cv,cv], range_units=:kpc);
+                    center=[cv,cv,cv], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:41.449[22m
@@ -214,7 +213,7 @@ Use the short notation for the box center :bc or :boxcenter for all dimensions (
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                         xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                        center=[:boxcenter], range_units=:kpc);
+                        center=[:boxcenter], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:42.672[22m
@@ -238,7 +237,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                         xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                        center=[:bc], range_units=:kpc);
+                        center=[:bc], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:42.903[22m
@@ -264,7 +263,7 @@ Use the box center notation for individual dimensions, here x,z:
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
                         xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                        center=[:bc, 24., :bc], range_units=:kpc);
+                        center=[:bc, 24., :bc], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:44.532[22m
@@ -296,7 +295,7 @@ proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:45.139[22m
@@ -326,7 +325,7 @@ proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:45.37[22m
@@ -356,7 +355,7 @@ proj1_z = projection(particles, [:sd , :vx], [:Msol_pc2, :km_s], lmax=9,
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:46.77[22m
@@ -385,7 +384,7 @@ projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-19T15:00:47.421[22m
@@ -562,10 +561,10 @@ proj1_z.ratio # the ratio between the two ranges
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false) 
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     direction = :x);
 ```
@@ -602,11 +601,11 @@ Project a specific spatial range and plot the axes of the map relative to the bo
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[24.,24.,24.], data_center_units=:kpc) 
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[24.,24.,24.], data_center_units=:kpc, 
                     direction = :x);
@@ -637,11 +636,11 @@ Plot the axes of the map relative to the map-center (given by keyword: data_cent
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[19.,19.,24.], data_center_units=:kpc) 
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[19.,19.,24.], data_center_units=:kpc, 
                     direction = :x);
@@ -680,7 +679,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
                     units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg], 
                     lmax=9,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                    center=[24.,24.,24.], range_units=:kpc);
+                    center=[24.,24.,24.], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-26T16:06:58.261[22m
@@ -818,7 +817,7 @@ For the cylindrical or spherical components of a quantity, the center of the coo
 proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],                    
                     units=[:km_s,:km_s,:km_s, :km_s, :km_s, :kpc, :km_s, :km_s, :km_s, :km_s], 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                    center=[:boxcenter], range_units=:kpc,
+                    center=[:boxcenter], range_unit=:kpc,
                     data_center=[24.,24.,24.],
                     data_center_units=:kpc); 
 ```

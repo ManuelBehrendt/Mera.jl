@@ -1,14 +1,14 @@
 function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
-    xrange::Array{<:Number,1}=[dataobject.ranges[1],dataobject.ranges[2]], # cuboid
-    yrange::Array{<:Number,1}=[dataobject.ranges[3],dataobject.ranges[4]], # cuboid
-    zrange::Array{<:Number,1}=[dataobject.ranges[5],dataobject.ranges[6]], # cuboid
+    xrange::Array{<:Any,1}=[missing, missing],  # cuboid
+    yrange::Array{<:Any,1}=[missing, missing],  # cuboid
+    zrange::Array{<:Any,1}=[missing, missing],  # cuboid
 
     radius::Number=0.,              # cylinder, sphere
     height::Number=0.,              # cylinder
     direction::Symbol=:z,           # cylinder
 
-    center::Array{<:Number,1}=[0.,0.,0.],   # all
-    range_units::Symbol=:standard,          # all
+    center::Array{<:Any,1}=[0.,0.,0.],   # all
+    range_unit::Symbol=:standard,          # all
     cell::Bool=true,                        # hydro and gravity
     inverse::Bool=false,                    # all
     verbose::Bool=verbose_mode)             # all
@@ -19,7 +19,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             return subregioncuboid(dataobject,
                         xrange=xrange, yrange=yrange, zrange=zrange,
                         center=center,
-                        range_units=range_units,
+                        range_unit=range_unit,
                         cell=cell,
                         inverse=inverse,
                         verbose=verbose)
@@ -27,7 +27,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             return subregioncuboid(dataobject,
                         xrange=xrange, yrange=yrange, zrange=zrange,
                         center=center,
-                        range_units=range_units,
+                        range_unit=range_unit,
                         inverse=inverse,
                         verbose=verbose)
         end
@@ -38,7 +38,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             radius=radius,
                             height=height,
                             center=center,
-                            length_units=range_units,
+                            range_unit=range_unit,
                             direction=direction,
                             cell=cell,
                             inverse=inverse,
@@ -48,7 +48,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             radius=radius,
                             height=height,
                             center=center,
-                            length_units=range_units,
+                            range_unit=range_unit,
                             direction=direction,
                             inverse=inverse,
                             verbose=verbose)
@@ -59,7 +59,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             return subregionsphere(dataobject,
                             radius=radius,
                             center=center,
-                            length_units=range_units,
+                            range_unit=range_unit,
                             cell=cell,
                             inverse=inverse,
                             verbose=verbose)
@@ -67,7 +67,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             return subregionsphere(dataobject,
                             radius=radius,
                             center=center,
-                            length_units=range_units,
+                            range_unit=range_unit,
                             inverse=inverse,
                             verbose=verbose)
         end

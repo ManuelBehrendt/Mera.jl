@@ -17,7 +17,7 @@ gethydro(   dataobject::InfoType;
             yrange::Array{<:Any,1}=[missing, missing],
             zrange::Array{<:Any,1}=[missing, missing],
             center::Array{<:Any,1}=[0., 0., 0.],
-            range_units::Symbol=:standard,
+            range_unit::Symbol=:standard,
             smallr::Number=0.,
             smallc::Number=0.,
             check_negvalues::Bool=false,
@@ -44,11 +44,11 @@ julia> fieldnames(gas)
 ##### Predefined/Optional Keywords:
 - **`lmax`:** the maximum level to be read from the data
 - **`var(s)`:** the selected hydro variables in arbitrary order: :all (default), :cpu, :rho, :vx, :vy, :vz, :p, :var6, :var7...
-- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_units` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
-- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_units` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
-- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_units` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_units`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_units`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`smallr`:** set lower limit for density; zero means inactive
 - **`smallc`:** set lower limit for thermal pressure; zero means inactive
 - **`check_negvalues`:** check loaded data of "rho" and "p" on negative values; false by default
@@ -79,7 +79,7 @@ julia> gas = gethydro(    info,
                           yrange=[-10.,10.],
                           zrange=[-2.,2.],
                           center=[24., 24., 24.],
-                          range_units=:kpc )
+                          range_unit=:kpc )
 
 # Example 3:
 # give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
@@ -91,7 +91,7 @@ julia> gas = gethydro(    info,
                           yrange=[-10.,10.],
                           zrange=[-2.,2.],
                           center=[33., bc:, 10.],
-                          range_units=:kpc )
+                          range_unit=:kpc )
 
 # Example 4:
 # read hydro data of the variables density and the thermal pressure, full-box, all levels
@@ -110,7 +110,7 @@ function gethydro( dataobject::InfoType, var::Symbol;
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
-                    range_units::Symbol=:standard,
+                    range_unit::Symbol=:standard,
                     smallr::Number=0.,
                     smallc::Number=0.,
                     check_negvalues::Bool=false,
@@ -121,7 +121,7 @@ function gethydro( dataobject::InfoType, var::Symbol;
     return gethydro(dataobject, vars=[var],
                     lmax=lmax,
                     xrange=xrange, yrange=yrange, zrange=zrange, center=center,
-                    range_units=range_units,
+                    range_unit=range_unit,
                     smallr=smallr,
                     smallc=smallc,
                     check_negvalues=check_negvalues,
@@ -136,7 +136,7 @@ function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
-                    range_units::Symbol=:standard,
+                    range_unit::Symbol=:standard,
                     smallr::Number=0.,
                     smallc::Number=0.,
                     check_negvalues::Bool=false,
@@ -148,7 +148,7 @@ function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
                     vars=vars,
                     lmax=lmax,
                     xrange=xrange, yrange=yrange, zrange=zrange, center=center,
-                    range_units=range_units,
+                    range_unit=range_unit,
                     smallr=smallr,
                     smallc=smallc,
                     check_negvalues=check_negvalues,
@@ -166,7 +166,7 @@ function gethydro( dataobject::InfoType;
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
-                    range_units::Symbol=:standard,
+                    range_unit::Symbol=:standard,
                     smallr::Number=0.,
                     smallc::Number=0.,
                     check_negvalues::Bool=false,
@@ -184,7 +184,7 @@ function gethydro( dataobject::InfoType;
     nvarh_list, nvarh_i_list, nvarh_corr, read_cpu, used_descriptors = prepvariablelist(dataobject, :hydro, vars, lmax, verbose)
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject, range_units, verbose, xrange, yrange, zrange, center)
+    ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
     # read hydro-data of the selected variables
     if read_cpu

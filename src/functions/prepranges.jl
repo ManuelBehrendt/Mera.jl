@@ -4,7 +4,7 @@ convert given ranges and print overview on screen
 used for gethydro, getparticles, getgravity, getclumps..., subregions...
 """
 function prepranges(    dataobject::InfoType,
-                        range_units::Symbol,
+                        range_unit::Symbol,
                         verbose::Bool,
                         xrangem::Array{<:Any,1},
                         yrangem::Array{<:Any,1},
@@ -18,13 +18,13 @@ function prepranges(    dataobject::InfoType,
     zrange = zeros(Float64,2)
     selected_units = 1. # :standard
     conv = 1. # :standard, variable used to convert to standard units
-    if range_units != :standard
-        selected_units = getunit(dataobject, range_units)
+    if range_unit != :standard
+        selected_units = getunit(dataobject, range_unit)
         conv = dataobject.boxlen * selected_units
     end
 
 
-    center = prepboxcenter(dataobject, range_units, center)
+    center = prepboxcenter(dataobject, range_unit, center)
 
 
     # assign ranges to selected data range or missing ranges = full box
@@ -139,13 +139,13 @@ function prepranges(    dataobject::InfoType,
                             center::Array{<:Any,1},
                             radius::Number,
                             height::Number,
-                            range_units::Symbol,
+                            range_unit::Symbol,
                             verbose::Bool)
 
-    center = prepboxcenter(dataobject, range_units, center)
+    center = prepboxcenter(dataobject, range_unit, center)
 
     selected_units = 1.
-    if range_units == :standard
+    if range_unit == :standard
         xmin = -radius + center[1]
         xmax =  radius + center[1]
         ymin = -radius + center[2]
@@ -161,7 +161,7 @@ function prepranges(    dataobject::InfoType,
         #todo
 
     else
-        selected_units = getunit(dataobject, range_units)
+        selected_units = getunit(dataobject, range_unit)
         xmin = (-radius + center[1]) * selected_units /dataobject.boxlen
         xmax = ( radius + center[1]) * selected_units /dataobject.boxlen
         ymin = (-radius + center[2]) * selected_units /dataobject.boxlen
@@ -250,13 +250,13 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
                             radius_in::Number,
                             radius_out::Number,
                             height::Number,
-                            range_units::Symbol,
+                            range_unit::Symbol,
                             verbose::Bool)
 
-    center = prepboxcenter(dataobject, range_units, center)
+    center = prepboxcenter(dataobject, range_unit, center)
 
     selected_units = 1.
-    if range_units == :standard
+    if range_unit == :standard
         xmin = -radius_out + center[1]
         xmax =  radius_out + center[1]
         ymin = -radius_out + center[2]
@@ -268,7 +268,7 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
         #todo
 
     else
-        selected_units = getunit(dataobject, range_units)
+        selected_units = getunit(dataobject, range_unit)
         xmin = (-radius_out + center[1]) * selected_units /dataobject.boxlen
         xmax = ( radius_out + center[1]) * selected_units /dataobject.boxlen
         ymin = (-radius_out + center[2]) * selected_units /dataobject.boxlen
@@ -355,14 +355,14 @@ function prep_spherical_shellranges(    dataobject::InfoType,
                             center::Array{<:Any,1},
                             radius_in::Number,
                             radius_out::Number,
-                            range_units::Symbol,
+                            range_unit::Symbol,
                             verbose::Bool)
 
 
-    center = prepboxcenter(dataobject, range_units, center)
+    center = prepboxcenter(dataobject, range_unit, center)
 
     selected_units = 1.
-    if range_units == :standard
+    if range_unit == :standard
         xmin = -radius_out + center[1]
         xmax =  radius_out + center[1]
         ymin = -radius_out + center[2]
@@ -374,7 +374,7 @@ function prep_spherical_shellranges(    dataobject::InfoType,
         #todo
 
     else
-        selected_units = getunit(dataobject, range_units)
+        selected_units = getunit(dataobject, range_unit)
         xmin = (-radius_out + center[1]) * selected_units /dataobject.boxlen
         xmax = ( radius_out + center[1]) * selected_units /dataobject.boxlen
         ymin = (-radius_out + center[2]) * selected_units /dataobject.boxlen
@@ -447,24 +447,24 @@ end
 
 
 
-function prepboxcenter(dataobject::InfoType, range_units::Symbol, center::Array{<:Any,1})
+function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<:Any,1})
 
     selected_units = 1.
-    if range_units != :standard
-        selected_units = getunit(dataobject, range_units)
+    if range_unit != :standard
+        selected_units = getunit(dataobject, range_unit)
     end
 
     # check for :bc, :boxcenter
     Ncenter = length(center)
     if Ncenter  == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = dataobject.boxlen / 2. * selected_units # use range_units
+            bc = dataobject.boxlen / 2. * selected_units # use range_unit
             center = [bc, bc, bc]
         end
     else
         for i = 1:Ncenter
             if center[i] == :bc || center[i] == :boxcenter
-                bc = dataobject.boxlen / 2. * selected_units # use range_units
+                bc = dataobject.boxlen / 2. * selected_units # use range_unit
                 center[i] = bc
             end
         end

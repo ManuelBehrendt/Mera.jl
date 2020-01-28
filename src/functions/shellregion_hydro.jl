@@ -6,7 +6,7 @@ function shellregioncylinder(dataobject::HydroDataType;
                             radius::Array{<:Number,1}=[0.,0.],
                             height::Number=0.,
                             center::Array{<:Any,1}=[0.,0.,0.],
-                            length_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             cell::Bool=true,
                             inverse::Bool=false,
@@ -24,7 +24,7 @@ function shellregioncylinder(dataobject::HydroDataType;
     scale = dataobject.scale
 
     # convert given ranges and print overview on screen
-    ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift, height_shift = prep_cylindrical_shellranges(dataobject.info, center, radius_in, radius_out, height, length_units, verbose)
+    ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift, height_shift = prep_cylindrical_shellranges(dataobject.info, center, radius_in, radius_out, height, range_unit, verbose)
 
 
     if inverse == false
@@ -91,7 +91,7 @@ end
 function shellregionsphere(dataobject::HydroDataType;
                             radius::Array{<:Number,1}=[0.,0.],
                             center::Array{<:Any,1}=[0.,0.,0.],
-                            length_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,
                             verbose::Bool=verbose_mode)
@@ -109,7 +109,7 @@ function shellregionsphere(dataobject::HydroDataType;
     scale = dataobject.scale
 
     # convert given ranges and print overview on screen
-    ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift = prep_spherical_shellranges(dataobject.info, center, radius_in, radius_out, length_units, verbose)
+    ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift = prep_spherical_shellranges(dataobject.info, center, radius_in, radius_out, range_unit, verbose)
 
 
     if inverse == false
