@@ -1,7 +1,7 @@
 function gethydrodata( dataobject::InfoType,
                         Nnvarh::Int,
                         nvarh_corr::Array{Int,1},
-                        lmax::Number,
+                        lmax::Real,
                         ranges::Array{Float64,1},
                         print_filenames::Bool,
                         read_cpu::Bool,

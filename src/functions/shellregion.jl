@@ -1,6 +1,6 @@
 function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
-            radius::Array{<:Number,1}=[0.,0.],  # cylinder, sphere;
-            height::Number=0.,                  # cylinder
+            radius::Array{<:Real,1}=[0.,0.],  # cylinder, sphere;
+            height::Real=0.,                  # cylinder
             direction::Symbol=:z,                # cylinder
 
             center::Array{<:Any,1}=[0., 0., 0.],   # all

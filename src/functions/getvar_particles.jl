@@ -4,7 +4,7 @@ function get_data(dataobject::PartDataType,
                 direction::Symbol,
                 center::Array{<:Any,1},
                 mask::MaskType,
-                ref_time::Number)
+                ref_time::Real)
 
     vars_dict = Dict()
     #vars = unique(vars)

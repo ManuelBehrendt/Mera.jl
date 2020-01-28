@@ -11,15 +11,15 @@
 
 ```julia
 gethydro(   dataobject::InfoType;
-            lmax::Number=dataobject.levelmax,
+            lmax::Real=dataobject.levelmax,
             vars::Array{Symbol,1}=[:all],
             xrange::Array{<:Any,1}=[missing, missing],
             yrange::Array{<:Any,1}=[missing, missing],
             zrange::Array{<:Any,1}=[missing, missing],
             center::Array{<:Any,1}=[0., 0., 0.],
             range_unit::Symbol=:standard,
-            smallr::Number=0.,
-            smallc::Number=0.,
+            smallr::Real=0.,
+            smallc::Real=0.,
             check_negvalues::Bool=false,
             print_filenames::Bool=false,
             verbose::Bool=verbose_mode )
@@ -105,14 +105,14 @@ julia> gas = gethydro( info, :rho ) # no array for a single variable needed
 
 """
 function gethydro( dataobject::InfoType, var::Symbol;
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-                    smallr::Number=0.,
-                    smallc::Number=0.,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode )
@@ -131,14 +131,14 @@ end
 
 
 function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-                    smallr::Number=0.,
-                    smallc::Number=0.,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode )
@@ -160,15 +160,15 @@ end
 
 
 function gethydro( dataobject::InfoType;
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     vars::Array{Symbol,1}=[:all],
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-                    smallr::Number=0.,
-                    smallc::Number=0.,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode )
@@ -250,7 +250,7 @@ end
 
 
 
-function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bool, smallr::Number, smallc::Number, nvarh_list::Array{Int,1}, nvarh_corr::Array{Int,1})
+function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bool, smallr::Real, smallc::Real, nvarh_list::Array{Int,1}, nvarh_corr::Array{Int,1})
 
     # set minimum density in cells
     if smallr != 0. && in(1, nvarh_list)

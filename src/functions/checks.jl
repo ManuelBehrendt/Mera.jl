@@ -15,7 +15,7 @@ function checkfortype(dataobject::InfoType, datatype::Symbol)
 end
 
 
-function checklevelmax(dataobject::InfoType, lmax::Number)
+function checklevelmax(dataobject::InfoType, lmax::Real)
     if dataobject.levelmax < lmax
         error("[Mera]: Simulation lmax=$(dataobject.levelmax) < your lmax=$lmax")
     elseif lmax < dataobject.levelmin
@@ -24,7 +24,7 @@ function checklevelmax(dataobject::InfoType, lmax::Number)
 end
 
 # use lmax in case user forces to load a uniform grid from amr data (lmax=levelmin)
-function checkuniformgrid(dataobject::InfoType, lmax::Number)
+function checkuniformgrid(dataobject::InfoType, lmax::Real)
     isamr = true
     if lmax == dataobject.levelmin
         isamr = false
@@ -32,7 +32,7 @@ function checkuniformgrid(dataobject::InfoType, lmax::Number)
     return isamr
 end
 
-function checkuniformgrid(dataobject::DataSetType, lmax::Number)
+function checkuniformgrid(dataobject::DataSetType, lmax::Real)
     isamr = true
     if lmax == dataobject.info.levelmin
         isamr = false

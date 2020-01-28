@@ -65,8 +65,8 @@ end
 
 
 function subregioncylinder(dataobject::PartDataType;
-                            radius::Number=0.,
-                            height::Number=0.,
+                            radius::Real=0.,
+                            height::Real=0.,
                             center::Array{<:Any,1}=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
@@ -124,7 +124,7 @@ end
 # -----------------------------------------------------------------------------
 ##### SPHERE #####-------------------------------------------------------------
 function subregionsphere(dataobject::PartDataType;
-                            radius::Number=0.,
+                            radius::Real=0.,
                             center::Array{<:Any,1}=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             inverse::Bool=false,

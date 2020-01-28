@@ -116,8 +116,8 @@ end
 
 
 function subregioncylinder(dataobject::HydroDataType;
-                            radius::Number=0.,
-                            height::Number=0.,
+                            radius::Real=0.,
+                            height::Real=0.,
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
@@ -216,7 +216,7 @@ end
 
 
 function subregionsphere(dataobject::HydroDataType;
-                            radius::Number=0.,
+                            radius::Real=0.,
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             cell::Bool=true,

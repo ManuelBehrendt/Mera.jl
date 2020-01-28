@@ -3,8 +3,8 @@
 
 
 function shellregioncylinder(dataobject::HydroDataType;
-                            radius::Array{<:Number,1}=[0.,0.],
-                            height::Number=0.,
+                            radius::Array{<:Real,1}=[0.,0.],
+                            height::Real=0.,
                             center::Array{<:Any,1}=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             direction::Symbol=:z,
@@ -89,7 +89,7 @@ end
 ##### SPHERE/SHELL #####-------------------------------------------------------
 
 function shellregionsphere(dataobject::HydroDataType;
-                            radius::Array{<:Number,1}=[0.,0.],
+                            radius::Array{<:Real,1}=[0.,0.],
                             center::Array{<:Any,1}=[0.,0.,0.],
                             range_unit::Symbol=:standard,
                             cell::Bool=true,

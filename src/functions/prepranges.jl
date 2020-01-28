@@ -10,7 +10,7 @@ function prepranges(    dataobject::InfoType,
                         yrangem::Array{<:Any,1},
                         zrangem::Array{<:Any,1},
                         center::Array{<:Any,1};
-                        dataranges::Array{<:Number,1}=[0.,1., 0.,1., 0.,1.] )
+                        dataranges::Array{<:Real,1}=[0.,1., 0.,1., 0.,1.] )
 
 
     xrange = zeros(Float64,2)
@@ -137,8 +137,8 @@ used for subregions...
 """
 function prepranges(    dataobject::InfoType,
                             center::Array{<:Any,1},
-                            radius::Number,
-                            height::Number,
+                            radius::Real,
+                            height::Real,
                             range_unit::Symbol,
                             verbose::Bool)
 
@@ -247,9 +247,9 @@ used for shellregions...
 """
 function prep_cylindrical_shellranges(    dataobject::InfoType,
                             center::Array{<:Any,1},
-                            radius_in::Number,
-                            radius_out::Number,
-                            height::Number,
+                            radius_in::Real,
+                            radius_out::Real,
+                            height::Real,
                             range_unit::Symbol,
                             verbose::Bool)
 
@@ -353,8 +353,8 @@ used for shellregions...
 """
 function prep_spherical_shellranges(    dataobject::InfoType,
                             center::Array{<:Any,1},
-                            radius_in::Number,
-                            radius_out::Number,
+                            radius_in::Real,
+                            radius_out::Real,
                             range_unit::Symbol,
                             verbose::Bool)
 

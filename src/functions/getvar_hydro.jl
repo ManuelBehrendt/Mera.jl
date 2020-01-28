@@ -4,7 +4,7 @@ function get_data(  dataobject::HydroDataType,
                     direction::Symbol,
                     center::Array{<:Any,1},
                     mask::MaskType,
-                    ref_time::Number)
+                    ref_time::Real)
 
     boxlen = dataobject.boxlen
     lmax = dataobject.lmax
