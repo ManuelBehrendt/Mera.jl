@@ -18,7 +18,8 @@ makedocs(modules = [Mera],
                                                       "Clumps"     =>  "02_clumps_Load_Selections.md"],
 
                        "3-Get Subregions"     => Any[ "Hydro"      => "03_hydro_Get_Subregions/03_hydro_Get_Subregions.md",
-                                                      "Particles"  => "03_particles_Get_Subregions/03_particles_Get_Subregions.md"],
+                                                      "Particles"  => "03_particles_Get_Subregions/03_particles_Get_Subregions.md",
+                                                      "Clumps"     => "03_clumps_Get_Subregions/03_clumps_Get_Subregions.md"],
 
                       "4-Basic Calculations"  => "04_multi_Basic_Calculations.md",
 

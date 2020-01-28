@@ -3,7 +3,8 @@ function get_data(dataobject::ClumpDataType,
                 units::Array{Symbol,1},
                 direction::Symbol,
                 center::Array{<:Any,1},
-                mask::MaskType)
+                mask::MaskType,
+                ref_time::Number)
 
     vars_dict = Dict()
     #vars = unique(vars)
@@ -42,7 +43,7 @@ function get_data(dataobject::ClumpDataType,
     for i in vars
 
 
-        # quantitties that are in the datatable
+        # quantities that are in the datatable
         if in(i, column_names) || in(i, descriptor)#|| occursin("var", string(i))
             selected_units = getunit(dataobject, i, vars, units)
 
@@ -67,7 +68,7 @@ function get_data(dataobject::ClumpDataType,
 
 
 
-        # quantitties that are derived from the variables in the data table
+        # quantities that are derived from the variables in the data table
         elseif i == :v
             selected_units = getunit(dataobject, :v, vars, units)
             vars_dict[:v] =  sqrt.(select(dataobject.data, :vx).^2 .+
@@ -98,10 +99,4 @@ function get_data(dataobject::ClumpDataType,
             return vars_dict
     end
 
-end
-
-
-
-function getmass(dataobject::ClumpDataType;)
-    return getvar(dataobject, :mass)
 end

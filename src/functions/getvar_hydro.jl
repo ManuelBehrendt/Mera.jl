@@ -45,7 +45,7 @@ function get_data(  dataobject::HydroDataType,
 
     for i in vars
 
-        # quantitties that are in the datatable
+        # quantities that are in the datatable
         if in(i, column_names)
 
             selected_units = getunit(dataobject, i, vars, units)
@@ -76,7 +76,7 @@ function get_data(  dataobject::HydroDataType,
                 #end
             end
 
-        # quantitties that are derived from the variables in the data table
+        # quantities that are derived from the variables in the data table
         elseif i == :cellsize
             selected_units = getunit(dataobject, :cellsize, vars, units)
             if isamr
@@ -279,19 +279,4 @@ function get_data(  dataobject::HydroDataType,
             return vars_dict
     end
 
-end
-
-
-function getmass(dataobject::HydroDataType;)
-
-    lmax = dataobject.lmax
-    boxlen = dataobject.boxlen
-    isamr = checkuniformgrid(dataobject, lmax)
-
-    #return select(dataobject.data, :rho) .* (dataobject.boxlen ./ 2. ^(select(dataobject.data, :level))).^3
-    if isamr
-        return select( dataobject.data, (:rho, :level)=>p->p.rho * (boxlen / 2^p.level)^3 )
-    else # if uniform grid
-        return select( dataobject.data, (:rho)=>p->p.rho * (boxlen / 2^lmax)^3 )
-    end
 end

@@ -41,7 +41,7 @@ function get_data(dataobject::PartDataType,
 
     for i in vars
 
-        # quantitties that are in the datatable
+        # quantities that are in the datatable
         if in(i, column_names)
             selected_units = getunit(dataobject, i, vars, units)
 
@@ -58,7 +58,7 @@ function get_data(dataobject::PartDataType,
                 vars_dict[i] =  select(dataobject.data, i) .* selected_units
             end
 
-        # quantitties that are derived from the variables in the data table
+        # quantities that are derived from the variables in the data table
         elseif i == :vx2
             selected_units = getunit(dataobject, :vx2, vars, units)
             vars_dict[:vx2] =  (getvar(dataobject, :vx) .* selected_units ) .^2

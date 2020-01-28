@@ -5,7 +5,7 @@
 
 ```julia
 using Mera, PyPlot
-info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
+info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14")
 gas  = gethydro(info, :rho, lmax=10, smallr=1e-5); 
 ```
 
@@ -1005,7 +1005,8 @@ cb = colorbar(im, label=labeltext);
 ![png](output_69_0.png)
 
 
-#### Spherical Shell: Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
+#### Spherical Shell: 
+Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia
