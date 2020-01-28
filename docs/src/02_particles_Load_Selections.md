@@ -1,4 +1,3 @@
-
 # 2. Particles: Load Selected Variables and Data Ranges
 
 ## Simulation Overview
@@ -386,7 +385,7 @@ particles = getparticles(  info,
                             xrange=[2.,22.], 
                             yrange=[2.,22.], 
                             zrange=[22.,26.], 
-                            range_units=:kpc); 
+                            range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get particle data: 2020-01-08T15:45:11.354[22m
@@ -405,7 +404,7 @@ particles = getparticles(  info,
     
 
 
-The possible physical length units for the keyword *range_units* are defined in the field *scale* : 
+The possible physical length units for the keyword *range_unit* are defined in the field *scale* : 
 
 
 ```julia
@@ -459,7 +458,7 @@ particles = getparticles(  info,
                             yrange=[-16.,16.], 
                             zrange=[-2.,2.], 
                             center=[50.,50.,50.], 
-                            range_units=:kpc); 
+                            range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get particle data: 2020-01-08T15:49:53.257[22m
@@ -480,7 +479,7 @@ particles = getparticles(  info,
     
 
 
-Use the short notation for the box center :bc or :boxcenter for all in dimensions (x,y,z):
+Use the short notation for the box center :bc or :boxcenter for all  dimensions (x,y,z):
 
 
 ```julia
@@ -489,7 +488,7 @@ particles = getparticles(  info,
                             yrange=[-16.,16.], 
                             zrange=[-2.,2.], 
                             center=[:boxcenter], 
-                            range_units=:kpc); 
+                            range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get particle data: 2020-01-08T15:48:20.214[22m
@@ -517,7 +516,7 @@ particles = getparticles(  info,
                             yrange=[-16.,16.], 
                             zrange=[-2.,2.], 
                             center=[:bc], 
-                            range_units=:kpc); 
+                            range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get particle data: 2020-01-08T15:48:31.94[22m
@@ -547,7 +546,7 @@ particles = getparticles(  info,
                             yrange=[-16.,16.], 
                             zrange=[-2.,2.], 
                             center=[:bc, 50., :bc], 
-                            range_units=:kpc); 
+                            range_unit=:kpc); 
 ```
 
     [0m[1m[Mera]: Get particle data: 2020-01-08T15:49:39.507[22m

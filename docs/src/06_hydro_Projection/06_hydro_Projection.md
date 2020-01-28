@@ -1,4 +1,3 @@
-
 # 6. Hydro: Projections
 
 ## Load The Data
@@ -146,7 +145,7 @@ projection()
 
 ## Projection of a Single Quantity in Different Directions (z,y,x)
 
-Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]). 
+Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]) onto a grid corresponding to the maximum loaded level. 
 Pass any object of *HydroDataType* (here: "gas") to the *projection*-function and select a variable by a Symbol (here: :sd = :surfacedensity = :Σ in Msol/pc^3)
 
 
@@ -184,7 +183,7 @@ See also in the documentation for: load data by selection
 cv = (gas.boxlen / 2.) * gas.scale.kpc # provide the box-center in kpc
 proj_z = projection(gas, :sd, :Msol_pc2, 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                    center=[cv,cv,cv], range_units=:kpc);
+                    center=[cv,cv,cv], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:11:55.919[22m
@@ -209,7 +208,7 @@ Use the short notation for the box center :bc or :boxcenter for all dimensions (
 ```julia
 proj_z = projection(gas, :sd, :Msol_pc2,  
                         xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                        center=[:boxcenter], range_units=:kpc);
+                        center=[:boxcenter], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:04.997[22m
@@ -232,7 +231,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```julia
 proj_z = projection(gas, :sd, :Msol_pc2,  
                         xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                        center=[:bc], range_units=:kpc);
+                        center=[:bc], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:12.293[22m
@@ -257,7 +256,7 @@ Use the box center notation for individual dimensions, here x,z:
 ```julia
 proj_z = projection(gas, :sd, :Msol_pc2,  
                         xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                        center=[:bc, 24., :bc], range_units=:kpc);
+                        center=[:bc, 24., :bc], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:21.673[22m
@@ -288,7 +287,7 @@ proj1_x = projection(gas, [:sd], units=[:Msol_pc2],
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:29.949[22m
@@ -317,7 +316,7 @@ proj1_z = projection(gas, [:sd, :vx], units=[:Msol_pc2, :km_s],
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:37.284[22m
@@ -346,7 +345,7 @@ proj1_z = projection(gas, [:sd , :vx], [:Msol_pc2, :km_s],
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:45.261[22m
@@ -374,7 +373,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz], :km_s,
                         yrange=[-10.,10.], 
                         zrange=[-2.,2.], 
                         center=[24.,24.,24.], 
-                        range_units=:kpc);
+                        range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:12:52.943[22m
@@ -564,10 +563,10 @@ proj1_z.ratio # the ratio between the two ranges
 
 ```julia
 proj_z = projection(gas, :sd, :Msol_pc2, 
-                    zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false) 
 proj_x = projection(gas, :sd, :Msol_pc2, 
-                    zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     direction = :x);
 ```
@@ -608,11 +607,11 @@ Project a specific spatial range and plot the axes of the map relative to the bo
 
 ```julia
 proj_z = projection(gas, :sd, :Msol_pc2, 
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[24.,24.,24.], data_center_units=:kpc) 
 proj_x = projection(gas, :sd, :Msol_pc2, 
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[24.,24.,24.], data_center_units=:kpc, 
                     direction = :x);
@@ -647,11 +646,11 @@ Plot the axes of the map relative to the map-center (given by keyword: data_cent
 
 ```julia
 proj_z = projection(gas, :sd, :Msol_pc2, 
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[19.,19.,24.], data_center_units=:kpc) 
 proj_x = projection(gas, :sd, :Msol_pc2, 
-                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_units=:kpc,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
                     verbose=false, 
                     data_center=[19.,19.,24.], data_center_units=:kpc, 
                     direction = :x);
@@ -693,7 +692,7 @@ Project the following derived data
 proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :ekin], 
                     units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg], 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                    center=[24.,24.,24.], range_units=:kpc);
+                    center=[24.,24.,24.], range_unit=:kpc);
 ```
 
     [0m[1m[Mera]: 2020-01-18T15:16:25.265[22m
@@ -827,7 +826,7 @@ For the cylindrical or spherical components of a quantity, the center of the coo
 proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],                    
                     units=[:km_s,:km_s,:km_s, :km_s, :km_s, :kpc, :km_s, :km_s, :km_s, :km_s], 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
-                    center=[:boxcenter], range_units=:kpc,
+                    center=[:boxcenter], range_unit=:kpc,
                     data_center=[24.,24.,24.],
                     data_center_units=:kpc); 
 ```

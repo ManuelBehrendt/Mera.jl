@@ -5,7 +5,7 @@ function subregioncuboid(dataobject::HydroDataType;
     yrange::Array{<:Any,1}=[missing, missing],
     zrange::Array{<:Any,1}=[missing, missing],
     center::Array{<:Any,1}=[0., 0., 0.],
-    range_units::Symbol=:standard,
+    range_unit::Symbol=:standard,
     cell::Bool=true,
     inverse::Bool=false,
     verbose::Bool=verbose_mode)
@@ -15,7 +15,7 @@ function subregioncuboid(dataobject::HydroDataType;
     boxlen = dataobject.boxlen
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_units, verbose, xrange, yrange, zrange, center)
+    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
@@ -119,7 +119,7 @@ function subregioncylinder(dataobject::HydroDataType;
                             radius::Number=0.,
                             height::Number=0.,
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            length_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             direction::Symbol=:z,
                             cell::Bool=true,
                             inverse::Bool=false,
@@ -135,7 +135,7 @@ function subregioncylinder(dataobject::HydroDataType;
     scale = dataobject.scale
 
     # convert given ranges and print overview on screen
-    ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift = prepranges(dataobject.info, center, radius, height, length_units, verbose)
+    ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
 
 
@@ -218,13 +218,12 @@ end
 function subregionsphere(dataobject::HydroDataType;
                             radius::Number=0.,
                             center::Array{<:Any,1}=[0., 0., 0.],
-                            length_units::Symbol=:standard,
+                            range_unit::Symbol=:standard,
                             cell::Bool=true,
                             inverse::Bool=false,
                             verbose::Bool=verbose_mode)
 
     printtime("", verbose)
-
 
     if radius == 0. || in(0., center)
         error("[Mera]: given radius or center should be != 0.")
@@ -235,7 +234,7 @@ function subregionsphere(dataobject::HydroDataType;
 
     # convert given ranges and print overview on screen
     height = 0.
-    ranges, cx_shift, cy_shift, cz_shift, radius_shift = prepranges(dataobject.info, center, radius, height, length_units, verbose)
+    ranges, cx_shift, cy_shift, cz_shift, radius_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
 
     if inverse == false

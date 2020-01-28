@@ -4,7 +4,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             direction::Symbol=:z,                # cylinder
 
             center::Array{<:Any,1}=[0., 0., 0.],   # all
-            range_units::Symbol=:standard,  # all
+            range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
             verbose::Bool=verbose_mode)             # all
@@ -17,7 +17,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         radius=radius,
                                         height=height,
                                         center=center,
-                                        length_units=range_units,
+                                        range_unit=range_unit,
                                         direction=direction,
                                         cell=cell,
                                         inverse=inverse,
@@ -27,7 +27,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
                                         radius=radius,
                                         height=height,
                                         center=center,
-                                        length_units=range_units,
+                                        range_unit=range_unit,
                                         direction=direction,
                                         inverse=inverse,
                                         verbose=verbose)
@@ -38,7 +38,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             return shellregionsphere(  dataobject,
                                         radius=radius,
                                         center=center,
-                                        length_units=range_units,
+                                        range_unit=range_unit,
                                         cell=cell,
                                         inverse=inverse,
                                         verbose=verbose)
@@ -46,7 +46,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             return shellregionsphere(  dataobject,
                                         radius=radius,
                                         center=center,
-                                        length_units=range_units,
+                                        range_unit=range_unit,
                                         inverse=inverse,
                                         verbose=verbose)
 

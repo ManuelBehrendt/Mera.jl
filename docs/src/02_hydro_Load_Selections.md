@@ -1,4 +1,3 @@
-
 # 2. Hydro: Load Selected Variables and Data Ranges
 
 ## Simulation Overview
@@ -8,57 +7,6 @@
 using Mera
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
 ```
-
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
-    
-    *__   __ _______ ______   _______ 
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
-    
-    [0m[1m[Mera]: 2019-12-31T13:07:14.719[22m
-    
-    Code: RAMSES
-    output [420] summary:
-    mtime: 2017-07-27T01:22:09
-    ctime: 2019-12-24T09:57:04.822
-    [0m[1m=======================================================[22m
-    simulation time: 624.91 [Myr]
-    boxlen: 48.0 [kpc]
-    ncpu: 1024
-    ndim: 3
-    -------------------------------------------------------
-    amr:           true
-    level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
-    -------------------------------------------------------
-    hydro:         true
-    hydro-variables:  6  --> (:rho, :vx, :vy, :vz, :p, :var6)
-    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1)
-    γ: 1.01
-    -------------------------------------------------------
-    gravity:       true
-    gravity-variables: (:epot, :ax, :ay, :az)
-    -------------------------------------------------------
-    particles:     true
-    particle variables: (:vx, :vy, :vz, :mass, :age)
-    -------------------------------------------------------
-    clumps:        true
-    clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
-    -------------------------------------------------------
-    namelist-file: false
-    timer-file:       false
-    compilation-file: true
-    makefile:         true
-    patchfile:        true
-    [0m[1m=======================================================[22m
-    
-
 
 ## Select Variables
 
@@ -71,27 +19,6 @@ Choose from the existing hydro variables listed in the simulation-info. Use the 
 ```julia
 gas = gethydro(info);
 ```
-
-    [0m[1m[Mera]: Get hydro data: 2019-12-31T12:22:07.195[22m
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
-    domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Reading data...
-
-
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:59[39m
-
-
-    Memory used for data table :85.94877052307129 MB
-    -------------------------------------------------------
-    
-
 
 
 ```julia
@@ -407,7 +334,7 @@ gas = gethydro(info, lmax=8,
                 xrange=[2.,22.], 
                 yrange=[2.,22.], 
                 zrange=[22.,26.], 
-                range_units=:kpc, 
+                range_unit=:kpc, 
                 smallr = 1.0e-30 / info.unit_d); 
 ```
 
@@ -432,7 +359,7 @@ gas = gethydro(info, lmax=8,
     
 
 
-The possible physical length units for the keyword *range_units* are defined in the field *scale* : 
+The possible physical length units for the keyword *range_unit* are defined in the field *scale* : 
 
 
 ```julia
@@ -486,7 +413,7 @@ gas = gethydro(info, lmax=8,
                 yrange=[-16.,16.], 
                 zrange=[-2.,2.], 
                 center=[24.,24.,24.], 
-                range_units=:kpc, 
+                range_unit=:kpc, 
                 smallr = 1.0e-30 / info.unit_d); 
 ```
 
@@ -513,7 +440,7 @@ gas = gethydro(info, lmax=8,
     
 
 
-Use the short notation for the box center :bc or :boxcenter for all in dimensions (x,y,z):
+Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):
 
 
 ```julia
@@ -522,7 +449,7 @@ gas = gethydro(info, lmax=8,
                 yrange=[-16., 16.], 
                 zrange=[-2., 2.], 
                 center=[:boxcenter], 
-                range_units=:kpc, 
+                range_unit=:kpc, 
                 smallr = 1.0e-30 / info.unit_d); 
 ```
 
@@ -556,7 +483,7 @@ gas = gethydro(info, lmax=8,
                 yrange=[-16., 16.], 
                 zrange=[-2., 2.], 
                 center=[:bc], 
-                range_units=:kpc, 
+                range_unit=:kpc, 
                 smallr = 1.0e-30 / info.unit_d); 
 ```
 
@@ -592,7 +519,7 @@ gas = gethydro(info, lmax=8,
                 yrange=[-16., 16.], 
                 zrange=[-2., 2.], 
                 center=[:bc, 24., :bc], 
-                range_units=:kpc, 
+                range_unit=:kpc, 
                 smallr = 1.0e-30 / info.unit_d); 
 ```
 

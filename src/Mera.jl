@@ -131,10 +131,11 @@ include("functions/projection_particles.jl")
 
 include("functions/subregion.jl")
 include("functions/subregion_hydro.jl")
+include("functions/subregion_particles.jl")
 
 include("functions/shellregion.jl")
 include("functions/shellregion_hydro.jl")
-
+include("functions/shellregion_particles.jl")
 
 println()
 println( "*__   __ _______ ______   _______ ")
