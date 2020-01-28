@@ -8,7 +8,7 @@
 
 ```julia
 getparticles(       dataobject::InfoType;
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     vars::Array{Symbol,1}=[:all],
                     stars::Bool=true,
                     xrange::Array{<:Any,1}=[missing, missing],
@@ -96,7 +96,7 @@ julia> particles = getparticles( info, :mass ) # no array for a single variable 
 
 """
 function getparticles( dataobject::InfoType, var::Symbol;
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     stars::Bool=true,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -121,7 +121,7 @@ end
 
 
 function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     stars::Bool=true,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -144,7 +144,7 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
 end
 
 function getparticles( dataobject::InfoType;
-                    lmax::Number=dataobject.levelmax,
+                    lmax::Real=dataobject.levelmax,
                     vars::Array{Symbol,1}=[:all],
                     stars::Bool=true,
                     xrange::Array{<:Any,1}=[missing, missing],
@@ -295,7 +295,7 @@ function getparticles( dataobject::InfoType;
 end
 
 
-function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, lmax::Number, levelmin::Number)
+function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, lmax::Real, levelmin::Real)
 
     if read_cpu
         if lmax != levelmin # if AMR

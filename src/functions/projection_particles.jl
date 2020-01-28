@@ -36,9 +36,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
+                            data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
-                            ref_time::Number=dataobject.info.time,
+                            ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=units,
@@ -75,9 +75,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
+                            data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
-                            ref_time::Number=dataobject.info.time,
+                            ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=units,
@@ -114,9 +114,9 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
+                            data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
-                            ref_time::Number=dataobject.info.time,
+                            ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, [var], units=[unit],
@@ -153,9 +153,9 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
+                            data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
-                            ref_time::Number=dataobject.info.time,
+                            ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, [var], units=[unit],
@@ -191,9 +191,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
+                            data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
-                            ref_time::Number=dataobject.info.time,
+                            ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
@@ -230,9 +230,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             zrange::Array{<:Any,1}=[missing, missing],
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
-                            data_center::Array{<:Number,1}=[0.5, 0.5, 0.5],
+                            data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                             data_center_units::Symbol=:standard,
-                            ref_time::Number=dataobject.info.time,
+                            ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
 

@@ -39,7 +39,7 @@ end
 
 
 
-function usedmemory(obj_value::Number, verbose::Bool=true)
+function usedmemory(obj_value::Real, verbose::Bool=true)
 
     value_buffer = obj_value
     value_unit = "Bytes"

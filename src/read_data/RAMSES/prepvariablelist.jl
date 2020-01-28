@@ -1,4 +1,4 @@
-function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Symbol,1}, lmax::Number, verbose::Bool)
+function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Symbol,1}, lmax::Real, verbose::Bool)
 
     if datatype == :hydro
         nvarh = dataobject.nvarh

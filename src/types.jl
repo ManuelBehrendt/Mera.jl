@@ -173,7 +173,7 @@ end
 
 # exported
 mutable struct InfoType
-    output::Number
+    output::Real
     path::String
     fnames::FileNamesType
     simcode::String
@@ -330,7 +330,7 @@ mutable struct HydroMapsType
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_lmax::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
-    lmax_projected::Number
+    lmax_projected::Real
     lmin::Int
     lmax::Int
     ranges::Array{Float64,1}
@@ -350,7 +350,7 @@ mutable struct PartMapsType
     maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     lmin::Int
     lmax::Int
-    ref_time::Number
+    ref_time::Real
     ranges::Array{Float64,1}
     extent::Array{Float64,1}
     cextent::Array{Float64,1}

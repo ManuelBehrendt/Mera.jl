@@ -232,25 +232,25 @@ end
 #### Calculate statistical values w/o weighting of any Array:
 
 ```julia
-wstat(array::Array{<:Number,1}; weight::Array{<:Number,1}=[1.], mask::MaskType=[false])
+wstat(array::Array{<:Real,1}; weight::Array{<:Real,1}=[1.], mask::MaskType=[false])
 
 WStatType(mean, median, std, skewness, kurtosis, min, max)
 ```
 #### Arguments
 ##### Required:
-- **`array`:** Array needs to be of type: "<:Number"
+- **`array`:** Array needs to be of type: "<:Real"
 
 ##### Optional Keywords:
-- **`weight`:** Array needs to be of type: "<:Number" (can be used w/o keyword)
+- **`weight`:** Array needs to be of type: "<:Real" (can be used w/o keyword)
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the Array
 
 """
-function wstat(array::Array{<:Number,1}, weight::Array{<:Number,1}; mask::MaskType=[false])
+function wstat(array::Array{<:Real,1}, weight::Array{<:Real,1}; mask::MaskType=[false])
     return  wstat(array, weight=weight, mask=mask)
 end
 
 
-function wstat(array::Array{<:Number,1}; weight::Array{<:Number,1}=[1.], mask::MaskType=[false])
+function wstat(array::Array{<:Real,1}; weight::Array{<:Real,1}=[1.], mask::MaskType=[false])
 
             if length(mask) > 1
                 array=array[mask]

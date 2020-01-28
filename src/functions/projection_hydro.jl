@@ -16,7 +16,7 @@
 ```julia
 projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
-                        lmax::Number=dataobject.lmax,
+                        lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
@@ -70,7 +70,7 @@ projection( dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; ...)
 """
 function projection(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
-                        lmax::Number=dataobject.lmax,
+                        lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
@@ -106,7 +106,7 @@ end
 
 
 function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
-                        lmax::Number=dataobject.lmax,
+                        lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
@@ -142,7 +142,7 @@ end
 
 
 function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
-                        lmax::Number=dataobject.lmax,
+                        lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
@@ -179,7 +179,7 @@ end
 
 
 function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
-                        lmax::Number=dataobject.lmax,
+                        lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
@@ -218,7 +218,7 @@ end
 #todo: check for uniform grid
 function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
-                        lmax::Number=dataobject.lmax,
+                        lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
@@ -754,7 +754,7 @@ end
 
 
 
-function remap(dataobject::HydroMapsType, lmax::Number; verbose::Bool=verbose_mode)
+function remap(dataobject::HydroMapsType, lmax::Real; verbose::Bool=verbose_mode)
 
     printtime("", verbose)
 

@@ -3,8 +3,8 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     yrange::Array{<:Any,1}=[missing, missing],  # cuboid
     zrange::Array{<:Any,1}=[missing, missing],  # cuboid
 
-    radius::Number=0.,              # cylinder, sphere
-    height::Number=0.,              # cylinder
+    radius::Real=0.,              # cylinder, sphere
+    height::Real=0.,              # cylinder
     direction::Symbol=:z,           # cylinder
 
     center::Array{<:Any,1}=[0.,0.,0.],   # all

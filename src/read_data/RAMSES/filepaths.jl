@@ -1,10 +1,10 @@
 """
 ```julia
- createpath(output::Number, path::String; namelist::String="")
+ createpath(output::Real, path::String; namelist::String="")
 
  return  FileNamesType
 """
-function createpath(output::Number, path::String; namelist::String="")
+function createpath(output::Real, path::String; namelist::String="")
 
     if output < 10
         Path_folder = "output_0000$output"

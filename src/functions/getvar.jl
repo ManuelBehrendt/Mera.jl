@@ -116,7 +116,7 @@ function getvar(   dataobject::DataSetType, var::Symbol;
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
                     mask::MaskType=[false],
-                    ref_time::Number=dataobject.info.time)
+                    ref_time::Real=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
 
@@ -134,7 +134,7 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
-                    ref_time::Number=dataobject.info.time)
+                    ref_time::Real=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
 
@@ -152,7 +152,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
-                    ref_time::Number=dataobject.info.time)
+                    ref_time::Real=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
 
@@ -171,7 +171,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     center_units::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
-                    ref_time::Number=dataobject.info.time)
+                    ref_time::Real=dataobject.info.time)
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
     units = fill(unit, length(vars)) # use given unit for all variables
@@ -193,7 +193,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     direction::Symbol=:z,
                     units::Array{Symbol,1}=[:standard],
                     mask::MaskType=[false],
-                    ref_time::Number=dataobject.info.time)
+                    ref_time::Real=dataobject.info.time)
 
 
     center = center_in_standardnotation(dataobject.info, center, center_units)
