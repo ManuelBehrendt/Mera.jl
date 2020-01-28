@@ -16,6 +16,9 @@ makedocs(modules = [Mera],
                       "2-Load by Selection"   => Any[ "Hydro"      =>  "02_hydro_Load_Selections.md",
                                                       "Particles"  =>  "02_particles_Load_Selections.md",
                                                       "Clumps"     =>  "02_clumps_Load_Selections.md"],
+
+                       "3-Get Subregions"     => Any[ "Hydro"      => "03_hydro_Get_Subregions/03_hydro_Get_Subregions.md"],
+
                       "4-Basic Calculations"  => "04_multi_Basic_Calculations.md",
 
                       "6-Projection"          => Any[ "Hydro"      =>  "06_hydro_Projection/06_hydro_Projection.md",
