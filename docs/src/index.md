@@ -41,6 +41,9 @@ using Pkg
 Pkg.update("Mera")
 ```
 
+## Reproducibility
+Projects...
+
 ## Jupyter notebooks
 To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl))
 

@@ -23,6 +23,8 @@ makedocs(modules = [Mera],
 
                       "4-Basic Calculations"  => "04_multi_Basic_Calculations.md",
 
+                      "5-Mask/Filter/Metaprogramming" => "05_multi_Masking_Filtering/05_multi_Masking_Filtering.md",
+
                       "6-Projection"          => Any[ "Hydro"      =>  "06_hydro_Projection/06_hydro_Projection.md",
                                                       "Particles"  =>  "06_particles_Projection/06_particles_Projection.md"]
                       ]
