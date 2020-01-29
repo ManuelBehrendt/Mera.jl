@@ -1,6 +1,9 @@
 
-# exported
+"""
+Mutable Struct: Contains the created scale factors from code to physical units
+"""
 mutable struct ScalesType
+# exported
    Mpc::Float64
    kpc::Float64
    pc::Float64
@@ -43,9 +46,11 @@ mutable struct ScalesType
 end
 
 
-# exported
+"""
+Mutable Struct: Contains the physical constants in cgs units
+"""
  mutable struct PhysicalUnitsType
-
+# exported
     # in cgs units
      Au::Float64#cm: Astronomical unit
      Mpc::Float64 #cm: Parsec
@@ -77,6 +82,7 @@ end
      PhysicalUnitsType() = new()
 end
 
+
 mutable struct FileNamesType
     output::String
     info::String
@@ -96,8 +102,11 @@ mutable struct FileNamesType
     FileNamesType() = new()
 end
 
-# exported
+"""
+Mutable Struct: Contains the collected information about grid
+"""
 mutable struct GridInfoType
+# exported
     ngridmax::Int
     nstep_coarse::Int
     nx::Int
@@ -111,8 +120,11 @@ mutable struct GridInfoType
     GridInfoType() = new()
 end
 
-# exported
+"""
+Mutable Struct: Contains the collected information about particles
+"""
 mutable struct PartInfoType
+# exported
     eta_sn::Float64
     age_sn::Float64
     f_w::Float64
@@ -133,8 +145,11 @@ mutable struct PartInfoType
     PartInfoType() = new()
 end
 
-# exported
+"""
+Mutable Struct: Contains the collected information about the compilation of RAMSES
+"""
 mutable struct CompilationInfoType
+# exported
     compile_date::String
     patch_dir::String
     remote_repo::String
@@ -143,8 +158,11 @@ mutable struct CompilationInfoType
     CompilationInfoType() = new()
 end
 
-# exported
+"""
+Mutable Struct: Contains the collected information about the descriptors
+"""
 mutable struct DescriptorType
+# exported
     hversion::Int
     hydro::Array{Symbol,1}
     htypes::Array{String,1}
@@ -171,7 +189,9 @@ mutable struct DescriptorType
     DescriptorType() = new()
 end
 
-
+"""
+Mutable Struct: Collected information about the selected simulation output
+"""
 mutable struct InfoType
     # exported
     output::Real
@@ -245,13 +265,31 @@ mutable struct LevelType
 end
 
 
-# exported
-abstract type DataSetType end # Supertype of all the different dataset types
-abstract type ContainMassDataSetType <: DataSetType end # Data-sets that contain mass variables
-abstract type HydroPartType <: ContainMassDataSetType end # Data-sets that contain hydro and particle data
+"""
+Abstract Supertype of all the different dataset types
+> HydroPartType <: ContainMassDataSetType <: DataSetType
+"""
+abstract type DataSetType end # exported
 
-# exported
+"""
+Abstract Supertype of all datasets that contain mass variables
+> HydroPartType <: ContainMassDataSetType <: DataSetType
+"""
+abstract type ContainMassDataSetType <: DataSetType end # exported
+
+"""
+Abstract Supertype of data-sets that contain hydro and particle data
+> HydroPartType <: ContainMassDataSetType <: DataSetType
+"""
+abstract type HydroPartType <: ContainMassDataSetType end # exported
+
+
+"""
+Mutable Struct: Contains hydro data and information about the selected simulation
+> HydroDataType <: HydroPartType
+"""
 mutable struct HydroDataType <: HydroPartType
+    # exported
     data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
@@ -281,8 +319,12 @@ end
 #     GravDataType() = new()
 # end
 
-# exported
+"""
+Mutable Struct: Contains particle data and information about the selected simulation
+> PartDataType <: HydroPartType
+"""
 mutable struct PartDataType <: HydroPartType
+#exported
     data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
@@ -296,8 +338,12 @@ mutable struct PartDataType <: HydroPartType
 end
 
 
-# exported
+"""
+Mutable Struct: Contains clump data and information about the selected simulation
+> ClumpDataType <: ContainMassDataSetType
+"""
 mutable struct ClumpDataType <: ContainMassDataSetType
+# exported
     data
     info::InfoType
     boxlen::Float64
@@ -308,13 +354,19 @@ mutable struct ClumpDataType <: ContainMassDataSetType
     ClumpDataType() = new()
 end
 
-# exported
-MaskType = Union{Array{Bool,1},BitArray{1}}
+"""
+Union Type: Mask-array that is of type Bool or BitArray
+> HydroPartType <: ContainMassDataSetType <: DataSetType
+"""
+MaskType = Union{Array{Bool,1},BitArray{1}} # exported
+
 MaskArrayType = Union{ Array{Array{Bool,1},1}, Array{BitArray{1},1} }
 MaskArrayAbstractType = Union{ MaskArrayType, Array{AbstractArray{Bool,1},1} } # used for the combined center_of_mass function
 #HydroPartType = Union{HydroDataType, PartDataType}
 
-
+"""
+Mutable Struct: Contains the output statistics returned by wstat
+"""
 mutable struct WStatType
     mean::Float64
     median::Float64
@@ -325,7 +377,9 @@ mutable struct WStatType
     max::Float64
 end
 
-
+"""
+Mutable Struct: Contains the maps/units returned by the hydro-projection information about the selected simulation
+"""
 mutable struct HydroMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
@@ -345,6 +399,9 @@ mutable struct HydroMapsType
     info::InfoType
 end
 
+"""
+Mutable Struct: Contains the maps/units returned by the particles-projection information about the selected simulation
+"""
 mutable struct PartMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
