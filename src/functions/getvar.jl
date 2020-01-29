@@ -302,8 +302,6 @@ end
 
 
 
-
-
 function getextent( dataobject::DataSetType, unit::Symbol;
                      center::Array{<:Any,1}=[0., 0., 0.],
                      center_units::Symbol=:standard,

@@ -14,16 +14,16 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Many examples and tutorials
 
 
-## Release Notes
-This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
-- Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
-- Create Profiles of quantities and projected data
-- Reader for sinks, gravity, rt, ..
-- Create 1D, 2D histograms (phase plots)
-- More predefined quantities
-- Export data into binary files to use with Paraview (volume rendering)
-- Tutorials to create 360° equirectangular projections
-- ...
+!!! note "Release Notes"
+    This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
+    - Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
+    - Create Profiles of quantities and projected data
+    - Reader for sinks, gravity, rt, ..
+    - Create 1D, 2D histograms (phase plots)
+    - More predefined quantities
+    - Export data into binary files to use with Paraview (volume rendering)
+    - Tutorials to create 360° equirectangular projections
+    - ...
 
 
 
@@ -94,7 +94,7 @@ Now add packages like Mera and PyPlot in the favored version:
 ## Further Notes
 - To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl))
 - The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
-- Mera is tested against the RAMSES versions: =<stable_17_09, stable_18_09, stable_19_10
+- Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
 - The variables from the descriptor-files are currently only read and can be used in a future Mera version
 - For simulations with a uniform grid is the column :level not created to save memory usage
 
