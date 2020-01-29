@@ -1,8 +1,9 @@
 # Home
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
-It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, we intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
+It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
-## Package features
+
+## Package Features
 - Easy to install and update
 - Fast and memory lightweight data reading/saving and handling
 - The data is loaded and processed in a database framework [JuliaDB.jl](https://juliadb.org)
@@ -13,7 +14,20 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Many examples and tutorials
 
 
-## Package installation
+## Release Notes
+This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
+- Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
+- Create Profiles of quantities and projected data
+- Reader for sinks, gravity, rt, ..
+- Create 1D, 2D histograms (phase plots)
+- More predefined quantities
+- Export data into binary files to use with Paraview (volume rendering)
+- Tutorials to create 360° equirectangular projections
+- ...
+
+
+
+## Package Installation
 The package is tested against Julia 1.3 and can be installed with the Julia package manager.
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
 
@@ -26,6 +40,21 @@ Or, equivalently, via the Pkg API in the Jupyter notebook use
 using Pkg
 Pkg.add("Mera")
 ```
+
+Optionally, precompile the downloaded package and all its dependencies:
+
+```julia
+pkg> precompile
+```
+
+In the Jupyter notebook
+
+```julia
+using Pkg
+Pkg.precompile()
+```
+
+
 
 ## Updates
 Subscribe to the mailing list for updates [here](https://manuelbehrendt.com/mera.html) or watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
@@ -41,19 +70,33 @@ using Pkg
 Pkg.update("Mera")
 ```
 
+
 ## Reproducibility
-Projects...
+Reproducibility is an essential requirement of the scientific process. Therefore, I recommend working with environments.
+Create independent projects that contain their list of used package dependencies and their versions.
+The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared. For more information see [Julia environments](https://julialang.github.io/Pkg.jl/v1.3/environments/).
+In order to create a new project "activate" your working directory:
 
-## RAMSES version
+```julia
+shell> cd MyProject
+/Users/you/MyProject
+
+(v1.3) pkg> activate .
+```
+
+Now add packages like Mera and PyPlot in the favored version:
+
+```julia
+(MyProject) pkg> add Package
+```
 
 
-## Jupyter notebooks
-To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl))
-
-
-## Tutorials
-The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials/version_1) as Jupyter notebooks.
-
+## Further Notes
+- To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl))
+- The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
+- Mera is tested against the RAMSES versions: =<stable_17_09, stable_18_09, stable_19_10
+- The variables from the descriptor-files are currently only read and can be used in a future Mera version
+- For simulations with a uniform grid is the column :level not created to save memory usage
 
 
 ## Why Julia?
@@ -66,7 +109,7 @@ Further features:
 - Multiple dispatch
 - Build-in parallelism
 - Metaprogramming
-- Directly call C, Fortran and Python (e.g. Matplotlib), R libraries
+- Directly call C, Fortran, Python (e.g. Matplotlib), R libraries, ...
 ….
 
 
@@ -75,10 +118,16 @@ Further features:
 - [Learning Julia](https://julialang.org/learning/)
 - [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
 - [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
+- [Free book ThinkJulia](https://benlauwens.github.io/ThinkJulia.jl/latest/book.html)
+- [Julia forum JuliaDiscourse](https://discourse.julialang.org)
+- [Courses on YouTube](https://www.youtube.com/user/JuliaLanguage)
 - Database framework used in Mera: [JuliaDB.jl](https://juliadb.org)
 - Interesting Packages: [JuliaAstro.jl](http://juliaastro.github.io), [JuliaObserver.com](https://juliaobserver.com)
 - Use Matplotlib in Julia: [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl)
 - Call Python packages/functions from Julia: [PyCall.jl](https://github.com/JuliaPy/PyCall.jl)
+- Visual Studio Code based Julia IDE [julia-vscode](https://github.com/julia-vscode/julia-vscode)
+- Atom based Julia IDE [Juno](https://junolab.org)
+
 
 ## Contribute
 New ideas, feature requests or bug reports are very welcome.
