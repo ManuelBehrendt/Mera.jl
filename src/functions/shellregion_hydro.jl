@@ -22,45 +22,59 @@ function shellregioncylinder(dataobject::HydroDataType;
 
     boxlen = dataobject.boxlen
     scale = dataobject.scale
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
     ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift, height_shift = prep_cylindrical_shellranges(dataobject.info, center, radius_in, radius_out, height, range_unit, verbose)
 
 
     if inverse == false
-        sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                            >= (cell_shift(p.level, radius_in_shift,cell))  &&
+        if isamr
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
+                                >= (cell_shift(p.level, radius_in_shift,cell))  &&
 
-                              get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                            <= (cell_shift(p.level, radius_out_shift,cell))  &&
+                                  get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
+                                <= (cell_shift(p.level, radius_out_shift,cell))  &&
 
-                            get_height_cylinder(p.cz, p.level, cz_shift)
-                            <= (cell_shift(p.level, height_shift,cell)),
-                            dataobject.data)
-        #=
-        sub_data = filter(p->ceil(Int,
-                            sqrt( (p.cx - cell_shift(p.level, cx_shift))^2 +
-                            (p.cy - cell_shift(p.level, cy_shift) )^2) )
-                            >= (cell_shift(p.level, radius_in_shift))  &&
+                                get_height_cylinder(p.cz, p.level, cz_shift)
+                                <= (cell_shift(p.level, height_shift,cell)),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
+                                >= (cell_shift(lmax, radius_in_shift,cell))  &&
 
-                            ceil(Int,
-                            sqrt( (p.cx - cell_shift(p.level, cx_shift))^2 +
-                            (p.cy - cell_shift(p.level, cy_shift) )^2) )
-                            <= (cell_shift(p.level, radius_out_shift))  &&
+                                  get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
+                                <= (cell_shift(lmax, radius_out_shift,cell))  &&
 
-                            abs(p.cz - cell_shift(p.level, cz_shift)) <= (cell_shift(p.level, height_shift)),
-                            dataobject.data)
-        =#
+                                get_height_cylinder(p.cz, lmax, cz_shift)
+                                <= (cell_shift(lmax, height_shift,cell)),
+                                dataobject.data)
+        end
+
     elseif inverse == true
-        sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                            < (cell_shift(p.level, radius_in_shift,cell))  ||
+        if isamr
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
+                                < (cell_shift(p.level, radius_in_shift,cell))  ||
 
-                              get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                            > (cell_shift(p.level, radius_out_shift,cell))  ||
+                                  get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
+                                > (cell_shift(p.level, radius_out_shift,cell))  ||
 
-                            get_height_cylinder(p.cz, p.level, cz_shift)
-                            > (cell_shift(p.level, height_shift,cell)),
-                            dataobject.data)
+                                get_height_cylinder(p.cz, p.level, cz_shift)
+                                > (cell_shift(p.level, height_shift,cell)),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
+                                < (cell_shift(lmax, radius_in_shift,cell))  ||
+
+                                  get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
+                                > (cell_shift(lmax, radius_out_shift,cell))  ||
+
+                                get_height_cylinder(p.cz, lmax, cz_shift)
+                                > (cell_shift(lmax, height_shift,cell)),
+                                dataobject.data)
+        end
+
         ranges = dataobject.ranges
 
     end
@@ -107,25 +121,46 @@ function shellregionsphere(dataobject::HydroDataType;
 
     boxlen = dataobject.boxlen
     scale = dataobject.scale
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
     ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift = prep_spherical_shellranges(dataobject.info, center, radius_in, radius_out, range_unit, verbose)
 
 
     if inverse == false
-        sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
-                            >= cell_shift(p.level, radius_in_shift, cell) &&
+        if isamr
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
+                                >= cell_shift(p.level, radius_in_shift, cell) &&
 
-                            get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
-                            <= cell_shift(p.level, radius_out_shift,cell),
-                            dataobject.data)
+                                get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
+                                <= cell_shift(p.level, radius_out_shift,cell),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
+                                >= cell_shift(lmax, radius_in_shift, cell) &&
+
+                                get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
+                                <= cell_shift(lmax, radius_out_shift,cell),
+                                dataobject.data)
+        end
+
     elseif inverse == true
-        sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
-                            < cell_shift(p.level, radius_in_shift, cell) ||
+        if isamr
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
+                                < cell_shift(p.level, radius_in_shift, cell) ||
 
-                            get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
-                            > cell_shift(p.level, radius_out_shift, cell),
-                            dataobject.data)
+                                get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
+                                > cell_shift(p.level, radius_out_shift, cell),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
+                                < cell_shift(lmax, radius_in_shift, cell) ||
+
+                                get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
+                                > cell_shift(lmax, radius_out_shift, cell),
+                                dataobject.data)
+        end
         ranges = dataobject.ranges
 
     end

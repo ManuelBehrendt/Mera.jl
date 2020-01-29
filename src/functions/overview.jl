@@ -300,14 +300,17 @@ return a JuliaDB table
 ```
 """
 function dataoverview(dataobject::HydroDataType)
-# todo: check for uniform grid
 
     nvarh = dataobject.info.nvarh
+    lmin = dataobject.lmin
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     cells_tot = 0
     cells_masstot = 0
     density_var = :rho
     skip_vars = [:cpu, :level, :cx, :cy, :cz]
+
     if dataobject.info.descriptor.usehydro == true
         if haskey(dataobject.used_descriptors, 1)
             density_var = dataobject.used_descriptors[1]
@@ -330,11 +333,16 @@ function dataoverview(dataobject::HydroDataType)
 
     cells = Array{Any,2}(undef, (dataobject.lmax - dataobject.lmin + 1,length(names_constr) ) )
     println("Calculating...")
-    @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
+    @showprogress 1 "" for ilevel=lmin:lmax
         cell_iterator = 1
-        filtered_level = filter(p->p.level==ilevel, dataobject.data )
 
-        cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = ilevel
+        if isamr
+            filtered_level = filter(p->p.level==ilevel, dataobject.data )
+        else # if uniform grid
+            filtered_level = dataobject.data
+        end
+
+        cells[Int(ilevel-lmin+1),cell_iterator] = ilevel
         cell_iterator= cell_iterator + 1
 
         for ifn in fn
@@ -343,7 +351,7 @@ function dataoverview(dataobject::HydroDataType)
                     cells_msum = sum(select(filtered_level , density_var)) * (dataobject.boxlen / 2^ilevel)^3
                     #todo: introduce humanize for mass
                     #cells_masstot = cells_masstot + cells_msum
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = cells_msum
+                    cells[Int(ilevel-lmin+1),cell_iterator] = cells_msum
                     cell_iterator= cell_iterator + 1
                     if length(select(filtered_level, density_var)) != 0
                         rho_minmax = reduce((min, max), filtered_level, select=density_var)
@@ -353,9 +361,9 @@ function dataoverview(dataobject::HydroDataType)
                         rhomin= 0.
                         rhomax= 0.
                     end
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = rhomin
+                    cells[Int(ilevel-lmin+1),cell_iterator] = rhomin
                     cell_iterator= cell_iterator + 1
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = rhomax
+                    cells[Int(ilevel-lmin+1),cell_iterator] = rhomax
                     cell_iterator= cell_iterator + 1
 
                 else
@@ -367,9 +375,9 @@ function dataoverview(dataobject::HydroDataType)
                         valuemin = 0.
                         valuemax = 0.
                     end
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = valuemin
+                    cells[Int(ilevel-lmin+1),cell_iterator] = valuemin
                     cell_iterator= cell_iterator + 1
-                    cells[Int(ilevel-dataobject.lmin+1),cell_iterator] = valuemax
+                    cells[Int(ilevel-lmin+1),cell_iterator] = valuemax
                     cell_iterator= cell_iterator + 1
                 end
             end
@@ -422,7 +430,10 @@ return a JuliaDB table
 ```
 """
 function dataoverview(dataobject::PartDataType)
-# todo: check for uniform grid
+
+    lmin = dataobject.lmin
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     parts_tot = 0
     parts_masstot = 0
@@ -441,11 +452,16 @@ function dataoverview(dataobject::PartDataType)
 
     parts = Array{Any,2}(undef, (dataobject.lmax - dataobject.lmin + 1,length(names_constr) ) )
     #@showprogress 1 "Searching..."
-    for ilevel=dataobject.lmin:dataobject.lmax
+    for ilevel=lmin:lmax
         part_iterator = 1
-        filtered_level = filter(p->p.level==ilevel, dataobject.data )
 
-        parts[Int(ilevel-dataobject.lmin+1),part_iterator] = ilevel
+        if isamr
+            filtered_level = filter(p->p.level==ilevel, dataobject.data )
+        else # if uniform grid
+            filtered_level = dataobject.data
+        end
+
+        parts[Int(ilevel-lmin+1),part_iterator] = ilevel
         part_iterator= part_iterator + 1
 
         for ifn in fn
@@ -458,9 +474,9 @@ function dataoverview(dataobject::PartDataType)
                     valuemin = 0.
                     valuemax = 0.
                 end
-            parts[Int(ilevel-dataobject.lmin+1),part_iterator] = valuemin
+            parts[Int(ilevel-lmin+1),part_iterator] = valuemin
             part_iterator= part_iterator + 1
-            parts[Int(ilevel-dataobject.lmin+1),part_iterator] = valuemax
+            parts[Int(ilevel-lmin+1),part_iterator] = valuemax
             part_iterator= part_iterator + 1
             end
         end

@@ -250,6 +250,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
     lmax_projected = lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     selected_vars = vars #unique(vars)
 
@@ -410,7 +411,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     @showprogress 1 "" for level = lmin:simlmax
 
         first_time_level = fill(1, length(selected_vars) )
-        level_data = filter(row->row.level == level, dataobject.data);
+        if isamr
+            level_data = filter(row->row.level == level, dataobject.data)
+        else # for uniform grid
+            level_data = dataobject.data
+        end
 
         # rebin data on the used level grid
         rl1 = floor(Int, ranges[1] * (2^level ))  + 1

@@ -13,6 +13,8 @@ function subregioncuboid(dataobject::HydroDataType;
     printtime("", verbose)
 
     boxlen = dataobject.boxlen
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
@@ -24,37 +26,73 @@ function subregioncuboid(dataobject::HydroDataType;
        zrange == [dataobject.ranges[5], dataobject.ranges[6]])
 
         if inverse == false
+            if isamr
+                if cell == true
+                    sub_data = filter(p->   p.cx >=floor(Int, 2^p.level * xmin) &&
+                                            p.cx <=ceil(Int,  2^p.level * xmax) &&
+                                            p.cy >=floor(Int, 2^p.level * ymin) &&
+                                            p.cy <=ceil(Int,  2^p.level * ymax) &&
+                                            p.cz >=floor(Int, 2^p.level * zmin) &&
+                                            p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
+                else
+                    sub_data = filter(p->   p.cx >=( 2^p.level * xmin) &&
+                                            p.cx <=( 2^p.level * xmax) &&
+                                            p.cy >=( 2^p.level * ymin) &&
+                                            p.cy <=( 2^p.level * ymax) &&
+                                            p.cz >=( 2^p.level * zmin) &&
+                                            p.cz <=( 2^p.level * zmax), dataobject.data)
+                end
+            else # for uniform grid
+                if cell == true
+                    sub_data = filter(p->   p.cx >=floor(Int, 2^lmax * xmin) &&
+                                            p.cx <=ceil(Int,  2^lmax * xmax) &&
+                                            p.cy >=floor(Int, 2^lmax * ymin) &&
+                                            p.cy <=ceil(Int,  2^lmax * ymax) &&
+                                            p.cz >=floor(Int, 2^lmax * zmin) &&
+                                            p.cz <=ceil(Int,  2^lmax * zmax), dataobject.data)
+                else
+                    sub_data = filter(p->   p.cx >=( 2^lmax * xmin) &&
+                                            p.cx <=( 2^lmax * xmax) &&
+                                            p.cy >=( 2^lmax * ymin) &&
+                                            p.cy <=( 2^lmax * ymax) &&
+                                            p.cz >=( 2^lmax * zmin) &&
+                                            p.cz <=( 2^lmax * zmax), dataobject.data)
+                end
 
-            if cell == true
-                sub_data = filter(p->   p.cx >=floor(Int, 2^p.level * xmin) &&
-                                        p.cx <=ceil(Int,  2^p.level * xmax) &&
-                                        p.cy >=floor(Int, 2^p.level * ymin) &&
-                                        p.cy <=ceil(Int,  2^p.level * ymax) &&
-                                        p.cz >=floor(Int, 2^p.level * zmin) &&
-                                        p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
-            else
-                sub_data = filter(p->   p.cx >=( 2^p.level * xmin) &&
-                                        p.cx <=( 2^p.level * xmax) &&
-                                        p.cy >=( 2^p.level * ymin) &&
-                                        p.cy <=( 2^p.level * ymax) &&
-                                        p.cz >=( 2^p.level * zmin) &&
-                                        p.cz <=( 2^p.level * zmax), dataobject.data)
             end
         elseif inverse == true
             if cell == true
-                sub_data = filter(p->   p.cx <floor(Int, 2^p.level * xmin) ||
-                                        p.cx >ceil(Int,  2^p.level * xmax) ||
-                                        p.cy <floor(Int, 2^p.level * ymin) ||
-                                        p.cy >ceil(Int,  2^p.level * ymax) ||
-                                        p.cz <floor(Int, 2^p.level * zmin) ||
-                                        p.cz >ceil(Int,  2^p.level * zmax) , dataobject.data)
+                if isamr
+                    sub_data = filter(p->   p.cx <floor(Int, 2^p.level * xmin) ||
+                                            p.cx >ceil(Int,  2^p.level * xmax) ||
+                                            p.cy <floor(Int, 2^p.level * ymin) ||
+                                            p.cy >ceil(Int,  2^p.level * ymax) ||
+                                            p.cz <floor(Int, 2^p.level * zmin) ||
+                                            p.cz >ceil(Int,  2^p.level * zmax) , dataobject.data)
+                else # for uniform grid
+                    sub_data = filter(p->   p.cx <floor(Int, 2^lmax * xmin) ||
+                                            p.cx >ceil(Int,  2^lmax * xmax) ||
+                                            p.cy <floor(Int, 2^lmax * ymin) ||
+                                            p.cy >ceil(Int,  2^lmax * ymax) ||
+                                            p.cz <floor(Int, 2^lmax * zmin) ||
+                                            p.cz >ceil(Int,  2^lmax * zmax) , dataobject.data)
+                end
             else
-                sub_data = filter(p->   p.cx <( 2^p.level * xmin) ||
-                                        p.cx >( 2^p.level * xmax) ||
-                                        p.cy <( 2^p.level * ymin) ||
-                                        p.cy >( 2^p.level * ymax) ||
-                                        p.cz <( 2^p.level * zmin) ||
-                                        p.cz >( 2^p.level * zmax), dataobject.data)
+                if isamr
+                    sub_data = filter(p->   p.cx <( 2^p.level * xmin) ||
+                                            p.cx >( 2^p.level * xmax) ||
+                                            p.cy <( 2^p.level * ymin) ||
+                                            p.cy >( 2^p.level * ymax) ||
+                                            p.cz <( 2^p.level * zmin) ||
+                                            p.cz >( 2^p.level * zmax), dataobject.data)
+                else # for uniform grid
+                    sub_data = filter(p->   p.cx <( 2^lmax * xmin) ||
+                                            p.cx >( 2^lmax * xmax) ||
+                                            p.cy <( 2^lmax * ymin) ||
+                                            p.cy >( 2^lmax * ymax) ||
+                                            p.cz <( 2^lmax * zmin) ||
+                                            p.cz >( 2^lmax * zmax), dataobject.data)
+                end
             end
 
                 ranges = dataobject.ranges
@@ -133,6 +171,8 @@ function subregioncylinder(dataobject::HydroDataType;
 
     boxlen = dataobject.boxlen
     scale = dataobject.scale
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
     ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
@@ -140,49 +180,48 @@ function subregioncylinder(dataobject::HydroDataType;
 
 
     if inverse == false
+        if isamr
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
+                                <= (cell_shift(lmax, radius_shift,cell))  &&
 
-        sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                            <= (cell_shift(p.level, radius_shift,cell))  &&
+                                get_height_cylinder(p.cz, p.level, cz_shift)
+                                <= (cell_shift(lmax, height_shift,cell)),
 
-                            get_height_cylinder(p.cz, p.level, cz_shift)
-                            <= (cell_shift(p.level, height_shift,cell)),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
+                                <= (cell_shift(lmax, radius_shift,cell))  &&
 
-                            dataobject.data)# &&
-                            #=
-        sub_data = filter(p->ceil(Int,
-                            sqrt( (p.cx - cell_shift(p.level, cx_shift))^2 +
-                            (p.cy - cell_shift(p.level, cy_shift) )^2) )
-                            <= (cell_shift(p.level, radius_shift))  &&
-                            abs(p.cz - cell_shift(p.level, cz_shift)) <= (cell_shift(p.level, height_shift)),
-                            dataobject.data)# &&
-                            #abs(p.cz) <=Int(round( 2^p.level * zmax)+1) , dataobject.data)
-                            =#
+                                get_height_cylinder(p.cz, lmax, cz_shift)
+                                <= (cell_shift(lmax, height_shift,cell)),
+
+                                dataobject.data)
+        end
+
     elseif inverse == true
-        sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                            > (cell_shift(p.level, radius_shift,cell))  ||
+        if isamr
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
+                                > (cell_shift(p.level, radius_shift,cell))  ||
 
-                            get_height_cylinder(p.cz, p.level, cz_shift)
-                            > (cell_shift(p.level, height_shift,cell)),
+                                get_height_cylinder(p.cz, p.level, cz_shift)
+                                > (cell_shift(p.level, height_shift,cell)),
 
-                            dataobject.data)
-        #=
-        sub_data = filter(p->ceil(Int,
-                            sqrt( (p.cx - cell_shift(p.level, cx_shift))^2 +
-                            (p.cy - cell_shift(p.level, cy_shift) )^2) )
-                            > (cell_shift(p.level, radius_shift))  ||
-                            abs(p.cz - cell_shift(p.level, cz_shift)) > (cell_shift(p.level, height_shift)),
-                            dataobject.data)
-        =#
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
+                                > (cell_shift(lmax, radius_shift,cell))  ||
+
+                                get_height_cylinder(p.cz, lmax, cz_shift)
+                                > (cell_shift(lmax, height_shift,cell)),
+
+                                dataobject.data)
+        end
+
         ranges = dataobject.ranges
 
     end
         printtablememory(sub_data, verbose)
-        #=
-        if verbose
-            arg_value, arg_unit = memory_used(sub_data,false)
-            println("[Mera]: Memory used for hydro sub-data table :", arg_value, " ", arg_unit)
-        end
-        =#
+
 
         hydrodata = HydroDataType()
         hydrodata.data = sub_data
@@ -231,6 +270,9 @@ function subregionsphere(dataobject::HydroDataType;
 
     boxlen = dataobject.boxlen
     scale = dataobject.scale
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
+
 
     # convert given ranges and print overview on screen
     height = 0.
@@ -238,23 +280,30 @@ function subregionsphere(dataobject::HydroDataType;
 
 
     if inverse == false
-        sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
+        if isamr
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
 
-                            <= cell_shift(p.level, radius_shift, cell),
-                            dataobject.data)
+                                <= cell_shift(p.level, radius_shift, cell),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
+
+                                <= cell_shift(lmax, radius_shift, cell),
+                                dataobject.data)
+        end
     elseif inverse == true
-        sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
+        if isamr
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
 
-                            > cell_shift(p.level, radius_shift, cell),
-                            dataobject.data)
-        #=
-        sub_data = filter(p->ceil(Int,
-                            sqrt( (p.cx - cell_shift(p.level, cx_shift))^2 +
-                            (p.cy - cell_shift(p.level, cy_shift) )^2 +
-                            (p.cz - cell_shift(p.level, cz_shift) )^2 ))
-                            > cell_shift(p.level, radius_shift, cell),
-                            dataobject.data)
-        =#
+                                > cell_shift(p.level, radius_shift, cell),
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
+
+                                > cell_shift(lmax, radius_shift, cell),
+                                dataobject.data)
+        end
+
         ranges = dataobject.ranges
 
     end

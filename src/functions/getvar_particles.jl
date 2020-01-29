@@ -189,8 +189,3 @@ function get_data(dataobject::PartDataType,
     end
 
 end
-
-
-function getmass(dataobject::PartDataType;)
-    return getvar(dataobject, :mass)
-end

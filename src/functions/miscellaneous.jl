@@ -353,18 +353,18 @@ function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::Part
     return partdata
 end
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::GravDataType)
-    gravitydata = GravDataType()
-    gravitydata.data = data
-    gravitydata.info = dataobject.info
-    gravitydata.lmin = dataobject.lmin
-    gravitydata.lmax = dataobject.lmax
-    gravitydata.boxlen = dataobject.boxlen
-    gravitydata.ranges = dataobject.ranges
-    gravitydata.selected_gravvars = dataobject.selected_gravvars
-    gravitydata.scale = dataobject.scale
-    return gravitydata
-end
+# function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::GravDataType)
+#     gravitydata = GravDataType()
+#     gravitydata.data = data
+#     gravitydata.info = dataobject.info
+#     gravitydata.lmin = dataobject.lmin
+#     gravitydata.lmax = dataobject.lmax
+#     gravitydata.boxlen = dataobject.boxlen
+#     gravitydata.ranges = dataobject.ranges
+#     gravitydata.selected_gravvars = dataobject.selected_gravvars
+#     gravitydata.scale = dataobject.scale
+#     return gravitydata
+# end
 
 function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::ClumpDataType)
     clumpdata = ClumpDataType()
