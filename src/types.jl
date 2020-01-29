@@ -268,17 +268,17 @@ end
 
 
 # exported
-mutable struct GravDataType <: DataSetType
-    data
-    info::InfoType
-    lmin::Int
-    lmax::Int
-    boxlen::Float64
-    ranges::Array{Float64,1}
-    selected_gravvars::Array{Int,1}
-    scale::ScalesType
-    GravDataType() = new()
-end
+# mutable struct GravDataType <: DataSetType
+#     data
+#     info::InfoType
+#     lmin::Int
+#     lmax::Int
+#     boxlen::Float64
+#     ranges::Array{Float64,1}
+#     selected_gravvars::Array{Int,1}
+#     scale::ScalesType
+#     GravDataType() = new()
+# end
 
 # exported
 mutable struct PartDataType <: HydroPartType

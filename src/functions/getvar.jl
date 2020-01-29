@@ -247,7 +247,7 @@ function getmass(dataobject::HydroDataType;)
     if isamr
         return select( dataobject.data, (:rho, :level)=>p->p.rho * (boxlen / 2^p.level)^3 )
     else # if uniform grid
-        return select( dataobject.data, (:rho)=>p->p.rho * (boxlen / 2^lmax)^3 )
+        return select( dataobject.data, :rho=>p->p * (boxlen / 2^lmax)^3 )
     end
 end
 

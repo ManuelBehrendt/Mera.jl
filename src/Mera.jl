@@ -89,7 +89,7 @@ export
     ContainMassDataSetType,
     HydroPartType,
     HydroDataType,
-    GravDataType,
+    #GravDataType,
     PartDataType,
     ClumpDataType,
 
