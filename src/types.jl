@@ -171,8 +171,9 @@ mutable struct DescriptorType
     DescriptorType() = new()
 end
 
-# exported
+
 mutable struct InfoType
+    # exported
     output::Real
     path::String
     fnames::FileNamesType
