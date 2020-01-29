@@ -1,7 +1,6 @@
 ## Types
 ```@index
 Modules = [Mera]
-Public = false
 Order = [:type]
 ```
 
@@ -12,7 +11,14 @@ Private = false
 Order = [:function]
 ```
 
-## Documentation
+## Documentation Types
 ```@autodocs
   Modules = [Mera]
+  Order = [:type]
+```
+
+## Documentation Functions
+```@autodocs
+  Modules = [Mera]
+  Order = [:function]
 ```
