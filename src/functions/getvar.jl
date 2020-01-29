@@ -251,6 +251,10 @@ function getmass(dataobject::HydroDataType;)
     end
 end
 
+function getmass(dataobject::PartDataType;)
+    return getvar(dataobject, :mass)
+end
+
 
 function getmass(dataobject::ClumpDataType;)
     return getvar(dataobject, :mass)
