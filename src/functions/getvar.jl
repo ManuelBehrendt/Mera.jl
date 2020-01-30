@@ -327,20 +327,20 @@ function getextent( dataobject::DataSetType;
 
     center = prepboxcenter(dataobject.info, center_units, center) # code units
     center = center ./ dataobject.boxlen
-    #selected_units = 1.
+    #selected_unit = 1.
     # if center_units != :standard
-    #     selected_units = getunit(dataobject.info, center_units)
-    #     center = center ./ dataobject.boxlen .* selected_units
+    #     selected_unit = getunit(dataobject.info, center_units)
+    #     center = center ./ dataobject.boxlen .* selected_unit
     # end
 
 
-    selected_units = getunit(dataobject.info, unit)
-    xmin = ( range[1] - center[1] ) * boxlen * selected_units
-    xmax = ( range[2] - center[1] ) * boxlen * selected_units
-    ymin = ( range[3] - center[2] ) * boxlen * selected_units
-    ymax = ( range[4] - center[2] ) * boxlen * selected_units
-    zmin = ( range[5] - center[3] ) * boxlen * selected_units
-    zmax = ( range[6] - center[3] ) * boxlen * selected_units
+    selected_unit = getunit(dataobject.info, unit)
+    xmin = ( range[1] - center[1] ) * boxlen * selected_unit
+    xmax = ( range[2] - center[1] ) * boxlen * selected_unit
+    ymin = ( range[3] - center[2] ) * boxlen * selected_unit
+    ymax = ( range[4] - center[2] ) * boxlen * selected_unit
+    zmin = ( range[5] - center[3] ) * boxlen * selected_unit
+    zmax = ( range[6] - center[3] ) * boxlen * selected_unit
 
 
     if direction == :y

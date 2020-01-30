@@ -272,7 +272,7 @@ function skiplines(file, nlines::Int)
 end
 
 
-# todo: test
+
 function getunit(dataobject, quantity::Symbol, vars::Array{Symbol,1}, units::Array{Symbol,1}; uname::Bool=false)
     idx = findall(x->x==quantity, vars)
     if length(idx) >= 1
@@ -321,8 +321,7 @@ end
 
 
 
-#todo test all typess
-#todo adapt selected vars
+
 function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::HydroDataType)
     hydrodata = HydroDataType()
     hydrodata.data = data

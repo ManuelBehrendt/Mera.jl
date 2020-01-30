@@ -16,11 +16,11 @@ function prepranges(    dataobject::InfoType,
     xrange = zeros(Float64,2)
     yrange = zeros(Float64,2)
     zrange = zeros(Float64,2)
-    selected_units = 1. # :standard
+    selected_unit = 1. # :standard
     conv = 1. # :standard, variable used to convert to standard units
     if range_unit != :standard
-        selected_units = getunit(dataobject, range_unit)
-        conv = dataobject.boxlen * selected_units
+        selected_unit = getunit(dataobject, range_unit)
+        conv = dataobject.boxlen * selected_unit
     end
 
 
@@ -144,7 +144,7 @@ function prepranges(    dataobject::InfoType,
 
     center = prepboxcenter(dataobject, range_unit, center)
 
-    selected_units = 1.
+    selected_unit = 1.
     if range_unit == :standard
         xmin = -radius + center[1]
         xmax =  radius + center[1]
@@ -161,25 +161,25 @@ function prepranges(    dataobject::InfoType,
         #todo
 
     else
-        selected_units = getunit(dataobject, range_unit)
-        xmin = (-radius + center[1]) * selected_units /dataobject.boxlen
-        xmax = ( radius + center[1]) * selected_units /dataobject.boxlen
-        ymin = (-radius + center[2]) * selected_units /dataobject.boxlen
-        ymax = ( radius + center[2]) * selected_units /dataobject.boxlen
+        selected_unit = getunit(dataobject, range_unit)
+        xmin = (-radius + center[1]) * selected_unit /dataobject.boxlen
+        xmax = ( radius + center[1]) * selected_unit /dataobject.boxlen
+        ymin = (-radius + center[2]) * selected_unit /dataobject.boxlen
+        ymax = ( radius + center[2]) * selected_unit /dataobject.boxlen
         if height != 0.
-            zmin = ( -height + center[3]) * selected_units /dataobject.boxlen
-            zmax = (  height + center[3]) * selected_units /dataobject.boxlen
+            zmin = ( -height + center[3]) * selected_unit /dataobject.boxlen
+            zmax = (  height + center[3]) * selected_unit /dataobject.boxlen
         else
-            zmin = ( -radius + center[3]) * selected_units /dataobject.boxlen
-            zmax = (  radius + center[3]) * selected_units /dataobject.boxlen
+            zmin = ( -radius + center[3]) * selected_unit /dataobject.boxlen
+            zmax = (  radius + center[3]) * selected_unit /dataobject.boxlen
         end
         # given center relative to the data range in units: cell centers
-        cx_shift = center[1] * selected_units /dataobject.boxlen
-        cy_shift = center[2] * selected_units /dataobject.boxlen
-        cz_shift = center[3] * selected_units /dataobject.boxlen
-        radius_shift = radius * selected_units /dataobject.boxlen
-        if height != 0. height_shift = height * selected_units /dataobject.boxlen end
-        center  =  center / (dataobject.boxlen * selected_units )
+        cx_shift = center[1] * selected_unit /dataobject.boxlen
+        cy_shift = center[2] * selected_unit /dataobject.boxlen
+        cz_shift = center[3] * selected_unit /dataobject.boxlen
+        radius_shift = radius * selected_unit /dataobject.boxlen
+        if height != 0. height_shift = height * selected_unit /dataobject.boxlen end
+        center  =  center / (dataobject.boxlen * selected_unit )
     end
 
     if verbose
@@ -255,7 +255,7 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
 
     center = prepboxcenter(dataobject, range_unit, center)
 
-    selected_units = 1.
+    selected_unit = 1.
     if range_unit == :standard
         xmin = -radius_out + center[1]
         xmax =  radius_out + center[1]
@@ -268,22 +268,22 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
         #todo
 
     else
-        selected_units = getunit(dataobject, range_unit)
-        xmin = (-radius_out + center[1]) * selected_units /dataobject.boxlen
-        xmax = ( radius_out + center[1]) * selected_units /dataobject.boxlen
-        ymin = (-radius_out + center[2]) * selected_units /dataobject.boxlen
-        ymax = ( radius_out + center[2]) * selected_units /dataobject.boxlen
-        zmin = ( -height + center[3]) * selected_units /dataobject.boxlen
-        zmax = (  height + center[3]) * selected_units /dataobject.boxlen
+        selected_unit = getunit(dataobject, range_unit)
+        xmin = (-radius_out + center[1]) * selected_unit /dataobject.boxlen
+        xmax = ( radius_out + center[1]) * selected_unit /dataobject.boxlen
+        ymin = (-radius_out + center[2]) * selected_unit /dataobject.boxlen
+        ymax = ( radius_out + center[2]) * selected_unit /dataobject.boxlen
+        zmin = ( -height + center[3]) * selected_unit /dataobject.boxlen
+        zmax = (  height + center[3]) * selected_unit /dataobject.boxlen
 
         # given center relative to the data range in units: cell centers
-        cx_shift = center[1] * selected_units /dataobject.boxlen
-        cy_shift = center[2] * selected_units /dataobject.boxlen
-        cz_shift = center[3] * selected_units /dataobject.boxlen
-        radius_in_shift = radius_in * selected_units /dataobject.boxlen
-        radius_out_shift = radius_out * selected_units /dataobject.boxlen
-        height_shift = height * selected_units /dataobject.boxlen
-        center  =  center / (dataobject.boxlen * selected_units )
+        cx_shift = center[1] * selected_unit /dataobject.boxlen
+        cy_shift = center[2] * selected_unit /dataobject.boxlen
+        cz_shift = center[3] * selected_unit /dataobject.boxlen
+        radius_in_shift = radius_in * selected_unit /dataobject.boxlen
+        radius_out_shift = radius_out * selected_unit /dataobject.boxlen
+        height_shift = height * selected_unit /dataobject.boxlen
+        center  =  center / (dataobject.boxlen * selected_unit )
     end
 
     if verbose
@@ -361,7 +361,7 @@ function prep_spherical_shellranges(    dataobject::InfoType,
 
     center = prepboxcenter(dataobject, range_unit, center)
 
-    selected_units = 1.
+    selected_unit = 1.
     if range_unit == :standard
         xmin = -radius_out + center[1]
         xmax =  radius_out + center[1]
@@ -374,22 +374,22 @@ function prep_spherical_shellranges(    dataobject::InfoType,
         #todo
 
     else
-        selected_units = getunit(dataobject, range_unit)
-        xmin = (-radius_out + center[1]) * selected_units /dataobject.boxlen
-        xmax = ( radius_out + center[1]) * selected_units /dataobject.boxlen
-        ymin = (-radius_out + center[2]) * selected_units /dataobject.boxlen
-        ymax = ( radius_out + center[2]) * selected_units /dataobject.boxlen
-        zmin = ( -radius_out + center[3]) * selected_units /dataobject.boxlen
-        zmax = (  radius_out + center[3]) * selected_units /dataobject.boxlen
+        selected_unit = getunit(dataobject, range_unit)
+        xmin = (-radius_out + center[1]) * selected_unit /dataobject.boxlen
+        xmax = ( radius_out + center[1]) * selected_unit /dataobject.boxlen
+        ymin = (-radius_out + center[2]) * selected_unit /dataobject.boxlen
+        ymax = ( radius_out + center[2]) * selected_unit /dataobject.boxlen
+        zmin = ( -radius_out + center[3]) * selected_unit /dataobject.boxlen
+        zmax = (  radius_out + center[3]) * selected_unit /dataobject.boxlen
 
         # given center relative to the data range in units: cell centers
-        cx_shift = center[1] * selected_units /dataobject.boxlen
-        cy_shift = center[2] * selected_units /dataobject.boxlen
-        cz_shift = center[3] * selected_units /dataobject.boxlen
-        radius_in_shift = radius_in * selected_units /dataobject.boxlen
-        radius_out_shift = radius_out * selected_units /dataobject.boxlen
+        cx_shift = center[1] * selected_unit /dataobject.boxlen
+        cy_shift = center[2] * selected_unit /dataobject.boxlen
+        cz_shift = center[3] * selected_unit /dataobject.boxlen
+        radius_in_shift = radius_in * selected_unit /dataobject.boxlen
+        radius_out_shift = radius_out * selected_unit /dataobject.boxlen
 
-        center  =  center / (dataobject.boxlen * selected_units )
+        center  =  center / (dataobject.boxlen * selected_unit )
     end
 
     if verbose
@@ -449,22 +449,22 @@ end
 
 function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<:Any,1})
 
-    selected_units = 1.
+    selected_unit = 1.
     if range_unit != :standard
-        selected_units = getunit(dataobject, range_unit)
+        selected_unit = getunit(dataobject, range_unit)
     end
 
     # check for :bc, :boxcenter
     Ncenter = length(center)
     if Ncenter  == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = dataobject.boxlen / 2. * selected_units # use range_unit
+            bc = dataobject.boxlen / 2. * selected_unit # use range_unit
             center = [bc, bc, bc]
         end
     else
         for i = 1:Ncenter
             if center[i] == :bc || center[i] == :boxcenter
-                bc = dataobject.boxlen / 2. * selected_units # use range_unit
+                bc = dataobject.boxlen / 2. * selected_unit # use range_unit
                 center[i] = bc
             end
         end

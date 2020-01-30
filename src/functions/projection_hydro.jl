@@ -299,8 +299,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
     if data_center_units != :standard
-        selected_units = getunit(dataobject.info, data_center_units)
-        data_center = data_center ./ dataobject.boxlen .* selected_units
+        selected_unit = getunit(dataobject.info, data_center_units)
+        data_center = data_center ./ dataobject.boxlen .* selected_unit
     end
 
 
@@ -604,14 +604,14 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             #if ivar != :sd && ivar != :Σ && ivar != :surfacedensity && ivar != :rho && ivar != :ρ && ivar != :density && weighting == true
 
                 #map[:,:,counter] = map[:,:,counter] ./ map_weight
-                selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                 #println(ivar, " ", counter, " ", unit_name)
-                maps[Symbol(ivar)] = map[:,:, counter] ./ map_weight .* selected_units
+                maps[Symbol(ivar)] = map[:,:, counter] ./ map_weight .* selected_unit
                 maps_unit[Symbol( string(ivar)  )] = unit_name
 
             else
-                selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-                maps[Symbol(ivar)] = map[:,:, counter]  .* selected_units
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                maps[Symbol(ivar)] = map[:,:, counter]  .* selected_unit
                 maps_unit[Symbol( string(ivar)  )] = unit_name
 
             end
@@ -658,7 +658,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
         if in(ivar, σcheck)
             #for iσ in σcheck
-                selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
 
                     selected_v = σ_to_v[ivar]
                     iv  = maps[selected_v[1]]
@@ -669,7 +669,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         if iv_unit == unit_name
                             maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
                         elseif iv_unit == :standard
-                            maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_units
+                            maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
                         elseif iv_unit == :km_s
                             maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
                         end
@@ -707,7 +707,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             if in(ivar, σcheck)
                 #for iσ in σcheck
-                    selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
 
                         selected_v = σ_to_v[ivar]
                         iv  = maps_lmax[selected_v[1]]
@@ -718,7 +718,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                             if iv_unit == unit_name
                                 maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
                             elseif iv_unit == :standard
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_units
+                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
                             elseif iv_unit == :km_s
                                 maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
                             end
@@ -831,7 +831,7 @@ function remap(dataobject::HydroMapsType, lmax::Real; verbose::Bool=verbose_mode
 
             if in(ivar, σcheck)
                 #for iσ in σcheck
-                    selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
 
                         selected_v = σ_to_v[ivar]
                         iv  = maps_lmax[selected_v[1]]
@@ -842,7 +842,7 @@ function remap(dataobject::HydroMapsType, lmax::Real; verbose::Bool=verbose_mode
                             if iv_unit == unit_name
                                 maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
                             elseif iv_unit == :standard
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_units
+                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
                             elseif iv_unit == :km_s
                                 maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
                             end
