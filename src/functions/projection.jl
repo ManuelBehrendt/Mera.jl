@@ -43,9 +43,9 @@ function projection()
     println("velocity dispersion => σr_cylinder, σϕ_cylinder ")
     #println(":l, :lx, :ly, :lz :lr, :lϕ, :lθ")
     println()
-    println("2d maps:")
+    println("2d maps (not projected):")
     println(":r_cylinder, :r_sphere")
-    println(":ϕ, :θ")
+    println(":ϕ") # :θ
     println("------------------------------------------------")
     println()
     return
