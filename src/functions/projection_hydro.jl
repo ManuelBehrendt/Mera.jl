@@ -58,11 +58,11 @@ return HydroMapsType
 
 ### Defined Methods - function defined for different arguments
 
-projection( dataobject::HydroDataType, var::Symbol; ...) # one given variable
-projection( dataobject::HydroDataType, var::Symbol, unit::Symbol; ...) # one given variable with its unit
-projection( dataobject::HydroDataType, vars::Array{Symbol,1}; ...) # several given variables -> array needed
-projection( dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays
-projection( dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; ...)  # several given variables that have the same unit -> array for the variables and a single Symbol for the unit
+- projection( dataobject::HydroDataType, var::Symbol; ...) # one given variable
+- projection( dataobject::HydroDataType, var::Symbol, unit::Symbol; ...) # one given variable with its unit
+- projection( dataobject::HydroDataType, vars::Array{Symbol,1}; ...) # several given variables -> array needed
+- projection( dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays
+- projection( dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; ...)  # several given variables that have the same unit -> array for the variables and a single Symbol for the unit
 
 
 #### Examples

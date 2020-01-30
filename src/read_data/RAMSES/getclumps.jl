@@ -45,8 +45,8 @@ julia> fieldnames(clumps)
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
 
 ### Defined Methods - function defined for different arguments
-getclumps(dataobject::InfoType; ...) # no given variables -> all variables loaded
-getclumps(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # one or several given variables -> array needed
+- getclumps(dataobject::InfoType; ...) # no given variables -> all variables loaded
+- getclumps(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # one or several given variables -> array needed
 
 
 

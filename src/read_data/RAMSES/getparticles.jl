@@ -49,9 +49,9 @@ julia> fieldnames(particles)
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
 
 ### Defined Methods - function defined for different arguments
-getparticles( dataobject::InfoType; ...) # no given variables -> all variables loaded
-getparticles( dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
-getparticles( dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
+- getparticles( dataobject::InfoType; ...) # no given variables -> all variables loaded
+- getparticles( dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
+- getparticles( dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
 
 
 #### Examples
