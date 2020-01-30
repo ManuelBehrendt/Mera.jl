@@ -385,6 +385,34 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     #println()
 
 
+    rows = length(dataobject.data)
+    mera_mask_inserted = false
+    if length(mask) > 1
+        if length(mask) !== rows
+            error("[Mera] ",now()," : array-mask length: $(length(mask)) does not match with data-table length: $(rows)")
+        else
+            if in(:mask, colnames(dataobject.data))
+                println(":mask provided by datatable")
+                println()
+            else
+                Nafter = JuliaDB.ncols(dataobject.data)
+                dataobject.data = JuliaDB.insertcolsafter(dataobject.data, Nafter, :mask => mask)
+                println(":mask provided by function")
+                println()
+                mera_mask_inserted = true
+            end
+        end
+    end
+
+
+
+
+
+
+
+
+
+
 
     closed=:left
 
@@ -401,18 +429,19 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
                 if in(i_var, sd_names)
 
-                    h = fit(Histogram, ( select_data(dataobject.data, parttypes, var_a) ,
+                    if length(mask) == 1
+                        global h = fit(Histogram, ( select_data(dataobject.data, parttypes, var_a) ,
                                         select_data(dataobject.data, parttypes, var_b) ),
                                         weights( select_data(dataobject.data, parttypes, :mass) ) ,
                                         closed=closed,
                                         (newrange1, newrange2) )
-                    #=
-                    h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( select(dataobject.data, :mass) ),
+                    else
+                        global h = fit(Histogram, ( select_data(dataobject.data, parttypes, var_a) ,
+                                        select_data(dataobject.data, parttypes, var_b) ),
+                                        weights( select_data(dataobject.data, parttypes, :mass) .* select(dataobject.data, :mask) ) ,
                                         closed=closed,
                                         (newrange1, newrange2) )
-                                        =#
+                    end
 
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
@@ -425,11 +454,19 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     maps_mode[Symbol( string(i_var)  )] = :mass_weighted
 
                 elseif in(i_var, density_names)
-                    h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( select(dataobject.data, :mass) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+                    if length(mask) == 1
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    else
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) .* select(dataobject.data, :mask) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    end
 
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
@@ -443,19 +480,36 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
                 else
 
-                    h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time) .* select(dataobject.data, :mass) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+                    if length(mask) == 1
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time) .* select(dataobject.data, :mass) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
 
 
 
-                    h_mass = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( select(dataobject.data, :mass) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+                        h_mass = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    else
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time) .* select(dataobject.data, :mass) .* select(dataobject.data, :mask) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+
+
+
+                        h_mass = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) .* select(dataobject.data, :mask) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+
+                    end
 
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
@@ -474,12 +528,19 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
                 if in(i_var, sd_names)
-
-                    h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( select(dataobject.data, :mass) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+                    if length(mask) == 1
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    else
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) .* select(dataobject.data, :mask) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    end
 
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
@@ -492,11 +553,21 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     maps_mode[Symbol( string(i_var)  )] = :volume_weighted
 
                 elseif in(i_var, density_names)
-                    h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( select(dataobject.data, :mass) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+
+                    if length(mask) == 1
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+
+                    else
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( select(dataobject.data, :mass) .* select(dataobject.data, :mask)  ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    end
 
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
@@ -510,12 +581,21 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
                 else
 
-                    h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                        select(dataobject.data, var_b) ),
-                                        weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  ),
-                                        #weights( select(dataobject.data, Symbol(i_var)) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+                    if length(mask) == 1
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  ),
+                                            #weights( select(dataobject.data, Symbol(i_var)) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    else
+                        h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                            select(dataobject.data, var_b) ),
+                                            weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  .* select(dataobject.data, :mask)  ),
+                                            #weights( select(dataobject.data, Symbol(i_var)) ),
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                    end
 
 
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
@@ -535,12 +615,21 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
             elseif mode == :sum
-                h = fit(Histogram, (select(dataobject.data, var_a) ,
-                                    select(dataobject.data, var_b) ),
-                                    weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  ),
-                                    #weights( select(dataobject.data, Symbol(i_var)) ),
-                                    closed=closed,
-                                    (newrange1, newrange2) )
+                if length(mask) == 1
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time)  ),
+                                        #weights( select(dataobject.data, Symbol(i_var)) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+                else
+                    h = fit(Histogram, (select(dataobject.data, var_a) ,
+                                        select(dataobject.data, var_b) ),
+                                        weights( getvar(dataobject, i_var, center=data_center, direction=direction, ref_time=ref_time) .* select(dataobject.data, :mask)  ),
+                                        #weights( select(dataobject.data, Symbol(i_var)) ),
+                                        closed=closed,
+                                        (newrange1, newrange2) )
+                end
 
                 selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
@@ -608,6 +697,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
 
+    if mera_mask_inserted # delete column :mask
+        dataobject.data = select(dataobject.data, Not(:mask))
+    end
 
 
     return PartMapsType(maps, maps_unit, maps_mode, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, boxlen, dataobject.scale, dataobject.info)
