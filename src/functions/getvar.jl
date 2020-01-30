@@ -78,11 +78,11 @@ return Array{Float64,1}
 - **`ref_time`:** reference zero-time for particle age calculation
 
 ### Defined Methods - function defined for different arguments
-getvar(   dataobject::DataSetType, var::Symbol; ...) # one given variable -> returns 1d array
-getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol; ...) # one given variable with its unit -> returns 1d array
-getvar(   dataobject::DataSetType, vars::Array{Symbol,1}; ...) # several given variables -> array needed -> returns dictionary with 1d arrays
-getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays -> returns dictionary with 1d arrays
-getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol; ...) # several given variables that have the same unit -> array for the variables and a single Symbol for the unit -> returns dictionary with 1d arrays
+- getvar(   dataobject::DataSetType, var::Symbol; ...) # one given variable -> returns 1d array
+- getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol; ...) # one given variable with its unit -> returns 1d array
+- getvar(   dataobject::DataSetType, vars::Array{Symbol,1}; ...) # several given variables -> array needed -> returns dictionary with 1d arrays
+- getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays -> returns dictionary with 1d arrays
+- getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol; ...) # several given variables that have the same unit -> array for the variables and a single Symbol for the unit -> returns dictionary with 1d arrays
 
 #### Examples
 ```julia
@@ -298,8 +298,9 @@ return x, y, z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
 ### Defined Methods - function defined for different arguments
-getpositions( dataobject::DataSetType; ...) # one given variable
-getpositions( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
+
+- getpositions( dataobject::DataSetType; ...) # one given variable
+- getpositions( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
 
 """
 function getpositions( dataobject::DataSetType, unit::Symbol;
@@ -363,8 +364,8 @@ return (xmin, xmax), (ymin ,ymax ), (zmin ,zmax )
 - **`unit`:** return the variables in given unit
 
 ### Defined Methods - function defined for different arguments
-getextent( dataobject::DataSetType; # one given variable
-getextent( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
+- getextent( dataobject::DataSetType; # one given variable
+- getextent( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
 
 """
 function getextent( dataobject::DataSetType, unit::Symbol;
