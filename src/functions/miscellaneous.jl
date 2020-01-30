@@ -169,7 +169,8 @@ function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::Str
     else
 
         if quantity == "length"
-            value_buffer = value * scale.Mpc
+            sign_buffer = sign(value)
+            value_buffer = value * scale.Mpc * sign_buffer
             value_unit = "Mpc"
             if value_buffer <= 1.
                 value_buffer = value * scale.kpc
@@ -195,13 +196,14 @@ function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::Str
                     end
                 end
             end
-
+            value_buffer = value_buffer * sign_buffer
         end
 
 
 
         if quantity == "time"
-            value_buffer = value * scale.Gyr
+            sign_buffer = sign(value)
+            value_buffer = value * scale.Gyr * sign_buffer
             value_unit = "Gyr"
             if value_buffer <= 1.
                 value_buffer = value * scale.Myr
@@ -219,6 +221,7 @@ function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::Str
                     end
                 end
             end
+            value_buffer = value_buffer * sign_buffer
         end
 
 
