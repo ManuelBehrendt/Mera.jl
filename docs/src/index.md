@@ -99,6 +99,15 @@ Now add packages like Mera and PyPlot in the favored version:
 - For simulations with a uniform grid is the column :level not created to save memory usage
 
 
+!!! note "Install Julia without admin privileges"
+    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
+    Define an alias in the .bashrc file that is pointing to julia:
+
+    ```shell
+    alias julia="/home/username/codes/julia/usr/bin/julia"
+    ```
+
+
 ## Why Julia?
 In scientific computing, we are dealing with a steadily increasing amount of data. Highest performance is required, and therefore, most science-related libraries are written in low-level languages like C or Fortran with relatively long development times. The reduced data is often processed in a high-level language like Python.
 Julia is a relatively new and modern language, and it combines high-level programming with high-performance numerical computing. The syntax is simple and great for math. The just-in-time compilation allows for interactive coding and to achieve an optimized machine code on the fly. Both enhance prototyping and code readability. Therefore, complex projects can be realized in relatively short development times.
