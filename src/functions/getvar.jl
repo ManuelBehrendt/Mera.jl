@@ -56,7 +56,8 @@ getvar(   dataobject::DataSetType, var::Symbol;
         center_unit::Symbol=:standard,
         direction::Symbol=:z,
         unit::Symbol=:standard,
-        mask::MaskType=[false])
+        mask::MaskType=[false],
+        ref_time::Real=dataobject.info.time)
 
 return Array{Float64,1}
 
@@ -74,7 +75,7 @@ return Array{Float64,1}
 - **`direction`:** todo
 - **`unit(s)`:** return the variable in given units
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-
+- **`ref_time`:** reference zero-time for particle age calculation
 
 ### Defined Methods - function defined for different arguments
 getvar(   dataobject::DataSetType, var::Symbol; ...) # one given variable -> returns 1d array
@@ -236,7 +237,16 @@ end
 
 
 
+"""
+#### Get mass-array from the dataset (cells/particles/clumps/...):
+```julia
+getmass(dataobject::HydroDataType)
+getmass(dataobject::PartDataType)
+getmass(dataobject::ClumpDataType)
 
+return Array{Float64,1}
+```
+"""
 function getmass(dataobject::HydroDataType;)
 
     lmax = dataobject.lmax
@@ -264,19 +274,46 @@ end
 
 
 
+"""
+#### Get the x,y,z positions from the dataset (cells/particles/clumps/...):
+```julia
+getpositions( dataobject::DataSetType;
+                    unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    center_unit::Symbol=:standard)
+
+return x, y, z
+```
 
 
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "DataSetType"
+##### Predefined/Optional Keywords:
+- **`center`:** in unit given by argument `center_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`direction`:** todo
+- **`unit`:** return the variables in given unit
+- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
+### Defined Methods - function defined for different arguments
+getpositions( dataobject::DataSetType; ...) # one given variable
+getpositions( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
+
+"""
 function getpositions( dataobject::DataSetType, unit::Symbol;
                         direction::Symbol=:z,
                         center::Array{<:Any,1}=[0., 0., 0.],
-                        center_unit::Symbol=:standard                        )
+                        center_unit::Symbol=:standard,
+                        mask::MaskType=[false])
 
     positions = getvar(dataobject, [:x, :y, :z],
                         center=center,
                         center_unit=center_unit,
                         direction=direction,
-                        units=[unit, unit, unit])
+                        units=[unit, unit, unit],
+                        mask=mask)
 
     return positions[:x], positions[:y], positions[:z]
 end
@@ -285,14 +322,16 @@ function getpositions( dataobject::DataSetType;
                         unit::Symbol=:standard,
                         direction::Symbol=:z,
                         center::Array{<:Any,1}=[0., 0., 0.],
-                        center_unit::Symbol=:standard)
+                        center_unit::Symbol=:standard,
+                        mask::MaskType=[false])
 
 
     positions = getvar(dataobject, [:x, :y, :z],
                         center=center,
                         center_unit=center_unit,
                         direction=direction,
-                        units=[unit, unit, unit])
+                        units=[unit, unit, unit],
+                        mask=mask)
 
     return positions[:x], positions[:y], positions[:z]
 end
@@ -301,7 +340,33 @@ end
 
 
 
+"""
+#### Get the extent of the dataset-domain:
+```julia
+function getextent( dataobject::DataSetType;
+                     unit::Symbol=:standard,
+                     center::Array{<:Any,1}=[0., 0., 0.],
+                     center_unit::Symbol=:standard,
+                     direction::Symbol=:z)
 
+return (xmin, xmax), (ymin ,ymax ), (zmin ,zmax )
+```
+
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "DataSetType"
+##### Predefined/Optional Keywords:
+- **`center`:** in unit given by argument `center_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`direction`:** todo
+- **`unit`:** return the variables in given unit
+
+### Defined Methods - function defined for different arguments
+getextent( dataobject::DataSetType; # one given variable
+getextent( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
+
+"""
 function getextent( dataobject::DataSetType, unit::Symbol;
                      center::Array{<:Any,1}=[0., 0., 0.],
                      center_unit::Symbol=:standard,
