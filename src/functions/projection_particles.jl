@@ -37,7 +37,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
-                            data_center_units::Symbol=:standard,
+                            data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
@@ -55,7 +55,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 center=center,
                                 range_unit=range_unit,
                                 data_center=data_center,
-                                data_center_units=data_center_units,
+                                data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose)
 end
@@ -76,7 +76,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
-                            data_center_units::Symbol=:standard,
+                            data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
@@ -94,7 +94,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 center=center,
                                 range_unit=range_unit,
                                 data_center=data_center,
-                                data_center_units=data_center_units,
+                                data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose)
 end
@@ -115,7 +115,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
-                            data_center_units::Symbol=:standard,
+                            data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
@@ -133,7 +133,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 center=center,
                                 range_unit=range_unit,
                                 data_center=data_center,
-                                data_center_units=data_center_units,
+                                data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose)
 end
@@ -154,7 +154,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
-                            data_center_units::Symbol=:standard,
+                            data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
@@ -172,7 +172,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 center=center,
                                 range_unit=range_unit,
                                 data_center=data_center,
-                                data_center_units=data_center_units,
+                                data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose)
 end
@@ -192,7 +192,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
-                            data_center_units::Symbol=:standard,
+                            data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
@@ -210,7 +210,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 center=center,
                                 range_unit=range_unit,
                                 data_center=data_center,
-                                data_center_units=data_center_units,
+                                data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose)
 end
@@ -231,7 +231,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
-                            data_center_units::Symbol=:standard,
+                            data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode)
 
@@ -288,8 +288,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
     selected_unit = 1.
-    if data_center_units != :standard
-        selected_unit = getunit(dataobject.info, data_center_units)
+    if data_center_unit != :standard
+        selected_unit = getunit(dataobject.info, data_center_unit)
         data_center = data_center ./ dataobject.boxlen .* selected_unit
     end
 
