@@ -43,40 +43,40 @@ function get_data(dataobject::PartDataType,
 
         # quantities that are in the datatable
         if in(i, column_names)
-            selected_units = getunit(dataobject, i, vars, units)
+            selected_unit = getunit(dataobject, i, vars, units)
 
             if i == :x
-                #selected_units = (dataobject, :x, vars, units)
-                vars_dict[:x] =  (select(dataobject.data, apos) .-  boxlen * center[1] )  .* selected_units
+                #selected_unit = (dataobject, :x, vars, units)
+                vars_dict[:x] =  (select(dataobject.data, apos) .-  boxlen * center[1] )  .* selected_unit
             elseif i == :y
-                #selected_units = (dataobject, :y, vars, units)
-                vars_dict[:y] =  (select(dataobject.data, bpos) .- boxlen * center[2] )  .* selected_units
+                #selected_unit = (dataobject, :y, vars, units)
+                vars_dict[:y] =  (select(dataobject.data, bpos) .- boxlen * center[2] )  .* selected_unit
             elseif i == :z
-                #selected_units = (dataobject, :z, vars, units)
-                vars_dict[:z] =  (select(dataobject.data, cpos)  .- boxlen * center[3] )  .* selected_units
+                #selected_unit = (dataobject, :z, vars, units)
+                vars_dict[:z] =  (select(dataobject.data, cpos)  .- boxlen * center[3] )  .* selected_unit
             else
-                vars_dict[i] =  select(dataobject.data, i) .* selected_units
+                vars_dict[i] =  select(dataobject.data, i) .* selected_unit
             end
 
         # quantities that are derived from the variables in the data table
         elseif i == :vx2
-            selected_units = getunit(dataobject, :vx2, vars, units)
-            vars_dict[:vx2] =  (getvar(dataobject, :vx) .* selected_units ) .^2
+            selected_unit = getunit(dataobject, :vx2, vars, units)
+            vars_dict[:vx2] =  (getvar(dataobject, :vx) .* selected_unit ) .^2
 
         elseif i == :vy2
-            selected_units = getunit(dataobject, :vy2, vars, units)
-            vars_dict[:vy2] =  (getvar(dataobject, :vy) .* selected_units ) .^2
+            selected_unit = getunit(dataobject, :vy2, vars, units)
+            vars_dict[:vy2] =  (getvar(dataobject, :vy) .* selected_unit ) .^2
 
         elseif i == :v
-            selected_units = getunit(dataobject, :v, vars, units)
+            selected_unit = getunit(dataobject, :v, vars, units)
             vars_dict[:v] =  sqrt.(select(dataobject.data, :vx).^2 .+
                                    select(dataobject.data, :vy).^2 .+
-                                   select(dataobject.data, :vz).^2 ) .* selected_units
+                                   select(dataobject.data, :vz).^2 ) .* selected_unit
         elseif i == :v2
-           selected_units = getunit(dataobject, :v2, vars, units)
+           selected_unit = getunit(dataobject, :v2, vars, units)
            vars_dict[:v2] = (select(dataobject.data, :vx).^2 .+
                                   select(dataobject.data, :vy).^2 .+
-                                  select(dataobject.data, :vz).^2 ) .* selected_units .^2
+                                  select(dataobject.data, :vz).^2 ) .* selected_unit .^2
 
        elseif i == :vϕ_cylinder
            radius = getvar(dataobject, :r_cylinder, center=center)
@@ -85,8 +85,8 @@ function get_data(dataobject::PartDataType,
            vx = getvar(dataobject, :vx)
            vy = getvar(dataobject, :vy)
 
-           selected_units = getunit(dataobject, :vϕ, vars, units)
-           vars_dict[:vϕ_cylinder] =  (x .* vy .- y .* vx) ./ radius .* selected_units
+           selected_unit = getunit(dataobject, :vϕ, vars, units)
+           vars_dict[:vϕ_cylinder] =  (x .* vy .- y .* vx) ./ radius .* selected_unit
 
        elseif i == :vϕ_cylinder2
            radius = getvar(dataobject, :r_cylinder, center=center)
@@ -95,8 +95,8 @@ function get_data(dataobject::PartDataType,
            vx = getvar(dataobject, :vx)
            vy = getvar(dataobject, :vy)
 
-           selected_units = getunit(dataobject, :vϕ2, vars, units)
-           vars_dict[:vϕ_cylinder2] =  ((x .* vy .- y .* vx) ./ radius .* selected_units ).^2
+           selected_unit = getunit(dataobject, :vϕ2, vars, units)
+           vars_dict[:vϕ_cylinder2] =  ((x .* vy .- y .* vx) ./ radius .* selected_unit ).^2
 
        elseif i == :vr_cylinder
            radius = getvar(dataobject, :r_cylinder, center=center)
@@ -105,15 +105,15 @@ function get_data(dataobject::PartDataType,
            vx = getvar(dataobject, :vx)
            vy = getvar(dataobject, :vy)
 
-           selected_units = getunit(dataobject, :vr_cylinder, vars, units)
-           vars_dict[:vr_cylinder] =  (x .* vx .+ y .* vy) ./ radius .* selected_units
+           selected_unit = getunit(dataobject, :vr_cylinder, vars, units)
+           vars_dict[:vr_cylinder] =  (x .* vx .+ y .* vy) ./ radius .* selected_unit
 
 
        elseif i == :vz2
            vz = getvar(dataobject, :vz)
 
-           selected_units = getunit(dataobject, :vz2, vars, units)
-           vars_dict[:vz2] =  (vz .* selected_units ).^2
+           selected_unit = getunit(dataobject, :vz2, vars, units)
+           vars_dict[:vz2] =  (vz .* selected_unit ).^2
 
 
        elseif i == :vr_cylinder2
@@ -123,25 +123,25 @@ function get_data(dataobject::PartDataType,
            vx = getvar(dataobject, :vx)
            vy = getvar(dataobject, :vy)
            #end
-           selected_units = getunit(dataobject, :vr_cylinder2, vars, units)
-           vars_dict[:vr_cylinder2] =  ((x .* vx .+ y .* vy) ./ radius .* selected_units ).^2
+           selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
+           vars_dict[:vr_cylinder2] =  ((x .* vx .+ y .* vy) ./ radius .* selected_unit ).^2
 
 
 
 
 
        elseif i == :r_cylinder
-           selected_units = getunit(dataobject, :r_cylinder, vars, units)
+           selected_unit = getunit(dataobject, :r_cylinder, vars, units)
 
            vars_dict[:r_cylinder] = select( dataobject.data, (apos, bpos)=>p->
-                                               selected_units * sqrt( (p[apos] - center[1] * boxlen )^2 +
+                                               selected_unit * sqrt( (p[apos] - center[1] * boxlen )^2 +
                                                                   (p[bpos] - center[2] * boxlen )^2 ) )
 
 
        elseif i == :r_sphere
-           selected_units = getunit(dataobject, :r_sphere, vars, units)
+           selected_unit = getunit(dataobject, :r_sphere, vars, units)
            vars_dict[:r_sphere] = select( dataobject.data, (apos, bpos, cpos)=>p->
-                                          selected_units * sqrt( (p[apos] - center[1] * boxlen )^2  +
+                                          selected_unit * sqrt( (p[apos] - center[1] * boxlen )^2  +
                                                                   (p[bpos] - center[2] * boxlen )^2 +
                                                                   (p[cpos] - center[3] * boxlen )^2 )  )
 
@@ -152,16 +152,16 @@ function get_data(dataobject::PartDataType,
 
 
         elseif i == :ekin
-            selected_units = getunit(dataobject, :ekin, vars, units)
+            selected_unit = getunit(dataobject, :ekin, vars, units)
             vars_dict[:ekin] =   0.5 .* getvar(dataobject, :mass)  .*
                                 (select(dataobject.data, :vx).^2 .+
                                 select(dataobject.data, :vy).^2 .+
-                                select(dataobject.data, :vz).^2 ) .* selected_units
+                                select(dataobject.data, :vz).^2 ) .* selected_unit
 
 
         elseif i == :age
-            selected_units = getunit(dataobject, :age, vars, units)
-            vars_dict[:age] = ( ref_time .- getvar(dataobject, :birth) ) .* selected_units
+            selected_unit = getunit(dataobject, :age, vars, units)
+            vars_dict[:age] = ( ref_time .- getvar(dataobject, :birth) ) .* selected_unit
         end
 
 

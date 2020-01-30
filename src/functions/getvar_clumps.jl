@@ -45,42 +45,42 @@ function get_data(dataobject::ClumpDataType,
 
         # quantities that are in the datatable
         if in(i, column_names) || in(i, descriptor)#|| occursin("var", string(i))
-            selected_units = getunit(dataobject, i, vars, units)
+            selected_unit = getunit(dataobject, i, vars, units)
 
             if i == :peak_x || i == :x
-                vars_dict[i] = ( select(dataobject.data, apos) .-  boxlen * center[1]) .* selected_units
+                vars_dict[i] = ( select(dataobject.data, apos) .-  boxlen * center[1]) .* selected_unit
             elseif i == :peak_y || i == :y
-                vars_dict[i] = ( select(dataobject.data, bpos) .-  boxlen * center[2]) .* selected_units
+                vars_dict[i] = ( select(dataobject.data, bpos) .-  boxlen * center[2]) .* selected_unit
             elseif i == :peak_z || i == :z
-                vars_dict[i] = ( select(dataobject.data, cpos) .-  boxlen * center[3]) .* selected_units
+                vars_dict[i] = ( select(dataobject.data, cpos) .-  boxlen * center[3]) .* selected_unit
 
             elseif i == :vx
-                vars_dict[i] =  select(dataobject.data, avel) .* selected_units
+                vars_dict[i] =  select(dataobject.data, avel) .* selected_unit
             elseif i == :vy
-                vars_dict[i] =  select(dataobject.data, bvel) .* selected_units
+                vars_dict[i] =  select(dataobject.data, bvel) .* selected_unit
             elseif i == :vz
-                vars_dict[i] =  select(dataobject.data, cvel) .* selected_units
+                vars_dict[i] =  select(dataobject.data, cvel) .* selected_unit
             elseif i == :mass
-                vars_dict[i] =  select(dataobject.data, :mass_cl) .* selected_units
+                vars_dict[i] =  select(dataobject.data, :mass_cl) .* selected_unit
             else
-                vars_dict[i] =  select(dataobject.data, i) .* selected_units
+                vars_dict[i] =  select(dataobject.data, i) .* selected_unit
             end
 
 
 
         # quantities that are derived from the variables in the data table
         elseif i == :v
-            selected_units = getunit(dataobject, :v, vars, units)
+            selected_unit = getunit(dataobject, :v, vars, units)
             vars_dict[:v] =  sqrt.(select(dataobject.data, :vx).^2 .+
                                    select(dataobject.data, :vy).^2 .+
-                                   select(dataobject.data, :vz).^2 ) .* selected_units
+                                   select(dataobject.data, :vz).^2 ) .* selected_unit
 
         elseif i == :ekin
-            selected_units = getunit(dataobject, :ekin, vars, units)
+            selected_unit = getunit(dataobject, :ekin, vars, units)
             vars_dict[:ekin] =   0.5 .* getvar(dataobject, vars=[:mass_cl])  .*
                                 (select(dataobject.data, :vx).^2 .+
                                 select(dataobject.data, :vy).^2 .+
-                                select(dataobject.data, :vz).^2 ) .* selected_units
+                                select(dataobject.data, :vz).^2 ) .* selected_unit
         end
 
 

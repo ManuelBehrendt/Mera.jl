@@ -48,8 +48,8 @@ function center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask::
 end
 
 function center_of_mass(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
-    selected_units = getunit(dataobject.info, unit)
-    return ( average_mweighted(dataobject, :x, mask=mask), average_mweighted(dataobject, :y, mask=mask), average_mweighted(dataobject, :z,  mask=mask) ) .* selected_units
+    selected_unit = getunit(dataobject.info, unit)
+    return ( average_mweighted(dataobject, :x, mask=mask), average_mweighted(dataobject, :y, mask=mask), average_mweighted(dataobject, :z,  mask=mask) ) .* selected_unit
 end
 
 
@@ -105,7 +105,7 @@ end
 
 function center_of_mass(dataobject::Array{HydroPartType,1}; unit::Symbol=:standard, mask::MaskArrayAbstractType=[[false],[false]])
 
-    selected_units = getunit(dataobject[1].info, unit) # assuming both datasets are from same simulation output
+    selected_unit = getunit(dataobject[1].info, unit) # assuming both datasets are from same simulation output
 
 
     if length(mask[1]) == 1 && length(mask[2]) == 1
@@ -134,7 +134,7 @@ function center_of_mass(dataobject::Array{HydroPartType,1}; unit::Symbol=:standa
         z_weighted = (sum( getvar(dataobject[1], :z)[mask[1]] .* m1 ) + sum( getvar(dataobject[2], :z)[mask[2]] .* m2) ) / m_sum
 
     end
-    return ( x_weighted, y_weighted, z_weighted ) .* selected_units
+    return ( x_weighted, y_weighted, z_weighted ) .* selected_unit
 
 end
 
@@ -197,11 +197,11 @@ end
 
 
 function bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, massweight::Bool=true, mask::MaskType=[false])
-    selected_units = getunit(dataobject.info, unit)
+    selected_unit = getunit(dataobject.info, unit)
     if massweight
-        return ( average_mweighted(dataobject, :vx, mask=mask), average_mweighted(dataobject, :vy, mask=mask), average_mweighted(dataobject, :vz,  mask=mask) ) .* selected_units
+        return ( average_mweighted(dataobject, :vx, mask=mask), average_mweighted(dataobject, :vy, mask=mask), average_mweighted(dataobject, :vz,  mask=mask) ) .* selected_unit
     else
-        return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_units
+        return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_unit
     end
 end
 

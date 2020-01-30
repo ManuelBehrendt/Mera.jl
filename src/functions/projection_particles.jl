@@ -287,10 +287,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
-    selected_units = 1.
+    selected_unit = 1.
     if data_center_units != :standard
-        selected_units = getunit(dataobject.info, data_center_units)
-        data_center = data_center ./ dataobject.boxlen .* selected_units
+        selected_unit = getunit(dataobject.info, data_center_units)
+        data_center = data_center ./ dataobject.boxlen .* selected_unit
     end
 
 
@@ -414,10 +414,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                         (newrange1, newrange2) )
                                         =#
 
-                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                    if selected_units != 1.
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_units
+                    if selected_unit != 1.
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_unit
                     else
                         maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
                     end
@@ -431,10 +431,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                         closed=closed,
                                         (newrange1, newrange2) )
 
-                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                    if selected_units != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
+                    if selected_unit != 1.
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_unit
                     else
                         maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
                     end
@@ -457,10 +457,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                         closed=closed,
                                         (newrange1, newrange2) )
 
-                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                    if selected_units != 1.
-                        maps[Symbol(i_var)] = h.weights ./ h_mass.weights .* selected_units
+                    if selected_unit != 1.
+                        maps[Symbol(i_var)] = h.weights ./ h_mass.weights .* selected_unit
                     else
                         maps[Symbol(i_var)] = h.weights ./ h_mass.weights
                     end
@@ -481,10 +481,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                         closed=closed,
                                         (newrange1, newrange2) )
 
-                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                    if selected_units != 1.
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_units
+                    if selected_unit != 1.
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_unit
                     else
                         maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
                     end
@@ -498,10 +498,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                         closed=closed,
                                         (newrange1, newrange2) )
 
-                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                    if selected_units != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
+                    if selected_unit != 1.
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_unit
                     else
                         maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
                     end
@@ -518,10 +518,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                         (newrange1, newrange2) )
 
 
-                    selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                    if selected_units != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_units
+                    if selected_unit != 1.
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_unit
                     else
                         maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
                     end
@@ -542,10 +542,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                     closed=closed,
                                     (newrange1, newrange2) )
 
-                selected_units, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
-                if selected_units != 1.
-                    maps[Symbol(i_var)] = h.weights .* selected_units
+                if selected_unit != 1.
+                    maps[Symbol(i_var)] = h.weights .* selected_unit
                 else
                     maps[Symbol(i_var)] = h.weights
                 end
@@ -565,7 +565,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
         if in(ivar, σcheck)
             #for iσ in σcheck
-                selected_units, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
 
                     selected_v = σ_to_v[ivar]
                     iv  = maps[selected_v[1]]
@@ -578,7 +578,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         if iv_unit == unit_name
                             maps[Symbol(ivar)] = sqrt.( diff_iv )
                         elseif iv_unit == :standard
-                            maps[Symbol(ivar)] = sqrt.( diff_iv )  .* selected_units
+                            maps[Symbol(ivar)] = sqrt.( diff_iv )  .* selected_unit
                         elseif iv_unit == :km_s
                             maps[Symbol(ivar)] = sqrt.( diff_iv )  ./ dataobject.info.scale.km_s
                         end
