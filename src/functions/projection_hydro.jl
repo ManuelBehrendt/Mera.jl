@@ -650,21 +650,31 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
     # create ϕ-angle map
-    # for ivar in selected_vars
-    #     if in(ivar, anglecheck)
-    #         map_ϕ = zeros(Float64, length1, length2 );
-    #         for i = 1:(length1)
-    #             for j = 1:(length2)
-    #                 x = i * dataobject.boxlen / 2^simlmax - length1_center
-    #                 y = j * dataobject.boxlen / 2^simlmax - length2_center
-    #                 map_ϕ[i,j] = atan(y / x)
-    #             end
-    #         end
-    #
-    #         maps[Symbol(ivar)] = map_ϕ
-    #         maps_unit[Symbol( string(ivar)  )] = :radian
-    #     end
-    # end
+    for ivar in selected_vars
+        if in(ivar, anglecheck)
+            map_ϕ = zeros(Float64, length1, length2 );
+            for i = 1:(length1)
+                for j = 1:(length2)
+                    x = i * dataobject.boxlen / 2^simlmax - length1_center
+                    y = j * dataobject.boxlen / 2^simlmax - length2_center
+                    if x > 0. && y >= 0.
+                        map_ϕ[i,j] = atan(y / x)
+                    elseif x > 0. && y < 0.
+                        map_ϕ[i,j] = atan(y / x) + 2. * pi
+                    elseif x < 0.
+                        map_ϕ[i,j] = atan(y / x) + pi
+                    elseif x==0 && y > 0
+                        map_ϕ[i,j] = pi/2.
+                    elseif x==0 && y < 0
+                        map_ϕ[i,j] = 3. * pi/2.
+                    end
+                end
+            end
+
+            maps[Symbol(ivar)] = map_ϕ
+            maps_unit[Symbol( string(ivar)  )] = :radian
+        end
+    end
 
 
     # remap onto lmax grid
