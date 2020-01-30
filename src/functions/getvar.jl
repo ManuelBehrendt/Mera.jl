@@ -53,7 +53,7 @@ end
 getvar(   dataobject::DataSetType, var::Symbol;
         filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
         center::Array{<:Any,1}=[0.,0.,0.],
-        center_units::Symbol=:standard,
+        center_unit::Symbol=:standard,
         direction::Symbol=:z,
         unit::Symbol=:standard,
         mask::MaskType=[false])
@@ -69,8 +69,8 @@ return Array{Float64,1}
 - **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
 ##### Predefined/Optional Keywords:
 - **`filtered_db`:** pass a filtered or manipulated database together with the corresponding DataSetType object (required argument)
-- **`center`:** in units given by argument `center_units`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`center_units`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `center_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** todo
 - **`unit(s)`:** return the variable in given units
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
@@ -112,13 +112,13 @@ quantities = getvar(gas, [:vx, :vy, :vz], :km_s)
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
-                    center_units::Symbol=:standard,
+                    center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     unit::Symbol=:standard,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_units)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -131,12 +131,12 @@ end
 function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
                     filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
-                    center_units::Symbol=:standard,
+                    center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_units)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -149,12 +149,12 @@ end
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                     filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
-                    center_units::Symbol=:standard,
+                    center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_units)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
 
     # construct corresponding DataSetType from filtered database to use the calculations below
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
@@ -168,12 +168,12 @@ end
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                     filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
-                    center_units::Symbol=:standard,
+                    center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
-    center = center_in_standardnotation(dataobject.info, center, center_units)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
     units = fill(unit, length(vars)) # use given unit for all variables
 
     # construct corresponding DataSetType from filtered database to use the calculations below
@@ -189,14 +189,14 @@ end
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
                     filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
-                    center_units::Symbol=:standard,
+                    center_unit::Symbol=:standard,
                     direction::Symbol=:z,
                     units::Array{Symbol,1}=[:standard],
                     mask::MaskType=[false],
                     ref_time::Real=dataobject.info.time)
 
 
-    center = center_in_standardnotation(dataobject.info, center, center_units)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
 
 
     # construct corresponding DataSetType from filtered database to use the calculations below
@@ -212,7 +212,7 @@ end
 
 
 
-function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}, center_units::Symbol)
+function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}, center_unit::Symbol)
 
     # check for :bc, :boxcenter
     Ncenter = length(center)
@@ -226,8 +226,8 @@ function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}
             if center[i] == :bc || center[i] == :boxcenter
                 bc = 0.5
                 center[i] = bc
-            elseif center_units != :standard
-                center[i] = center[i] / dataobject.boxlen .* getunit(dataobject, center_units)
+            elseif center_unit != :standard
+                center[i] = center[i] / dataobject.boxlen .* getunit(dataobject, center_unit)
             end
         end
     end
@@ -270,11 +270,11 @@ end
 function getpositions( dataobject::DataSetType, unit::Symbol;
                         direction::Symbol=:z,
                         center::Array{<:Any,1}=[0., 0., 0.],
-                        center_units::Symbol=:standard                        )
+                        center_unit::Symbol=:standard                        )
 
     positions = getvar(dataobject, [:x, :y, :z],
                         center=center,
-                        center_units=center_units,
+                        center_unit=center_unit,
                         direction=direction,
                         units=[unit, unit, unit])
 
@@ -285,12 +285,12 @@ function getpositions( dataobject::DataSetType;
                         unit::Symbol=:standard,
                         direction::Symbol=:z,
                         center::Array{<:Any,1}=[0., 0., 0.],
-                        center_units::Symbol=:standard)
+                        center_unit::Symbol=:standard)
 
 
     positions = getvar(dataobject, [:x, :y, :z],
                         center=center,
-                        center_units=center_units,
+                        center_unit=center_unit,
                         direction=direction,
                         units=[unit, unit, unit])
 
@@ -304,12 +304,12 @@ end
 
 function getextent( dataobject::DataSetType, unit::Symbol;
                      center::Array{<:Any,1}=[0., 0., 0.],
-                     center_units::Symbol=:standard,
+                     center_unit::Symbol=:standard,
                      direction::Symbol=:z)
 
     return  getextent( dataobject,
                          center=center,
-                         center_units=center_units,
+                         center_unit=center_unit,
                          direction=direction,
                          unit=unit)
 end
@@ -317,7 +317,7 @@ end
 function getextent( dataobject::DataSetType;
                      unit::Symbol=:standard,
                      center::Array{<:Any,1}=[0., 0., 0.],
-                     center_units::Symbol=:standard,
+                     center_unit::Symbol=:standard,
                      direction::Symbol=:z)
 
     range = dataobject.ranges
@@ -325,11 +325,11 @@ function getextent( dataobject::DataSetType;
 
 
 
-    center = prepboxcenter(dataobject.info, center_units, center) # code units
+    center = prepboxcenter(dataobject.info, center_unit, center) # code units
     center = center ./ dataobject.boxlen
     #selected_unit = 1.
-    # if center_units != :standard
-    #     selected_unit = getunit(dataobject.info, center_units)
+    # if center_unit != :standard
+    #     selected_unit = getunit(dataobject.info, center_unit)
     #     center = center ./ dataobject.boxlen .* selected_unit
     # end
 

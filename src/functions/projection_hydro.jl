@@ -28,7 +28,7 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
-                        data_center_units::Symbol=:standard,
+                        data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
 return HydroMapsType
@@ -50,8 +50,8 @@ return HydroMapsType
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`weighting`:** select between mass weighting (true) and volume weighting (false)
 - **`mode`:** todo: select between :weighting the average or summing the data up with :sum
-- **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_units`; by default the box-center [0.5, 0.5, 0.5];
-- **`data_center_units`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the box-center [0.5, 0.5, 0.5];
+- **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** select between: :x, :y, :z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
@@ -82,7 +82,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
-                        data_center_units::Symbol=:standard,
+                        data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
 
@@ -99,7 +99,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                             center=center,
                             range_unit=range_unit,
                             data_center=data_center,
-                            data_center_units=data_center_units,
+                            data_center_unit=data_center_unit,
                             verbose=verbose)
 
 end
@@ -118,7 +118,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
-                        data_center_units::Symbol=:standard,
+                        data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
 
@@ -135,7 +135,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             center=center,
                             range_unit=range_unit,
                             data_center=data_center,
-                            data_center_units=data_center_units,
+                            data_center_unit=data_center_unit,
                             verbose=verbose)
 
 end
@@ -154,7 +154,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
-                        data_center_units::Symbol=:standard,
+                        data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
     return projection(dataobject, vars, units=units,
@@ -170,7 +170,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                                                 center=center,
                                                 range_unit=range_unit,
                                                 data_center=data_center,
-                                                data_center_units=data_center_units,
+                                                data_center_unit=data_center_unit,
                                                 verbose=verbose)
 
 end
@@ -191,7 +191,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
-                        data_center_units::Symbol=:standard,
+                        data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
     return projection(dataobject, vars, units=fill(unit, length(vars)),
@@ -207,7 +207,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                                                 center=center,
                                                 range_unit=range_unit,
                                                 data_center=data_center,
-                                                data_center_units=data_center_units,
+                                                data_center_unit=data_center_unit,
                                                 verbose=verbose)
 
 end
@@ -230,7 +230,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
-                        data_center_units::Symbol=:standard,
+                        data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
 
@@ -298,8 +298,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
-    if data_center_units != :standard
-        selected_unit = getunit(dataobject.info, data_center_units)
+    if data_center_unit != :standard
+        selected_unit = getunit(dataobject.info, data_center_unit)
         data_center = data_center ./ dataobject.boxlen .* selected_unit
     end
 
