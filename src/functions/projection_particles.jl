@@ -257,9 +257,14 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     sd_names = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
 
+    # checks to use maps instead of projections
+    rcheck = [:r_cylinder, :r_sphere]
+    anglecheck = [:ϕ]
+
     # for velocity dispersion add necessary velocity components
     # ========================================================
     σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    rσanglecheck = [rcheck...,σcheck...,anglecheck...]
 
     σ_to_v = SortedDict(  :σx => [:vx, :vx2],
                           :σy => [:vy, :vy2],
@@ -348,6 +353,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         extent=[r1-1,r2-1,r3-1,r4-1] .* dataobject.boxlen ./ 2^lmax
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[2], extent[4]-rl[2]]
+        length1_center = data_center[1] * boxlen
+        length2_center = data_center[2] * boxlen
 
     elseif direction == :y
         # range on maximum used grid
@@ -361,6 +368,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         extent=[r1-1,r2-1,r5-1,r6-1] .* dataobject.boxlen ./ 2^lmax
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[3], extent[4]-rl[3]]
+        length1_center = data_center[1] * boxlen
+        length2_center = data_center[3] * boxlen
 
     elseif direction == :x
         # range on maximum used grid
@@ -373,6 +382,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         extent=[r3-1,r4-1,r5-1,r6-1] .* dataobject.boxlen ./ 2^lmax
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[2], extent[2]-rl[2], extent[3]-rl[3], extent[4]-rl[3]]
+        length1_center = data_center[2] * boxlen
+        length2_center = data_center[3] * boxlen
     end
 
 
@@ -422,7 +433,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     @showprogress 1 "" for i_var in selected_vars #dependencies_part_list
         #println(i_var)
 
-        if !in(i_var, σcheck) # exclude velocity dispersion symbols
+        if !in(i_var, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
 
             if mode == :mass
 
@@ -696,6 +707,31 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
             #end
         end
     end
+
+
+
+    # create radius map
+    for ivar in selected_vars
+        if in(ivar, rcheck)
+            selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+            map_R = zeros(Float64, length1, length2 );
+            for i = 1:(length1)
+                for j = 1:(length2)
+                    x = i * dataobject.boxlen / 2^lmax
+                    y = j * dataobject.boxlen / 2^lmax
+                    radius = sqrt((x-length1_center)^2 + (y-length2_center)^2)
+                    map_R[i,j] = radius * selected_unit
+                end
+            end
+
+            maps[Symbol(ivar)] = map_R
+            maps_unit[Symbol( string(ivar)  )] = unit_name
+        end
+    end
+
+
+
+
 
     if mera_mask_inserted # delete column :mask
         dataobject.data = select(dataobject.data, Not(:mask))
