@@ -52,6 +52,7 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", verbose
 
     info = InfoType()   # predeclare InfoType
     info.descriptor = DescriptorType()
+    info.files_content = FilesContentType()
 
     info.output     = output
     info.path       = joinpath(pwd(), path) # store full path
@@ -566,9 +567,13 @@ end
 
 function istimerfile!(dataobject::InfoType)
     timer_file = false
-    if isfile(dataobject.fnames.timer ) timer_file = true end
-
+    if isfile(dataobject.fnames.timer )
+        timer_file = true
+        f = open(dataobject.fnames.timer);
+        dataobject.files_content.timerfile = readlines(f)
+    end
     dataobject.timerfile = timer_file
+
     return dataobject
 end
 
@@ -607,7 +612,11 @@ end
 
 function ismakefile!(dataobject::InfoType)
     make_file = false
-    if  isfile(dataobject.fnames.makefile) make_file = true end
+    if  isfile(dataobject.fnames.makefile)
+        make_file = true
+        f = open(dataobject.fnames.makefile);
+        dataobject.files_content.makefile = readlines(f)
+    end
 
     dataobject.makefile = make_file
     return dataobject
@@ -615,8 +624,11 @@ end
 
 function ispatchfile!(dataobject::InfoType)
     patch_file = false
-    if  isfile(dataobject.fnames.patchfile) patch_file = true end
-
+    if  isfile(dataobject.fnames.patchfile)
+        patch_file = true
+        f = open(dataobject.fnames.patchfile);
+        dataobject.files_content.patchfile = readlines(f)
+    end
     dataobject.patchfile = patch_file
     return dataobject
 end
