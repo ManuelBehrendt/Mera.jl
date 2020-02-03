@@ -94,6 +94,10 @@ export
     PartDataType,
     ClumpDataType,
 
+    DataMapsType,
+    HydroMapsType,
+    PartMapsType,
+
     MaskType,
     MaskArrayType,
     MaskArrayAbstractType

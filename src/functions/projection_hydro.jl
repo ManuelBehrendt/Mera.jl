@@ -74,8 +74,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
-                        weighting::Bool=true,
-                        mode::Symbol=:weighting,
+                        weighting::Symbol=:mass,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -92,7 +91,6 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                             direction=direction,
                             plane_orientation=plane_orientation,
                             weighting=weighting,
-                            mode=mode,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -110,8 +108,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
-                        weighting::Bool=true,
-                        mode::Symbol=:weighting,
+                        weighting::Symbol=:mass,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -128,7 +125,6 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             direction=direction,
                             plane_orientation=plane_orientation,
                             weighting=weighting,
-                            mode=mode,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -146,8 +142,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
-                        weighting::Bool=true,
-                        mode::Symbol=:weighting,
+                        weighting::Symbol=:mass,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -163,7 +158,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                                                 direction=direction,
                                                 plane_orientation=plane_orientation,
                                                 weighting=weighting,
-                                                mode=mode,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -183,8 +177,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
-                        weighting::Bool=true,
-                        mode::Symbol=:weighting,
+                        weighting::Symbol=:mass,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -200,7 +193,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                                                 direction=direction,
                                                 plane_orientation=plane_orientation,
                                                 weighting=weighting,
-                                                mode=mode,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -222,8 +214,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         mask=[false],
                         direction::Symbol=:z,
                         plane_orientation::Symbol=:perpendicular,
-                        weighting::Bool=true,
-                        mode::Symbol=:weighting,
+                        weighting::Symbol=:mass,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -291,7 +282,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
 
-    if weighting == true
+    if weighting == :mass
+        if !in(:sd, selected_vars)
+            append!(selected_vars, [:sd])
+        end
+
         if !in(:rho, keys(dataobject.data[1]) )
             error("""[Mera]: For mass weighting variable "rho" is necessary.""")
         end
@@ -482,7 +477,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             if in(:rho, selected_vars) || in(:ρ, selected_vars) || in(:density, selected_vars) ||
                 in(:sd, selected_vars) || in(:Σ, selected_vars) || in(:surfacedensity, selected_vars) ||
                 in(:ekin, selected_vars) ||
-                weighting == true
+                weighting == :mass
 
                 if length(mask) == 1
                     global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
@@ -510,7 +505,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     if !in(ivar, density_names) && !in(ivar, sd_names)
                     #if ivar != :sd  &&  ivar!=:rho
                          #&& ivar != :Σ && ivar != :surfacedensity  #&& ivar != :ρ && ivar != :density
-                        if weighting == true
+                        if weighting == :mass
                             if length(mask) == 1
                                 #println(ivar, " ", counter)
                                 h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
@@ -523,7 +518,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                                                 closed=closed,
                                                 (new_level_range1, new_level_range2) )
                             end
-                        else
+                        elseif weighting == :volume
                             h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
                                                 weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  .* select(level_data, :mask) ),
                                                 closed=closed,
@@ -541,7 +536,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     elseif in(ivar, density_names) #ivar == :rho #|| ivar == :ρ || ivar == :density
                         map_buffer = h.weights .* (boxlen / 2^level)
 
-                    elseif !in(ivar, density_names) && !in(ivar, sd_names) && weighting == false
+                    elseif !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :volume
                     #elseif ivar !== :sd && ivar != :rho && weighting == false
                         map_buffer = h_var.weights .* (boxlen / 2^level)
 
@@ -569,25 +564,25 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         r4_diff = f_max(new_level_range2[end]-1., ratio_level)-newrange2[end]+1.
 
                         # map on lmax grid
-                        remap = [map_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1) , y in range(1, stop=s[2], length=scaled_length2)]
+                        remapped = [map_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1) , y in range(1, stop=s[2], length=scaled_length2)]
 
-                        if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == true
+                        if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass
                         #if ivar != :sd && ivar != :rho && weighting == true
 
                             if first_time_level[counter] == 1
-                                map[:, :, counter] .+= remap[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2
+                                map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2
 
                                 remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
                                 map_weight .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2  # and correct for remapping
                                 first_time_level[counter] = 0
                             end
                         else
-                            map[:, :, counter] .+= remap[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
+                            map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
                         end
                     elseif level == simlmax
                         map[:,:,counter] .+= map_buffer
 
-                        if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == true && first_time_level[counter] == 1
+                        if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass && first_time_level[counter] == 1
                         #if ivar != :sd && ivar != :rho && weighting == true && first_time_level[counter] == 1
                             map_weight .+= map_buffer_weight
                             first_time_level[counter] = 0
@@ -603,29 +598,29 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     end
 
 
-
+    # calc density maps & reverse weighting
     counter = 0
     for ivar in selected_vars
         counter = counter + 1
         if !in(ivar, rσanglecheck) # exclude velocity dispersion symbols and radius/angle maps
-            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == true
+            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass
             #if ivar != :sd && ivar != :Σ && ivar != :surfacedensity && ivar != :rho && ivar != :ρ && ivar != :density && weighting == true
-
                 #map[:,:,counter] = map[:,:,counter] ./ map_weight
                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                 #println(ivar, " ", counter, " ", unit_name)
                 maps[Symbol(ivar)] = map[:,:, counter] ./ map_weight .* selected_unit
-                maps_unit[Symbol( string(ivar)  )] = unit_name
+                maps_unit[Symbol( ivar )] = unit_name
 
             else
                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                 maps[Symbol(ivar)] = map[:,:, counter]  .* selected_unit
                 maps_unit[Symbol( string(ivar)  )] = unit_name
-
             end
 
         end
     end
+
+
 
 
 
@@ -677,36 +672,41 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     end
 
 
-    # remap onto lmax grid
-    if simlmax > lmax
-        if verbose
-            println()
-            println("remap from:")
-            println("level ", simlmax, " => ", lmax)
 
-            min_cellsize, min_unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
-            max_cellsize, max_unit  = humanize(dataobject.info.boxlen / 2^simlmax, dataobject.info.scale, 2, "length")
-            println("cellsize ", max_cellsize," [$max_unit] => ", min_cellsize ," [$min_unit]")
-        end
 
-        first_time  =1
-        counter = 0
-        for ivar in selected_vars
-            counter = counter + 1
-            if !in(ivar, rσanglecheck)
-                maps_buffer = maps[Symbol(ivar)]
-                s = size(maps_buffer)
-                lmax_ratio = 2^simlmax / 2^lmax
-                scaled_length1 = round(Int, s[1] / lmax_ratio)
-                scaled_length2 = round(Int, s[2] / lmax_ratio)
-                if first_time == 1
-                    if verbose println("pixels ", s, " => ($scaled_length1, $scaled_length2)" ) end
-                    first_time = 0
-                end
-                maps_lmax[Symbol(ivar)] = [maps_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
-            end
-        end
-    end
+
+    # # remap onto lmax grid
+    # if simlmax > lmax
+    #     if verbose
+    #         println()
+    #         println("remap from:")
+    #         println("level ", simlmax, " => ", lmax)
+    #
+    #         min_cellsize, min_unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
+    #         max_cellsize, max_unit  = humanize(dataobject.info.boxlen / 2^simlmax, dataobject.info.scale, 2, "length")
+    #         println("cellsize ", max_cellsize," [$max_unit] => ", min_cellsize ," [$min_unit]")
+    #     end
+    #
+    #     first_time  =1
+    #     for ivar in selected_vars
+    #         if !in(ivar, σcheck)
+    #             maps_buffer = maps[Symbol(ivar)]
+    #
+    #             s = size(maps_buffer)
+    #             lmax_ratio = 2^simlmax / 2^lmax
+    #             scaled_length1 = round(Int, s[1] / lmax_ratio)
+    #             scaled_length2 = round(Int, s[2] / lmax_ratio)
+    #             if first_time == 1
+    #                 if verbose println("pixels ", s, " => ($scaled_length1, $scaled_length2)" ) end
+    #                 first_time = 0
+    #             end
+    #             maps_lmax[Symbol(ivar)] = [maps_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
+    #         end
+    #     end
+    # end
+
+
+
 
 
     # create velocity dispersion maps, after all other maps are created
@@ -757,194 +757,67 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     end
 
 
-    # create velocity dispersion maps from rebinned maps
-    if simlmax > lmax
-        counter = 0
-        for ivar in selected_vars
-            counter = counter + 1
 
-            if in(ivar, σcheck)
-                #for iσ in σcheck
-                    selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-
-                        selected_v = σ_to_v[ivar]
-                        iv  = maps_lmax[selected_v[1]]
-                        iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
-                        iv2 = maps_lmax[selected_v[2]]
-                        iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
-                        if iv_unit == iv2_unit
-                            if iv_unit == unit_name
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
-                            elseif iv_unit == :standard
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
-                            elseif iv_unit == :km_s
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
-                            end
-                        elseif iv_unit != iv2_unit
-                            if iv_unit == :km_s && unit_name == :standard
-                                iv = iv ./ dataobject.info.scale.km_s
-                            elseif iv_unit == :standard && unit_name == :km_s
-                                iv = iv .* dataobject.info.scale.km_s
-                            end
-                            if iv2_unit == :km_s && unit_name == :standard
-                                iv2 = iv2 ./ dataobject.info.scale.km_s.^2
-                            elseif iv2_unit == :standard && unit_name == :km_s
-                                iv2 = iv2 .* dataobject.info.scale.km_s.^2
-                            end
-
-                            # overwrite NaN due to radius = 0
-                            #iv2 = iv2[isnan.(iv2)] .= 0
-                            #iv  = iv[isnan.(iv)] .= 0
-
-                            maps_lmax[Symbol(ivar)]  = sqrt.( iv2 .- iv .^2 )
-                        end
-
-
-                    #end
-                #end
-            end
-        end
-    end
-
+    #
+    # # create velocity dispersion maps from rebinned maps
+    # if simlmax > lmax
+    #     counter = 0
+    #     for ivar in selected_vars
+    #         counter = counter + 1
+    #
+    #         if in(ivar, σcheck)
+    #             #for iσ in σcheck
+    #                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+    #
+    #                     selected_v = σ_to_v[ivar]
+    #                     iv  = maps_lmax[selected_v[1]]
+    #                     iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
+    #                     iv2 = maps_lmax[selected_v[2]]
+    #                     iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
+    #                     if iv_unit == iv2_unit
+    #                         if iv_unit == unit_name
+    #                             maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
+    #                         elseif iv_unit == :standard
+    #                             maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
+    #                         elseif iv_unit == :km_s
+    #                             maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
+    #                         end
+    #                     elseif iv_unit != iv2_unit
+    #                         if iv_unit == :km_s && unit_name == :standard
+    #                             iv = iv ./ dataobject.info.scale.km_s
+    #                         elseif iv_unit == :standard && unit_name == :km_s
+    #                             iv = iv .* dataobject.info.scale.km_s
+    #                         end
+    #                         if iv2_unit == :km_s && unit_name == :standard
+    #                             iv2 = iv2 ./ dataobject.info.scale.km_s.^2
+    #                         elseif iv2_unit == :standard && unit_name == :km_s
+    #                             iv2 = iv2 .* dataobject.info.scale.km_s.^2
+    #                         end
+    #
+    #                         # overwrite NaN due to radius = 0
+    #                         #iv2 = iv2[isnan.(iv2)] .= 0
+    #                         #iv  = iv[isnan.(iv)] .= 0
+    #
+    #                         maps_lmax[Symbol(ivar)]  = sqrt.( iv2 .- iv .^2 )
+    #                     end
+    #
+    #
+    #                 #end
+    #             #end
+    #         end
+    #     end
+    # end
 
     if mera_mask_inserted # delete column :mask
         dataobject.data = select(dataobject.data, Not(:mask))
     end
 
+    finalmaps = HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
 
-    return HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
-end
-
-
-
-function remap(dataobject::HydroMapsType, lmax::Real; verbose::Bool=verbose_mode)
-
-    printtime("", verbose)
-
-    simlmax = dataobject.lmax
-    lmax_projected = lmax
-
-    maps = dataobject.maps
-    selected_vars= Symbol[]
-    for k in keys(maps)
-        push!(selected_vars, k)
-    end
-
-    maps_unit = dataobject.maps_unit
-    units= Symbol[]
-    for k in selected_vars
-        kunit = maps_unit[ Symbol(string(k) ) ]
-        push!(units, kunit)
-    end
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
-    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
-                          :σy => [:vy, :vy2],
-                          :σz => [:vz, :vz2],
-                          :σ  => [:v,  :v2],
-                          :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
-
-    maps_lmax = SortedDict()
-    # remap onto lmax grid
     if simlmax > lmax
-        if verbose
-            println()
-            println("remap from:")
-            println("level ", simlmax, " => ", lmax)
-
-            min_cellsize, min_unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
-            max_cellsize, max_unit  = humanize(dataobject.info.boxlen / 2^simlmax, dataobject.info.scale, 2, "length")
-            println("cellsize ", max_cellsize," [$max_unit] => ", min_cellsize ," [$min_unit]")
-        end
-
-        first_time  =1
-        counter = 0
-        for ivar in selected_vars
-            counter = counter + 1
-            if !in(ivar, σcheck)
-                maps_buffer = maps[Symbol(ivar)]
-                s = size(maps_buffer)
-                lmax_ratio = 2^simlmax / 2^lmax
-                scaled_length1 = round(Int, s[1] / lmax_ratio)
-                scaled_length2 = round(Int, s[2] / lmax_ratio)
-                if first_time == 1
-                    if verbose println("pixels ", s, " => ($scaled_length1, $scaled_length2)" ) end
-                    first_time = 0
-                end
-                maps_lmax[Symbol(ivar)] = [maps_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
-            end
-        end
+            return remap(finalmaps, lmax, weighting=weighting)
     else
-        error("lmax of simulation is =< given lmax.")
+        return finalmaps
     end
 
-
-
-
-    # create velocity dispersion maps from rebinned maps
-    if simlmax > lmax
-        counter = 0
-        for ivar in selected_vars
-            counter = counter + 1
-
-            if in(ivar, σcheck)
-                #for iσ in σcheck
-                    selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-
-                        selected_v = σ_to_v[ivar]
-                        iv  = maps_lmax[selected_v[1]]
-                        iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
-                        iv2 = maps_lmax[selected_v[2]]
-                        iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
-                        if iv_unit == iv2_unit
-                            if iv_unit == unit_name
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
-                            elseif iv_unit == :standard
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
-                            elseif iv_unit == :km_s
-                                maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
-                            end
-                        elseif iv_unit != iv2_unit
-                            if iv_unit == :km_s && unit_name == :standard
-                                iv = iv ./ dataobject.info.scale.km_s
-                            elseif iv_unit == :standard && unit_name == :km_s
-                                iv = iv .* dataobject.info.scale.km_s
-                            end
-                            if iv2_unit == :km_s && unit_name == :standard
-                                iv2 = iv2 ./ dataobject.info.scale.km_s.^2
-                            elseif iv2_unit == :standard && unit_name == :km_s
-                                iv2 = iv2 .* dataobject.info.scale.km_s.^2
-                            end
-
-                            # overwrite NaN due to radius = 0
-                            #iv2 = iv2[isnan.(iv2)] .= 0
-                            #iv  = iv[isnan.(iv)] .= 0
-
-                            maps_lmax[Symbol(ivar)]  = sqrt.( iv2 .- iv .^2 )
-                        end
-
-
-                    #end
-                #end
-            end
-        end
-    end
-
-
-
-
-
-
-    return HydroMapsType(maps, maps_unit, maps_lmax,
-                        dataobject.maps_mode,
-                        lmax_projected,
-                        dataobject.lmin,
-                        simlmax,
-                        dataobject.ranges,
-                        dataobject.extent,
-                        dataobject.cextent,
-                        dataobject.ratio,
-                        dataobject.boxlen,
-                        dataobject.smallr, dataobject.smallc, dataobject.scale,
-                        dataobject.info)
 end
