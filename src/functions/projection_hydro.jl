@@ -757,57 +757,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     end
 
 
-
-    #
-    # # create velocity dispersion maps from rebinned maps
-    # if simlmax > lmax
-    #     counter = 0
-    #     for ivar in selected_vars
-    #         counter = counter + 1
-    #
-    #         if in(ivar, σcheck)
-    #             #for iσ in σcheck
-    #                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-    #
-    #                     selected_v = σ_to_v[ivar]
-    #                     iv  = maps_lmax[selected_v[1]]
-    #                     iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
-    #                     iv2 = maps_lmax[selected_v[2]]
-    #                     iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
-    #                     if iv_unit == iv2_unit
-    #                         if iv_unit == unit_name
-    #                             maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
-    #                         elseif iv_unit == :standard
-    #                             maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
-    #                         elseif iv_unit == :km_s
-    #                             maps_lmax[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
-    #                         end
-    #                     elseif iv_unit != iv2_unit
-    #                         if iv_unit == :km_s && unit_name == :standard
-    #                             iv = iv ./ dataobject.info.scale.km_s
-    #                         elseif iv_unit == :standard && unit_name == :km_s
-    #                             iv = iv .* dataobject.info.scale.km_s
-    #                         end
-    #                         if iv2_unit == :km_s && unit_name == :standard
-    #                             iv2 = iv2 ./ dataobject.info.scale.km_s.^2
-    #                         elseif iv2_unit == :standard && unit_name == :km_s
-    #                             iv2 = iv2 .* dataobject.info.scale.km_s.^2
-    #                         end
-    #
-    #                         # overwrite NaN due to radius = 0
-    #                         #iv2 = iv2[isnan.(iv2)] .= 0
-    #                         #iv  = iv[isnan.(iv)] .= 0
-    #
-    #                         maps_lmax[Symbol(ivar)]  = sqrt.( iv2 .- iv .^2 )
-    #                     end
-    #
-    #
-    #                 #end
-    #             #end
-    #         end
-    #     end
-    # end
-
     if mera_mask_inserted # delete column :mask
         dataobject.data = select(dataobject.data, Not(:mask))
     end

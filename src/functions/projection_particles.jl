@@ -720,9 +720,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
             map_R = zeros(Float64, length1, length2 );
             for i = 1:(length1)
                 for j = 1:(length2)
-                    x = i * dataobject.boxlen / 2^lmax
-                    y = j * dataobject.boxlen / 2^lmax
-                    radius = sqrt((x-length1_center)^2 + (y-length2_center)^2)
+                    x = i * dataobject.boxlen
+                    y = j * dataobject.boxlen
+                    radius = sqrt( ((x-length1_center) / 2^lmax )^2 + ( (y-length2_center) / 2^lmax)^2)
                     map_R[i,j] = radius * selected_unit
                 end
             end
@@ -739,8 +739,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
             map_ϕ = zeros(Float64, length1, length2 );
             for i = 1:(length1)
                 for j = 1:(length2)
-                    x = i * dataobject.boxlen / 2^lmax - length1_center
-                    y = j * dataobject.boxlen / 2^lmax - length2_center
+                    x = i * (dataobject.boxlen  - length1_center) / 2^lmax
+                    y = j * (dataobject.boxlen  - length2_center) / 2^lmax
                     if x > 0. && y >= 0.
                         map_ϕ[i,j] = atan(y / x)
                     elseif x > 0. && y < 0.
