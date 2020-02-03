@@ -259,7 +259,11 @@ function namelist(object::Dict{Any,Any})
 end
 
 
-
+"""Get a printout of the makefile:
+```julia
+makefile(object::InfoType)
+```
+"""
 function makefile(object::InfoType)
     println()
     printstyled("[Mera]: Makefile content\n", bold=true, color=:normal)
@@ -278,7 +282,11 @@ function makefile(object::InfoType)
     return
 end
 
-
+"""Get a printout of the timerfile:
+```julia
+timerfile(object::InfoType)
+```
+"""
 function timerfile(object::InfoType)
     println()
     printstyled("[Mera]: Timer-file content\n", bold=true, color=:normal)
@@ -298,7 +306,11 @@ function timerfile(object::InfoType)
 end
 
 
-
+"""Get a printout of the patchfile:
+```julia
+patchfile(object::InfoType)
+```
+"""
 function patchfile(object::InfoType)
     println()
     printstyled("[Mera]: Patch-file content\n", bold=true, color=:normal)
@@ -318,9 +330,9 @@ function patchfile(object::InfoType)
 end
 
 
-"""Get a detailed overview of all the fields from MERA composite types:
+"""Get a detailed overview of many fields from the MERA InfoType:
 ```julia
-viewallfields(object)
+viewallfields(dataobject::InfoType)
 ```
 """
 function viewallfields(dataobject::InfoType)
