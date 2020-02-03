@@ -189,6 +189,14 @@ mutable struct DescriptorType
     DescriptorType() = new()
 end
 
+
+mutable struct FilesContentType
+    makefile::Array{String,1}
+    timerfile::Array{String,1}
+    patchfile::Array{String,1}
+    FilesContentType() = new()
+end
+
 """
 Mutable Struct: Collected information about the selected simulation output
 """
@@ -240,6 +248,7 @@ mutable struct InfoType
     namelist_content::Dict{Any,Any}
     headerfile::Bool
     makefile::Bool
+    files_content::FilesContentType
     timerfile::Bool
     compilationfile::Bool
     patchfile::Bool
@@ -254,6 +263,9 @@ mutable struct InfoType
     #boxcenter::Array{Float64,1}
     InfoType() = new()
 end
+
+
+
 
 mutable struct LevelType
   imin::Int

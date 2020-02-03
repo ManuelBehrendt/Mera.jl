@@ -37,6 +37,9 @@ function viewfields(object::InfoType)
         elseif i == :namelist_content
             printstyled(i, " ==> dictionary: ", tuple(keys(object.namelist_content)...), "\n", bold=true, color=:normal)
             println()
+        elseif i == :files_content
+            printstyled(i, " ==> subfields: ", propertynames(object.files_content), "\n", bold=true, color=:normal)
+            println()
         else
             println(i, "\t= ", getfield(object, i))
         end
@@ -158,6 +161,20 @@ function viewfields(object::DescriptorType)
 end
 
 
+function viewfields(object::FilesContentType)
+
+    list_field = propertynames(object)
+
+    println()
+    printstyled("[Mera]: List of files-content\n", bold=true, color=:normal)
+    printstyled("=================================\n", bold=true, color=:normal)
+    println(propertynames(object))
+
+    println()
+    return
+end
+
+
 
 function viewfields(object::PhysicalUnitsType)
 
@@ -243,6 +260,64 @@ end
 
 
 
+function makefile(object::InfoType)
+    println()
+    printstyled("[Mera]: Makefile content\n", bold=true, color=:normal)
+    printstyled("=================================\n", bold=true, color=:normal)
+
+    if object.makefile
+        for i in object.files_content.makefile
+            println(i)
+        end
+    else
+        println("[Mera]: No Makefile found!")
+    end
+
+    println()
+
+    return
+end
+
+
+function timerfile(object::InfoType)
+    println()
+    printstyled("[Mera]: Timer-file content\n", bold=true, color=:normal)
+    printstyled("=================================\n", bold=true, color=:normal)
+
+    if object.timerfile
+        for i in object.files_content.timerfile
+            println(i)
+        end
+    else
+        println("[Mera]: No timer-file found!")
+    end
+
+    println()
+
+    return
+end
+
+
+
+function patchfile(object::InfoType)
+    println()
+    printstyled("[Mera]: Patch-file content\n", bold=true, color=:normal)
+    printstyled("=================================\n", bold=true, color=:normal)
+
+    if object.patchfile
+        for i in object.files_content.patchfile
+            println(i)
+        end
+    else
+        println("[Mera]: No timer-file found!")
+    end
+
+    println()
+
+    return
+end
+
+
 """Get a detailed overview of all the fields from MERA composite types:
 ```julia
 viewallfields(object)
@@ -259,5 +334,7 @@ function viewallfields(dataobject::InfoType)
     viewfields(dataobject.grid_info)
     viewfields(dataobject.part_info)
     viewfields(dataobject.compilation)
+    makefile(dataobject)
+    timerfile(dataobject)
     return
 end
