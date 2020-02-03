@@ -11,7 +11,7 @@ function get_data(  dataobject::HydroDataType,
     isamr = checkuniformgrid(dataobject, lmax)
     vars_dict = Dict()
     #vars = unique(vars)
-
+    
 
     if direction == :z
         apos = :cx

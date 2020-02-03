@@ -226,9 +226,9 @@ function prepranges(    dataobject::InfoType,
     end
 
 
-    if xmin < 0. || ymin < 0. || zmin < 0. || xmax > 1. || ymax > 1. || zmax > 1.
-        error("[Mera]: Given range(s) outside of box!")
-    end
+    # if xmin < 0. || ymin < 0. || zmin < 0. || xmax > 1. || ymax > 1. || zmax > 1.
+    #     error("[Mera]: Given range(s) outside of box!")
+    # end
     ranges = [xmin, xmax, ymin, ymax, zmin, zmax]
 
     if height != 0.
@@ -333,9 +333,9 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
     end
 
 
-    if xmin < 0. || ymin < 0. || zmin < 0. || xmax > 1. || ymax > 1. || zmax > 1.
-        error("[Mera]: Given range(s) outside of box!")
-    end
+    # if xmin < 0. || ymin < 0. || zmin < 0. || xmax > 1. || ymax > 1. || zmax > 1.
+    #     error("[Mera]: Given range(s) outside of box!")
+    # end
     ranges = [xmin, xmax, ymin, ymax, zmin, zmax]
 
     return ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift, height_shift
@@ -437,9 +437,9 @@ function prep_spherical_shellranges(    dataobject::InfoType,
     end
 
 
-    if xmin < 0. || ymin < 0. || zmin < 0. || xmax > 1. || ymax > 1. || zmax > 1.
-        error("[Mera]: Given range(s) outside of box!")
-    end
+    # if xmin < 0. || ymin < 0. || zmin < 0. || xmax > 1. || ymax > 1. || zmax > 1.
+    #     error("[Mera]: Given range(s) outside of box!")
+    # end
     ranges = [xmin, xmax, ymin, ymax, zmin, zmax]
 
     return ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift
