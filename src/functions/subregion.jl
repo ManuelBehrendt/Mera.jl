@@ -4,7 +4,8 @@
 - select size of a region (w/o intersecting cells)
 - give the spatial center (with units) of the data relative to the full box
 - relate the coordinates to a direction (x,y,z)
-- in
+- inverse the selected region
+
 ```julia
 subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
             xrange::Array{<:Any,1}=[missing, missing],  # cuboid
