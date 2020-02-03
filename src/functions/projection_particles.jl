@@ -30,7 +30,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             mask=[false],
                             direction::Symbol=:z,
                             plane_orientation::Symbol=:perpendicular,
-                            mode::Symbol=:mass,
+                            weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -48,7 +48,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 mask=mask,
                                 direction=direction,
                                 plane_orientation=plane_orientation,
-                                mode=mode,
+                                weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -69,7 +69,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             mask=[false],
                             direction::Symbol=:z,
                             plane_orientation::Symbol=:perpendicular,
-                            mode::Symbol=:mass,
+                            weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -87,7 +87,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 mask=mask,
                                 direction=direction,
                                 plane_orientation=plane_orientation,
-                                mode=mode,
+                                weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -108,7 +108,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             mask=[false],
                             direction::Symbol=:z,
                             plane_orientation::Symbol=:perpendicular,
-                            mode::Symbol=:mass,
+                            weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -126,7 +126,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 mask=mask,
                                 direction=direction,
                                 plane_orientation=plane_orientation,
-                                mode=mode,
+                                weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -147,7 +147,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             mask=[false],
                             direction::Symbol=:z,
                             plane_orientation::Symbol=:perpendicular,
-                            mode::Symbol=:mass,
+                            weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -165,7 +165,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 mask=mask,
                                 direction=direction,
                                 plane_orientation=plane_orientation,
-                                mode=mode,
+                                weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -185,7 +185,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             mask=[false],
                             direction::Symbol=:z,
                             plane_orientation::Symbol=:perpendicular,
-                            mode::Symbol=:mass,
+                            weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -203,7 +203,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 mask=mask,
                                 direction=direction,
                                 plane_orientation=plane_orientation,
-                                mode=mode,
+                                weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
                                 zrange=zrange,
@@ -224,7 +224,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             mask=[false],
                             direction::Symbol=:z,
                             plane_orientation::Symbol=:perpendicular,
-                            mode::Symbol=:mass,
+                            weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
@@ -239,12 +239,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     printtime("", verbose)
 
 
-    if mode == :mass
 
-        if !in(:mass, keys(dataobject.data[1]) )
-            error("""[Mera]: For mass weighting variable "mass" is necessary.""")
-        end
-    end
 
 
     boxlen = dataobject.boxlen
@@ -286,7 +281,15 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
     # ========================================================
+    if weighting == :mass
+        if !in(:sd, selected_vars)
+            append!(selected_vars, [:sd])
+        end
 
+        if !in(:mass, keys(dataobject.data[1]) )
+            error("""[Mera]: For mass weighting variable "mass" is necessary.""")
+        end
+    end
 
 
     # convert given ranges and print overview on screen
@@ -435,7 +438,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
         if !in(i_var, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
 
-            if mode == :mass
+            if weighting == :mass
 
 
                 if in(i_var, sd_names)
@@ -535,7 +538,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
 
-            elseif mode == :volume
+            elseif weighting == :volume
 
 
                 if in(i_var, sd_names)
@@ -763,7 +766,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
 
 
-    return PartMapsType(maps, maps_unit, maps_mode, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, boxlen, dataobject.scale, dataobject.info)
+    return PartMapsType(maps, maps_unit, SortedDict( ), maps_mode, lmax, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, boxlen, dataobject.scale, dataobject.info)
 
 
 end

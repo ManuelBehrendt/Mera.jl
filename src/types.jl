@@ -377,10 +377,20 @@ mutable struct WStatType
     max::Float64
 end
 
+
+
+"""
+Abstract Supertype of all the different dataset type maps
+HydroMapsType <: DataMapsType
+PartMapsType <: DataMapsType
+"""
+abstract type DataMapsType end # exported
+
+
 """
 Mutable Struct: Contains the maps/units returned by the hydro-projection information about the selected simulation
 """
-mutable struct HydroMapsType
+mutable struct HydroMapsType <: DataMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_lmax::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
@@ -402,10 +412,12 @@ end
 """
 Mutable Struct: Contains the maps/units returned by the particles-projection information about the selected simulation
 """
-mutable struct PartMapsType
+mutable struct PartMapsType <: DataMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_lmax::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    lmax_projected::Real
     lmin::Int
     lmax::Int
     ref_time::Real
