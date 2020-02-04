@@ -52,7 +52,25 @@ function projection()
 end
 
 
+"""
+#### Remap projected data of DataMapsType onto a coarser grid:
+- select the level of the coarser grid
+- select the weighting
+- toggle verbose mode
 
+```julia
+remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=verbose_mode)
+
+return DataMapsType
+```
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "DataMapsType", e.g. created by the function *projection*
+- **`lmax`:** the level of the coarser grid to be created
+##### Predefined/Optional Keywords:
+- **`weighting`:** choose between: :volume, :mass
+- **`verbose`:** print the dimensions/pixel size of the provided and created maps on screen; default: set by the variable `verbose_mode`
+"""
 function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=verbose_mode)
 
     mcheck = [:sd, :Σ, :surfacedensity,:density, :rho, :ρ]
