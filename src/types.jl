@@ -368,7 +368,7 @@ end
 
 """
 Union Type: Mask-array that is of type Bool or BitArray
-> HydroPartType <: ContainMassDataSetType <: DataSetType
+MaskType = Union{Array{Bool,1},BitArray{1}}
 """
 MaskType = Union{Array{Bool,1},BitArray{1}} # exported
 
