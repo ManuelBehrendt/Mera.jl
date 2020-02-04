@@ -351,6 +351,7 @@ julia> filtered_db = @filter gas.data :rho >= density
 # construct a new HydroDataType
 # (comparable to the object "gas" but only with filtered data)
 julia> gas_new = construct_datatype(filtered_db, gas)
+```
 """
 function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::HydroDataType)
     hydrodata = HydroDataType()
