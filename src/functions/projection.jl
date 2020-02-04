@@ -80,6 +80,7 @@ function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, 
         for ivar in keys(dataobject.maps)
             if in(ivar, mcheck)
                 mvar = ivar
+                no_mass_map = false
                 break
             else
                 no_mass_map = true
