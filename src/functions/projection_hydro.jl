@@ -227,9 +227,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
     printtime("", verbose)
 
-
-
-
     lmin = dataobject.lmin
     #lmax = dataobject.lmax
     simlmax=dataobject.lmax
@@ -416,9 +413,23 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
         first_time_level = fill(1, length(selected_vars) )
         if isamr
-            level_data = filter(row->row.level == level, dataobject.data)
+            #level_data = filter(row->row.level == level, dataobject.data)
+            level_data = filter(p-> p.level == level &&
+                                    p.cx >=floor(Int, 2^p.level * xmin) &&
+                                    p.cx <=ceil(Int,  2^p.level * xmax) &&
+                                    p.cy >=floor(Int, 2^p.level * ymin) &&
+                                    p.cy <=ceil(Int,  2^p.level * ymax) &&
+                                    p.cz >=floor(Int, 2^p.level * zmin) &&
+                                    p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
+
         else # for uniform grid
-            level_data = dataobject.data
+            #level_data = dataobject.data
+            level_data = filter(p-> p.cx >=floor(Int, 2^lmax * xmin) &&
+                                    p.cx <=ceil(Int,  2^lmax * xmax) &&
+                                    p.cy >=floor(Int, 2^lmax * ymin) &&
+                                    p.cy <=ceil(Int,  2^lmax * ymax) &&
+                                    p.cz >=floor(Int, 2^lmax * zmin) &&
+                                    p.cz <=ceil(Int,  2^lmax * zmax), dataobject.data)
         end
 
         # rebin data on the used level grid
@@ -519,10 +530,17 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                                                 (new_level_range1, new_level_range2) )
                             end
                         elseif weighting == :volume
-                            h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                            if length(mask) == 1
+                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  ),
+                                                closed=closed,
+                                                (new_level_range1, new_level_range2) )
+                            else
+                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
                                                 weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  .* select(level_data, :mask) ),
                                                 closed=closed,
                                                 (new_level_range1, new_level_range2) )
+                            end
                         end
 
 

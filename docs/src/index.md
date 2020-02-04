@@ -91,7 +91,7 @@ Now add packages like Mera and PyPlot in the favored version:
 ```
 
 ## Help mode and documentation
-The exported functions and types in MERA are listed in the API documentation, but can also be accesed in the REPL or Jupyter notebook.
+The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
 
 In the REPL use e.g. for the function *getinfo*:
 ```julia
