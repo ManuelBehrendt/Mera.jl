@@ -186,6 +186,10 @@ mutable struct DescriptorType
     sinks::Array{Symbol,1}
     usesinks::Bool
     sinksfile::Bool
+
+    rt::Array{Symbol,1}
+    usert::Bool
+    rtfile::Bool
     DescriptorType() = new()
 end
 
@@ -243,6 +247,7 @@ mutable struct InfoType
     particles::Bool
     clumps::Bool
     sinks::Bool
+    rt::Bool
 
     namelist::Bool
     namelist_content::Dict{Any,Any}
