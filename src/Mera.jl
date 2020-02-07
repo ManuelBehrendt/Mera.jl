@@ -139,10 +139,13 @@ include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")
 
 include("read_data/RAMSES/getclumps.jl")
+# ============================================
 
+# projection, slice
 include("functions/projection.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_particles.jl")
+
 # ============================================
 
 # Subregion
@@ -158,6 +161,14 @@ include("functions/shellregion_hydro.jl")
 include("functions/shellregion_particles.jl")
 include("functions/shellregion_clumps.jl")
 # ============================================
+
+# Functions under development
+pkgdir = joinpath(@__DIR__, "dev/dev.jl")
+if isfile(pkgdir)
+    include(pkgdir)
+end
+# ============================================
+
 
 println()
 println( "*__   __ _______ ______   _______ ")

@@ -255,6 +255,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     # checks to use maps instead of projections
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
+    ranglecheck = [rcheck..., anglecheck...]
 
     # for velocity dispersion add necessary velocity components
     # ========================================================
@@ -282,7 +283,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
     # ========================================================
     if weighting == :mass
-        if !in(:sd, selected_vars)
+        use_sd_map = checkformaps(selected_vars, ranglecheck)
+        # only add :sd if there are also other variables than in ranglecheck
+        if !in(:sd, selected_vars) && use_sd_map
             append!(selected_vars, [:sd])
         end
 
