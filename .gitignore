@@ -37,6 +37,9 @@ tutorials/version_1/.ipynb_checkpoints/
 testing/
 profiling/
 
+# functions under development
+src/dev
+
 # others
 .DS_Store
 todo.rtf

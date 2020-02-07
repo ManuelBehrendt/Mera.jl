@@ -44,7 +44,7 @@ function projection()
     #println(":l, :lx, :ly, :lz :lr, :lϕ, :lθ")
     println()
     println("2d maps (not projected):")
-    println(":r_cylinder, :r_sphere")
+    println(":r_cylinder") #, :r_sphere")
     println(":ϕ") # :θ
     println("------------------------------------------------")
     println()
@@ -73,21 +73,30 @@ return DataMapsType
 """
 function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=verbose_mode)
 
+    # checks to use maps instead of mass weighting
+    rcheck = [:r_cylinder, :r_sphere]
+    anglecheck = [:ϕ]
+    ranglecheck = [rcheck..., anglecheck...]
+
+
     mcheck = [:sd, :Σ, :surfacedensity,:density, :rho, :ρ]
     mvar = :no
     if weighting == :mass
-        no_mass_map = false
-        for ivar in keys(dataobject.maps)
-            if in(ivar, mcheck)
-                mvar = ivar
-                no_mass_map = false
-                break
-            else
-                no_mass_map = true
+        notonly_ranglecheck_vars = checkformaps(dataobject, ranglecheck)
+        if notonly_ranglecheck_vars
+            no_mass_map = false
+            for ivar in keys(dataobject.maps)
+                if in(ivar, mcheck)
+                    mvar = ivar
+                    no_mass_map = false
+                    break
+                else
+                    no_mass_map = true
+                end
             end
-        end
-        if no_mass_map
-            error("""[Mera]: For mass weighting a map with "rho" or "sd" is necessary.""")
+            if no_mass_map
+                error("""[Mera]: For mass weighting a map with "rho" or "sd" is necessary.""")
+            end
         end
     end
 
@@ -247,4 +256,31 @@ function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, 
                             dataobject.info)
     end
 
+end
+
+
+# check if only variables from ranglecheck are selected
+function checkformaps(selected_vars::Array{Symbol,1}, reference_vars::Array{Symbol,1})
+    Nvars = length(selected_vars)
+    cw = 0
+    for iw in selected_vars
+        if in(iw,reference_vars)
+            cw +=1
+        end
+    end
+    Ndiff = Nvars-cw
+    return Ndiff != 0
+end
+
+function checkformaps(dataobject::DataMapsType, reference_vars::Array{Symbol,1})
+    Nvars =0
+    cw = 0
+    for iw in keys(dataobject.maps)
+        Nvars +=1
+        if in(iw,reference_vars)
+            cw +=1
+        end
+    end
+    Ndiff = Nvars-cw
+    return Ndiff != 0
 end

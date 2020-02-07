@@ -248,7 +248,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # checks to use maps instead of projections
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
-
+    ranglecheck = [rcheck..., anglecheck...]
     # for velocity dispersion add necessary velocity components
     # ========================================================
     σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
@@ -277,10 +277,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
 
-
+    notonly_ranglecheck_vars = checkformaps(selected_vars, ranglecheck)
 
     if weighting == :mass
-        if !in(:sd, selected_vars)
+        # only add :sd if there are also other variables than in ranglecheck
+        if !in(:sd, selected_vars) && notonly_ranglecheck_vars
             append!(selected_vars, [:sd])
         end
 
@@ -409,212 +410,213 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_unit = SortedDict( )
     maps_lmax = SortedDict( )
     maps_mode = SortedDict( )
-    @showprogress 1 "" for level = lmin:simlmax
+    if notonly_ranglecheck_vars
+        @showprogress 1 "" for level = lmin:simlmax
 
-        first_time_level = fill(1, length(selected_vars) )
-        if isamr
-            #level_data = filter(row->row.level == level, dataobject.data)
-            level_data = filter(p-> p.level == level &&
-                                    p.cx >=floor(Int, 2^p.level * xmin) &&
-                                    p.cx <=ceil(Int,  2^p.level * xmax) &&
-                                    p.cy >=floor(Int, 2^p.level * ymin) &&
-                                    p.cy <=ceil(Int,  2^p.level * ymax) &&
-                                    p.cz >=floor(Int, 2^p.level * zmin) &&
-                                    p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
+            first_time_level = fill(1, length(selected_vars) )
+            if isamr
+                #level_data = filter(row->row.level == level, dataobject.data)
+                level_data = filter(p-> p.level == level &&
+                                        p.cx >=floor(Int, 2^p.level * xmin) &&
+                                        p.cx <=ceil(Int,  2^p.level * xmax) &&
+                                        p.cy >=floor(Int, 2^p.level * ymin) &&
+                                        p.cy <=ceil(Int,  2^p.level * ymax) &&
+                                        p.cz >=floor(Int, 2^p.level * zmin) &&
+                                        p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
 
-        else # for uniform grid
-            #level_data = dataobject.data
-            level_data = filter(p-> p.cx >=floor(Int, 2^lmax * xmin) &&
-                                    p.cx <=ceil(Int,  2^lmax * xmax) &&
-                                    p.cy >=floor(Int, 2^lmax * ymin) &&
-                                    p.cy <=ceil(Int,  2^lmax * ymax) &&
-                                    p.cz >=floor(Int, 2^lmax * zmin) &&
-                                    p.cz <=ceil(Int,  2^lmax * zmax), dataobject.data)
-        end
+            else # for uniform grid
+                #level_data = dataobject.data
+                level_data = filter(p-> p.cx >=floor(Int, 2^lmax * xmin) &&
+                                        p.cx <=ceil(Int,  2^lmax * xmax) &&
+                                        p.cy >=floor(Int, 2^lmax * ymin) &&
+                                        p.cy <=ceil(Int,  2^lmax * ymax) &&
+                                        p.cz >=floor(Int, 2^lmax * zmin) &&
+                                        p.cz <=ceil(Int,  2^lmax * zmax), dataobject.data)
+            end
 
-        # rebin data on the used level grid
-        rl1 = floor(Int, ranges[1] * (2^level ))  + 1
-        rl2 = ceil(Int, ranges[2] * (2^level ))   + 1
-        rl3 = floor(Int, ranges[3] * (2^level ))  + 1
-        rl4 = ceil(Int, ranges[4] * (2^level ))   + 1
-        rl5 = floor(Int, ranges[5] * (2^level)) + 1
-        rl6 = ceil(Int, ranges[6] * (2^level))  + 1
-        #println("Rebin data on the used maximum used grid")
-        #println("xrange: ",rl1, " ", rl2)
-        #println("yrange: ",rl3, " ", rl4)
-        #println()
-
-
-        if level == simlmax
-            alt_shift = 1
-        end
+            # rebin data on the used level grid
+            rl1 = floor(Int, ranges[1] * (2^level ))  + 1
+            rl2 = ceil(Int, ranges[2] * (2^level ))   + 1
+            rl3 = floor(Int, ranges[3] * (2^level ))  + 1
+            rl4 = ceil(Int, ranges[4] * (2^level ))   + 1
+            rl5 = floor(Int, ranges[5] * (2^level)) + 1
+            rl6 = ceil(Int, ranges[6] * (2^level))  + 1
+            #println("Rebin data on the used maximum used grid")
+            #println("xrange: ",rl1, " ", rl2)
+            #println("yrange: ",rl3, " ", rl4)
+            #println()
 
 
-        if direction == :z
-            # range on maximum used grid
-            new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1) +alt_shift)
-            new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3) +alt_shift)
-            #println(newrange1)
-            #println(newrange2)
+            if level == simlmax
+                alt_shift = 1
+            end
 
 
-
-        elseif direction == :y
-            # range on maximum used grid
-            new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+alt_shift)
-            new_level_range2 = range(rl5, stop=rl6, length=(rl6-rl5)+alt_shift)
-            #println(newrange1)
-            #println(newrange2)s
-
-
-        elseif direction == :x
-            # range on maximum used grid
-            new_level_range1 = range(rl3, stop=rl4, length=(rl4-rl3)+alt_shift)
-            new_level_range2 = range(rl5, stop=rl6, length=(rl6-rl5)+alt_shift)
-            #println(newrange1)
-            #println(newrange2)
-
-        end
+            if direction == :z
+                # range on maximum used grid
+                new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1) +alt_shift)
+                new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3) +alt_shift)
+                #println(newrange1)
+                #println(newrange2)
 
 
 
-        # range on maximum used level grid
-        length_level1=length( new_level_range1 )
-        length_level2=length( new_level_range2 )
+            elseif direction == :y
+                # range on maximum used grid
+                new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+alt_shift)
+                new_level_range2 = range(rl5, stop=rl6, length=(rl6-rl5)+alt_shift)
+                #println(newrange1)
+                #println(newrange2)s
 
 
-
-            # needed for mass weighting and/or sd,rho, ekin projections
-            if in(:rho, selected_vars) || in(:ρ, selected_vars) || in(:density, selected_vars) ||
-                in(:sd, selected_vars) || in(:Σ, selected_vars) || in(:surfacedensity, selected_vars) ||
-                in(:ekin, selected_vars) ||
-                weighting == :mass
-
-                if length(mask) == 1
-                    global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                        weights( select(level_data, :rho) ),
-                                        closed=closed,
-                                        (new_level_range1, new_level_range2)  )
-                else
-                    global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                        weights( select(level_data, :rho) .* select(level_data, :mask) ),
-                                        closed=closed,
-                                        (new_level_range1, new_level_range2)  )
-                end
+            elseif direction == :x
+                # range on maximum used grid
+                new_level_range1 = range(rl3, stop=rl4, length=(rl4-rl3)+alt_shift)
+                new_level_range2 = range(rl5, stop=rl6, length=(rl6-rl5)+alt_shift)
+                #println(newrange1)
+                #println(newrange2)
 
             end
 
 
 
-            counter = 0
-            for ivar in selected_vars
-                counter = counter + 1
+            # range on maximum used level grid
+            length_level1=length( new_level_range1 )
+            length_level2=length( new_level_range2 )
 
-                if !in(ivar, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
 
-                    # non derived variables, density weighted (per level)
-                    if !in(ivar, density_names) && !in(ivar, sd_names)
-                    #if ivar != :sd  &&  ivar!=:rho
-                         #&& ivar != :Σ && ivar != :surfacedensity  #&& ivar != :ρ && ivar != :density
-                        if weighting == :mass
-                            if length(mask) == 1
-                                #println(ivar, " ", counter)
-                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction) .* select(level_data, :rho)  ),
-                                                closed=closed,
-                                                (new_level_range1, new_level_range2) )
-                            else
-                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction) .* select(level_data, :rho) .* select(level_data, :mask)  ),
-                                                closed=closed,
-                                                (new_level_range1, new_level_range2) )
+
+                # needed for mass weighting and/or sd,rho, ekin projections
+                if in(:rho, selected_vars) || in(:ρ, selected_vars) || in(:density, selected_vars) ||
+                    in(:sd, selected_vars) || in(:Σ, selected_vars) || in(:surfacedensity, selected_vars) ||
+                    in(:ekin, selected_vars) ||
+                    weighting == :mass
+
+                    if length(mask) == 1
+                        global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                            weights( select(level_data, :rho) ),
+                                            closed=closed,
+                                            (new_level_range1, new_level_range2)  )
+                    else
+                        global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                            weights( select(level_data, :rho) .* select(level_data, :mask) ),
+                                            closed=closed,
+                                            (new_level_range1, new_level_range2)  )
+                    end
+
+                end
+
+
+
+                counter = 0
+                for ivar in selected_vars
+                    counter = counter + 1
+
+                    if !in(ivar, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
+
+                        # non derived variables, density weighted (per level)
+                        if !in(ivar, density_names) && !in(ivar, sd_names)
+                        #if ivar != :sd  &&  ivar!=:rho
+                             #&& ivar != :Σ && ivar != :surfacedensity  #&& ivar != :ρ && ivar != :density
+                            if weighting == :mass
+                                if length(mask) == 1
+                                    #println(ivar, " ", counter)
+                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction) .* select(level_data, :rho)  ),
+                                                    closed=closed,
+                                                    (new_level_range1, new_level_range2) )
+                                else
+                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction) .* select(level_data, :rho) .* select(level_data, :mask)  ),
+                                                    closed=closed,
+                                                    (new_level_range1, new_level_range2) )
+                                end
+                            elseif weighting == :volume
+                                if length(mask) == 1
+                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  ),
+                                                    closed=closed,
+                                                    (new_level_range1, new_level_range2) )
+                                else
+                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  .* select(level_data, :mask) ),
+                                                    closed=closed,
+                                                    (new_level_range1, new_level_range2) )
+                                end
                             end
-                        elseif weighting == :volume
-                            if length(mask) == 1
-                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  ),
-                                                closed=closed,
-                                                (new_level_range1, new_level_range2) )
-                            else
-                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  .* select(level_data, :mask) ),
-                                                closed=closed,
-                                                (new_level_range1, new_level_range2) )
-                            end
+
+
                         end
 
 
-                    end
+                        # scale to current levels
+                        if in(ivar, sd_names) #ivar == :sd #|| ivar == :Σ || ivar == :surfacedensity
+                            map_buffer = h.weights .* (boxlen / 2^level)
+
+                        elseif in(ivar, density_names) #ivar == :rho #|| ivar == :ρ || ivar == :density
+                            map_buffer = h.weights .* (boxlen / 2^level)
+
+                        elseif !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :volume
+                        #elseif ivar !== :sd && ivar != :rho && weighting == false
+                            map_buffer = h_var.weights .* (boxlen / 2^level)
+
+                        else # for any kind of mass weighted projection
+                            map_buffer = h_var.weights .* (boxlen / 2^level)^3
+                            #if first_time == 1
+                            map_buffer_weight = h.weights .* (boxlen / 2^level)^3
+                            #end
+
+                        end
 
 
-                    # scale to current levels
-                    if in(ivar, sd_names) #ivar == :sd #|| ivar == :Σ || ivar == :surfacedensity
-                        map_buffer = h.weights .* (boxlen / 2^level)
+                        s = size(map_buffer)
+                        #println( s )
+                        # remap on selected gridsize
+                        if level != simlmax
+                            ratio_level = 2^simlmax / 2^level
+                            scaled_length1 = Int(ratio_level * (length_level1-alt_shift) )
+                            scaled_length2 = Int(ratio_level * (length_level2-alt_shift) )
 
-                    elseif in(ivar, density_names) #ivar == :rho #|| ivar == :ρ || ivar == :density
-                        map_buffer = h.weights .* (boxlen / 2^level)
+                            r1_diff = f_min(new_level_range1[1], ratio_level)-newrange1[1]
+                            r2_diff = f_max(new_level_range1[end]-1., ratio_level)-newrange1[end]+1.
 
-                    elseif !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :volume
-                    #elseif ivar !== :sd && ivar != :rho && weighting == false
-                        map_buffer = h_var.weights .* (boxlen / 2^level)
+                            r3_diff = f_min(new_level_range2[1], ratio_level)-newrange2[1]
+                            r4_diff = f_max(new_level_range2[end]-1., ratio_level)-newrange2[end]+1.
 
-                    else # for any kind of mass weighted projection
-                        map_buffer = h_var.weights .* (boxlen / 2^level)^3
-                        #if first_time == 1
-                        map_buffer_weight = h.weights .* (boxlen / 2^level)^3
-                        #end
+                            # map on lmax grid
+                            remapped = [map_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1) , y in range(1, stop=s[2], length=scaled_length2)]
 
-                    end
+                            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass
+                            #if ivar != :sd && ivar != :rho && weighting == true
 
+                                if first_time_level[counter] == 1
+                                    map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2
 
-                    s = size(map_buffer)
-                    #println( s )
-                    # remap on selected gridsize
-                    if level != simlmax
-                        ratio_level = 2^simlmax / 2^level
-                        scaled_length1 = Int(ratio_level * (length_level1-alt_shift) )
-                        scaled_length2 = Int(ratio_level * (length_level2-alt_shift) )
+                                    remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
+                                    map_weight .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2  # and correct for remapping
+                                    first_time_level[counter] = 0
+                                end
+                            else
+                                map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
+                            end
+                        elseif level == simlmax
+                            map[:,:,counter] .+= map_buffer
 
-                        r1_diff = f_min(new_level_range1[1], ratio_level)-newrange1[1]
-                        r2_diff = f_max(new_level_range1[end]-1., ratio_level)-newrange1[end]+1.
-
-                        r3_diff = f_min(new_level_range2[1], ratio_level)-newrange2[1]
-                        r4_diff = f_max(new_level_range2[end]-1., ratio_level)-newrange2[end]+1.
-
-                        # map on lmax grid
-                        remapped = [map_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1) , y in range(1, stop=s[2], length=scaled_length2)]
-
-                        if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass
-                        #if ivar != :sd && ivar != :rho && weighting == true
-
-                            if first_time_level[counter] == 1
-                                map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2
-
-                                remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
-                                map_weight .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2  # and correct for remapping
+                            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass && first_time_level[counter] == 1
+                            #if ivar != :sd && ivar != :rho && weighting == true && first_time_level[counter] == 1
+                                map_weight .+= map_buffer_weight
                                 first_time_level[counter] = 0
                             end
-                        else
-                            map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
                         end
-                    elseif level == simlmax
-                        map[:,:,counter] .+= map_buffer
 
-                        if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass && first_time_level[counter] == 1
-                        #if ivar != :sd && ivar != :rho && weighting == true && first_time_level[counter] == 1
-                            map_weight .+= map_buffer_weight
-                            first_time_level[counter] = 0
-                        end
                     end
+
 
                 end
 
 
-            end
-
-
-    end
-
+        end
+    end # notonly_ranglecheck_vars
 
     # calc density maps & reverse weighting
     counter = 0
@@ -688,42 +690,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             maps_unit[Symbol( string(ivar)  )] = :radian
         end
     end
-
-
-
-
-
-    # # remap onto lmax grid
-    # if simlmax > lmax
-    #     if verbose
-    #         println()
-    #         println("remap from:")
-    #         println("level ", simlmax, " => ", lmax)
-    #
-    #         min_cellsize, min_unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
-    #         max_cellsize, max_unit  = humanize(dataobject.info.boxlen / 2^simlmax, dataobject.info.scale, 2, "length")
-    #         println("cellsize ", max_cellsize," [$max_unit] => ", min_cellsize ," [$min_unit]")
-    #     end
-    #
-    #     first_time  =1
-    #     for ivar in selected_vars
-    #         if !in(ivar, σcheck)
-    #             maps_buffer = maps[Symbol(ivar)]
-    #
-    #             s = size(maps_buffer)
-    #             lmax_ratio = 2^simlmax / 2^lmax
-    #             scaled_length1 = round(Int, s[1] / lmax_ratio)
-    #             scaled_length2 = round(Int, s[2] / lmax_ratio)
-    #             if first_time == 1
-    #                 if verbose println("pixels ", s, " => ($scaled_length1, $scaled_length2)" ) end
-    #                 first_time = 0
-    #             end
-    #             maps_lmax[Symbol(ivar)] = [maps_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
-    #         end
-    #     end
-    # end
-
-
 
 
 

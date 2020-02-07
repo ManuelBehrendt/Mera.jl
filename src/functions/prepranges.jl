@@ -1,3 +1,4 @@
+
 """
 cuboid ranges
 convert given ranges and print overview on screen
@@ -24,7 +25,7 @@ function prepranges(    dataobject::InfoType,
     end
 
 
-    center = prepboxcenter(dataobject, range_unit, center)
+    center = prepboxcenter(dataobject, range_unit, center) .* conv
 
 
     # assign ranges to selected data range or missing ranges = full box
@@ -458,13 +459,13 @@ function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<
     Ncenter = length(center)
     if Ncenter  == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = dataobject.boxlen / 2. * selected_unit # use range_unit
+            bc = 1. / 2. * selected_unit # use range_unit
             center = [bc, bc, bc]
         end
     else
         for i = 1:Ncenter
             if center[i] == :bc || center[i] == :boxcenter
-                bc = dataobject.boxlen / 2. * selected_unit # use range_unit
+                bc = 1. / 2. * selected_unit # use range_unit
                 center[i] = bc
             end
         end

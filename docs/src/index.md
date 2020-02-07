@@ -16,6 +16,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 
 !!! note "Release Notes"
     This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
+    - Slicing
     - Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
     - Create Profiles of quantities and projected data
     - Reader for sinks, gravity, rt, ..
