@@ -79,6 +79,12 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", verbose
     info.descriptor.usesinks = false
     info.descriptor.sinksfile = false
 
+    # todo: check for rt
+    info.rt = false
+    info.descriptor.rt = Symbol[]
+    info.descriptor.usert = false
+    info.descriptor.rtfile = false
+
     readtimerfile!(info)      # check for timer-file
     readcompilationfile!(info)  # compilation overview
     readmakefile!(info)       # check for makefile
