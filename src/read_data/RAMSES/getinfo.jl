@@ -79,10 +79,10 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", verbose
     info.descriptor.usesinks = false
     info.descriptor.sinksfile = false
 
-    istimerfile!(info)      # check for timer-file
+    readtimerfile!(info)      # check for timer-file
     readcompilationfile!(info)  # compilation overview
-    ismakefile!(info)       # check for makefile
-    ispatchfile!(info)      # check for patchfile
+    readmakefile!(info)       # check for makefile
+    readpatchfile!(info)      # check for patchfile
 
     printsimoverview(info, verbose) # print overview on screen
     return info
@@ -565,7 +565,7 @@ function readclumpfile1!(dataobject::InfoType)
 end
 
 
-function istimerfile!(dataobject::InfoType)
+function readtimerfile!(dataobject::InfoType)
     timer_file = false
     if isfile(dataobject.fnames.timer )
         timer_file = true
@@ -610,7 +610,7 @@ function readcompilationfile!(dataobject::InfoType)
 end
 
 
-function ismakefile!(dataobject::InfoType)
+function readmakefile!(dataobject::InfoType)
     make_file = false
     if  isfile(dataobject.fnames.makefile)
         make_file = true
@@ -622,7 +622,7 @@ function ismakefile!(dataobject::InfoType)
     return dataobject
 end
 
-function ispatchfile!(dataobject::InfoType)
+function readpatchfile!(dataobject::InfoType)
     patch_file = false
     if  isfile(dataobject.fnames.patchfile)
         patch_file = true
