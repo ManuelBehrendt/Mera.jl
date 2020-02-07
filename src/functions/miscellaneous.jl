@@ -166,6 +166,10 @@ function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::Str
     if quantity == ""
         round(value, digits=ndigits)
 
+    elseif value == 0
+        value_buffer = 0.
+        value_unit = "x"
+        return round(value_buffer, digits=ndigits), value_unit
     else
 
         if quantity == "length"
@@ -173,22 +177,22 @@ function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::Str
             value_buffer = value * scale.Mpc * sign_buffer
             value_unit = "Mpc"
             if value_buffer <= 1.
-                value_buffer = value * scale.kpc
+                value_buffer = value * scale.kpc * sign_buffer
                 value_unit = "kpc"
                 if value_buffer <= 1.
-                    value_buffer = value * scale.pc
+                    value_buffer = value * scale.pc * sign_buffer
                     value_unit = "pc"
                     if value_buffer <= 1.
-                        value_buffer = value * scale.mpc
+                        value_buffer = value * scale.mpc * sign_buffer
                         value_unit = "mpc"
                         #if value_buffer < 1. #todo check
                         #    value_buffer = value * scale.au
                         #    value_unit = "au"
                             if value_buffer <= .1
-                                value_buffer = value * scale.cm
+                                value_buffer = value * scale.cm * sign_buffer
                                 value_unit = "cm"
                             if value_buffer <= .1
-                                value_buffer = value * scale.μm
+                                value_buffer = value * scale.μm * sign_buffer
                                 value_unit = "μm"
                                 end
                             end
@@ -206,24 +210,25 @@ function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::Str
             value_buffer = value * scale.Gyr * sign_buffer
             value_unit = "Gyr"
             if value_buffer <= 1.
-                value_buffer = value * scale.Myr
+                value_buffer = value * scale.Myr * sign_buffer
                 value_unit = "Myr"
                 if value_buffer <= .1
-                    value_buffer = value * scale.yr
+                    value_buffer = value * scale.yr * sign_buffer
                     value_unit = "yr"
                     if value_buffer <= 1.
-                        value_buffer = value * scale.s
+                        value_buffer = value * scale.s * sign_buffer
                         value_unit = "s"
                         if value_buffer <= 1.
-                            value_buffer = value * scale.ms
+                            value_buffer = value * scale.ms * sign_buffer
                             value_unit = "ms"
                         end
                     end
                 end
             end
-            value_buffer = value_buffer * sign_buffer
-        end
 
+        value_buffer = value_buffer * sign_buffer
+
+        end
 
 
 
