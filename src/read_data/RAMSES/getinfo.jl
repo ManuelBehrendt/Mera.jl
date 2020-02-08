@@ -445,8 +445,23 @@ function readparticlesfile1!(dataobject::InfoType)
     else
 
         if in(:metallicity, variable_descriptor_list)
-            dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals]
-            dataobject.nvarp = 8
+            pre_variable_list = [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z,
+                                 :mass, :identity, :levelp, :birth_time, :metallicity, :family, :tag]
+            addvar_index = Int[]
+            for (i,ival) in enumerate(variable_descriptor_list)
+                if !in(ival, pre_variable_list)
+                    append!(addvar_index, [i])
+                end
+            end
+
+
+            particles_variable_list=[:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals]
+            if length(addvar_index) != 0
+                addvar = variable_descriptor_list[addvar_index]
+                append!(particles_variable_list, addvar)
+            end
+            dataobject.particles_variable_list=particles_variable_list
+            dataobject.nvarp = length(particles_variable_list)
         else
             dataobject.particles_variable_list=[:vx, :vy, :vz, :mass, :family, :tag, :birth]
             dataobject.nvarp = 7

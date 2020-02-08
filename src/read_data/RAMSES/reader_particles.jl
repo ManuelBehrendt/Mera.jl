@@ -331,8 +331,6 @@ function readpart(dataobject::InfoType;
 
 
 
-
-
                 # read additional variables
                 if Nvarp>7
                     for iN = 8:Nvarp
