@@ -23,15 +23,80 @@
 
 
 
+"""
+#### Project variables or derived quantities from the **particle-dataset**:
+- projection to a grid related to a given level
+- overview the list of predefined quantities with: projection()
+- select variable(s) and their unit(s)
+- limit to a maximum range
+- give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
+- relate the coordinates to a direction (x,y,z)
+- select between mass (default) and volume weighting
+- pass a mask to exclude elements (cells/particles/...) from the calculation
+- toggle verbose mode
 
+
+
+```julia
+projection(   dataobject::PartDataType, vars::Array{Symbol,1};
+                units::Array{Symbol,1}=[:standard],
+                lmax::Int=9,
+                mask=[false],
+                direction::Symbol=:z,
+                weighting::Symbol=:mass,
+                xrange::Array{<:Any,1}=[missing, missing],
+                yrange::Array{<:Any,1}=[missing, missing],
+                zrange::Array{<:Any,1}=[missing, missing],
+                center::Array{<:Any,1}=[0., 0., 0.],
+                range_unit::Symbol=:standard,
+                data_center::Array{<:Any,1}=[missing, missing, missing],
+                data_center_unit::Symbol=:standard,
+                ref_time::Real=dataobject.info.time,
+                verbose::Bool=verbose_mode)
+
+return HydroMapsType
+
+```
+
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "PartDataType"
+- **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
+##### Predefined/Optional Keywords:
+- **`unit(s)`:** return the variable in given units
+- **`lmax`:** create maps with coarser grid than provided by the maximum level of the loaded data
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
+- **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
+- **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`direction`:** select between: :x, :y, :z
+- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
+
+### Defined Methods - function defined for different arguments
+
+- projection( dataobject::PartDataType, var::Symbol; ...) # one given variable
+- projection( dataobject::PartDataType, var::Symbol, unit::Symbol; ...) # one given variable with its unit
+- projection( dataobject::PartDataType, vars::Array{Symbol,1}; ...) # several given variables -> array needed
+- projection( dataobject::PartDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays
+- projection( dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol; ...)  # several given variables that have the same unit -> array for the variables and a single Symbol for the unit
+
+
+#### Examples
+...
+"""
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
-                            parttypes::Array{Symbol,1}=[:stars],
+                            #parttypes::Array{Symbol,1}=[:stars],
                             units::Array{Symbol,1}=[:standard],
-                            coordinates::Symbol=:cartesian,
                             lmax::Int=9,
                             mask=[false],
                             direction::Symbol=:z,
-                            plane_orientation::Symbol=:perpendicular,
+                            #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
@@ -44,12 +109,11 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=units,
-                                parttypes=parttypes,
-                                coordinates=coordinates,
+                                #parttypes=parttypes,
                                 lmax=lmax,
                                 mask=mask,
                                 direction=direction,
-                                plane_orientation=plane_orientation,
+                                #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
@@ -65,12 +129,11 @@ end
 
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             units::Array{Symbol,1};
-                            parttypes::Array{Symbol,1}=[:stars],
-                            coordinates::Symbol=:cartesian,
+                            #parttypes::Array{Symbol,1}=[:stars],
                             lmax::Int=9,
                             mask=[false],
                             direction::Symbol=:z,
-                            plane_orientation::Symbol=:perpendicular,
+                            #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
@@ -83,12 +146,11 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=units,
-                                parttypes=parttypes,
-                                coordinates=coordinates,
+                                #parttypes=parttypes,
                                 lmax=lmax,
                                 mask=mask,
                                 direction=direction,
-                                plane_orientation=plane_orientation,
+                                #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
@@ -103,13 +165,12 @@ end
 
 
 function projection(   dataobject::PartDataType, var::Symbol;
-                            parttypes::Array{Symbol,1}=[:stars],
+                            #parttypes::Array{Symbol,1}=[:stars],
                             unit::Symbol=:standard,
-                            coordinates::Symbol=:cartesian,
                             lmax::Int=9,
                             mask=[false],
                             direction::Symbol=:z,
-                            plane_orientation::Symbol=:perpendicular,
+                            #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
@@ -122,12 +183,11 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, [var], units=[unit],
-                                parttypes=parttypes,
-                                coordinates=coordinates,
+                                #parttypes=parttypes,
                                 lmax=lmax,
                                 mask=mask,
                                 direction=direction,
-                                plane_orientation=plane_orientation,
+                                #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
@@ -143,12 +203,11 @@ end
 
 
 function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
-                            parttypes::Array{Symbol,1}=[:stars],
-                            coordinates::Symbol=:cartesian,
+                            #parttypes::Array{Symbol,1}=[:stars],
                             lmax::Int=9,
                             mask=[false],
                             direction::Symbol=:z,
-                            plane_orientation::Symbol=:perpendicular,
+                            #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
@@ -161,12 +220,11 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, [var], units=[unit],
-                                parttypes=parttypes,
-                                coordinates=coordinates,
+                                #parttypes=parttypes,
                                 lmax=lmax,
                                 mask=mask,
                                 direction=direction,
-                                plane_orientation=plane_orientation,
+                                #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
@@ -181,12 +239,11 @@ end
 
 
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol;
-                            parttypes::Array{Symbol,1}=[:stars],
-                            coordinates::Symbol=:cartesian,
+                            #parttypes::Array{Symbol,1}=[:stars],
                             lmax::Int=9,
                             mask=[false],
                             direction::Symbol=:z,
-                            plane_orientation::Symbol=:perpendicular,
+                            #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
@@ -199,12 +256,11 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             verbose::Bool=verbose_mode)
 
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
-                                parttypes=parttypes,
-                                coordinates=coordinates,
+                                #parttypes=parttypes,
                                 lmax=lmax,
                                 mask=mask,
                                 direction=direction,
-                                plane_orientation=plane_orientation,
+                                #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
                                 yrange=yrange,
@@ -219,13 +275,12 @@ end
 
 
 function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
-                            parttypes::Array{Symbol,1}=[:stars],
+                            #parttypes::Array{Symbol,1}=[:stars],
                             units::Array{Symbol,1}=[:standard],
-                            coordinates::Symbol=:cartesian,
                             lmax::Int=9,
                             mask=[false],
                             direction::Symbol=:z,
-                            plane_orientation::Symbol=:perpendicular,
+                            #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
