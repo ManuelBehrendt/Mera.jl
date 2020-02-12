@@ -2,7 +2,7 @@ function get_data(  dataobject::HydroDataType,
                     vars::Array{Symbol,1},
                     units::Array{Symbol,1},
                     direction::Symbol,
-                    center::Array{<:Any,1},
+                    center::Array{<:Real,1},
                     mask::MaskType,
                     ref_time::Real)
 
@@ -11,7 +11,7 @@ function get_data(  dataobject::HydroDataType,
     isamr = checkuniformgrid(dataobject, lmax)
     vars_dict = Dict()
     #vars = unique(vars)
-    
+
 
     if direction == :z
         apos = :cx
@@ -151,10 +151,8 @@ function get_data(  dataobject::HydroDataType,
             vϕ_cylinder =  sqrt.( a .* b  ) ./ radius .^2 .* selected_unit
             #(y .* (y .* vx .- x .* vy) ).^2 .- ( x .* (y .* vx .- x .* vy) ) .^2
 
-
             #(x .* vy .- y .* vx) ./ radius .* selected_unit
-            vϕ_cylinder[isnan.(vϕ_cylinder)] .= 0 # overwrite NaN due to radius = 0
-
+            vϕ_cylinder[isnan.(vϕ_cylinder)] .= 0. # overwrite NaN due to radius = 0
             vars_dict[:vϕ_cylinder] = vϕ_cylinder
 
 
@@ -188,11 +186,11 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :vr_cylinder
 
             radius = getvar(dataobject, :r_cylinder, center=center )
+
             x = getvar(dataobject, :x, center=center)
             y = getvar(dataobject, :y, center=center)
             vx = getvar(dataobject, :vx)
             vy = getvar(dataobject, :vy)
-
 
             selected_unit = getunit(dataobject, :vr_cylinder, vars, units)
             vr = (x .* vx .+ y .* vy) ./ radius .* selected_unit
@@ -237,13 +235,14 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :r_cylinder
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)
             if isamr
-                vars_dict[:r_cylinder] = select( dataobject.data, (apos, bpos, :level)=>p->
+                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( dataobject.data, (apos, bpos, :level)=>p->
                                                 selected_unit * sqrt( (p[apos] * boxlen / 2^p.level - boxlen * center[1] )^2 +
-                                                                   (p[bpos] * boxlen / 2^p.level - boxlen * center[2] )^2 ) )
+                                                                   (p[bpos] * boxlen / 2^p.level - boxlen * center[2] )^2 ) ) )
             else # if uniform grid
-                vars_dict[:r_cylinder] = select( dataobject.data, (apos, bpos)=>p->
+
+                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( dataobject.data, (apos, bpos)=>p->
                                                 selected_unit * sqrt( (p[apos] * boxlen / 2^lmax - boxlen * center[1] )^2 +
-                                                                   (p[bpos] * boxlen / 2^lmax - boxlen * center[2] )^2 ) )
+                                                                   (p[bpos] * boxlen / 2^lmax - boxlen * center[2] )^2 ) ) )
             end
         elseif i == :r_sphere
             selected_unit = getunit(dataobject, :r_sphere, vars, units)
