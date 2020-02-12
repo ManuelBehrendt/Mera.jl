@@ -1,5 +1,3 @@
-
-
 # First Steps
 
 ## Simulation Overview
@@ -10,14 +8,14 @@ The first call of **MERA** will compile the package.
 using Mera
 ```
 
-Get information with the function **getinfo** about the simulation for a selected output and assign it to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function **getinfo** prints a small summary and the given units are printed in human-readable representation.
+Get information with the function ``getinfo`` about the simulation for a selected output and assign it to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function ``getinfo`` prints a small summary and the given units are printed in human-readable representation.
 
 
 ```julia
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10"); # output=400 in given path
 ```
 
-    [0m[1m[Mera]: 2019-12-27T22:41:53.439[22m
+    [0m[1m[Mera]: 2020-02-12T20:05:20.735[22m
     
     Code: RAMSES
     output [420] summary:
@@ -41,7 +39,7 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10"); # output=400 i
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    particle variables: (:vx, :vy, :vz, :mass, :age)
+    particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
@@ -55,7 +53,7 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10"); # output=400 i
     
 
 
-The simulation output can be selected in several ways, which is realised by using multiple dispatch. See the different defined methods on the function **getinfo**:
+The simulation output can be selected in several ways, which is realised by using multiple dispatch. See the different defined methods on the function ``getinfo``:
 
 
 ```julia
@@ -67,15 +65,13 @@ methods(getinfo)
 
 
 
-4 methods for generic function getinfo:
-- getinfo(; output, path, namelist, verbose) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:51
-- getinfo(path::String; output, namelist, verbose) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:46
-- getinfo(output::Number; path, namelist, verbose) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:38
-- getinfo(output::Number, path::String; namelist, verbose) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:42
+
+# 4 methods for generic function <b>getinfo</b>:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L51" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:51</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L46" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:46</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L38" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:38</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L42" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:42</a></li> </ul>
+
 
 
 ## Fields
-The created object **info** is of type **InfoType** (composite type):
+The created object ``info`` is of type ``InfoType`` (composite type):
 
 
 ```julia
@@ -99,7 +95,7 @@ viewfields(info);
 
     output	= 420
     path	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10
-    [0m[1mfnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)[22m
+    [0m[1mfnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)[22m
     
     simcode	= RAMSES
     mtime	= 2017-07-27T01:22:09
@@ -127,21 +123,24 @@ viewfields(info);
     nvarp	= 5
     variable_list	= Symbol[:rho, :vx, :vy, :vz, :p, :var6]
     gravity_variable_list	= Symbol[:epot, :ax, :ay, :az]
-    particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :age]
+    particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :birth]
     clumps_variable_list	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     sinks_variable_list	= Symbol[]
-    [0m[1mdescriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)[22m
+    [0m[1mdescriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)[22m
     
     amr	= true
     gravity	= true
     particles	= true
     clumps	= true
     sinks	= false
+    rt	= false
     namelist	= false
     [0m[1mnamelist_content ==> dictionary: ()[22m
     
     headerfile	= true
     makefile	= true
+    [0m[1mfiles_content ==> subfields: (:makefile, :timerfile, :patchfile)[22m
+    
     timerfile	= false
     compilationfile	= true
     patchfile	= true
@@ -170,14 +169,14 @@ propertynames(info)
 
 
 
-    (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+    (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
 
 
 
 ## Physical Units
 All calculations in **MERA** are processed in the code units of the loades simulation. The **RAMSES** scaling factors from code- to cgs-units are given for the length, density, mass, velocity and time, assigned to the fields: unit_l, unit_d, unit_m, unit_v, unit_t
 
-To make life easier, we provide more predefined scaling factors, assigned to the sub-field **scale**:
+To make life easier, we provide more predefined scaling factors, assigned to the sub-field ``scale``:
 
 
 ```julia
@@ -285,7 +284,7 @@ scale.km_s
 
 
 
-Furthermore, the scales can be assigned by applying the function **createscales** on an object of type **InfoType** (here: *info*):
+Furthermore, the scales can be assigned by applying the function ``createscales`` on an object of type ``InfoType`` (here: `info`):
 
 
 ```julia
@@ -313,7 +312,7 @@ my_scales.km_s
 
 
 ## Physical Constants
-Some useful constants are assigned to the *InfoType* object:
+Some useful constants are assigned to the `InfoType` object:
 
 
 ```julia
@@ -389,7 +388,7 @@ viewfields(con)
 
 
 ## InfoType Fields Overview
-All fields and sub-fields that are assigned to the *InfoType* or from other objects can be viewed by the function **viewfields** or **namelist**.
+All fields and sub-fields that are assigned to the `InfoType` or from other objects can be viewed by the function **viewfields**, **namelist**, **makefile**, **timerfile**, **patchfile**.
 See the methods list:
 
 
@@ -400,16 +399,8 @@ methods(viewfields)
 
 
 
-9 methods for generic function viewfields:
-- viewfields(object::PhysicalUnitsType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:164
-- viewfields(object::DescriptorType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:147
-- viewfields(object::FileNamesType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:131
-- viewfields(object::CompilationInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:113
-- viewfields(object::GridInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:87
-- viewfields(object::PartInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:70
-- viewfields(object::ScalesType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:54
-- viewfields(object::InfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:12
-- viewfields(object::DataSetType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:180
+# 10 methods for generic function <b>viewfields</b>:<ul><li> viewfields(object::<b>PhysicalUnitsType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L181" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:181</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L166" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:166</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L150" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:150</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L134" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:134</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L116" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:116</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L90" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L73" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:73</a></li> <li> viewfields(object::<b>ScalesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L57" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:57</a></li> <li> viewfields(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L12" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:12</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L197" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:197</a></li> </ul>
+
 
 
 
@@ -420,9 +411,8 @@ methods(namelist)
 
 
 
-2 methods for generic function namelist:
-- namelist(object::Dict{Any,Any}) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:228
-- namelist(object::InfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:210
+# 2 methods for generic function <b>namelist</b>:<ul><li> namelist(object::<b>Dict{Any,Any}</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L244" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:244</a></li> <li> namelist(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L226" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:226</a></li> </ul>
+
 
 
 Get a detailed overview of all the fields from MERA composite types:
@@ -434,7 +424,7 @@ viewallfields(info)
 
     output	= 420
     path	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10
-    [0m[1mfnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)[22m
+    [0m[1mfnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)[22m
     
     simcode	= RAMSES
     mtime	= 2017-07-27T01:22:09
@@ -462,21 +452,24 @@ viewallfields(info)
     nvarp	= 5
     variable_list	= Symbol[:rho, :vx, :vy, :vz, :p, :var6]
     gravity_variable_list	= Symbol[:epot, :ax, :ay, :az]
-    particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :age]
+    particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :birth]
     clumps_variable_list	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     sinks_variable_list	= Symbol[]
-    [0m[1mdescriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)[22m
+    [0m[1mdescriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)[22m
     
     amr	= true
     gravity	= true
     particles	= true
     clumps	= true
     sinks	= false
+    rt	= false
     namelist	= false
     [0m[1mnamelist_content ==> dictionary: ()[22m
     
     headerfile	= true
     makefile	= true
+    [0m[1mfiles_content ==> subfields: (:makefile, :timerfile, :patchfile)[22m
+    
     timerfile	= false
     compilationfile	= true
     patchfile	= true
@@ -565,6 +558,7 @@ viewallfields(info)
     hydro_descriptor	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/hydro_file_descriptor.txt
     gravity	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/grav_00420.
     particles	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/part_00420.
+    part_descriptor	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/part_file_descriptor.txt
     clumps	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/clump_00420.
     timer	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/timer_00420.txt
     header	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/header_00420.txt
@@ -582,7 +576,7 @@ viewallfields(info)
     usehydro	= false
     hydrofile	= true
     pversion	= 0
-    particles	= Symbol[:vx, :vy, :vz, :mass, :age]
+    particles	= Symbol[:vx, :vy, :vz, :mass, :birth]
     ptypes	= String[]
     useparticles	= false
     particlesfile	= false
@@ -595,6 +589,9 @@ viewallfields(info)
     sinks	= Symbol[]
     usesinks	= false
     sinksfile	= false
+    rt	= Symbol[]
+    usert	= false
+    rtfile	= false
     
     
     [0m[1m[Mera]: Namelist file content[22m
@@ -638,10 +635,161 @@ viewallfields(info)
     [0m[1m[Mera]: Compilation file overview[22m
     [0m[1m========================================[22m
     compile_date	=  01/12/16-18:13:59
-    patch_dir	=  /hydra/u/manb/projects/new/unresolved_scale_height/patch
+    patch_dir	=  /hydra/u/manb/sf_sim/patch
     remote_repo	=  
     local_branch	=  
     last_commit	=  
+    
+    
+    [0m[1m[Mera]: Makefile content[22m
+    [0m[1m=================================[22m
+    #############################################################################
+    # If you have problems with this makefile, contact Romain.Teyssier@gmail.com
+    #############################################################################
+    # Compilation time parameters
+    NVECTOR = 32
+    NDIM = 3
+    NPRE = 8
+    NVAR = 6
+    NENER = 0
+    SOLVER = hydro
+    PATCH = /hydra/u/manb/sf_sim/patch
+    EXEC = ramses_neu
+    #############################################################################
+    GITBRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+    GITHASH = $(shell git log --pretty=format:'%H' -n 1)
+    GITREPO = $(shell git config --get remote.origin.url)
+    BUILDDATE = $(shell date +"%D-%T")
+    DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNENER=$(NENER) -DNVAR=$(NVAR) \
+              -DSOLVER$(SOLVER)
+    #############################################################################
+    # Fortran compiler options and directives
+    
+    # --- No MPI, gfortran -------------------------------
+    #F90 = gfortran -O3 -frecord-marker=4 -fbacktrace -ffree-line-length-none -g
+    #FFLAGS = -x f95-cpp-input $(DEFINES) -DWITHOUTMPI
+    
+    # --- No MPI, tau ----------------------------------
+    #F90 = tau_f90.sh -optKeepFiles -optPreProcess -optCPPOpts=$(DEFINES) -DWITHOUTMPI
+    
+    # --- No MPI, pgf90 ----------------------------------
+    #F90 = pgf90
+    #FFLAGS = -Mpreprocess $(DEFINES) -DWITHOUTMPI
+    
+    # --- No MPI, xlf ------------------------------------
+    #F90 = xlf
+    #FFLAGS = -WF,-DNDIM=$(NDIM),-DNPRE=$(NPRE),-DNVAR=$(NVAR),-DSOLVER$(SOLVER),-DWITHOUTMPI -qfree=f90 -qsuffix=f=f90 -qsuffix=cpp=f90
+    
+    # --- No MPI, f90 ------------------------------------
+    #F90 = f90
+    #FFLAGS = -cpp $(DEFINES) -DWITHOUTMPI
+    
+    # --- No MPI, ifort ----------------------------------
+    #F90 = ifort
+    #FFLAGS = -cpp $(DEFINES) -DWITHOUTMPI
+    
+    # --- MPI, gfortran syntax ------------------------------
+    #F90 = mpif90 -frecord-marker=4 -O3 -ffree-line-length-none -g -fbacktrace 
+    #FFLAGS = -x f95-cpp-input $(DEFINES)
+    
+    # --- MPI, gfortran DEBUG syntax ------------------------------ 
+    #F90 = mpif90 -frecord-marker=4 -ffree-line-length-none -fbacktrace -g -O -fbounds-check -Wuninitialized -Wall
+    #FFLAGS = -x f95-cpp-input -ffpe-trap=zero,underflow,overflow,invalid -finit-real=nan  $(DEFINES)    
+    
+    # --- MPI, pgf90 syntax ------------------------------
+    #F90 = mpif90 -O3
+    #FFLAGS = -Mpreprocess $(DEFINES)
+    
+    # --- MPI, ifort syntax ------------------------------
+    F90 = mpiifort
+    #FFLAGS = -cpp -fast $(DEFINES) -DNOSYSTEM
+    FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM
+    
+    # --- MPI, ifort syntax, additional checks -----------
+    #F90 = mpif90
+    #FFLAGS = -warn all -O0 -g -traceback -fpe0 -ftrapuv -check bounds -cpp $(DEFINES) -DNOSYSTEM
+    
+    
+    # --- MPI, ifort syntax ------------------------------
+    #F90 = ftn
+    #FFLAGS = -xAVX -g -traceback -fpp -fast $(DEFINES) -DNOSYSTEM #-DRT 
+    
+    # --- MPI, ifort syntax, additional checks -----------
+    #F90 = ftn
+    #FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM #-DRT
+    
+    #############################################################################
+    MOD = mod
+    #############################################################################
+    # MPI librairies
+    LIBMPI = 
+    #LIBMPI = -lfmpi -lmpi -lelan
+    
+    # --- CUDA libraries, for Titane ---
+    LIBCUDA = -L/opt/cuda/lib  -lm -lcuda -lcudart
+    
+    LIBS = $(LIBMPI)
+    #############################################################################
+    # Sources directories are searched in this exact order
+    VPATH = $(PATCH):../$(SOLVER):../aton:../hydro:../pm:../poisson:../amr:../tools
+    #############################################################################
+    # All objects
+    MODOBJ = amr_parameters.o amr_commons.o random.o pm_parameters.o pm_commons.o poisson_parameters.o \
+             poisson_commons.o hydro_parameters.o hydro_commons.o cooling_module.o bisection.o sparse_mat.o \
+             clfind_commons.o gadgetreadfile.o write_makefile.o write_patch.o write_gitinfo.o
+    
+    AMROBJ = read_params.o init_amr.o init_time.o init_refine.o adaptive_loop.o amr_step.o update_time.o \
+             output_amr.o flag_utils.o physical_boundaries.o virtual_boundaries.o refine_utils.o nbors_utils.o \
+             hilbert.o load_balance.o title.o sort.o cooling_fine.o units.o light_cone.o movie.o
+    # Particle-Mesh objects
+    PMOBJ = init_part.o output_part.o rho_fine.o synchro_fine.o move_fine.o newdt_fine.o particle_tree.o \
+            add_list.o remove_list.o star_formation.o sink_particle.o feedback.o clump_finder.o clump_merger.o \
+            flag_formation_sites.o init_sink.o output_sink.o
+    # Poisson solver objects
+    POISSONOBJ = init_poisson.o phi_fine_cg.o interpol_phi.o force_fine.o multigrid_coarse.o multigrid_fine_commons.o \
+                 multigrid_fine_fine.o multigrid_fine_coarse.o gravana.o boundary_potential.o rho_ana.o output_poisson.o
+    # Hydro objects
+    HYDROOBJ = init_hydro.o init_flow_fine.o write_screen.o output_hydro.o courant_fine.o godunov_fine.o \
+               uplmde.o umuscl.o interpol_hydro.o godunov_utils.o condinit.o hydro_flag.o hydro_boundary.o \
+               boundana.o read_hydro_params.o synchro_hydro_fine.o
+    EXTTOOLS = specfun.o
+    
+    # All objects
+    AMRLIB = $(EXTTOOLS)  $(AMROBJ) $(HYDROOBJ) $(PMOBJ) $(POISSONOBJ)
+    # ATON objects
+    ATON_MODOBJ = timing.o radiation_commons.o rad_step.o
+    ATON_OBJ = observe.o init_radiation.o rad_init.o rad_boundary.o rad_stars.o rad_backup.o ../aton/atonlib/libaton.a
+    #############################################################################
+    ramses:	$(MODOBJ) $(AMRLIB) ramses.o
+    	$(F90) $(MODOBJ) $(AMRLIB) ramses.o -o $(EXEC)$(NDIM)d $(LIBS)
+    	rm write_makefile.f90
+    	rm write_patch.f90
+    ramses_aton: $(MODOBJ) $(ATON_MODOBJ) $(AMRLIB) $(ATON_OBJ) ramses.o
+    	$(F90) $(MODOBJ) $(ATON_MODOBJ) $(AMRLIB) $(ATON_OBJ) ramses.o -o $(EXEC)$(NDIM)d $(LIBS) $(LIBCUDA)
+    	rm write_makefile.f90
+    	rm write_patch.f90
+    #############################################################################
+    write_gitinfo.o: FORCE
+    	$(F90) $(FFLAGS) -DPATCH=\'$(PATCH)\' -DGITBRANCH=\'$(GITBRANCH)\' -DGITHASH=\'"$(GITHASH)"\' \
+     -DGITREPO=\'$(GITREPO)\' -DBUILDDATE=\'"$(BUILDDATE)"\' -c ../amr/write_gitinfo.f90 -o $@		
+    write_makefile.o: FORCE
+    	../utils/scripts/cr_write_makefile.sh $(MAKEFILE_LIST)
+    	$(F90) $(FFLAGS) -c write_makefile.f90 -o $@
+    write_patch.o: FORCE
+    	../utils/scripts/cr_write_patch.sh $(PATCH)
+    	$(F90) $(FFLAGS) -c write_patch.f90 -o $@
+    %.o:%.f90
+    	$(F90) $(FFLAGS) -c $^ -o $@
+    FORCE:
+    #############################################################################
+    clean :
+    	rm *.o *.$(MOD)
+    #############################################################################
+    
+    
+    [0m[1m[Mera]: Timer-file content[22m
+    [0m[1m=================================[22m
+    [Mera]: No timer-file found!
     
 
 
@@ -666,3 +814,8 @@ storageoverview(info)
     mtime: 2017-07-27T01:22:09
     ctime: 2019-12-24T09:57:04.822
 
+
+
+```julia
+
+```

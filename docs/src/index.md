@@ -17,6 +17,8 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 !!! note "Release Notes"
     This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
     - Slicing
+    - Select particle id/family etc. in projection function
+    - Particle age calculation for cosmological runs
     - Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
     - Create Profiles of quantities and projected data
     - Reader for sinks, gravity, rt, ..
@@ -75,7 +77,7 @@ Pkg.update("Mera")
 ## Reproducibility
 Reproducibility is an essential requirement of the scientific process. Therefore, I recommend working with environments.
 Create independent projects that contain their list of used package dependencies and their versions.
-The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments](https://julialang.github.io/Pkg.jl/v1.3/environments/). 
+The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments](https://julialang.github.io/Pkg.jl/v1.3/environments/).
 In order to create a new project "activate" your working directory:
 
 ```julia

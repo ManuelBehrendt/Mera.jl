@@ -8,7 +8,7 @@ using Mera
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 ```
 
-    [0m[1m[Mera]: 2020-01-01T14:36:12.612[22m
+    [0m[1m[Mera]: 2020-02-08T13:43:44.724[22m
     
     Code: RAMSES
     output [400] summary:
@@ -35,7 +35,7 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     - Npart:    5.091500e+05 
     - Nstars:   5.066030e+05 
     - Ndm:      2.547000e+03 
-    particle variables: (:vx, :vy, :vz, :mass, :age)
+    particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
@@ -59,7 +59,7 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 clumps = getclumps(info);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T14:39:53.951[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:43:54.134[22m
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -106,14 +106,14 @@ The colum names should not be changed, since they are assumed in some functions.
 
 Currently, the length of the loaded variable list can be modified. E.g. the list can be extended with more names if there are more columns in the data than given by the header in the files. 
 
-Load less than the found 12 columns from the header of the clump files; Pass an array with the variables to the keyword argument *vars*. The order of the variables has to be consistent with the header in the clump files:}
+Load less than the found 12 columns from the header of the clump files; Pass an array with the variables to the keyword argument `vars`. The order of the variables has to be consistent with the header in the clump files:}
 
 
 ```julia
 clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T14:56:25.38[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:01.434[22m
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -127,14 +127,14 @@ clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y,
     
 
 
-Pass an array that contains the variables without the keyword argument *vars*. The following order has to be preserved: InfoType-object, variables
+Pass an array that contains the variables without the keyword argument `vars`. The following order has to be preserved: InfoType-object, variables
 
 
 ```julia
 clumps = getclumps(info, [ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:06:42.715[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:03.36[22m
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -193,7 +193,7 @@ Load more than the found 12 columns from the header of the clump files. The orde
 clumps = getclumps(info, vars=[  :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance, :vx, :vy, :vz]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:07:46.616[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:04.175[22m
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -250,7 +250,7 @@ clumps = getclumps(info,
                     zrange=[0.4,0.6]); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:09:41.457[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:06.579[22m
     
     domain:
     xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
@@ -264,7 +264,7 @@ clumps = getclumps(info,
     
 
 
-The loaded data ranges are assigned to the field *ranges* in an array in  **RAMSES** standard notation (domain: [0:1]^3):
+The loaded data ranges are assigned to the field `ranges` in an array in  **RAMSES** standard notation (domain: [0:1]^3):
 
 
 ```julia
@@ -295,7 +295,7 @@ clumps = getclumps(info,
                     center=[0.5, 0.5, 0.5]); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:10:17.773[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:09.633[22m
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -323,7 +323,7 @@ clumps = getclumps(info,
                     range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:11:35.098[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:09.96[22m
     
     domain:
     xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
@@ -337,7 +337,7 @@ clumps = getclumps(info,
     
 
 
-The possible physical length units for the keyword *range_unit* are defined in the field *scale* : 
+The possible physical length units for the keyword `range_unit` are defined in the field `scale` : 
 
 
 ```julia
@@ -394,7 +394,7 @@ clumps = getclumps(info,
                     range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:13:13.16[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:10.318[22m
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -422,7 +422,7 @@ clumps = getclumps(info,
                     range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:14:45.008[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:11.159[22m
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -448,7 +448,7 @@ clumps = getclumps(info,
                     range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:14:52.572[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:11.478[22m
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -476,7 +476,7 @@ clumps = getclumps(info,
                     range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-01-01T15:15:29.407[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-08T13:44:12.344[22m
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -491,16 +491,6 @@ clumps = getclumps(info,
     -------------------------------------------------------
     
 
-
-
-```julia
-
-```
-
-
-```julia
-
-```
 
 
 ```julia
