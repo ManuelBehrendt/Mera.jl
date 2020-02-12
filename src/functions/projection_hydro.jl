@@ -27,7 +27,7 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         zrange::Array{<:Any,1}=[missing, missing],
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center::Array{<:Real,1}=[0.5, 0.5, 0.5],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
@@ -80,7 +80,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         zrange::Array{<:Any,1}=[missing, missing],
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
@@ -114,7 +114,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         zrange::Array{<:Any,1}=[missing, missing],
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
@@ -148,7 +148,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         zrange::Array{<:Any,1}=[missing, missing],
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
@@ -183,7 +183,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         zrange::Array{<:Any,1}=[missing, missing],
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
@@ -220,7 +220,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         zrange::Array{<:Any,1}=[missing, missing],
                         center::Array{<:Any,1}=[0., 0., 0.],
                         range_unit::Symbol=:standard,
-                        data_center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=verbose_mode)
 
@@ -295,11 +295,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
-    if data_center_unit != :standard
-        selected_unit = getunit(dataobject.info, data_center_unit)
-        data_center = data_center ./ dataobject.boxlen .* selected_unit
-    end
-
+    data_centerm = prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
 
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
@@ -322,7 +318,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
     x_coord = :cx
     y_coord = :cy
-    rl = data_center  .* 2^simlmax #.* dataobject.boxlen
+    rl = data_centerm .* 2^simlmax #.* dataobject.boxlen
+
 
     if direction == :z
         # range on maximum used grid
@@ -338,8 +335,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[2], extent[4]-rl[2]] .* boxlen ./ 2^simlmax
         extent = extent .* boxlen ./ 2^simlmax
-        length1_center = data_center[1] * boxlen
-        length2_center = data_center[2] * boxlen
+        length1_center = (data_centerm[1] -xmin ) * boxlen
+        length2_center = (data_centerm[2] -ymin ) * boxlen
 
     elseif direction == :y
         # range on maximum used grid
@@ -354,8 +351,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[3], extent[4]-rl[3]] .* boxlen ./ 2^simlmax
         extent = extent .* boxlen ./ 2^simlmax
-        length1_center = data_center[1] * boxlen
-        length2_center = data_center[3] * boxlen
+        length1_center = (data_centerm[1] - xmin  ) * boxlen
+        length2_center = (data_centerm[3] - zmin) * boxlen
 
     elseif direction == :x
         # range on maximum used grid
@@ -369,8 +366,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[2], extent[2]-rl[2], extent[3]-rl[3], extent[4]-rl[3]] .* boxlen ./ 2^simlmax
         extent = extent .* boxlen ./ 2^simlmax
-        length1_center = data_center[2] * boxlen
-        length2_center = data_center[3] * boxlen
+        length1_center = (data_centerm[2] -ymin ) * boxlen
+        length2_center = (data_centerm[3] -zmin) * boxlen
     end
 
 
@@ -423,7 +420,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                                         p.cy <=ceil(Int,  2^p.level * ymax) &&
                                         p.cz >=floor(Int, 2^p.level * zmin) &&
                                         p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
-
             else # for uniform grid
                 #level_data = dataobject.data
                 level_data = filter(p-> p.cx >=floor(Int, 2^lmax * xmin) &&
@@ -522,24 +518,24 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                                 if length(mask) == 1
                                     #println(ivar, " ", counter)
                                     h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction) .* select(level_data, :rho)  ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction) .* select(level_data, :rho)  ),
                                                     closed=closed,
                                                     (new_level_range1, new_level_range2) )
                                 else
                                     h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction) .* select(level_data, :rho) .* select(level_data, :mask)  ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction) .* select(level_data, :rho) .* select(level_data, :mask)  ),
                                                     closed=closed,
                                                     (new_level_range1, new_level_range2) )
                                 end
                             elseif weighting == :volume
                                 if length(mask) == 1
                                     h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction)  ),
                                                     closed=closed,
                                                     (new_level_range1, new_level_range2) )
                                 else
                                     h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_center, direction=direction)  .* select(level_data, :mask) ),
+                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction)  .* select(level_data, :mask) ),
                                                     closed=closed,
                                                     (new_level_range1, new_level_range2) )
                                 end
@@ -753,4 +749,57 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         return finalmaps
     end
 
+end
+
+
+
+
+function prepdatacenter(dataobject::InfoType, center::Array{<:Any,1}, range_unit::Symbol, data_centerm::Array{<:Any,1}, data_center_unit::Symbol)
+
+    center = center_in_standardnotation(dataobject, center, range_unit)
+    selected_unit = 1.
+    if data_center_unit != :standard
+        selected_unit = getunit(dataobject, data_center_unit)
+    end
+
+    Ndc = length(center)
+    data_center = zeros(Float64, Ndc)
+    if  Ndc == 3
+        if data_centerm[1] === missing
+            data_center[1] = center[1]
+        else
+            data_center[1] = prepboxcenter(dataobject, selected_unit, data_centerm[1])
+        end
+
+        if data_centerm[2] === missing
+            data_center[2] = center[2]
+        else
+            data_center[2] = prepboxcenter(dataobject, selected_unit, data_centerm[2])
+        end
+
+        if data_centerm[3] === missing
+            data_center[3] = center[3]
+        else
+            data_center[3] = prepboxcenter(dataobject, selected_unit, data_centerm[3])
+        end
+    elseif Ndc == 1
+        data_center[1] = data_center[2] = data_center[3] = prepboxcenter(dataobject, selected_unit, data_centerm[1])
+    end
+
+    return data_center
+end
+
+
+function prepboxcenter(dataobject::InfoType, selected_unit::Real, centerm::Any)
+
+    Nc = length(centerm)
+    center = zeros(Float64, Nc)
+
+    if centerm == :bc || centerm == :boxcenter
+        center = dataobject.boxlen * 0.5 * selected_unit
+    else
+        center = centerm ./ dataobject.boxlen .* selected_unit
+    end
+
+    return center
 end
