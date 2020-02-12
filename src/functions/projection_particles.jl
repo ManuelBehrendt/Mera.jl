@@ -47,7 +47,7 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 xrange::Array{<:Any,1}=[missing, missing],
                 yrange::Array{<:Any,1}=[missing, missing],
                 zrange::Array{<:Any,1}=[missing, missing],
-                center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                center::Array{<:Any,1}=[0., 0., 0.],
                 range_unit::Symbol=:standard,
                 data_center::Array{<:Any,1}=[missing, missing, missing],
                 data_center_unit::Symbol=:standard,
@@ -70,7 +70,7 @@ return HydroMapsType
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0.5, 0.5, 0.5]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
@@ -101,7 +101,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                            center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
@@ -138,7 +138,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                            center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
@@ -175,7 +175,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                            center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
@@ -212,7 +212,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                            center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
@@ -248,7 +248,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                            center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
@@ -285,7 +285,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             xrange::Array{<:Any,1}=[missing, missing],
                             yrange::Array{<:Any,1}=[missing, missing],
                             zrange::Array{<:Any,1}=[missing, missing],
-                            center::Array{<:Any,1}=[0.5, 0.5, 0.5],
+                            center::Array{<:Any,1}=[0., 0., 0.],
                             range_unit::Symbol=:standard,
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
