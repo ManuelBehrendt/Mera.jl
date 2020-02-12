@@ -177,15 +177,13 @@ function subregioncylinder(dataobject::HydroDataType;
     # convert given ranges and print overview on screen
     ranges, cx_shift, cy_shift, cz_shift, radius_shift, height_shift = prepranges(dataobject.info, center, radius, height, range_unit, verbose)
 
-
-
     if inverse == false
         if isamr
             sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                                <= (cell_shift(lmax, radius_shift,cell))  &&
+                                <= (cell_shift(p.level, radius_shift,cell))  &&
 
                                 get_height_cylinder(p.cz, p.level, cz_shift)
-                                <= (cell_shift(lmax, height_shift,cell)),
+                                <= (cell_shift(p.level, height_shift,cell)),
 
                                 dataobject.data)
         else # for uniform grid
