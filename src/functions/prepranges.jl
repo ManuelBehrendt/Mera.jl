@@ -13,10 +13,10 @@ function prepranges(    dataobject::InfoType,
                         center::Array{<:Any,1};
                         dataranges::Array{<:Real,1}=[0.,1., 0.,1., 0.,1.] )
 
-
     xrange = zeros(Float64,2)
     yrange = zeros(Float64,2)
     zrange = zeros(Float64,2)
+
     selected_unit = 1. # :standard
     conv = 1. # :standard, variable used to convert to standard units
     if range_unit != :standard
@@ -25,7 +25,7 @@ function prepranges(    dataobject::InfoType,
     end
 
 
-    center = prepboxcenter(dataobject, range_unit, center) .* conv
+    center = prepboxcenter(dataobject, range_unit, center)
 
 
     # assign ranges to selected data range or missing ranges = full box
@@ -73,6 +73,8 @@ function prepranges(    dataobject::InfoType,
 
     center = center ./ conv
 
+
+
     # ensure that min-var is minimum and max-var is maximum of each dimension
     if xmin > xmax  error("[Mera]: xmin > xmax") end
     if ymin > ymax  error("[Mera]: ymin > ymax") end
@@ -107,7 +109,7 @@ function prepranges(    dataobject::InfoType,
         println("domain:")
 
         print("xmin::xmax: $(round(xmin, digits=7)) :: $(round(xmax, digits=7))  \t")
-        xmin_val, xmin_unit  = humanize(xmin * dataobject.boxlen , dataobject.scale, 3, "length")
+        xmin_val, xmin_unit  = humanize(xmin * dataobject.boxlen, dataobject.scale, 3, "length")
         xmax_val, xmax_unit  = humanize(xmax * dataobject.boxlen, dataobject.scale, 3, "length")
         if xmin_val == 0. xmin_unit = xmax_unit end
         print("==> $xmin_val [$xmin_unit] :: $xmax_val [$xmax_unit]\n")
@@ -338,7 +340,6 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
     #     error("[Mera]: Given range(s) outside of box!")
     # end
     ranges = [xmin, xmax, ymin, ymax, zmin, zmax]
-
     return ranges, cx_shift, cy_shift, cz_shift, radius_in_shift, radius_out_shift, height_shift
 end
 
@@ -459,13 +460,13 @@ function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<
     Ncenter = length(center)
     if Ncenter  == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = 1. / 2. * selected_unit # use range_unit
+            bc = dataobject.boxlen * 0.5 * selected_unit # use range_unit
             center = [bc, bc, bc]
         end
     else
         for i = 1:Ncenter
             if center[i] == :bc || center[i] == :boxcenter
-                bc = 1. / 2. * selected_unit # use range_unit
+                bc = dataobject.boxlen * 0.5 * selected_unit # use range_unit
                 center[i] = bc
             end
         end
