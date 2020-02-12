@@ -1,4 +1,3 @@
-
 # 1. Hydro: First Data Inspection
 
 ## Simulation Overview
@@ -9,20 +8,7 @@ using Mera
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
 ```
 
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
-    
-    *__   __ _______ ______   _______ 
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
-    
-    [0m[1m[Mera]: 2019-12-29T23:08:35.046[22m
+    [0m[1m[Mera]: 2020-02-12T20:42:32.755[22m
     
     Code: RAMSES
     output [420] summary:
@@ -46,7 +32,7 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    particle variables: (:vx, :vy, :vz, :mass, :age)
+    particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
@@ -127,7 +113,7 @@ viewfields(info.descriptor)
     usehydro	= false
     hydrofile	= true
     pversion	= 0
-    particles	= Symbol[:vx, :vy, :vz, :mass, :age]
+    particles	= Symbol[:vx, :vy, :vz, :mass, :birth]
     ptypes	= String[]
     useparticles	= false
     particlesfile	= false
@@ -140,6 +126,9 @@ viewfields(info.descriptor)
     sinks	= Symbol[]
     usesinks	= false
     sinksfile	= false
+    rt	= Symbol[]
+    usert	= false
+    rtfile	= false
     
 
 
@@ -153,7 +142,7 @@ propertynames(info.descriptor)
 
 
 
-    (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
+    (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)
 
 
 
@@ -168,10 +157,10 @@ Read the AMR and the Hydro data from all files of the full box with all existing
 
 
 ```julia
-gas = gethydro(info, smallr=1e-30 / info.unit_d);
+gas = gethydro(info, smallr=1e-5);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2019-12-29T23:08:45.54[22m
+    [0m[1m[Mera]: Get hydro data: 2020-02-12T20:43:29.834[22m
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
@@ -184,7 +173,7 @@ gas = gethydro(info, smallr=1e-30 / info.unit_d);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:45[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:00:54[39m
 
 
     Memory used for data table :85.94877052307129 MB
@@ -199,10 +188,10 @@ The memory consumption of the data table is printed at the end. We provide a fun
 usedmemory(gas);
 ```
 
-    Memory used: 85.963 MB
+    Memory used: 86.16 MB
 
 
-The assigned data object is now of type *HydroDataType*:
+The assigned data object is now of type `HydroDataType`:
 
 
 ```julia
@@ -216,7 +205,21 @@ typeof(gas)
 
 
 
-It is a sub-type of to the super-type *DataSetType*
+It is a sub-type of `ContainMassDataSetType`
+
+
+```julia
+supertype( ContainMassDataSetType )
+```
+
+
+
+
+    DataSetType
+
+
+
+`ContainMassDataSetType` is a sub-type of to the super-type `DataSetType`
 
 
 ```julia
@@ -226,7 +229,7 @@ supertype( HydroDataType )
 
 
 
-    DataSetType
+    HydroPartType
 
 
 
@@ -238,16 +241,16 @@ viewfields(gas)
 ```
 
     
-    [0m[1mdata ==> JuliaDB table: (:columns, :pkey, :perms, :cardinality, :columns_buffer)[22m
+    [0m[1mdata ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6)[22m
     
-    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
+    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
     
     lmin	= 6
     lmax	= 10
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
     selected_hydrovars	= [1, 2, 3, 4, 5, 6]
-    smallr	= 1.4774579400791327e-8
+    smallr	= 1.0e-5
     smallc	= 0.0
     
     [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
@@ -257,14 +260,14 @@ viewfields(gas)
 
 For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "gas.info" and the scaling relations from code to cgs units in "gas.scale". The minimum and maximum level of the loaded data, the box length, the selected ranges and number of the hydro variables are retained.
 
-A minimum density or sound speed can be set for the loaded data (e.g. to overwrite negative densities) and is then represented by the fields smallr and smallc of the object *gas* (here). An example:
+A minimum density or sound speed can be set for the loaded data (e.g. to overwrite negative densities) and is then represented by the fields smallr and smallc of the object `gas` (here). An example:
 
 
 ```julia
-gas = gethydro(info, smallr=1.5e-8);
+gas = gethydro(info, smallr=1e-5);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2019-12-29T23:09:34.046[22m
+    [0m[1m[Mera]: Get hydro data: 2020-02-12T20:44:27.671[22m
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
@@ -277,7 +280,7 @@ gas = gethydro(info, smallr=1.5e-8);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:34[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:00:55[39m
 
 
     Memory used for data table :85.94877052307129 MB
@@ -301,8 +304,8 @@ propertynames(gas)
 
 ## Overview of AMR/Hydro
 
-Get an overview of the AMR structure associated with the object *gas* (HydroDataType).
-The printed information is stored into the object *amr_overview* as a **JuliaDB** table (code units)  and can be used for further calculations:
+Get an overview of the AMR structure associated with the object `gas` (HydroDataType).
+The printed information is stored into the object `overview_amr` as a **JuliaDB** table (code units)  and can be used for further calculations:
 
 
 ```julia
@@ -326,7 +329,7 @@ overview_amr = amroverview(gas)
 
 
 
-Get some overview of the data that is associated with the object *gas*. The calculated information can be accessed from the object *data_overview* (here) in code units for further calculations:
+Get some overview of the data that is associated with the object `gas`. The calculated information can be accessed from the object `data_overview` (here) in code units for further calculations:
 
 
 ```julia
@@ -363,7 +366,7 @@ data_overview = dataoverview(gas)
 
 
 
-If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the *select* function. The representation ":mass" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
+If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the `select` function. The representation ":mass" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
 
 
 ```julia
@@ -381,34 +384,34 @@ select(data_overview, (:level,:mass, :rho_min, :rho_max ) )
     Table with 5 rows, 4 columns:
     level  mass      rho_min     rho_max
     ───────────────────────────────────────
-    6      1.07894   1.5e-8      0.00611279
-    7      0.880043  5.21814e-6  0.0201622
+    6      1.75297   1.0e-5      0.00611279
+    7      0.880087  1.0e-5      0.0201622
     8      2.29402   1.30505e-5  0.0927872
     9      2.95427   1.40099e-5  0.39797
     10     26.1408   4.18939e-5  379.907
 
 
 
-Get an array from the column ":mass" in *data_overview* and scale it to the units *Msol*. The order of the calculated data is consistent with the table above:
+Get an array from the column ":mass" in `data_overview` and scale it to the units `Msol`. The order of the calculated data is consistent with the table above:
 
 
 ```julia
-column(data_overview, :mass) .* info.scale.Msol # '.*" corresponds to an element-wise multiplikation
+column(data_overview, :mass) * info.scale.Msol 
 ```
 
 
 
 
     5-element Array{Float64,1}:
-     1.0786451433623521e9 
-     8.79799184131516e8   
+     1.752485761487614e9  
+     8.798434048277442e8  
      2.2933832876377296e9 
      2.9534569318639927e9 
      2.6133591055943253e10
 
 
 
-Or simply convert the *:mass* data in the table to *Msol* units by manipulating the column:
+Or simply convert the `:mass` data in the table to `Msol` units by manipulating the column:
 
 
 ```julia
@@ -426,8 +429,8 @@ select(data_overview, (:level, :mass, :rho_min, :rho_max ) )
     Table with 5 rows, 4 columns:
     level  mass        rho_min     rho_max
     ─────────────────────────────────────────
-    6      1.07865e9   1.5e-8      0.00611279
-    7      8.79799e8   5.21814e-6  0.0201622
+    6      1.75249e9   1.0e-5      0.00611279
+    7      8.79843e8   1.0e-5      0.0201622
     8      2.29338e9   1.30505e-5  0.0927872
     9      2.95346e9   1.40099e-5  0.39797
     10     2.61336e10  4.18939e-5  379.907
@@ -435,7 +438,7 @@ select(data_overview, (:level, :mass, :rho_min, :rho_max ) )
 
 
 ## Data Inspection
-The data is associated with the field *gas.data* as a **JuliaDB** table (code units).
+The data is associated with the field `gas.data` as a **JuliaDB** table (code units).
 Each row corresponds to a cell and each column to a property which makes it easy to  find, filter, map, aggregate, group the data, etc.
 More information can be found in the **Mera** tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
@@ -480,18 +483,18 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
     Table with 1126532 rows, 5 columns:
     [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mrho
     ───────────────────────────────
-    6      1    1    1    1.5e-8
-    6      1    1    2    1.5e-8
-    6      1    1    3    1.5e-8
-    6      1    1    4    1.5e-8
-    6      1    1    5    1.5e-8
-    6      1    1    6    1.5e-8
-    6      1    1    7    1.5e-8
-    6      1    1    8    1.5e-8
-    6      1    1    9    1.5e-8
-    6      1    1    10   1.5e-8
-    6      1    1    11   1.5e-8
-    6      1    1    12   1.5e-8
+    6      1    1    1    1.0e-5
+    6      1    1    2    1.0e-5
+    6      1    1    3    1.0e-5
+    6      1    1    4    1.0e-5
+    6      1    1    5    1.0e-5
+    6      1    1    6    1.0e-5
+    6      1    1    7    1.0e-5
+    6      1    1    8    1.0e-5
+    6      1    1    9    1.0e-5
+    6      1    1    10   1.0e-5
+    6      1    1    11   1.0e-5
+    6      1    1    12   1.0e-5
     ⋮
     10     822  507  516  0.0305045
     10     822  508  511  0.0551132
@@ -506,6 +509,16 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
     10     822  510  514  0.0861783
 
 
+
+
+```julia
+
+```
+
+
+```julia
+
+```
 
 
 ```julia

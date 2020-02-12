@@ -1,6 +1,5 @@
-
 # 4. Basic Calculations
-The following functions process different types of *DataSetType*: 
+The following functions process different types of `DataSetType`: 
 - ContainMassDataSetType,
 -    HydroPartType,
 -    HydroDataType,
@@ -18,18 +17,94 @@ particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
 ```
 
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
+    [0m[1m[Mera]: 2020-02-08T20:45:43.752[22m
     
-    *__   __ _______ ______   _______ 
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
+    Code: RAMSES
+    output [400] summary:
+    mtime: 2018-09-05T09:51:55.041
+    ctime: 2019-11-01T17:35:21.051
+    [0m[1m=======================================================[22m
+    simulation time: 594.98 [Myr]
+    boxlen: 48.0 [kpc]
+    ncpu: 2048
+    ndim: 3
+    -------------------------------------------------------
+    amr:           true
+    level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
+    -------------------------------------------------------
+    hydro:         true
+    hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
+    γ: 1.6667
+    -------------------------------------------------------
+    gravity:       true
+    gravity-variables: (:epot, :ax, :ay, :az)
+    -------------------------------------------------------
+    particles:     true
+    - Npart:    5.091500e+05 
+    - Nstars:   5.066030e+05 
+    - Ndm:      2.547000e+03 
+    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    -------------------------------------------------------
+    clumps:        true
+    clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+    -------------------------------------------------------
+    namelist-file: false
+    timer-file:       false
+    compilation-file: true
+    makefile:         true
+    patchfile:        true
+    [0m[1m=======================================================[22m
+    
+    [0m[1m[Mera]: Get hydro data: 2020-02-08T20:45:50.946[22m
+    
+    Key vars=(:level, :cx, :cy, :cz)
+    Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz) 
+    
+    domain:
+    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
+    Reading data...
+
+
+    [32m100%|███████████████████████████████████████████████████| Time: 0:01:47[39m
+
+
+    Memory used for data table :51.840110778808594 MB
+    -------------------------------------------------------
+    
+    [0m[1m[Mera]: Get particle data: 2020-02-08T20:47:41.515[22m
+    
+    Key vars=(:level, :x, :y, :z, :id)
+    Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass) 
+    
+    domain:
+    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
+
+
+    [32mReading data...100%|████████████████████████████████████| Time: 0:00:06[39m
+
+
+    Found 5.089390e+05 particles
+    Memory used for data table :31.064278602600098 MB
+    -------------------------------------------------------
+    
+    [0m[1m[Mera]: Get clump data: 2020-02-08T20:47:49.697[22m
+    
+    domain:
+    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
+    Read 12 colums: 
+    Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
+    Memory used for data table :61.77734375 KB
+    -------------------------------------------------------
     
 
 
@@ -82,7 +157,7 @@ viewfields(info.scale)
 
 ## Total Mass
 
-The function *msum* calculates the total mass of the data that is assigned to the provided object. For the hydro-data, the mass is derived from the density and cell-size (level) of all elements. *info.scale.Msol* (or e.g.: gas.info.scale.Msol) scales the result from code units to solar masses:
+The function `msum` calculates the total mass of the data that is assigned to the provided object. For the hydro-data, the mass is derived from the density and cell-size (level) of all elements. `info.scale.Msol` (or e.g.: gas.info.scale.Msol) scales the result from code units to solar masses:
 
 
 ```julia
@@ -110,7 +185,7 @@ println( "Clumps Mtot:    ", msum(clumps, :Msol)    , " Msol" )
     Clumps Mtot:    1.3743280681841677e10 Msol
 
 
-The following methods are defined on the function *msum*:
+The following methods are defined on the function `msum`:
 
 
 ```julia
@@ -120,12 +195,11 @@ methods(msum)
 
 
 
-2 methods for generic function
 
 
 
 ## Center-Of-Mass
-The function *center_of_mass* or *com* calculates the center-of-mass of the data that is assigned to the provided object.
+The function `center_of_mass` or `com` calculates the center-of-mass of the data that is assigned to the provided object.
 
 
 ```julia
@@ -153,7 +227,7 @@ println( "Clumps COM:    ", center_of_mass(clumps, :kpc)    , " kpc" );
     Clumps COM:    (23.135765457064576, 23.741712325649264, 24.0050127185862) kpc
 
 
-A shorter name for the function *center_of_mass* is defined as *com* :
+A shorter name for the function `center_of_mass` is defined as `com` :
 
 
 ```julia
@@ -196,7 +270,7 @@ println( "Joint COM (Particles + Gas): ", center_of_mass([particles,gas], :kpc) 
     Joint COM (Particles + Gas): (23.24961513830681, 23.895900266222746, 24.03484321295537) kpc
 
 
-Use the shorter name *com* that is defined as the function *center_of_mass* :
+Use the shorter name `com` that is defined as the function `center_of_mass` :
 
 
 ```julia
@@ -216,9 +290,6 @@ methods(center_of_mass)
 
 
 
- 4 methods for generic function
-
-
 
 
 ```julia
@@ -228,13 +299,11 @@ methods(com)
 
 
 
- 4 methods for generic function
-
 
 
 ## Bulk Velocity
 
-The function *bulk_velocity* or *average_velocity* calculates the average velocity (mass-weightedO of the data that is assigned to the provided object. It can also be used for the clump data if it has velocity components: vx, vy, vz
+The function `bulk_velocity` or `average_velocity` calculates the average velocity (w/o mass-weight) of the data that is assigned to the provided object. It can also be used for the clump data if it has velocity components: vx, vy, vz. The default is with mass-weighting:
 
 
 ```julia
@@ -256,6 +325,28 @@ println( "Particles: ", average_velocity(particles, :km_s) , " km/s" )
     Particles: (-11.623422700314535, -18.440572802490234, -0.3291927731417528) km/s
 
 
+Without mass-weighting:
+
+
+```julia
+println( "Gas:       ", bulk_velocity(gas, :km_s, massweight=false)       , " km/s" )
+println( "Particles: ", bulk_velocity(particles, :km_s, massweight=false) , " km/s" )
+```
+
+    Gas:       (-2.931877465071372, -4.04863540210973, -1.4275164966340528) km/s
+    Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
+
+
+
+```julia
+println( "Gas:       ", average_velocity(gas, :km_s, massweight=false)       , " km/s" )
+println( "Particles: ", average_velocity(particles, :km_s, massweight=false) , " km/s" )
+```
+
+    Gas:       (-2.931877465071372, -4.04863540210973, -1.4275164966340528) km/s
+    Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
+
+
 
 ```julia
 methods(bulk_velocity)
@@ -264,7 +355,6 @@ methods(bulk_velocity)
 
 
 
- 2 methods for generic function
 
 
 
@@ -276,12 +366,11 @@ methods(average_velocity)
 
 
 
- 2 methods for generic function
 
 
 
 ## Mass Weighted Average
-The functions *center_of_mass* and *bulk_velocity* use the function *average_mweighted* (average_mass-weighted) in the backend which can be feeded with any kind of variable that is pre-defined for the *getvar()* function or exists in the datatable. See the defined method and at getvar() below:
+The functions `center_of_mass` and `bulk_velocity` use the function `average_mweighted` (average_mass-weighted) in the backend which can be feeded with any kind of variable that is pre-defined for the `getvar()` function or exists in the datatable. See the defined method and at getvar() below:
 
 
 ```julia
@@ -308,10 +397,10 @@ gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:51[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:00:56[39m
 
 
-Use *getvar* to extract variables or derive predefined quantities from the database, dependent on the data type.
+Use `getvar` to extract variables or derive predefined quantities from the database, dependent on the data type.
 See the possible variables:
 
 
@@ -326,7 +415,7 @@ getvar()
     :cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
     
                   -derived hydro vars-
-    :x, :y, :z (in code units)
+    :x, :y, :z
     :mass, :cellsize, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
     
@@ -348,9 +437,8 @@ getvar()
     related to a given center:
     ---------------------------
     :r_cylinder, :r_sphere (radial components)
-    :ϕ, :θ
-    :vr_cylinder, vr_sphere (radial components)
-    :vϕ, :vθ
+    :vr_cylinder
+    :vϕ
     ----------------------------------------------------------------
 
 
@@ -358,7 +446,7 @@ getvar()
 In the following example, we calculate the mass for each cell of the hydro data. 
 - The output is a 1dim array in code units by default (mass1).
 - Each element/cell can be scaled to Msol units by the elementwise multiplikation **gas.scale.Msol** (mass2). 
-- The *getvar* function supports intrinsic scaling to a selected unit (mass3).
+- The `getvar` function supports intrinsic scaling to a selected unit (mass3).
 - The selected unit does not need a keyword argument if the following order is maintained: dataobject, variable, unit
 
 
@@ -445,9 +533,9 @@ getmass(gas)
 
 
 
-### Get a Multiple Quantities
+### Get Multiple Quantities
 Get several quantities with one function call by passing an array containing the selected variables. 
-*getvar* returns a dictionary containing 1dim arrays for each quantity in code units:
+`getvar` returns a dictionary containing 1dim arrays for each quantity in code units:
 
 
 ```julia
@@ -568,7 +656,7 @@ getvar()
     :cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
     
                   -derived hydro vars-
-    :x, :y, :z (in code units)
+    :x, :y, :z
     :mass, :cellsize, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
     
@@ -590,20 +678,19 @@ getvar()
     related to a given center:
     ---------------------------
     :r_cylinder, :r_sphere (radial components)
-    :ϕ, :θ
-    :vr_cylinder, vr_sphere (radial components)
-    :vϕ, :vθ
+    :vr_cylinder
+    :vϕ
     ----------------------------------------------------------------
 
 
-The unit of the provided center-array (in cartesian coordinates: x,y.z) is given by the keyword argument *center_units* (default: code units).
+The unit of the provided center-array (in cartesian coordinates: x,y.z) is given by the keyword argument `center_unit` (default: code units).
 The function returns the quantitites in code units:
 
 
 ```julia
 cv = (gas.boxlen / 2.) * gas.scale.kpc # provide the box-center in kpc
 # e.g. for :mass the center keyword is ignored
-quantities = getvar(gas, [:mass, :r_cylinder], center=[cv, cv, cv], center_units=:kpc) 
+quantities = getvar(gas, [:mass, :r_cylinder], center=[cv, cv, cv], center_unit=:kpc) 
 ```
 
 
@@ -619,7 +706,7 @@ Here, the function returns the result in the units that are provided. Note: E.g.
 
 
 ```julia
-quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], center=[cv, cv, cv], center_units=:kpc)
+quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], center=[cv, cv, cv], center_unit=:kpc)
 ```
 
 
@@ -632,7 +719,7 @@ quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], c
 
 
 
-Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z). In this case the keyword *center_units* is ignored:
+Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z). In this case the keyword `center_unit` is ignored:
 
 
 ```julia
@@ -664,11 +751,11 @@ quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], c
 
 
 
-Use the box center notation for individual dimensions, here x,z. The keyword *center_units* is needed for the y-coordinates:
+Use the box center notation for individual dimensions, here x,z. The keyword `center_unit` is needed for the y-coordinates:
 
 
 ```julia
-quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], center=[:bc, 24., :bc], center_units=:kpc)
+quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], center=[:bc, 24., :bc], center_unit=:kpc)
 ```
 
 
@@ -754,7 +841,7 @@ Example: Get the mass for each gas cell:
 m_i  = ρ_i * cell_volume_i = ρ_i * (boxlen / 2^level)^3
 
 #### Version 1
-Use the *select* function and calculate the mass for each cell:
+Use the `select` function and calculate the mass for each cell:
 
 
 ```julia
@@ -765,7 +852,7 @@ mass1 = select(gas.data, :rho) .* cellvol .* info.scale.Msol; # calculate the ma
 ```
 
 #### Version 2
-Use a single time the *select* function to do the calculations from above :
+Use a single time the `select` function to do the calculations from above :
 
 
 ```julia
@@ -773,7 +860,7 @@ mass2 = select( gas.data, (:rho, :level)=>p->p.rho * (boxlen / 2^p.level)^3 ) .*
 ```
 
 #### Version 3
-Use the *map* function to do the calculations from above :
+Use the `map` function to do the calculations from above :
 
 
 ```julia
@@ -833,11 +920,11 @@ clumps    = getclumps(info, verbose=false);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:02:43[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:02:28[39m
     [32mReading data...100%|████████████████████████████████████| Time: 0:00:04[39m
 
 
-Pass any kind of Array{<:Number,1} (Float, Integer,...) to the *wstat* function to get several unweighted statistical quantities at once:
+Pass any kind of Array{<:Number,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:
 
 
 ```julia
@@ -902,7 +989,7 @@ stats_particles = wstat( getvar(particles, :vx,     :km_s), weight=getvar(partic
 stats_clumps    = wstat( getvar(clumps,    :peak_x, :kpc ), weight=getvar(clumps,    :mass_cl))  ;
 ```
 
-Without the keyword *weight* the following order for the given arrays has to be maintained: values, weight
+Without the keyword `weight` the following order for the given arrays has to be maintained: values, weight
 
 
 ```julia
@@ -947,7 +1034,85 @@ println( "Clumps     min/max_allclumps    : ",  stats_clumps.min,   "/", stats_c
     Clumps     min/max_allclumps    : 10.29199219000667/38.17382813002474 Msol/pc^3
 
 
+## Helpful Functions
+
+
+Get the x,y,z positions of every cell relative to a given center:
+
 
 ```julia
-
+x,y,z = getpositions(gas, :kpc, center=[24.,24.,24.], center_unit=:kpc); # returns a Tuple of 3 arrays
 ```
+
+The box-center can be calculated automatically:
+
+
+```julia
+x,y,z = getpositions(gas, :kpc, center=[:boxcenter]);
+```
+
+
+```julia
+[x y z] # preview of the output
+```
+
+
+
+
+    849332×3 Array{Float64,2}:
+     -23.25   -23.25    -23.25  
+     -23.25   -23.25    -22.5   
+     -23.25   -23.25    -21.75  
+     -23.25   -23.25    -21.0   
+     -23.25   -23.25    -20.25  
+     -23.25   -23.25    -19.5   
+     -23.25   -23.25    -18.75  
+     -23.25   -23.25    -18.0   
+     -23.25   -23.25    -17.25  
+     -23.25   -23.25    -16.5   
+     -23.25   -23.25    -15.75  
+     -23.25   -23.25    -15.0   
+     -23.25   -23.25    -14.25  
+       ⋮                        
+      16.125    3.9375    0.1875
+      16.125    3.9375    0.375 
+      16.125    3.9375    0.5625
+      16.125    3.9375    0.75  
+      16.125    4.125    -0.5625
+      16.125    4.125    -0.375 
+      16.125    4.125    -0.1875
+      16.125    4.125     0.0   
+      16.125    4.125     0.1875
+      16.125    4.125     0.375 
+      16.125    4.125     0.5625
+      16.125    4.125     0.75  
+
+
+
+Get the extent of the dataset-domain:
+
+
+```julia
+getextent(gas) # returns Tuple of (xmin, xmax), (ymin ,ymax ), (zmin ,zmax )
+```
+
+
+
+
+    ((0.0, 48.0), (0.0, 48.0), (0.0, 48.0))
+
+
+
+Get the extent relative to a given center:
+
+
+```julia
+getextent(gas, center=[:boxcenter])
+```
+
+
+
+
+    ((-24.0, 24.0), (-24.0, 24.0), (-24.0, 24.0))
+
+

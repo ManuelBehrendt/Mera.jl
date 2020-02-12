@@ -8,27 +8,14 @@ using Mera
 info = getinfo(1, "../../testing/simulations/manu_stable_2019");
 ```
 
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
-    
-    *__   __ _______ ______   _______ 
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
-    
-    [0m[1m[Mera]: 2020-01-08T15:39:31.651[22m
+    [0m[1m[Mera]: 2020-02-08T13:43:41.281[22m
     
     Code: RAMSES
     output [1] summary:
     mtime: 2020-01-04T21:08:11.996
     ctime: 2020-01-04T21:08:11.996
     [0m[1m=======================================================[22m
-    simulation time: 0.0 [ms]
+    simulation time: 0.0 [x]
     boxlen: 100.0 [kpc]
     ncpu: 32
     ndim: 3
@@ -79,7 +66,7 @@ The functions in **Mera** "know" the predefined particle variable names:
 particles = getparticles(info);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:40:01.123[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:43:54.032[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -130,7 +117,7 @@ particles.data
 particles_a = getparticles(info, vars=[:mass, :birth]); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:40:11.966[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:01.662[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(4, 7) = (:mass, :birth) 
@@ -153,7 +140,7 @@ The same variables can be read by using the var-number:
 particles_a = getparticles(info, vars=[:var4, :var7]); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:41:30.392[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:03.329[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(4, 7) = (:mass, :birth) 
@@ -176,7 +163,7 @@ A keyword argument for the variables is not needed if the following order is pre
 particles_a = getparticles(info, [:mass, :birth]); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:42:05.754[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:03.984[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(4, 7) = (:mass, :birth) 
@@ -239,7 +226,7 @@ In this case, no array and keyword is necessary, but preserve the following or
 particles_c = getparticles(info, :vx ); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:42:43.734[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:05.126[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1,) = (:vx,) 
@@ -306,7 +293,7 @@ particles = getparticles(  info,
                             zrange=[0.4,0.6]); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:43:40.303[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:07.416[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -316,18 +303,13 @@ particles = getparticles(  info,
     ymin::ymax: 0.2 :: 0.8  	==> 20.0 [kpc] :: 80.0 [kpc]
     zmin::zmax: 0.4 :: 0.6  	==> 40.0 [kpc] :: 60.0 [kpc]
     
-
-
-    [32mReading data...100%|████████████████████████████████████| Time: 0:00:01[39m
-
-
     Found 1.753150e+05 particles
     Memory used for data table :13.711382865905762 MB
     -------------------------------------------------------
     
 
 
-The loaded data ranges are assigned to the field *ranges* as an array in  **RAMSES** standard notation (domain: [0:1]^3):
+The loaded data ranges are assigned to the field `ranges` as an array in  **RAMSES** standard notation (domain: [0:1]^3):
 
 
 ```julia
@@ -358,7 +340,7 @@ particles = getparticles(  info,
                             center=[0.5, 0.5, 0.5]);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:44:07.822[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:09.718[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -377,7 +359,7 @@ particles = getparticles(  info,
 
 
 ### Use notation in physical units
-In the following example the ranges are given in units "kpc", relative to the box corner [0., 0., 0.] (default):
+In the following example the ranges are given in unit "kpc", relative to the box corner [0., 0., 0.] (default):
 
 
 ```julia
@@ -388,7 +370,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:45:11.354[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:11.119[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -404,7 +386,7 @@ particles = getparticles(  info,
     
 
 
-The possible physical length units for the keyword *range_unit* are defined in the field *scale* : 
+The possible physical length units for the keyword `range_unit` are defined in the field `scale` : 
 
 
 ```julia
@@ -449,7 +431,7 @@ viewfields(info.scale)  # or e.g.: gas.info.scale
     
 
 
-### Ranges relative to the given center e.g. in units "kpc":
+### Ranges relative to the given center e.g. in unit "kpc":
 
 
 ```julia
@@ -461,7 +443,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:49:53.257[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:11.576[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -491,7 +473,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:48:20.214[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:12.793[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -519,7 +501,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:48:31.94[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:13.572[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
@@ -549,7 +531,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-01-08T15:49:39.507[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:15.41[22m
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 

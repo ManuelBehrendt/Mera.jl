@@ -1,4 +1,3 @@
-
 # 1. Clumps: First Data Inspection
 
 ## Simulation Overview
@@ -9,20 +8,7 @@ using Mera
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 ```
 
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
-    
-    *__   __ _______ ______   _______ 
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
-    
-    [0m[1m[Mera]: 2019-12-30T22:51:39.858[22m
+    [0m[1m[Mera]: 2020-02-12T20:41:16.814[22m
     
     Code: RAMSES
     output [400] summary:
@@ -49,7 +35,7 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     - Npart:    5.091500e+05 
     - Nstars:   5.066030e+05 
     - Ndm:      2.547000e+03 
-    particle variables: (:vx, :vy, :vz, :mass, :age)
+    particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
@@ -75,7 +61,7 @@ Read the Clumps data from all files of the full box with all existing variables.
 clumps = getclumps(info);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2019-12-30T22:51:47.383[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-12T20:41:23.656[22m
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -96,10 +82,10 @@ The memory consumption of the data table is printed at the end. We provide a fun
 usedmemory(clumps);
 ```
 
-    Memory used: 85.036 KB
+    Memory used: 331.672 KB
 
 
-The assigned object is now of type: *ClumpsDataType*:
+The assigned object is now of type: `ClumpsDataType`:
 
 
 ```julia
@@ -113,7 +99,21 @@ typeof(clumps)
 
 
 
-It is a sub-type of to the super-type *DataSetType*
+It is a sub-type of `ContainMassDataSetType`
+
+
+```julia
+supertype( ContainMassDataSetType )
+```
+
+
+
+
+    DataSetType
+
+
+
+`ContainMassDataSetType` is a sub-type of to the super-type `DataSetType`
 
 
 ```julia
@@ -123,7 +123,7 @@ supertype( ClumpDataType )
 
 
 
-    DataSetType
+    ContainMassDataSetType
 
 
 
@@ -135,12 +135,10 @@ viewfields(clumps)
 ```
 
     
-    [0m[1mdata ==> JuliaDB table: (:columns, :pkey, :perms, :cardinality, :columns_buffer)[22m
+    [0m[1mdata ==> JuliaDB table: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)[22m
     
-    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
+    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
     
-    lmin	= 6
-    lmax	= 14
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
     selected_clumpvars	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
@@ -162,13 +160,13 @@ propertynames(clumps)
 
 
 
-    (:data, :info, :lmin, :lmax, :boxlen, :ranges, :selected_clumpvars, :used_descriptors, :scale)
+    (:data, :info, :boxlen, :ranges, :selected_clumpvars, :used_descriptors, :scale)
 
 
 
 ## Overview of Clump Data
 
-Get some overview of the data associated with the object *clumps*. The calculated information can be accessed from the object *data_overview* (here) in code units for further calculations:
+Get some overview of the data associated with the object `clumps`. The calculated information can be accessed from the object `data_overview` (here) in code units for further calculations:
 
 
 ```julia
@@ -198,7 +196,7 @@ data_overview = dataoverview(clumps)
 
 
 
-If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the *select* function. The representation ":mass_cl" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
+If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the `select` function. The representation ":mass_cl" is called a quoted Symbol ([see in Julia documentation](https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1)):
 
 
 ```julia
@@ -221,7 +219,7 @@ select(data_overview, (:extrema, :index, :peak_x, :peak_y, :peak_z, :mass_cl) )
 
 
 
-Get an array from the column ":mass_cl" in *data_overview* and scale it to the units *Msol*. The order of the calculated data is consistent with the table above:
+Get an array from the column ":mass_cl" in `data_overview` and scale it to the units `Msol`. The order of the calculated data is consistent with the table above:
 
 
 ```julia
@@ -237,7 +235,7 @@ select(data_overview, :mass_cl) * info.scale.Msol
 
 
 
-Or simply convert the *:mass_cl* data in the table to *Msol* units by manipulating the column:
+Or simply convert the `:mass_cl` data in the table to `Msol` units by manipulating the column:
 
 
 ```julia
@@ -261,7 +259,7 @@ select(data_overview, (:extrema, :index, :peak_x, :peak_y, :peak_z, :mass_cl) )
 
 
 ## Data Inspection
-The data is associated with the field *clumps.data* as a **JuliaDB** table (code units). Each row corresponds to a clump and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
+The data is associated with the field `clumps.data` as a **JuliaDB** table (code units). Each row corresponds to a clump and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
 More information can be found in the MERA tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
 ### Table View
