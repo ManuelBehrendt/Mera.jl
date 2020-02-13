@@ -61,7 +61,7 @@ Pkg.precompile()
 
 ## Updates
 Subscribe to the mailing list for updates [here](https://manuelbehrendt.com/mera.html) or watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
-Note: Before updating, read the release notes. In Pkg REPL mode run:
+Note: Before updating, always read the release notes. In Pkg REPL mode run:
 
 ```julia
 pkg> update Mera
@@ -177,7 +177,7 @@ julia> methods(viewfields)
 - The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
 - Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
 - The variables from the descriptor-files are currently only read and can be used in a future Mera version
-- For simulations with a uniform grid is the column :level not created to save memory usage
+- For simulations with a uniform grid is the column :level not created to reduce memory usage
 
 
 !!! note "Install Julia without admin privileges"
