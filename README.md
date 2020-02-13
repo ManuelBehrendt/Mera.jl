@@ -4,6 +4,8 @@
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
+`Note: Currently awaiting registration approval!!`
+
 
 ## Package Features
 - Easy to install and update
@@ -18,17 +20,17 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 
 !!! note "Release Notes"
     This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
-    - Slicing
-    - Select particle id/family etc. in projection function
-    - Particle age calculation for cosmological runs
-    - Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
-    - Create Profiles of quantities and projected data
-    - Reader for sinks, gravity, rt, ..
-    - Create 1D, 2D histograms (phase plots)
-    - More predefined quantities
-    - Export data into binary files to use with Paraview (volume rendering)
-    - Tutorials to create 360° equirectangular projections
-    - ...
+- Slicing
+- Select particle id/family etc. in projection function
+- Particle age calculation for cosmological runs
+- Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
+- Create Profiles of quantities and projected data
+- Reader for sinks, gravity, rt, ..
+- Create 1D, 2D histograms (phase plots)
+- More predefined quantities
+- Export data into binary files to use with Paraview (volume rendering)
+- Tutorials to create 360° equirectangular projections
+- ...
 
 
 
@@ -63,7 +65,7 @@ Pkg.precompile()
 
 ## Updates
 Subscribe to the mailing list for updates [here](https://manuelbehrendt.com/mera.html) or watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
-Note: Before updating, read the release notes. In Pkg REPL mode run:
+Note: Before updating, always read the release notes. In Pkg REPL mode run:
 
 ```julia
 pkg> update Mera
@@ -179,16 +181,16 @@ julia> methods(viewfields)
 - The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
 - Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
 - The variables from the descriptor-files are currently only read and can be used in a future Mera version
-- For simulations with a uniform grid is the column :level not created to save memory usage
+- For simulations with a uniform grid is the column :level not created to reduce memory usage
 
 
 !!! note "Install Julia without admin privileges"
     Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
     Define an alias in the .bashrc file that is pointing to julia:
 
-    ```shell
-    alias julia="/home/username/codes/julia/usr/bin/julia"
-    ```
+```
+shell> alias julia="/home/username/codes/julia/usr/bin/julia"
+```
 
 
 ## Why Julia?
