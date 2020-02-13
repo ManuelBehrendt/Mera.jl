@@ -18,7 +18,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Many examples and tutorials
 
 
-`Release Notes: `
+`Release Notes:`
     This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
 - Slicing
 - Select particle id/family etc. in projection function
@@ -184,7 +184,7 @@ julia> methods(viewfields)
 - For simulations with a uniform grid is the column :level not created to reduce memory usage
 
 
-`Install Julia without admin privileges: `
+`Install Julia without admin privileges:`
     Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
     Define an alias in the .bashrc file that is pointing to julia:
 
