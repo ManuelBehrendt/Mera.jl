@@ -17,7 +17,6 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [compat]
-julia = "1.3"
 DataStructures = "0.17.9"
 ElasticArrays = "1.0.0"
 FortranFiles = "0.5.0"
@@ -26,3 +25,4 @@ OnlineStats = "1.0.3"
 ProgressMeter = "1.2.0"
 StatsBase = "0.32.0"
 StructArrays = "0.4.1"
+julia = "1.3"
