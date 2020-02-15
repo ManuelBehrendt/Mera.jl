@@ -6,29 +6,29 @@
 ```julia
 using Mera, PyPlot
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14")
-gas  = gethydro(info, :rho, lmax=10, smallr=1e-5); 
+gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
 ```
 
     ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
     └ @ Base loading.jl:1273
 
 
-    
-    *__   __ _______ ______   _______ 
+
+    *__   __ _______ ______   _______
     |  |_|  |       |    _ | |   _   |
     |       |    ___|   | || |  |_|  |
     |       |   |___|   |_||_|       |
     |       |    ___|    __  |       |
     | ||_|| |   |___|   |  | |   _   |
     |_|   |_|_______|___|  |_|__| |__|
-    
-    [0m[1m[Mera]: 2020-02-08T20:33:27.53[22m
-    
+
+     [Mera]: 2020-02-08T20:33:27.53
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -46,9 +46,9 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -59,27 +59,27 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T20:33:35.314[22m
-    
+     =======================================================
+
+     [Mera]: Get hydro data: 2020-02-08T20:33:35.314
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1,) = (:rho,) 
-    
+    Using var(s)=(1,) = (:rho,)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:03:32[39m
+     100%|███████████████████████████████████████████████████| Time: 0:03:32
 
 
     Memory used for data table :186.1558656692505 MB
     -------------------------------------------------------
-    
+
 
 
 ## Cuboid Region
@@ -93,7 +93,7 @@ proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verb
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:03[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:03
 
 
 The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field `cextent` gives the extent related to a given center (default: [0.,0.,0.]).
@@ -149,26 +149,26 @@ Note: The selected regions can be given relative to a user given center or to th
 
 
 ```julia
-gas_subregion = subregion( gas, :cuboid, 
-                            xrange=[-4., 0.], 
-                            yrange=[-15., 15.], 
-                            zrange=[-2., 2.], 
-                            center=[:boxcenter], 
+gas_subregion = subregion( gas, :cuboid,
+                            xrange=[-4., 0.],
+                            yrange=[-15., 15.],
+                            zrange=[-2., 2.],
+                            center=[:boxcenter],
                             range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:37:53.044[22m
-    
+     [Mera]: 2020-02-08T20:37:53.044
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Memory used for data table :47.87415790557861 MB
     -------------------------------------------------------
-    
+
 
 
 The function `subregion` creates a new object with the same type as the object created by the function `gethydro` :
@@ -185,7 +185,7 @@ typeof(gas_subregion)
 
 
 
-#### Cuboid Region: Projections of the sub-region. 
+#### Cuboid Region: Projections of the sub-region.
 The coordinates center is the center of the box:
 
 
@@ -229,26 +229,26 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ```julia
 gas_subregion = subregion( gas, :cuboid,
-                            xrange=[-4., 0.], 
+                            xrange=[-4., 0.],
                             yrange=[-15., 15.],
-                            zrange=[-2., 2.], 
-                            center=[:boxcenter], 
-                            range_unit=:kpc, 
+                            zrange=[-2., 2.],
+                            center=[:boxcenter],
+                            range_unit=:kpc,
                             inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:37:55.64[22m
-    
+     [Mera]: 2020-02-08T20:37:55.64
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Memory used for data table :138.2824068069458 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -339,29 +339,29 @@ Select the ranges of the cylinder in the unit "kpc", relative to the given cente
 
 ```julia
 gas_subregion = subregion(  gas, :cylinder,
-                            radius=3., 
-                            height=2., 
-                            range_unit=:kpc, 
+                            radius=3.,
+                            height=2.,
+                            range_unit=:kpc,
                             center=[13., :bc, :bc]); # direction=:z, by default
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:08.201[22m
-    
+     [Mera]: 2020-02-08T20:38:08.201
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
     ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :9.945767402648926 MB
     -------------------------------------------------------
-    
 
 
-#### Cylindrical Region: Projections of the sub-region. 
+
+#### Cylindrical Region: Projections of the sub-region.
 The coordinates center is the center of the box:
 
 
@@ -454,28 +454,28 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 
 ```julia
-gas_subregion = subregion(  gas, :cylinder, 
-                            radius=3., 
-                            height=2., 
-                            range_unit=:kpc, 
-                            center=[13.,:bc,:bc], 
+gas_subregion = subregion(  gas, :cylinder,
+                            radius=3.,
+                            height=2.,
+                            range_unit=:kpc,
+                            center=[13.,:bc,:bc],
                             inverse=true); # direction=:z, by default
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:10.623[22m
-    
+     [Mera]: 2020-02-08T20:38:10.623
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
     ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :176.2107973098755 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -485,9 +485,9 @@ proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:01[39m
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:01[39m
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:02[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
 
 
 
@@ -532,9 +532,9 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:01[39m
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:02[39m
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:02[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
 
 
 #### Spherical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
@@ -576,28 +576,28 @@ Select the radius of the sphere in the unit "kpc", relative to the given center 
 
 
 ```julia
-gas_subregion = subregion(  gas, :sphere, 
-                            radius=10., 
-                            range_unit=:kpc, 
+gas_subregion = subregion(  gas, :sphere,
+                            radius=10.,
+                            range_unit=:kpc,
                             center=[13.,:bc,:bc]);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:25.626[22m
-    
+     [Mera]: 2020-02-08T20:38:25.626
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Radius: 10.0 [kpc]
     Memory used for data table :57.03980731964111 MB
     -------------------------------------------------------
-    
 
 
-#### Spherical Region: Projections of the sub-region. 
+
+#### Spherical Region: Projections of the sub-region.
 The coordinates center is the center of the box:
 
 
@@ -643,26 +643,26 @@ cb = colorbar(im, label=labeltext);
 
 
 ```julia
-gas_subregion = subregion(  gas, :sphere, 
-                            radius=10., 
-                            range_unit=:kpc, 
-                            center=[13.,:bc,:bc], 
+gas_subregion = subregion(  gas, :sphere,
+                            radius=10.,
+                            range_unit=:kpc,
+                            center=[13.,:bc,:bc],
                             inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:28.679[22m
-    
+     [Mera]: 2020-02-08T20:38:28.679
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Radius: 10.0 [kpc]
     Memory used for data table :129.1167573928833 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -804,34 +804,34 @@ cb = colorbar(im, label=labeltext);
 ![png](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_0.png)
 
 
-#### Cylindrical Shell: 
+#### Cylindrical Shell:
 Pass the height of the cylinder and the inner/outer radius of the shell in the unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia
-gas_subregion = shellregion( gas, :cylinder, 
-                            radius=[5., 10.], 
-                            height=2., 
-                            range_unit=:kpc, 
+gas_subregion = shellregion( gas, :cylinder,
+                            radius=[5., 10.],
+                            height=2.,
+                            range_unit=:kpc,
                             center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:44.442[22m
-    
+     [Mera]: 2020-02-08T20:38:44.442
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :53.790066719055176 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -882,30 +882,30 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 
 ```julia
-gas_subregion = shellregion(gas, :cylinder, 
-                            radius=[5., 10.], 
-                            height=2., 
-                            range_unit=:kpc, 
-                            center=[:boxcenter], 
+gas_subregion = shellregion(gas, :cylinder,
+                            radius=[5., 10.],
+                            height=2.,
+                            range_unit=:kpc,
+                            center=[:boxcenter],
                             inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:47.174[22m
-    
+     [Mera]: 2020-02-08T20:38:47.174
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :132.36649799346924 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -1004,35 +1004,35 @@ cb = colorbar(im, label=labeltext);
 ![png](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_73_0.png)
 
 
-#### Spherical Shell: 
+#### Spherical Shell:
 Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia
-gas_subregion = shellregion(gas, :sphere, 
-                            radius=[5., 10.], 
-                            range_unit=:kpc, 
+gas_subregion = shellregion(gas, :sphere,
+                            radius=[5., 10.],
+                            range_unit=:kpc,
                             center=[24.,24.,24.]);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:38:58.783[22m
-    
+     [Mera]: 2020-02-08T20:38:58.783
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Memory used for data table :56.55305194854736 MB
     -------------------------------------------------------
-    
 
 
-#### Spherical Shell: Projections of the shell-region. 
+
+#### Spherical Shell: Projections of the shell-region.
 The coordinates center is the center of the box:
 
 
@@ -1082,27 +1082,27 @@ cb = colorbar(im, label=labeltext);
 
 ```julia
 gas_subregion = shellregion(gas, :sphere,
-                            radius=[5., 10.], 
-                            range_unit=:kpc, 
-                            center=[:boxcenter], 
+                            radius=[5., 10.],
+                            range_unit=:kpc,
+                            center=[:boxcenter],
                             inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:39:01.81[22m
-    
+     [Mera]: 2020-02-08T20:39:01.81 
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Memory used for data table :129.60351276397705 MB
     -------------------------------------------------------
-    
+
 
 
 

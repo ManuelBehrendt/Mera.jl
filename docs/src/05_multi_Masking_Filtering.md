@@ -16,13 +16,13 @@ particles = getparticles(info)
 clumps    = getclumps(info);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:56:19.834[22m
-    
+     [Mera]: 2020-02-08T20:56:19.834
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -40,9 +40,9 @@ clumps    = getclumps(info);
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -53,60 +53,60 @@ clumps    = getclumps(info);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T20:56:27.064[22m
-    
+     =======================================================
+
+     [Mera]: Get hydro data: 2020-02-08T20:56:27.064
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:02:07[39m
+     100%|███████████████████████████████████████████████████| Time: 0:02:07
 
 
     Memory used for data table :71.28007793426514 MB
     -------------------------------------------------------
-    
-    [0m[1m[Mera]: Get particle data: 2020-02-08T20:58:39.435[22m
-    
+
+     [Mera]: Get particle data: 2020-02-08T20:58:39.435
+
     Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
-    
+    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Found 5.089390e+05 particles
     Memory used for data table :34.947275161743164 MB
     -------------------------------------------------------
-    
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:58:41.769[22m
-    
+
+     [Mera]: Get clump data: 2020-02-08T20:58:41.769
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
+
 
 
 ## Select From Data Table
 
 ### Select a single column/variable
 
-##### By using JuliaDB or Mera functions 
+##### By using JuliaDB or Mera functions
 
 
 ```julia
@@ -139,7 +139,7 @@ select(gas.data, :rho) # JuliaDB
      1.0e-5                
      ⋮                     
      0.00010967104288285959
-     0.0001088040126114162 
+     0.0001088040126114162
      0.00010915603617815434
      0.00010917096551347797
      0.00012465438542871006
@@ -180,7 +180,7 @@ getvar(gas, :rho) # MERA
      1.0e-5                
      ⋮                     
      0.00010967104288285959
-     0.0001088040126114162 
+     0.0001088040126114162
      0.00010915603617815434
      0.00010917096551347797
      0.00012465438542871006
@@ -207,7 +207,7 @@ select(gas.data, (:rho, :level)) #JuliaDB
 
 
     Table with 849332 rows, 2 columns:
-    rho          [1mlevel[22m
+    rho           level
     ──────────────────
     1.0e-5       6
     1.0e-5       6
@@ -302,7 +302,7 @@ vtuple.rho
      1.0e-5                
      ⋮                     
      0.00010967104288285959
-     0.0001088040126114162 
+     0.0001088040126114162
      0.00010915603617815434
      0.00010917096551347797
      0.00012465438542871006
@@ -332,7 +332,7 @@ filtered_db = filter(p->p.level==6, gas.data ) # JuliaDB
 
     Table with 240956 rows, 11 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -370,7 +370,7 @@ filtered_db = @filter gas.data :level==6 # JuliaDBMeta
 
     Table with 240956 rows, 11 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -401,7 +401,7 @@ filtered_db = filter(p->p.rho>= density, gas.data ) # JuliaDB
 
     Table with 210 rows, 11 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -430,7 +430,7 @@ filtered_db = @filter gas.data :rho>= density # JuliaDBMeta
 
     Table with 210 rows, 11 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -522,7 +522,7 @@ Get the mass of all cells/rows with densities >= 3 Msol/pc^3 that is within the 
 
 ```julia
 boxlen = info.boxlen
-cv = boxlen/2. # box-center 
+cv = boxlen/2. # box-center
 density = 3. /gas.scale.Msol_pc3
 radius  = 3. /gas.scale.kpc
 height  = 2. /gas.scale.kpc
@@ -690,7 +690,7 @@ Add costum columns/variables to the data that can be automatically processed in 
 
 ```julia
 # calculate the Mach number in each cell
-mach = getvar(gas, :mach); 
+mach = getvar(gas, :mach);
 ```
 
 
@@ -707,7 +707,7 @@ gas.data = transform(gas.data, :mach => mach) # JuliaDB
 
     Table with 849332 rows, 12 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -729,20 +729,20 @@ gas.data = transform(gas.data, :mach => mach) # JuliaDB
 proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:59:42.246[22m
-    
+     [Mera]: 2020-02-08T20:59:42.246
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.3333333 :: 0.6666667  	==> 16.0 [kpc] :: 32.0 [kpc]
     ymin::ymax: 0.3333333 :: 0.6666667  	==> 16.0 [kpc] :: 32.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
-    Selected var(s)=(:mach, :sd) 
-    
+
+    Selected var(s)=(:mach, :sd)
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:07[39m
+
+     100%|███████████████████████████████████████████████████| Time: 0:00:07
 
 
 
@@ -768,7 +768,7 @@ gas.data = select(gas.data, Not(:mach)) # select all columns, not :mach
 
     Table with 849332 rows, 11 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type 
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -797,7 +797,7 @@ function ftest(value)
     density = (4. / gas.scale.Msol_pc3)
     if value < density
         return true
-     else 
+     else
         return false
     end
 end
@@ -867,52 +867,52 @@ The masked rows are not considered in the calculations (mask-element = false ).
 
 ```julia
 mask = map(row->row.rho < 1. / gas.scale.Msol_pc3, gas.data);
-mtot_masked = msum(gas, :Msol, mask=mask) 
-mtot        = msum(gas, :Msol) 
+mtot_masked = msum(gas, :Msol, mask=mask)
+mtot        = msum(gas, :Msol)
 println()
 println( "Gas Mtot masked: ", mtot_masked  , " Msol" )
 println( "Gas Mtot:        ", mtot         , " Msol" )
 println()
 ```
 
-    
+
     Gas Mtot masked: 1.336918953133308e10 Msol
     Gas Mtot:        3.0968754148332745e10 Msol
-    
+
 
 
 
 ```julia
 mask = map(row->row.birth < 100. / particles.scale.Myr, particles.data);
-mtot_masked = msum(particles, :Msol, mask=mask) 
-mtot        = msum(particles, :Msol) 
+mtot_masked = msum(particles, :Msol, mask=mask)
+mtot        = msum(particles, :Msol)
 println()
 println( "Particles Mtot masked: ", mtot_masked , " Msol" )
 println( "Particles Mtot:        ", mtot        , " Msol" )
 println()
 ```
 
-    
+
     Particles Mtot masked: 1.4537556611888414e7 Msol
     Particles Mtot:        5.804426008528437e9 Msol
-    
+
 
 
 
 ```julia
 mask = map(row->row.mass_cl < 1e6 / clumps.scale.Msol, clumps.data);
-mtot_masked = msum(clumps, :Msol, mask=mask) 
-mtot        = msum(clumps, :Msol) 
+mtot_masked = msum(clumps, :Msol, mask=mask)
+mtot        = msum(clumps, :Msol)
 println()
 println( "Clumps Mtot masked:    ", mtot_masked , " Msol" )
 println( "Clumps Mtot:           ", mtot        , " Msol" )
 println()
 ```
 
-    
+
     Clumps Mtot masked:    2.926390055686605e7 Msol
     Clumps Mtot:           1.3743280681841677e10 Msol
-    
+
 
 
 ### Center-Of-Mass
@@ -920,35 +920,35 @@ println()
 
 ```julia
 mask = map(row->row.rho < 100. / gas.scale.nH, gas.data);
-com_gas_masked = center_of_mass(gas, :kpc, mask=mask) 
-com_gas        = center_of_mass(gas, :kpc) 
+com_gas_masked = center_of_mass(gas, :kpc, mask=mask)
+com_gas        = center_of_mass(gas, :kpc)
 println()
 println( "Gas COM masked: ", com_gas_masked , " kpc" )
 println( "Gas COM:        ", com_gas        , " kpc" )
 println()
 ```
 
-    
+
     Gas COM masked: (23.632781376611646, 24.017935187730938, 24.078280687627124) kpc
     Gas COM:        (23.47221401632259, 23.93931869865653, 24.08483637116779) kpc
-    
+
 
 
 
 ```julia
 mask = map(row->row.birth < 100. / particles.scale.Myr, particles.data);
-com_particles_masked = center_of_mass(particles, :kpc, mask=mask) 
-com_particles        = center_of_mass(particles, :kpc) 
+com_particles_masked = center_of_mass(particles, :kpc, mask=mask)
+com_particles        = center_of_mass(particles, :kpc)
 println()
 println( "Particles COM masked: ", com_particles_masked , " kpc" )
 println( "Particles COM:        ", com_particles        , " kpc" )
 println()
 ```
 
-    
+
     Particles COM masked: (22.766374936557934, 24.817294529838456, 24.020065595650212) kpc
     Particles COM:        (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc
-    
+
 
 
 
@@ -968,18 +968,18 @@ println( "Joint COM (Gas + Particles):        ", center_of_mass([gas,particles],
 
 ```julia
 mask = map(row->row.mass_cl < 1e6 / clumps.scale.Msol, clumps.data);
-com_clumps_masked = center_of_mass(clumps, mask=mask) 
-com_clumps        = center_of_mass(clumps) 
+com_clumps_masked = center_of_mass(clumps, mask=mask)
+com_clumps        = center_of_mass(clumps)
 println()
 println( "Clumps COM masked:", com_clumps_masked .* clumps.scale.kpc, " kpc" )
 println( "Clumps COM:       ", com_clumps        .* clumps.scale.kpc, " kpc" )
 println()
 ```
 
-    
+
     Clumps COM masked:(22.979676622296815, 23.22447986984898, 24.11056806473746) kpc
     Clumps COM:       (23.135765457064576, 23.741712325649264, 24.0050127185862) kpc
-    
+
 
 
 ### Bulk-Velocity
@@ -987,7 +987,7 @@ println()
 
 ```julia
 mask = map(row->row.rho < 100. / gas.scale.nH, gas.data);
-bv_gas_masked = bulk_velocity(gas, :km_s, mask=mask) 
+bv_gas_masked = bulk_velocity(gas, :km_s, mask=mask)
 bv_gas        = bulk_velocity(gas, :km_s)  
 println()
 println( "Gas bulk velocity masked: ", bv_gas_masked , " km/s" )
@@ -995,27 +995,27 @@ println( "Gas bulk velocity:        ", bv_gas        , " km/s" )
 println()
 ```
 
-    
+
     Gas bulk velocity masked: (-0.046336703401138456, -6.60993479840688, -1.000280146674773) km/s
     Gas bulk velocity:        (-1.1999253584798182, -10.678485153330122, -0.44038538452508785) km/s
-    
+
 
 
 
 ```julia
 mask = map(row->row.birth < 100. / particles.scale.Myr, particles.data);
-bv_particles_masked = bulk_velocity(particles, :km_s, mask=mask) 
-bv_particles        = bulk_velocity(particles, :km_s) 
+bv_particles_masked = bulk_velocity(particles, :km_s, mask=mask)
+bv_particles        = bulk_velocity(particles, :km_s)
 println()
 println( "Particles bulk velocity masked: ", bv_particles_masked , " km/s" )
 println( "Particles bulk velocity:        ", bv_particles        , " km/s" )
 println()
 ```
 
-    
+
     Particles bulk velocity masked: (-27.702254113836513, -7.532075727552787, -1.3273993940211153) km/s
     Particles bulk velocity:        (-11.623422700314535, -18.440572802490234, -0.3291927731417528) km/s
-    
+
 
 
 ### Weighted Statistics
@@ -1041,7 +1041,7 @@ println()
     Gas        <vx>_cells masked      : -0.04633670340114798 km/s (mass weighted)
     Particles  <vx>_particles masked  : -27.702254113836517 km/s (mass weighted)
     Clumps <peak_x>_clumps masked     : 22.907689025275953 kpc  (mass weighted)
-    
+
 
 
 
@@ -1059,7 +1059,7 @@ println()
     Gas        <vx>_allcells     : -1.199925358479736 km/s (mass weighted)
     Particles  <vx>_allparticles : -11.623422700314544 km/s (mass weighted)
     Clumps <peak_x>_allclumps    : 23.13576545706458 kpc  (mass weighted)
-    
+
 
 
 

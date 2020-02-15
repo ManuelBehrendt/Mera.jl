@@ -9,13 +9,13 @@ using Mera
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:40:36.118[22m
-    
+     [Mera]: 2020-02-12T20:40:36.118
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -33,9 +33,9 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -46,8 +46,8 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
+     =======================================================
+
 
 
 A short overview of the loaded particle properties is printed:
@@ -57,12 +57,12 @@ A short overview of the loaded particle properties is printed:
 - the variable names from the descriptor file (if exist)
 
 
-The functions in **Mera** "know" the predefined particle variable names: 
-- From >= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,.... 
-- For  =< ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,.... 
+The functions in **Mera** "know" the predefined particle variable names:
+- From >= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,....
+- For  =< ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,....
 - Currently, the following variables are loaded by default (if exist): :level, :x, :y, :z, :id, :family, :tag.
 - The cpu number associated with the particles can be loaded with the variable names: :cpu or :varn1
-- In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true . 
+- In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true .
 
 Get an overview of the loaded particle properties:
 
@@ -71,9 +71,9 @@ Get an overview of the loaded particle properties:
 viewfields(info.part_info)
 ```
 
-    
-    [0m[1m[Mera]: Particle overview[22m
-    [0m[1m===============================[22m
+
+     [Mera]: Particle overview
+     ===============================
     eta_sn	= 0.0
     age_sn	= 0.6706464407596582
     f_w	= 0.0
@@ -91,7 +91,7 @@ viewfields(info.part_info)
     star_tracer	= 0
     other_tracer2	= 0
     gas_tracer	= 0
-    
+
 
 
 ## Load AMR/Particle Data
@@ -103,28 +103,28 @@ Read the AMR and the Particle data from all files of the full box with all exist
 particles = getparticles(info);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-12T20:40:36.139[22m
-    
+     [Mera]: Get particle data: 2020-02-12T20:40:36.139
+
     Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
-    
+    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
 
 
-    [32mReading data...100%|████████████████████████████████████| Time: 0:00:03[39m
+
+     Reading data...100%|████████████████████████████████████| Time: 0:00:03
 
 
     Found 5.089390e+05 particles
     Memory used for data table :34.947275161743164 MB
     -------------------------------------------------------
-    
 
 
-The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object: 
+
+The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:
 
 
 ```julia
@@ -183,20 +183,20 @@ The data is stored in a **JuliaDB** table and the user selected particle variab
 viewfields(particles)
 ```
 
-    
-    [0m[1mdata ==> JuliaDB table: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)[22m
-    
-    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
-    
+
+     data ==> JuliaDB table: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
+
+     info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
     lmin	= 6
     lmax	= 14
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
     selected_partvars	= Symbol[:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth]
-    
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
-    
-    
+
+     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+
 
 
 For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "particles.info" and the scaling relations from code to cgs units in "particles.scale".
@@ -256,7 +256,7 @@ data_overview = dataoverview(particles)
 
     Table with 9 rows, 19 columns:
     Columns:
-    [1m#   [22m[1mcolname    [22m[1mtype[22m
+     #     colname      type
     ───────────────────
     1   level      Any
     2   x_min      Any
@@ -314,7 +314,7 @@ Get an array from the column ":birth" in `data_overview` and scale it to the uni
 
 
 ```julia
-column(data_overview, :birth_min) * info.scale.Myr 
+column(data_overview, :birth_min) * info.scale.Myr
 ```
 
 
@@ -328,7 +328,7 @@ column(data_overview, :birth_min) * info.scale.Myr
      64.00484282690913
      65.06931266062217
      67.27645257301232
-     66.6561171130916 
+     66.6561171130916
      78.40495776518468
 
 
@@ -364,7 +364,7 @@ select(data_overview, (:level,:mass_min, :mass_max, :birth_min, :birth_max ) )
 
 
 ## Data inspection
-The data is associated with the field `particles.data` as a **JuliaDB** table (code units). 
+The data is associated with the field `particles.data` as a **JuliaDB** table (code units).
 Each row corresponds to a particle and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
 More information can be found in the **Mera** tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
@@ -383,7 +383,7 @@ particles.data
 
     Table with 508939 rows, 10 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int32
     2   x        Float64
@@ -409,7 +409,7 @@ select(particles.data, (:level,:x, :y, :z, :birth) )
 
 
     Table with 508939 rows, 5 columns:
-    [1mlevel  [22m[1mx           [22m[1my        [22m[1mz        [22mbirth
+     level    x             y          z         birth
     ────────────────────────────────────────────
     6      0.00462947  22.3885  24.571   32.0735
     6      0.109066    22.3782  21.5844  19.8963

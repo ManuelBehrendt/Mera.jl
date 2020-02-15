@@ -8,13 +8,13 @@ using Mera
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:41:16.814[22m
-    
+     [Mera]: 2020-02-12T20:41:16.814
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -32,9 +32,9 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -45,8 +45,8 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
+     =======================================================
+
 
 
 A short overview of the loaded clumps properties is printed:
@@ -61,21 +61,21 @@ Read the Clumps data from all files of the full box with all existing variables.
 clumps = getclumps(info);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-02-12T20:41:23.656[22m
-    
+     [Mera]: Get clump data: 2020-02-12T20:41:23.656
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
 
 
-The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object: 
+
+The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:
 
 
 ```julia
@@ -134,18 +134,18 @@ The data is stored as a **JuliaDB** table and the selected clump variables and p
 viewfields(clumps)
 ```
 
-    
-    [0m[1mdata ==> JuliaDB table: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)[22m
-    
-    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
-    
+
+     data ==> JuliaDB table: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+
+     info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
     selected_clumpvars	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-    
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
-    
-    
+
+     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+
 
 
 For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "clumps.info" and the scaling relations from code to cgs units in "clumps.scale". The box length, the selected ranges and number of the clump variables are also retained.
@@ -178,7 +178,7 @@ data_overview = dataoverview(clumps)
 
     Table with 2 rows, 13 columns:
     Columns:
-    [1m#   [22m[1mcolname    [22m[1mtype[22m
+     #     colname      type
     ───────────────────
     1   extrema    Any
     2   index      Any
@@ -277,7 +277,7 @@ clumps.data
 
     Table with 644 rows, 12 columns:
     Columns:
-    [1m#   [22m[1mcolname    [22m[1mtype[22m
+     #     colname      type 
     ──────────────────────
     1   index      Float64
     2   lev        Float64
