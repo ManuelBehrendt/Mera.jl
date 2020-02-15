@@ -6,16 +6,16 @@
 ```julia
 using Mera
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
-particles  = getparticles(info); 
+particles  = getparticles(info);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:20.643[22m
-    
+     [Mera]: 2020-02-12T20:07:20.643[22m
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================[22m
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -33,9 +33,9 @@ particles  = getparticles(info);
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -46,22 +46,22 @@ particles  = getparticles(info);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
-    [0m[1m[Mera]: Get particle data: 2020-02-12T20:07:28.584[22m
-    
+     =======================================================
+
+     [Mera]: Get particle data: 2020-02-12T20:07:28.584
+
     Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
-    
+    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Found 5.089390e+05 particles
     Memory used for data table :34.947275161743164 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -74,7 +74,7 @@ particles.data
 
     Table with 508939 rows, 10 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int32
     2   x        Float64
@@ -109,37 +109,37 @@ projection()
     :sd or :Σ or :surfacedensity
     :mass, :cellsize, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
-    
+
     ==================[particles]:==================
             all the non derived  vars:
-    :cpu, :level, :id, :family, :tag 
+    :cpu, :level, :id, :family, :tag
     :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
-    
+
                   -derived particle vars-
     :age
-    
+
     ==============[gas or particles]:===============
     :v, :ekin
     squared => :vx2, :vy2, :vz2
     velocity dispersion => σx, σy, σz, σ
-    
+
     related to a given center:
     ---------------------------
     :vr_cylinder, vr_sphere (radial components)
     :vϕ_cylinder, :vθ
     squared => :vr_cylinder2, :vϕ_cylinder2
-    velocity dispersion => σr_cylinder, σϕ_cylinder 
-    
+    velocity dispersion => σr_cylinder, σϕ_cylinder
+
     2d maps (not projected):
     :r_cylinder
     :ϕ
     ------------------------------------------------
-    
+
 
 
 ## Projection of a Single Quantity in Different Directions (z,y,x)
 
-Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]) on a grid corresponding to level=9. 
+Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]) on a grid corresponding to level=9.
 Pass any object of *PartDataType* (here: "particles") to the *projection*-function and select a variable by a Symbol (here: :sd = :surfacedensity = :Σ in Msol/pc^3)
 
 
@@ -151,21 +151,21 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, zrange=[0.45,0.55], verbo
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9, direction = :x, zrange=[0.45,0.55], verbose=false); # Project the surface density in x-direction
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:42.33[22m
-    
+     [Mera]: 2020-02-12T20:07:42.33
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.95 :: 1.0  	==> 45.6 [kpc] :: 48.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 1 513
     yrange: 1 513
     zrange: 487 513
     pixel-size: 93.75 [pc]
-    
+
 
 
 ### Select a Range Related to a Center
@@ -175,25 +175,25 @@ See also in the documentation for: load data by selection
 ```julia
 cv = (particles.boxlen / 2.) * particles.scale.kpc # provide the box-center in kpc
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[cv,cv,cv], range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:45.187[22m
-    
+     [Mera]: 2020-02-12T20:07:45.187
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):
@@ -201,75 +201,75 @@ Use the short notation for the box center :bc or :boxcenter for all dimensions (
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                         center=[:boxcenter], range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:46.718[22m
-    
+     [Mera]: 2020-02-12T20:07:46.718
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                         center=[:bc], range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:46.818[22m
-    
+     [Mera]: 2020-02-12T20:07:46.818
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 Use the box center notation for individual dimensions, here x,z:
 
 
 ```julia
-proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
-                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                         center=[:bc, 24., :bc], range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:48.695[22m
-    
+     [Mera]: 2020-02-12T20:07:48.695
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 ### Get Multiple Quantities
@@ -279,29 +279,29 @@ Get several quantities with one function call by passing an array containing the
 
 ```julia
 proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
-                        direction = :x, 
-                        xrange=[-10.,10.], 
-                        yrange=[-10.,10.], 
-                        zrange=[-2.,2.], 
-                        center=[24.,24.,24.], 
+                        direction = :x,
+                        xrange=[-10.,10.],
+                        yrange=[-10.,10.],
+                        zrange=[-2.,2.],
+                        center=[24.,24.,24.],
                         range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:49.018[22m
-    
+     [Mera]: 2020-02-12T20:07:49.018
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 Pass an array containing several quantities to process and their corresponding units:
@@ -310,28 +310,28 @@ Pass an array containing several quantities to process and their corresponding u
 ```julia
 proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
                         direction = :x,
-                        xrange=[-10.,10.], 
-                        yrange=[-10.,10.], 
-                        zrange=[-2.,2.], 
-                        center=[24.,24.,24.], 
+                        xrange=[-10.,10.],
+                        yrange=[-10.,10.],
+                        zrange=[-2.,2.],
+                        center=[24.,24.,24.],
                         range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:49.132[22m
-    
+     [Mera]: 2020-02-12T20:07:49.132
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 The function can be called without any keywords by preserving the following order: dataobject, variables, units
@@ -340,28 +340,28 @@ The function can be called without any keywords by preserving the following orde
 ```julia
 proj1_z = projection(particles, [:sd , :vx], [:Msol_pc2, :km_s], lmax=9,
                         direction = :x,
-                        xrange=[-10.,10.], 
-                        yrange=[-10.,10.], 
-                        zrange=[-2.,2.], 
-                        center=[24.,24.,24.], 
+                        xrange=[-10.,10.],
+                        yrange=[-10.,10.],
+                        zrange=[-2.,2.],
+                        center=[24.,24.,24.],
                         range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:50.02[22m
-    
+     [Mera]: 2020-02-12T20:07:50.02
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 If all selected variables should be of the same unit use the following arguments: dataobject, array of quantities, unit (no array needed)
@@ -369,28 +369,28 @@ If all selected variables should be of the same unit use the following arguments
 
 ```julia
 projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
-                        xrange=[-10.,10.], 
-                        yrange=[-10.,10.], 
-                        zrange=[-2.,2.], 
-                        center=[24.,24.,24.], 
+                        xrange=[-10.,10.],
+                        yrange=[-10.,10.],
+                        zrange=[-2.,2.],
+                        center=[24.,24.,24.],
                         range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:07:50.259[22m
-    
+     [Mera]: 2020-02-12T20:07:50.259
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
+
 
 
 ## Function Output
@@ -493,11 +493,11 @@ proj1_z.ranges # normalized to the domain=[0:1]
 
     6-element Array{Float64,1}:
      0.29166666666647767
-     0.7083333333328743 
+     0.7083333333328743
      0.29166666666647767
-     0.7083333333328743 
-     0.4583333333330363 
-     0.5416666666663156 
+     0.7083333333328743
+     0.4583333333330363
+     0.5416666666663156
 
 
 
@@ -512,8 +512,8 @@ proj1_z.extent # ranges in code units
     4-element Array{Float64,1}:
      13.96875
      34.03125
-     21.9375 
-     26.0625 
+     21.9375
+     26.0625
 
 
 
@@ -551,10 +551,10 @@ proj1_z.ratio # the ratio between the two ranges
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                     zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false) 
+                    verbose=false)
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
                     zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false, 
+                    verbose=false,
                     direction = :x);
 ```
 
@@ -589,14 +589,14 @@ Project a specific spatial range and plot the axes of the map relative to the bo
 
 
 ```julia
-proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
+proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false, 
-                    data_center=[24.,24.,24.], data_center_unit=:kpc) 
+                    verbose=false,
+                    data_center=[24.,24.,24.], data_center_unit=:kpc)
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false, 
-                    data_center=[24.,24.,24.], data_center_unit=:kpc, 
+                    verbose=false,
+                    data_center=[24.,24.,24.], data_center_unit=:kpc,
                     direction = :x);
 ```
 
@@ -626,12 +626,12 @@ Plot the axes of the map relative to the map-center (given by keyword: data_cent
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false, 
-                    data_center=[19.,19.,24.], data_center_unit=:kpc) 
+                    verbose=false,
+                    data_center=[19.,19.,24.], data_center_unit=:kpc)
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false, 
-                    data_center=[19.,19.,24.], data_center_unit=:kpc, 
+                    verbose=false,
+                    data_center=[19.,19.,24.], data_center_unit=:kpc,
                     direction = :x);
 ```
 
@@ -664,31 +664,31 @@ Project the following derived data
 
 
 ```julia
-proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin], 
-                    units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg], 
+proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
+                    units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg],
                     lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[24.,24.,24.], range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:08:16.209[22m
-    
+     [Mera]: 2020-02-12T20:08:16.209
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:02[39m
+
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
 
 
 For the velocity dispersion additional maps are created to created the mass-weighted quantity:
@@ -806,30 +806,30 @@ For the cylindrical or spherical components of a quantity, the center of the coo
 
 ```julia
 proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],                    
-                    units=[:km_s,:km_s,:km_s, :km_s, :standard, :kpc, :km_s, :km_s, :km_s, :km_s], 
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                    units=[:km_s,:km_s,:km_s, :km_s, :standard, :kpc, :km_s, :km_s, :km_s, :km_s],
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:boxcenter], range_unit=:kpc,
-                    data_center=[24.,24.,24.], data_center_unit=:kpc); 
+                    data_center=[24.,24.,24.], data_center_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:08:21.115[22m
-    
+     [Mera]: 2020-02-12T20:08:21.115
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 9
     xrange: 150 364
     yrange: 150 364
     zrange: 235 279
     pixel-size: 93.75 [pc]
-    
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:04[39m
+
+     100%|███████████████████████████████████████████████████| Time: 0:00:04
 
 
 
@@ -964,32 +964,32 @@ The default is the projection on the maximum loaded grid level (always provided 
 
 
 ```julia
-proj_z = projection(particles, 
-                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
-                    :km_s, 
+proj_z = projection(particles,
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
+                    :km_s,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:boxcenter], range_unit=:kpc,
-                    lmax=8); 
+                    lmax=8);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:08:29.068[22m
-    
+     [Mera]: 2020-02-12T20:08:29.068
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Map data on given lmax: 8
     xrange: 75 183
     yrange: 75 183
     zrange: 118 140
     pixel-size: 187.5 [pc]
-    
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:01[39m
+
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 The projection onto the maximum loaded grid is always provided:
@@ -1131,7 +1131,7 @@ Pass the object with the projected data to the function *remap* and the level of
 proj_zlmax = remap(proj_z, 6, weighting=:mass);
 ```
 
-    
+
     remap from:
     level 8 => 6
     cellsize 187.5 [pc] => 750.0 [pc]
@@ -1242,9 +1242,9 @@ Project the average birth-time of the particles to the grid:
 
 ```julia
 proj_z = projection(particles, :birth, :Myr,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false);
 proj_x = projection(particles, :birth, :Myr,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false);
 ```
 
 
@@ -1272,9 +1272,9 @@ Project the average age of the particles to the grid. The age is taken relative 
 
 ```julia
 proj_z = projection(particles, :age, :Myr,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false);
 proj_x = projection(particles, :age, :Myr,
-                    lmax=6,  zrange=[0.45,0.55], direction=:x,  center=[0.,0.,0.], verbose=false); 
+                    lmax=6,  zrange=[0.45,0.55], direction=:x,  center=[0.,0.,0.], verbose=false);
 ```
 
 The reference time (code units) for the age calculation:
@@ -1316,9 +1316,9 @@ Project the average age of the particles relative to a given reference time:
 
 ```julia
 proj_z = projection(particles, :age, :Myr, ref_time=0.,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false);
 proj_x = projection(particles, :age, :Myr, ref_time = 0.,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false);
 ```
 
 The reference time (code units) for the age calculation:
@@ -1367,41 +1367,41 @@ mask = getvar(particles, :age, :Myr) .> 500. ;
 
 ```julia
 proj_z = projection(particles, :age, :Myr, mask=mask,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.]); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.]);
 proj_x = projection(particles, :age, :Myr, mask=mask,
-                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x); 
+                    lmax=6,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:10:27.51[22m
-    
+     [Mera]: 2020-02-12T20:10:27.51
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
-    
+
     Map data on given lmax: 6
     xrange: 1 65
     yrange: 1 65
     zrange: 29 37
     pixel-size: 750.0 [pc]
-    
+
     :mask provided by function
-    
-    [0m[1m[Mera]: 2020-02-12T20:10:30.943[22m
-    
+
+     [Mera]: 2020-02-12T20:10:30.943[22m
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
-    
+
     Map data on given lmax: 6
     xrange: 1 65
     yrange: 1 65
     zrange: 29 37
     pixel-size: 750.0 [pc]
-    
+
     :mask provided by function
-    
+
 
 
 

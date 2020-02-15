@@ -12,15 +12,15 @@ using Mera
     └ @ Base loading.jl:1273
 
 
-    
-    *__   __ _______ ______   _______ 
+
+    *__   __ _______ ______   _______
     |  |_|  |       |    _ | |   _   |
     |       |    ___|   | || |  |_|  |
     |       |   |___|   |_||_|       |
     |       |    ___|    __  |       |
     | ||_|| |   |___|   |  | |   _   |
     |_|   |_|_______|___|  |_|__| |__|
-    
+
 
 
 Get information with the function ``getinfo`` about the simulation for a selected output and assign it to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function ``getinfo`` prints a small summary and the given units are printed in human-readable representation.
@@ -30,13 +30,13 @@ Get information with the function ``getinfo`` about the simulation for a selecte
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10"); # output=400 in given path
 ```
 
-    [0m[1m[Mera]: 2020-02-15T22:02:55.164[22m
-    
+     [Mera]: 2020-02-15T22:02:55.164
+
     Code: RAMSES
     output [420] summary:
     mtime: 2017-07-27T01:22:09
     ctime: 2019-12-24T09:57:04.822
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 624.91 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 1024
@@ -64,15 +64,15 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10"); # output=400 i
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
+     =======================================================
+
 
 
 The simulation output can be selected in several ways, which is realised by using multiple dispatch. See the different defined methods on the function ``getinfo``:
 
 
 ```julia
-# info = getinfo(); # default: output=1 in current folder, 
+# info = getinfo(); # default: output=1 in current folder,
 # info = getinfo("../simulations/"); # given path, default: output=1
 # info = getinfo(output=400, path="../simulations/"); # pass path and output number by keywords
 
@@ -110,8 +110,8 @@ viewfields(info);
 
     output	= 420
     path	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10
-    [0m[1mfnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)[22m
-    
+     fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
+
     simcode	= RAMSES
     mtime	= 2017-07-27T01:22:09
     ctime	= 2019-12-24T09:57:04.822
@@ -141,8 +141,8 @@ viewfields(info);
     particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :birth]
     clumps_variable_list	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     sinks_variable_list	= Symbol[]
-    [0m[1mdescriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)[22m
-    
+     descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)
+
     amr	= true
     gravity	= true
     particles	= true
@@ -150,28 +150,28 @@ viewfields(info);
     sinks	= false
     rt	= false
     namelist	= false
-    [0m[1mnamelist_content ==> dictionary: ()[22m
-    
+     namelist_content ==> dictionary: ()
+
     headerfile	= true
     makefile	= true
-    [0m[1mfiles_content ==> subfields: (:makefile, :timerfile, :patchfile)[22m
-    
+     files_content ==> subfields: (:makefile, :timerfile, :patchfile)
+
     timerfile	= false
     compilationfile	= true
     patchfile	= true
     Narraysize	= 0
-    
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
-    
-    [0m[1mgrid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)[22m
-    
-    [0m[1mpart_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)[22m
-    
-    [0m[1mcompilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)[22m
-    
-    [0m[1mconstants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Mearth, :Mjupiter, :Rsol, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)[22m
-    
-    
+
+     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+     grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
+
+     part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+
+     compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+
+     constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Mearth, :Mjupiter, :Rsol, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
+
+
 
 
 Get a simple list of the fields of any object:
@@ -195,12 +195,12 @@ To make life easier, we provide more predefined scaling factors, assigned to the
 
 
 ```julia
-viewfields(info.scale) 
+viewfields(info.scale)
 ```
 
-    
-    [0m[1m[Mera]: Fields to scale from user/code units to selected units[22m
-    [0m[1m=======================================================================[22m
+
+     [Mera]: Fields to scale from user/code units to selected units
+     =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -244,7 +244,7 @@ viewfields(info.scale)
     g_cms2	= 2.9104844143584656e-9
     T_mu	= 517028.3199143136
     Ba	= 2.910484414358466e-9
-    
+
 
 
 
@@ -260,7 +260,7 @@ list_field = propertynames( info.scale )
 
 
 The underline in the unit representation corresponds to the fraction line, e.g.:
- 
+
 |field name | corresponding unit |
 |---- | ----|
 |Msol_pc3        | Msol * pc^-3|
@@ -345,9 +345,9 @@ Some useful constants are assigned to the `InfoType` object:
 viewfields(info.constants)
 ```
 
-    
-    [0m[1m[Mera]: Constants given in cgs units[22m
-    [0m[1m=========================================[22m
+
+     [Mera]: Constants given in cgs units
+     =========================================
     Au	= 0.01495978707
     Mpc	= 3.08567758128e24
     kpc	= 3.08567758128e21
@@ -370,7 +370,7 @@ viewfields(info.constants)
     Gyr	= 3.15576e16
     Myr	= 3.15576e13
     yr	= 3.15576e7
-    
+
 
 
 Reduce the hierarchy of sub-fields:
@@ -385,9 +385,9 @@ con = info.constants;
 viewfields(con)
 ```
 
-    
-    [0m[1m[Mera]: Constants given in cgs units[22m
-    [0m[1m=========================================[22m
+
+     [Mera]: Constants given in cgs units
+     =========================================
     Au	= 0.01495978707
     Mpc	= 3.08567758128e24
     kpc	= 3.08567758128e21
@@ -410,7 +410,7 @@ viewfields(con)
     Gyr	= 3.15576e16
     Myr	= 3.15576e13
     yr	= 3.15576e7
-    
+
 
 
 ## InfoType Fields Overview
@@ -448,8 +448,8 @@ viewallfields(info)
 
     output	= 420
     path	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10
-    [0m[1mfnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)[22m
-    
+     fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
+
     simcode	= RAMSES
     mtime	= 2017-07-27T01:22:09
     ctime	= 2019-12-24T09:57:04.822
@@ -479,8 +479,8 @@ viewallfields(info)
     particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :birth]
     clumps_variable_list	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     sinks_variable_list	= Symbol[]
-    [0m[1mdescriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)[22m
-    
+     descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)
+
     amr	= true
     gravity	= true
     particles	= true
@@ -488,31 +488,31 @@ viewallfields(info)
     sinks	= false
     rt	= false
     namelist	= false
-    [0m[1mnamelist_content ==> dictionary: ()[22m
-    
+     namelist_content ==> dictionary: ()
+
     headerfile	= true
     makefile	= true
-    [0m[1mfiles_content ==> subfields: (:makefile, :timerfile, :patchfile)[22m
-    
+     files_content ==> subfields: (:makefile, :timerfile, :patchfile)
+
     timerfile	= false
     compilationfile	= true
     patchfile	= true
     Narraysize	= 0
-    
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
-    
-    [0m[1mgrid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)[22m
-    
-    [0m[1mpart_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)[22m
-    
-    [0m[1mcompilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)[22m
-    
-    [0m[1mconstants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Mearth, :Mjupiter, :Rsol, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)[22m
-    
-    
-    
-    [0m[1m[Mera]: Fields to scale from user/code units to selected units[22m
-    [0m[1m=======================================================================[22m
+
+     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+     grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
+
+     part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+
+     compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+
+     constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Mearth, :Mjupiter, :Rsol, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
+
+
+
+     [Mera]: Fields to scale from user/code units to selected units
+     =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -556,10 +556,10 @@ viewallfields(info)
     g_cms2	= 2.9104844143584656e-9
     T_mu	= 517028.3199143136
     Ba	= 2.910484414358466e-9
-    
-    
-    [0m[1m[Mera]: Constants given in cgs units[22m
-    [0m[1m=========================================[22m
+
+
+     [Mera]: Constants given in cgs units
+     =========================================
     Au	= 0.01495978707
     Mpc	= 3.08567758128e24
     kpc	= 3.08567758128e21
@@ -582,10 +582,10 @@ viewallfields(info)
     Gyr	= 3.15576e16
     Myr	= 3.15576e13
     yr	= 3.15576e7
-    
-    
-    [0m[1m[Mera]: Paths and file-names[22m
-    [0m[1m=================================[22m
+
+
+     [Mera]: Paths and file-names
+     =================================
     output	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420
     info	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/info_00420.txt
     amr	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/amr_00420.
@@ -601,10 +601,10 @@ viewallfields(info)
     compilation	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/compilation.txt
     makefile	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/makefile.txt
     patchfile	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/patches.txt
-    
-    
-    [0m[1m[Mera]: Descriptor overview[22m
-    [0m[1m=================================[22m
+
+
+     [Mera]: Descriptor overview
+     =================================
     hversion	= 0
     hydro	= Symbol[:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1]
     htypes	= String[]
@@ -627,13 +627,13 @@ viewallfields(info)
     rt	= Symbol[]
     usert	= false
     rtfile	= false
-    
-    
-    [0m[1m[Mera]: Namelist file content[22m
-    [0m[1m=================================[22m
-    
-    [0m[1m[Mera]: Grid overview [22m
-    [0m[1m============================[22m
+
+
+     [Mera]: Namelist file content
+     =================================
+
+     [Mera]: Grid overview 
+     ============================
     ngridmax	= 850000
     nstep_coarse	= 1644
     nx	= 3
@@ -644,10 +644,10 @@ viewallfields(info)
     ngrid_current	= 2383
     bound_key ==> length(1025)
     cpu_read ==> length(1025)
-    
-    
-    [0m[1m[Mera]: Particle overview[22m
-    [0m[1m===============================[22m
+
+
+     [Mera]: Particle overview
+     ===============================
     eta_sn	= 0.0
     age_sn	= 0.6706464407596582
     f_w	= 0.0
@@ -665,19 +665,19 @@ viewallfields(info)
     star_tracer	= 0
     other_tracer2	= 0
     gas_tracer	= 0
-    
-    
-    [0m[1m[Mera]: Compilation file overview[22m
-    [0m[1m========================================[22m
+
+
+     [Mera]: Compilation file overview
+     ========================================
     compile_date	=  01/12/16-18:13:59
     patch_dir	=  /hydra/u/manb/sf_sim/patch
     remote_repo	=  
     local_branch	=  
     last_commit	=  
-    
-    
-    [0m[1m[Mera]: Makefile content[22m
-    [0m[1m=================================[22m
+
+
+     [Mera]: Makefile content
+     =================================
     #############################################################################
     # If you have problems with this makefile, contact Romain.Teyssier@gmail.com
     #############################################################################
@@ -699,70 +699,70 @@ viewallfields(info)
               -DSOLVER$(SOLVER)
     #############################################################################
     # Fortran compiler options and directives
-    
+
     # --- No MPI, gfortran -------------------------------
     #F90 = gfortran -O3 -frecord-marker=4 -fbacktrace -ffree-line-length-none -g
     #FFLAGS = -x f95-cpp-input $(DEFINES) -DWITHOUTMPI
-    
+
     # --- No MPI, tau ----------------------------------
     #F90 = tau_f90.sh -optKeepFiles -optPreProcess -optCPPOpts=$(DEFINES) -DWITHOUTMPI
-    
+
     # --- No MPI, pgf90 ----------------------------------
     #F90 = pgf90
     #FFLAGS = -Mpreprocess $(DEFINES) -DWITHOUTMPI
-    
+
     # --- No MPI, xlf ------------------------------------
     #F90 = xlf
     #FFLAGS = -WF,-DNDIM=$(NDIM),-DNPRE=$(NPRE),-DNVAR=$(NVAR),-DSOLVER$(SOLVER),-DWITHOUTMPI -qfree=f90 -qsuffix=f=f90 -qsuffix=cpp=f90
-    
+
     # --- No MPI, f90 ------------------------------------
     #F90 = f90
     #FFLAGS = -cpp $(DEFINES) -DWITHOUTMPI
-    
+
     # --- No MPI, ifort ----------------------------------
     #F90 = ifort
     #FFLAGS = -cpp $(DEFINES) -DWITHOUTMPI
-    
+
     # --- MPI, gfortran syntax ------------------------------
-    #F90 = mpif90 -frecord-marker=4 -O3 -ffree-line-length-none -g -fbacktrace 
+    #F90 = mpif90 -frecord-marker=4 -O3 -ffree-line-length-none -g -fbacktrace
     #FFLAGS = -x f95-cpp-input $(DEFINES)
-    
-    # --- MPI, gfortran DEBUG syntax ------------------------------ 
+
+    # --- MPI, gfortran DEBUG syntax ------------------------------
     #F90 = mpif90 -frecord-marker=4 -ffree-line-length-none -fbacktrace -g -O -fbounds-check -Wuninitialized -Wall
     #FFLAGS = -x f95-cpp-input -ffpe-trap=zero,underflow,overflow,invalid -finit-real=nan  $(DEFINES)    
-    
+
     # --- MPI, pgf90 syntax ------------------------------
     #F90 = mpif90 -O3
     #FFLAGS = -Mpreprocess $(DEFINES)
-    
+
     # --- MPI, ifort syntax ------------------------------
     F90 = mpiifort
     #FFLAGS = -cpp -fast $(DEFINES) -DNOSYSTEM
     FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM
-    
+
     # --- MPI, ifort syntax, additional checks -----------
     #F90 = mpif90
     #FFLAGS = -warn all -O0 -g -traceback -fpe0 -ftrapuv -check bounds -cpp $(DEFINES) -DNOSYSTEM
-    
-    
+
+
     # --- MPI, ifort syntax ------------------------------
     #F90 = ftn
-    #FFLAGS = -xAVX -g -traceback -fpp -fast $(DEFINES) -DNOSYSTEM #-DRT 
-    
+    #FFLAGS = -xAVX -g -traceback -fpp -fast $(DEFINES) -DNOSYSTEM #-DRT
+
     # --- MPI, ifort syntax, additional checks -----------
     #F90 = ftn
     #FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM #-DRT
-    
+
     #############################################################################
     MOD = mod
     #############################################################################
     # MPI librairies
-    LIBMPI = 
+    LIBMPI =
     #LIBMPI = -lfmpi -lmpi -lelan
-    
+
     # --- CUDA libraries, for Titane ---
     LIBCUDA = -L/opt/cuda/lib  -lm -lcuda -lcudart
-    
+
     LIBS = $(LIBMPI)
     #############################################################################
     # Sources directories are searched in this exact order
@@ -772,7 +772,7 @@ viewallfields(info)
     MODOBJ = amr_parameters.o amr_commons.o random.o pm_parameters.o pm_commons.o poisson_parameters.o \
              poisson_commons.o hydro_parameters.o hydro_commons.o cooling_module.o bisection.o sparse_mat.o \
              clfind_commons.o gadgetreadfile.o write_makefile.o write_patch.o write_gitinfo.o
-    
+
     AMROBJ = read_params.o init_amr.o init_time.o init_refine.o adaptive_loop.o amr_step.o update_time.o \
              output_amr.o flag_utils.o physical_boundaries.o virtual_boundaries.o refine_utils.o nbors_utils.o \
              hilbert.o load_balance.o title.o sort.o cooling_fine.o units.o light_cone.o movie.o
@@ -788,7 +788,7 @@ viewallfields(info)
                uplmde.o umuscl.o interpol_hydro.o godunov_utils.o condinit.o hydro_flag.o hydro_boundary.o \
                boundana.o read_hydro_params.o synchro_hydro_fine.o
     EXTTOOLS = specfun.o
-    
+
     # All objects
     AMRLIB = $(EXTTOOLS)  $(AMROBJ) $(HYDROOBJ) $(PMOBJ) $(POISSONOBJ)
     # ATON objects
@@ -820,12 +820,12 @@ viewallfields(info)
     clean :
     	rm *.o *.$(MOD)
     #############################################################################
-    
-    
-    [0m[1m[Mera]: Timer-file content[22m
-    [0m[1m=================================[22m
+
+
+     [Mera]: Timer-file content
+     =================================
     [Mera]: No timer-file found!
-    
+
 
 
 ## Disc Space
@@ -836,16 +836,16 @@ Gives an overview of the used disc space for the different data types of the sel
 storageoverview(info)
 ```
 
-    [0m[1mOverview of the used disc space for output: [420][22m
-    [0m[1m------------------------------------------------------[22m
+     Overview of the used disc space for output: [420]
+     ------------------------------------------------------
     Folder:         1.38 GB 	<282.44 KB>/file
     AMR-Files:      321.44 MB 	<321.44 KB>/file
     Hydro-Files:    607.0 MB 	<606.41 KB>/file
     Gravity-Files:  485.14 MB 	<485.14 KB>/file
     Particle-Files: 188.0 KB 	<188.0 Bytes>/file
     Clump-Files:    184.25 KB 	<184.25 Bytes>/file
-    
-    
+
+
     mtime: 2017-07-27T01:22:09
     ctime: 2019-12-24T09:57:04.822
 

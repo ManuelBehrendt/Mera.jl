@@ -6,16 +6,16 @@
 ```julia
 using Mera, PyPlot
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
-particles = getparticles(info, :mass); 
+particles = getparticles(info, :mass);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:28:59.093[22m
-    
+     [Mera]: 2020-02-12T20:28:59.093
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -33,9 +33,9 @@ particles = getparticles(info, :mass);
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -46,27 +46,27 @@ particles = getparticles(info, :mass);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
-    [0m[1m[Mera]: Get particle data: 2020-02-12T20:29:09.155[22m
-    
+     =======================================================
+
+     [Mera]: Get particle data: 2020-02-12T20:29:09.155
+
     Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(4,) = (:mass,) 
-    
+    Using var(s)=(4,) = (:mass,)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
 
 
-    [32mReading data...100%|████████████████████████████████████| Time: 0:00:04[39m
+
+     Reading data...100%|████████████████████████████████████| Time: 0:00:04
 
 
     Found 5.089390e+05 particles
     Memory used for data table :19.4152889251709 MB
     -------------------------------------------------------
-    
+
 
 
 ## Cuboid Region
@@ -134,25 +134,25 @@ Note: The selected regions can be given relative to a user given center or to th
 
 ```julia
 part_subregion = subregion( particles, :cuboid,
-                                    xrange=[-4., 0.], 
-                                    yrange=[-15. ,15.], 
+                                    xrange=[-4., 0.],
+                                    yrange=[-15. ,15.],
                                     zrange=[-2. ,2.],
                                     center=[:boxcenter],
                                     range_unit=:kpc );
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:17:06.008[22m
-    
+     [Mera]: 2020-02-12T20:17:06.008
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Memory used for data table :10.259977340698242 MB
     -------------------------------------------------------
-    
+
 
 
 The function `subregion` creates a new object with the same type as the object created by the function `getparticles` :
@@ -169,7 +169,7 @@ typeof(part_subregion)
 
 
 
-#### Cuboid Region: Projections of the sub-region. 
+#### Cuboid Region: Projections of the sub-region.
 The coordinates center is the center of the box:
 
 
@@ -194,7 +194,7 @@ subplot(1,3,2)
 im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -211,27 +211,27 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 
 ```julia
-part_subregion = subregion( particles, :cuboid, 
-                                    xrange=[-4., 0.], 
-                                    yrange=[-15. ,15.], 
+part_subregion = subregion( particles, :cuboid,
+                                    xrange=[-4., 0.],
+                                    yrange=[-15. ,15.],
                                     zrange=[-2. ,2.],
                                     center=[24.,24.,24.],
                                     range_unit=:kpc,
                                     inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:17:22.042[22m
-    
+     [Mera]: 2020-02-12T20:17:22.042
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Memory used for data table :9.156118392944336 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -324,28 +324,28 @@ Select the ranges of the cylinder in the unit "kpc", relative to the given cente
 part_subregion = subregion(particles, :cylinder,
                             radius=3.,
                             height=2.,
-                            range_unit=:kpc, 
+                            range_unit=:kpc,
                             center=[13.,:bc,:bc],
                             direction=:z);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:29:21.058[22m
-    
+     [Mera]: 2020-02-12T20:29:21.058
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
     ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :578.951171875 KB
     -------------------------------------------------------
-    
 
 
-#### Cylindrical Region: Projections of the sub-region. 
+
+#### Cylindrical Region: Projections of the sub-region.
 The coordinates center is the center of the box:
 
 
@@ -435,26 +435,26 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 part_subregion = subregion(particles, :cylinder,
                                     radius=3.,
                                     height=2.,
-                                    range_unit=:kpc, 
+                                    range_unit=:kpc,
                                     center=[ (24. -11.),:bc,:bc],
                                     direction=:z,
                                     inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:19:47.994[22m
-    
+     [Mera]: 2020-02-12T20:19:47.994
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
     ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :18.8507137298584 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -482,7 +482,7 @@ im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.
 plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -526,7 +526,7 @@ im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -545,28 +545,28 @@ Select the radius of the sphere in the unit "kpc", relative to the given center 
 
 
 ```julia
-part_subregion = subregion( particles, :sphere, 
+part_subregion = subregion( particles, :sphere,
                             radius=10.,
-                            range_unit=:kpc, 
+                            range_unit=:kpc,
                             center=[(24. -11.),24.,24.]);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:20:08.93[22m
-    
+     [Mera]: 2020-02-12T20:20:08.93
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Radius: 10.0 [kpc]
     Memory used for data table :8.807950973510742 MB
     -------------------------------------------------------
-    
 
 
-#### Spherical Region: Projections of the sub-region. 
+
+#### Spherical Region: Projections of the sub-region.
 The coordinates center is the center of the box:
 
 
@@ -594,7 +594,7 @@ im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -614,24 +614,24 @@ cb = colorbar(im, label=labeltext);
 ```julia
 part_subregion = subregion( particles, :sphere,
                             radius=10.,
-                            range_unit=:kpc, 
-                            center=[(24. -11.),24.,24.], 
+                            range_unit=:kpc,
+                            center=[(24. -11.),24.,24.],
                             inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:20:22.215[22m
-    
+     [Mera]: 2020-02-12T20:20:22.215
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Radius: 10.0 [kpc]
     Memory used for data table :10.608144760131836 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -659,7 +659,7 @@ im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -757,7 +757,7 @@ plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -778,28 +778,28 @@ Pass the height of the cylinder and the inner/outer radius of the shell in the u
 
 ```julia
 part_subregion = shellregion( particles, :cylinder,
-                                radius=[5.,10.], 
-                                height=2., 
-                                range_unit=:kpc, 
+                                radius=[5.,10.],
+                                height=2.,
+                                range_unit=:kpc,
                                 center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:23:09.665[22m
-    
+     [Mera]: 2020-02-12T20:23:09.665
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :7.282835006713867 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -849,29 +849,29 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ```julia
 part_subregion = shellregion( particles, :cylinder,
-                                radius=[5.,10.], 
-                                height=2., 
-                                range_unit=:kpc, 
+                                radius=[5.,10.],
+                                height=2.,
+                                range_unit=:kpc,
                                 center=[:boxcenter],
                                 inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:23:29.982[22m
-    
+     [Mera]: 2020-02-12T20:23:29.982
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :12.133260726928711 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -901,7 +901,7 @@ plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -965,35 +965,35 @@ cb = colorbar(im, label=labeltext);
 ![png](03_particles_Get_Subregions_files/03_particles_Get_Subregions_75_0.png)
 
 
-#### Spherical Shell: 
+#### Spherical Shell:
 Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia
 part_subregion = shellregion( particles, :sphere,
                                 radius=[5.,10.],
-                                range_unit=:kpc, 
+                                range_unit=:kpc,
                                 center=[24.,24.,24.]);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:23:51.297[22m
-    
+     [Mera]: 2020-02-12T20:23:51.297
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Memory used for data table :7.592016220092773 MB
     -------------------------------------------------------
-    
 
 
-#### Spherical Shell: Projections of the shell-region. 
+
+#### Spherical Shell: Projections of the shell-region.
 The coordinates center is the center of the box:
 
 
@@ -1023,7 +1023,7 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red",ls="--")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext); 
+cb = colorbar(im, label=labeltext);
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
@@ -1044,26 +1044,26 @@ cb = colorbar(im, label=labeltext);
 ```julia
 part_subregion = shellregion( particles, :sphere,
                                 radius=[5.,10.],
-                                range_unit=:kpc, 
-                                center=[:boxcenter], 
+                                range_unit=:kpc,
+                                center=[:boxcenter],
                                 inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:24:13.472[22m
-    
+     [Mera]: 2020-02-12T20:24:13.472 
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Memory used for data table :11.824079513549805 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -1093,7 +1093,7 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
-cb = colorbar(im, label=labeltext) 
+cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
 im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)

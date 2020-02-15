@@ -8,13 +8,13 @@ using Mera
 info = getinfo(1, "../../testing/simulations/manu_stable_2019");
 ```
 
-    [0m[1m[Mera]: 2020-02-08T13:43:41.281[22m
-    
+     [Mera]: 2020-02-08T13:43:41.281
+
     Code: RAMSES
     output [1] summary:
     mtime: 2020-01-04T21:08:11.996
     ctime: 2020-01-04T21:08:11.996
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 0.0 [x]
     boxlen: 100.0 [kpc]
     ncpu: 32
@@ -32,8 +32,8 @@ info = getinfo(1, "../../testing/simulations/manu_stable_2019");
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Nstars:   1.050000e+05 
-    - Ndm:      9.993500e+04 
+    - Nstars:   1.050000e+05
+    - Ndm:      9.993500e+04
     particle variables: (:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals)
     particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity)
     -------------------------------------------------------
@@ -45,19 +45,19 @@ info = getinfo(1, "../../testing/simulations/manu_stable_2019");
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
+     =======================================================
+
 
 
 ## Select Variables
 
-Choose from the existing particle variables listed in the simulation-info. 
-The functions in **Mera** "know" the predefined particle variable names: 
-- From >= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,.... 
-- For  =< ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,.... 
+Choose from the existing particle variables listed in the simulation-info.
+The functions in **Mera** "know" the predefined particle variable names:
+- From >= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,....
+- For  =< ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,....
 - Currently, the following variables are loaded by default (if exist): :level, :x, :y, :z, :id, :family, :tag.
 - The cpu number associated with the particles can be loaded with the variable names: :cpu or :varn1
-- In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true . 
+- In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true .
 
 ### Read all variables by default
 
@@ -66,20 +66,20 @@ The functions in **Mera** "know" the predefined particle variable names:
 particles = getparticles(info);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:43:54.032[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:43:54.032
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-    
+
     Found 2.049350e+05 particles
     Memory used for data table :16.027705192565918 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -92,7 +92,7 @@ particles.data
 
     Table with 204935 rows, 13 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int32
     2   x        Float64
@@ -114,69 +114,69 @@ particles.data
 
 
 ```julia
-particles_a = getparticles(info, vars=[:mass, :birth]); 
+particles_a = getparticles(info, vars=[:mass, :birth]);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:01.662[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:01.662
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(4, 7) = (:mass, :birth) 
-    
+    Using var(s)=(4, 7) = (:mass, :birth)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-    
+
     Found 2.049350e+05 particles
     Memory used for data table :9.773184776306152 MB
     -------------------------------------------------------
-    
+
 
 
 The same variables can be read by using the var-number:
 
 
 ```julia
-particles_a = getparticles(info, vars=[:var4, :var7]); 
+particles_a = getparticles(info, vars=[:var4, :var7]);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:03.329[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:03.329
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(4, 7) = (:mass, :birth) 
-    
+    Using var(s)=(4, 7) = (:mass, :birth)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-    
+
     Found 2.049350e+05 particles
     Memory used for data table :9.773184776306152 MB
     -------------------------------------------------------
-    
+
 
 
 A keyword argument for the variables is not needed if the following order is preserved: InfoType-object, variables:
 
 
 ```julia
-particles_a = getparticles(info, [:mass, :birth]); 
+particles_a = getparticles(info, [:mass, :birth]);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:03.984[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:03.984
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(4, 7) = (:mass, :birth) 
-    
+    Using var(s)=(4, 7) = (:mass, :birth)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-    
+
     Found 2.049350e+05 particles
     Memory used for data table :9.773184776306152 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -188,7 +188,7 @@ particles_a.data
 
 
     Table with 204935 rows, 9 columns:
-    [1mlevel  [22m[1mx         [22m[1my        [22m[1mz        [22m[1mid  [22m[1mfamily    [22m[1mtag  [22mmass         birth
+     level    x           y          z          id    family      tag   mass         birth
     ────────────────────────────────────────────────────────────────────────
     8      0.162018  48.7716  38.9408  1   13076927  0    0.000359393  0.0
     8      0.241993  43.34    61.1182  1   13057738  0    0.000359393  0.0
@@ -223,23 +223,23 @@ In this case, no array and keyword is necessary, but preserve the following or
 
 
 ```julia
-particles_c = getparticles(info, :vx ); 
+particles_c = getparticles(info, :vx );
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:05.126[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:05.126
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1,) = (:vx,) 
-    
+    Using var(s)=(1,) = (:vx,)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-    
+
     Found 2.049350e+05 particles
     Memory used for data table :8.209554672241211 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -251,7 +251,7 @@ particles_c.data
 
 
     Table with 204935 rows, 8 columns:
-    [1mlevel  [22m[1mx         [22m[1my        [22m[1mz        [22m[1mid  [22m[1mfamily    [22m[1mtag  [22mvx
+     level    x           y          z          id    family      tag   vx
     ────────────────────────────────────────────────────────────────
     8      0.162018  48.7716  38.9408  1   13076927  0    0.127661
     8      0.241993  43.34    61.1182  1   13057738  0    -0.329024
@@ -287,26 +287,26 @@ Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0.
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[0.2,0.8], 
-                            yrange=[0.2,0.8], 
-                            zrange=[0.4,0.6]); 
+particles = getparticles(  info,
+                            xrange=[0.2,0.8],
+                            yrange=[0.2,0.8],
+                            zrange=[0.4,0.6]);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:07.416[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:07.416
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     domain:
     xmin::xmax: 0.2 :: 0.8  	==> 20.0 [kpc] :: 80.0 [kpc]
     ymin::ymax: 0.2 :: 0.8  	==> 20.0 [kpc] :: 80.0 [kpc]
     zmin::zmax: 0.4 :: 0.6  	==> 40.0 [kpc] :: 60.0 [kpc]
-    
+
     Found 1.753150e+05 particles
     Memory used for data table :13.711382865905762 MB
     -------------------------------------------------------
-    
+
 
 
 The loaded data ranges are assigned to the field `ranges` as an array in  **RAMSES** standard notation (domain: [0:1]^3):
@@ -333,29 +333,29 @@ particles.ranges
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[-0.3, 0.3], 
-                            yrange=[-0.3, 0.3], 
-                            zrange=[-0.1, 0.1], 
+particles = getparticles(  info,
+                            xrange=[-0.3, 0.3],
+                            yrange=[-0.3, 0.3],
+                            zrange=[-0.1, 0.1],
                             center=[0.5, 0.5, 0.5]);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:09.718[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:09.718
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2 :: 0.8  	==> 20.0 [kpc] :: 80.0 [kpc]
     ymin::ymax: 0.2 :: 0.8  	==> 20.0 [kpc] :: 80.0 [kpc]
     zmin::zmax: 0.4 :: 0.6  	==> 40.0 [kpc] :: 60.0 [kpc]
-    
+
     Found 1.753150e+05 particles
     Memory used for data table :13.711382865905762 MB
     -------------------------------------------------------
-    
+
 
 
 ### Use notation in physical units
@@ -363,39 +363,39 @@ In the following example the ranges are given in unit "kpc", relative to the box
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[2.,22.], 
-                            yrange=[2.,22.], 
-                            zrange=[22.,26.], 
-                            range_unit=:kpc); 
+particles = getparticles(  info,
+                            xrange=[2.,22.],
+                            yrange=[2.,22.],
+                            zrange=[22.,26.],
+                            range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:11.119[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:11.119
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     domain:
     xmin::xmax: 0.02 :: 0.22  	==> 2.0 [kpc] :: 22.0 [kpc]
     ymin::ymax: 0.02 :: 0.22  	==> 2.0 [kpc] :: 22.0 [kpc]
     zmin::zmax: 0.22 :: 0.26  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Found 1.000000e+00 particles
     Memory used for data table :1.6396484375 KB
     -------------------------------------------------------
-    
 
 
-The possible physical length units for the keyword `range_unit` are defined in the field `scale` : 
+
+The possible physical length units for the keyword `range_unit` are defined in the field `scale` :
 
 
 ```julia
 viewfields(info.scale)  # or e.g.: gas.info.scale
 ```
 
-    
-    [0m[1m[Mera]: Fields to scale from user/code units to selected units[22m
-    [0m[1m=======================================================================[22m
+
+     [Mera]: Fields to scale from user/code units to selected units
+     =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -428,125 +428,125 @@ viewfields(info.scale)  # or e.g.: gas.info.scale
     g_cms2	= 2.9128322630389308e-9
     T_mu	= 517302.3151964531
     Ba	= 2.9128322630389304e-9
-    
+
 
 
 ### Ranges relative to the given center e.g. in unit "kpc":
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[50.,50.,50.], 
-                            range_unit=:kpc); 
+particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[50.,50.,50.],
+                            range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:11.576[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:11.576
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     ymin::ymax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     zmin::zmax: 0.48 :: 0.52  	==> 48.0 [kpc] :: 52.0 [kpc]
-    
+
     Found 1.295770e+05 particles
     Memory used for data table :10.134612083435059 MB
     -------------------------------------------------------
-    
+
 
 
 Use the short notation for the box center :bc or :boxcenter for all  dimensions (x,y,z):
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[:boxcenter], 
-                            range_unit=:kpc); 
+particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:boxcenter],
+                            range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:12.793[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:12.793
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     ymin::ymax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     zmin::zmax: 0.48 :: 0.52  	==> 48.0 [kpc] :: 52.0 [kpc]
-    
+
     Found 1.295770e+05 particles
     Memory used for data table :10.134612083435059 MB
     -------------------------------------------------------
-    
+
 
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[:bc], 
-                            range_unit=:kpc); 
+particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:bc],
+                            range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:13.572[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:13.572
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     ymin::ymax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     zmin::zmax: 0.48 :: 0.52  	==> 48.0 [kpc] :: 52.0 [kpc]
-    
+
     Found 1.295770e+05 particles
     Memory used for data table :10.134612083435059 MB
     -------------------------------------------------------
-    
+
 
 
 Use the box center notation for individual dimensions, here x,z:
 
 
 ```julia
-particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[:bc, 50., :bc], 
-                            range_unit=:kpc); 
+particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:bc, 50., :bc],
+                            range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: Get particle data: 2020-02-08T13:44:15.41[22m
-    
+     [Mera]: Get particle data: 2020-02-08T13:44:15.41 
+
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity) 
-    
+    Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
     center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     ymin::ymax: 0.34 :: 0.66  	==> 34.0 [kpc] :: 66.0 [kpc]
     zmin::zmax: 0.48 :: 0.52  	==> 48.0 [kpc] :: 52.0 [kpc]
-    
+
     Found 1.295770e+05 particles
     Memory used for data table :10.134612083435059 MB
     -------------------------------------------------------
-    
+
 
 
 

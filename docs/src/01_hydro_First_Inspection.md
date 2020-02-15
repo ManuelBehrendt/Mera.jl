@@ -8,13 +8,13 @@ using Mera
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:42:32.755[22m
-    
+     [Mera]: 2020-02-12T20:42:32.755
+
     Code: RAMSES
     output [420] summary:
     mtime: 2017-07-27T01:22:09
     ctime: 2019-12-24T09:57:04.822
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 624.91 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 1024
@@ -42,8 +42,8 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
+     =======================================================
+
 
 
 A short overview of the loaded hydro properties is printed:
@@ -104,9 +104,9 @@ Get an overview of the loaded descriptor properties:
 viewfields(info.descriptor)
 ```
 
-    
-    [0m[1m[Mera]: Descriptor overview[22m
-    [0m[1m=================================[22m
+
+     [Mera]: Descriptor overview
+     =================================
     hversion	= 0
     hydro	= Symbol[:density, :vel_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1]
     htypes	= String[]
@@ -129,7 +129,7 @@ viewfields(info.descriptor)
     rt	= Symbol[]
     usert	= false
     rtfile	= false
-    
+
 
 
 Get a simple list of the fields:
@@ -160,28 +160,28 @@ Read the AMR and the Hydro data from all files of the full box with all existing
 gas = gethydro(info, smallr=1e-5);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-12T20:43:29.834[22m
-    
+     [Mera]: Get hydro data: 2020-02-12T20:43:29.834
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:54[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:54
 
 
     Memory used for data table :85.94877052307129 MB
     -------------------------------------------------------
-    
 
 
-The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object: 
+
+The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:
 
 
 ```julia
@@ -240,11 +240,11 @@ The data is stored in a **JuliaDB** table and the user selected hydro variables
 viewfields(gas)
 ```
 
-    
-    [0m[1mdata ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6)[22m
-    
-    [0m[1minfo ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)[22m
-    
+
+     data ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6)
+
+     info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
     lmin	= 6
     lmax	= 10
     boxlen	= 48.0
@@ -252,10 +252,10 @@ viewfields(gas)
     selected_hydrovars	= [1, 2, 3, 4, 5, 6]
     smallr	= 1.0e-5
     smallc	= 0.0
-    
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
-    
-    
+
+     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+
 
 
 For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "gas.info" and the scaling relations from code to cgs units in "gas.scale". The minimum and maximum level of the loaded data, the box length, the selected ranges and number of the hydro variables are retained.
@@ -267,25 +267,25 @@ A minimum density or sound speed can be set for the loaded data (e.g. to overwri
 gas = gethydro(info, smallr=1e-5);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-12T20:44:27.671[22m
-    
+     [Mera]: Get hydro data: 2020-02-12T20:44:27.671
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:55[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:55
 
 
     Memory used for data table :85.94877052307129 MB
     -------------------------------------------------------
-    
+
 
 
 Print the fields of an object (composite type) in a simple list:
@@ -339,7 +339,7 @@ data_overview = dataoverview(gas)
     Calculating...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:01[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 
@@ -347,7 +347,7 @@ data_overview = dataoverview(gas)
 
     Table with 5 rows, 14 columns:
     Columns:
-    [1m#   [22m[1mcolname   [22m[1mtype[22m
+     #     colname     type
     ──────────────────
     1   level     Any
     2   mass      Any
@@ -396,7 +396,7 @@ Get an array from the column ":mass" in `data_overview` and scale it to the unit
 
 
 ```julia
-column(data_overview, :mass) * info.scale.Msol 
+column(data_overview, :mass) * info.scale.Msol
 ```
 
 
@@ -405,8 +405,8 @@ column(data_overview, :mass) * info.scale.Msol
     5-element Array{Float64,1}:
      1.752485761487614e9  
      8.798434048277442e8  
-     2.2933832876377296e9 
-     2.9534569318639927e9 
+     2.2933832876377296e9
+     2.9534569318639927e9
      2.6133591055943253e10
 
 
@@ -455,7 +455,7 @@ gas.data
 
     Table with 1126532 rows, 10 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -481,7 +481,7 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
 
 
     Table with 1126532 rows, 5 columns:
-    [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mrho
+     level    cx     cy     cz    rho
     ───────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5

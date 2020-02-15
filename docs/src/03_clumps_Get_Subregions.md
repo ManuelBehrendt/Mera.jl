@@ -9,13 +9,13 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14")
 clumps = getclumps(info);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:39:44.033[22m
-    
+     [Mera]: 2020-02-08T20:39:44.033
+
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -33,9 +33,9 @@ clumps = getclumps(info);
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05 
-    - Nstars:   5.066030e+05 
-    - Ndm:      2.547000e+03 
+    - Npart:    5.091500e+05
+    - Nstars:   5.066030e+05
+    - Ndm:      2.547000e+03
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -46,20 +46,20 @@ clumps = getclumps(info);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:39:48.496[22m
-    
+     =======================================================
+
+     [Mera]: Get clump data: 2020-02-08T20:39:48.496
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
+
 
 
 ## Cuboid Region
@@ -80,7 +80,7 @@ Alternatively, use the `getposition` function to extract the positions of the cl
 x, y, z = getpositions(clumps, :kpc, center=[:boxcenter], center_unit=:kpc); # assign the three components of the tuple to three arrays
 ```
 
-Get the extent of the processed domain with respect to a given center. The returned tuple is useful declare the specific range of the plots. 
+Get the extent of the processed domain with respect to a given center. The returned tuple is useful declare the specific range of the plots.
 
 
 ```julia
@@ -131,25 +131,25 @@ Note: The selected regions can be given relative to a user given center or to th
 
 ```julia
 clumps_subregion = subregion( clumps, :cuboid,
-                                    xrange=[-4., 0.], 
-                                    yrange=[-15. ,15.], 
+                                    xrange=[-4., 0.],
+                                    yrange=[-15. ,15.],
                                     zrange=[-2. ,2.],
                                     center=[:boxcenter],
                                     range_unit=:kpc);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:40:04.755[22m
-    
+     [Mera]: 2020-02-08T20:40:04.755
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Memory used for data table :29.52734375 KB
     -------------------------------------------------------
-    
+
 
 
 The function `subregion` creates a new object with the same type as the object created by the function `getclumps` :
@@ -166,7 +166,7 @@ typeof(clumps_subregion)
 
 
 
-#### Cuboid Region: Scatter-Plots of the sub-region. 
+#### Cuboid Region: Scatter-Plots of the sub-region.
 The coordinates center is the center of the box by default:
 
 
@@ -254,26 +254,26 @@ ylabel("z [kpc]");
 
 ```julia
 clumps_subregion = subregion( clumps, :cuboid,
-                                    xrange=[-4., 0.], 
-                                    yrange=[-15. ,15.], 
+                                    xrange=[-4., 0.],
+                                    yrange=[-15. ,15.],
                                     zrange=[-2. ,2.],
                                     center=[:boxcenter],
                                     range_unit=:kpc,
                                     inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:40:36.521[22m
-    
+     [Mera]: 2020-02-08T20:40:36.521
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Memory used for data table :33.65234375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -328,18 +328,18 @@ x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
 rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:40:43.377[22m
-    
+     [Mera]: Get clump data: 2020-02-08T20:40:43.377
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
+
 
 
 #### Cylindrical Region: The red lines show the region that we want to cut-out as a sub-region from the full data:
@@ -386,26 +386,26 @@ Select the ranges of the cylinder in the unit "kpc", relative to the given cente
 
 ```julia
 clumps_subregion = subregion( clumps, :cylinder,
-                                radius=3., 
+                                radius=3.,
                                 height=2.,
-                                range_unit=:kpc, 
+                                range_unit=:kpc,
                                 center=[(24. -11.), :bc, :bc]); # direction=:z, by default
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:40:50.168[22m
-    
+     [Mera]: 2020-02-08T20:40:50.168
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
     ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :5.24609375 KB
     -------------------------------------------------------
-    
+
 
 
 Extract the the clump positions of the subregion and the extent of the full box:
@@ -457,10 +457,10 @@ ylabel("z [kpc]");
 
 ```julia
 x, y, z    = getpositions(clumps_subregion, :kpc,
-                            center=[ (24. -11.), :bc, :bc], 
+                            center=[ (24. -11.), :bc, :bc],
                             center_unit=:kpc);
 rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc,
-                                    center=[ (24. -11.), :bc, :bc], 
+                                    center=[ (24. -11.), :bc, :bc],
                                     center_unit=:kpc);
 ```
 
@@ -503,27 +503,27 @@ ylabel("kpc");
 
 ```julia
 clumps_subregion = subregion( clumps, :cylinder,
-                            radius=3., 
+                            radius=3.,
                             height=2.,
-                            range_unit=:kpc, 
+                            range_unit=:kpc,
                             center=[ (24. -11.),:bc,:bc],
                             inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:41:13.553[22m
-    
+     [Mera]: 2020-02-08T20:41:13.553
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
     ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :57.93359375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -579,18 +579,18 @@ x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
 rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:41:17.127[22m
-    
+     [Mera]: Get clump data: 2020-02-08T20:41:17.127
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
+
 
 
 #### The red lines show the region that we want to cut-out as a sub-region from the full data:
@@ -646,23 +646,23 @@ Select the radius of the sphere in the unit "kpc", relative to the given center 
 ```julia
 clumps_subregion = subregion( clumps, :sphere,
                                      radius=10.,
-                                     range_unit=:kpc, 
+                                     range_unit=:kpc,
                                      center=[ (24. -11.),:bc, :bc]);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:41:21.728[22m
-    
+     [Mera]: 2020-02-08T20:41:21.728
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Radius: 10.0 [kpc]
     Memory used for data table :28.68359375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -712,11 +712,11 @@ ylabel("z [kpc]");
 
 
 ```julia
-x, y, z    = getpositions(clumps_subregion, :kpc, 
-                            center=[ (24. -11.), :bc, :bc], 
+x, y, z    = getpositions(clumps_subregion, :kpc,
+                            center=[ (24. -11.), :bc, :bc],
                             center_unit=:kpc); # subregion
-rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc, 
-                            center=[(24. -11.), :bc, :bc], 
+rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc,
+                            center=[(24. -11.), :bc, :bc],
                             center_unit=:kpc); # subregion
 ```
 
@@ -762,24 +762,24 @@ ylabel("z [kpc]");
 ```julia
 clumps_subregion = subregion( clumps, :sphere,
                                      radius=10.,
-                                     range_unit=:kpc, 
+                                     range_unit=:kpc,
                                      center=[ (24. -11.),:bc,:bc],
                                      inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:41:43.641[22m
-    
+     [Mera]: 2020-02-08T20:41:43.641
+
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Radius: 10.0 [kpc]
     Memory used for data table :34.49609375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -847,18 +847,18 @@ x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
 rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:41:52.553[22m
-    
+     [Mera]: Get clump data: 2020-02-08T20:41:52.553
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
+
 
 
 #### The red lines show the shell that we want to cut-out as a sub-region from the full data:
@@ -902,34 +902,34 @@ ylabel("z [kpc]");
 ![png](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_66_0.png)
 
 
-#### Cylindrical Shell: 
+#### Cylindrical Shell:
 Pass the height of the cylinder and the inner/outer radius of the shell in the unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia
 clumps_subregion = shellregion( clumps, :cylinder,
-                                         radius=[5.,10.], 
-                                         height=2., 
-                                         range_unit=:kpc, 
+                                         radius=[5.,10.],
+                                         height=2.,
+                                         range_unit=:kpc,
                                          center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:42:00.413[22m
-    
+     [Mera]: 2020-02-08T20:42:00.413
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :18.55859375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -982,29 +982,29 @@ ylabel("z [kpc]");
 
 ```julia
 clumps_subregion = shellregion( clumps, :cylinder,
-                                         radius=[5.,10.], 
-                                         height=2., 
-                                         range_unit=:kpc, 
+                                         radius=[5.,10.],
+                                         height=2.,
+                                         range_unit=:kpc,
                                          center=[:boxcenter],
                                          inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:42:10.055[22m
-    
+     [Mera]: 2020-02-08T20:42:10.055
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
     Memory used for data table :44.62109375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -1063,18 +1063,18 @@ x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
 rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:42:14.641[22m
-    
+     [Mera]: Get clump data: 2020-02-08T20:42:14.641
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    Read 12 colums: 
+
+    Read 12 colums:
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-    
+
 
 
 #### The red lines show the shell that we want to cut-out as a sub-region from the full data:
@@ -1118,32 +1118,32 @@ ylabel("z [kpc]");
 ![png](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_79_0.png)
 
 
-#### Spherical Shell: 
+#### Spherical Shell:
 Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
 
 
 ```julia
 clumps_subregion = shellregion( clumps, :sphere,
                                 radius=[5.,10.],
-                                range_unit=:kpc, 
+                                range_unit=:kpc,
                                 center=[:boxcenter]);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:42:19.499[22m
-    
+     [Mera]: 2020-02-08T20:42:19.499
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Memory used for data table :18.55859375 KB
     -------------------------------------------------------
-    
+
 
 
 
@@ -1197,26 +1197,26 @@ ylabel("z [kpc]");
 ```julia
 clumps_subregion = shellregion( clumps, :sphere,
                                 radius=[5.,10.],
-                                range_unit=:kpc, 
+                                range_unit=:kpc,
                                 center=[:boxcenter],
                                 inverse=true);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:42:23.949[22m
-    
+     [Mera]: 2020-02-08T20:42:23.949 
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-    
+
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Memory used for data table :44.62109375 KB
     -------------------------------------------------------
-    
+
 
 
 

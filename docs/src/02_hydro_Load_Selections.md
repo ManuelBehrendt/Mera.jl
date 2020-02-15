@@ -12,22 +12,22 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
     └ @ Base loading.jl:1273
 
 
-    
-    *__   __ _______ ______   _______ 
+
+    *__   __ _______ ______   _______
     |  |_|  |       |    _ | |   _   |
     |       |    ___|   | || |  |_|  |
     |       |   |___|   |_||_|       |
     |       |    ___|    __  |       |
     | ||_|| |   |___|   |  | |   _   |
     |_|   |_|_______|___|  |_|__| |__|
-    
-    [0m[1m[Mera]: 2020-02-08T13:41:33.944[22m
-    
+
+     [Mera]: 2020-02-08T13:41:33.944
+
     Code: RAMSES
     output [420] summary:
     mtime: 2017-07-27T01:22:09
     ctime: 2019-12-24T09:57:04.822
-    [0m[1m=======================================================[22m
+     =======================================================
     simulation time: 624.91 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 1024
@@ -55,8 +55,8 @@ info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
     compilation-file: true
     makefile:         true
     patchfile:        true
-    [0m[1m=======================================================[22m
-    
+     =======================================================
+
 
 
 ## Select Variables
@@ -71,25 +71,25 @@ Choose from the existing hydro variables listed in the simulation-info. Use the 
 gas = gethydro(info);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:08:41.471[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:08:41.471
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:48[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:48
 
 
     Memory used for data table :85.94877052307129 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -102,7 +102,7 @@ gas.data
 
     Table with 1126532 rows, 10 columns:
     Columns:
-    [1m#   [22m[1mcolname  [22m[1mtype[22m
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -121,84 +121,84 @@ gas.data
 
 
 ```julia
-gas_a = gethydro(info, vars=[:rho, :p], smallr = 1e-4); 
+gas_a = gethydro(info, vars=[:rho, :p], smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:09:34.25[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:09:34.25
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 5) = (:rho, :p) 
-    
+    Using var(s)=(1, 5) = (:rho, :p)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:40[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:40
 
 
     Memory used for data table :51.5693416595459 MB
     -------------------------------------------------------
-    
+
 
 
 The same variables can be read by using the var-number:
 
 
 ```julia
-gas_a = gethydro(info, vars=[:var1, :var5], smallr = 1e-4 / info.unit_d); 
+gas_a = gethydro(info, vars=[:var1, :var5], smallr = 1e-4 / info.unit_d);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:10:15.474[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:10:15.474
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 5) = (:rho, :p) 
-    
+    Using var(s)=(1, 5) = (:rho, :p)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:50[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:50
 
 
     Memory used for data table :51.5693416595459 MB
     -------------------------------------------------------
-    
+
 
 
 A keyword argument for the variables is not needed if the following order is preserved: InfoType-object, variables:
 
 
 ```julia
-gas_a = gethydro(info, [:rho, :p], smallr = 1e-4); 
+gas_a = gethydro(info, [:rho, :p], smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:11:05.814[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:11:05.814
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 5) = (:rho, :p) 
-    
+    Using var(s)=(1, 5) = (:rho, :p)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:53[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:53
 
 
     Memory used for data table :51.5693416595459 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -210,7 +210,7 @@ gas_a.data
 
 
     Table with 1126532 rows, 6 columns:
-    [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mrho        p
+     level    cx     cy     cz    rho        p
     ────────────────────────────────────────────
     6      1    1    1    0.0001     2.85781e-7
     6      1    1    2    0.0001     2.85781e-7
@@ -245,28 +245,28 @@ In this case, no array and keyword is necessary, but preserve the following or
 
 
 ```julia
-gas_c = gethydro(info, :vx ); 
+gas_c = gethydro(info, :vx );
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:11:59.783[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:11:59.783
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(2,) = (:vx,) 
-    
+    Using var(s)=(2,) = (:vx,)
+
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:43[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:43
 
 
     Memory used for data table :42.97448444366455 MB
     -------------------------------------------------------
-    
+
 
 
 
@@ -278,7 +278,7 @@ gas_c.data
 
 
     Table with 1126532 rows, 5 columns:
-    [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mvx
+     level    cx     cy     cz    vx
     ────────────────────────────────
     6      1    1    1    0.0990548
     6      1    1    2    0.110889
@@ -314,32 +314,32 @@ Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0.
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[0.2,0.8], 
-                yrange=[0.2,0.8], 
-                zrange=[0.4,0.6], 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[0.2,0.8],
+                yrange=[0.2,0.8],
+                zrange=[0.4,0.6],
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:12:44.551[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:12:44.551
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     domain:
     xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
     ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
     zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:35[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:35
 
 
     Memory used for data table :23.961313247680664 MB
     -------------------------------------------------------
-    
+
 
 
 The loaded data ranges are assigned to the field `ranges` as an array in  **RAMSES** standard notation (domain: [0:1]^3):
@@ -366,35 +366,35 @@ gas.ranges
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-0.3, 0.3], 
-                yrange=[-0.3, 0.3], 
-                zrange=[-0.1, 0.1], 
-                center=[0.5, 0.5, 0.5], 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[-0.3, 0.3],
+                yrange=[-0.3, 0.3],
+                zrange=[-0.1, 0.1],
+                center=[0.5, 0.5, 0.5],
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:13:20.861[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:13:20.861
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
     ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
     zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:36[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:36
 
 
     Memory used for data table :23.961313247680664 MB
     -------------------------------------------------------
-    
+
 
 
 ### Use notation in physical units
@@ -402,45 +402,45 @@ In the following example the ranges are given in unit "kpc", relative to the box
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[2.,22.], 
-                yrange=[2.,22.], 
-                zrange=[22.,26.], 
-                range_unit=:kpc, 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[2.,22.],
+                yrange=[2.,22.],
+                zrange=[22.,26.],
+                range_unit=:kpc,
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:13:57.226[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:13:57.226
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     domain:
     xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
     ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:32[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:32
 
 
     Memory used for data table :4.347360610961914 MB
     -------------------------------------------------------
-    
 
 
-The possible physical length units for the keyword `range_unit` are defined in the field `scale` : 
+
+The possible physical length units for the keyword `range_unit` are defined in the field `scale` :
 
 
 ```julia
 viewfields(info.scale)  # or e.g.: gas.info.scale
 ```
 
-    
-    [0m[1m[Mera]: Fields to scale from user/code units to selected units[22m
-    [0m[1m=======================================================================[22m
+
+     [Mera]: Fields to scale from user/code units to selected units
+     =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -473,149 +473,149 @@ viewfields(info.scale)  # or e.g.: gas.info.scale
     g_cms2	= 2.9104844143584656e-9
     T_mu	= 517028.3199143136
     Ba	= 2.910484414358466e-9
-    
+
 
 
 ### Ranges relative to a given center e.g. in unit "kpc":
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16.,16.], 
-                yrange=[-16.,16.], 
-                zrange=[-2.,2.], 
-                center=[24.,24.,24.], 
-                range_unit=:kpc, 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16.,16.],
+                yrange=[-16.,16.],
+                zrange=[-2.,2.],
+                center=[24.,24.,24.],
+                range_unit=:kpc,
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:41:54.547[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:41:54.547
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:37[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:37
 
 
     Memory used for data table :22.76700782775879 MB
     -------------------------------------------------------
-    
+
 
 
 Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:boxcenter], 
-                range_unit=:kpc, 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:boxcenter],
+                range_unit=:kpc,
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:42:56.283[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:42:56.283
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:28[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:28
 
 
     Memory used for data table :22.76700782775879 MB
     -------------------------------------------------------
-    
+
 
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc], 
-                range_unit=:kpc, 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc],
+                range_unit=:kpc,
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:15:01.751[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:15:01.751
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:31[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:31
 
 
     Memory used for data table :22.76700782775879 MB
     -------------------------------------------------------
-    
+
 
 
 Use the box center notation for individual dimensions, here x,z:
 
 
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc, 24., :bc], 
-                range_unit=:kpc, 
-                smallr = 1e-4); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc, 24., :bc],
+                range_unit=:kpc,
+                smallr = 1e-4);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T13:44:27.734[22m
-    
+     [Mera]: Get hydro data: 2020-02-08T13:44:27.734 
+
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
-    
+    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
+
     domain:
     xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
+
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:00:27[39m
+     100%|███████████████████████████████████████████████████| Time: 0:00:27
 
 
     Memory used for data table :22.76700782775879 MB
     -------------------------------------------------------
-    
+
 
 
 
