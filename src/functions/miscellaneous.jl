@@ -105,6 +105,18 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.mm        = unit_l * 10.
     scale.μm        = unit_l * 1e4
 
+    scale.Mpc3       = scale.Mpc^3
+    scale.kpc3       = scale.kpc^3
+    scale.pc3        = scale.pc^3
+    scale.mpc3       = scale.mpc^3
+    scale.ly3        = scale.ly^3
+    scale.Au3        = scale.Au^3
+    scale.km3        = scale.km^3
+    scale.m3         = scale.m^3
+    scale.cm3        = scale.cm^3
+    scale.mm3        = scale.mm^3
+    scale.μm3        = scale.μm^3
+
     scale.Msol_pc3  = unit_d * pc^3 / Msol
     scale.g_cm3     = unit_d
 
