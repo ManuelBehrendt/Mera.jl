@@ -1,12 +1,27 @@
 # First Steps
 
 ## Simulation Overview
-The first call of **MERA** will compile the package.
+The first call of **MERA** will compile the package!
 
 
 ```julia
 using Mera
 ```
+
+    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
+    └ @ Base loading.jl:1273
+
+
+    
+    *__   __ _______ ______   _______ 
+    |  |_|  |       |    _ | |   _   |
+    |       |    ___|   | || |  |_|  |
+    |       |   |___|   |_||_|       |
+    |       |    ___|    __  |       |
+    | ||_|| |   |___|   |  | |   _   |
+    |_|   |_|_______|___|  |_|__| |__|
+    
+
 
 Get information with the function ``getinfo`` about the simulation for a selected output and assign it to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function ``getinfo`` prints a small summary and the given units are printed in human-readable representation.
 
@@ -15,7 +30,7 @@ Get information with the function ``getinfo`` about the simulation for a selecte
 info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10"); # output=400 in given path
 ```
 
-    [0m[1m[Mera]: 2020-02-12T20:05:20.735[22m
+    [0m[1m[Mera]: 2020-02-15T22:02:55.164[22m
     
     Code: RAMSES
     output [420] summary:
@@ -60,13 +75,13 @@ The simulation output can be selected in several ways, which is realised by usin
 # info = getinfo(); # default: output=1 in current folder, 
 # info = getinfo("../simulations/"); # given path, default: output=1
 # info = getinfo(output=400, path="../simulations/"); # pass path and output number by keywords
+
 methods(getinfo)
 ```
 
 
 
 
-# 4 methods for generic function <b>getinfo</b>:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L51" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:51</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L46" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:46</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L38" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:38</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/read_data/RAMSES/getinfo.jl#L42" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/read_data/RAMSES/getinfo.jl:42</a></li> </ul>
 
 
 
@@ -146,7 +161,7 @@ viewfields(info);
     patchfile	= true
     Narraysize	= 0
     
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
+    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
     
     [0m[1mgrid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)[22m
     
@@ -197,6 +212,17 @@ viewfields(info.scale)
     cm	= 3.085677581282e21
     mm	= 3.085677581282e22
     μm	= 3.085677581282e25
+    Mpc3	= 1.0000000000019446e-9
+    kpc3	= 1.0000000000019444
+    pc3	= 1.0000000000019448e9
+    mpc3	= 1.0000000000019446e18
+    ly3	= 3.469585750743794e10
+    Au3	= 8.775571306099254e69
+    km3	= 2.9379989454983075e49
+    m3	= 2.9379989454983063e58
+    cm3	= 2.9379989454983065e64
+    mm3	= 2.937998945498306e67
+    μm3	= 2.937998945498306e76
     Msol_pc3	= 0.9997234790001649
     g_cm3	= 6.76838218451376e-23
     Msol_pc2	= 999.7234790008131
@@ -229,7 +255,7 @@ list_field = propertynames( info.scale )
 
 
 
-    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
 
 
 
@@ -399,7 +425,6 @@ methods(viewfields)
 
 
 
-# 10 methods for generic function <b>viewfields</b>:<ul><li> viewfields(object::<b>PhysicalUnitsType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L181" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:181</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L166" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:166</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L150" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:150</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L134" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:134</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L116" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:116</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L90" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L73" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:73</a></li> <li> viewfields(object::<b>ScalesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L57" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:57</a></li> <li> viewfields(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L12" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:12</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L197" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:197</a></li> </ul>
 
 
 
@@ -411,7 +436,6 @@ methods(namelist)
 
 
 
-# 2 methods for generic function <b>namelist</b>:<ul><li> namelist(object::<b>Dict{Any,Any}</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L244" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:244</a></li> <li> namelist(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/21c29d5a50b0d8fd64edb5a387acfaf816774b06//src/functions/viewfields.jl#L226" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:226</a></li> </ul>
 
 
 
@@ -475,7 +499,7 @@ viewallfields(info)
     patchfile	= true
     Narraysize	= 0
     
-    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
+    [0m[1mscale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)[22m
     
     [0m[1mgrid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)[22m
     
@@ -500,6 +524,17 @@ viewallfields(info)
     cm	= 3.085677581282e21
     mm	= 3.085677581282e22
     μm	= 3.085677581282e25
+    Mpc3	= 1.0000000000019446e-9
+    kpc3	= 1.0000000000019444
+    pc3	= 1.0000000000019448e9
+    mpc3	= 1.0000000000019446e18
+    ly3	= 3.469585750743794e10
+    Au3	= 8.775571306099254e69
+    km3	= 2.9379989454983075e49
+    m3	= 2.9379989454983063e58
+    cm3	= 2.9379989454983065e64
+    mm3	= 2.937998945498306e67
+    μm3	= 2.937998945498306e76
     Msol_pc3	= 0.9997234790001649
     g_cm3	= 6.76838218451376e-23
     Msol_pc2	= 999.7234790008131
