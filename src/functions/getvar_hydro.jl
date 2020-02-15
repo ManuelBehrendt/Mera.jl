@@ -84,6 +84,10 @@ function get_data(  dataobject::HydroDataType,
             else # if uniform grid
                 vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , dataobject.data)
             end
+        elseif i == :volume
+            selected_unit = getunit(dataobject, :volume, vars, units)
+            vars_dict[:volume] =  getvar(dataobject, :cellsize) .^3 .* selected_unit
+
         elseif i == :jeanslength
             selected_unit = getunit(dataobject, :jeanslength, vars, units)
             vars_dict[:jeanslength] = getvar(dataobject, :cs, unit=:cm_s)  .*
@@ -91,7 +95,7 @@ function get_data(  dataobject::HydroDataType,
                                         sqrt.( getvar(dataobject, :rho, unit=:g_cm3) ) ./ dataobject.info.scale.cm  .*  selected_unit
         elseif i == :jeansnumber
             selected_unit = getunit(dataobject, :jeansnumber, vars, units)
-            vars_dict[:jeansnumber] = getvar(dataobject, :jeanslength) ./ getvar(dataobject, :cellsize)
+            vars_dict[:jeansnumber] = getvar(dataobject, :jeanslength) ./ getvar(dataobject, :cellsize) ./ selected_unit
 
 
         elseif i == :freefall_time
