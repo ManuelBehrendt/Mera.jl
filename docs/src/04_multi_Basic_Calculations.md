@@ -17,7 +17,20 @@ particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
 ```
 
-    [0m[1m[Mera]: 2020-02-08T20:45:43.752[22m
+    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
+    └ @ Base loading.jl:1273
+
+
+    
+    *__   __ _______ ______   _______ 
+    |  |_|  |       |    _ | |   _   |
+    |       |    ___|   | || |  |_|  |
+    |       |   |___|   |_||_|       |
+    |       |    ___|    __  |       |
+    | ||_|| |   |___|   |  | |   _   |
+    |_|   |_|_______|___|  |_|__| |__|
+    
+    [0m[1m[Mera]: 2020-02-15T21:12:42.671[22m
     
     Code: RAMSES
     output [400] summary:
@@ -56,7 +69,7 @@ clumps    = getclumps(info);
     patchfile:        true
     [0m[1m=======================================================[22m
     
-    [0m[1m[Mera]: Get hydro data: 2020-02-08T20:45:50.946[22m
+    [0m[1m[Mera]: Get hydro data: 2020-02-15T21:12:50.488[22m
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz) 
@@ -69,13 +82,13 @@ clumps    = getclumps(info);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:01:47[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:02:13[39m
 
 
     Memory used for data table :51.840110778808594 MB
     -------------------------------------------------------
     
-    [0m[1m[Mera]: Get particle data: 2020-02-08T20:47:41.515[22m
+    [0m[1m[Mera]: Get particle data: 2020-02-15T21:15:06.908[22m
     
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass) 
@@ -87,14 +100,14 @@ clumps    = getclumps(info);
     
 
 
-    [32mReading data...100%|████████████████████████████████████| Time: 0:00:06[39m
+    [32mReading data...100%|████████████████████████████████████| Time: 0:00:02[39m
 
 
     Found 5.089390e+05 particles
     Memory used for data table :31.064278602600098 MB
     -------------------------------------------------------
     
-    [0m[1m[Mera]: Get clump data: 2020-02-08T20:47:49.697[22m
+    [0m[1m[Mera]: Get clump data: 2020-02-15T21:15:11.574[22m
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -292,9 +305,12 @@ methods(center_of_mass)
 
 
 
+
+
 ```julia
 methods(com)
 ```
+
 
 
 
@@ -326,24 +342,26 @@ println( "Particles: ", average_velocity(particles, :km_s) , " km/s" )
 
 
 Without mass-weighting:
+- gas: volume or :no weighting 
+- particles: no weighting
 
 
 ```julia
-println( "Gas:       ", bulk_velocity(gas, :km_s, massweight=false)       , " km/s" )
-println( "Particles: ", bulk_velocity(particles, :km_s, massweight=false) , " km/s" )
+println( "Gas:       ", bulk_velocity(gas, :km_s, weighting=:volume)       , " km/s" )
+println( "Particles: ", bulk_velocity(particles, :km_s, weighting=:no) , " km/s" )
 ```
 
-    Gas:       (-2.931877465071372, -4.04863540210973, -1.4275164966340528) km/s
+    Gas:       (1.5248458901822857, -8.770913864354458, -0.5037635305158431) km/s
     Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 
 
 
 ```julia
-println( "Gas:       ", average_velocity(gas, :km_s, massweight=false)       , " km/s" )
-println( "Particles: ", average_velocity(particles, :km_s, massweight=false) , " km/s" )
+println( "Gas:       ", average_velocity(gas, :km_s, weighting=:volume)       , " km/s" )
+println( "Particles: ", average_velocity(particles, :km_s, weighting=:no) , " km/s" )
 ```
 
-    Gas:       (-2.931877465071372, -4.04863540210973, -1.4275164966340528) km/s
+    Gas:       (1.5248458901822857, -8.770913864354458, -0.5037635305158431) km/s
     Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 
 
@@ -376,7 +394,6 @@ The functions `center_of_mass` and `bulk_velocity` use the function `average_mwe
 ```julia
 methods( average_mweighted )
 ```
-
 
 
 
@@ -416,7 +433,7 @@ getvar()
     
                   -derived hydro vars-
     :x, :y, :z
-    :mass, :cellsize, :freefall_time
+    :mass, :cellsize, :volume, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
     
     ==========================[particles]:==========================
@@ -657,7 +674,7 @@ getvar()
     
                   -derived hydro vars-
     :x, :y, :z
-    :mass, :cellsize, :freefall_time
+    :mass, :cellsize, :volume, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
     
     ==========================[particles]:==========================
@@ -920,11 +937,11 @@ clumps    = getclumps(info, verbose=false);
     Reading data...
 
 
-    [32m100%|███████████████████████████████████████████████████| Time: 0:02:28[39m
-    [32mReading data...100%|████████████████████████████████████| Time: 0:00:04[39m
+    [32m100%|███████████████████████████████████████████████████| Time: 0:02:22[39m
+    [32mReading data...100%|████████████████████████████████████| Time: 0:00:03[39m
 
 
-Pass any kind of Array{<:Number,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:
+Pass any kind of Array{<:Real,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:
 
 
 ```julia
@@ -980,7 +997,7 @@ println( "Clumps     min/max_allclumps    : ",  stats_clumps.min,   "/", stats_c
 
 
 ## Weighted Statistics
-Pass any kind of Array{<:Number,1} (Float, Integer,...) for the given variables and one for the weighting with the same length. The weighting goes cell by cell, particle by particle, clump by clump, etc...:
+Pass any kind of Array{<:Real,1} (Float, Integer,...) for the given variables and one for the weighting with the same length. The weighting goes cell by cell, particle by particle, clump by clump, etc...:
 
 
 ```julia
@@ -1032,6 +1049,21 @@ println( "Clumps     min/max_allclumps    : ",  stats_clumps.min,   "/", stats_c
     Gas        min/max_allcells     : -676.5464963488397/894.9181733956399 km/s
     Particles  min/max_allparticles : -874.6440509326601/670.7956741234592 km/s
     Clumps     min/max_allclumps    : 10.29199219000667/38.17382813002474 Msol/pc^3
+
+
+For the average of the gas-density use volume weighting:
+
+
+```julia
+stats_gas = wstat( getvar(gas, :rho, :g_cm3), weight=getvar(gas, :volume) );
+```
+
+
+```julia
+println( "Gas  <rho>_allcells : ",  stats_gas.mean,  " g/cm^3 (volume weighted)" )
+```
+
+    Gas  <rho>_allcells : 0.008679815788762611 g/cm^3 (volume weighted)
 
 
 ## Helpful Functions
