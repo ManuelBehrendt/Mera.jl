@@ -213,6 +213,7 @@ Further features:
 - [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
 - [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
 - [Free book ThinkJulia](https://benlauwens.github.io/ThinkJulia.jl/latest/book.html)
+- [Synthax comparison: MATLAB–Python–Julia](https://cheatsheets.quantecon.org)
 - [Julia forum JuliaDiscourse](https://discourse.julialang.org)
 - [Courses on YouTube](https://www.youtube.com/user/JuliaLanguage)
 - Database framework used in Mera: [JuliaDB.jl](https://juliadb.org)
