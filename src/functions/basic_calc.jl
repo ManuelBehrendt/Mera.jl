@@ -177,7 +177,7 @@ end
 #### Calculate the average velocity (w/o mass-weight) of any ContainMassDataSetType:
 
 ```julia
-bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
+bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
 
 return Tuple{Float64, Float64, Float64,}
 ```
@@ -187,21 +187,30 @@ return Tuple{Float64, Float64, Float64,}
 
 ##### Optional Keywords:
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :km_s, :m_s, :cm_s (of typye Symbol) ..etc. ; see for defined velocity-scales viewfields(info.scale)
-- **`massweight`:** use mass weighting, default: true
+- **`weighting`:** use different weightings: :mass (default), :volume (hydro), :no
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
 """
-function bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; massweight::Bool=true, mask::MaskType=[false])
-    return bulk_velocity(dataobject, unit=unit, massweight=massweight, mask=mask)
+function bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting::Symbol=:mass, mask::MaskType=[false])
+    return bulk_velocity(dataobject, unit=unit, weighting=weighting, mask=mask)
 end
 
 
-function bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, massweight::Bool=true, mask::MaskType=[false])
+function bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
     selected_unit = getunit(dataobject.info, unit)
-    if massweight
+    if weighting == :mass
         return ( average_mweighted(dataobject, :vx, mask=mask), average_mweighted(dataobject, :vy, mask=mask), average_mweighted(dataobject, :vz,  mask=mask) ) .* selected_unit
-    else
-        return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_unit
+    elseif weighting == :volume && typeof(dataobject) == HydroDataType
+        isamr = checkuniformgrid(dataobject, dataobject.lmax)
+        if isamr
+            return ( sum( getvar(dataobject, :vx, mask=mask) .* getvar(dataobject, :volume, mask=mask) ) ./ sum( getvar(dataobject, :volume, mask=mask) ),
+                     sum( getvar(dataobject, :vy, mask=mask) .* getvar(dataobject, :volume, mask=mask) ) ./ sum( getvar(dataobject, :volume, mask=mask) ),
+                     sum( getvar(dataobject, :vz, mask=mask) .* getvar(dataobject, :volume, mask=mask) ) ./ sum( getvar(dataobject, :volume, mask=mask) ) ) .* selected_unit
+        else
+            return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_unit
+        end
+    elseif weighting == :no # for AMR
+            return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_unit
     end
 end
 
@@ -210,7 +219,7 @@ end
 #### Calculate the average velocity (w/o mass-weight) of any ContainMassDataSetType:
 
 ```julia
-average_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
+average_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
 
 return Tuple{Float64, Float64, Float64,}
 ```
@@ -220,16 +229,16 @@ return Tuple{Float64, Float64, Float64,}
 
 ##### Optional Keywords:
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :km_s, :m_s, :cm_s (of typye Symbol) ..etc. ; see for defined velocity-scales viewfields(info.scale)
-- **`massweight`:** use mass weighting, default: true
+- **`weighting`:** use different weightings: :mass (default), :volume (hydro), :no
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
 """
-function average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; massweight::Bool=true, mask::MaskType=[false])
-    return bulk_velocity(dataobject, unit, massweight=massweight, mask=mask)
+function average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting::Symbol=:mass, mask::MaskType=[false])
+    return bulk_velocity(dataobject, unit, weighting=weighting, mask=mask)
 end
 
-function average_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, massweight::Bool=true, mask::MaskType=[false])
-    return bulk_velocity(dataobject, unit=unit, massweight=massweight,  mask=mask)
+function average_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
+    return bulk_velocity(dataobject, unit=unit, weighting=weighting,  mask=mask)
 end
 
 
