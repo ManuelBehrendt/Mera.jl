@@ -382,13 +382,17 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             error("[Mera] ",now()," : array-mask length: $(length(mask)) does not match with data-table length: $(rows)")
         else
             if in(:mask, colnames(dataobject.data))
-                println(":mask provided by datatable")
-                println()
+                if verbose
+                    println(":mask provided by datatable")
+                    println()
+                end
             else
                 Nafter = JuliaDB.ncols(dataobject.data)
                 dataobject.data = JuliaDB.insertcolsafter(dataobject.data, Nafter, :mask => mask)
-                println(":mask provided by function")
-                println()
+                if verbose
+                    println(":mask provided by function")
+                    println()
+                end
                 mera_mask_inserted = true
             end
         end
