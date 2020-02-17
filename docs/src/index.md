@@ -60,7 +60,7 @@ Pkg.precompile()
 
 
 ## Updates
-Subscribe to the mailing list for updates [here](https://manuelbehrendt.com/mera.html) or watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
+Watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
 Note: Before updating, always read the release notes. In Pkg REPL mode run:
 
 ```julia
@@ -92,6 +92,15 @@ Now add packages like Mera and PyPlot in the favored version:
 ```julia
 (MyProject) pkg> add Package
 ```
+
+!!! note "Install Julia without admin privileges"
+    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
+    Define an alias in the .bashrc file that is pointing to julia:
+
+    ```shell
+    alias julia="/home/username/codes/julia/usr/bin/julia"
+    ```
+
 
 ## Help mode and documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
@@ -179,14 +188,6 @@ julia> methods(viewfields)
 - The variables from the descriptor-files are currently only read and can be used in a future Mera version
 - For simulations with a uniform grid is the column :level not created to reduce memory usage
 
-
-!!! note "Install Julia without admin privileges"
-    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
-    Define an alias in the .bashrc file that is pointing to julia:
-
-    ```shell
-    alias julia="/home/username/codes/julia/usr/bin/julia"
-    ```
 
 
 ## Why Julia?
