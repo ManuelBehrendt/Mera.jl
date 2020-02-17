@@ -1,5 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Mera = "1f1fa8a1-8ae2-4eda-b7d2-8fd697439c90"
 
 [compat]
 Documenter = "0.24"
