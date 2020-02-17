@@ -86,7 +86,7 @@ function get_data(  dataobject::HydroDataType,
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
-            vars_dict[:volume] =  getvar(dataobject, :cellsize) .^3 .* selected_unit
+            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize) .^3 .* selected_unit)
 
         elseif i == :jeanslength
             selected_unit = getunit(dataobject, :jeanslength, vars, units)
