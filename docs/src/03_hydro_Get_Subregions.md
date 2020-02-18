@@ -5,24 +5,14 @@
 
 ```julia
 using Mera, PyPlot
+using ColorSchemes
+cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
+
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14")
 gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
 ```
 
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
-
-    *__   __ _______ ______   _______
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
-
-     [Mera]: 2020-02-08T20:33:27.53
+     [Mera]: 2020-02-18T23:23:22.753
 
     Code: RAMSES
     output [400] summary:
@@ -61,7 +51,7 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     patchfile:        true
      =======================================================
 
-     [Mera]: Get hydro data: 2020-02-08T20:33:35.314
+     [Mera]: Get hydro data: 2020-02-18T23:23:32.417
 
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1,) = (:rho,)
@@ -74,7 +64,7 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:03:32
+     100%|███████████████████████████████████████████████████| Time: 0:02:49
 
 
     Memory used for data table :186.1558656692505 MB
@@ -93,7 +83,7 @@ proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verb
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:03
+     100%|███████████████████████████████████████████████████| Time: 0:00:03
 
 
 The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field `cextent` gives the extent related to a given center (default: [0.,0.,0.]).
@@ -118,21 +108,21 @@ figure(figsize=(15.5, 3.5))
 labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -157,7 +147,7 @@ gas_subregion = subregion( gas, :cuboid,
                             range_unit=:kpc);
 ```
 
-     [Mera]: 2020-02-08T20:37:53.044
+     [Mera]: 2020-02-18T23:27:06.861
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -201,19 +191,19 @@ figure(figsize=(15.5, 3.5))
 labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 ylabel("z [kpc]")
@@ -237,7 +227,7 @@ gas_subregion = subregion( gas, :cuboid,
                             inverse=true);
 ```
 
-     [Mera]: 2020-02-08T20:37:55.64
+     [Mera]: 2020-02-18T23:27:09.597
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -258,27 +248,30 @@ proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+
+
 
 ```julia
 figure(figsize=(15.5, 3.5))
 labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -299,6 +292,10 @@ proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verb
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+
+
 #### Cylindrical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
 
 
@@ -308,21 +305,21 @@ labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -345,7 +342,7 @@ gas_subregion = subregion(  gas, :cylinder,
                             center=[13., :bc, :bc]); # direction=:z, by default
 ```
 
-     [Mera]: 2020-02-08T20:38:08.201
+     [Mera]: 2020-02-18T23:27:24.715
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -378,14 +375,14 @@ labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 
 xlabel("x [kpc]")
 ylabel("z [kpc]")
@@ -393,7 +390,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -423,14 +420,14 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta), 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 
 xlabel("x [kpc]")
 ylabel("z [kpc]")
@@ -438,7 +435,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -462,7 +459,7 @@ gas_subregion = subregion(  gas, :cylinder,
                             inverse=true); # direction=:z, by default
 ```
 
-     [Mera]: 2020-02-08T20:38:10.623
+     [Mera]: 2020-02-18T23:27:29.071
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -485,11 +482,6 @@ proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:01
-     100%|███████████████████████████████████████████████████| Time: 0:00:01
-     100%|███████████████████████████████████████████████████| Time: 0:00:02
-
-
 
 ```julia
 figure(figsize=(15.5, 3.5))
@@ -497,21 +489,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -532,9 +524,7 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:01
-     100%|███████████████████████████████████████████████████| Time: 0:00:02
-     100%|███████████████████████████████████████████████████| Time: 0:00:02
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 #### Spherical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
@@ -546,21 +536,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -582,7 +572,7 @@ gas_subregion = subregion(  gas, :sphere,
                             center=[13.,:bc,:bc]);
 ```
 
-     [Mera]: 2020-02-08T20:38:25.626
+     [Mera]: 2020-02-18T23:27:42.261
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -614,21 +604,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -650,7 +640,7 @@ gas_subregion = subregion(  gas, :sphere,
                             inverse=true);
 ```
 
-     [Mera]: 2020-02-08T20:38:28.679
+     [Mera]: 2020-02-18T23:27:46.433
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -679,21 +669,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -733,20 +723,20 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 ylabel("z [kpc]")
@@ -767,6 +757,9 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
+
+
 #### Cylindrical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:
 
 
@@ -776,7 +769,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -784,7 +777,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
@@ -792,7 +785,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("y [kpc]")
@@ -816,7 +809,7 @@ gas_subregion = shellregion( gas, :cylinder,
                             center=[:boxcenter]);
 ```
 
-     [Mera]: 2020-02-08T20:38:44.442
+     [Mera]: 2020-02-18T23:28:03.834
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -848,7 +841,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -856,7 +849,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
@@ -865,7 +858,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("y [kpc]")
@@ -890,7 +883,7 @@ gas_subregion = shellregion(gas, :cylinder,
                             inverse=true);
 ```
 
-     [Mera]: 2020-02-08T20:38:47.174
+     [Mera]: 2020-02-18T23:28:06.945
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -922,7 +915,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -930,7 +923,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
@@ -938,7 +931,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("y [kpc]")
@@ -948,13 +941,6 @@ cb = colorbar(im, label=labeltext);
 
 
 ![png](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_69_0.png)
-
-
-
-
-
-    PyObject <matplotlib.colorbar.Colorbar object at 0x14342f748>
-
 
 
 ## Spherical Shell
@@ -967,6 +953,11 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
+     100%|███████████████████████████████████████████████████| Time: 0:00:02
+     100%|███████████████████████████████████████████████████| Time: 0:00:01
+
+
 #### Spherical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:
 
 
@@ -976,7 +967,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red",ls="--")
 xlabel("x [kpc]")
@@ -984,7 +975,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -992,7 +983,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("y [kpc]")
@@ -1015,7 +1006,7 @@ gas_subregion = shellregion(gas, :sphere,
                             center=[24.,24.,24.]);
 ```
 
-     [Mera]: 2020-02-08T20:38:58.783
+     [Mera]: 2020-02-18T23:28:21.357
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1049,7 +1040,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1057,7 +1048,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1065,7 +1056,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("y [kpc]")
@@ -1088,7 +1079,7 @@ gas_subregion = shellregion(gas, :sphere,
                             inverse=true);
 ```
 
-     [Mera]: 2020-02-08T20:39:01.81 
+     [Mera]: 2020-02-18T23:28:25.267
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1119,7 +1110,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1127,7 +1118,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1135,7 +1126,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("y [kpc]")
