@@ -1,7 +1,7 @@
 name = "Mera"
 uuid = "02f895e8-fdb1-4346-8fe6-c721699f5126"
 authors = ["Manuel Behrendt"]
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
