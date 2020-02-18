@@ -9,7 +9,20 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 gas  = gethydro(info, lmax=10, smallr=1e-5);
 ```
 
-     [Mera]: 2020-02-12T20:11:29.898
+    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
+    └ @ Base loading.jl:1273
+
+
+
+    *__   __ _______ ______   _______
+    |  |_|  |       |    _ | |   _   |
+    |       |    ___|   | || |  |_|  |
+    |       |   |___|   |_||_|       |
+    |       |    ___|    __  |       |
+    | ||_|| |   |___|   |  | |   _   |
+    |_|   |_|_______|___|  |_|__| |__|
+
+     [Mera]: 2020-02-18T22:27:12.257
 
     Code: RAMSES
     output [400] summary:
@@ -48,7 +61,7 @@ gas  = gethydro(info, lmax=10, smallr=1e-5);
     patchfile:        true
      =======================================================
 
-     [Mera]: Get hydro data: 2020-02-12T20:11:31.804
+     [Mera]: Get hydro data: 2020-02-18T22:27:49.16
 
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
@@ -61,7 +74,7 @@ gas  = gethydro(info, lmax=10, smallr=1e-5);
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:03:05
+     100%|███████████████████████████████████████████████████| Time: 0:03:04
 
 
     Memory used for data table :409.5426664352417 MB
@@ -79,7 +92,7 @@ gas.data
 
     Table with 4879946 rows, 11 columns:
     Columns:
-     #     colname    type
+     #     colname    type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -168,11 +181,11 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction = :x, zrange=[0.45,0.55], ver
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:01:07
-     100%|███████████████████████████████████████████████████| Time: 0:01:02
-     100%|███████████████████████████████████████████████████| Time: 0:00:57
-     100%|███████████████████████████████████████████████████| Time: 0:00:57
-     100%|███████████████████████████████████████████████████| Time: 0:00:56
+     100%|███████████████████████████████████████████████████| Time: 0:01:07
+     100%|███████████████████████████████████████████████████| Time: 0:01:02
+     100%|███████████████████████████████████████████████████| Time: 0:00:57
+     100%|███████████████████████████████████████████████████| Time: 0:00:57
+     100%|███████████████████████████████████████████████████| Time: 0:00:56
 
 
 ### Select a Range Related to a Center
@@ -199,7 +212,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:55
+     100%|███████████████████████████████████████████████████| Time: 0:00:55
 
 
 Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):
@@ -224,7 +237,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:53
+     100%|███████████████████████████████████████████████████| Time: 0:00:53
 
 
 
@@ -247,7 +260,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:52
+     100%|███████████████████████████████████████████████████| Time: 0:00:52
 
 
 Use the box center notation for individual dimensions, here x,z:
@@ -272,7 +285,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:53
+     100%|███████████████████████████████████████████████████| Time: 0:00:53
 
 
 ### Get Multiple Quantities
@@ -303,7 +316,7 @@ proj1_x = projection(gas, [:sd], units=[:Msol_pc2],
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:53
+     100%|███████████████████████████████████████████████████| Time: 0:00:53
 
 
 Pass an array containing several quantities to process and their corresponding units:
@@ -332,7 +345,7 @@ proj1_z = projection(gas, [:sd, :vx], units=[:Msol_pc2, :km_s],
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:59
+     100%|███████████████████████████████████████████████████| Time: 0:00:59
 
 
 The function can be called without any keywords by preserving the following order: dataobject, variables, units
@@ -361,7 +374,7 @@ proj1_z = projection(gas, [:sd , :vx], [:Msol_pc2, :km_s],
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:56
+     100%|███████████████████████████████████████████████████| Time: 0:00:56
 
 
 If all selected variables should be of the same unit use the following arguments: dataobject, array of quantities, unit (no array needed)
@@ -389,7 +402,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz], :km_s,
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:55
+     100%|███████████████████████████████████████████████████| Time: 0:00:55
 
 
 ## Function Output
@@ -571,8 +584,8 @@ proj_x = projection(gas, :sd, :Msol_pc2,
                     direction = :x);
 ```
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:57
-     100%|███████████████████████████████████████████████████| Time: 0:00:58
+     100%|███████████████████████████████████████████████████| Time: 0:01:02
+     100%|███████████████████████████████████████████████████| Time: 0:01:00
 
 
 Python functions can be directly called in Julia, which gives the opportunity, e.g. to use the Matplotlib library.
@@ -580,19 +593,29 @@ Python functions can be directly called in Julia, which gives the opportunity, e
 
 ```julia
 using PyPlot
+using ColorSchemes
+cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
+cmap2 = ColorMap(ColorSchemes.roma.colors)
 ```
+
+
+
+
+![svg](06_hydro_Projection_files/06_hydro_Projection_45_0.svg)
+
+
 
 
 ```julia
 figure(figsize=(10, 3.5))
 subplot(1,2,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 
 subplot(1,2,2)
-im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
@@ -617,21 +640,21 @@ proj_x = projection(gas, :sd, :Msol_pc2,
                     direction = :x);
 ```
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:50
-     100%|███████████████████████████████████████████████████| Time: 0:00:50
+     100%|███████████████████████████████████████████████████| Time: 0:00:54
+     100%|███████████████████████████████████████████████████| Time: 0:00:51
 
 
 
 ```julia
 figure(figsize=(10, 3.5))
 subplot(1,2,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 
 subplot(1,2,2)
-im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
@@ -656,21 +679,21 @@ proj_x = projection(gas, :sd, :Msol_pc2,
                     direction = :x);
 ```
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:52
-     100%|███████████████████████████████████████████████████| Time: 0:00:49
+     100%|███████████████████████████████████████████████████| Time: 0:01:10
+     100%|███████████████████████████████████████████████████| Time: 0:01:00
 
 
 
 ```julia
 figure(figsize=(10, 3.5))
 subplot(1,2,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 
 subplot(1,2,2)
-im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
@@ -694,7 +717,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz], :km_s,
                     center=[24.,24.,24.], range_unit=:kpc);
 ```
 
-     [Mera]: 2020-02-12T19:57:41.744
+     [Mera]: 2020-02-18T22:49:54.49
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -707,7 +730,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz], :km_s,
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:01:09
+     100%|███████████████████████████████████████████████████| Time: 0:01:03
 
 
 For the velocity dispersion additional maps are created to created the mass-weighted quantity:
@@ -777,32 +800,32 @@ figure(figsize=(10, 5.5))
 
 subplot(2, 3, 1)
 title("v [km/s]")
-imshow( (permutedims(proj_z.maps[:v])  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( (permutedims(proj_z.maps[:v])  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(2, 3, 2)
 title("σ [km/s]")
-imshow( (permutedims(proj_z.maps[:σ])  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( (permutedims(proj_z.maps[:σ])  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(2, 3, 4)
 title("σx [km/s]")
-imshow( (permutedims(proj_z.maps[:σx])   ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( (permutedims(proj_z.maps[:σx])   ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(2, 3, 5)
 title("σy [km/s]")
-imshow( permutedims(proj_z.maps[:σy]) , cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σy]) , cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(2, 3, 6)
 title("σz [km/s]")
-imshow( permutedims(proj_z.maps[:σz]) , cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σz]) , cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar();
 
 ```
@@ -825,7 +848,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :
                     data_center_unit=:kpc);
 ```
 
-     [Mera]: 2020-02-12T19:59:04.806
+     [Mera]: 2020-02-18T23:17:14.519
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -838,7 +861,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:01:13
+     100%|███████████████████████████████████████████████████| Time: 0:01:08
 
 
 
@@ -907,59 +930,59 @@ figure(figsize=(10, 8.5))
 
 subplot(3, 3, 1)
 title("Radius [kpc]")
-imshow( permutedims(proj_z.maps[:r_cylinder]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:r_cylinder]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(3, 3, 2)
 title("vr [km/s]")
-imshow( permutedims(proj_z.maps[:vr_cylinder] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:vr_cylinder] ), cmap=cmap2, origin="lower", extent=proj_z.cextent, vmin=-20.,vmax=20.)
 colorbar()
 
 
 subplot(3, 3, 3)
 title("vϕ [km/s]")
-imshow( permutedims(proj_z.maps[:vϕ_cylinder]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:vϕ_cylinder]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 4)
 title("ϕ-angle ")
-imshow( permutedims(proj_z.maps[:ϕ]) , cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:ϕ]) , cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 5)
 title("σr [km/s]")
-imshow( permutedims(proj_z.maps[:σr_cylinder]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σr_cylinder]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(3, 3, 6)
 title("σϕ [km/s]")
-imshow( permutedims(proj_z.maps[:σϕ_cylinder] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σϕ_cylinder] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 7)
 title("σ [km/s]")
-imshow( permutedims(proj_z.maps[:σ]) , cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σ]) , cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 8)
 title("σx [km/s]")
-imshow( permutedims(proj_z.maps[:σx] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σx] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(3, 3, 9)
 title("σy [km/s]")
-imshow( permutedims(proj_z.maps[:σy] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar();
 ```
 
@@ -980,7 +1003,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder
                     lmax=8);
 ```
 
-     [Mera]: 2020-02-12T15:43:52.006
+     [Mera]: 2020-02-18T23:18:44.018
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -993,7 +1016,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:01:10
+     100%|███████████████████████████████████████████████████| Time: 0:01:08
 
 
 
@@ -1117,60 +1140,60 @@ proj_z.maps_lmax
 figure(figsize=(10, 8.5))
 
 subplot(3, 3, 1)
-title("Radius [kpc]")
-imshow( permutedims(proj_z.maps_lmax[:v]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+title("v [km/s]")
+imshow( permutedims(proj_z.maps_lmax[:v]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(3, 3, 2)
 title("vr [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:vr_cylinder] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:vr_cylinder] ), cmap=cmap2, origin="lower", extent=proj_z.cextent, vmin=-20.,vmax=20.)
 colorbar()
 
 
 subplot(3, 3, 3)
 title("vϕ [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:vϕ_cylinder]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:vϕ_cylinder]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 4)
 title("σz [km/s]")
-imshow( (permutedims(proj_z.maps_lmax[:σz]) ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:σz] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 5)
 title("σr [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:σr_cylinder]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:σr_cylinder]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(3, 3, 6)
 title("σϕ [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:σϕ_cylinder] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:σϕ_cylinder] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 7)
 title("σ [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:σ]) , cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:σ]) , cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 8)
 title("σx [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:σx]  ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:σx]  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar()
 
 
 subplot(3, 3, 9)
 title("σy [km/s]")
-imshow( permutedims(proj_z.maps_lmax[:σy] ), cmap="jet", origin="lower", extent=proj_z.cextent)
+imshow( permutedims(proj_z.maps_lmax[:σy] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar();
 ```
 
@@ -1199,60 +1222,60 @@ proj_zlmax = remap(proj_z, 6, weighting=:mass);
 figure(figsize=(10, 8.5))
 
 subplot(3, 3, 1)
-title("Radius [kpc]")
-imshow( permutedims(proj_zlmax.maps_lmax[:v]  ), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+title("v [km/s]")
+imshow( permutedims(proj_zlmax.maps_lmax[:v]  ), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 subplot(3, 3, 2)
 title("vr [km/s]")
-imshow( permutedims(proj_zlmax.maps_lmax[:vr_cylinder] ), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( permutedims(proj_zlmax.maps_lmax[:vr_cylinder] ), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent, vmin=-20.,vmax=20.)
 colorbar()
 
 
 subplot(3, 3, 3)
 title("vϕ [km/s]")
-imshow( permutedims(proj_zlmax.maps_lmax[:vϕ_cylinder]  ), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( permutedims(proj_zlmax.maps_lmax[:vϕ_cylinder]  ), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 4)
 title("log10(σz) [km/s]")
-imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σz]) ), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σz]) ), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 5)
 title("log10(σr) [km/s]")
-imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σr_cylinder]  )), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σr_cylinder]  )), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 subplot(3, 3, 6)
 title("log10(σϕ) [km/s]")
-imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σϕ_cylinder] )), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σϕ_cylinder] )), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 7)
 title("log10(σ) [km/s]")
-imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σ]) ), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σ]) ), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 
 subplot(3, 3, 8)
 title("log10(σx) [km/s]")
-imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σx]  )), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σx]  )), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar()
 
 
 subplot(3, 3, 9)
 title("log10(σy) [km/s]")
-imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σy] )), cmap="jet", origin="lower", extent=proj_zlmax.cextent)
+imshow( log10.(permutedims(proj_zlmax.maps_lmax[:σy] )), cmap=cmap2, origin="lower", extent=proj_zlmax.cextent)
 colorbar();
 ```
 
@@ -1270,7 +1293,7 @@ proj_z = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.3, 0.6], yran
 proj_x = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.3, 0.6], yrange=[0.3, 0.6], direction=:x);
 ```
 
-     [Mera]: 2020-02-12T12:40:08.958
+     [Mera]: 2020-02-18T22:54:00.33
 
     domain:
     xmin::xmax: 0.3 :: 0.6  	==> 14.4 [kpc] :: 28.8 [kpc]
@@ -1281,10 +1304,10 @@ proj_x = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.3, 0.6], yran
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:54
+     100%|███████████████████████████████████████████████████| Time: 0:00:58
 
 
-     [Mera]: 2020-02-12T12:41:03.584
+     [Mera]: 2020-02-18T22:54:58.629
 
     domain:
     xmin::xmax: 0.3 :: 0.6  	==> 14.4 [kpc] :: 28.8 [kpc]
@@ -1295,7 +1318,7 @@ proj_x = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.3, 0.6], yran
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:52
+     100%|███████████████████████████████████████████████████| Time: 0:00:55
 
 
 
@@ -1303,14 +1326,14 @@ proj_x = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.3, 0.6], yran
 figure(figsize=(10, 3.5))
 
 subplot(1, 2, 1)
-im = imshow( log10.(permutedims(proj_z.maps[:cs])   ), cmap="jet", origin="lower", extent=proj_z.cextent)
+im = imshow( log10.(permutedims(proj_z.maps[:cs])   ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(c_s) \ [km \ s^{-1}]}")
 
 
 subplot(1, 2, 2)
-im = imshow( log10.(permutedims(proj_x.maps[:cs]) ), cmap="jet", origin="lower", extent=proj_x.cextent)
+im = imshow( log10.(permutedims(proj_x.maps[:cs]) ), cmap=cmap2, origin="lower", extent=proj_x.cextent)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(c_s) \ [km \ s^{-1}]}",orientation="horizontal", pad=0.2);
@@ -1329,7 +1352,7 @@ Mask higher densities by creating a Bool-array where the lower density cells cor
 
 
 ```julia
-density = 2e-3 / gas.scale.Msol_pc3
+density = 4e-3 / gas.scale.Msol_pc3
 mask = map(row->row.rho < density, gas.data);
 ```
 
@@ -1341,7 +1364,7 @@ proj_z = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask)
 proj_x = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask, direction=:x);
 ```
 
-     [Mera]: 2020-02-12T12:42:06.938
+     [Mera]: 2020-02-18T23:04:58.755
 
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1354,10 +1377,10 @@ proj_x = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask, directio
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:01:44
+     100%|███████████████████████████████████████████████████| Time: 0:01:35
 
 
-     [Mera]: 2020-02-12T12:43:53.735 
+     [Mera]: 2020-02-18T23:06:34.69
 
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1370,20 +1393,20 @@ proj_x = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask, directio
 
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:01:43
+     100%|███████████████████████████████████████████████████| Time: 0:01:34
 
 
 
 ```julia
 figure(figsize=(10, 3.5))
 subplot(1,2,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 
 subplot(1,2,2)
-im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
@@ -1391,3 +1414,9 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 
 
 ![png](06_hydro_Projection_files/06_hydro_Projection_91_0.png)
+
+
+
+```julia
+
+```

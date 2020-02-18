@@ -5,11 +5,14 @@
 
 ```julia
 using Mera, PyPlot
+using ColorSchemes
+cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
+
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
 particles = getparticles(info, :mass);
 ```
 
-     [Mera]: 2020-02-12T20:28:59.093
+     [Mera]: 2020-02-18T23:29:31.468
 
     Code: RAMSES
     output [400] summary:
@@ -46,9 +49,9 @@ particles = getparticles(info, :mass);
     compilation-file: true
     makefile:         true
     patchfile:        true
-     =======================================================
+     ======================================================= 
 
-     [Mera]: Get particle data: 2020-02-12T20:29:09.155
+     [Mera]: Get particle data: 2020-02-18T23:29:46.476
 
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(4,) = (:mass,)
@@ -60,7 +63,7 @@ particles = getparticles(info, :mass);
 
 
 
-     Reading data...100%|████████████████████████████████████| Time: 0:00:04
+     Reading data...100%|████████████████████████████████████| Time: 0:00:03
 
 
     Found 5.089390e+05 particles
@@ -102,21 +105,21 @@ figure(figsize=(15.5, 3.5))
 labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -141,7 +144,7 @@ part_subregion = subregion( particles, :cuboid,
                                     range_unit=:kpc );
 ```
 
-     [Mera]: 2020-02-12T20:17:06.008
+     [Mera]: 2020-02-18T23:30:10.393
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -185,19 +188,19 @@ figure(figsize=(15.5, 3.5))
 labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
@@ -220,7 +223,7 @@ part_subregion = subregion( particles, :cuboid,
                                     inverse=true);
 ```
 
-     [Mera]: 2020-02-12T20:17:22.042
+     [Mera]: 2020-02-18T23:30:12.491
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -247,21 +250,21 @@ figure(figsize=(15.5, 3.5))
 labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -291,21 +294,21 @@ labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -329,7 +332,7 @@ part_subregion = subregion(particles, :cylinder,
                             direction=:z);
 ```
 
-     [Mera]: 2020-02-12T20:29:21.058
+     [Mera]: 2020-02-18T23:30:15.671
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -362,21 +365,21 @@ labeltext = L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -405,20 +408,20 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta), 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
@@ -441,7 +444,7 @@ part_subregion = subregion(particles, :cylinder,
                                     inverse=true);
 ```
 
-     [Mera]: 2020-02-12T20:19:47.994
+     [Mera]: 2020-02-18T23:30:19.162
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -471,21 +474,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -515,21 +518,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -551,7 +554,7 @@ part_subregion = subregion( particles, :sphere,
                             center=[(24. -11.),24.,24.]);
 ```
 
-     [Mera]: 2020-02-12T20:20:08.93
+     [Mera]: 2020-02-18T23:30:22.122
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -583,21 +586,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -619,7 +622,7 @@ part_subregion = subregion( particles, :sphere,
                             inverse=true);
 ```
 
-     [Mera]: 2020-02-12T20:20:22.215
+     [Mera]: 2020-02-18T23:30:23.142
 
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -648,21 +651,21 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color="red")
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 xlabel("y [kpc]")
 ylabel("z [kpc]")
@@ -702,19 +705,19 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
@@ -744,7 +747,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -752,7 +755,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
@@ -760,7 +763,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("y [kpc]")
@@ -784,7 +787,7 @@ part_subregion = shellregion( particles, :cylinder,
                                 center=[:boxcenter]);
 ```
 
-     [Mera]: 2020-02-12T20:23:09.665
+     [Mera]: 2020-02-18T23:30:28.41
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -816,7 +819,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -824,7 +827,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
@@ -832,7 +835,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("y [kpc]")
@@ -856,7 +859,7 @@ part_subregion = shellregion( particles, :cylinder,
                                 inverse=true);
 ```
 
-     [Mera]: 2020-02-12T20:23:29.982
+     [Mera]: 2020-02-18T23:30:30.228
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -888,7 +891,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -896,7 +899,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("x [kpc]")
@@ -904,7 +907,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color="red")
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color="red", ls="--")
 xlabel("y [kpc]")
@@ -937,7 +940,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -945,7 +948,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -953,7 +956,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red",ls="--")
 xlabel("y [kpc]")
@@ -976,7 +979,7 @@ part_subregion = shellregion( particles, :sphere,
                                 center=[24.,24.,24.]);
 ```
 
-     [Mera]: 2020-02-12T20:23:51.297
+     [Mera]: 2020-02-18T23:30:34.32
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1010,7 +1013,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1018,7 +1021,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red",ls="--")
 xlabel("x [kpc]")
@@ -1026,7 +1029,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red",ls="--")
 xlabel("y [kpc]")
@@ -1049,7 +1052,7 @@ part_subregion = shellregion( particles, :sphere,
                                 inverse=true);
 ```
 
-     [Mera]: 2020-02-12T20:24:13.472 
+     [Mera]: 2020-02-18T23:30:35.378
 
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1080,7 +1083,7 @@ labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 theta = range(-pi, stop=pi, length=100)
 
 subplot(1,3,1)
-im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap="jet", aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1088,7 +1091,7 @@ ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap="jet", aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("x [kpc]")
@@ -1096,7 +1099,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap="jet", aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color="red")
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color="red", ls="--")
 xlabel("y [kpc]")
