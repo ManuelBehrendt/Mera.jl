@@ -32,4 +32,4 @@ makedocs(modules = [Mera],
 		 )
 
 
-#deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git")
+deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git")
