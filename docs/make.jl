@@ -33,5 +33,6 @@ makedocs(modules = [Mera],
 
 
 deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git",
+	   devurl = "dev",
            versions = ["stable" => "v^", "v#.#.#", devurl => devurl]
 )
