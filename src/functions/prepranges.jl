@@ -460,19 +460,31 @@ function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<
     Ncenter = length(center)
     if Ncenter  == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = dataobject.boxlen * 0.5 * selected_unit # use range_unit
-            center = [bc, bc, bc]
+            if range_unit == :standard
+                bc = 0.5
+            else
+                bc = dataobject.boxlen * 0.5 * selected_unit # use range_unit
+            end
+            centerm = [bc, bc, bc]
+
         end
     else
+        centerm = zeros(Float64, length(center))
         for i = 1:Ncenter
             if center[i] == :bc || center[i] == :boxcenter
-                bc = dataobject.boxlen * 0.5 * selected_unit # use range_unit
-                center[i] = bc
+                if range_unit == :standard
+                    bc =0.5
+                else
+                    bc = dataobject.boxlen * 0.5 * selected_unit # use range_unit
+                end
+                centerm[i] = bc
+            else
+                centerm[i] = center[i]
             end
         end
     end
-
-    return  center
+    
+    return  centerm
 
 end
 
