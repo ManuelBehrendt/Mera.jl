@@ -33,9 +33,5 @@ makedocs(modules = [Mera],
 
 
 deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git",
-	   target = "build",
-           branch = "gh-pages",
-           devbranch = "master",
-           devurl = "dev",
            versions = ["stable" => "v^", "v#.#.#", devurl => devurl]
 )
