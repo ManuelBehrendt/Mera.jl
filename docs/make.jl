@@ -37,4 +37,5 @@ deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git",
            branch = "gh-pages",
            devbranch = "master",
            devurl = "dev",
-           versions = ["stable" => "v^", "v#.#.#", devurl => devurl)
+           versions = ["stable" => "v^", "v#.#.#", devurl => devurl]
+)
