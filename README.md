@@ -1,6 +1,7 @@
 <img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
 
 <a href="https://manuelbehrendt.github.io/Mera.jl/dev/" target="_blank"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Latest documentation"></a>
+[![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Build Status](https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master)](https://travis-ci.com/ManuelBehrendt/Mera.jl)
 
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
