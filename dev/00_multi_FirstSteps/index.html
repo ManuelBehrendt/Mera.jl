@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>First Steps · Mera.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>First Steps</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview-1"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Fields-1"><span>Fields</span></a></li><li><a class="tocitem" href="#Physical-Units-1"><span>Physical Units</span></a></li><li><a class="tocitem" href="#Physical-Constants-1"><span>Physical Constants</span></a></li><li><a class="tocitem" href="#InfoType-Fields-Overview-1"><span>InfoType Fields Overview</span></a></li><li><a class="tocitem" href="#Disc-Space-1"><span>Disc Space</span></a></li></ul></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>First Steps</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>First Steps</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/00_multi_FirstSteps.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="First-Steps-1"><a class="docs-heading-anchor" href="#First-Steps-1">First Steps</a><a class="docs-heading-anchor-permalink" href="#First-Steps-1" title="Permalink"></a></h1><h2 id="Simulation-Overview-1"><a class="docs-heading-anchor" href="#Simulation-Overview-1">Simulation Overview</a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-1" title="Permalink"></a></h2><p>The first call of <strong>MERA</strong> will compile the package!</p><pre><code class="language-julia">using Mera</code></pre><pre><code class="language-none">┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
+└ @ Base loading.jl:1273
+
+
+
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|</code></pre><p>Get information with the function <span>$getinfo$</span> about the simulation for a selected output and assign it to an object, here: &quot;info&quot;  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function <span>$getinfo$</span> prints a small summary and the given units are printed in human-readable representation.</p><pre><code class="language-julia">info = getinfo(420, &quot;../../testing/simulations/manu_sim_sf_L10&quot;); # output=400 in given path</code></pre><pre><code class="language-none"> [Mera]: 2020-02-15T22:02:55.164
+
+Code: RAMSES
+output [420] summary:
+mtime: 2017-07-27T01:22:09
+ctime: 2019-12-24T09:57:04.822
+ =======================================================
+simulation time: 624.91 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 1024
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  6  --&gt; (:rho, :vx, :vy, :vz, :p, :var6)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1)
+γ: 1.01
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+particle variables: (:vx, :vy, :vz, :mass, :birth)
+-------------------------------------------------------
+clumps:        true
+clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
+-------------------------------------------------------
+namelist-file: false
+timer-file:       false
+compilation-file: true
+makefile:         true
+patchfile:        true
+ =======================================================</code></pre><p>The simulation output can be selected in several ways, which is realised by using multiple dispatch. See the different defined methods on the function <span>$getinfo$</span>:</p><pre><code class="language-julia"># info = getinfo(); # default: output=1 in current folder,
+# info = getinfo(&quot;../simulations/&quot;); # given path, default: output=1
+# info = getinfo(output=400, path=&quot;../simulations/&quot;); # pass path and output number by keywords
+
+methods(getinfo)</code></pre><h2 id="Fields-1"><a class="docs-heading-anchor" href="#Fields-1">Fields</a><a class="docs-heading-anchor-permalink" href="#Fields-1" title="Permalink"></a></h2><p>The created object <span>$info$</span> is of type <span>$InfoType$</span> (composite type):</p><pre><code class="language-julia">typeof(info)</code></pre><pre><code class="language-none">InfoType</code></pre><p>The previously printed information and even more simulation properties are assigned to the object and can be accessed from fields and sub-fields. Get an overview with:</p><pre><code class="language-julia">viewfields(info);</code></pre><pre><code class="language-none">output	= 420
+path	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10
+ fnames ==&gt; subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
+
+simcode	= RAMSES
+mtime	= 2017-07-27T01:22:09
+ctime	= 2019-12-24T09:57:04.822
+ncpu	= 1024
+ndim	= 3
+levelmin	= 6
+levelmax	= 10
+boxlen	= 48.0
+time	= 41.9092891721775
+aexp	= 1.0
+H0	= 1.0
+omega_m	= 1.0
+omega_l	= 0.0
+omega_k	= 0.0
+omega_b	= 0.0
+unit_l	= 3.085677581282e21
+unit_d	= 6.76838218451376e-23
+unit_m	= 1.9885499720830952e42
+unit_v	= 6.557528732282063e6
+unit_t	= 4.70554946422349e14
+gamma	= 1.01
+hydro	= true
+nvarh	= 6
+nvarp	= 5
+variable_list	= Symbol[:rho, :vx, :vy, :vz, :p, :var6]
+gravity_variable_list	= Symbol[:epot, :ax, :ay, :az]
+particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :birth]
+clumps_variable_list	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
+sinks_variable_list	= Symbol[]
+ descriptor ==&gt; subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)
+
+amr	= true
+gravity	= true
+particles	= true
+clumps	= true
+sinks	= false
+rt	= false
+namelist	= false
+ namelist_content ==&gt; dictionary: ()
+
+headerfile	= true
+makefile	= true
+ files_content ==&gt; subfields: (:makefile, :timerfile, :patchfile)
+
+timerfile	= false
+compilationfile	= true
+patchfile	= true
+Narraysize	= 0
+
+ scale ==&gt; subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+ grid_info ==&gt; subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
+
+ part_info ==&gt; subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+
+ compilation ==&gt; subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+
+ constants ==&gt; subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Mearth, :Mjupiter, :Rsol, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)</code></pre><p>Get a simple list of the fields of any object:</p><pre><code class="language-julia">propertynames(info)</code></pre><pre><code class="language-none">(:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)</code></pre><h2 id="Physical-Units-1"><a class="docs-heading-anchor" href="#Physical-Units-1">Physical Units</a><a class="docs-heading-anchor-permalink" href="#Physical-Units-1" title="Permalink"></a></h2><p>All calculations in <strong>MERA</strong> are processed in the code units of the loades simulation. The <strong>RAMSES</strong> scaling factors from code- to cgs-units are given for the length, density, mass, velocity and time, assigned to the fields: unit<em>l, unit</em>d, unit<em>m, unit</em>v, unit_t</p><p>To make life easier, we provide more predefined scaling factors, assigned to the sub-field <span>$scale$</span>:</p><pre><code class="language-julia">viewfields(info.scale)</code></pre><pre><code class="language-none"> [Mera]: Fields to scale from user/code units to selected units
+ =======================================================================
+Mpc	= 0.0010000000000006482
+kpc	= 1.0000000000006481
+pc	= 1000.0000000006482
+mpc	= 1.0000000000006482e6
+ly	= 3261.5637769461323
+Au	= 2.0626480623310105e23
+km	= 3.0856775812820004e16
+m	= 3.085677581282e19
+cm	= 3.085677581282e21
+mm	= 3.085677581282e22
+μm	= 3.085677581282e25
+Mpc3	= 1.0000000000019446e-9
+kpc3	= 1.0000000000019444
+pc3	= 1.0000000000019448e9
+mpc3	= 1.0000000000019446e18
+ly3	= 3.469585750743794e10
+Au3	= 8.775571306099254e69
+km3	= 2.9379989454983075e49
+m3	= 2.9379989454983063e58
+cm3	= 2.9379989454983065e64
+mm3	= 2.937998945498306e67
+μm3	= 2.937998945498306e76
+Msol_pc3	= 0.9997234790001649
+g_cm3	= 6.76838218451376e-23
+Msol_pc2	= 999.7234790008131
+g_cm2	= 0.20885045168302602
+Gyr	= 0.014910986463557083
+Myr	= 14.910986463557084
+yr	= 1.4910986463557083e7
+s	= 4.70554946422349e14
+ms	= 4.70554946422349e17
+Msol	= 9.99723479002109e8
+Mearth	= 3.329677459032007e14
+Mjupiter	= 1.0476363431814971e12
+g	= 1.9885499720830952e42
+km_s	= 65.57528732282063
+m_s	= 65575.28732282063
+cm_s	= 6.557528732282063e6
+nH	= 30.987773856809987
+erg	= 8.551000140274429e55
+g_cms2	= 2.9104844143584656e-9
+T_mu	= 517028.3199143136
+Ba	= 2.910484414358466e-9</code></pre><pre><code class="language-julia">list_field = propertynames( info.scale )</code></pre><pre><code class="language-none">(:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)</code></pre><p>The underline in the unit representation corresponds to the fraction line, e.g.:</p><table><tr><th style="text-align: right">field name</th><th style="text-align: right">corresponding unit</th></tr><tr><td style="text-align: right">Msol_pc3</td><td style="text-align: right">Msol * pc^-3</td></tr><tr><td style="text-align: right">g_cm3</td><td style="text-align: right">g * cm^-3</td></tr><tr><td style="text-align: right">Msol_pc2</td><td style="text-align: right">Msol * pc^-2</td></tr><tr><td style="text-align: right">g_cm2</td><td style="text-align: right">g * cm^-2</td></tr><tr><td style="text-align: right">km_s</td><td style="text-align: right">km * s^-1</td></tr><tr><td style="text-align: right">m_s</td><td style="text-align: right">m * s^-1</td></tr><tr><td style="text-align: right">cm_s</td><td style="text-align: right">cm * s^-1</td></tr><tr><td style="text-align: right">g_cms2</td><td style="text-align: right">g / (cm * s^2)</td></tr><tr><td style="text-align: right">nH</td><td style="text-align: right">cm^-3</td></tr><tr><td style="text-align: right">T_mu</td><td style="text-align: right">T / μ</td></tr><tr><td style="text-align: right">Ba</td><td style="text-align: right">= Barye (pressure) [cm^-1 * g * s^-2]</td></tr></table><p>Access a scaling factor to use it in your calculations or plots by e.g.:</p><pre><code class="language-julia">info.scale.km_s  </code></pre><pre><code class="language-none">65.57528732282063</code></pre><p>To reduce the hierarchy of sub-fields, assign a new object:</p><pre><code class="language-julia">scale = info.scale;</code></pre><p>The scaling factor can now be accessed by:</p><pre><code class="language-julia">scale.km_s</code></pre><pre><code class="language-none">65.57528732282063</code></pre><p>Furthermore, the scales can be assigned by applying the function <span>$createscales$</span> on an object of type <span>$InfoType$</span> (here: <code>info</code>):</p><pre><code class="language-julia">typeof(info)</code></pre><pre><code class="language-none">InfoType</code></pre><pre><code class="language-julia">my_scales = createscales(info)
+my_scales.km_s</code></pre><pre><code class="language-none">65.57528732282063</code></pre><h2 id="Physical-Constants-1"><a class="docs-heading-anchor" href="#Physical-Constants-1">Physical Constants</a><a class="docs-heading-anchor-permalink" href="#Physical-Constants-1" title="Permalink"></a></h2><p>Some useful constants are assigned to the <code>InfoType</code> object:</p><pre><code class="language-julia">viewfields(info.constants)</code></pre><pre><code class="language-none"> [Mera]: Constants given in cgs units
+ =========================================
+Au	= 0.01495978707
+Mpc	= 3.08567758128e24
+kpc	= 3.08567758128e21
+pc	= 3.08567758128e18
+mpc	= 3.08567758128e15
+ly	= 9.4607304725808e17
+Msol	= 1.9891e33
+Mearth	= 5.9722e27
+Mjupiter	= 1.89813e30
+Rsol	= 6.96e10
+me	= 9.1093897e-28
+mp	= 1.6726231e-24
+mn	= 1.6749286e-24
+mH	= 1.66e-24
+amu	= 1.6605402e-24
+NA	= 6.0221367e23
+c	= 2.99792458e10
+G	= 6.67259e-8
+kB	= 1.38062e-16
+Gyr	= 3.15576e16
+Myr	= 3.15576e13
+yr	= 3.15576e7</code></pre><p>Reduce the hierarchy of sub-fields:</p><pre><code class="language-julia">con = info.constants;</code></pre><pre><code class="language-julia">viewfields(con)</code></pre><pre><code class="language-none"> [Mera]: Constants given in cgs units
+ =========================================
+Au	= 0.01495978707
+Mpc	= 3.08567758128e24
+kpc	= 3.08567758128e21
+pc	= 3.08567758128e18
+mpc	= 3.08567758128e15
+ly	= 9.4607304725808e17
+Msol	= 1.9891e33
+Mearth	= 5.9722e27
+Mjupiter	= 1.89813e30
+Rsol	= 6.96e10
+me	= 9.1093897e-28
+mp	= 1.6726231e-24
+mn	= 1.6749286e-24
+mH	= 1.66e-24
+amu	= 1.6605402e-24
+NA	= 6.0221367e23
+c	= 2.99792458e10
+G	= 6.67259e-8
+kB	= 1.38062e-16
+Gyr	= 3.15576e16
+Myr	= 3.15576e13
+yr	= 3.15576e7</code></pre><h2 id="InfoType-Fields-Overview-1"><a class="docs-heading-anchor" href="#InfoType-Fields-Overview-1">InfoType Fields Overview</a><a class="docs-heading-anchor-permalink" href="#InfoType-Fields-Overview-1" title="Permalink"></a></h2><p>All fields and sub-fields that are assigned to the <code>InfoType</code> or from other objects can be viewed by the function <strong>viewfields</strong>, <strong>namelist</strong>, <strong>makefile</strong>, <strong>timerfile</strong>, <strong>patchfile</strong>. See the methods list:</p><pre><code class="language-julia">methods(viewfields)</code></pre><pre><code class="language-julia">methods(namelist)</code></pre><p>Get a detailed overview of all the fields from MERA composite types:</p><pre><code class="language-julia">viewallfields(info)</code></pre><pre><code class="language-none">output	= 420
+path	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10
+ fnames ==&gt; subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
+
+simcode	= RAMSES
+mtime	= 2017-07-27T01:22:09
+ctime	= 2019-12-24T09:57:04.822
+ncpu	= 1024
+ndim	= 3
+levelmin	= 6
+levelmax	= 10
+boxlen	= 48.0
+time	= 41.9092891721775
+aexp	= 1.0
+H0	= 1.0
+omega_m	= 1.0
+omega_l	= 0.0
+omega_k	= 0.0
+omega_b	= 0.0
+unit_l	= 3.085677581282e21
+unit_d	= 6.76838218451376e-23
+unit_m	= 1.9885499720830952e42
+unit_v	= 6.557528732282063e6
+unit_t	= 4.70554946422349e14
+gamma	= 1.01
+hydro	= true
+nvarh	= 6
+nvarp	= 5
+variable_list	= Symbol[:rho, :vx, :vy, :vz, :p, :var6]
+gravity_variable_list	= Symbol[:epot, :ax, :ay, :az]
+particles_variable_list	= Symbol[:vx, :vy, :vz, :mass, :birth]
+clumps_variable_list	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
+sinks_variable_list	= Symbol[]
+ descriptor ==&gt; subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)
+
+amr	= true
+gravity	= true
+particles	= true
+clumps	= true
+sinks	= false
+rt	= false
+namelist	= false
+ namelist_content ==&gt; dictionary: ()
+
+headerfile	= true
+makefile	= true
+ files_content ==&gt; subfields: (:makefile, :timerfile, :patchfile)
+
+timerfile	= false
+compilationfile	= true
+patchfile	= true
+Narraysize	= 0
+
+ scale ==&gt; subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+
+ grid_info ==&gt; subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
+
+ part_info ==&gt; subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+
+ compilation ==&gt; subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+
+ constants ==&gt; subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Mearth, :Mjupiter, :Rsol, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
+
+
+
+ [Mera]: Fields to scale from user/code units to selected units
+ =======================================================================
+Mpc	= 0.0010000000000006482
+kpc	= 1.0000000000006481
+pc	= 1000.0000000006482
+mpc	= 1.0000000000006482e6
+ly	= 3261.5637769461323
+Au	= 2.0626480623310105e23
+km	= 3.0856775812820004e16
+m	= 3.085677581282e19
+cm	= 3.085677581282e21
+mm	= 3.085677581282e22
+μm	= 3.085677581282e25
+Mpc3	= 1.0000000000019446e-9
+kpc3	= 1.0000000000019444
+pc3	= 1.0000000000019448e9
+mpc3	= 1.0000000000019446e18
+ly3	= 3.469585750743794e10
+Au3	= 8.775571306099254e69
+km3	= 2.9379989454983075e49
+m3	= 2.9379989454983063e58
+cm3	= 2.9379989454983065e64
+mm3	= 2.937998945498306e67
+μm3	= 2.937998945498306e76
+Msol_pc3	= 0.9997234790001649
+g_cm3	= 6.76838218451376e-23
+Msol_pc2	= 999.7234790008131
+g_cm2	= 0.20885045168302602
+Gyr	= 0.014910986463557083
+Myr	= 14.910986463557084
+yr	= 1.4910986463557083e7
+s	= 4.70554946422349e14
+ms	= 4.70554946422349e17
+Msol	= 9.99723479002109e8
+Mearth	= 3.329677459032007e14
+Mjupiter	= 1.0476363431814971e12
+g	= 1.9885499720830952e42
+km_s	= 65.57528732282063
+m_s	= 65575.28732282063
+cm_s	= 6.557528732282063e6
+nH	= 30.987773856809987
+erg	= 8.551000140274429e55
+g_cms2	= 2.9104844143584656e-9
+T_mu	= 517028.3199143136
+Ba	= 2.910484414358466e-9
+
+
+ [Mera]: Constants given in cgs units
+ =========================================
+Au	= 0.01495978707
+Mpc	= 3.08567758128e24
+kpc	= 3.08567758128e21
+pc	= 3.08567758128e18
+mpc	= 3.08567758128e15
+ly	= 9.4607304725808e17
+Msol	= 1.9891e33
+Mearth	= 5.9722e27
+Mjupiter	= 1.89813e30
+Rsol	= 6.96e10
+me	= 9.1093897e-28
+mp	= 1.6726231e-24
+mn	= 1.6749286e-24
+mH	= 1.66e-24
+amu	= 1.6605402e-24
+NA	= 6.0221367e23
+c	= 2.99792458e10
+G	= 6.67259e-8
+kB	= 1.38062e-16
+Gyr	= 3.15576e16
+Myr	= 3.15576e13
+yr	= 3.15576e7
+
+
+ [Mera]: Paths and file-names
+ =================================
+output	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420
+info	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/info_00420.txt
+amr	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/amr_00420.
+hydro	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/hydro_00420.
+hydro_descriptor	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/hydro_file_descriptor.txt
+gravity	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/grav_00420.
+particles	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/part_00420.
+part_descriptor	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/part_file_descriptor.txt
+clumps	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/clump_00420.
+timer	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/timer_00420.txt
+header	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/header_00420.txt
+namelist	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/namelist.txt
+compilation	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/compilation.txt
+makefile	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/makefile.txt
+patchfile	= /Users/mabe/Documents/Projects/dev/Mera/tutorials/version_1/../../testing/simulations/manu_sim_sf_L10/output_00420/patches.txt
+
+
+ [Mera]: Descriptor overview
+ =================================
+hversion	= 0
+hydro	= Symbol[:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1]
+htypes	= String[]
+usehydro	= false
+hydrofile	= true
+pversion	= 0
+particles	= Symbol[:vx, :vy, :vz, :mass, :birth]
+ptypes	= String[]
+useparticles	= false
+particlesfile	= false
+gravity	= Symbol[:epot, :ax, :ay, :az]
+usegravity	= false
+gravityfile	= false
+clumps	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
+useclumps	= false
+clumpsfile	= false
+sinks	= Symbol[]
+usesinks	= false
+sinksfile	= false
+rt	= Symbol[]
+usert	= false
+rtfile	= false
+
+
+ [Mera]: Namelist file content
+ =================================
+
+ [Mera]: Grid overview 
+ ============================
+ngridmax	= 850000
+nstep_coarse	= 1644
+nx	= 3
+ny	= 3
+nz	= 3
+nlevelmax	= 10
+nboundary	= 6
+ngrid_current	= 2383
+bound_key ==&gt; length(1025)
+cpu_read ==&gt; length(1025)
+
+
+ [Mera]: Particle overview
+ ===============================
+eta_sn	= 0.0
+age_sn	= 0.6706464407596582
+f_w	= 0.0
+Npart	= 0
+Ndm	= 0
+Nstars	= 0
+Nsinks	= 0
+Ncloud	= 0
+Ndebris	= 0
+Nother	= 0
+Nundefined	= 0
+other_tracer1	= 0
+debris_tracer	= 0
+cloud_tracer	= 0
+star_tracer	= 0
+other_tracer2	= 0
+gas_tracer	= 0
+
+
+ [Mera]: Compilation file overview
+ ========================================
+compile_date	=  01/12/16-18:13:59
+patch_dir	=  /hydra/u/manb/sf_sim/patch
+remote_repo	=  
+local_branch	=  
+last_commit	=  
+
+
+ [Mera]: Makefile content
+ =================================
+#############################################################################
+# If you have problems with this makefile, contact Romain.Teyssier@gmail.com
+#############################################################################
+# Compilation time parameters
+NVECTOR = 32
+NDIM = 3
+NPRE = 8
+NVAR = 6
+NENER = 0
+SOLVER = hydro
+PATCH = /hydra/u/manb/sf_sim/patch
+EXEC = ramses_neu
+#############################################################################
+GITBRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+GITHASH = $(shell git log --pretty=format:&#39;%H&#39; -n 1)
+GITREPO = $(shell git config --get remote.origin.url)
+BUILDDATE = $(shell date +&quot;%D-%T&quot;)
+DEFINES = -DNVECTOR=$(NVECTOR) -DNDIM=$(NDIM) -DNPRE=$(NPRE) -DNENER=$(NENER) -DNVAR=$(NVAR) \
+          -DSOLVER$(SOLVER)
+#############################################################################
+# Fortran compiler options and directives
+
+# --- No MPI, gfortran -------------------------------
+#F90 = gfortran -O3 -frecord-marker=4 -fbacktrace -ffree-line-length-none -g
+#FFLAGS = -x f95-cpp-input $(DEFINES) -DWITHOUTMPI
+
+# --- No MPI, tau ----------------------------------
+#F90 = tau_f90.sh -optKeepFiles -optPreProcess -optCPPOpts=$(DEFINES) -DWITHOUTMPI
+
+# --- No MPI, pgf90 ----------------------------------
+#F90 = pgf90
+#FFLAGS = -Mpreprocess $(DEFINES) -DWITHOUTMPI
+
+# --- No MPI, xlf ------------------------------------
+#F90 = xlf
+#FFLAGS = -WF,-DNDIM=$(NDIM),-DNPRE=$(NPRE),-DNVAR=$(NVAR),-DSOLVER$(SOLVER),-DWITHOUTMPI -qfree=f90 -qsuffix=f=f90 -qsuffix=cpp=f90
+
+# --- No MPI, f90 ------------------------------------
+#F90 = f90
+#FFLAGS = -cpp $(DEFINES) -DWITHOUTMPI
+
+# --- No MPI, ifort ----------------------------------
+#F90 = ifort
+#FFLAGS = -cpp $(DEFINES) -DWITHOUTMPI
+
+# --- MPI, gfortran syntax ------------------------------
+#F90 = mpif90 -frecord-marker=4 -O3 -ffree-line-length-none -g -fbacktrace
+#FFLAGS = -x f95-cpp-input $(DEFINES)
+
+# --- MPI, gfortran DEBUG syntax ------------------------------
+#F90 = mpif90 -frecord-marker=4 -ffree-line-length-none -fbacktrace -g -O -fbounds-check -Wuninitialized -Wall
+#FFLAGS = -x f95-cpp-input -ffpe-trap=zero,underflow,overflow,invalid -finit-real=nan  $(DEFINES)    
+
+# --- MPI, pgf90 syntax ------------------------------
+#F90 = mpif90 -O3
+#FFLAGS = -Mpreprocess $(DEFINES)
+
+# --- MPI, ifort syntax ------------------------------
+F90 = mpiifort
+#FFLAGS = -cpp -fast $(DEFINES) -DNOSYSTEM
+FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM
+
+# --- MPI, ifort syntax, additional checks -----------
+#F90 = mpif90
+#FFLAGS = -warn all -O0 -g -traceback -fpe0 -ftrapuv -check bounds -cpp $(DEFINES) -DNOSYSTEM
+
+
+# --- MPI, ifort syntax ------------------------------
+#F90 = ftn
+#FFLAGS = -xAVX -g -traceback -fpp -fast $(DEFINES) -DNOSYSTEM #-DRT
+
+# --- MPI, ifort syntax, additional checks -----------
+#F90 = ftn
+#FFLAGS = -O3 -g -traceback -fpe0 -ftrapuv -cpp $(DEFINES) -DNOSYSTEM #-DRT
+
+#############################################################################
+MOD = mod
+#############################################################################
+# MPI librairies
+LIBMPI =
+#LIBMPI = -lfmpi -lmpi -lelan
+
+# --- CUDA libraries, for Titane ---
+LIBCUDA = -L/opt/cuda/lib  -lm -lcuda -lcudart
+
+LIBS = $(LIBMPI)
+#############################################################################
+# Sources directories are searched in this exact order
+VPATH = $(PATCH):../$(SOLVER):../aton:../hydro:../pm:../poisson:../amr:../tools
+#############################################################################
+# All objects
+MODOBJ = amr_parameters.o amr_commons.o random.o pm_parameters.o pm_commons.o poisson_parameters.o \
+         poisson_commons.o hydro_parameters.o hydro_commons.o cooling_module.o bisection.o sparse_mat.o \
+         clfind_commons.o gadgetreadfile.o write_makefile.o write_patch.o write_gitinfo.o
+
+AMROBJ = read_params.o init_amr.o init_time.o init_refine.o adaptive_loop.o amr_step.o update_time.o \
+         output_amr.o flag_utils.o physical_boundaries.o virtual_boundaries.o refine_utils.o nbors_utils.o \
+         hilbert.o load_balance.o title.o sort.o cooling_fine.o units.o light_cone.o movie.o
+# Particle-Mesh objects
+PMOBJ = init_part.o output_part.o rho_fine.o synchro_fine.o move_fine.o newdt_fine.o particle_tree.o \
+        add_list.o remove_list.o star_formation.o sink_particle.o feedback.o clump_finder.o clump_merger.o \
+        flag_formation_sites.o init_sink.o output_sink.o
+# Poisson solver objects
+POISSONOBJ = init_poisson.o phi_fine_cg.o interpol_phi.o force_fine.o multigrid_coarse.o multigrid_fine_commons.o \
+             multigrid_fine_fine.o multigrid_fine_coarse.o gravana.o boundary_potential.o rho_ana.o output_poisson.o
+# Hydro objects
+HYDROOBJ = init_hydro.o init_flow_fine.o write_screen.o output_hydro.o courant_fine.o godunov_fine.o \
+           uplmde.o umuscl.o interpol_hydro.o godunov_utils.o condinit.o hydro_flag.o hydro_boundary.o \
+           boundana.o read_hydro_params.o synchro_hydro_fine.o
+EXTTOOLS = specfun.o
+
+# All objects
+AMRLIB = $(EXTTOOLS)  $(AMROBJ) $(HYDROOBJ) $(PMOBJ) $(POISSONOBJ)
+# ATON objects
+ATON_MODOBJ = timing.o radiation_commons.o rad_step.o
+ATON_OBJ = observe.o init_radiation.o rad_init.o rad_boundary.o rad_stars.o rad_backup.o ../aton/atonlib/libaton.a
+#############################################################################
+ramses:	$(MODOBJ) $(AMRLIB) ramses.o
+	$(F90) $(MODOBJ) $(AMRLIB) ramses.o -o $(EXEC)$(NDIM)d $(LIBS)
+	rm write_makefile.f90
+	rm write_patch.f90
+ramses_aton: $(MODOBJ) $(ATON_MODOBJ) $(AMRLIB) $(ATON_OBJ) ramses.o
+	$(F90) $(MODOBJ) $(ATON_MODOBJ) $(AMRLIB) $(ATON_OBJ) ramses.o -o $(EXEC)$(NDIM)d $(LIBS) $(LIBCUDA)
+	rm write_makefile.f90
+	rm write_patch.f90
+#############################################################################
+write_gitinfo.o: FORCE
+	$(F90) $(FFLAGS) -DPATCH=\&#39;$(PATCH)\&#39; -DGITBRANCH=\&#39;$(GITBRANCH)\&#39; -DGITHASH=\&#39;&quot;$(GITHASH)&quot;\&#39; \
+ -DGITREPO=\&#39;$(GITREPO)\&#39; -DBUILDDATE=\&#39;&quot;$(BUILDDATE)&quot;\&#39; -c ../amr/write_gitinfo.f90 -o $@		
+write_makefile.o: FORCE
+	../utils/scripts/cr_write_makefile.sh $(MAKEFILE_LIST)
+	$(F90) $(FFLAGS) -c write_makefile.f90 -o $@
+write_patch.o: FORCE
+	../utils/scripts/cr_write_patch.sh $(PATCH)
+	$(F90) $(FFLAGS) -c write_patch.f90 -o $@
+%.o:%.f90
+	$(F90) $(FFLAGS) -c $^ -o $@
+FORCE:
+#############################################################################
+clean :
+	rm *.o *.$(MOD)
+#############################################################################
+
+
+ [Mera]: Timer-file content
+ =================================
+[Mera]: No timer-file found!</code></pre><h2 id="Disc-Space-1"><a class="docs-heading-anchor" href="#Disc-Space-1">Disc Space</a><a class="docs-heading-anchor-permalink" href="#Disc-Space-1" title="Permalink"></a></h2><p>Gives an overview of the used disc space for the different data types of the selected output:</p><pre><code class="language-julia">storageoverview(info)</code></pre><pre><code class="language-none"> Overview of the used disc space for output: [420]
+ ------------------------------------------------------
+Folder:         1.38 GB 	&lt;282.44 KB&gt;/file
+AMR-Files:      321.44 MB 	&lt;321.44 KB&gt;/file
+Hydro-Files:    607.0 MB 	&lt;606.41 KB&gt;/file
+Gravity-Files:  485.14 MB 	&lt;485.14 KB&gt;/file
+Particle-Files: 188.0 KB 	&lt;188.0 Bytes&gt;/file
+Clump-Files:    184.25 KB 	&lt;184.25 Bytes&gt;/file
+
+
+mtime: 2017-07-27T01:22:09
+ctime: 2019-12-24T09:57:04.822</code></pre><pre><code class="language-julia"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../01_hydro_First_Inspection/">Hydro »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 19 February 2020 12:02">Wednesday 19 February 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
