@@ -1,4 +1,7 @@
 # Home
+[![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
+
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
@@ -102,7 +105,7 @@ Now add packages like Mera and PyPlot in the favored version:
     ```
 
 
-## Help mode and documentation
+## Help and documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
 
 In the REPL use e.g. for the function *getinfo*:
@@ -181,7 +184,6 @@ julia> methods(viewfields)
 
 
 ## Further Notes
-
 - To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl))
 - The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
 - Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
@@ -204,7 +206,7 @@ Further features:
 ….
 
 
-## Useful Information
+## Useful Links
 - [Official Julia website](https://julialang.org)
 - [Learning Julia](https://julialang.org/learning/)
 - [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
@@ -221,10 +223,15 @@ Further features:
 - Atom based Julia IDE [Juno](https://junolab.org)
 
 
-## Contribute
-New ideas, feature requests or bug reports are very welcome.
-MERA can be easily extended for other grid-based or N-body based data.
-Please open an issue on [GitHub](https://github.com/ManuelBehrendt/Mera.jl) if you encounter any problems or write an email to: mera[>]manuelbehrendt.com
+## Contact for Questions and Contributing
+- If you have any questions about the package, please feel free to chat in the Gitter channel: [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+- For bug reports, etc., please submit an issue on [GitHub](https://github.com/ManuelBehrendt/Mera.jl)
+New ideas, feature requests are very welcome! MERA can be easily extended for other grid-based or N-body based data. Write an email to: mera[>]manuelbehrendt.com
+
+
+## Supporting and Citing
+To credit the Mera software, please star the repository on GitHub. If you use the Mera software as part of your research, teaching, or other activities, I would be grateful if you could cite my work. To give proper academic credit, follow the link for BibTeX export:
+[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
 
 ## License
