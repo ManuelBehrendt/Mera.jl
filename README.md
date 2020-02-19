@@ -1,5 +1,6 @@
 <img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/)
+
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) 
 [![Latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/dev/)
 [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Build Status](https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master)](https://travis-ci.com/ManuelBehrendt/Mera.jl)
