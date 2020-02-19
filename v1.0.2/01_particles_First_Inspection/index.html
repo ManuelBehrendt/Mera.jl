@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Particles · Mera.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li class="is-active"><a class="tocitem" href>Particles</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview-1"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Load-AMR/Particle-Data-1"><span>Load AMR/Particle Data</span></a></li><li><a class="tocitem" href="#Overview-of-AMR/Particles-1"><span>Overview of AMR/Particles</span></a></li><li><a class="tocitem" href="#Data-inspection-1"><span>Data inspection</span></a></li></ul></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">1-Data Inspection</a></li><li class="is-active"><a href>Particles</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Particles</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/01_particles_First_Inspection.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Particles:-First-Data-Inspection-1"><a class="docs-heading-anchor" href="#.-Particles:-First-Data-Inspection-1">1. Particles: First Data Inspection</a><a class="docs-heading-anchor-permalink" href="#.-Particles:-First-Data-Inspection-1" title="Permalink"></a></h1><h2 id="Simulation-Overview-1"><a class="docs-heading-anchor" href="#Simulation-Overview-1">Simulation Overview</a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-1" title="Permalink"></a></h2><pre><code class="language-julia">using Mera
+#info = getinfo(1, &quot;../../testing/simulations/manu_stable_2019&quot;);
+info = getinfo(400, &quot;../../testing/simulations/manu_sim_sf_L14&quot;);</code></pre><pre><code class="language-none"> [Mera]: 2020-02-12T20:40:36.118
+
+Code: RAMSES
+output [400] summary:
+mtime: 2018-09-05T09:51:55.041
+ctime: 2019-11-01T17:35:21.051
+ =======================================================
+simulation time: 594.98 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 2048
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
+particle variables: (:vx, :vy, :vz, :mass, :birth)
+-------------------------------------------------------
+clumps:        true
+clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
+-------------------------------------------------------
+namelist-file: false
+timer-file:       false
+compilation-file: true
+makefile:         true
+patchfile:        true
+ =======================================================</code></pre><p>A short overview of the loaded particle properties is printed:</p><ul><li>existence of particle files</li><li>the predefined variables</li><li>the number of particles for each id/family (if exist)</li><li>the variable names from the descriptor file (if exist)</li></ul><p>The functions in <strong>Mera</strong> &quot;know&quot; the predefined particle variable names:</p><ul><li>From &gt;= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,....</li><li>For  =&lt; ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,....</li><li>Currently, the following variables are loaded by default (if exist): :level, :x, :y, :z, :id, :family, :tag.</li><li>The cpu number associated with the particles can be loaded with the variable names: :cpu or :varn1</li><li>In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true .</li></ul><p>Get an overview of the loaded particle properties:</p><pre><code class="language-julia">viewfields(info.part_info)</code></pre><pre><code class="language-none"> [Mera]: Particle overview
+ ===============================
+eta_sn	= 0.0
+age_sn	= 0.6706464407596582
+f_w	= 0.0
+Npart	= 509150
+Ndm	= 2547
+Nstars	= 506603
+Nsinks	= 0
+Ncloud	= 0
+Ndebris	= 0
+Nother	= 0
+Nundefined	= 0
+other_tracer1	= 0
+debris_tracer	= 0
+cloud_tracer	= 0
+star_tracer	= 0
+other_tracer2	= 0
+gas_tracer	= 0</code></pre><h2 id="Load-AMR/Particle-Data-1"><a class="docs-heading-anchor" href="#Load-AMR/Particle-Data-1">Load AMR/Particle Data</a><a class="docs-heading-anchor-permalink" href="#Load-AMR/Particle-Data-1" title="Permalink"></a></h2><p>Read the AMR and the Particle data from all files of the full box with all existing variables and particle positions:</p><pre><code class="language-julia">particles = getparticles(info);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-12T20:40:36.139
+
+Key vars=(:level, :x, :y, :z, :id)
+Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+
+
+ Reading data...100%|████████████████████████████████████| Time: 0:00:03
+
+
+Found 5.089390e+05 particles
+Memory used for data table :34.947275161743164 MB
+-------------------------------------------------------</code></pre><p>The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:</p><pre><code class="language-julia">usedmemory(particles);</code></pre><pre><code class="language-none">Memory used: 35.211 MB</code></pre><p>The assigned object is now of type <code>PartDataType</code>:</p><pre><code class="language-julia">typeof(particles)</code></pre><pre><code class="language-none">PartDataType</code></pre><p>It is a sub-type of ContainMassDataSetType</p><pre><code class="language-julia">supertype( ContainMassDataSetType )</code></pre><pre><code class="language-none">DataSetType</code></pre><p>ContainMassDataSetType is a sub-type of to the super-type DataSetType</p><pre><code class="language-julia">supertype( PartDataType )</code></pre><pre><code class="language-none">HydroPartType</code></pre><p>The data is stored in a <strong>JuliaDB</strong> table and the user selected particle variables and parameters are assigned to fields:</p><pre><code class="language-julia">viewfields(particles)</code></pre><pre><code class="language-none"> data ==&gt; JuliaDB table: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
+
+ info ==&gt; subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
+lmin	= 6
+lmax	= 14
+boxlen	= 48.0
+ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+selected_partvars	= Symbol[:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth]
+
+ scale ==&gt; subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)</code></pre><p>For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with &quot;particles.info&quot; and the scaling relations from code to cgs units in &quot;particles.scale&quot;.</p><p>Print the fields of an object (composite type) in a simple list:</p><pre><code class="language-julia">propertynames(particles)</code></pre><pre><code class="language-none">(:data, :info, :lmin, :lmax, :boxlen, :ranges, :selected_partvars, :used_descriptors, :scale)</code></pre><h2 id="Overview-of-AMR/Particles-1"><a class="docs-heading-anchor" href="#Overview-of-AMR/Particles-1">Overview of AMR/Particles</a><a class="docs-heading-anchor-permalink" href="#Overview-of-AMR/Particles-1" title="Permalink"></a></h2><p>Get an overview of the AMR structure associated with the object <code>particles</code> (PartDataType). The printed information is stored into the object <code>overview_amr</code> as a <strong>JuliaDB</strong> table (code units)  and can be used for further calculations:</p><pre><code class="language-julia">amr_overview = amroverview(particles)</code></pre><pre><code class="language-none">Counting...
+
+
+
+
+
+Table with 9 rows, 2 columns:
+level  particles
+────────────────
+6      2867
+7      11573
+8      56209
+9      118156
+10     115506
+11     77303
+12     49300
+13     31859
+14     46166</code></pre><p>Get some overview of the data that is associated with the object <code>particles</code>. The calculated information can be accessed from the object <code>data_overview</code> (here) in code units for further calculations:</p><pre><code class="language-julia">data_overview = dataoverview(particles)</code></pre><pre><code class="language-none">Table with 9 rows, 19 columns:
+Columns:
+ #     colname      type
+───────────────────
+1   level      Any
+2   x_min      Any
+3   x_max      Any
+4   y_min      Any
+5   y_max      Any
+6   z_min      Any
+7   z_max      Any
+8   id_min     Any
+9   id_max     Any
+10  vx_min     Any
+11  vx_max     Any
+12  vy_min     Any
+13  vy_max     Any
+14  vz_min     Any
+15  vz_max     Any
+16  mass_min   Any
+17  mass_max   Any
+18  birth_min  Any
+19  birth_max  Any</code></pre><p>If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the <code>select</code> function. The representation &quot;:birth_max&quot; is called a quoted Symbol (<a href="https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1">see in Julia documentation</a>):</p><pre><code class="language-julia">using JuliaDB</code></pre><pre><code class="language-julia">select(data_overview, (:level,:mass_min, :mass_max, :birth_min, :birth_max ) )</code></pre><pre><code class="language-none">Table with 9 rows, 5 columns:
+level  mass_min    mass_max    birth_min  birth_max
+───────────────────────────────────────────────────
+6      1.13606e-5  1.13606e-5  4.54194    38.2611
+7      1.13606e-5  1.13606e-5  4.35262    38.6822
+8      1.13606e-5  2.27212e-5  4.30782    39.2733
+9      1.13606e-5  2.27212e-5  4.39811    39.397
+10     1.13606e-5  2.27212e-5  4.29246    39.6783
+11     1.13606e-5  2.27212e-5  4.36385    39.744
+12     1.13606e-5  2.27212e-5  4.51187    39.8358
+13     4.99231e-6  2.27212e-5  4.47027    39.883
+14     4.91416e-6  2.27212e-5  5.2582     39.902</code></pre><p>Get an array from the column &quot;:birth&quot; in <code>data_overview</code> and scale it to the units <code>Myr</code>. The order of the calculated data is consistent with the table above:</p><pre><code class="language-julia">column(data_overview, :birth_min) * info.scale.Myr</code></pre><pre><code class="language-none">9-element Array{Float64,1}:
+ 67.72475450854526
+ 64.901905404619  
+ 64.23377578948651
+ 65.58011000778922
+ 64.00484282690913
+ 65.06931266062217
+ 67.27645257301232
+ 66.6561171130916
+ 78.40495776518468</code></pre><p>Or simply convert the <code>birth_max</code> data in the table to <code>Myr</code> units by manipulating the column:</p><pre><code class="language-julia">data_overview = transform(data_overview, :birth_max =&gt; :birth_max =&gt; value-&gt;value * info.scale.Myr);</code></pre><pre><code class="language-julia">select(data_overview, (:level,:mass_min, :mass_max, :birth_min, :birth_max ) )</code></pre><pre><code class="language-none">Table with 9 rows, 5 columns:
+level  mass_min    mass_max    birth_min  birth_max
+───────────────────────────────────────────────────
+6      1.13606e-5  1.13606e-5  4.54194    570.511
+7      1.13606e-5  1.13606e-5  4.35262    576.79
+8      1.13606e-5  2.27212e-5  4.30782    585.604
+9      1.13606e-5  2.27212e-5  4.39811    587.448
+10     1.13606e-5  2.27212e-5  4.29246    591.643
+11     1.13606e-5  2.27212e-5  4.36385    592.623
+12     1.13606e-5  2.27212e-5  4.51187    593.991
+13     4.99231e-6  2.27212e-5  4.47027    594.694
+14     4.91416e-6  2.27212e-5  5.2582     594.977</code></pre><h2 id="Data-inspection-1"><a class="docs-heading-anchor" href="#Data-inspection-1">Data inspection</a><a class="docs-heading-anchor-permalink" href="#Data-inspection-1" title="Permalink"></a></h2><p>The data is associated with the field <code>particles.data</code> as a <strong>JuliaDB</strong> table (code units). Each row corresponds to a particle and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc. More information can be found in the <strong>Mera</strong> tutorials or in: <a href="http://juliadb.org/latest/api/">JuliaDB API Reference</a></p><h3 id="Table-View-1"><a class="docs-heading-anchor" href="#Table-View-1">Table View</a><a class="docs-heading-anchor-permalink" href="#Table-View-1" title="Permalink"></a></h3><p>The particle positions x,y,z are given in code units and used in many functions of <strong>MERA</strong> and should not be modified.</p><pre><code class="language-julia">particles.data</code></pre><pre><code class="language-none">Table with 508939 rows, 10 columns:
+Columns:
+ #     colname    type
+────────────────────
+1   level    Int32
+2   x        Float64
+3   y        Float64
+4   z        Float64
+5   id       Int32
+6   vx       Float64
+7   vy       Float64
+8   vz       Float64
+9   mass     Float64
+10  birth    Float64</code></pre><p>A more detailed view into the data:</p><pre><code class="language-julia">select(particles.data, (:level,:x, :y, :z, :birth) )</code></pre><pre><code class="language-none">Table with 508939 rows, 5 columns:
+ level    x             y          z         birth
+────────────────────────────────────────────
+6      0.00462947  22.3885  24.571   32.0735
+6      0.109066    22.3782  21.5844  19.8963
+6      0.238211    28.7537  24.8191  24.9471
+6      0.271366    22.7512  31.5681  20.9888
+6      0.312574    16.2385  23.7591  23.0935
+6      0.314957    28.2084  30.966   31.6911
+6      0.328337    4.59858  23.5001  30.3666
+6      0.420712    27.6688  26.5735  18.9512
+6      0.509144    33.1737  23.9789  24.3613
+6      0.565516    25.9409  26.0579  32.7551
+6      0.587289    9.60231  23.8477  29.6981
+6      0.592878    25.5519  21.3079  15.9204
+⋮
+14     37.6271     25.857   23.8833  36.7754
+14     37.6299     25.8403  23.9383  36.0289
+14     37.6301     25.8502  23.9361  38.7225
+14     37.6326     25.8544  23.9383  36.3547
+14     37.6528     25.8898  23.9928  38.2109
+14     37.6643     25.9061  23.9945  39.49
+14     37.6813     25.8743  23.9789  36.6981
+14     37.7207     25.8623  23.8775  38.6107
+14     38.173      25.8862  23.7978  33.0212
+14     38.1738     25.8914  23.7979  35.2712
+14     38.1739     25.8905  23.7992  34.4097</code></pre><pre><code class="language-julia"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_hydro_First_Inspection/">« Hydro</a><a class="docs-footer-nextpage" href="../01_clumps_First_Inspection/">Clumps »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Wednesday 19 February 2020 13:39">Wednesday 19 February 2020</span>. Using Julia version 1.3.1.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
