@@ -107,7 +107,7 @@ Now add packages like Mera and PyPlot in the favored version:
 (MyProject) pkg> add Package
 ```
 
-## Help and documentation
+## Help and Documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
 
 In the REPL use e.g. for the function *getinfo*:
