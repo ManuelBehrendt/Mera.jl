@@ -107,7 +107,7 @@ Now add packages like Mera and PyPlot in the favored version:
 (MyProject) pkg> add Package
 ```
 
-## Help mode and documentation
+## Help and documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
 
 In the REPL use e.g. for the function *getinfo*:
@@ -209,7 +209,7 @@ Further features:
 ….
 
 
-## Useful Information
+## Useful Links
 - [Official Julia website](https://julialang.org)
 - [Learning Julia](https://julialang.org/learning/)
 - [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
@@ -226,10 +226,16 @@ Further features:
 - Atom based Julia IDE [Juno](https://junolab.org)
 
 
-## Contribute
-New ideas, feature requests or bug reports are very welcome.
-MERA can be easily extended for other grid-based or N-body based data.
-Please open an issue on [GitHub](https://github.com/ManuelBehrendt/Mera.jl) if you encounter any problems or write an email to: mera[>]manuelbehrendt.com
+## Contact for Questions and Contributing
+- If you have any questions about the package, please feel free to chat in the Gitter channel: [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+- For bug reports, etc., please submit an issue on [GitHub](https://github.com/ManuelBehrendt/Mera.jl)
+New ideas, feature requests are very welcome! MERA can be easily extended for other grid-based or N-body based data. Write an email to: mera[>]manuelbehrendt.com
+
+
+## Supporting and Citing
+To credit the Mera software, please star the repository on GitHub. If you use the Mera software as part of your research, teaching, or other activities, I would be grateful if you could cite my work. To give proper academic credit, follow the link for BibTeX export:
+[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
+
 
 
 ## License
