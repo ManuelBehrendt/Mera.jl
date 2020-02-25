@@ -53,6 +53,7 @@ export
     storageoverview,
     amroverview,
     dataoverview,
+    getoutputs,
 
 # basic calcs
     msum,
