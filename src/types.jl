@@ -468,3 +468,12 @@ mutable struct PartMapsType <: DataMapsType
     scale::ScalesType
     info::InfoType
 end
+
+
+"""
+Mutable Struct: Contains the existing simulation snapshots in a folder and a list of the empty output-folders
+"""
+mutable struct GetOutputNumberType
+    outputs::Array{Int,1}
+    missing::Array{Int,1}
+end

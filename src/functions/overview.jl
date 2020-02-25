@@ -486,3 +486,73 @@ function dataoverview(dataobject::PartDataType)
     particle_overview_table = table( [parts[:, i ] for i = 1:length(names_constr)]..., names=[names_constr...] )
     return particle_overview_table
 end
+
+
+
+
+
+"""
+#### Get the existing simulation snapshots in a given folder
+- returns field `outputs` with Array{Int,1} containing the output-numbers of the existing simulations
+- returns field `missing` with Array{Int,1} containing the output-numbers of empty simulation folders
+
+```julia
+getoutputs(path::String="./")
+return GetOutputNumberType
+```
+
+#### Examples
+```julia
+# Example 1:
+# look in current folder
+julia> N = getoutputs();
+julia> N.outputs
+julia> N.missing
+
+# Example 2:
+# look in given path
+# without any keyword
+julia>N = getoutputs("simulation001");
+```
+
+"""
+
+function getoutputs(path::String="./")
+
+    if path == "" || path == " " path="./" end
+    folder = readdir(path)
+
+    # filter "output_" - names
+    ftrue = occursin.("output_", folder)
+    folder = folder[ftrue]
+
+    # create full path to supposed folders
+    output_path = joinpath.(path,folder)
+
+    # filter real folders
+    folder = folder[isdir.(output_path)]
+
+    # get existing output numbers
+    missing_outputs = Int[]
+    existing_outputs = Int[]
+    Nfolders = length(folder)
+    if Nfolders > 0
+        Noutputs_string = [folder[x][8:end] for x in 1:Nfolders]
+        Noutputs = parse.(Int, Noutputs_string)
+
+        # find missing output numbers
+        maxoutput = maximum(Noutputs)
+        #expected_outputs = 1:maxoutput
+        for Nout in Noutputs
+            fnames = createpath(Nout, path)
+            isinfofile = isfile(fnames.info)
+            if isinfofile
+                append!(existing_outputs, Nout)
+            else
+                append!(missing_outputs, Nout)
+            end
+        end
+    end
+
+    return GetOutputNumberType(existing_outputs, missing_outputs)
+end
