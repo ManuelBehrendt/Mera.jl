@@ -516,7 +516,6 @@ julia>N = getoutputs("simulation001");
 ```
 
 """
-
 function getoutputs(path::String="./")
 
     if path == "" || path == " " path="./" end
