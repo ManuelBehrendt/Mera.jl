@@ -27,6 +27,9 @@ makedocs(modules = [Mera],
 
                       "6-Projection"          => Any[ "Hydro"      =>  "06_hydro_Projection.md",
                                                       "Particles"  =>  "06_particles_Projection.md"],
+
+                      "Examples"              => "examples.md",
+                      
                       "API Documentation"     => "api.md"
                       ]
 		 )
