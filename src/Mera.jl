@@ -30,6 +30,7 @@ using StructArrays
 using ProgressMeter
 using StatsBase
 using OnlineStats
+using HDF5
 
 export
 
