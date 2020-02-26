@@ -1,10 +1,13 @@
 <img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) 
-[![Latest](https://img.shields.io/badge/docs-latest-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/dev/)
-[![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)
 [![Build Status](https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master)](https://travis-ci.com/ManuelBehrendt/Mera.jl)
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
+
+Documentation: [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) 
+[![Latest](https://img.shields.io/badge/docs-dev-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/dev/)
+
+Contact: [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
