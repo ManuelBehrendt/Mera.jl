@@ -1,12 +1,10 @@
 <img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
 
-
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)
 [![Build Status](https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master)](https://travis-ci.com/ManuelBehrendt/Mera.jl)
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
 Documentation: [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) 
-
 [![Latest](https://img.shields.io/badge/docs-dev-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/dev/)
 
 [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
