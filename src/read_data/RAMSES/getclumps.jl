@@ -1,3 +1,22 @@
+# function getclumps(dataobject::InfoType, var::Symbol;
+#                     xrange::Array{<:Any,1}=[missing, missing],
+#                     yrange::Array{<:Any,1}=[missing, missing],
+#                     zrange::Array{<:Any,1}=[missing, missing],
+#                     center::Array{<:Any,1}=[0., 0., 0.],
+#                     range_unit::Symbol=:standard,
+#                     print_filenames::Bool=false,
+#                     verbose::Bool=verbose_mode)
+#
+#     return  getclumps(dataobject, vars=[var],
+#                     xrange=xrange,
+#                     yrange=yrange,
+#                     zrange=zrange,
+#                     center=center,
+#                     range_unit=range_unit,
+#                     print_filenames=print_filenames,
+#                     verbose=verbose)
+#
+# end
 
 """
 #### Read the clump-data:
@@ -102,27 +121,6 @@ julia> clumps = getclumps(info, [   :index, :lev, :parent, :ncell,
 ```
 
 """
-# function getclumps(dataobject::InfoType, var::Symbol;
-#                     xrange::Array{<:Any,1}=[missing, missing],
-#                     yrange::Array{<:Any,1}=[missing, missing],
-#                     zrange::Array{<:Any,1}=[missing, missing],
-#                     center::Array{<:Any,1}=[0., 0., 0.],
-#                     range_unit::Symbol=:standard,
-#                     print_filenames::Bool=false,
-#                     verbose::Bool=verbose_mode)
-#
-#     return  getclumps(dataobject, vars=[var],
-#                     xrange=xrange,
-#                     yrange=yrange,
-#                     zrange=zrange,
-#                     center=center,
-#                     range_unit=range_unit,
-#                     print_filenames=print_filenames,
-#                     verbose=verbose)
-#
-# end
-
-
 function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
