@@ -20,7 +20,7 @@ hydro = gethydro(info, :rho, smallr=1e-5, lmax=10)
 particles = getparticles(info, :mass);
 ```
 
-    [0m[1m[Mera]: Get hydro data: 2020-02-29T17:54:15.397[22m
+     [Mera]: Get hydro data: 2020-02-29T17:54:15.397
 
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1,) = (:rho,)
@@ -39,7 +39,7 @@ particles = getparticles(info, :mass);
     Memory used for data table :186.1558656692505 MB
     -------------------------------------------------------
 
-    [0m[1m[Mera]: Get particle data: 2020-02-29T17:57:14.49[22m
+     [Mera]: Get particle data: 2020-02-29T17:57:14.49
 
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(4,) = (:mass,)
@@ -229,7 +229,7 @@ particles.data
 
 
     Table with 508939 rows, 6 columns:
-    [1mlevel  [22m[1mx           [22m[1my        [22m[1mz        [22m[1mid      [22mmass
+     level    x             y          z          id       mass
     ───────────────────────────────────────────────────────
     6      0.00462947  22.3885  24.571   327957  1.13606e-5
     6      0.109066    22.3782  21.5844  116193  1.13606e-5
@@ -316,7 +316,7 @@ JuliaDB.save(hydro.data, "database_hydro.jdb")
 
 
     Table with 4879946 rows, 5 columns:
-    [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mrho
+     level    cx     cy     cz    rho
     ─────────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5
@@ -354,7 +354,7 @@ hdata = JuliaDB.load("database_hydro.jdb")
 
 
     Table with 4879946 rows, 5 columns:
-    [1mlevel  [22m[1mcx   [22m[1mcy   [22m[1mcz   [22mrho
+     level    cx     cy     cz    rho
     ─────────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5
