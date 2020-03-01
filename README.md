@@ -1,13 +1,26 @@
 <img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
 
+| **Documentation** | **Build Status**  | **Contact** | **Cite**|                                                                            
+|:----------------- |:------------------ |:----------------|:----------------|
+| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] | [![][chat-img]][chat-url] | [![][doi-img]][doi-url] |
+
+
+[docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
+[docs-stable-url]: https://manuelbehrendt.github.io/Mera.jl/stable/
+
+[docs-latest-img]: https://img.shields.io/badge/docs-in_development-orange.svg
+[docs-latest-url]: https://manuelbehrendt.github.io/Mera.jl/dev/
+
+[travis-img]: https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master
+[travis-url]: https://travis-ci.com/ManuelBehrendt/Mera.jl
+
+[chat-img]: https://badges.gitter.im/Mera-jl/Lobby.svg
+[chat-url]: https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+
+[doi-img]: https://zenodo.org/badge/229728152.svg
+[doi-url]: https://zenodo.org/badge/latestdoi/229728152
+
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)
-[![Build Status](https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master)](https://travis-ci.com/ManuelBehrendt/Mera.jl)
-[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
-
-Documentation: [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) 
-[![Latest](https://img.shields.io/badge/docs-dev-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/dev/)
-
-Contact: [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
