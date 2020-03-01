@@ -1,11 +1,12 @@
 <img src="assets/repository_logo_small.jpg" alt="Mera.jl" width="200">
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)
 
 
-| **Documentation** | **Build Status**  | **Contact** | **Cite**|                                                                            
-|:----------------- |:------------------ |:----------------|:----------------|
-| [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] | [![][chat-img]][chat-url] | [![][doi-img]][doi-url] |
+
+**Version** | **Documentation** | **Build Status**  | **Contact** | **Cite**|                                                                            
+|:------------|:----------------- |:------------------ |:----------------|:----------------|
+| ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) | [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] | [![][chat-img]][chat-url] | [![][doi-img]][doi-url] |
+
 
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
