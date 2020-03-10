@@ -54,6 +54,7 @@ export
     amroverview,
     dataoverview,
     getoutputs,
+    gettime,
 
 # basic calcs
     msum,

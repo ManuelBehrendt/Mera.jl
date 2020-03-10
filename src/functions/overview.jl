@@ -555,3 +555,57 @@ function getoutputs(path::String="./")
 
     return GetOutputNumberType(existing_outputs, missing_outputs)
 end
+
+
+
+"""
+#### Get physical time in selected units
+returns Float
+
+```julia
+gettime(output::Real; path::String="./", unit::Symbol=:standard)
+gettime(dataobject::DataSetType; unit::Symbol=:standard)
+
+return time
+```
+
+#### Arguments Function 1
+##### Required:
+- **`output`:** give the output-number of the simulation
+
+##### Predefined/Optional Keywords:
+- **`path`:** the path to the output folder relative to the current folder or absolute path
+- **`unit`:** return the variable in given unit
+
+
+#### Arguments Function 2
+##### Required:
+- **`dataobject`:** needs to be of type: "DataSetType"
+
+##### Predefined/Optional Keywords:
+- **`unit`:** return the variable in given unit
+
+
+"""
+function gettime(output::Real, path::String, unit::Symbol;)
+    return gettime(output, path=path, unit=unit)
+end
+
+function gettime(output::Real, path::String; unit::Symbol=:standard)
+    return gettime(output, path=path, unit=unit)
+end
+
+function gettime(output::Real; path::String="./", unit::Symbol=:standard)
+    info = getinfo(output, path, verbose=false)
+    return info.time * getunit(info, unit)
+end
+
+
+
+function gettime(dataobject::DataSetType, unit::Symbol;)
+    return gettime(dataobject, unit=unit)
+end
+
+function gettime(dataobject::DataSetType; unit::Symbol=:standard)
+    return dataobject.info.time * getunit(dataobject.info, unit)
+end
