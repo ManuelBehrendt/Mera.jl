@@ -3,8 +3,7 @@ This notebook presents several ways to export your data.
 
 Used libraries in this tutorial:
 - DelimitedFiles, Serialization (comes with Julia)
-- JuliaDB (comes with MERA)
-- FileIO, CSVFiles, JLD, CodecZlib, HDF5, Numpy, FITS, Matlap, GZip (needs to be installed)
+- JuliaDB, FileIO, CSVFiles, JLD, CodecZlib, HDF5, Numpy, FITS, Matlap, GZip (needs to be installed)
 
 ## Load The Data
 
@@ -20,7 +19,7 @@ hydro = gethydro(info, :rho, smallr=1e-5, lmax=10)
 particles = getparticles(info, :mass);
 ```
 
-     [Mera]: Get hydro data: 2020-02-29T17:54:15.397
+    [0m [Mera]: Get hydro data: 2020-02-29T17:54:15.397
 
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1,) = (:rho,)
@@ -39,7 +38,7 @@ particles = getparticles(info, :mass);
     Memory used for data table :186.1558656692505 MB
     -------------------------------------------------------
 
-     [Mera]: Get particle data: 2020-02-29T17:57:14.49
+    [0m [Mera]: Get particle data: 2020-02-29T17:57:14.49
 
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(4,) = (:mass,)
@@ -229,7 +228,7 @@ particles.data
 
 
     Table with 508939 rows, 6 columns:
-     level    x             y          z          id       mass
+     level    x             y          z          id       mass
     ───────────────────────────────────────────────────────
     6      0.00462947  22.3885  24.571   327957  1.13606e-5
     6      0.109066    22.3782  21.5844  116193  1.13606e-5
@@ -316,7 +315,7 @@ JuliaDB.save(hydro.data, "database_hydro.jdb")
 
 
     Table with 4879946 rows, 5 columns:
-     level    cx     cy     cz    rho
+     level    cx     cy     cz    rho
     ─────────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5
@@ -354,7 +353,7 @@ hdata = JuliaDB.load("database_hydro.jdb")
 
 
     Table with 4879946 rows, 5 columns:
-     level    cx     cy     cz    rho
+     level    cx     cy     cz    rho
     ─────────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5
@@ -681,3 +680,8 @@ hydrodata3 = deserialize( GzipDecompressorStream( open("sample-data3.jls.gz", "r
 - FITS https://github.com/emmt/EasyFITS.jl
 - Matlab https://github.com/JuliaIO/MAT.jl
 - GZip https://github.com/JuliaIO/GZip.jl
+
+
+```julia
+
+```
