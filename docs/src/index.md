@@ -60,7 +60,13 @@ using Pkg
 Pkg.precompile()
 ```
 
+!!! note "Install Julia without admin privileges"
+    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
+    Define an alias in the .bashrc file that is pointing to julia:
 
+    ```shell
+    alias julia="/home/username/codes/julia/usr/bin/julia"
+    ```
 
 ## Updates
 Watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
@@ -95,14 +101,6 @@ Now add packages like Mera and PyPlot in the favored version:
 ```julia
 (MyProject) pkg> add Package
 ```
-
-!!! note "Install Julia without admin privileges"
-    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
-    Define an alias in the .bashrc file that is pointing to julia:
-
-    ```shell
-    alias julia="/home/username/codes/julia/usr/bin/julia"
-    ```
 
 
 ## Help and documentation
