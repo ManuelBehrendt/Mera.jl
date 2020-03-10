@@ -5,19 +5,14 @@
 using Mera
 ```
 
-    ┌ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126]
-    └ @ Base loading.jl:1273
-
-
-    
-    *__   __ _______ ______   _______ 
+    *__   __ _______ ______   _______
     |  |_|  |       |    _ | |   _   |
     |       |    ___|   | || |  |_|  |
     |       |   |___|   |_||_|       |
     |       |    ___|    __  |       |
     | ||_|| |   |___|   |  | |   _   |
     |_|   |_|_______|___|  |_|__| |__|
-    
+
 
 
 ## Load data from a sequence of snapshots
@@ -114,6 +109,27 @@ end
     Output: 13
     Output: 16
     Output: 19
+
+
+Get the physical time of all existing outputs:
+
+
+```julia
+gettime.(N.outputs, path, :Myr)
+```
+
+
+
+
+    7-element Array{Float64,1}:
+     0.0               
+     0.6974071892328049
+     0.8722968605999833
+     1.0432588470755855
+     1.2217932462903247
+     1.4016810597086558
+     1.5865234202798626
+
 
 
 
