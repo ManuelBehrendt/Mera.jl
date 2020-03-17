@@ -1,9 +1,8 @@
 ## Types
 #### Abstract type hierarchies
 
-- HydroDataType <: HydroPartType <: ContainMassDataSetType <: DataSetType
-- PartDataType  <: HydroPartType <: ContainMassDataSetType <: DataSetType
-- ClumpDataType <: ContainMassDataSetType <: DataSetType
+![DataSetType hierarchy](assets/TypeHierarchy.png)
+
 - HydroMapsType <: DataMapsType
 - PartMapsType  <: DataMapsType
 
