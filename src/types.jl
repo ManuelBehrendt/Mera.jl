@@ -473,7 +473,7 @@ end
 """
 Mutable Struct: Contains the existing simulation snapshots in a folder and a list of the empty output-folders
 """
-mutable struct GetOutputNumberType
+mutable struct CheckOutputNumberType
     outputs::Array{Int,1}
     missing::Array{Int,1}
 end
