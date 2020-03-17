@@ -53,7 +53,7 @@ export
     storageoverview,
     amroverview,
     dataoverview,
-    getoutputs,
+    checkoutputs,
     gettime,
 
 # basic calcs

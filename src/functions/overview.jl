@@ -497,26 +497,26 @@ end
 - returns field `missing` with Array{Int,1} containing the output-numbers of empty simulation folders
 
 ```julia
-getoutputs(path::String="./")
-return GetOutputNumberType
+checkoutputs(path::String="./")
+return CheckOutputNumberType
 ```
 
 #### Examples
 ```julia
 # Example 1:
 # look in current folder
-julia> N = getoutputs();
+julia> N = checkoutputs();
 julia> N.outputs
 julia> N.missing
 
 # Example 2:
 # look in given path
 # without any keyword
-julia>N = getoutputs("simulation001");
+julia>N = checkoutputs("simulation001");
 ```
 
 """
-function getoutputs(path::String="./")
+function checkoutputs(path::String="./")
 
     if path == "" || path == " " path="./" end
     folder = readdir(path)
@@ -553,7 +553,7 @@ function getoutputs(path::String="./")
         end
     end
 
-    return GetOutputNumberType(existing_outputs, missing_outputs)
+    return CheckOutputNumberType(existing_outputs, missing_outputs)
 end
 
 

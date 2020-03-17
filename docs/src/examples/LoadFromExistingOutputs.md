@@ -54,7 +54,7 @@ Get the relevant simulation output-numbers:
 
 
 ```julia
-N = getoutputs(path);
+N = checkoutputs(path);
 ```
 
 
