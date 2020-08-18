@@ -18,7 +18,7 @@ StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 StructArrays = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
 
 [compat]
-DataStructures = "0.17"
+DataStructures = "0.17, 0.18"
 ElasticArrays = "1.0"
 FortranFiles = "0.5"
 JLD = "0.9"
