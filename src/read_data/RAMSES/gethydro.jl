@@ -217,9 +217,12 @@ function gethydro( dataobject::InfoType;
         end
     else
         if isamr
-            data = table(pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
-                        [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
+            data = table(pos_1D[4,:], pos_1D[1,:], pos_1D[2,:], pos_1D[3,:],
+                        [vars_1D[ nvarh_corr[i],: ] for i in nvarh_i_list]...,
                         names=collect(names_constr), pkey=[:level,:cx, :cy, :cz], presorted = false ) #[names_constr...]
+            #data = table(pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+            #            [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
+            #            names=collect(names_constr), pkey=[:level,:cx, :cy, :cz], presorted = false ) #[names_constr...]
         else # if uniform grid
             data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
                         [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
