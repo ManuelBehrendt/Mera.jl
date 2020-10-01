@@ -44,6 +44,7 @@ export
 
 # mera files
     save_merafile,
+    read_merafile,
     view_merafile,
     info_merafile,
     info_merafile,
@@ -154,6 +155,7 @@ include("read_data/RAMSES/getclumps.jl")
 
 # Mera files
 include("functions/merafile_save.jl")
+include("functions/merafile_read.jl")
 include("functions/merafile_view.jl")
 include("functions/merafile_info.jl")
 include("functions/merafile_comparefields.jl")
