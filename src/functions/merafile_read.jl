@@ -38,6 +38,8 @@ function read_merafile(;
         dtype = HydroDataType()
     end
 
+    println("Reading data...")
+
     # read only data for database
     file = h5open(filename, "r")
 
