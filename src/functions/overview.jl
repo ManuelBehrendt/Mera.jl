@@ -76,12 +76,13 @@ end
 
 ```julia
 function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
+return dictionary in bytes
 ```
 """
 function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
+    # todo simplyfy to single function calls
 
-#todo: add RT, MHD
-
+    dictoutput = Dict()
 
     output = dataobject.output
     printstyled("Overview of the used disc space for output: [$output]\n", bold=true, color=:normal)
@@ -115,6 +116,8 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         hydro_value, hydro_unit =  usedmemory(hydro_size, false)
         hydro_meanvalue, hydro_meanunit =  usedmemory(hydro_mean, false)
         println( "Hydro-Files:    ", round(hydro_value, digits=2),   " ", hydro_unit,   " \t<", round(hydro_meanvalue, digits=2),   " ", hydro_meanunit,">/file" )
+    else
+        hydro_size = 0.
     end
 
     if dataobject.gravity
@@ -125,6 +128,8 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         gravity_value, gravity_unit =  usedmemory(gravity_size, false)
         gravity_meanvalue, gravity_meanunit =  usedmemory(gravity_mean, false)
         println( "Gravity-Files:  ", round(gravity_value, digits=2), " ", gravity_unit, " \t<", round(gravity_meanvalue, digits=2), " ", gravity_meanunit,">/file" )
+    else
+        gravity_size = 0.
     end
 
     if dataobject.particles
@@ -134,7 +139,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         particle_mean = mean( particle )
         particle_value, particle_unit =  usedmemory(particle_size, false)
         particle_meanvalue, particle_meanunit =  usedmemory(particle_mean, false)
-            println( "Particle-Files: ", round(particle_value, digits=2)," ", particle_unit," \t<", round(particle_meanvalue, digits=2)," ", particle_meanunit,">/file" )
+        println( "Particle-Files: ", round(particle_value, digits=2)," ", particle_unit," \t<", round(particle_meanvalue, digits=2)," ", particle_meanunit,">/file" )
+    else
+        particle_size = 0.
     end
 
     if dataobject.clumps
@@ -145,7 +152,22 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         clump_value, clump_unit =  usedmemory(clump_size, false)
         clump_meanvalue, clump_meanunit =  usedmemory(clump_mean, false)
         println( "Clump-Files:    ", round(clump_value, digits=2),   " ", clump_unit,   " \t<", round(clump_meanvalue, digits=2),   " ", clump_meanunit,">/file" )
+    else
+        clump_size = 0.
     end
+
+    if dataobject.rt
+        rt_files = all_files[ occursin.( "rt", all_files) ]
+        rt = filesize.( fnames.output .* "/" .* rt_files )
+        rt_size = sum( rt )
+        rt_mean = mean( rt )
+        rt_value, rt_unit =  usedmemory(rt_size, false)
+        rt_meanvalue, rt_meanunit =  usedmemory(rt_mean, false)
+        println( "RT-Files:       ", round(rt_value, digits=2),   " ", rt_unit,   " \t<", round(rt_meanvalue, digits=2),   " ", rt_meanunit,">/file" )
+    else
+        rt_size = 0.
+    end
+
 
     # todo: check for sink files
     if dataobject.sinks
@@ -156,11 +178,27 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         sink_value, sink_unit =  usedmemory(sink_size, false)
         sink_meanvalue, sink_meanunit =  usedmemory(sink_mean, false)
         println( "Sink-Files:    ", round(sink_value, digits=2),   " ", sink_unit,   " \t<", round(sink_meanvalue, digits=2),   " ", sink_meanunit,">/file" )
+
+    else
+        sink_size = 0.
     end
+
     println()
     println()
     println("mtime: ", dataobject.mtime)
     println("ctime: ", dataobject.ctime)
+
+    # prepare output
+    dictoutput[:folder] = folder_size
+    dictoutput[:amr] = amr_size
+    dictoutput[:hydro] = hydro_size
+    dictoutput[:gravity] = gravity_size
+    dictoutput[:particle] = particle_size
+    dictoutput[:clump] = clump_size
+    dictoutput[:rt] = rt_size
+    dictoutput[:sink] = sink_size
+
+    return dictoutput
 
 end
 
