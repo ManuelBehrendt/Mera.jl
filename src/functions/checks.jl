@@ -5,6 +5,8 @@ function checkfortype(dataobject::InfoType, datatype::Symbol)
         error("[Mera]: Simulation has no amr files!")
     elseif !dataobject.gravity && datatype==:gravity
         error("[Mera]: Simulation has no gravity files!")
+    elseif !dataobject.rt && datatype==:rt
+        error("[Mera]: Simulation has no rt files!")
     elseif !dataobject.particles && datatype==:particles
         error("[Mera]: Simulation has no particle files!")
     elseif !dataobject.clumps && datatype==:clumps

@@ -70,7 +70,8 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", verbose
     readhydrofile1!(info)   # hydro overview
     isgravityfile1!(info)   # gravity overview
     readparticlesfile1!(info)   # particles overview
-    readclumpfile1!(info)     # clumps overview
+    readrtfile1!(info)      # rt overview
+    readclumpfile1!(info)   # clumps overview
 
     # todo: check for sinks
     info.sinks = false
@@ -79,11 +80,7 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", verbose
     info.descriptor.usesinks = false
     info.descriptor.sinksfile = false
 
-    # todo: check for rt
-    info.rt = false
-    info.descriptor.rt = Symbol[]
-    info.descriptor.usert = false
-    info.descriptor.rtfile = false
+
 
     readtimerfile!(info)      # check for timer-file
     readcompilationfile!(info)  # compilation overview
@@ -288,6 +285,88 @@ function readhydrofile1!(dataobject::InfoType)
     return dataobject
 end
 
+# in work
+function readrtfile1!(dataobject::InfoType)
+
+    # read descriptor file
+    descriptor_file = false
+    rtPhotonGroups = Dict()
+    descriptor_list= Dict()
+    version = 0
+
+    if  isfile(dataobject.fnames.rt_descriptor)
+        version = 1
+        descriptor_file = true
+    elseif isfile(dataobject.fnames.rt_descriptor_v0)
+        descriptor_file = true
+    end
+
+    if descriptor_file
+        if version == 0
+            f = open(dataobject.fnames.rt_descriptor_v0)
+        elseif version == 1
+            f = open(dataobject.fnames.rt_descriptor)
+        end
+        lines = readlines(f)
+
+        if length(lines) != 0 # check for empty file
+
+            # read descriptor variables
+            descriptor_list[Symbol("nRTvar")]  = parse(Int, rsplit(lines[1],"=")[2] )
+            descriptor_list[Symbol("nIons")]   = parse(Int, rsplit(lines[2],"=")[2] )
+            descriptor_list[Symbol("nGroups")] = parse(Int, rsplit(lines[3],"=")[2] )
+            descriptor_list[Symbol("iIons")]   = parse(Int, rsplit(lines[4],"=")[2] )
+
+            descriptor_list[Symbol("X_fraction")] = parse(Float64, rsplit(lines[6],"=")[2] )
+            descriptor_list[Symbol("Y_fraction")] = parse(Float64, rsplit(lines[7],"=")[2] )
+
+            descriptor_list[Symbol("unit_np")] = parse(Float64, rsplit(lines[9],"=")[2] )
+            descriptor_list[Symbol("unit_pf")] = parse(Float64, rsplit(lines[10],"=")[2] )
+            descriptor_list[Symbol("rt_c_frac")] = parse(Float64, rsplit(lines[11],"=")[2] )
+
+            descriptor_list[Symbol("n_star")] = parse(Float64, rsplit(lines[13],"=")[2] )
+            descriptor_list[Symbol("T2_star")] = parse(Float64, rsplit(lines[14],"=")[2] )
+            descriptor_list[Symbol("g_star")] = parse(Float64, rsplit(lines[15],"=")[2] )
+
+            #todo read photon groups
+            #rtPhotonGroups
+
+        else # if file is empty
+            descriptor_file = false
+
+        end
+
+
+    end
+
+
+    #read header from first cpu file
+    rt_files = false
+    nvarrt = 0
+    if  isfile(dataobject.fnames.rt * "out00001")
+        rt_files = true
+        f_rt = FortranFile(dataobject.fnames.rt * "out00001")
+        skiplines(f_rt, 1)
+        nvarrt = read(f_rt, Int32)
+        skiplines(f_rt, 3)
+        #println(read(f_rt, Float64)) # gamma
+
+        close(f_rt)
+    end
+
+    dataobject.rt                   = rt_files
+    dataobject.nvarrt               = nvarrt
+    dataobject.rt_variable_list     = Symbol[]
+
+    # descriptor
+    dataobject.descriptor.rtversion     = version
+    dataobject.descriptor.rt            = descriptor_list
+    dataobject.descriptor.rtPhotonGroups  = rtPhotonGroups
+    dataobject.descriptor.usert         = false
+    dataobject.descriptor.rtfile        = descriptor_file
+
+    return dataobject
+end
 
 function isgravityfile1!(dataobject::InfoType)
     grav_files = false
@@ -536,7 +615,7 @@ function readnamelistfile!(dataobject::InfoType)
         if asciifile
             iheader = "false"
             Nlines = length(lines)
-            for i in lines
+            for (j,i) in enumerate(lines)
                 if iheader != "false"
                     if occursin("=", i)
                         variable = String(rsplit(i, "=" )[1])
@@ -545,7 +624,7 @@ function readnamelistfile!(dataobject::InfoType)
                     end
                 end
 
-                if occursin("&", i) || i == lines[Nlines-1]
+                if occursin("&", i) || j == Nlines
                     if iheader != "false"
                         namelist[iheader]= variables
                         variables = Dict()
@@ -588,6 +667,7 @@ end
 
 function readtimerfile!(dataobject::InfoType)
     timer_file = false
+    dataobject.files_content.timerfile = [""]
     if isfile(dataobject.fnames.timer )
         timer_file = true
         f = open(dataobject.fnames.timer);
@@ -611,11 +691,13 @@ function readcompilationfile!(dataobject::InfoType)
         f = open(dataobject.fnames.compilation )
 
         lines = readlines(f)
-        compile_date = String(rsplit(lines[1], "=" )[2])
-        patch_dir  =  String(rsplit(lines[2], "=" )[2])
-        remote_repo =  String(rsplit(lines[3], "=" )[2])
-        local_branch =  String(rsplit(lines[4], "=" )[2])
-        last_commit =  String(rsplit(lines[5], "=" )[2])
+        if !occursin("\0", String(rsplit(lines[1], "=" )[2])) # skip embedded NULs
+            compile_date = String(rsplit(lines[1], "=" )[2])
+            patch_dir  =  String(rsplit(lines[2], "=" )[2])
+            remote_repo =  String(rsplit(lines[3], "=" )[2])
+            local_branch =  String(rsplit(lines[4], "=" )[2])
+            last_commit =  String(rsplit(lines[5], "=" )[2])
+        end
         close(f)
     end
 
@@ -633,6 +715,7 @@ end
 
 function readmakefile!(dataobject::InfoType)
     make_file = false
+    dataobject.files_content.makefile = [""]
     if  isfile(dataobject.fnames.makefile)
         make_file = true
         f = open(dataobject.fnames.makefile);
@@ -645,6 +728,7 @@ end
 
 function readpatchfile!(dataobject::InfoType)
     patch_file = false
+    dataobject.files_content.patchfile = [""]
     if  isfile(dataobject.fnames.patchfile)
         patch_file = true
         f = open(dataobject.fnames.patchfile);
@@ -737,9 +821,28 @@ function printsimoverview(info::InfoType, verbose::Bool)
         end
 
         if info.particles
-            println("particle variables: ", tuple(info.particles_variable_list...) )
+
+            println("particle-variables: ", info.nvarp, "  --> ", tuple(info.particles_variable_list...) )
             if info.descriptor.particlesfile
                 println("particle-descriptor: ", tuple(info.descriptor.particles...) )
+            end
+            if !info.rt
+                println("-------------------------------------------------------")
+            end
+        end
+
+
+        if info.rt
+            println("-------------------------------------------------------")
+        end
+        println("rt:            ",     info.rt)
+        if info.rt
+            println("rt-variables: ", info.nvarrt)
+            if info.descriptor.rtfile
+                #println("nRTvar: ", info.descriptor.rt[:nRTvar] )
+                println("nIons: ", info.descriptor.rt[:nIons] )
+                println("nGroups: ", info.descriptor.rt[:nGroups] )
+                println("iIons: ", info.descriptor.rt[:iIons] )
             end
             if !info.clumps
                 println("-------------------------------------------------------")
@@ -747,10 +850,11 @@ function printsimoverview(info::InfoType, verbose::Bool)
         end
 
 
+
         if info.clumps
             println("-------------------------------------------------------")
         end
-        println("clumps:        ", info.clumps)
+        println("clumps:           ", info.clumps)
         if info.clumps
             println("clump-variables: ", tuple(info.clumps_variable_list...) )
             println("-------------------------------------------------------")
@@ -763,7 +867,7 @@ function printsimoverview(info::InfoType, verbose::Bool)
             println("namelist-file: ", tuple(keys(info.namelist_content)...) )
             println("-------------------------------------------------------")
         else
-            println("namelist-file: ", info.namelist)
+            println("namelist-file:    ", info.namelist)
         end
 
 

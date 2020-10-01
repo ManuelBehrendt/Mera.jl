@@ -114,6 +114,9 @@ mutable struct FileNamesType
     gravity::String
     particles::String
     part_descriptor::String
+    rt::String
+    rt_descriptor::String
+    rt_descriptor_v0::String
     clumps::String
     timer::String
     header::String
@@ -201,6 +204,12 @@ mutable struct DescriptorType
     usegravity::Bool
     gravityfile::Bool
 
+    rtversion::Int
+    rt::Dict{Any,Any}
+    rtPhotonGroups::Dict{Any,Any}
+    usert::Bool
+    rtfile::Bool
+
     clumps::Array{Symbol,1}
     useclumps::Bool
     clumpsfile::Bool
@@ -209,9 +218,6 @@ mutable struct DescriptorType
     usesinks::Bool
     sinksfile::Bool
 
-    rt::Array{Symbol,1}
-    usert::Bool
-    rtfile::Bool
     DescriptorType() = new()
 end
 
@@ -256,10 +262,12 @@ mutable struct InfoType
     hydro::Bool
     nvarh::Int   # number of hydro variables
     nvarp::Int   # number of particle variables
+    nvarrt::Int  # number of rt variables
 
     variable_list::Array{Symbol,1}  # hydro variable list
     gravity_variable_list::Array{Symbol,1}
     particles_variable_list::Array{Symbol,1}
+    rt_variable_list::Array{Symbol,1}
     clumps_variable_list::Array{Symbol,1}
     sinks_variable_list::Array{Symbol,1}
     descriptor::DescriptorType
@@ -267,9 +275,9 @@ mutable struct InfoType
     amr::Bool
     gravity::Bool
     particles::Bool
+    rt::Bool
     clumps::Bool
     sinks::Bool
-    rt::Bool
 
     namelist::Bool
     namelist_content::Dict{Any,Any}
