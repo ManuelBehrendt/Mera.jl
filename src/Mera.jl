@@ -30,16 +30,23 @@ using StructArrays
 using ProgressMeter
 using StatsBase
 using OnlineStats
-#using JLD
+using HDF5
 
 export
 
+# data reader
     getunit,
     getinfo,
     createpath,
     gethydro,
     getparticles,
     getclumps,
+
+# mera files
+    save_merafile,
+    view_merafile,
+    info_merafile,
+    info_merafile,
 
 # data_overview
     printtime,
@@ -144,12 +151,21 @@ include("read_data/RAMSES/reader_particles.jl")
 include("read_data/RAMSES/getclumps.jl")
 # ============================================
 
+
+# Mera files
+include("functions/merafile_save.jl")
+include("functions/merafile_view.jl")
+include("functions/merafile_info.jl")
+include("functions/merafile_comparefields.jl")
+# ============================================
+
+
 # projection, slice
 include("functions/projection.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_particles.jl")
-
 # ============================================
+
 
 # Subregion
 include("functions/subregion.jl")
