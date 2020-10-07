@@ -72,7 +72,7 @@ function info_merafile(;
 
     # check if selected datatype exists
     if !in(datatype, existing_datatypes)
-        println("Selected datatype $datatype does not exist!")
+        if verbose println("Selected datatype $datatype does not exist!") end
         datatype = "hydro"
         if !in(datatype, existing_datatypes)
             datatype = "particles"
