@@ -34,7 +34,7 @@ function save_merafile( dataobject::DataSetType;
                     ###cn = 9 # compression strength: [0,9]
 
     datasource, use_descriptor, descriptor_names = check_datasource(dataobject)
-    filemode, overwdata = check_merafile_mode(fmode, datasource)
+    filemode, overwdata = check_merafile_mode(fmode, datasource, filename)
 
     fields = propertynames(dataobject)
     mem = usedmemory(dataobject, false)
@@ -124,6 +124,8 @@ function save_merafile( dataobject::DataSetType;
         s = filesize(filename)
         svalue, sunit = humanize(Float64(s), 3, "memory")
         println("File size: ", svalue, " ", sunit)
+        println("-----------------------------------")
+        println()
     end
 
     return
@@ -154,19 +156,27 @@ function check_datasource(dataobject::DataSetType)
 end
 
 
-function check_merafile_mode(fmode::String, datasource::String)
+function check_merafile_mode(fmode::String, datasource::String, filename::String)
+    println()
+    if !isfile(filename)
+        println("Create mera-file:")
+    else
+        println("Existing mera-file:")
+    end
+
+
     if fmode == "add"
         filemode = "cw"
         overwdata = false
-        println("Add $datasource data to mera file:")
+        println("Adding $datasource data...")
     elseif fmode == "add+"
         filemode = "cw"
         overwdata = true
-        println("Add/overwrite $datasource data to/in mera file:")
+        #println("Adding/overwriting $datasource data...")
     elseif fmode == "w"
         filemode = "w"
         overwdata = true
-        println("Create/overwrite mera file and add $datasource data:")
+        println("Creating/Overwriting mera-file and adding $datasource data...")
     else
         error("""Choose between "w" = create/overwrite file and add data, \n use "add" to add data to an existing file or it will be created. """)
     end
@@ -179,11 +189,11 @@ end
 function prep_toplevel(file::HDF5.HDF5File, datasource::String, overwdata::Bool)
     if exists(file, datasource)
         if overwdata == true
-            println("""overwrite existing data-type "$datasource" with new data...""")
+            println("""Overwriting existing data-type "$datasource" with new data...""")
             o_delete(file, datasource)
         else
-            println("""stop adding: found existing data-type "$datasource" """)
-            error("""use fmode="add+" to overwrite existing data-type or fmode="w" to overwrite file""")
+            println("""Stop adding: found existing data-type "$datasource" """)
+            error("""Use fmode="add+" to overwrite existing data-type or fmode="w" to overwrite file""")
         end
     end
     println()
