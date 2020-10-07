@@ -226,6 +226,9 @@ function info_merafile(;
     end
 
     close(file)
+
+    printsimoverview(info, verbose) # print overview on screen (from getinfo-function)
+
     return info
 end
 
