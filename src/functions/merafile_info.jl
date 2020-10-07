@@ -67,8 +67,28 @@ function info_merafile(;
 
     # read only data for InfoType
     file = h5open(filename, "r")
-    #stored_datatypes = names(file)
     datatype = string(datatype)
+    existing_datatypes=names(file)
+
+    # check if selected datatype exists
+    if !in(datatype, existing_datatypes)
+        println("Selected datatype $datatype does not exist!")
+        datatype = "hydro"
+        if !in(datatype, existing_datatypes)
+            datatype = "particles"
+            if !in(datatype, existing_datatypes)
+                datatype = "clumps"
+                if !in(datatype, existing_datatypes)
+                    error("Cannot find any suitable datatype!")
+                end
+            end
+        end
+    end
+    if verbose
+        println("Reading InfoType from datatype: $datatype")
+        println()
+    end
+
     group = file[datatype]
     getinfo = group["info"]
     # --------------------------
