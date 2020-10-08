@@ -52,10 +52,15 @@ function read_merafile(;
     #------------------
     #default variable selection for gethydro, getparticles, getclumps, getgravity, ....
     vars=[:all]
-    lmax=info.levelmax
-    # create variabe-list and vector-mask (nvarh_corr) for gethydrodata-function
-    # print selected variables on screen
-    nvarh_list, nvarh_i_list, nvarh_corr, read_cpu, used_descriptors = prepvariablelist(info, datatype, vars, lmax, verbose)
+    if datatype==:clumps
+        # read clumps-data of the selected variables
+        column_names, NColumns = getclumpvariables(info, vars, info.fnames)
+    else
+        lmax=info.levelmax
+        # create variabe-list and vector-mask (nvarh_corr) for gethydrodata-function
+        # print selected variables on screen
+        nvarh_list, nvarh_i_list, nvarh_corr, read_cpu, used_descriptors = prepvariablelist(info, datatype, vars, lmax, verbose)
+    end
     #------------------
 
     #------------------
@@ -68,6 +73,13 @@ function read_merafile(;
     # convert given ranges and print overview on screen
     ranges = prepranges(info, range_unit, verbose, xrange, yrange, zrange, center)
     #------------------
+    if datatype==:clumps
+        if verbose
+            println("Read $NColumns colums: ")
+            println(column_names)
+        end
+    end
+
 
     # read only data for database
     file = h5open(filename, "r")
@@ -78,11 +90,31 @@ function read_merafile(;
         column_names = read(data["names"])
 
         if datatype == :hydro
+            if in("level", column_names)
+                pkey=[:level,:cx, :cy, :cz]
+            else
+                pkey=[:cx, :cy, :cz]
+            end
             t = table([read(data[i]) for i in column_names]...,
-            names=Symbol.(column_names), pkey=[:cx, :cy, :cz], presorted = false)
+            names=Symbol.(column_names), pkey=pkey, presorted = false)
         elseif datatype == :particles
+
+            if info.levelmax != info.levelmin # if AMR
+                if info.descriptor.pversion == 0
+                    Nkeys = [:level, :x, :y, :z, :id]
+                elseif info.descriptor.pversion > 0
+                    Nkeys = [:level, :x, :y, :z, :id, :family, :tag]
+                end
+            else # if uniform grid
+                if info.descriptor.pversion == 0
+                    Nkeys = [:x, :y, :z, :id]
+                elseif info.descriptor.pversion > 0
+                    Nkeys = [:x, :y, :z, :id, :family, :tag]
+                end
+            end
+
             t = table([read(data[i]) for i in column_names]...,
-            names=Symbol.(column_names), pkey=[:x, :y, :z, :id], presorted = false)
+            names=Symbol.(column_names), pkey=collect(Nkeys),, presorted = false)
         elseif datatype == :clumps
             t = table([read(data[i]) for i in column_names]...,
             names=Symbol.(column_names), presorted = false)
@@ -112,9 +144,9 @@ function read_merafile(;
         elseif datatype == :particles # Fill specific PartDataType fields
             dtype.lmin = read(group["lmin"])
             dtype.lmax = read(group["lmax"])
-            dtype.selected_partvars = read(group["selected_partvars"])
+            dtype.selected_partvars = Symbol.(read(group["selected_partvars"]))
         elseif datatype == :clumps # Fill specific ClumpDataType fields
-            dtype.selected_clumpvars = read(group["selected_clumpvars"])
+            dtype.selected_clumpvars = Symbol.(read(group["selected_clumpvars"]))
         end
 
         printtablememory(dtype, verbose)
