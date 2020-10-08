@@ -21,9 +21,9 @@ function subregioncuboid(dataobject::PartDataType;
     #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
     #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
     #   zrange == [dataobject.ranges[5], dataobject.ranges[6]])
-    if !(xrange == [missing,missing] &&
-         yrange == [missing,missing] &&
-         zrange == [missing,missing])
+    if !(xrange[1] === missing && xrange[2] === missing &&
+         yrange[1] === missing && yrange[2] === missing &&
+         zrange[1] === missing && zrange[2] === missing)
 
        if inverse == false
            sub_data = filter(p->   p.x >=  xmin * boxlen  &&
