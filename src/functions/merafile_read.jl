@@ -1,20 +1,44 @@
 function read_merafile(filename::String, datatype::Symbol;
+
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+
                         printfields::Bool=false,
                         verbose::Bool=verbose_mode)
 
         return read_merafile(filename=filename,
                         datatype=datatype,
+                        xrange=xrange,
+                        yrange=yrange,
+                        zrange=zrange,
+                        center=center,
+                        range_unit=range_unit,
                         printfields=printfields,
                         verbose=verbose)
 end
 
 function read_merafile(filename::String;
                         datatype::Symbol=:hydro,
+
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+
                         printfields::Bool=false,
                         verbose::Bool=verbose_mode)
 
         return read_merafile(filename=filename,
                         datatype=datatype,
+                        xrange=xrange,
+                        yrange=yrange,
+                        zrange=zrange,
+                        center=center,
+                        range_unit=range_unit,
                         printfields=printfields,
                         verbose=verbose)
 end
@@ -24,6 +48,13 @@ end
 function read_merafile(;
                         filename::String="",
                         datatype::Symbol=:hydro,
+
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+
                         printfields::Bool=false,
                         verbose::Bool=verbose_mode)
 
@@ -64,12 +95,6 @@ function read_merafile(;
     #------------------
 
     #------------------
-    # default ranges for gethydro, getparticles, getclumps, getgravity, ....
-    range_unit=:standard
-    xrange=[missing, missing]
-    yrange=[missing, missing]
-    zrange=[missing, missing]
-    center = [0., 0., 0.]
     # convert given ranges and print overview on screen
     ranges = prepranges(info, range_unit, verbose, xrange, yrange, zrange, center)
     #------------------
@@ -97,6 +122,7 @@ function read_merafile(;
             end
             t = table([read(data[i]) for i in column_names]...,
             names=Symbol.(column_names), pkey=pkey, presorted = false)
+
         elseif datatype == :particles
 
             if info.levelmax != info.levelmin # if AMR
@@ -114,11 +140,16 @@ function read_merafile(;
             end
 
             t = table([read(data[i]) for i in column_names]...,
-            names=Symbol.(column_names), pkey=collect(Nkeys),, presorted = false)
+            names=Symbol.(column_names), pkey=collect(Nkeys), presorted = false)
         elseif datatype == :clumps
             t = table([read(data[i]) for i in column_names]...,
             names=Symbol.(column_names), presorted = false)
         end
+
+
+
+
+
 
         # Fill datatype
         dtype.info = info
@@ -148,6 +179,14 @@ function read_merafile(;
         elseif datatype == :clumps # Fill specific ClumpDataType fields
             dtype.selected_clumpvars = Symbol.(read(group["selected_clumpvars"]))
         end
+
+        # filter selected data region
+        dtype = subregion(dtype, :cuboid,
+                         xrange=xrange,
+                         yrange=yrange,
+                         zrange=zrange,
+                         verbose=false)
+
 
         printtablememory(dtype, verbose)
 
