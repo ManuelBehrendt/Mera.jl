@@ -22,7 +22,9 @@ function subregioncuboid(dataobject::ClumpDataType;
        #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
        #  yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
        #  zrange == [dataobject.ranges[5], dataobject.ranges[6]])
-
+       if !(xrange == [missing,missing] &&
+            yrange == [missing,missing] &&
+            zrange == [missing,missing] &&)
 
           if inverse == false
               sub_data = filter(p->   p.peak_x >=  xmin * boxlen  &&
@@ -53,11 +55,11 @@ function subregioncuboid(dataobject::ClumpDataType;
           clumpdata.used_descriptors = dataobject.used_descriptors
           clumpdata.scale = dataobject.scale
           return clumpdata
-      #else
-
+      else
+          return dataobject
       #    println("[Mera]: Nothing to do! Given ranges match data ranges!")
       #    println()
-      #end
+      end
 end
 
 
