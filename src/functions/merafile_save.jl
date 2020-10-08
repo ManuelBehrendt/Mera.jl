@@ -195,6 +195,10 @@ function prep_toplevel(file::HDF5.HDF5File, datasource::String, overwdata::Bool)
             println("""Stop adding: found existing data-type "$datasource" """)
             error("""Use fmode="add+" to overwrite existing data-type or fmode="w" to overwrite file""")
         end
+    else
+        if overwdata == true
+            println("Adding $datasource data...")
+        end
     end
     println()
 
