@@ -21,9 +21,9 @@ function subregioncuboid(dataobject::HydroDataType;
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
-    if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
-       yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
-       zrange == [dataobject.ranges[5], dataobject.ranges[6]])
+    #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
+    #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
+    #   zrange == [dataobject.ranges[5], dataobject.ranges[6]])
 
         if inverse == false
             if isamr
@@ -115,9 +115,9 @@ function subregioncuboid(dataobject::HydroDataType;
         hydrodata.scale = dataobject.scale
         return hydrodata
 
-    else
-        error("[Mera]: Nothing to do! Given ranges match data ranges!")
-    end
+    #else
+    #    error("[Mera]: Nothing to do! Given ranges match data ranges!")
+    #end
 
 
 end
