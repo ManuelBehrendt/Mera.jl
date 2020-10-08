@@ -26,7 +26,7 @@ function subregioncuboid(dataobject::HydroDataType;
     #   zrange == [dataobject.ranges[5], dataobject.ranges[6]])
     if !(xrange == [missing,missing] &&
          yrange == [missing,missing] &&
-         zrange == [missing,missing] &&)
+         zrange == [missing,missing])
 
         if inverse == false
             if isamr
