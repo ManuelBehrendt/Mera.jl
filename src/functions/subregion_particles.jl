@@ -18,9 +18,9 @@ function subregioncuboid(dataobject::PartDataType;
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
-    if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
-       yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
-       zrange == [dataobject.ranges[5], dataobject.ranges[6]])
+    #if !(xrange == [dataobject.ranges[1], dataobject.ranges[2]] &&
+    #   yrange == [dataobject.ranges[3], dataobject.ranges[4]] &&
+    #   zrange == [dataobject.ranges[5], dataobject.ranges[6]])
 
 
        if inverse == false
@@ -55,11 +55,11 @@ function subregioncuboid(dataobject::PartDataType;
        partdata.scale = dataobject.scale
        return partdata
 
-   else
+   #else
 
-       println("[Mera]: Nothing to do! Given ranges match data ranges!")
-       println()
-   end
+   #   println("[Mera]: Nothing to do! Given ranges match data ranges!")
+   #   println()
+   #end
 end
 
 
