@@ -185,6 +185,7 @@ function read_merafile(;
                          xrange=xrange,
                          yrange=yrange,
                          zrange=zrange,
+                         center=center,
                          range_unit=range_unit,
                          verbose=false)
 
