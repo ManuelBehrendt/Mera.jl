@@ -82,6 +82,7 @@ export
     remap,
     subregion,
     shellregion,
+    histogram2d,
 
 # miscellaneous
     viewmodule,
@@ -112,6 +113,8 @@ export
     HydroMapsType,
     PartMapsType,
 
+    Histogram2DMapType,
+
     MaskType,
     MaskArrayType,
     MaskArrayAbstractType
@@ -124,6 +127,7 @@ include("types.jl")
 include("functions/miscellaneous.jl")
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
+include("functions/histogram2d.jl")
 
 # Get variables/quantities
 include("functions/getvar.jl")

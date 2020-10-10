@@ -479,6 +479,24 @@ end
 
 
 """
+Mutable Struct: Contains the 2D histogram returned by the function: histogram2 and information about the selected simulation
+"""
+mutable struct Histogram2DMapType
+    map::Array{Float64,2}
+    closed::Symbol
+    weight::Tuple{Symbol,Symbol}
+    nbins::Array{Int,1}
+    xrange::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}
+    yrange::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}
+    extent::Array{Float64,1}
+    ratio::Float64
+    scale::ScalesType
+    info::InfoType
+end
+
+
+
+"""
 Mutable Struct: Contains the existing simulation snapshots in a folder and a list of the empty output-folders
 """
 mutable struct CheckOutputNumberType
