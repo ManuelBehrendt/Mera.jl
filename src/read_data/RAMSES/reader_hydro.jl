@@ -1,3 +1,5 @@
+
+
 function gethydrodata( dataobject::InfoType,
                         Nnvarh::Int,
                         nvarh_corr::Array{Int,1},
@@ -163,7 +165,7 @@ function gethydrodata( dataobject::InfoType,
     var_level = 0
     #get_var_totsize = 0
 
-    @showprogress 1 "" for k=1:ncpu_read #Reading files...
+    @showprogress 1 ""  for k=1:ncpu_read #Reading files...
         icpu=cpu_list[k]
         #println("icpu ",icpu)
 
@@ -205,7 +207,7 @@ function gethydrodata( dataobject::InfoType,
             nx_full=Int32(2^ilevel)
             ny_full=nx_full
             nz_full=nx_full
-            xc = geometry(twotondim_float, ilevel, xc)
+            xc = geometry(twotondim_float, ilevel, xc) # @trace
 
             # Allocate work arrays
             ngrida=ngridfile[icpu,ilevel] # integer
@@ -302,6 +304,7 @@ function gethydrodata( dataobject::InfoType,
 end
 
 
+
 function geometry(twotondim_float::Float64, ilevel::Int, xc::Array{Float64,2})
     dx=0.5^ilevel
     for (ind,iind) =enumerate(1.:twotondim_float)
@@ -315,6 +318,8 @@ function geometry(twotondim_float::Float64, ilevel::Int, xc::Array{Float64,2})
     end
     return xc
 end
+
+
 
 
 
@@ -365,13 +370,13 @@ function loopovercellshydro(twotondim::Int,
                     #println()
                     #println(ilevel, ",    ", ix, " ", iy, " ", iz, "     ", grid[ilevel] )
 
-                    append!(vars_1D, vara[i,ind,:])
+                    @turbo append!(vars_1D, vara[i,ind,:])
                     if read_level # if AMR
-                        append!(pos_1D, [ix, iy, iz, ilevel])
+                        @turbo append!(pos_1D, [ix, iy, iz, ilevel])
                     else # if uniform grid
-                        append!(pos_1D, [ix, iy, iz])
+                        @turbo append!(pos_1D, [ix, iy, iz])
                     end
-                    if read_cpu append!(cpus_1D, k) end
+                    if read_cpu @turbo append!(cpus_1D, k) end
                 end
             end
         end
