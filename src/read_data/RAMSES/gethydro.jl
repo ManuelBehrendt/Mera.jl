@@ -207,26 +207,25 @@ function gethydro( dataobject::InfoType;
     # decouple pos_1D/vars_1D from ElasticArray with ElasticArray.data
     if read_cpu # load also cpu number related to cell
         if isamr
-            data = @inbounds table(pos_1D[4,:].data, cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
-                        [vars_1D[nvarh_corr[i],: ] for i in nvarh_i_list]...,
+            @inbounds data = table(pos_1D[4,:].data, cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                        [vars_1D[nvarh_corr[i],: ].data for i in nvarh_i_list]...,
                         names=collect(names_constr), pkey=[:level,:cx, :cy, :cz], presorted = false ) #[names_constr...]
         else # if uniform grid
-            data = @inbounds table(cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+            @inbounds data =  table(cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
                         [vars_1D[nvarh_corr[i],: ].data for i in nvarh_i_list]...,
                         names=collect(names_constr), pkey=[:cx, :cy, :cz], presorted = false ) #[names_constr...]
         end
     else
         if isamr
-            data = @inbounds table(pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+            @inbounds data =  table(pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
                         [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
                         names=collect(names_constr), pkey=[:level,:cx, :cy, :cz], presorted = false ) #[names_constr...]
         else # if uniform grid
-            data = @inbounds table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+            @inbounds data =  table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
                         [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
                         names=collect(names_constr), pkey=[:cx, :cy, :cz], presorted = false ) #[names_constr...]
         end
     end
-
     printtablememory(data, verbose)
 
     # Return data
@@ -256,13 +255,13 @@ function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bo
     # set minimum density in cells
     if smallr != 0. && in(1, nvarh_list)
 
-        vars_1D[1,:] =clamp.(vars_1D[nvarh_corr[1],:], smallr, maximum(vars_1D[nvarh_corr[1],:]) + 1 )
+        @inbounds vars_1D[1,:] =clamp.(vars_1D[nvarh_corr[1],:], smallr, maximum(vars_1D[nvarh_corr[1],:]) + 1 )
 
     else
         # check for negative values in density
         if check_negvalues == true
             if in(1, nvarh_list)
-                count_nv = count(x->x<0., vars_1D[nvarh_corr[1],:])
+                @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[1],:])
                 if count_nv > 0
                     println()
                     println("[Mera]: Found $count_nv negative value(s) in density data.")
@@ -273,13 +272,13 @@ function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bo
 
     # set minimum thermal pressure in cells
     if smallc != 0.  && in(5, nvarh_list)
-        vars_1D[5,:] =clamp.(vars_1D[nvarh_corr[5],:], smallr, maximum(vars_1D[nvarh_corr[5],:]) + 1 )
+        @inbounds vars_1D[5,:] =clamp.(vars_1D[nvarh_corr[5],:], smallr, maximum(vars_1D[nvarh_corr[5],:]) + 1 )
 
     else
         # check for negative values in thermal pressure
         if check_negvalues == true
             if in(5, nvarh_list)
-                count_nv = count(x->x<0., vars_1D[nvarh_corr[5],:])
+                @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[5],:])
                 if count_nv > 0
                     println()
                     println("[Mera]: Found $count_nv negative value(s) in thermal pressure data.")
