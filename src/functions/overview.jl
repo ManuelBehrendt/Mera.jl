@@ -581,7 +581,8 @@ end
 """
 #### Get the existing simulation snapshots in a given folder
 - returns field `outputs` with Array{Int,1} containing the output-numbers of the existing simulations
-- returns field `missing` with Array{Int,1} containing the output-numbers of empty simulation folders
+- returns field `miss` with Array{Int,1} containing the output-numbers of empty simulation folders
+- returns field `path` as String
 
 ```julia
 checkoutputs(path::String="./")
@@ -594,7 +595,8 @@ return CheckOutputNumberType
 # look in current folder
 julia> N = checkoutputs();
 julia> N.outputs
-julia> N.missing
+julia> N.miss
+julia> N.path
 
 # Example 2:
 # look in given path
@@ -640,7 +642,7 @@ function checkoutputs(path::String="./")
         end
     end
 
-    return CheckOutputNumberType(existing_outputs, missing_outputs)
+    return CheckOutputNumberType(existing_outputs, missing_outputs, path)
 end
 
 

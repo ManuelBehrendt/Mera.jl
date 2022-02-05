@@ -501,5 +501,6 @@ Mutable Struct: Contains the existing simulation snapshots in a folder and a lis
 """
 mutable struct CheckOutputNumberType
     outputs::Array{Int,1}
-    missing::Array{Int,1}
+    miss::Array{Int,1}
+    path::String
 end
