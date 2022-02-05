@@ -81,10 +81,10 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
 return dictionary in bytes
 ```
 """
-function storageoverview(dataobject::InfoType; verbose::Bool=true)
+function storageoverview(dataobject::InfoType, verbose::Bool)
     return storageoverview(dataobject, verbose=verbose)
 end
-function storageoverview(dataobject::InfoType, verbose::Bool=true)
+function storageoverview(dataobject::InfoType; verbose::Bool=true)
     # todo simplyfy to single function calls
 
     dictoutput = Dict()
@@ -236,7 +236,7 @@ function overview_amr(dataobject::HydroDataType; verbose::Bool=true)
 return a JuliaDB table
 ```
 """
-function amroverview(dataobject::HydroDataType, verbose::Bool=true)
+function amroverview(dataobject::HydroDataType, verbose::Bool)
     amroverview(dataobject, verbose=verbose)
 end
 
@@ -301,7 +301,7 @@ function overview_amr(dataobject::PartDataType; verbose::Bool=true)
 return a JuliaDB table
 ```
 """
-function amroverview(dataobject::PartDataType, verbose::Bool=true)
+function amroverview(dataobject::PartDataType, verbose::Bool)
     amroverview(dataobject, verbose=verbose)
 end
 
@@ -375,7 +375,7 @@ function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 return a JuliaDB table
 ```
 """
-function dataoverview(dataobject::HydroDataType, verbose::Bool=true)
+function dataoverview(dataobject::HydroDataType, verbose::Bool)
     return dataoverview(dataobject, verbose=verbose)
 end
 
@@ -511,7 +511,7 @@ function dataoverview(dataobject::PartDataType; verbose::Bool=true)
 return a JuliaDB table
 ```
 """
-function dataoverview(dataobject::PartDataType, verbose::Bool=true)
+function dataoverview(dataobject::PartDataType, verbose::Bool)
     return dataoverview(dataobject, verbose=verbose)
 end
 
