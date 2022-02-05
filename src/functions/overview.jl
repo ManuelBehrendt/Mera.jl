@@ -79,14 +79,16 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
 return dictionary in bytes
 ```
 """
-function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
+function storageoverview(dataobject::InfoType; verbose::Bool=true)
     # todo simplyfy to single function calls
 
     dictoutput = Dict()
 
     output = dataobject.output
-    printstyled("Overview of the used disc space for output: [$output]\n", bold=true, color=:normal)
-    printstyled("------------------------------------------------------\n", bold=true, color=:normal)
+    if verbose
+        printstyled("Overview of the used disc space for output: [$output]\n", bold=true, color=:normal)
+        printstyled("------------------------------------------------------\n", bold=true, color=:normal)
+    end
     #path = dataobject.path
     #fnames = createpath(output, path)
     #println(fnames)
@@ -98,7 +100,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
     folder_mean = mean( folder )
     folder_value, folder_unit =  usedmemory(folder_size, false)
     folder_meanvalue, folder_meanunit =  usedmemory(folder_mean, false)
-    println( "Folder:         ", round(folder_value,digits=2),   " ", folder_unit,  " \t<", round(folder_meanvalue, digits=2),  " ", folder_meanunit,">/file" )
+    if verbose
+        println( "Folder:         ", round(folder_value,digits=2),   " ", folder_unit,  " \t<", round(folder_meanvalue, digits=2),  " ", folder_meanunit,">/file" )
+    end
 
     amr_files = all_files[ occursin.( "amr", all_files) ]
     amr = filesize.( fnames.output .* "/" .* amr_files )
@@ -106,7 +110,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
     amr_mean = mean( amr )
     amr_value, amr_unit =  usedmemory(amr_size, false)
     amr_meanvalue, amr_meanunit =  usedmemory(amr_mean, false)
-    println( "AMR-Files:      ", round(amr_value, digits=2),     " ", amr_unit,     " \t<", round(amr_meanvalue, digits=2),     " ", amr_meanunit,">/file" )
+    if verbose
+        println( "AMR-Files:      ", round(amr_value, digits=2),     " ", amr_unit,     " \t<", round(amr_meanvalue, digits=2),     " ", amr_meanunit,">/file" )
+    end
 
     if dataobject.hydro
         hydro_files = all_files[ occursin.( "hydro", all_files) ]
@@ -115,7 +121,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         hydro_mean = mean( hydro )
         hydro_value, hydro_unit =  usedmemory(hydro_size, false)
         hydro_meanvalue, hydro_meanunit =  usedmemory(hydro_mean, false)
-        println( "Hydro-Files:    ", round(hydro_value, digits=2),   " ", hydro_unit,   " \t<", round(hydro_meanvalue, digits=2),   " ", hydro_meanunit,">/file" )
+        if verbose
+            println( "Hydro-Files:    ", round(hydro_value, digits=2),   " ", hydro_unit,   " \t<", round(hydro_meanvalue, digits=2),   " ", hydro_meanunit,">/file" )
+        end
     else
         hydro_size = 0.
     end
@@ -127,7 +135,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         gravity_mean = mean( gravity )
         gravity_value, gravity_unit =  usedmemory(gravity_size, false)
         gravity_meanvalue, gravity_meanunit =  usedmemory(gravity_mean, false)
-        println( "Gravity-Files:  ", round(gravity_value, digits=2), " ", gravity_unit, " \t<", round(gravity_meanvalue, digits=2), " ", gravity_meanunit,">/file" )
+        if verbose
+            println( "Gravity-Files:  ", round(gravity_value, digits=2), " ", gravity_unit, " \t<", round(gravity_meanvalue, digits=2), " ", gravity_meanunit,">/file" )
+        end
     else
         gravity_size = 0.
     end
@@ -139,7 +149,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         particle_mean = mean( particle )
         particle_value, particle_unit =  usedmemory(particle_size, false)
         particle_meanvalue, particle_meanunit =  usedmemory(particle_mean, false)
-        println( "Particle-Files: ", round(particle_value, digits=2)," ", particle_unit," \t<", round(particle_meanvalue, digits=2)," ", particle_meanunit,">/file" )
+        if verbose
+            println( "Particle-Files: ", round(particle_value, digits=2)," ", particle_unit," \t<", round(particle_meanvalue, digits=2)," ", particle_meanunit,">/file" )
+        end
     else
         particle_size = 0.
     end
@@ -151,7 +163,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         clump_mean = mean( clump )
         clump_value, clump_unit =  usedmemory(clump_size, false)
         clump_meanvalue, clump_meanunit =  usedmemory(clump_mean, false)
-        println( "Clump-Files:    ", round(clump_value, digits=2),   " ", clump_unit,   " \t<", round(clump_meanvalue, digits=2),   " ", clump_meanunit,">/file" )
+        if verbose
+            println( "Clump-Files:    ", round(clump_value, digits=2),   " ", clump_unit,   " \t<", round(clump_meanvalue, digits=2),   " ", clump_meanunit,">/file" )
+        end
     else
         clump_size = 0.
     end
@@ -163,7 +177,9 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         rt_mean = mean( rt )
         rt_value, rt_unit =  usedmemory(rt_size, false)
         rt_meanvalue, rt_meanunit =  usedmemory(rt_mean, false)
-        println( "RT-Files:       ", round(rt_value, digits=2),   " ", rt_unit,   " \t<", round(rt_meanvalue, digits=2),   " ", rt_meanunit,">/file" )
+        if verbose
+            println( "RT-Files:       ", round(rt_value, digits=2),   " ", rt_unit,   " \t<", round(rt_meanvalue, digits=2),   " ", rt_meanunit,">/file" )
+        end
     else
         rt_size = 0.
     end
@@ -177,16 +193,19 @@ function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
         sink_mean = mean( sink )
         sink_value, sink_unit =  usedmemory(sink_size, false)
         sink_meanvalue, sink_meanunit =  usedmemory(sink_mean, false)
-        println( "Sink-Files:    ", round(sink_value, digits=2),   " ", sink_unit,   " \t<", round(sink_meanvalue, digits=2),   " ", sink_meanunit,">/file" )
-
+        if verbose
+            println( "Sink-Files:    ", round(sink_value, digits=2),   " ", sink_unit,   " \t<", round(sink_meanvalue, digits=2),   " ", sink_meanunit,">/file" )
+        end
     else
         sink_size = 0.
     end
 
-    println()
-    println()
-    println("mtime: ", dataobject.mtime)
-    println("ctime: ", dataobject.ctime)
+    if verbose
+        println()
+        println()
+        println("mtime: ", dataobject.mtime)
+        println("ctime: ", dataobject.ctime)
+    end
 
     # prepare output
     dictoutput[:folder] = folder_size
@@ -210,7 +229,7 @@ function overview_amr(dataobject::HydroDataType)
 return a JuliaDB table
 ```
 """
-function amroverview(dataobject::HydroDataType)
+function amroverview(dataobject::HydroDataType, verbose::Bool=true)
 
     checkforAMR(dataobject)
 
@@ -225,7 +244,7 @@ function amroverview(dataobject::HydroDataType)
     cells = zeros(Int, dataobject.lmax - dataobject.lmin + 1, Ncols)
     cellsize = zeros(Float64, dataobject.lmax - dataobject.lmin + 1,1)
 
-    println("Counting...")
+    if verbose println("Counting...") end
     @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
         if cpu_col
          cpus_ilevel = length( unique( select( filter(p->p.level==ilevel, select(dataobject.data, (:level, :cpu) ) ), :cpu) ) )
@@ -269,7 +288,7 @@ function overview_amr(dataobject::PartDataType)
 return a JuliaDB table
 ```
 """
-function amroverview(dataobject::PartDataType)
+function amroverview(dataobject::PartDataType, verbose::Bool=true)
 
     checkforAMR(dataobject)
 
@@ -286,7 +305,7 @@ function amroverview(dataobject::PartDataType)
 
     part_tot = 0
     part_masstot = 0
-    println("Counting...")
+    if verbose println("Counting...") end
     @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
         if cpu_col
             cpus_ilevel = length( unique( select( filter(p->p.level==ilevel, select(dataobject.data, (:level, :cpu) ) ), :cpu) ) )
@@ -337,7 +356,7 @@ function overview_data(dataobject::HydroDataType)
 return a JuliaDB table
 ```
 """
-function dataoverview(dataobject::HydroDataType)
+function dataoverview(dataobject::HydroDataType, verbose::Bool=true)
 
     nvarh = dataobject.info.nvarh
     lmin = dataobject.lmin
@@ -370,7 +389,7 @@ function dataoverview(dataobject::HydroDataType)
 
 
     cells = Array{Any,2}(undef, (dataobject.lmax - dataobject.lmin + 1,length(names_constr) ) )
-    println("Calculating...")
+    if verbose println("Calculating...") end
     @showprogress 1 "" for ilevel=lmin:lmax
         cell_iterator = 1
 
