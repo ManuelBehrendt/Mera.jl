@@ -75,11 +75,16 @@ end
 #### Print overview of the used storage per file type for a given timestep
 
 ```julia
+function storageoverview(dataobject::InfoType, verbose::Bool=true)
 function storageoverview(dataobject::InfoType; verbose::Bool=true)
+
 return dictionary in bytes
 ```
 """
 function storageoverview(dataobject::InfoType; verbose::Bool=true)
+    return storageoverview(dataobject, verbose=verbose)
+end
+function storageoverview(dataobject::InfoType, verbose::Bool=true)
     # todo simplyfy to single function calls
 
     dictoutput = Dict()
@@ -292,6 +297,7 @@ end
 ```julia
 function overview_amr(dataobject::PartDataType, verbose::Bool=true)
 function overview_amr(dataobject::PartDataType; verbose::Bool=true)
+
 return a JuliaDB table
 ```
 """
@@ -364,10 +370,16 @@ end
 
 ```julia
 function overview_data(dataobject::HydroDataType, verbose::Bool=true)
+function overview_data(dataobject::HydroDataType; verbose::Bool=true)
+
 return a JuliaDB table
 ```
 """
 function dataoverview(dataobject::HydroDataType, verbose::Bool=true)
+    return dataoverview(dataobject, verbose=verbose)
+end
+
+function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 
     nvarh = dataobject.info.nvarh
     lmin = dataobject.lmin
@@ -494,10 +506,16 @@ end
 
 ```julia
 function overviewdata(dataobject::PartDataType, verbose::Bool=true)
+function overviewdata(dataobject::PartDataType; verbose::Bool=true)
+
 return a JuliaDB table
 ```
 """
 function dataoverview(dataobject::PartDataType, verbose::Bool=true)
+    return dataoverview(dataobject, verbose=verbose)
+end
+
+function dataoverview(dataobject::PartDataType; verbose::Bool=true)
 
     lmin = dataobject.lmin
     lmax = dataobject.lmax
