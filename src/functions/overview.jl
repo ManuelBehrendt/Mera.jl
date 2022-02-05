@@ -369,8 +369,8 @@ end
 ### Get the mass and min/max value of each variable in the database per level
 
 ```julia
-function overview_data(dataobject::HydroDataType, verbose::Bool=true)
-function overview_data(dataobject::HydroDataType; verbose::Bool=true)
+function dataoverview(dataobject::HydroDataType, verbose::Bool=true)
+function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 
 return a JuliaDB table
 ```
@@ -475,7 +475,7 @@ end
 ### Get the extrema of each variable in the database
 
 ```julia
-function overview_data(dataobject::ClumpDataType)
+function dataoverview(dataobject::ClumpDataType)
 return a JuliaDB table
 ```
 """
@@ -505,8 +505,8 @@ end
 ### Get the min/max value of each variable in the database per level
 
 ```julia
-function overviewdata(dataobject::PartDataType, verbose::Bool=true)
-function overviewdata(dataobject::PartDataType; verbose::Bool=true)
+function dataoverview(dataobject::PartDataType, verbose::Bool=true)
+function dataoverview(dataobject::PartDataType; verbose::Bool=true)
 
 return a JuliaDB table
 ```
