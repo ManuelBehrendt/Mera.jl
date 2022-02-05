@@ -603,6 +603,7 @@ returns Float
 ```julia
 gettime(output::Real; path::String="./", unit::Symbol=:standard)
 gettime(dataobject::DataSetType; unit::Symbol=:standard)
+gettime(dataobject::InfoType, unit::Symbol=:standard)
 
 return time
 ```
@@ -623,6 +624,13 @@ return time
 ##### Predefined/Optional Keywords:
 - **`unit`:** return the variable in given unit
 
+
+#### Arguments Function 3
+##### Required:
+- **`dataobject`:** needs to be of type: "InfoType"
+
+##### Predefined/Optional Keywords:
+- **`unit`:** return the variable in given unit
 
 """
 function gettime(output::Real, path::String, unit::Symbol;)
@@ -646,4 +654,14 @@ end
 
 function gettime(dataobject::DataSetType; unit::Symbol=:standard)
     return dataobject.info.time * getunit(dataobject.info, unit)
+end
+
+
+
+function gettime(dataobject::InfoType, unit::Symbol;)
+    return gettime(dataobject, unit=unit)
+end
+
+function gettime(dataobject::InfoType; unit::Symbol=:standard)
+    return dataobject.time * getunit(dataobject, unit)
 end
