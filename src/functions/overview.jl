@@ -226,10 +226,16 @@ end
 ### Get the number of cells and/or the CPUs per level
 ```julia
 function overview_amr(dataobject::HydroDataType, verbose::Bool=true)
+function overview_amr(dataobject::HydroDataType; verbose::Bool=true)
+
 return a JuliaDB table
 ```
 """
 function amroverview(dataobject::HydroDataType, verbose::Bool=true)
+    amroverview(dataobject, verbose=verbose)
+end
+
+function amroverview(dataobject::HydroDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
 
@@ -285,10 +291,15 @@ end
 ### Get the number of particles and/or the CPUs per level
 ```julia
 function overview_amr(dataobject::PartDataType, verbose::Bool=true)
+function overview_amr(dataobject::PartDataType; verbose::Bool=true)
 return a JuliaDB table
 ```
 """
 function amroverview(dataobject::PartDataType, verbose::Bool=true)
+    amroverview(dataobject, verbose=verbose)
+end
+
+function amroverview(dataobject::PartDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
 
