@@ -75,7 +75,7 @@ end
 #### Print overview of the used storage per file type for a given timestep
 
 ```julia
-function storageoverview(dataobject::InfoType; verbose::Bool=verbose_mode)
+function storageoverview(dataobject::InfoType; verbose::Bool=true)
 return dictionary in bytes
 ```
 """
@@ -225,7 +225,7 @@ end
 """
 ### Get the number of cells and/or the CPUs per level
 ```julia
-function overview_amr(dataobject::HydroDataType)
+function overview_amr(dataobject::HydroDataType, verbose::Bool=true)
 return a JuliaDB table
 ```
 """
@@ -284,7 +284,7 @@ end
 """
 ### Get the number of particles and/or the CPUs per level
 ```julia
-function overview_amr(dataobject::PartDataType)
+function overview_amr(dataobject::PartDataType, verbose::Bool=true)
 return a JuliaDB table
 ```
 """
@@ -352,7 +352,7 @@ end
 ### Get the mass and min/max value of each variable in the database per level
 
 ```julia
-function overview_data(dataobject::HydroDataType)
+function overview_data(dataobject::HydroDataType, verbose::Bool=true)
 return a JuliaDB table
 ```
 """
@@ -482,11 +482,11 @@ end
 ### Get the min/max value of each variable in the database per level
 
 ```julia
-function overviewdata(dataobject::PartDataType)
+function overviewdata(dataobject::PartDataType, verbose::Bool=true)
 return a JuliaDB table
 ```
 """
-function dataoverview(dataobject::PartDataType)
+function dataoverview(dataobject::PartDataType, verbose::Bool=true)
 
     lmin = dataobject.lmin
     lmax = dataobject.lmax
@@ -498,6 +498,7 @@ function dataoverview(dataobject::PartDataType)
     fn = propertynames(dataobject.data.columns)
     #fn = convert(Array{String,1}, fn) #todo delte
     names_constr = [Symbol("level")]
+    if verbose println("Calculating...") end
     for i in fn
         if !in(i, skip_vars)
             append!(names_constr, [Symbol("$(i)_min")] )
