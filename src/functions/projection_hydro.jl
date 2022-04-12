@@ -329,9 +329,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         x_coord = :cx
         y_coord = :cy
         extent=[r1-1,r2-1,r3-1,r4-1]
+
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[2], extent[4]-rl[2]] .* boxlen ./ 2^simlmax
         extent = extent .* boxlen ./ 2^simlmax
+
         length1_center = (data_centerm[1] -xmin ) * boxlen
         length2_center = (data_centerm[2] -ymin ) * boxlen
 
@@ -345,9 +347,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         x_coord = :cx
         y_coord = :cz
         extent=[r1-1,r2-1,r5-1,r6-1]
+
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[3], extent[4]-rl[3]] .* boxlen ./ 2^simlmax
         extent = extent .* boxlen ./ 2^simlmax
+
         length1_center = (data_centerm[1] - xmin  ) * boxlen
         length2_center = (data_centerm[3] - zmin) * boxlen
 
@@ -360,9 +364,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         x_coord = :cy
         y_coord = :cz
         extent=[r3-1,r4-1,r5-1,r6-1]
+
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[2], extent[2]-rl[2], extent[3]-rl[3], extent[4]-rl[3]] .* boxlen ./ 2^simlmax
         extent = extent .* boxlen ./ 2^simlmax
+
         length1_center = (data_centerm[2] -ymin ) * boxlen
         length2_center = (data_centerm[3] -zmin) * boxlen
     end
@@ -543,6 +549,17 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                             end
 
 
+                        elseif in(ivar, density_names)
+                            if length(mask) == 1
+                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                closed=closed,
+                                                (new_level_range1, new_level_range2) )
+                            else
+                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
+                                                weights( select(level_data, :mask) ),
+                                                closed=closed,
+                                                (new_level_range1, new_level_range2) )
+                            end
                         end
 
 
@@ -551,7 +568,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                             map_buffer = h.weights .* (boxlen / 2^level)
 
                         elseif in(ivar, density_names) #ivar == :rho #|| ivar == :ρ || ivar == :density
-                            map_buffer = h.weights .* (boxlen / 2^level)
+                            map_buffer = h.weights
+                            map_buffer_weight = h_var.weights
 
                         elseif !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :volume
                         #elseif ivar !== :sd && ivar != :rho && weighting == false
@@ -591,19 +609,25 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
                                     remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
                                     map_weight[:, :, counter] .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2  # and correct for remapping
-                                    #println(counter, " ", level, " ", sum(map_weight[:, :, counter]))
                                     first_time_level[counter] = 0
                                 end
+                            elseif in(ivar, density_names)
+                                #if first_time_level[counter] == 1
+                                map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
+                                remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
+                                map_weight[:, :, counter] .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
+                                #first_time_level[counter] = 0
+                                #end
+
                             else
                                 map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
                             end
                         elseif level == simlmax
                             map[:,:,counter] .+= map_buffer
 
-                            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass && first_time_level[counter] == 1
+                            if !in(ivar, sd_names) && weighting == :mass && first_time_level[counter] == 1
                             #if ivar != :sd && ivar != :rho && weighting == true && first_time_level[counter] == 1
                                 map_weight[:, :, counter] .+= map_buffer_weight
-                                #println(counter, " ", level, " ", sum(map_weight[:, :, counter]))
                                 first_time_level[counter] = 0
                             end
                         end
@@ -627,20 +651,19 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             #if ivar != :sd && ivar != :Σ && ivar != :surfacedensity && ivar != :rho && ivar != :ρ && ivar != :density && weighting == true
                 #map[:,:,counter] = map[:,:,counter] ./ map_weight
                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-                #println(counter, " ", size(map), " ", ivar, " ", selected_unit, " ", unit_name)
-                #println(ivar, " ", counter, " ", unit_name)
                 maps[Symbol(ivar)] = map[:,:, counter] ./ map_weight[:, :, counter] .* selected_unit
-                #println(sum(map[:,:, counter]), " ", sum(map_weight[:, :, counter]), " ", sum(map[:,:, counter] ./ map_weight[:, :, counter]))
-                #println()
                 maps_unit[Symbol( ivar )] = unit_name
 
-            else
+            elseif in(ivar, density_names)
                 selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-                #println(counter, " ", size(map), " ", ivar, " ", selected_unit, " ", unit_name)
-                maps[Symbol(ivar)] = map[:,:, counter]  .* selected_unit
-                #println(sum(map[:,:, counter]), " ", sum(map_weight[:, :, counter]), " ", sum(map[:,:, counter] ./ map_weight[:, :, counter]))
-                #println()
+                maps[Symbol(ivar)] = map[:,:, counter]  ./ map_weight[:, :, counter] .* selected_unit
                 maps_unit[Symbol( string(ivar)  )] = unit_name
+
+            elseif in(ivar, sd_names)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                maps[Symbol(ivar)] = map[:,:, counter]  .* selected_unit
+                maps_unit[Symbol( string(ivar)  )] = unit_name
+
             end
 
         end
