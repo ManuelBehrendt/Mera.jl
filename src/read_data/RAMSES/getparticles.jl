@@ -16,6 +16,7 @@ getparticles(       dataobject::InfoType;
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode)
 ```
@@ -45,6 +46,7 @@ julia> fieldnames(particles)
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`presorted`:** presort data according to the key vars (by default)
 - **`print_filenames`:** print on screen the current processed particle file of each CPU
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
 
@@ -103,6 +105,7 @@ function getparticles( dataobject::InfoType, var::Symbol;
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode)
 
@@ -114,6 +117,7 @@ function getparticles( dataobject::InfoType, var::Symbol;
                         zrange=zrange,
                         center=center,
                         range_unit=range_unit,
+                        presorted=presorted,
                         print_filenames=print_filenames,
                         verbose=verbose)
 end
@@ -128,6 +132,7 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode)
 
@@ -139,6 +144,7 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                                         zrange=zrange,
                                         center=center,
                                         range_unit=range_unit,
+                                        presorted=presorted,
                                         print_filenames=print_filenames,
                                         verbose=verbose)
 end
@@ -152,6 +158,7 @@ function getparticles( dataobject::InfoType;
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode)
 
@@ -222,58 +229,111 @@ function getparticles( dataobject::InfoType;
     if read_cpu # read also cpu number related to particle
         if isamr
             if dataobject.descriptor.pversion == 0
-                @inbounds data = table( levels_1D[:],
-                    pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
+
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
-                @inbounds data = table( levels_1D[:],
-                    pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
             end
 
         else # if uniform grid
             if dataobject.descriptor.pversion == 0
-                @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
-                @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
             end
         end
     else
         if isamr
             if dataobject.descriptor.pversion == 0
-                @inbounds data = table( levels_1D[:],
+                if presorted
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table( levels_1D[:],
                     pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
                     [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                    names=collect(names_constr), presorted = false )
+                end
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
-                @inbounds data = table( levels_1D[:],
-                    pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table( levels_1D[:],
+                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
             end
         else # if uniform grid
             if dataobject.descriptor.pversion == 0
-                @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
             elseif dataobject.descriptor.pversion > 0
                 filter!(x->x≠6,nvarp_i_list)
                 filter!(x->x≠5,nvarp_i_list)
-                @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                if presorted
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
+                else
+                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
+                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                        names=collect(names_constr), presorted = false )
+                end
             end
 
         end
