@@ -9,13 +9,13 @@ end
 
 
 function projection()
-
     println("Predefined vars for projections:")
     println("------------------------------------------------")
     println("=====================[gas]:=====================")
     println("       -all the non derived hydro vars-")
     println(":cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...")
     println("further possibilities: :rho, :density, :ρ")
+
     println("              -derived hydro vars-")
     println(":x, :y, :z")
     println(":sd or :Σ or :surfacedensity")
@@ -43,9 +43,10 @@ function projection()
     println("velocity dispersion => σr_cylinder, σϕ_cylinder ")
     #println(":l, :lx, :ly, :lz :lr, :lϕ, :lθ")
     println()
-    println("2d maps (not projected):")
-    println(":r_cylinder") #, :r_sphere")
-    println(":ϕ") # :θ
+    println("2d maps (not projected) => :r_cylinder, :ϕ")
+    #println(":r_cylinder") #, :r_sphere")
+    #println(":ϕ") # :θ
+    println()
     println("------------------------------------------------")
     println()
     return
@@ -131,8 +132,7 @@ function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, 
     # remap onto lmax grid
     if simlmax > lmax
         if verbose
-            println()
-            println("remap from:")
+            println("Remap from:")
             println("level ", simlmax, " => ", lmax)
 
             min_cellsize, min_unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
@@ -155,6 +155,7 @@ function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, 
                 scaled_length2 = round(Int, s[2] / lmax_ratio)
                 if first_time == 1
                     if verbose println("pixels ", s, " => ($scaled_length1, $scaled_length2)" ) end
+                    println()
                     first_time = 0
                 end
                 maps_lmax[Symbol(ivar)] = [maps_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
