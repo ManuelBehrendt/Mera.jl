@@ -372,9 +372,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     if verbose
         println("Map data on given lmax: ", lmax)
-        println("xrange: ",r1, " ", r2)
-        println("yrange: ",r3, " ", r4)
-        println("zrange: ",r5, " ", r6)
+        println("xrange: ",r1, " ", r2-1)
+        println("yrange: ",r3, " ", r4-1)
+        println("zrange: ",r5, " ", r6-1)
 
         cellsize, unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
         println("pixel-size: ", cellsize ," [$unit]")
@@ -391,8 +391,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     if direction == :z
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2, length=(r2-r1)+1 ) ./ 2^lmax .* dataobject.boxlen
-        newrange2 = range(r3, stop=r4, length=(r4-r3)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange2 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ 2^lmax .* dataobject.boxlen
         #println(newrange1)
         #println(newrange2)
 
@@ -407,10 +407,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :y
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2, length=(r2-r1)+1 ) ./ 2^lmax .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6, length=(r6-r5)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ 2^lmax .* dataobject.boxlen
         #println(newrange1)
-        #println(newrange2)s
+        #println(newrange2)
 
         var_a = :x
         var_b = :z
@@ -422,8 +422,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :x
         # range on maximum used grid
-        newrange1 = range(r3, stop=r4, length=(r4-r3)+1 ) ./ 2^lmax .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6, length=(r6-r5)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange1 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ 2^lmax .* dataobject.boxlen
         #println(newrange1)
         #println(newrange2)
         var_a = :y
@@ -436,8 +436,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
 
 
-    length1=length( newrange1)
-    length2=length( newrange2)
+    length1=length( newrange1) - 1
+    length2=length( newrange2) - 1
     map = zeros(Float64, length1, length2, length(selected_vars)  )
     map_weight = zeros(Float64, length1 , length2   );
     #println("length1,2: (final maps) ", length1 , " ", length2 )
