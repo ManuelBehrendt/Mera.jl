@@ -23,8 +23,6 @@
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
-# -> Expect a new release in October tested on the Julia version 1.5! <-
-
 ## Package Features
 - Easy to install and update
 - Fast and memory lightweight data reading/saving and handling
@@ -53,7 +51,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 
 
 ## Package Installation
-The package is tested against Julia 1.3 and can be installed with the Julia package manager.
+The package is tested against Julia 1.6 and can be installed with the Julia package manager.
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
 
 ```julia
