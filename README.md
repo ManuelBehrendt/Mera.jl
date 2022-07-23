@@ -3,7 +3,7 @@
 
 
 
-**Version** | **Documentation** | **Build Status**  | **Contact** | **Cite**|                                                                            
+**Version** | **Documentation** | **Cite**|                                                                            
 |:------------|:----------------- |:------------------ |:----------------|:----------------|
 | ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) | [![][docs-stable-img]][docs-stable-url] [![][docs-latest-img]][docs-latest-url] | [![][travis-img]][travis-url] | [![][chat-img]][chat-url] | [![][doi-img]][doi-url] |
 
