@@ -104,14 +104,14 @@ Pkg.update("Mera")
 ## Reproducibility
 Reproducibility is an essential requirement of the scientific process. Therefore, I recommend working with environments.
 Create independent projects that contain their list of used package dependencies and their versions.
-The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments](https://julialang.github.io/Pkg.jl/v1.3/environments/).
+The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments](https://julialang.github.io/Pkg.jl/v1.6/environments/).
 In order to create a new project "activate" your working directory:
 
 ```julia
 shell> cd MyProject
 /Users/you/MyProject
 
-(v1.3) pkg> activate .
+(v1.6) pkg> activate .
 ```
 
 Now add packages like Mera and PyPlot in the favored version:
