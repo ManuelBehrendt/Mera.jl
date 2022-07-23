@@ -15,12 +15,6 @@
 [docs-latest-img]: https://img.shields.io/badge/docs-in_development-orange.svg
 [docs-latest-url]: https://manuelbehrendt.github.io/Mera.jl/dev/
 
-[travis-img]: https://travis-ci.com/ManuelBehrendt/Mera.jl.svg?branch=master
-[travis-url]: https://travis-ci.com/ManuelBehrendt/Mera.jl
-
-[chat-img]: https://badges.gitter.im/Mera-jl/Lobby.svg
-[chat-url]: https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
-
 [doi-img]: https://zenodo.org/badge/229728152.svg
 [doi-url]: https://zenodo.org/badge/latestdoi/229728152
 
