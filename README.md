@@ -240,7 +240,7 @@ Further features:
 
 
 ## Contact for Questions and Contributing
-- If you have any questions about the package, please feel free to chat in the Gitter channel: [![Gitter](https://badges.gitter.im/Mera-jl/Lobby.svg)](https://gitter.im/Mera-jl/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+- If you have any questions about the package, please feel free to write an email to: mera[>]manuelbehrendt.com
 - For bug reports, etc., please submit an issue on [GitHub](https://github.com/ManuelBehrendt/Mera.jl)
 New ideas, feature requests are very welcome! MERA can be easily extended for other grid-based or N-body based data. Write an email to: mera[>]manuelbehrendt.com
 
