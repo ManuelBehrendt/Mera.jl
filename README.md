@@ -29,7 +29,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - The data is loaded and processed in a database framework [JuliaDB.jl](https://juliadb.org)
 - Efficient workflow
 - Many functionalities for advanced analysis
-- Easy to extend
+- Easy to extend 
 - Interactive and script functionality
 - Many examples and tutorials
 
