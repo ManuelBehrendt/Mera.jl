@@ -228,6 +228,43 @@ function get_data(  dataobject::HydroDataType,
                 vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
+        elseif i == :hx # specific angular momentum
+            # y * vz - z * vy
+             selected_unit = getunit(dataobject, :hx, vars, units)
+             ypos = getvar(dataobject, :y, center=center)
+             zpos = getvar(dataobject, :z, center=center)
+             vy = getvar(dataobject, :vy, center=center)
+             vz = getvar(dataobject, :vz, center=center)
+
+             vars_dict[:hx] = (ypos .* vz .- zpos .* vy) .* selected_unit
+
+        elseif i == :hy # specific angular momentum
+            # z * vx - x * vz
+            selected_unit = getunit(dataobject, :hy, vars, units)
+            xpos = getvar(dataobject, :x, center=center)
+            zpos = getvar(dataobject, :z, center=center)
+            vx = getvar(dataobject, :vx, center=center)
+            vz = getvar(dataobject, :vz, center=center)
+
+            vars_dict[:hy] = (zpos .* vx .- xpos .* vz) .* selected_unit
+
+        elseif i == :hz # specific angular momentum
+            # x * vy - y * vx
+            selected_unit = getunit(dataobject, :hz, vars, units)
+            xpos = getvar(dataobject, :x, center=center)
+            ypos = getvar(dataobject, :y, center=center)
+            vx = getvar(dataobject, :vx, center=center)
+            vy = getvar(dataobject, :vy, center=center)
+
+            vars_dict[:hz] = (xpos .* vy .- ypos .* vx) .* selected_unit
+
+        elseif i == :h # specific angular momentum
+            selected_unit = getunit(dataobject, :h, vars, units)
+            hx = getvar(dataobject, :hx, center=center)
+            hy = getvar(dataobject, :hy, center=center)
+            hz = getvar(dataobject, :hz, center=center)
+
+            vars_dict[:h] = sqrt.(hx .^2 .+ hy .^2 .+ hz .^2) .* selected_unit
 
         elseif i == :mach #no unit needed
             vars_dict[:mach] = getvar(dataobject, :v) ./ getvar(dataobject, :cs)
