@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Particles · Mera.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li class="is-active"><a class="tocitem" href>Particles</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview-1"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Select-Variables-1"><span>Select Variables</span></a></li><li><a class="tocitem" href="#Selected-Spatial-Ranges-1"><span>Selected Spatial Ranges</span></a></li></ul></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2-Load by Selection</a></li><li class="is-active"><a href>Particles</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Particles</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/02_particles_Load_Selections.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Particles:-Load-Selected-Variables-and-Data-Ranges-1"><a class="docs-heading-anchor" href="#.-Particles:-Load-Selected-Variables-and-Data-Ranges-1">2. Particles: Load Selected Variables and Data Ranges</a><a class="docs-heading-anchor-permalink" href="#.-Particles:-Load-Selected-Variables-and-Data-Ranges-1" title="Permalink"></a></h1><h2 id="Simulation-Overview-1"><a class="docs-heading-anchor" href="#Simulation-Overview-1">Simulation Overview</a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-1" title="Permalink"></a></h2><pre><code class="language-julia">using Mera
+info = getinfo(1, &quot;../../testing/simulations/manu_stable_2019&quot;);</code></pre><pre><code class="language-none"> [Mera]: 2020-02-08T13:43:41.281
+
+Code: RAMSES
+output [1] summary:
+mtime: 2020-01-04T21:08:11.996
+ctime: 2020-01-04T21:08:11.996
+ =======================================================
+simulation time: 0.0 [x]
+boxlen: 100.0 [kpc]
+ncpu: 32
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 8 - 10 --&gt; cellsize(s): 390.63 [pc] - 97.66 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :metallicity, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   1.050000e+05
+- Ndm:      9.993500e+04
+particle variables: (:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity)
+-------------------------------------------------------
+clumps:        false
+-------------------------------------------------------
+namelist-file: (&quot;&amp;AMR_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;cooling_params&quot;, &quot;&amp;sf_params&quot;, &quot;&amp;feedback_params&quot;, &quot;&amp;DICE_PARAMS&quot;, &quot;&amp;units_params&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&quot;, &quot;&amp;REFINE_PARAMS&quot;, &quot;!&amp;PHYSICS_PARAMS&quot;)
+-------------------------------------------------------
+timer-file:       true
+compilation-file: true
+makefile:         true
+patchfile:        true
+ =======================================================</code></pre><h2 id="Select-Variables-1"><a class="docs-heading-anchor" href="#Select-Variables-1">Select Variables</a><a class="docs-heading-anchor-permalink" href="#Select-Variables-1" title="Permalink"></a></h2><p>Choose from the existing particle variables listed in the simulation-info. The functions in <strong>Mera</strong> &quot;know&quot; the predefined particle variable names:</p><ul><li>From &gt;= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,....</li><li>For  =&lt; ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,....</li><li>Currently, the following variables are loaded by default (if exist): :level, :x, :y, :z, :id, :family, :tag.</li><li>The cpu number associated with the particles can be loaded with the variable names: :cpu or :varn1</li><li>In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true .</li></ul><h3 id="Read-all-variables-by-default-1"><a class="docs-heading-anchor" href="#Read-all-variables-by-default-1">Read all variables by default</a><a class="docs-heading-anchor-permalink" href="#Read-all-variables-by-default-1" title="Permalink"></a></h3><pre><code class="language-julia">particles = getparticles(info);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:43:54.032
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Found 2.049350e+05 particles
+Memory used for data table :16.027705192565918 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia">particles.data</code></pre><pre><code class="language-none">Table with 204935 rows, 13 columns:
+Columns:
+ #     colname    type
+────────────────────
+1   level    Int32
+2   x        Float64
+3   y        Float64
+4   z        Float64
+5   id       Int8
+6   family   Int32
+7   tag      Int8
+8   vx       Float64
+9   vy       Float64
+10  vz       Float64
+11  mass     Float64
+12  birth    Float64
+13  metals   Float64</code></pre><h3 id="Select-several-variables-w/o-a-keyword-1"><a class="docs-heading-anchor" href="#Select-several-variables-w/o-a-keyword-1">Select several variables w/o a keyword</a><a class="docs-heading-anchor-permalink" href="#Select-several-variables-w/o-a-keyword-1" title="Permalink"></a></h3><pre><code class="language-julia">particles_a = getparticles(info, vars=[:mass, :birth]);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:01.662
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(4, 7) = (:mass, :birth)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Found 2.049350e+05 particles
+Memory used for data table :9.773184776306152 MB
+-------------------------------------------------------</code></pre><p>The same variables can be read by using the var-number:</p><pre><code class="language-julia">particles_a = getparticles(info, vars=[:var4, :var7]);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:03.329
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(4, 7) = (:mass, :birth)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Found 2.049350e+05 particles
+Memory used for data table :9.773184776306152 MB
+-------------------------------------------------------</code></pre><p>A keyword argument for the variables is not needed if the following order is preserved: InfoType-object, variables:</p><pre><code class="language-julia">particles_a = getparticles(info, [:mass, :birth]);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:03.984
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(4, 7) = (:mass, :birth)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Found 2.049350e+05 particles
+Memory used for data table :9.773184776306152 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia">particles_a.data</code></pre><pre><code class="language-none">Table with 204935 rows, 9 columns:
+ level    x           y          z          id    family      tag   mass         birth
+────────────────────────────────────────────────────────────────────────
+8      0.162018  48.7716  38.9408  1   13076927  0    0.000359393  0.0
+8      0.241993  43.34    61.1182  1   13057738  0    0.000359393  0.0
+8      0.351147  47.5691  46.5596  1   13020347  0    0.000359393  0.0
+8      0.530987  55.3409  40.0985  1   13057752  0    0.000359393  0.0
+8      0.711498  41.6374  46.4307  1   13020736  0    0.000359393  0.0
+8      0.75967   58.6955  37.0071  1   13076417  0    0.000359393  0.0
+8      0.780296  35.406   50.9124  1   13065542  0    0.000359393  0.0
+8      0.882309  38.8843  54.2554  1   13008907  0    0.000359393  0.0
+8      0.89698   61.4106  60.336   1   13076479  0    0.000359393  0.0
+8      0.979073  44.4677  63.8858  1   13051722  0    0.000359393  0.0
+8      1.04498   40.9592  69.235   1   13003955  0    0.000359393  0.0
+8      1.18224   51.4781  50.0146  1   13089657  0    0.000359393  0.0
+⋮
+8      99.3534   53.6374  56.8546  1   13009482  0    0.000359393  0.0
+8      99.3742   42.8799  68.9125  1   13089718  0    0.000359393  0.0
+8      99.4208   33.6806  60.4349  1   13057697  0    0.000359393  0.0
+8      99.6151   54.8829  36.4236  1   13057437  0    0.000359393  0.0
+8      99.6609   47.92    50.0631  1   13089673  0    0.000359393  0.0
+8      99.6624   40.7391  56.939   1   13066194  0    0.000359393  0.0
+8      99.7309   58.3593  37.43    1   13050186  0    0.000359393  0.0
+8      99.8277   51.3123  55.7462  1   13081505  0    0.000359393  0.0
+8      99.8709   42.983   59.9095  1   13066188  0    0.000359393  0.0
+8      99.8864   49.9097  51.638   1   13008893  0    0.000359393  0.0
+8      99.9239   45.4416  37.0604  1   13057426  0    0.000359393  0.0</code></pre><h3 id="Select-one-variable-1"><a class="docs-heading-anchor" href="#Select-one-variable-1">Select one variable</a><a class="docs-heading-anchor-permalink" href="#Select-one-variable-1" title="Permalink"></a></h3><p>In this case, no array and keyword is necessary, but preserve the following order: InfoType-object, variable:</p><pre><code class="language-julia">particles_c = getparticles(info, :vx );</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:05.126
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1,) = (:vx,)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Found 2.049350e+05 particles
+Memory used for data table :8.209554672241211 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia">particles_c.data</code></pre><pre><code class="language-none">Table with 204935 rows, 8 columns:
+ level    x           y          z          id    family      tag   vx
+────────────────────────────────────────────────────────────────
+8      0.162018  48.7716  38.9408  1   13076927  0    0.127661
+8      0.241993  43.34    61.1182  1   13057738  0    -0.329024
+8      0.351147  47.5691  46.5596  1   13020347  0    -0.849745
+8      0.530987  55.3409  40.0985  1   13057752  0    -0.0592976
+8      0.711498  41.6374  46.4307  1   13020736  0    -0.471851
+8      0.75967   58.6955  37.0071  1   13076417  0    0.982907
+8      0.780296  35.406   50.9124  1   13065542  0    -0.356155
+8      0.882309  38.8843  54.2554  1   13008907  0    -1.44461
+8      0.89698   61.4106  60.336   1   13076479  0    -0.50173
+8      0.979073  44.4677  63.8858  1   13051722  0    -0.285347
+8      1.04498   40.9592  69.235   1   13003955  0    0.0818029
+8      1.18224   51.4781  50.0146  1   13089657  0    -0.984195
+⋮
+8      99.3534   53.6374  56.8546  1   13009482  0    -0.442525
+8      99.3742   42.8799  68.9125  1   13089718  0    0.187082
+8      99.4208   33.6806  60.4349  1   13057697  0    -0.801086
+8      99.6151   54.8829  36.4236  1   13057437  0    -0.0448441
+8      99.6609   47.92    50.0631  1   13089673  0    -1.80605
+8      99.6624   40.7391  56.939   1   13066194  0    -0.254425
+8      99.7309   58.3593  37.43    1   13050186  0    0.39214
+8      99.8277   51.3123  55.7462  1   13081505  0    0.422148
+8      99.8709   42.983   59.9095  1   13066188  0    -2.84491
+8      99.8864   49.9097  51.638   1   13008893  0    -1.36332
+8      99.9239   45.4416  37.0604  1   13057426  0    -0.108421</code></pre><h2 id="Selected-Spatial-Ranges-1"><a class="docs-heading-anchor" href="#Selected-Spatial-Ranges-1">Selected Spatial Ranges</a><a class="docs-heading-anchor-permalink" href="#Selected-Spatial-Ranges-1" title="Permalink"></a></h2><h3 id="Use-RAMSES-Standard-Notation-1"><a class="docs-heading-anchor" href="#Use-RAMSES-Standard-Notation-1">Use RAMSES Standard Notation</a><a class="docs-heading-anchor-permalink" href="#Use-RAMSES-Standard-Notation-1" title="Permalink"></a></h3><p>Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default.</p><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[0.2,0.8],
+                            yrange=[0.2,0.8],
+                            zrange=[0.4,0.6]);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:07.416
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+domain:
+xmin::xmax: 0.2 :: 0.8  	==&gt; 20.0 [kpc] :: 80.0 [kpc]
+ymin::ymax: 0.2 :: 0.8  	==&gt; 20.0 [kpc] :: 80.0 [kpc]
+zmin::zmax: 0.4 :: 0.6  	==&gt; 40.0 [kpc] :: 60.0 [kpc]
+
+Found 1.753150e+05 particles
+Memory used for data table :13.711382865905762 MB
+-------------------------------------------------------</code></pre><p>The loaded data ranges are assigned to the field <code>ranges</code> as an array in  <strong>RAMSES</strong> standard notation (domain: [0:1]^3):</p><pre><code class="language-julia">particles.ranges</code></pre><pre><code class="language-none">6-element Array{Float64,1}:
+ 0.2
+ 0.8
+ 0.2
+ 0.8
+ 0.4
+ 0.6</code></pre><h3 id="Ranges-relative-to-a-given-center:-1"><a class="docs-heading-anchor" href="#Ranges-relative-to-a-given-center:-1">Ranges relative to a given center:</a><a class="docs-heading-anchor-permalink" href="#Ranges-relative-to-a-given-center:-1" title="Permalink"></a></h3><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[-0.3, 0.3],
+                            yrange=[-0.3, 0.3],
+                            zrange=[-0.1, 0.1],
+                            center=[0.5, 0.5, 0.5]);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:09.718
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2 :: 0.8  	==&gt; 20.0 [kpc] :: 80.0 [kpc]
+ymin::ymax: 0.2 :: 0.8  	==&gt; 20.0 [kpc] :: 80.0 [kpc]
+zmin::zmax: 0.4 :: 0.6  	==&gt; 40.0 [kpc] :: 60.0 [kpc]
+
+Found 1.753150e+05 particles
+Memory used for data table :13.711382865905762 MB
+-------------------------------------------------------</code></pre><h3 id="Use-notation-in-physical-units-1"><a class="docs-heading-anchor" href="#Use-notation-in-physical-units-1">Use notation in physical units</a><a class="docs-heading-anchor-permalink" href="#Use-notation-in-physical-units-1" title="Permalink"></a></h3><p>In the following example the ranges are given in unit &quot;kpc&quot;, relative to the box corner <a href="default">0., 0., 0.</a>:</p><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[2.,22.],
+                            yrange=[2.,22.],
+                            zrange=[22.,26.],
+                            range_unit=:kpc);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:11.119
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+domain:
+xmin::xmax: 0.02 :: 0.22  	==&gt; 2.0 [kpc] :: 22.0 [kpc]
+ymin::ymax: 0.02 :: 0.22  	==&gt; 2.0 [kpc] :: 22.0 [kpc]
+zmin::zmax: 0.22 :: 0.26  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Found 1.000000e+00 particles
+Memory used for data table :1.6396484375 KB
+-------------------------------------------------------</code></pre><p>The possible physical length units for the keyword <code>range_unit</code> are defined in the field <code>scale</code> :</p><pre><code class="language-julia">viewfields(info.scale)  # or e.g.: gas.info.scale</code></pre><pre><code class="language-none"> [Mera]: Fields to scale from user/code units to selected units
+ =======================================================================
+Mpc	= 0.0010000000000006482
+kpc	= 1.0000000000006481
+pc	= 1000.0000000006482
+mpc	= 1.0000000000006482e6
+ly	= 3261.5637769461323
+Au	= 2.0626480623310105e23
+km	= 3.0856775812820004e16
+m	= 3.085677581282e19
+cm	= 3.085677581282e21
+mm	= 3.085677581282e22
+μm	= 3.085677581282e25
+Msol_pc3	= 0.9999999999980551
+g_cm3	= 6.77025430198932e-23
+Msol_pc2	= 999.9999999987034
+g_cm2	= 0.20890821919226463
+Gyr	= 0.014907037050462488
+Myr	= 14.907037050462488
+yr	= 1.4907037050462488e7
+s	= 4.70430312423675e14
+ms	= 4.70430312423675e17
+Msol	= 9.999999999999998e8
+Mearth	= 3.330598439436053e14
+Mjupiter	= 1.0479261167570186e12
+g	= 1.9890999999999996e42
+km_s	= 65.59266058737735
+m_s	= 65592.66058737735
+cm_s	= 6.559266058737735e6
+nH	= 30.996344997059538
+erg	= 8.557898117221824e55
+g_cms2	= 2.9128322630389308e-9
+T_mu	= 517302.3151964531
+Ba	= 2.9128322630389304e-9</code></pre><h3 id="Ranges-relative-to-the-given-center-e.g.-in-unit-&quot;kpc&quot;:-1"><a class="docs-heading-anchor" href="#Ranges-relative-to-the-given-center-e.g.-in-unit-&quot;kpc&quot;:-1">Ranges relative to the given center e.g. in unit &quot;kpc&quot;:</a><a class="docs-heading-anchor-permalink" href="#Ranges-relative-to-the-given-center-e.g.-in-unit-&quot;kpc&quot;:-1" title="Permalink"></a></h3><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[50.,50.,50.],
+                            range_unit=:kpc);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:11.576
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+ymin::ymax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+zmin::zmax: 0.48 :: 0.52  	==&gt; 48.0 [kpc] :: 52.0 [kpc]
+
+Found 1.295770e+05 particles
+Memory used for data table :10.134612083435059 MB
+-------------------------------------------------------</code></pre><p>Use the short notation for the box center :bc or :boxcenter for all  dimensions (x,y,z):</p><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:boxcenter],
+                            range_unit=:kpc);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:12.793
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+ymin::ymax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+zmin::zmax: 0.48 :: 0.52  	==&gt; 48.0 [kpc] :: 52.0 [kpc]
+
+Found 1.295770e+05 particles
+Memory used for data table :10.134612083435059 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:bc],
+                            range_unit=:kpc);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:13.572
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+ymin::ymax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+zmin::zmax: 0.48 :: 0.52  	==&gt; 48.0 [kpc] :: 52.0 [kpc]
+
+Found 1.295770e+05 particles
+Memory used for data table :10.134612083435059 MB
+-------------------------------------------------------</code></pre><p>Use the box center notation for individual dimensions, here x,z:</p><pre><code class="language-julia">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:bc, 50., :bc],
+                            range_unit=:kpc);</code></pre><pre><code class="language-none"> [Mera]: Get particle data: 2020-02-08T13:44:15.41 
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7, 8) = (:vx, :vy, :vz, :mass, :birth, :metallicity)
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+ymin::ymax: 0.34 :: 0.66  	==&gt; 34.0 [kpc] :: 66.0 [kpc]
+zmin::zmax: 0.48 :: 0.52  	==&gt; 48.0 [kpc] :: 52.0 [kpc]
+
+Found 1.295770e+05 particles
+Memory used for data table :10.134612083435059 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_hydro_Load_Selections/">« Hydro</a><a class="docs-footer-nextpage" href="../02_clumps_Load_Selections/">Clumps »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 26 July 2022 12:29">Tuesday 26 July 2022</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

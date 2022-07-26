@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Clumps · Mera.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li class="is-active"><a class="tocitem" href>Clumps</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview-1"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Load-Clump-Data-1"><span>Load Clump Data</span></a></li><li><a class="tocitem" href="#Overview-of-Clump-Data-1"><span>Overview of Clump Data</span></a></li><li><a class="tocitem" href="#Data-Inspection-1"><span>Data Inspection</span></a></li></ul></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">1-Data Inspection</a></li><li class="is-active"><a href>Clumps</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Clumps</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/01_clumps_First_Inspection.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Clumps:-First-Data-Inspection-1"><a class="docs-heading-anchor" href="#.-Clumps:-First-Data-Inspection-1">1. Clumps: First Data Inspection</a><a class="docs-heading-anchor-permalink" href="#.-Clumps:-First-Data-Inspection-1" title="Permalink"></a></h1><h2 id="Simulation-Overview-1"><a class="docs-heading-anchor" href="#Simulation-Overview-1">Simulation Overview</a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-1" title="Permalink"></a></h2><pre><code class="language-julia">using Mera
+info = getinfo(400, &quot;../../testing/simulations/manu_sim_sf_L14&quot;);</code></pre><pre><code class="language-none"> [Mera]: 2020-02-12T20:41:16.814
+
+Code: RAMSES
+output [400] summary:
+mtime: 2018-09-05T09:51:55.041
+ctime: 2019-11-01T17:35:21.051
+ =======================================================
+simulation time: 594.98 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 2048
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
+particle variables: (:vx, :vy, :vz, :mass, :birth)
+-------------------------------------------------------
+clumps:        true
+clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
+-------------------------------------------------------
+namelist-file: false
+timer-file:       false
+compilation-file: true
+makefile:         true
+patchfile:        true
+ =======================================================</code></pre><p>A short overview of the loaded clumps properties is printed:</p><ul><li>existence of clumps files</li><li>the variable names from the header of the clump files</li></ul><h2 id="Load-Clump-Data-1"><a class="docs-heading-anchor" href="#Load-Clump-Data-1">Load Clump Data</a><a class="docs-heading-anchor-permalink" href="#Load-Clump-Data-1" title="Permalink"></a></h2><p>Read the Clumps data from all files of the full box with all existing variables. <strong>MERA</strong> checks the first line of a clump file to find the column names. The identified names give the number of existing columns.</p><pre><code class="language-julia">clumps = getclumps(info);</code></pre><pre><code class="language-none"> [Mera]: Get clump data: 2020-02-12T20:41:23.656
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+Read 12 colums:
+Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
+Memory used for data table :61.77734375 KB
+-------------------------------------------------------</code></pre><p>The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:</p><pre><code class="language-julia">usedmemory(clumps);</code></pre><pre><code class="language-none">Memory used: 331.672 KB</code></pre><p>The assigned object is now of type: <code>ClumpsDataType</code>:</p><pre><code class="language-julia">typeof(clumps)</code></pre><pre><code class="language-none">ClumpDataType</code></pre><p>It is a sub-type of <code>ContainMassDataSetType</code></p><pre><code class="language-julia">supertype( ContainMassDataSetType )</code></pre><pre><code class="language-none">DataSetType</code></pre><p><code>ContainMassDataSetType</code> is a sub-type of to the super-type <code>DataSetType</code></p><pre><code class="language-julia">supertype( ClumpDataType )</code></pre><pre><code class="language-none">ContainMassDataSetType</code></pre><p>The data is stored as a <strong>JuliaDB</strong> table and the selected clump variables and parameters are assigned to fields:</p><pre><code class="language-julia">viewfields(clumps)</code></pre><pre><code class="language-none"> data ==&gt; JuliaDB table: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
+
+ info ==&gt; subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
+boxlen	= 48.0
+ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+selected_clumpvars	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
+
+ scale ==&gt; subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)</code></pre><p>For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with &quot;clumps.info&quot; and the scaling relations from code to cgs units in &quot;clumps.scale&quot;. The box length, the selected ranges and number of the clump variables are also retained.</p><p>Print the fields of an object (composite type) in a simple list:</p><pre><code class="language-julia">propertynames(clumps)</code></pre><pre><code class="language-none">(:data, :info, :boxlen, :ranges, :selected_clumpvars, :used_descriptors, :scale)</code></pre><h2 id="Overview-of-Clump-Data-1"><a class="docs-heading-anchor" href="#Overview-of-Clump-Data-1">Overview of Clump Data</a><a class="docs-heading-anchor-permalink" href="#Overview-of-Clump-Data-1" title="Permalink"></a></h2><p>Get some overview of the data associated with the object <code>clumps</code>. The calculated information can be accessed from the object <code>data_overview</code> (here) in code units for further calculations:</p><pre><code class="language-julia">data_overview = dataoverview(clumps)</code></pre><pre><code class="language-none">Table with 2 rows, 13 columns:
+Columns:
+ #     colname      type
+───────────────────
+1   extrema    Any
+2   index      Any
+3   lev        Any
+4   parent     Any
+5   ncell      Any
+6   peak_x     Any
+7   peak_y     Any
+8   peak_z     Any
+9   rho-       Any
+10  rho+       Any
+11  rho_av     Any
+12  mass_cl    Any
+13  relevance  Any</code></pre><p>If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the <code>select</code> function. The representation &quot;:mass_cl&quot; is called a quoted Symbol (<a href="https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1">see in Julia documentation</a>):</p><pre><code class="language-julia">using JuliaDB</code></pre><pre><code class="language-julia">select(data_overview, (:extrema, :index, :peak_x, :peak_y, :peak_z, :mass_cl) )</code></pre><pre><code class="language-none">Table with 2 rows, 6 columns:
+extrema  index   peak_x   peak_y   peak_z   mass_cl
+──────────────────────────────────────────────────────
+&quot;min&quot;    4.0     10.292   9.93604  22.1294  0.00031216
+&quot;max&quot;    2147.0  38.1738  35.7056  25.4634  0.860755</code></pre><p>Get an array from the column &quot;:mass<em>cl&quot; in `data</em>overview<code>and scale it to the units</code>Msol`. The order of the calculated data is consistent with the table above:</p><pre><code class="language-julia">select(data_overview, :mass_cl) * info.scale.Msol</code></pre><pre><code class="language-none">2-element Array{Float64,1}:
+ 312073.3187055649       
+      8.605166312657958e8</code></pre><p>Or simply convert the <code>:mass_cl</code> data in the table to <code>Msol</code> units by manipulating the column:</p><pre><code class="language-julia">data_overview = transform(data_overview, :mass_cl =&gt; :mass_cl =&gt; value-&gt;value * info.scale.Msol);</code></pre><pre><code class="language-julia">select(data_overview, (:extrema, :index, :peak_x, :peak_y, :peak_z, :mass_cl) )</code></pre><pre><code class="language-none">Table with 2 rows, 6 columns:
+extrema  index   peak_x   peak_y   peak_z   mass_cl
+─────────────────────────────────────────────────────
+&quot;min&quot;    4.0     10.292   9.93604  22.1294  3.12073e5
+&quot;max&quot;    2147.0  38.1738  35.7056  25.4634  8.60517e8</code></pre><h2 id="Data-Inspection-1"><a class="docs-heading-anchor" href="#Data-Inspection-1">Data Inspection</a><a class="docs-heading-anchor-permalink" href="#Data-Inspection-1" title="Permalink"></a></h2><p>The data is associated with the field <code>clumps.data</code> as a <strong>JuliaDB</strong> table (code units). Each row corresponds to a clump and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc. More information can be found in the MERA tutorials or in: <a href="http://juliadb.org/latest/api/">JuliaDB API Reference</a></p><h3 id="Table-View-1"><a class="docs-heading-anchor" href="#Table-View-1">Table View</a><a class="docs-heading-anchor-permalink" href="#Table-View-1" title="Permalink"></a></h3><p>The positions peak<em>x, peak</em>y,peak_z are the positions and should not be modified.</p><pre><code class="language-julia">clumps.data</code></pre><pre><code class="language-none">Table with 644 rows, 12 columns:
+Columns:
+ #     colname      type 
+──────────────────────
+1   index      Float64
+2   lev        Float64
+3   parent     Float64
+4   ncell      Float64
+5   peak_x     Float64
+6   peak_y     Float64
+7   peak_z     Float64
+8   rho-       Float64
+9   rho+       Float64
+10  rho_av     Float64
+11  mass_cl    Float64
+12  relevance  Float64</code></pre><p>A more detailed view into the data:</p><pre><code class="language-julia">select(clumps.data, (:index, :peak_x, :peak_y, :peak_z, :mass_cl) )</code></pre><pre><code class="language-none">Table with 644 rows, 5 columns:
+index   peak_x   peak_y   peak_z   mass_cl
+─────────────────────────────────────────────
+4.0     20.1094  11.5005  23.9604  0.0213767
+5.0     20.1592  11.5122  23.9253  0.0131504
+9.0     21.7852  17.855   23.814   0.00358253
+12.0    21.8232  17.8608  23.855   0.00509792
+13.0    21.8906  17.2837  23.5415  0.0319414
+18.0    21.7822  16.8823  23.7817  0.00848828
+19.0    21.75    16.8589  23.7993  0.00587003
+20.0    21.6006  17.5679  23.7935  0.0324672
+25.0    21.5801  17.6177  23.9341  0.0245806
+26.0    21.5859  17.5796  23.9165  0.0183601
+29.0    21.5625  17.5854  23.8726  0.0303356
+46.0    21.5215  17.6235  23.9458  0.343594
+⋮
+2115.0  27.7705  13.2788  23.8081  0.0340939
+2116.0  27.7617  13.3081  23.8081  0.0145199
+2117.0  27.7793  13.2993  23.6851  0.00855992
+2120.0  27.7559  13.1792  23.8638  0.00508007
+2125.0  27.7939  13.0298  23.9194  0.00128829
+2128.0  27.791   13.0649  23.9019  0.00183979
+2131.0  28.3037  12.8188  23.9487  0.00128627
+2132.0  28.626   12.8188  23.8755  0.00434
+2137.0  29.9736  15.0571  23.7202  0.00195464
+2140.0  27.1436  15.6401  23.9048  0.0160477
+2147.0  25.1953  9.93604  23.9897  0.0294943</code></pre><pre><code class="language-julia"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_particles_First_Inspection/">« Particles</a><a class="docs-footer-nextpage" href="../02_hydro_Load_Selections/">Hydro »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 26 July 2022 12:29">Tuesday 26 July 2022</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
