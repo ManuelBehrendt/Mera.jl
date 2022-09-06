@@ -585,7 +585,7 @@ end
 - returns field `path` as String
 
 ```julia
-checkoutputs(path::String="./")
+checkoutputs(path::String="./"; verbose::Bool=true)
 return CheckOutputNumberType
 ```
 
@@ -658,6 +658,81 @@ function checkoutputs(path::String="./"; verbose::Bool=true)
     end
     return CheckOutputNumberType(existing_outputs, missing_outputs, path)
 end
+
+
+
+"""
+#### List the existing simulation snapshots in a given folder
+- returns a Dictonary with existing simulations and their folder names with:
+- field `outputs` with Array{Int,1} containing the output-numbers of the existing simulations
+- field `miss` with Array{Int,1} containing the output-numbers of empty simulation folders
+- field `path` as String
+
+```julia
+checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
+return Dict with named Tuple: simulation name and N=CheckOutputNumberType
+```
+
+"""
+function checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
+    fulldirpaths=filter(isdir,readdir(path,join=true))
+    dirnames=basename.(fulldirpaths)
+
+    # filter folders
+    filter!(e->e ≠ ".ipynb_checkpoints",dirnames)
+    if length(filternames) != 0
+        for ifnames in filternames
+            filter!(e->e ≠ ifnames,dirnames)
+        end
+    end
+
+    # check folders for simulation outputs
+    sims = Dict()
+    namesize = 0
+    for (i, idir) in enumerate(dirnames)
+        ipath = joinpath(path, idir)
+        N = checkoutputs(ipath, verbose=false)
+        if length(N.outputs) !=0 || length(N.miss) !=0
+            sims[i] = (name=idir, N=N)
+            if length(idir) > namesize
+                namesize = length(idir)
+            end
+        end
+    end
+
+    if verbose
+        if length(sims) != 0
+            for i = 1:length(sims)
+                isim = sims[i]
+                N_exist = length(isim.N.outputs)
+                Min_exist = minimum(isim.N.outputs)
+                Max_exist = maximum(isim.N.outputs)
+
+                N_miss = length(isim.N.miss)
+                lname = length(isim.name)
+                namediff = namesize-lname
+                emptyspace = ""
+                if namediff > 0
+                    for i = 1: namediff
+                        emptyspace *= " "
+                    end
+                end
+                println("Sim $i \t", isim.name, emptyspace,  "\t - Outputs - existing: $N_exist betw. $Min_exist:$Max_exist - missing: $N_miss")
+            end
+        else
+            println("no simulation data found" )
+        end
+        println()
+    end
+
+
+    return sims
+end
+
+
+
+
+
 
 
 
