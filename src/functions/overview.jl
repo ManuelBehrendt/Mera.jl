@@ -605,7 +605,7 @@ julia>N = checkoutputs("simulation001");
 ```
 
 """
-function checkoutputs(path::String="./")
+function checkoutputs(path::String="./", verbose::Bool=true)
 
     if path == "" || path == " " path="./" end
     folder = readdir(path)
@@ -642,6 +642,14 @@ function checkoutputs(path::String="./")
         end
     end
 
+    N_exist = length(existing_outputs)
+    Min_exist = minimum(existing_outputs)
+    Max_exist = maximum(existing_outputs)
+
+    N_miss = length(missing_outputs)
+    
+    println( "Outputs - existing: $N_exist betw. $Min_exist:$Max_exist - missing: $N_miss")
+    println()
     return CheckOutputNumberType(existing_outputs, missing_outputs, path)
 end
 
