@@ -63,6 +63,7 @@ export
     amroverview,
     dataoverview,
     checkoutputs,
+    checksimulations,
     gettime,
 
 # basic calcs
