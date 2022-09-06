@@ -643,12 +643,16 @@ function checkoutputs(path::String="./", verbose::Bool=true)
     end
 
     N_exist = length(existing_outputs)
-    Min_exist = minimum(existing_outputs)
-    Max_exist = maximum(existing_outputs)
+    if N_exist !=0
+        Min_exist = minimum(existing_outputs)
+        Max_exist = maximum(existing_outputs)
 
-    N_miss = length(missing_outputs)
-    
-    println( "Outputs - existing: $N_exist betw. $Min_exist:$Max_exist - missing: $N_miss")
+        N_miss = length(missing_outputs)
+
+        println( "Outputs - existing: $N_exist betw. $Min_exist:$Max_exist - missing: $N_miss")
+    else
+        println( "Outputs - 0")
+    end
     println()
     return CheckOutputNumberType(existing_outputs, missing_outputs, path)
 end
