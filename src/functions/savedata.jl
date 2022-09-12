@@ -1,6 +1,6 @@
 
 
-function savedata( dataobject::DataSetType; 
+function savedata( dataobject::DataSetType;
                     path::String="./",
                     fname = "output_",
                     fmode::Any=nothing,
@@ -9,17 +9,17 @@ function savedata( dataobject::DataSetType;
                     comments::Any=nothing,
                     merafile_version::Float64=1.,
                     verbose::Bool=true)
-    
+
         datatype, use_descriptor, descriptor_names = check_datasource(dataobject)
-    
+
         icpu= dataobject.info.output
         filename = outputname(fname, icpu) * ".jld2"
         fpath    = checkpath(path, filename)
         fexist, wdata, jld2mode = check_file_mode(fmode, datatype, path, filename)
         ctype = check_compression(compress, wdata)
         column_names = propertynames(dataobject.data.columns)
-    
-    
+
+
     if verbose
         println("Directory: ", dataobject.info.path )
         println("-----------------------------------")
@@ -34,18 +34,18 @@ function savedata( dataobject::DataSetType;
                 println("-----------------------------------")
     end
 
-    
+
     if wdata
         jldopen(fpath, jld2mode; compress = ctype) do f
             #mygroup = JLD2.Group(f, string(datatype))
             dt = string(datatype)
-            
+
             #myinfgroup = JLD2.Group(mygroup, "information")
-            df = "/information/" 
-            
+            df = "/information/"
+
             f[dt * df * "compression"] = ctype
             f[dt * df * "comments"] = comments
-            
+
             f[dt * df * "versions/merafile_version"] = merafile_version
             f[dt * df * "versions/JLD2compatible_versions"] = JLD2.COMPATIBLE_VERSIONS
             pkg = Pkg.dependencies()
@@ -53,13 +53,13 @@ function savedata( dataobject::DataSetType;
             for i  in keys(pkg)
                 ipgk = pkg[i]
                 if ipgk.name in check_pkg
-                    
+
                     if ipgk.is_tracking_repo
                         f[dt * df * "versions/" * ipgk.name] = [ipgk.version, ipgk.git_source]
                     else
                         f[dt * df * "versions/" * ipgk.name] = [ipgk.version]
                     end
-                    
+
                     if verbose
                         if ipgk.is_tracking_repo
                             println(ipgk.name, "  ", ipgk.version, "   ", ipgk.git_source)
@@ -69,8 +69,8 @@ function savedata( dataobject::DataSetType;
                     end
                 end
             end
-            
-        
+
+
 
             f[dt * df * "storage"] = storageoverview(dataobject.info, verbose=false)
             f[dt * df * "memory"] = usedmemory(dataobject, false)
@@ -78,21 +78,22 @@ function savedata( dataobject::DataSetType;
 
             #mydatagroup = JLD2.Group(mygroup, "data")
             f[dt * "/data"] = dataobject
+            f[dt * "/info"] = dataobject.info
         end
     end
-   
-    
+
+
     if verbose
                 println("-----------------------------------")
         mem = usedmemory(dataobject, false)
         println("Memory size: ", round(mem[1], digits=3)," ", mem[2], " (uncompressed)")
         s = filesize(fpath)
         svalue, sunit = humanize(Float64(s), 3, "memory")
-        if wdata println("Total file size: ", svalue, " ", sunit) end 
+        if wdata println("Total file size: ", svalue, " ", sunit) end
         println("-----------------------------------")
         println()
     end
-    
+
     return
 end
 
@@ -126,9 +127,9 @@ end
 
 function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::String)
     println()
-    
+
     jld2mode = ""
-    if fmode in [nothing] 
+    if fmode in [nothing]
         wdata = false
     else
         wdata = true
@@ -140,8 +141,8 @@ function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::
             error("Unknown fmode...")
         end
     end
-    
-    
+
+
     if !isfile(fullpath) && wdata
         println("Create file: ", fname)
         fexist = false
@@ -152,7 +153,7 @@ function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::
         println("Existing file: ", fname)
         fexist = true
     end
-    
+
     return fexist, wdata, jld2mode
 end
 
@@ -161,9 +162,9 @@ function check_compression(compress, wdata)
     if compress == nothing && wdata
         ctype = ZlibCompressor(level=9)
     elseif typeof(compress) == ZlibCompressor && wdata
-        ctype = compress  
+        ctype = compress
     elseif typeof(compress) == Bzip2Compressor && wdata
-        ctype = compress   
+        ctype = compress
     elseif compress == false || !wdata
         ctype = :nothing
     end
@@ -177,7 +178,7 @@ function checkpath(path, filename)
         elseif path == "" || path == " "
             fpath = filename
         else
-  
+
         if string(path[end]) == "/"
                 fpath = path * filename
             else
