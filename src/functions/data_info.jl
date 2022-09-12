@@ -18,7 +18,17 @@ function infodata(output::Int; path::String="./",
 
     # check if request exists
     if datatype == :nothing
-        dtype = fkeys[1]
+        if "hydro" in fkeys
+            dtype = "hydro"
+        elseif "particles" in keys
+            dtype = "particles"
+        elseif "clumps" in keys
+            dtype = "clumps"
+        elseif "gravity" in keys
+            dtype = "gravity"
+        else
+            error("No datatype found...")
+        end
     else
         if string(datatype) in fkeys
             dtype = string(datatype)
