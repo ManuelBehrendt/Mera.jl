@@ -54,6 +54,7 @@ export
     savedata,
     loaddata,
     viewdata,
+    infodata,
 
 # data_overview
     printtime,
