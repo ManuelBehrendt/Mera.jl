@@ -3,10 +3,7 @@ function infodata(output::Int; path::String="./",
                     datatype::Symbol,
                     verbose::Bool=true)
 
-    if verbose
-        println("Open Mera info-file:")
-        println()
-    end
+    printtime("",verbose)
 
     filename = outputname(fname, output) * ".jld2"
     fpath    = checkpath(path, filename)
