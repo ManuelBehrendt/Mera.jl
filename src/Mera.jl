@@ -20,6 +20,7 @@ module Mera
 using Printf
 using Dates
 using Statistics
+using Pkg
 
 # external libraries
 using FortranFiles
@@ -32,6 +33,8 @@ using ProgressMeter
 using StatsBase
 using OnlineStats
 using HDF5
+
+using JLD2, CodecZlib, CodecBzip2
 
 export
 
@@ -48,7 +51,9 @@ export
     read_merafile,
     view_merafile,
     info_merafile,
-    info_merafile,
+    savedata,
+    loaddata,
+    viewdata,
 
 # data_overview
     printtime,
@@ -167,6 +172,10 @@ include("functions/merafile_read.jl")
 include("functions/merafile_view.jl")
 include("functions/merafile_info.jl")
 include("functions/merafile_comparefields.jl")
+
+include("functions/savedata.jl")
+include("functions/loaddata.jl")
+include("functions/viewdata.jl")
 # ============================================
 
 
