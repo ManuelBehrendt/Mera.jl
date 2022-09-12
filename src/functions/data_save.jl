@@ -114,7 +114,7 @@ function outputname(fname::String, icpu::Int)
     if icpu < 10
         return string(fname, "0000", icpu)
     elseif icpu < 100 && icpu > 9
-        return string(fname, "00", icpu)
+        return string(fname, "000", icpu)
     elseif icpu < 1000 && icpu > 99
         return string(fname, "00", icpu)
     elseif icpu < 10000 && icpu > 999
