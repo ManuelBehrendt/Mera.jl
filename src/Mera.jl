@@ -176,6 +176,7 @@ include("functions/merafile_comparefields.jl")
 include("functions/data_save.jl")
 include("functions/data_load.jl")
 include("functions/data_view.jl")
+include("functions/data_info.jl")
 # ============================================
 
 
