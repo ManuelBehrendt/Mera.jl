@@ -1,6 +1,6 @@
 function infodata(output::Int; path::String="./",
                     fname = "output_",
-                    datatype::Any=nothing,
+                    datatype::Any=:nothing,
                     verbose::Bool=true)
 
     printtime("",verbose)
@@ -17,16 +17,16 @@ function infodata(output::Int; path::String="./",
     close(f)
 
     # check if request exists
-    if datatype == nothing
+    if datatype == :nothing
         dtype = fkeys[1]
     else
-        if datatype in fkeys
-            dtype = datatype
+        if string(datatype) in fkeys
+            dtype = string(datatype)
         else
             error("Datatype $datatype does not exist...")
         end
     end
-    println("Use datatype: ", dtype)
+    if verbose println("Use datatype: ", dtype) end
     inflink = string(dtype) * "/info"
     dataobject = JLD2.load(fpath, inflink)
 
