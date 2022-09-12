@@ -67,7 +67,7 @@ function viewdata(output::Int; path::String="./",
 
             for v in vkeys[rname]
                 vlink = rname * "/information/" * "versions/" * v
-                vdata[v] = JLD.load(fpath, vlink)
+                vdata[v] = JLD2.load(fpath, vlink)
             end
             idata["versions"] = vdata
             viewoutput[rname] = idata
