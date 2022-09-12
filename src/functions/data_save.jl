@@ -10,6 +10,8 @@ function savedata( dataobject::DataSetType;
                     merafile_version::Float64=1.,
                     verbose::Bool=true)
 
+        printtime("",verbose)
+        
         datatype, use_descriptor, descriptor_names = check_datasource(dataobject)
 
         icpu= dataobject.info.output

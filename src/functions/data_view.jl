@@ -5,7 +5,8 @@ function viewdata(output::Int; path::String="./",
                     verbose::Bool=true)
 
 
-
+    printtime("",verbose)
+    
     if verbose
         println("Mera-file Contains:")
         println()

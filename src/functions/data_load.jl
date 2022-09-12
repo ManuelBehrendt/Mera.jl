@@ -3,6 +3,8 @@ function loaddata(output::Int; path::String="./",
                     datatype::Symbol,
                     verbose::Bool=true)
 
+    printtime("",verbose)
+    
     if verbose
         println("Open Mera-file:")
         println()
