@@ -173,9 +173,9 @@ include("functions/merafile_view.jl")
 include("functions/merafile_info.jl")
 include("functions/merafile_comparefields.jl")
 
-include("functions/savedata.jl")
-include("functions/loaddata.jl")
-include("functions/viewdata.jl")
+include("functions/data_save.jl")
+include("functions/data_load.jl")
+include("functions/data_view.jl")
 # ============================================
 
 
