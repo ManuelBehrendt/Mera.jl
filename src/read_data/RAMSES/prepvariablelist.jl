@@ -426,7 +426,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         end
 
         return nvarg_list, nvarg_i_list, nvarg_corr, read_cpu, used_descriptors
-
+    end
 
 
 end
