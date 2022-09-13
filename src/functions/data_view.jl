@@ -8,19 +8,20 @@ function viewdata(output::Int; path::String="./",
 
     printtime("",verbose)
 
-    if verbose
-        println("Mera-file Contains:")
-        println()
-    end
 
     filename = outputname(fname, output) * ".jld2"
     fpath    = checkpath(path, filename)
 
+    if verbose
+        println("Mera-file $filename contains:")
+        println()
+    end
 
     if showfull
         f = jldopen(fpath, "r"; )
             printtoc(f)
         close(f)
+        println()
         println()
     end
 
