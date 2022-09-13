@@ -196,7 +196,7 @@ function getgravitydata( dataobject::InfoType,
 
         f_grav = FortranFile(gravpath)
 
-        skiplines(f_grav, 6)
+        skiplines(f_grav, 4)
 
         # Loop over levels
         for ilevel=1:lmax
