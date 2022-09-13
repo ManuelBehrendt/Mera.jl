@@ -320,9 +320,114 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
 
 
+    elseif datatype == :gravity
+        nvarg = length(dataobject.gravity_variable_list) # :epot, :ax, :ay, :az
+
+        #:level, :x, :y, :z, :id, :cpu, :epot, :ax, :ay, :az]
+        # manage user selected variables
+        #-------------------------------------
+        nvarg_list=Int[]
+        ivar=1
+        read_cpu = false # do not load cpu number by default
+        gravvar_buffer = copy(vars)
+        used_descriptors = Dict()
+
+        if gravvar_buffer == [:all]
+            nvarg_list=[1,2,3,4]
+
+            # read_cpu = true
+            if in(:cpu, gravvar_buffer) || in(:varn1, gravvar_buffer)
+             read_cpu = true
+            end
+
+        else
+
+            if in(:cpu, gravvar_buffer) || in(:varn1, gravvar_buffer)
+             read_cpu = true
+             filter!(e->e≠:cpu, gravvar_buffer)
+             filter!(e->e≠:varn1, gravvar_buffer)
+            end
+            if in(:epot, gravvar_buffer) || in(:var1, gravvar_buffer)
+             append!(nvarg_list, 1)
+             filter!(e->e≠:epot, gravvar_buffer)
+             filter!(e->e≠:var1, gravvar_buffer)
+            end
+            if in(:ax, gravvar_buffer) || in(:var2, gravvar_buffer)
+             append!(nvarg_list, 2)
+             filter!(e->e≠:ax, gravvar_buffer)
+             filter!(e->e≠:var2, gravvar_buffer)
+            end
+            if in(:ay, gravvar_buffer) || in(:var3, gravvar_buffer)
+             append!(nvarg_list, 3)
+             filter!(e->e≠:ay, gravvar_buffer)
+             filter!(e->e≠:var3, gravvar_buffer)
+            end
+            if in(:az, gravvar_buffer) || in(:var4, gravvar_buffer)
+             append!(nvarg_list, 4)
+             filter!(e->e≠:az, gravvar_buffer)
+             filter!(e->e≠:var4, gravvar_buffer)
+            end
+
+        end
+
+        if length(nvarg_list) == 0
+            error("[Mera]: Simulation vars array is empty!")
+        end
+
+        #clean for double assignment
+        nvarg_list = unique(nvarg_list)
+
+        if maximum(nvarg_list) > maximum(nvarg)
+            error("[Mera]: Simulation maximum variable=$(maximum(nvarg)) < your maximum variable=$(maximum(nvarg_list))")
+        end
+
+        # create vector to use selected gravvars
+        nvarg = dataobject.gravity_variable_list
+        nvarg_corr = zeros(Int, nvarg )
+        nvarg_i_list=[]
+        for i =1:nvarg
+            if in(i,nvarg_list)
+                nvarg_corr[i] = findall(x -> x == i, nvarg_list)[1]
+                append!(nvarg_i_list, i)
+            end
+        end
+
+        nvarg_list_strings= Symbol[]
+        if read_cpu append!(nvarg_list_strings, [:cpu]) end
+        for i in nvarg_list
+            #if !haskey(used_descriptors, i)
+                if i < 5
+                    append!(nvarg_list_strings, [Symbol("$(indices_togravvariables[i])")])
+                #elseif i > 4
+                #    append!(nvarg_list_strings, [Symbol("var$i")])
+                end
+            #else
+            #    append!(nvarg_list_strings, [used_descriptors[i]])
+            #end
+        end
 
 
-    end
+        #println("nvarg_list",nvarg_list)
+        #println("nvarg_corr",nvarg_corr)
+
+        if verbose
+            if lmax != dataobject.levelmin # if AMR
+                println("Key vars=(:level, :cx, :cy, :cz)")
+            else # if uniform grid
+                println("Key vars=(:cx, :cy, :cz)")
+            end
+
+            if read_cpu
+                println("Using var(s)=$(tuple(-1, nvarg_list...)) = $(tuple(nvarg_list_strings...)) ")
+            else
+                println("Using var(s)=$(tuple(nvarg_list...)) = $(tuple(nvarg_list_strings...)) ")
+            end
+            println()
+        end
+
+        return nvarg_list, nvarg_i_list, nvarg_corr, read_cpu, used_descriptors
+
+
 
 end
 
@@ -337,6 +442,15 @@ global indices_tovariables = SortedDict( -1 =>  "cpu",
                                           3 => "vy",
                                           4 => "vz",
                                           5 => "p")
+
+
+global indices_togravvariables = SortedDict( -1 =>  "cpu",
+                                            0 => "level",
+
+                                            1 => "epot",
+                                            2 => "ax",
+                                            3 => "ay",
+                                            4 => "az")
 
 global indices_toparticlevariables = SortedDict(
                                      -1 =>  "cpu",
