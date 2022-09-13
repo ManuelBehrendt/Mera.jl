@@ -2,11 +2,12 @@
 # check known types
 function viewdata(output::Int; path::String="./",
                     fname = "output_",
+                    showfull::Bool=false,
                     verbose::Bool=true)
 
 
     printtime("",verbose)
-    
+
     if verbose
         println("Mera-file Contains:")
         println()
@@ -15,12 +16,13 @@ function viewdata(output::Int; path::String="./",
     filename = outputname(fname, output) * ".jld2"
     fpath    = checkpath(path, filename)
 
-    #fmode = "r"
-    #f = jldopen(fpath, fmode; )
-    #    printtoc(f)
-    #    viewoutput =
-    #close(f)
 
+    if showfull
+        f = jldopen(fpath, "r"; )
+            printtoc(f)
+        close(f)
+        println()
+    end
 
 
     # get root-list with datatypes
