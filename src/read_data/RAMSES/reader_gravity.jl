@@ -40,7 +40,7 @@ function getgravitydata( dataobject::InfoType,
 
     path = dataobject.path
     overview = dataobject.grid_info
-    nvarh = dataobject.gravity_variable_list
+    nvarh = length(dataobject.gravity_variable_list)
     cpu_overview = dataobject.grid_info
 
 
