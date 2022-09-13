@@ -382,7 +382,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         end
 
         # create vector to use selected gravvars
-        nvarg = dataobject.gravity_variable_list
+        nvarg = length(dataobject.gravity_variable_list)
         nvarg_corr = zeros(Int, nvarg )
         nvarg_i_list=[]
         for i =1:nvarg
