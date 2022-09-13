@@ -362,6 +362,7 @@ mutable struct GravDataType <: DataSetType
     boxlen::Float64
     ranges::Array{Float64,1}
     selected_gravvars::Array{Int,1}
+    used_descriptors::Dict{Any,Any}
     scale::ScalesType
     GravDataType() = new()
 end
