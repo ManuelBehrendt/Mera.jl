@@ -4,15 +4,14 @@ function loaddata(output::Int; path::String="./",
                     verbose::Bool=true)
 
     printtime("",verbose)
-    
-    if verbose
-        println("Open Mera-file:")
-        println()
-    end
 
     filename = outputname(fname, output) * ".jld2"
     fpath    = checkpath(path, filename)
 
+    if verbose
+        println("Open Mera-file $filename:")
+        println()
+    end
 
     # get root-list with datatypes
     f = jldopen(fpath)
