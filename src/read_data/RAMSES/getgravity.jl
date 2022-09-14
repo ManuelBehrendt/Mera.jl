@@ -41,7 +41,7 @@ function getgravity( dataobject::InfoType;
     # decouple pos_1D/vars_1D from ElasticArray with ElasticArray.data
     if read_cpu # load also cpu number related to cell
         if isamr
-            @inbounds data = table( pos_1D[:,4].data, cpus_1D[:], pos_1D[:,1].data, pos_1D[:,2].data, pos_1D[:,3].data,
+            @inbounds data = table( pos_1D[4,:].data, cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
                      [vars_1D[nvarg_corr[i],: ].data for i in nvarg_i_list]...,
                      names=collect(names_constr), pkey=[:level, :cx, :cy, :cz], presorted = false ) #[names_constr...]
         else # if uniform grid
@@ -51,7 +51,7 @@ function getgravity( dataobject::InfoType;
         end
    else
         if isamr
-            @inbounds data = table( pos_1D[:,4].data, pos_1D[:,1].data, pos_1D[:,2].data, pos_1D[:,3].data,
+            @inbounds data = table( pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
                     [vars_1D[nvarg_corr[i],: ].data for i in nvarg_i_list]...,
                     names=collect(names_constr), pkey=[:level, :cx, :cy, :cz], presorted = false  ) #[names_constr...]
         else # if uniform grid
