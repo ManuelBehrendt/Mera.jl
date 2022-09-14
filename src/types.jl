@@ -355,7 +355,7 @@ end
 
 # exported
 mutable struct GravDataType <: DataSetType
-    data
+    data::JuliaDB.AbstractIndexedTable
     info::InfoType
     lmin::Int
     lmax::Int
