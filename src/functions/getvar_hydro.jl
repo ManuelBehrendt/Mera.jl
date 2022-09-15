@@ -2,7 +2,7 @@ function get_data(  dataobject::HydroDataType,
                     vars::Array{Symbol,1},
                     units::Array{Symbol,1},
                     direction::Symbol,
-                    center::Array{<:Real,1},
+                    center::Array{<:Any,1},
                     mask::MaskType,
                     ref_time::Real)
 
