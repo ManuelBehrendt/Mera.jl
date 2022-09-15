@@ -145,6 +145,7 @@ include("functions/getvar.jl")
 include("functions/getvar_hydro.jl")
 include("functions/getvar_particles.jl")
 include("functions/getvar_clumps.jl")
+include("functions/getvar_gravity.jl")
 # ============================================
 
 include("read_data/RAMSES/filepaths.jl")
