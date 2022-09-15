@@ -76,44 +76,43 @@ function get_data(dataobject::GravDataType,
                 #end
             end
 
-            # quantities that are derived from the variables in the data table
-            elseif i == :cellsize
-                selected_unit = getunit(dataobject, :cellsize, vars, units)
-                if isamr
-                    vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^row.level * selected_unit , dataobject.data)
-                else # if uniform grid
-                    vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , dataobject.data)
-                end
-            elseif i == :volume
-                selected_unit = getunit(dataobject, :volume, vars, units)
-                vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize) .^3 .* selected_unit)
+        # quantities that are derived from the variables in the data table
+        elseif i == :cellsize
+            selected_unit = getunit(dataobject, :cellsize, vars, units)
+            if isamr
+                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^row.level * selected_unit , dataobject.data)
+            else # if uniform grid
+                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , dataobject.data)
+            end
+        elseif i == :volume
+            selected_unit = getunit(dataobject, :volume, vars, units)
+            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize) .^3 .* selected_unit)
 
 
-            elseif i == :x
-                selected_unit = getunit(dataobject, :x, vars, units)
-                if isamr
-                    vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2 .^getvar(dataobject, :level) .-  boxlen * center[1] )  .* selected_unit
-                else # if uniform grid
-                    vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
-                end
-            elseif i == :y
-                selected_unit = getunit(dataobject, :y, vars, units)
-                if isamr
-                    vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[2] )  .* selected_unit
-                else # if uniform grid
-                    vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
-                end
-            elseif i == :z
-                selected_unit = getunit(dataobject, :z, vars, units)
-                if isamr
-                    vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[3] )  .* selected_unit
-                else # if uniform grid
-                    vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
-                end
-
+        elseif i == :x
+            selected_unit = getunit(dataobject, :x, vars, units)
+            if isamr
+                vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2 .^getvar(dataobject, :level) .-  boxlen * center[1] )  .* selected_unit
+            else # if uniform grid
+                vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
+            end
+        elseif i == :y
+            selected_unit = getunit(dataobject, :y, vars, units)
+            if isamr
+                vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[2] )  .* selected_unit
+            else # if uniform grid
+                vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
+            end
+        elseif i == :z
+            selected_unit = getunit(dataobject, :z, vars, units)
+            if isamr
+                vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[3] )  .* selected_unit
+            else # if uniform grid
+                vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
         end
+
     end
 
 
