@@ -22,7 +22,8 @@ gethydro(   dataobject::InfoType;
             smallc::Real=0.,
             check_negvalues::Bool=false,
             print_filenames::Bool=false,
-            verbose::Bool=verbose_mode )
+            verbose::Bool=verbose_mode,
+            show_progress::Bool=true  )
 ```
 #### Returns an object of type HydroDataType, containing the hydro-data table, the selected options and the simulation ScaleType and summary of the InfoType
 ```julia
@@ -54,6 +55,7 @@ julia> fieldnames(gas)
 - **`check_negvalues`:** check loaded data of "rho" and "p" on negative values; false by default
 - **`print_filenames`:** print on screen the current processed hydro file of each CPU
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`show_progress`:** print progress bar on screen
 
 ### Defined Methods - function defined for different arguments
 - gethydro( dataobject::InfoType; ...) # no given variables -> all variables loaded
@@ -115,7 +117,8 @@ function gethydro( dataobject::InfoType, var::Symbol;
                     smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode )
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
                     #, progressbar::Bool=show_progressbar)
 
     return gethydro(dataobject, vars=[var],
@@ -126,7 +129,8 @@ function gethydro( dataobject::InfoType, var::Symbol;
                     smallc=smallc,
                     check_negvalues=check_negvalues,
                     print_filenames=print_filenames,
-                    verbose=verbose)
+                    verbose=verbose,
+                    show_progress=show_progress)
 end
 
 
@@ -141,7 +145,8 @@ function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
                     smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode )
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
                     #, progressbar::Bool=show_progressbar)
 
     return gethydro(dataobject,
@@ -153,7 +158,8 @@ function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
                     smallc=smallc,
                     check_negvalues=check_negvalues,
                     print_filenames=print_filenames,
-                    verbose=verbose)
+                    verbose=verbose,
+                    show_progress=show_progress)
 end
 
 
@@ -171,7 +177,8 @@ function gethydro( dataobject::InfoType;
                     smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode )
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
                     #, progressbar::Bool=show_progressbar)
 
     printtime("Get hydro data: ", verbose)
@@ -190,11 +197,11 @@ function gethydro( dataobject::InfoType;
     if read_cpu
         vars_1D, pos_1D, cpus_1D = gethydrodata( dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, read_cpu, isamr )
+                                         print_filenames, show_progress, read_cpu, isamr )
     else
         vars_1D, pos_1D          = gethydrodata( dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, read_cpu, isamr )
+                                         print_filenames, show_progress, read_cpu, isamr )
     end
 
     # set minimum density in cells and check vor negative values
