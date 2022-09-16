@@ -1,3 +1,103 @@
+"""
+#### Read the leaf-cells of the gravity-data:
+- select variables
+- limit to a maximum level
+- limit to a spatial range
+- print the name of each data-file before reading it
+- toggle verbose mode
+
+
+```julia
+getgravity(   dataobject::InfoType;
+            lmax::Real=dataobject.levelmax,
+            vars::Array{Symbol,1}=[:all],
+            xrange::Array{<:Any,1}=[missing, missing],
+            yrange::Array{<:Any,1}=[missing, missing],
+            zrange::Array{<:Any,1}=[missing, missing],
+            center::Array{<:Any,1}=[0., 0., 0.],
+            range_unit::Symbol=:standard,
+            print_filenames::Bool=false,
+            verbose::Bool=verbose_mode,
+            show_progress::Bool=true  )
+```
+#### Returns an object of type GravDataType, containing the gravity-data table, the selected options and the simulation ScaleType and summary of the InfoType
+```julia
+return GravDataType()
+
+# get an overview of the returned fields:
+# e.g.:
+julia> info = getinfo(100)
+julia> grav  = getgravity(info)
+julia> viewfields(grav)
+#or:
+julia> fieldnames(grav)
+```
+
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
+##### Predefined/Optional Keywords:
+- **`lmax`:** the maximum level to be read from the data
+- **`var(s)`:** the selected gravity variables in arbitrary order: :all (default), :cpu, :epot, :ax, :ay, :az
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`print_filenames`:** print on screen the current processed gravity file of each CPU
+- **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`show_progress`:** print progress bar on screen
+
+### Defined Methods - function defined for different arguments
+- getgravity( dataobject::InfoType; ...) # no given variables -> all variables loaded
+- getgravity( dataobject::InfoType, var::Symbol; ...) # one given variable -> no array needed
+- getgravity( dataobject::InfoType, vars::Array{Symbol,1}; ...)  # several given variables -> array needed
+
+
+#### Examples
+```julia
+# read simulation information
+julia> info = getinfo(420)
+
+# Example 1:
+# read gravity data of all variables, full-box, all levels
+julia> grav = getgravity(info)
+
+# Example 2:
+# read gravity data of all variables up to level 8
+# data range 20x20x4 kpc; ranges are given in kpc relative to the box (here: 48 kpc) center at 24 kpc
+julia> grav = getgravity(    info,
+                          lmax=8,
+                          xrange=[-10.,10.],
+                          yrange=[-10.,10.],
+                          zrange=[-2.,2.],
+                          center=[24., 24., 24.],
+                          range_unit=:kpc )
+
+# Example 3:
+# give the center of the box by simply passing: center = [:bc] or center = [:boxcenter]
+# this is equivalent to center=[24.,24.,24.] in Example 2
+# the following combination is also possible: e.g. center=[:bc, 12., 34.], etc.
+julia> grav = getgravity(    info,
+                          lmax=8,
+                          xrange=[-10.,10.],
+                          yrange=[-10.,10.],
+                          zrange=[-2.,2.],
+                          center=[33., bc:, 10.],
+                          range_unit=:kpc )
+
+# Example 4:
+# read gravity data of the variables epot and the x-acceleration, full-box, all levels
+julia> grav = getgravity( info, [:epot, :ax] ) # use array for the variables
+
+# Example 5:
+# read gravity data of the single variable epot, full-box, all levels
+julia> grav = getgravity( info, :epot ) # no array for a single variable needed
+...
+```
+
+"""
 function getgravity( dataobject::InfoType, var::Symbol;
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
