@@ -4,6 +4,7 @@
 - limit to a maximum range
 - print the name of each data-file before reading it
 - toggle verbose mode
+- toggle progress bar
 
 
 ```julia

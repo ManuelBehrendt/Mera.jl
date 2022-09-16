@@ -7,6 +7,7 @@
 - check for negative values in density and thermal pressure
 - print the name of each data-file before reading it
 - toggle verbose mode
+- toggle progress bar
 
 
 ```julia
