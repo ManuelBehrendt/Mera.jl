@@ -1,3 +1,45 @@
+function getgravity( dataobject::InfoType, var::Symbol;
+                    lmax::Real=dataobject.levelmax,
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    print_filenames::Bool=false,
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
+
+    return getgravity(dataobject, vars=[var],
+                    lmax=lmax,
+                    xrange=xrange, yrange=yrange, zrange=zrange, center=center,
+                    range_unit=range_unit,
+                    print_filenames=print_filenames,
+                    verbose=verbose,
+                    show_progress=show_progress)
+end
+
+function getgravity( dataobject::InfoType, vars::Array{Symbol,1};
+                    lmax::Real=dataobject.levelmax,
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    print_filenames::Bool=false,
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
+
+    return getgravity(dataobject,
+                    vars=vars,
+                    lmax=lmax,
+                    xrange=xrange, yrange=yrange, zrange=zrange, center=center,
+                    range_unit=range_unit,
+                    print_filenames=print_filenames,
+                    verbose=verbose,
+                    show_progress=show_progress)
+end
+
+
 function getgravity( dataobject::InfoType;
                       lmax::Real=dataobject.levelmax,
                       vars::Array{Symbol,1}=[:all],
