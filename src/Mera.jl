@@ -196,6 +196,7 @@ include("functions/projection_particles.jl")
 # Subregion
 include("functions/subregion.jl")
 include("functions/subregion_hydro.jl")
+include("functions/subregion_gravity.jl")
 include("functions/subregion_particles.jl")
 include("functions/subregion_clumps.jl")
 # ============================================
