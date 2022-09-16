@@ -34,7 +34,7 @@
 - select between mass (default) and volume weighting
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
-
+- toggle progress bar
 
 
 ```julia
@@ -52,7 +52,8 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 data_center::Array{<:Any,1}=[missing, missing, missing],
                 data_center_unit::Symbol=:standard,
                 ref_time::Real=dataobject.info.time,
-                verbose::Bool=verbose_mode)
+                verbose::Bool=verbose_mode,
+                show_progress::Bool=true )
 
 return HydroMapsType
 
@@ -77,6 +78,7 @@ return HydroMapsType
 - **`direction`:** select between: :x, :y, :z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 - **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
+- **`show_progress`:** print progress bar on screen
 
 ### Defined Methods - function defined for different arguments
 
@@ -106,7 +108,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode)
+                            verbose::Bool=verbose_mode,
+                            show_progress::Bool=true )
 
     return   create_projection(   dataobject, vars, units=units,
                                 #parttypes=parttypes,
@@ -123,7 +126,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 data_center=data_center,
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
-                                verbose=verbose)
+                                verbose=verbose,
+                                show_progress=show_progress)
 end
 
 
@@ -143,7 +147,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode)
+                            verbose::Bool=verbose_mode,
+                            show_progress::Bool=true )
 
     return   create_projection(   dataobject, vars, units=units,
                                 #parttypes=parttypes,
@@ -160,7 +165,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 data_center=data_center,
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
-                                verbose=verbose)
+                                verbose=verbose,
+                                show_progress=show_progress)
 end
 
 
@@ -180,7 +186,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode)
+                            verbose::Bool=verbose_mode,
+                            show_progress::Bool=true )
 
     return   create_projection(   dataobject, [var], units=[unit],
                                 #parttypes=parttypes,
@@ -197,7 +204,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 data_center=data_center,
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
-                                verbose=verbose)
+                                verbose=verbose,
+                                show_progress=show_progress)
 end
 
 
@@ -217,7 +225,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode)
+                            verbose::Bool=verbose_mode,
+                            show_progress::Bool=true )
 
     return   create_projection(   dataobject, [var], units=[unit],
                                 #parttypes=parttypes,
@@ -234,7 +243,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 data_center=data_center,
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
-                                verbose=verbose)
+                                verbose=verbose,
+                                show_progress=show_progress)
 end
 
 
@@ -253,7 +263,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode)
+                            verbose::Bool=verbose_mode,
+                            show_progress::Bool=true )
 
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
                                 #parttypes=parttypes,
@@ -270,7 +281,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 data_center=data_center,
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
-                                verbose=verbose)
+                                verbose=verbose,
+                                show_progress=show_progress)
 end
 
 
@@ -290,7 +302,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode)
+                            verbose::Bool=verbose_mode,
+                            show_progress::Bool=true )
 
 
     printtime("", verbose)
@@ -484,7 +497,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     maps = SortedDict( )
     maps_mode = SortedDict( )
     maps_unit = SortedDict( )
-    @showprogress 1 "" for i_var in selected_vars #dependencies_part_list
+
+    if show_progress p = Progress(length(selected_vars)) end
+    for i_var in selected_vars #dependencies_part_list @showprogress 1 ""
         #println(i_var)
 
         if !in(i_var, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
@@ -707,7 +722,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
             end
 
         end
-    end
+
+        if show_progress next!(p, showvalues = [(:Nvars, i_var)]) end # ProgressMeter
+    end #for
 
 
 
