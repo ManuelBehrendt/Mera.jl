@@ -1,7 +1,7 @@
 """
 ### Cutout sub-regions of the data base of DataSetType
 - select shape of a region
-- select size of a region (w/o intersecting cells)
+- select size of a region (with or w/o intersecting cells)
 - give the spatial center (with units) of the data relative to the full box
 - relate the coordinates to a direction (x,y,z)
 - inverse the selected region
