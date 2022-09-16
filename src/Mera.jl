@@ -30,8 +30,6 @@ using DataStructures
 using ElasticArrays
 using StructArrays
 using ProgressMeter
-ProgressMeter.ijulia_behavior(:clear)
-
 using StatsBase
 using OnlineStats
 using HDF5
