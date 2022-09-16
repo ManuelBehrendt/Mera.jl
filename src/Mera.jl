@@ -143,9 +143,9 @@ include("functions/histogram_sfr.jl")
 # Get variables/quantities
 include("functions/getvar.jl")
 include("functions/getvar_hydro.jl")
+include("functions/getvar_gravity.jl")
 include("functions/getvar_particles.jl")
 include("functions/getvar_clumps.jl")
-include("functions/getvar_gravity.jl")
 # ============================================
 
 include("read_data/RAMSES/filepaths.jl")
@@ -204,6 +204,7 @@ include("functions/subregion_clumps.jl")
 # Shellregion
 include("functions/shellregion.jl")
 include("functions/shellregion_hydro.jl")
+include("functions/shellregion_gravity.jl")
 include("functions/shellregion_particles.jl")
 include("functions/shellregion_clumps.jl")
 # ============================================

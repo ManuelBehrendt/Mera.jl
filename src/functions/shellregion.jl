@@ -53,7 +53,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
     # subregion = wrapper over all subregion shell functions
 
     if shape == :cylinder || shape == :disc
-        if typeof(dataobject) == HydroDataType
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return shellregioncylinder(dataobject,
                                         radius=radius,
                                         height=height,
@@ -75,7 +75,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
         end
 
     elseif shape == :sphere
-        if typeof(dataobject) == HydroDataType
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return shellregionsphere(  dataobject,
                                         radius=radius,
                                         center=center,
