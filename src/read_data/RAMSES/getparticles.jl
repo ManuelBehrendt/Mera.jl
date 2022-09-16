@@ -18,7 +18,8 @@ getparticles(       dataobject::InfoType;
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode)
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
 ```
 #### Returns an object of type PartDataType, containing the particle-data table, the selected and the simulation ScaleType and summary of the InfoType
 ```julia
@@ -49,6 +50,7 @@ julia> fieldnames(particles)
 - **`presorted`:** presort data according to the key vars (by default)
 - **`print_filenames`:** print on screen the current processed particle file of each CPU
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`show_progress`:** print progress bar on screen
 
 ### Defined Methods - function defined for different arguments
 - getparticles( dataobject::InfoType; ...) # no given variables -> all variables loaded
@@ -107,7 +109,8 @@ function getparticles( dataobject::InfoType, var::Symbol;
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode)
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
 
     return  getparticles( dataobject, vars=[var],
                         lmax=lmax,
@@ -119,7 +122,8 @@ function getparticles( dataobject::InfoType, var::Symbol;
                         range_unit=range_unit,
                         presorted=presorted,
                         print_filenames=print_filenames,
-                        verbose=verbose)
+                        verbose=verbose,
+                        show_progress=show_progress)
 end
 
 
@@ -134,7 +138,8 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode)
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
 
     return  getparticles( dataobject, vars=vars,
                                         lmax=lmax,
@@ -146,7 +151,8 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                                         range_unit=range_unit,
                                         presorted=presorted,
                                         print_filenames=print_filenames,
-                                        verbose=verbose)
+                                        verbose=verbose,
+                                        show_progress=show_progress)
 end
 
 function getparticles( dataobject::InfoType;
@@ -160,7 +166,8 @@ function getparticles( dataobject::InfoType;
                     range_unit::Symbol=:standard,
                     presorted::Bool=true,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode)
+                    verbose::Bool=verbose_mode,
+                    show_progress::Bool=true )
 
 
     printtime("Get particle data: ", verbose)
@@ -184,18 +191,18 @@ function getparticles( dataobject::InfoType;
     if read_cpu
         if dataobject.descriptor.pversion == 0
             pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                                         print_filenames, verbose, read_cpu)
+                                         print_filenames, show_progress, verbose, read_cpu)
         elseif dataobject.descriptor.pversion > 0
             pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                                         print_filenames, verbose, read_cpu)
+                                         print_filenames, show_progress, verbose, read_cpu)
         end
     else
         if dataobject.descriptor.pversion == 0
             pos_1D, vars_1D, identity_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                                         print_filenames, verbose, read_cpu)
+                                         print_filenames, show_progress, verbose, read_cpu)
         elseif dataobject.descriptor.pversion > 0
             pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata(  dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                                         print_filenames, verbose, read_cpu)
+                                         print_filenames, show_progress, verbose, read_cpu)
         end
     end
 

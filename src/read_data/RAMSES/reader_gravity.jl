@@ -5,6 +5,7 @@ function getgravitydata( dataobject::InfoType,
                         lmax::Real,
                         ranges::Array{Float64,1},
                         print_filenames::Bool,
+                        show_progress::Bool,
                         read_cpu::Bool,
                         read_level::Bool)
 
@@ -164,7 +165,8 @@ function getgravitydata( dataobject::InfoType,
     var_level = 0
     #get_var_totsize = 0
 
-    @showprogress 1 ""  for k=1:ncpu_read #Reading files...
+    if show_progress p = Progress(ncpu_read) end
+    for k=1:ncpu_read #Reading files... @showprogress 1 ""
         icpu=cpu_list[k]
         #println("icpu ",icpu)
 
@@ -292,7 +294,7 @@ function getgravitydata( dataobject::InfoType,
         close(f_amr)
         close(f_grav)
 
-
+        if show_progress next!(p, showvalues = [(:Nfiles, k)]) end # ProgressMeter
     end # End loop over cpu files
 
     if read_cpu
