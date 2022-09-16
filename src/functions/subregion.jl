@@ -69,7 +69,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
 
     # subregion = wrapper over all subregion functions
     if shape == :cuboid
-        if typeof(dataobject) == HydroDataType
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return subregioncuboid(dataobject,
                         xrange=xrange, yrange=yrange, zrange=zrange,
                         center=center,
@@ -87,7 +87,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
         end
 
     elseif shape == :cylinder || shape == :disc
-        if typeof(dataobject) == HydroDataType
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return subregioncylinder(dataobject,
                             radius=radius,
                             height=height,
@@ -109,7 +109,7 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
         end
 
     elseif shape == :sphere
-        if typeof(dataobject) == HydroDataType
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return subregionsphere(dataobject,
                             radius=radius,
                             center=center,
