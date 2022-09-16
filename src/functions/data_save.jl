@@ -196,10 +196,10 @@ function check_datasource(dataobject::DataSetType)
         datatype = :hydro
         use_descriptor = dataobject.info.descriptor.usehydro
         descriptor_names = dataobject.info.descriptor.hydro
-    #elseif typeof(dataobject) == GravDataType
-    #    datatype = :gravity
-    #    use_descriptor = dataobject.info.descriptor.usegravity
-    #    descriptor_names = dataobject.info.descriptor.gravity
+    elseif typeof(dataobject) == GravDataType
+        datatype = :gravity
+        use_descriptor = dataobject.info.descriptor.usegravity
+        descriptor_names = dataobject.info.descriptor.gravity
     elseif typeof(dataobject) == PartDataType
         datatype = :particles
         use_descriptor = dataobject.info.descriptor.useparticles
