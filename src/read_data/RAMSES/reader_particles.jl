@@ -5,6 +5,7 @@ function getparticledata( dataobject::InfoType,
                         lmax::Real,
                         ranges::Array{Float64,1},
                         print_filenames::Bool,
+                        show_progress::Bool,
                         verbose::Bool,
                         read_cpu::Bool )
 
@@ -128,7 +129,8 @@ function getparticledata( dataobject::InfoType,
                                      stars=stars,
                                      read_cpu=read_cpu,
                                      verbose=verbose,
-                                     print_filenames=print_filenames )
+                                     print_filenames=print_filenames,
+                                     show_progress=show_progress )
 
 
 
@@ -144,7 +146,8 @@ function getparticledata( dataobject::InfoType,
                                      stars=stars,
                                      read_cpu=read_cpu,
                                      verbose=verbose,
-                                     print_filenames=print_filenames )
+                                     print_filenames=print_filenames,
+                                     show_progress=show_progress )
 
 
 
@@ -161,7 +164,8 @@ function getparticledata( dataobject::InfoType,
                                      stars=stars,
                                      read_cpu=read_cpu,
                                      verbose=verbose,
-                                     print_filenames=print_filenames )
+                                     print_filenames=print_filenames,
+                                     show_progress=show_progress )
 
             return pos_1D, vars_1D, identity_1D, levels_1D
 
@@ -175,7 +179,8 @@ function getparticledata( dataobject::InfoType,
                                      stars=stars,
                                      read_cpu=read_cpu,
                                      verbose=verbose,
-                                     print_filenames=print_filenames )
+                                     print_filenames=print_filenames,
+                                     show_progress=show_progress )
 
             return pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D
         end # if pversion
@@ -195,7 +200,8 @@ function readpart(dataobject::InfoType;
                             stars::Bool=true,
                             read_cpu::Bool=false,
                             verbose::Bool=verbose_mode,
-                            print_filenames::Bool=false)
+                            print_filenames::Bool=false,
+                            show_progress::Bool=true)
 
     boxlen = dataobject.boxlen
     path = dataobject.path
@@ -224,7 +230,8 @@ function readpart(dataobject::InfoType;
     #ngrida=0
     parti=Int32(0) # particle iterator
 
-    @showprogress 1 "Reading data..." for k=1:ncpu_read
+    if show_progress p = Progress(ncpu_read) end
+    for k=1:ncpu_read # @showprogress 1 "Reading data..."
 
        icpu=cpu_list[k]
 
@@ -347,6 +354,7 @@ function readpart(dataobject::InfoType;
         end
         close(f_part)
 
+        if show_progress next!(p, showvalues = [(:Nfiles, k)]) end # ProgressMeter
     end #for
 
     if read_cpu

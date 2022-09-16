@@ -7,8 +7,8 @@ function getgravity( dataobject::InfoType;
                       center::Array{<:Any,1}=[0., 0., 0.],
                       range_unit::Symbol=:standard,
                       print_filenames::Bool=false,
-                      verbose::Bool=verbose_mode )
-                        #, progressbar::Bool=show_progressbar)
+                      verbose::Bool=verbose_mode,
+                      show_progress::Bool=true )
 
     printtime("Get gravity data: ", verbose)
     checkfortype(dataobject, :gravity)
@@ -27,11 +27,11 @@ function getgravity( dataobject::InfoType;
     if read_cpu
         vars_1D, pos_1D, cpus_1D = getgravitydata( dataobject, length(nvarg_list),
                                          nvarg_corr, lmax, ranges,
-                                         print_filenames, read_cpu, isamr  )
+                                         print_filenames, show_progress, read_cpu, isamr  )
     else
         vars_1D, pos_1D          = getgravitydata( dataobject, length(nvarg_list),
                                          nvarg_corr, lmax, ranges,
-                                         print_filenames, read_cpu, isamr  )
+                                         print_filenames, show_progress, read_cpu, isamr  )
     end
 
     # prepare column names for the data table
