@@ -1,7 +1,7 @@
 """
 ### Cutout sub-regions of the data base of DataSetType
 - select shape of a shell-region
-- select size of a region (w/o intersecting cells)
+- select size of a region (with or w/o intersecting cells)
 - give the spatial center (with units) of the data relative to the full box
 - relate the coordinates to a direction (x,y,z)
 - inverse the selected region
@@ -22,7 +22,7 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
 #### Arguments
 ##### Required:
 - **`dataobject`:** needs to be of type: "DataSetType"
-- **`shape`:** select between region shapes: :cuboid, :cylinder/:disc, :sphere
+- **`shape`:** select between region shapes: :cylinder/:disc, :sphere
 ##### Predefined/Optional Keywords:
 **For cylindrical shell-region, related to a given center:**
 - **`radius`:** the inner and outer radius of the shell in units given by argument `range_unit` and relative to the given `center`
