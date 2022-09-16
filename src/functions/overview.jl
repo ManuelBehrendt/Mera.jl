@@ -540,6 +540,114 @@ end
 
 
 """
+todo: needs to be tested
+### Get the total epot and min/max value of each variable in the database per level
+
+```julia
+function dataoverview(dataobject::GravDataType, verbose::Bool=true)
+function dataoverview(dataobject::GravDataType; verbose::Bool=true)
+
+return a JuliaDB table
+```
+"""
+function dataoverview(dataobject::GravDataType, verbose::Bool)
+    return dataoverview(dataobject, verbose=verbose)
+end
+
+function dataoverview(dataobject::GravDataType; verbose::Bool=true)
+
+    nvarh = length(dataobject.info.gravity_variable_list)
+    lmin = dataobject.lmin
+    lmax = dataobject.lmax
+    isamr = checkuniformgrid(dataobject, lmax)
+
+    cells_tot = 0
+    cells_masstot = 0
+    epot_var = :epot
+    skip_vars = [:cpu, :level, :cx, :cy, :cz]
+
+    if dataobject.info.descriptor.usegravity == true
+        if haskey(dataobject.used_descriptors, 1)
+            density_var = dataobject.used_descriptors[1]
+        end
+    end
+    names_constr = [Symbol("level")]
+    fn = propertynames(dataobject.data.columns)
+    for i in fn
+        if !in(i, skip_vars)
+            if i == epot_var
+                append!(names_constr, [Symbol("epot_tot")] )
+            end
+            append!(names_constr, [Symbol("$(i)_min")] )
+            append!(names_constr, [Symbol("$(i)_max")] )
+
+        end
+    end
+
+
+
+    cells = Array{Any,2}(undef, (dataobject.lmax - dataobject.lmin + 1,length(names_constr) ) )
+    if verbose println("Calculating...") end
+    @showprogress 1 "" for ilevel=lmin:lmax
+        cell_iterator = 1
+
+        if isamr
+            filtered_level = filter(p->p.level==ilevel, dataobject.data )
+        else # if uniform grid
+            filtered_level = dataobject.data
+        end
+
+        cells[Int(ilevel-lmin+1),cell_iterator] = ilevel
+        cell_iterator= cell_iterator + 1
+
+        for ifn in fn
+            if !in(ifn, skip_vars)
+                if ifn == epot_var
+                    cells_msum = sum(select(filtered_level , epot_var))
+                    #todo: introduce humanize for mass
+                    #cells_masstot = cells_masstot + cells_msum
+                    cells[Int(ilevel-lmin+1),cell_iterator] = cells_msum
+                    cell_iterator= cell_iterator + 1
+                    if length(select(filtered_level, epot_var)) != 0
+                        epot_minmax = reduce((min, max), filtered_level, select=epot_var)
+                        epotmin= epot_minmax.min
+                        epotmax= epot_minmax.max
+                    else
+                        epotmin= 0.
+                        epotmax= 0.
+                    end
+                    cells[Int(ilevel-lmin+1),cell_iterator] = epotmin
+                    cell_iterator= cell_iterator + 1
+                    cells[Int(ilevel-lmin+1),cell_iterator] = epotmax
+                    cell_iterator= cell_iterator + 1
+
+                else
+                    if length(select(filtered_level, ifn)) != 0
+                        value_minmax = reduce((min, max), filtered_level, select=ifn)
+                        valuemin = value_minmax.min
+                        valuemax = value_minmax.max
+                    else
+                        valuemin = 0.
+                        valuemax = 0.
+                    end
+                    cells[Int(ilevel-lmin+1),cell_iterator] = valuemin
+                    cell_iterator= cell_iterator + 1
+                    cells[Int(ilevel-lmin+1),cell_iterator] = valuemax
+                    cell_iterator= cell_iterator + 1
+                end
+            end
+        end
+
+    end
+
+
+    grav_overview_table = table( [cells[:, i ] for i = 1:length(names_constr)]..., names=[names_constr...] )
+    return grav_overview_table
+end
+
+
+
+"""
 ### Get the extrema of each variable in the database
 
 ```julia
