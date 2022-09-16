@@ -291,6 +291,74 @@ function amroverview(dataobject::HydroDataType; verbose::Bool=true)
 end
 
 
+"""
+### Get the number of cells and/or the CPUs per level
+```julia
+function overview_amr(dataobject::GravDataType, verbose::Bool=true)
+function overview_amr(dataobject::GravDataType; verbose::Bool=true)
+
+return a JuliaDB table
+```
+"""
+function amroverview(dataobject::GravDataType, verbose::Bool)
+    amroverview(dataobject, verbose=verbose)
+end
+
+function amroverview(dataobject::GravDataType; verbose::Bool=true)
+
+    checkforAMR(dataobject)
+
+    # check if cpu column exists
+    fn = propertynames(dataobject.data.columns)
+    cpu_col = false
+    Ncols = 2
+    if  in(Symbol("cpu"), fn)
+        cpu_col = true
+        Ncols = 3
+    end
+    cells = zeros(Int, dataobject.lmax - dataobject.lmin + 1, Ncols)
+    cellsize = zeros(Float64, dataobject.lmax - dataobject.lmin + 1,1)
+
+    if verbose println("Counting...") end
+    @showprogress 1 "" for ilevel=dataobject.lmin:dataobject.lmax
+        if cpu_col
+         cpus_ilevel = length( unique( select( filter(p->p.level==ilevel, select(dataobject.data, (:level, :cpu) ) ), :cpu) ) )
+         cells[Int(ilevel-dataobject.lmin+1),3] = cpus_ilevel
+        end
+
+        cells[Int(ilevel-dataobject.lmin+1),1] = ilevel
+        cellsize[Int(ilevel-dataobject.lmin+1)] = dataobject.boxlen / 2^ilevel
+    end
+
+    cells_per_level = fit!(CountMap(Int), select(dataobject.data, (:level)) )
+    #Nlevels = length(cells_per_level.value.keys)
+    #for ilevel=1:(dataobject.lmax-dataobject.lmin)
+
+        #if ilevel <= Nlevels
+        for (ilevel,j) in enumerate(cells_per_level.value.keys)
+
+                cells[j-dataobject.lmin+1,2] = cells_per_level.value.vals[ilevel]
+            #else
+            #    cells[ilevel,2] = 0.
+
+        end
+    #end
+
+    if cpu_col
+        amr_grav_table = table(cells[:,1], cells[:,2], cellsize[:], cells[:,3], names=[:level, :cells, :cellsize, :cpus])
+    else
+        amr_grav_table = table(cells[:,1], cells[:,2], cellsize[:], names=[:level, :cells, :cellsize])
+    end
+
+    return amr_grav_table
+
+end
+
+
+
+
+
+
 
 """
 ### Get the number of particles and/or the CPUs per level
