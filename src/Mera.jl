@@ -173,12 +173,14 @@ include("read_data/RAMSES/getclumps.jl")
 
 
 # Mera files
+# old: JLD format
 include("functions/merafile_save.jl")
 include("functions/merafile_read.jl")
 include("functions/merafile_view.jl")
 include("functions/merafile_info.jl")
 include("functions/merafile_comparefields.jl")
 
+# new: JLD2 format
 include("functions/data_save.jl")
 include("functions/data_load.jl")
 include("functions/data_view.jl")
