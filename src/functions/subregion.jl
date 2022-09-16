@@ -51,7 +51,6 @@ subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
 
 
 """
-
 function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     xrange::Array{<:Any,1}=[missing, missing],  # cuboid
     yrange::Array{<:Any,1}=[missing, missing],  # cuboid
