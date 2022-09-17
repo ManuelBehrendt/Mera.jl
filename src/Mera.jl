@@ -35,6 +35,7 @@ using OnlineStats
 using HDF5
 
 using JLD2, CodecZlib, CodecBzip2
+using TimerOutputs
 
 export
 
