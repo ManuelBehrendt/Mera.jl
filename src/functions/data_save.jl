@@ -17,7 +17,7 @@ function savedata( dataobject::DataSetType;
         icpu= dataobject.info.output
         filename = outputname(fname, icpu) * ".jld2"
         fpath    = checkpath(path, filename)
-        fexist, wdata, jld2mode = check_file_mode(fmode, datatype, path, filename)
+        fexist, wdata, jld2mode = check_file_mode(fmode, datatype, path, filename, verbose)
         ctype = check_compression(compress, wdata)
         column_names = propertynames(dataobject.data.columns)
 
@@ -127,8 +127,8 @@ function outputname(fname::String, icpu::Int)
 end
 
 
-function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::String)
-    println()
+function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::String, verbose::Bool)
+    if verbose println() end
 
     jld2mode = ""
     if fmode in [nothing]
@@ -145,14 +145,14 @@ function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::
     end
 
 
-    if !isfile(fullpath) && wdata
+    if !isfile(fullpath) && wdata && verbose
         println("Create file: ", fname)
         fexist = false
-    elseif !wdata && !isfile(fullpath)
+    elseif !wdata && !isfile(fullpath) && verbose
         println("Not existing file: ", fname)
         fexist = false
     else
-        println("Existing file: ", fname)
+        println("Existing file: ", fname) && verbose
         fexist = true
     end
 
