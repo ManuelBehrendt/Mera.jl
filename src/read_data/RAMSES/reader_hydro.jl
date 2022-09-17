@@ -10,7 +10,7 @@ function gethydrodata( dataobject::InfoType,
                         read_cpu::Bool,
                         read_level::Bool)
 
-    println("Reading data...")
+    if show_progress println("Reading data...") end
 # Narraysize::Int,
 
     kind = Float64 #data type
