@@ -152,7 +152,7 @@ function check_file_mode(fmode::Any, datatype::Symbol, fullpath::String, fname::
         println("Not existing file: ", fname)
         fexist = false
     else
-        println("Existing file: ", fname) && verbose
+        if verbose println("Existing file: ", fname) end
         fexist = true
     end
 
