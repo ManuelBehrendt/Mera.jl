@@ -24,17 +24,17 @@ function infodata(output::Int; path::String="./",
             find_dt_flag = false
         end
 
-        if "particles" in keys && find_dt_flag
+        if "particles" in fkeys && find_dt_flag
             dtype = "particles"
             find_dt_flag = false
         end
 
-        if "clumps" in keys && find_dt_flag
+        if "clumps" in fkeys && find_dt_flag
             dtype = "clumps"
             find_dt_flag = false
         end
 
-        if "gravity" in keys && find_dt_flag
+        if "gravity" in fkeys && find_dt_flag
             dtype = "gravity"
             find_dt_flag = false
         end
