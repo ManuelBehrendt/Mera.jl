@@ -18,15 +18,28 @@ function infodata(output::Int; path::String="./",
 
     # check if request exists
     if datatype == :nothing
-        if "hydro" in fkeys
+        find_dt_flag = true
+        if "hydro" in fkeys && find_dt_flag
             dtype = "hydro"
-        elseif "particles" in keys
+            find_dt_flag = false
+        end
+
+        if "particles" in keys && find_dt_flag
             dtype = "particles"
-        elseif "clumps" in keys
+            find_dt_flag = false
+        end
+
+        if "clumps" in keys && find_dt_flag
             dtype = "clumps"
-        elseif "gravity" in keys
+            find_dt_flag = false
+        end
+
+        if "gravity" in keys && find_dt_flag
             dtype = "gravity"
-        else
+            find_dt_flag = false
+        end
+
+        if find_dt_flag == false
             error("No datatype found...")
         end
     else
