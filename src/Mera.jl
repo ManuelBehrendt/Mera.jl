@@ -90,6 +90,7 @@ export
 
 #
     projection,
+    slice,
     remap,
     subregion,
     shellregion,
@@ -193,6 +194,7 @@ include("functions/data_convert.jl")
 
 # projection, slice
 include("functions/projection.jl")
+include("functions/slice.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_particles.jl")
 # ============================================
