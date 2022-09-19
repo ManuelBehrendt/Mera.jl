@@ -235,7 +235,7 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1};
         range_unit=range_unit,
         data_center=dcenter,
         data_center_unit=data_center_unit,
-        verbose=verbose)
+        verbose=verbose,
         show_progress=show_progress)
 
     return proj
