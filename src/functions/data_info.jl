@@ -39,7 +39,7 @@ function infodata(output::Int; path::String="./",
             find_dt_flag = false
         end
 
-        if find_dt_flag == false
+        if find_dt_flag
             error("No datatype found...")
         end
     else
