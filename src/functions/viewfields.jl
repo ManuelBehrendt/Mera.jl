@@ -51,6 +51,21 @@ end
 
 
 
+function viewfields(object::ArgumentsType)
+
+    list_field = propertynames(object)
+
+    println()
+    printstyled("[Mera]: Fields to use as arguments in functions\n", bold=true, color=:normal)
+    printstyled("=======================================================================\n", bold=true, color=:normal)
+    for i=list_field
+        #fname = fieldname(field, i)
+        println(i, "\t= ", getfield(object, i)) #, "\t\t", "[",typeof(getfield(object, i)),"]")
+    end
+    println()
+    return
+end
+
 
 function viewfields(object::ScalesType)
 
