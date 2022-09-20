@@ -510,30 +510,30 @@ end
 """
 Mutable Struct: Contains fields to use as arguments in functions
 """
-mutable struct ArgumentsType
-    lmax::Real
+Base.@kwdef mutable struct ArgumentsType
 
-    xrange::Array{<:Any,1}
-    yrange::Array{<:Any,1}
-    zrange::Array{<:Any,1}
+    lmax::Union{Real, Missing}              = missing
 
-    radius::Array{<:Real,1}
-    height::Real
-    direction::Symbol
+    xrange::Union{Array{<:Any,1}, Missing}  = missing
+    yrange::Union{Array{<:Any,1}, Missing}  = missing
+    zrange::Union{Array{<:Any,1}, Missing}  = missing
 
-    plane::Symbol
-    plane_ranges::Array{<:Any,1}
-    thickness::Real
-    position::Real
+    radius::Union{Array{<:Real,1}, Missing} = missing
+    height::Union{Real, Missing}            = missing
+    direction::Union{Symbol, Missing}       = missing
 
-    center::Array{<:Any,1}
+    plane::Union{Symbol, Missing}           = missing
+    plane_ranges::Union{Array{<:Any,1}, Missing}  = missing
+    thickness::Union{Real, Missing}         = missing
+    position::Union{Real, Missing}          = missing
 
-    range_unit::Symbol
-    data_center::Array{<:Any,1}
-    data_center_unit::Symbol
+    center::Union{Array{<:Any,1}, Missing}  = missing
 
-    verbose::Bool
-    show_progress::Bool
+    range_unit::Union{Symbol, Missing} = missing
+    data_center::Union{Array{<:Any,1}, Missing} = missing
+    data_center_unit::Union{Symbol, Missing} = missing
 
-    ArgumentsType() = new()
+    verbose::Union{Bool, Missing}           = true
+    show_progress::Union{Bool, Missing}     = true
+
 end
