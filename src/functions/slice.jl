@@ -37,8 +37,8 @@ function slice( dataobject::DataSetType, var::Symbol;
                     range_unit=range_unit,
                     data_center=data_center,
                     data_center_unit=data_center_unit,
-                    verbose=verbose)
-                    #show_progress=show_progress)
+                    verbose=verbose,
+                    show_progress=show_progress)
 end
 
 function slice( dataobject::DataSetType, var::Symbol, unit::Symbol;
@@ -74,8 +74,8 @@ function slice( dataobject::DataSetType, var::Symbol, unit::Symbol;
                     range_unit=range_unit,
                     data_center=data_center,
                     data_center_unit=data_center_unit,
-                    verbose=verbose)
-                    #show_progress=show_progress)
+                    verbose=verbose,
+                    show_progress=show_progress)
 end
 
 
@@ -112,8 +112,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Sym
                     range_unit=range_unit,
                     data_center=data_center,
                     data_center_unit=data_center_unit,
-                    verbose=verbose)
-                    #show_progress=show_progress)
+                    verbose=verbose,
+                    show_progress=show_progress)
 end
 
 
@@ -150,8 +150,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
             range_unit=range_unit,
             data_center=data_center,
             data_center_unit=data_center_unit,
-            verbose=verbose)
-            #show_progress=show_progress)
+            verbose=verbose,
+            show_progress=show_progress)
 
 end
 
@@ -173,8 +173,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=true)
-                        #show_progress::Bool=true)
+                        verbose::Bool=true,
+                        show_progress::Bool=true)
 
 
     # convert plane, plane_ranges, position, thickness, data_center(2D)
@@ -235,8 +235,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1};
         range_unit=range_unit,
         data_center=dcenter,
         data_center_unit=data_center_unit,
-        verbose=verbose)
-        #show_progress=show_progress)
+        verbose=verbose,
+        show_progress=show_progress)
 
     return proj
 end
