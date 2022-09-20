@@ -5,18 +5,20 @@
 - give the spatial center (with units) of the data relative to the full box
 - relate the coordinates to a direction (x,y,z)
 - inverse the selected region
+- pass a struct with arguments (myargs)
 
 ```julia
 shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             radius::Array{<:Real,1}=[0.,0.],  # cylinder, sphere;
             height::Real=0.,                  # cylinder
-            direction::Symbol=:z,                # cylinder
+            direction::Symbol=:z,             # cylinder
 
             center::Array{<:Any,1}=[0., 0., 0.],   # all
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
-            verbose::Bool=verbose_mode)             # all
+            verbose::Bool=verbose_mode,             # all
+            myargs::ArgumentsType=ArgumentsType() ) # all
 ```
 
 #### Arguments
@@ -38,20 +40,32 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
 - **`inverse`:** inverse the region selection = get the data outside of the region
 - **`cell`:** take intersecting cells of the region boarder into account (true) or only the cells-centers within the selected region (false)
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of radius, height, direction, center, range_unit, verbose
+
+
 """
 function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             radius::Array{<:Real,1}=[0.,0.],  # cylinder, sphere;
             height::Real=0.,                  # cylinder
-            direction::Symbol=:z,                # cylinder
+            direction::Symbol=:z,             # cylinder
 
             center::Array{<:Any,1}=[0., 0., 0.],   # all
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
-            verbose::Bool=verbose_mode)             # all
+            verbose::Bool=verbose_mode,             # all
+            myargs::ArgumentsType=ArgumentsType() ) # all
+
+    # take values from myargs if given
+    if !(myargs.direction     === missing)     direction = myargs.direction end
+    if !(myargs.radius        === missing)        radius = myargs.radius end
+    if !(myargs.height        === missing)        height = myargs.height end
+    if !(myargs.center        === missing)        center = myargs.center end
+    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+
 
     # subregion = wrapper over all subregion shell functions
-
     if shape == :cylinder || shape == :disc
         if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return shellregioncylinder(dataobject,
