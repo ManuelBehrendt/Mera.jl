@@ -162,10 +162,6 @@ function getgravity( dataobject::InfoType;
                       show_progress::Bool=true,
                       myargs::ArgumentsType=ArgumentsType()  )
 
-    printtime("Get gravity data: ", verbose)
-    checkfortype(dataobject, :gravity)
-    checklevelmax(dataobject, lmax)
-    isamr = checkuniformgrid(dataobject, lmax)
 
     # take values from myargs if given
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
@@ -176,6 +172,11 @@ function getgravity( dataobject::InfoType;
     if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+
+    printtime("Get gravity data: ", verbose)
+    checkfortype(dataobject, :gravity)
+    checklevelmax(dataobject, lmax)
+    isamr = checkuniformgrid(dataobject, lmax)
 
     # create variabe-list and vector-mask (nvarg_corr) for getgravitydata-function
     # print selected variables on screen

@@ -244,11 +244,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    printtime("", verbose)
-
-    lmin = dataobject.lmin
-    #lmax = dataobject.lmax
-
     # take values from myargs if given
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.direction     === missing)     direction = myargs.direction end
@@ -262,6 +257,10 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    printtime("", verbose)
+
+    lmin = dataobject.lmin
+    #lmax = dataobject.lmax
     simlmax=dataobject.lmax
     #simlmax=lmax
     Nlevel = simlmax-lmin

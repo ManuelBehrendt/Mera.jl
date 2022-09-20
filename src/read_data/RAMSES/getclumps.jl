@@ -162,10 +162,7 @@ function getclumps(dataobject::InfoType;
                     myargs::ArgumentsType=ArgumentsType() )
 
 
-    printtime("Get clump data: ", verbose)
-    checkfortype(dataobject, :clumps)
 
-    boxlen = dataobject.boxlen
 
     # take values from myargs if given
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
@@ -175,6 +172,11 @@ function getclumps(dataobject::InfoType;
     if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
 
+    printtime("Get clump data: ", verbose)
+    checkfortype(dataobject, :clumps)
+
+    boxlen = dataobject.boxlen
+    
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
