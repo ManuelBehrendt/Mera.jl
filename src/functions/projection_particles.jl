@@ -35,6 +35,7 @@
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
 - toggle progress bar
+- pass a struct with arguments (myargs)
 
 
 ```julia
@@ -53,7 +54,8 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 data_center_unit::Symbol=:standard,
                 ref_time::Real=dataobject.info.time,
                 verbose::Bool=verbose_mode,
-                show_progress::Bool=true )
+                show_progress::Bool=true,
+                myargs::ArgumentsType=ArgumentsType()  )
 
 return HydroMapsType
 
@@ -79,6 +81,7 @@ return HydroMapsType
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 - **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
 - **`show_progress`:** print progress bar on screen
+- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
 ### Defined Methods - function defined for different arguments
 
@@ -109,7 +112,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode,
-                            show_progress::Bool=true )
+                            show_progress::Bool=true,
+                            myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, vars, units=units,
                                 #parttypes=parttypes,
@@ -127,7 +131,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose,
-                                show_progress=show_progress)
+                                show_progress=show_progress,
+                                myargs=myargs)
 end
 
 
@@ -148,7 +153,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode,
-                            show_progress::Bool=true )
+                            show_progress::Bool=true,
+                            myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, vars, units=units,
                                 #parttypes=parttypes,
@@ -166,7 +172,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose,
-                                show_progress=show_progress)
+                                show_progress=show_progress,
+                                myargs=myargs)
 end
 
 
@@ -187,7 +194,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode,
-                            show_progress::Bool=true )
+                            show_progress::Bool=true,
+                            myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, [var], units=[unit],
                                 #parttypes=parttypes,
@@ -205,7 +213,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose,
-                                show_progress=show_progress)
+                                show_progress=show_progress,
+                                myargs=myargs)
 end
 
 
@@ -226,7 +235,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode,
-                            show_progress::Bool=true )
+                            show_progress::Bool=true,
+                            myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, [var], units=[unit],
                                 #parttypes=parttypes,
@@ -244,7 +254,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose,
-                                show_progress=show_progress)
+                                show_progress=show_progress,
+                                myargs=myargs)
 end
 
 
@@ -264,7 +275,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode,
-                            show_progress::Bool=true )
+                            show_progress::Bool=true,
+                            myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
                                 #parttypes=parttypes,
@@ -282,7 +294,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 data_center_unit=data_center_unit,
                                 ref_time=ref_time,
                                 verbose=verbose,
-                                show_progress=show_progress)
+                                show_progress=show_progress,
+                                myargs=myargs)
 end
 
 
@@ -303,12 +316,24 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
                             verbose::Bool=verbose_mode,
-                            show_progress::Bool=true )
+                            show_progress::Bool=true,
+                            myargs::ArgumentsType=ArgumentsType() )
 
 
     printtime("", verbose)
 
-
+    # take values from myargs if given
+    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
+    if !(myargs.direction     === missing)     direction = myargs.direction end
+    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
+    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
+    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
+    if !(myargs.center        === missing)        center = myargs.center end
+    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+    if !(myargs.data_center   === missing)   data_center = myargs.data_center end
+    if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
+        if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
 
 
