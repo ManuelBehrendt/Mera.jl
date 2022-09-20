@@ -10,7 +10,7 @@
 - select between mass (default) and volume weighting
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
-
+- toggle progress bar
 
 
 ```julia
@@ -27,7 +27,8 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=verbose_mode,
+                        show_progress::Bool=true)
 
 return HydroMapsType
 
@@ -51,7 +52,7 @@ return HydroMapsType
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** select between: :x, :y, :z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-
+- **`show_progress`:** print progress bar on screen
 
 ### Defined Methods - function defined for different arguments
 
@@ -79,7 +80,8 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=verbose_mode,
+                        show_progress::Bool=true )
 
 
     return projection(dataobject, [var], units=[unit],
@@ -95,7 +97,8 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                             range_unit=range_unit,
                             data_center=data_center,
                             data_center_unit=data_center_unit,
-                            verbose=verbose)
+                            verbose=verbose,
+                            show_progress=show_progress)
 
 end
 
@@ -113,7 +116,8 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=verbose_mode,
+                        show_progress::Bool=true )
 
 
     return projection(dataobject, [var], units=[unit],
@@ -129,7 +133,8 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             range_unit=range_unit,
                             data_center=data_center,
                             data_center_unit=data_center_unit,
-                            verbose=verbose)
+                            verbose=verbose,
+                            show_progress=show_progress)
 
 end
 
@@ -147,7 +152,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=verbose_mode,
+                        show_progress::Bool=true )
 
     return projection(dataobject, vars, units=units,
                                                 lmax=lmax,
@@ -162,7 +168,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                                                 range_unit=range_unit,
                                                 data_center=data_center,
                                                 data_center_unit=data_center_unit,
-                                                verbose=verbose)
+                                                verbose=verbose,
+                                                show_progress=show_progress)
 
 end
 
@@ -182,7 +189,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=verbose_mode,
+                        show_progress::Bool=true )
 
     return projection(dataobject, vars, units=fill(unit, length(vars)),
                                                 lmax=lmax,
@@ -197,7 +205,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                                                 range_unit=range_unit,
                                                 data_center=data_center,
                                                 data_center_unit=data_center_unit,
-                                                verbose=verbose)
+                                                verbose=verbose,
+                                                show_progress=show_progress)
 
 end
 
@@ -219,7 +228,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=verbose_mode,
+                        show_progress::Bool=true )
 
 
     printtime("", verbose)
@@ -415,7 +425,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_lmax = SortedDict( )
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
-        @showprogress 1 "" for level = lmin:simlmax
+        if show_progress p = Progress(length(selected_vars)) end
+        for level = lmin:simlmax #@showprogress 1 ""
 
             first_time_level = fill(1, length(selected_vars) )
             if isamr
@@ -637,7 +648,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
                 end
 
-
+                if show_progress next!(p, showvalues = [(:Nvars, i_var)]) end # ProgressMeter
         end
     end # notonly_ranglecheck_vars
 
