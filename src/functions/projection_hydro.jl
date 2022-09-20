@@ -254,7 +254,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
     if !(myargs.data_center   === missing)   data_center = myargs.data_center end
     if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
-        if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
     printtime("", verbose)
