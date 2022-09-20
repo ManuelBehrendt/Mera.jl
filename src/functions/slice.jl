@@ -19,7 +19,8 @@ function slice( dataobject::DataSetType, var::Symbol;
                         data_center::Array{<:Any,1}=[missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
-                        show_progress::Bool=true)
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
 
 
@@ -38,7 +39,8 @@ function slice( dataobject::DataSetType, var::Symbol;
                     data_center=data_center,
                     data_center_unit=data_center_unit,
                     verbose=verbose,
-                    show_progress=show_progress)
+                    show_progress=show_progress,
+                    myargs=myargs )
 end
 
 function slice( dataobject::DataSetType, var::Symbol, unit::Symbol;
@@ -56,7 +58,8 @@ function slice( dataobject::DataSetType, var::Symbol, unit::Symbol;
                         data_center::Array{<:Any,1}=[missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
-                        show_progress::Bool=true)
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
 
 
@@ -75,7 +78,8 @@ function slice( dataobject::DataSetType, var::Symbol, unit::Symbol;
                     data_center=data_center,
                     data_center_unit=data_center_unit,
                     verbose=verbose,
-                    show_progress=show_progress)
+                    show_progress=show_progress,
+                    myargs=myargs )
 end
 
 
@@ -94,7 +98,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Sym
                         data_center::Array{<:Any,1}=[missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
-                        show_progress::Bool=true)
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
 
 
@@ -113,7 +118,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Sym
                     data_center=data_center,
                     data_center_unit=data_center_unit,
                     verbose=verbose,
-                    show_progress=show_progress)
+                    show_progress=show_progress,
+                    myargs=myargs )
 end
 
 
@@ -132,7 +138,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
                         data_center::Array{<:Any,1}=[missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
-                        show_progress::Bool=true)
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
 
 
@@ -151,7 +158,8 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
             data_center=data_center,
             data_center_unit=data_center_unit,
             verbose=verbose,
-            show_progress=show_progress)
+            show_progress=show_progress,
+            myargs=myargs )
 
 end
 
@@ -174,8 +182,22 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1};
                         data_center::Array{<:Any,1}=[missing, missing],
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
-                        show_progress::Bool=true)
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
+
+        # take values from myargs if given
+        if !(myargs.lmax          === missing)          lmax = myargs.lmax end
+        if !(myargs.plane         === missing)         plane = myargs.plane end
+        if !(myargs.plane_ranges  === missing)  plane_ranges = myargs.plane_ranges end
+        if !(myargs.position         === missing)   position = myargs.position end
+        if !(myargs.thickness         === missing) thickness = myargs.thickness end
+        if !(myargs.center        === missing)        center = myargs.center end
+        if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+        if !(myargs.data_center   === missing)   data_center = myargs.data_center end
+        if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
+        if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+        if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
     # convert plane, plane_ranges, position, thickness, data_center(2D)
     # to direction, xrange, yrange, zrange, data_center(3D)
