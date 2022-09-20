@@ -529,11 +529,11 @@ Base.@kwdef mutable struct ArgumentsType
 
     center::Union{Array{<:Any,1}, Missing}  = missing
 
-    range_unit::Union{Symbol, Missing} = missing
+    range_unit::Union{Symbol, Missing}      = missing
     data_center::Union{Array{<:Any,1}, Missing} = missing
     data_center_unit::Union{Symbol, Missing} = missing
 
-    verbose::Union{Bool, Missing}           = true
-    show_progress::Union{Bool, Missing}     = true
+    verbose::Union{Bool, Missing}           = missing
+    show_progress::Union{Bool, Missing}     = missing
 
 end
