@@ -124,7 +124,7 @@ function gethydro( dataobject::InfoType, var::Symbol;
                     verbose::Bool=verbose_mode,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
-                    #, progressbar::Bool=show_progressbar)
+
 
     return gethydro(dataobject, vars=[var],
                     lmax=lmax,
@@ -154,7 +154,7 @@ function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
                     verbose::Bool=verbose_mode,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
-                    #, progressbar::Bool=show_progressbar)
+
 
     return gethydro(dataobject,
                     vars=vars,
@@ -188,7 +188,7 @@ function gethydro( dataobject::InfoType;
                     verbose::Bool=verbose_mode,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
-                    #, progressbar::Bool=show_progressbar)
+
 
     printtime("Get hydro data: ", verbose)
     checkfortype(dataobject, :hydro)

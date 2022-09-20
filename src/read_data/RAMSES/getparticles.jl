@@ -5,7 +5,7 @@
 - print the name of each data-file before reading it
 - toggle verbose mode
 - toggle progress bar
-
+- pass a struct with arguments (myargs)
 
 ```julia
 getparticles(       dataobject::InfoType;
@@ -20,7 +20,8 @@ getparticles(       dataobject::InfoType;
                     presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode,
-                    show_progress::Bool=true )
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
 ```
 #### Returns an object of type PartDataType, containing the particle-data table, the selected and the simulation ScaleType and summary of the InfoType
 ```julia
@@ -52,6 +53,7 @@ julia> fieldnames(particles)
 - **`print_filenames`:** print on screen the current processed particle file of each CPU
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
 - **`show_progress`:** print progress bar on screen
+- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
 ### Defined Methods - function defined for different arguments
 - getparticles( dataobject::InfoType; ...) # no given variables -> all variables loaded
@@ -111,7 +113,8 @@ function getparticles( dataobject::InfoType, var::Symbol;
                     presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode,
-                    show_progress::Bool=true )
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
 
     return  getparticles( dataobject, vars=[var],
                         lmax=lmax,
@@ -124,7 +127,8 @@ function getparticles( dataobject::InfoType, var::Symbol;
                         presorted=presorted,
                         print_filenames=print_filenames,
                         verbose=verbose,
-                        show_progress=show_progress)
+                        show_progress=show_progress,
+                        myargs=myargs )
 end
 
 
@@ -140,7 +144,8 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                     presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode,
-                    show_progress::Bool=true )
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
 
     return  getparticles( dataobject, vars=vars,
                                         lmax=lmax,
@@ -153,7 +158,8 @@ function getparticles( dataobject::InfoType, vars::Array{Symbol,1};
                                         presorted=presorted,
                                         print_filenames=print_filenames,
                                         verbose=verbose,
-                                        show_progress=show_progress)
+                                        show_progress=show_progress,
+                                        myargs=myargs )
 end
 
 function getparticles( dataobject::InfoType;
@@ -168,7 +174,8 @@ function getparticles( dataobject::InfoType;
                     presorted::Bool=true,
                     print_filenames::Bool=false,
                     verbose::Bool=verbose_mode,
-                    show_progress::Bool=true )
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
 
 
     printtime("Get particle data: ", verbose)
@@ -180,6 +187,16 @@ function getparticles( dataobject::InfoType;
     isamr = checkuniformgrid(dataobject, lmax)
     #time = dataobject.time
 
+    # take values from myargs if given
+    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
+    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
+    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
+    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
+    if !(myargs.center        === missing)        center = myargs.center end
+    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    
     # create variabe-list and vector-mask (nvarh_corr) for getparticledata-function
     # print selected variables on screen
     nvarp_list, nvarp_i_list, nvarp_corr, read_cpu, used_descriptors = prepvariablelist(dataobject, :particles, vars, lmax, verbose)
