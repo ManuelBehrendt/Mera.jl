@@ -1,6 +1,7 @@
 function convertdata(output::Int; path::String="./", fpath::String="./",
                     fname = "output_",
                     datatypes::Array{<:Any,1}=[missing],
+                    lmax::Real=dataobject.lmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
@@ -61,7 +62,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
     first_amrflag = true
     if info.hydro && :hydro in datatypes
         if verbose println("- hydro") end
-        @timeit lt "hydro"  gas    = gethydro(info, smallr=smallr,
+        @timeit lt "hydro"  gas    = gethydro(info, lmax=lmax, smallr=smallr,
                                 xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit,
                                 verbose=false, show_progress=show_progress)
@@ -75,7 +76,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
 
     if info.gravity && :gravity in datatypes
         if verbose println("- gravity") end
-        @timeit lt "gravity"  grav    = getgravity(info,
+        @timeit lt "gravity"  grav    = getgravity(info, lmax=lmax,
                                 xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit,
                                 verbose=false, show_progress=show_progress)
