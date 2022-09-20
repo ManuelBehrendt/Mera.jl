@@ -320,7 +320,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             myargs::ArgumentsType=ArgumentsType() )
 
 
-    printtime("", verbose)
 
     # take values from myargs if given
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
@@ -332,11 +331,11 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
     if !(myargs.data_center   === missing)   data_center = myargs.data_center end
     if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
-        if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
 
-
+    printtime("", verbose)
     boxlen = dataobject.boxlen
     selected_vars = vars
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
