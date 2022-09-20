@@ -58,6 +58,7 @@ end
 - select the level of the coarser grid
 - select the weighting
 - toggle verbose mode
+- toggle progress bar
 
 ```julia
 remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=verbose_mode)
