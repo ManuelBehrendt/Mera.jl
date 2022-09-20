@@ -425,7 +425,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_lmax = SortedDict( )
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
-        if show_progress p = Progress(length(selected_vars)) end
+        if show_progress p = Progress(length(simlmax-lmin)) end
         for level = lmin:simlmax #@showprogress 1 ""
 
             first_time_level = fill(1, length(selected_vars) )
@@ -648,7 +648,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
                 end
 
-                if show_progress next!(p, showvalues = [(:Nvars, i_var)]) end # ProgressMeter
+                if show_progress next!(p, showvalues = [(:Level, level)]) end # ProgressMeter
         end
     end # notonly_ranglecheck_vars
 
