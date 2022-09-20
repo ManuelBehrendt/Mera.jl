@@ -505,3 +505,35 @@ mutable struct CheckOutputNumberType
     miss::Array{Int,1}
     path::String
 end
+
+
+"""
+Mutable Struct: Contains fields to use as arguments in functions
+"""
+mutable struct ArgumentsType
+    lmax::Real
+
+    xrange::Array{<:Any,1}
+    yrange::Array{<:Any,1}
+    zrange::Array{<:Any,1}
+
+    radius::Array{<:Real,1}
+    height::Real
+    direction::Symbol
+
+    plane::Symbol
+    plane_ranges::Array{<:Any,1}
+    thickness::Real
+    position::Real
+
+    center::Array{<:Any,1}
+
+    range_unit::Symbol
+    data_center::Array{<:Any,1}
+    data_center_unit::Symbol
+
+    verbose::Bool
+    show_progress::Bool
+
+    ArgumentsType() = new()
+end
