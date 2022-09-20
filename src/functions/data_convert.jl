@@ -6,11 +6,21 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-
                     smallr::Real=1e-11,
-
                     verbose::Bool=true,
-                    show_progress::Bool=true)
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+    # take values from myargs if given
+    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
+    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
+    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
+    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
+    if !(myargs.center        === missing)        center = myargs.center end
+    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+
 
     printtime("",verbose)
 
