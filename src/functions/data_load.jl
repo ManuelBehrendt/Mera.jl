@@ -7,8 +7,17 @@ function loaddata(output::Int; path::String="./",
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    verbose::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
 
-                    verbose::Bool=true)
+    # take values from myargs if given
+    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
+    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
+    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
+    if !(myargs.center        === missing)        center = myargs.center end
+    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+
 
     printtime("",verbose)
 
