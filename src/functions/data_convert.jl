@@ -1,7 +1,6 @@
 function convertdata(output::Int; path::String="./", fpath::String="./",
                     fname = "output_",
                     datatypes::Array{<:Any,1}=[missing],
-                    lmax::Real=dataobject.lmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
@@ -13,7 +12,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
                     myargs::ArgumentsType=ArgumentsType() )
 
     # take values from myargs if given
-    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
+    #if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
     if !(myargs.zrange        === missing)        zrange = myargs.zrange end
@@ -62,7 +61,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
     first_amrflag = true
     if info.hydro && :hydro in datatypes
         if verbose println("- hydro") end
-        @timeit lt "hydro"  gas    = gethydro(info, lmax=lmax, smallr=smallr,
+        @timeit lt "hydro"  gas    = gethydro(info, smallr=smallr,
                                 xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit,
                                 verbose=false, show_progress=show_progress)
@@ -76,7 +75,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
 
     if info.gravity && :gravity in datatypes
         if verbose println("- gravity") end
-        @timeit lt "gravity"  grav    = getgravity(info, lmax=lmax,
+        @timeit lt "gravity"  grav    = getgravity(info,
                                 xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit,
                                 verbose=false, show_progress=show_progress)
