@@ -77,5 +77,5 @@ function showprogress(mode::Union{Bool,Nothing})
 end
 
 function showprogress()
-    println("showprogress_mode: ", showprogress__mode)
+    println("showprogress_mode: ", showprogress_mode)
 end
