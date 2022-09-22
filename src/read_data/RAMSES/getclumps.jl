@@ -35,7 +35,7 @@ getclumps(  dataobject::InfoType;
             center::Array{<:Any,1}=[0., 0., 0.],
             range_unit::Symbol=:standard,
             print_filenames::Bool=false,
-            verbose::Bool=verbose_mode,
+            verbose::Bool=true,
             myargs::ArgumentsType=ArgumentsType() )
 ```
 #### Returns an object of type ClumpDataType, containing the clump-data table, the selected options and the simulation ScaleType and summary of the InfoType
@@ -63,7 +63,7 @@ julia> fieldnames(clumps)
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`print_filenames`:** print on screen the current processed particle file of each CPU
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of xrange, yrange, zrange, center, range_unit, verbose
 
 ### Defined Methods - function defined for different arguments
@@ -131,7 +131,7 @@ function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
     return  getclumps(dataobject,
@@ -158,7 +158,7 @@ function getclumps(dataobject::InfoType;
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -172,11 +172,12 @@ function getclumps(dataobject::InfoType;
     if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
 
+    verbose = checkverbose(verbose)
     printtime("Get clump data: ", verbose)
     checkfortype(dataobject, :clumps)
 
     boxlen = dataobject.boxlen
-    
+
     # convert given ranges and print overview on screen
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 

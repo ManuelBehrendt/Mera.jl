@@ -19,7 +19,7 @@ getgravity(   dataobject::InfoType;
             center::Array{<:Any,1}=[0., 0., 0.],
             range_unit::Symbol=:standard,
             print_filenames::Bool=false,
-            verbose::Bool=verbose_mode,
+            verbose::Bool=true,
             show_progress::Bool=true,
             myargs::ArgumentsType=ArgumentsType()  )
 ```
@@ -49,7 +49,7 @@ julia> fieldnames(grav)
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`print_filenames`:** print on screen the current processed gravity file of each CPU
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
@@ -111,7 +111,7 @@ function getgravity( dataobject::InfoType, var::Symbol;
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType()  )
 
@@ -133,7 +133,7 @@ function getgravity( dataobject::InfoType, vars::Array{Symbol,1};
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType()  )
 
@@ -158,7 +158,7 @@ function getgravity( dataobject::InfoType;
                       center::Array{<:Any,1}=[0., 0., 0.],
                       range_unit::Symbol=:standard,
                       print_filenames::Bool=false,
-                      verbose::Bool=verbose_mode,
+                      verbose::Bool=true,
                       show_progress::Bool=true,
                       myargs::ArgumentsType=ArgumentsType()  )
 
@@ -173,6 +173,7 @@ function getgravity( dataobject::InfoType;
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    verbose = checkverbose(verbose)
     printtime("Get gravity data: ", verbose)
     checkfortype(dataobject, :gravity)
     checklevelmax(dataobject, lmax)
