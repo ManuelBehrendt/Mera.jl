@@ -1,6 +1,6 @@
 function info_merafile(filename::String, datatype::Symbol;
                         printfields::Bool=false,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
         return info_merafile(filename=filename,
                         datatype=datatype,
@@ -11,7 +11,7 @@ end
 function info_merafile(filename::String;
                         datatype::Symbol=:hydro,
                         printfields::Bool=false,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
         return info_merafile(filename=filename,
                         datatype=datatype,
@@ -37,8 +37,9 @@ function info_merafile(;
                         filename::String="",
                         datatype::Symbol=:hydro,
                         printfields::Bool=false,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     #othertypes = [DateTime, FileNamesType, DescriptorType,
     #                Dict{Any,Any}, FilesContentType,
     #                ScalesType, GridInfoType, PartInfoType,

@@ -7,7 +7,7 @@ function read_merafile(filename::String, datatype::Symbol;
                         range_unit::Symbol=:standard,
 
                         printfields::Bool=false,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
         return read_merafile(filename=filename,
                         datatype=datatype,
@@ -30,7 +30,7 @@ function read_merafile(filename::String;
                         range_unit::Symbol=:standard,
 
                         printfields::Bool=false,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
         return read_merafile(filename=filename,
                         datatype=datatype,
@@ -56,7 +56,7 @@ function read_merafile(;
                         range_unit::Symbol=:standard,
 
                         printfields::Bool=false,
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
 
     info = info_merafile(filename=filename,
@@ -65,6 +65,8 @@ function read_merafile(;
                         verbose=false) # suppress screen print from info_merafile
 
 
+    verbose = checkverbose(verbose)
+    
     if datatype == :hydro
         dtype = HydroDataType()
         if verbose println() end

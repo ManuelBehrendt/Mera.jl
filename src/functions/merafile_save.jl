@@ -7,7 +7,7 @@ function save_merafile(dataobject::DataSetType, filename::String;
                     comment::String="",
                     merafile_version::Float64=1.,
                     printfields::Bool=false,
-                    verbose::Bool=verbose_mode)
+                    verbose::Bool=true)
 
     return save_merafile(dataobject,
                     filename=filename,
@@ -26,13 +26,14 @@ function save_merafile( dataobject::DataSetType;
                     comment::String="",
                     merafile_version::Float64=1.,
                     printfields::Bool=false,
-                    verbose::Bool=verbose_mode)
+                    verbose::Bool=true)
 
 
                     ###filemode = "w" #r, r+, cw, w
                     ###ctype = "blosc"
                     ###cn = 9 # compression strength: [0,9]
 
+    verbose = checkverbose(verbose)
     datasource, use_descriptor, descriptor_names = check_datasource(dataobject)
     filemode, overwdata = check_merafile_mode(fmode, datasource, filename)
 
