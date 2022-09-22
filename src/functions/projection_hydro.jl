@@ -258,6 +258,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
     verbose = checkverbose(verbose)
+    show_progress = checkprogress(show_progress)
     printtime("", verbose)
 
     lmin = dataobject.lmin
