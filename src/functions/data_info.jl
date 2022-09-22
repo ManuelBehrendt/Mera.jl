@@ -3,6 +3,7 @@ function infodata(output::Int; path::String="./",
                     datatype::Any=:nothing,
                     verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     printtime("",verbose)
 
     filename = outputname(fname, output) * ".jld2"

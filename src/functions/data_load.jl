@@ -1,7 +1,6 @@
 function loaddata(output::Int; path::String="./",
                     fname = "output_",
                     datatype::Symbol,
-
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],

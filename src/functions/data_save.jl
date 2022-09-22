@@ -10,6 +10,7 @@ function savedata( dataobject::DataSetType;
                     merafile_version::Float64=1.,
                     verbose::Bool=true)
 
+        verbose = checkverbose(verbose)
         printtime("",verbose)
 
         datatype, use_descriptor, descriptor_names = check_datasource(dataobject)
