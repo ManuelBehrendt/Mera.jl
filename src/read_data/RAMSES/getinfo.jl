@@ -1,7 +1,7 @@
 """
 #### Get the simulation overview from RAMSES info, descriptor and output header files
 ```julia
-getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=verbose_mode)
+getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=true)
 return InfoType
 ```
 
@@ -34,20 +34,22 @@ julia> namelist(info)
 ```
 
 """
-function getinfo(output::Real; path::String="", namelist::String="", verbose::Bool=verbose_mode)
+function getinfo(output::Real; path::String="", namelist::String="", verbose::Bool=true)
     return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
 end
 
-function getinfo(output::Real, path::String; namelist::String="", verbose::Bool=verbose_mode)
+function getinfo(output::Real, path::String; namelist::String="", verbose::Bool=true)
     return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
 end
 
-function getinfo(path::String; output::Real=1, namelist::String="", verbose::Bool=verbose_mode)
+function getinfo(path::String; output::Real=1, namelist::String="", verbose::Bool=true)
     return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
 end
 
-function getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=verbose_mode)
+function getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=true)
 
+
+    verbose = checkverbose(verbose)
     printtime("",verbose)
 
     info = InfoType()   # predeclare InfoType
