@@ -37,11 +37,14 @@ using HDF5
 using JLD2, CodecZlib, CodecBzip2
 using TimerOutputs
 global verbose_mode = true
+global showprogress_mode = true
 
 export
 
     verbose_mode,
     verbose,
+    showprogress_mode
+    showprogress,
 # data reader
     getunit,
     getinfo,
