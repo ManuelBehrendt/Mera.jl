@@ -5,7 +5,7 @@ function viewdata(output::Int; path::String="./",
                     showfull::Bool=false,
                     verbose::Bool=true)
 
-
+    verbose = checkverbose(verbose)
     printtime("",verbose)
 
 

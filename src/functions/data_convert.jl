@@ -21,7 +21,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
-
+    verbose = checkverbose(verbose)
     printtime("",verbose)
 
     if length(datatypes) == 1 &&  datatypes[1] === missing || length(datatypes) == 0 || length(datatypes) == 1 &&  datatypes[1] == :all
