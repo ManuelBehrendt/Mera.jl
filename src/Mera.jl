@@ -134,7 +134,7 @@ export
     MaskArrayAbstractType
 
 
-verbose_mode = true
+global verbose_mode = nothing
 
 include("types.jl")
 
