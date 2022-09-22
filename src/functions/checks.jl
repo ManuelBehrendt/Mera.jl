@@ -60,3 +60,22 @@ end
 function verbose()
     println("verbose_mode: ", verbose_mode)
 end
+
+
+# global showprogress mode ===========================
+function checkverbose(show_progress::Bool)
+    if showprogress_mode != nothing
+        show_progress = copy(showprogress_mode)
+    end
+
+    return show_progress
+end
+
+function showprogress(mode::Union{Bool,Nothing})
+        global showprogress_mode = mode
+        @eval(Mera, showprogress__mode)
+end
+
+function showprogress()
+    println("showprogress_mode: ", showprogress__mode)
+end
