@@ -10,8 +10,9 @@ function sfr_histogram(dataobject::PartDataType;
                         mask=[false],
                         mode::Symbol=:none,
 
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
+        verbose = checkverbose(verbose)
         massweight = map(row->particle_selection(row.birth, row.mass, dataobject.scale.Msol), dataobject.data);
         birth = getvar(dataobject, :birth, :Myr)
 

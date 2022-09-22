@@ -87,6 +87,7 @@ end
 function storageoverview(dataobject::InfoType; verbose::Bool=true)
     # todo simplyfy to single function calls
 
+    verbose = checkverbose(verbose)
     dictoutput = Dict()
 
     output = dataobject.output
@@ -243,7 +244,7 @@ end
 function amroverview(dataobject::HydroDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
-
+    verbose = checkverbose(verbose)
     # check if cpu column exists
     fn = propertynames(dataobject.data.columns)
     cpu_col = false
@@ -307,7 +308,7 @@ end
 function amroverview(dataobject::GravDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
-
+    verbose = checkverbose(verbose)
     # check if cpu column exists
     fn = propertynames(dataobject.data.columns)
     cpu_col = false
@@ -376,6 +377,7 @@ end
 function amroverview(dataobject::PartDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
+    verbose = checkverbose(verbose)
 
     # check if cpu column exists
     fn = propertynames(dataobject.data.columns)
@@ -449,6 +451,7 @@ end
 
 function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     nvarh = dataobject.info.nvarh
     lmin = dataobject.lmin
     lmax = dataobject.lmax
@@ -556,6 +559,7 @@ end
 
 function dataoverview(dataobject::GravDataType; verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     nvarh = length(dataobject.info.gravity_variable_list)
     lmin = dataobject.lmin
     lmax = dataobject.lmax
@@ -693,6 +697,7 @@ end
 
 function dataoverview(dataobject::PartDataType; verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     lmin = dataobject.lmin
     lmax = dataobject.lmax
     isamr = checkuniformgrid(dataobject, lmax)
@@ -783,6 +788,7 @@ julia>N = checkoutputs("simulation001");
 """
 function checkoutputs(path::String="./"; verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     if path == "" || path == " " path="./" end
     folder = readdir(path)
 
@@ -851,6 +857,9 @@ return Dict with named Tuple: simulation name and N=CheckOutputNumberType
 
 """
 function checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
+
+    verbose = checkverbose(verbose)
+    
     fulldirpaths=filter(isdir,readdir(path,join=true))
     dirnames=basename.(fulldirpaths)
 
