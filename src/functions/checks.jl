@@ -41,3 +41,12 @@ function checkuniformgrid(dataobject::DataSetType, lmax::Real)
     end
     return isamr
 end
+
+
+function checkverbose(verbose::Bool)
+    if verbose_mode != nothing
+        verbose = copy(verbose_mode)
+    end
+
+    return verbose
+end
