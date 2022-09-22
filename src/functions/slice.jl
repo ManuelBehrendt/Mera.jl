@@ -199,6 +199,7 @@ function slice( dataobject::DataSetType, vars::Array{Symbol,1};
         if !(myargs.verbose       === missing)       verbose = myargs.verbose end
         if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    #verbose = checkverbose(verbose)
     # convert plane, plane_ranges, position, thickness, data_center(2D)
     # to direction, xrange, yrange, zrange, data_center(3D)
     if plane == :zx
