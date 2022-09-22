@@ -36,7 +36,7 @@ using HDF5
 
 using JLD2, CodecZlib, CodecBzip2
 using TimerOutputs
-global verbose_mode = nothing
+global verbose_mode = true
 
 export
 
