@@ -53,7 +53,7 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 data_center::Array{<:Any,1}=[missing, missing, missing],
                 data_center_unit::Symbol=:standard,
                 ref_time::Real=dataobject.info.time,
-                verbose::Bool=verbose_mode,
+                verbose::Bool=true,
                 show_progress::Bool=true,
                 myargs::ArgumentsType=ArgumentsType()  )
 
@@ -111,7 +111,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode,
+                            verbose::Bool=true,
                             show_progress::Bool=true,
                             myargs::ArgumentsType=ArgumentsType() )
 
@@ -152,7 +152,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode,
+                            verbose::Bool=true,
                             show_progress::Bool=true,
                             myargs::ArgumentsType=ArgumentsType() )
 
@@ -193,7 +193,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode,
+                            verbose::Bool=true,
                             show_progress::Bool=true,
                             myargs::ArgumentsType=ArgumentsType() )
 
@@ -234,7 +234,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode,
+                            verbose::Bool=true,
                             show_progress::Bool=true,
                             myargs::ArgumentsType=ArgumentsType() )
 
@@ -274,7 +274,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode,
+                            verbose::Bool=true,
                             show_progress::Bool=true,
                             myargs::ArgumentsType=ArgumentsType() )
 
@@ -315,7 +315,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             data_center::Array{<:Any,1}=[missing, missing, missing],
                             data_center_unit::Symbol=:standard,
                             ref_time::Real=dataobject.info.time,
-                            verbose::Bool=verbose_mode,
+                            verbose::Bool=true,
                             show_progress::Bool=true,
                             myargs::ArgumentsType=ArgumentsType() )
 
@@ -334,7 +334,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
-
+    verbose = checkverbose(verbose)
     printtime("", verbose)
     boxlen = dataobject.boxlen
     selected_vars = vars

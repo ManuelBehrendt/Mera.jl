@@ -61,7 +61,7 @@ end
 - toggle progress bar
 
 ```julia
-remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=verbose_mode)
+remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=true)
 
 return DataMapsType
 ```
@@ -71,10 +71,12 @@ return DataMapsType
 - **`lmax`:** the level of the coarser grid to be created
 ##### Predefined/Optional Keywords:
 - **`weighting`:** choose between: :volume, :mass
-- **`verbose`:** print the dimensions/pixel size of the provided and created maps on screen; default: set by the variable `verbose_mode`
+- **`verbose`:** print the dimensions/pixel size of the provided and created maps on screen; default: true
 """
-function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=verbose_mode)
+function remap(dataobject::DataMapsType, lmax::Real; weighting::Symbol=:volume, verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
+    
     # checks to use maps instead of mass weighting
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]

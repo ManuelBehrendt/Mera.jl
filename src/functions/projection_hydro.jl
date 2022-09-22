@@ -28,7 +28,7 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode,
+                        verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
@@ -83,7 +83,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode,
+                        verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
@@ -121,7 +121,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode,
+                        verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
@@ -159,7 +159,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode,
+                        verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
@@ -198,7 +198,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode,
+                        verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
@@ -239,7 +239,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        verbose::Bool=verbose_mode,
+                        verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
@@ -257,6 +257,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    verbose = checkverbose(verbose)
     printtime("", verbose)
 
     lmin = dataobject.lmin
