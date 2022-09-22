@@ -43,7 +43,7 @@ export
 
     verbose_mode,
     verbose,
-    showprogress_mode
+    showprogress_mode,
     showprogress,
 # data reader
     getunit,
