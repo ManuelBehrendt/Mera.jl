@@ -1,6 +1,6 @@
 
 function view_merafile(filename::String;
-                        verbose::Bool=verbose_mode)
+                        verbose::Bool=true)
 
          return view_merafile(filename=filename,
                               verbose=verbose)
@@ -8,8 +8,9 @@ end
 
 function view_merafile(;
                        filename::String="",
-                       verbose::Bool=verbose_mode)
+                       verbose::Bool=true)
 
+    verbose = checkverbose(verbose)
     viewoutput = Dict()
 
     if verbose
