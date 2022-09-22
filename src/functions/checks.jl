@@ -73,7 +73,7 @@ end
 
 function showprogress(mode::Union{Bool,Nothing})
         global showprogress_mode = mode
-        @eval(Mera, showprogress__mode)
+        @eval(Mera, showprogress_mode)
 end
 
 function showprogress()
