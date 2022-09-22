@@ -335,6 +335,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
     verbose = checkverbose(verbose)
+    show_progress = checkprogress(show_progress)
     printtime("", verbose)
     boxlen = dataobject.boxlen
     selected_vars = vars
