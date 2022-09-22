@@ -63,7 +63,7 @@ end
 
 
 # global showprogress mode ===========================
-function checkverbose(show_progress::Bool)
+function checkprogress(show_progress::Bool)
     if showprogress_mode != nothing
         show_progress = copy(showprogress_mode)
     end
