@@ -200,6 +200,7 @@ function gethydro( dataobject::InfoType;
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
     verbose = checkverbose(verbose)
+    show_progress = checkprogress(show_progress)
     printtime("Get hydro data: ", verbose)
     checkfortype(dataobject, :hydro)
     checklevelmax(dataobject, lmax)
