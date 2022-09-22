@@ -43,6 +43,7 @@ function checkuniformgrid(dataobject::DataSetType, lmax::Real)
 end
 
 
+# global verbose mode ===========================
 function checkverbose(verbose::Bool)
     if verbose_mode != nothing
         verbose = copy(verbose_mode)
@@ -52,7 +53,8 @@ function checkverbose(verbose::Bool)
 end
 
 function verbose(mode::Union{Bool,Nothing})
-    @eval(Mera, verbose_mode = mode)
+        global verbose_mode = mode
+        @eval(Mera, verbose_mode)
 end
 
 function verbose()
