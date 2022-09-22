@@ -9,7 +9,7 @@ return InfoType
 - **`output`:** timestep number (default=1)
 - **`path`:** the path to the output folder relative to the current folder or absolute path
 - **`namelist`:** give the path to a namelist file (by default the namelist.txt-file in the output-folder is read)
-- **`verbose:`:** informations are printed on the screen by default: gloval variable `verbose_mode=true`
+- **`verbose:`:** informations are printed on the screen by default
 
 #### Examples
 ```julia

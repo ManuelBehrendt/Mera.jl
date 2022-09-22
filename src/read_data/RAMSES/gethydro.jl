@@ -24,7 +24,7 @@ gethydro(   dataobject::InfoType;
             smallc::Real=0.,
             check_negvalues::Bool=false,
             print_filenames::Bool=false,
-            verbose::Bool=verbose_mode,
+            verbose::Bool=true,
             show_progress::Bool=true,
             myargs::ArgumentsType=ArgumentsType()  )
 ```
@@ -57,7 +57,7 @@ julia> fieldnames(gas)
 - **`smallc`:** set lower limit for thermal pressure; zero means inactive
 - **`check_negvalues`:** check loaded data of "rho" and "p" on negative values; false by default
 - **`print_filenames`:** print on screen the current processed hydro file of each CPU
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
@@ -121,7 +121,7 @@ function gethydro( dataobject::InfoType, var::Symbol;
                     smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -151,7 +151,7 @@ function gethydro( dataobject::InfoType, vars::Array{Symbol,1};
                     smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -185,7 +185,7 @@ function gethydro( dataobject::InfoType;
                     smallc::Real=0.,
                     check_negvalues::Bool=false,
                     print_filenames::Bool=false,
-                    verbose::Bool=verbose_mode,
+                    verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -199,6 +199,7 @@ function gethydro( dataobject::InfoType;
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    verbose = checkverbose(verbose)
     printtime("Get hydro data: ", verbose)
     checkfortype(dataobject, :hydro)
     checklevelmax(dataobject, lmax)
