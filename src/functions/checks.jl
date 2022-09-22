@@ -50,3 +50,7 @@ function checkverbose(verbose::Bool)
 
     return verbose
 end
+
+function verbose(verbose_mode::Bool)
+    global verbose_mode = verbose_mode
+end
