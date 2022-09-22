@@ -36,9 +36,11 @@ using HDF5
 
 using JLD2, CodecZlib, CodecBzip2
 using TimerOutputs
+global verbose_mode = nothing
 
 export
 
+    verbose_mode,
 # data reader
     getunit,
     getinfo,
@@ -134,7 +136,7 @@ export
     MaskArrayAbstractType
 
 
-global verbose_mode = nothing
+
 
 include("types.jl")
 
