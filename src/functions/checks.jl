@@ -51,6 +51,10 @@ function checkverbose(verbose::Bool)
     return verbose
 end
 
-function verbose(verbose_mode::Bool)
-    global verbose_mode = verbose_mode
+function verbose(mode::Union{Bool,Nothing})
+    @eval(Mera, verbose_mode = mode)
+end
+
+function verbose()
+    println("verbose_mode: ", verbose_mode)
 end
