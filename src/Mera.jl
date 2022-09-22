@@ -41,6 +41,7 @@ global verbose_mode = nothing
 export
 
     verbose_mode,
+    verbose,
 # data reader
     getunit,
     getinfo,
