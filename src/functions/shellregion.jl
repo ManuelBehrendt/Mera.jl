@@ -17,7 +17,7 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
-            verbose::Bool=verbose_mode,             # all
+            verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 ```
 
@@ -39,7 +39,7 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`inverse`:** inverse the region selection = get the data outside of the region
 - **`cell`:** take intersecting cells of the region boarder into account (true) or only the cells-centers within the selected region (false)
-- **`verbose`:** print timestamp, selected vars and ranges on screen; default: set by the variable `verbose_mode`
+- **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of radius, height, direction, center, range_unit, verbose
 
 
@@ -53,7 +53,7 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
             range_unit::Symbol=:standard,  # all
             cell::Bool=true,                        # hydro and gravity
             inverse::Bool=false,                    # all
-            verbose::Bool=verbose_mode,             # all
+            verbose::Bool=true,             # all
             myargs::ArgumentsType=ArgumentsType() ) # all
 
     # take values from myargs if given
@@ -64,7 +64,8 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
     if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
 
-
+    verbose = checkverbose(verbose)
+    
     # subregion = wrapper over all subregion shell functions
     if shape == :cylinder || shape == :disc
         if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
