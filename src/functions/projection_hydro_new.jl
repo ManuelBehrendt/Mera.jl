@@ -311,7 +311,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
 
 
-    check_mask(dataobject, mask, verbose)
+    skipmask = check_mask(dataobject, mask, verbose)
 
 
 
@@ -322,7 +322,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
         newmap_w = zeros(Float64, (res, res) )
-        data_dict, xval, yval, leveldata, weightval = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck)
+        data_dict, xval, yval, leveldata, weightval = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask)
 
 
         closed=:left
@@ -597,7 +597,7 @@ end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck)
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask)
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
         if ranges[3] != 0.
@@ -613,25 +613,29 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
         end
 
         if ranges[3] != 0. || ranges[4] !=1.
-            if length(mask) != 1
+            if !skipmask
                 mask = mask .* mask_zmin .* mask_zmax
             else
                 mask =  mask_zmin .* mask_zmax
             end
         end
 
-
-        xval = select(dataobject.data, x_coord)[mask] #getvar(dataobject, x_coord, mask=mask)
-        yval = select(dataobject.data, y_coord)[mask] #getvar(dataobject, y_coord, mask=mask)
-        #if weighting == nothing
-        #    weightval = 1.
-        #else
-            weightval = getvar(dataobject, weighting, mask=mask)
-        #end
-        leveldata = select(dataobject.data, :level)[mask] #getvar(dataobject, :level, mask=mask)
-        #end
-
-
+        if length(mask) == 1
+            xval = select(dataobject.data, x_coord)
+            yval = select(dataobject.data, y_coord)
+            weightval = getvar(dataobject, weighting)
+            leveldata = select(dataobject.data, :level)
+        else
+            xval = select(dataobject.data, x_coord)[mask] #getvar(dataobject, x_coord, mask=mask)
+            yval = select(dataobject.data, y_coord)[mask] #getvar(dataobject, y_coord, mask=mask)
+            #if weighting == nothing
+            #    weightval = 1.
+            #else
+                weightval = getvar(dataobject, weighting, mask=mask)
+            #end
+            leveldata = select(dataobject.data, :level)[mask] #getvar(dataobject, :level, mask=mask)
+            #end
+        end
 
 
         data_dict = SortedDict( )
@@ -699,17 +703,20 @@ end
 
 
 function check_mask(dataobject, mask, verbose)
+    skipmask=true
     rows = length(dataobject.data)
     if length(mask) > 1
         if length(mask) !== rows
             error("[Mera] ",now()," : array-mask length: $(length(mask)) does not match with data-table length: $(rows)")
         else
+            skipmask = false
             if verbose
                 println(":mask provided by function")
                 println()
             end
         end
     end
+    return skipmask
 end
 
 
