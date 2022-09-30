@@ -308,7 +308,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
         println()
     end
 
-    x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
+    x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
 
 
     skipmask = check_mask(dataobject, mask, verbose)
@@ -322,7 +322,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
         newmap_w = zeros(Float64, (res, res) )
-        data_dict, xval, yval, leveldata, weightval = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask)
+        data_dict, xval, yval, leveldata, weightval = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask, rangez)
 
 
         closed=:left
@@ -521,6 +521,7 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
         #x_coord = :cx
         #y_coord = :cy
         #z_coord = :z
+        rangez = [zmin, zmax]
 
         # get range for given resolution
         newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
@@ -543,6 +544,7 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
         x_coord = :cx
         y_coord = :cz
         z_coord = :y
+        rangez = [ymin, ymax]
 
         # get range for given resolution
         newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
@@ -565,6 +567,7 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
         x_coord = :cy
         y_coord = :cz
         z_coord = :x
+        rangez = [xmin, xmax]
 
         # get range for given resolution
         newrange1 = range(r3, stop=r4, length=(r4-r3)+1)
@@ -592,33 +595,46 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
 
 
-    return x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center
+    return x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez
 end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask)
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask,rangez)
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
-        if ranges[3] != 0.
-            mask_zmin = zval .>= ranges[3] .* dataobject.boxlen
-        else
-            mask_zmin = 1.
-        end
-
-        if ranges[4] != 1.
-            mask_zmax = zval .<= ranges[4] .* dataobject.boxlen
-        else
-            mask_zmax = 1.
-        end
-
-        if ranges[3] != 0. || ranges[4] !=1.
+        #println(rangez)
+        if rangez[1] != 0.
+            mask_zmin = zval .>= rangez[1] .* dataobject.boxlen
             if !skipmask
-                mask = mask .* mask_zmin .* mask_zmax
+                #println("mask zmin 1")
+                mask = mask .* mask_zmin
             else
-                mask =  mask_zmin .* mask_zmax
+                #println("mask zmin 1")
+                mask = mask_zmin
             end
+        else
+                #println("mask zmin no")
         end
+
+        if rangez[2] != 1.
+            mask_zmax = zval .<= rangez[2] .* dataobject.boxlen
+            if !skipmask
+                #println("mask zmax 1")
+                mask = mask .* mask_zmax
+            else
+                if rangez[1] != 0.
+                    #println("mask zmax 2")
+                    mask = mask .* mask_zmax
+                else
+                    #println("mask zmax 3")
+                    mask = mask_zmax
+                end
+            end
+        else
+            #println("mask zmax no")
+        end
+
 
         if length(mask) == 1
             xval = select(dataobject.data, x_coord)
@@ -643,12 +659,20 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             if !in(ivar, anglecheck) && !in(ivar, rcheck)
                 maps[ivar] =  zeros(Float64, (res, res) )
                 if ivar !== :sd
-                    data_dict[ivar] = getvar(dataobject, ivar, mask=mask, center=center, center_unit=range_unit)
+                    if length(mask) == 1
+                        data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                    else
+                        data_dict[ivar] = getvar(dataobject, ivar, mask=mask, center=center, center_unit=range_unit)
+                    end
                 elseif ivar == :sd || ivar == :mass
                     if weighting == :mass
                         data_dict[ivar] = weightval
                     else
-                        data_dict[ivar] = getvar(dataobject, :mass, mask=mask)
+                        if length(mask) == 1
+                            ata_dict[ivar] = getvar(dataobject, :mass)
+                        else
+                            data_dict[ivar] = getvar(dataobject, :mass, mask=mask)
+                        end
                     end
                 end
             end
