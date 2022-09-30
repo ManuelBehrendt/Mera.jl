@@ -33,14 +33,15 @@ using ProgressMeter
 using StatsBase
 using OnlineStats
 using HDF5
+using ImageTransformations
 
 using JLD2, CodecZlib, CodecBzip2
 using TimerOutputs
+
 global verbose_mode = nothing
 global showprogress_mode = nothing
 
 export
-
     verbose_mode,
     verbose,
     showprogress_mode,
@@ -96,6 +97,7 @@ export
 
 #
     projection,
+    projection_new,
     slice,
     remap,
     subregion,
@@ -203,6 +205,7 @@ include("functions/data_convert.jl")
 include("functions/projection.jl")
 include("functions/slice.jl")
 include("functions/projection_hydro.jl")
+include("functions/projection_hydro_new.jl")
 include("functions/projection_particles.jl")
 # ============================================
 
