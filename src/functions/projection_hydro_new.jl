@@ -265,7 +265,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
-    res = floor(Int, res) # to be sure to have Integer
+
 
     verbose = Mera.checkverbose(verbose)
     show_progress = Mera.checkprogress(show_progress)
@@ -279,7 +279,8 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     ##Nlevel = simlmax-lmin
     boxlen = dataobject.boxlen
     if res === missing res = 2^lmax end
-
+    res = floor(Int, res) # to be sure to have Integer
+    
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
