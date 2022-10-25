@@ -57,9 +57,11 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
     # reading =============================
     if verbose
         println()
-        println("reading:")
+        println("reading/writing:")
     end
+
     first_amrflag = true
+    first_flag = true
     if info.hydro && :hydro in datatypes
         if verbose println("- hydro") end
         @timeit lt "hydro"  gas    = gethydro(info, smallr=smallr,
@@ -72,6 +74,13 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
             storage_tot += si[:amr]
             first_amrflag = false
         end
+
+        # write
+        first_flag, fmode = JLD2flag(first_flag)
+        @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, fmode=fmode, verbose=false)
+
+        # clear mem
+        gas = 0.
     end
 
     if info.gravity && :gravity in datatypes
@@ -86,6 +95,13 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
             storage_tot += si[:amr]
             first_amrflag = false
         end
+
+        # write
+        first_flag, fmode = JLD2flag(first_flag)
+        @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, fmode=fmode, verbose=false)
+
+        # clear mem
+        grav = 0.
     end
 
     if info.particles && :particles in datatypes
@@ -100,6 +116,13 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
             storage_tot += si[:amr]
             first_amrflag = false
         end
+
+        # write
+        first_flag, fmode = JLD2flag(first_flag)
+        @timeit wt "particles"  savedata(part, path=fpath, fname=fname, fmode=fmode, verbose=false)
+
+        # clear mem
+        part = 0.
     end
 
     if info.clumps && :clumps in datatypes
@@ -110,43 +133,51 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
                                 verbose=false)
         memtot += Base.summarysize(clumps)
         storage_tot += si[:clump]
-    end
 
-
-    # writing =============================
-    if verbose
-        println()
-        println("writing:")
-    end
-
-
-    first_flag = true
-    if info.hydro && :hydro in datatypes
-        if verbose println("- hydro") end
-        first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, fmode=fmode, verbose=false)
-
-    end
-
-    if info.gravity && :gravity in datatypes
-        if verbose println("- gravity") end
-        first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, fmode=fmode, verbose=false)
-
-    end
-
-    if info.particles && :particles in datatypes
-        if verbose println("- particles") end
-        first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "particles"  savedata(part, path=fpath, fname=fname, fmode=fmode, verbose=false)
-
-    end
-
-    if info.clumps && :clumps in datatypes
-        if verbose println("- clumps") end
+        # write
         first_flag, fmode = JLD2flag(first_flag)
         @timeit wt "clumps"  savedata(clumps, path=fpath, fname=fname, fmode=fmode, verbose=false)
+
+        # clear mem
+        clumps = 0.
     end
+
+
+    #
+    # # writing =============================
+    # if verbose
+    #     println()
+    #     println("writing:")
+    # end
+    #
+    #
+    # first_flag = true
+    # if info.hydro && :hydro in datatypes
+    #     if verbose println("- hydro") end
+    #     first_flag, fmode = JLD2flag(first_flag)
+    #     @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, fmode=fmode, verbose=false)
+    #
+    # end
+    #
+    # if info.gravity && :gravity in datatypes
+    #     if verbose println("- gravity") end
+    #     first_flag, fmode = JLD2flag(first_flag)
+    #     @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, fmode=fmode, verbose=false)
+    #
+    # end
+    #
+    # if info.particles && :particles in datatypes
+    #     if verbose println("- particles") end
+    #     first_flag, fmode = JLD2flag(first_flag)
+    #     @timeit wt "particles"  savedata(part, path=fpath, fname=fname, fmode=fmode, verbose=false)
+    #
+    # end
+    #
+    # if info.clumps && :clumps in datatypes
+    #     if verbose println("- clumps") end
+    #     first_flag, fmode = JLD2flag(first_flag)
+    #     @timeit wt "clumps"  savedata(clumps, path=fpath, fname=fname, fmode=fmode, verbose=false)
+    # end
 
     # return =============================
     icpu= info.output
