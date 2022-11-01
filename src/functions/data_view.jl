@@ -97,7 +97,6 @@ function viewdata(output::Int; path::String="./",
                 println(v, ": ", iversions)
             end
             println("-------------------------")
-            if convertstat != false println("convert stat: true") end
             mem = iroot["memory"]
             println("Memory: ", mem[1], " ", mem[2], " (uncompressed)")
             println()
@@ -111,6 +110,15 @@ function viewdata(output::Int; path::String="./",
     viewoutput["FileSize"] = (svalue, sunit)
 
     if verbose
+        println("-----------------------------------")
+        if convertstat != false
+            println("convert stat: true")
+            viewoutput["convertstat"] = convertstat
+        else
+            println("convert stat: false")
+        else
+
+        end
         println("-----------------------------------")
         println("Total file size: ", svalue, " ", sunit)
         println("-----------------------------------")
