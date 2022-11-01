@@ -39,7 +39,7 @@ function viewdata(output::Int; path::String="./",
     ikeys = Dict() # information keys
     vkeys = Dict() # versions keys
     for rname in fkeys
-        if rname != "_types" && rnames in [:hydro, :gravity, :particles, :clumps]
+        if rname != "_types" && rname in [:hydro, :gravity, :particles, :clumps]
             #println(rname)
             ilink = rname * "/information"
             ifk = JLD2.load(fpath, ilink)
@@ -60,7 +60,7 @@ function viewdata(output::Int; path::String="./",
     viewoutput = Dict()
     convertstat = false
     for rname in fkeys
-        if rname != "_types" && rnames in [:hydro, :gravity, :particles, :clumps]
+        if rname != "_types" && rname in [:hydro, :gravity, :particles, :clumps]
             idata = Dict()
             vdata = Dict()
             for i in ikeys[rname]
