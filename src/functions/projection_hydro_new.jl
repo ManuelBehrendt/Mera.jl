@@ -280,7 +280,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     boxlen = dataobject.boxlen
     if res === missing res = 2^lmax end
     res = floor(Int, res) # to be sure to have Integer
-    
+
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
@@ -327,8 +327,13 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
         closed=:left
-        if show_progress p = Progress(simlmax-lmin) end
-        for level = lmin:simlmax #@showprogress 1 ""
+        if show_progress
+            p = 1 # show updates
+        else
+            p = simlmax-lmin+2 # do not show updates
+        end
+        #if show_progress p = Progress(simlmax-lmin) end
+        @showprogress p for level = lmin:simlmax #@showprogress 1 ""
             #println()
             #println("level: ", level)
             mask_level = leveldata .== level
@@ -351,7 +356,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
             end
 
 
-            if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
+            #if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
         end #for level
 
 
