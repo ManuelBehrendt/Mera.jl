@@ -230,8 +230,12 @@ function readpart(dataobject::InfoType;
     #ngrida=0
     parti=Int32(0) # particle iterator
 
-    if show_progress p = Progress(ncpu_read) end
-    for k=1:ncpu_read # @showprogress 1 "Reading data..."
+    if show_progress
+        p = 1 # show updates
+    else
+        p = ncpu_read+2 # do not show updates
+    end
+    @showprogress p for k=1:ncpu_read # @showprogress 1 "Reading data..."
 
        icpu=cpu_list[k]
 
@@ -354,7 +358,7 @@ function readpart(dataobject::InfoType;
         end
         close(f_part)
 
-        if show_progress next!(p, showvalues = [(:Nfiles, k)]) end # ProgressMeter
+        #if show_progress next!(p, showvalues = [(:Nfiles, k)]) end # ProgressMeter
     end #for
 
     if read_cpu
