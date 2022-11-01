@@ -330,7 +330,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
         if show_progress
             p = 1 # show updates
         else
-            p = simlmax-lmin+2 # do not show updates
+            p = simlmax+2 # do not show updates
         end
         #if show_progress p = Progress(simlmax-lmin) end
         @showprogress p for level = lmin:simlmax #@showprogress 1 ""
