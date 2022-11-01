@@ -166,8 +166,12 @@ function gethydrodata( dataobject::InfoType,
     var_level = 0
     #get_var_totsize = 0
 
-    if show_progress p = Progress(ncpu_read) end
-    for k=1:ncpu_read #Reading files... @showprogress 1 ""
+    if show_progress
+        p = 1 # show updates
+    else
+        p = ncpu_read+2 # do not show updates
+    end
+    @showprogress p for k=1:ncpu_read #Reading files... @showprogress 1 ""
         icpu=cpu_list[k]
         #println("icpu ",icpu)
 
@@ -295,7 +299,7 @@ function gethydrodata( dataobject::InfoType,
         close(f_amr)
         close(f_hydro)
 
-        if show_progress next!(p, showvalues = [(:Nfiles, k)]) end # ProgressMeter
+        #if show_progress next!(p, showvalues = [(:Nfiles, k)]) end # ProgressMeter
     end # End loop over cpu files
 
     if read_cpu
