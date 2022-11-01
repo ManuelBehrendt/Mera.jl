@@ -1,3 +1,4 @@
+
 function convertdata(output::Int, datatypes::Array{Symbol, 1};
                     path::String="./", fpath::String="./",
                     fname = "output_",
@@ -7,7 +8,8 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-                    smallr::Real=1e-11,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
                     verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
@@ -23,6 +25,7 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};
                             center=center,
                             range_unit=range_unit,
                             smallr=smallr,
+                            smallc=smallc,
                             verbose=verbose,
                             show_progress=show_progress,
                             myargs=myargs )
@@ -36,7 +39,8 @@ function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::S
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-                    smallr::Real=1e-11,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
                     verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
@@ -52,6 +56,7 @@ function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::S
                             center=center,
                             range_unit=range_unit,
                             smallr=smallr,
+                            smallc=smallc,
                             verbose=verbose,
                             show_progress=show_progress,
                             myargs=myargs )
@@ -68,7 +73,8 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
-                    smallr::Real=1e-11,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
                     verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
@@ -128,6 +134,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
     if info.hydro && :hydro in datatypes
         if verbose println("- hydro") end
         @timeit lt "hydro"  gas    = gethydro(info, lmax=lmax, smallr=smallr,
+                                smallc=smallc,
                                 xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit,
                                 verbose=false, show_progress=show_progress)
