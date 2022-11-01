@@ -116,8 +116,6 @@ function viewdata(output::Int; path::String="./",
             viewoutput["convertstat"] = convertstat
         else
             println("convert stat: false")
-        else
-
         end
         println("-----------------------------------")
         println("Total file size: ", svalue, " ", sunit)
