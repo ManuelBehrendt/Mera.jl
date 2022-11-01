@@ -78,7 +78,7 @@ function viewdata(output::Int; path::String="./",
             viewoutput[rname] = idata
 
         elseif rname == "convertstat"
-            convertstat = ikeys[rname]
+            convertstat = fkeys[rname]
             viewoutput[rname] = convertstat
         end
 
