@@ -13,7 +13,7 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};
                     myargs::ArgumentsType=ArgumentsType() )
 
 
-        return convertdata(output=output, datatypes=datatypes,
+        return convertdata(output, datatypes=datatypes,
                             path=path, fpath=fpath,
                             fname = fname,
                             lmax=lmax,
@@ -42,7 +42,7 @@ function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::S
                     myargs::ArgumentsType=ArgumentsType() )
 
 
-        return convertdata(output=output, datatypes=[datatypes],
+        return convertdata(output, datatypes=[datatypes],
                             path=path, fpath=fpath,
                             fname = fname,
                             lmax=lmax,
