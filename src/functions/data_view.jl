@@ -79,7 +79,6 @@ function viewdata(output::Int; path::String="./",
 
         elseif rname == "convertstat"
             convertstat = JLD2.load(fpath, rname)
-            viewoutput[rname] = convertstat
         end
 
     end
