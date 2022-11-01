@@ -120,7 +120,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
     # reading =============================
     if verbose
         println()
-        println("reading/writing lmax: ", lmax)
+        println("reading/writing lmax: ", lmax, " of", info.levelmax)
     end
 
     first_amrflag = true
