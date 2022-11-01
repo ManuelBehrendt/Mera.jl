@@ -1,6 +1,63 @@
-function convertdata(output::Int; path::String="./", fpath::String="./",
+function convertdata(output::Int, datatypes::Array{Symbol, 1};
+                    path::String="./", fpath::String="./",
                     fname = "output_",
-                    datatypes::Array{<:Any,1}=[missing],
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    smallr::Real=1e-11,
+                    verbose::Bool=true,
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+
+        return convertdata(output=output, datatypes=datatypes,
+                            path=path, fpath=fpath,
+                            fname = fname,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            smallr=smallr,
+                            verbose=verbose,
+                            show_progress=show_progress,
+                            myargs=myargs )
+end
+
+function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::String="./",
+                    fname = "output_",
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    smallr::Real=1e-11,
+                    verbose::Bool=true,
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+
+        return convertdata(output=output, datatypes=[datatypes],
+                            path=path, fpath=fpath,
+                            fname = fname,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            smallr=smallr,
+                            verbose=verbose,
+                            show_progress=show_progress,
+                            myargs=myargs )
+end
+
+
+
+
+function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::String="./", fpath::String="./",
+                    fname = "output_",
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
                     zrange::Array{<:Any,1}=[missing, missing],
@@ -206,6 +263,7 @@ function convertdata(output::Int; path::String="./", fpath::String="./",
     overview["TimerOutputs"] = rw
     overview["viewdata"] = viewdata(output, path=fpath, fname=fname, verbose=false)
     overview["size"] = mem
+
     return overview
 end
 
