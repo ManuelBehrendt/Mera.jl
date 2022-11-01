@@ -522,9 +522,13 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     maps = SortedDict( )
     maps_mode = SortedDict( )
     maps_unit = SortedDict( )
-
-    if show_progress p = Progress(length(selected_vars)) end
-    for i_var in selected_vars #dependencies_part_list @showprogress 1 ""
+    if show_progress
+        p = 1 # show updates
+    else
+        p = length(selected_vars)+2 # do not show updates
+    end
+    #if show_progress p = Progress(length(selected_vars)) end
+    @showprogress p for i_var in selected_vars #dependencies_part_list @showprogress 1 ""
         #println(i_var)
 
         if !in(i_var, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
@@ -748,7 +752,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
         end
 
-        if show_progress next!(p, showvalues = [(:Nvars, i_var)]) end # ProgressMeter
+        #if show_progress next!(p, showvalues = [(:Nvars, i_var)]) end # ProgressMeter
     end #for
 
 
