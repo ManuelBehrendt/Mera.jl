@@ -58,8 +58,9 @@ function viewdata(output::Int; path::String="./",
 
     # load information/versions into dictionary of each datatype
     viewoutput = Dict()
+    convertstat = false
     for rname in fkeys
-        if rname != "_types"
+        if rname != "_types" && rnames in [:hydro, :gravity, :particles, :clumps]
             idata = Dict()
             vdata = Dict()
             for i in ikeys[rname]
@@ -76,6 +77,9 @@ function viewdata(output::Int; path::String="./",
             idata["versions"] = vdata
             viewoutput[rname] = idata
 
+        elseif rname == "convertstat"
+            convertstat = ikeys[rname]
+            viewoutput[rname] = convertstat
         end
 
     end
@@ -93,6 +97,7 @@ function viewdata(output::Int; path::String="./",
                 println(v, ": ", iversions)
             end
             println("-------------------------")
+            if convertstat != false println("convert stat: true") end
             mem = iroot["memory"]
             println("Memory: ", mem[1], " ", mem[2], " (uncompressed)")
             println()
@@ -117,7 +122,7 @@ function viewdata(output::Int; path::String="./",
 end
 
 function known_datatype(datatype::Symbol)
-    knowntypes = [:hydro, :particles, :clumps]
+    knowntypes = [:hydro, :gravity, :particles, :clumps]
     if in(datatype, knowntypes)
         return true
     else
