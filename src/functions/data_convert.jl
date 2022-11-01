@@ -270,6 +270,14 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
     overview["viewdata"] = viewdata(output, path=fpath, fname=fname, verbose=false)
     overview["size"] = mem
 
+    jld2mode = "a+" # append
+    icpu= output
+    filename = outputname(fname, icpu) * ".jld2"
+    sfpath    = checkpath(fpath, filename)
+    jldopen(sfpath, jld2mode) do f
+        f["convertstat"] = overview
+    end
+
     return overview
 end
 
