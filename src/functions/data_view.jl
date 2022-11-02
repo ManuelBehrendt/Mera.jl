@@ -1,6 +1,19 @@
 # todo : simulation code
 # check known types
-function viewdata(output::Int; path::String="./",
+function viewdata(output::Int, path::String;
+                    fname = "output_",
+                    showfull::Bool=false,
+                    verbose::Bool=true)
+
+        return viewdata(output, path=path,
+                            fname=fname,
+                            showfull=showfull,
+                            verbose=verbose)
+
+end
+
+function viewdata(output::Int;
+                    path::String="./",
                     fname = "output_",
                     showfull::Bool=false,
                     verbose::Bool=true)

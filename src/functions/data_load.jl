@@ -1,3 +1,74 @@
+function loaddata(output::Int, datatype::Symbol;
+                    path::String="./",
+                    fname = "output_",
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    verbose::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+        return loaddata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            verbose=verbose,
+                            myargs=myargs )
+end
+
+function loaddata(output::Int, path::String, datatype::Symbol;
+                    fname = "output_",
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    verbose::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+        return loaddata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            verbose=verbose,
+                            myargs=myargs )
+end
+
+
+function loaddata(output::Int, path::String;
+                    fname = "output_",
+                    datatype::Symbol,
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    verbose::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+        return loaddata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            verbose=verbose,
+                            myargs=myargs )
+end
+
+
+
 function loaddata(output::Int; path::String="./",
                     fname = "output_",
                     datatype::Symbol,

@@ -1,4 +1,37 @@
-function infodata(output::Int; path::String="./",
+function infodata(output::Int, datatype::Symbol;
+                    path::String="./",
+                    fname = "output_",
+                    verbose::Bool=true)
+
+        return infodata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            verbose=verbose)
+end
+
+function infodata(output::Int, path::String, datatype::Symbol;
+                    fname = "output_",
+                    verbose::Bool=true)
+
+        return infodata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            verbose=verbose)
+end
+
+function infodata(output::Int, path::String;
+                    fname = "output_",
+                    datatype::Any=:nothing,
+                    verbose::Bool=true)
+
+        return infodata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            verbose=verbose)
+end
+
+function infodata(output::Int;
+                    path::String="./",
                     fname = "output_",
                     datatype::Any=:nothing,
                     verbose::Bool=true)
