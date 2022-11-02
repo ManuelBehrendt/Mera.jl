@@ -1,4 +1,61 @@
+function savedata( dataobject::DataSetType, fmode::Symbol;
+                    path::String="./",
+                    fname = "output_",
+                    dataformat::Symbol=:JLD2,
+                    compress::Any=nothing,
+                    comments::Any=nothing,
+                    merafile_version::Float64=1.,
+                    verbose::Bool=true)
 
+        return savedata( dataobject,
+                            path=path,
+                            fname=fname,
+                            fmode=fmode,
+                            dataformat=dataformat,
+                            compress=compress,
+                            comments=comments,
+                            merafile_version=merafile_version,
+                            verbose=verbose)
+end
+
+function savedata( dataobject::DataSetType, path::String, fmode::Symbol;
+                    fname = "output_",
+                    dataformat::Symbol=:JLD2,
+                    compress::Any=nothing,
+                    comments::Any=nothing,
+                    merafile_version::Float64=1.,
+                    verbose::Bool=true)
+
+        return savedata( dataobject,
+                            path=path,
+                            fname=fname,
+                            fmode=fmode,
+                            dataformat=dataformat,
+                            compress=compress,
+                            comments=comments,
+                            merafile_version=merafile_version,
+                            verbose=verbose)
+end
+
+function savedata( dataobject::DataSetType, path::String;
+                    fname = "output_",
+                    fmode::Any=nothing,
+                    dataformat::Symbol=:JLD2,
+                    compress::Any=nothing,
+                    comments::Any=nothing,
+                    merafile_version::Float64=1.,
+                    verbose::Bool=true)
+
+        return savedata( dataobject,
+                            path=path,
+                            fname=fname,
+                            fmode=fmode,
+                            dataformat=dataformat,
+                            compress=compress,
+                            comments=comments,
+                            merafile_version=merafile_version,
+                            verbose=verbose)
+end
 
 function savedata( dataobject::DataSetType;
                     path::String="./",
