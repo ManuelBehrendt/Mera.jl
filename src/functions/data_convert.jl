@@ -126,7 +126,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
     # reading =============================
     if verbose
         println()
-        println("reading/writing lmax: ", lmax, " of", info.levelmax)
+        println("reading/writing lmax: ", lmax, " of ", info.levelmax)
     end
 
     first_amrflag = true
@@ -278,10 +278,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
     overview["size"] = mem
 
     jld2mode = "a+" # append
-    icpu= output
-    filename = outputname(fname, icpu) * ".jld2"
-    sfpath    = checkpath(fpath, filename)
-    jldopen(sfpath, jld2mode) do f
+    jldopen(fullpath, jld2mode) do f
         f["convertstat"] = overview
     end
 
