@@ -44,7 +44,7 @@ return HydroMapsType
 - **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
 ##### Predefined/Optional Keywords:
 - **`unit(s)`:** return the variable in given units
-- **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected
+- **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected; (pixel number is related to the full boxsize)
 - **`lmax`:** create maps with 2^lmax pixels for each dimension
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
