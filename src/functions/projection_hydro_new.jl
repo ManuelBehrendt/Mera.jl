@@ -322,8 +322,8 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_unit = SortedDict( )
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
-        newmap_w = zeros(Float64, (res, res) )
-        data_dict, xval, yval, leveldata, weightval = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask, rangez)
+        newmap_w = zeros(Float64, (length1, length2) )
+        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask, rangez, length1, length2)
 
 
         closed=:left
@@ -341,7 +341,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
             new_level_range1, new_level_range2, length_level1, length_level2 = prep_level_range(direction, level, ranges)
 
             # bin data on current level grid and resize map
-            fcorrect =  (2^level /  res)^ 2
+            fcorrect = (2^level /  res) ^ 2
             map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval)
             newmap_w += imresize(map_weight, (length1, length2)) .* fcorrect
 
@@ -606,7 +606,7 @@ end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask,rangez)
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask,rangez, length1, length2)
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
         #println(rangez)
@@ -663,7 +663,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
         data_dict = SortedDict( )
         for ivar in selected_vars
             if !in(ivar, anglecheck) && !in(ivar, rcheck)
-                #maps[ivar] =  zeros(Float64, (res, res) )
+                maps[ivar] =  zeros(Float64, (length1, length2) )
                 if ivar !== :sd
                     if length(mask) == 1
                         data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
@@ -684,7 +684,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             end
         end
         # =================================
-    return data_dict, xval, yval, leveldata, weightval
+    return data_dict, xval, yval, leveldata, weightval, maps
 end
 
 
