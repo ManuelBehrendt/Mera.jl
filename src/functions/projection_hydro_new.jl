@@ -304,9 +304,6 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     data_centerm = Mera.prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
 
     if verbose
-        println("Effective resolution: $res^2")
-        println("Map size: $length1 x $length2")
-        println()
         println("Selected var(s)=$(tuple(selected_vars...)) ")
         println("Weighting      = :", weighting)
         println()
@@ -314,6 +311,11 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
     x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
 
+    if verbose
+        println("Effective resolution: $res^2")
+        println("Map size: $length1 x $length2")
+        println()
+    end
 
     skipmask = check_mask(dataobject, mask, verbose)
 
