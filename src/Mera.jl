@@ -113,6 +113,7 @@ export
 
 #types
     ScalesType001,
+    ScalesType,
     ArgumentsType,
     PhysicalUnitsType,
     GridInfoType,
