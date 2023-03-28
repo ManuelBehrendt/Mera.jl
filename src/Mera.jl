@@ -146,6 +146,7 @@ export
 
 
 include("types.jl")
+include("types_old.jl")
 
 include("functions/miscellaneous.jl")
 include("functions/overview.jl")
