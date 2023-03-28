@@ -29,6 +29,7 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
+                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -56,6 +57,7 @@ return HydroMapsType
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** select between: :x, :y, :z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`mode`:** :standard (default) handles surface density, and weighted average quantities. mode=:sum sums-up the weighted quantities in projection direction. 
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
@@ -86,6 +88,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
+                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -105,6 +108,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                             range_unit=range_unit,
                             data_center=data_center,
                             data_center_unit=data_center_unit,
+                            mode=mode,
                             verbose=verbose,
                             show_progress=show_progress,
                             myargs=myargs )
@@ -126,6 +130,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
+                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -145,6 +150,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             range_unit=range_unit,
                             data_center=data_center,
                             data_center_unit=data_center_unit,
+                            mode=mode,
                             verbose=verbose,
                             show_progress=show_progress,
                             myargs=myargs)
@@ -166,6 +172,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
+                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -184,6 +191,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                                                 range_unit=range_unit,
                                                 data_center=data_center,
                                                 data_center_unit=data_center_unit,
+                                                mode=mode,
                                                 verbose=verbose,
                                                 show_progress=show_progress,
                                                 myargs=myargs)
@@ -207,6 +215,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
+                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -225,6 +234,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                                                 range_unit=range_unit,
                                                 data_center=data_center,
                                                 data_center_unit=data_center_unit,
+                                                mode=mode,
                                                 verbose=verbose,
                                                 show_progress=show_progress,
                                                 myargs=myargs)
@@ -247,6 +257,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
+                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
