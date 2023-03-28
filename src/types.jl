@@ -33,10 +33,12 @@ mutable struct ScalesType
 
    # density
    Msol_pc3::Float64
+   Msun_pc3::Float64
    g_cm3::Float64
 
    # surface
    Msol_pc2::Float64
+   Msun_pc2::Float64
    g_cm2::Float64
 
    # time
@@ -48,6 +50,7 @@ mutable struct ScalesType
 
    # mass
    Msol::Float64
+   Msun::Float64
    Mearth::Float64
    Mjupiter::Float64
    g::Float64
@@ -63,7 +66,11 @@ mutable struct ScalesType
    g_cms2::Float64
 
    T_mu::Float64
+   T::Float64
    Ba::Float64
+   g_cm_s2::Float64
+   p_kB::Float64
+   K_cm3::Float64
    ScalesType() = new()
 end
 
@@ -81,9 +88,11 @@ Mutable Struct: Contains the physical constants in cgs units
      mpc::Float64 #cm: MilliParsec
      ly::Float64 #cm: Light year
      Msol::Float64 #g: Solar mass
+     Msun::Float64 #g: Sun mass
      Mearth::Float64 #g: Earth mass
      Mjupiter::Float64 #g: Jupiter mass
      Rsol::Float64 #cm: Solar radius
+     Rsun::Float64
     # Lsol = #erg s-2: Solar luminosity
     # Mearth = #g: Earh mass
 

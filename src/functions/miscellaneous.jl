@@ -21,7 +21,9 @@ function createconstants()
 
     constants.ly = 9.4607304725808e17  # [cm] Light year -> from IAU
     constants.Msol = 1.9891e33         # [g] Solar mass -> from IAU
+    constants.Msun = constants.Msol
     constants.Rsol = 6.96e10 #cm: Solar radius
+    constants.Rsun = constants.Rsol
     # Lsol = #erg s-2: Solar luminosity
     constants.Mearth = 5.9722e27       # [g]  Earth mass -> from IAU
     constants.Mjupiter = 1.89813e30    # [g]  Jupiter -> from IAU
@@ -91,7 +93,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     #Myr     =   constants.yr /1e6   # [s]  MegaYear -> from IAU
     yr      =   constants.yr        # [s]  Year -> from IAU
     X_frac  =   0.76                # Hydrogen fraction by mass -> cooling_module.f90 RAMSES
-
+    μ       =   1/X_frac            # mean molecular weight
 
     scale.Mpc       = unit_l / pc / 1e6
     scale.kpc       = unit_l / pc / 1e3
@@ -118,9 +120,11 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.μm3        = scale.μm^3
 
     scale.Msol_pc3  = unit_d * pc^3 / Msol
+    scale.Msun_pc3  = scale.Msol_pc3
     scale.g_cm3     = unit_d
 
     scale.Msol_pc2  = unit_d * unit_l * pc^2 / Msol
+    scale.Msun_pc2  = scale.Msol_pc2
     scale.g_cm2     = unit_d * unit_l
 
     scale.Gyr       = unit_t / yr / 1e9
@@ -130,6 +134,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.ms        = unit_t * 1e3
 
     scale.Msol      = unit_d * unit_l^3 / Msol
+    scale.Msun      = scale.Msol
     scale.Mearth    = unit_d * unit_l^3 / Mearth
     scale.Mjupiter  = unit_d * unit_l^3 / Mjupiter
     scale.g         = unit_d * unit_l^3
@@ -141,8 +146,12 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.erg       = unit_m * (unit_l / unit_t)^2 # [g (cm/s)^2]
     scale.g_cms2    = unit_m / (unit_l * unit_t^2)
 
-    scale.T_mu      = mH / kB * (unit_l / unit_t)^2 # T/mu [Kelvin]
+    scale.T_mu      = mH / kB * (unit_t / unit_l)^2 # T/mu [Kelvin]
+    scale.T         = mH / kB * μ * (unit_t / unit_l)^2 # T [Kelvin]
     scale.Ba        = unit_m / unit_l / unit_t^2 # Barye (pressure) [cm-1 g s-2]
+    scale.g_cm_s2   = scale.Ba
+    scale.p_kB      = scale.g_cm_s2 / kB # [K cm-3]
+    scale.K_cm3     = scale.p_kB # p/kB
 
     return scale
 end
