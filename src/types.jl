@@ -2,7 +2,7 @@
 """
 Mutable Struct: Contains the created scale factors from code to physical units
 """
-mutable struct ScalesType
+mutable struct ScalesType001
 # exported
 
    # length
@@ -71,7 +71,7 @@ mutable struct ScalesType
    g_cm_s2::Float64
    p_kB::Float64
    K_cm3::Float64
-   ScalesType() = new()
+   ScalesType001() = new()
 end
 
 
@@ -297,7 +297,7 @@ mutable struct InfoType
     compilationfile::Bool
     patchfile::Bool
     Narraysize::Int
-    scale::ScalesType
+    scale::ScalesType001
     grid_info::GridInfoType
     part_info::PartInfoType
     compilation::CompilationInfoType
@@ -356,7 +356,7 @@ mutable struct HydroDataType <: HydroPartType
     used_descriptors::Dict{Any,Any}
     smallr::Float64
     smallc::Float64
-    scale::ScalesType
+    scale::ScalesType001
     HydroDataType() = new()
 end
 
@@ -372,7 +372,7 @@ mutable struct GravDataType <: DataSetType
     ranges::Array{Float64,1}
     selected_gravvars::Array{Int,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType
+    scale::ScalesType001
     GravDataType() = new()
 end
 
@@ -390,7 +390,7 @@ mutable struct PartDataType <: HydroPartType
     ranges::Array{Float64,1}
     selected_partvars::Array{Symbol,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType
+    scale::ScalesType001
     PartDataType() = new()
 end
 
@@ -407,7 +407,7 @@ mutable struct ClumpDataType <: ContainMassDataSetType
     ranges::Array{Float64,1}
     selected_clumpvars::Array{Symbol,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType
+    scale::ScalesType001
     ClumpDataType() = new()
 end
 
@@ -462,7 +462,7 @@ mutable struct HydroMapsType <: DataMapsType
     boxlen::Float64
     smallr::Float64
     smallc::Float64
-    scale::ScalesType
+    scale::ScalesType001
     info::InfoType
 end
 
@@ -483,7 +483,7 @@ mutable struct PartMapsType <: DataMapsType
     cextent::Array{Float64,1}
     ratio::Float64
     boxlen::Float64
-    scale::ScalesType
+    scale::ScalesType001
     info::InfoType
 end
 
@@ -500,7 +500,7 @@ mutable struct Histogram2DMapType
     yrange::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}
     extent::Array{Float64,1}
     ratio::Float64
-    scale::ScalesType
+    scale::ScalesType001
     info::InfoType
 end
 

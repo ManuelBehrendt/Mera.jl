@@ -55,7 +55,7 @@ end
 ```julia
 function createscales!(dataobject::InfoType)
 
-return ScalesType
+return ScalesType001
 ```
 """
 function createscales!(dataobject::InfoType)
@@ -75,7 +75,7 @@ end
 
 function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType)
     #Initialize scale-object
-    scale = ScalesType() #zeros(Float64, 32)...)
+    scale = ScalesType001() #zeros(Float64, 32)...)
 
     # Conversion factors from user units to astronomical units
     mH      =   constants.mH        # [g]   H-Atom mass -> from RAMSES
@@ -177,12 +177,12 @@ end
 ### Convert a value to human-readable astrophysical units and round to ndigits
 (pass the value in code units and the quantity specification (length, time) )
 ```julia
-function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::String)
+function humanize(value::Float64, scale::ScalesType001, ndigits::Int, quantity::String)
 
 return value, value_unit
 ```
 """
-function humanize(value::Float64, scale::ScalesType, ndigits::Int, quantity::String)
+function humanize(value::Float64, scale::ScalesType001, ndigits::Int, quantity::String)
 
     if quantity == ""
         round(value, digits=ndigits)
