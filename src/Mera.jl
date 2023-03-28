@@ -112,7 +112,7 @@ export
     humanize,
 
 #types
-    ScalesType,
+    ScalesType001,
     ArgumentsType,
     PhysicalUnitsType,
     GridInfoType,

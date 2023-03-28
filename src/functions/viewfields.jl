@@ -71,7 +71,7 @@ function viewfields(object::ArgumentsType)
 end
 
 
-function viewfields(object::ScalesType)
+function viewfields(object::ScalesType001)
 
     list_field = propertynames(object)
 
