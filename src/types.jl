@@ -301,7 +301,7 @@ mutable struct InfoType
     grid_info::GridInfoType
     part_info::PartInfoType
     compilation::CompilationInfoType
-    constants::PhysicalUnitsType
+    constants::PhysicalUnitsType001
     #overview::simulation_overview
     #cpu_overview::cpu_overview_type
     #boxcenter::Array{Float64,1}
