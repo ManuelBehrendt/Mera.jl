@@ -12,7 +12,7 @@ function createconstants()
     # http://www.astro.wisc.edu/~dolan/constants.html
     # IAU
     # RAMSES
-    constants = PhysicalUnitsType() #zeros(Float64, 17)...)
+    constants = PhysicalUnitsType001() #zeros(Float64, 17)...)
     constants.Au = 149597870700e-13    # [cm] Astronomical unit -> from IAU
     constants.pc = 3.08567758128e18    # [cm] Parsec -> from IAU
     constants.kpc = constants.pc * 1e3
@@ -73,7 +73,7 @@ function createscales(dataobject::InfoType)
     return createscales(unit_l, unit_d, unit_t, unit_m, constants)
 end
 
-function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType)
+function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType001)
     #Initialize scale-object
     scale = ScalesType001() #zeros(Float64, 32)...)
 

@@ -65,3 +65,40 @@ mutable struct ScalesType
    Ba::Float64
    ScalesType() = new()
 end
+
+
+"""
+Mutable Struct: Contains the physical constants in cgs units
+"""
+ mutable struct PhysicalUnitsType
+# exported
+    # in cgs units
+     Au::Float64#cm: Astronomical unit
+     Mpc::Float64 #cm: Parsec
+     kpc::Float64 #cm: Parsec
+     pc::Float64 #cm: Parsec
+     mpc::Float64 #cm: MilliParsec
+     ly::Float64 #cm: Light year
+     Msol::Float64 #g: Solar mass
+     Mearth::Float64 #g: Earth mass
+     Mjupiter::Float64 #g: Jupiter mass
+     Rsol::Float64 #cm: Solar radius
+    # Lsol = #erg s-2: Solar luminosity
+    # Mearth = #g: Earh mass
+
+     me::Float64 #g: electron mass
+     mp::Float64 #g: proton mass
+     mn::Float64 #g: neutron mass
+     mH::Float64 #g: hydrogen mass
+     amu::Float64 #g: atomic mass unit
+     NA::Float64 # Avagadro's number
+     c::Float64 #cm s-1: speed of light in a vacuum
+    # h = #erg s: Planck constant
+    # hbar = #erg s
+     G::Float64 # cm3 g-1 g-2 Gravitational constant
+     kB::Float64 #erg k-1 Boltzmann constant
+     Gyr::Float64 #sec: defined as 365.25 days
+     Myr::Float64 #sec: defined as 365.25 days
+     yr::Float64 #sec: defined as 365.25 days
+     PhysicalUnitsType() = new()
+end
