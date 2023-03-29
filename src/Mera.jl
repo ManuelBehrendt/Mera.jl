@@ -115,6 +115,7 @@ export
     ScalesType001,
     ScalesType,
     ArgumentsType,
+    PhysicalUnitsType001,
     PhysicalUnitsType,
     GridInfoType,
     PartInfoType,

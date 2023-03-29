@@ -78,7 +78,7 @@ end
 """
 Mutable Struct: Contains the physical constants in cgs units
 """
- mutable struct PhysicalUnitsType
+ mutable struct PhysicalUnitsType001
 # exported
     # in cgs units
      Au::Float64#cm: Astronomical unit
@@ -110,7 +110,7 @@ Mutable Struct: Contains the physical constants in cgs units
      Gyr::Float64 #sec: defined as 365.25 days
      Myr::Float64 #sec: defined as 365.25 days
      yr::Float64 #sec: defined as 365.25 days
-     PhysicalUnitsType() = new()
+     PhysicalUnitsType001() = new()
 end
 
 

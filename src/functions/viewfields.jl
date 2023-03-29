@@ -195,7 +195,7 @@ end
 
 
 
-function viewfields(object::PhysicalUnitsType)
+function viewfields(object::PhysicalUnitsType001)
 
     list_field = propertynames(object)
 
