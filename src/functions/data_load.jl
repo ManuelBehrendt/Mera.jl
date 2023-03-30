@@ -114,9 +114,18 @@ function loaddata(output::Int; path::String="./",
     fkeys = keys(froot.written_links)
     close(f)
 
+
+    #------------------
+    # prepare with rconvert to load also older data types
+    JLD2.rconvert(::Type{ScalesType001}, nt::NamedTuple) = ScalesType001()
+    JLD2.rconvert(::Type{PhysicalUnitsType001}, nt::NamedTuple) = PhysicalUnitsType001()
+    #------------------
+
     # todo: check if request exists
     dlink = string(datatype) * "/data"
-    dataobject = JLD2.load(fpath, dlink)
+    dataobject = JLD2.load(fpath, dlink,
+                    typemap=Dict("Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
+                                 "Mera.ScalesType" => JLD2.Upgrade(ScalesType001)))
 
     # filter selected data region
     dataobject = subregion(dataobject, :cuboid,
