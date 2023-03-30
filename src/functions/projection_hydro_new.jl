@@ -304,9 +304,15 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
     σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
+            :σy => [:vy, :vy2],
+            :σz => [:vz, :vz2],
+            :σ  => [:v,  :v2],
+            :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
+            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
 
     # checks to use maps instead of projections
-    notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck)
+    notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
 
     selected_vars = check_need_rho(dataobject, selected_vars, weighting, notonly_ranglecheck_vars)
 
@@ -378,6 +384,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             #if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
         end #for level
+
 
 
         # finish projected data and revise weighting
@@ -463,7 +470,7 @@ end
 
 
 # check if only variables from ranglecheck are selected
-function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σcheck)
+function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σcheck, σ_to_v)
     # checks to use maps instead of projections
 
 
@@ -471,13 +478,6 @@ function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σch
     # for velocity dispersion add necessary velocity components
     # ========================================================
     rσanglecheck = [rcheck...,σcheck...,anglecheck...]
-
-    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
-                          :σy => [:vy, :vy2],
-                          :σz => [:vz, :vz2],
-                          :σ  => [:v,  :v2],
-                          :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
 
     for i in σcheck
         idx = findall(x->x==i, selected_vars) #[1]
