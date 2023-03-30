@@ -1,3 +1,61 @@
+"""
+#### Save the simulation data to compressed JLD2 files
+
+```julia
+savedata( dataobject::DataSetType;
+                    path::String="./",
+                    fname = "output_",
+                    fmode::Any=nothing,
+                    dataformat::Symbol=:JLD2,
+                    compress::Any=nothing,
+                    comments::Any=nothing,
+                    merafile_version::Float64=1.,
+                    verbose::Bool=true)
+
+return nothing
+```
+#### Arguments
+##### Required:
+
+
+#### Keyword Arguments
+- **`output`:** timestep number
+- **`path`:** the path to the output JLD2 file relative to the current folder or absolute path
+- **`fname`:** "output_"-> filename = "output_***.jld2" by default, can be changed to "myname***.jld2"
+- **`verbose:`:** informations are printed on the screen by default
+
+#### Examples
+```julia
+# read simulation information from output `1` in current folder
+julia> info = infodata(1) # filename="output_00001.jld2"
+
+# read simulation information from output `420` in given folder (relative path to the current working folder)
+julia> info = infodata(420, path="../MySimFolder/")
+
+# or simply use
+julia> info = infodata(420, "../MySimFolder/")
+
+
+
+# get an overview of the returned field-names
+julia> propertynames(info)
+
+# a more detailed overview
+julia> viewfields(info)
+...
+julia> viewallfields(info)
+...
+julia> namelist(info)
+...
+julia> makefile(info)
+...
+julia> timerfile(info)
+...
+julia> patchfile(info)
+...
+```
+
+"""
 function savedata( dataobject::DataSetType, fmode::Symbol;
                     path::String="./",
                     fname = "output_",

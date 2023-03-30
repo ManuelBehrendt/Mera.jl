@@ -483,7 +483,7 @@ function prepboxcenter(dataobject::InfoType, range_unit::Symbol, center::Array{<
             end
         end
     end
-    
+
     return  centerm
 
 end
