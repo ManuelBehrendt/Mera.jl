@@ -102,3 +102,10 @@ Mutable Struct: Contains the physical constants in cgs units
      yr::Float64 #sec: defined as 365.25 days
      PhysicalUnitsType() = new()
 end
+
+
+    #------------------
+    # prepare with rconvert to load also older data types
+    JLD2.rconvert(::Type{ScalesType001}, nt::NamedTuple) = ScalesType001()
+    JLD2.rconvert(::Type{PhysicalUnitsType001}, nt::NamedTuple) = PhysicalUnitsType001()
+    #------------------
