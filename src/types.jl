@@ -66,7 +66,9 @@ mutable struct ScalesType001
    g_cms2::Float64
 
    T_mu::Float64
+   K_mu::Float64
    T::Float64
+   K::Float64
    Ba::Float64
    g_cm_s2::Float64
    p_kB::Float64
