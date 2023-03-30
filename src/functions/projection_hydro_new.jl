@@ -323,9 +323,12 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
     x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
 
+    pixsize = dataobject.boxlen / res # in code units
     if verbose
         println("Effective resolution: $res^2")
         println("Map size: $length1 x $length2")
+        px_val, px_unit = humanize(pixsize, dataobject.scale, 3, "length")
+        println("Pixel size: $px_val [$px_unit]")
         println()
     end
 
@@ -450,7 +453,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
     maps_lmax = SortedDict( )
-    return HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+    return HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
 
     return maps, maps_unit, extent_center, ranges
 end
