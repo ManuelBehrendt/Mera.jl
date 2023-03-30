@@ -120,6 +120,10 @@ function loaddata(output::Int; path::String="./",
                     typemap=Dict("Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
                                  "Mera.ScalesType" => JLD2.Upgrade(ScalesType001)))
 
+    # update constants and scales
+    dataobject.info.constants = Mera.createconstants()
+    dataobject.info.scale = Mera.createscales(dataobject.info)
+
     # filter selected data region
     dataobject = subregion(dataobject, :cuboid,
                      xrange=xrange,
