@@ -136,7 +136,9 @@ function infodata(output::Int;
     end
     if verbose println("Use datatype: ", dtype) end
     inflink = string(dtype) * "/info"
-    dataobject = JLD2.load(fpath, inflink)
+    dataobject = JLD2.load(fpath, inflink,
+                    typemap=Dict("Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
+                    "Mera.ScalesType" => JLD2.Upgrade(ScalesType001)))
 
     printsimoverview(dataobject, verbose) # print overview on screen
     return dataobject
