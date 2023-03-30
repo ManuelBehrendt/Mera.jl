@@ -146,8 +146,8 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.erg       = unit_m * (unit_l / unit_t)^2 # [g (cm/s)^2]
     scale.g_cms2    = unit_m / (unit_l * unit_t^2)
 
-    scale.T_mu      = mH / kB * (unit_t / unit_l)^2 # T/mu [Kelvin]
-    scale.T         = mH / kB * μ * (unit_t / unit_l)^2 # T [Kelvin]
+    scale.T_mu      = mH / kB * unit_d * (unit_t / unit_l)^2 # T/mu [Kelvin]
+    scale.T         = mH / kB * μ * unit_d * (unit_t / unit_l)^2 # T [Kelvin]
     scale.Ba        = unit_m / unit_l / unit_t^2 # Barye (pressure) [cm-1 g s-2]
     scale.g_cm_s2   = scale.Ba
     scale.p_kB      = scale.g_cm_s2 / kB # [K cm-3]
