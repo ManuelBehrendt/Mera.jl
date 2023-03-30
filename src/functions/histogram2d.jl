@@ -232,7 +232,7 @@ function histogram2d(dataobject::DataSetType, data::Array{Array{Float64,1},1};
 end
 
 
-# 1d version exists in histogram1.jl
+
 function histogram_binning(data::Array{Array{Float64,1},1},
                         xrange::Array{<:Any,1},
                         yrange::Array{<:Any,1},
