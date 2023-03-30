@@ -123,6 +123,7 @@ function loaddata(output::Int; path::String="./",
     # update constants and scales
     dataobject.info.constants = Mera.createconstants()
     dataobject.info.scale = Mera.createscales(dataobject.info)
+    dataobject.scale = dataobject.info.scale
 
     # filter selected data region
     dataobject = subregion(dataobject, :cuboid,
