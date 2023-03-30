@@ -146,7 +146,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.erg       = unit_m * (unit_l / unit_t)^2 # [g (cm/s)^2]
     scale.g_cms2    = unit_m / (unit_l * unit_t^2)
 
-    scale.T_mu      = mH / kB * unit_d * (unit_t / unit_l)^2 # T/mu [Kelvin]
+    scale.T_mu      = mH / kB * (unit_l / unit_t)^2 # T/mu [Kelvin]
     scale.K_mu      = scale.T_mu
     scale.T         = scale.T_mu * μ # T [Kelvin]
     scale.K         = scale.T
