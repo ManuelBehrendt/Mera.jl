@@ -461,8 +461,6 @@ mutable struct HydroMapsType <: DataMapsType
     extent::Array{Float64,1}
     cextent::Array{Float64,1}
     ratio::Float64
-    effres::Int
-    pixsize::Float64
     boxlen::Float64
     smallr::Float64
     smallc::Float64
