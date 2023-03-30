@@ -340,7 +340,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
         newmap_w = zeros(Float64, (length1, length2) )
-        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask, rangez, length1, length2)
+        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2)
 
 
         closed=:left
@@ -622,7 +622,7 @@ end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, skipmask,rangez, length1, length2)
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2)
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
         #println(rangez)
@@ -683,7 +683,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
                 if ivar !== :sd
                     if length(mask) == 1
                         data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
-                    else
+                    elseif !(ivar in σcheck)
                         data_dict[ivar] = getvar(dataobject, ivar, mask=mask, center=center, center_unit=range_unit)
                     end
                 elseif ivar == :sd || ivar == :mass
