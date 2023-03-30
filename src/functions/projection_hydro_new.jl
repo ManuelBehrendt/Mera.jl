@@ -303,9 +303,10 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     density_names = [:density, :rho, :ρ]
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
 
     # checks to use maps instead of projections
-    notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck)
+    notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck)
 
     selected_vars = check_need_rho(dataobject, selected_vars, weighting, notonly_ranglecheck_vars)
 
@@ -459,14 +460,13 @@ end
 
 
 # check if only variables from ranglecheck are selected
-function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck)
+function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σcheck)
     # checks to use maps instead of projections
 
 
     ranglecheck = [rcheck..., anglecheck...]
     # for velocity dispersion add necessary velocity components
     # ========================================================
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
     rσanglecheck = [rcheck...,σcheck...,anglecheck...]
 
     σ_to_v = SortedDict(  :σx => [:vx, :vx2],
