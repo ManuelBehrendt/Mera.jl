@@ -140,6 +140,10 @@ function infodata(output::Int;
                     typemap=Dict("Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
                     "Mera.ScalesType" => JLD2.Upgrade(ScalesType001)))
 
+    # update constants and scales
+    dataobject.info.constants = Mera.createconstants()
+    dataobject.info.scale = Mera.createscales(dataobject.info)
+
     printsimoverview(dataobject, verbose) # print overview on screen
     return dataobject
 end
