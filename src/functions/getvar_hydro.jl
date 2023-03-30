@@ -114,8 +114,8 @@ function get_data(  dataobject::HydroDataType,
 
         elseif i == :T || i == :Temp || i == :Temperature
             selected_unit = getunit(dataobject, i, vars, units)
-            vars_dict[i] =   select( dataobject.data, :p) ./ select( dataobject.data, :rho) ) .* selected_unit
-            
+            vars_dict[i] =   select( dataobject.data, :p) ./ select( dataobject.data, :rho) .* selected_unit
+
         elseif i == :vx2
             selected_unit = getunit(dataobject, :vx2, vars, units)
             vars_dict[:vx2] =  select(dataobject.data, :vx).^2  .* selected_unit.^2
