@@ -142,7 +142,7 @@ function infodata(output::Int;
 
     # update constants and scales
     dataobject.constants = Mera.createconstants()
-    dataobject.scale = Mera.createscales(dataobject.info)
+    dataobject.scale = Mera.createscales(dataobject)
 
     printsimoverview(dataobject, verbose) # print overview on screen
     return dataobject
