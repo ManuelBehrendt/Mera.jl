@@ -112,6 +112,10 @@ function get_data(  dataobject::HydroDataType,
                                         select( dataobject.data, :p) ./
                                         select( dataobject.data, :rho) ) .* selected_unit
 
+        elseif i == :T || i == :Temp || i == :Temperature
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] =   select( dataobject.data, :p) ./ select( dataobject.data, :rho) ) .* selected_unit
+            
         elseif i == :vx2
             selected_unit = getunit(dataobject, :vx2, vars, units)
             vars_dict[:vx2] =  select(dataobject.data, :vx).^2  .* selected_unit.^2
@@ -266,7 +270,7 @@ function get_data(  dataobject::HydroDataType,
 
             vars_dict[:h] = sqrt.(hx .^2 .+ hy .^2 .+ hz .^2) .* selected_unit
 
-        elseif i == :mach #no unit needed
+        elseif i == :mach #thermal; no unit needed
             vars_dict[:mach] = getvar(dataobject, :v) ./ getvar(dataobject, :cs)
 
         elseif i == :ekin
