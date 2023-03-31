@@ -28,7 +28,6 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 
 [compat]
 CodecBzip2 = "= 0.7.2"
-CodecZlib = "= 0.7.1"
 DataStructures = "= 0.17.20"
 ElasticArrays = "= 1.2.9"
 FortranFiles = "= 0.6.0"
