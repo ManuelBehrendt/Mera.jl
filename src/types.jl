@@ -525,7 +525,7 @@ Mutable Struct: Contains fields to use as arguments in functions
 """
 Base.@kwdef mutable struct ArgumentsType
 
-    pxsize::nion{Array{<:Any,1}, Missing}   = missing
+    pxsize::Union{Array{<:Any,1}, Missing}   = missing
     res::Union{Real, Missing}               = missing
     lmax::Union{Real, Missing}              = missing
 
