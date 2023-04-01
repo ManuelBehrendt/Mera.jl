@@ -814,7 +814,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
     res = 0
     pixsize=0.
-    finalmaps = HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+    finalmaps = HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
 
     if simlmax > lmax
             return remap(finalmaps, lmax, weighting=weighting)
