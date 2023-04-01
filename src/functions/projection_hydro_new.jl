@@ -22,7 +22,8 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -30,7 +31,6 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -54,7 +54,7 @@ return HydroMapsType
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
+- **`weighting`:** select between `:mass` weighting (default) and any other pre-defined quantity, e.g. `:volume`. Pass an array with the weighting=[quantity (Symbol), physical unit (Symbol)]
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** select between: :x, :y, :z
@@ -83,7 +83,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
@@ -127,7 +127,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
@@ -171,7 +171,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
@@ -216,7 +216,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
@@ -260,7 +260,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
@@ -316,8 +316,19 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
         px_scale = pxsize[1] / px_unit
         res = boxlen/px_scale
     end
-
     res = floor(Int, res) # be sure to have Integer
+
+    if !(weighting[1] === missing)
+        weight_scale = 1. # :standard
+        if length(weighting) != 1
+            if !(weighting[2] === missing) 
+                if weighting[2] != :standard 
+                    weight_scale = getunit(dataobject.info, weighting[2])
+                end
+            end
+        end
+
+    end
 
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
@@ -341,7 +352,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # checks to use maps instead of projections
     notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
 
-    selected_vars = check_need_rho(dataobject, selected_vars, weighting, notonly_ranglecheck_vars)
+    selected_vars = check_need_rho(dataobject, selected_vars, weighting[1], notonly_ranglecheck_vars)
 
     # convert given ranges and print overview on screen
     ranges = Mera.prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
@@ -350,7 +361,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
     if verbose
         println("Selected var(s)=$(tuple(selected_vars...)) ")
-        println("Weighting      = :", weighting)
+        println("Weighting      = :", weighting[1])
         println()
     end
 
@@ -377,7 +388,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
         newmap_w = zeros(Float64, (length1, length2) )
-        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2)
+        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2)
 
 
         closed=:left
@@ -396,7 +407,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             # bin data on current level grid and resize map
             fcorrect = (2^level /  res) ^ 2
-            map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval)
+            map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval) .* weight_scale
             newmap_w += imresize(map_weight, (length1, length2)) .* fcorrect
 
             for ivar in keys(data_dict)
@@ -404,7 +415,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     #if ivar == :mass println(ivar) end
                     map = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar])
                 else
-                    map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar])
+                    map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar]) .* weight_scale
                 end
                 maps[ivar] += imresize(map, (length1, length2)) .* fcorrect
             end
