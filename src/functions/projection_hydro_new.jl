@@ -19,6 +19,7 @@ projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         weighting::Symbol=:mass,
@@ -45,6 +46,7 @@ return HydroMapsType
 - **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
 ##### Predefined/Optional Keywords:
 - **`unit(s)`:** return the variable in given units
+- **`pxsize``:** creates maps with the given pixel size in physical/code units (dominates over: res, lmax) : pxsize=[physical size, physical unit]
 - **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected; (pixel number is related to the full boxsize)
 - **`lmax`:** create maps with 2^lmax pixels for each dimension
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
@@ -77,6 +79,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
@@ -97,6 +100,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
     return projection_new(dataobject, [var], units=[unit],
                             lmax=lmax,
                             res=res,
+                            pxsize=pxsize,
                             mask=mask,
                             direction=direction,
                             #plane_orientation=plane_orientation,
@@ -119,6 +123,7 @@ end
 function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
@@ -139,6 +144,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
     return projection_new(dataobject, [var], units=[unit],
                             lmax=lmax,
                             res=res,
+                            pxsize=pxsize,
                             mask=mask,
                             direction=direction,
                             #plane_orientation=plane_orientation,
@@ -161,6 +167,7 @@ end
 function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
@@ -180,6 +187,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
     return projection_new(dataobject, vars, units=units,
                                                 lmax=lmax,
                                                 res=res,
+                                                pxsize=pxsize,
                                                 mask=mask,
                                                 direction=direction,
                                                 #plane_orientation=plane_orientation,
@@ -204,6 +212,7 @@ end
 function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
@@ -223,6 +232,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
     return projection_new(dataobject, vars, units=fill(unit, length(vars)),
                                                 lmax=lmax,
                                                 res=res,
+                                                pxsize=pxsize,
                                                 mask=mask,
                                                 direction=direction,
                                                 #plane_orientation=plane_orientation,
@@ -247,6 +257,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         weighting::Symbol=:mass,
@@ -290,6 +301,20 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
     ##Nlevel = simlmax-lmin
     boxlen = dataobject.boxlen
     if res === missing res = 2^lmax end
+
+    if !(pxsize[1] === missing)
+        px_unit = 1. # :standard
+        if length(pxsize) != 1
+            if !(pxsize[2] === missing) 
+                if pxsize[2] != :standard 
+                    px_unit = getunit(dataobject.info, pxsize[2])
+                end
+            end
+        end
+        px_scale = pxsize[1] / px_unit
+        res = boxlen/px_scale
+    end
+
     res = floor(Int, res) # be sure to have Integer
 
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
