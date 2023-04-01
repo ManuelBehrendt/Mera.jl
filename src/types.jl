@@ -453,6 +453,7 @@ mutable struct HydroMapsType <: DataMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_lmax::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
+    maps_weight::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_mode::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     lmax_projected::Real
     lmin::Int
