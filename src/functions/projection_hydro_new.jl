@@ -386,6 +386,38 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
         end #for level
 
 
+        # velocity dispersion maps
+        for ivar in selected_vars
+            if in(ivar, σcheck)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                selected_v = σ_to_v[ivar]
+
+                # revert weighting
+                iv  = maps[selected_v[1]] = maps[selected_v[1]]  ./newmap_w 
+                iv2 = maps[selected_v[2]] = maps[selected_v[2]]  ./newmap_w 
+                delete!(data_dict, selected_v[1])
+                delete!(data_dict, selected_v[2])
+                
+                # create vdisp map
+                maps[ivar] = sqrt.( iv2 .- iv .^2 ) .* selected_unit
+                maps_unit[ivar] = unit_name
+                maps_mode[ivar] = weighting
+                
+                # assign units 
+                selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
+                maps_unit[selected_v[1]]  = unit_name
+                maps[selected_v[1]] = maps[selected_v[1]] .* selected_unit
+                maps_mode[selected_v[1]] = weighting
+                
+                selected_unit, unit_name= getunit(dataobject, selected_v[2], selected_vars, units, uname=true)
+                maps_unit[selected_v[2]]  = unit_name
+                maps[selected_v[2]] = maps[selected_v[2]] .* selected_unit^2
+                maps_mode[selected_v[2]] = weighting
+                
+            end
+        end
+
+
 
         # finish projected data and revise weighting
         for ivar in keys(data_dict)
