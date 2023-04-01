@@ -59,7 +59,7 @@ return HydroMapsType
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** select between: :x, :y, :z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
-- **`mode`:** :standard (default) handles surface density, and weighted average quantities. mode=:sum sums-up the weighted quantities in projection direction. 
+- **`mode`:** :standard (default) handles projections other than surface density. mode=:standard (default) -> weighted average; mode=:sum sums-up the weighted quantities in projection direction. 
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
@@ -84,6 +84,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Symbol=:mass,
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -91,7 +92,6 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -105,6 +105,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                             direction=direction,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
+                            mode=mode,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -112,7 +113,6 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                             range_unit=range_unit,
                             data_center=data_center,
                             data_center_unit=data_center_unit,
-                            mode=mode,
                             verbose=verbose,
                             show_progress=show_progress,
                             myargs=myargs )
@@ -128,6 +128,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Symbol=:mass,
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -135,7 +136,6 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -149,6 +149,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             direction=direction,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
+                            mode=mode,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -156,7 +157,6 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             range_unit=range_unit,
                             data_center=data_center,
                             data_center_unit=data_center_unit,
-                            mode=mode,
                             verbose=verbose,
                             show_progress=show_progress,
                             myargs=myargs)
@@ -172,6 +172,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Symbol=:mass,
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -179,7 +180,6 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -192,6 +192,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                                                 direction=direction,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
+                                                mode=mode,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -199,7 +200,6 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                                                 range_unit=range_unit,
                                                 data_center=data_center,
                                                 data_center_unit=data_center_unit,
-                                                mode=mode,
                                                 verbose=verbose,
                                                 show_progress=show_progress,
                                                 myargs=myargs)
@@ -217,6 +217,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Symbol=:mass,
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -224,7 +225,6 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -237,6 +237,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                                                 direction=direction,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
+                                                mode=mode,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -244,7 +245,6 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                                                 range_unit=range_unit,
                                                 data_center=data_center,
                                                 data_center_unit=data_center_unit,
-                                                mode=mode,
                                                 verbose=verbose,
                                                 show_progress=show_progress,
                                                 myargs=myargs)
@@ -261,6 +261,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         weighting::Symbol=:mass,
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -268,7 +269,6 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         range_unit::Symbol=:standard,
                         data_center::Array{<:Any,1}=[missing, missing, missing],
                         data_center_unit::Symbol=:standard,
-                        mode::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
@@ -369,10 +369,11 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
 
-    # prepare data
+     # prepare data
     # =================================
     maps = SortedDict( )
     maps_unit = SortedDict( )
+    maps_weight = SortedDict( )
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
         newmap_w = zeros(Float64, (length1, length2) )
@@ -420,26 +421,34 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 selected_v = σ_to_v[ivar]
 
                 # revert weighting
-                iv  = maps[selected_v[1]] = maps[selected_v[1]]  ./newmap_w 
-                iv2 = maps[selected_v[2]] = maps[selected_v[2]]  ./newmap_w 
+                if mode == :standard
+                    iv  = maps[selected_v[1]] = maps[selected_v[1]]  ./newmap_w 
+                    iv2 = maps[selected_v[2]] = maps[selected_v[2]]  ./newmap_w 
+                elseif mode == :sum
+                    iv  = maps[selected_v[1]] = maps[selected_v[1]]   
+                    iv2 = maps[selected_v[2]] = maps[selected_v[2]]   
+                end
                 delete!(data_dict, selected_v[1])
                 delete!(data_dict, selected_v[2])
                 
                 # create vdisp map
                 maps[ivar] = sqrt.( iv2 .- iv .^2 ) .* selected_unit
                 maps_unit[ivar] = unit_name
-                maps_mode[ivar] = weighting
+                maps_weight[ivar] = weighting
+                maps_mode[ivar] = mode
                 
                 # assign units 
                 selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
                 maps_unit[selected_v[1]]  = unit_name
                 maps[selected_v[1]] = maps[selected_v[1]] .* selected_unit
-                maps_mode[selected_v[1]] = weighting
+                maps_weight[selected_v[1]] = weighting
+                maps_mode[selected_v[1]] = mode
                 
                 selected_unit, unit_name= getunit(dataobject, selected_v[2], selected_vars, units, uname=true)
                 maps_unit[selected_v[2]]  = unit_name
                 maps[selected_v[2]] = maps[selected_v[2]] .* selected_unit^2
-                maps_mode[selected_v[2]] = weighting
+                maps_weight[selected_v[2]] = weighting
+                maps_mode[selected_v[2]] = mode
                 
             end
         end
@@ -451,14 +460,21 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
             selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
 
             if ivar == :sd
+                maps_weight[ivar] = :nothing
                 maps_mode[ivar] = :nothing
                 maps[ivar] = maps[ivar] ./ (boxlen / res)^2 .* selected_unit # sd = mass/A * unit
             elseif ivar == :mass
+                maps_weight[ivar] = :nothing
                 maps_mode[ivar] = :sum
                 maps[ivar] = maps[ivar] .* selected_unit
             else
-                maps_mode[ivar] = weighting
-                maps[ivar] = maps[ivar] ./ newmap_w .* selected_unit
+                maps_weight[ivar] = weighting
+                maps_mode[ivar] = mode
+                if mode == :standard
+                    maps[ivar] = maps[ivar] ./ newmap_w .* selected_unit
+                elseif mode == :sum
+                    maps[ivar] = maps[ivar].* selected_unit
+                end
             end
             maps_unit[ivar]  = unit_name
         end
@@ -483,6 +499,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 end
             end
             maps_mode[ivar] = :nothing
+            maps_weight[ivar] = :nothing
             maps[ivar] = map_R
             maps_unit[ivar] = unit_name
         end
@@ -512,6 +529,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
             end
 
             maps_mode[ivar] = :nothing
+            maps_weight[ivar] = :nothing
             maps[ivar] = map_ϕ
             maps_unit[ivar] = :radian
         end
@@ -519,9 +537,9 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
     maps_lmax = SortedDict( )
-    return HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+    return HydroMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
 
-    return maps, maps_unit, extent_center, ranges
+    #return maps, maps_unit, extent_center, ranges
 end
 
 
