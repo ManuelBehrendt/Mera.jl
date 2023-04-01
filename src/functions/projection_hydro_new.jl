@@ -275,6 +275,8 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
     # take values from myargs if given
+    if !(myargs.pxsize        === missing)        pxsize = myargs.xrange end
+    if !(myargs.res           === missing)           res = myargs.res end
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.direction     === missing)     direction = myargs.direction end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
