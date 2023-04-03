@@ -316,7 +316,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         px_scale = pxsize[1] / px_unit
         res = boxlen/px_scale
     end
-    res = floor(Int, res) # be sure to have Integer
+    res = ceil(Int, res) # be sure to have Integer
 
     if !(weighting[1] === missing)
         weight_scale = 1. # :standard
