@@ -338,7 +338,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     show_progress = checkprogress(show_progress)
     printtime("", verbose)
     boxlen = dataobject.boxlen
-    selected_vars = vars
+    selected_vars = deepcopy(vars)
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
