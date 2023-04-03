@@ -771,7 +771,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
 
         data_dict = SortedDict( )
         for ivar in selected_vars
-            if !in(ivar, anglecheck) && !in(ivar, rcheck)
+            if !in(ivar, anglecheck) && !in(ivar, rcheck)  && !in(ivar, σcheck)
                 maps[ivar] =  zeros(Float64, (length1, length2) )
                 if ivar !== :sd
                     if length(mask) == 1
