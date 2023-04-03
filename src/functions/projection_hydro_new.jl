@@ -335,7 +335,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     nvarh = dataobject.info.nvarh
     lmax_projected = lmax
     isamr = Mera.checkuniformgrid(dataobject, lmax)
-    selected_vars = vars #unique(vars)
+    selected_vars = deepcopy(vars) #unique(vars)
 
     #sd_names = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
@@ -372,7 +372,9 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         println("Effective resolution: $res^2")
         println("Map size: $length1 x $length2")
         px_val, px_unit = humanize(pixsize, dataobject.scale, 3, "length")
+        pxmin_val, pxmin_unit = humanize(boxlen/2^dataobject.lmax, dataobject.scale, 3, "length")
         println("Pixel size: $px_val [$px_unit]")
+        println("Simulation min.: $pxmin_val [$pxmin_unit]")
         println()
     end
 
