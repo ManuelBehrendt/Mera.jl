@@ -4,7 +4,6 @@ authors = ["Manuel Behrendt"]
 version = "1.2.0"
 
 [deps]
-CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 ElasticArrays = "fdbdab4c-e67f-52f5-8c3f-e7b388dad3d4"
