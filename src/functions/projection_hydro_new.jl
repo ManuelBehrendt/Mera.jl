@@ -75,7 +75,7 @@ return HydroMapsType
 #### Examples
 ...
 """
-function projection_new(   dataobject::HydroDataType, var::Symbol;
+function projection(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
@@ -97,7 +97,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    return projection_new(dataobject, [var], units=[unit],
+    return projection(dataobject, [var], units=[unit],
                             lmax=lmax,
                             res=res,
                             pxsize=pxsize,
@@ -120,7 +120,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol;
 end
 
 
-function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
+function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
                         pxsize::Array{<:Any,1}=[missing, missing],
@@ -141,7 +141,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    return projection_new(dataobject, [var], units=[unit],
+    return projection(dataobject, [var], units=[unit],
                             lmax=lmax,
                             res=res,
                             pxsize=pxsize,
@@ -164,7 +164,7 @@ function projection_new(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
 end
 
 
-function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
                         pxsize::Array{<:Any,1}=[missing, missing],
@@ -184,7 +184,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
-    return projection_new(dataobject, vars, units=units,
+    return projection(dataobject, vars, units=units,
                                                 lmax=lmax,
                                                 res=res,
                                                 pxsize=pxsize,
@@ -209,7 +209,7 @@ end
 
 
 
-function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
                         pxsize::Array{<:Any,1}=[missing, missing],
@@ -229,7 +229,7 @@ function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1}, uni
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
-    return projection_new(dataobject, vars, units=fill(unit, length(vars)),
+    return projection(dataobject, vars, units=fill(unit, length(vars)),
                                                 lmax=lmax,
                                                 res=res,
                                                 pxsize=pxsize,
@@ -253,7 +253,7 @@ end
 
 
 
-function projection_new(   dataobject::HydroDataType, vars::Array{Symbol,1};
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,

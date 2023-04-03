@@ -69,7 +69,7 @@ return HydroMapsType
 #### Examples
 ...
 """
-function projection(   dataobject::HydroDataType, var::Symbol;
+function projection_depr(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Real=dataobject.lmax,
                         mask=[false],
@@ -88,7 +88,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    return projection(dataobject, [var], units=[unit],
+    return projection_depr(dataobject, [var], units=[unit],
                             lmax=lmax,
                             mask=mask,
                             direction=direction,
@@ -108,7 +108,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
 end
 
 
-function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
+function projection_depr(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
@@ -126,7 +126,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    return projection(dataobject, [var], units=[unit],
+    return projection_depr(dataobject, [var], units=[unit],
                             lmax=lmax,
                             mask=mask,
                             direction=direction,
@@ -146,7 +146,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
 end
 
 
-function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                         lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
@@ -163,7 +163,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
-    return projection(dataobject, vars, units=units,
+    return projection_depr(dataobject, vars, units=units,
                                                 lmax=lmax,
                                                 mask=mask,
                                                 direction=direction,
@@ -185,7 +185,7 @@ end
 
 
 
-function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         mask=[false],
                         direction::Symbol=:z,
@@ -202,7 +202,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
-    return projection(dataobject, vars, units=fill(unit, length(vars)),
+    return projection_depr(dataobject, vars, units=fill(unit, length(vars)),
                                                 lmax=lmax,
                                                 mask=mask,
                                                 direction=direction,
@@ -225,7 +225,7 @@ end
 
 
 #todo: check for uniform grid
-function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
+function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
                         mask=[false],
