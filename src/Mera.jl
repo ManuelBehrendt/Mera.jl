@@ -35,7 +35,7 @@ using OnlineStats
 using HDF5
 using ImageTransformations
 
-using JLD2, CodecZlib, CodecBzip2
+using JLD2, CodecBzip2
 using TimerOutputs
 
 global verbose_mode = nothing
