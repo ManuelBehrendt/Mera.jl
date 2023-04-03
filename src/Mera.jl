@@ -98,6 +98,7 @@ export
 #
     projection,
     projection_new,
+    projection_depr,
     slice,
     remap,
     subregion,
@@ -210,6 +211,7 @@ include("functions/slice.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_hydro_new.jl")
 include("functions/projection_particles.jl")
+include("functions/projection_particles_new.jl")
 # ============================================
 
 
