@@ -14,6 +14,7 @@
 function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::String="./", fpath::String="./",
             fname = "output_",
             compress::Any=nothing,
+            comments::Any=nothing,
             lmax::Union{Int, Missing}=missing,
             xrange::Array{<:Any,1}=[missing, missing],
             yrange::Array{<:Any,1}=[missing, missing],
@@ -35,8 +36,12 @@ return statistics (dictionary)
 - **`output`:** output number
 
 ##### Predefined/Optional Keywords:
--**`datatypes`:** default -> all available (known) data is converted; pass an array with only selected datatypes, e.g.: datatypes=[:hydro, :particles]
+- **`datatypes`:** default -> all available (known) data is converted; pass an array with only selected datatypes, e.g.: datatypes=[:hydro, :particles]
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
+- **`compress`:** by default compression is activated. compress=false (deactivate). 
+If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). 
+Load the required package to choose the compression type and to see their parameters: CodecZlib, CodecBzip2 or CodecLz4
+- **`comments`:** add a string that includes e.g. a description about your simulation
 - **`lmax`:** the maximum level to be read from the data
 - **`path`:** path to the RAMSES folders; default is local path.
 - **`fpath`:** path to the JLD23 file; default is local path.
@@ -61,6 +66,7 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};
                     path::String="./", fpath::String="./",
                     fname = "output_",
                     compress::Any=nothing,
+                    comments::Any=nothing,
                     lmax::Union{Int, Missing}=missing,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -78,6 +84,7 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};
                             path=path, fpath=fpath,
                             fname = fname,
                             compress=compress,
+                            comments=comments,
                             lmax=lmax,
                             xrange=xrange,
                             yrange=yrange,
@@ -94,6 +101,7 @@ end
 function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::String="./",
                     fname = "output_",
                     compress::Any=nothing,
+                    comments::Any=nothing,
                     lmax::Union{Int, Missing}=missing,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -111,6 +119,7 @@ function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::S
                             path=path, fpath=fpath,
                             fname = fname,
                             compress=compress,
+                            comments=comments,
                             lmax=lmax,
                             xrange=xrange,
                             yrange=yrange,
@@ -130,6 +139,7 @@ end
 function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::String="./", fpath::String="./",
                     fname = "output_",
                     compress::Any=nothing,
+                    comments::Any=nothing,
                     lmax::Union{Int, Missing}=missing,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -214,7 +224,9 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
+        @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, 
+                                         fmode=fmode, compress=compress, 
+                                         comments=comments, verbose=false)
 
         # clear mem
         gas = 0.
@@ -235,7 +247,9 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
+        @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, 
+                                            fmode=fmode, compress=compress, 
+                                            comments=comments, verbose=false)
 
         # clear mem
         grav = 0.
@@ -256,7 +270,9 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "particles"  savedata(part, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
+        @timeit wt "particles"  savedata(part, path=fpath, fname=fname, 
+                                            fmode=fmode, compress=compress, 
+                                            comments=comments, verbose=false)
 
         # clear mem
         part = 0.
@@ -273,7 +289,9 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "clumps"  savedata(clumps, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
+        @timeit wt "clumps"  savedata(clumps, path=fpath, fname=fname, 
+                                            fmode=fmode, compress=compress, 
+                                            comments=comments, verbose=false)
 
         # clear mem
         clumps = 0.

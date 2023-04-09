@@ -30,7 +30,7 @@ return
 - **`dataformat`:** currently, only JLD2 can be selected.
 - **`compress`:** by default compression is activated. compress=false (deactivate). 
 If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). 
-Load the required package to choose the compressore type and to see their parameters: CodecZlib, CodecBzip2 or CodecLz4
+Load the required package to choose the compression type and to see their parameters: CodecZlib, CodecBzip2 or CodecLz4
 - **`comments`:** add a string that includes e.g. a description about your simulation
 - **`merafile_version`:** default: 1.; current only version
 - **`verbose`:** print timestamp and further information on screen; default: true
