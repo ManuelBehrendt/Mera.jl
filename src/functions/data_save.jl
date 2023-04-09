@@ -28,8 +28,8 @@ return
 - **`path`:** path to save the file; default is local path.
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined  name.
 - **`dataformat`:** currently, only JLD2 can be selected.
-- **`compress`:** by default compression is activated. compress=false (deactivate). \
-If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). \
+- **`compress`:** by default compression is activated. compress=false (deactivate). 
+If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). 
 Load the required package to choose the compressore type and to see their parameters: CodecZlib, CodecBzip2 or CodecLz4
 - **`comments`:** add a string that includes e.g. a description about your simulation
 - **`merafile_version`:** default: 1.; current only version
