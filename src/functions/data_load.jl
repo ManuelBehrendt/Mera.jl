@@ -36,10 +36,10 @@ return dataobject
 
 ### Defined Methods - function defined for different arguments
 
-loaddata(output::Int64; ...) # opens first datatype in the file
-loaddata(output::Int64, datatype::Symbol; ...)
-loaddata(output::Int64, path::String; ...)
-loaddata(output::Int64, path::String, datatype::Symbol; ...)
+- loaddata(output::Int64; ...) # opens first datatype in the file
+- loaddata(output::Int64, datatype::Symbol; ...)
+- loaddata(output::Int64, path::String; ...)
+- loaddata(output::Int64, path::String, datatype::Symbol; ...)
 
 """
 function loaddata(output::Int, datatype::Symbol;
