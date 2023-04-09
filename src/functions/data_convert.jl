@@ -13,6 +13,7 @@
 ```julia
 function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::String="./", fpath::String="./",
             fname = "output_",
+            compress::Any=nothing,
             lmax::Union{Int, Missing}=missing,
             xrange::Array{<:Any,1}=[missing, missing],
             yrange::Array{<:Any,1}=[missing, missing],
