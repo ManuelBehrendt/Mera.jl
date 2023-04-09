@@ -109,7 +109,7 @@ function savedata( dataobject::DataSetType;
             f[dt * df * "versions/merafile_version"] = merafile_version
             f[dt * df * "versions/JLD2compatible_versions"] = JLD2.COMPATIBLE_VERSIONS
             pkg = Pkg.dependencies()
-            check_pkg = ["Mera","JLD2", "CodecZlib", "CodecBzip2"]
+            check_pkg = ["Mera","JLD2", "CodecZlib", "CodecBzip2", "CodecLz4"]
             for i  in keys(pkg)
                 ipgk = pkg[i]
                 if ipgk.name in check_pkg
@@ -224,6 +224,8 @@ function check_compression(compress, wdata)
     elseif typeof(compress) == ZlibCompressor && wdata
         ctype = compress
     elseif typeof(compress) == Bzip2Compressor && wdata
+        ctype = compress
+    elseif typeof(compress) == LZ4FrameCompressor && wdata
         ctype = compress
     elseif compress == false || !wdata
         ctype = :nothing
