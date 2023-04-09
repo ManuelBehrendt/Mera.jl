@@ -41,7 +41,9 @@
 ```julia
 projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 units::Array{Symbol,1}=[:standard],
-                lmax::Int=9,
+                lmax::Real=dataobject.lmax,
+                res::Union{Real, Missing}=missing,
+                pxsize::Array{<:Any,1}=[missing, missing],
                 mask=[false],
                 direction::Symbol=:z,
                 weighting::Symbol=:mass,
@@ -68,7 +70,9 @@ return HydroMapsType
 - **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
 ##### Predefined/Optional Keywords:
 - **`unit(s)`:** return the variable in given units
-- **`lmax`:** create maps with coarser grid than provided by the maximum level of the loaded data
+- **`pxsize``:** creates maps with the given pixel size in physical/code units (dominates over: res, lmax) : pxsize=[physical size (Number), physical unit (Symbol)]
+- **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected; (pixel number is related to the full boxsize)
+- **`lmax`:** create maps with 2^lmax pixels for each dimension
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
@@ -98,7 +102,9 @@ return HydroMapsType
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             #parttypes::Array{Symbol,1}=[:stars],
                             units::Array{Symbol,1}=[:standard],
-                            lmax::Int=9,
+                            lmax::Real=dataobject.lmax,
+                            res::Union{Real, Missing}=missing,
+                            pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
                             #plane_orientation::Symbol=:perpendicular,
@@ -118,6 +124,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     return   create_projection(   dataobject, vars, units=units,
                                 #parttypes=parttypes,
                                 lmax=lmax,
+                                res=res,
+                                pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
                                 #plane_orientation=plane_orientation,
@@ -139,7 +147,9 @@ end
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             units::Array{Symbol,1};
                             #parttypes::Array{Symbol,1}=[:stars],
-                            lmax::Int=9,
+                            lmax::Real=dataobject.lmax,
+                            res::Union{Real, Missing}=missing,
+                            pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
                             #plane_orientation::Symbol=:perpendicular,
@@ -159,6 +169,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
     return   create_projection(   dataobject, vars, units=units,
                                 #parttypes=parttypes,
                                 lmax=lmax,
+                                res=res,
+                                pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
                                 #plane_orientation=plane_orientation,
@@ -180,7 +192,9 @@ end
 function projection(   dataobject::PartDataType, var::Symbol;
                             #parttypes::Array{Symbol,1}=[:stars],
                             unit::Symbol=:standard,
-                            lmax::Int=9,
+                            lmax::Real=dataobject.lmax,
+                            res::Union{Real, Missing}=missing,
+                            pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
                             #plane_orientation::Symbol=:perpendicular,
@@ -200,6 +214,8 @@ function projection(   dataobject::PartDataType, var::Symbol;
     return   create_projection(   dataobject, [var], units=[unit],
                                 #parttypes=parttypes,
                                 lmax=lmax,
+                                res=res,
+                                pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
                                 #plane_orientation=plane_orientation,
@@ -221,7 +237,9 @@ end
 
 function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             #parttypes::Array{Symbol,1}=[:stars],
-                            lmax::Int=9,
+                            lmax::Real=dataobject.lmax,
+                            res::Union{Real, Missing}=missing,
+                            pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
                             #plane_orientation::Symbol=:perpendicular,
@@ -241,6 +259,8 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
     return   create_projection(   dataobject, [var], units=[unit],
                                 #parttypes=parttypes,
                                 lmax=lmax,
+                                res=res,
+                                pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
                                 #plane_orientation=plane_orientation,
@@ -261,7 +281,9 @@ end
 
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol;
                             #parttypes::Array{Symbol,1}=[:stars],
-                            lmax::Int=9,
+                            lmax::Real=dataobject.lmax,
+                            res::Union{Real, Missing}=missing,
+                            pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
                             #plane_orientation::Symbol=:perpendicular,
@@ -281,6 +303,8 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
                                 #parttypes=parttypes,
                                 lmax=lmax,
+                                res=res,
+                                pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
                                 #plane_orientation=plane_orientation,
@@ -302,7 +326,9 @@ end
 function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             #parttypes::Array{Symbol,1}=[:stars],
                             units::Array{Symbol,1}=[:standard],
-                            lmax::Int=9,
+                            lmax::Real=dataobject.lmax,
+                            res::Union{Real, Missing}=missing,
+                            pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
                             #plane_orientation::Symbol=:perpendicular,
@@ -322,6 +348,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
     # take values from myargs if given
+    if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
+    if !(myargs.res           === missing)           res = myargs.res end
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.direction     === missing)     direction = myargs.direction end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
@@ -334,16 +362,30 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
-    verbose = checkverbose(verbose)
-    show_progress = checkprogress(show_progress)
+    verbose = Mera.checkverbose(verbose)
+    show_progress = Mera.checkprogress(show_progress)
     printtime("", verbose)
     boxlen = dataobject.boxlen
     selected_vars = deepcopy(vars)
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
-    nbins = 2^lmax
-
+    if res === missing res = 2^lmax end
+    if !(pxsize[1] === missing)
+        px_unit = 1. # :standard
+        if length(pxsize) != 1
+            if !(pxsize[2] === missing) 
+                if pxsize[2] != :standard 
+                    px_unit = getunit(dataobject.info, pxsize[2])
+                end
+            end
+        end
+        px_scale = pxsize[1] / px_unit
+        res = boxlen/px_scale
+    end
+    res = ceil(Int, res) # be sure to have Integer
+    
+    
     sd_names = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
 
@@ -378,7 +420,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
     # ========================================================
     if weighting == :mass
-        use_sd_map = checkformaps(selected_vars, ranglecheck)
+        use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
         # only add :sd if there are also other variables than in ranglecheck
         if !in(:sd, selected_vars) && use_sd_map
             append!(selected_vars, [:sd])
@@ -391,31 +433,31 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
+    ranges = Mera.prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
-    data_centerm = prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
+    data_centerm = Mera.prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
 
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
 
     # rebin data on the maximum used grid
-    r1 = floor(Int, ranges[1] * (2^lmax)) + 1
-    r2 = ceil(Int, ranges[2] * (2^lmax))  + 1
-    r3 = floor(Int, ranges[3] * (2^lmax)) + 1
-    r4 = ceil(Int, ranges[4] * (2^lmax))  + 1
-    r5 = floor(Int, ranges[5] * (2^lmax)) + 1
-    r6 = ceil(Int, ranges[6] * (2^lmax))  + 1
+    r1 = floor(Int, ranges[1] * res) + 1
+    r2 = ceil(Int, ranges[2] * res)  + 1
+    r3 = floor(Int, ranges[3] * res) + 1
+    r4 = ceil(Int, ranges[4] * res)  + 1
+    r5 = floor(Int, ranges[5] * res) + 1
+    r6 = ceil(Int, ranges[6] * res)  + 1
 
-
+    
+    pixsize = dataobject.boxlen / res # in code units
     if verbose
-        println("Map data on given lmax: ", lmax)
-        println("xrange: ",r1, " ", r2-1)
-        println("yrange: ",r3, " ", r4-1)
-        println("zrange: ",r5, " ", r6-1)
-
-        cellsize, unit  = humanize(dataobject.info.boxlen / 2^lmax, dataobject.info.scale, 2, "length")
-        println("pixel-size: ", cellsize ," [$unit]")
+        println("Effective resolution: $res^2")
+        #println("Map size: $length1 x $length2")
+        px_val, px_unit = humanize(pixsize, dataobject.scale, 3, "length")
+        pxmin_val, pxmin_unit = humanize(boxlen/2^dataobject.lmax, dataobject.scale, 3, "length")
+        println("Pixel size: $px_val [$px_unit]")
+        println("Simulation min.: $pxmin_val [$pxmin_unit]")
         println()
     end
 
@@ -424,19 +466,19 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     var_a = :x
     var_b = :y
-    finished = zeros(Float64, nbins,nbins)
+    finished = zeros(Float64, res,res)
     rl = data_centerm .* dataobject.boxlen
 
     if direction == :z
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ 2^lmax .* dataobject.boxlen
-        newrange2 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
+        newrange2 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
         #println(newrange1)
         #println(newrange2)
 
         var_a = :x
         var_b = :y
-        extent=[r1-1,r2-1,r3-1,r4-1] .* dataobject.boxlen ./ 2^lmax
+        extent=[r1-1,r2-1,r3-1,r4-1] .* dataobject.boxlen ./ res
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[2], extent[4]-rl[2]]
         length1_center = (data_centerm[1] -xmin) * boxlen
@@ -445,14 +487,14 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :y
         # range on maximum used grid
-        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ 2^lmax .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
+        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
         #println(newrange1)
         #println(newrange2)
 
         var_a = :x
         var_b = :z
-        extent=[r1-1,r2-1,r5-1,r6-1] .* dataobject.boxlen ./ 2^lmax
+        extent=[r1-1,r2-1,r5-1,r6-1] .* dataobject.boxlen ./ res
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[3], extent[4]-rl[3]]
         length1_center = (data_centerm[1] -xmin) * boxlen
@@ -460,13 +502,13 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     elseif direction == :x
         # range on maximum used grid
-        newrange1 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ 2^lmax .* dataobject.boxlen
-        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ 2^lmax .* dataobject.boxlen
+        newrange1 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
+        newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
         #println(newrange1)
         #println(newrange2)
         var_a = :y
         var_b = :z
-        extent=[r3-1,r4-1,r5-1,r6-1] .* dataobject.boxlen ./ 2^lmax
+        extent=[r3-1,r4-1,r5-1,r6-1] .* dataobject.boxlen ./ res
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
         extent_center= [extent[1]-rl[2], extent[2]-rl[2], extent[3]-rl[3], extent[4]-rl[3]]
         length1_center = (data_centerm[2] -ymin) * boxlen
@@ -554,9 +596,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
                     if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_unit
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2 .* selected_unit
                     else
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2
                     end
                     maps_unit[Symbol( string(i_var)  )] = unit_name
                     maps_mode[Symbol( string(i_var)  )] = :mass_weighted
@@ -579,9 +621,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
                     if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_unit
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
                     else
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
                     end
                     maps_unit[Symbol( string(i_var)  )] = unit_name
                     maps_mode[Symbol( string(i_var)  )] = :mass_weighted
@@ -653,9 +695,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
                     if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2 .* selected_unit
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2 .* selected_unit
                     else
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / nbins )^2
+                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2
                     end
                     maps_unit[Symbol( string(i_var)  )] = unit_name
                     maps_mode[Symbol( string(i_var)  )] = :volume_weighted
@@ -680,9 +722,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
                     if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_unit
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
                     else
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
                     end
                     maps_unit[Symbol( string(i_var)  )] = unit_name
                     maps_mode[Symbol( string(i_var)  )] = :volume_weighted
@@ -709,9 +751,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
 
                     if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins) .* selected_unit
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
                     else
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / nbins )^3 * nbins)
+                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
                     end
 
 
@@ -816,9 +858,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
             map_R = zeros(Float64, length1, length2 );
             for i = 1:(length1)
                 for j = 1:(length2)
-                    x = i * dataobject.boxlen / 2^lmax
+                    x = i * dataobject.boxlen / res
 
-                    y = j * dataobject.boxlen / 2^lmax
+                    y = j * dataobject.boxlen / res
                     radius = sqrt( ((x-length1_center)  )^2 + ( (y-length2_center) )^2)
                     map_R[i,j] = radius * selected_unit
                 end
@@ -836,8 +878,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
             map_ϕ = zeros(Float64, length1, length2 );
             for i = 1:(length1)
                 for j = 1:(length2)
-                    x = i * dataobject.boxlen / 2^lmax  - length1_center
-                    y = j * dataobject.boxlen / 2^lmax  - length2_center
+                    x = i * dataobject.boxlen / res  - length1_center
+                    y = j * dataobject.boxlen / res  - length2_center
                     if x > 0. && y >= 0.
                         map_ϕ[i,j] = atan(y / x)
                     elseif x > 0. && y < 0.
@@ -862,8 +904,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         dataobject.data = select(dataobject.data, Not(:mask))
     end
 
-
-    return PartMapsType(maps, maps_unit, SortedDict( ), maps_mode, lmax, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, boxlen, dataobject.scale, dataobject.info)
+    maps_lmax = SortedDict( )
+    return PartMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.scale, dataobject.info)
 
 
 end
