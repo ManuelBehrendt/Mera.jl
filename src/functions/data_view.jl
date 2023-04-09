@@ -1,5 +1,32 @@
-# todo : simulation code
-# check known types
+"""
+#### Get overview of stored datatypes:
+- compression
+- versions of the used/loaded compression
+- MERA/MERA-file version
+- compressed/uncompressed data size
+- returns stored conversion statistics, when available (created by convertdata-function) 
+
+```julia
+function viewdata(output::Int;
+        path::String="./",
+        fname = "output_",
+        showfull::Bool=false,
+        verbose::Bool=true)
+
+return overview (dictionary)
+```
+
+#### Arguments
+##### Required:
+- **`output`:** output number
+- **`datatype`:** :hydro, :particles, :gravity or :clumps
+
+##### Predefined/Optional Keywords:
+- **`path`:** the path to the output JLD2 file relative to the current folder or absolute path
+- **`fname`:** "output_"-> filename = "output_***.jld2" by default, can be changed to "myname***.jld2"
+- **`showfull`:** shows the full data tree of the datafile
+- **`verbose:`:** informations are printed on the screen by default
+"""
 function viewdata(output::Int, path::String;
                     fname = "output_",
                     showfull::Bool=false,
@@ -12,6 +39,8 @@ function viewdata(output::Int, path::String;
 
 end
 
+# todo : simulation code
+# check known types
 function viewdata(output::Int;
                     path::String="./",
                     fname = "output_",
