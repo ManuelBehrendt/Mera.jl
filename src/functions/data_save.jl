@@ -225,7 +225,7 @@ function check_compression(compress, wdata)
         ctype = compress
     elseif typeof(compress) == Bzip2Compressor && wdata
         ctype = compress
-    elseif (typeof(compress) == LZ4FrameCompressor || typeof(compress) == LZ4HCCompressor) && wdata
+    elseif typeof(compress) == LZ4FrameCompressor && wdata
         ctype = compress
     elseif compress == false || !wdata
         ctype = :nothing
