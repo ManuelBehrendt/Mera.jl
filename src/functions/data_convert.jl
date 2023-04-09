@@ -1,4 +1,61 @@
+"""
+#### Converts full simulation data into a compressed/uncompressed JLD2 format:
+- all existing datatypes are sequentially loaded and stored
+- supports :hydro, :particles, :hydro, :clumps
+- running number is taken from original RAMSES folders
+- use different compression methods
+- select a certain data range, smallr, smallc, lmax
+- add a string to describe the simulation
+- the individual loading and storing processes are timed and stored into the file (and more statistics)
+- toggle progressbar mode
+- toggle verbose mode
 
+```julia
+function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::String="./", fpath::String="./",
+            fname = "output_",
+            lmax::Union{Int, Missing}=missing,
+            xrange::Array{<:Any,1}=[missing, missing],
+            yrange::Array{<:Any,1}=[missing, missing],
+            zrange::Array{<:Any,1}=[missing, missing],
+            center::Array{<:Any,1}=[0., 0., 0.],
+            range_unit::Symbol=:standard,
+            smallr::Real=0.,
+            smallc::Real=0.,
+            verbose::Bool=true,
+            show_progress::Bool=true,
+            myargs::ArgumentsType=ArgumentsType() )
+
+return statistics (dictionary)
+
+```
+
+#### Arguments
+##### Required:
+- **`output`:** output number
+
+##### Predefined/Optional Keywords:
+-**`datatypes`:** default -> all available (known) data is converted; pass an array with only selected datatypes, e.g.: datatypes=[:hydro, :particles]
+- **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
+- **`lmax`:** the maximum level to be read from the data
+- **`path`:** path to the RAMSES folders; default is local path.
+- **`fpath`:** path to the JLD23 file; default is local path.
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`smallr`:** set lower limit for density; zero means inactive
+- **`smallc`:** set lower limit for thermal pressure; zero means inactive
+- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of xrange, yrange, zrange, center, range_unit, verbose
+- **`verbose`:** print timestamp and further information on screen; default: true
+
+### Defined Methods - function defined for different arguments
+
+- convertdata(output::Int64; ...)
+- convertdata(output::Int64, datatypes::Vector{Symbol}; ...)
+- convertdata(output::Int64, datatypes::Symbol; ...)
+
+"""
 function convertdata(output::Int, datatypes::Array{Symbol, 1};
                     path::String="./", fpath::String="./",
                     fname = "output_",
