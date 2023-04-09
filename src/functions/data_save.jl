@@ -1,3 +1,48 @@
+"""
+#### Save loaded simulation data into a compressed/uncompressed JLD2 format:
+- write new file; add datatype to existing file
+- running number is taken from original RAMSES folders
+- use different compression methods
+- add a string to describe the simulation
+- toggle verbose mode
+
+```julia
+function savedata( dataobject::DataSetType;
+                    path::String="./",
+                    fname = "output_",
+                    fmode::Any=nothing,
+                    dataformat::Symbol=:JLD2,
+                    compress::Any=nothing,
+                    comments::Any=nothing,
+                    merafile_version::Float64=1.,
+                    verbose::Bool=true)
+return 
+
+```
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType"
+- **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file or overwriting existing file); fmode=:append further datatype. (overwriting of existing datatypes is not possible)
+##### Predefined/Optional Keywords:
+- **`path`:** path to save the file; default is local path.
+- **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined  name.
+- **`dataformat`:** currently, only JLD2 can be selected.
+- **`compress`:** by default compression is activated. compress=false (deactivate). \
+If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). \
+Load the required package to choose the compressore type and to see their parameters: CodecZlib, CodecBzip2 or CodecLz4
+- **`comments`:** add a string that includes e.g. a description about your simulation
+- **`merafile_version`:** default: 1.; current only version
+- **`verbose`:** print timestamp and further information on screen; default: true
+
+### Defined Methods - function defined for different arguments
+
+- savedata( dataobject::DataSetType; ...) # note: fmode needs to be given for action!
+- savedata( dataobject::DataSetType, fmode::Symbol; ...) 
+- savedata( dataobject::DataSetType, path::String; ...) 
+- savedata( dataobject::DataSetType, path::String, fmode::Symbol; ...)
+
+"""
 function savedata( dataobject::DataSetType, fmode::Symbol;
                     path::String="./",
                     fname = "output_",
