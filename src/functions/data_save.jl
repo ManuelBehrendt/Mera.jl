@@ -26,7 +26,7 @@ return
 - **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file or overwriting existing file); fmode=:append further datatype. (overwriting of existing datatypes is not possible)
 ##### Predefined/Optional Keywords:
 - **`path`:** path to save the file; default is local path.
-- **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined  name.
+- **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
 - **`dataformat`:** currently, only JLD2 can be selected.
 - **`compress`:** by default compression is activated. compress=false (deactivate). 
 If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). 
