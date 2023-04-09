@@ -59,6 +59,7 @@ return statistics (dictionary)
 function convertdata(output::Int, datatypes::Array{Symbol, 1};
                     path::String="./", fpath::String="./",
                     fname = "output_",
+                    compress::Any=nothing,
                     lmax::Union{Int, Missing}=missing,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -75,6 +76,7 @@ function convertdata(output::Int, datatypes::Array{Symbol, 1};
         return convertdata(output, datatypes=datatypes,
                             path=path, fpath=fpath,
                             fname = fname,
+                            compress=compress,
                             lmax=lmax,
                             xrange=xrange,
                             yrange=yrange,
@@ -90,6 +92,7 @@ end
 
 function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::String="./",
                     fname = "output_",
+                    compress::Any=nothing,
                     lmax::Union{Int, Missing}=missing,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -106,6 +109,7 @@ function convertdata(output::Int, datatypes::Symbol; path::String="./", fpath::S
         return convertdata(output, datatypes=[datatypes],
                             path=path, fpath=fpath,
                             fname = fname,
+                            compress=compress,
                             lmax=lmax,
                             xrange=xrange,
                             yrange=yrange,
@@ -124,6 +128,7 @@ end
 
 function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::String="./", fpath::String="./",
                     fname = "output_",
+                    compress::Any=nothing,
                     lmax::Union{Int, Missing}=missing,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -182,8 +187,12 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
     # reading =============================
     if verbose
+        ctype = check_compression(compress, true)
         println()
         println("reading/writing lmax: ", lmax, " of ", info.levelmax)
+        println("-----------------------------------")
+        println("Compression: ", ctype)
+        println("-----------------------------------")
     end
 
     first_amrflag = true
@@ -204,7 +213,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, fmode=fmode, verbose=false)
+        @timeit wt "hydro"  savedata(gas, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
 
         # clear mem
         gas = 0.
@@ -225,7 +234,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, fmode=fmode, verbose=false)
+        @timeit wt "gravity"  savedata(grav, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
 
         # clear mem
         grav = 0.
@@ -246,7 +255,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "particles"  savedata(part, path=fpath, fname=fname, fmode=fmode, verbose=false)
+        @timeit wt "particles"  savedata(part, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
 
         # clear mem
         part = 0.
@@ -263,7 +272,7 @@ function convertdata(output::Int; datatypes::Array{<:Any,1}=[missing], path::Str
 
         # write
         first_flag, fmode = JLD2flag(first_flag)
-        @timeit wt "clumps"  savedata(clumps, path=fpath, fname=fname, fmode=fmode, verbose=false)
+        @timeit wt "clumps"  savedata(clumps, path=fpath, fname=fname, fmode=fmode, compress=compress, verbose=false)
 
         # clear mem
         clumps = 0.
