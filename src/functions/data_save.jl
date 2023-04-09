@@ -220,7 +220,7 @@ end
 
 function check_compression(compress, wdata)
     if compress == nothing && wdata
-        ctype = ZlibCompressor(level=9)
+        ctype = LZ4FrameCompressor() #ZlibCompressor(level=9)
     elseif typeof(compress) == ZlibCompressor && wdata
         ctype = compress
     elseif typeof(compress) == Bzip2Compressor && wdata
