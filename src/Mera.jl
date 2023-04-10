@@ -6,7 +6,7 @@ module Mera
 # of hydrodynamic simulations with Julia!
 #
 # Manuel Behrendt, since 2017
-# Max-Planck-Institute for Extraterrestrial Physics, Garching
+# Max-Planck-Institute for extraterrestrial Physics, Garching
 # Ludwig-Maximillians-University, Munich
 #
 # https://github.com/ManuelBehrendt/Mera.jl
@@ -56,10 +56,10 @@ export
     getclumps,
 
 # mera files
-    save_merafile,
-    read_merafile,
-    view_merafile,
-    info_merafile,
+    #save_merafile,
+    #read_merafile,
+    #view_merafile,
+    #info_merafile,
     savedata,
     loaddata,
     viewdata,
@@ -190,11 +190,11 @@ include("read_data/RAMSES/getclumps.jl")
 
 # Mera files
 # old: JLD format
-include("functions/merafile_save.jl")
-include("functions/merafile_read.jl")
-include("functions/merafile_view.jl")
-include("functions/merafile_info.jl")
-include("functions/merafile_comparefields.jl")
+#include("functions/merafile_save.jl")
+#include("functions/merafile_read.jl")
+#include("functions/merafile_view.jl")
+#include("functions/merafile_info.jl")
+#include("functions/merafile_comparefields.jl")
 
 # new: JLD2 format
 include("functions/data_save.jl")
