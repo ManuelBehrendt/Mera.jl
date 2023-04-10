@@ -32,18 +32,14 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Easy to extend 
 - Interactive and script functionality
 - Many examples and tutorials
-
+- Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
 
 `Release Notes:`
     This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
-- Slicing
 - Select particle id/family etc. in projection function
 - Particle age calculation for cosmological runs
-- Mera-files is a significant faster way to read/store the RAMSES data for time sequence analysis
-- Create Profiles of quantities and projected data
-- Reader for sinks, gravity, rt, ..
-- Create 1D, 2D histograms (phase plots)
-- More predefined quantities
+
+- Reader for rt, ..
 - Export data into binary files to use with Paraview (volume rendering)
 - Tutorials to create 360° equirectangular projections
 - ...
@@ -51,7 +47,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 
 
 ## Package Installation
-The package is tested against Julia 1.6 and can be installed with the Julia package manager.
+The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
 
 ```julia
@@ -119,6 +115,9 @@ Now add packages like Mera and PyPlot in the favored version:
 ```julia
 (MyProject) pkg> add Package
 ```
+
+## Apple Silicon: M1/M2 Chips
+Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package
 
 ## Help and Documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
@@ -200,11 +199,11 @@ julia> methods(viewfields)
 
 ## Further Notes
 
-- To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl))
+- To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
 - The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
 - Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
 - The variables from the descriptor-files are currently only read and can be used in a future Mera version
-- For simulations with a uniform grid is the column :level not created to reduce memory usage
+- For simulations with a uniform grid, the column **:level** is not created to reduce memory usage
 
 
 
@@ -224,6 +223,7 @@ Further features:
 
 ## Useful Links
 - [Official Julia website](https://julialang.org)
+- Alternatively use the Julia version manager and make Julia 1.6.* the default: https://github.com/JuliaLang/juliaup
 - [Learning Julia](https://julialang.org/learning/)
 - [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
 - [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
@@ -236,7 +236,6 @@ Further features:
 - Use Matplotlib in Julia: [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl)
 - Call Python packages/functions from Julia: [PyCall.jl](https://github.com/JuliaPy/PyCall.jl)
 - Visual Studio Code based Julia IDE [julia-vscode](https://github.com/julia-vscode/julia-vscode)
-- Atom based Julia IDE [Juno](https://junolab.org)
 
 
 ## Contact for Questions and Contributing
