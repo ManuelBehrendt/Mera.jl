@@ -36,6 +36,7 @@ tutorials/version_1/.DS_Store
 tutorials/version_1/*.mera
 tutorials/version_1/Untitled*
 tutorials/version_1/.ipynb_checkpoints/
+tutorials/version_1/.jupyter
 
 tutorials/version_1/examples/*.jdb
 tutorials/version_1/examples/*.csv
