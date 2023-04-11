@@ -83,10 +83,8 @@ savedata(gas, "../../testing/simulations/JLD2_files/");
     -----------------------------------
     
 
-
-<div class="alert alert-block alert-info"> <b>NOTE</b> The hydro data was not written into the file to prevent overwriting existing files.
-
-The following argument is mandatory: **fmode=:write** </div>
+!!! note "NOTE"
+    The hydro data was not written into the file to prevent overwriting existing files. The following argument is mandatory: **fmode=:write** 
 
 
 ```julia
@@ -171,7 +169,8 @@ savedata(grav, "../../testing/simulations/JLD2_files/", fmode=:append);
     
 
 
-<div class="alert alert-block alert-info"> <b>NOTE</b> It is not possible to exchange stored data; only writing into a new file or appending is supported. </div>
+!!! note "NOTE"
+    It is not possible to exchange stored data; only writing into a new file or appending is supported.
 
 ## Overview of Stored Data
 
@@ -748,7 +747,8 @@ to
 
 
 
-<div class="alert alert-block alert-info"> <b>NOTE</b> The reading from JLD2 files is multiple times faster than from the original RAMSES files. </div>
+!!! note "NOTE"
+    The reading from JLD2 files is multiple times faster than from the original RAMSES files.
 
 #### Used Memory
 
@@ -768,7 +768,8 @@ cvd["size"]
 
 
 
-<div class="alert alert-block alert-info"> <b>NOTE</b> The compressed JLD2 file takes a significantly smaller disk space than the original RAMSES folder.</div>
+!!! note "NOTE"
+    The compressed JLD2 file takes a significantly smaller disk space than the original RAMSES folder.
 
 
 ```julia
