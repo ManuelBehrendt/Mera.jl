@@ -32,7 +32,6 @@ using StructArrays
 using ProgressMeter
 using StatsBase
 using OnlineStats
-using HDF5
 using ImageTransformations
 
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
