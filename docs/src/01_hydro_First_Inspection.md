@@ -5,45 +5,48 @@
 
 ```julia
 using Mera
-info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10");
+info = getinfo(300, "../../testing/simulations/mw_L10");
 ```
 
-     [Mera]: 2020-02-12T20:42:32.755
-
+    [Mera]: 2023-04-10T10:48:46.483
+    
     Code: RAMSES
-    output [420] summary:
-    mtime: 2017-07-27T01:22:09
-    ctime: 2019-12-24T09:57:04.822
-     =======================================================
-    simulation time: 624.91 [Myr]
+    output [300] summary:
+    mtime: 2023-04-09T05:34:09
+    ctime: 2023-04-10T08:08:14.488
+    =======================================================
+    simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
-    ncpu: 1024
+    ncpu: 640
     ndim: 3
     -------------------------------------------------------
     amr:           true
     level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
     -------------------------------------------------------
     hydro:         true
-    hydro-variables:  6  --> (:rho, :vx, :vy, :vz, :p, :var6)
-    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1)
-    γ: 1.01
+    hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+    γ: 1.6667
     -------------------------------------------------------
     gravity:       true
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    - Nstars:   5.445150e+05 
+    particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+    particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
     -------------------------------------------------------
-    clumps:        true
-    clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+    rt:            false
+    clumps:           false
     -------------------------------------------------------
-    namelist-file: false
-    timer-file:       false
-    compilation-file: true
+    namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+    -------------------------------------------------------
+    timer-file:       true
+    compilation-file: false
     makefile:         true
     patchfile:        true
-     =======================================================
-
+    =======================================================
+    
 
 
 A short overview of the loaded hydro properties is printed:
@@ -62,13 +65,14 @@ info.descriptor.hydro
 
 
 
-    6-element Array{Symbol,1}:
-     :density         
-     :velocity_x      
-     :velocity_y      
-     :velocity_z      
-     :thermal_pressure
-     :passive_scalar_1
+    7-element Vector{Symbol}:
+     :density
+     :velocity_x
+     :velocity_y
+     :velocity_z
+     :pressure
+     :scalar_00
+     :scalar_01
 
 
 
@@ -87,13 +91,14 @@ info.descriptor.hydro
 
 
 
-    6-element Array{Symbol,1}:
-     :density         
-     :vel_x           
-     :velocity_y      
-     :velocity_z      
-     :thermal_pressure
-     :passive_scalar_1
+    7-element Vector{Symbol}:
+     :density
+     :vel_x
+     :velocity_y
+     :velocity_z
+     :pressure
+     :scalar_00
+     :scalar_01
 
 
 
@@ -104,32 +109,34 @@ Get an overview of the loaded descriptor properties:
 viewfields(info.descriptor)
 ```
 
-
-     [Mera]: Descriptor overview
-     =================================
-    hversion	= 0
-    hydro	= Symbol[:density, :vel_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1]
-    htypes	= String[]
+    
+    [Mera]: Descriptor overview
+    =================================
+    hversion	= 1
+    hydro	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
+    htypes	= ["d", "d", "d", "d", "d", "d", "d"]
     usehydro	= false
     hydrofile	= true
-    pversion	= 0
-    particles	= Symbol[:vx, :vy, :vz, :mass, :birth]
-    ptypes	= String[]
+    pversion	= 1
+    particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time]
+    ptypes	= ["d", "d", "d", "d", "d", "d", "d", "i", "i", "b", "b", "d"]
     useparticles	= false
-    particlesfile	= false
-    gravity	= Symbol[:epot, :ax, :ay, :az]
+    particlesfile	= true
+    gravity	= [:epot, :ax, :ay, :az]
     usegravity	= false
     gravityfile	= false
-    clumps	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
+    rtversion	= 0
+    rt	= Dict{Any, Any}()
+    rtPhotonGroups	= Dict{Any, Any}()
+    usert	= false
+    rtfile	= false
+    clumps	= Symbol[]
     useclumps	= false
     clumpsfile	= false
     sinks	= Symbol[]
     usesinks	= false
     sinksfile	= false
-    rt	= Symbol[]
-    usert	= false
-    rtfile	= false
-
+    
 
 
 Get a simple list of the fields:
@@ -142,7 +149,7 @@ propertynames(info.descriptor)
 
 
 
-    (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile, :rt, :usert, :rtfile)
+    (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
 
 
 
@@ -150,45 +157,45 @@ propertynames(info.descriptor)
 
 
 ```julia
-info = getinfo(420, "../../testing/simulations/manu_sim_sf_L10", verbose=false); # used to overwrite the previous changes
+info = getinfo(300, "../../testing/simulations/mw_L10", verbose=false); # used to overwrite the previous changes
 ```
 
 Read the AMR and the Hydro data from all files of the full box with all existing variables and cell positions (only leaf cells of the AMR grid).
 
 
 ```julia
-gas = gethydro(info, smallr=1e-5);
+gas = gethydro(info);
 ```
 
-     [Mera]: Get hydro data: 2020-02-12T20:43:29.834
-
+    [Mera]: Get hydro data: 2023-04-10T10:49:21.228
+    
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
-
+    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
+    
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:54
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:29
 
 
-    Memory used for data table :85.94877052307129 MB
+    Memory used for data table :2.3210865957662463 GB
     -------------------------------------------------------
+    
 
 
-
-The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:
+The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object: 
 
 
 ```julia
 usedmemory(gas);
 ```
 
-    Memory used: 86.16 MB
+    Memory used: 2.321 GB
 
 
 The assigned data object is now of type `HydroDataType`:
@@ -240,22 +247,22 @@ The data is stored in a **JuliaDB** table and the user selected hydro variables
 viewfields(gas)
 ```
 
-
-     data ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6)
-
-     info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
+    
+    data ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+    
+    info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+    
     lmin	= 6
     lmax	= 10
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
-    selected_hydrovars	= [1, 2, 3, 4, 5, 6]
-    smallr	= 1.0e-5
+    selected_hydrovars	= [1, 2, 3, 4, 5, 6, 7]
+    smallr	= 0.0
     smallc	= 0.0
-
-     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
-
-
+    
+    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
+    
+    
 
 
 For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "gas.info" and the scaling relations from code to cgs units in "gas.scale". The minimum and maximum level of the loaded data, the box length, the selected ranges and number of the hydro variables are retained.
@@ -264,28 +271,28 @@ A minimum density or sound speed can be set for the loaded data (e.g. to overwri
 
 
 ```julia
-gas = gethydro(info, smallr=1e-5);
+gas = gethydro(info, smallr=1e-11);
 ```
 
-     [Mera]: Get hydro data: 2020-02-12T20:44:27.671
-
+    [Mera]: Get hydro data: 2023-04-10T10:54:09.424
+    
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
-
+    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
+    
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:55
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:25
 
 
-    Memory used for data table :85.94877052307129 MB
+    Memory used for data table :2.3210865957662463 GB
     -------------------------------------------------------
-
+    
 
 
 Print the fields of an object (composite type) in a simple list:
@@ -319,13 +326,13 @@ overview_amr = amroverview(gas)
 
 
     Table with 5 rows, 3 columns:
-    level  cells   cellsize
-    ───────────────────────
-    6      249057  0.75
-    7      73010   0.375
-    8      209058  0.1875
-    9      321159  0.09375
-    10     274248  0.046875
+    level  cells     cellsize
+    ─────────────────────────
+    6      66568     0.75
+    7      374908    0.375
+    8      7806793   0.1875
+    9      12774134  0.09375
+    10     7298576   0.046875
 
 
 
@@ -339,15 +346,15 @@ data_overview = dataoverview(gas)
     Calculating...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:01
+     100%|███████████████████████████████████████████████████| Time: 0:00:06
 
 
 
 
 
-    Table with 5 rows, 14 columns:
+    Table with 5 rows, 16 columns:
     Columns:
-     #     colname     type
+    #   colname   type
     ──────────────────
     1   level     Any
     2   mass      Any
@@ -363,6 +370,8 @@ data_overview = dataoverview(gas)
     12  p_max     Any
     13  var6_min  Any
     14  var6_max  Any
+    15  var7_min  Any
+    16  var7_max  Any
 
 
 
@@ -382,13 +391,13 @@ select(data_overview, (:level,:mass, :rho_min, :rho_max ) )
 
 
     Table with 5 rows, 4 columns:
-    level  mass      rho_min     rho_max
-    ───────────────────────────────────────
-    6      1.75297   1.0e-5      0.00611279
-    7      0.880087  1.0e-5      0.0201622
-    8      2.29402   1.30505e-5  0.0927872
-    9      2.95427   1.40099e-5  0.39797
-    10     26.1408   4.18939e-5  379.907
+    level  mass         rho_min     rho_max
+    ───────────────────────────────────────────
+    6      0.000698165  2.61776e-9  1.16831e-7
+    7      0.00126374   1.15139e-8  2.21103e-7
+    8      0.0201245    2.44071e-8  0.000222309
+    9      0.204407     1.2142e-7   0.0141484
+    10     6.83618      4.49036e-7  3.32984
 
 
 
@@ -396,18 +405,18 @@ Get an array from the column ":mass" in `data_overview` and scale it to the unit
 
 
 ```julia
-column(data_overview, :mass) * info.scale.Msol
+column(data_overview, :mass) * info.scale.Msol 
 ```
 
 
 
 
-    5-element Array{Float64,1}:
-     1.752485761487614e9  
-     8.798434048277442e8  
-     2.2933832876377296e9
-     2.9534569318639927e9
-     2.6133591055943253e10
+    5-element Vector{Float64}:
+     697971.5415380469
+          1.2633877595077453e6
+          2.01189316548175e7
+          2.0435047070331135e8
+          6.834288803451587e9
 
 
 
@@ -427,13 +436,13 @@ select(data_overview, (:level, :mass, :rho_min, :rho_max ) )
 
 
     Table with 5 rows, 4 columns:
-    level  mass        rho_min     rho_max
+    level  mass       rho_min     rho_max
     ─────────────────────────────────────────
-    6      1.75249e9   1.0e-5      0.00611279
-    7      8.79843e8   1.0e-5      0.0201622
-    8      2.29338e9   1.30505e-5  0.0927872
-    9      2.95346e9   1.40099e-5  0.39797
-    10     2.61336e10  4.18939e-5  379.907
+    6      6.97972e5  2.61776e-9  1.16831e-7
+    7      1.26339e6  1.15139e-8  2.21103e-7
+    8      2.01189e7  2.44071e-8  0.000222309
+    9      2.0435e8   1.2142e-7   0.0141484
+    10     6.83429e9  4.49036e-7  3.32984
 
 
 
@@ -453,9 +462,9 @@ gas.data
 
 
 
-    Table with 1126532 rows, 10 columns:
+    Table with 28320979 rows, 11 columns:
     Columns:
-     #     colname    type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -467,6 +476,7 @@ gas.data
     8   vz       Float64
     9   p        Float64
     10  var6     Float64
+    11  var7     Float64
 
 
 
@@ -480,33 +490,33 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
 
 
 
-    Table with 1126532 rows, 5 columns:
-     level    cx     cy     cz    rho
-    ───────────────────────────────
-    6      1    1    1    1.0e-5
-    6      1    1    2    1.0e-5
-    6      1    1    3    1.0e-5
-    6      1    1    4    1.0e-5
-    6      1    1    5    1.0e-5
-    6      1    1    6    1.0e-5
-    6      1    1    7    1.0e-5
-    6      1    1    8    1.0e-5
-    6      1    1    9    1.0e-5
-    6      1    1    10   1.0e-5
-    6      1    1    11   1.0e-5
-    6      1    1    12   1.0e-5
+    Table with 28320979 rows, 5 columns:
+    level  cx   cy   cz   rho
+    ─────────────────────────────────
+    6      1    1    1    3.18647e-9
+    6      1    1    2    3.58591e-9
+    6      1    1    3    3.906e-9
+    6      1    1    4    4.27441e-9
+    6      1    1    5    4.61042e-9
+    6      1    1    6    4.83977e-9
+    6      1    1    7    4.974e-9
+    6      1    1    8    5.08112e-9
+    6      1    1    9    5.20596e-9
+    6      1    1    10   5.38372e-9
+    6      1    1    11   5.67209e-9
+    6      1    1    12   6.14423e-9
     ⋮
-    10     822  507  516  0.0305045
-    10     822  508  511  0.0551132
-    10     822  508  512  0.0551132
-    10     822  508  513  0.0845289
-    10     822  508  514  0.0788161
-    10     822  508  515  0.0305045
-    10     822  508  516  0.0305045
-    10     822  509  513  0.0861783
-    10     822  509  514  0.0861783
-    10     822  510  513  0.0861783
-    10     822  510  514  0.0861783
+    10     814  493  514  0.000321702
+    10     814  494  509  1.42963e-6
+    10     814  494  510  1.4351e-6
+    10     814  494  511  0.00029515
+    10     814  494  512  0.000395273
+    10     814  494  513  0.000321133
+    10     814  494  514  0.000319678
+    10     814  495  511  0.00024646
+    10     814  495  512  0.000269009
+    10     814  496  511  0.000235329
+    10     814  496  512  0.000242422
 
 
 
