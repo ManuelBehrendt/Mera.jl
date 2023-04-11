@@ -1,10 +1,10 @@
 # 4. Basic Calculations
-The following functions process different types of `DataSetType`:
+The following functions process different types of `DataSetType`: 
 - ContainMassDataSetType,
 -    HydroPartType,
 -    HydroDataType,
 -    PartDataType,
--    ClumpDataType.
+-    ClumpDataType. 
 
 ## Load The Data
 
@@ -12,7 +12,7 @@ The following functions process different types of `DataSetType`:
 ```julia
 using Mera
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
-gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8);
+gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8); 
 particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
 ```
@@ -21,22 +21,22 @@ clumps    = getclumps(info);
     └ @ Base loading.jl:1273
 
 
-
-    *__   __ _______ ______   _______
+    
+    *__   __ _______ ______   _______ 
     |  |_|  |       |    _ | |   _   |
     |       |    ___|   | || |  |_|  |
     |       |   |___|   |_||_|       |
     |       |    ___|    __  |       |
     | ||_|| |   |___|   |  | |   _   |
     |_|   |_|_______|___|  |_|__| |__|
-
-     [Mera]: 2020-02-15T21:12:42.671
-
+    
+    [Mera]: 2020-02-15T21:12:42.671
+    
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55.041
     ctime: 2019-11-01T17:35:21.051
-     =======================================================
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -54,9 +54,9 @@ clumps    = getclumps(info);
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05
-    - Nstars:   5.066030e+05
-    - Ndm:      2.547000e+03
+    - Npart:    5.091500e+05 
+    - Nstars:   5.066030e+05 
+    - Ndm:      2.547000e+03 
     particle variables: (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
     clumps:        true
@@ -67,58 +67,58 @@ clumps    = getclumps(info);
     compilation-file: true
     makefile:         true
     patchfile:        true
-     =======================================================
-
-     [Mera]: Get hydro data: 2020-02-15T21:12:50.488
-
+    =======================================================
+    
+    [Mera]: Get hydro data: 2020-02-15T21:12:50.488
+    
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz)
-
+    Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
+    
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:02:13
+    100%|███████████████████████████████████████████████████| Time: 0:02:13
 
 
     Memory used for data table :51.840110778808594 MB
     -------------------------------------------------------
-
-     [Mera]: Get particle data: 2020-02-15T21:15:06.908
-
+    
+    [Mera]: Get particle data: 2020-02-15T21:15:06.908
+    
     Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass)
-
+    Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
 
 
-
-     Reading data...100%|████████████████████████████████████| Time: 0:00:02
+    Reading data...100%|████████████████████████████████████| Time: 0:00:02
 
 
     Found 5.089390e+05 particles
     Memory used for data table :31.064278602600098 MB
     -------------------------------------------------------
-
-     [Mera]: Get clump data: 2020-02-15T21:15:11.574
-
+    
+    [Mera]: Get clump data: 2020-02-15T21:15:11.574
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-    Read 12 colums:
+    
+    Read 12 colums: 
     Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     Memory used for data table :61.77734375 KB
     -------------------------------------------------------
-
+    
 
 
 ### Note
@@ -129,9 +129,9 @@ Many functions can provide the results in selected units. The internal scaling 
 viewfields(info.scale)
 ```
 
-
-     [Mera]: Fields to scale from user/code units to selected units
-     =======================================================================
+    
+    [Mera]: Fields to scale from user/code units to selected units
+    =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -164,7 +164,7 @@ viewfields(info.scale)
     g_cms2	= 2.9104844143584656e-9
     T_mu	= 517028.3199143136
     Ba	= 2.910484414358466e-9
-
+    
 
 
 
@@ -208,6 +208,7 @@ methods(msum)
 
 
 
+2 methods for generic function <b>msum</b>:<ul><li> msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L23" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:23</a></li> <li> msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L19" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:19</a></li> </ul>
 
 
 
@@ -303,6 +304,7 @@ methods(center_of_mass)
 
 
 
+4 methods for generic function <b>center_of_mass</b>:<ul><li> center_of_mass(dataobject::<b>Array{HydroPartType,1}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L108" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:108</a></li> <li> center_of_mass(dataobject::<b>Array{HydroPartType,1}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L103" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:103</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L51" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:51</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L47" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:47</a></li> </ul>
 
 
 
@@ -314,6 +316,7 @@ methods(com)
 
 
 
+4 methods for generic function <b>com</b>:<ul><li> com(dataobject::<b>Array{HydroPartType,1}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L166" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:166</a></li> <li> com(dataobject::<b>Array{HydroPartType,1}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L162" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:162</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L80" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:80</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L76" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:76</a></li> </ul>
 
 
 
@@ -342,7 +345,7 @@ println( "Particles: ", average_velocity(particles, :km_s) , " km/s" )
 
 
 Without mass-weighting:
-- gas: volume or :no weighting
+- gas: volume or :no weighting 
 - particles: no weighting
 
 
@@ -373,6 +376,7 @@ methods(bulk_velocity)
 
 
 
+2 methods for generic function <b>bulk_velocity</b>:<ul><li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L200" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:200</a></li> <li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L195" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:195</a></li> </ul>
 
 
 
@@ -384,6 +388,7 @@ methods(average_velocity)
 
 
 
+2 methods for generic function <b>average_velocity</b>:<ul><li> average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L241" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:241</a></li> <li> average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L237" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:237</a></li> </ul>
 
 
 
@@ -398,6 +403,8 @@ methods( average_mweighted )
 
 
 
+1 method for generic function <b>average_mweighted</b>:<ul><li> average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L172" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:172</a></li> </ul>
+
 
 
 <a id="Statistics"></a>
@@ -408,13 +415,13 @@ Here, we only show the examples with the hydro-data:
 
 ```julia
 info = getinfo(1, "../../testing/simulations/manu_stable_2019", verbose=false);
-gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
+gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false); 
 ```
 
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:56
+    100%|███████████████████████████████████████████████████| Time: 0:00:56
 
 
 Use `getvar` to extract variables or derive predefined quantities from the database, dependent on the data type.
@@ -430,27 +437,27 @@ getvar()
     =============================[gas]:=============================
            -all the non derived hydro vars-
     :cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
-
+    
                   -derived hydro vars-
     :x, :y, :z
     :mass, :cellsize, :volume, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
-
+    
     ==========================[particles]:==========================
             all the non derived  vars:
-    :cpu, :level, :id, :family, :tag
+    :cpu, :level, :id, :family, :tag 
     :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
-
+    
                   -derived particle vars-
     :age
-
+    
     ===========================[clumps]:===========================
     :peak_x or :x, :peak_y or :y, :peak_z or :z
     :v, :ekin,...
-
+    
     =====================[gas or particles]:=======================
     :v, :ekin
-
+    
     related to a given center:
     ---------------------------
     :r_cylinder, :r_sphere (radial components)
@@ -460,9 +467,9 @@ getvar()
 
 
 ### Get a Single Quantity
-In the following example, we calculate the mass for each cell of the hydro data.
+In the following example, we calculate the mass for each cell of the hydro data. 
 - The output is a 1dim array in code units by default (mass1).
-- Each element/cell can be scaled to Msol units by the elementwise multiplikation **gas.scale.Msol** (mass2).
+- Each element/cell can be scaled to Msol units by the elementwise multiplikation **gas.scale.Msol** (mass2). 
 - The `getvar` function supports intrinsic scaling to a selected unit (mass3).
 - The selected unit does not need a keyword argument if the following order is maintained: dataobject, variable, unit
 
@@ -474,7 +481,7 @@ mass3 = getvar(gas, :mass, unit=:Msol) # unit calculation, provided by a keyword
 mass4 = getvar(gas, :mass, :Msol) # unit calculation provided by an argument [Msol]
 
 # construct a three dimensional array to compare the three created arrays column wise:  
-mass_overview = [mass1 mass2 mass3 mass4]
+mass_overview = [mass1 mass2 mass3 mass4] 
 ```
 
 
@@ -499,14 +506,14 @@ mass_overview = [mass1 mass2 mass3 mass4]
      1.02889e-7  102.889    102.889    102.889  
      1.94423e-7  194.423    194.423    194.423  
      1.94423e-7  194.423    194.423    194.423  
-     8.90454e-8   89.0454    89.0454    89.0454
-     8.90454e-8   89.0454    89.0454    89.0454
-     2.27641e-8   22.7641    22.7641    22.7641
-     2.27641e-8   22.7641    22.7641    22.7641
+     8.90454e-8   89.0454    89.0454    89.0454 
+     8.90454e-8   89.0454    89.0454    89.0454 
+     2.27641e-8   22.7641    22.7641    22.7641 
+     2.27641e-8   22.7641    22.7641    22.7641 
      8.42157e-9    8.42157    8.42157    8.42157
      8.42157e-9    8.42157    8.42157    8.42157
-     3.65085e-8   36.5085    36.5085    36.5085
-     3.65085e-8   36.5085    36.5085    36.5085
+     3.65085e-8   36.5085    36.5085    36.5085 
+     3.65085e-8   36.5085    36.5085    36.5085 
 
 
 
@@ -521,19 +528,19 @@ getmass(gas)
 
 
     37898393-element Array{Float64,1}:
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
-     8.940696716308594e-7
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
+     8.940696716308594e-7 
      ⋮                    
      1.0288910576564388e-7
      1.0288910576564388e-7
@@ -541,17 +548,17 @@ getmass(gas)
      1.9442336261293343e-7
      8.90453891574347e-8  
      8.90453891574347e-8  
-     2.276412192306883e-8
-     2.276412192306883e-8
-     8.421571563820485e-9
-     8.421571563820485e-9
-     3.650851622718898e-8
-     3.650851622718898e-8
+     2.276412192306883e-8 
+     2.276412192306883e-8 
+     8.421571563820485e-9 
+     8.421571563820485e-9 
+     3.650851622718898e-8 
+     3.650851622718898e-8 
 
 
 
 ### Get Multiple Quantities
-Get several quantities with one function call by passing an array containing the selected variables.
+Get several quantities with one function call by passing an array containing the selected variables. 
 `getvar` returns a dictionary containing 1dim arrays for each quantity in code units:
 
 
@@ -625,18 +632,18 @@ quantities[:mass]
      894.0696716308591  
      894.0696716308591  
        ⋮                
-     102.88910576564386
-     102.88910576564386
-     194.42336261293337
-     194.42336261293337
-      89.04538915743468
-      89.04538915743468
+     102.88910576564386 
+     102.88910576564386 
+     194.42336261293337 
+     194.42336261293337 
+      89.04538915743468 
+      89.04538915743468 
       22.764121923068824
       22.764121923068824
        8.421571563820482
        8.421571563820482
-      36.50851622718897
-      36.50851622718897
+      36.50851622718897 
+      36.50851622718897 
 
 
 
@@ -671,27 +678,38 @@ getvar()
     =============================[gas]:=============================
            -all the non derived hydro vars-
     :cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
-
+    
                   -derived hydro vars-
     :x, :y, :z
     :mass, :cellsize, :volume, :freefall_time
     :cs, :mach, :jeanslength, :jeansnumber
-
+    :T, :Temp, :Temperature with p/rho
+    
+    :h, :hx, :hy, :hz (specific angular momentum)
+    
     ==========================[particles]:==========================
-            all the non derived  vars:
-    :cpu, :level, :id, :family, :tag
+           -all the non derived particle vars-
+    :cpu, :level, :id, :family, :tag 
     :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
-
+    
                   -derived particle vars-
     :age
-
+    
+    ===========================[gravity]:===========================
+           -all the non derived gravity vars-
+    :cpu, :level, cx, cy, cz, :epot, :ax, :ay, :az
+    
+                  -derived gravity vars-
+    :x, :y, :z
+    :cellsize, :volume
+    
     ===========================[clumps]:===========================
     :peak_x or :x, :peak_y or :y, :peak_z or :z
     :v, :ekin,...
-
+    
     =====================[gas or particles]:=======================
     :v, :ekin
-
+    
     related to a given center:
     ---------------------------
     :r_cylinder, :r_sphere (radial components)
@@ -707,7 +725,7 @@ The function returns the quantitites in code units:
 ```julia
 cv = (gas.boxlen / 2.) * gas.scale.kpc # provide the box-center in kpc
 # e.g. for :mass the center keyword is ignored
-quantities = getvar(gas, [:mass, :r_cylinder], center=[cv, cv, cv], center_unit=:kpc)
+quantities = getvar(gas, [:mass, :r_cylinder], center=[cv, cv, cv], center_unit=:kpc) 
 ```
 
 
@@ -913,14 +931,14 @@ Comparison of the results:
      102.889    102.889    102.889  
      194.423    194.423    194.423  
      194.423    194.423    194.423  
-      89.0454    89.0454    89.0454
-      89.0454    89.0454    89.0454
-      22.7641    22.7641    22.7641
-      22.7641    22.7641    22.7641
+      89.0454    89.0454    89.0454 
+      89.0454    89.0454    89.0454 
+      22.7641    22.7641    22.7641 
+      22.7641    22.7641    22.7641 
        8.42157    8.42157    8.42157
        8.42157    8.42157    8.42157
-      36.5085    36.5085    36.5085
-      36.5085    36.5085    36.5085
+      36.5085    36.5085    36.5085 
+      36.5085    36.5085    36.5085 
 
 
 
@@ -929,7 +947,7 @@ Comparison of the results:
 
 ```julia
 info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14", verbose=false);
-gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8, smallr=1e-5, verbose=false);
+gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8, smallr=1e-5, verbose=false); 
 particles = getparticles(info, [:mass, :vx, :vy, :vz], verbose=false)
 clumps    = getclumps(info, verbose=false);
 ```
@@ -937,8 +955,8 @@ clumps    = getclumps(info, verbose=false);
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:02:22
-     Reading data...100%|████████████████████████████████████| Time: 0:00:03
+    100%|███████████████████████████████████████████████████| Time: 0:02:22
+    Reading data...100%|████████████████████████████████████| Time: 0:00:03
 
 
 Pass any kind of Array{<:Real,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:
@@ -1107,15 +1125,15 @@ x,y,z = getpositions(gas, :kpc, center=[:boxcenter]);
      -23.25   -23.25    -14.25  
        ⋮                        
       16.125    3.9375    0.1875
-      16.125    3.9375    0.375
+      16.125    3.9375    0.375 
       16.125    3.9375    0.5625
       16.125    3.9375    0.75  
       16.125    4.125    -0.5625
-      16.125    4.125    -0.375
+      16.125    4.125    -0.375 
       16.125    4.125    -0.1875
       16.125    4.125     0.0   
       16.125    4.125     0.1875
-      16.125    4.125     0.375
+      16.125    4.125     0.375 
       16.125    4.125     0.5625
       16.125    4.125     0.75  
 
@@ -1146,3 +1164,48 @@ getextent(gas, center=[:boxcenter])
 
 
     ((-24.0, 24.0), (-24.0, 24.0), (-24.0, 24.0))
+
+
+
+Get simulation time in code unit oder physical unit
+
+
+```julia
+gettime(info)
+```
+
+
+
+
+    29.9031937665063
+
+
+
+
+```julia
+gettime(info, :Myr)
+```
+
+
+
+
+    445.8861174695
+
+
+
+
+```julia
+gettime(gas, :Myr)
+```
+
+
+
+
+    445.8861174695
+
+
+
+
+```julia
+
+```

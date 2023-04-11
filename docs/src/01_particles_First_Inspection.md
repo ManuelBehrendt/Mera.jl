@@ -5,49 +5,48 @@
 
 ```julia
 using Mera
-#info = getinfo(1, "../../testing/simulations/manu_stable_2019");
-info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
+info = getinfo(300, "../../testing/simulations/mw_L10");
 ```
 
-     [Mera]: 2020-02-12T20:40:36.118
-
+    [Mera]: 2023-04-10T10:58:43.590
+    
     Code: RAMSES
-    output [400] summary:
-    mtime: 2018-09-05T09:51:55.041
-    ctime: 2019-11-01T17:35:21.051
-     =======================================================
-    simulation time: 594.98 [Myr]
+    output [300] summary:
+    mtime: 2023-04-09T05:34:09
+    ctime: 2023-04-10T08:08:14.488
+    =======================================================
+    simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
-    ncpu: 2048
+    ncpu: 640
     ndim: 3
     -------------------------------------------------------
     amr:           true
-    level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
+    level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
     -------------------------------------------------------
     hydro:         true
     hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
+    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
     γ: 1.6667
     -------------------------------------------------------
     gravity:       true
     gravity-variables: (:epot, :ax, :ay, :az)
     -------------------------------------------------------
     particles:     true
-    - Npart:    5.091500e+05
-    - Nstars:   5.066030e+05
-    - Ndm:      2.547000e+03
-    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    - Nstars:   5.445150e+05 
+    particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+    particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
     -------------------------------------------------------
-    clumps:        true
-    clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+    rt:            false
+    clumps:           false
     -------------------------------------------------------
-    namelist-file: false
-    timer-file:       false
-    compilation-file: true
+    namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+    -------------------------------------------------------
+    timer-file:       true
+    compilation-file: false
     makefile:         true
     patchfile:        true
-     =======================================================
-
+    =======================================================
+    
 
 
 A short overview of the loaded particle properties is printed:
@@ -57,12 +56,12 @@ A short overview of the loaded particle properties is printed:
 - the variable names from the descriptor file (if exist)
 
 
-The functions in **Mera** "know" the predefined particle variable names:
-- From >= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,....
-- For  =< ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,....
+The functions in **Mera** "know" the predefined particle variable names: 
+- From >= ramses-version-2018: :vx, :vy, :vz, :mass, :family, :tag, :birth, :metals :var9,.... 
+- For  =< ramses-version-2017: :vx, :vy, :vz, :mass, :birth, :var6, :var7,.... 
 - Currently, the following variables are loaded by default (if exist): :level, :x, :y, :z, :id, :family, :tag.
 - The cpu number associated with the particles can be loaded with the variable names: :cpu or :varn1
-- In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true .
+- In a future version the variable names from the particle descriptor can be used by setting the field info.descriptor.useparticles = true . 
 
 Get an overview of the loaded particle properties:
 
@@ -71,15 +70,15 @@ Get an overview of the loaded particle properties:
 viewfields(info.part_info)
 ```
 
-
-     [Mera]: Particle overview
-     ===============================
+    
+    [Mera]: Particle overview
+    ===============================
     eta_sn	= 0.0
     age_sn	= 0.6706464407596582
     f_w	= 0.0
-    Npart	= 509150
-    Ndm	= 2547
-    Nstars	= 506603
+    Npart	= 0
+    Ndm	= 0
+    Nstars	= 544515
     Nsinks	= 0
     Ncloud	= 0
     Ndebris	= 0
@@ -91,7 +90,7 @@ viewfields(info.part_info)
     star_tracer	= 0
     other_tracer2	= 0
     gas_tracer	= 0
-
+    
 
 
 ## Load AMR/Particle Data
@@ -103,35 +102,35 @@ Read the AMR and the Particle data from all files of the full box with all exist
 particles = getparticles(info);
 ```
 
-     [Mera]: Get particle data: 2020-02-12T20:40:36.139
-
-    Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
-
+    [Mera]: Get particle data: 2023-04-10T10:58:56.439
+    
+    Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+    Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
 
 
+    [32mProgress: 100%|█████████████████████████████████████████| Time: 0:00:02[39m
 
-     Reading data...100%|████████████████████████████████████| Time: 0:00:03
 
-
-    Found 5.089390e+05 particles
-    Memory used for data table :34.947275161743164 MB
+    Found 5.445150e+05 particles
+    Memory used for data table :38.42913246154785 MB
     -------------------------------------------------------
+    
 
 
-
-The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object:
+The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object: 
 
 
 ```julia
 usedmemory(particles);
 ```
 
-    Memory used: 35.211 MB
+    Memory used: 38.451 MB
 
 
 The assigned object is now of type `PartDataType`:
@@ -183,20 +182,20 @@ The data is stored in a **JuliaDB** table and the user selected particle variab
 viewfields(particles)
 ```
 
-
-     data ==> JuliaDB table: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
-
-     info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
+    
+    data ==> JuliaDB table: (:level, :x, :y, :z, :id, :family, :tag, :vx, :vy, :vz, :mass, :birth)
+    
+    info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+    
     lmin	= 6
-    lmax	= 14
+    lmax	= 10
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
-    selected_partvars	= Symbol[:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth]
-
-     scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
-
-
+    selected_partvars	= [:level, :x, :y, :z, :id, :family, :tag, :vx, :vy, :vz, :mass, :birth]
+    
+    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
+    
+    
 
 
 For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with "particles.info" and the scaling relations from code to cgs units in "particles.scale".
@@ -229,18 +228,14 @@ amr_overview = amroverview(particles)
 
 
 
-    Table with 9 rows, 2 columns:
+    Table with 5 rows, 2 columns:
     level  particles
     ────────────────
-    6      2867
-    7      11573
-    8      56209
-    9      118156
-    10     115506
-    11     77303
-    12     49300
-    13     31859
-    14     46166
+    6      1389
+    7      543126
+    8      0
+    9      0
+    10     0
 
 
 
@@ -251,32 +246,39 @@ Get some overview of the data that is associated with the object `particles`. Th
 data_overview = dataoverview(particles)
 ```
 
+    Calculating...
 
 
 
-    Table with 9 rows, 19 columns:
+
+
+    Table with 5 rows, 23 columns:
     Columns:
-     #     colname      type
-    ───────────────────
-    1   level      Any
-    2   x_min      Any
-    3   x_max      Any
-    4   y_min      Any
-    5   y_max      Any
-    6   z_min      Any
-    7   z_max      Any
-    8   id_min     Any
-    9   id_max     Any
-    10  vx_min     Any
-    11  vx_max     Any
-    12  vy_min     Any
-    13  vy_max     Any
-    14  vz_min     Any
-    15  vz_max     Any
-    16  mass_min   Any
-    17  mass_max   Any
-    18  birth_min  Any
-    19  birth_max  Any
+    #   colname     type
+    ────────────────────
+    1   level       Any
+    2   x_min       Any
+    3   x_max       Any
+    4   y_min       Any
+    5   y_max       Any
+    6   z_min       Any
+    7   z_max       Any
+    8   id_min      Any
+    9   id_max      Any
+    10  family_min  Any
+    11  family_max  Any
+    12  tag_min     Any
+    13  tag_max     Any
+    14  vx_min      Any
+    15  vx_max      Any
+    16  vy_min      Any
+    17  vy_max      Any
+    18  vz_min      Any
+    19  vz_max      Any
+    20  mass_min    Any
+    21  mass_max    Any
+    22  birth_min   Any
+    23  birth_max   Any
 
 
 
@@ -295,18 +297,14 @@ select(data_overview, (:level,:mass_min, :mass_max, :birth_min, :birth_max ) )
 
 
 
-    Table with 9 rows, 5 columns:
+    Table with 5 rows, 5 columns:
     level  mass_min    mass_max    birth_min  birth_max
     ───────────────────────────────────────────────────
-    6      1.13606e-5  1.13606e-5  4.54194    38.2611
-    7      1.13606e-5  1.13606e-5  4.35262    38.6822
-    8      1.13606e-5  2.27212e-5  4.30782    39.2733
-    9      1.13606e-5  2.27212e-5  4.39811    39.397
-    10     1.13606e-5  2.27212e-5  4.29246    39.6783
-    11     1.13606e-5  2.27212e-5  4.36385    39.744
-    12     1.13606e-5  2.27212e-5  4.51187    39.8358
-    13     4.99231e-6  2.27212e-5  4.47027    39.883
-    14     4.91416e-6  2.27212e-5  5.2582     39.902
+    6      0.0         0.0         0.0        0.0
+    7      0.0         0.0         0.0        0.0
+    8      0.0         0.0         0.0        0.0
+    9      8.00221e-7  8.00221e-7  5.56525    22.126
+    10     8.00221e-7  2.00055e-6  0.0951753  29.9032
 
 
 
@@ -314,22 +312,18 @@ Get an array from the column ":birth" in `data_overview` and scale it to the uni
 
 
 ```julia
-column(data_overview, :birth_min) * info.scale.Myr
+column(data_overview, :birth_min) * info.scale.Myr 
 ```
 
 
 
 
-    9-element Array{Float64,1}:
-     67.72475450854526
-     64.901905404619  
-     64.23377578948651
-     65.58011000778922
-     64.00484282690913
-     65.06931266062217
-     67.27645257301232
-     66.6561171130916
-     78.40495776518468
+    5-element Vector{Float64}:
+      0.0
+      0.0
+      0.0
+     82.98342559299353
+      1.419158337486011
 
 
 
@@ -348,23 +342,19 @@ select(data_overview, (:level,:mass_min, :mass_max, :birth_min, :birth_max ) )
 
 
 
-    Table with 9 rows, 5 columns:
+    Table with 5 rows, 5 columns:
     level  mass_min    mass_max    birth_min  birth_max
     ───────────────────────────────────────────────────
-    6      1.13606e-5  1.13606e-5  4.54194    570.511
-    7      1.13606e-5  1.13606e-5  4.35262    576.79
-    8      1.13606e-5  2.27212e-5  4.30782    585.604
-    9      1.13606e-5  2.27212e-5  4.39811    587.448
-    10     1.13606e-5  2.27212e-5  4.29246    591.643
-    11     1.13606e-5  2.27212e-5  4.36385    592.623
-    12     1.13606e-5  2.27212e-5  4.51187    593.991
-    13     4.99231e-6  2.27212e-5  4.47027    594.694
-    14     4.91416e-6  2.27212e-5  5.2582     594.977
+    6      0.0         0.0         0.0        0.0
+    7      0.0         0.0         0.0        0.0
+    8      0.0         0.0         0.0        0.0
+    9      8.00221e-7  8.00221e-7  5.56525    329.92
+    10     8.00221e-7  2.00055e-6  0.0951753  445.886
 
 
 
 ## Data inspection
-The data is associated with the field `particles.data` as a **JuliaDB** table (code units).
+The data is associated with the field `particles.data` as a **JuliaDB** table (code units). 
 Each row corresponds to a particle and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
 More information can be found in the **Mera** tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
@@ -381,20 +371,22 @@ particles.data
 
 
 
-    Table with 508939 rows, 10 columns:
+    Table with 544515 rows, 12 columns:
     Columns:
-     #     colname    type
+    #   colname  type
     ────────────────────
     1   level    Int32
     2   x        Float64
     3   y        Float64
     4   z        Float64
     5   id       Int32
-    6   vx       Float64
-    7   vy       Float64
-    8   vz       Float64
-    9   mass     Float64
-    10  birth    Float64
+    6   family   Int8
+    7   tag      Int8
+    8   vx       Float64
+    9   vy       Float64
+    10  vz       Float64
+    11  mass     Float64
+    12  birth    Float64
 
 
 
@@ -408,33 +400,33 @@ select(particles.data, (:level,:x, :y, :z, :birth) )
 
 
 
-    Table with 508939 rows, 5 columns:
-     level    x             y          z         birth
-    ────────────────────────────────────────────
-    6      0.00462947  22.3885  24.571   32.0735
-    6      0.109066    22.3782  21.5844  19.8963
-    6      0.238211    28.7537  24.8191  24.9471
-    6      0.271366    22.7512  31.5681  20.9888
-    6      0.312574    16.2385  23.7591  23.0935
-    6      0.314957    28.2084  30.966   31.6911
-    6      0.328337    4.59858  23.5001  30.3666
-    6      0.420712    27.6688  26.5735  18.9512
-    6      0.509144    33.1737  23.9789  24.3613
-    6      0.565516    25.9409  26.0579  32.7551
-    6      0.587289    9.60231  23.8477  29.6981
-    6      0.592878    25.5519  21.3079  15.9204
+    Table with 544515 rows, 5 columns:
+    level  x        y        z        birth
+    ─────────────────────────────────────────
+    9      9.17918  22.4404  24.0107  8.86726
+    9      9.23642  21.5559  24.0144  8.71495
+    9      9.35638  20.7472  24.0475  7.91459
+    9      9.39529  21.1854  24.0155  7.85302
+    9      9.42686  20.9697  24.0162  8.2184
+    9      9.42691  22.2181  24.0137  8.6199
+    9      9.48834  22.0913  24.0137  8.70493
+    9      9.5262   20.652   24.0179  7.96008
+    9      9.60376  21.2814  24.0155  8.03346
+    9      9.6162   20.6243  24.0506  8.56482
+    9      9.62155  20.6248  24.0173  7.78062
+    9      9.62252  24.4396  24.0206  9.44825
     ⋮
-    14     37.6271     25.857   23.8833  36.7754
-    14     37.6299     25.8403  23.9383  36.0289
-    14     37.6301     25.8502  23.9361  38.7225
-    14     37.6326     25.8544  23.9383  36.3547
-    14     37.6528     25.8898  23.9928  38.2109
-    14     37.6643     25.9061  23.9945  39.49
-    14     37.6813     25.8743  23.9789  36.6981
-    14     37.7207     25.8623  23.8775  38.6107
-    14     38.173      25.8862  23.7978  33.0212
-    14     38.1738     25.8914  23.7979  35.2712
-    14     38.1739     25.8905  23.7992  34.4097
+    10     37.7913  25.6793  24.018   9.78881
+    10     37.8255  22.6271  24.0279  9.89052
+    10     37.8451  22.7506  24.027   9.61716
+    10     37.8799  25.5668  24.0193  10.2294
+    10     37.969   23.2135  24.0273  9.85439
+    10     37.9754  22.6288  24.0265  9.4959
+    10     37.9811  23.2854  24.0283  9.9782
+    10     37.9919  22.873   24.0271  9.12003
+    10     37.9966  23.092   24.0281  9.45574
+    10     38.0328  22.8404  24.0265  9.77493
+    10     38.0953  22.8757  24.0231  9.20251
 
 
 
