@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>5-Mask/Filter/Meta · Mera.jl</title><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li class="is-active"><a class="tocitem" href>5-Mask/Filter/Meta</a><ul class="internal"><li><a class="tocitem" href="#Load-The-Data-1"><span>Load The Data</span></a></li><li><a class="tocitem" href="#Select-From-Data-Table-1"><span>Select From Data Table</span></a></li><li><a class="tocitem" href="#Filter-by-Condition-1"><span>Filter by Condition</span></a></li><li><a class="tocitem" href="#Filter-by-Multiple-Conditions-1"><span>Filter by Multiple Conditions</span></a></li><li><a class="tocitem" href="#Extend-the-Data-Table-1"><span>Extend the Data Table</span></a></li><li><a class="tocitem" href="#Masking-1"><span>Masking</span></a></li></ul></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>5-Mask/Filter/Meta</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>5-Mask/Filter/Meta</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/05_multi_Masking_Filtering.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Mask/Select/Map/Filter/Metaprogramming...-1"><a class="docs-heading-anchor" href="#.-Mask/Select/Map/Filter/Metaprogramming...-1">5. Mask/Select/Map/Filter/Metaprogramming...</a><a class="docs-heading-anchor-permalink" href="#.-Mask/Select/Map/Filter/Metaprogramming...-1" title="Permalink"></a></h1><ul><li>Learn how to extract data from the data table with JuliaDB and Mera functions</li><li>Filter the data table according to one or several conditions</li><li>Extract data from a filtered data table and use it for further calculations</li><li>Extend the data table with new columns/variables</li><li>Mask data with different methods and apply it to some functions</li></ul><h2 id="Load-The-Data-1"><a class="docs-heading-anchor" href="#Load-The-Data-1">Load The Data</a><a class="docs-heading-anchor-permalink" href="#Load-The-Data-1" title="Permalink"></a></h2><pre><code class="language-julia">using Mera
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>5. Mask/Select/Map/Filter/Metaprogramming... · Mera.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>5. Mask/Select/Map/Filter/Metaprogramming...</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>5. Mask/Select/Map/Filter/Metaprogramming...</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/05_multi_Masking_Filtering.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Mask/Select/Map/Filter/Metaprogramming..."><a class="docs-heading-anchor" href="#.-Mask/Select/Map/Filter/Metaprogramming...">5. Mask/Select/Map/Filter/Metaprogramming...</a><a id=".-Mask/Select/Map/Filter/Metaprogramming...-1"></a><a class="docs-heading-anchor-permalink" href="#.-Mask/Select/Map/Filter/Metaprogramming..." title="Permalink"></a></h1><ul><li>Learn how to extract data from the data table with JuliaDB and Mera functions</li><li>Filter the data table according to one or several conditions</li><li>Extract data from a filtered data table and use it for further calculations</li><li>Extend the data table with new columns/variables</li><li>Mask data with different methods and apply it to some functions</li></ul><h2 id="Load-The-Data"><a class="docs-heading-anchor" href="#Load-The-Data">Load The Data</a><a id="Load-The-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Load-The-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
 info = getinfo(400, &quot;../../testing/simulations/manu_sim_sf_L14&quot;);
 gas       = gethydro(info, lmax=8, smallr=1e-5);  
 particles = getparticles(info)
-clumps    = getclumps(info);</code></pre><pre><code class="language-none"> [Mera]: 2020-02-08T20:56:19.834
+clumps    = getclumps(info);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-08T20:56:19.834
 
 Code: RAMSES
 output [400] summary:
@@ -85,7 +85,7 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 Read 12 colums:
 Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.77734375 KB
--------------------------------------------------------</code></pre><h2 id="Select-From-Data-Table-1"><a class="docs-heading-anchor" href="#Select-From-Data-Table-1">Select From Data Table</a><a class="docs-heading-anchor-permalink" href="#Select-From-Data-Table-1" title="Permalink"></a></h2><h3 id="Select-a-single-column/variable-1"><a class="docs-heading-anchor" href="#Select-a-single-column/variable-1">Select a single column/variable</a><a class="docs-heading-anchor-permalink" href="#Select-a-single-column/variable-1" title="Permalink"></a></h3><h5 id="By-using-JuliaDB-or-Mera-functions-1"><a class="docs-heading-anchor" href="#By-using-JuliaDB-or-Mera-functions-1">By using JuliaDB or Mera functions</a><a class="docs-heading-anchor-permalink" href="#By-using-JuliaDB-or-Mera-functions-1" title="Permalink"></a></h5><pre><code class="language-julia">using JuliaDB</code></pre><p>The JuliaDB data table is stored in the <code>data</code>-field of any <code>DataSetType</code>. Extract an existing column (variable):</p><pre><code class="language-julia">select(gas.data, :rho) # JuliaDB</code></pre><pre><code class="language-none">849332-element Array{Float64,1}:
+-------------------------------------------------------</code></pre><h2 id="Select-From-Data-Table"><a class="docs-heading-anchor" href="#Select-From-Data-Table">Select From Data Table</a><a id="Select-From-Data-Table-1"></a><a class="docs-heading-anchor-permalink" href="#Select-From-Data-Table" title="Permalink"></a></h2><h3 id="Select-a-single-column/variable"><a class="docs-heading-anchor" href="#Select-a-single-column/variable">Select a single column/variable</a><a id="Select-a-single-column/variable-1"></a><a class="docs-heading-anchor-permalink" href="#Select-a-single-column/variable" title="Permalink"></a></h3><h5 id="By-using-JuliaDB-or-Mera-functions"><a class="docs-heading-anchor" href="#By-using-JuliaDB-or-Mera-functions">By using JuliaDB or Mera functions</a><a id="By-using-JuliaDB-or-Mera-functions-1"></a><a class="docs-heading-anchor-permalink" href="#By-using-JuliaDB-or-Mera-functions" title="Permalink"></a></h5><pre><code class="language-julia hljs">using JuliaDB</code></pre><p>The JuliaDB data table is stored in the <code>data</code>-field of any <code>DataSetType</code>. Extract an existing column (variable):</p><pre><code class="language-julia hljs">select(gas.data, :rho) # JuliaDB</code></pre><pre><code class="nohighlight hljs">849332-element Array{Float64,1}:
  1.0e-5                
  1.0e-5                
  1.0e-5                
@@ -111,7 +111,7 @@ Memory used for data table :61.77734375 KB
  0.00010901341218606515
  0.00010849404903183988
  0.00010900588395976569
- 0.00010910219163333514</code></pre><p>Pass the entire <code>DataSetType</code> (here <code>gas</code>) to the Mera function <code>getvar</code> to extract the selected variable or derived quantity from the data table. Call <code>getvar()</code> to get a list of the predefined quantities.</p><pre><code class="language-julia">getvar(gas, :rho) # MERA</code></pre><pre><code class="language-none">849332-element Array{Float64,1}:
+ 0.00010910219163333514</code></pre><p>Pass the entire <code>DataSetType</code> (here <code>gas</code>) to the Mera function <code>getvar</code> to extract the selected variable or derived quantity from the data table. Call <code>getvar()</code> to get a list of the predefined quantities.</p><pre><code class="language-julia hljs">getvar(gas, :rho) # MERA</code></pre><pre><code class="nohighlight hljs">849332-element Array{Float64,1}:
  1.0e-5                
  1.0e-5                
  1.0e-5                
@@ -137,7 +137,7 @@ Memory used for data table :61.77734375 KB
  0.00010901341218606515
  0.00010849404903183988
  0.00010900588395976569
- 0.00010910219163333514</code></pre><h3 id="Select-several-columns-1"><a class="docs-heading-anchor" href="#Select-several-columns-1">Select several columns</a><a class="docs-heading-anchor-permalink" href="#Select-several-columns-1" title="Permalink"></a></h3><p>By selecting several columns a new JuliaDB databse is returned:</p><pre><code class="language-julia">select(gas.data, (:rho, :level)) #JuliaDB</code></pre><pre><code class="language-none">Table with 849332 rows, 2 columns:
+ 0.00010910219163333514</code></pre><h3 id="Select-several-columns"><a class="docs-heading-anchor" href="#Select-several-columns">Select several columns</a><a id="Select-several-columns-1"></a><a class="docs-heading-anchor-permalink" href="#Select-several-columns" title="Permalink"></a></h3><p>By selecting several columns a new JuliaDB databse is returned:</p><pre><code class="language-julia hljs">select(gas.data, (:rho, :level)) #JuliaDB</code></pre><pre><code class="nohighlight hljs">Table with 849332 rows, 2 columns:
 rho           level
 ──────────────────
 1.0e-5       6
@@ -163,9 +163,9 @@ rho           level
 0.000109013  8
 0.000108494  8
 0.000109006  8
-0.000109102  8</code></pre><p>The getvar function returns a dictionary containing the extracted arrays:</p><pre><code class="language-julia">getvar(gas, [:rho, :level]) # MERA</code></pre><pre><code class="language-none">Dict{Any,Any} with 2 entries:
+0.000109102  8</code></pre><p>The getvar function returns a dictionary containing the extracted arrays:</p><pre><code class="language-julia hljs">getvar(gas, [:rho, :level]) # MERA</code></pre><pre><code class="nohighlight hljs">Dict{Any,Any} with 2 entries:
   :level =&gt; [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0  …  8.0, 8.0, 8.0…
-  :rho   =&gt; [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.…</code></pre><p>Select one or more columns and get a tuple of vectors:</p><pre><code class="language-julia">vtuple = columns(gas.data, (:rho, :level)) # JuliaDB</code></pre><pre><code class="language-none">(rho = [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5  …  0.00010915603617815434, 0.00010917096551347797, 0.00012465438542871006, 0.00011934527871880502, 0.00011294656300014925, 0.00011110068692986109, 0.00010901341218606515, 0.00010849404903183988, 0.00010900588395976569, 0.00010910219163333514], level = [6, 6, 6, 6, 6, 6, 6, 6, 6, 6  …  8, 8, 8, 8, 8, 8, 8, 8, 8, 8])</code></pre><pre><code class="language-julia">propertynames(vtuple)</code></pre><pre><code class="language-none">(:rho, :level)</code></pre><pre><code class="language-julia">vtuple.rho</code></pre><pre><code class="language-none">849332-element Array{Float64,1}:
+  :rho   =&gt; [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.…</code></pre><p>Select one or more columns and get a tuple of vectors:</p><pre><code class="language-julia hljs">vtuple = columns(gas.data, (:rho, :level)) # JuliaDB</code></pre><pre><code class="nohighlight hljs">(rho = [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5  …  0.00010915603617815434, 0.00010917096551347797, 0.00012465438542871006, 0.00011934527871880502, 0.00011294656300014925, 0.00011110068692986109, 0.00010901341218606515, 0.00010849404903183988, 0.00010900588395976569, 0.00010910219163333514], level = [6, 6, 6, 6, 6, 6, 6, 6, 6, 6  …  8, 8, 8, 8, 8, 8, 8, 8, 8, 8])</code></pre><pre><code class="language-julia hljs">propertynames(vtuple)</code></pre><pre><code class="nohighlight hljs">(:rho, :level)</code></pre><pre><code class="language-julia hljs">vtuple.rho</code></pre><pre><code class="nohighlight hljs">849332-element Array{Float64,1}:
  1.0e-5                
  1.0e-5                
  1.0e-5                
@@ -191,8 +191,8 @@ rho           level
  0.00010901341218606515
  0.00010849404903183988
  0.00010900588395976569
- 0.00010910219163333514</code></pre><h2 id="Filter-by-Condition-1"><a class="docs-heading-anchor" href="#Filter-by-Condition-1">Filter by Condition</a><a class="docs-heading-anchor-permalink" href="#Filter-by-Condition-1" title="Permalink"></a></h2><h3 id="With-JuliaDB-(example-A)-1"><a class="docs-heading-anchor" href="#With-JuliaDB-(example-A)-1">With JuliaDB (example A)</a><a class="docs-heading-anchor-permalink" href="#With-JuliaDB-(example-A)-1" title="Permalink"></a></h3><p>Get all the data corresponding to cells/rows with level=6. Here, the variable <code>p</code> is used as placeholder for rows. A new JuliaDB data table is returend:</p><pre><code class="language-julia">filtered_db = filter(p-&gt;p.level==6, gas.data ) # JuliaDB
-# see the reduced row number</code></pre><pre><code class="language-none">Table with 240956 rows, 11 columns:
+ 0.00010910219163333514</code></pre><h2 id="Filter-by-Condition"><a class="docs-heading-anchor" href="#Filter-by-Condition">Filter by Condition</a><a id="Filter-by-Condition-1"></a><a class="docs-heading-anchor-permalink" href="#Filter-by-Condition" title="Permalink"></a></h2><h3 id="With-JuliaDB-(example-A)"><a class="docs-heading-anchor" href="#With-JuliaDB-(example-A)">With JuliaDB (example A)</a><a id="With-JuliaDB-(example-A)-1"></a><a class="docs-heading-anchor-permalink" href="#With-JuliaDB-(example-A)" title="Permalink"></a></h3><p>Get all the data corresponding to cells/rows with level=6. Here, the variable <code>p</code> is used as placeholder for rows. A new JuliaDB data table is returend:</p><pre><code class="language-julia hljs">filtered_db = filter(p-&gt;p.level==6, gas.data ) # JuliaDB
+# see the reduced row number</code></pre><pre><code class="nohighlight hljs">Table with 240956 rows, 11 columns:
 Columns:
  #     colname    type
 ────────────────────
@@ -206,8 +206,8 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h3 id="With-Macro-Expression-(example-A)-1"><a class="docs-heading-anchor" href="#With-Macro-Expression-(example-A)-1">With Macro Expression (example A)</a><a class="docs-heading-anchor-permalink" href="#With-Macro-Expression-(example-A)-1" title="Permalink"></a></h3><p>(see the documentation at: <a href="https://piever.github.io/JuliaDBMeta.jl/stable/">https://piever.github.io/JuliaDBMeta.jl/stable/</a> )</p><pre><code class="language-julia">using JuliaDBMeta</code></pre><pre><code class="language-none">┌ Info: Precompiling JuliaDBMeta [2c06ca41-a429-545c-b8f0-5ca7dd64ba19]
-└ @ Base loading.jl:1273</code></pre><pre><code class="language-julia">filtered_db = @filter gas.data :level==6 # JuliaDBMeta</code></pre><pre><code class="language-none">Table with 240956 rows, 11 columns:
+11  var7     Float64</code></pre><h3 id="With-Macro-Expression-(example-A)"><a class="docs-heading-anchor" href="#With-Macro-Expression-(example-A)">With Macro Expression (example A)</a><a id="With-Macro-Expression-(example-A)-1"></a><a class="docs-heading-anchor-permalink" href="#With-Macro-Expression-(example-A)" title="Permalink"></a></h3><p>(see the documentation at: <a href="https://piever.github.io/JuliaDBMeta.jl/stable/">https://piever.github.io/JuliaDBMeta.jl/stable/</a> )</p><pre><code class="language-julia hljs">using JuliaDBMeta</code></pre><pre><code class="nohighlight hljs">┌ Info: Precompiling JuliaDBMeta [2c06ca41-a429-545c-b8f0-5ca7dd64ba19]
+└ @ Base loading.jl:1273</code></pre><pre><code class="language-julia hljs">filtered_db = @filter gas.data :level==6 # JuliaDBMeta</code></pre><pre><code class="nohighlight hljs">Table with 240956 rows, 11 columns:
 Columns:
  #     colname    type
 ────────────────────
@@ -221,8 +221,8 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h3 id="With-JuliaDB-(example-B)-1"><a class="docs-heading-anchor" href="#With-JuliaDB-(example-B)-1">With JuliaDB (example B)</a><a class="docs-heading-anchor-permalink" href="#With-JuliaDB-(example-B)-1" title="Permalink"></a></h3><p>Get all cells/rows with densities &gt;= 3 Msol/pc^3. Since the data is given in code units, we need to convert from the given physical units:</p><pre><code class="language-julia">density = 3. / gas.scale.Msol_pc3
-filtered_db = filter(p-&gt;p.rho&gt;= density, gas.data ) # JuliaDB</code></pre><pre><code class="language-none">Table with 210 rows, 11 columns:
+11  var7     Float64</code></pre><h3 id="With-JuliaDB-(example-B)"><a class="docs-heading-anchor" href="#With-JuliaDB-(example-B)">With JuliaDB (example B)</a><a id="With-JuliaDB-(example-B)-1"></a><a class="docs-heading-anchor-permalink" href="#With-JuliaDB-(example-B)" title="Permalink"></a></h3><p>Get all cells/rows with densities &gt;= 3 Msol/pc^3. Since the data is given in code units, we need to convert from the given physical units:</p><pre><code class="language-julia hljs">density = 3. / gas.scale.Msol_pc3
+filtered_db = filter(p-&gt;p.rho&gt;= density, gas.data ) # JuliaDB</code></pre><pre><code class="nohighlight hljs">Table with 210 rows, 11 columns:
 Columns:
  #     colname    type
 ────────────────────
@@ -236,8 +236,8 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h3 id="With-Macro-Expression-(example-B)-1"><a class="docs-heading-anchor" href="#With-Macro-Expression-(example-B)-1">With Macro Expression (example B)</a><a class="docs-heading-anchor-permalink" href="#With-Macro-Expression-(example-B)-1" title="Permalink"></a></h3><pre><code class="language-julia">density = 3. /gas.scale.Msol_pc3
-filtered_db = @filter gas.data :rho&gt;= density # JuliaDBMeta</code></pre><pre><code class="language-none">Table with 210 rows, 11 columns:
+11  var7     Float64</code></pre><h3 id="With-Macro-Expression-(example-B)"><a class="docs-heading-anchor" href="#With-Macro-Expression-(example-B)">With Macro Expression (example B)</a><a id="With-Macro-Expression-(example-B)-1"></a><a class="docs-heading-anchor-permalink" href="#With-Macro-Expression-(example-B)" title="Permalink"></a></h3><pre><code class="language-julia hljs">density = 3. /gas.scale.Msol_pc3
+filtered_db = @filter gas.data :rho&gt;= density # JuliaDBMeta</code></pre><pre><code class="nohighlight hljs">Table with 210 rows, 11 columns:
 Columns:
  #     colname    type
 ────────────────────
@@ -251,15 +251,15 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h3 id="Get-a-Quantity/Variable-from-The-Filtered-Data-Table-1"><a class="docs-heading-anchor" href="#Get-a-Quantity/Variable-from-The-Filtered-Data-Table-1">Get a Quantity/Variable from The Filtered Data Table</a><a class="docs-heading-anchor-permalink" href="#Get-a-Quantity/Variable-from-The-Filtered-Data-Table-1" title="Permalink"></a></h3><p>Calculate the mass for each cell and the sum:</p><pre><code class="language-julia">mass_tot = getvar(gas, :mass, :Msol) # the full data table
-sum(mass_tot)</code></pre><pre><code class="language-none">3.0968754148332745e10</code></pre><p>The same calculation is possible for the filtered data base which has to be passed together with the original object, here: <code>gas</code></p><pre><code class="language-julia">mass_filtered_tot = getvar(gas, :mass, :Msol, filtered_db=filtered_db) # the filtered data table
-sum(mass_filtered_tot)</code></pre><pre><code class="language-none">1.4862767967535206e10</code></pre><h3 id="Create-a-New-DataSetType-from-a-Filtered-Data-Table-1"><a class="docs-heading-anchor" href="#Create-a-New-DataSetType-from-a-Filtered-Data-Table-1">Create a New DataSetType from a Filtered Data Table</a><a class="docs-heading-anchor-permalink" href="#Create-a-New-DataSetType-from-a-Filtered-Data-Table-1" title="Permalink"></a></h3><p>A new <code>DataSetType</code> can be constructed for the filtered data table that can be passed to the functions.</p><pre><code class="language-julia">density = 3. /gas.scale.Msol_pc3
+11  var7     Float64</code></pre><h3 id="Get-a-Quantity/Variable-from-The-Filtered-Data-Table"><a class="docs-heading-anchor" href="#Get-a-Quantity/Variable-from-The-Filtered-Data-Table">Get a Quantity/Variable from The Filtered Data Table</a><a id="Get-a-Quantity/Variable-from-The-Filtered-Data-Table-1"></a><a class="docs-heading-anchor-permalink" href="#Get-a-Quantity/Variable-from-The-Filtered-Data-Table" title="Permalink"></a></h3><p>Calculate the mass for each cell and the sum:</p><pre><code class="language-julia hljs">mass_tot = getvar(gas, :mass, :Msol) # the full data table
+sum(mass_tot)</code></pre><pre><code class="nohighlight hljs">3.0968754148332745e10</code></pre><p>The same calculation is possible for the filtered data base which has to be passed together with the original object, here: <code>gas</code></p><pre><code class="language-julia hljs">mass_filtered_tot = getvar(gas, :mass, :Msol, filtered_db=filtered_db) # the filtered data table
+sum(mass_filtered_tot)</code></pre><pre><code class="nohighlight hljs">1.4862767967535206e10</code></pre><h3 id="Create-a-New-DataSetType-from-a-Filtered-Data-Table"><a class="docs-heading-anchor" href="#Create-a-New-DataSetType-from-a-Filtered-Data-Table">Create a New DataSetType from a Filtered Data Table</a><a id="Create-a-New-DataSetType-from-a-Filtered-Data-Table-1"></a><a class="docs-heading-anchor-permalink" href="#Create-a-New-DataSetType-from-a-Filtered-Data-Table" title="Permalink"></a></h3><p>A new <code>DataSetType</code> can be constructed for the filtered data table that can be passed to the functions.</p><pre><code class="language-julia hljs">density = 3. /gas.scale.Msol_pc3
 filtered_db = @filter gas.data :rho &gt;= density
-gas_new = construct_datatype(filtered_db, gas);</code></pre><pre><code class="language-julia"># Both are now of HydroDataType and include the same information about the simulation properties (besides the canged data table)
+gas_new = construct_datatype(filtered_db, gas);</code></pre><pre><code class="language-julia hljs"># Both are now of HydroDataType and include the same information about the simulation properties (besides the canged data table)
 println( typeof(gas) )
-println( typeof(gas_new) )</code></pre><pre><code class="language-none">HydroDataType
-HydroDataType</code></pre><pre><code class="language-julia">mass_filtered_tot = getvar(gas_new, :mass, :Msol)
-sum(mass_filtered_tot)</code></pre><pre><code class="language-none">1.4862767967535206e10</code></pre><h2 id="Filter-by-Multiple-Conditions-1"><a class="docs-heading-anchor" href="#Filter-by-Multiple-Conditions-1">Filter by Multiple Conditions</a><a class="docs-heading-anchor-permalink" href="#Filter-by-Multiple-Conditions-1" title="Permalink"></a></h2><h3 id="With-JuliaDB-1"><a class="docs-heading-anchor" href="#With-JuliaDB-1">With JuliaDB</a><a class="docs-heading-anchor-permalink" href="#With-JuliaDB-1" title="Permalink"></a></h3><p>Get the mass of all cells/rows with densities &gt;= 3 Msol/pc^3 that is within the disk radius of 3 kpc and 2 kpc from the plane:</p><pre><code class="language-julia">boxlen = info.boxlen
+println( typeof(gas_new) )</code></pre><pre><code class="nohighlight hljs">HydroDataType
+HydroDataType</code></pre><pre><code class="language-julia hljs">mass_filtered_tot = getvar(gas_new, :mass, :Msol)
+sum(mass_filtered_tot)</code></pre><pre><code class="nohighlight hljs">1.4862767967535206e10</code></pre><h2 id="Filter-by-Multiple-Conditions"><a class="docs-heading-anchor" href="#Filter-by-Multiple-Conditions">Filter by Multiple Conditions</a><a id="Filter-by-Multiple-Conditions-1"></a><a class="docs-heading-anchor-permalink" href="#Filter-by-Multiple-Conditions" title="Permalink"></a></h2><h3 id="With-JuliaDB"><a class="docs-heading-anchor" href="#With-JuliaDB">With JuliaDB</a><a id="With-JuliaDB-1"></a><a class="docs-heading-anchor-permalink" href="#With-JuliaDB" title="Permalink"></a></h3><p>Get the mass of all cells/rows with densities &gt;= 3 Msol/pc^3 that is within the disk radius of 3 kpc and 2 kpc from the plane:</p><pre><code class="language-julia hljs">boxlen = info.boxlen
 cv = boxlen/2. # box-center
 density = 3. /gas.scale.Msol_pc3
 radius  = 3. /gas.scale.kpc
@@ -274,7 +274,7 @@ filtered_db = filter(row-&gt; sqrt( (row.cx * boxlen /2^row.level - cv)^2 + (row
                               abs(row.cz * boxlen /2^row.level - cv) &lt;= height, filtered_db)
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
-sum(var_filtered) # [Msol]</code></pre><pre><code class="language-none">2.750632450062189e9</code></pre><h3 id="Use-Pipeline-Macros-1"><a class="docs-heading-anchor" href="#Use-Pipeline-Macros-1">Use Pipeline Macros</a><a class="docs-heading-anchor-permalink" href="#Use-Pipeline-Macros-1" title="Permalink"></a></h3><pre><code class="language-julia">boxlen = info.boxlen
+sum(var_filtered) # [Msol]</code></pre><pre><code class="nohighlight hljs">2.750632450062189e9</code></pre><h3 id="Use-Pipeline-Macros"><a class="docs-heading-anchor" href="#Use-Pipeline-Macros">Use Pipeline Macros</a><a id="Use-Pipeline-Macros-1"></a><a class="docs-heading-anchor-permalink" href="#Use-Pipeline-Macros" title="Permalink"></a></h3><pre><code class="language-julia hljs">boxlen = info.boxlen
 cv = boxlen/2.
 density = 3. /gas.scale.Msol_pc3
 radius  = 3. /gas.scale.kpc
@@ -287,7 +287,7 @@ filtered_db = @apply gas.data begin
 end
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
-sum(var_filtered) # [Msol]</code></pre><pre><code class="language-none">2.750632450062189e9</code></pre><h3 id="External-Functions-With-JuliaDB-1"><a class="docs-heading-anchor" href="#External-Functions-With-JuliaDB-1">External Functions With JuliaDB</a><a class="docs-heading-anchor-permalink" href="#External-Functions-With-JuliaDB-1" title="Permalink"></a></h3><pre><code class="language-julia">boxlen = info.boxlen
+sum(var_filtered) # [Msol]</code></pre><pre><code class="nohighlight hljs">2.750632450062189e9</code></pre><h3 id="External-Functions-With-JuliaDB"><a class="docs-heading-anchor" href="#External-Functions-With-JuliaDB">External Functions With JuliaDB</a><a id="External-Functions-With-JuliaDB-1"></a><a class="docs-heading-anchor-permalink" href="#External-Functions-With-JuliaDB" title="Permalink"></a></h3><pre><code class="language-julia hljs">boxlen = info.boxlen
 function r(x,y,level,boxlen)
     return sqrt((x * boxlen /2^level - boxlen/2.)^2 + (y * boxlen /2^level - boxlen/2.)^2)
 end
@@ -308,7 +308,7 @@ filtered_db = filter(row-&gt;  row.rho &gt;= density &amp;&amp;
 
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
-sum(var_filtered) # [Msol]</code></pre><pre><code class="language-none">2.750632450062189e9</code></pre><h3 id="External-Functions-With-Macro-Expression-1"><a class="docs-heading-anchor" href="#External-Functions-With-Macro-Expression-1">External Functions With Macro Expression</a><a class="docs-heading-anchor-permalink" href="#External-Functions-With-Macro-Expression-1" title="Permalink"></a></h3><pre><code class="language-julia">boxlen = info.boxlen
+sum(var_filtered) # [Msol]</code></pre><pre><code class="nohighlight hljs">2.750632450062189e9</code></pre><h3 id="External-Functions-With-Macro-Expression"><a class="docs-heading-anchor" href="#External-Functions-With-Macro-Expression">External Functions With Macro Expression</a><a id="External-Functions-With-Macro-Expression-1"></a><a class="docs-heading-anchor-permalink" href="#External-Functions-With-Macro-Expression" title="Permalink"></a></h3><pre><code class="language-julia hljs">boxlen = info.boxlen
 cv = boxlen/2.
 density = 3. /gas.scale.Msol_pc3
 radius  = 3. /gas.scale.kpc
@@ -326,24 +326,24 @@ filtered_db = @apply gas.data begin
 end
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
-sum(var_filtered) # [Msol]</code></pre><pre><code class="language-none">2.750632450062189e9</code></pre><h3 id="Compare-With-Predefined-Functions-1"><a class="docs-heading-anchor" href="#Compare-With-Predefined-Functions-1">Compare With Predefined Functions</a><a class="docs-heading-anchor-permalink" href="#Compare-With-Predefined-Functions-1" title="Permalink"></a></h3><p>Compare the previous calculations with the predefined <code>subregion</code> function: The <code>subregion</code> function takes the intersected cells of the range borders into account (default):</p><pre><code class="language-julia">density = 3. /gas.scale.Msol_pc3 # in code units
+sum(var_filtered) # [Msol]</code></pre><pre><code class="nohighlight hljs">2.750632450062189e9</code></pre><h3 id="Compare-With-Predefined-Functions"><a class="docs-heading-anchor" href="#Compare-With-Predefined-Functions">Compare With Predefined Functions</a><a id="Compare-With-Predefined-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Compare-With-Predefined-Functions" title="Permalink"></a></h3><p>Compare the previous calculations with the predefined <code>subregion</code> function: The <code>subregion</code> function takes the intersected cells of the range borders into account (default):</p><pre><code class="language-julia hljs">density = 3. /gas.scale.Msol_pc3 # in code units
 
 sub_region = subregion(gas, :cylinder, radius=3., height=2., center=[:boxcenter], range_unit=:kpc, verbose=false ) # default: cell=true
 filtered_db = @filter sub_region.data :rho &gt;= density
 
 var_filtered = getvar(gas, :mass, :Msol, filtered_db=filtered_db)
-sum(var_filtered) # [Msol]</code></pre><pre><code class="language-none">2.9388306102361355e9</code></pre><p>By setting the keyword <code>cell=false</code>, only the cell-centres within the defined region are taken into account (as in the calculations in the previous section).</p><pre><code class="language-julia">density = 3. /gas.scale.Msol_pc3 # in code units
+sum(var_filtered) # [Msol]</code></pre><pre><code class="nohighlight hljs">2.9388306102361355e9</code></pre><p>By setting the keyword <code>cell=false</code>, only the cell-centres within the defined region are taken into account (as in the calculations in the previous section).</p><pre><code class="language-julia hljs">density = 3. /gas.scale.Msol_pc3 # in code units
 
 sub_region = subregion(gas, :cylinder, radius=3., height=2., center=[:boxcenter], range_unit=:kpc, cell=false, verbose=false )
 filtered_db = @filter sub_region.data :rho &gt;= density
 
 var_filtered = getvar(gas, :mass, :Msol, filtered_db=filtered_db)
-sum(var_filtered)</code></pre><pre><code class="language-none">2.750632450062189e9</code></pre><h2 id="Extend-the-Data-Table-1"><a class="docs-heading-anchor" href="#Extend-the-Data-Table-1">Extend the Data Table</a><a class="docs-heading-anchor-permalink" href="#Extend-the-Data-Table-1" title="Permalink"></a></h2><p>Add costum columns/variables to the data that can be automatically processed in some functions: (note: to take advantage of the Mera unit management, store new data in code-units)</p><pre><code class="language-julia"># calculate the Mach number in each cell
-mach = getvar(gas, :mach);</code></pre><pre><code class="language-julia"># add the extracted Mach number (1dim-array) to the data in the object &quot;gas&quot;
+sum(var_filtered)</code></pre><pre><code class="nohighlight hljs">2.750632450062189e9</code></pre><h2 id="Extend-the-Data-Table"><a class="docs-heading-anchor" href="#Extend-the-Data-Table">Extend the Data Table</a><a id="Extend-the-Data-Table-1"></a><a class="docs-heading-anchor-permalink" href="#Extend-the-Data-Table" title="Permalink"></a></h2><p>Add costum columns/variables to the data that can be automatically processed in some functions: (note: to take advantage of the Mera unit management, store new data in code-units)</p><pre><code class="language-julia hljs"># calculate the Mach number in each cell
+mach = getvar(gas, :mach);</code></pre><pre><code class="language-julia hljs"># add the extracted Mach number (1dim-array) to the data in the object &quot;gas&quot;
 # the array has the same length and order (rows/cells) as in the data table
 # push a column at the end of the table:
 # transform(data-table, key =&gt; new-data)
-gas.data = transform(gas.data, :mach =&gt; mach) # JuliaDB</code></pre><pre><code class="language-none">Table with 849332 rows, 12 columns:
+gas.data = transform(gas.data, :mach =&gt; mach) # JuliaDB</code></pre><pre><code class="nohighlight hljs">Table with 849332 rows, 12 columns:
 Columns:
  #     colname    type
 ────────────────────
@@ -358,7 +358,7 @@ Columns:
 9   p        Float64
 10  var6     Float64
 11  var7     Float64
-12  mach     Float64</code></pre><pre><code class="language-julia">proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc);</code></pre><pre><code class="language-none"> [Mera]: 2020-02-08T20:59:42.246
+12  mach     Float64</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-08T20:59:42.246
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -371,9 +371,9 @@ Selected var(s)=(:mach, :sd)
 
 
 
- 100%|███████████████████████████████████████████████████| Time: 0:00:07</code></pre><pre><code class="language-julia">using PyPlot
+ 100%|███████████████████████████████████████████████████| Time: 0:00:07</code></pre><pre><code class="language-julia hljs">using PyPlot
 imshow( ( permutedims(proj_z.maps[:mach]) ), origin=&quot;lower&quot;, extent=proj_z.cextent)
-colorbar();</code></pre><p><img src="../05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_60_0.png" alt="png"/></p><p>Remove the column :mach from the table:</p><pre><code class="language-julia">gas.data = select(gas.data, Not(:mach)) # select all columns, not :mach</code></pre><pre><code class="language-none">Table with 849332 rows, 11 columns:
+colorbar();</code></pre><p><img src="../05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_60_0.png" alt="png"/></p><p>Remove the column :mach from the table:</p><pre><code class="language-julia hljs">gas.data = select(gas.data, Not(:mach)) # select all columns, not :mach</code></pre><pre><code class="nohighlight hljs">Table with 849332 rows, 11 columns:
 Columns:
  #     colname    type 
 ────────────────────
@@ -387,7 +387,7 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h2 id="Masking-1"><a class="docs-heading-anchor" href="#Masking-1">Masking</a><a class="docs-heading-anchor-permalink" href="#Masking-1" title="Permalink"></a></h2><p>Many functions in <strong>MERA</strong> provide the opportunity to use a mask on selected data without changing the content in the data table. Here we present several methods to prepare a mask and apply it to some functions. A created mask is an array of type: <code>MaskType</code>, which can be Array{Bool,1} or BitArray{1}. A masked cell/row corresponds to a <strong>false</strong>.</p><h4 id="Version-1:-External-Function-1"><a class="docs-heading-anchor" href="#Version-1:-External-Function-1">Version 1: External Function</a><a class="docs-heading-anchor-permalink" href="#Version-1:-External-Function-1" title="Permalink"></a></h4><p>Create an array which represents the cells with the selected condition by true. The function checks if the following requirement is true or false for each row/cell in the data table:</p><pre><code class="language-julia">function ftest(value)
+11  var7     Float64</code></pre><h2 id="Masking"><a class="docs-heading-anchor" href="#Masking">Masking</a><a id="Masking-1"></a><a class="docs-heading-anchor-permalink" href="#Masking" title="Permalink"></a></h2><p>Many functions in <strong>MERA</strong> provide the opportunity to use a mask on selected data without changing the content in the data table. Here we present several methods to prepare a mask and apply it to some functions. A created mask is an array of type: <code>MaskType</code>, which can be Array{Bool,1} or BitArray{1}. A masked cell/row corresponds to a <strong>false</strong>.</p><h4 id="Version-1:-External-Function"><a class="docs-heading-anchor" href="#Version-1:-External-Function">Version 1: External Function</a><a id="Version-1:-External-Function-1"></a><a class="docs-heading-anchor-permalink" href="#Version-1:-External-Function" title="Permalink"></a></h4><p>Create an array which represents the cells with the selected condition by true. The function checks if the following requirement is true or false for each row/cell in the data table:</p><pre><code class="language-julia hljs">function ftest(value)
     density = (4. / gas.scale.Msol_pc3)
     if value &lt; density
         return true
@@ -399,83 +399,83 @@ end
 mask_v1 = map(row-&gt;ftest(row.rho), gas.data);
 
 println( length(mask_v1) )
-println( typeof(mask_v1) )</code></pre><pre><code class="language-none">849332
-Array{Bool,1}</code></pre><h4 id="Version-2:-Short-Syntax-1"><a class="docs-heading-anchor" href="#Version-2:-Short-Syntax-1">Version 2: Short Syntax</a><a class="docs-heading-anchor-permalink" href="#Version-2:-Short-Syntax-1" title="Permalink"></a></h4><h5 id="Example-1-1"><a class="docs-heading-anchor" href="#Example-1-1">Example 1</a><a class="docs-heading-anchor-permalink" href="#Example-1-1" title="Permalink"></a></h5><pre><code class="language-julia">mask_v2 = map(row-&gt;row.rho &lt; 4. / gas.scale.Msol_pc3, gas.data);
+println( typeof(mask_v1) )</code></pre><pre><code class="nohighlight hljs">849332
+Array{Bool,1}</code></pre><h4 id="Version-2:-Short-Syntax"><a class="docs-heading-anchor" href="#Version-2:-Short-Syntax">Version 2: Short Syntax</a><a id="Version-2:-Short-Syntax-1"></a><a class="docs-heading-anchor-permalink" href="#Version-2:-Short-Syntax" title="Permalink"></a></h4><h5 id="Example-1"><a class="docs-heading-anchor" href="#Example-1">Example 1</a><a id="Example-1-1"></a><a class="docs-heading-anchor-permalink" href="#Example-1" title="Permalink"></a></h5><pre><code class="language-julia hljs">mask_v2 = map(row-&gt;row.rho &lt; 4. / gas.scale.Msol_pc3, gas.data);
 
 println( length(mask_v2) )
-println( typeof(mask_v2) )</code></pre><pre><code class="language-none">849332
-Array{Bool,1}</code></pre><h5 id="Example-2-1"><a class="docs-heading-anchor" href="#Example-2-1">Example 2</a><a class="docs-heading-anchor-permalink" href="#Example-2-1" title="Permalink"></a></h5><pre><code class="language-julia">mask_v2b = getvar(gas, :rho, :Msol_pc3) .&gt; 1. ;
+println( typeof(mask_v2) )</code></pre><pre><code class="nohighlight hljs">849332
+Array{Bool,1}</code></pre><h5 id="Example-2"><a class="docs-heading-anchor" href="#Example-2">Example 2</a><a id="Example-2-1"></a><a class="docs-heading-anchor-permalink" href="#Example-2" title="Permalink"></a></h5><pre><code class="language-julia hljs">mask_v2b = getvar(gas, :rho, :Msol_pc3) .&gt; 1. ;
 
 println( length(mask_v2b) )
-println( typeof(mask_v2b) )</code></pre><pre><code class="language-none">849332
-BitArray{1}</code></pre><h4 id="Version-3:-Longer-Syntax-1"><a class="docs-heading-anchor" href="#Version-3:-Longer-Syntax-1">Version 3: Longer Syntax</a><a class="docs-heading-anchor-permalink" href="#Version-3:-Longer-Syntax-1" title="Permalink"></a></h4><pre><code class="language-julia">rho_array = select(gas.data, :rho);
+println( typeof(mask_v2b) )</code></pre><pre><code class="nohighlight hljs">849332
+BitArray{1}</code></pre><h4 id="Version-3:-Longer-Syntax"><a class="docs-heading-anchor" href="#Version-3:-Longer-Syntax">Version 3: Longer Syntax</a><a id="Version-3:-Longer-Syntax-1"></a><a class="docs-heading-anchor-permalink" href="#Version-3:-Longer-Syntax" title="Permalink"></a></h4><pre><code class="language-julia hljs">rho_array = select(gas.data, :rho);
 mask_v3 = rho_array .&lt; 1. / gas.scale.Msol_pc3;
 
 println( length(mask_v3) )
-println( typeof(mask_v3) )</code></pre><pre><code class="language-none">849332
-BitArray{1}</code></pre><h3 id="Some-Functions-With-Masking-Functionality-1"><a class="docs-heading-anchor" href="#Some-Functions-With-Masking-Functionality-1">Some Functions With Masking Functionality</a><a class="docs-heading-anchor-permalink" href="#Some-Functions-With-Masking-Functionality-1" title="Permalink"></a></h3><p>The masked rows are not considered in the calculations (mask-element = false ).</p><h3 id="Examples-1"><a class="docs-heading-anchor" href="#Examples-1">Examples</a><a class="docs-heading-anchor-permalink" href="#Examples-1" title="Permalink"></a></h3><h3 id="Total-Mass-1"><a class="docs-heading-anchor" href="#Total-Mass-1">Total Mass</a><a class="docs-heading-anchor-permalink" href="#Total-Mass-1" title="Permalink"></a></h3><pre><code class="language-julia">mask = map(row-&gt;row.rho &lt; 1. / gas.scale.Msol_pc3, gas.data);
+println( typeof(mask_v3) )</code></pre><pre><code class="nohighlight hljs">849332
+BitArray{1}</code></pre><h3 id="Some-Functions-With-Masking-Functionality"><a class="docs-heading-anchor" href="#Some-Functions-With-Masking-Functionality">Some Functions With Masking Functionality</a><a id="Some-Functions-With-Masking-Functionality-1"></a><a class="docs-heading-anchor-permalink" href="#Some-Functions-With-Masking-Functionality" title="Permalink"></a></h3><p>The masked rows are not considered in the calculations (mask-element = false ).</p><h3 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h3><h3 id="Total-Mass"><a class="docs-heading-anchor" href="#Total-Mass">Total Mass</a><a id="Total-Mass-1"></a><a class="docs-heading-anchor-permalink" href="#Total-Mass" title="Permalink"></a></h3><pre><code class="language-julia hljs">mask = map(row-&gt;row.rho &lt; 1. / gas.scale.Msol_pc3, gas.data);
 mtot_masked = msum(gas, :Msol, mask=mask)
 mtot        = msum(gas, :Msol)
 println()
 println( &quot;Gas Mtot masked: &quot;, mtot_masked  , &quot; Msol&quot; )
 println( &quot;Gas Mtot:        &quot;, mtot         , &quot; Msol&quot; )
-println()</code></pre><pre><code class="language-none">Gas Mtot masked: 1.336918953133308e10 Msol
-Gas Mtot:        3.0968754148332745e10 Msol</code></pre><pre><code class="language-julia">mask = map(row-&gt;row.birth &lt; 100. / particles.scale.Myr, particles.data);
+println()</code></pre><pre><code class="nohighlight hljs">Gas Mtot masked: 1.336918953133308e10 Msol
+Gas Mtot:        3.0968754148332745e10 Msol</code></pre><pre><code class="language-julia hljs">mask = map(row-&gt;row.birth &lt; 100. / particles.scale.Myr, particles.data);
 mtot_masked = msum(particles, :Msol, mask=mask)
 mtot        = msum(particles, :Msol)
 println()
 println( &quot;Particles Mtot masked: &quot;, mtot_masked , &quot; Msol&quot; )
 println( &quot;Particles Mtot:        &quot;, mtot        , &quot; Msol&quot; )
-println()</code></pre><pre><code class="language-none">Particles Mtot masked: 1.4537556611888414e7 Msol
-Particles Mtot:        5.804426008528437e9 Msol</code></pre><pre><code class="language-julia">mask = map(row-&gt;row.mass_cl &lt; 1e6 / clumps.scale.Msol, clumps.data);
+println()</code></pre><pre><code class="nohighlight hljs">Particles Mtot masked: 1.4537556611888414e7 Msol
+Particles Mtot:        5.804426008528437e9 Msol</code></pre><pre><code class="language-julia hljs">mask = map(row-&gt;row.mass_cl &lt; 1e6 / clumps.scale.Msol, clumps.data);
 mtot_masked = msum(clumps, :Msol, mask=mask)
 mtot        = msum(clumps, :Msol)
 println()
 println( &quot;Clumps Mtot masked:    &quot;, mtot_masked , &quot; Msol&quot; )
 println( &quot;Clumps Mtot:           &quot;, mtot        , &quot; Msol&quot; )
-println()</code></pre><pre><code class="language-none">Clumps Mtot masked:    2.926390055686605e7 Msol
-Clumps Mtot:           1.3743280681841677e10 Msol</code></pre><h3 id="Center-Of-Mass-1"><a class="docs-heading-anchor" href="#Center-Of-Mass-1">Center-Of-Mass</a><a class="docs-heading-anchor-permalink" href="#Center-Of-Mass-1" title="Permalink"></a></h3><pre><code class="language-julia">mask = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data);
+println()</code></pre><pre><code class="nohighlight hljs">Clumps Mtot masked:    2.926390055686605e7 Msol
+Clumps Mtot:           1.3743280681841677e10 Msol</code></pre><h3 id="Center-Of-Mass"><a class="docs-heading-anchor" href="#Center-Of-Mass">Center-Of-Mass</a><a id="Center-Of-Mass-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Of-Mass" title="Permalink"></a></h3><pre><code class="language-julia hljs">mask = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data);
 com_gas_masked = center_of_mass(gas, :kpc, mask=mask)
 com_gas        = center_of_mass(gas, :kpc)
 println()
 println( &quot;Gas COM masked: &quot;, com_gas_masked , &quot; kpc&quot; )
 println( &quot;Gas COM:        &quot;, com_gas        , &quot; kpc&quot; )
-println()</code></pre><pre><code class="language-none">Gas COM masked: (23.632781376611646, 24.017935187730938, 24.078280687627124) kpc
-Gas COM:        (23.47221401632259, 23.93931869865653, 24.08483637116779) kpc</code></pre><pre><code class="language-julia">mask = map(row-&gt;row.birth &lt; 100. / particles.scale.Myr, particles.data);
+println()</code></pre><pre><code class="nohighlight hljs">Gas COM masked: (23.632781376611646, 24.017935187730938, 24.078280687627124) kpc
+Gas COM:        (23.47221401632259, 23.93931869865653, 24.08483637116779) kpc</code></pre><pre><code class="language-julia hljs">mask = map(row-&gt;row.birth &lt; 100. / particles.scale.Myr, particles.data);
 com_particles_masked = center_of_mass(particles, :kpc, mask=mask)
 com_particles        = center_of_mass(particles, :kpc)
 println()
 println( &quot;Particles COM masked: &quot;, com_particles_masked , &quot; kpc&quot; )
 println( &quot;Particles COM:        &quot;, com_particles        , &quot; kpc&quot; )
-println()</code></pre><pre><code class="language-none">Particles COM masked: (22.766374936557934, 24.817294529838456, 24.020065595650212) kpc
-Particles COM:        (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc</code></pre><pre><code class="language-julia"># calculate joint center-of-mass from gas and particles
+println()</code></pre><pre><code class="nohighlight hljs">Particles COM masked: (22.766374936557934, 24.817294529838456, 24.020065595650212) kpc
+Particles COM:        (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc</code></pre><pre><code class="language-julia hljs"># calculate joint center-of-mass from gas and particles
 mask1 = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data); # mask for the hydro data
 mask2 = map(row-&gt;row.birth &lt; 100.  / particles.scale.Myr, particles.data); # mask for the particle data
 
 println( &quot;Joint COM (Gas + Particles) masked: &quot;, center_of_mass([gas,particles], :kpc, mask=[mask1, mask2]) , &quot; kpc&quot; )
-println( &quot;Joint COM (Gas + Particles):        &quot;, center_of_mass([gas,particles], :kpc) , &quot; kpc&quot; )</code></pre><pre><code class="language-none">Joint COM (Gas + Particles) masked: (23.632014753139174, 24.01864248583754, 24.078229177095928) kpc
-Joint COM (Gas + Particles):        (23.380528865533876, 23.976384982693947, 24.07195135758772) kpc</code></pre><pre><code class="language-julia">mask = map(row-&gt;row.mass_cl &lt; 1e6 / clumps.scale.Msol, clumps.data);
+println( &quot;Joint COM (Gas + Particles):        &quot;, center_of_mass([gas,particles], :kpc) , &quot; kpc&quot; )</code></pre><pre><code class="nohighlight hljs">Joint COM (Gas + Particles) masked: (23.632014753139174, 24.01864248583754, 24.078229177095928) kpc
+Joint COM (Gas + Particles):        (23.380528865533876, 23.976384982693947, 24.07195135758772) kpc</code></pre><pre><code class="language-julia hljs">mask = map(row-&gt;row.mass_cl &lt; 1e6 / clumps.scale.Msol, clumps.data);
 com_clumps_masked = center_of_mass(clumps, mask=mask)
 com_clumps        = center_of_mass(clumps)
 println()
 println( &quot;Clumps COM masked:&quot;, com_clumps_masked .* clumps.scale.kpc, &quot; kpc&quot; )
 println( &quot;Clumps COM:       &quot;, com_clumps        .* clumps.scale.kpc, &quot; kpc&quot; )
-println()</code></pre><pre><code class="language-none">Clumps COM masked:(22.979676622296815, 23.22447986984898, 24.11056806473746) kpc
-Clumps COM:       (23.135765457064576, 23.741712325649264, 24.0050127185862) kpc</code></pre><h3 id="Bulk-Velocity-1"><a class="docs-heading-anchor" href="#Bulk-Velocity-1">Bulk-Velocity</a><a class="docs-heading-anchor-permalink" href="#Bulk-Velocity-1" title="Permalink"></a></h3><pre><code class="language-julia">mask = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data);
+println()</code></pre><pre><code class="nohighlight hljs">Clumps COM masked:(22.979676622296815, 23.22447986984898, 24.11056806473746) kpc
+Clumps COM:       (23.135765457064576, 23.741712325649264, 24.0050127185862) kpc</code></pre><h3 id="Bulk-Velocity"><a class="docs-heading-anchor" href="#Bulk-Velocity">Bulk-Velocity</a><a id="Bulk-Velocity-1"></a><a class="docs-heading-anchor-permalink" href="#Bulk-Velocity" title="Permalink"></a></h3><pre><code class="language-julia hljs">mask = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data);
 bv_gas_masked = bulk_velocity(gas, :km_s, mask=mask)
 bv_gas        = bulk_velocity(gas, :km_s)  
 println()
 println( &quot;Gas bulk velocity masked: &quot;, bv_gas_masked , &quot; km/s&quot; )
 println( &quot;Gas bulk velocity:        &quot;, bv_gas        , &quot; km/s&quot; )
-println()</code></pre><pre><code class="language-none">Gas bulk velocity masked: (-0.046336703401138456, -6.60993479840688, -1.000280146674773) km/s
-Gas bulk velocity:        (-1.1999253584798182, -10.678485153330122, -0.44038538452508785) km/s</code></pre><pre><code class="language-julia">mask = map(row-&gt;row.birth &lt; 100. / particles.scale.Myr, particles.data);
+println()</code></pre><pre><code class="nohighlight hljs">Gas bulk velocity masked: (-0.046336703401138456, -6.60993479840688, -1.000280146674773) km/s
+Gas bulk velocity:        (-1.1999253584798182, -10.678485153330122, -0.44038538452508785) km/s</code></pre><pre><code class="language-julia hljs">mask = map(row-&gt;row.birth &lt; 100. / particles.scale.Myr, particles.data);
 bv_particles_masked = bulk_velocity(particles, :km_s, mask=mask)
 bv_particles        = bulk_velocity(particles, :km_s)
 println()
 println( &quot;Particles bulk velocity masked: &quot;, bv_particles_masked , &quot; km/s&quot; )
 println( &quot;Particles bulk velocity:        &quot;, bv_particles        , &quot; km/s&quot; )
-println()</code></pre><pre><code class="language-none">Particles bulk velocity masked: (-27.702254113836513, -7.532075727552787, -1.3273993940211153) km/s
-Particles bulk velocity:        (-11.623422700314535, -18.440572802490234, -0.3291927731417528) km/s</code></pre><h3 id="Weighted-Statistics-1"><a class="docs-heading-anchor" href="#Weighted-Statistics-1">Weighted Statistics</a><a class="docs-heading-anchor-permalink" href="#Weighted-Statistics-1" title="Permalink"></a></h3><p>(It is also possible to use the mask within the <code>getvar</code> function)</p><pre><code class="language-julia">maskgas   = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data);
+println()</code></pre><pre><code class="nohighlight hljs">Particles bulk velocity masked: (-27.702254113836513, -7.532075727552787, -1.3273993940211153) km/s
+Particles bulk velocity:        (-11.623422700314535, -18.440572802490234, -0.3291927731417528) km/s</code></pre><h3 id="Weighted-Statistics"><a class="docs-heading-anchor" href="#Weighted-Statistics">Weighted Statistics</a><a id="Weighted-Statistics-1"></a><a class="docs-heading-anchor-permalink" href="#Weighted-Statistics" title="Permalink"></a></h3><p>(It is also possible to use the mask within the <code>getvar</code> function)</p><pre><code class="language-julia hljs">maskgas   = map(row-&gt;row.rho &lt; 100. / gas.scale.nH, gas.data);
 maskpart  = map(row-&gt;row.birth &lt; 100.  / particles.scale.Myr, particles.data);
 maskclump = map(row-&gt;row.mass_cl &lt; 1e7 / clumps.scale.Msol, clumps.data);
 
@@ -486,15 +486,15 @@ stats_clumps_masked    = wstat( getvar(clumps,    :peak_x, :kpc ), weight=getvar
 println( &quot;Gas        &lt;vx&gt;_cells masked      : &quot;,  stats_gas_masked.mean,       &quot; km/s (mass weighted)&quot; )
 println( &quot;Particles  &lt;vx&gt;_particles masked  : &quot;,  stats_particles_masked.mean, &quot; km/s (mass weighted)&quot; )
 println( &quot;Clumps &lt;peak_x&gt;_clumps masked     : &quot;,  stats_clumps_masked.mean,    &quot; kpc  (mass weighted)&quot; )
-println()</code></pre><pre><code class="language-none">Gas        &lt;vx&gt;_cells masked      : -0.04633670340114798 km/s (mass weighted)
+println()</code></pre><pre><code class="nohighlight hljs">Gas        &lt;vx&gt;_cells masked      : -0.04633670340114798 km/s (mass weighted)
 Particles  &lt;vx&gt;_particles masked  : -27.702254113836517 km/s (mass weighted)
-Clumps &lt;peak_x&gt;_clumps masked     : 22.907689025275953 kpc  (mass weighted)</code></pre><pre><code class="language-julia">stats_gas       = wstat( getvar(gas,       :vx,     :km_s), weight=getvar(gas,       :mass  ));
+Clumps &lt;peak_x&gt;_clumps masked     : 22.907689025275953 kpc  (mass weighted)</code></pre><pre><code class="language-julia hljs">stats_gas       = wstat( getvar(gas,       :vx,     :km_s), weight=getvar(gas,       :mass  ));
 stats_particles = wstat( getvar(particles, :vx,     :km_s), weight=getvar(particles, :mass   ));
 stats_clumps    = wstat( getvar(clumps,    :peak_x, :kpc ), weight=getvar(clumps,    :mass_cl))  ;
 
 println( &quot;Gas        &lt;vx&gt;_allcells     : &quot;,  stats_gas.mean,       &quot; km/s (mass weighted)&quot; )
 println( &quot;Particles  &lt;vx&gt;_allparticles : &quot;,  stats_particles.mean, &quot; km/s (mass weighted)&quot; )
 println( &quot;Clumps &lt;peak_x&gt;_allclumps    : &quot;,  stats_clumps.mean,    &quot; kpc  (mass weighted)&quot; )
-println()</code></pre><pre><code class="language-none">Gas        &lt;vx&gt;_allcells     : -1.199925358479736 km/s (mass weighted)
+println()</code></pre><pre><code class="nohighlight hljs">Gas        &lt;vx&gt;_allcells     : -1.199925358479736 km/s (mass weighted)
 Particles  &lt;vx&gt;_allparticles : -11.623422700314544 km/s (mass weighted)
-Clumps &lt;peak_x&gt;_allclumps    : 23.13576545706458 kpc  (mass weighted)</code></pre><pre><code class="language-julia"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../04_multi_Basic_Calculations/">« 4-Basic Calculations</a><a class="docs-footer-nextpage" href="../06_hydro_Projection/">Hydro »</a></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> on <span class="colophon-date" title="Tuesday 11 April 2023 09:58">Tuesday 11 April 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Clumps &lt;peak_x&gt;_allclumps    : 23.13576545706458 kpc  (mass weighted)</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Tuesday 11 April 2023 10:24">Tuesday 11 April 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
