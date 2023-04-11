@@ -546,10 +546,8 @@ uuid = "f9f48841-c794-520a-933b-121f7ba6ed94"
 version = "0.2.0"
 
 [[Mera]]
-deps = ["CodecBzip2", "CodecLz4", "CodecZlib", "DataStructures", "Dates", "ElasticArrays", "FortranFiles", "HDF5", "ImageTransformations", "IndexedTables", "JLD", "JLD2", "JuliaDB", "LoopVectorization", "OnlineStats", "Pkg", "Printf", "ProgressMeter", "Statistics", "StatsBase", "StructArrays", "TimerOutputs"]
-git-tree-sha1 = "9318dc6e9beab0a7098e4db3d4dd5299700543dd"
-repo-rev = "master"
-repo-url = "https://github.com/ManuelBehrendt/Mera.jl"
+deps = ["CodecBzip2", "CodecLz4", "CodecZlib", "DataStructures", "Dates", "ElasticArrays", "FortranFiles", "ImageTransformations", "IndexedTables", "JLD2", "JuliaDB", "LoopVectorization", "OnlineStats", "Pkg", "Printf", "ProgressMeter", "Statistics", "StatsBase", "StructArrays", "TimerOutputs"]
+git-tree-sha1 = "9ecba58687ac77a55ce459d2d3378aa591c03e49"
 uuid = "02f895e8-fdb1-4346-8fe6-c721699f5126"
 version = "1.2.0"
 
