@@ -45,7 +45,6 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - ...
 
 
-
 ## Package Installation
 The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
