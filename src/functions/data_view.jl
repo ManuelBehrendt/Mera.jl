@@ -154,7 +154,6 @@ function viewdata(output::Int;
         println("-----------------------------------")
         if convertstat != false
             println("convert stat: true")
-            viewoutput["convertstat"] = convertstat
         else
             println("convert stat: false")
         end
@@ -164,6 +163,9 @@ function viewdata(output::Int;
         println()
     end
 
+    if convertstat != false
+        viewoutput["convertstat"] = convertstat
+    end
     #close(file)
     return viewoutput
 end
