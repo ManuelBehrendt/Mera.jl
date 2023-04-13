@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Particles · Mera.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li class="is-active"><a class="tocitem" href>Particles</a><ul class="internal"><li><a class="tocitem" href="#Load-The-Data"><span>Load The Data</span></a></li><li><a class="tocitem" href="#Projection-of-Predefined-Quantities"><span>Projection of Predefined Quantities</span></a></li><li><a class="tocitem" href="#Projection-of-a-Single-Quantity-in-Different-Directions-(z,y,x)"><span>Projection of a Single Quantity in Different Directions (z,y,x)</span></a></li><li><a class="tocitem" href="#Function-Output"><span>Function Output</span></a></li><li><a class="tocitem" href="#Plot-Maps-with-Python"><span>Plot Maps with Python</span></a></li><li><a class="tocitem" href="#Projections-of-Derived-Kinematic-Data"><span>Projections of Derived Kinematic Data</span></a></li><li><a class="tocitem" href="#Project-on-a-Coarser-Grid"><span>Project on a Coarser Grid</span></a></li><li><a class="tocitem" href="#Projection-of-the-Birth/Age-Time"><span>Projection of the Birth/Age-Time</span></a></li><li><a class="tocitem" href="#Projection-of-Masked-Data"><span>Projection of Masked Data</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../../examples/">Examples</a></li><li><a class="tocitem" href="../../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">6-Projection</a></li><li class="is-active"><a href>Particles</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Particles</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/06_particles_Projection/06_particles_Projection.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Particles:-Projections"><a class="docs-heading-anchor" href="#.-Particles:-Projections">6. Particles: Projections</a><a id=".-Particles:-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#.-Particles:-Projections" title="Permalink"></a></h1><h2 id="Load-The-Data"><a class="docs-heading-anchor" href="#Load-The-Data">Load The Data</a><a id="Load-The-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Load-The-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
+info = getinfo(300, &quot;../../testing/simulations/mw_L10&quot;);
+particles  = getparticles(info); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:15.828
+
+Code: RAMSES
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2023-04-10T08:08:14.488
+=======================================================
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05 
+particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+=======================================================
+
+[Mera]: Get particle data: 2023-04-10T13:44:20.554
+
+Key vars=(:level, :x, :y, :z, :id, :family, :tag)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+Found 5.445150e+05 particles
+Memory used for data table :38.42913246154785 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">particles.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 12 columns:
+Columns:
+#   colname  type
+────────────────────
+1   level    Int32
+2   x        Float64
+3   y        Float64
+4   z        Float64
+5   id       Int32
+6   family   Int8
+7   tag      Int8
+8   vx       Float64
+9   vy       Float64
+10  vz       Float64
+11  mass     Float64
+12  birth    Float64</code></pre><h2 id="Projection-of-Predefined-Quantities"><a class="docs-heading-anchor" href="#Projection-of-Predefined-Quantities">Projection of Predefined Quantities</a><a id="Projection-of-Predefined-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-of-Predefined-Quantities" title="Permalink"></a></h2><p>See the possible variables:</p><pre><code class="language-julia hljs">projection()</code></pre><pre><code class="nohighlight hljs">Predefined vars for projections:
+------------------------------------------------
+=====================[gas]:=====================
+       -all the non derived hydro vars-
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
+further possibilities: :rho, :density, :ρ
+              -derived hydro vars-
+:x, :y, :z
+:sd or :Σ or :surfacedensity
+:mass, :cellsize, :freefall_time
+:cs, :mach, :jeanslength, :jeansnumber
+:t, :Temp, :Temperature with p/rho
+
+==================[particles]:==================
+        all the non derived  vars:
+:cpu, :level, :id, :family, :tag 
+:x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
+
+              -derived particle vars-
+:age
+
+==============[gas or particles]:===============
+:v, :ekin
+squared =&gt; :vx2, :vy2, :vz2
+velocity dispersion =&gt; σx, σy, σz, σ
+
+related to a given center:
+---------------------------
+:vr_cylinder, vr_sphere (radial components)
+:vϕ_cylinder, :vθ
+squared =&gt; :vr_cylinder2, :vϕ_cylinder2
+velocity dispersion =&gt; σr_cylinder, σϕ_cylinder 
+
+2d maps (not projected) =&gt; :r_cylinder, :ϕ
+
+------------------------------------------------</code></pre><h2 id="Projection-of-a-Single-Quantity-in-Different-Directions-(z,y,x)"><a class="docs-heading-anchor" href="#Projection-of-a-Single-Quantity-in-Different-Directions-(z,y,x)">Projection of a Single Quantity in Different Directions (z,y,x)</a><a id="Projection-of-a-Single-Quantity-in-Different-Directions-(z,y,x)-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-of-a-Single-Quantity-in-Different-Directions-(z,y,x)" title="Permalink"></a></h2><p>Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]) on a grid corresponding to level=9.  Pass any object of <em>PartDataType</em> (here: &quot;particles&quot;) to the <em>projection</em>-function and select a variable by a Symbol (here: :sd = :surfacedensity = :Σ in Msol/pc^3)</p><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, lmax=9, zrange=[0.45,0.55])
+proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, zrange=[0.45,0.55], verbose=false) # The keyword &quot;unit&quot; (singular) can be omit if the following order is preserved: data-object, quantity, unit.
+proj_x = projection(particles, :sd, :Msol_pc2, lmax=9, direction = :x, zrange=[0.45,0.55], verbose=false); # Project the surface density in x-direction</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:30.854
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><h3 id="Select-a-Range-Related-to-a-Center"><a class="docs-heading-anchor" href="#Select-a-Range-Related-to-a-Center">Select a Range Related to a Center</a><a id="Select-a-Range-Related-to-a-Center-1"></a><a class="docs-heading-anchor-permalink" href="#Select-a-Range-Related-to-a-Center" title="Permalink"></a></h3><p>See also in the documentation for: load data by selection</p><pre><code class="language-julia hljs">cv = (particles.boxlen / 2.) * particles.scale.kpc # provide the box-center in kpc
+proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                    center=[cv,cv,cv], range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:38.556
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):</p><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                        center=[:boxcenter], range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:42.484
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                        center=[:bc], range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:43.180
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>Use the box center notation for individual dimensions, here x,z:</p><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
+                        xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                        center=[:bc, 24., :bc], range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:46.717
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><h3 id="Get-Multiple-Quantities"><a class="docs-heading-anchor" href="#Get-Multiple-Quantities">Get Multiple Quantities</a><a id="Get-Multiple-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Get-Multiple-Quantities" title="Permalink"></a></h3><p>Get several quantities with one function call by passing an array containing the selected variables (at least one entry). The keyword name for the units is now in plural.</p><pre><code class="language-julia hljs">proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
+                        direction = :x, 
+                        xrange=[-10.,10.], 
+                        yrange=[-10.,10.], 
+                        zrange=[-2.,2.], 
+                        center=[24.,24.,24.], 
+                        range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:54.060
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>Pass an array containing several quantities to process and their corresponding units:</p><pre><code class="language-julia hljs">proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
+                        direction = :x,
+                        xrange=[-10.,10.], 
+                        yrange=[-10.,10.], 
+                        zrange=[-2.,2.], 
+                        center=[24.,24.,24.], 
+                        range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:44:56.764
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>The function can be called without any keywords by preserving the following order: dataobject, variables, units</p><pre><code class="language-julia hljs">proj1_z = projection(particles, [:sd , :vx], [:Msol_pc2, :km_s], lmax=9,
+                        direction = :x,
+                        xrange=[-10.,10.], 
+                        yrange=[-10.,10.], 
+                        zrange=[-2.,2.], 
+                        center=[24.,24.,24.], 
+                        range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:45:02.692
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>If all selected variables should be of the same unit use the following arguments: dataobject, array of quantities, unit (no array needed)</p><pre><code class="language-julia hljs">projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
+                        xrange=[-10.,10.], 
+                        yrange=[-10.,10.], 
+                        zrange=[-2.,2.], 
+                        center=[24.,24.,24.], 
+                        range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:45:05.474
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><h2 id="Function-Output"><a class="docs-heading-anchor" href="#Function-Output">Function Output</a><a id="Function-Output-1"></a><a class="docs-heading-anchor-permalink" href="#Function-Output" title="Permalink"></a></h2><p>List the fields of the assigned object:</p><pre><code class="language-julia hljs">propertynames(projvel_z)</code></pre><pre><code class="nohighlight hljs">(:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :scale, :info)</code></pre><p>The projected 2D maps are stored in a dictionary:</p><pre><code class="language-julia hljs">projvel_z.maps # NaN for empty regions</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 4 entries:
+  :sd =&gt; [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.0 …
+  :vx =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN NaN …
+  :vy =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN NaN …
+  :vz =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN NaN …</code></pre><p>The maps can be accessed by giving the name of the dictionary:</p><pre><code class="language-julia hljs">proj1_z.maps[:sd]</code></pre><pre><code class="nohighlight hljs">214×44 Matrix{Float64}:
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ ⋮                        ⋮              ⋱                 ⋮              
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
+ 0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0</code></pre><p>The units of the maps are stored in:</p><pre><code class="language-julia hljs">projvel_z.maps_unit</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 4 entries:
+  :sd =&gt; :standard
+  :vx =&gt; :km_s
+  :vy =&gt; :km_s
+  :vz =&gt; :km_s</code></pre><p>The following fields are helpful for further calculations or plots.</p><pre><code class="language-julia hljs">projvel_z.ranges # normalized to the domain=[0:1]</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
+ 0.29166666666647767
+ 0.7083333333328743
+ 0.29166666666647767
+ 0.7083333333328743
+ 0.4583333333330363
+ 0.5416666666663156</code></pre><pre><code class="language-julia hljs">projvel_z.extent # ranges in code units</code></pre><pre><code class="nohighlight hljs">4-element Vector{Float64}:
+ 13.96875
+ 34.03125
+ 13.96875
+ 34.03125</code></pre><pre><code class="language-julia hljs">projvel_z.cextent # ranges in code units relative to a given center (by default: box center)</code></pre><pre><code class="nohighlight hljs">4-element Vector{Float64}:
+ -10.031250000015554
+  10.031249999984446
+ -10.031250000015554
+  10.031249999984446</code></pre><pre><code class="language-julia hljs">proj1_z.ratio # the ratio between the two ranges</code></pre><pre><code class="nohighlight hljs">4.863636363636363</code></pre><h2 id="Plot-Maps-with-Python"><a class="docs-heading-anchor" href="#Plot-Maps-with-Python">Plot Maps with Python</a><a id="Plot-Maps-with-Python-1"></a><a class="docs-heading-anchor-permalink" href="#Plot-Maps-with-Python" title="Permalink"></a></h2><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+                    zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
+                    verbose=false) 
+proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
+                    zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
+                    verbose=false, 
+                    direction = :x);</code></pre><p>Python functions can be directly called in Julia, which gives the opportunity, e.g. to use the Matplotlib library.</p><pre><code class="language-julia hljs">using PyPlot
+using ColorSchemes
+cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
+cmap2 = ColorMap(reverse(ColorSchemes.roma.colors))</code></pre><p><img src="../output_43_0.svg" alt="svg"/></p><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=-0.5, vmax=1.5)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;)
+
+subplot(1,2,2)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=-0.5, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);
+tight_layout()</code></pre><p><img src="../output_44_0.png" alt="png"/></p><p>Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):</p><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
+                    verbose=false, 
+                    data_center=[24.,24.,24.], data_center_unit=:kpc) 
+proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
+                    verbose=false, 
+                    data_center=[24.,24.,24.], data_center_unit=:kpc, 
+                    direction = :x);</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=-0.5, vmax=2.)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;)
+
+subplot(1,2,2)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=-0.5, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);</code></pre><p><img src="../output_47_0.png" alt="png"/></p><p>Plot the axes of the map relative to the map-center (given by keyword: data_center):</p><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
+                    verbose=false, 
+                    data_center=[19.,19.,24.], data_center_unit=:kpc) 
+proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
+                    xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
+                    verbose=false, 
+                    data_center=[19.,19.,24.], data_center_unit=:kpc, 
+                    direction = :x);</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=-0.5, vmax=2.)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;)
+
+subplot(1,2,2)
+im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=-0.5, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);</code></pre><p><img src="../output_50_0.png" alt="png"/></p><h2 id="Projections-of-Derived-Kinematic-Data"><a class="docs-heading-anchor" href="#Projections-of-Derived-Kinematic-Data">Projections of Derived Kinematic Data</a><a id="Projections-of-Derived-Kinematic-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Projections-of-Derived-Kinematic-Data" title="Permalink"></a></h2><h4 id="Use-quantities-in-cartesian-coordinates:"><a class="docs-heading-anchor" href="#Use-quantities-in-cartesian-coordinates:">Use quantities in cartesian coordinates:</a><a id="Use-quantities-in-cartesian-coordinates:-1"></a><a class="docs-heading-anchor-permalink" href="#Use-quantities-in-cartesian-coordinates:" title="Permalink"></a></h4><p>Project the following derived data (mass weighted by default): The absolute value of the velocity :v, the velocity dispersion :σ in different directions and the kinetic energy :ekin. The Julia language supports Unicode characters and can be inserted by e.g. &quot;\sigma + tab-key&quot; leading to: <strong>σ</strong>.</p><pre><code class="language-julia hljs">proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin], 
+                    units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg], 
+                    lmax=9,
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                    center=[24.,24.,24.], range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:49:11.587
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 512^2
+Pixel size: 93.75 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>For the velocity dispersion additional maps are created to created the mass-weighted quantity: E. g.: σx = sqrt( &lt;vx^2&gt; - &lt; vx &gt;^2 )</p><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 14 entries:
+  :ekin =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :sd   =&gt; [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0; 0.0 0.…
+  :v    =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :v2   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :vx   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :vx2  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :vy   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :vy2  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :vz   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :vz2  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :σ    =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :σx   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :σy   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
+  :σz   =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…</code></pre><pre><code class="language-julia hljs">proj_z.maps_unit</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 14 entries:
+  :ekin =&gt; :erg
+  :sd   =&gt; :standard
+  :v    =&gt; :km_s
+  :v2   =&gt; :standard
+  :vx   =&gt; :standard
+  :vx2  =&gt; :standard
+  :vy   =&gt; :standard
+  :vy2  =&gt; :standard
+  :vz   =&gt; :standard
+  :vz2  =&gt; :standard
+  :σ    =&gt; :km_s
+  :σx   =&gt; :km_s
+  :σy   =&gt; :km_s
+  :σz   =&gt; :km_s</code></pre><pre><code class="language-julia hljs">usedmemory(proj_z);</code></pre><pre><code class="nohighlight hljs">Memory used: 4.919 MB</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 5.5))
+
+subplot(2, 3, 1)
+title(&quot;v [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:v])  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent, vmax=300.)
+colorbar()
+
+
+subplot(2, 3, 2)
+title(&quot;σ [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σ])  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(2, 3, 3)
+title(&quot;Ekin [erg]&quot;)
+imshow( log10.(permutedims(proj_z.maps[:ekin]) ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(2, 3, 4)
+title(&quot;σx [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σx])   ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(2, 3, 5)
+title(&quot;σy [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σy])  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(2, 3, 6)
+title(&quot;σz [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σz])  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar();
+</code></pre><p><img src="../output_59_0.png" alt="png"/></p><h4 id="Use-quantities-in-cylindrical-coordinates:"><a class="docs-heading-anchor" href="#Use-quantities-in-cylindrical-coordinates:">Use quantities in cylindrical coordinates:</a><a id="Use-quantities-in-cylindrical-coordinates:-1"></a><a class="docs-heading-anchor-permalink" href="#Use-quantities-in-cylindrical-coordinates:" title="Permalink"></a></h4><h4 id="Face-on-disc-(z-direction)"><a class="docs-heading-anchor" href="#Face-on-disc-(z-direction)">Face-on disc (z-direction)</a><a id="Face-on-disc-(z-direction)-1"></a><a class="docs-heading-anchor-permalink" href="#Face-on-disc-(z-direction)" title="Permalink"></a></h4><p>For the cylindrical or spherical components of a quantity, the center of the coordinate system is used (keywords: data<em>center = center default) and can be given with the keyword &quot;data</em>center&quot; and its units with &quot;data<em>center</em>unit&quot;. Additionally, the quantities that are based on cartesian coordinates can be given.</p><pre><code class="language-julia hljs">proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],                    
+                    units=[:km_s,:km_s,:km_s, :km_s, :standard, :kpc, :km_s, :km_s, :km_s, :km_s], 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
+                    center=[:boxcenter], range_unit=:kpc,
+                    data_center=[24.,24.,24.], data_center_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T13:50:46.517
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 1024^2
+Pixel size: 46.875 [pc]
+Simulation min.: 46.875 [pc]
+
+
+
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:01</code></pre><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
+  :r_cylinder   =&gt; [14.0758 14.0427 … 14.1201 14.1534; 14.0427 14.0096 … 14.087…
+  :sd           =&gt; [0.0 0.0 … 0.0 0.0; 0.0 0.0 … 0.0 0.0; … ; 0.0 0.0 … 0.0 0.0…
+  :v            =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :v2           =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vr_cylinder  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vr_cylinder2 =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vx           =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vx2          =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vy           =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vy2          =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vϕ_cylinder  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :vϕ_cylinder2 =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :σ            =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :σr_cylinder  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :σx           =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :σy           =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :σϕ_cylinder  =&gt; [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN…
+  :ϕ            =&gt; [3.92699 3.92463 … 2.35306 2.35073; 3.92935 3.92699 … 2.3507…</code></pre><pre><code class="language-julia hljs">proj_z.maps_unit</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
+  :r_cylinder   =&gt; :kpc
+  :sd           =&gt; :standard
+  :v            =&gt; :km_s
+  :v2           =&gt; :standard
+  :vr_cylinder  =&gt; :km_s
+  :vr_cylinder2 =&gt; :standard
+  :vx           =&gt; :standard
+  :vx2          =&gt; :standard
+  :vy           =&gt; :standard
+  :vy2          =&gt; :standard
+  :vϕ_cylinder  =&gt; :km_s
+  :vϕ_cylinder2 =&gt; :standard
+  :σ            =&gt; :km_s
+  :σr_cylinder  =&gt; :km_s
+  :σx           =&gt; :km_s
+  :σy           =&gt; :km_s
+  :σϕ_cylinder  =&gt; :km_s
+  :ϕ            =&gt; :radian</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
+
+subplot(3, 3, 1)
+title(&quot;Radius [kpc]&quot;)
+imshow( permutedims(proj_z.maps[:r_cylinder]  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(3, 3, 2)
+title(&quot;vr [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:vr_cylinder] ), cmap=&quot;seismic&quot;, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=-50.,vmax=50.)
+colorbar()
+
+
+subplot(3, 3, 3)
+title(&quot;vϕ [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:vϕ_cylinder]  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 4)
+title(&quot;ϕ-angle&quot;)
+imshow( (permutedims(proj_z.maps[:ϕ]) ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 5)
+title(&quot;σr [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:σr_cylinder]  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(3, 3, 6)
+title(&quot;σϕ [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:σϕ_cylinder] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 7)
+title(&quot;σ [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σ]) ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 8)
+title(&quot;σx [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:σx]  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(3, 3, 9)
+title(&quot;σy [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar();</code></pre><p><img src="../output_64_0.png" alt="png"/></p><h2 id="Project-on-a-Coarser-Grid"><a class="docs-heading-anchor" href="#Project-on-a-Coarser-Grid">Project on a Coarser Grid</a><a id="Project-on-a-Coarser-Grid-1"></a><a class="docs-heading-anchor-permalink" href="#Project-on-a-Coarser-Grid" title="Permalink"></a></h2><h3 id="lmax"><a class="docs-heading-anchor" href="#lmax">lmax</a><a id="lmax-1"></a><a class="docs-heading-anchor-permalink" href="#lmax" title="Permalink"></a></h3><p>The default is the projection on the maximum loaded grid level (always provided in the output). Choose a smaller/larger level with the keyword <code>lmax</code> (independend on the maximum level of the simulation) to project on a coarser/finer grid. By default, the data is assumed to be in the center of the simulation box.</p><pre><code class="language-julia hljs">proj_z = projection(particles, 
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
+                    :km_s, 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    center=[:boxcenter], range_unit=:kpc,
+                    lmax=6); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T14:35:46.954
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 64^2
+Pixel size: 750.0 [pc]
+Simulation min.: 46.875 [pc]</code></pre><p>The projection onto the maximum loaded grid is always provided:</p><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 19 entries:
+  :sd           =&gt; [3.6988e-5 6.11725e-5 … 2.84523e-5 4.26785e-6; 0.000146885 8…
+  :v            =&gt; [215.727 217.893 … 213.689 211.398; 211.909 214.371 … 215.29…
+  :v2           =&gt; [10.8327 11.0472 … 10.6218 10.3945; 10.4511 10.6909 … 10.782…
+  :vr_cylinder  =&gt; [-4.97035 9.83744 … 0.326624 -5.23378; -8.36334 3.71396 … 7.…
+  :vr_cylinder2 =&gt; [0.0231364 0.0346302 … 0.0196151 0.0344127; 0.0339309 0.0312…
+  :vx           =&gt; [2.38824 2.13472 … -2.30736 -2.28246; 2.4166 2.28742 … -2.49…
+  :vx2          =&gt; [5.71099 4.56492 … 5.33794 5.23511; 5.844 5.24859 … 6.2532 6…
+  :vy           =&gt; [-2.25778 -2.54366 … -2.29652 -2.26901; -2.14059 -2.32778 … …
+  :vy2          =&gt; [5.12035 6.48209 … 5.28291 5.15929; 4.60593 5.44099 … 4.5285…
+  :vz           =&gt; [-0.032174 0.00624848 … -0.0229633 0.00636579; -0.0269481 -0…
+  :vz2          =&gt; [0.00140393 0.000219812 … 0.000962049 0.000127987; 0.0011519…
+  :vϕ_cylinder  =&gt; [215.479 217.553 … 213.481 211.046; 211.546 214.042 … 214.91…
+  :vϕ_cylinder2 =&gt; [10.8082 11.0124 … 10.6012 10.36; 10.416 10.6583 … 10.7443 1…
+  :σ            =&gt; [6.62266 5.19183 … 3.45808 2.9201; 5.96424 4.11213 … 3.61926…
+  :σr_cylinder  =&gt; [8.64782 7.22072 … 9.17826 10.9812; 8.71558 10.9816 … 10.005…
+  :σx           =&gt; [5.59831 5.83217 … 7.77318 10.4683; 4.16244 8.36784 … 6.5268…
+  :σy           =&gt; [9.89835 7.14297 … 6.19364 6.84324; 10.118 9.82426 … 9.42142…
+  :σz           =&gt; [1.25926 0.88166 … 1.36727 0.613275; 1.35303 2.02241 … 1.188…
+  :σϕ_cylinder  =&gt; [6.7421 5.02267 … 3.52611 2.97303; 6.19423 4.23835 … 3.69795…</code></pre><pre><code class="language-julia hljs">proj_z.maps_unit</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 19 entries:
+  :sd           =&gt; :standard
+  :v            =&gt; :km_s
+  :v2           =&gt; :standard
+  :vr_cylinder  =&gt; :km_s
+  :vr_cylinder2 =&gt; :standard
+  :vx           =&gt; :standard
+  :vx2          =&gt; :standard
+  :vy           =&gt; :standard
+  :vy2          =&gt; :standard
+  :vz           =&gt; :standard
+  :vz2          =&gt; :standard
+  :vϕ_cylinder  =&gt; :km_s
+  :vϕ_cylinder2 =&gt; :standard
+  :σ            =&gt; :km_s
+  :σr_cylinder  =&gt; :km_s
+  :σx           =&gt; :km_s
+  :σy           =&gt; :km_s
+  :σz           =&gt; :km_s
+  :σϕ_cylinder  =&gt; :km_s</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
+
+subplot(3, 3, 1)
+title(&quot;|v| [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:v]  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent, vmax=300.)
+colorbar()
+
+
+subplot(3, 3, 2)
+title(&quot;vr [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:vr_cylinder] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=-200.,vmax=200.)
+colorbar()
+
+
+subplot(3, 3, 3)
+title(&quot;vϕ [km/s]&quot;)
+imshow( permutedims(proj_z.maps[:vϕ_cylinder]  ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 4)
+title(&quot;σz [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σz]) ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 5)
+title(&quot;σr [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σr_cylinder]  )), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(3, 3, 6)
+title(&quot;σϕ [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σϕ_cylinder] )), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 7)
+title(&quot;σ [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σ]) ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+
+subplot(3, 3, 8)
+title(&quot;σx [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σx]  )), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar()
+
+
+subplot(3, 3, 9)
+title(&quot;σy [km/s]&quot;)
+imshow( (permutedims(proj_z.maps[:σy] )), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
+colorbar();</code></pre><p><img src="../output_70_0.png" alt="png"/></p><h3 id="res"><a class="docs-heading-anchor" href="#res">res</a><a id="res-1"></a><a class="docs-heading-anchor-permalink" href="#res" title="Permalink"></a></h3><p>Choose the effective resolution (related to the full box) of the projected grid:</p><pre><code class="language-julia hljs">proj_z = projection(particles, 
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
+                    :km_s, 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    center=[:boxcenter], range_unit=:kpc,
+                    res=100); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T14:36:28.832
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 100^2
+Pixel size: 480.0 [pc]
+Simulation min.: 46.875 [pc]</code></pre><h3 id="pxsize"><a class="docs-heading-anchor" href="#pxsize">pxsize</a><a id="pxsize-1"></a><a class="docs-heading-anchor-permalink" href="#pxsize" title="Permalink"></a></h3><p>Choose the pixel size in a physical unit, e.g. pixel-size=100 pc. The data is projected to a grid with a pixel-size that is closest to the given number, but not larger:</p><pre><code class="language-julia hljs">proj_z = projection(particles, 
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
+                    :km_s, 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    center=[:boxcenter], range_unit=:kpc,
+                    pxsize=[100., :pc]); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T14:36:55.300
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Effective resolution: 481^2
+Pixel size: 99.792 [pc]
+Simulation min.: 46.875 [pc]</code></pre><h2 id="Projection-of-the-Birth/Age-Time"><a class="docs-heading-anchor" href="#Projection-of-the-Birth/Age-Time">Projection of the Birth/Age-Time</a><a id="Projection-of-the-Birth/Age-Time-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-of-the-Birth/Age-Time" title="Permalink"></a></h2><p>Project the average birth-time of the particles to the grid:</p><pre><code class="language-julia hljs">proj_z = projection(particles, :birth, :Myr,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
+proj_x = projection(particles, :birth, :Myr,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false); </code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( log10.( permutedims(proj_z.maps[:birth])), cmap=cmap2, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(Birth) \ [Myr]}&quot;)
+
+subplot(1,2,2)
+im = imshow( log10.( permutedims(proj_x.maps[:birth])), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_x.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(Birth) \ [Myr]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);
+tight_layout()</code></pre><p><img src="../output_78_0.png" alt="png"/></p><p>Project the average age of the particles to the grid. The age is taken relative to the loaded snapshot time by default.</p><pre><code class="language-julia hljs">proj_z = projection(particles, :age, :Myr,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
+proj_x = projection(particles, :age, :Myr,
+                    lmax=8,  zrange=[0.45,0.55], direction=:x,  center=[0.,0.,0.], verbose=false); </code></pre><p>The reference time (code units) for the age calculation:</p><pre><code class="language-julia hljs">proj_z.ref_time</code></pre><pre><code class="nohighlight hljs">29.9031937665063</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( log10.( permutedims(proj_z.maps[:age])), cmap=cmap2, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(Age) \ [Myr]}&quot;)
+
+subplot(1,2,2)
+im = imshow( log10.( permutedims(proj_x.maps[:age])), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_x.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(Age) \ [Myr]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);
+tight_layout()</code></pre><p><img src="../output_83_0.png" alt="png"/></p><p>Project the average age of the particles relative to a given reference time:</p><pre><code class="language-julia hljs">proj_z = projection(particles, :age, :Myr, ref_time=0.,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
+proj_x = projection(particles, :age, :Myr, ref_time = 0.,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false); </code></pre><p>The reference time (code units) for the age calculation:</p><pre><code class="language-julia hljs">proj_z.ref_time</code></pre><pre><code class="nohighlight hljs">0.0</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( ( permutedims(proj_z.maps[:age])), cmap=cmap2, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{Age \ [Myr]}&quot;)
+
+subplot(1,2,2)
+im = imshow( ( permutedims(proj_x.maps[:age])), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_x.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{Age \ [Myr]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);
+tight_layout()</code></pre><p><img src="../output_88_0.png" alt="png"/></p><h2 id="Projection-of-Masked-Data"><a class="docs-heading-anchor" href="#Projection-of-Masked-Data">Projection of Masked Data</a><a id="Projection-of-Masked-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-of-Masked-Data" title="Permalink"></a></h2><p>Mask particles with ages higher than 400 Myr by creating a Bool-array where the smaller ages correspond to false entries:</p><pre><code class="language-julia hljs">mask = getvar(particles, :age, :Myr) .&gt; 400. ;</code></pre><pre><code class="language-julia hljs">proj_z = projection(particles, :age, :Myr, mask=mask,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.]); 
+proj_x = projection(particles, :age, :Myr, mask=mask,
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T14:40:56.942
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
+
+Effective resolution: 256^2
+Pixel size: 187.5 [pc]
+Simulation min.: 46.875 [pc]
+
+:mask provided by function
+
+[Mera]: 2023-04-10T14:40:57.144
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
+
+Effective resolution: 256^2
+Pixel size: 187.5 [pc]
+Simulation min.: 46.875 [pc]
+
+:mask provided by function</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+subplot(1,2,1)
+im = imshow( log10.( permutedims(proj_z.maps[:age])), cmap=cmap2, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(Age) \ [Myr]}&quot;)
+
+subplot(1,2,2)
+im = imshow( log10.( permutedims(proj_x.maps[:age])), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_x.cextent)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=L&quot;\mathrm{log10(Age) \ [Myr]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);
+tight_layout()</code></pre><p><img src="../output_93_0.png" alt="png"/></p><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../06_hydro_Projection/06_hydro_Projection/">« Hydro</a><a class="docs-footer-nextpage" href="../../07_multi_Mera_Files/">7-MERA-Files »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Thursday 13 April 2023 14:48">Thursday 13 April 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

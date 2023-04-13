@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Export/Import Data (ASCII/Binary) · Mera.jl</title><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../">Examples</a></li><li><a class="tocitem" href="../../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Export/Import Data (ASCII/Binary)</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Export/Import Data (ASCII/Binary)</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/examples/ExportImportData.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Export/Import-Data-(ASCII/Binary)"><a class="docs-heading-anchor" href="#Export/Import-Data-(ASCII/Binary)">Export/Import Data (ASCII/Binary)</a><a id="Export/Import-Data-(ASCII/Binary)-1"></a><a class="docs-heading-anchor-permalink" href="#Export/Import-Data-(ASCII/Binary)" title="Permalink"></a></h1><p>This notebook presents several ways to export your data.</p><p>Used libraries in this tutorial:</p><ul><li>DelimitedFiles, Serialization (comes with Julia)</li><li>JuliaDB, FileIO, CSVFiles, JLD, CodecZlib, HDF5, Numpy, FITS, Matlap, GZip (needs to be installed)</li></ul><h2 id="Load-The-Data"><a class="docs-heading-anchor" href="#Load-The-Data">Load The Data</a><a id="Load-The-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Load-The-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera</code></pre><pre><code class="language-julia hljs">info = getinfo(400, &quot;../../../testing/simulations/manu_sim_sf_L14&quot;, verbose=false)
+hydro = gethydro(info, :rho, smallr=1e-5, lmax=10)
+particles = getparticles(info, :mass);</code></pre><pre><code class="nohighlight hljs">[0m [Mera]: Get hydro data: 2020-02-29T17:54:15.397
+
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1,) = (:rho,)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+Reading data...
+
+
+ 100%|███████████████████████████████████████████████████| Time: 0:02:55
+
+
+Memory used for data table :186.1558656692505 MB
+-------------------------------------------------------
+
+[0m [Mera]: Get particle data: 2020-02-29T17:57:14.49
+
+Key vars=(:level, :x, :y, :z, :id)
+Using var(s)=(4,) = (:mass,)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+
+
+ Reading data...100%|████████████████████████████████████| Time: 0:00:03
+
+
+Found 5.089390e+05 particles
+Memory used for data table :19.4152889251709 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">println(&quot;Cells: &quot;, length(hydro.data))
+println(&quot;Particles: &quot;, length(particles.data))</code></pre><pre><code class="nohighlight hljs">Cells: 4879946
+Particles: 508939</code></pre><p>Define a function to preview the first lines of the created ASCII files:</p><pre><code class="language-julia hljs">function viewheader(filename, lines)
+    open(filename) do f
+        line = 1
+        while line&lt;=lines
+            x = readline(f)
+            println(x)
+            line += 1
+        end
+    end
+end</code></pre><pre><code class="nohighlight hljs">viewheader (generic function with 1 method)</code></pre><h2 id="Collect-The-Data-For-Export"><a class="docs-heading-anchor" href="#Collect-The-Data-For-Export">Collect The Data For Export</a><a id="Collect-The-Data-For-Export-1"></a><a class="docs-heading-anchor-permalink" href="#Collect-The-Data-For-Export" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Get the cell and particle positions relative to the box-center
+# Choose the relevant units
+# The function getvar returns a dictionary containing a 1d-array for each quantity
+hvals = getvar(hydro, [:x,:y,:z,:cellsize,:rho], [:kpc,:kpc,:kpc,:kpc,:g_cm3], center=[:boxcenter]);
+pvals = getvar(hydro, [:x,:y,:z,:mass], [:kpc,:kpc,:kpc,:Msol], center=[:boxcenter]);</code></pre><pre><code class="language-julia hljs">hvals</code></pre><pre><code class="nohighlight hljs">Dict{Any,Any} with 5 entries:
+  :cellsize =&gt; [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75  …  …
+  :y        =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25,…
+  :rho      =&gt; [6.76838e-28, 6.76838e-28, 6.76838e-28, 6.76838e-28, 6.76838e-28…
+  :z        =&gt; [-23.25, -22.5, -21.75, -21.0, -20.25, -19.5, -18.75, -18.0, -17…
+  :x        =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25,…</code></pre><pre><code class="language-julia hljs">pvals</code></pre><pre><code class="nohighlight hljs">Dict{Any,Any} with 4 entries:
+  :y    =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23…
+  :z    =&gt; [-23.25, -22.5, -21.75, -21.0, -20.25, -19.5, -18.75, -18.0, -17.25,…
+  :mass =&gt; [4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217…
+  :x    =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23…</code></pre><h2 id="ASCII:-DelimitedFiles-Library"><a class="docs-heading-anchor" href="#ASCII:-DelimitedFiles-Library">ASCII: DelimitedFiles Library</a><a id="ASCII:-DelimitedFiles-Library-1"></a><a class="docs-heading-anchor-permalink" href="#ASCII:-DelimitedFiles-Library" title="Permalink"></a></h2><pre><code class="language-julia hljs">using DelimitedFiles</code></pre><p>Save into an ASCII file with no header, comma separated:</p><pre><code class="language-julia hljs">open(&quot;simulation_hydro.csv&quot;, &quot;w&quot;) do io
+    writedlm(io, [hvals[:x] hvals[:y] hvals[:z] hvals[:cellsize] hvals[:rho]], &quot;,&quot;)
+end</code></pre><p>Check the first lines in the file:</p><pre><code class="language-julia hljs">viewheader(&quot;simulation_hydro.csv&quot;, 5)</code></pre><pre><code class="nohighlight hljs">-23.25000000001507,-23.25000000001507,-23.25000000001507,0.7500000000004861,6.768382184513761e-28
+-23.25000000001507,-23.25000000001507,-22.500000000014584,0.7500000000004861,6.768382184513761e-28
+-23.25000000001507,-23.25000000001507,-21.750000000014097,0.7500000000004861,6.768382184513761e-28
+-23.25000000001507,-23.25000000001507,-21.00000000001361,0.7500000000004861,6.768382184513761e-28
+-23.25000000001507,-23.25000000001507,-20.250000000013124,0.7500000000004861,6.768382184513761e-28</code></pre><p>Use a different syntax; save into file with header and tab-separated values:</p><pre><code class="language-julia hljs">header = [&quot;x/kpc&quot; &quot;y/kpc&quot; &quot;z/kpc&quot; &quot;cellsize/kpc&quot; &quot;rho/g_cm3&quot;]
+valsrray = [hvals[:x] hvals[:y] hvals[:z] hvals[:cellsize] hvals[:rho]] # Array with the columns
+writedlm(&quot;simulation_hydro.dat&quot;, [header ; valsrray], &quot;\t&quot;)</code></pre><pre><code class="language-julia hljs">viewheader(&quot;simulation_hydro.dat&quot;, 5)</code></pre><pre><code class="nohighlight hljs">x/kpc	y/kpc	z/kpc	cellsize/kpc	rho/g_cm3
+-23.25000000001507	-23.25000000001507	-23.25000000001507	0.7500000000004861	6.768382184513761e-28
+-23.25000000001507	-23.25000000001507	-22.500000000014584	0.7500000000004861	6.768382184513761e-28
+-23.25000000001507	-23.25000000001507	-21.750000000014097	0.7500000000004861	6.768382184513761e-28
+-23.25000000001507	-23.25000000001507	-21.00000000001361	0.7500000000004861	6.768382184513761e-28</code></pre><p>Write the particles data into an ASCII file with header:</p><pre><code class="language-julia hljs">header = [&quot;x/kpc&quot; &quot;y/kpc&quot; &quot;z/kpc&quot; &quot;mass/Msol&quot;]
+valsrray = [pvals[:x] pvals[:y] pvals[:z] pvals[:mass]]
+writedlm(&quot;simulation_particles.dat&quot;, [header ; valsrray], &quot;\t&quot;)</code></pre><pre><code class="language-julia hljs">viewheader(&quot;simulation_particles.dat&quot;, 5)</code></pre><pre><code class="nohighlight hljs">x/kpc	y/kpc	z/kpc	mass/Msol
+-23.25000000001507	-23.25000000001507	-23.25000000001507	4217.583427040147
+-23.25000000001507	-23.25000000001507	-22.500000000014584	4217.583427040147
+-23.25000000001507	-23.25000000001507	-21.750000000014097	4217.583427040147
+-23.25000000001507	-23.25000000001507	-21.00000000001361	4217.583427040147</code></pre><h2 id="ASCII:-Save-JuliaDB-Database-into-a-CSV-File-with-FileIO"><a class="docs-heading-anchor" href="#ASCII:-Save-JuliaDB-Database-into-a-CSV-File-with-FileIO">ASCII: Save JuliaDB Database into a CSV-File with FileIO</a><a id="ASCII:-Save-JuliaDB-Database-into-a-CSV-File-with-FileIO-1"></a><a class="docs-heading-anchor-permalink" href="#ASCII:-Save-JuliaDB-Database-into-a-CSV-File-with-FileIO" title="Permalink"></a></h2><pre><code class="language-julia hljs">using FileIO</code></pre><p>See for documentation https://github.com/JuliaIO/FileIO.jl/tree/master/docs</p><p>The simulation data is stored in a JuliadB database:</p><pre><code class="language-julia hljs">particles.data</code></pre><pre><code class="nohighlight hljs">Table with 508939 rows, 6 columns:
+ level    x             y          z          id       mass
+───────────────────────────────────────────────────────
+6      0.00462947  22.3885  24.571   327957  1.13606e-5
+6      0.109066    22.3782  21.5844  116193  1.13606e-5
+6      0.238211    28.7537  24.8191  194252  1.13606e-5
+6      0.271366    22.7512  31.5681  130805  1.13606e-5
+6      0.312574    16.2385  23.7591  162174  1.13606e-5
+6      0.314957    28.2084  30.966   320052  1.13606e-5
+6      0.328337    4.59858  23.5001  292889  1.13606e-5
+6      0.420712    27.6688  26.5735  102940  1.13606e-5
+6      0.509144    33.1737  23.9789  183902  1.13606e-5
+6      0.565516    25.9409  26.0579  342278  1.13606e-5
+6      0.587289    9.60231  23.8477  280020  1.13606e-5
+6      0.592878    25.5519  21.3079  64182   1.13606e-5
+⋮
+14     37.6271     25.857   23.8833  437164  1.13606e-5
+14     37.6299     25.8403  23.9383  421177  1.13606e-5
+14     37.6301     25.8502  23.9361  478941  1.13606e-5
+14     37.6326     25.8544  23.9383  428429  1.13606e-5
+14     37.6528     25.8898  23.9928  467148  1.13606e-5
+14     37.6643     25.9061  23.9945  496129  1.13606e-5
+14     37.6813     25.8743  23.9789  435636  1.13606e-5
+14     37.7207     25.8623  23.8775  476398  1.13606e-5
+14     38.173      25.8862  23.7978  347919  1.13606e-5
+14     38.1738     25.8914  23.7979  403094  1.13606e-5
+14     38.1739     25.8905  23.7992  381503  1.13606e-5</code></pre><pre><code class="language-julia hljs">FileIO.save(&quot;database_partilces.csv&quot;, particles.data)</code></pre><pre><code class="nohighlight hljs">┌ Info: Precompiling CSVFiles [5d742f6a-9f54-50ce-8119-2520741973ca]
+└ @ Base loading.jl:1273</code></pre><pre><code class="language-julia hljs">viewheader(&quot;database_partilces.csv&quot;, 5)</code></pre><pre><code class="nohighlight hljs">&quot;level&quot;,&quot;x&quot;,&quot;y&quot;,&quot;z&quot;,&quot;id&quot;,&quot;mass&quot;
+6,0.004629472789625229,22.388543919075275,24.571021484979347,327957,1.1360607549574087e-5
+6,0.1090659052277639,22.3782196217294,21.58442789512976,116193,1.1360607549574087e-5
+6,0.2382109772356709,28.753723953405462,24.81911909925676,194252,1.1360607549574087e-5
+6,0.271365638325332,22.751224267806695,31.568145104287826,130805,1.1360607549574087e-5</code></pre><p>Export selected variables from the datatable:</p><pre><code class="language-julia hljs">using JuliaDB</code></pre><p>See for documentation https://juliacomputing.github.io/JuliaDB.jl/latest/</p><pre><code class="language-julia hljs">FileIO.save(&quot;database_partilces.csv&quot;, select(particles.data, (:x,:y,:mass)) )</code></pre><pre><code class="language-julia hljs">viewheader(&quot;database_partilces.csv&quot;, 5)</code></pre><pre><code class="nohighlight hljs">&quot;x&quot;,&quot;y&quot;,&quot;mass&quot;
+0.004629472789625229,22.388543919075275,1.1360607549574087e-5
+0.1090659052277639,22.3782196217294,1.1360607549574087e-5
+0.2382109772356709,28.753723953405462,1.1360607549574087e-5
+0.271365638325332,22.751224267806695,1.1360607549574087e-5</code></pre><h2 id="Binary:-Save-JuliaDB-Database-into-a-Binary-Format"><a class="docs-heading-anchor" href="#Binary:-Save-JuliaDB-Database-into-a-Binary-Format">Binary: Save JuliaDB Database into a Binary Format</a><a id="Binary:-Save-JuliaDB-Database-into-a-Binary-Format-1"></a><a class="docs-heading-anchor-permalink" href="#Binary:-Save-JuliaDB-Database-into-a-Binary-Format" title="Permalink"></a></h2><pre><code class="language-julia hljs">JuliaDB.save(hydro.data, &quot;database_hydro.jdb&quot;)</code></pre><pre><code class="nohighlight hljs">Table with 4879946 rows, 5 columns:
+ level    cx     cy     cz    rho
+─────────────────────────────────
+6      1    1    1    1.0e-5
+6      1    1    2    1.0e-5
+6      1    1    3    1.0e-5
+6      1    1    4    1.0e-5
+6      1    1    5    1.0e-5
+6      1    1    6    1.0e-5
+6      1    1    7    1.0e-5
+6      1    1    8    1.0e-5
+6      1    1    9    1.0e-5
+6      1    1    10   1.0e-5
+6      1    1    11   1.0e-5
+6      1    1    12   1.0e-5
+⋮
+10     826  554  512  0.000561671
+10     826  554  513  0.000634561
+10     826  554  514  0.000585903
+10     826  555  509  0.000368259
+10     826  555  510  0.000381535
+10     826  555  511  0.000401867
+10     826  555  512  0.000413433
+10     826  556  509  0.000353701
+10     826  556  510  0.000360669
+10     826  556  511  0.000380094
+10     826  556  512  0.000386327</code></pre><pre><code class="language-julia hljs">hdata = JuliaDB.load(&quot;database_hydro.jdb&quot;)</code></pre><pre><code class="nohighlight hljs">Table with 4879946 rows, 5 columns:
+ level    cx     cy     cz    rho
+─────────────────────────────────
+6      1    1    1    1.0e-5
+6      1    1    2    1.0e-5
+6      1    1    3    1.0e-5
+6      1    1    4    1.0e-5
+6      1    1    5    1.0e-5
+6      1    1    6    1.0e-5
+6      1    1    7    1.0e-5
+6      1    1    8    1.0e-5
+6      1    1    9    1.0e-5
+6      1    1    10   1.0e-5
+6      1    1    11   1.0e-5
+6      1    1    12   1.0e-5
+⋮
+10     826  554  512  0.000561671
+10     826  554  513  0.000634561
+10     826  554  514  0.000585903
+10     826  555  509  0.000368259
+10     826  555  510  0.000381535
+10     826  555  511  0.000401867
+10     826  555  512  0.000413433
+10     826  556  509  0.000353701
+10     826  556  510  0.000360669
+10     826  556  511  0.000380094
+10     826  556  512  0.000386327</code></pre><h2 id="Binary:-Save-Multiple-Data-into-a-JLD-File"><a class="docs-heading-anchor" href="#Binary:-Save-Multiple-Data-into-a-JLD-File">Binary: Save Multiple Data into a JLD File</a><a id="Binary:-Save-Multiple-Data-into-a-JLD-File-1"></a><a class="docs-heading-anchor-permalink" href="#Binary:-Save-Multiple-Data-into-a-JLD-File" title="Permalink"></a></h2><p>See for documentation: https://github.com/JuliaIO/JLD.jl</p><pre><code class="language-julia hljs">using JLD</code></pre><pre><code class="language-julia hljs">jldopen(&quot;mydata.jld&quot;, &quot;w&quot;) do file
+    write(file, &quot;hydro&quot;, hvals )
+    write(file, &quot;particles&quot;, pvals )
+end</code></pre><p>Open file for read and get an overview of the stored dataset:</p><pre><code class="language-julia hljs">file = jldopen(&quot;mydata.jld&quot;,&quot;r&quot;)</code></pre><pre><code class="nohighlight hljs">Julia data file version 0.1.3: mydata.jld</code></pre><pre><code class="language-julia hljs">names(file)</code></pre><pre><code class="nohighlight hljs">2-element Array{String,1}:
+ &quot;hydro&quot;    
+ &quot;particles&quot;</code></pre><pre><code class="language-julia hljs">hydrodata = read(file, &quot;hydro&quot;)</code></pre><pre><code class="nohighlight hljs">Dict{Any,Any} with 5 entries:
+  :x        =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25,…
+  :y        =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25,…
+  :rho      =&gt; [6.76838e-28, 6.76838e-28, 6.76838e-28, 6.76838e-28, 6.76838e-28…
+  :z        =&gt; [-23.25, -22.5, -21.75, -21.0, -20.25, -19.5, -18.75, -18.0, -17…
+  :cellsize =&gt; [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75  …  …</code></pre><pre><code class="language-julia hljs">particledata = read(file, &quot;particles&quot;)</code></pre><pre><code class="nohighlight hljs">Dict{Any,Any} with 4 entries:
+  :y    =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23…
+  :z    =&gt; [-23.25, -22.5, -21.75, -21.0, -20.25, -19.5, -18.75, -18.0, -17.25,…
+  :mass =&gt; [4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217.58, 4217…
+  :x    =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23…</code></pre><p>Compare stored with original data:</p><pre><code class="language-julia hljs">hydrodata == hvals</code></pre><pre><code class="nohighlight hljs">true</code></pre><pre><code class="language-julia hljs">particledata == pvals</code></pre><pre><code class="nohighlight hljs">true</code></pre><h2 id="Binary:-Compress-Data-into-a-gz-File"><a class="docs-heading-anchor" href="#Binary:-Compress-Data-into-a-gz-File">Binary: Compress Data into a gz-File</a><a id="Binary:-Compress-Data-into-a-gz-File-1"></a><a class="docs-heading-anchor-permalink" href="#Binary:-Compress-Data-into-a-gz-File" title="Permalink"></a></h2><pre><code class="language-julia hljs">using CodecZlib, Serialization</code></pre><p>See for documentation: https://github.com/JuliaIO/CodecZlib.jl</p><pre><code class="language-julia hljs">fo= GzipCompressorStream( open(&quot;sample-data.jls.gz&quot;, &quot;w&quot;) ); serialize(fo, hvals); close(fo)</code></pre><pre><code class="language-julia hljs">hydrodata1 = deserialize( GzipDecompressorStream( open(&quot;sample-data.jls.gz&quot;, &quot;r&quot;) ) )</code></pre><pre><code class="nohighlight hljs">Dict{Any,Any} with 5 entries:
+  :x        =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25,…
+  :y        =&gt; [-23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25, -23.25,…
+  :rho      =&gt; [6.76838e-28, 6.76838e-28, 6.76838e-28, 6.76838e-28, 6.76838e-28…
+  :z        =&gt; [-23.25, -22.5, -21.75, -21.0, -20.25, -19.5, -18.75, -18.0, -17…
+  :cellsize =&gt; [0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75, 0.75  …  …</code></pre><pre><code class="language-julia hljs">hydrodata1 == hvals</code></pre><pre><code class="nohighlight hljs">true</code></pre><p>Prepare variable-array:</p><pre><code class="language-julia hljs">varsarray = [hvals[:x] hvals[:y] hvals[:z] hvals[:cellsize] hvals[:rho]]</code></pre><pre><code class="nohighlight hljs">4879946×5 Array{Float64,2}:
+ -23.25    -23.25     -23.25      0.75      6.76838e-28
+ -23.25    -23.25     -22.5       0.75      6.76838e-28
+ -23.25    -23.25     -21.75      0.75      6.76838e-28
+ -23.25    -23.25     -21.0       0.75      6.76838e-28
+ -23.25    -23.25     -20.25      0.75      6.76838e-28
+ -23.25    -23.25     -19.5       0.75      6.76838e-28
+ -23.25    -23.25     -18.75      0.75      6.76838e-28
+ -23.25    -23.25     -18.0       0.75      6.76838e-28
+ -23.25    -23.25     -17.25      0.75      6.76838e-28
+ -23.25    -23.25     -16.5       0.75      6.76838e-28
+ -23.25    -23.25     -15.75      0.75      6.76838e-28
+ -23.25    -23.25     -15.0       0.75      6.76838e-28
+ -23.25    -23.25     -14.25      0.75      6.76838e-28
+   ⋮                                                   
+  14.7188    1.96875   -0.046875  0.046875  3.59298e-26
+  14.7188    1.96875    0.0       0.046875  3.80161e-26
+  14.7188    1.96875    0.046875  0.046875  4.29495e-26
+  14.7188    1.96875    0.09375   0.046875  3.96562e-26
+  14.7188    2.01563   -0.140625  0.046875  2.49252e-26
+  14.7188    2.01563   -0.09375   0.046875  2.58237e-26
+  14.7188    2.01563   -0.046875  0.046875  2.71999e-26
+  14.7188    2.01563    0.0       0.046875  2.79827e-26
+  14.7188    2.0625    -0.140625  0.046875  2.39398e-26
+  14.7188    2.0625    -0.09375   0.046875  2.44115e-26
+  14.7188    2.0625    -0.046875  0.046875  2.57262e-26
+  14.7188    2.0625     0.0       0.046875  2.61481e-26</code></pre><pre><code class="language-julia hljs">fo= GzipCompressorStream( open(&quot;sample-data2.jls.gz&quot;, &quot;w&quot;) ); serialize(fo, varsarray); close(fo)</code></pre><p>Read the data again:</p><pre><code class="language-julia hljs">hydrodata2 = deserialize( GzipDecompressorStream( open(&quot;sample-data2.jls.gz&quot;, &quot;r&quot;) ) )</code></pre><pre><code class="nohighlight hljs">4879946×5 Array{Float64,2}:
+ -23.25    -23.25     -23.25      0.75      6.76838e-28
+ -23.25    -23.25     -22.5       0.75      6.76838e-28
+ -23.25    -23.25     -21.75      0.75      6.76838e-28
+ -23.25    -23.25     -21.0       0.75      6.76838e-28
+ -23.25    -23.25     -20.25      0.75      6.76838e-28
+ -23.25    -23.25     -19.5       0.75      6.76838e-28
+ -23.25    -23.25     -18.75      0.75      6.76838e-28
+ -23.25    -23.25     -18.0       0.75      6.76838e-28
+ -23.25    -23.25     -17.25      0.75      6.76838e-28
+ -23.25    -23.25     -16.5       0.75      6.76838e-28
+ -23.25    -23.25     -15.75      0.75      6.76838e-28
+ -23.25    -23.25     -15.0       0.75      6.76838e-28
+ -23.25    -23.25     -14.25      0.75      6.76838e-28
+   ⋮                                                   
+  14.7188    1.96875   -0.046875  0.046875  3.59298e-26
+  14.7188    1.96875    0.0       0.046875  3.80161e-26
+  14.7188    1.96875    0.046875  0.046875  4.29495e-26
+  14.7188    1.96875    0.09375   0.046875  3.96562e-26
+  14.7188    2.01563   -0.140625  0.046875  2.49252e-26
+  14.7188    2.01563   -0.09375   0.046875  2.58237e-26
+  14.7188    2.01563   -0.046875  0.046875  2.71999e-26
+  14.7188    2.01563    0.0       0.046875  2.79827e-26
+  14.7188    2.0625    -0.140625  0.046875  2.39398e-26
+  14.7188    2.0625    -0.09375   0.046875  2.44115e-26
+  14.7188    2.0625    -0.046875  0.046875  2.57262e-26
+  14.7188    2.0625     0.0       0.046875  2.61481e-26</code></pre><p>Compare original with loaded data:</p><pre><code class="language-julia hljs">hydrodata2 == varsarray</code></pre><pre><code class="nohighlight hljs">true</code></pre><p>Store array with header:</p><pre><code class="language-julia hljs">header = [&quot;x/kpc&quot; &quot;y/kpc&quot; &quot;z/kpc&quot; &quot;cellsize/kpc&quot; &quot;rho/g_cm3&quot;]
+fo= GzipCompressorStream( open(&quot;sample-data3.jls.gz&quot;, &quot;w&quot;) ); serialize(fo, [header ; varsarray]); close(fo)</code></pre><pre><code class="language-julia hljs">hydrodata3 = deserialize( GzipDecompressorStream( open(&quot;sample-data3.jls.gz&quot;, &quot;r&quot;) ) )</code></pre><pre><code class="nohighlight hljs">4879947×5 Array{Any,2}:
+    &quot;x/kpc&quot;     &quot;y/kpc&quot;     &quot;z/kpc&quot;   &quot;cellsize/kpc&quot;   &quot;rho/g_cm3&quot;
+ -23.25      -23.25      -23.25      0.75             6.76838e-28
+ -23.25      -23.25      -22.5       0.75             6.76838e-28
+ -23.25      -23.25      -21.75      0.75             6.76838e-28
+ -23.25      -23.25      -21.0       0.75             6.76838e-28
+ -23.25      -23.25      -20.25      0.75             6.76838e-28
+ -23.25      -23.25      -19.5       0.75             6.76838e-28
+ -23.25      -23.25      -18.75      0.75             6.76838e-28
+ -23.25      -23.25      -18.0       0.75             6.76838e-28
+ -23.25      -23.25      -17.25      0.75             6.76838e-28
+ -23.25      -23.25      -16.5       0.75             6.76838e-28
+ -23.25      -23.25      -15.75      0.75             6.76838e-28
+ -23.25      -23.25      -15.0       0.75             6.76838e-28
+   ⋮                                                              
+  14.7188      1.96875    -0.046875  0.046875         3.59298e-26
+  14.7188      1.96875     0.0       0.046875         3.80161e-26
+  14.7188      1.96875     0.046875  0.046875         4.29495e-26
+  14.7188      1.96875     0.09375   0.046875         3.96562e-26
+  14.7188      2.01563    -0.140625  0.046875         2.49252e-26
+  14.7188      2.01563    -0.09375   0.046875         2.58237e-26
+  14.7188      2.01563    -0.046875  0.046875         2.71999e-26
+  14.7188      2.01563     0.0       0.046875         2.79827e-26
+  14.7188      2.0625     -0.140625  0.046875         2.39398e-26
+  14.7188      2.0625     -0.09375   0.046875         2.44115e-26
+  14.7188      2.0625     -0.046875  0.046875         2.57262e-26
+  14.7188      2.0625      0.0       0.046875         2.61481e-26</code></pre><h2 id="Other-File-Formats"><a class="docs-heading-anchor" href="#Other-File-Formats">Other File Formats</a><a id="Other-File-Formats-1"></a><a class="docs-heading-anchor-permalink" href="#Other-File-Formats" title="Permalink"></a></h2><ul><li>HDF5 https://github.com/JuliaIO/HDF5.jl</li><li>Numpy https://github.com/fhs/NPZ.jl</li><li>FITS https://github.com/JuliaAstro/FITSIO.jl</li><li>FITS https://github.com/emmt/EasyFITS.jl</li><li>Matlab https://github.com/JuliaIO/MAT.jl</li><li>GZip https://github.com/JuliaIO/GZip.jl</li></ul><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Thursday 13 April 2023 14:48">Thursday 13 April 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

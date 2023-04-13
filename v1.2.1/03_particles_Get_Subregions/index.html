@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>3. Particles: Get Sub-Regions of Loaded the Data · Mera.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>3. Particles: Get Sub-Regions of Loaded the Data</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>3. Particles: Get Sub-Regions of Loaded the Data</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/03_particles_Get_Subregions.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Particles:-Get-Sub-Regions-of-Loaded-the-Data"><a class="docs-heading-anchor" href="#.-Particles:-Get-Sub-Regions-of-Loaded-the-Data">3. Particles: Get Sub-Regions of Loaded the Data</a><a id=".-Particles:-Get-Sub-Regions-of-Loaded-the-Data-1"></a><a class="docs-heading-anchor-permalink" href="#.-Particles:-Get-Sub-Regions-of-Loaded-the-Data" title="Permalink"></a></h1><h2 id="Load-the-Data"><a class="docs-heading-anchor" href="#Load-the-Data">Load the Data</a><a id="Load-the-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Load-the-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera, PyPlot
+using ColorSchemes
+cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
+
+info = getinfo(400, &quot;../../testing/simulations/manu_sim_sf_L14&quot;);
+particles = getparticles(info, :mass);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:29:31.468
+
+Code: RAMSES
+output [400] summary:
+mtime: 2018-09-05T09:51:55.041
+ctime: 2019-11-01T17:35:21.051
+ =======================================================
+simulation time: 594.98 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 2048
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
+particle variables: (:vx, :vy, :vz, :mass, :birth)
+-------------------------------------------------------
+clumps:        true
+clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
+-------------------------------------------------------
+namelist-file: false
+timer-file:       false
+compilation-file: true
+makefile:         true
+patchfile:        true
+ ======================================================= 
+
+ [Mera]: Get particle data: 2020-02-18T23:29:46.476
+
+Key vars=(:level, :x, :y, :z, :id)
+Using var(s)=(4,) = (:mass,)
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+
+
+ Reading data...100%|████████████████████████████████████| Time: 0:00:03
+
+
+Found 5.089390e+05 particles
+Memory used for data table :19.4152889251709 MB
+-------------------------------------------------------</code></pre><h2 id="Cuboid-Region"><a class="docs-heading-anchor" href="#Cuboid-Region">Cuboid Region</a><a id="Cuboid-Region-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region" title="Permalink"></a></h2><h3 id="Create-projections-of-the-full-box:"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:">Create projections of the full box:</a><a id="Create-projections-of-the-full-box:-1"></a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:" title="Permalink"></a></h3><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><p>The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field cextent gives the extent related to a given center (default: [0.,0.,0.]).</p><pre><code class="language-julia hljs">propertynames(proj_z)</code></pre><pre><code class="nohighlight hljs">(:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :boxlen, :scale, :info)</code></pre><h4 id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Cuboid Region: The red lines show the region that we want to cutout as a sub-region from the full data:</a><a id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_9_0.png" alt="png"/></p><h4 id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles">Cuboid Region: Cutout the data assigned to the object <code>particles</code></a><a id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation <a href="default">0:1</a> or physical length-units, defined in e.g. info.scale :</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :cuboid,
+                                    xrange=[-4., 0.],
+                                    yrange=[-15. ,15.],
+                                    zrange=[-2. ,2.],
+                                    center=[:boxcenter],
+                                    range_unit=:kpc );</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:10.393
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
+ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Memory used for data table :10.259977340698242 MB
+-------------------------------------------------------</code></pre><p>The function <code>subregion</code> creates a new object with the same type as the object created by the function <code>getparticles</code> :</p><pre><code class="language-julia hljs">typeof(part_subregion)</code></pre><pre><code class="nohighlight hljs">PartDataType</code></pre><h4 id="Cuboid-Region:-Projections-of-the-sub-region."><a class="docs-heading-anchor" href="#Cuboid-Region:-Projections-of-the-sub-region.">Cuboid Region: Projections of the sub-region.</a><a id="Cuboid-Region:-Projections-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Projections-of-the-sub-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=10, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=10, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=10, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_17_0.png" alt="png"/></p><h4 id="Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):">Cuboid Region: Get the data outside of the selected region (inverse selection):</a><a id="Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):" title="Permalink"></a></h4><pre><code class="language-julia hljs">part_subregion = subregion( particles, :cuboid,
+                                    xrange=[-4., 0.],
+                                    yrange=[-15. ,15.],
+                                    zrange=[-2. ,2.],
+                                    center=[24.,24.,24.],
+                                    range_unit=:kpc,
+                                    inverse=true);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:12.491
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
+ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Memory used for data table :9.156118392944336 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_21_0.png" alt="png"/></p><h2 id="Cylindrical-Region"><a class="docs-heading-anchor" href="#Cylindrical-Region">Cylindrical Region</a><a id="Cylindrical-Region-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region" title="Permalink"></a></h2><h4 id="Create-projections-of-the-full-box:-2"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:-2">Create projections of the full box:</a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:-2" title="Permalink"></a></h4><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><h4 id="Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Cylindrical Region: The red lines show the region that we want to cutout as a sub-region from the full data:</a><a id="Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_25_0.png" alt="png"/></p><h4 id="Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-particles">Cylindrical Region: Cutout the data assigned to the object <code>particles</code></a><a id="Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Select the ranges of the cylinder in the unit &quot;kpc&quot;, relative to the given center [13., 24., 24.]. The height refers to both z-directions from the plane.</p><pre><code class="language-julia hljs">part_subregion = subregion(particles, :cylinder,
+                            radius=3.,
+                            height=2.,
+                            range_unit=:kpc,
+                            center=[13.,:bc,:bc],
+                            direction=:z);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:15.671
+
+center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2083333 :: 0.3333333  	==&gt; 10.0 [kpc] :: 16.0 [kpc]
+ymin::ymax: 0.4375 :: 0.5625  	==&gt; 21.0 [kpc] :: 27.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Radius: 3.0 [kpc]
+Height: 2.0 [kpc]
+Memory used for data table :578.951171875 KB
+-------------------------------------------------------</code></pre><h4 id="Cylindrical-Region:-Projections-of-the-sub-region."><a class="docs-heading-anchor" href="#Cylindrical-Region:-Projections-of-the-sub-region.">Cylindrical Region: Projections of the sub-region.</a><a id="Cylindrical-Region:-Projections-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Projections-of-the-sub-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=10, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=10, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=10, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_30_0.png" alt="png"/></p><h4 id="Cylindrical-Region:-Projections-of-the-sub-region-py-passing-a-different-center:"><a class="docs-heading-anchor" href="#Cylindrical-Region:-Projections-of-the-sub-region-py-passing-a-different-center:">Cylindrical Region: Projections of the sub-region py passing a different center:</a><a id="Cylindrical-Region:-Projections-of-the-sub-region-py-passing-a-different-center:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Projections-of-the-sub-region-py-passing-a-different-center:" title="Permalink"></a></h4><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, direction=:z, center=[13., 24.,24.], range_unit=:kpc, lmax=10, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, direction=:y, center=[13., 24.,24.], range_unit=:kpc, lmax=10, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, direction=:x, center=[13., 24.,24.], range_unit=:kpc, lmax=10, verbose=false);</code></pre><h4 id="The-ranges-of-the-plots-are-now-adapted-to-the-given-data-center:"><a class="docs-heading-anchor" href="#The-ranges-of-the-plots-are-now-adapted-to-the-given-data-center:">The ranges of the plots are now adapted to the given data center:</a><a id="The-ranges-of-the-plots-are-now-adapted-to-the-given-data-center:-1"></a><a class="docs-heading-anchor-permalink" href="#The-ranges-of-the-plots-are-now-adapted-to-the-given-data-center:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 3. .* sin.(theta), 3 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_34_0.png" alt="png"/></p><h4 id="Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):">Cylindrical Region: Get the data outside of the selected region (inverse selection):</a><a id="Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):" title="Permalink"></a></h4><pre><code class="language-julia hljs">part_subregion = subregion(particles, :cylinder,
+                                    radius=3.,
+                                    height=2.,
+                                    range_unit=:kpc,
+                                    center=[ (24. -11.),:bc,:bc],
+                                    direction=:z,
+                                    inverse=true);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:19.162
+
+center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2083333 :: 0.3333333  	==&gt; 10.0 [kpc] :: 16.0 [kpc]
+ymin::ymax: 0.4375 :: 0.5625  	==&gt; 21.0 [kpc] :: 27.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Radius: 3.0 [kpc]
+Height: 2.0 [kpc]
+Memory used for data table :18.8507137298584 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_38_0.png" alt="png"/></p><h2 id="Spherical-Region"><a class="docs-heading-anchor" href="#Spherical-Region">Spherical Region</a><a id="Spherical-Region-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region" title="Permalink"></a></h2><h3 id="Create-projections-of-the-full-box:-3"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:-3">Create projections of the full box:</a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:-3" title="Permalink"></a></h3><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><h4 id="Spherical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Spherical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Spherical Region: The red lines show the region that we want to cutout as a sub-region from the full data:</a><a id="Spherical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_42_0.png" alt="png"/></p><h4 id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles">Spherical Region: Cutout the data assigned to the object <code>particles</code></a><a id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Select the radius of the sphere in the unit &quot;kpc&quot;, relative to the given center [13., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :sphere,
+                            radius=10.,
+                            range_unit=:kpc,
+                            center=[(24. -11.),24.,24.]);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:22.122
+
+center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0625 :: 0.4791667  	==&gt; 3.0 [kpc] :: 23.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+
+Radius: 10.0 [kpc]
+Memory used for data table :8.807950973510742 MB
+-------------------------------------------------------</code></pre><h4 id="Spherical-Region:-Projections-of-the-sub-region."><a class="docs-heading-anchor" href="#Spherical-Region:-Projections-of-the-sub-region.">Spherical Region: Projections of the sub-region.</a><a id="Spherical-Region:-Projections-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Projections-of-the-sub-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_47_0.png" alt="png"/></p><h4 id="Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):">Spherical Region: Get the data outside of the selected region (inverse selection):</a><a id="Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):" title="Permalink"></a></h4><pre><code class="language-julia hljs">part_subregion = subregion( particles, :sphere,
+                            radius=10.,
+                            range_unit=:kpc,
+                            center=[(24. -11.),24.,24.],
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:23.142
+
+center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0625 :: 0.4791667  	==&gt; 3.0 [kpc] :: 23.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+
+Radius: 10.0 [kpc]
+Memory used for data table :10.608144760131836 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_51_0.png" alt="png"/></p><h2 id="Combined/Nested/Shell-Sub-Regions"><a class="docs-heading-anchor" href="#Combined/Nested/Shell-Sub-Regions">Combined/Nested/Shell Sub-Regions</a><a id="Combined/Nested/Shell-Sub-Regions-1"></a><a class="docs-heading-anchor-permalink" href="#Combined/Nested/Shell-Sub-Regions" title="Permalink"></a></h2><h4 id="The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)"><a class="docs-heading-anchor" href="#The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)">The sub-region and shell functions can be used in any combination with each other! (Combined with overlapping ranges or nested)</a><a id="The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)-1"></a><a class="docs-heading-anchor-permalink" href="#The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)" title="Permalink"></a></h4><p>One Example:</p><pre><code class="language-julia hljs">comb_region = subregion(particles, :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
+comb_region2 = subregion(comb_region, :sphere, radius=12., center=[40.,24.,24.], range_unit=:kpc, inverse=true, verbose=false)
+comb_region3 = subregion(comb_region2, :sphere, radius=12., center=[8.,24.,24.], range_unit=:kpc, inverse=true, verbose=false);
+comb_region4 = subregion(comb_region3, :sphere, radius=12., center=[24.,5.,24.], range_unit=:kpc, inverse=true, verbose=false);
+comb_region5 = subregion(comb_region4, :sphere, radius=12., center=[24.,43.,24.], range_unit=:kpc, inverse=true, verbose=false);</code></pre><pre><code class="language-julia hljs">proj_z = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+proj_y = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter],direction=:y, verbose=false);
+proj_x = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter],direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = LinRange(-pi, pi, 100)
+
+subplot(1,3,1)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_57_0.png" alt="png"/></p><h2 id="Cylindrical-Shell"><a class="docs-heading-anchor" href="#Cylindrical-Shell">Cylindrical Shell</a><a id="Cylindrical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell" title="Permalink"></a></h2><h4 id="Create-projections-of-the-full-box:-4"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:-4">Create projections of the full box:</a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:-4" title="Permalink"></a></h4><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><h4 id="Cylindrical-Shell:-The-red-lines-show-the-shell-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cylindrical-Shell:-The-red-lines-show-the-shell-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Cylindrical Shell: The red lines show the shell we want to cutout as a sub-region from the full data:</a><a id="Cylindrical-Shell:-The-red-lines-show-the-shell-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell:-The-red-lines-show-the-shell-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
+plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
+plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_62_0.png" alt="png"/></p><h4 id="Cylindrical-Shell:"><a class="docs-heading-anchor" href="#Cylindrical-Shell:">Cylindrical Shell:</a><a id="Cylindrical-Shell:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell:" title="Permalink"></a></h4><p>Pass the height of the cylinder and the inner/outer radius of the shell in the unit &quot;kpc&quot;, relative to the box center [24., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = shellregion( particles, :cylinder,
+                                radius=[5.,10.],
+                                height=2.,
+                                range_unit=:kpc,
+                                center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:28.41
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Inner radius: 5.0 [kpc]
+Outer radius: 10.0 [kpc]
+Radius diff: 5.0 [kpc]
+Height: 2.0 [kpc]
+Memory used for data table :7.282835006713867 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
+plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
+plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_66_0.png" alt="png"/></p><h4 id="Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-(inverse-selection):"><a class="docs-heading-anchor" href="#Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-(inverse-selection):">Cylindrical Shell: Get the data outside of the selected shell (inverse selection):</a><a id="Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-(inverse-selection):" title="Permalink"></a></h4><pre><code class="language-julia hljs">part_subregion = shellregion( particles, :cylinder,
+                                radius=[5.,10.],
+                                height=2.,
+                                range_unit=:kpc,
+                                center=[:boxcenter],
+                                inverse=true);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:30.228
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
+Inner radius: 5.0 [kpc]
+Outer radius: 10.0 [kpc]
+Radius diff: 5.0 [kpc]
+Height: 2.0 [kpc]
+Memory used for data table :12.133260726928711 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
+plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
+plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_70_0.png" alt="png"/></p><p>&lt;a id=&quot;ShellRegionSphere&quot;&gt;&lt;/a&gt;</p><h2 id="Spherical-Shell"><a class="docs-heading-anchor" href="#Spherical-Shell">Spherical Shell</a><a id="Spherical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell" title="Permalink"></a></h2><h4 id="Create-projections-of-the-full-box:-5"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:-5">Create projections of the full box:</a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:-5" title="Permalink"></a></h4><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><h4 id="Spherical-Shell:-The-red-lines-show-the-shell-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Spherical-Shell:-The-red-lines-show-the-shell-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Spherical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:</a><a id="Spherical-Shell:-The-red-lines-show-the-shell-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:-The-red-lines-show-the-shell-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;,ls=&quot;--&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_75_0.png" alt="png"/></p><h4 id="Spherical-Shell:"><a class="docs-heading-anchor" href="#Spherical-Shell:">Spherical Shell:</a><a id="Spherical-Shell:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:" title="Permalink"></a></h4><p>Select the inner and outer radius of the spherical shell in unit &quot;kpc&quot;, relative to the box center [24., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = shellregion( particles, :sphere,
+                                radius=[5.,10.],
+                                range_unit=:kpc,
+                                center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:34.32
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+
+Inner radius: 5.0 [kpc]
+Outer radius: 10.0 [kpc]
+Radius diff: 5.0 [kpc]
+Memory used for data table :7.592016220092773 MB
+-------------------------------------------------------</code></pre><h4 id="Spherical-Shell:-Projections-of-the-shell-region."><a class="docs-heading-anchor" href="#Spherical-Shell:-Projections-of-the-shell-region.">Spherical Shell: Projections of the shell-region.</a><a id="Spherical-Shell:-Projections-of-the-shell-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:-Projections-of-the-shell-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;,ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;,ls=&quot;--&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_80_0.png" alt="png"/></p><h4 id="Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):">Spherical Shell: Get the data outside of the selected shell-region (inverse selection):</a><a id="Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):" title="Permalink"></a></h4><pre><code class="language-julia hljs">part_subregion = shellregion( particles, :sphere,
+                                radius=[5.,10.],
+                                range_unit=:kpc,
+                                center=[:boxcenter],
+                                inverse=true);</code></pre><pre><code class="nohighlight hljs"> [Mera]: 2020-02-18T23:30:35.378
+
+center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
+
+Inner radius: 5.0 [kpc]
+Outer radius: 10.0 [kpc]
+Radius diff: 5.0 [kpc]
+Memory used for data table :11.824079513549805 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
+proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
+proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
+theta = range(-pi, stop=pi, length=100)
+
+subplot(1,3,1)
+im = imshow( log10.( permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;y [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,2)
+im = imshow( log10.( permutedims(proj_y.maps[:sd]) ), cmap=cmap, aspect=proj_y.ratio, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;x [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext)
+
+subplot(1,3,3)
+im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ratio, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
+plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
+xlabel(&quot;y [kpc]&quot;)
+ylabel(&quot;z [kpc]&quot;)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_particles_Get_Subregions_files/03_particles_Get_Subregions_84_0.png" alt="png"/></p><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Thursday 13 April 2023 14:48">Thursday 13 April 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
