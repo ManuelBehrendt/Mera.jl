@@ -1,7 +1,7 @@
 name = "Mera"
 uuid = "02f895e8-fdb1-4346-8fe6-c721699f5126"
 authors = ["Manuel Behrendt"]
-version = "1.2.0"
+version = "1.2.1"
 
 [deps]
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
