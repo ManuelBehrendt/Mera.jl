@@ -445,7 +445,7 @@ end
 
 function bell()
     # Sound folder
-    sounddir = joinpath(@__DIR__, "sounds/")
+    sounddir = joinpath(@__DIR__, "../sounds/")
     y, fs = wavread(sounddir * "strum.wav")
     wavplay(y, fs)
     return
