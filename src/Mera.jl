@@ -111,6 +111,7 @@ export
     construct_datatype,
     createscales,
     humanize,
+    bell,
 
 #types
     ScalesType001,
