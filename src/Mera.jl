@@ -36,6 +36,7 @@ using ImageTransformations
 
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
 using TimerOutputs
+using WAV
 
 global verbose_mode = nothing
 global showprogress_mode = nothing
@@ -228,6 +229,7 @@ include("functions/shellregion_gravity.jl")
 include("functions/shellregion_particles.jl")
 include("functions/shellregion_clumps.jl")
 # ============================================
+
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")

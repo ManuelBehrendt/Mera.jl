@@ -440,3 +440,13 @@ function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::Clum
     return clumpdata
 
 end
+
+
+
+function bell()
+    # Sound folder
+    sounddir = joinpath(@__DIR__, "sounds/")
+    y, fs = wavread(sounddir * "strum.wav")
+    wavplay(y, fs)
+    return
+end
