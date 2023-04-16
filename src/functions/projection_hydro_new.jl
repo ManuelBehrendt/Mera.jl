@@ -365,7 +365,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         println()
     end
 
-    x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
+    x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
 
     pixsize = dataobject.boxlen / res # in code units
     if verbose
@@ -706,11 +706,11 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     # prepare maps
     length1=length( newrange1) -1
     length2=length( newrange2) -1
-    map = zeros(Float64, length1, length2, length(selected_vars)  ) # 2d map vor each variable
-    map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
+    #map = zeros(Float64, length1, length2, length(selected_vars)  ) # 2d map vor each variable
+    #map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
 
 
-    return x_coord, y_coord, z_coord, map, map_weight, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez
+    return x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez
 end
 
 
