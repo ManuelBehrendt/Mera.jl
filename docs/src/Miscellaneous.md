@@ -347,3 +347,16 @@ showprogress()
 ```julia
 
 ```
+
+## Notification Bell 
+
+
+```julia
+# Add the following function below your code to get a sound notification:
+bell()
+```
+
+
+```julia
+
+```
