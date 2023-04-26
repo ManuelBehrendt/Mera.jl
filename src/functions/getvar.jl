@@ -310,8 +310,8 @@ return x, y, z
 
 ### Defined Methods - function defined for different arguments
 
-- getpositions( dataobject::DataSetType; ...) # one given variable
-- getpositions( dataobject::DataSetType, unit::Symbol; ...) # one given variable with its unit
+- getpositions( dataobject::DataSetType; ...) # one given dataobject
+- getpositions( dataobject::DataSetType, unit::Symbol; ...) # one given dataobject and position unit
 
 """
 function getpositions( dataobject::DataSetType, unit::Symbol;
@@ -347,6 +347,66 @@ function getpositions( dataobject::DataSetType;
 
     return positions[:x], positions[:y], positions[:z]
 end
+
+
+
+
+
+
+"""
+#### Get the vx,vy,vz velocities from the dataset (cells/particles/clumps/...):
+```julia
+function getvelocities( dataobject::DataSetType, unit::Symbol;
+    mask::MaskType=[false])
+
+return vx, vy, vz
+```
+
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "DataSetType"
+##### Predefined/Optional Keywords:
+- **`unit`:** return the variables in given unit
+- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+
+### Defined Methods - function defined for different arguments
+
+- getvelocities( dataobject::DataSetType; ...) # one given dataobject
+- getvelocities( dataobject::DataSetType, unit::Symbol; ...) # one given dataobject and velocity unit
+
+"""
+function getvelocities( dataobject::DataSetType, unit::Symbol;
+    mask::MaskType=[false])
+
+    velocities = getvar(dataobject, [:vx, :vy, :vz],
+    units=[unit, unit, unit],
+    mask=mask)
+
+    return velocities[:vx], velocities[:vy], velocities[:vz]
+end
+
+function getvelocities( dataobject::DataSetType;
+    unit::Symbol=:standard,
+    mask::MaskType=[false])
+
+
+    velocities = getvar(dataobject, [:vx, :vy, :vz],
+    units=[unit, unit, unit],
+    mask=mask)
+
+    return velocities[:vx], velocities[:vy], velocities[:vz]
+end
+
+
+
+
+
+
+
+
+
+
 
 
 

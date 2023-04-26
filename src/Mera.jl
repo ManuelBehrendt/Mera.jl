@@ -92,6 +92,7 @@ export
     getvar,
     getmass,
     getpositions,
+    getvelocities,
     getextent,
     wstat,
 
