@@ -101,6 +101,7 @@ export
     projection_new,
     projection_depr,
     slice,
+    profile,
     remap,
     subregion,
     shellregion,
@@ -215,6 +216,10 @@ include("functions/projection_hydro_new.jl")
 include("functions/projection_particles.jl")
 # ============================================
 
+
+# profile
+include("functions/profile_hydro.jl")
+# ============================================
 
 # Subregion
 include("functions/subregion.jl")
