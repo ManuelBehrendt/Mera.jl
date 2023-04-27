@@ -218,7 +218,7 @@ include("functions/projection_particles.jl")
 
 
 # profile
-include("functions/profile_hydro.jl")
+include("functions/profile.jl")
 # ============================================
 
 # Subregion
