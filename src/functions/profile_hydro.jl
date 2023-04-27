@@ -19,9 +19,9 @@ function profile(  dataobject::HydroDataType,
 
     center = Mera.center_in_standardnotation(dataobject.info, center, center_unit)
 
-    xquantity = getvar(dataobject, vars[1], units[1], center=center, center_unit=center_unit, mask=mask)
-    yquantity = getvar(dataobject, vars[2], units[2], center=center, center_unit=center_unit, mask=mask)               
-    wquantity = getvar(dataobject, weighting, center=center, center_unit=center_unit, mask=mask) 
+    xquantity = getvar(dataobject, vars[1], units[1], center=center, mask=mask)
+    yquantity = getvar(dataobject, vars[2], units[2], center=center, mask=mask)               
+    wquantity = getvar(dataobject, weighting, center=center, mask=mask) 
 
     xhist = fit(Histogram, xquantity, weights(yquantity .* wquantity),  hrange )
     whist = fit(Histogram, xquantity, weights(wquantity),  hrange )
