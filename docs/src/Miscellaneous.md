@@ -352,9 +352,60 @@ showprogress()
 
 
 ```julia
-# Add the following function below your code to get a sound notification:
-bell()
+?bell
 ```
+
+    search: bell bytesavailable @label bulk_velocity baremodule AbstractChannel
+    
+
+
+
+
+
+### Get a notification sound, e.g., when your calculations are finished.
+
+This may not apply when working remotely on a server:
+
+```julia
+julia> bell()
+```
+
+
+
+
+## Notification E-Mail 
+
+
+```julia
+?notifyme
+```
+
+    search: notifyme notify
+    
+
+
+
+
+
+### Get an email notification, e.g., when your calculations are finished.
+
+Mandatory: 
+
+  * the email client "mail" needs to be installed
+  * put a file with the name "email.txt" in your home folder that contains your email address in the first line
+
+```julia
+julia> notifyme()
+```
+
+or:
+
+```julia
+julia> notifyme("Calculation 1 finished!")
+```
+
+
+
 
 
 ```julia
