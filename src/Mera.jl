@@ -114,6 +114,7 @@ export
     createscales,
     humanize,
     bell,
+    notifyme,
 
 #types
     ScalesType001,
