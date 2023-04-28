@@ -470,12 +470,12 @@ Mandatory:
 ```julia
 julia> notifyme()
 ```
-`
+
 or:
 
 ```julia
 julia> notifyme("Calculation 1 finished!")
-````
+```
 
 """
 function notifyme(msg::String)
