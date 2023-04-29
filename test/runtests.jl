@@ -483,4 +483,4 @@ end
 # mera files; myarguments
 
 rm(pwd() * "/simulations", recursive=true)
-rm(pwd() * "simulations.tar")
+rm(pwd() * "/simulations.tar")
