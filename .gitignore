@@ -44,9 +44,12 @@ tutorials/version_1/examples/*.jld
 tutorials/version_1/examples/*.gz
 tutorials/version_1/examples/*.dat
 tutorials/version_1/examples/.ipynb_checkpoints/
+tutorials/version_1/examples/.jupyter
+
 # test scripts
 testing/
 profiling/
+test/Manifest.toml
 
 # functions under development
 src/dev
