@@ -6,7 +6,8 @@ using Tar
 
 #run(`mkdir simulations`)
 #mkdir("simulations")
-Downloads.download("https://www.usm.lmu.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
+Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
+#Downloads.download("https://www.usm.lmu.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
 tar = open("./simulations.tar")
 dir = Tar.extract(tar, "./simulations")
 close(tar)
