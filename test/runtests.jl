@@ -489,6 +489,7 @@ output = 2
         @info("data types:")
         printstyled("--------------------------------------\n", color=:cyan)
 
+
         @test checktypes_error(output, path, :hydro)
         @test checktypes_error(output, path, :particles)
         @test checktypes_error(output, path, :gravity)
@@ -496,6 +497,10 @@ output = 2
         @test checktypes_error(output, path, :clumps)
         @test checktypes_error(output, path, :sinks)
         @test checktypes_error(output, path, :amr)
+
+
+        @test checklevelmax_error(output, path)
+        @test checklevelmin_error(output, path)
 
     end
 end
