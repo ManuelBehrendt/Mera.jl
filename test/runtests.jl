@@ -32,6 +32,19 @@ output = 2
 
 @testset "Mera test" begin
     @testset "01 General Tests" begin
+        
+        ===================================================================
+        println()
+        printstyled("--------------------------------------\n", color=:cyan)
+        @info("general tests:")
+        printstyled("--------------------------------------\n", color=:cyan)
+            @testset "getinfo" begin
+            @test verbose_status()
+            @test showprogress_status()
+            @test view_argtypes()
+            
+
+
 
         # ===================================================================
         println()
@@ -41,8 +54,9 @@ output = 2
         @testset "getinfo" begin
             # main functionality
 
-            @test verbose_status()
-            @test showprogress_status()
+           
+
+
 
             @test  infotest(output, path)
 
