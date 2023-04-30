@@ -88,6 +88,8 @@ output = 2
         @testset "info overview" begin
             @test simoverview(output, simpath)
             @test viewfieldstest(output, path)
+            @test viewfilescontent(output, path)
+            
         end
 
 
