@@ -30,3 +30,18 @@ function checktypes_error(output, path, datatype)
 
     return true
 end
+
+
+
+
+function checklevelmax_error(output, path)
+    info = getinfo(output, path, verbose=false)
+    gas = gethydro(info, lmax=10)
+    return true
+end
+
+function checklevelmin_error(output, path)
+    info = getinfo(output, path, verbose=false)
+    gas = gethydro(info, lmax=1)
+    return true
+end
