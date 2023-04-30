@@ -7,7 +7,7 @@ using Tar
 #run(`mkdir simulations`)
 #mkdir("simulations")
 Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
-#Downloads.download("https://www.usm.lmu.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
+
 tar = open("./simulations.tar")
 dir = Tar.extract(tar, "./simulations")
 close(tar)
@@ -535,13 +535,12 @@ end
 # getvar, particles
 # masking
 # basic calcs: msum, com, bulk vel; average
-# mera files; myarguments
+# mera files; 
 # test uniform grid
 # particles read cpu
 # particles uniform grid
 # old RAMSES version: gethydro, getparticles
 
-# viewfields(object::FilesContentType)
-
+# not needed:
 #rm(pwd() * "/simulations", recursive=true)
 #rm(pwd() * "/simulations.tar")
