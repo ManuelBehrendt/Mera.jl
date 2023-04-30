@@ -299,7 +299,7 @@ function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bo
 
     # set minimum thermal pressure in cells
     if smallc != 0.  && in(5, nvarh_list)
-        @inbounds vars_1D[5,:] =clamp.(vars_1D[nvarh_corr[5],:], smallr, maximum(vars_1D[nvarh_corr[5],:]) + 1 )
+        @inbounds vars_1D[5,:] =clamp.(vars_1D[nvarh_corr[5],:], smallc, maximum(vars_1D[nvarh_corr[5],:]) + 1 )
 
     else
         # check for negative values in thermal pressure
