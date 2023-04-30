@@ -1,14 +1,14 @@
 """
 #### Project variables or derived quantities from the **hydro-dataset**:
-- projection to a grid related to the maximum level of the loaded data
+- projection to an arbitrary large grid: give pixelnumber for each dimension = res
 - overview the list of predefined quantities with: projection()
 - select variable(s) and their unit(s)
 - limit to a maximum range
 - select a coarser grid than the maximum resolution of the loaded data (maps with both resolutions are created)
 - give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
 - relate the coordinates to a direction (x,y,z)
-- select between mass (default) and volume weighting
-- pass a mask to exclude elements (cells/particles/...) from the calculation
+- select arbitrary weighting: mass (default),  volume weighting, etc.
+- pass a mask to exclude elements (cells) from the calculation
 - toggle verbose mode
 - toggle progress bar
 - pass a struct with arguments (myargs)
@@ -18,9 +18,12 @@
 projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
-                        mask=[false],
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -43,17 +46,20 @@ return HydroMapsType
 - **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
 ##### Predefined/Optional Keywords:
 - **`unit(s)`:** return the variable in given units
-- **`lmax`:** create maps with coarser grid than provided by the maximum level of the loaded data
+- **`pxsize``:** creates maps with the given pixel size in physical/code units (dominates over: res, lmax) : pxsize=[physical size (Number), physical unit (Symbol)]
+- **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected; (pixel number is related to the full boxsize)
+- **`lmax`:** create maps with 2^lmax pixels for each dimension
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
+- **`weighting`:** select between `:mass` weighting (default) and any other pre-defined quantity, e.g. `:volume`. Pass an array with the weighting=[quantity (Symbol), physical unit (Symbol)]
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** select between: :x, :y, :z
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`mode`:** :standard (default) handles projections other than surface density. mode=:standard (default) -> weighted average; mode=:sum sums-up the weighted quantities in projection direction. 
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
 
@@ -69,13 +75,16 @@ return HydroMapsType
 #### Examples
 ...
 """
-function projection_depr(   dataobject::HydroDataType, var::Symbol;
+function projection(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Real=dataobject.lmax,
-                        mask=[false],
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -88,12 +97,15 @@ function projection_depr(   dataobject::HydroDataType, var::Symbol;
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    return projection_depr(dataobject, [var], units=[unit],
+    return projection(dataobject, [var], units=[unit],
                             lmax=lmax,
+                            res=res,
+                            pxsize=pxsize,
                             mask=mask,
                             direction=direction,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
+                            mode=mode,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -108,12 +120,15 @@ function projection_depr(   dataobject::HydroDataType, var::Symbol;
 end
 
 
-function projection_depr(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
+function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         lmax::Real=dataobject.lmax,
-                        mask=[false],
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -126,12 +141,15 @@ function projection_depr(   dataobject::HydroDataType, var::Symbol, unit::Symbol
                         myargs::ArgumentsType=ArgumentsType() )
 
 
-    return projection_depr(dataobject, [var], units=[unit],
+    return projection(dataobject, [var], units=[unit],
                             lmax=lmax,
+                            res=res,
+                            pxsize=pxsize,
                             mask=mask,
                             direction=direction,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
+                            mode=mode,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -146,12 +164,15 @@ function projection_depr(   dataobject::HydroDataType, var::Symbol, unit::Symbol
 end
 
 
-function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
                         lmax::Real=dataobject.lmax,
-                        mask=[false],
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -163,12 +184,15 @@ function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1}, un
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
-    return projection_depr(dataobject, vars, units=units,
+    return projection(dataobject, vars, units=units,
                                                 lmax=lmax,
+                                                res=res,
+                                                pxsize=pxsize,
                                                 mask=mask,
                                                 direction=direction,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
+                                                mode=mode,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -185,12 +209,15 @@ end
 
 
 
-function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
                         lmax::Real=dataobject.lmax,
-                        mask=[false],
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
                         #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -202,12 +229,15 @@ function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1}, un
                         show_progress::Bool=true,
                         myargs::ArgumentsType=ArgumentsType() )
 
-    return projection_depr(dataobject, vars, units=fill(unit, length(vars)),
+    return projection(dataobject, vars, units=fill(unit, length(vars)),
                                                 lmax=lmax,
+                                                res=res,
+                                                pxsize=pxsize,
                                                 mask=mask,
                                                 direction=direction,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
+                                                mode=mode,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -223,15 +253,15 @@ end
 
 
 
-
-#todo: check for uniform grid
-function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1};
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
-                        mask=[false],
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
-                        #plane_orientation::Symbol=:perpendicular,
-                        weighting::Symbol=:mass,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -245,6 +275,8 @@ function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
     # take values from myargs if given
+    if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
+    if !(myargs.res           === missing)           res = myargs.res end
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.direction     === missing)     direction = myargs.direction end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
@@ -257,43 +289,285 @@ function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
-    verbose = checkverbose(verbose)
-    show_progress = checkprogress(show_progress)
+
+
+    verbose = Mera.checkverbose(verbose)
+    show_progress = Mera.checkprogress(show_progress)
     printtime("", verbose)
+
 
     lmin = dataobject.lmin
     #lmax = dataobject.lmax
     simlmax=dataobject.lmax
     #simlmax=lmax
-    Nlevel = simlmax-lmin
+    ##Nlevel = simlmax-lmin
     boxlen = dataobject.boxlen
+    if res === missing res = 2^lmax end
+
+    if !(pxsize[1] === missing)
+        px_unit = 1. # :standard
+        if length(pxsize) != 1
+            if !(pxsize[2] === missing) 
+                if pxsize[2] != :standard 
+                    px_unit = getunit(dataobject.info, pxsize[2])
+                end
+            end
+        end
+        px_scale = pxsize[1] / px_unit
+        res = boxlen/px_scale
+    end
+    res = ceil(Int, res) # be sure to have Integer
+
+    if !(weighting[1] === missing)
+        weight_scale = 1. # :standard
+        if length(weighting) != 1
+            if !(weighting[2] === missing) 
+                if weighting[2] != :standard 
+                    weight_scale = getunit(dataobject.info, weighting[2])
+                end
+            end
+        end
+
+    end
 
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
     lmax_projected = lmax
-    isamr = checkuniformgrid(dataobject, lmax)
+    isamr = Mera.checkuniformgrid(dataobject, lmax)
+    selected_vars = deepcopy(vars) #unique(vars)
 
-    selected_vars = vars #unique(vars)
-
-    sd_names = [:sd, :Σ, :surfacedensity]
+    #sd_names = [:sd, :Σ, :surfacedensity]
     density_names = [:density, :rho, :ρ]
-
-    # checks to use maps instead of projections
     rcheck = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
+            :σy => [:vy, :vy2],
+            :σz => [:vz, :vz2],
+            :σ  => [:v,  :v2],
+            :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
+            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
+
+    # checks to use maps instead of projections
+    notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
+
+    selected_vars = check_need_rho(dataobject, selected_vars, weighting[1], notonly_ranglecheck_vars)
+
+    # convert given ranges and print overview on screen
+    ranges = Mera.prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
+
+    data_centerm = Mera.prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
+
+    if verbose
+        println("Selected var(s)=$(tuple(selected_vars...)) ")
+        println("Weighting      = :", weighting[1])
+        println()
+    end
+
+    x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
+
+    pixsize = dataobject.boxlen / res # in code units
+    if verbose
+        println("Effective resolution: $res^2")
+        println("Map size: $length1 x $length2")
+        px_val, px_unit = humanize(pixsize, dataobject.scale, 3, "length")
+        pxmin_val, pxmin_unit = humanize(boxlen/2^dataobject.lmax, dataobject.scale, 3, "length")
+        println("Pixel size: $px_val [$px_unit]")
+        println("Simulation min.: $pxmin_val [$pxmin_unit]")
+        println()
+    end
+
+    skipmask = check_mask(dataobject, mask, verbose)
+
+
+
+     # prepare data
+    # =================================
+    maps = SortedDict( )
+    maps_unit = SortedDict( )
+    maps_weight = SortedDict( )
+    maps_mode = SortedDict( )
+    if notonly_ranglecheck_vars
+        newmap_w = zeros(Float64, (length1, length2) )
+        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2)
+
+
+        closed=:left
+        if show_progress
+            p = 1 # show updates
+        else
+            p = simlmax+2 # do not show updates
+        end
+        #if show_progress p = Progress(simlmax-lmin) end
+        @showprogress p for level = lmin:simlmax #@showprogress 1 ""
+            #println()
+            #println("level: ", level)
+            mask_level = leveldata .== level
+
+            new_level_range1, new_level_range2, length_level1, length_level2 = prep_level_range(direction, level, ranges)
+
+            # bin data on current level grid and resize map
+            fcorrect = (2^level /  res) ^ 2
+            map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval) .* weight_scale
+            newmap_w += imresize(map_weight, (length1, length2)) .* fcorrect
+
+            for ivar in keys(data_dict)
+                if ivar == :sd || ivar == :mass
+                    #if ivar == :mass println(ivar) end
+                    map = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar])
+                else
+                    map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar]) .* weight_scale
+                end
+                maps[ivar] += imresize(map, (length1, length2)) .* fcorrect
+            end
+
+
+            #if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
+        end #for level
+
+
+        # velocity dispersion maps
+        for ivar in selected_vars
+            if in(ivar, σcheck)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                selected_v = σ_to_v[ivar]
+
+                # revert weighting
+                if mode == :standard
+                    iv  = maps[selected_v[1]] = maps[selected_v[1]]  ./newmap_w 
+                    iv2 = maps[selected_v[2]] = maps[selected_v[2]]  ./newmap_w 
+                elseif mode == :sum
+                    iv  = maps[selected_v[1]] = maps[selected_v[1]]   
+                    iv2 = maps[selected_v[2]] = maps[selected_v[2]]   
+                end
+                delete!(data_dict, selected_v[1])
+                delete!(data_dict, selected_v[2])
+                
+                # create vdisp map
+                maps[ivar] = sqrt.( iv2 .- iv .^2 ) .* selected_unit
+                maps_unit[ivar] = unit_name
+                maps_weight[ivar] = weighting
+                maps_mode[ivar] = mode
+                
+                # assign units 
+                selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
+                maps_unit[selected_v[1]]  = unit_name
+                maps[selected_v[1]] = maps[selected_v[1]] .* selected_unit
+                maps_weight[selected_v[1]] = weighting
+                maps_mode[selected_v[1]] = mode
+                
+                selected_unit, unit_name= getunit(dataobject, selected_v[2], selected_vars, units, uname=true)
+                maps_unit[selected_v[2]]  = unit_name
+                maps[selected_v[2]] = maps[selected_v[2]] .* selected_unit^2
+                maps_weight[selected_v[2]] = weighting
+                maps_mode[selected_v[2]] = mode
+                
+            end
+        end
+
+
+
+        # finish projected data and revise weighting
+        for ivar in keys(data_dict)
+            selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+
+            if ivar == :sd
+                maps_weight[ivar] = :nothing
+                maps_mode[ivar] = :nothing
+                maps[ivar] = maps[ivar] ./ (boxlen / res)^2 .* selected_unit # sd = mass/A * unit
+            elseif ivar == :mass
+                maps_weight[ivar] = :nothing
+                maps_mode[ivar] = :sum
+                maps[ivar] = maps[ivar] .* selected_unit
+            else
+                maps_weight[ivar] = weighting
+                maps_mode[ivar] = mode
+                if mode == :standard
+                    maps[ivar] = maps[ivar] ./ newmap_w .* selected_unit
+                elseif mode == :sum
+                    maps[ivar] = maps[ivar].* selected_unit
+                end
+            end
+            maps_unit[ivar]  = unit_name
+        end
+     end # notonly_ranglecheck_vars
+
+
+
+
+
+
+        # create radius map
+    for ivar in selected_vars
+        if in(ivar, rcheck)
+            selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+            map_R = zeros(Float64, length1, length2 );
+            for i = 1:(length1)
+                for j = 1:(length2)
+                    x = i * dataobject.boxlen / res
+                    y = j * dataobject.boxlen / res
+                    radius = sqrt((x-length1_center)^2 + (y-length2_center)^2)
+                    map_R[i,j] = radius * selected_unit
+                end
+            end
+            maps_mode[ivar] = :nothing
+            maps_weight[ivar] = :nothing
+            maps[ivar] = map_R
+            maps_unit[ivar] = unit_name
+        end
+    end
+
+
+    # create ϕ-angle map
+    for ivar in selected_vars
+        if in(ivar, anglecheck)
+            map_ϕ = zeros(Float64, length1, length2 );
+            for i = 1:(length1)
+                for j = 1:(length2)
+                    x = i * dataobject.boxlen /res - length1_center
+                    y = j * dataobject.boxlen / res - length2_center
+                    if x > 0. && y >= 0.
+                        map_ϕ[i,j] = atan(y / x)
+                    elseif x > 0. && y < 0.
+                        map_ϕ[i,j] = atan(y / x) + 2. * pi
+                    elseif x < 0.
+                        map_ϕ[i,j] = atan(y / x) + pi
+                    elseif x==0 && y > 0
+                        map_ϕ[i,j] = pi/2.
+                    elseif x==0 && y < 0
+                        map_ϕ[i,j] = 3. * pi/2.
+                    end
+                end
+            end
+
+            maps_mode[ivar] = :nothing
+            maps_weight[ivar] = :nothing
+            maps[ivar] = map_ϕ
+            maps_unit[ivar] = :radian
+        end
+    end
+
+
+    maps_lmax = SortedDict( )
+    return HydroMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+
+    #return maps, maps_unit, extent_center, ranges
+end
+
+
+
+
+
+# check if only variables from ranglecheck are selected
+function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σcheck, σ_to_v)
+    # checks to use maps instead of projections
+
+
     ranglecheck = [rcheck..., anglecheck...]
     # for velocity dispersion add necessary velocity components
     # ========================================================
-    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
     rσanglecheck = [rcheck...,σcheck...,anglecheck...]
-
-    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
-                          :σy => [:vy, :vy2],
-                          :σz => [:vz, :vz2],
-                          :σ  => [:v,  :v2],
-                          :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
-                          :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
 
     for i in σcheck
         idx = findall(x->x==i, selected_vars) #[1]
@@ -310,8 +584,20 @@ function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # ========================================================
 
 
+    Nvars = length(selected_vars)
+    cw = 0
+    for iw in selected_vars
+        if in(iw,ranglecheck)
+            cw +=1
+        end
+    end
+    Ndiff = Nvars-cw
+    return Ndiff != 0
+end
 
-    notonly_ranglecheck_vars = checkformaps(selected_vars, ranglecheck)
+
+
+function check_need_rho(dataobject, selected_vars, weighting, notonly_ranglecheck_vars)
 
     if weighting == :mass
         # only add :sd if there are also other variables than in ranglecheck
@@ -323,503 +609,277 @@ function projection_depr(   dataobject::HydroDataType, vars::Array{Symbol,1};
             error("""[Mera]: For mass weighting variable "rho" is necessary.""")
         end
     end
+    return selected_vars
+end
 
 
+function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
+    x_coord = :cx
+    y_coord = :cy
+    z_coord = :z
 
-    # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
+    r1 = floor(Int, ranges[1] * res)
+    r2 = ceil(Int,  ranges[2] * res)
+    r3 = floor(Int, ranges[3] * res)
+    r4 = ceil(Int,  ranges[4] * res)
+    r5 = floor(Int, ranges[5] * res)
+    r6 = ceil(Int,  ranges[6] * res)
 
-    data_centerm = prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
-
+    rl1 = data_centerm[1] .* res
+    rl2 = data_centerm[2] .* res
+    rl3 = data_centerm[3] .* res
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
-    if verbose
-        println("Selected var(s)=$(tuple(selected_vars...)) ")
-        println()
-    end
-
-
-
-    # rebin data on the maximum loaded grid
-    r1 = floor(Int, ranges[1] * (2^simlmax)) + 1
-    r2 = ceil(Int, ranges[2] * (2^simlmax))  + 1
-    r3 = floor(Int, ranges[3] * (2^simlmax)) + 1
-    r4 = ceil(Int, ranges[4] * (2^simlmax))  + 1
-    r5 = floor(Int, ranges[5] * (2^simlmax)) + 1
-    r6 = ceil(Int, ranges[6] * (2^simlmax))  + 1
-
-
-    x_coord = :cx
-    y_coord = :cy
-    rl = data_centerm .* 2^simlmax #.* dataobject.boxlen
-
 
     if direction == :z
-        # range on maximum used grid
+        #x_coord = :cx
+        #y_coord = :cy
+        #z_coord = :z
+        rangez = [zmin, zmax]
 
-        newrange1 = range(r1, stop=r2, length=(r2-r1))
-        newrange2 = range(r3, stop=r4, length=(r4-r3))
-        #println(newrange1)
-        #println(newrange2)
+        # get range for given resolution
+        newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
+        newrange2 = range(r3, stop=r4, length=(r4-r3)+1)
 
-        x_coord = :cx
-        y_coord = :cy
-        extent=[r1-1,r2-1,r3-1,r4-1]
 
+        # export img properties for plots
+        extent=[r1,r2,r3,r4]
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
-        extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[2], extent[4]-rl[2]] .* boxlen ./ 2^simlmax
-        extent = extent .* boxlen ./ 2^simlmax
+        extent_center = [0.,0.,0.,0.]
+        extent_center[1:2] = [extent[1]-rl1, extent[2]-rl1] * boxlen / res
+        extent_center[3:4] = [extent[3]-rl2, extent[4]-rl2] * boxlen / res
+        extent = extent .* boxlen ./ res
 
+        # for radius and ϕ-angle map
         length1_center = (data_centerm[1] -xmin ) * boxlen
         length2_center = (data_centerm[2] -ymin ) * boxlen
 
     elseif direction == :y
-        # range on maximum used grid
-        newrange1 = range(r1, stop=r2, length=(r2-r1))
-        newrange2 = range(r5, stop=r6, length=(r6-r5))
-        #println(newrange1)
-        #println(newrange2)s
-
         x_coord = :cx
         y_coord = :cz
-        extent=[r1-1,r2-1,r5-1,r6-1]
+        z_coord = :y
+        rangez = [ymin, ymax]
 
+        # get range for given resolution
+        newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
+        newrange2 = range(r5, stop=r6, length=(r6-r5)+1)
+
+
+        # export img properties for plots
+        extent=[r1,r2,r5,r6]
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
-        extent_center= [extent[1]-rl[1], extent[2]-rl[1], extent[3]-rl[3], extent[4]-rl[3]] .* boxlen ./ 2^simlmax
-        extent = extent .* boxlen ./ 2^simlmax
+        extent_center = [0.,0.,0.,0.]
+        extent_center[1:2] = [extent[1]-rl1, extent[2]-rl1] * boxlen / res
+        extent_center[3:4] = [extent[3]-rl3, extent[4]-rl3] * boxlen / res
+        extent = extent .* boxlen ./ res
 
-        length1_center = (data_centerm[1] - xmin  ) * boxlen
-        length2_center = (data_centerm[3] - zmin) * boxlen
+        # for radius and ϕ-angle map
+        length1_center = (data_centerm[1] -xmin ) * boxlen
+        length2_center = (data_centerm[3] -zmin ) * boxlen
 
-    elseif direction == :x
-        # range on maximum used grid
-        newrange1 = range(r3, stop=r4, length=(r4-r3))
-        newrange2 = range(r5, stop=r6, length=(r6-r5))
-        #println(newrange1)
-        #println(newrange2)
+     elseif direction == :x
         x_coord = :cy
         y_coord = :cz
-        extent=[r3-1,r4-1,r5-1,r6-1]
+        z_coord = :x
+        rangez = [xmin, xmax]
 
+        # get range for given resolution
+        newrange1 = range(r3, stop=r4, length=(r4-r3)+1)
+        newrange2 = range(r5, stop=r6, length=(r6-r5)+1)
+
+
+        # export img properties for plots
+        extent=[r3,r4,r5,r6]
         ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
-        extent_center= [extent[1]-rl[2], extent[2]-rl[2], extent[3]-rl[3], extent[4]-rl[3]] .* boxlen ./ 2^simlmax
-        extent = extent .* boxlen ./ 2^simlmax
+        extent_center = [0.,0.,0.,0.]
+        extent_center[1:2] = [extent[1]-rl2, extent[2]-rl2] * boxlen / res
+        extent_center[3:4] = [extent[3]-rl3, extent[4]-rl3] * boxlen / res
+        extent = extent .* boxlen ./ res
 
+        # for radius and ϕ-angle map
         length1_center = (data_centerm[2] -ymin ) * boxlen
-        length2_center = (data_centerm[3] -zmin) * boxlen
+        length2_center = (data_centerm[3] -zmin ) * boxlen
     end
 
 
-    length1=length( newrange1)
-    length2=length( newrange2)
-    map = zeros(Float64, length1, length2, length(selected_vars)  )
-    map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
+    # prepare maps
+    length1=length( newrange1) -1
+    length2=length( newrange2) -1
+    #map = zeros(Float64, length1, length2, length(selected_vars)  ) # 2d map vor each variable
+    #map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
+
+
+    return x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez
+end
 
 
 
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2)
+        # mask thickness of projection
+        zval = getvar(dataobject, z_coord)
+        #println(rangez)
+        if rangez[1] != 0.
+            mask_zmin = zval .>= rangez[1] .* dataobject.boxlen
+            if !skipmask
+                #println("mask zmin 1")
+                mask = mask .* mask_zmin
+            else
+                #println("mask zmin 1")
+                mask = mask_zmin
+            end
+        else
+                #println("mask zmin no")
+        end
+
+        if rangez[2] != 1.
+            mask_zmax = zval .<= rangez[2] .* dataobject.boxlen
+            if !skipmask
+                #println("mask zmax 1")
+                mask = mask .* mask_zmax
+            else
+                if rangez[1] != 0.
+                    #println("mask zmax 2")
+                    mask = mask .* mask_zmax
+                else
+                    #println("mask zmax 3")
+                    mask = mask_zmax
+                end
+            end
+        else
+            #println("mask zmax no")
+        end
+
+
+        if length(mask) == 1
+            xval = select(dataobject.data, x_coord)
+            yval = select(dataobject.data, y_coord)
+            weightval = getvar(dataobject, weighting)
+            leveldata = select(dataobject.data, :level)
+        else
+            xval = select(dataobject.data, x_coord)[mask] #getvar(dataobject, x_coord, mask=mask)
+            yval = select(dataobject.data, y_coord)[mask] #getvar(dataobject, y_coord, mask=mask)
+            #if weighting == nothing
+            #    weightval = 1.
+            #else
+                weightval = getvar(dataobject, weighting, mask=mask)
+            #end
+            leveldata = select(dataobject.data, :level)[mask] #getvar(dataobject, :level, mask=mask)
+            #end
+        end
+
+
+        data_dict = SortedDict( )
+        for ivar in selected_vars
+            if !in(ivar, anglecheck) && !in(ivar, rcheck)  && !in(ivar, σcheck)
+                maps[ivar] =  zeros(Float64, (length1, length2) )
+                if ivar !== :sd
+                    if length(mask) == 1
+                        data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                    elseif !(ivar in σcheck)
+                        data_dict[ivar] = getvar(dataobject, ivar, mask=mask, center=center, center_unit=range_unit)
+                    end
+                elseif ivar == :sd || ivar == :mass
+                    if weighting == :mass
+                        data_dict[ivar] = weightval
+                    else
+                        if length(mask) == 1
+                            data_dict[ivar] = getvar(dataobject, :mass)
+                        else
+                            data_dict[ivar] = getvar(dataobject, :mass, mask=mask)
+                        end
+                    end
+                end
+            end
+        end
+        # =================================
+    return data_dict, xval, yval, leveldata, weightval, maps
+end
+
+
+
+function prep_level_range(direction, level, ranges)
+    if direction == :z
+        # rebin data on the current level grid
+        rl1 = floor(Int, ranges[1] * 2^level) +1
+        rl2 = ceil(Int,  ranges[2] * 2^level) +1
+        rl3 = floor(Int, ranges[3] * 2^level) +1
+        rl4 = ceil(Int,  ranges[4] * 2^level) +1
+
+        # range of current level grid
+        new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
+        new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
+
+    elseif direction == :y
+        # rebin data on the current level grid
+        rl1 = floor(Int, ranges[1] * 2^level) +1
+        rl2 = ceil(Int,  ranges[2] * 2^level) +1
+        rl3 = floor(Int, ranges[5] * 2^level) +1
+        rl4 = ceil(Int,  ranges[6] * 2^level) +1
+
+        # range of current level grid
+        new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
+        new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
+
+    elseif direction == :x
+        # rebin data on the current level grid
+        rl1 = floor(Int, ranges[3] * 2^level) +1
+        rl2 = ceil(Int,  ranges[4] * 2^level) +1
+        rl3 = floor(Int, ranges[5] * 2^level) +1
+        rl4 = ceil(Int,  ranges[6] * 2^level) +1
+
+        # range of current level grid
+        new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
+        new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
+    end
+
+    # length of current level grid
+    length_level1=length( new_level_range1 )
+    length_level2=length( new_level_range2 )
+
+    return new_level_range1, new_level_range2, length_level1, length_level2
+end
+
+
+function check_mask(dataobject, mask, verbose)
+    skipmask=true
     rows = length(dataobject.data)
-    mera_mask_inserted = false
     if length(mask) > 1
         if length(mask) !== rows
             error("[Mera] ",now()," : array-mask length: $(length(mask)) does not match with data-table length: $(rows)")
         else
-            if in(:mask, colnames(dataobject.data))
-                if verbose
-                    println(":mask provided by datatable")
-                    println()
-                end
-            else
-                Nafter = JuliaDB.ncols(dataobject.data)
-                dataobject.data = JuliaDB.insertcolsafter(dataobject.data, Nafter, :mask => mask)
-                if verbose
-                    println(":mask provided by function")
-                    println()
-                end
-                mera_mask_inserted = true
+            skipmask = false
+            if verbose
+                println(":mask provided by function")
+                println()
             end
         end
     end
-
-
-
-
-
-    alt_shift = 2
-    closed=:left
-    maps = SortedDict( )
-    maps_unit = SortedDict( )
-    maps_lmax = SortedDict( )
-    maps_mode = SortedDict( )
-    if notonly_ranglecheck_vars
-        if show_progress p = Progress(simlmax-lmin) end
-        for level = lmin:simlmax #@showprogress 1 ""
-
-            first_time_level = fill(1, length(selected_vars) )
-            if isamr
-                #level_data = filter(row->row.level == level, dataobject.data)
-                level_data = filter(p-> p.level == level &&
-                                        p.cx >=floor(Int, 2^p.level * xmin) &&
-                                        p.cx <=ceil(Int,  2^p.level * xmax) &&
-                                        p.cy >=floor(Int, 2^p.level * ymin) &&
-                                        p.cy <=ceil(Int,  2^p.level * ymax) &&
-                                        p.cz >=floor(Int, 2^p.level * zmin) &&
-                                        p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
-            else # for uniform grid
-                #level_data = dataobject.data
-                level_data = filter(p-> p.cx >=floor(Int, 2^lmax * xmin) &&
-                                        p.cx <=ceil(Int,  2^lmax * xmax) &&
-                                        p.cy >=floor(Int, 2^lmax * ymin) &&
-                                        p.cy <=ceil(Int,  2^lmax * ymax) &&
-                                        p.cz >=floor(Int, 2^lmax * zmin) &&
-                                        p.cz <=ceil(Int,  2^lmax * zmax), dataobject.data)
-            end
-
-            # rebin data on the used level grid
-            rl1 = floor(Int, ranges[1] * (2^level ))  + 1
-            rl2 = ceil(Int, ranges[2] * (2^level ))   + 1
-            rl3 = floor(Int, ranges[3] * (2^level ))  + 1
-            rl4 = ceil(Int, ranges[4] * (2^level ))   + 1
-            rl5 = floor(Int, ranges[5] * (2^level)) + 1
-            rl6 = ceil(Int, ranges[6] * (2^level))  + 1
-            #println("Rebin data on the used maximum used grid")
-            #println("xrange: ",rl1, " ", rl2)
-            #println("yrange: ",rl3, " ", rl4)
-            #println()
-
-
-            if level == simlmax
-                alt_shift = 1
-            end
-
-
-            if direction == :z
-                # range on maximum used grid
-                new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1) +alt_shift)
-                new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3) +alt_shift)
-                #println(newrange1)
-                #println(newrange2)
-
-
-
-            elseif direction == :y
-                # range on maximum used grid
-                new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+alt_shift)
-                new_level_range2 = range(rl5, stop=rl6, length=(rl6-rl5)+alt_shift)
-                #println(newrange1)
-                #println(newrange2)s
-
-
-            elseif direction == :x
-                # range on maximum used grid
-                new_level_range1 = range(rl3, stop=rl4, length=(rl4-rl3)+alt_shift)
-                new_level_range2 = range(rl5, stop=rl6, length=(rl6-rl5)+alt_shift)
-                #println(newrange1)
-                #println(newrange2)
-
-            end
-
-
-
-            # range on maximum used level grid
-            length_level1=length( new_level_range1 )
-            length_level2=length( new_level_range2 )
-
-
-
-                # needed for mass weighting and/or sd,rho, ekin projections
-                if in(:rho, selected_vars) || in(:ρ, selected_vars) || in(:density, selected_vars) ||
-                    in(:sd, selected_vars) || in(:Σ, selected_vars) || in(:surfacedensity, selected_vars) ||
-                    in(:ekin, selected_vars) ||
-                    weighting == :mass
-
-                    if length(mask) == 1
-                        global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                            weights( select(level_data, :rho) ),
-                                            closed=closed,
-                                            (new_level_range1, new_level_range2)  )
-                    else
-                        global h = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                            weights( select(level_data, :rho) .* select(level_data, :mask) ),
-                                            closed=closed,
-                                            (new_level_range1, new_level_range2)  )
-                    end
-
-                end
-
-
-
-                counter = 0
-                for ivar in selected_vars
-                    counter = counter + 1
-
-                    if !in(ivar, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
-
-                        # non derived variables, density weighted (per level)
-                        if !in(ivar, density_names) && !in(ivar, sd_names)
-                        #if ivar != :sd  &&  ivar!=:rho
-                             #&& ivar != :Σ && ivar != :surfacedensity  #&& ivar != :ρ && ivar != :density
-                            if weighting == :mass
-                                if length(mask) == 1
-                                    #println(ivar, " ", counter)
-                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction) .* select(level_data, :rho)  ),
-                                                    closed=closed,
-                                                    (new_level_range1, new_level_range2) )
-                                else
-                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction) .* select(level_data, :rho) .* select(level_data, :mask)  ),
-                                                    closed=closed,
-                                                    (new_level_range1, new_level_range2) )
-                                end
-                            elseif weighting == :volume
-                                if length(mask) == 1
-                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction)  ),
-                                                    closed=closed,
-                                                    (new_level_range1, new_level_range2) )
-                                else
-                                    h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                    weights( getvar(dataobject, ivar, filtered_db=level_data, center=data_centerm, direction=direction)  .* select(level_data, :mask) ),
-                                                    closed=closed,
-                                                    (new_level_range1, new_level_range2) )
-                                end
-                            end
-
-
-                        elseif in(ivar, density_names)
-                            if length(mask) == 1
-                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                closed=closed,
-                                                (new_level_range1, new_level_range2) )
-                            else
-                                h_var = fit(Histogram, ( select(level_data, x_coord), select(level_data, y_coord) ),
-                                                weights( select(level_data, :mask) ),
-                                                closed=closed,
-                                                (new_level_range1, new_level_range2) )
-                            end
-                        end
-
-
-                        # scale to current levels
-                        if in(ivar, sd_names) #ivar == :sd #|| ivar == :Σ || ivar == :surfacedensity
-                            map_buffer = h.weights .* (boxlen / 2^level)
-
-                        elseif in(ivar, density_names) #ivar == :rho #|| ivar == :ρ || ivar == :density
-                            map_buffer = h.weights
-                            map_buffer_weight = h_var.weights
-
-                        elseif !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :volume
-                        #elseif ivar !== :sd && ivar != :rho && weighting == false
-                            map_buffer = h_var.weights .* (boxlen / 2^level)
-
-                        else # for any kind of mass weighted projection
-                            map_buffer = h_var.weights .* (boxlen / 2^level)^3
-                            #if first_time == 1
-                            map_buffer_weight = h.weights .* (boxlen / 2^level)^3
-                            #end
-
-                        end
-
-
-                        s = size(map_buffer)
-                        #println( s )
-                        # remap on selected gridsize
-                        if level != simlmax
-                            ratio_level = 2^simlmax / 2^level
-                            scaled_length1 = Int(ratio_level * (length_level1-alt_shift) )
-                            scaled_length2 = Int(ratio_level * (length_level2-alt_shift) )
-
-                            r1_diff = f_min(new_level_range1[1], ratio_level)-newrange1[1]
-                            r2_diff = f_max(new_level_range1[end]-1., ratio_level)-newrange1[end]+1.
-
-                            r3_diff = f_min(new_level_range2[1], ratio_level)-newrange2[1]
-                            r4_diff = f_max(new_level_range2[end]-1., ratio_level)-newrange2[end]+1.
-
-                            # map on lmax grid
-                            remapped = [map_buffer[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1) , y in range(1, stop=s[2], length=scaled_length2)]
-
-                            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass
-                            #if ivar != :sd && ivar != :rho && weighting == true
-
-                                if first_time_level[counter] == 1
-                                    map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2
-
-                                    remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
-                                    map_weight[:, :, counter] .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)] ./ (2^simlmax / 2^level  )^2  # and correct for remapping
-                                    first_time_level[counter] = 0
-                                end
-                            elseif in(ivar, density_names)
-                                #if first_time_level[counter] == 1
-                                map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
-                                remap_weight = [map_buffer_weight[floor(Int,x),floor(Int,y)]  for x in range(1, stop=s[1], length=scaled_length1), y in range(1, stop=s[2], length=scaled_length2)]
-                                map_weight[:, :, counter] .+= remap_weight[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
-                                #first_time_level[counter] = 0
-                                #end
-
-                            else
-                                map[:, :, counter] .+= remapped[Int(1-r1_diff):Int(end-r2_diff), Int(1-r3_diff):Int(end-r4_diff)]
-                            end
-                        elseif level == simlmax
-                            map[:,:,counter] .+= map_buffer
-
-                            if !in(ivar, sd_names) && weighting == :mass && first_time_level[counter] == 1
-                            #if ivar != :sd && ivar != :rho && weighting == true && first_time_level[counter] == 1
-                                map_weight[:, :, counter] .+= map_buffer_weight
-                                first_time_level[counter] = 0
-                            end
-                        end
-
-                    end
-
-
-                end
-
-                if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
-        end #for level
-    end # notonly_ranglecheck_vars
-
-    # calc density maps & reverse weighting
-    counter = 0
-    for ivar in selected_vars
-        counter = counter + 1
-        if !in(ivar, rσanglecheck) # exclude velocity dispersion symbols and radius/angle maps
-            if !in(ivar, density_names) && !in(ivar, sd_names) && weighting == :mass
-
-            #if ivar != :sd && ivar != :Σ && ivar != :surfacedensity && ivar != :rho && ivar != :ρ && ivar != :density && weighting == true
-                #map[:,:,counter] = map[:,:,counter] ./ map_weight
-                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-                maps[Symbol(ivar)] = map[:,:, counter] ./ map_weight[:, :, counter] .* selected_unit
-                maps_unit[Symbol( ivar )] = unit_name
-
-            elseif in(ivar, density_names)
-                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-                maps[Symbol(ivar)] = map[:,:, counter]  ./ map_weight[:, :, counter] .* selected_unit
-                maps_unit[Symbol( string(ivar)  )] = unit_name
-
-            elseif in(ivar, sd_names)
-                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-                maps[Symbol(ivar)] = map[:,:, counter]  .* selected_unit
-                maps_unit[Symbol( string(ivar)  )] = unit_name
-
-            end
-
-        end
-    end
-
-
-
-
-
-    # create radius map
-    for ivar in selected_vars
-        if in(ivar, rcheck)
-            selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-            map_R = zeros(Float64, length1, length2 );
-            for i = 1:(length1)
-                for j = 1:(length2)
-                    x = i * dataobject.boxlen / 2^simlmax
-                    y = j * dataobject.boxlen / 2^simlmax
-                    radius = sqrt((x-length1_center)^2 + (y-length2_center)^2)
-                    map_R[i,j] = radius * selected_unit
-                end
-            end
-
-            maps[Symbol(ivar)] = map_R
-            maps_unit[Symbol( string(ivar)  )] = unit_name
-        end
-    end
-
-
-    # create ϕ-angle map
-    for ivar in selected_vars
-        if in(ivar, anglecheck)
-            map_ϕ = zeros(Float64, length1, length2 );
-            for i = 1:(length1)
-                for j = 1:(length2)
-                    x = i * dataobject.boxlen / 2^simlmax - length1_center
-                    y = j * dataobject.boxlen / 2^simlmax - length2_center
-                    if x > 0. && y >= 0.
-                        map_ϕ[i,j] = atan(y / x)
-                    elseif x > 0. && y < 0.
-                        map_ϕ[i,j] = atan(y / x) + 2. * pi
-                    elseif x < 0.
-                        map_ϕ[i,j] = atan(y / x) + pi
-                    elseif x==0 && y > 0
-                        map_ϕ[i,j] = pi/2.
-                    elseif x==0 && y < 0
-                        map_ϕ[i,j] = 3. * pi/2.
-                    end
-                end
-            end
-
-            maps[Symbol(ivar)] = map_ϕ
-            maps_unit[Symbol( string(ivar)  )] = :radian
-        end
-    end
-
-
-
-    # create velocity dispersion maps, after all other maps are created
-    counter = 0
-    for ivar in selected_vars
-        counter = counter + 1
-
-        if in(ivar, σcheck)
-            #for iσ in σcheck
-                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-
-                    selected_v = σ_to_v[ivar]
-                    iv  = maps[selected_v[1]]
-                    iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
-                    iv2 = maps[selected_v[2]]
-                    iv2_unit = maps_unit[Symbol( string(selected_v[2])  )]
-                    if iv_unit == iv2_unit
-                        if iv_unit == unit_name
-                            maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
-                        elseif iv_unit == :standard
-                            maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  .* selected_unit
-                        elseif iv_unit == :km_s
-                            maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )  ./ dataobject.info.scale.km_s
-                        end
-                    elseif iv_unit != iv2_unit
-                        if iv_unit == :km_s && unit_name == :standard
-                            iv = iv ./ dataobject.info.scale.km_s
-                        elseif iv_unit == :standard && unit_name == :km_s
-                            iv = iv .* dataobject.info.scale.km_s
-                        end
-                        if iv2_unit == :km_s && unit_name == :standard
-                            iv2 = iv2 ./ dataobject.info.scale.km_s.^2
-                        elseif iv2_unit == :standard && unit_name == :km_s
-                            iv2 = iv2 .* dataobject.info.scale.km_s.^2
-                        end
-
-                        # overwrite NaN due to radius = 0
-                        #iv2 = iv2[isnan.(iv2)] .= 0
-                        #iv  = iv[isnan.(iv)] .= 0
-
-                        maps[Symbol(ivar)] = sqrt.( iv2 .- iv .^2 )
-                    end
-
-                    maps_unit[Symbol( string(ivar)  )] = unit_name
-                #end
-            #end
-        end
-    end
-
-
-    if mera_mask_inserted # delete column :mask
-        dataobject.data = select(dataobject.data, Not(:mask))
-    end
-
-    res = 0
-    pixsize=0.
-    finalmaps = HydroMapsType(maps, maps_unit, maps_lmax, maps_mode, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
-
-    if simlmax > lmax
-            return remap(finalmaps, lmax, weighting=weighting)
-    else
-        return finalmaps
-    end
-
+    return skipmask
+end
+
+
+function nrange(start::Int, stop::Int, len::Int, nshift::Int)
+   return range(start, stop=stop + nshift, length=len + nshift )
+end
+
+#function hist2d_weight(x::Vector{Int64}, y::Vector{Int64},
+#                        s::Vector{StepRangeLen{Float64,
+#                        Base.TwicePrecision{Float64},
+#                        Base.TwicePrecision{Float64}}},
+#                        mask::MaskType, w::Vector{Float64})
+function hist2d_weight(x, y, s, mask, w)
+    h = fit(Histogram, (x[mask], y[mask]), weights(w[mask]), (s[1],s[2]))
+    return h.weights
+end
+
+#function hist2d_data(x::Vector{Int64}, y::Vector{Int64},
+#                        s::Vector{StepRangeLen{Float64,
+#                        Base.TwicePrecision{Float64},
+#                        Base.TwicePrecision{Float64}}},
+#                        mask::MaskType, w::Vector{Float64},
+#                        data::Vector{Float64})
+function hist2d_data(x, y, s, mask, w, data)
+    h = fit(Histogram, (x[mask], y[mask]), weights(data[mask] .* w[mask]), (s[1],s[2]))
+    return h.weights
 end
