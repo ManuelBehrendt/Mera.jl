@@ -11,6 +11,13 @@ function showprogress_status()
 end
 
 
+function view_argtypes()
+    myargs = ArgumentsType()
+    viewfields(myargs)
+    return true
+end
+
+
 function infotest(output, path)
     
     info = getinfo(path)
