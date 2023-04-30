@@ -29,3 +29,10 @@ function viewfieldstest(output, path)
     viewallfields(info)
     return true
 end
+
+
+function viewfilescontent(output, path)
+    info = getinfo(output, path, verbose=false)
+    viewfields(info.files_content)
+    return true
+end
