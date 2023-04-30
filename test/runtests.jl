@@ -490,17 +490,17 @@ output = 2
         printstyled("--------------------------------------\n", color=:cyan)
 
 
-        @test checktypes_error(output, path, :hydro)
-        @test checktypes_error(output, path, :particles)
-        @test checktypes_error(output, path, :gravity)
-        @test checktypes_error(output, path, :rt)
-        @test checktypes_error(output, path, :clumps)
-        @test checktypes_error(output, path, :sinks)
-        @test checktypes_error(output, path, :amr)
+        @test_throws checktypes_error(output, path, :hydro)
+        @test_throws checktypes_error(output, path, :particles)
+        @test_throws checktypes_error(output, path, :gravity)
+        @test_throws checktypes_error(output, path, :rt)
+        @test_throws checktypes_error(output, path, :clumps)
+        @test_throws checktypes_error(output, path, :sinks)
+        @test_throws checktypes_error(output, path, :amr)
 
 
-        @test checklevelmax_error(output, path)
-        @test checklevelmin_error(output, path)
+        @test_throws checklevelmax_error(output, path)
+        @test_throws checklevelmin_error(output, path)
 
     end
 end
