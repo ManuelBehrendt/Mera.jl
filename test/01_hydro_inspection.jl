@@ -25,7 +25,14 @@ function gethydro_selectedvars(output, path)
     if length(Ncol) == 6 && :rho in Ncol && :vx in Ncol Ncol_flag2 = true end
     println("Ncol_flag2 = ", Ncol_flag2 )
    
-    return Ncol_flag1 == true && Ncol_flag2 == true     
+    gas = gethydro(info, [:rho, :vx, :vy, :vz, :p])
+    Ncol = propertynames(gas.data.columns)
+    Ncol_flag3 = false
+    if length(Ncol) == 9 && :rho in Ncol && :vx in Ncol && :vy in Ncol && 
+                             :vz in Ncol && :p in Ncol Ncol_flag3 = true end
+    println("Ncol_flag3 = ", Ncol_flag3 )
+
+    return Ncol_flag1 == true && Ncol_flag2 == true  &&  Ncol_flag3 == true
 end
 
 
