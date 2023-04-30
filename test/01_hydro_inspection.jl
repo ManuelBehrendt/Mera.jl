@@ -40,6 +40,15 @@ function gethydro_cpuvar(output, path)
     return Ncol_flag1 == true
 end
 
+function gethydro_negvalues(output, path)
+    info = getinfo(output, path)
+    gas = gethydro(info, check_negvalues=true);
+    return true
+end
+
+
+
+
 function hydro_smallr(output, path) 
     info = getinfo(output, path)
     gas = gethydro(info, smallr=1e-11)

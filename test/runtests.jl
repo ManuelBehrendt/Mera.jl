@@ -83,6 +83,7 @@ output = 2
                 @test gethydro_allvars(output, path)
                 @test gethydro_selectedvars(output, path)
                 @test gethydro_cpuvar(output, path)
+                @test gethydro_negvalues(output, path)
                 @test hydro_smallr(output, path)
 
                 @test hydro_viewfields(output, path)
@@ -113,6 +114,7 @@ output = 2
                 # test number of stars and dm
                 @test getparticles_allvars(output, path)
                 @test getparticles_selectedvars(output, path)
+                #@test getparticles_cpuvar(output, path)
 
     	    @test particles_viewfields(output, path)
                 @test particles_amroverview(output, path)
@@ -483,6 +485,11 @@ end
 # masking
 # basic calcs: msum, com, bulk vel; average
 # mera files; myarguments
+# test uniform grid
+# if smallc != 0.
+# particles read cpu
+# particles uniform grid
+# old RAMSES version: gethydro, getparticles
 
 rm(pwd() * "/simulations", recursive=true)
 rm(pwd() * "/simulations.tar")
