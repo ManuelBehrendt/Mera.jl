@@ -529,8 +529,6 @@ output = 2
     end
 end
 
-D:\\a\\Mera.jl\\Mera.jl\\test/./simulations/output_00003/info_00003.txt !")
-      Thrown: ErrorException("[Mera]:  File or folder does not exist: D:\\a\\Mera.jl\\Mera.jl\\test\\./simulations/output_00003\\info_00003.txt !")
 
 
 # projection, partilces
