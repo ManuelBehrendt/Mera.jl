@@ -22,6 +22,7 @@ include("02_hydro_selections.jl")
 include("02_particles_selections.jl")
 include("02_gravity_selections.jl")
 include("03_hydro_getvar.jl")
+include("04_error_checks.jl")
 
 #simpath = "./simulations/"
 #path = "./simulations/01_spiral/"
@@ -476,8 +477,24 @@ output = 2
         end
 
     end
-end
 
+    @testset "03 Error Checks" begin
+        # ===================================================================
+        println()
+        printstyled("--------------------------------------\n", color=:cyan)
+        @info("data types:")
+        printstyled("--------------------------------------\n", color=:cyan)
+
+        @test checktypes_error(output, path, :hydro)
+        @test checktypes_error(output, path, :particles)
+        @test checktypes_error(output, path, :gravity)
+        @test checktypes_error(output, path, :rt)
+        @test checktypes_error(output, path, :clumps)
+        @test checktypes_error(output, path, :sinks)
+        @test checktypes_error(output, path, :amr)
+
+    end
+end
 
 
 
