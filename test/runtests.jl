@@ -535,5 +535,5 @@ end
 # namelist
 # viewfields(object::FilesContentType)
 
-rm(pwd() * "/simulations", recursive=true)
-rm(pwd() * "/simulations.tar")
+#rm(pwd() * "/simulations", recursive=true)
+#rm(pwd() * "/simulations.tar")
