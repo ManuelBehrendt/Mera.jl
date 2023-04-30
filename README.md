@@ -11,6 +11,7 @@
 **Development Version**|
 |:---------------------|
 |[![Coverage Status](https://coveralls.io/repos/github/ManuelBehrendt/Mera.jl/badge.svg?branch=master)](https://coveralls.io/github/ManuelBehrendt/Mera.jl?branch=master)  [![CompatHelper](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml) [![Documentation](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml) [![][docs-latest-img]][docs-latest-url]|
+|Runtests for different Julia versions: [![CI1.6](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml) [![CI1.7](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml) |
 
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
