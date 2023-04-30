@@ -29,6 +29,22 @@ function getgravity_selectedvars(output, path)
 end
 
 
+function getgravity_cpuvar(output, path)
+    info = getinfo(output, path)
+    grav = getgravity(info, [:cpu, :epot])
+    Ncol = propertynames(grav.data.columns)
+    Ncol_flag1 = false
+    if length(Ncol) == 6 && :epot in Ncol && :cpu in Ncol Ncol_flag1 = true end
+    println("Ncol_flag1 = ", Ncol_flag1 )
+   
+    return Ncol_flag1 == true     
+end
+
+
+
+
+
+
 function gravity_amroverview(output, path)
     info =getinfo(output, path)
     grav = getgravity(info)

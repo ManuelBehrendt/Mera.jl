@@ -169,7 +169,8 @@ output = 2
                 @test getgravity_infocheck(output, path)
                 @test getgravity_allvars(output, path)
                 @test getgravity_selectedvars(output, path)
-
+                @test getgravity_cpuvar(output, path)
+                
                 @test gravity_viewfields(output, path)
                 @test gravity_amroverview(output, path)
                 @test gravity_dataoverview(output, path)
