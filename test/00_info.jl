@@ -18,6 +18,18 @@ function view_argtypes()
 end
 
 
+function view_namelist(output, path)
+    info = getinfo(output, path)
+    namelist(info)
+    return true
+end
+
+function view_patchfile(output, path)
+    info = getinfo(output, path)
+    patchfile(info)
+    return true
+end
+
 function infotest(output, path)
     
     info = getinfo(path)
