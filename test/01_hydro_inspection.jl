@@ -57,6 +57,15 @@ function hydro_smallr(output, path)
     return minimum(rho) >= 1e-11 && gas.smallr >= 1e-11
 end
 
+function hydro_smallc(output, path) 
+    info = getinfo(output, path)
+    gas = gethydro(info, smallc=1e-7)
+    p = select(gas.data, :p)
+    println("min-p: ", minimum(p))
+    return minimum(p) >= 1e-7 && gas.smallc >= 1e-7
+end
+
+
 function hydro_amroverview(output, path)
     info =getinfo(output, path)
     gas = gethydro(info)
