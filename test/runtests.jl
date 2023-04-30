@@ -516,6 +516,7 @@ output = 2
         @test_throws ErrorException("[Mera]: Simulation lmax=7 < your lmax=10") checklevelmax_error(output, path)
         @test_throws ErrorException("[Mera]: Simulation lmin=3 > your lmin=1") checklevelmin_error(output, path)
         
+        @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/simulations/output_00003/info_00003.txt !") checkfolder_error(path)
 
     end
 end

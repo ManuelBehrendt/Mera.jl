@@ -44,3 +44,8 @@ function checklevelmin_error(output, path)
     gas = gethydro(info, lmax=1)
     return 
 end
+
+function checkfolder_error(path)
+    info = getinfo(3, path)
+    return
+end
