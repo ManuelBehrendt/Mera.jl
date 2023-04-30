@@ -82,6 +82,7 @@ output = 2
     	    @test gethydro_infocheck(output, path)
                 @test gethydro_allvars(output, path)
                 @test gethydro_selectedvars(output, path)
+                @test gethydro_cpuvar(output, path)
                 @test hydro_smallr(output, path)
 
                 @test hydro_viewfields(output, path)

@@ -28,6 +28,18 @@ function gethydro_selectedvars(output, path)
     return Ncol_flag1 == true && Ncol_flag2 == true     
 end
 
+
+
+function gethydro_cpuvar(output, path)
+    info = getinfo(output, path)
+    gas = gethydro(info, [:cpu, :rho]);
+    Ncol = propertynames(gas.data.columns)
+    if length(Ncol) == 6 && :cpu in Ncol Ncol_flag1 = true end
+    println("CPU numbers loaded = ", Ncol_flag1 )
+
+    return Ncol_flag1 == true
+end
+
 function hydro_smallr(output, path) 
     info = getinfo(output, path)
     gas = gethydro(info, smallr=1e-11)
