@@ -42,7 +42,7 @@ output = 2
             @test verbose_status()
             @test showprogress_status()
             @test view_argtypes()
-            
+        end
 
 
 
@@ -531,6 +531,9 @@ end
 # particles read cpu
 # particles uniform grid
 # old RAMSES version: gethydro, getparticles
+# patchfile
+# namelist
+# viewfields(object::FilesContentType)
 
 rm(pwd() * "/simulations", recursive=true)
 rm(pwd() * "/simulations.tar")
