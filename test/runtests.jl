@@ -522,9 +522,9 @@ output = 2
         @test_throws ErrorException("[Mera]: Simulation lmin=3 > your lmin=1") checklevelmin_error(output, path)
         
         if Sys.iswindows()
-            @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/./simulations/output_00003/info_00003.txt !") checkfolder_error(path)
-        else
             @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"\\./simulations/output_00003\\info_00003.txt !") checkfolder_error(path)
+        else
+            @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/./simulations/output_00003/info_00003.txt !") checkfolder_error(path)
         end
     end
 end
