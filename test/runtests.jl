@@ -40,6 +40,10 @@ output = 2
         printstyled("--------------------------------------\n", color=:cyan)
         @testset "getinfo" begin
             # main functionality
+
+            @test verbose_status()
+            @test showprogress_status()
+
             @test  infotest(output, path)
 
             # simulation details
