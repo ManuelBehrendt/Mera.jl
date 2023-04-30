@@ -85,6 +85,7 @@ output = 2
                 @test gethydro_cpuvar(output, path)
                 @test gethydro_negvalues(output, path)
                 @test hydro_smallr(output, path)
+                @test hydro_smallc(output, path)
 
                 @test hydro_viewfields(output, path)
                 @test hydro_amroverview(output, path)
@@ -486,7 +487,6 @@ end
 # basic calcs: msum, com, bulk vel; average
 # mera files; myarguments
 # test uniform grid
-# if smallc != 0.
 # particles read cpu
 # particles uniform grid
 # old RAMSES version: gethydro, getparticles
