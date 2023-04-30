@@ -1,4 +1,4 @@
-name: CI1.6
+name: 1.6
 
 on:
   push:
