@@ -288,11 +288,11 @@ end
 """
 #### Get the x,y,z positions from the dataset (cells/particles/clumps/...):
 ```julia
-getpositions( dataobject::DataSetType;
-                    unit::Symbol=:standard,
-                    direction::Symbol=:z,
-                    center::Array{<:Any,1}=[0., 0., 0.],
-                    center_unit::Symbol=:standard)
+getpositions( dataobject::DataSetType, unit::Symbol;
+        direction::Symbol=:z,
+        center::Array{<:Any,1}=[0., 0., 0.],
+        center_unit::Symbol=:standard,
+        mask::MaskType=[false])
 
 return x, y, z
 ```
