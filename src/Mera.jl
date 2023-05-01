@@ -94,9 +94,9 @@ export
 
 #
     projection,
-    slice,
-    profile,
-    remap,
+    #slice,
+    #profile,
+    #remap,
     subregion,
     shellregion,
     histogram2d,
@@ -198,14 +198,14 @@ include("functions/data_convert.jl")
 
 # projection, slice
 include("functions/projection.jl")
-include("functions/slice.jl")
+#include("functions/slice.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_particles.jl")
 # ============================================
 
 
 # profile
-include("functions/profile.jl")
+#include("functions/profile.jl")
 # ============================================
 
 # Subregion
