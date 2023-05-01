@@ -201,12 +201,16 @@ output = 2
         printstyled("--------------------------------------\n", color=:cyan)
         @testset "getvar hydro" begin
 
-    	gas, irho1, ip1, ics1= prepare_data1(output, path)
+        
 
+    	gas, irho1, ip1, ics1= prepare_data1(output, path)
+        @testset "show possible vars" begin
+            getvar()
+        end
     	@testset "rho" begin
                 @test test_rho(gas) ≈ irho1  rtol=1e-10
     	    @test test_p(gas) ≈ ip1  rtol=1e-10
-            end
+        end
 
             # test mass
     	@testset "mass" begin
@@ -217,7 +221,7 @@ output = 2
                 @test mass_ref ≈ mass_tot  rtol=1e-10
                 @test mass_tot ≈ mass_tot_function1  rtol=1e-10
      	    @test mass_tot ≈ mass_tot_function2  rtol=1e-10
-           end
+        end
 
             # test masking on mass
             @testset "mass masking" begin
