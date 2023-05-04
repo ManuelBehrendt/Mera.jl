@@ -616,7 +616,7 @@ end
 function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     x_coord = :cx
     y_coord = :cy
-    z_coord = :z
+    z_coord = :cz
 
     r1 = floor(Int, ranges[1] * res)
     r2 = ceil(Int,  ranges[2] * res)
@@ -635,7 +635,7 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     if direction == :z
         #x_coord = :cx
         #y_coord = :cy
-        #z_coord = :z
+        #z_coord = :cz
         rangez = [zmin, zmax]
 
         # get range for given resolution
@@ -658,7 +658,7 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     elseif direction == :y
         x_coord = :cx
         y_coord = :cz
-        z_coord = :y
+        z_coord = :cy
         rangez = [ymin, ymax]
 
         # get range for given resolution
@@ -681,7 +681,7 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
      elseif direction == :x
         x_coord = :cy
         y_coord = :cz
-        z_coord = :x
+        z_coord = :cx
         rangez = [xmin, xmax]
 
         # get range for given resolution
@@ -718,9 +718,10 @@ end
 function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2)
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
+        lvl = getvar(dataobject, :level)
         #println(rangez)
         if rangez[1] != 0.
-            mask_zmin = zval .>= rangez[1] .* dataobject.boxlen
+            mask_zmin = zval .>= ceil.(Int, rangez[1] .* 2 .^lvl)
             if !skipmask
                 #println("mask zmin 1")
                 mask = mask .* mask_zmin
@@ -733,7 +734,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
         end
 
         if rangez[2] != 1.
-            mask_zmax = zval .<= rangez[2] .* dataobject.boxlen
+            mask_zmax = zval .<= ceil.(Int, rangez[2] .* 2 .^lvl)
             if !skipmask
                 #println("mask zmax 1")
                 mask = mask .* mask_zmax
