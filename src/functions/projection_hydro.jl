@@ -721,7 +721,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
         lvl = getvar(dataobject, :level)
         #println(rangez)
         if rangez[1] != 0.
-            mask_zmin = zval .>= ceil.(Int, rangez[1] .* 2 .^lvl)
+            mask_zmin = zval .>= floor.(Int, rangez[1] .* 2 .^lvl)
             if !skipmask
                 #println("mask zmin 1")
                 mask = mask .* mask_zmin
