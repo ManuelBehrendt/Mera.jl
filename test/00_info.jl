@@ -80,3 +80,8 @@ function module_view()
     viewmodule(Mera)
     return true
 end
+
+function call_bell()
+    bell()
+    return true
+end
