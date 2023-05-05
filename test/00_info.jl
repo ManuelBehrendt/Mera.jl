@@ -85,3 +85,14 @@ function call_bell()
     bell()
     return true
 end
+
+function call_notifyme()
+    # prepare test
+    open(homedir() * "/email.txt", "w") do io
+        print(io, "mabe@mpe.mpg.de")
+    end
+
+    notifyme()
+    notifyme("GitHub runtest!")
+    return true
+end
