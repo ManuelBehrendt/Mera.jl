@@ -137,7 +137,7 @@ function getparticledata( dataobject::InfoType,
             return pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D
 
         elseif dataobject.descriptor.pversion > 0
-            pos_1D, vars_1D, cpus_1D, family_1D, tag_1D, levels_1D = readpart( dataobject,
+            pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = readpart( dataobject,
                                      Nvarp=Nvarp, nvarp_corr=nvarp_corr,
                                      lmax=lmax,
                                      ranges=ranges,
