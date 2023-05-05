@@ -138,7 +138,7 @@ output = 2
                 # test number of stars and dm
                 @test getparticles_allvars(output, path)
                 @test getparticles_selectedvars(output, path)
-                #@test getparticles_cpuvar(output, path)
+                @test getparticles_cpuvar(output, path)
 
     	    @test particles_viewfields(output, path)
                 @test particles_amroverview(output, path)
@@ -535,13 +535,12 @@ end
 
 
 
-# projection, partilces
+# projection, particles
 # getvar, particles
 # masking
 # basic calcs: msum, com, bulk vel; average
 # mera files; 
 # test uniform grid
-# particles read cpu
 # particles uniform grid
 # old RAMSES version: gethydro, getparticles
 
