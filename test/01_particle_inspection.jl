@@ -41,10 +41,16 @@ function getparticles_cpuvar(output, path)
     info = getinfo(output, path)
     part = getparticles(info, [:cpu, :mass]);
     Ncol = propertynames(part.data.columns)
+    Ncol_flag1 = false
     if length(Ncol) == 9 && :cpu in Ncol Ncol_flag1 = true end
-    println("CPU numbers loaded = ", Ncol_flag1 )
+    println("flag1: CPU numbers loaded = ", Ncol_flag1 )
 
-    return Ncol_flag1 == true
+    part = getparticles(info, [:cpu, :all]);
+    Ncol = propertynames(part.data.columns)
+    Ncol_flag2 = false
+    if length(Ncol) == 13 && :cpu in Ncol Ncol_flag2 = true end
+    println("flag2: CPU numbers loaded = ", Ncol_flag2 )
+    return Ncol_flag1 == true && Ncol_flag2 == true
 end
 
 

@@ -37,7 +37,14 @@ function getgravity_cpuvar(output, path)
     if length(Ncol) == 6 && :epot in Ncol && :cpu in Ncol Ncol_flag1 = true end
     println("Ncol_flag1 = ", Ncol_flag1 )
    
-    return Ncol_flag1 == true     
+
+    grav = getgravity(info, [:cpu, :all])
+    Ncol = propertynames(grav.data.columns)
+    Ncol_flag2 = false
+    if length(Ncol) == 9 && :epot in Ncol && :cpu in Ncol Ncol_flag2 = true end
+    println("Ncol_flag2 = ", Ncol_flag2 )
+
+    return Ncol_flag1 == true && Ncol_flag2 == true
 end
 
 
