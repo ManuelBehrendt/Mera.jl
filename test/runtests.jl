@@ -49,7 +49,7 @@ output = 2
         @test memory_units()
         @test module_view()
         @test call_bell()
-        @test call_notifyme()
+        @test call_notifyme() skip=true # cannot test on GitHub
 
         # ===================================================================
         println()
