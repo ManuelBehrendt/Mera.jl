@@ -47,7 +47,7 @@ output = 2
         end
 
         @test memory_units()
-
+        @test module_view()
 
         # ===================================================================
         println()
@@ -544,6 +544,8 @@ end
 # test uniform grid
 # particles uniform grid
 # old RAMSES version: gethydro, getparticles
+# humanize, getunit
+
 
 # not needed:
 #rm(pwd() * "/simulations", recursive=true)
