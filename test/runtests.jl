@@ -46,6 +46,7 @@ output = 2
             @test view_patchfile(output, path)
         end
 
+        @test memory_units()
 
 
         # ===================================================================
