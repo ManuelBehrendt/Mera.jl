@@ -48,7 +48,7 @@ output = 2
 
         @test memory_units()
         @test module_view()
-        @test call_bell()
+        @test_broken call_bell() #skip=true # cannot test on GitHub
         @test_broken call_notifyme() #skip=true # cannot test on GitHub
 
         # ===================================================================
