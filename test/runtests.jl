@@ -48,7 +48,8 @@ output = 2
 
         @test memory_units()
         @test module_view()
-
+        @test call_bell()
+        
         # ===================================================================
         println()
         printstyled("--------------------------------------\n", color=:cyan)
