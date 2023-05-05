@@ -11,7 +11,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         hydrovar_buffer = copy(vars)
         used_descriptors = Dict()
 
-        if hydrovar_buffer == [:all]
+        if in(:all, hydrovar_buffer) #hydrovar_buffer == [:all]
             nvarh_list=[1,2,3,4,5]
 
             # read_cpu = true
@@ -74,7 +74,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
             if length(hydrovar_buffer)>0
                 for x in hydrovar_buffer
-                    if occursin("var")
+                    if occursin("var", string(x))
                         append!( nvarh_list, parse(Int, string(x)[4:end]) )
                     end
                 end
@@ -156,7 +156,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         read_cpu = false
         particlesvar_buffer = copy(vars)
         used_descriptors = Dict()
-        if particlesvar_buffer == [:all]
+        if in(:all, particlesvar_buffer) #particlesvar_buffer == [:all]
             for invarp = 1:nvarp
                 append!(nvarp_list, invarp)
             end
@@ -239,8 +239,8 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
 
             if length(particlesvar_buffer)>0
                 for x in particlesvar_buffer
-                    if occursin("var")
-                        append!( nvarh_list, parse(Int, string(x)[4:end]) )
+                    if occursin("var", string(x))
+                        append!( nvarp_list, parse(Int, string(x)[4:end]) )
                     end
                 end
 
@@ -332,7 +332,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         gravvar_buffer = copy(vars)
         used_descriptors = Dict()
 
-        if gravvar_buffer == [:all]
+        if in(:all, gravvar_buffer)  #gravvar_buffer == [:all]
             nvarg_list=[1,2,3,4]
 
             # read_cpu = true
