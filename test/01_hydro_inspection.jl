@@ -48,7 +48,7 @@ function gethydro_cpuvar(output, path)
     gas = gethydro(info, [:cpu, :all]);
     Ncol = propertynames(gas.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 12 && :cpu in Ncol Ncol_flag2 = true end
+    if length(Ncol) == 11 && :cpu in Ncol Ncol_flag2 = true end
     println("flag2: CPU numbers loaded = ", Ncol_flag2 )
 
 
