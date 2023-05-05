@@ -74,3 +74,9 @@ function memory_units()
 
     return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true
 end
+
+
+function module_view()
+    viewmodule(Mera)
+    return true
+end
