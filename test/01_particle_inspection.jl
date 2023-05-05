@@ -36,7 +36,7 @@ function getparticles_selectedvars(output, path)
     return Ncol_flag1 == true && Ncol_flag2 == true     
 end
 
-"""
+
 function getparticles_cpuvar(output, path)
     info = getinfo(output, path)
     part = getparticles(info, [:cpu, :mass]);
@@ -46,7 +46,7 @@ function getparticles_cpuvar(output, path)
 
     return Ncol_flag1 == true
 end
-"""
+
 
 
 function particles_amroverview(output, path)
