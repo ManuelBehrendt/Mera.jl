@@ -290,6 +290,7 @@ output = 2
             gas, irho1, ip1, ics1= prepare_data1(output, path)
             @testset "default" begin
                 mtot = msum(gas, :Msol)
+                projection()
                 p = projection(gas, :mass, :Msol, mode=:sum, show_progress=false)
                 map = p.maps[:mass]
                 @test size(map) == (2^gas.lmax, 2^gas.lmax)
