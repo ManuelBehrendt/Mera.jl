@@ -5,6 +5,14 @@ function gethydro_infocheck(output, path)
     return gas.info == info
 end
 
+
+function gethydro_lmaxEQlmin(output, path)
+    info = getinfo(output, path)
+    gas = gethydro(info, lmax=info.levelmin);
+    Ncol = propertynames(gas.data.columns)
+    return !(:level in Ncol) # lmax=levelmin -> treated as uniform grid
+end
+
 function gethydro_allvars(output, path)
     info = getinfo(output, path)
     gas = gethydro(info);

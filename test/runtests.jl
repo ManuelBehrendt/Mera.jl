@@ -110,8 +110,11 @@ output = 2
                 @test gethydro_selectedvars(output, path)
                 @test gethydro_cpuvar(output, path)
                 @test gethydro_negvalues(output, path)
+                @test gethydro_lmaxEQlmin(output, path)
                 @test hydro_smallr(output, path)
                 @test hydro_smallc(output, path)
+
+
 
                 @test hydro_viewfields(output, path)
                 @test hydro_amroverview(output, path)
