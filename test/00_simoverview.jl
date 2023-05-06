@@ -5,6 +5,7 @@ function simoverview(output, simpath)
     N    = checkoutputs(path)
     info = getinfo(output, path)
     so   = storageoverview(info)
+    so   = storageoverview(info,true)
 
     my_scales = createscales(info)
 
