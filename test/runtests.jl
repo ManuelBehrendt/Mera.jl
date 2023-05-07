@@ -551,13 +551,13 @@ output = 2
 
         verbose(true)
         @test convert_jld2(output, path)
-        
+
 
         println()
         printstyled("--------------------------------------\n", color=:cyan)
         @info("Read MERA files:")
         printstyled("--------------------------------------\n", color=:cyan)
-
+        @test info_jld2(output, path)
 
     end
 

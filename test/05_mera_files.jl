@@ -20,7 +20,7 @@ function convert_jld2(output, path)
     stdata = keys(vd)
     flag3 = in("hydro", stdata)
     flag4 = in("gravity", stdata)
-    flag5 = in("partticles", stdata)
+    flag5 = in("particles", stdata)
     println("flag3: hydro in jld2 file? ", flag3)
     println("flag4: gravity in jld2 file? ", flag4)
     println("flag5: particles in jld2 file? ", flag5)
@@ -35,7 +35,6 @@ function info_jld2(output, path)
 
 
     info_fields = propertynames(info)
-    infoconv_fields = propertynames(infoconv);
     field_comparison = true
     field_comparison_data = true
     for i in info_fields
