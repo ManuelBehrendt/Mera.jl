@@ -538,9 +538,28 @@ output = 2
             @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/./simulations/output_00003/info_00003.txt !") checkfolder_error(path)
         end
     end
+
+
+
+    @testset "MERA files" begin
+        # ===================================================================
+        println()
+        printstyled("--------------------------------------\n", color=:cyan)
+        @info("Write MERA files:")
+        printstyled("--------------------------------------\n", color=:cyan)
+
+        @test convert_jld2(output, path)
+
+
+        println()
+        printstyled("--------------------------------------\n", color=:cyan)
+        @info("Read MERA files:")
+        printstyled("--------------------------------------\n", color=:cyan)
+
+
+    end
+
 end
-
-
 
 # projection, particles
 # getvar, particles
