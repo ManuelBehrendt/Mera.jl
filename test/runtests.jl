@@ -549,8 +549,9 @@ output = 2
         @info("Write MERA files:")
         printstyled("--------------------------------------\n", color=:cyan)
 
+        verbose(true)
         @test convert_jld2(output, path)
-
+        
 
         println()
         printstyled("--------------------------------------\n", color=:cyan)
