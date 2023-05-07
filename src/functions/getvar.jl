@@ -41,9 +41,9 @@ function getvar()
     println("related to a given center:")
     println("---------------------------")
     println(":r_cylinder, :r_sphere (radial components)")
-    #println(":ϕ, :θ")
+    println(":ϕ") # , :θ
     println(":vr_cylinder") #, vr_sphere (radial components)")
-    println(":vϕ") #", :vθ")
+    println(":vϕ_cylinder") #", :vθ")
     #println(":l, :lx, :ly, :lz :lr, :lϕ, :lθ (angular momentum)")
     println("----------------------------------------------------------------")
     return
