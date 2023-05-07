@@ -23,6 +23,7 @@ include("02_particles_selections.jl")
 include("02_gravity_selections.jl")
 include("03_hydro_getvar.jl")
 include("04_error_checks.jl")
+include("05_mera_files.jl")
 
 #simpath = "./simulations/"
 #path = "./simulations/01_spiral/"
