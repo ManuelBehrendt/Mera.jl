@@ -3,8 +3,9 @@
 function save_jld2(output, path)
     info = getinfo(output, path)
     gas = gethydro(info)
-    savedata(gas, fmode=:write)
-    savedata(gas, path="./", fmode=:write)
+    savedata(gas, :write)
+    savedata(gas, "./", :write)
+    savedata(gas, "./", fmode=:write)
 
     part = getparticles(info)
     savedata(part, fmode=:append)
