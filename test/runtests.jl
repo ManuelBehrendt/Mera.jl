@@ -436,26 +436,28 @@ output = 2
                 """
             end
 
-            """
+            # ==========
             @testset "fullbox, directions and mass conservation " begin
                 mtot = msum(gas, :Msol)
 
                 p = projection(gas, [:sd, :cs], [:Msun_pc2, :cm_s], direction=:x, verbose=false, show_progress=false)
                 map = p.maps[:sd]
                 map_cs = p.maps[:cs]
+                cellsize = p.pixsize * p.info.scale.pc
                 @test size(map) == (2^gas.lmax, 2^gas.lmax)
-                ##@test sum(map) ≈ mtot rtol=1e-10
+                @test sum(map) * cellsize^2 ≈ mtot rtol=1e-10
                 @test sum(map_cs) / length(map_cs[:]) ≈ ics1  rtol=1e-10
 
                 p = projection(gas, [:sd, :cs], [:Msun_pc2, :cm_s], direction=:y, verbose=false, show_progress=false)
                 map = p.maps[:sd]
                 map_cs = p.maps[:cs]
-                #@test size(map) == (2^gas.lmax, 2^gas.lmax)
-                ##@test sum(map) ≈ mtot rtol=1e-10
+                cellsize = p.pixsize * p.info.scale.pc
+                @test size(map) == (2^gas.lmax, 2^gas.lmax)
+                @test sum(map) * cellsize^2 ≈ mtot rtol=1e-10
                 @test sum(map_cs) / length(map_cs[:]) ≈ ics1  rtol=1e-10
             end
 
-
+            """
             @testset "subregions, direction and mass conservation " begin
                 xrange = yrange = [-12., 12.]
                 zrange = [-1., 1.]
