@@ -573,7 +573,7 @@ output = 2
                 cellsize = p.pixsize * info.scale.pc
                 @test sum(map) * cellsize^2 ≈ mtot rtol=1e-10
 
-                @test p.maps_unit[:sd] == :standard
+                @test p.maps_unit[:sd] == :Msun_pc2
                 @test p.maps_mode[:sd] == :mass_weighted
                 @test p.extent  == part.ranges[1:4] .* part.boxlen
                 @test p.cextent == part.ranges[1:4] .* part.boxlen .- part.boxlen /2
@@ -587,7 +587,7 @@ output = 2
                 mtot = msum(part, :Msol, mask=mask_stars)
                 res=2^11
                 csize = part.info.boxlen * part.info.scale.pc / res
-                p = projection(part, :sd, :Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false)
+                p = projection(part, :sd, :Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false, mask=mask_stars)
                 p2 = projection(part, :sd, unit=:Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false, mask=mask_stars)
                 @test p.maps == p2.maps
                 
