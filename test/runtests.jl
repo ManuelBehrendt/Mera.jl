@@ -348,11 +348,16 @@ output = 2
 
             end
 
+
             @testset "pxsize - resolution, center" begin
+                verbose(true)
                 mtot = msum(gas, :Msol)
                 res=2^11
                 csize = gas.info.boxlen * gas.info.scale.pc / res
                 p = projection(gas, :mass, :Msol, mode=:sum, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false)
+                p2 = projection(gas, :mass, unit=:Msol, mode=:sum, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false)
+                @test p.maps == p2.maps
+                
                 map = p.maps[:mass]
                 @test size(map) == (res, res)
                 @test sum(map) ≈ mtot rtol=1e-10
@@ -364,7 +369,7 @@ output = 2
                 @test p.extent  == gas.ranges[1:4] .* gas.boxlen
                 @test p.cextent == gas.ranges[1:4] .* gas.boxlen .- gas.boxlen /2
                 @test p.ratio   == (p.extent[4] - p.extent[3]) / (p.extent[2] - p.extent[1])
-
+                verbose(nothing)
             end
 
 
@@ -541,7 +546,7 @@ output = 2
             @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/./simulations/output_00003/info_00003.txt !") checkfolder_error(path)
         end
 
-        # savedata 
+        # savedata , infodata (wrong datatype)
     end
 
 
