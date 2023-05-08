@@ -1,5 +1,38 @@
 
 
+function save_jld2(output, path)
+    info = getinfo(output, path)
+    gas = gethydro(info)
+    savedata(gas, fmode=:write)
+    savedata(gas, path="./", fmode=:write)
+
+    part = getparticles(info)
+    savedata(part, fmode=:append)
+
+    grav = getgravity(info)
+    savedata(grav, fmode=:append)
+
+    vd = viewdata(output)
+    stdata = keys(vd)
+    flag1 = in("hydro", stdata)
+    println("flag1: hydro in jld2 file? ", flag1)
+    println()
+    flag2 = in("hydro", stdata)
+    println("flag2: hydro in jld2 file? ", flag2)
+    println()
+    flag3 = in("hydro", stdata)
+    flag4 = in("gravity", stdata)
+    flag5 = in("particles", stdata)
+    println("flag3: hydro in jld2 file? ", flag3)
+    println("flag4: gravity in jld2 file? ", flag4)
+    println("flag5: particles in jld2 file? ", flag5)
+    println()
+    println()
+    return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true
+end
+
+
+
 function convert_jld2(output, path)
     st = convertdata(output, [:hydro], path=path)
     vd = viewdata(output)
