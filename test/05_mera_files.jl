@@ -118,14 +118,29 @@ function load_data(output, path)
     gas = gethydro(info)
     gasconv = loaddata(output, :hydro)
     flag1 = gas.data == gasconv.data
+    println()
+    println("flag1: data load hydro: ", flag1)
+    println()
 
     part = getparticles(info)
     partconv = loaddata(output, :particles)
     flag2 = part.data == partconv.data
+    println()
+    println("flag2: data load particles: ", flag2)
+    println()
 
     grav = getgravity(info)
     gravconv = loaddata(output, :gravity)
     flag3 = grav.data == gravconv.data
+    println()
+    println("flag3: data load gravity: ", flag3)
+    println()
 
-    return flag1 == true && flag2 == true && flag3 == true
+    gasconv = loaddata(output, "./", :hydro)
+    flag4 = gas.data == asconv.data
+    println()
+    println("flag4: data load hydro: ", flag4)
+    println()
+
+    return flag1 == true && flag2 == true && flag3 == true && flag4 == true
 end
