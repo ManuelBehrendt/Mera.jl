@@ -531,6 +531,8 @@ output = 2
             @testset "default" begin
                 mtot = msum(part, :Msol, mask=mask_stars)               
                 p = projection(part, :sd, :Msun_pc2, show_progress=false, mask=mask_stars)
+                p2 = projection(part, [:sd], unit=:Msun_pc2, show_progress=false, mask=mask_stars)
+                @test p.maps == p2.maps
                 map = p.maps[:sd]
                 @test size(map) == (2^part.lmax, 2^part.lmax)
                 cellsize = p.pixsize * info.scale.pc
@@ -545,6 +547,12 @@ output = 2
                 @test p.lmax    == part.lmax
                 @test p.scale   == part.scale
                 @test p.info    == part.info
+
+                mtot = msum(part, :Msol) 
+                p = projection(part, :sd, :Msun_pc2, show_progress=false, verbose=false)
+                map = p.maps[:sd]
+                cellsize = p.pixsize * info.scale.pc
+                @test sum(map) * cellsize^2 ≈ mtot rtol=1e-10
             end
 
             @testset "lmax, better resolution, center" begin
