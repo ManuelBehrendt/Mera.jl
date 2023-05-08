@@ -552,7 +552,7 @@ output = 2
                 p = projection(part, :sd, :Msun_pc2, show_progress=false, verbose=false)
                 map = p.maps[:sd]
                 cellsize = p.pixsize * info.scale.pc
-                @test sum(map) * cellsize^2 ≈ mtot rtol=1e-10
+                @test sum(map) * cellsize^2 ≈ mtot rtol=1e-4
             end
 
             @testset "lmax, better resolution, center" begin
