@@ -548,7 +548,7 @@ output = 2
             end
 
             @testset "lmax, better resolution, center" begin
-                mtot = msum(part, :Msol)
+                mtot = msum(part, :Msol, mask=mask_stars)
                 res=2^11
                 p = projection(part, :sd, :Msun_pc2, center=[:bc], res=res, verbose=false, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
@@ -565,7 +565,7 @@ output = 2
             end
             
             @testset "lmax, less resolution, center" begin
-                mtot = msum(part, :Msol)
+                mtot = msum(part, :Msol, mask=mask_stars)
                 res = 2^5
                 p = projection(part, :sd, :Msun_pc2, res=res, center=[:bc], verbose=true, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
@@ -584,7 +584,7 @@ output = 2
 
             @testset "pxsize - resolution, center" begin
                 verbose(true)
-                mtot = msum(part, :Msol)
+                mtot = msum(part, :Msol, mask=mask_stars)
                 res=2^11
                 csize = part.info.boxlen * part.info.scale.pc / res
                 p = projection(part, :sd, :Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false)
@@ -607,7 +607,7 @@ output = 2
 
             # ==========
             @testset "fullbox, directions and mass conservation " begin
-                mtot = msum(part, :Msol)
+                mtot = msum(part, :Msol, mask=mask_stars)
                 # todo add, e.g., age
                 p = projection(part, [:sd], [:Msun_pc2], direction=:x, verbose=false, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
