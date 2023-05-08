@@ -525,13 +525,11 @@ output = 2
         @info("projection particle/stars:")
         printstyled("--------------------------------------\n", color=:cyan)
         @testset "projection stars" begin
-            
+            info = getinfo(output, path, verbose=false)
+            part = getparticles(info, verbose=false)
+            mask_stars = getvar(part, :family) .== 2
             @testset "default" begin
-                info = getinfo(output, path, verbose=false)
-                part = getparticles(info, verbose=false)
-                mask_stars = getvar(part, :family) .== 2
-                mtot = msum(part, :Msol, mask=mask_stars)
-                
+                mtot = msum(part, :Msol, mask=mask_stars)               
                 p = projection(part, :sd, :Msun_pc2, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
                 @test size(map) == (2^part.lmax, 2^part.lmax)
@@ -552,7 +550,7 @@ output = 2
             @testset "lmax, better resolution, center" begin
                 mtot = msum(part, :Msol)
                 res=2^11
-                p = projection(part, :sd, :Msun_pc2, center=[:bc], res=res, verbose=false, show_progress=false)
+                p = projection(part, :sd, :Msun_pc2, center=[:bc], res=res, verbose=false, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
                 @test size(map) == (res, res)
                 cellsize = p.pixsize * info.scale.pc
@@ -567,9 +565,9 @@ output = 2
             end
             
             @testset "lmax, less resolution, center" begin
-                mtot = msum(gas, :Msol)
+                mtot = msum(part, :Msol)
                 res = 2^5
-                p = projection(gas, :sd, :Msun_pc2, res=res, center=[:bc], verbose=true, show_progress=false)
+                p = projection(part, :sd, :Msun_pc2, res=res, center=[:bc], verbose=true, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
                 @test size(map) == (res, res)
                 cellsize = p.pixsize * info.scale.pc
@@ -577,8 +575,8 @@ output = 2
 
                 @test p.maps_unit[:sd] == :standard
                 @test p.maps_mode[:sd] == :mass_weighted
-                @test p.extent  == gas.ranges[1:4] .* gas.boxlen
-                @test p.cextent == gas.ranges[1:4] .* gas.boxlen .- gas.boxlen /2
+                @test p.extent  == part.ranges[1:4] .* part.boxlen
+                @test p.cextent == part.ranges[1:4] .* part.boxlen .- part.boxlen /2
                 @test p.ratio   == (p.extent[4] - p.extent[3]) / (p.extent[2] - p.extent[1])
 
             end
@@ -590,7 +588,7 @@ output = 2
                 res=2^11
                 csize = part.info.boxlen * part.info.scale.pc / res
                 p = projection(part, :sd, :Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false)
-                p2 = projection(part, :sd, unit=:Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false)
+                p2 = projection(part, :sd, unit=:Msun_pc2, center=[:bc], pxsize=[csize, :pc], verbose=true, show_progress=false, mask=mask_stars)
                 @test p.maps == p2.maps
                 
                 map = p.maps[:sd]
@@ -611,13 +609,13 @@ output = 2
             @testset "fullbox, directions and mass conservation " begin
                 mtot = msum(part, :Msol)
                 # todo add, e.g., age
-                p = projection(part, [:sd], [:Msun_pc2], direction=:x, verbose=false, show_progress=false)
+                p = projection(part, [:sd], [:Msun_pc2], direction=:x, verbose=false, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
                 cellsize = p.pixsize * p.info.scale.pc
                 @test size(map) == (2^part.lmax, 2^part.lmax)
                 @test sum(map) * cellsize^2 ≈ mtot rtol=1e-10
 
-                p = projection(part, [:sd, :cs], [:Msun_pc2, :cm_s], direction=:y, verbose=false, show_progress=false)
+                p = projection(part, [:sd], [:Msun_pc2], direction=:y, verbose=false, show_progress=false, mask=mask_stars)
                 map = p.maps[:sd]
                 cellsize = p.pixsize * p.info.scale.pc
                 @test size(map) == (2^part.lmax, 2^part.lmax)
