@@ -99,8 +99,6 @@ export
     #remap,
     subregion,
     shellregion,
-    histogram2d,
-    sfr_histogram,
 
 # miscellaneous
     viewmodule,
@@ -151,8 +149,6 @@ include("types_old.jl")
 include("functions/miscellaneous.jl")
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
-include("functions/histogram2d.jl")
-include("functions/histogram_sfr.jl")
 
 # Get variables/quantities
 include("functions/getvar.jl")
