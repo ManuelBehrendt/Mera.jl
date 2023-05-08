@@ -531,7 +531,7 @@ output = 2
             @testset "default" begin
                 mtot = msum(part, :Msol, mask=mask_stars)               
                 p = projection(part, :sd, :Msun_pc2, show_progress=false, mask=mask_stars)
-                p2 = projection(part, [:sd], unit=:Msun_pc2, show_progress=false, mask=mask_stars)
+                p2 = projection(part, [:sd], units=[:Msun_pc2], show_progress=false, mask=mask_stars)
                 @test p.maps == p2.maps
                 map = p.maps[:sd]
                 @test size(map) == (2^part.lmax, 2^part.lmax)
