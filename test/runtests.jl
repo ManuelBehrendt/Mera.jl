@@ -538,6 +538,8 @@ output = 2
         else
             @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/./simulations/output_00003/info_00003.txt !") checkfolder_error(path)
         end
+
+        # savedata 
     end
 
 
@@ -547,21 +549,18 @@ output = 2
         println()
         println()
         printstyled("--------------------------------------\n", color=:cyan)
-        @info("Write MERA files:")
+        @info("Write/Read MERA files:")
         printstyled("--------------------------------------\n", color=:cyan)
 
         verbose(true)
+
+        @test save_jld2(output, path)
+        @test load_data(output, path)
+
+
         @test convert_jld2(output, path)
-
-
-        println()
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("Read MERA files:")
-        printstyled("--------------------------------------\n", color=:cyan)
         @test info_jld2(output, path)
         @test viewdata_all(output)
-
         @test load_data(output, path)
     end
 
