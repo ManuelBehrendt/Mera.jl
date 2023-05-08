@@ -32,6 +32,8 @@ end
 function info_jld2(output, path)
     info = getinfo(output, path)
     infoconv = infodata(output)
+    infoconv = infodata(output, "./")
+    infoconv = infodata(output, :hydro)
 
 
     info_fields = propertynames(info)
