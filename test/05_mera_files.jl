@@ -104,3 +104,28 @@ function comparefields(info_field, infoconv_field, field_comparison_data)
     end
     return
 end
+
+
+function viewdata_all(output)
+    vd = viewdata(output, showfull=true)
+    return true
+end
+
+
+
+function load_data(output, path)
+    info = getinfo(output, path)
+    gas = gethydro(info)
+    gasconv = loaddata(output, :hydro)
+    flag1 = gas.data == gasconv.data
+
+    part = getparticles(info)
+    partconv = loaddata(output, :particles)
+    flag2 = part.data == partconv.data
+
+    grav = getgravity(info)
+    gravconv = loaddata(output, :gravity)
+    flag3 = grav.data == gravconv.data
+
+    return flag1 == true && flag2 == true && flag3 == true
+end
