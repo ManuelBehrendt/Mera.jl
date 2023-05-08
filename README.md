@@ -10,7 +10,7 @@
 
 **Development Version**|
 |:---------------------|
-|[![Coverage Status](https://coveralls.io/repos/github/ManuelBehrendt/Mera.jl/badge.svg?branch=master&kill_cache=1)](https://coveralls.io/github/ManuelBehrendt/Mera.jl?branch=master) [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl) [![CompatHelper](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml) | 
+|[![Coverage Status](https://coveralls.io/repos/github/ManuelBehrendt/Mera.jl/badge.svg?branch=master&kill_cache=2)](https://coveralls.io/github/ManuelBehrendt/Mera.jl?branch=master) [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl) [![CompatHelper](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml) | 
 [![Documentation](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml) [![][docs-latest-img]][docs-latest-url]|
 |Runtests for: [![1.6](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml) [![1.7](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml) [![1.8](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml)|
 
@@ -29,7 +29,8 @@
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
-`Hands-On Session RUM2023`
+> **Note**
+> To get a first impression, look at the `Hands-On Session RUM2023` with downloadable simulation examples: 
     https://github.com/ManuelBehrendt/RUM2023
 
 ## Package Features
