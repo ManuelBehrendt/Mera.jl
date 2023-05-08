@@ -545,6 +545,7 @@ output = 2
     @testset "MERA files" begin
         # ===================================================================
         println()
+        println()
         printstyled("--------------------------------------\n", color=:cyan)
         @info("Write MERA files:")
         printstyled("--------------------------------------\n", color=:cyan)
@@ -554,11 +555,14 @@ output = 2
 
 
         println()
+        println()
         printstyled("--------------------------------------\n", color=:cyan)
         @info("Read MERA files:")
         printstyled("--------------------------------------\n", color=:cyan)
         @test info_jld2(output, path)
+        @test viewdata_all(output)
 
+        @test load_data(output, path)
     end
 
 end
