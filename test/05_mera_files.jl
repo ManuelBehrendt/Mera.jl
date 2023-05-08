@@ -66,7 +66,8 @@ end
 function info_jld2(output, path)
     info = getinfo(output, path)
     infoconv = infodata(output)
-    infoconv = infodata(output, "./")
+    infoconv = infodata(output, "./", :hydro)
+    infoconv = infodata(output, "./", datatype=:hydro)
     infoconv = infodata(output, :hydro)
 
 
