@@ -53,6 +53,8 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Tutorials to create 360° equirectangular projections
 - ...
 
+## Dependencies
+Find the main dependencies of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml)
 
 ## Package Installation
 The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
