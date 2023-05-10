@@ -22,6 +22,7 @@ include("02_hydro_selections.jl")
 include("02_particles_selections.jl")
 include("02_gravity_selections.jl")
 include("03_hydro_getvar.jl")
+include("03_particles_getvar.jl")
 include("04_error_checks.jl")
 include("05_mera_files.jl")
 
@@ -208,27 +209,25 @@ output = 2
         printstyled("--------------------------------------\n", color=:cyan)
         @testset "getvar hydro" begin
 
-        
+            gas, irho1, ip1, ics1= prepare_data1(output, path)
+            @testset "show possible vars" begin
+                getvar()
+            end
+            @testset "rho" begin
+                    @test test_rho(gas) ≈ irho1  rtol=1e-10
+                @test test_p(gas) ≈ ip1  rtol=1e-10
+            end
 
-    	gas, irho1, ip1, ics1= prepare_data1(output, path)
-        @testset "show possible vars" begin
-            getvar()
-        end
-    	@testset "rho" begin
-                @test test_rho(gas) ≈ irho1  rtol=1e-10
-    	    @test test_p(gas) ≈ ip1  rtol=1e-10
-        end
-
-            # test mass
-    	@testset "mass" begin
-    	    mass_ref = 1.0000000000019456e16
-                mass_tot = sum( getvar(gas, :mass, :Msol) )
-                mass_tot_function1 = sum(getmass(gas)) .* gas.info.scale.Msol
-                mass_tot_function2 = msum(gas, :Msol)
-                @test mass_ref ≈ mass_tot  rtol=1e-10
-                @test mass_tot ≈ mass_tot_function1  rtol=1e-10
-     	    @test mass_tot ≈ mass_tot_function2  rtol=1e-10
-        end
+                # test mass
+            @testset "mass" begin
+                mass_ref = 1.0000000000019456e16
+                    mass_tot = sum( getvar(gas, :mass, :Msol) )
+                    mass_tot_function1 = sum(getmass(gas)) .* gas.info.scale.Msol
+                    mass_tot_function2 = msum(gas, :Msol)
+                    @test mass_ref ≈ mass_tot  rtol=1e-10
+                    @test mass_tot ≈ mass_tot_function1  rtol=1e-10
+                @test mass_tot ≈ mass_tot_function2  rtol=1e-10
+            end
 
             # test masking on mass
             @testset "mass masking" begin
@@ -240,7 +239,7 @@ output = 2
                 @test mass1 ≈ mass1_function2  rtol=1e-10
             end
 
-    	# test cs
+    	    # test cs
             @testset "cs" begin
     	    cs = getvar(gas, :cs, :cm_s)
     	    cs_av = sum(cs) / length(cs)
@@ -269,7 +268,7 @@ output = 2
             end
 
             # test cellsize, volume
-    	@testset "cellsize, volume" begin
+    	    @testset "cellsize, volume" begin
                 leveldata = getvar(gas, :level)
                 cellsize_ref = gas.boxlen ./ 2 .^leveldata
                 cellsize_data = getvar(gas, :cellsize);
@@ -281,12 +280,29 @@ output = 2
             end
 
 
-        @testset "getpositions" begin
-                @test check_positions_hydro(output, path)
-                #@test check_positions_part(output, path)
-                @test check_velocities_hydro(output, path)
+            @testset "get positions/velocities" begin
+                    @test check_positions_hydro(output, path)
+                    #@test check_positions_part(output, path)
+                    @test check_velocities_hydro(output, path)
             end
         end
+
+
+         # ===================================================================
+         println()
+         printstyled("--------------------------------------\n", color=:cyan)
+         @info("getvar particles:")
+         printstyled("--------------------------------------\n", color=:cyan)
+         @testset "getvar particles" begin
+
+
+            @testset "get positions/velocities" begin
+                @test check_positions_part(output, path)
+                @test check_velocities_part(output, path)
+            end
+        end
+    
+
 
 
         # ===================================================================
