@@ -279,6 +279,13 @@ output = 2
                 volume_data = getvar(gas, :volume)
                 @test volume_ref == volume_data
             end
+
+
+        @testset "getpositions" begin
+                @test check_positions_hydro(output, path)
+                #@test check_positions_part(output, path)
+                @test check_velocities_hydro(output, path)
+            end
         end
 
 
