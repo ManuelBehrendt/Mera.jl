@@ -179,3 +179,21 @@ function load_data(output, path)
 
     return flag1 == true && flag2 == true && flag3 == true && flag4 == true
 end
+
+
+function check_filenames()
+    fname="output_"
+    filename = Mera.outputname(fname, 10) * ".jld2"
+    flag1 = filename == "output_00010.jld2"
+    
+    filename = Mera.outputname(fname, 100) * ".jld2"
+    flag2 = filename == "output_00100.jld2"
+
+    filename = Mera.outputname(fname, 1000) * ".jld2"
+    flag3 = filename == "output_01000.jld2"
+
+    filename = Mera.outputname(fname, 10000) * ".jld2"
+    flag4 = filename == "output_10000.jld2"
+    
+    return flag1 == true && flag2 == true && flag3 == true && flag4 == true
+end
