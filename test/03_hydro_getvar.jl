@@ -44,3 +44,60 @@ function test_p(dataobject)
     return pdata
 end
 
+
+
+function check_positions_hydro(output, path)
+    info = getinfo(output, path, verbose=false)
+    gas = gethydro(info, verbose=false)
+    x,y,z = getpositions(gas, :kpc, center=[:bc] )
+
+    xv = getvar(gas, :x, :kpc, center=[:bc])
+    yv = getvar(gas, :y, :kpc, center=[:bc])
+    zv = getvar(gas, :z, :kpc, center=[:bc]);
+
+    flag1 = x == xv
+    flag2 = y == yv
+    flag3 = z == zv
+
+
+   
+    x,y,z = getpositions(gas, unit=:kpc, center=[:bc] )
+
+    xv = getvar(gas, :x, :kpc, center=[:bc])
+    yv = getvar(gas, :y, :kpc, center=[:bc])
+    zv = getvar(gas, :z, :kpc, center=[:bc]);
+
+    flag4 = x == xv
+    flag5 = y == yv
+    flag6 = z == zv    
+
+    return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true && flag6 == true
+end
+
+
+function check_velocities_hydro(output, path)
+    info = getinfo(output, path, verbose=false)
+    gas = gethydro(info, verbose=false)
+    vx,vy,vz = getvelocities(gas, :km_s)
+
+    vxv = getvar(gas, :vx, :km_s)
+    vyv = getvar(gas, :vy, :km_s)
+    vzv = getvar(gas, :vz, :km_s);
+
+    flag1 = vx == vxv
+    flag2 = vy == vyv
+    flag3 = vz == vzv
+
+
+    vx,vy,vz = getvelocities(gas, unit=:km_s )
+
+    vxv = getvar(gas, :vx, :km_s)
+    vyv = getvar(gas, :vy, :km_s)
+    vzv = getvar(gas, :vz, :km_s);
+
+    flag4 = vx == vxv
+    flag5 = vy == vyv
+    flag6 = vz == vzv    
+
+    return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true && flag6 == true
+end
