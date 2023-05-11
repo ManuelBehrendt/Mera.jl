@@ -334,7 +334,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     scale = dataobject.scale
     nvarh = dataobject.info.nvarh
     lmax_projected = lmax
-    isamr = Mera.checkuniformgrid(dataobject, lmax)
+    isamr = Mera.checkuniformgrid(dataobject, dataobject.lmax)
     selected_vars = deepcopy(vars) #unique(vars)
 
     #sd_names = [:sd, :Σ, :surfacedensity]
