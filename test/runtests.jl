@@ -6,11 +6,7 @@ using Tar
 
 #run(`mkdir simulations`)
 #mkdir("simulations")
-Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
 
-tar = open("./simulations.tar")
-dir = Tar.extract(tar, "./simulations")
-close(tar)
 
 include("screen_output.jl")
 include("overview/00_info.jl")
@@ -34,46 +30,21 @@ simpath = "./"
 path = "./simulations/"
 output = 2
 
-@testset "Mera test" begin
-    @testset "01 General Tests" begin
-        include("general.jl")
-    end
+@testset "MERA AMR" begin
+    Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
 
-    verbose(false)
-    showprogress(false)
-    @testset "02 getvar hydro" begin
-        printscreen("getvar hydro:")
-        include("values_hydro.jl")
-    end
+    tar = open("./simulations.tar")
+    dir = Tar.extract(tar, "./simulations")
+    close(tar)
 
-    @testset "03 getvar particles" begin
-        printscreen("getvar particles:")
-        include("values_particles.jl")
-    end
+    include("all_tests.jl")
 
-    @testset "04 projection hydro" begin
-        printscreen("projection hydro:")
-        include("projection/projection_hydro.jl")
-    end
-
-    @testset "05 projection stars" begin
-        printscreen("projection particle/stars:")
-        include("projection/projection_particles.jl")
-    end
-
-    @testset "06 Error Checks" begin
-        printscreen("data types:")
-        include("errors.jl")
-    end
-
-    verbose(true)
-    @testset  "07 MERA files" begin
-        printscreen("Write/Read MERA files:")
-        include("merafiles.jl")
-    end
-
+    
 end
 
+@testset "MERA Uniform Grid" begin
+
+end  
 # projection, particles
 # getvar, particles
 # masking
