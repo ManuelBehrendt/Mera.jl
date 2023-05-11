@@ -462,13 +462,16 @@ function getextent( dataobject::DataSetType;
 
 
 
-    center = prepboxcenter(dataobject.info, center_unit, center) # code units
-    center = center ./ dataobject.boxlen
-    #selected_unit = 1.
-    # if center_unit != :standard
-    #     selected_unit = getunit(dataobject.info, center_unit)
-    #     center = center ./ dataobject.boxlen .* selected_unit
-    # end
+    selected_unit = 1. # :standard
+    conv = 1. # :standard, variable used to convert to standard units
+    if center_unit != :standard
+        selected_unit = getunit(dataobject.info, center_unit)
+        conv = dataobject.boxlen * selected_unit
+    end
+
+
+    center = Mera.prepboxcenter(dataobject.info, center_unit, center) # code units
+    center = center ./ conv
 
 
     selected_unit = getunit(dataobject.info, unit)
