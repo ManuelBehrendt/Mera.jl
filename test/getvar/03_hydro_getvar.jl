@@ -26,11 +26,17 @@ function prepare_data1(output, path)
     vz = fill(40. / gas.info.scale.km_s, N  );
     p = fill( ip / gas.info.unit_d / gas.info.unit_v^2 , N);		
 
-    t = insertcols(t, 5, :rho => rho)
-    t = insertcols(t, 6, :vx => vx)
-    t = insertcols(t, 7, :vy => vy)
-    t = insertcols(t, 8, :vz => vz)
-    t = insertcols(t, 9, :p => p)
+    
+    if info.levelmin !== info.levelmax
+        shift = 0
+    else
+        shift = -1
+    end
+    t = insertcols(t, 5+shift, :rho => rho)
+    t = insertcols(t, 6+shift, :vx => vx)
+    t = insertcols(t, 7+shift, :vy => vy)
+    t = insertcols(t, 8+shift, :vz => vz)
+    t = insertcols(t, 9+shift, :p => p)
     gas.data = t;
 
     return gas, irho, ip / gas.info.unit_d / gas.info.unit_v^2, ics
