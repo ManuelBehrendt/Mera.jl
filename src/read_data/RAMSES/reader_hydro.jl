@@ -376,13 +376,13 @@ function loopovercellshydro(twotondim::Int,
                     #println()
                     #println(ilevel, ",    ", ix, " ", iy, " ", iz, "     ", grid[ilevel] )
 
-                    @turbo append!(vars_1D, vara[i,ind,:])
+                    append!(vars_1D, vara[i,ind,:])
                     if read_level # if AMR
-                        @turbo append!(pos_1D, [ix, iy, iz, ilevel])
+                        append!(pos_1D, [ix, iy, iz, ilevel])
                     else # if uniform grid
-                        @turbo append!(pos_1D, [ix, iy, iz])
+                        append!(pos_1D, [ix, iy, iz])
                     end
-                    if read_cpu @turbo append!(cpus_1D, k) end
+                    if read_cpu append!(cpus_1D, k) end
                 end
             end
         end
