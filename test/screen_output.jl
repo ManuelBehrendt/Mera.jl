@@ -2,5 +2,5 @@ function printscreen(message)
     println()
     printstyled("--------------------------------------\n", color=:cyan)
     @info(message)
-    printstyled("--------------------------------------\n", color=:cyan)() 
+    printstyled("--------------------------------------\n", color=:cyan) 
 end
