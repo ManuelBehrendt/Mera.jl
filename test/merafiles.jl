@@ -1,4 +1,3 @@
-verbose(true)
 
 @test save_jld2(output, path)
 @test load_data(output, path)
