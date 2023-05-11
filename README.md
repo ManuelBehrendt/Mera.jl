@@ -58,7 +58,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 Find the main dependencies of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml)
 
 ## Tests
-We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests** to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file. The current **code coverage** of the development version can be accessed by the banners at the top of the README.md file.
+We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file. The current **code coverage** of the development version can be accessed by the banners at the top of the README.md file.
 
 ## Package Installation
 The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
