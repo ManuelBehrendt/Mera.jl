@@ -7,7 +7,7 @@ end
     info = getinfo(output, path, verbose=false)
     part = getparticles(info, verbose=false)
     rx,ry,rz = getextent(part, :kpc)
-    @test rxu, ryu, rzu = getextent(part, unit=:kpc)
+    rxu, ryu, rzu = getextent(part, unit=:kpc)
     @test rx == rxu
     @test fry == ryu
     @test rz == rzu

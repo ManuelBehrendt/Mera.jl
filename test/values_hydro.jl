@@ -84,7 +84,7 @@ end
 
 @testset "get extent" begin
     rx,ry,rz = getextent(gas, :kpc)
-    @test rxu, ryu, rzu = getextent(gas, unit=:kpc)
+    rxu, ryu, rzu = getextent(gas, unit=:kpc)
     @test rx == rxu
     @test fry == ryu
     @test rz == rzu
