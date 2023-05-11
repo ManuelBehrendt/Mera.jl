@@ -38,7 +38,7 @@ include("jld2files/05_mera_files.jl")
     dir = Tar.extract(tar, "./simulations")
     close(tar)
 
-    include("all_tests.jl")
+    include("alltests.jl")
     rm(pwd() * "/simulations", recursive=true)
     rm(pwd() * "/simulations.tar")
 
@@ -53,8 +53,8 @@ end
     tar = open("./simulations.tar")
     dir = Tar.extract(tar, "./simulations")
     close(tar)
-    
-    include("all_tests.jl")
+
+    include("alltests.jl")
 end  
 # projection, particles
 # getvar, particles
