@@ -90,26 +90,26 @@ end
     @test rz == rzu
 
     rx,ry,rz = getextent(gas, :kpc, center=[:bc])
-    @test rx[1] = -50 atol=1e-10
-    @test rx[2] = 50 atol=1e-10
-    @test ry[1] = -50 atol=1e-10
-    @test ry[2] = 50 atol=1e-10
-    @test rz[1] = -50 atol=1e-10
-    @test rz[2] = 50 atol=1e-10
+    @test rx[1] ≈ -50 atol=1e-10
+    @test rx[2] ≈ 50 atol=1e-10
+    @test ry[1] ≈ -50 atol=1e-10
+    @test ry[2] ≈ 50 atol=1e-10
+    @test rz[1] ≈ -50 atol=1e-10
+    @test rz[2] ≈ 50 atol=1e-10
 
     rx,ry,rz = getextent(gas, :kpc, center=[0.5,0.5,0.5])
-    @test rx[1] = -50 atol=1e-10
-    @test rx[2] = 50 atol=1e-10
-    @test ry[1] = -50 atol=1e-10
-    @test ry[2] = 50 atol=1e-10
-    @test rz[1] = -50 atol=1e-10
-    @test rz[2] = 50 atol=1e-10
+    @test rx[1] ≈ -50 atol=1e-10
+    @test rx[2] ≈ 50 atol=1e-10
+    @test ry[1] ≈ -50 atol=1e-10
+    @test ry[2] ≈ 50 atol=1e-10
+    @test rz[1] ≈ -50 atol=1e-10
+    @test rz[2] ≈ 50 atol=1e-10
 
     rx,ry,rz = getextent(gas, :kpc, center=[0.5,0.5,0.5], center_unit=:kpc)
-    @test rx[1] = -0.5 atol=1e-10
-    @test rx[2] = 99.5 atol=1e-10
-    @test ry[1] = -0.5 atol=1e-10
-    @test ry[2] = 99.5 atol=1e-10
-    @test rz[1] = -0.5 atol=1e-10
-    @test rz[2] = 99.5 atol=1e-10
+    @test rx[1] ≈ -0.5 atol=1e-10
+    @test rx[2] ≈ 99.5 atol=1e-10
+    @test ry[1] ≈ -0.5 atol=1e-10
+    @test ry[2] ≈ 99.5 atol=1e-10
+    @test rz[1] ≈ -0.5 atol=1e-10
+    @test rz[2] ≈ 99.5 atol=1e-10
 end
