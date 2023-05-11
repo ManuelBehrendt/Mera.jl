@@ -6,8 +6,10 @@
 @test_throws ErrorException("[Mera]: Simulation has no sink files!") checktypes_error(output, path, :sinks)
 @test_throws ErrorException("[Mera]: Simulation has no amr files!") checktypes_error(output, path, :amr)
 
-@test_throws ErrorException("[Mera]: Simulation lmax=7 < your lmax=10") checklevelmax_error(output, path)
-@test_throws ErrorException("[Mera]: Simulation lmin=3 > your lmin=1") checklevelmin_error(output, path)
+if info.levelmin !== info.levelmax
+    @test_throws ErrorException("[Mera]: Simulation lmax=7 < your lmax=10") checklevelmax_error(output, path)
+    @test_throws ErrorException("[Mera]: Simulation lmin=3 > your lmin=1") checklevelmin_error(output, path)
+end
 
 if Sys.iswindows()
     @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"\\./simulations/output_00003\\info_00003.txt !") checkfolder_error(path)

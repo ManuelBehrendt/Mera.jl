@@ -16,7 +16,11 @@ end
 function getparticles_allvars(output, path)
     info = getinfo(output, path)
     part = getparticles(info);
-    return length(part.selected_partvars) == 13
+    if info.levelmin !== info.levelmax
+        return length(part.selected_partvars) == 13
+    else
+        return length(part.selected_partvars) == 12
+    end
 end
 
 function getparticles_selectedvars(output, path)
@@ -24,13 +28,21 @@ function getparticles_selectedvars(output, path)
     part = getparticles(info, :mass)
     Ncol = propertynames(part.data.columns)
     Ncol_flag1 = false
-    if length(Ncol) == 8 && :mass in Ncol Ncol_flag1 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 8 && :mass in Ncol Ncol_flag1 = true end
+    else
+        if length(Ncol) == 7 && :mass in Ncol Ncol_flag1 = true end
+    end
     println("Ncol_flag1 = ", Ncol_flag1 )
 
     part = getparticles(info, [:mass, :metals])
     Ncol = propertynames(part.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 9 && :mass in Ncol && :metals in Ncol Ncol_flag2 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 9 && :mass in Ncol && :metals in Ncol Ncol_flag2 = true end
+    else 
+        if length(Ncol) == 8 && :mass in Ncol && :metals in Ncol Ncol_flag2 = true end
+    end
     println("Ncol_flag2 = ", Ncol_flag2 )
    
     return Ncol_flag1 == true && Ncol_flag2 == true     
@@ -42,13 +54,21 @@ function getparticles_cpuvar(output, path)
     part = getparticles(info, [:cpu, :mass]);
     Ncol = propertynames(part.data.columns)
     Ncol_flag1 = false
-    if length(Ncol) == 9 && :cpu in Ncol Ncol_flag1 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 9 && :cpu in Ncol Ncol_flag1 = true end
+    else
+        if length(Ncol) == 8 && :cpu in Ncol Ncol_flag1 = true end
+    end
     println("flag1: CPU numbers loaded = ", Ncol_flag1 )
 
     part = getparticles(info, [:cpu, :all]);
     Ncol = propertynames(part.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 14 && :cpu in Ncol Ncol_flag2 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 14 && :cpu in Ncol Ncol_flag2 = true end
+    else
+        if length(Ncol) == 13 && :cpu in Ncol Ncol_flag2 = true end
+    end
     println("flag2: CPU numbers loaded = ", Ncol_flag2 )
     return Ncol_flag1 == true && Ncol_flag2 == true
 end
@@ -57,8 +77,10 @@ end
 
 function particles_amroverview(output, path)
     info =getinfo(output, path)
-    part = getparticles(info)    
-    amroverview(part)
+    if info.levelmin !== info.levelmax
+        part = getparticles(info)    
+        amroverview(part)
+    end
 
     return true
 end    

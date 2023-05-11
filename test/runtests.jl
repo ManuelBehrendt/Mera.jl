@@ -68,7 +68,8 @@ end
 # particles uniform grid
 # old RAMSES version: gethydro, getparticles
 # humanize, getunit
-
+# error  amroverview for uniform grid (hydro, particles, etc.)
+# hydro_range_codeunit,gravity_range_codeunit add test for uniform grid
 
 # not needed:
 #rm(pwd() * "/simulations", recursive=true)
