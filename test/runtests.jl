@@ -12,7 +12,7 @@ tar = open("./simulations.tar")
 dir = Tar.extract(tar, "./simulations")
 close(tar)
 
-
+include("screen_output.jl")
 include("overview/00_info.jl")
 include("overview/00_simoverview.jl")
 include("inspection/01_hydro_inspection.jl")
@@ -39,67 +39,36 @@ output = 2
         include("general.jl")
     end
 
+    verbose(false)
+    showprogress(false)
 
-    @testset "02 Physical values test" begin
-        verbose(false)
-        showprogress(false)
-        # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("getvar hydro:")
-        printstyled("--------------------------------------\n", color=:cyan)
-        @testset "getvar hydro" begin
-            include("values_hydro.jl")
-        end
-
-         # ===================================================================
-         println()
-         printstyled("--------------------------------------\n", color=:cyan)
-         @info("getvar particles:")
-         printstyled("--------------------------------------\n", color=:cyan)
-         @testset "getvar particles" begin
-            include("values_particles.jl")
-        end
-    
-
-        # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("projection hydro:")
-        printstyled("--------------------------------------\n", color=:cyan)
-        @testset "projection hydro" begin
-            include("projection/projection_hydro.jl")
-        end
-
-
-        # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("projection particle/stars:")
-        printstyled("--------------------------------------\n", color=:cyan)
-        @testset "projection stars" begin
-            include("projection/projection_particles.jl")
-        end
-
+    @testset "02 getvar hydro" begin
+        printscreen("getvar hydro:")
+        include("values_hydro.jl")
     end
 
-    # ===================================================================
-    println()
-    printstyled("--------------------------------------\n", color=:cyan)
-    @info("data types:")
-    printstyled("--------------------------------------\n", color=:cyan)
-    @testset "03 Error Checks" begin
+    @testset "03 getvar particles" begin
+        printscreen("getvar particles:")
+        include("values_particles.jl")
+    end
+
+    @testset "04 projection hydro" begin
+        printscreen("projection hydro:")
+        include("projection/projection_hydro.jl")
+    end
+
+    @testset "05 projection stars" begin
+        printscreen("projection particle/stars:")
+        include("projection/projection_particles.jl")
+    end
+
+    @testset "06 Error Checks" begin
+        printscreen("data types:")
         include("errors.jl")
     end
 
-
-    # ===================================================================
-    println()
-    println()
-    printstyled("--------------------------------------\n", color=:cyan)
-    @info("Write/Read MERA files:")
-    printstyled("--------------------------------------\n", color=:cyan)
-    @testset 04 "MERA files" begin
+    @testset  "07 MERA files" begin
+        printscreen("Write/Read MERA files:")
         include("merafiles.jl")
     end
 
