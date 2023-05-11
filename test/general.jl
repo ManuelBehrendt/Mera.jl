@@ -1,10 +1,7 @@
    
         # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("general tests:")
-        printstyled("--------------------------------------\n", color=:cyan)
-            @testset "getinfo" begin
+        @testset "getinfo" begin
+            printscreen("general tests:")
             @test verbose_status()
             @test showprogress_status()
             @test view_argtypes()
@@ -18,16 +15,9 @@
         #@test_broken call_notifyme() #skip=true # cannot test on GitHub
 
         # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("getinfo:")
-        printstyled("--------------------------------------\n", color=:cyan)
         @testset "getinfo" begin
             # main functionality
-
-           
-
-
+            printscreen("getinfo:")
 
             @test  infotest(output, path)
 
@@ -50,11 +40,9 @@
             # check variables
         end
 
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("info overview:")
-        printstyled("--------------------------------------\n", color=:cyan)
+        # ===================================================================
         @testset "info overview" begin
+            printscreen("info overview:")
             @test simoverview(output, simpath)
             @test viewfieldstest(output, path)
             @test viewfilescontent(output, path)
@@ -62,101 +50,78 @@
         end
 
 
-
-
         # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("hydro data inspection:")
-        printstyled("--------------------------------------\n", color=:cyan)
-        @testset "hydro" begin
-            @testset "hydro data inspection" begin
+        @testset "hydro data inspection" begin
+            printscreen("hydro data inspection:")
     	    @test gethydro_infocheck(output, path)
-                @test gethydro_allvars(output, path)
-                @test gethydro_selectedvars(output, path)
-                @test gethydro_cpuvar(output, path)
-                @test gethydro_negvalues(output, path)
-                @test gethydro_lmaxEQlmin(output, path)
-                @test hydro_smallr(output, path)
-                @test hydro_smallc(output, path)
+            @test gethydro_allvars(output, path)
+            @test gethydro_selectedvars(output, path)
+            @test gethydro_cpuvar(output, path)
+            @test gethydro_negvalues(output, path)
+            @test gethydro_lmaxEQlmin(output, path)
+            @test hydro_smallr(output, path)
+            @test hydro_smallc(output, path)
 
 
 
-                @test hydro_viewfields(output, path)
-                @test hydro_amroverview(output, path)
-                @test hydro_dataoverview(output, path)
-                @test hydro_gettime(output, path)
-            end
+            @test hydro_viewfields(output, path)
+            @test hydro_amroverview(output, path)
+            @test hydro_dataoverview(output, path)
+            @test hydro_gettime(output, path)
 
-            printstyled("--------------------------------------\n", color=:cyan)
-            @info("hydro selected ranges:")
-            printstyled("--------------------------------------\n", color=:cyan)
-            @testset "hydro selected ranges" begin
-                @test hydro_range_codeunit(output, path)
-            end
         end
 
+        # ===================================================================
+        @testset "hydro selected ranges" begin
+            printscreen("hydro selected ranges:")
+            @test hydro_range_codeunit(output, path)
+        end       
 
 
         # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("particle data inspection:")
-        printstyled("--------------------------------------\n", color=:cyan)
-        @testset "particle" begin
-            @testset "particle data inspection" begin
-                @test getparticles_infocheck(output, path)
-                @test_broken getparticles_number(output, path)
-                # test number of stars and dm
-                @test getparticles_allvars(output, path)
-                @test getparticles_selectedvars(output, path)
-                @test getparticles_cpuvar(output, path)
+        @testset "particle data inspection" begin
+            printscreen("particle data inspection:")
+            @test getparticles_infocheck(output, path)
+            @test_broken getparticles_number(output, path)
+            # test number of stars and dm
+            @test getparticles_allvars(output, path)
+            @test getparticles_selectedvars(output, path)
+            @test getparticles_cpuvar(output, path)
 
-    	    @test particles_viewfields(output, path)
-                @test particles_amroverview(output, path)
-                @test particles_dataoverview(output, path)
-                @test particles_gettime(output, path)
-            end
+            @test particles_viewfields(output, path)
 
-            println()
-            printstyled("--------------------------------------\n", color=:cyan)
-            @info("particles selected data:")
-            printstyled("--------------------------------------\n", color=:cyan)
-            @testset "particles selected data" begin
-                @test  particles_range_codeunit(output, path)
-            end
+            @test particles_amroverview(output, path)
+            @test particles_dataoverview(output, path)
+            @test particles_gettime(output, path)
         end
 
-
-
+ 
+        # ===================================================================
+        @testset "particles selected data" begin
+            printscreen("particle selected ranges:")
+            @test  particles_range_codeunit(output, path)
+        end
 
 
         # ===================================================================
-        println()
-        printstyled("--------------------------------------\n", color=:cyan)
-        @info("gravity data inspection:")
-        printstyled("--------------------------------------\n", color=:cyan)
-        @testset "gravity" begin
-            @testset "gravity data inspection" begin
-                @test getgravity_infocheck(output, path)
-                @test getgravity_allvars(output, path)
-                @test getgravity_selectedvars(output, path)
-                @test getgravity_cpuvar(output, path)
-                
-                @test gravity_viewfields(output, path)
-                @test gravity_amroverview(output, path)
-                @test gravity_dataoverview(output, path)
-                @test gravity_gettime(output, path)
-            end
-
-            println()
-            printstyled("--------------------------------------\n", color=:cyan)
-            @info("gravity selected data:")
-            printstyled("--------------------------------------\n", color=:cyan)
-            @testset "gravity selected data" begin
-                @test  gravity_range_codeunit(output, path)
-            end
+        @testset "gravity data inspection" begin
+            printscreen("gravity data inspection:")
+            @test getgravity_infocheck(output, path)
+            @test getgravity_allvars(output, path)
+            @test getgravity_selectedvars(output, path)
+            @test getgravity_cpuvar(output, path)
+            
+            @test gravity_viewfields(output, path)
+            @test gravity_amroverview(output, path)
+            @test gravity_dataoverview(output, path)
+            @test gravity_gettime(output, path)
         end
 
+
+        # ===================================================================
+        @testset "gravity selected data" begin
+            printscreen("gravity selected ranges:")
+            @test  gravity_range_codeunit(output, path)
+        end
 
         # ===================================================================
