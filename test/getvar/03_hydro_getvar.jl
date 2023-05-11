@@ -1,7 +1,11 @@
 function prepare_data1(output, path)
     info = getinfo(output, path, verbose=false)
     gas = gethydro(info, verbose=false, show_progress=false)
-    t = select(gas.data, (:level, :cx, :cy, :cz) )
+    if info.levelmin !== info.levelmax
+        t = select(gas.data, (:level, :cx, :cy, :cz) )
+    else
+        t = select(gas.data, (:cx, :cy, :cz) )
+    end
 
     
     kB = gas.info.constants.kB #1.38062e-16 # erg/K
