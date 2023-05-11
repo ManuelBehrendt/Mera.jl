@@ -5,18 +5,18 @@ gas, irho1, ip1, ics1= prepare_data1(output, path)
     getvar()
 end
 @testset "rho" begin
-        @test test_rho(gas) ≈ irho1  rtol=1e-10
+    @test test_rho(gas) ≈ irho1  rtol=1e-10
     @test test_p(gas) ≈ ip1  rtol=1e-10
 end
 
     # test mass
 @testset "mass" begin
     mass_ref = 1.0000000000019456e16
-        mass_tot = sum( getvar(gas, :mass, :Msol) )
-        mass_tot_function1 = sum(getmass(gas)) .* gas.info.scale.Msol
-        mass_tot_function2 = msum(gas, :Msol)
-        @test mass_ref ≈ mass_tot  rtol=1e-10
-        @test mass_tot ≈ mass_tot_function1  rtol=1e-10
+    mass_tot = sum( getvar(gas, :mass, :Msol) )
+    mass_tot_function1 = sum(getmass(gas)) .* gas.info.scale.Msol
+    mass_tot_function2 = msum(gas, :Msol)
+    @test mass_ref ≈ mass_tot  rtol=1e-10
+    @test mass_tot ≈ mass_tot_function1  rtol=1e-10
     @test mass_tot ≈ mass_tot_function2  rtol=1e-10
 end
 
@@ -32,8 +32,8 @@ end
 
 # test cs
 @testset "cs" begin
-cs = getvar(gas, :cs, :cm_s)
-cs_av = sum(cs) / length(cs)
+    cs = getvar(gas, :cs, :cm_s)
+    cs_av = sum(cs) / length(cs)
     @test cs_av ≈ ics1  rtol=1e-10
 end
 
@@ -72,7 +72,7 @@ end
 
 
 @testset "get positions/velocities" begin
-        @test check_positions_hydro(output, path)
-        #@test check_positions_part(output, path)
-        @test check_velocities_hydro(output, path)
+    @test check_positions_hydro(output, path)
+    #@test check_positions_part(output, path)
+    @test check_velocities_hydro(output, path)
 end
