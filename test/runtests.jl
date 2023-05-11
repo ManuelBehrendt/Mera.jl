@@ -31,7 +31,7 @@ simpath = "./"
 path = "./simulations/"
 output = 2
 
-@testset "MERA tests"
+@testset "MERA tests" begin
     @testset "AMR" begin
         
         Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
