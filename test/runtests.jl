@@ -30,7 +30,7 @@ include("jld2files/05_mera_files.jl")
 
 #simpath = "./simulations/"
 #path = "./simulations/01_spiral/"
-simpath = "../"
+simpath = "../."
 path = "./simulations/"
 output = 2
 
