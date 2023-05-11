@@ -69,8 +69,8 @@ end
 
 
 function gravity_amroverview(output, path)
+    info =getinfo(output, path)
     if info.levelmin !== info.levelmax
-        info =getinfo(output, path)
         grav = getgravity(info)
     end
     amroverview(grav)

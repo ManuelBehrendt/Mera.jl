@@ -27,11 +27,12 @@ include("jld2files/05_mera_files.jl")
 #simpath = "./simulations/"
 #path = "./simulations/01_spiral/"
 
-simpath = "./"
-path = "./simulations/"
-output = 2
+
 
 @testset "MERA tests" begin
+    global simpath = "./"
+    global path = "./simulations/"
+    global output = 2
     @testset "AMR" begin
         
         Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
@@ -46,9 +47,9 @@ output = 2
 
     end
 
-    simpath = "./"
-    path = "./simulations/"
-    output = 1
+    global simpath = "./"
+    global path = "./simulations/"
+    global output = 1
     @testset "Uniform Grid" begin
 
         Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulation_ugrid.tar", pwd() * "/simulations.tar")

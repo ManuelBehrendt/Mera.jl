@@ -1,7 +1,7 @@
 
-function hydro_range_codeunit(output, path)
+function hydro_range_codeunit(output, path) 
+    info = getinfo(output, path)
     if info.levelmin !== info.levelmax
-        info = getinfo(output, path)
         gas00 = gethydro(info, lmax=5, smallr=1e-11)
         gas01 = gethydro(info, lmax=5,
                     xrange=[0.2,0.8],

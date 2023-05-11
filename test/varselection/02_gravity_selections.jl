@@ -1,7 +1,7 @@
 
 function gravity_range_codeunit(output, path)
     info = getinfo(output, path)
-    if nfo.levelmin !== info.levelmax
+    if info.levelmin !== info.levelmax
         gas00 = getgravity(info, lmax=5)
         gas01 = getgravity(info, lmax=5,
                     xrange=[0.2,0.8],
