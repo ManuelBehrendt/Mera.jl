@@ -409,7 +409,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             # bin data on current level grid and resize map
             fcorrect = (2^level /  res) ^ 2
-            map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval) .* weight_scale
+            map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, isamr) .* weight_scale
             newmap_w += imresize(map_weight, (length1, length2)) .* fcorrect
 
             for ivar in keys(data_dict)
@@ -417,7 +417,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     #if ivar == :mass println(ivar) end
                     map = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar])
                 else
-                    map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar]) .* weight_scale
+                    map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                 end
                 maps[ivar] += imresize(map, (length1, length2)) .* fcorrect
             end
@@ -881,18 +881,25 @@ end
 #                        Base.TwicePrecision{Float64},
 #                        Base.TwicePrecision{Float64}}},
 #                        mask::MaskType, w::Vector{Float64})
-function hist2d_weight(x, y, s, mask, w)
-    h = fit(Histogram, (x[mask], y[mask]), weights(w[mask]), (s[1],s[2]))
+function hist2d_weight(x, y, s, mask, w, isamr)
+    if isamr
+        h = fit(Histogram, (x[mask], y[mask]), weights(w[mask]), (s[1],s[2]))
+    else
+        h = fit(Histogram, (x, y), weights(w), (s[1],s[2]))
+    end
     return h.weights
 end
-
 #function hist2d_data(x::Vector{Int64}, y::Vector{Int64},
 #                        s::Vector{StepRangeLen{Float64,
 #                        Base.TwicePrecision{Float64},
 #                        Base.TwicePrecision{Float64}}},
 #                        mask::MaskType, w::Vector{Float64},
 #                        data::Vector{Float64})
-function hist2d_data(x, y, s, mask, w, data)
-    h = fit(Histogram, (x[mask], y[mask]), weights(data[mask] .* w[mask]), (s[1],s[2]))
+function hist2d_data(x, y, s, mask, w, data, isamr)
+    if isamr
+        h = fit(Histogram, (x[mask], y[mask]), weights(data[mask] .* w[mask]), (s[1],s[2]))
+    else
+        h = fit(Histogram, (x, y), weights(data .* w), (s[1],s[2]))
+    end
     return h.weights
 end
