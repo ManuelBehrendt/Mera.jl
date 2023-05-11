@@ -415,7 +415,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             for ivar in keys(data_dict)
                 if ivar == :sd || ivar == :mass
                     #if ivar == :mass println(ivar) end
-                    map = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar])
+                    map = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar], isamr)
                 else
                     map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                 end
