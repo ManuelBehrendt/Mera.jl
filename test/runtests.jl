@@ -26,24 +26,35 @@ include("jld2files/05_mera_files.jl")
 
 #simpath = "./simulations/"
 #path = "./simulations/01_spiral/"
-simpath = "./"
-path = "./simulations/"
-output = 2
+
 
 @testset "MERA AMR" begin
-    Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
+    simpath = "./"
+    path = "./simulations/"
+    output = 2
 
+    Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
     tar = open("./simulations.tar")
     dir = Tar.extract(tar, "./simulations")
     close(tar)
 
     include("all_tests.jl")
+    rm(pwd() * "/simulations", recursive=true)
+    rm(pwd() * "/simulations.tar")
 
-    
 end
 
 @testset "MERA Uniform Grid" begin
+    simpath = "./"
+    path = "./simulations/"
+    output = 1
 
+    Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulation_ugrid.tar", pwd() * "/simulations.tar")
+    tar = open("./simulations.tar")
+    dir = Tar.extract(tar, "./simulations")
+    close(tar)
+    
+    include("all_tests.jl")
 end  
 # projection, particles
 # getvar, particles
