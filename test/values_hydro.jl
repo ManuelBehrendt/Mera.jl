@@ -81,3 +81,35 @@ end
     #@test check_positions_part(output, path)
     @test check_velocities_hydro(output, path)
 end
+
+@testset "get extent" begin
+    @test rx,ry,rz = getextent(gas, :kpc)
+    @test rxu, ryu, rzu = getextent(gas, unit=:kpc)
+    @test rx == rxu
+    @test fry == ryu
+    @test rz == rzu
+
+    @test rx,ry,rz = getextent(gas, :kpc, center=[:bc])
+    @test rx[1] == -50 atol=1e-10
+    @test rx[2] == 50 atol=1e-10
+    @test ry[1] == -50 atol=1e-10
+    @test ry[2] == 50 atol=1e-10
+    @test rz[1] == -50 atol=1e-10
+    @test rz[2] == 50 atol=1e-10
+
+    @test rx,ry,rz = getextent(gas, :kpc, center=[0.5,0.5,0.5])
+    @test rx[1] == -50 atol=1e-10
+    @test rx[2] == 50 atol=1e-10
+    @test ry[1] == -50 atol=1e-10
+    @test ry[2] == 50 atol=1e-10
+    @test rz[1] == -50 atol=1e-10
+    @test rz[2] == 50 atol=1e-10
+
+    @test rx,ry,rz = getextent(gas, :kpc, center=[0.5,0.5,0.5], center_unit=:kpc)
+    @test rx[1] == -0.5 atol=1e-10
+    @test rx[2] == 99.5 atol=1e-10
+    @test ry[1] == -0.5 atol=1e-10
+    @test ry[2] == 99.5 atol=1e-10
+    @test rz[1] == -0.5 atol=1e-10
+    @test rz[2] == 99.5 atol=1e-10
+end
