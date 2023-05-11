@@ -83,7 +83,13 @@ end
 @testset "particle data inspection" begin
     printscreen("particle data inspection:")
     @test getparticles_infocheck(output, path)
-    @test_broken getparticles_number(output, path)
+
+    info = getinfo(output, path, verbose=false)
+    if info.levelmin !== info.levelmax
+        @test_broken getparticles_number(output, path)
+    else
+        @test getparticles_number(output, path)
+    end
     # test number of stars and dm
     @test getparticles_allvars(output, path)
     @test getparticles_selectedvars(output, path)
