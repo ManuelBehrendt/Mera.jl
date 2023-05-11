@@ -390,7 +390,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
         newmap_w = zeros(Float64, (length1, length2) )
-        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2)
+        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
 
 
         closed=:left
@@ -715,10 +715,14 @@ end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2)
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2, isamr, simlmax) 
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
-        lvl = getvar(dataobject, :level)
+        if isamr
+            lvl = getvar(dataobject, :level)
+        else
+            lvl = simlmax
+        end
         #println(rangez)
         if rangez[1] != 0.
             mask_zmin = zval .>= floor.(Int, rangez[1] .* 2 .^lvl)
@@ -756,7 +760,11 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             xval = select(dataobject.data, x_coord)
             yval = select(dataobject.data, y_coord)
             weightval = getvar(dataobject, weighting)
-            leveldata = select(dataobject.data, :level)
+            if isamr
+                leveldata = select(dataobject.data, :level)
+            else
+                leveldata = simlmax
+            end
         else
             xval = select(dataobject.data, x_coord)[mask] #getvar(dataobject, x_coord, mask=mask)
             yval = select(dataobject.data, y_coord)[mask] #getvar(dataobject, y_coord, mask=mask)
@@ -765,7 +773,11 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             #else
                 weightval = getvar(dataobject, weighting, mask=mask)
             #end
-            leveldata = select(dataobject.data, :level)[mask] #getvar(dataobject, :level, mask=mask)
+            if isamr
+                leveldata = select(dataobject.data, :level)[mask] #getvar(dataobject, :level, mask=mask)
+            else 
+                leveldata = simlmax
+            end
             #end
         end
 
