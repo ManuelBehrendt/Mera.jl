@@ -16,13 +16,21 @@ function getgravity_selectedvars(output, path)
     grav = getgravity(info, :epot)
     Ncol = propertynames(grav.data.columns)
     Ncol_flag1 = false
-    if length(Ncol) == 5 && :epot in Ncol Ncol_flag1 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 5 && :epot in Ncol Ncol_flag1 = true end
+    else
+        if length(Ncol) == 4 && :epot in Ncol Ncol_flag1 = true end
+    end
     println("Ncol_flag1 = ", Ncol_flag1 )
 
     grav = getgravity(info, [:epot, :ax])
     Ncol = propertynames(grav.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 6 && :epot in Ncol && :ax in Ncol Ncol_flag2 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 6 && :epot in Ncol && :ax in Ncol Ncol_flag2 = true end
+    else
+        if length(Ncol) == 5 && :epot in Ncol && :ax in Ncol Ncol_flag2 = true end
+    end
     println("Ncol_flag2 = ", Ncol_flag2 )
    
     return Ncol_flag1 == true && Ncol_flag2 == true     
@@ -34,14 +42,22 @@ function getgravity_cpuvar(output, path)
     grav = getgravity(info, [:cpu, :epot])
     Ncol = propertynames(grav.data.columns)
     Ncol_flag1 = false
-    if length(Ncol) == 6 && :epot in Ncol && :cpu in Ncol Ncol_flag1 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 6 && :epot in Ncol && :cpu in Ncol Ncol_flag1 = true end
+    else
+        if length(Ncol) == 5 && :epot in Ncol && :cpu in Ncol Ncol_flag1 = true end
+    end
     println("Ncol_flag1 = ", Ncol_flag1 )
    
 
     grav = getgravity(info, [:cpu, :all])
     Ncol = propertynames(grav.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 9 && :epot in Ncol && :cpu in Ncol Ncol_flag2 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 9 && :epot in Ncol && :cpu in Ncol Ncol_flag2 = true end
+    else
+        if length(Ncol) == 8 && :epot in Ncol && :cpu in Ncol Ncol_flag2 = true end
+    end
     println("Ncol_flag2 = ", Ncol_flag2 )
 
     return Ncol_flag1 == true && Ncol_flag2 == true
@@ -53,8 +69,10 @@ end
 
 
 function gravity_amroverview(output, path)
-    info =getinfo(output, path)
-    grav = getgravity(info)
+    if info.levelmin !== info.levelmax
+        info =getinfo(output, path)
+        grav = getgravity(info)
+    end
     amroverview(grav)
 
     return true

@@ -24,20 +24,34 @@ function gethydro_selectedvars(output, path)
     gas = gethydro(info, :rho)
     Ncol = propertynames(gas.data.columns)
     Ncol_flag1 = false
-    if length(Ncol) == 5 && :rho in Ncol Ncol_flag1 = true end
+
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 5 && :rho in Ncol Ncol_flag1 = true end
+    else
+        if length(Ncol) == 4 && :rho in Ncol Ncol_flag1 = true end
+    end
     println("Ncol_flag1 = ", Ncol_flag1 )
 
     gas = gethydro(info, [:rho, :vx])
     Ncol = propertynames(gas.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 6 && :rho in Ncol && :vx in Ncol Ncol_flag2 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 6 && :rho in Ncol && :vx in Ncol Ncol_flag2 = true end
+    else
+        if length(Ncol) == 5 && :rho in Ncol && :vx in Ncol Ncol_flag2 = true end
+    end
     println("Ncol_flag2 = ", Ncol_flag2 )
    
     gas = gethydro(info, [:rho, :vx, :vy, :vz, :p])
     Ncol = propertynames(gas.data.columns)
     Ncol_flag3 = false
-    if length(Ncol) == 9 && :rho in Ncol && :vx in Ncol && :vy in Ncol && 
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 9 && :rho in Ncol && :vx in Ncol && :vy in Ncol && 
                              :vz in Ncol && :p in Ncol Ncol_flag3 = true end
+    else
+        if length(Ncol) == 8 && :rho in Ncol && :vx in Ncol && :vy in Ncol && 
+            :vz in Ncol && :p in Ncol Ncol_flag3 = true end
+    end
     println("Ncol_flag3 = ", Ncol_flag3 )
 
     return Ncol_flag1 == true && Ncol_flag2 == true  &&  Ncol_flag3 == true
@@ -50,13 +64,21 @@ function gethydro_cpuvar(output, path)
     gas = gethydro(info, [:cpu, :rho]);
     Ncol = propertynames(gas.data.columns)
     Ncol_flag1 = false
-    if length(Ncol) == 6 && :cpu in Ncol Ncol_flag1 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 6 && :cpu in Ncol Ncol_flag1 = true end
+    else
+        if length(Ncol) == 5 && :cpu in Ncol Ncol_flag1 = true end
+    end
     println("flag1: CPU numbers loaded = ", Ncol_flag1 )
 
     gas = gethydro(info, [:cpu, :all]);
     Ncol = propertynames(gas.data.columns)
     Ncol_flag2 = false
-    if length(Ncol) == 11 && :cpu in Ncol Ncol_flag2 = true end
+    if info.levelmin !== info.levelmax
+        if length(Ncol) == 11 && :cpu in Ncol Ncol_flag2 = true end
+    else
+        if length(Ncol) == 10 && :cpu in Ncol Ncol_flag2 = true end
+    end
     println("flag2: CPU numbers loaded = ", Ncol_flag2 )
 
 
@@ -91,8 +113,10 @@ end
 
 function hydro_amroverview(output, path)
     info =getinfo(output, path)
-    gas = gethydro(info)
-    amroverview(gas)
+    if info.levelmin !== info.levelmax
+        gas = gethydro(info)
+        amroverview(gas)
+    end
 
     return true
 end    

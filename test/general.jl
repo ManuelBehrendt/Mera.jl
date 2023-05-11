@@ -26,9 +26,11 @@ end
     @test info.descriptor.hversion == 1 # hydro reader version
     @test info.descriptor.pversion == 1 # particle reader version
 
-    @test info.time ≈ 0.330855641315456 rtol=1e-13
-    @test gettime(info) ≈ 0.330855641315456 rtol=1e-13
-    @test gettime(info, :Myr) ≈ 4.9320773034440295 rtol=1e-13
+    if info.levelmin !== info.levelmax # for uniform grid sim time = 0.
+        @test info.time ≈ 0.330855641315456 rtol=1e-13
+        @test gettime(info) ≈ 0.330855641315456 rtol=1e-13
+        @test gettime(info, :Myr) ≈ 4.9320773034440295 rtol=1e-13
+    end
     @test info.rt == false
     @test info.sinks == false
     @test info.clumps == false
