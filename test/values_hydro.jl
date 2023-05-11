@@ -22,7 +22,11 @@ end
 
 # test masking on mass
 @testset "mass masking" begin
-    mask1 = getvar(gas, :level) .> 6
+    if gas.info.levelmin !== gas.info.levelmax
+        mask1 = getvar(gas, :level) .> 6
+    else
+        mask1 = getvar(gas, :rho, :nH) .< 0.1
+    end
     mass1 = sum( getvar(gas, :mass, :Msol, mask=mask1))
     mass1_function1 =  sum(getmass(gas)[mask1]) .* gas.info.scale.Msol
     mass1_function2 = msum(gas, :Msol, mask=mask1)
@@ -58,16 +62,17 @@ end
     @test vref ≈ vdata  rtol=1e-10
 end
 
-# test cellsize, volume
-@testset "cellsize, volume" begin
-    leveldata = getvar(gas, :level)
-    cellsize_ref = gas.boxlen ./ 2 .^leveldata
-    cellsize_data = getvar(gas, :cellsize);
-    @test cellsize_ref == cellsize_data
+if gas.info.levelmin !== gas.info.levelmax
+    @testset "cellsize, volume" begin
+        leveldata = getvar(gas, :level)
+        cellsize_ref = gas.boxlen ./ 2 .^leveldata
+        cellsize_data = getvar(gas, :cellsize);
+        @test cellsize_ref == cellsize_data
 
-    volume_ref = cellsize_ref .^3
-    volume_data = getvar(gas, :volume)
-    @test volume_ref == volume_data
+        volume_ref = cellsize_ref .^3
+        volume_data = getvar(gas, :volume)
+        @test volume_ref == volume_data
+    end
 end
 
 
