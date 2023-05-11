@@ -41,7 +41,6 @@ output = 2
 
     verbose(false)
     showprogress(false)
-
     @testset "02 getvar hydro" begin
         printscreen("getvar hydro:")
         include("values_hydro.jl")
@@ -67,6 +66,7 @@ output = 2
         include("errors.jl")
     end
 
+    verbose(true)
     @testset  "07 MERA files" begin
         printscreen("Write/Read MERA files:")
         include("merafiles.jl")
