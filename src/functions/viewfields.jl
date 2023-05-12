@@ -316,7 +316,7 @@ function timerfile(object::InfoType)
             println(i)
         end
     else
-        println("[Mera]: No timer-file found!")
+        println("[Mera]: No Timer-file found!")
     end
 
     println()
@@ -340,7 +340,7 @@ function patchfile(object::InfoType)
             println(i)
         end
     else
-        println("[Mera]: No patch-file found!")
+        println("[Mera]: No Patch-file found!")
     end
 
     println()
