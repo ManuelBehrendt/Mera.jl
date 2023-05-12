@@ -15,12 +15,14 @@ end
     end
 
     @testset "all vars" begin
+        info = getinfo(output, path);
         clumps = getclumps(info)
         @test length( colnames(clumps.data) ) == 12
         @test length(clumps.data) == 7
     end
 
     @testset "selected vars" begin
+        info = getinfo(output, path);
         clumps = getclumps(info, [:peak_x, :peak_y, :peak_z]);
         @test length(colnames(clumps.data)) == 3
         Ncol = propertynames(clumps.data.columns)
