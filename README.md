@@ -136,7 +136,8 @@ Now add packages like Mera and PyPlot in the favored version:
 ```
 
 ## Apple Silicon: M1/M2 Chips
-Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package
+Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package .
+If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
 
 ## Help and Documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
