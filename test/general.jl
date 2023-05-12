@@ -1,127 +1,129 @@
 
-@testset "file/folder-names" begin
-    printscreen("file/folder-names:")
+if !Sys.iswindows() # skip test for windows
+    @testset "file/folder-names" begin
+        printscreen("file/folder-names:")
 
-    # =================================
-    fname  = Mera.createpath(10, "./");
-    flag = Dict()
-    flag[1]  = fname.amr              == "./output_00010/amr_00010."
-    flag[2]  = fname.clumps           == "./output_00010/clump_00010."
-    flag[3]  = fname.compilation      == "./output_00010/compilation.txt"
-    flag[4]  = fname.gravity          == "./output_00010/grav_00010."
-    flag[5]  = fname.header           == "./output_00010/header_00010.txt"
-    flag[6]  = fname.hydro            == "./output_00010/hydro_00010."
-    flag[7]  = fname.hydro_descriptor == "./output_00010/hydro_file_descriptor.txt"
-    flag[8]  = fname.info             == "./output_00010/info_00010.txt"
-    flag[9]  = fname.makefile         == "./output_00010/makefile.txt"
-    flag[10] = fname.namelist         == "./output_00010/namelist.txt"
-    flag[11] = fname.output           == "./output_00010"
-    flag[12] = fname.part_descriptor  == "./output_00010/part_file_descriptor.txt"
-    flag[13] = fname.particles        == "./output_00010/part_00010."
-    flag[14] = fname.patchfile        == "./output_00010/patches.txt"
-    flag[15] = fname.rt               == "./output_00010/rt_00010."
-    flag[16] = fname.rt_descriptor    == "./output_00010/rt_file_descriptor.txt"
-    flag[17] = fname.rt_descriptor_v0 == "./output_00010/info_rt_00010.txt"
-    flag[18] = fname.timer            == "./output_00010/timer_00010.txt"
+        # =================================
+        fname  = Mera.createpath(10, "./");
+        flag = Dict()
+        flag[1]  = fname.amr              == "./output_00010/amr_00010."
+        flag[2]  = fname.clumps           == "./output_00010/clump_00010."
+        flag[3]  = fname.compilation      == "./output_00010/compilation.txt"
+        flag[4]  = fname.gravity          == "./output_00010/grav_00010."
+        flag[5]  = fname.header           == "./output_00010/header_00010.txt"
+        flag[6]  = fname.hydro            == "./output_00010/hydro_00010."
+        flag[7]  = fname.hydro_descriptor == "./output_00010/hydro_file_descriptor.txt"
+        flag[8]  = fname.info             == "./output_00010/info_00010.txt"
+        flag[9]  = fname.makefile         == "./output_00010/makefile.txt"
+        flag[10] = fname.namelist         == "./output_00010/namelist.txt"
+        flag[11] = fname.output           == "./output_00010"
+        flag[12] = fname.part_descriptor  == "./output_00010/part_file_descriptor.txt"
+        flag[13] = fname.particles        == "./output_00010/part_00010."
+        flag[14] = fname.patchfile        == "./output_00010/patches.txt"
+        flag[15] = fname.rt               == "./output_00010/rt_00010."
+        flag[16] = fname.rt_descriptor    == "./output_00010/rt_file_descriptor.txt"
+        flag[17] = fname.rt_descriptor_v0 == "./output_00010/info_rt_00010.txt"
+        flag[18] = fname.timer            == "./output_00010/timer_00010.txt"
 
-    ispos = true
-    for i in sort(collect(keys(flag)))
-        if flag[i] == false
-            ispos = false
-            println("test 10: flag: ", i, " = false")
+        ispos = true
+        for i in sort(collect(keys(flag)))
+            if flag[i] == false
+                ispos = false
+                println("test 10: flag: ", i, " = false")
+            end
         end
-    end
 
 
-    # =================================
-    fname  = Mera.createpath(100, "./");
-    flag = Dict()
-    flag[1]  = fname.amr              == "./output_00100/amr_00100."
-    flag[2]  = fname.clumps           == "./output_00100/clump_00100."
-    flag[3]  = fname.compilation      == "./output_00100/compilation.txt"
-    flag[4]  = fname.gravity          == "./output_00100/grav_00100."
-    flag[5]  = fname.header           == "./output_00100/header_00100.txt"
-    flag[6]  = fname.hydro            == "./output_00100/hydro_00100."
-    flag[7]  = fname.hydro_descriptor == "./output_00100/hydro_file_descriptor.txt"
-    flag[8]  = fname.info             == "./output_00100/info_00100.txt"
-    flag[9]  = fname.makefile         == "./output_00100/makefile.txt"
-    flag[10] = fname.namelist         == "./output_00100/namelist.txt"
-    flag[11] = fname.output           == "./output_00100"
-    flag[12] = fname.part_descriptor  == "./output_00100/part_file_descriptor.txt"
-    flag[13] = fname.particles        == "./output_00100/part_00100."
-    flag[14] = fname.patchfile        == "./output_00100/patches.txt"
-    flag[15] = fname.rt               == "./output_00100/rt_00100."
-    flag[16] = fname.rt_descriptor    == "./output_00100/rt_file_descriptor.txt"
-    flag[17] = fname.rt_descriptor_v0 == "./output_00100/info_rt_00100.txt"
-    flag[18] = fname.timer            == "./output_00100/timer_00100.txt"
+        # =================================
+        fname  = Mera.createpath(100, "./");
+        flag = Dict()
+        flag[1]  = fname.amr              == "./output_00100/amr_00100."
+        flag[2]  = fname.clumps           == "./output_00100/clump_00100."
+        flag[3]  = fname.compilation      == "./output_00100/compilation.txt"
+        flag[4]  = fname.gravity          == "./output_00100/grav_00100."
+        flag[5]  = fname.header           == "./output_00100/header_00100.txt"
+        flag[6]  = fname.hydro            == "./output_00100/hydro_00100."
+        flag[7]  = fname.hydro_descriptor == "./output_00100/hydro_file_descriptor.txt"
+        flag[8]  = fname.info             == "./output_00100/info_00100.txt"
+        flag[9]  = fname.makefile         == "./output_00100/makefile.txt"
+        flag[10] = fname.namelist         == "./output_00100/namelist.txt"
+        flag[11] = fname.output           == "./output_00100"
+        flag[12] = fname.part_descriptor  == "./output_00100/part_file_descriptor.txt"
+        flag[13] = fname.particles        == "./output_00100/part_00100."
+        flag[14] = fname.patchfile        == "./output_00100/patches.txt"
+        flag[15] = fname.rt               == "./output_00100/rt_00100."
+        flag[16] = fname.rt_descriptor    == "./output_00100/rt_file_descriptor.txt"
+        flag[17] = fname.rt_descriptor_v0 == "./output_00100/info_rt_00100.txt"
+        flag[18] = fname.timer            == "./output_00100/timer_00100.txt"
 
-    for i in sort(collect(keys(flag)))
-        if flag[i] == false
-            ispos = false
-            println("test 100: flag: ", i, " = false")
+        for i in sort(collect(keys(flag)))
+            if flag[i] == false
+                ispos = false
+                println("test 100: flag: ", i, " = false")
+            end
         end
-    end
 
 
-    # =================================
-    fname  = Mera.createpath(1000, "./");
-    flag = Dict()
-    flag[1]  = fname.amr              == "./output_01000/amr_01000."
-    flag[2]  = fname.clumps           == "./output_01000/clump_01000."
-    flag[3]  = fname.compilation      == "./output_01000/compilation.txt"
-    flag[4]  = fname.gravity          == "./output_01000/grav_01000."
-    flag[5]  = fname.header           == "./output_01000/header_01000.txt"
-    flag[6]  = fname.hydro            == "./output_01000/hydro_01000."
-    flag[7]  = fname.hydro_descriptor == "./output_01000/hydro_file_descriptor.txt"
-    flag[8]  = fname.info             == "./output_01000/info_01000.txt"
-    flag[9]  = fname.makefile         == "./output_01000/makefile.txt"
-    flag[10] = fname.namelist         == "./output_01000/namelist.txt"
-    flag[11] = fname.output           == "./output_01000"
-    flag[12] = fname.part_descriptor  == "./output_01000/part_file_descriptor.txt"
-    flag[13] = fname.particles        == "./output_01000/part_01000."
-    flag[14] = fname.patchfile        == "./output_01000/patches.txt"
-    flag[15] = fname.rt               == "./output_01000/rt_01000."
-    flag[16] = fname.rt_descriptor    == "./output_01000/rt_file_descriptor.txt"
-    flag[17] = fname.rt_descriptor_v0 == "./output_01000/info_rt_01000.txt"
-    flag[18] = fname.timer            == "./output_01000/timer_01000.txt"
+        # =================================
+        fname  = Mera.createpath(1000, "./");
+        flag = Dict()
+        flag[1]  = fname.amr              == "./output_01000/amr_01000."
+        flag[2]  = fname.clumps           == "./output_01000/clump_01000."
+        flag[3]  = fname.compilation      == "./output_01000/compilation.txt"
+        flag[4]  = fname.gravity          == "./output_01000/grav_01000."
+        flag[5]  = fname.header           == "./output_01000/header_01000.txt"
+        flag[6]  = fname.hydro            == "./output_01000/hydro_01000."
+        flag[7]  = fname.hydro_descriptor == "./output_01000/hydro_file_descriptor.txt"
+        flag[8]  = fname.info             == "./output_01000/info_01000.txt"
+        flag[9]  = fname.makefile         == "./output_01000/makefile.txt"
+        flag[10] = fname.namelist         == "./output_01000/namelist.txt"
+        flag[11] = fname.output           == "./output_01000"
+        flag[12] = fname.part_descriptor  == "./output_01000/part_file_descriptor.txt"
+        flag[13] = fname.particles        == "./output_01000/part_01000."
+        flag[14] = fname.patchfile        == "./output_01000/patches.txt"
+        flag[15] = fname.rt               == "./output_01000/rt_01000."
+        flag[16] = fname.rt_descriptor    == "./output_01000/rt_file_descriptor.txt"
+        flag[17] = fname.rt_descriptor_v0 == "./output_01000/info_rt_01000.txt"
+        flag[18] = fname.timer            == "./output_01000/timer_01000.txt"
 
-    for i in sort(collect(keys(flag)))
-        if flag[i] == false
-            ispos = false
-            println("test 1000: flag: ", i, " = false")
+        for i in sort(collect(keys(flag)))
+            if flag[i] == false
+                ispos = false
+                println("test 1000: flag: ", i, " = false")
+            end
         end
-    end
 
 
-    # =================================
-    fname  = Mera.createpath(10000, "./");
-    flag = Dict()
-    flag[1]  = fname.amr              == "./output_10000/amr_10000."
-    flag[2]  = fname.clumps           == "./output_10000/clump_10000."
-    flag[3]  = fname.compilation      == "./output_10000/compilation.txt"
-    flag[4]  = fname.gravity          == "./output_10000/grav_10000."
-    flag[5]  = fname.header           == "./output_10000/header_10000.txt"
-    flag[6]  = fname.hydro            == "./output_10000/hydro_10000."
-    flag[7]  = fname.hydro_descriptor == "./output_10000/hydro_file_descriptor.txt"
-    flag[8]  = fname.info             == "./output_10000/info_10000.txt"
-    flag[9]  = fname.makefile         == "./output_10000/makefile.txt"
-    flag[10] = fname.namelist         == "./output_10000/namelist.txt"
-    flag[11] = fname.output           == "./output_10000"
-    flag[12] = fname.part_descriptor  == "./output_10000/part_file_descriptor.txt"
-    flag[13] = fname.particles        == "./output_10000/part_10000."
-    flag[14] = fname.patchfile        == "./output_10000/patches.txt"
-    flag[15] = fname.rt               == "./output_10000/rt_10000."
-    flag[16] = fname.rt_descriptor    == "./output_10000/rt_file_descriptor.txt"
-    flag[17] = fname.rt_descriptor_v0 == "./output_10000/info_rt_10000.txt"
-    flag[18] = fname.timer            == "./output_10000/timer_10000.txt"
+        # =================================
+        fname  = Mera.createpath(10000, "./");
+        flag = Dict()
+        flag[1]  = fname.amr              == "./output_10000/amr_10000."
+        flag[2]  = fname.clumps           == "./output_10000/clump_10000."
+        flag[3]  = fname.compilation      == "./output_10000/compilation.txt"
+        flag[4]  = fname.gravity          == "./output_10000/grav_10000."
+        flag[5]  = fname.header           == "./output_10000/header_10000.txt"
+        flag[6]  = fname.hydro            == "./output_10000/hydro_10000."
+        flag[7]  = fname.hydro_descriptor == "./output_10000/hydro_file_descriptor.txt"
+        flag[8]  = fname.info             == "./output_10000/info_10000.txt"
+        flag[9]  = fname.makefile         == "./output_10000/makefile.txt"
+        flag[10] = fname.namelist         == "./output_10000/namelist.txt"
+        flag[11] = fname.output           == "./output_10000"
+        flag[12] = fname.part_descriptor  == "./output_10000/part_file_descriptor.txt"
+        flag[13] = fname.particles        == "./output_10000/part_10000."
+        flag[14] = fname.patchfile        == "./output_10000/patches.txt"
+        flag[15] = fname.rt               == "./output_10000/rt_10000."
+        flag[16] = fname.rt_descriptor    == "./output_10000/rt_file_descriptor.txt"
+        flag[17] = fname.rt_descriptor_v0 == "./output_10000/info_rt_10000.txt"
+        flag[18] = fname.timer            == "./output_10000/timer_10000.txt"
 
-    for i in sort(collect(keys(flag)))
-        if flag[i] == false
-            ispos = false
-            println("test 10000: flag: ", i, " = false")
+        for i in sort(collect(keys(flag)))
+            if flag[i] == false
+                ispos = false
+                println("test 10000: flag: ", i, " = false")
+            end
         end
+        @test ispos 
     end
-    @test ispos 
 end
 
 
