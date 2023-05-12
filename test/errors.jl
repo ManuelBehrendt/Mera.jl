@@ -18,6 +18,6 @@ else
 end
 
 
-@test_throws ErrorException("Datatype clumps does not exist...") infograv = infodata(output, :clumps)
+@test_throws ErrorException("Datatype clumps does not exist...") infodata(output, :clumps)
 
 # savedata
