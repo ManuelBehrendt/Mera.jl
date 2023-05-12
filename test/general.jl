@@ -1,5 +1,5 @@
 
-if !Sys.iswindows() # skip test for windows
+if !(Sys.iswindows()) # skip test for windows
     @testset "file/folder-names" begin
         printscreen("file/folder-names:")
 
