@@ -33,6 +33,35 @@ function save_jld2(output, path)
 end
 
 
+function save_different_order_jld2(output, path)
+    info = getinfo(output, path)
+    
+    part = getparticles(info)
+    savedata(part, fmode=:write)
+    vd = viewdata(output)
+    stdata = keys(vd)
+    flag1 = in("part", stdata)
+    flag1a = !in("hydro", stdata)
+
+    grav = getgravity(info)
+    savedata(grav, fmode=:write)
+    vd = viewdata(output)
+    stdata = keys(vd)
+    flag2 = in("gravity", stdata)
+    flag2a = !in("hydro", stdata)
+
+    println("flag1: particles in jld2 file? ", flag1)
+    println("flag1a: no hydro in jld2 file? ", flag1a)
+    println()
+    println("flag2: gravity in jld2 file? ", flag2)
+    println("flag2a: no hydro in jld2 file? ", flag2a)
+    println()
+    println()
+    return flag1 == true && flag1a == true && flag2 == true && flag2a == true 
+end
+
+
+
 
 function convert_jld2(output, path)
     st = convertdata(output, [:hydro], path=path)

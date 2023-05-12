@@ -1,7 +1,7 @@
 
 @test save_jld2(output, path)
 @test load_data(output, path)
-
+@test save_different_order_jld2(output, path)
 
 @test convert_jld2(output, path)
 @test info_jld2(output, path)
