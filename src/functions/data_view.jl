@@ -170,11 +170,11 @@ function viewdata(output::Int;
     return viewoutput
 end
 
-function known_datatype(datatype::Symbol)
-    knowntypes = [:hydro, :gravity, :particles, :clumps]
-    if in(datatype, knowntypes)
-        return true
-    else
-        return false
-    end
-end
+# function known_datatype(datatype::Symbol)
+#     knowntypes = [:hydro, :gravity, :particles, :clumps]
+#     if in(datatype, knowntypes)
+#         return true
+#     else
+#         return false
+#     end
+# end
