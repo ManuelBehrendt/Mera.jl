@@ -24,13 +24,13 @@ end
     include("projection/projection_particles.jl")
 end
 
-@testset "06 Error Checks" begin
-    printscreen("data types:")
-    include("errors.jl")
-end
-
 verbose(true)
-@testset  "07 MERA files" begin
+@testset  "06 MERA files" begin
     printscreen("Write/Read MERA files:")
     include("merafiles.jl")
+end
+
+@testset "07 Error Checks" begin
+    printscreen("data types:")
+    include("errors.jl")
 end
