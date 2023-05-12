@@ -340,7 +340,7 @@ function patchfile(object::InfoType)
             println(i)
         end
     else
-        println("[Mera]: No timer-file found!")
+        println("[Mera]: No patch-file found!")
     end
 
     println()
