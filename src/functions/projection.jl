@@ -68,15 +68,16 @@ function checkformaps(selected_vars::Array{Symbol,1}, reference_vars::Array{Symb
     return Ndiff != 0
 end
 
-function checkformaps(dataobject::DataMapsType, reference_vars::Array{Symbol,1})
-    Nvars =0
-    cw = 0
-    for iw in keys(dataobject.maps)
-        Nvars +=1
-        if in(iw,reference_vars)
-            cw +=1
-        end
-    end
-    Ndiff = Nvars-cw
-    return Ndiff != 0
-end
+
+# function checkformaps(dataobject::DataMapsType, reference_vars::Array{Symbol,1})
+#     Nvars =0
+#     cw = 0
+#     for iw in keys(dataobject.maps)
+#         Nvars +=1
+#         if in(iw,reference_vars)
+#             cw +=1
+#         end
+#     end
+#     Ndiff = Nvars-cw
+#     return Ndiff != 0
+# end
