@@ -182,7 +182,7 @@ function load_data(output, path)
     println("flag4: data load hydro: ", flag4)
     println()
 
-    gasconv = loaddata(output, "./", dataype=:hydro)
+    gasconv = loaddata(output, "./", datatype=:hydro)
     flag5 = gas.data == gasconv.data
     println()
     println("flag5: data load hydro: ", flag5)
