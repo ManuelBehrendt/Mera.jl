@@ -219,11 +219,13 @@ julia> methods(viewfields)
 
 ## Further Notes
 
-- To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
-- The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
-- Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
-- The variables from the descriptor-files are currently only read and can be used in a future Mera version
-- For simulations with a uniform grid, the column **:level** is not created to reduce memory usage
+- To use the **Jupyter** interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
+- The **tutorials** in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
+-  To get a first impression, look at the **Hands-On Session** RUM2023` with downloadable simulation examples: 
+    https://github.com/ManuelBehrendt/RUM2023
+- Mera is tested against the **RAMSES versions**: =< stable-17.09, stable-18-09, stable-19-10
+- The variables from the **descriptor-files** are currently only read and can be used in a future Mera version
+- For simulations with a **uniform grid**, the column **:level** is not created to reduce memory usage
 
 
 
