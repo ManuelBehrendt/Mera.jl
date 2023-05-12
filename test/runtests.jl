@@ -58,20 +58,30 @@ include("jld2files/05_mera_files.jl")
         close(tar)
 
         include("alltests.jl")
+
+        rm(pwd() * "/simulations", recursive=true)
+        rm(pwd() * "/simulations.tar")
+    end  
+
+
+    global simpath = "./"
+    global path = "./simulations/"
+    global output = 100
+    @testset "Clumps Simulation" begin
+
+        Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulation_clumps.tar", pwd() * "/simulations.tar")
+        tar = open("./simulations.tar")
+        dir = Tar.extract(tar, "./simulations")
+        close(tar)
+
+        include("clumptests.jl")
     end  
 end
-# projection, particles
-# getvar, particles
-# masking
+
+
 # basic calcs: msum, com, bulk vel; average
-# mera files; 
-# test uniform grid
-# particles uniform grid
+
 # old RAMSES version: gethydro, getparticles
 # humanize, getunit
 # error  amroverview for uniform grid (hydro, particles, etc.)
 # hydro_range_codeunit,gravity_range_codeunit add test for uniform grid
-
-# not needed:
-#rm(pwd() * "/simulations", recursive=true)
-#rm(pwd() * "/simulations.tar")
