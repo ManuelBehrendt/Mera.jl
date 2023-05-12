@@ -189,9 +189,6 @@ function load_data(output, path)
     println()
 
 
-    function loaddata(output::Int, path::String;
-
-
     return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true
 end
 
