@@ -70,6 +70,11 @@ function info_jld2(output, path)
     infoconv = infodata(output, "./", datatype=:hydro)
     infoconv = infodata(output, :hydro)
 
+    # test reading only
+    infopart = infodata(output, :particles)
+    infograv = infodata(output, :gravity)
+    # ===================
+
 
     info_fields = propertynames(info)
     field_comparison = true

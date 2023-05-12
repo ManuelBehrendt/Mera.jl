@@ -17,4 +17,7 @@ else
     @test_throws ErrorException("[Mera]:  File or folder does not exist: " * pwd() *"/./simulations/output_00003/info_00003.txt !") checkfolder_error(path)
 end
 
-# savedata , infodata (wrong datatype)
+
+@test_throws ErrorException("Datatype clumps does not exist...") infograv = infodata(output, :clumps)
+
+# savedata
