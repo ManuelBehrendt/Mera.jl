@@ -182,7 +182,17 @@ function load_data(output, path)
     println("flag4: data load hydro: ", flag4)
     println()
 
-    return flag1 == true && flag2 == true && flag3 == true && flag4 == true
+    gasconv = loaddata(output, "./", dataype=:hydro)
+    flag5 = gas.data == gasconv.data
+    println()
+    println("flag5: data load hydro: ", flag5)
+    println()
+
+
+    function loaddata(output::Int, path::String;
+
+
+    return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true
 end
 
 
