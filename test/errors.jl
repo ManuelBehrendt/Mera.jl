@@ -21,7 +21,7 @@ end
 @test_throws ErrorException("Datatype clumps does not exist...") infodata(output, :clumps)
 
 
-@test_throws ErrorException("unknown datatype(s) given...") convertdata(output, [:clumps], path=path)
+@test_throws ErrorException("unknown datatype(s) given...") convertdata(output, [:anyname], path=path)
 
 
 # savedata
