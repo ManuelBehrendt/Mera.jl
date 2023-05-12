@@ -121,7 +121,7 @@
             println("test 10000: flag: ", i, " = false")
         end
     end
-    @test ispos == true
+    @test ispos 
 end
 
 
