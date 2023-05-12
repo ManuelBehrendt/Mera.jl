@@ -1,11 +1,3 @@
-function f_min(iter, factor)
-    return  (iter * factor) -(factor-1)
-end
-
-function f_max(iter, factor)
-    return (iter * factor)
-end
-
 
 
 function projection()
