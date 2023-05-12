@@ -40,7 +40,7 @@ function save_different_order_jld2(output, path)
     savedata(part, fmode=:write)
     vd = viewdata(output)
     stdata = keys(vd)
-    flag1 = in("part", stdata)
+    flag1 = in("particles", stdata)
     flag1a = !in("hydro", stdata)
 
     grav = getgravity(info)
