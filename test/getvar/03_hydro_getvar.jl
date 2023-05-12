@@ -107,7 +107,26 @@ function check_velocities_hydro(output, path)
 
     flag4 = vx == vxv
     flag5 = vy == vyv
-    flag6 = vz == vzv    
+    flag6 = vz == vzv  
+    
+    
+    vel = getvar(gas, [:vx, :vy, :vz], :km_s)
 
-    return flag1 == true && flag2 == true && flag3 == true && flag4 == true && flag5 == true && flag6 == true
+    flag7 = vx == vel[:vx]
+    flag8 = vy == vel[:vy]
+    flag9 = vz == vel[:vz] 
+
+
+    vel = getvar(gas, [:vx, :vy, :vz], [:km_s, :km_s, :km_s])
+
+    flag10 = vx == vel[:vx]
+    flag11 = vy == vel[:vy]
+    flag12 = vz == vel[:vz] 
+
+
+    return flag1 == true && flag2 == true && flag3 == true && 
+           flag4 == true && flag5 == true && flag6 == true &&
+           flag7 == true && flag8 == true && flag9 == true &&
+           flag10 == true && flag11 == true && flag12 == true
 end
+
