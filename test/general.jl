@@ -130,7 +130,7 @@ end
 
 
 # ===================================================================
-@testset "getinfo" begin
+@testset "getinfo general" begin
     printscreen("general tests:")
     @test verbose_status()
     @test showprogress_status()
