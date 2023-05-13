@@ -38,7 +38,7 @@ include("clumps/inspection.jl")
         
         Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar", pwd() * "/simulations.tar")
         tar = open("./simulations.tar")
-        dir = Tar.extract(tar, "./simulations")
+        dir = Tar.extract(tar, "simulations")
         close(tar)
 
         include("alltests.jl")
@@ -56,7 +56,7 @@ include("clumps/inspection.jl")
 
         Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulation_ugrid.tar", pwd() * "/simulations.tar")
         tar = open("./simulations.tar")
-        dir = Tar.extract(tar, "./simulations")
+        dir = Tar.extract(tar, "simulations")
         close(tar)
 
         include("alltests.jl")
@@ -73,7 +73,7 @@ include("clumps/inspection.jl")
 
         Downloads.download("www.usm.uni-muenchen.de/CAST/behrendt/simulation_clumps.tar", pwd() * "/simulations.tar")
         tar = open("./simulations.tar")
-        dir = Tar.extract(tar, "./simulations")
+        dir = Tar.extract(tar, "simulations")
         close(tar)
 
         include("clumptests.jl")
