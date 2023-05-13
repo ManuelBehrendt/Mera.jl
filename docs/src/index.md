@@ -4,6 +4,10 @@
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
 It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
+!!! note "Note"
+    To get a first impression, look at the `Hands-On Session RUM2023` with downloadable simulation examples: 
+    https://github.com/ManuelBehrendt/RUM2023
+
 ## Package Features
 - Easy to install and update
 - Fast and memory lightweight data reading/saving and handling
@@ -15,18 +19,11 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Many examples and tutorials
 - Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
 
+## Dependencies
+Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
 
-!!! note "Release Notes"
-    This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
-    - Select particle id/family etc. in projection function
-    - Particle age calculation for cosmological runs
-
-    - Reader for rt, ..
-    - Export data into binary files to use with Paraview (volume rendering)
-    - Tutorials to create 360° equirectangular projections
-    - ...
-
-
+## Tests
+We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file. Find the current test status of the development version at: https://github.com/ManuelBehrendt/Mera.jl/blob/master/README.md
 
 ## Package Installation
 The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
@@ -99,7 +96,8 @@ Now add packages like Mera and PyPlot in the favored version:
 ```
 
 ## Apple Silicon: M1/M2 Chips
-Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package
+Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package .
+If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
 
 ## Help and Documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
@@ -181,11 +179,13 @@ julia> methods(viewfields)
 
 ## Further Notes
 
-- To use the Jupyter interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
-- The tutorials in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
-- Mera is tested against the RAMSES versions: =< stable-17.09, stable-18-09, stable-19-10
-- The variables from the descriptor-files are currently only read and can be used in a future Mera version
-- For simulations with a uniform grid, the column **:level** is not created to reduce memory usage
+- To use the **Jupyter** interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
+- The **tutorials** in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Mera.jl/tree/master/tutorials) as Jupyter notebooks
+-  To get a first impression, look at the **Hands-On Session** RUM2023` with downloadable simulation examples: 
+    https://github.com/ManuelBehrendt/RUM2023
+- Mera is tested against the **RAMSES versions**: =< stable-17.09, stable-18-09, stable-19-10
+- The variables from the **descriptor-files** are currently only read and can be used in a future Mera version
+- For simulations with a **uniform grid**, the column **:level** is not created to reduce memory usage
 
 
 
