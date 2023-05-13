@@ -43,11 +43,15 @@ include("clumps/inspection.jl")
 
         include("alltests.jl")
 
-
-        rm(pwd() * "/simulations", recursive=true)
-        rm(pwd() * "/simulations.tar")
-
+        if Sys.iswindows()
+            rm(pwd() * "\\simulations", recursive=true)
+            rm(pwd() * "\\simulations.tar")
+        else
+            rm(pwd() * "/simulations", recursive=true)
+            rm(pwd() * "/simulations.tar")
+        end
     end
+
 
     global simpath = "./"
     global path = "./simulations/"
@@ -61,8 +65,13 @@ include("clumps/inspection.jl")
 
         include("alltests.jl")
 
-        rm(pwd() * "/simulations", recursive=true)
-        rm(pwd() * "/simulations.tar")
+        if Sys.iswindows()
+            rm(pwd() * "\\simulations", recursive=true)
+            rm(pwd() * "\\simulations.tar")
+        else
+            rm(pwd() * "/simulations", recursive=true)
+            rm(pwd() * "/simulations.tar")
+        end
     end  
 
 
