@@ -149,7 +149,7 @@ function get_data(  dataobject::HydroDataType,
             # vϕ = |(x*vy - y*vx) / (x^2 + y^2)| * sqrt(x^2 + y^2)
             # vϕ = |x*vy - y*vx| / sqrt(x^2 + y^2)
             selected_unit = getunit(dataobject, :vϕ_cylinder, vars, units)
-            aval = @. abs(x * vy - y * vx)
+            aval = @. x * vy - y * vx # without abs to get direction
             bval = @. (x^2 + y^2)^(-0.5)
 
             vϕ_cylinder = @. aval .* bval .* selected_unit
