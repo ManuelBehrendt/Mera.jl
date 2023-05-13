@@ -43,8 +43,9 @@ include("clumps/inspection.jl")
 
         include("alltests.jl")
 
-        rm(pwd() * "/simulations", recursive=true)
-        rm(pwd() * "/simulations.tar")
+
+        rm(pwd() * "./simulations", recursive=true)
+        rm(pwd() * "./simulations.tar")
 
     end
 
@@ -60,8 +61,8 @@ include("clumps/inspection.jl")
 
         include("alltests.jl")
 
-        rm(pwd() * "/simulations", recursive=true)
-        rm(pwd() * "/simulations.tar")
+        rm(pwd() * "./simulations", recursive=true)
+        rm(pwd() * "./simulations.tar")
     end  
 
 
