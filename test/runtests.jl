@@ -44,8 +44,8 @@ include("clumps/inspection.jl")
         include("alltests.jl")
 
         if Sys.iswindows()
-            rm(pwd() * "\\simulations", recursive=true)
-            rm(pwd() * "\\simulations.tar")
+            #rm(pwd() * "\\simulations", recursive=true)
+            #rm(pwd() * "\\simulations.tar")
         else
             rm(pwd() * "/simulations", recursive=true)
             rm(pwd() * "/simulations.tar")
@@ -66,8 +66,8 @@ include("clumps/inspection.jl")
         include("alltests.jl")
 
         if Sys.iswindows()
-            rm(pwd() * "\\simulations", recursive=true)
-            rm(pwd() * "\\simulations.tar")
+            #rm(pwd() * "\\simulations", recursive=true)
+            #rm(pwd() * "\\simulations.tar")
         else
             rm(pwd() * "/simulations", recursive=true)
             rm(pwd() * "/simulations.tar")
