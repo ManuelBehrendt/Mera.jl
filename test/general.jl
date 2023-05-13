@@ -177,8 +177,23 @@ end
 # ===================================================================
 @testset "getinfo general" begin
     printscreen("general tests:")
-    @test verbose_status()
-    @test showprogress_status()
+
+    verbose(true)
+    @test verbose_status(true)   
+    verbose(false)
+    @test verbose_status(false)  
+    verbose(Nothing)
+    @test verbose_status(Nothing)
+
+
+    showprogress(true)
+    @test showprogress_status(true)
+    showprogress(false)
+    @test showprogress_status(false)
+    showprogress(Nothing)
+    @test showprogress_status(Nothing)
+
+
     @test view_argtypes()
     @test view_namelist(output, path)
     @test view_patchfile(output, path)
