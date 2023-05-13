@@ -79,14 +79,21 @@ function get_data(dataobject::PartDataType,
                                   select(dataobject.data, :vz).^2 ) .* selected_unit .^2
 
        elseif i == :vϕ_cylinder
-           radius = getvar(dataobject, :r_cylinder, center=center)
-           x = getvar(dataobject, :x, center=center)
-           y = getvar(dataobject, :y, center=center)
-           vx = getvar(dataobject, :vx)
-           vy = getvar(dataobject, :vy)
+            x = getvar(dataobject, :x, center=center)
+            y = getvar(dataobject, :y, center=center)
+            vx = getvar(dataobject, :vx)
+            vy = getvar(dataobject, :vy)
 
-           selected_unit = getunit(dataobject, :vϕ, vars, units)
-           vars_dict[:vϕ_cylinder] =  (x .* vy .- y .* vx) ./ radius .* selected_unit
+            # vϕ = omega x radius
+            # vϕ = |(x*vy - y*vx) / (x^2 + y^2)| * sqrt(x^2 + y^2)
+            # vϕ = |x*vy - y*vx| / sqrt(x^2 + y^2)
+            selected_unit = getunit(dataobject, :vϕ_cylinder, vars, units)
+            aval = @. abs(x * vy - y * vx)
+            bval = @. (x^2 + y^2)^(-0.5)
+
+            vϕ_cylinder = @. aval .* bval .* selected_unit
+            vϕ_cylinder[isnan.(vϕ_cylinder)] .= 0. # overwrite NaN due to radius = 0
+            vars_dict[:vϕ_cylinder] = vϕ_cylinder
 
        elseif i == :vϕ_cylinder2
            radius = getvar(dataobject, :r_cylinder, center=center)
@@ -95,8 +102,9 @@ function get_data(dataobject::PartDataType,
            vx = getvar(dataobject, :vx)
            vy = getvar(dataobject, :vy)
 
-           selected_unit = getunit(dataobject, :vϕ2, vars, units)
-           vars_dict[:vϕ_cylinder2] =  ((x .* vy .- y .* vx) ./ radius .* selected_unit ).^2
+            selected_unit = getunit(dataobject, :vϕ_cylinder2, vars, units)
+            vars_dict[:vϕ_cylinder2] = (getvar(dataobject, :vϕ_cylinder, center=center) .* selected_unit).^2
+
 
        elseif i == :vr_cylinder
            radius = getvar(dataobject, :r_cylinder, center=center)
