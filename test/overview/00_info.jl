@@ -1,20 +1,30 @@
 
 
-function verbose_status()
-    verbose()
-    return true
+function verbose_status(status)
+    verbose() # print status on screen
+    return verbose_mode == status # check status
 end
 
-function showprogress_status()
-    showprogress()
-    return true
+function showprogress_status(status)
+    showprogress() # print status on screen
+    return showprogress_mode == status # check status
 end
 
 
-function view_argtypes()
+function view_argtypes() # test creation
     myargs = ArgumentsType()
     viewfields(myargs)
-    return true
+    fields = propertynames(myargs)
+    flagpos = true
+    for i in fields
+        iif = getfield(myargs, i )
+        if !(iif === missing)
+            flagpos = false
+        println("false for field: ", iif) 
+        end
+    end
+
+    return flagpos
 end
 
 
@@ -77,7 +87,7 @@ end
 
 
 function module_view()
-    viewmodule(Mera)
+    viewmodule(Mera) 
     return true
 end
 
