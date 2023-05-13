@@ -5,7 +5,7 @@
 
 |**Version** | **Documentation** | **Cite**|                                                                            
 |:------------|:----------------- |:------------------ |
-| ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) | [![][docs-stable-img]][docs-stable-url]  | [![][doi-img]][doi-url] |
+| [![version](https://juliahub.com/docs/Mera/version.svg)](https://juliahub.com/ui/Packages/Mera/7jlnw) | [![][docs-stable-img]][docs-stable-url]  | [![][doi-img]][doi-url] |
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
 [docs-stable-url]: https://manuelbehrendt.github.io/Mera.jl/stable/
@@ -47,7 +47,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - ...
 
 ## Dependencies
-Find the main dependencies of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml)
+Find the main dependencies of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml) or on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1)
 
 ## Tests
 We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
