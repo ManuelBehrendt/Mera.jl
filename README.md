@@ -36,18 +36,8 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Many examples and tutorials
 - Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
 
-`Release Notes:`
-    This first public release includes not all available functions yet. Stable versions of the following functions will be published stepwise:
-- Select particle id/family etc. in projection function
-- Particle age calculation for cosmological runs
-
-- Reader for rt, ..
-- Export data into binary files to use with Paraview (volume rendering)
-- Tutorials to create 360° equirectangular projections
-- ...
-
 ## Dependencies
-Find the main dependencies of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml) or on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1)
+Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
 
 ## Tests
 We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
