@@ -29,7 +29,27 @@ end
         @test :peak_x in Ncol && :peak_y in Ncol && :peak_z in Ncol
     end
 
+
+    @testset "info overview" begin
+        printscreen("info overview:")
+        @test_broken simoverview(output, simpath)
+        @test viewfilescontent(output, path)
+        
+    end
+
+    @testset "gravity data inspection" begin
+        printscreen("gravity data inspection:")
+
+        
+        @test clumps_dataoverview(output, path)
+        @test clumps_gettime(output, path)
+    end
+
+
+
 end
+
+
 
 
 # ===================================================================
