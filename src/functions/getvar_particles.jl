@@ -96,11 +96,6 @@ function get_data(dataobject::PartDataType,
             vars_dict[:vϕ_cylinder] = vϕ_cylinder
 
        elseif i == :vϕ_cylinder2
-           radius = getvar(dataobject, :r_cylinder, center=center)
-           x = getvar(dataobject, :x, center=center)
-           y = getvar(dataobject, :y, center=center)
-           vx = getvar(dataobject, :vx)
-           vy = getvar(dataobject, :vy)
 
             selected_unit = getunit(dataobject, :vϕ_cylinder2, vars, units)
             vars_dict[:vϕ_cylinder2] = (getvar(dataobject, :vϕ_cylinder, center=center) .* selected_unit).^2
