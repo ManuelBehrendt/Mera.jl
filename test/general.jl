@@ -182,16 +182,16 @@ end
     @test verbose_status(true)   
     verbose(false)
     @test verbose_status(false)  
-    verbose(Nothing)
-    @test verbose_status(Nothing)
+    verbose(nothing)
+    @test verbose_status(nothing)
 
 
     showprogress(true)
     @test showprogress_status(true)
     showprogress(false)
     @test showprogress_status(false)
-    showprogress(Nothing)
-    @test showprogress_status(Nothing)
+    showprogress(nothing)
+    @test showprogress_status(nothing)
 
 
     @test view_argtypes()
