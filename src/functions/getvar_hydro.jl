@@ -140,47 +140,26 @@ function get_data(  dataobject::HydroDataType,
 
         elseif i == :vϕ_cylinder
 
-            radius = getvar(dataobject, :r_cylinder, center=center)
             x = getvar(dataobject, :x, center=center)
             y = getvar(dataobject, :y, center=center)
             vx = getvar(dataobject, :vx)
             vy = getvar(dataobject, :vy)
 
-            # selected_unit = getunit(dataobject, :vϕ, vars, units)
-            # vϕ = (x .* vy .- y .* vx) ./ radius .* selected_unit
-            # vϕ[isnan.(vϕ)] .= 0 # overwrite NaN due to radius = 0
-            # vars_dict[:vϕ] = vϕ
-
-
             # vϕ = omega x radius
+            # vϕ = |(x*vy - y*vx) / (x^2 + y^2)| * sqrt(x^2 + y^2)
+            # vϕ = |x*vy - y*vx| / sqrt(x^2 + y^2)
             selected_unit = getunit(dataobject, :vϕ_cylinder, vars, units)
-            a = (-1 .* y) .^2 + x .^2
-            b = ( x .* vy .- y .* vx) .^2
-            vϕ_cylinder =  sqrt.( a .* b  ) ./ radius .^2 .* selected_unit
-            #(y .* (y .* vx .- x .* vy) ).^2 .- ( x .* (y .* vx .- x .* vy) ) .^2
+            aval = @. abs(x * vy - y * vx)
+            bval = @. (x^2 + y^2)^(-0.5)
 
-            #(x .* vy .- y .* vx) ./ radius .* selected_unit
+            vϕ_cylinder = @. aval .* bval .* selected_unit
             vϕ_cylinder[isnan.(vϕ_cylinder)] .= 0. # overwrite NaN due to radius = 0
             vars_dict[:vϕ_cylinder] = vϕ_cylinder
 
 
         elseif i == :vϕ_cylinder2
-            #radius = getvar(dataobject, :r_cylinder, center=center)
-            #x = getvar(dataobject, :x, center=center)
-            #y = getvar(dataobject, :y, center=center)
-            #vx = getvar(dataobject, :vx)
-            #vy = getvar(dataobject, :vy)
-
 
             selected_unit = getunit(dataobject, :vϕ_cylinder2, vars, units)
-            #vϕ2 = ((x .* vy .- y .* vx) ./ radius .* selected_unit ).^2
-            #vϕ2[isnan.(vϕ2)] .= 0 # overwrite NaN due to radius = 0
-            #vars_dict[:vϕ2] = vϕ2
-            #vϕ_cylinder2 = ( sqrt.( (y .^2 .* (y .* vx .- x .* vy) .^2 ) .- ( x .^2 .* (y .* vx .- x .* vy) .^2 )  ) ./ radius .^2 .* selected_unit ) .^2
-            #selected_unit = getunit(dataobject, :vϕ_cylinder2, vars, units)
-
-            #vϕ_cylinder2 = ((x .* vy .- y .* vx) ./ radius .* selected_unit ).^2
-            #vϕ_cylinder2[isnan.(vϕ_cylinder2)] .= 0 # overwrite NaN due to radius = 0
             vars_dict[:vϕ_cylinder2] = (getvar(dataobject, :vϕ_cylinder, center=center) .* selected_unit).^2
 
 
