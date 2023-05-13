@@ -22,6 +22,7 @@ include("getvar/03_particles_getvar.jl")
 include("errors/04_error_checks.jl")
 include("jld2files/05_mera_files.jl")
 
+include("clumps/inspection.jl")
 
 
 #simpath = "./simulations/"
