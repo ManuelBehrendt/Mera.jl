@@ -19,11 +19,18 @@ end
 
 # end
 
-# verbose(true)
-# @testset  "04 MERA files" begin
-#     printscreen("Write/Read MERA files:")
-#     include("clumps/merafiles.jl")
-# end
+ verbose(true)
+ @testset  "04 MERA files" begin
+    printscreen("Write/Read MERA files:")
+    include("clumps/merafiles.jl")
+
+    @test save_clumps_jld2(output, path)
+    @test load_data(output, path)
+    @test save_clumps_different_order_jld2(output, path)
+
+    @test convert_clumps_jld2(output, path)
+    @test load_uaclumps_data(output, path)
+ end
 
 # @testset "05 Error Checks" begin
 #     printscreen("data types:")
