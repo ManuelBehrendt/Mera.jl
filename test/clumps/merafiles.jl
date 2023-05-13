@@ -105,7 +105,7 @@ function convert_clumps_jld2(output, path)
     println("flag5: particles in jld2 file? ", flag5)
     println("flag6: clumps in jld2 file? ", flag6)
     println()
-    return flag1 == flag1a == flag2 == flag2a ==flag3 ==  flag4 ==  flag5 == flag6
+    return flag1 == flag1a == flag2 == flag2a ==flag3 ==  flag4 ==  flag5 == flag6 == true
 end
 
 function load_uaclumps_data(output, path)
@@ -152,5 +152,5 @@ function load_uaclumps_data(output, path)
     println()
 
 
-    return flag1 == flag2 == flag3 == flag4 == flag5 == flag6
+    return flag1 == flag2 == flag3 == flag4 == flag5 == flag6 == true
 end
