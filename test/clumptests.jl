@@ -24,13 +24,13 @@ end
     printscreen("Write/Read MERA files:")
     include("clumps/merafiles.jl")
 
-    @test save_clumps_jld2(output, path)
-    @test load_data(output, path)
-    @test save_clumps_different_order_jld2(output, path)
+    @testset "saving" begin @test save_clumps_jld2(output, path) end
+    @testset "loading" begin @test load_data(output, path) end
+    @testset "save different order" begin @test save_clumps_different_order_jld2(output, path) end
 
-    @test convert_clumps_jld2(output, path)
-    @test load_uaclumps_data(output, path)
- end
+    @testset "converting" begin@test convert_clumps_jld2(output, path) end
+    @testset "compare stored clump data" begin @test load_uaclumps_data(output, path) end
+ end      
 
 # @testset "05 Error Checks" begin
 #     printscreen("data types:")

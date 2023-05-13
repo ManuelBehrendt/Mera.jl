@@ -146,7 +146,7 @@ function load_uaclumps_data(output, path)
     println()
 
     clumpconv = loaddata(output, "./", datatype=:clumps)
-    flag6 = gas.data == clumpconv.data
+    flag6 = clumps.data == clumpconv.data
     println()
     println("flag6: data load clumps: ", flag6)
     println()
