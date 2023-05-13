@@ -102,14 +102,15 @@ function get_data(dataobject::PartDataType,
 
 
        elseif i == :vr_cylinder
-           radius = getvar(dataobject, :r_cylinder, center=center)
            x = getvar(dataobject, :x, center=center)
            y = getvar(dataobject, :y, center=center)
            vx = getvar(dataobject, :vx)
            vy = getvar(dataobject, :vy)
 
            selected_unit = getunit(dataobject, :vr_cylinder, vars, units)
-           vars_dict[:vr_cylinder] =  (x .* vx .+ y .* vy) ./ radius .* selected_unit
+           vr = @. (x * vx + y * vy)  * (x^2 + y^2)^(-0.5) * selected_unit
+           vr[isnan.(vr)] .= 0 # overwrite NaN due to radius = 0
+           vars_dict[:vr_cylinder] =  vr
 
 
        elseif i == :vz2
@@ -120,17 +121,9 @@ function get_data(dataobject::PartDataType,
 
 
        elseif i == :vr_cylinder2
-           radius = getvar(dataobject, :r_cylinder, center=center)
-           x = getvar(dataobject, :x, center=center)
-           y = getvar(dataobject, :y, center=center)
-           vx = getvar(dataobject, :vx)
-           vy = getvar(dataobject, :vy)
-           #end
-           selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
-           vars_dict[:vr_cylinder2] =  ((x .* vx .+ y .* vy) ./ radius .* selected_unit ).^2
 
-
-
+        selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
+        vars_dict[:vr_cylinder2] = (getvar(dataobject, :vr_cylinder, center=center) .* selected_unit).^2
 
 
        elseif i == :r_cylinder
