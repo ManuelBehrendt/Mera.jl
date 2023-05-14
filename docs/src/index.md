@@ -25,41 +25,29 @@ Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7
 ## Tests
 We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file. Find the current test status of the development version at: https://github.com/ManuelBehrendt/Mera.jl/blob/master/README.md
 
+
+## Julia Installation
+- Binary download + installation instructions: https://julialang.org/downloads/
+- Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
+
+- Apple Silicon: M1/M2 Chips: Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
+
 ## Package Installation
-The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
+The package is tested against the long-term supported Julia 1.6.x (recommended), 1.7.x, 1.8.x, 1.9.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
+
+### Julia REPL
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
 
 ```julia
 pkg> add Mera
 ```
+### Jupyter Notebook
 Or, equivalently, via the Pkg API in the Jupyter notebook use
 
 ```julia
 using Pkg
 Pkg.add("Mera")
 ```
-
-Optionally, precompile the downloaded package and all its dependencies:
-
-```julia
-pkg> precompile
-```
-
-In the Jupyter notebook
-
-```julia
-using Pkg
-Pkg.precompile()
-```
-
-`Install Julia without admin privileges:`
-    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
-    Define an alias in the .bashrc file that is pointing to julia:
-
-```
-shell> alias julia="/home/username/codes/julia/usr/bin/julia"
-```
-
 
 ## Updates
 Watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
@@ -94,10 +82,6 @@ Now add packages like Mera and PyPlot in the favored version:
 ```julia
 (MyProject) pkg> add Package
 ```
-
-## Apple Silicon: M1/M2 Chips
-Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package .
-If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
 
 ## Help and Documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
