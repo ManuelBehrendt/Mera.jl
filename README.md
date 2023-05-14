@@ -37,7 +37,7 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 - Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
 
 ## Dependencies
-Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or of the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
+Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
 
 ## Tests
 We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
@@ -55,39 +55,34 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 [![1.8](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml) | ubuntu-latest, macOS-latest | 
 [![Julia1.9](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml)| ubuntu-latest, macOS-latest |
 
+
+
+## Julia Installation
+
+- Binary download + installation instructions: https://julialang.org/downloads/
+- Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
+
+- Apple Silicon: M1/M2 Chips: Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
+
+
+
+
+
 ## Package Installation
-The package is tested against the long-term supported Julia 1.6.x (recommended) and can be installed with the Julia package manager.
+The package is tested against the long-term supported Julia 1.6.x (recommended), 1.7.x, 1.8.x, 1.9.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
+
+### Julia REPL
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
 
 ```julia
 pkg> add Mera
 ```
+### Jupyter Notebook
 Or, equivalently, via the Pkg API in the Jupyter notebook use
 
 ```julia
 using Pkg
 Pkg.add("Mera")
-```
-
-Optionally, precompile the downloaded package and all its dependencies:
-
-```julia
-pkg> precompile
-```
-
-In the Jupyter notebook
-
-```julia
-using Pkg
-Pkg.precompile()
-```
-
-`Install Julia without admin privileges:`
-    Download the Linux binary from Julialang.org and untar it in your favored folder on your server.
-    Define an alias in the .bashrc file that is pointing to julia:
-
-```
-shell> alias julia="/home/username/codes/julia/usr/bin/julia"
 ```
 
 
@@ -98,7 +93,7 @@ Note: Before updating, always read the release notes. In Pkg REPL mode run:
 ```julia
 pkg> update Mera
 ```
-Or, equivalently,
+Or, equivalently, in a Jupyter notebook:
 
 ```julia
 using Pkg
@@ -109,7 +104,7 @@ Pkg.update("Mera")
 ## Reproducibility
 Reproducibility is an essential requirement of the scientific process. Therefore, I recommend working with environments.
 Create independent projects that contain their list of used package dependencies and their versions.
-The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments](https://julialang.github.io/Pkg.jl/v1.6/environments/).
+The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments]([https://julialang.github.io/Pkg.jl/v1.6/environments/](https://pkgdocs.julialang.org/v1.9/environments/)).
 In order to create a new project "activate" your working directory:
 
 ```julia
@@ -124,10 +119,6 @@ Now add packages like Mera and PyPlot in the favored version:
 ```julia
 (MyProject) pkg> add Package
 ```
-
-## Apple Silicon: M1/M2 Chips
-Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package .
-If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
 
 ## Help and Documentation
 The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
