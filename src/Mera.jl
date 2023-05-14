@@ -25,7 +25,6 @@ using Pkg
 # external libraries
 using FortranFiles
 using JuliaDB
-using LoopVectorization
 using DataStructures
 using ElasticArrays
 using StructArrays
