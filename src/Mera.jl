@@ -32,6 +32,7 @@ using ProgressMeter
 using StatsBase
 using OnlineStats
 using ImageTransformations
+using ImageTransformations.Interpolations
 
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
 using TimerOutputs
