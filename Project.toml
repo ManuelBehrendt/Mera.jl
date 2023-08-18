@@ -26,7 +26,7 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 
 [compat]
-CodecBzip2 = "= 0.7.2"
+CodecBzip2 = "= 0.7.2, 0.8"
 CodecLz4 = "= 0.4.0"
 CodecZlib = "= 0.6.0"
 DataStructures = "= 0.17.20"
