@@ -27,7 +27,7 @@ WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 
 [compat]
 CodecBzip2 = "= 0.7.2"
-CodecLz4 = "= 0.4.0"
+CodecLz4 = "= 0.4.0, 0.4"
 CodecZlib = "= 0.6.0"
 DataStructures = "= 0.17.20"
 ElasticArrays = "= 1.2.11"
