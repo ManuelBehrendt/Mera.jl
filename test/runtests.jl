@@ -1,5 +1,5 @@
 using Mera
-using Mera.JuliaDB 
+using Mera.IndexedTables 
 using Test
 using Downloads
 using Tar
