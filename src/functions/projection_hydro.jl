@@ -85,7 +85,6 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
-                        interpolation::Interpolations.InterpolationType=BSpline(Constant(Next)),
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -107,7 +106,6 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
-                            interpolation=interpolation,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -131,7 +129,6 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
-                        interpolation::Interpolations.InterpolationType=BSpline(Constant(Next)),
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -153,7 +150,6 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
-                            interpolation=interpolation,
                             xrange=xrange,
                             yrange=yrange,
                             zrange=zrange,
@@ -177,7 +173,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
-                        interpolation::Interpolations.InterpolationType=BSpline(Constant(Next)),
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -198,7 +193,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
-                                                interpolation=interpolation,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -224,7 +218,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
-                        interpolation::Interpolations.InterpolationType=BSpline(Constant(Next)),
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -245,7 +238,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
-                                                interpolation=interpolation,
                                                 xrange=xrange,
                                                 yrange=yrange,
                                                 zrange=zrange,
@@ -270,7 +262,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         direction::Symbol=:z,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
-                        interpolation::Interpolations.InterpolationType=BSpline(Constant(Next)),
                         xrange::Array{<:Any,1}=[missing, missing],
                         yrange::Array{<:Any,1}=[missing, missing],
                         zrange::Array{<:Any,1}=[missing, missing],
@@ -419,7 +410,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             # bin data on current level grid and resize map
             fcorrect = (2^level /  res) ^ 2
             map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, isamr) .* weight_scale
-            newmap_w += imresize(map_weight, (length1, length2), method=interpolation) .* fcorrect
+            newmap_w += imresize(map_weight, (length1, length2)) .* fcorrect
 
             for ivar in keys(data_dict)
                 if ivar == :sd || ivar == :mass
@@ -428,7 +419,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 else
                     map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                 end
-                maps[ivar] += imresize(map, (length1, length2), method=interpolation) .* fcorrect
+                maps[ivar] += imresize(map, (length1, length2)) .* fcorrect
             end
 
 
