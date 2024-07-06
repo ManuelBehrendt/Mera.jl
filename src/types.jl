@@ -348,7 +348,7 @@ Mutable Struct: Contains hydro data and information about the selected simulatio
 """
 mutable struct HydroDataType <: HydroPartType
     # exported
-    data::JuliaDB.AbstractIndexedTable
+    data::IndexedTables.AbstractIndexedTable
     info::InfoType
     lmin::Int
     lmax::Int
@@ -366,7 +366,7 @@ end
 
 # exported
 mutable struct GravDataType <: DataSetType
-    data::JuliaDB.AbstractIndexedTable
+    data::IndexedTables.AbstractIndexedTable
     info::InfoType
     lmin::Int
     lmax::Int
@@ -384,7 +384,7 @@ Mutable Struct: Contains particle data and information about the selected simula
 """
 mutable struct PartDataType <: HydroPartType
 #exported
-    data::JuliaDB.AbstractIndexedTable
+    data::IndexedTables.AbstractIndexedTable
     info::InfoType
     lmin::Int
     lmax::Int

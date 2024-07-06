@@ -62,7 +62,7 @@ end
 
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;
-        filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
+        filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
         center::Array{<:Any,1}=[0.,0.,0.],
         center_unit::Symbol=:standard,
         direction::Symbol=:z,
@@ -122,7 +122,7 @@ quantities = getvar(gas, [:vx, :vy, :vz], :km_s)
 ...
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
-                    filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
@@ -141,7 +141,7 @@ function getvar(   dataobject::DataSetType, var::Symbol;
 end
 
 function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
-                    filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
@@ -159,7 +159,7 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
 end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1};
-                    filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
@@ -178,7 +178,7 @@ end
 
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
-                    filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
@@ -199,7 +199,7 @@ end
 
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
-                    filtered_db::JuliaDB.AbstractIndexedTable=JuliaDB.table([1]),
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,
                     direction::Symbol=:z,
