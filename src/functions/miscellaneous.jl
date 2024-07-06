@@ -356,16 +356,16 @@ end
 ### Create a New DataSetType from a Filtered Data Table
 
 ```julia
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::HydroDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::HydroDataType)
 return HydroDataType
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::PartDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::PartDataType)
 return PartDataType
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::ClumpDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::ClumpDataType)
 return ClumpDataType
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::GravDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::GravDataType)
 return GravDataType
 ```
 
@@ -384,7 +384,7 @@ julia> filtered_db = @filter gas.data :rho >= density
 julia> gas_new = construct_datatype(filtered_db, gas)
 ```
 """
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::HydroDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::HydroDataType)
     hydrodata = HydroDataType()
     hydrodata.data = data
     hydrodata.info = dataobject.info
@@ -400,7 +400,7 @@ function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::Hydr
     return hydrodata
 end
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::PartDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::PartDataType)
     partdata = PartDataType()
     partdata.data = data
     partdata.info = dataobject.info
@@ -414,7 +414,7 @@ function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::Part
     return partdata
 end
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::GravDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::GravDataType)
     gravitydata = GravDataType()
     gravitydata.data = data
     gravitydata.info = dataobject.info
@@ -428,7 +428,7 @@ function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::Grav
     return gravitydata
 end
 
-function construct_datatype(data::JuliaDB.AbstractIndexedTable, dataobject::ClumpDataType)
+function construct_datatype(data::IndexedTables.AbstractIndexedTable, dataobject::ClumpDataType)
     clumpdata = ClumpDataType()
     clumpdata.data = data
     clumpdata.info = dataobject.info

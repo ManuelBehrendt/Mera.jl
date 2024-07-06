@@ -537,8 +537,8 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     println()
                 end
             else
-                Nafter = JuliaDB.ncols(dataobject.data)
-                dataobject.data = JuliaDB.insertcolsafter(dataobject.data, Nafter, :mask => mask)
+                Nafter = IndexedTables.ncols(dataobject.data)
+                dataobject.data = IndexedTables.insertcolsafter(dataobject.data, Nafter, :mask => mask)
                 if verbose
                     println(":mask provided by function")
                     println()

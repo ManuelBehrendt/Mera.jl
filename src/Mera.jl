@@ -24,7 +24,8 @@ using Pkg
 
 # external libraries
 using FortranFiles
-using JuliaDB
+#using JuliaDB
+using IndexedTables
 using DataStructures
 using ElasticArrays
 using StructArrays
