@@ -246,8 +246,19 @@ function get_data(  dataobject::HydroDataType,
 
             vars_dict[:h] = sqrt.(hx .^2 .+ hy .^2 .+ hz .^2) .* selected_unit
 
+
         elseif i == :mach #thermal; no unit needed
             vars_dict[:mach] = getvar(dataobject, :v) ./ getvar(dataobject, :cs)
+
+        elseif i == :machx #thermal; no unit needed
+            vars_dict[:machx] = getvar(dataobject, :vx) ./ getvar(dataobject, :cs)
+
+        elseif i == :machy #thermal; no unit needed
+            vars_dict[:machy] = getvar(dataobject, :vy) ./ getvar(dataobject, :cs)
+
+        elseif i == :machz #thermal; no unit needed
+            vars_dict[:machz] = getvar(dataobject, :vz) ./ getvar(dataobject, :cs)
+
 
         elseif i == :ekin
             selected_unit = getunit(dataobject, :ekin, vars, units)
