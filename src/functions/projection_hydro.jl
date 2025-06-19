@@ -304,6 +304,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     boxlen = dataobject.boxlen
     if res === missing res = 2^lmax end
 
+
     if !(pxsize[1] === missing)
         px_unit = 1. # :standard
         if length(pxsize) != 1
@@ -329,6 +330,10 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         end
 
     end
+
+
+
+
 
     #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
     scale = dataobject.scale
@@ -384,13 +389,15 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
      # prepare data
     # =================================
-    maps = SortedDict( )
+    imaps = SortedDict( )
     maps_unit = SortedDict( )
     maps_weight = SortedDict( )
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
+        println(length1, " ", length2)
         newmap_w = zeros(Float64, (length1, length2) )
-        data_dict, xval, yval, leveldata, weightval, maps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
+        println()
+        data_dict, xval, yval, leveldata, weightval, imaps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
 
 
         closed=:left
@@ -409,17 +416,26 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             # bin data on current level grid and resize map
             fcorrect = (2^level /  res) ^ 2
+            println("res ", res)
             map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, isamr) .* weight_scale
-            newmap_w += imresize(map_weight, (length1, length2)) .* fcorrect
-
+            #σ = map((o,n)->0.75*o/n, size(map_weight), (length1, length2))
+            #kern = KernelFactors.gaussian(σ)
+            #newmap_w += imresize(imfilter(map_weight, kern, NA()), (length1, length2)) .* fcorrect
+            newmap_w += imresize(map_weight, (length1, length2), method=BSpline(Constant())) .* fcorrect
+            println(level, " ", size(newmap_w), " ", fcorrect)
             for ivar in keys(data_dict)
                 if ivar == :sd || ivar == :mass
                     #if ivar == :mass println(ivar) end
-                    map = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar], isamr)
+                    imap = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar], isamr)
                 else
-                    map = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
+                    imap = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                 end
-                maps[ivar] += imresize(map, (length1, length2)) .* fcorrect
+                #σ = map((o,n)->0.75*o/n, size(imap), (length1, length2))
+                #kern = KernelFactors.gaussian(σ)
+                #maps[ivar] += imresize(imfilter(imap, kern, NA()), (length1, length2)) .* fcorrect
+                imaps[ivar] += imresize(imap, (length1, length2), method=BSpline(Constant())) .* fcorrect
+                println(minimum(imap), " ", minimum(imaps[ivar] ))
+                println()
             end
 
 
@@ -435,17 +451,17 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
                 # revert weighting
                 if mode == :standard
-                    iv  = maps[selected_v[1]] = maps[selected_v[1]]  ./newmap_w 
-                    iv2 = maps[selected_v[2]] = maps[selected_v[2]]  ./newmap_w 
+                    iv  = imaps[selected_v[1]] = imaps[selected_v[1]]  ./newmap_w 
+                    iv2 = imaps[selected_v[2]] = imaps[selected_v[2]]  ./newmap_w 
                 elseif mode == :sum
-                    iv  = maps[selected_v[1]] = maps[selected_v[1]]   
-                    iv2 = maps[selected_v[2]] = maps[selected_v[2]]   
+                    iv  = imaps[selected_v[1]] = imaps[selected_v[1]]   
+                    iv2 = imaps[selected_v[2]] = imaps[selected_v[2]]   
                 end
                 delete!(data_dict, selected_v[1])
                 delete!(data_dict, selected_v[2])
                 
                 # create vdisp map
-                maps[ivar] = sqrt.( iv2 .- iv .^2 ) .* selected_unit
+                imaps[ivar] = sqrt.( iv2 .- iv .^2 ) .* selected_unit
                 maps_unit[ivar] = unit_name
                 maps_weight[ivar] = weighting
                 maps_mode[ivar] = mode
@@ -453,13 +469,13 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 # assign units 
                 selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
                 maps_unit[selected_v[1]]  = unit_name
-                maps[selected_v[1]] = maps[selected_v[1]] .* selected_unit
+                imaps[selected_v[1]] = imaps[selected_v[1]] .* selected_unit
                 maps_weight[selected_v[1]] = weighting
                 maps_mode[selected_v[1]] = mode
                 
                 selected_unit, unit_name= getunit(dataobject, selected_v[2], selected_vars, units, uname=true)
                 maps_unit[selected_v[2]]  = unit_name
-                maps[selected_v[2]] = maps[selected_v[2]] .* selected_unit^2
+                imaps[selected_v[2]] = imaps[selected_v[2]] .* selected_unit^2
                 maps_weight[selected_v[2]] = weighting
                 maps_mode[selected_v[2]] = mode
                 
@@ -475,18 +491,18 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             if ivar == :sd
                 maps_weight[ivar] = :nothing
                 maps_mode[ivar] = :nothing
-                maps[ivar] = maps[ivar] ./ (boxlen / res)^2 .* selected_unit # sd = mass/A * unit
+                imaps[ivar] = imaps[ivar] ./ (boxlen / res)^2 .* selected_unit # sd = mass/A * unit
             elseif ivar == :mass
                 maps_weight[ivar] = :nothing
                 maps_mode[ivar] = :sum
-                maps[ivar] = maps[ivar] .* selected_unit
+                imaps[ivar] = imaps[ivar] .* selected_unit
             else
                 maps_weight[ivar] = weighting
                 maps_mode[ivar] = mode
                 if mode == :standard
-                    maps[ivar] = maps[ivar] ./ newmap_w .* selected_unit
+                    imaps[ivar] = imaps[ivar] ./ newmap_w .* selected_unit
                 elseif mode == :sum
-                    maps[ivar] = maps[ivar].* selected_unit
+                    imaps[ivar] = imaps[ivar].* selected_unit
                 end
             end
             maps_unit[ivar]  = unit_name
@@ -513,7 +529,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             end
             maps_mode[ivar] = :nothing
             maps_weight[ivar] = :nothing
-            maps[ivar] = map_R
+            imaps[ivar] = map_R
             maps_unit[ivar] = unit_name
         end
     end
@@ -543,14 +559,14 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             maps_mode[ivar] = :nothing
             maps_weight[ivar] = :nothing
-            maps[ivar] = map_ϕ
+            imaps[ivar] = map_ϕ
             maps_unit[ivar] = :radian
         end
     end
 
 
     maps_lmax = SortedDict( )
-    return HydroMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+    return HydroMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
 
     #return maps, maps_unit, extent_center, ranges
 end
@@ -715,7 +731,7 @@ end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, maps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2, isamr, simlmax) 
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2, isamr, simlmax) 
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
         if isamr
@@ -785,7 +801,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
         data_dict = SortedDict( )
         for ivar in selected_vars
             if !in(ivar, anglecheck) && !in(ivar, rcheck)  && !in(ivar, σcheck)
-                maps[ivar] =  zeros(Float64, (length1, length2) )
+                imaps[ivar] =  zeros(Float64, (length1, length2) )
                 if ivar !== :sd
                     if length(mask) == 1
                         data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
@@ -806,7 +822,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             end
         end
         # =================================
-    return data_dict, xval, yval, leveldata, weightval, maps
+    return data_dict, xval, yval, leveldata, weightval, imaps
 end
 
 
@@ -887,6 +903,9 @@ function hist2d_weight(x, y, s, mask, w, isamr)
     else
         h = fit(Histogram, (x, y), weights(w), (s[1],s[2]))
     end
+    println("hist: ", s[1], " ", s[2])
+    println(size(h.weights))
+    println()
     return h.weights
 end
 #function hist2d_data(x::Vector{Int64}, y::Vector{Int64},
