@@ -66,8 +66,19 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 
 - Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
 - Binary download + installation instructions: https://julialang.org/downloads/
-- 
-- Apple Silicon: M1/M2 Chips: Julia 1.6.x can be installed without any trouble. But to use PyPlot, it is recommended to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.9, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
+  
+- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble.
+- But if you experience any problem installing PyPlot, try:
+```julia
+import Pkg
+Pkg.add("Conda")
+using Conda
+Conda.add("matplotlib")
+ENV["PYTHON"] = ""  # Let PyCall use Conda's Python
+Pkg.build("PyCall")
+Pkg.add("PyPlot")
+```
+Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.x, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
 
 
 
