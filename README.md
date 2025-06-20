@@ -50,7 +50,7 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 
 **Runtests for development version:** | **OS** |
 |:---------------------|:---------------------|
-[![Julia1.11](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/Create CI_1.11.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/Create CI_1.11.yml)| ubuntu-latest, macOS-latest |
+[![Julia1.11](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.11.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.11.yml)| ubuntu-latest, macOS-latest |
 [![Julia1.10](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml)| ubuntu-latest, macOS-latest |
 [![Julia1.9](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml)| ubuntu-latest, macOS-latest |
 [![1.8](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml) | ubuntu-latest, macOS-latest | 
