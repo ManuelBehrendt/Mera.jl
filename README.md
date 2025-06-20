@@ -2,7 +2,7 @@
 
 
 
-
+Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
 |**Last release** | **Documentation** | **Cite**|                                                                            
 |:------------|:----------------- |:------------------ |
 |[![version](https://juliahub.com/docs/Mera/version.svg)](https://juliahub.com/ui/Packages/Mera/7jlnw) |[![][docs-stable-img]][docs-stable-url]| [![][doi-img]][doi-url] |
