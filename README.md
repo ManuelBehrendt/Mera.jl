@@ -67,8 +67,7 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 - Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
 - Binary download + installation instructions: https://julialang.org/downloads/
   
-- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble.
-- But if you experience any problem installing PyPlot, try:
+- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble. But if you experience any problem installing PyPlot, try:
 ```julia
 import Pkg
 Pkg.add("Conda")
