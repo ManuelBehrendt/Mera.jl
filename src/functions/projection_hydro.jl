@@ -394,13 +394,11 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_weight = SortedDict( )
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
-        println(length1, " ", length2)
+
         newmap_w = zeros(Float64, (length1, length2) )
-        println()
         data_dict, xval, yval, leveldata, weightval, imaps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
 
 
-        closed=:left
         if show_progress
             p = 1 # show updates
         else
@@ -408,34 +406,34 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         end
         #if show_progress p = Progress(simlmax-lmin) end
         @showprogress p for level = lmin:simlmax #@showprogress 1 ""
-            #println()
-            #println("level: ", level)
             mask_level = leveldata .== level
 
-            new_level_range1, new_level_range2, length_level1, length_level2 = prep_level_range(direction, level, ranges)
+            new_level_range1, new_level_range2, length_level1, length_level2 = prep_level_range(direction, level, ranges, lmin)
 
             # bin data on current level grid and resize map
             fcorrect = (2^level /  res) ^ 2
-            println("res ", res)
             map_weight = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, isamr) .* weight_scale
-            #σ = map((o,n)->0.75*o/n, size(map_weight), (length1, length2))
-            #kern = KernelFactors.gaussian(σ)
-            #newmap_w += imresize(imfilter(map_weight, kern, NA()), (length1, length2)) .* fcorrect
-            newmap_w += imresize(map_weight, (length1, length2), method=BSpline(Constant())) .* fcorrect
-            println(level, " ", size(newmap_w), " ", fcorrect)
+
+            fs =  res / 2^level
+            overlap_size =  round.(Int, [length(new_level_range1) * fs - length1, length(new_level_range2) * fs- length2])
+            if overlap_size[1] < 0 overlap_size[1] = 0 end
+            if overlap_size[2] < 0 overlap_size[2] = 0 end
+            nmap_buff = imresize(map_weight, (length1+overlap_size[1], length2+overlap_size[2]), method=BSpline(Constant())) .* fcorrect
+            newmap_w += nmap_buff[1:end-overlap_size[1],1:end-overlap_size[2]]
+
             for ivar in keys(data_dict)
+                
                 if ivar == :sd || ivar == :mass
                     #if ivar == :mass println(ivar) end
                     imap = hist2d_weight(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar], isamr)
                 else
+                    
                     imap = hist2d_data(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                 end
-                #σ = map((o,n)->0.75*o/n, size(imap), (length1, length2))
-                #kern = KernelFactors.gaussian(σ)
-                #maps[ivar] += imresize(imfilter(imap, kern, NA()), (length1, length2)) .* fcorrect
-                imaps[ivar] += imresize(imap, (length1, length2), method=BSpline(Constant())) .* fcorrect
-                println(minimum(imap), " ", minimum(imaps[ivar] ))
-                println()
+
+                
+                imap_buff = imresize(imap, (length1+overlap_size[1] , length2+overlap_size[2] ), method=BSpline(Constant())) .* fcorrect
+                imaps[ivar] += imap_buff[1:end-overlap_size[1],1:end-overlap_size[2]]
             end
 
 
@@ -644,7 +642,6 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     rl1 = data_centerm[1] .* res
     rl2 = data_centerm[2] .* res
     rl3 = data_centerm[3] .* res
-
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
 
@@ -718,13 +715,11 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
         length2_center = (data_centerm[3] -zmin ) * boxlen
     end
 
-
     # prepare maps
     length1=length( newrange1) -1
     length2=length( newrange2) -1
     #map = zeros(Float64, length1, length2, length(selected_vars)  ) # 2d map vor each variable
     #map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
-
 
     return x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez
 end
@@ -827,44 +822,41 @@ end
 
 
 
-function prep_level_range(direction, level, ranges)
+function prep_level_range(direction, level, ranges, lmin)
+
     if direction == :z
         # rebin data on the current level grid
-        rl1 = floor(Int, ranges[1] * 2^level) +1
-        rl2 = ceil(Int,  ranges[2] * 2^level) +1
-        rl3 = floor(Int, ranges[3] * 2^level) +1
-        rl4 = ceil(Int,  ranges[4] * 2^level) +1
+        rl1 = floor(Int, ranges[1] * 2^level)  + 1
+        rl2 = ceil(Int,  ranges[2] * 2^level)  
+        rl3 = floor(Int, ranges[3] * 2^level)  + 1
+        rl4 = ceil(Int,  ranges[4] * 2^level) 
 
-        # range of current level grid
-        new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
-        new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
 
     elseif direction == :y
         # rebin data on the current level grid
-        rl1 = floor(Int, ranges[1] * 2^level) +1
-        rl2 = ceil(Int,  ranges[2] * 2^level) +1
-        rl3 = floor(Int, ranges[5] * 2^level) +1
-        rl4 = ceil(Int,  ranges[6] * 2^level) +1
+        rl1 = floor(Int, ranges[1] * 2^level)  + 1
+        rl2 = ceil(Int,  ranges[2] * 2^level) 
+        rl3 = floor(Int, ranges[5] * 2^level)  + 1
+        rl4 = ceil(Int,  ranges[6] * 2^level) 
 
-        # range of current level grid
-        new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
-        new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
 
     elseif direction == :x
         # rebin data on the current level grid
-        rl1 = floor(Int, ranges[3] * 2^level) +1
-        rl2 = ceil(Int,  ranges[4] * 2^level) +1
-        rl3 = floor(Int, ranges[5] * 2^level) +1
-        rl4 = ceil(Int,  ranges[6] * 2^level) +1
+        rl1 = floor(Int, ranges[3] * 2^level) + 1
+        rl2 = ceil(Int,  ranges[4] * 2^level) 
+        rl3 = floor(Int, ranges[5] * 2^level)  + 1
+        rl4 = ceil(Int,  ranges[6] * 2^level) 
 
-        # range of current level grid
-        new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
-        new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
+
     end
 
+    # range of current level grid
+    new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
+    new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
+
     # length of current level grid
-    length_level1=length( new_level_range1 )
-    length_level2=length( new_level_range2 )
+    length_level1=length( new_level_range1 )+1
+    length_level2=length( new_level_range2 )+1
 
     return new_level_range1, new_level_range2, length_level1, length_level2
 end
@@ -892,33 +884,124 @@ function nrange(start::Int, stop::Int, len::Int, nshift::Int)
    return range(start, stop=stop + nshift, length=len + nshift )
 end
 
+
+
 #function hist2d_weight(x::Vector{Int64}, y::Vector{Int64},
 #                        s::Vector{StepRangeLen{Float64,
 #                        Base.TwicePrecision{Float64},
 #                        Base.TwicePrecision{Float64}}},
 #                        mask::MaskType, w::Vector{Float64})
-function hist2d_weight(x, y, s, mask, w, isamr)
-    if isamr
-        h = fit(Histogram, (x[mask], y[mask]), weights(w[mask]), (s[1],s[2]))
-    else
-        h = fit(Histogram, (x, y), weights(w), (s[1],s[2]))
+#function hist2d_weight(x, y, s, mask, w, isamr)
+#    h = zeros(Float64, (length(s[1]), length(s[2])))
+#    fs1 = Int(minimum(s[1])) 
+#    fs2 = Int(minimum(s[2])) 
+#    if isamr
+#         @inbounds for (i,j, k) in zip( x[mask] , y[mask], w[mask])
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k
+#            end
+#        end
+        #h = fit(Histogram, (x[mask], y[mask]), weights(w[mask]), (s[1],s[2]))
+#    else
+#         @inbounds for (i,j, k) in zip( x , y, w)
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k
+#            end
+#        end
+        #h = fit(Histogram, (x, y), weights(w), (s[1],s[2]))
+#    end
+#    return h
+#end
+
+
+function fast_hist2d_weight!(h::Matrix{Float64}, x, y, w, range1, range2)
+    r1_min = Int(minimum(range1))
+    r2_min = Int(minimum(range2))
+    nx, ny = size(h)
+    
+    @inbounds for k in eachindex(x)
+        ix = x[k] - r1_min + 1
+        iy = y[k] - r2_min + 1
+        if 1 <= ix <= nx && 1 <= iy <= ny
+            h[ix, iy] += w[k]
+        end
     end
-    println("hist: ", s[1], " ", s[2])
-    println(size(h.weights))
-    println()
-    return h.weights
+    return h
 end
+
+function hist2d_weight(x, y, s, mask, w, isamr)
+    h = zeros(Float64, (length(s[1]), length(s[2])))
+    if isamr
+        fast_hist2d_weight!(h, x[mask], y[mask], w[mask], s[1], s[2])
+    else
+        fast_hist2d_weight!(h, x, y, w, s[1], s[2])
+    end
+    return h
+end
+
+
+
+
+
+
+
+
+
+
+
 #function hist2d_data(x::Vector{Int64}, y::Vector{Int64},
 #                        s::Vector{StepRangeLen{Float64,
 #                        Base.TwicePrecision{Float64},
 #                        Base.TwicePrecision{Float64}}},
 #                        mask::MaskType, w::Vector{Float64},
 #                        data::Vector{Float64})
-function hist2d_data(x, y, s, mask, w, data, isamr)
-    if isamr
-        h = fit(Histogram, (x[mask], y[mask]), weights(data[mask] .* w[mask]), (s[1],s[2]))
-    else
-        h = fit(Histogram, (x, y), weights(data .* w), (s[1],s[2]))
+#function hist2d_data(x, y, s, mask, w, data, isamr)
+#    h = zeros(Float64, (length(s[1]), length(s[2])))
+#    fs1 = Int(minimum(s[1])) 
+#    fs2 = Int(minimum(s[2])) 
+#    if isamr
+#         @inbounds for (i,j, k, l) in zip(x[mask] , y[mask], w[mask], data[mask])
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k * l
+#            end
+#        end
+#
+#        #h = fit(Histogram, (x[mask], y[mask]), weights(data[mask] .* w[mask]), (s[1],s[2]))
+#    else
+#         @inbounds for (i,j, k, l) in zip(x , y, w, data)
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k * l
+#            end
+#        end
+#
+#        #h = fit(Histogram, (x, y), weights(data .* w), (s[1],s[2]))
+#    end
+#
+#    return h
+#end
+
+
+function fast_hist2d_data!(h::Matrix{Float64}, x, y, data, w, range1, range2)
+    r1_min = Int(minimum(range1))
+    r2_min = Int(minimum(range2))
+    nx, ny = size(h)
+    
+    @inbounds for k in eachindex(x)
+        ix = x[k] - r1_min + 1
+        iy = y[k] - r2_min + 1
+        if 1 <= ix <= nx && 1 <= iy <= ny
+            h[ix, iy] += w[k] * data[k]
+        end
     end
-    return h.weights
+    return h
+end
+
+function hist2d_data(x, y, s, mask, w, data, isamr)
+    h = zeros(Float64, (length(s[1]), length(s[2])))
+    if isamr
+        fast_hist2d_data!(h, x[mask], y[mask], data[mask], w[mask], s[1], s[2])
+    else
+        fast_hist2d_data!(h, x, y, data, w, s[1], s[2])
+    end
+    return h
 end
