@@ -3,9 +3,9 @@
 
 
 
-|**Version** | **Documentation** | **Cite**|                                                                            
+|**Last release** | **Documentation** | **Cite**|                                                                            
 |:------------|:----------------- |:------------------ |
-|last release: [![version](https://juliahub.com/docs/Mera/version.svg)](https://juliahub.com/ui/Packages/Mera/7jlnw) | ==> [![][docs-stable-img]][docs-stable-url] <== | [![][doi-img]][doi-url] |
+|[![version](https://juliahub.com/docs/Mera/version.svg)](https://juliahub.com/ui/Packages/Mera/7jlnw) |[![][docs-stable-img]][docs-stable-url]| [![][doi-img]][doi-url] |
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
 [docs-stable-url]: https://manuelbehrendt.github.io/Mera.jl/stable/
