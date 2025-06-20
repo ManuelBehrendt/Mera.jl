@@ -48,13 +48,18 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 [![Documentation](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml) [![][docs-latest-img]][docs-latest-url]|
 
 
-**Runtests for:** | **OS** |
+**Runtests for development version:** | **OS** |
 |:---------------------|:---------------------|
-[![1.6](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml) | ubuntu-latest, macOS-latest| 
-[![1.7](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml) | ubuntu-latest, macOS-latest | 
-[![1.8](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml) | ubuntu-latest, macOS-latest | 
-[![Julia1.9](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml)| ubuntu-latest, macOS-latest |
+[![Julia1.11](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/Create CI_1.11.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/Create CI_1.11.yml)| ubuntu-latest, macOS-latest |
 [![Julia1.10](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml)| ubuntu-latest, macOS-latest |
+[![Julia1.9](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml)| ubuntu-latest, macOS-latest |
+[![1.8](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml) | ubuntu-latest, macOS-latest | 
+[![1.7](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml) | ubuntu-latest, macOS-latest | 
+[![1.6](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml) | ubuntu-latest, macOS-latest| 
+
+
+
+
 
 
 ## Julia Installation
