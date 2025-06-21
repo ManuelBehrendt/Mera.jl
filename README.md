@@ -28,13 +28,13 @@ It is entirely written in the language [Julia](https://julialang.org) and curren
 ## Package Features
 - Easy to install and update
 - Fast and memory lightweight data reading/saving and handling
-- The data is loaded and processed in a database framework [JuliaDB.jl](https://juliadb.org)
+- The data is loaded and processed in a database framework [IndexedTables.jl]([https://juliadb.org](https://github.com/JuliaData/IndexedTables.jl))
 - Efficient workflow
 - Many functionalities for advanced analysis
 - Easy to extend 
 - Interactive and script functionality
 - Many examples and tutorials
-- Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
+- Compressed Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
 
 ## Dependencies
 Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
@@ -77,14 +77,14 @@ ENV["PYTHON"] = ""  # Let PyCall use Conda's Python
 Pkg.build("PyCall")
 Pkg.add("PyPlot")
 ```
-Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.6/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.x, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
+Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.11/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.x, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
 
 
 
 
 
 ## Package Installation
-The package is tested against the long-term supported Julia 1.6.x (recommended), 1.7.x, 1.8.x, 1.9.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
+The package is tested against the long-term supported Julia 1.6.x , 1.7.x, 1.8.x, 1.9.x, 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
 
 ### Julia REPL
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
@@ -119,14 +119,14 @@ Pkg.update("Mera")
 ## Reproducibility
 Reproducibility is an essential requirement of the scientific process. Therefore, I recommend working with environments.
 Create independent projects that contain their list of used package dependencies and their versions.
-The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments]([https://julialang.github.io/Pkg.jl/v1.6/environments/](https://pkgdocs.julialang.org/v1.9/environments/)).
+The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments]([https://julialang.github.io/Pkg.jl/v1.11/environments/](https://pkgdocs.julialang.org/v1.11/environments/)).
 In order to create a new project "activate" your working directory:
 
 ```julia
 shell> cd MyProject
 /Users/you/MyProject
 
-(v1.6) pkg> activate .
+(v1.11) pkg> activate .
 ```
 
 Now add packages like Mera and PyPlot in the favored version:
@@ -241,7 +241,7 @@ Further features:
 
 ## Useful Links
 - [Official Julia website](https://julialang.org)
-- Alternatively use the Julia version manager and make Julia 1.6.* the default: https://github.com/JuliaLang/juliaup
+- Alternatively use the Julia version manager and make Julia 1.11.* the default: https://github.com/JuliaLang/juliaup
 - [Learning Julia](https://julialang.org/learning/)
 - [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
 - [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
