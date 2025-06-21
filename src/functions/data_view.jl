@@ -61,7 +61,7 @@ function viewdata(output::Int;
 
     if showfull
         f = jldopen(fpath, "r"; )
-            printtoc(f)
+            JLD2.printtoc(f)
         close(f)
         println()
         println()
