@@ -19,7 +19,7 @@ Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
 
 
 MERA is a package for working with large 3D AMR/uniform-grid and N-body particle data sets from astrophysical simulations.
-It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES (GitHub, newer versions)](https://github.com/ramses-organisation/ramses), [RAMSES (Bitbucket, old versions)](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
+It is entirely written in the language [Julia](https://julialang.org) and currently supports the hydrodynamic code [RAMSES (GitHub, newer versions)](https://github.com/ramses-organisation/ramses), [RAMSES (Bitbucket, older versions)](https://bitbucket.org/rteyssie/ramses/overview). With this package, I intend to provide essential functions to load and prepare the simulation data for calculations but try to avoid too high-level abstraction (black boxes).
 
 > **Note**
 > To get a first impression, look at the `Hands-On Session RUM2023` with downloadable simulation examples: 
