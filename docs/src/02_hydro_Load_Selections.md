@@ -5,15 +5,15 @@
 
 ```julia
 using Mera
-info = getinfo(300, "../../testing/simulations/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
-    [Mera]: 2023-04-10T11:03:31.417
+    [Mera]: 2025-06-21T20:58:33.581
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
-    ctime: 2023-04-10T08:08:14.488
+    ctime: 2025-06-21T18:31:24.020
     =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
@@ -61,7 +61,7 @@ Choose from the existing hydro variables listed in the simulation-info. Use the 
 gas = gethydro(info);
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:03:36.069
+    [Mera]: Get hydro data: 2025-06-21T20:58:37.410
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -74,10 +74,10 @@ gas = gethydro(info);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:22
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:59
 
 
-    Memory used for data table :2.3210865957662463 GB
+    Memory used for data table :2.321086215786636 GB
     -------------------------------------------------------
     
 
@@ -92,7 +92,7 @@ gas.data
 
     Table with 28320979 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -115,7 +115,7 @@ gas.data
 gas_a = gethydro(info, vars=[:rho, :p]); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:04:07.311
+    [Mera]: Get hydro data: 2025-06-21T21:00:17.323
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 5) = (:rho, :p) 
@@ -128,10 +128,10 @@ gas_a = gethydro(info, vars=[:rho, :p]);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
 
 
-    Memory used for data table :1.2660473119467497 GB
+    Memory used for data table :1.2660471182316542 GB
     -------------------------------------------------------
     
 
@@ -143,7 +143,7 @@ The same variables can be read by using the var-number:
 gas_a = gethydro(info, vars=[:var1, :var5]); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:04:31.757
+    [Mera]: Get hydro data: 2025-06-21T21:01:14.688
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 5) = (:rho, :p) 
@@ -156,10 +156,10 @@ gas_a = gethydro(info, vars=[:var1, :var5]);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:55
 
 
-    Memory used for data table :1.2660473119467497 GB
+    Memory used for data table :1.2660471182316542 GB
     -------------------------------------------------------
     
 
@@ -171,7 +171,7 @@ A keyword argument for the variables is not needed if the following order is pre
 gas_a = gethydro(info, [:rho, :p]); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:04:55.703
+    [Mera]: Get hydro data: 2025-06-21T21:02:12.154
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 5) = (:rho, :p) 
@@ -184,10 +184,10 @@ gas_a = gethydro(info, [:rho, :p]);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
 
 
-    Memory used for data table :1.2660473119467497 GB
+    Memory used for data table :1.2660471182316542 GB
     -------------------------------------------------------
     
 
@@ -201,7 +201,7 @@ gas_a.data
 
 
     Table with 28320979 rows, 6 columns:
-    level  cx   cy   cz   rho          p
+    level  cx   cy   cz   rho          p
     ─────────────────────────────────────────────
     6      1    1    1    3.18647e-9   1.06027e-9
     6      1    1    2    3.58591e-9   1.33677e-9
@@ -239,7 +239,7 @@ In this case, no array and keyword is necessary, but preserve the following or
 gas_c = gethydro(info, :vx ); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:05:59.554
+    [Mera]: Get hydro data: 2025-06-21T21:03:08.746
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(2,) = (:vx,) 
@@ -252,10 +252,10 @@ gas_c = gethydro(info, :vx );
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:20
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
 
 
-    Memory used for data table :1.0550394551828504 GB
+    Memory used for data table :1.0550392987206578 GB
     -------------------------------------------------------
     
 
@@ -269,7 +269,7 @@ gas_c.data
 
 
     Table with 28320979 rows, 5 columns:
-    level  cx   cy   cz   vx
+    level  cx   cy   cz   vx
     ────────────────────────────────
     6      1    1    1    -1.25532
     6      1    1    2    -1.23262
@@ -301,7 +301,7 @@ gas_c.data
 ## Select Spatial Ranges
 
 ### Use RAMSES Standard Notation
-Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default. Here, we limit the loading of the data to a maximum level of 8:
+Ranges correspond to the domain [0:1]^3 and are related to the box corner at '[0., 0., 0.]' by default. Here, we limit the loading of the data to a maximum level of 8:
 
 
 ```julia
@@ -311,7 +311,7 @@ gas = gethydro(info, lmax=8,
                 zrange=[0.4,0.6]); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:06:31.565
+    [Mera]: Get hydro data: 2025-06-21T21:04:05.571
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -324,10 +324,10 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:53
 
 
-    Memory used for data table :103.4984769821167 MB
+    Memory used for data table :103.4980878829956 MB
     -------------------------------------------------------
     
 
@@ -363,7 +363,7 @@ gas = gethydro(info, lmax=8,
                 center=[0.5, 0.5, 0.5]); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:06:46.359
+    [Mera]: Get hydro data: 2025-06-21T21:05:01.896
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -378,16 +378,16 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-    Memory used for data table :103.4984769821167 MB
+    Memory used for data table :103.4980878829956 MB
     -------------------------------------------------------
     
 
 
 ### Use notation in physical units
-In the following example the ranges are given in unit "kpc", relative to the box corner [0., 0., 0.] (default):
+In the following example the ranges are given in unit "kpc", relative to the box corner '[0., 0., 0.]' (default):
 
 
 ```julia
@@ -398,7 +398,7 @@ gas = gethydro(info, lmax=8,
                 range_unit=:kpc); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:07:00.080
+    [Mera]: Get hydro data: 2025-06-21T21:05:56.044
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -411,10 +411,10 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-    Memory used for data table :19.30322551727295 MB
+    Memory used for data table :19.302836418151855 MB
     -------------------------------------------------------
     
 
@@ -496,7 +496,7 @@ gas = gethydro(info, lmax=8,
                 range_unit=:kpc); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:07:13.344
+    [Mera]: Get hydro data: 2025-06-21T21:06:49.017
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -511,10 +511,10 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-    Memory used for data table :54.6228666305542 MB
+    Memory used for data table :54.622477531433105 MB
     -------------------------------------------------------
     
 
@@ -531,7 +531,7 @@ gas = gethydro(info, lmax=8,
                 range_unit=:kpc); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:07:26.753
+    [Mera]: Get hydro data: 2025-06-21T21:07:42.347
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -546,10 +546,10 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-    Memory used for data table :54.6228666305542 MB
+    Memory used for data table :54.622477531433105 MB
     -------------------------------------------------------
     
 
@@ -564,7 +564,7 @@ gas = gethydro(info, lmax=8,
                 range_unit=:kpc); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:07:40.694
+    [Mera]: Get hydro data: 2025-06-21T21:08:35.716
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -579,10 +579,10 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-    Memory used for data table :54.6228666305542 MB
+    Memory used for data table :54.622477531433105 MB
     -------------------------------------------------------
     
 
@@ -599,7 +599,7 @@ gas = gethydro(info, lmax=8,
                 range_unit=:kpc); 
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T11:07:54.736
+    [Mera]: Get hydro data: 2025-06-21T21:09:29.367
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -614,10 +614,10 @@ gas = gethydro(info, lmax=8,
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-    Memory used for data table :54.6228666305542 MB
+    Memory used for data table :54.622477531433105 MB
     -------------------------------------------------------
     
 

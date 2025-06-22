@@ -5,15 +5,15 @@
 
 ```julia
 using Mera
-info = getinfo(300, "../../testing/simulations/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
-    [Mera]: 2023-04-10T10:48:46.483
+    [Mera]: 2025-06-21T20:47:48.296
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
-    ctime: 2023-04-10T08:08:14.488
+    ctime: 2025-06-21T18:31:24.020
     =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
@@ -157,7 +157,7 @@ propertynames(info.descriptor)
 
 
 ```julia
-info = getinfo(300, "../../testing/simulations/mw_L10", verbose=false); # used to overwrite the previous changes
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10", verbose=false); # used to overwrite the previous changes
 ```
 
 Read the AMR and the Hydro data from all files of the full box with all existing variables and cell positions (only leaf cells of the AMR grid).
@@ -167,7 +167,7 @@ Read the AMR and the Hydro data from all files of the full box with all existing
 gas = gethydro(info);
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T10:49:21.228
+    [Mera]: Get hydro data: 2025-06-21T20:47:55.574
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -180,10 +180,10 @@ gas = gethydro(info);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:29
+    Progress: 100%|█████████████████████████████████████████| Time: 0:01:19
 
 
-    Memory used for data table :2.3210865957662463 GB
+    Memory used for data table :2.321086215786636 GB
     -------------------------------------------------------
     
 
@@ -240,7 +240,7 @@ supertype( HydroDataType )
 
 
 
-The data is stored in a **JuliaDB** table and the user selected hydro variables and parameters are assigned to fields:
+The data is stored in a **IndexedTables** table and the user selected hydro variables and parameters are assigned to fields:
 
 
 ```julia
@@ -274,7 +274,7 @@ A minimum density or sound speed can be set for the loaded data (e.g. to overwri
 gas = gethydro(info, smallr=1e-11);
 ```
 
-    [Mera]: Get hydro data: 2023-04-10T10:54:09.424
+    [Mera]: Get hydro data: 2025-06-21T20:49:53.650
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -287,10 +287,10 @@ gas = gethydro(info, smallr=1e-11);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:25
+    Progress: 100%|█████████████████████████████████████████| Time: 0:01:13
 
 
-    Memory used for data table :2.3210865957662463 GB
+    Memory used for data table :2.321086215786636 GB
     -------------------------------------------------------
     
 
@@ -312,7 +312,7 @@ propertynames(gas)
 ## Overview of AMR/Hydro
 
 Get an overview of the AMR structure associated with the object `gas` (HydroDataType).
-The printed information is stored into the object `overview_amr` as a **JuliaDB** table (code units)  and can be used for further calculations:
+The printed information is stored into the object `overview_amr` as a **IndexedTables** table (code units)  and can be used for further calculations:
 
 
 ```julia
@@ -346,7 +346,7 @@ data_overview = dataoverview(gas)
     Calculating...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:00:06
+     100%|███████████████████████████████████████████████████| Time: 0:03:09
 
 
 
@@ -354,7 +354,7 @@ data_overview = dataoverview(gas)
 
     Table with 5 rows, 16 columns:
     Columns:
-    #   colname   type
+    #   colname   type
     ──────────────────
     1   level     Any
     2   mass      Any
@@ -379,7 +379,7 @@ If the number of columns is relatively long, the table is typically represented 
 
 
 ```julia
-using JuliaDB
+using Mera.IndexedTables
 ```
 
 
@@ -447,7 +447,7 @@ select(data_overview, (:level, :mass, :rho_min, :rho_max ) )
 
 
 ## Data Inspection
-The data is associated with the field `gas.data` as a **JuliaDB** table (code units).
+The data is associated with the field `gas.data` as a **IndexedTables** table (code units).
 Each row corresponds to a cell and each column to a property which makes it easy to  find, filter, map, aggregate, group the data, etc.
 More information can be found in the **Mera** tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
@@ -464,7 +464,7 @@ gas.data
 
     Table with 28320979 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -491,7 +491,7 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
 
 
     Table with 28320979 rows, 5 columns:
-    level  cx   cy   cz   rho
+    level  cx   cy   cz   rho
     ─────────────────────────────────
     6      1    1    1    3.18647e-9
     6      1    1    2    3.58591e-9
@@ -519,16 +519,6 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
     10     814  496  512  0.000242422
 
 
-
-
-```julia
-
-```
-
-
-```julia
-
-```
 
 
 ```julia
