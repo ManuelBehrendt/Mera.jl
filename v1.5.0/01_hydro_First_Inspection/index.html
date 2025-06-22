@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><meta name="title" content="Hydro · Mera.jl"/><meta property="og:title" content="Hydro · Mera.jl"/><meta property="twitter:title" content="Hydro · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Load-AMR/Hydro-Data"><span>Load AMR/Hydro Data</span></a></li><li><a class="tocitem" href="#Overview-of-AMR/Hydro"><span>Overview of AMR/Hydro</span></a></li><li><a class="tocitem" href="#Data-Inspection"><span>Data Inspection</span></a></li></ul></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">1-Data Inspection</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/01_hydro_First_Inspection.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="1.-Hydro:-First-Data-Inspection"><a class="docs-heading-anchor" href="#1.-Hydro:-First-Data-Inspection">1. Hydro: First Data Inspection</a><a id="1.-Hydro:-First-Data-Inspection-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Hydro:-First-Data-Inspection" title="Permalink"></a></h1><h2 id="Simulation-Overview"><a class="docs-heading-anchor" href="#Simulation-Overview">Simulation Overview</a><a id="Simulation-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
+info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-21T20:47:48.296
+
+Code: RAMSES
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2025-06-21T18:31:24.020
+=======================================================
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05 
+particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+=======================================================</code></pre><p>A short overview of the loaded hydro properties is printed:</p><ul><li>existence of hydro files</li><li>the number and predefined variables</li><li>the variable names from the descriptor file</li><li>adiabatic index</li></ul><p>The functions in <strong>Mera</strong> &quot;know&quot; the predefined hydro variable names: :rho, :vx, :vy, :vz, :p, :var6, :var7,.... In a future version the variable names from the hydro descriptor can be used by setting the field info.descriptor.usehydro = true . Furthermore, the user has the opportunity to overwrite the variable names in the discriptor list by changing the entries in the array:</p><pre><code class="language-julia hljs">info.descriptor.hydro</code></pre><pre><code class="nohighlight hljs">7-element Vector{Symbol}:
+ :density
+ :velocity_x
+ :velocity_y
+ :velocity_z
+ :pressure
+ :scalar_00
+ :scalar_01</code></pre><p>For example:</p><pre><code class="language-julia hljs">info.descriptor.hydro[2] = :vel_x;</code></pre><pre><code class="language-julia hljs">info.descriptor.hydro</code></pre><pre><code class="nohighlight hljs">7-element Vector{Symbol}:
+ :density
+ :vel_x
+ :velocity_y
+ :velocity_z
+ :pressure
+ :scalar_00
+ :scalar_01</code></pre><p>Get an overview of the loaded descriptor properties:</p><pre><code class="language-julia hljs">viewfields(info.descriptor)</code></pre><pre><code class="nohighlight hljs">[Mera]: Descriptor overview
+=================================
+hversion	= 1
+hydro	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
+htypes	= [&quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;]
+usehydro	= false
+hydrofile	= true
+pversion	= 1
+particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time]
+ptypes	= [&quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;i&quot;, &quot;i&quot;, &quot;b&quot;, &quot;b&quot;, &quot;d&quot;]
+useparticles	= false
+particlesfile	= true
+gravity	= [:epot, :ax, :ay, :az]
+usegravity	= false
+gravityfile	= false
+rtversion	= 0
+rt	= Dict{Any, Any}()
+rtPhotonGroups	= Dict{Any, Any}()
+usert	= false
+rtfile	= false
+clumps	= Symbol[]
+useclumps	= false
+clumpsfile	= false
+sinks	= Symbol[]
+usesinks	= false
+sinksfile	= false</code></pre><p>Get a simple list of the fields:</p><pre><code class="language-julia hljs">propertynames(info.descriptor)</code></pre><pre><code class="nohighlight hljs">(:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)</code></pre><h2 id="Load-AMR/Hydro-Data"><a class="docs-heading-anchor" href="#Load-AMR/Hydro-Data">Load AMR/Hydro Data</a><a id="Load-AMR/Hydro-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Load-AMR/Hydro-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;, verbose=false); # used to overwrite the previous changes</code></pre><p>Read the AMR and the Hydro data from all files of the full box with all existing variables and cell positions (only leaf cells of the AMR grid).</p><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T20:47:55.574
+
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+Reading data...
+
+
+Progress: 100%|█████████████████████████████████████████| Time: 0:01:19
+
+
+Memory used for data table :2.321086215786636 GB
+-------------------------------------------------------</code></pre><p>The memory consumption of the data table is printed at the end. We provide a function which gives the possibility to print the used memory of any object: </p><pre><code class="language-julia hljs">usedmemory(gas);</code></pre><pre><code class="nohighlight hljs">Memory used: 2.321 GB</code></pre><p>The assigned data object is now of type <code>HydroDataType</code>:</p><pre><code class="language-julia hljs">typeof(gas)</code></pre><pre><code class="nohighlight hljs">HydroDataType</code></pre><p>It is a sub-type of <code>ContainMassDataSetType</code></p><pre><code class="language-julia hljs">supertype( ContainMassDataSetType )</code></pre><pre><code class="nohighlight hljs">DataSetType</code></pre><p><code>ContainMassDataSetType</code> is a sub-type of to the super-type <code>DataSetType</code></p><pre><code class="language-julia hljs">supertype( HydroDataType )</code></pre><pre><code class="nohighlight hljs">HydroPartType</code></pre><p>The data is stored in a <strong>IndexedTables</strong> table and the user selected hydro variables and parameters are assigned to fields:</p><pre><code class="language-julia hljs">viewfields(gas)</code></pre><pre><code class="nohighlight hljs">data ==&gt; JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+
+info ==&gt; subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
+lmin	= 6
+lmax	= 10
+boxlen	= 48.0
+ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+selected_hydrovars	= [1, 2, 3, 4, 5, 6, 7]
+smallr	= 0.0
+smallc	= 0.0
+
+scale ==&gt; subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)</code></pre><p>For convenience, all the fields from the info-object above (InfoType) are now also accessible from the object with &quot;gas.info&quot; and the scaling relations from code to cgs units in &quot;gas.scale&quot;. The minimum and maximum level of the loaded data, the box length, the selected ranges and number of the hydro variables are retained.</p><p>A minimum density or sound speed can be set for the loaded data (e.g. to overwrite negative densities) and is then represented by the fields smallr and smallc of the object <code>gas</code> (here). An example:</p><pre><code class="language-julia hljs">gas = gethydro(info, smallr=1e-11);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T20:49:53.650
+
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+Reading data...
+
+
+Progress: 100%|█████████████████████████████████████████| Time: 0:01:13
+
+
+Memory used for data table :2.321086215786636 GB
+-------------------------------------------------------</code></pre><p>Print the fields of an object (composite type) in a simple list:</p><pre><code class="language-julia hljs">propertynames(gas)</code></pre><pre><code class="nohighlight hljs">(:data, :info, :lmin, :lmax, :boxlen, :ranges, :selected_hydrovars, :used_descriptors, :smallr, :smallc, :scale)</code></pre><h2 id="Overview-of-AMR/Hydro"><a class="docs-heading-anchor" href="#Overview-of-AMR/Hydro">Overview of AMR/Hydro</a><a id="Overview-of-AMR/Hydro-1"></a><a class="docs-heading-anchor-permalink" href="#Overview-of-AMR/Hydro" title="Permalink"></a></h2><p>Get an overview of the AMR structure associated with the object <code>gas</code> (HydroDataType). The printed information is stored into the object <code>overview_amr</code> as a <strong>IndexedTables</strong> table (code units)  and can be used for further calculations:</p><pre><code class="language-julia hljs">overview_amr = amroverview(gas)</code></pre><pre><code class="nohighlight hljs">Counting...
+
+
+
+
+
+Table with 5 rows, 3 columns:
+level  cells     cellsize
+─────────────────────────
+6      66568     0.75
+7      374908    0.375
+8      7806793   0.1875
+9      12774134  0.09375
+10     7298576   0.046875</code></pre><p>Get some overview of the data that is associated with the object <code>gas</code>. The calculated information can be accessed from the object <code>data_overview</code> (here) in code units for further calculations:</p><pre><code class="language-julia hljs">data_overview = dataoverview(gas)</code></pre><pre><code class="nohighlight hljs">Calculating...
+
+
+ 100%|███████████████████████████████████████████████████| Time: 0:03:09
+
+
+
+
+
+Table with 5 rows, 16 columns:
+Columns:
+#   colname   type
+──────────────────
+1   level     Any
+2   mass      Any
+3   rho_min   Any
+4   rho_max   Any
+5   vx_min    Any
+6   vx_max    Any
+7   vy_min    Any
+8   vy_max    Any
+9   vz_min    Any
+10  vz_max    Any
+11  p_min     Any
+12  p_max     Any
+13  var6_min  Any
+14  var6_max  Any
+15  var7_min  Any
+16  var7_max  Any</code></pre><p>If the number of columns is relatively long, the table is typically represented by an overview. To access certain columns, use the <code>select</code> function. The representation &quot;:mass&quot; is called a quoted Symbol (<a href="https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1">see in Julia documentation</a>):</p><pre><code class="language-julia hljs">using Mera.IndexedTables</code></pre><pre><code class="language-julia hljs">select(data_overview, (:level,:mass, :rho_min, :rho_max ) )</code></pre><pre><code class="nohighlight hljs">Table with 5 rows, 4 columns:
+level  mass         rho_min     rho_max
+───────────────────────────────────────────
+6      0.000698165  2.61776e-9  1.16831e-7
+7      0.00126374   1.15139e-8  2.21103e-7
+8      0.0201245    2.44071e-8  0.000222309
+9      0.204407     1.2142e-7   0.0141484
+10     6.83618      4.49036e-7  3.32984</code></pre><p>Get an array from the column &quot;:mass&quot; in <code>data_overview</code> and scale it to the units <code>Msol</code>. The order of the calculated data is consistent with the table above:</p><pre><code class="language-julia hljs">column(data_overview, :mass) * info.scale.Msol </code></pre><pre><code class="nohighlight hljs">5-element Vector{Float64}:
+ 697971.5415380469
+      1.2633877595077453e6
+      2.01189316548175e7
+      2.0435047070331135e8
+      6.834288803451587e9</code></pre><p>Or simply convert the <code>:mass</code> data in the table to <code>Msol</code> units by manipulating the column:</p><pre><code class="language-julia hljs">data_overview = transform(data_overview, :mass =&gt; :mass =&gt; value-&gt;value * info.scale.Msol);</code></pre><pre><code class="language-julia hljs">select(data_overview, (:level, :mass, :rho_min, :rho_max ) )</code></pre><pre><code class="nohighlight hljs">Table with 5 rows, 4 columns:
+level  mass       rho_min     rho_max
+─────────────────────────────────────────
+6      6.97972e5  2.61776e-9  1.16831e-7
+7      1.26339e6  1.15139e-8  2.21103e-7
+8      2.01189e7  2.44071e-8  0.000222309
+9      2.0435e8   1.2142e-7   0.0141484
+10     6.83429e9  4.49036e-7  3.32984</code></pre><h2 id="Data-Inspection"><a class="docs-heading-anchor" href="#Data-Inspection">Data Inspection</a><a id="Data-Inspection-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Inspection" title="Permalink"></a></h2><p>The data is associated with the field <code>gas.data</code> as a <strong>IndexedTables</strong> table (code units). Each row corresponds to a cell and each column to a property which makes it easy to  find, filter, map, aggregate, group the data, etc. More information can be found in the <strong>Mera</strong> tutorials or in: <a href="http://juliadb.org/latest/api/">JuliaDB API Reference</a></p><h3 id="Table-View"><a class="docs-heading-anchor" href="#Table-View">Table View</a><a id="Table-View-1"></a><a class="docs-heading-anchor-permalink" href="#Table-View" title="Permalink"></a></h3><p>The cell positions cx,cy,cz correspond to a uniform 3D array for each level. E.g., for level=8, the positions range from 1-256 for each dimension, for level=14, 1-16384 while not all positions within this range exist due to the complex AMR structure. The integers cx,cy,cz are used to reconstruct the grid in many functions of <strong>MERA</strong> and should not be modified.</p><pre><code class="language-julia hljs">gas.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 11 columns:
+Columns:
+#   colname  type
+────────────────────
+1   level    Int64
+2   cx       Int64
+3   cy       Int64
+4   cz       Int64
+5   rho      Float64
+6   vx       Float64
+7   vy       Float64
+8   vz       Float64
+9   p        Float64
+10  var6     Float64
+11  var7     Float64</code></pre><p>A more detailed view into the data:</p><pre><code class="language-julia hljs">select(gas.data, (:level,:cx, :cy, :cz, :rho) )</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
+level  cx   cy   cz   rho
+─────────────────────────────────
+6      1    1    1    3.18647e-9
+6      1    1    2    3.58591e-9
+6      1    1    3    3.906e-9
+6      1    1    4    4.27441e-9
+6      1    1    5    4.61042e-9
+6      1    1    6    4.83977e-9
+6      1    1    7    4.974e-9
+6      1    1    8    5.08112e-9
+6      1    1    9    5.20596e-9
+6      1    1    10   5.38372e-9
+6      1    1    11   5.67209e-9
+6      1    1    12   6.14423e-9
+⋮
+10     814  493  514  0.000321702
+10     814  494  509  1.42963e-6
+10     814  494  510  1.4351e-6
+10     814  494  511  0.00029515
+10     814  494  512  0.000395273
+10     814  494  513  0.000321133
+10     814  494  514  0.000319678
+10     814  495  511  0.00024646
+10     814  495  512  0.000269009
+10     814  496  511  0.000235329
+10     814  496  512  0.000242422</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../00_multi_FirstSteps/">« First Steps</a><a class="docs-footer-nextpage" href="../01_particles_First_Inspection/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Sunday 22 June 2025 12:35">Sunday 22 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
