@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><form class="docs-search" action="../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Select-Variables"><span>Select Variables</span></a></li><li><a class="tocitem" href="#Select-Spatial-Ranges"><span>Select Spatial Ranges</span></a></li></ul></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2-Load by Selection</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/02_hydro_Load_Selections.md" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id=".-Hydro:-Load-Selected-Variables-and-Data-Ranges"><a class="docs-heading-anchor" href="#.-Hydro:-Load-Selected-Variables-and-Data-Ranges">2. Hydro: Load Selected Variables and Data Ranges</a><a id=".-Hydro:-Load-Selected-Variables-and-Data-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#.-Hydro:-Load-Selected-Variables-and-Data-Ranges" title="Permalink"></a></h1><h2 id="Simulation-Overview"><a class="docs-heading-anchor" href="#Simulation-Overview">Simulation Overview</a><a id="Simulation-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
-info = getinfo(300, &quot;../../testing/simulations/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2023-04-10T11:03:31.417
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><meta name="title" content="Hydro · Mera.jl"/><meta property="og:title" content="Hydro · Mera.jl"/><meta property="twitter:title" content="Hydro · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1-Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2-Load by Selection</span><ul><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Select-Variables"><span>Select Variables</span></a></li><li><a class="tocitem" href="#Select-Spatial-Ranges"><span>Select Spatial Ranges</span></a></li></ul></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3-Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4-Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5-Mask/Filter/Meta</a></li><li><span class="tocitem">6-Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../07_multi_Mera_Files/">7-MERA-Files</a></li><li><a class="tocitem" href="../Miscellaneous/">8-Miscellaneous</a></li><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../api/">API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2-Load by Selection</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/02_hydro_Load_Selections.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="2.-Hydro:-Load-Selected-Variables-and-Data-Ranges"><a class="docs-heading-anchor" href="#2.-Hydro:-Load-Selected-Variables-and-Data-Ranges">2. Hydro: Load Selected Variables and Data Ranges</a><a id="2.-Hydro:-Load-Selected-Variables-and-Data-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Hydro:-Load-Selected-Variables-and-Data-Ranges" title="Permalink"></a></h1><h2 id="Simulation-Overview"><a class="docs-heading-anchor" href="#Simulation-Overview">Simulation Overview</a><a id="Simulation-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
+info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-21T20:58:33.581
 
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
-ctime: 2023-04-10T08:08:14.488
+ctime: 2025-06-21T18:31:24.020
 =======================================================
 simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
@@ -37,7 +37,7 @@ timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Select-Variables"><a class="docs-heading-anchor" href="#Select-Variables">Select Variables</a><a id="Select-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Select-Variables" title="Permalink"></a></h2><p>Choose from the existing hydro variables listed in the simulation-info. Use the quoted Symbols: :varn1 or :cpu (=neg. one), :var1 or :rho, :var2 or :vx, :var3 or :vy, :var4 or :vz, :var5 or :p. Variables above 5 can be selected by :var6, :var7 etc. . No order is required. The selection of the variable&#39;s names from the descriptor files will be implemented in the future.</p><h3 id="Read-all-variables-(default)"><a class="docs-heading-anchor" href="#Read-all-variables-(default)">Read all variables (default)</a><a id="Read-all-variables-(default)-1"></a><a class="docs-heading-anchor-permalink" href="#Read-all-variables-(default)" title="Permalink"></a></h3><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:03:36.069
+=======================================================</code></pre><h2 id="Select-Variables"><a class="docs-heading-anchor" href="#Select-Variables">Select Variables</a><a id="Select-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Select-Variables" title="Permalink"></a></h2><p>Choose from the existing hydro variables listed in the simulation-info. Use the quoted Symbols: :varn1 or :cpu (=neg. one), :var1 or :rho, :var2 or :vx, :var3 or :vy, :var4 or :vz, :var5 or :p. Variables above 5 can be selected by :var6, :var7 etc. . No order is required. The selection of the variable&#39;s names from the descriptor files will be implemented in the future.</p><h3 id="Read-all-variables-(default)"><a class="docs-heading-anchor" href="#Read-all-variables-(default)">Read all variables (default)</a><a id="Read-all-variables-(default)-1"></a><a class="docs-heading-anchor-permalink" href="#Read-all-variables-(default)" title="Permalink"></a></h3><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T20:58:37.410
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -50,13 +50,13 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:22
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:59
 
 
-Memory used for data table :2.3210865957662463 GB
+Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 11 columns:
 Columns:
-#   colname  type
+#   colname  type
 ────────────────────
 1   level    Int64
 2   cx       Int64
@@ -68,7 +68,7 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h3 id="Select-several-variables-w/o-a-keyword"><a class="docs-heading-anchor" href="#Select-several-variables-w/o-a-keyword">Select several variables w/o a keyword</a><a id="Select-several-variables-w/o-a-keyword-1"></a><a class="docs-heading-anchor-permalink" href="#Select-several-variables-w/o-a-keyword" title="Permalink"></a></h3><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:rho, :p]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:04:07.311
+11  var7     Float64</code></pre><h3 id="Select-several-variables-w/o-a-keyword"><a class="docs-heading-anchor" href="#Select-several-variables-w/o-a-keyword">Select several variables w/o a keyword</a><a id="Select-several-variables-w/o-a-keyword-1"></a><a class="docs-heading-anchor-permalink" href="#Select-several-variables-w/o-a-keyword" title="Permalink"></a></h3><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:rho, :p]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:00:17.323
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 5) = (:rho, :p) 
@@ -81,28 +81,11 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
 
 
-Memory used for data table :1.2660473119467497 GB
--------------------------------------------------------</code></pre><p>The same variables can be read by using the var-number:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:var1, :var5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:04:31.757
-
-Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 5) = (:rho, :p) 
-
-domain:
-xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
-Reading data...
-
-
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
-
-
-Memory used for data table :1.2660473119467497 GB
--------------------------------------------------------</code></pre><p>A keyword argument for the variables is not needed if the following order is preserved: InfoType-object, variables:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, [:rho, :p]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:04:55.703
+Memory used for data table :1.2660471182316542 GB
+-------------------------------------------------------</code></pre><p>The same variables can be read by using the var-number:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:var1, :var5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:01:14.688
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 5) = (:rho, :p) 
@@ -115,12 +98,29 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:55
 
 
-Memory used for data table :1.2660473119467497 GB
+Memory used for data table :1.2660471182316542 GB
+-------------------------------------------------------</code></pre><p>A keyword argument for the variables is not needed if the following order is preserved: InfoType-object, variables:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, [:rho, :p]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:02:12.154
+
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 5) = (:rho, :p) 
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+Reading data...
+
+
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
+
+
+Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas_a.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 6 columns:
-level  cx   cy   cz   rho          p
+level  cx   cy   cz   rho          p
 ─────────────────────────────────────────────
 6      1    1    1    3.18647e-9   1.06027e-9
 6      1    1    2    3.58591e-9   1.33677e-9
@@ -145,7 +145,7 @@ level  cx   cy   cz   rho          p
 10     814  495  511  0.00024646   2.19846e-6
 10     814  495  512  0.000269009  2.20717e-6
 10     814  496  511  0.000235329  2.10577e-6
-10     814  496  512  0.000242422  2.09634e-6</code></pre><h3 id="Select-one-variable"><a class="docs-heading-anchor" href="#Select-one-variable">Select one variable</a><a id="Select-one-variable-1"></a><a class="docs-heading-anchor-permalink" href="#Select-one-variable" title="Permalink"></a></h3><p>In this case, no array and keyword is necessary, but preserve the following order: InfoType-object, variable:</p><pre><code class="language-julia hljs">gas_c = gethydro(info, :vx ); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:05:59.554
+10     814  496  512  0.000242422  2.09634e-6</code></pre><h3 id="Select-one-variable"><a class="docs-heading-anchor" href="#Select-one-variable">Select one variable</a><a id="Select-one-variable-1"></a><a class="docs-heading-anchor-permalink" href="#Select-one-variable" title="Permalink"></a></h3><p>In this case, no array and keyword is necessary, but preserve the following order: InfoType-object, variable:</p><pre><code class="language-julia hljs">gas_c = gethydro(info, :vx ); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:03:08.746
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(2,) = (:vx,) 
@@ -158,12 +158,12 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:20
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
 
 
-Memory used for data table :1.0550394551828504 GB
+Memory used for data table :1.0550392987206578 GB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas_c.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
-level  cx   cy   cz   vx
+level  cx   cy   cz   vx
 ────────────────────────────────
 6      1    1    1    -1.25532
 6      1    1    2    -1.23262
@@ -188,10 +188,10 @@ level  cx   cy   cz   vx
 10     814  495  511  0.289612
 10     814  495  512  0.290753
 10     814  496  511  0.285209
-10     814  496  512  0.285463</code></pre><h2 id="Select-Spatial-Ranges"><a class="docs-heading-anchor" href="#Select-Spatial-Ranges">Select Spatial Ranges</a><a id="Select-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Select-Spatial-Ranges" title="Permalink"></a></h2><h3 id="Use-RAMSES-Standard-Notation"><a class="docs-heading-anchor" href="#Use-RAMSES-Standard-Notation">Use RAMSES Standard Notation</a><a id="Use-RAMSES-Standard-Notation-1"></a><a class="docs-heading-anchor-permalink" href="#Use-RAMSES-Standard-Notation" title="Permalink"></a></h3><p>Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default. Here, we limit the loading of the data to a maximum level of 8:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
+10     814  496  512  0.285463</code></pre><h2 id="Select-Spatial-Ranges"><a class="docs-heading-anchor" href="#Select-Spatial-Ranges">Select Spatial Ranges</a><a id="Select-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Select-Spatial-Ranges" title="Permalink"></a></h2><h3 id="Use-RAMSES-Standard-Notation"><a class="docs-heading-anchor" href="#Use-RAMSES-Standard-Notation">Use RAMSES Standard Notation</a><a id="Use-RAMSES-Standard-Notation-1"></a><a class="docs-heading-anchor-permalink" href="#Use-RAMSES-Standard-Notation" title="Permalink"></a></h3><p>Ranges correspond to the domain [0:1]^3 and are related to the box corner at &#39;[0., 0., 0.]&#39; by default. Here, we limit the loading of the data to a maximum level of 8:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
                 xrange=[0.2,0.8], 
                 yrange=[0.2,0.8], 
-                zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:06:31.565
+                zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:04:05.571
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -204,10 +204,10 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:53
 
 
-Memory used for data table :103.4984769821167 MB
+Memory used for data table :103.4980878829956 MB
 -------------------------------------------------------</code></pre><p>The loaded data ranges are assigned to the field <code>ranges</code> as an array in  <strong>RAMSES</strong> standard notation (domain: [0:1]^3):</p><pre><code class="language-julia hljs">gas.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
  0.2
  0.8
@@ -218,7 +218,7 @@ Memory used for data table :103.4984769821167 MB
                 xrange=[-0.3, 0.3], 
                 yrange=[-0.3, 0.3], 
                 zrange=[-0.1, 0.1], 
-                center=[0.5, 0.5, 0.5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:06:46.359
+                center=[0.5, 0.5, 0.5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:05:01.896
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -233,15 +233,15 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-Memory used for data table :103.4984769821167 MB
--------------------------------------------------------</code></pre><h3 id="Use-notation-in-physical-units"><a class="docs-heading-anchor" href="#Use-notation-in-physical-units">Use notation in physical units</a><a id="Use-notation-in-physical-units-1"></a><a class="docs-heading-anchor-permalink" href="#Use-notation-in-physical-units" title="Permalink"></a></h3><p>In the following example the ranges are given in unit &quot;kpc&quot;, relative to the box corner <a href="default">0., 0., 0.</a>:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
+Memory used for data table :103.4980878829956 MB
+-------------------------------------------------------</code></pre><h3 id="Use-notation-in-physical-units"><a class="docs-heading-anchor" href="#Use-notation-in-physical-units">Use notation in physical units</a><a id="Use-notation-in-physical-units-1"></a><a class="docs-heading-anchor-permalink" href="#Use-notation-in-physical-units" title="Permalink"></a></h3><p>In the following example the ranges are given in unit &quot;kpc&quot;, relative to the box corner &#39;[0., 0., 0.]&#39; (default):</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
                 xrange=[2.,22.], 
                 yrange=[2.,22.], 
                 zrange=[22.,26.], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:07:00.080
+                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:05:56.044
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -254,10 +254,10 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-Memory used for data table :19.30322551727295 MB
+Memory used for data table :19.302836418151855 MB
 -------------------------------------------------------</code></pre><p>The possible physical length units for the keyword <code>range_unit</code> are defined in the field <code>scale</code> : </p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: gas.info.scale</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to scale from user/code units to selected units
 =======================================================================
 Mpc	= 0.0010000000000006482
@@ -316,7 +316,7 @@ K_cm3	= 2.1080995598777838e7</code></pre><h3 id="Ranges-relative-to-a-given-cent
                 yrange=[-16.,16.], 
                 zrange=[-2.,2.], 
                 center=[24.,24.,24.], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:07:13.344
+                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:06:49.017
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -331,16 +331,16 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-Memory used for data table :54.6228666305542 MB
+Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------</code></pre><p>Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
                 xrange=[-16., 16.], 
                 yrange=[-16., 16.], 
                 zrange=[-2., 2.], 
                 center=[:boxcenter], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:07:26.753
+                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:07:42.347
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -355,16 +355,16 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-Memory used for data table :54.6228666305542 MB
+Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
                 xrange=[-16., 16.], 
                 yrange=[-16., 16.], 
                 zrange=[-2., 2.], 
                 center=[:bc], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:07:40.694
+                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:08:35.716
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -379,16 +379,16 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-Memory used for data table :54.6228666305542 MB
+Memory used for data table :54.622477531433105 MB
 -------------------------------------------------------</code></pre><p>Use the box center notation for individual dimensions, here x,z:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
                 xrange=[-16., 16.], 
                 yrange=[-16., 16.], 
                 zrange=[-2., 2.], 
                 center=[:bc, 24., :bc], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2023-04-10T11:07:54.736
+                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-06-21T21:09:29.367
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -403,8 +403,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Reading data...
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:13
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:52
 
 
-Memory used for data table :54.6228666305542 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_clumps_First_Inspection/">« Clumps</a><a class="docs-footer-nextpage" href="../02_particles_Load_Selections/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.25 on <span class="colophon-date" title="Saturday 21 June 2025 21:57">Saturday 21 June 2025</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Memory used for data table :54.622477531433105 MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_clumps_First_Inspection/">« Clumps</a><a class="docs-footer-nextpage" href="../02_particles_Load_Selections/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Sunday 22 June 2025 09:56">Sunday 22 June 2025</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
