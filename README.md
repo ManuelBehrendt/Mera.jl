@@ -52,10 +52,6 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 |:---------------------|:---------------------|
 [![Julia1.11](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.11.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.11.yml)| ubuntu-latest, macOS-latest |
 [![Julia1.10](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml)| ubuntu-latest, macOS-latest |
-[![Julia1.9](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.9.yml)| ubuntu-latest, macOS-latest |
-[![1.8](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.8.yml) | ubuntu-latest, macOS-latest | 
-[![1.7](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.7.yml) | ubuntu-latest, macOS-latest | 
-[![1.6](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.6.yml) | ubuntu-latest, macOS-latest| 
 
 
 
@@ -84,7 +80,7 @@ Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdo
 
 
 ## Package Installation
-The package is tested against the long-term supported Julia 1.6.x , 1.7.x, 1.8.x, 1.9.x, 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
+The package is tested against Julia 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
 
 ### Julia REPL
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
