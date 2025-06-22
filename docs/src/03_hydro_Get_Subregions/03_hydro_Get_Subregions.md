@@ -64,7 +64,7 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:02:49
+    100%|███████████████████████████████████████████████████| Time: 0:02:49
 
 
     Memory used for data table :186.1558656692505 MB
@@ -83,7 +83,7 @@ proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verb
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:03
+    100%|███████████████████████████████████████████████████| Time: 0:00:03
 
 
 The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field `cextent` gives the extent related to a given center (default: [0.,0.,0.]).
@@ -137,7 +137,7 @@ cb = colorbar(im, label=labeltext);
 
 #### Cuboid Region: Cutout the data assigned to the object `gas`
 
-Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner '[0., 0., 0.]' by default. The user can choose between standard notation '[0:1]' (default) or physical length-units, defined in e.g. info.scale :
 
 
 ```julia
@@ -252,7 +252,7 @@ proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
+    100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 
@@ -298,8 +298,8 @@ proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verb
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
+    100%|███████████████████████████████████████████████████| Time: 0:00:01
+    100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 #### Cylindrical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
@@ -538,7 +538,7 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
+    100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 #### Spherical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
@@ -779,7 +779,7 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:02
+    100%|███████████████████████████████████████████████████| Time: 0:00:02
 
 
 #### Cylindrical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:
@@ -981,9 +981,9 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:02
-    100%|███████████████████████████████████████████████████| Time: 0:00:02
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
+    100%|███████████████████████████████████████████████████| Time: 0:00:02
+    100%|███████████████████████████████████████████████████| Time: 0:00:02
+    100%|███████████████████████████████████████████████████| Time: 0:00:01
 
 
 #### Spherical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:

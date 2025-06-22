@@ -83,7 +83,7 @@ clumps.data
 
     Table with 644 rows, 12 columns:
     Columns:
-    #   colname    type
+    #   colname    type
     ──────────────────────
     1   index      Float64
     2   lev        Float64
@@ -217,7 +217,7 @@ clumps.data
 
     Table with 644 rows, 15 columns:
     Columns:
-    #   colname    type
+    #   colname    type
     ──────────────────────
     1   index      Float64
     2   lev        Float64
@@ -240,7 +240,7 @@ clumps.data
 ## Select Spatial Ranges
 
 ### Use RAMSES Standard Notation
-Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default.
+Ranges correspond to the domain [0:1]^3 and are related to the box corner at '[0., 0., 0.]' by default.
 
 
 ```julia
@@ -312,7 +312,7 @@ clumps = getclumps(info,
 
 
 ### Use notation in physical units
-In the following example the ranges are given in units "kpc", relative to the box corner [0., 0., 0.] (default):
+In the following example the ranges are given in units "kpc", relative to the box corner '[0., 0., 0.]' (default):
 
 
 ```julia

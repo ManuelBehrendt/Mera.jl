@@ -126,7 +126,7 @@ ylabel("z [kpc]");
 
 #### Cuboid Region: Cutout the data assigned to the object `clumps`
 
-Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner '[0., 0., 0.]' by default. The user can choose between standard notation '[0:1]' (default) or physical length-units, defined in e.g. info.scale :
 
 
 ```julia

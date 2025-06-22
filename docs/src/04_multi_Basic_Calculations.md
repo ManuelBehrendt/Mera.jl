@@ -82,7 +82,7 @@ clumps    = getclumps(info);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:02:13
+    100%|███████████████████████████████████████████████████| Time: 0:02:13
 
 
     Memory used for data table :51.840110778808594 MB
@@ -100,7 +100,7 @@ clumps    = getclumps(info);
     
 
 
-    Reading data...100%|████████████████████████████████████| Time: 0:00:02
+    Reading data...100%|████████████████████████████████████| Time: 0:00:02
 
 
     Found 5.089390e+05 particles
@@ -208,7 +208,7 @@ methods(msum)
 
 
 
-2 methods for generic function <b>msum</b>:<ul><li> msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L23" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:23</a></li> <li> msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L19" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:19</a></li> </ul>
+# 2 methods for generic function <b>msum</b>:<ul><li> msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L23" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:23</a></li> <li> msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L19" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:19</a></li> </ul>
 
 
 
@@ -304,7 +304,7 @@ methods(center_of_mass)
 
 
 
-4 methods for generic function <b>center_of_mass</b>:<ul><li> center_of_mass(dataobject::<b>Array{HydroPartType,1}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L108" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:108</a></li> <li> center_of_mass(dataobject::<b>Array{HydroPartType,1}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L103" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:103</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L51" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:51</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L47" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:47</a></li> </ul>
+# 4 methods for generic function <b>center_of_mass</b>:<ul><li> center_of_mass(dataobject::<b>Array{HydroPartType,1}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L108" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:108</a></li> <li> center_of_mass(dataobject::<b>Array{HydroPartType,1}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L103" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:103</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L51" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:51</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L47" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:47</a></li> </ul>
 
 
 
@@ -316,7 +316,7 @@ methods(com)
 
 
 
-4 methods for generic function <b>com</b>:<ul><li> com(dataobject::<b>Array{HydroPartType,1}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L166" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:166</a></li> <li> com(dataobject::<b>Array{HydroPartType,1}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L162" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:162</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L80" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:80</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L76" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:76</a></li> </ul>
+# 4 methods for generic function <b>com</b>:<ul><li> com(dataobject::<b>Array{HydroPartType,1}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L166" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:166</a></li> <li> com(dataobject::<b>Array{HydroPartType,1}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L162" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:162</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L80" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:80</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L76" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:76</a></li> </ul>
 
 
 
@@ -376,7 +376,7 @@ methods(bulk_velocity)
 
 
 
-2 methods for generic function <b>bulk_velocity</b>:<ul><li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L200" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:200</a></li> <li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L195" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:195</a></li> </ul>
+# 2 methods for generic function <b>bulk_velocity</b>:<ul><li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L200" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:200</a></li> <li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L195" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:195</a></li> </ul>
 
 
 
@@ -388,7 +388,7 @@ methods(average_velocity)
 
 
 
-2 methods for generic function <b>average_velocity</b>:<ul><li> average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L241" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:241</a></li> <li> average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L237" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:237</a></li> </ul>
+# 2 methods for generic function <b>average_velocity</b>:<ul><li> average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L241" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:241</a></li> <li> average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L237" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:237</a></li> </ul>
 
 
 
@@ -403,7 +403,7 @@ methods( average_mweighted )
 
 
 
-1 method for generic function <b>average_mweighted</b>:<ul><li> average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L172" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:172</a></li> </ul>
+# 1 method for generic function <b>average_mweighted</b>:<ul><li> average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera/tree/23691e0c306bee008c0474baa1e7d326f318cfa3//src/functions/basic_calc.jl#L172" target="_blank">/Users/mabe/Documents/Projects/dev/Mera/src/functions/basic_calc.jl:172</a></li> </ul>
 
 
 
@@ -421,7 +421,7 @@ gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:56
+    100%|███████████████████████████████████████████████████| Time: 0:00:56
 
 
 Use `getvar` to extract variables or derive predefined quantities from the database, dependent on the data type.
@@ -864,12 +864,12 @@ radius = sqrt.(x.^2 .+ y.^2) .* info.scale.kpc
 
 
 
-### Use JuliaDB Functions
+### Use IndexedTables Functions
 see <https://juliadb.org>
 
 
 ```julia
-using JuliaDB
+using Mera.IndexedTables
 ```
 
 Example: Get the mass for each gas cell:
@@ -955,8 +955,8 @@ clumps    = getclumps(info, verbose=false);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:02:22
-    Reading data...100%|████████████████████████████████████| Time: 0:00:03
+    100%|███████████████████████████████████████████████████| Time: 0:02:22
+    Reading data...100%|████████████████████████████████████| Time: 0:00:03
 
 
 Pass any kind of Array{<:Real,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:

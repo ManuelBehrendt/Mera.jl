@@ -15,7 +15,6 @@ Order = [:type]
 ## Functions
 ```@index
 Modules = [Mera]
-Private = false
 Order = [:function]
 ```
 
@@ -23,6 +22,10 @@ Order = [:function]
 ```@autodocs
   Modules = [Mera]
   Order = [:type]
+```
+
+```@docs
+Mera.MaskType
 ```
 
 ## Documentation Functions

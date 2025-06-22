@@ -5,15 +5,15 @@
 
 ```julia
 using Mera
-info = getinfo(300, "../../testing/simulations/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
-    [Mera]: 2023-04-10T10:58:43.590
+    [Mera]: 2025-06-21T20:56:51.655
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
-    ctime: 2023-04-10T08:08:14.488
+    ctime: 2025-06-21T18:31:24.020
     =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
@@ -102,7 +102,7 @@ Read the AMR and the Particle data from all files of the full box with all exist
 particles = getparticles(info);
 ```
 
-    [Mera]: Get particle data: 2023-04-10T10:58:56.439
+    [Mera]: Get particle data: 2025-06-21T20:56:56.574
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -114,11 +114,11 @@ particles = getparticles(info);
     
 
 
-    [32mProgress: 100%|█████████████████████████████████████████| Time: 0:00:02[39m
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:08
 
 
     Found 5.445150e+05 particles
-    Memory used for data table :38.42913246154785 MB
+    Memory used for data table :38.428720474243164 MB
     -------------------------------------------------------
     
 
@@ -130,7 +130,7 @@ The memory consumption of the data table is printed at the end. We provide a fun
 usedmemory(particles);
 ```
 
-    Memory used: 38.451 MB
+    Memory used: 38.449 MB
 
 
 The assigned object is now of type `PartDataType`:
@@ -175,7 +175,7 @@ supertype( PartDataType )
 
 
 
-The data is stored in a **JuliaDB** table and the user selected particle variables and parameters are assigned to fields:
+The data is stored in a **IndexedTables** table and the user selected particle variables and parameters are assigned to fields:
 
 
 ```julia
@@ -215,7 +215,7 @@ propertynames(particles)
 
 
 ## Overview of AMR/Particles
-Get an overview of the AMR structure associated with the object `particles` (PartDataType). The printed information is stored into the object `overview_amr` as a **JuliaDB** table (code units)  and can be used for further calculations:
+Get an overview of the AMR structure associated with the object `particles` (PartDataType). The printed information is stored into the object `overview_amr` as a **IndexedTables** table (code units)  and can be used for further calculations:
 
 
 ```julia
@@ -254,7 +254,7 @@ data_overview = dataoverview(particles)
 
     Table with 5 rows, 23 columns:
     Columns:
-    #   colname     type
+    #   colname     type
     ────────────────────
     1   level       Any
     2   x_min       Any
@@ -286,7 +286,7 @@ If the number of columns is relatively long, the table is typically represented 
 
 
 ```julia
-using JuliaDB
+using Mera.IndexedTables
 ```
 
 
@@ -354,7 +354,7 @@ select(data_overview, (:level,:mass_min, :mass_max, :birth_min, :birth_max ) )
 
 
 ## Data inspection
-The data is associated with the field `particles.data` as a **JuliaDB** table (code units). 
+The data is associated with the field `particles.data` as a **IndexedTables** table (code units). 
 Each row corresponds to a particle and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
 More information can be found in the **Mera** tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
@@ -373,7 +373,7 @@ particles.data
 
     Table with 544515 rows, 12 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int32
     2   x        Float64
@@ -401,7 +401,7 @@ select(particles.data, (:level,:x, :y, :z, :birth) )
 
 
     Table with 544515 rows, 5 columns:
-    level  x        y        z        birth
+    level  x        y        z        birth
     ─────────────────────────────────────────
     9      9.17918  22.4404  24.0107  8.86726
     9      9.23642  21.5559  24.0144  8.71495

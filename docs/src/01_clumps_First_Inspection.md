@@ -178,7 +178,7 @@ data_overview = dataoverview(clumps)
 
     Table with 2 rows, 13 columns:
     Columns:
-    #   colname    type
+    #   colname    type
     ───────────────────
     1   extrema    Any
     2   index      Any
@@ -200,7 +200,7 @@ If the number of columns is relatively long, the table is typically represented 
 
 
 ```julia
-using JuliaDB
+using IndexedTables
 ```
 
 
@@ -259,7 +259,7 @@ select(data_overview, (:extrema, :index, :peak_x, :peak_y, :peak_z, :mass_cl) )
 
 
 ## Data Inspection
-The data is associated with the field `clumps.data` as a **JuliaDB** table (code units). Each row corresponds to a clump and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
+The data is associated with the field `clumps.data` as IndexedTables (code units). Each row corresponds to a clump and each column to a property which makes it easy to find, filter, map, aggregate, group the data, etc.
 More information can be found in the MERA tutorials or in: [JuliaDB API Reference](http://juliadb.org/latest/api/)
 
 ### Table View
@@ -277,7 +277,7 @@ clumps.data
 
     Table with 644 rows, 12 columns:
     Columns:
-    #   colname    type
+    #   colname    type
     ──────────────────────
     1   index      Float64
     2   lev        Float64

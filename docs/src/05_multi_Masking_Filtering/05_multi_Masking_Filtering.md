@@ -1,5 +1,5 @@
 # 5. Mask/Select/Map/Filter/Metaprogramming...
-- Learn how to extract data from the data table with JuliaDB and Mera functions
+- Learn how to extract data from the data table with IndexedTables and Mera functions
 - Filter the data table according to one or several conditions
 - Extract data from a filtered data table and use it for further calculations
 - Extend the data table with new columns/variables
@@ -68,7 +68,7 @@ clumps    = getclumps(info);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:02:07
+    100%|███████████████████████████████████████████████████| Time: 0:02:07[39m
 
 
     Memory used for data table :71.28007793426514 MB
@@ -106,14 +106,14 @@ clumps    = getclumps(info);
 
 ### Select a single column/variable
 
-##### By using JuliaDB or Mera functions 
+##### By using IndexedTables or Mera functions 
 
 
 ```julia
-using JuliaDB
+using Mera.IndexedTables
 ```
 
-The JuliaDB data table is stored in the `data`-field of any `DataSetType`. Extract an existing column (variable):
+The data table is stored in the `data`-field of any `DataSetType`. Extract an existing column (variable):
 
 
 ```julia
@@ -196,7 +196,7 @@ getvar(gas, :rho) # MERA
 
 ### Select several columns
 
-By selecting several columns a new JuliaDB databse is returned:
+By selecting several columns a new data table is returned:
 
 
 ```julia
@@ -207,7 +207,7 @@ select(gas.data, (:rho, :level)) #JuliaDB
 
 
     Table with 849332 rows, 2 columns:
-    rho          level
+    rho          level
     ──────────────────
     1.0e-5       6
     1.0e-5       6
@@ -317,7 +317,7 @@ vtuple.rho
 
 
 ## Filter by Condition
-### With JuliaDB (example A)
+### With IndexedTables (example A)
 
 Get all the data corresponding to cells/rows with level=6. Here, the variable `p` is used as placeholder for rows. A new JuliaDB data table is returend:
 
@@ -332,7 +332,7 @@ filtered_db = filter(p->p.level==6, gas.data ) # JuliaDB
 
     Table with 240956 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -348,45 +348,7 @@ filtered_db = filter(p->p.level==6, gas.data ) # JuliaDB
 
 
 
-### With Macro Expression (example A)
-(see the documentation at: <https://piever.github.io/JuliaDBMeta.jl/stable/> )
-
-
-```julia
-using JuliaDBMeta
-```
-
-    ┌ Info: Precompiling JuliaDBMeta [2c06ca41-a429-545c-b8f0-5ca7dd64ba19]
-    └ @ Base loading.jl:1273
-
-
-
-```julia
-filtered_db = @filter gas.data :level==6 # JuliaDBMeta
-```
-
-
-
-
-    Table with 240956 rows, 11 columns:
-    Columns:
-    #   colname  type
-    ────────────────────
-    1   level    Int64
-    2   cx       Int64
-    3   cy       Int64
-    4   cz       Int64
-    5   rho      Float64
-    6   vx       Float64
-    7   vy       Float64
-    8   vz       Float64
-    9   p        Float64
-    10  var6     Float64
-    11  var7     Float64
-
-
-
-### With JuliaDB (example B)
+### With IndexedTables (example B)
 
 Get all cells/rows with densities >= 3 Msol/pc^3. Since the data is given in code units, we need to convert from the given physical units:
 
@@ -401,36 +363,7 @@ filtered_db = filter(p->p.rho>= density, gas.data ) # JuliaDB
 
     Table with 210 rows, 11 columns:
     Columns:
-    #   colname  type
-    ────────────────────
-    1   level    Int64
-    2   cx       Int64
-    3   cy       Int64
-    4   cz       Int64
-    5   rho      Float64
-    6   vx       Float64
-    7   vy       Float64
-    8   vz       Float64
-    9   p        Float64
-    10  var6     Float64
-    11  var7     Float64
-
-
-
-### With Macro Expression (example B)
-
-
-```julia
-density = 3. /gas.scale.Msol_pc3
-filtered_db = @filter gas.data :rho>= density # JuliaDBMeta
-```
-
-
-
-
-    Table with 210 rows, 11 columns:
-    Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -515,7 +448,7 @@ sum(mass_filtered_tot)
 
 ## Filter by Multiple Conditions
 
-### With JuliaDB
+### With IndexedTables
 
 Get the mass of all cells/rows with densities >= 3 Msol/pc^3 that is within the disk radius of 3 kpc and 2 kpc from the plane:
 
@@ -573,7 +506,7 @@ sum(var_filtered) # [Msol]
 
 
 
-### External Functions With JuliaDB
+### External Functions With IndexedTables
 
 
 ```julia
@@ -596,38 +529,6 @@ filtered_db = filter(row->  row.rho >= density &&
                             r(row.cx,row.cy, row.level, boxlen) <= radius &&
                             h(row.cz,row.level, boxlen) <= height,  gas.data)
 
-
-var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
-sum(var_filtered) # [Msol]
-```
-
-
-
-
-    2.750632450062189e9
-
-
-
-### External Functions With Macro Expression
-
-
-```julia
-boxlen = info.boxlen
-cv = boxlen/2.
-density = 3. /gas.scale.Msol_pc3
-radius  = 3. /gas.scale.kpc
-height  = 2. /gas.scale.kpc
-
-function p(val, level, boxlen)
-    cv = boxlen/2
-    return val * boxlen /2^level - cv
-end
-
-filtered_db = @apply gas.data begin
-     @where :rho >= density
-     @where sqrt( p(:cx, :level, boxlen)^2 + p(:cy, :level, boxlen)^2  ) <= radius
-     @where abs( p(:cz, :level, boxlen) ) <= height
-end
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
 sum(var_filtered) # [Msol]
@@ -707,7 +608,7 @@ gas.data = transform(gas.data, :mach => mach) # JuliaDB
 
     Table with 849332 rows, 12 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -742,7 +643,7 @@ proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.
     
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:07
+    100%|███████████████████████████████████████████████████| Time: 0:00:07[39m
 
 
 
@@ -754,7 +655,7 @@ colorbar();
 
 
     
-![png](output_60_0.png)
+![png](output_53_0.png)
     
 
 
@@ -770,7 +671,7 @@ gas.data = select(gas.data, Not(:mach)) # select all columns, not :mach
 
     Table with 849332 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64

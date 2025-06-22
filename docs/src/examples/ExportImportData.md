@@ -3,7 +3,7 @@ This notebook presents several ways to export your data.
 
 Used libraries in this tutorial:
 - DelimitedFiles, Serialization (comes with Julia)
-- JuliaDB, FileIO, CSVFiles, JLD, CodecZlib, HDF5, Numpy, FITS, Matlap, GZip (needs to be installed)
+- IndexedTables, FileIO, CSVFiles, JLD, JLD2, CodecZlib, HDF5, Numpy, FITS, Matlap, GZip (needs to be installed)
 
 ## Load The Data
 
@@ -19,44 +19,44 @@ hydro = gethydro(info, :rho, smallr=1e-5, lmax=10)
 particles = getparticles(info, :mass);
 ```
 
-    [0m [Mera]: Get hydro data: 2020-02-29T17:54:15.397
-
+    [Mera]: Get hydro data: 2020-02-29T17:54:15.397
+    
     Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1,) = (:rho,)
-
+    Using var(s)=(1,) = (:rho,) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
+    
     Reading data...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:02:55
+    100%|███████████████████████████████████████████████████| Time: 0:02:55
 
 
     Memory used for data table :186.1558656692505 MB
     -------------------------------------------------------
-
-    [0m [Mera]: Get particle data: 2020-02-29T17:57:14.49
-
+    
+    [Mera]: Get particle data: 2020-02-29T17:57:14.49
+    
     Key vars=(:level, :x, :y, :z, :id)
-    Using var(s)=(4,) = (:mass,)
-
+    Using var(s)=(4,) = (:mass,) 
+    
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+    
 
 
-
-     Reading data...100%|████████████████████████████████████| Time: 0:00:03
+    Reading data...100%|████████████████████████████████████| Time: 0:00:03
 
 
     Found 5.089390e+05 particles
     Memory used for data table :19.4152889251709 MB
     -------------------------------------------------------
-
+    
 
 
 
@@ -208,7 +208,7 @@ viewheader("simulation_particles.dat", 5)
     -23.25000000001507	-23.25000000001507	-21.00000000001361	4217.583427040147
 
 
-## ASCII: Save JuliaDB Database into a CSV-File with FileIO
+## ASCII: Save IndexedTables Database into a CSV-File with FileIO
 
 
 ```julia
@@ -217,7 +217,7 @@ using FileIO
 
 See for documentation https://github.com/JuliaIO/FileIO.jl/tree/master/docs
 
-The simulation data is stored in a JuliadB database:
+The simulation data is stored in a IndexedTables database:
 
 
 ```julia
@@ -228,7 +228,7 @@ particles.data
 
 
     Table with 508939 rows, 6 columns:
-     level    x             y          z          id       mass
+    level  x           y        z        id      mass
     ───────────────────────────────────────────────────────
     6      0.00462947  22.3885  24.571   327957  1.13606e-5
     6      0.109066    22.3782  21.5844  116193  1.13606e-5
@@ -282,7 +282,7 @@ Export selected variables from the datatable:
 
 
 ```julia
-using JuliaDB
+using Mera.IndexedTables
 ```
 
 See for documentation https://juliacomputing.github.io/JuliaDB.jl/latest/
@@ -304,18 +304,18 @@ viewheader("database_partilces.csv", 5)
     0.271365638325332,22.751224267806695,1.1360607549574087e-5
 
 
-## Binary: Save JuliaDB Database into a Binary Format
+## Binary: Save IndexedTables Database into a Binary Format
 
 
 ```julia
-JuliaDB.save(hydro.data, "database_hydro.jdb")
+IndexedTables.save(hydro.data, "database_hydro.jdb")
 ```
 
 
 
 
     Table with 4879946 rows, 5 columns:
-     level    cx     cy     cz    rho
+    level  cx   cy   cz   rho
     ─────────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5
@@ -346,14 +346,14 @@ JuliaDB.save(hydro.data, "database_hydro.jdb")
 
 
 ```julia
-hdata = JuliaDB.load("database_hydro.jdb")
+hdata = IndexedTables.load("database_hydro.jdb")
 ```
 
 
 
 
     Table with 4879946 rows, 5 columns:
-     level    cx     cy     cz    rho
+    level  cx   cy   cz   rho
     ─────────────────────────────────
     6      1    1    1    1.0e-5
     6      1    1    2    1.0e-5
@@ -393,8 +393,8 @@ using JLD
 
 ```julia
 jldopen("mydata.jld", "w") do file
-    write(file, "hydro", hvals )
-    write(file, "particles", pvals )
+    write(file, "hydro", hvals ) 
+    write(file, "particles", pvals ) 
 end
 ```
 
@@ -645,35 +645,36 @@ hydrodata3 = deserialize( GzipDecompressorStream( open("sample-data3.jls.gz", "r
 
     4879947×5 Array{Any,2}:
         "x/kpc"     "y/kpc"     "z/kpc"   "cellsize/kpc"   "rho/g_cm3"
-     -23.25      -23.25      -23.25      0.75             6.76838e-28
-     -23.25      -23.25      -22.5       0.75             6.76838e-28
-     -23.25      -23.25      -21.75      0.75             6.76838e-28
-     -23.25      -23.25      -21.0       0.75             6.76838e-28
-     -23.25      -23.25      -20.25      0.75             6.76838e-28
-     -23.25      -23.25      -19.5       0.75             6.76838e-28
-     -23.25      -23.25      -18.75      0.75             6.76838e-28
-     -23.25      -23.25      -18.0       0.75             6.76838e-28
-     -23.25      -23.25      -17.25      0.75             6.76838e-28
-     -23.25      -23.25      -16.5       0.75             6.76838e-28
-     -23.25      -23.25      -15.75      0.75             6.76838e-28
-     -23.25      -23.25      -15.0       0.75             6.76838e-28
+     -23.25      -23.25      -23.25      0.75             6.76838e-28 
+     -23.25      -23.25      -22.5       0.75             6.76838e-28 
+     -23.25      -23.25      -21.75      0.75             6.76838e-28 
+     -23.25      -23.25      -21.0       0.75             6.76838e-28 
+     -23.25      -23.25      -20.25      0.75             6.76838e-28 
+     -23.25      -23.25      -19.5       0.75             6.76838e-28 
+     -23.25      -23.25      -18.75      0.75             6.76838e-28 
+     -23.25      -23.25      -18.0       0.75             6.76838e-28 
+     -23.25      -23.25      -17.25      0.75             6.76838e-28 
+     -23.25      -23.25      -16.5       0.75             6.76838e-28 
+     -23.25      -23.25      -15.75      0.75             6.76838e-28 
+     -23.25      -23.25      -15.0       0.75             6.76838e-28 
        ⋮                                                              
-      14.7188      1.96875    -0.046875  0.046875         3.59298e-26
-      14.7188      1.96875     0.0       0.046875         3.80161e-26
-      14.7188      1.96875     0.046875  0.046875         4.29495e-26
-      14.7188      1.96875     0.09375   0.046875         3.96562e-26
-      14.7188      2.01563    -0.140625  0.046875         2.49252e-26
-      14.7188      2.01563    -0.09375   0.046875         2.58237e-26
-      14.7188      2.01563    -0.046875  0.046875         2.71999e-26
-      14.7188      2.01563     0.0       0.046875         2.79827e-26
-      14.7188      2.0625     -0.140625  0.046875         2.39398e-26
-      14.7188      2.0625     -0.09375   0.046875         2.44115e-26
-      14.7188      2.0625     -0.046875  0.046875         2.57262e-26
-      14.7188      2.0625      0.0       0.046875         2.61481e-26
+      14.7188      1.96875    -0.046875  0.046875         3.59298e-26 
+      14.7188      1.96875     0.0       0.046875         3.80161e-26 
+      14.7188      1.96875     0.046875  0.046875         4.29495e-26 
+      14.7188      1.96875     0.09375   0.046875         3.96562e-26 
+      14.7188      2.01563    -0.140625  0.046875         2.49252e-26 
+      14.7188      2.01563    -0.09375   0.046875         2.58237e-26 
+      14.7188      2.01563    -0.046875  0.046875         2.71999e-26 
+      14.7188      2.01563     0.0       0.046875         2.79827e-26 
+      14.7188      2.0625     -0.140625  0.046875         2.39398e-26 
+      14.7188      2.0625     -0.09375   0.046875         2.44115e-26 
+      14.7188      2.0625     -0.046875  0.046875         2.57262e-26 
+      14.7188      2.0625      0.0       0.046875         2.61481e-26 
 
 
 
 ## Other File Formats
+- JLD2 https://github.com/JuliaIO/JLD2.jl
 - HDF5 https://github.com/JuliaIO/HDF5.jl
 - Numpy https://github.com/fhs/NPZ.jl
 - FITS https://github.com/JuliaAstro/FITSIO.jl

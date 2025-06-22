@@ -11,15 +11,15 @@ Get information with the function ``getinfo`` about the simulation for a selecte
 
 
 ```julia
-info = getinfo(300, "../../testing/simulations/mw_L10"); # output=300 in given path
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # output=300 in given path
 ```
 
-    [Mera]: 2023-04-10T10:09:57.797
+    [Mera]: 2025-06-21T20:41:44.407
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
-    ctime: 2023-04-10T08:08:14.488
+    ctime: 2025-06-21T18:31:24.020
     =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
@@ -66,7 +66,10 @@ The simulation output can be selected in several ways, which is realised by usin
 methods(getinfo)
 ```
 
-4 methods for generic function <b>getinfo</b>:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl:58</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl:46</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl:50</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/read_data/RAMSES/getinfo.jl:54</a></li> </ul>
+
+
+
+# 4 methods for generic function <b>getinfo</b> from Mera:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L58" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:58</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:54</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L50" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:50</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L46" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:46</a></li> </ul>
 
 
 
@@ -94,12 +97,12 @@ viewfields(info);
 ```
 
     output	= 300
-    path	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10
+    path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
     fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
     
     simcode	= RAMSES
     mtime	= 2023-04-09T05:34:09
-    ctime	= 2023-04-10T08:08:14.488
+    ctime	= 2025-06-21T18:31:24.020
     ncpu	= 640
     ndim	= 3
     levelmin	= 6
@@ -152,7 +155,7 @@ viewfields(info);
     
     grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
     
-    mpart_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
     
     compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
     
@@ -427,7 +430,7 @@ methods(viewfields)
 
 
 
-11 methods for generic function <b>viewfields</b>:<ul><li> viewfields(object::<b>InfoType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:10</a></li> <li> viewfields(object::<b>ArgumentsType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:54</a></li> <li> viewfields(object::<b>ScalesType001</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:74</a></li> <li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:107</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:133</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:151</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:167</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:183</a></li> <li> viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:198</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:215</a></li> </ul>
+# 11 methods for generic function <b>viewfields</b> from Mera:<ul><li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L90" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L107" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:107</a></li> <li> viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L198" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:198</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L167" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:167</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L151" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:151</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L133" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:133</a></li> <li> viewfields(object::<b>ArgumentsType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:54</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L183" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:183</a></li> <li> viewfields(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L10" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:10</a></li> <li> viewfields(object::<b>ScalesType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L74" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:74</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L215" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:215</a></li> </ul>
 
 
 
@@ -439,7 +442,7 @@ methods(namelist)
 
 
 
-2 methods for generic function <b>namelist</b>:<ul><li> namelist(object::<b>InfoType</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:244</a></li> <li> namelist(object::<b>Dict{Any, Any}</b>) in Mera at <a href="file:///Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl" target="_blank">/Users/mabe/.julia/packages/Mera/tD6wJ/src/functions/viewfields.jl:262</a></li> </ul>
+# 2 methods for generic function <b>namelist</b> from Mera:<ul><li> namelist(object::<b>Dict{Any, Any}</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L262" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:262</a></li> <li> namelist(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L244" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:244</a></li> </ul>
 
 
 
@@ -451,12 +454,12 @@ viewallfields(info)
 ```
 
     output	= 300
-    path	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10
+    path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
     fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
     
     simcode	= RAMSES
     mtime	= 2023-04-09T05:34:09
-    ctime	= 2023-04-10T08:08:14.488
+    ctime	= 2025-06-21T18:31:24.020
     ncpu	= 640
     ndim	= 3
     levelmin	= 6
@@ -603,24 +606,24 @@ viewallfields(info)
     
     [Mera]: Paths and file-names
     =================================
-    output	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300
-    info	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/info_00300.txt
-    amr	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/amr_00300.
-    hydro	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/hydro_00300.
-    hydro_descriptor	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/hydro_file_descriptor.txt
-    gravity	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/grav_00300.
-    particles	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/part_00300.
-    part_descriptor	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/part_file_descriptor.txt
-    rt	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/rt_00300.
-    rt_descriptor	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/rt_file_descriptor.txt
-    rt_descriptor_v0	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/info_rt_00300.txt
-    clumps	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/clump_00300.
-    timer	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/timer_00300.txt
-    header	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/header_00300.txt
-    namelist	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/namelist.txt
-    compilation	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/compilation.txt
-    makefile	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/makefile.txt
-    patchfile	= /Users/mabe/Documents/codes/github/Mera.jl/tutorials/version_1/../../testing/simulations/mw_L10/output_00300/patches.txt
+    output	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300
+    info	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/info_00300.txt
+    amr	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/amr_00300.
+    hydro	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/hydro_00300.
+    hydro_descriptor	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/hydro_file_descriptor.txt
+    gravity	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/grav_00300.
+    particles	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/part_00300.
+    part_descriptor	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/part_file_descriptor.txt
+    rt	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/rt_00300.
+    rt_descriptor	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/rt_file_descriptor.txt
+    rt_descriptor_v0	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/info_rt_00300.txt
+    clumps	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/clump_00300.
+    timer	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/timer_00300.txt
+    header	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/header_00300.txt
+    namelist	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/namelist.txt
+    compilation	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/compilation.txt
+    makefile	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/makefile.txt
+    patchfile	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/patches.txt
     
     
     [Mera]: Descriptor overview
@@ -810,14 +813,14 @@ storageoverview(info)
     
     
     mtime: 2023-04-09T05:34:09
-    ctime: 2023-04-10T08:08:14.488
+    ctime: 2025-06-21T18:31:24.020
 
 
 
 
 
     Dict{Any, Any} with 8 entries:
-      :folder   => 6101105264
+      :folder   => 6101111412
       :sink     => 0.0
       :particle => 40430034
       :hydro    => 3079240490
@@ -833,7 +836,7 @@ Get an overview of existing output folders of a simulation
 
 
 ```julia
-co = checkoutputs("../../testing/simulations/mw_L10")
+co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10")
 ```
 
     Outputs - existing: 1 betw. 300:300 - missing: 1
@@ -843,7 +846,7 @@ co = checkoutputs("../../testing/simulations/mw_L10")
 
 
 
-    Mera.CheckOutputNumberType([300], [301], "../../testing/simulations/mw_L10")
+    Mera.CheckOutputNumberType([300], [301], "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10")
 
 
 
@@ -885,11 +888,6 @@ co.miss
      301
 
 
-
-
-```julia
-
-```
 
 
 ```julia

@@ -5,15 +5,15 @@
 
 ```julia
 using Mera
-info = getinfo(300, "../../testing/simulations/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
-    [Mera]: 2023-04-10T11:09:58.577
+    [Mera]: 2025-06-21T21:14:39.119
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
-    ctime: 2023-04-10T08:08:14.488
+    ctime: 2025-06-21T18:31:24.020
     =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
@@ -66,7 +66,7 @@ The functions in **Mera** "know" the predefined particle variable names:
 particles = getparticles(info);
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:06.672
+    [Mera]: Get particle data: 2025-06-21T21:14:44.099
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -76,8 +76,13 @@ particles = getparticles(info);
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
+
+
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:08
+
+
     Found 5.445150e+05 particles
-    Memory used for data table :38.42913246154785 MB
+    Memory used for data table :38.428720474243164 MB
     -------------------------------------------------------
     
 
@@ -92,7 +97,7 @@ particles.data
 
     Table with 544515 rows, 12 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int32
     2   x        Float64
@@ -116,7 +121,7 @@ particles.data
 particles_a = getparticles(info, vars=[:mass, :birth]); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:09.828
+    [Mera]: Get particle data: 2025-06-21T21:14:57.806
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(4, 7) = (:mass, :birth) 
@@ -127,7 +132,7 @@ particles_a = getparticles(info, vars=[:mass, :birth]);
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
     Found 5.445150e+05 particles
-    Memory used for data table :25.96580410003662 MB
+    Memory used for data table :25.965506553649902 MB
     -------------------------------------------------------
     
 
@@ -139,7 +144,7 @@ The same variables can be read by using the var-number:
 particles_a = getparticles(info, vars=[:var4, :var7]); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:15.319
+    [Mera]: Get particle data: 2025-06-21T21:14:58.565
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(4, 7) = (:mass, :birth) 
@@ -150,7 +155,7 @@ particles_a = getparticles(info, vars=[:var4, :var7]);
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
     Found 5.445150e+05 particles
-    Memory used for data table :25.96580410003662 MB
+    Memory used for data table :25.965506553649902 MB
     -------------------------------------------------------
     
 
@@ -162,7 +167,7 @@ A keyword argument for the variables is not needed if the following order is pre
 particles_a = getparticles(info, [:mass, :birth]); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:17.681
+    [Mera]: Get particle data: 2025-06-21T21:14:58.961
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(4, 7) = (:mass, :birth) 
@@ -173,7 +178,7 @@ particles_a = getparticles(info, [:mass, :birth]);
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
     Found 5.445150e+05 particles
-    Memory used for data table :25.96580410003662 MB
+    Memory used for data table :25.965506553649902 MB
     -------------------------------------------------------
     
 
@@ -187,7 +192,7 @@ particles_a.data
 
 
     Table with 544515 rows, 9 columns:
-    level  x        y        z        id      family  tag  mass        birth
+    level  x        y        z        id      family  tag  mass        birth
     ──────────────────────────────────────────────────────────────────────────
     9      9.17918  22.4404  24.0107  128710  2       0    8.00221e-7  8.86726
     9      9.23642  21.5559  24.0144  126838  2       0    8.00221e-7  8.71495
@@ -225,7 +230,7 @@ In this case, no array and keyword is necessary, but preserve the following or
 particles_c = getparticles(info, :vx ); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:22.160
+    [Mera]: Get particle data: 2025-06-21T21:14:59.548
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1,) = (:vx,) 
@@ -236,7 +241,7 @@ particles_c = getparticles(info, :vx );
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
     Found 5.445150e+05 particles
-    Memory used for data table :21.81136131286621 MB
+    Memory used for data table :21.81110191345215 MB
     -------------------------------------------------------
     
 
@@ -250,7 +255,7 @@ particles_c.data
 
 
     Table with 544515 rows, 8 columns:
-    level  x        y        z        id      family  tag  vx
+    level  x        y        z        id      family  tag  vx
     ─────────────────────────────────────────────────────────────────
     9      9.17918  22.4404  24.0107  128710  2       0    0.670852
     9      9.23642  21.5559  24.0144  126838  2       0    0.810008
@@ -282,7 +287,7 @@ particles_c.data
 ## Selected Spatial Ranges
 
 ### Use RAMSES Standard Notation
-Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default.
+Ranges correspond to the domain [0:1]^3 and are related to the box corner at '[0., 0., 0.]' by default.
 
 
 ```julia
@@ -292,7 +297,7 @@ particles = getparticles(  info,
                             zrange=[0.4,0.6]); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:29.091
+    [Mera]: Get particle data: 2025-06-21T21:15:00.733
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -303,7 +308,7 @@ particles = getparticles(  info,
     zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
     
     Found 5.444850e+05 particles
-    Memory used for data table :38.42701530456543 MB
+    Memory used for data table :38.42660331726074 MB
     -------------------------------------------------------
     
 
@@ -339,7 +344,7 @@ particles = getparticles(  info,
                             center=[0.5, 0.5, 0.5]);
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:33.971
+    [Mera]: Get particle data: 2025-06-21T21:15:03.413
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -352,13 +357,13 @@ particles = getparticles(  info,
     zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
     
     Found 5.444850e+05 particles
-    Memory used for data table :38.42701530456543 MB
+    Memory used for data table :38.42660331726074 MB
     -------------------------------------------------------
     
 
 
 ### Use notation in physical units
-In the following example the ranges are given in unit "kpc", relative to the box corner [0., 0., 0.] (default):
+In the following example the ranges are given in unit "kpc", relative to the box corner '[0., 0., 0.]' (default):
 
 
 ```julia
@@ -369,7 +374,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:40.217
+    [Mera]: Get particle data: 2025-06-21T21:15:04.910
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -380,7 +385,7 @@ particles = getparticles(  info,
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
     Found 3.091600e+04 particles
-    Memory used for data table :2.1834754943847656 MB
+    Memory used for data table :2.183063507080078 MB
     -------------------------------------------------------
     
 
@@ -462,7 +467,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:45.564
+    [Mera]: Get particle data: 2025-06-21T21:15:05.240
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -475,7 +480,7 @@ particles = getparticles(  info,
     zmin::zmax: 1.0 :: 1.0  	==> 48.0 [kpc] :: 48.0 [kpc]
     
     Found 0.000000e+00 particles
-    Memory used for data table :1.71484375 KB
+    Memory used for data table :1.10546875 KB
     -------------------------------------------------------
     
 
@@ -492,7 +497,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:48.345
+    [Mera]: Get particle data: 2025-06-21T21:15:05.667
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -505,7 +510,7 @@ particles = getparticles(  info,
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
     Found 5.445150e+05 particles
-    Memory used for data table :38.42913246154785 MB
+    Memory used for data table :38.428720474243164 MB
     -------------------------------------------------------
     
 
@@ -520,7 +525,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:50.163
+    [Mera]: Get particle data: 2025-06-21T21:15:07.133
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -533,7 +538,7 @@ particles = getparticles(  info,
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
     Found 5.445150e+05 particles
-    Memory used for data table :38.42913246154785 MB
+    Memory used for data table :38.428720474243164 MB
     -------------------------------------------------------
     
 
@@ -550,7 +555,7 @@ particles = getparticles(  info,
                             range_unit=:kpc); 
 ```
 
-    [Mera]: Get particle data: 2023-04-10T11:10:53.187
+    [Mera]: Get particle data: 2025-06-21T21:15:08.777
     
     Key vars=(:level, :x, :y, :z, :id, :family, :tag)
     Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
@@ -563,7 +568,7 @@ particles = getparticles(  info,
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
     Found 2.078000e+03 particles
-    Memory used for data table :151.8828125 KB
+    Memory used for data table :151.4609375 KB
     -------------------------------------------------------
     
 
