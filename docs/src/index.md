@@ -47,7 +47,7 @@ Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdo
 
 
 ## Package Installation
-The package is tested against the long-term supported Julia 1.6.x , 1.7.x, 1.8.x, 1.9.x, 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
+The package is tested against Julia 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
 
 ### Julia REPL
 From the Julia REPL, type ] to enter the Pkg REPL mode and run:
