@@ -16,11 +16,6 @@ module Mera
 # by Romain Teyssier's amr2map.f90 and part2mapf.90
 # ==================================================================
 
-# Julia libraries
-using Printf
-using Dates
-using Statistics
-using Pkg
 
 # external libraries
 using FortranFiles
@@ -39,6 +34,32 @@ using ImageTransformations.Interpolations
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
 using TimerOutputs
 using WAV
+
+# Julia libraries
+using Printf
+using Dates
+using Statistics
+using Pkg
+using Base.Threads
+
+# external libraries
+using FortranFiles
+#using JuliaDB
+using IndexedTables
+using DataStructures
+using ElasticArrays
+using StructArrays
+using ProgressMeter
+using StatsBase
+using OnlineStats
+using ImageTransformations
+using ImageTransformations.Interpolations
+#using ImageFiltering
+
+using JLD2, CodecZlib, CodecBzip2, CodecLz4
+using TimerOutputs
+using WAV
+using WriteVTK
 
 global verbose_mode = nothing
 global showprogress_mode = nothing
@@ -109,6 +130,8 @@ export
     humanize,
     bell,
     notifyme,
+# volume rendering
+    export_vtk,
 
 #types
     ScalesType001,
@@ -222,6 +245,9 @@ include("functions/shellregion_particles.jl")
 include("functions/shellregion_clumps.jl")
 # ============================================
 
+
+# volume rendering
+include("functions/export_vtk.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
