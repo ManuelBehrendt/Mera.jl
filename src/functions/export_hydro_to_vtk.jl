@@ -6,9 +6,10 @@ export_vtk(
     scalars::Vector{Symbol} = [:rho],
     scalars_unit::Vector{Symbol} = [:nH],
     scalars_log10::Bool=false,
-    vectors::Array{<:Any,1}=[missing, missing, missing],
-    vectors_unit::Symbol = :km_s,
-    vectors_log10::Bool=false,
+    vector::Array{<:Any,1}=[missing, missing, missing],
+    vector_unit::Symbol = :km_s,
+    vector_name::String = "velocity",
+    vector_log10::Bool=false,
     positions_unit::Symbol = :standard,
     lmin::Int = dataobject.lmin,
     lmax::Int = dataobject.lmax,
@@ -32,9 +33,10 @@ and creates corresponding VTM multiblock container files to reference these VTU 
 - `scalars::Vector{Symbol} = [:rho]`: List of scalar variables to export (default is density, `:rho`).
 - `scalars_unit::Vector{Symbol} = [:nH]` : sets the unit for the list of scalars (default is hydrogen number density in cm^-3)
 - `scalars_log10::Bool=false` : apply log10 to the scalars
-- `vectors::::Array{<:Any,1}=[missing, missing, missing]`: List of vector component variables to export (default is missing). if != missing, export vector data as separate VTU files
-- `vectors_unit::Symbol = :km_s` : Sets the unit for the vector components in km/s (default)
-- `vectors_log10::Bool=false` : apply log10 to the vector
+- `vector::::Array{<:Any,1}=[missing, missing, missing]`: List of vector component variables to export (default is missing). if != missing, export vector data as separate VTU files
+- `vector_unit::Symbol = :km_s` : Sets the unit for the vector components in km/s (default)
+- `vector_name::String = "velocity"`: The name of the vector field in the VTK file.
+- `vector_log10::Bool=false` : apply log10 to the vector
 - `positions_unit::Symbol = :standard` : sets the unit of the cell positions (default code units); usefull in paraview to select regions 
 - `lmin::Int = lmin`: Minimum AMR level to process; smaller levels are excluded export
 - `lmax::Int = lmax`: Maximum AMR level to process; higher levels are interpolated down if `interpolate_higher_levels` is `true`.
@@ -47,7 +49,7 @@ and creates corresponding VTM multiblock container files to reference these VTU 
 ##### Returns
 - A tuple `(scalar_files, vector_files, vtm_path)` where:
   - `scalar_files::Vector{String}`: List of paths to scalar VTU files.
-  - `vector_files::Vector{String}`: List of paths to vector VTU files (empty if `export_vectors` is `false`).
+  - `vector_files::Vector{String}`: List of paths to vector VTU files (empty if `export_vector` is `false`).
   - `vtm_path::String`: Path to the VTM multiblock file referencing scalar VTU files.
 
 ##### Notes
@@ -60,9 +62,10 @@ function export_vtk(
     scalars::Vector{Symbol} = [:rho],
     scalars_unit::Vector{Symbol} = [:nH],
     scalars_log10::Bool=false,
-    vectors::Array{<:Any,1}=[missing, missing, missing],
-    vectors_unit::Symbol = :km_s,
-    vectors_log10::Bool=false,
+    vector::Array{<:Any,1}=[missing, missing, missing],
+    vector_unit::Symbol = :km_s,
+    vector_name::String = "velocity",
+    vector_log10::Bool=false,
     positions_unit::Symbol = :standard,
     lmin::Int = dataobject.lmin,
     lmax::Int = dataobject.lmax,
@@ -80,10 +83,10 @@ function export_vtk(
 
     boxlen = dataobject.boxlen
     println("Available Threads: ", Threads.nthreads())
-    if vectors[1] === missing || vectors[2] === missing || vectors[3] === missing
-        export_vectors = false 
+    if vector[1] === missing || vector[2] === missing || vector[3] === missing
+        export_vector = false 
     else
-        export_vectors = true 
+        export_vector = true 
     end
 
     # Ensure output directory exists for file writing
@@ -140,7 +143,7 @@ function export_vtk(
         s2 = Dict{Symbol, Vector{Float64}}()
         for s in scalars; s2[s] = Vector{Float64}(undef, N); end
         v2 = Dict{Symbol, Vector{Float64}}()
-        if export_vectors; for v in vectors; v2[v] = Vector{Float64}(undef, N); end; end
+        if export_vector; for v in vector; v2[v] = Vector{Float64}(undef, N); end; end
 
         # Compute averaged values for each coarse cell using multi-threading
         Threads.@threads for i in 1:N
@@ -155,8 +158,8 @@ function export_vtk(
                 s2[s][i] = sumv * inv
             end
             # Average vector data if requested
-            if export_vectors
-                for v in vectors
+            if export_vector
+                for v in vector
                     sumv = 0.0; @inbounds for j in idxs sumv += vdata[v][j] end
                     v2[v][i] = sumv * inv
                 end
@@ -197,12 +200,12 @@ function export_vtk(
 
         # Prepare vector data dictionaries if requested
         vdata = Dict{Symbol, Vector{Float64}}()
-        if export_vectors
-            for v in vectors
-                if vectors_log10
-                    arr = log10.( getvar(dataobject, v, vectors_unit, mask=mask) )
+        if export_vector
+            for v in vector
+                if vector_log10
+                    arr = log10.( getvar(dataobject, v, vector_unit, mask=mask) )
                 else
-                    arr = getvar(dataobject, v, vectors_unit, mask=mask)
+                    arr = getvar(dataobject, v, vector_unit, mask=mask)
                 end
                 vdata[v] = arr === nothing ? zeros(n) : Vector{Float64}(arr)
             end
@@ -248,19 +251,19 @@ function export_vtk(
         verbose && println("  wrote ", basename(vtu_path), " (Size: $(round(file_size_mb/1024, digits=2)) GB)")
 
         # Write VTU file for vector data if requested
-        if export_vectors
+        if export_vector
             vname = "$(outprefix)_vec_L$(L)"
             vtk_grid(vname, pts, cells; compress=compress, ascii=false) do vtk
                 mat = Matrix{Float64}(undef, 3, 8 * n)
                 for i in 1:n
-                    vx, vy, vz = vdata[vectors[1]][i], vdata[vectors[2]][i], vdata[vectors[3]][i]
+                    vx, vy, vz = vdata[vector[1]][i], vdata[vector[2]][i], vdata[vector[3]][i]
                     base = (i - 1) * 8 + 1
                     @inbounds for j in 0:7
                         idx = base + j
                         mat[1, idx] = vx; mat[2, idx] = vy; mat[3, idx] = vz
                     end
                 end
-                vtk["vector", VTKPointData()] = mat  # Attach vector data to points
+                vtk[vector_name, VTKPointData()] = mat  # Attach vector data to points
             end
             vec_path = vname * ".vtu"
             isfile(vec_path) || @error("Missing vector VTU: $vec_path")
@@ -275,7 +278,7 @@ function export_vtk(
         verbose && println("  ✓ Level $L completed, memory cleaned")
     end
 
-    # Assemble multiblock for vector VTU files if export_vectors is true
+    # Assemble multiblock for vector VTU files if export_vector is true
     scalar_vtm_path = outprefix * "_scalar.vtm"
     vtm_scalar = vtk_multiblock(outprefix * "_scalar")
     for (i, f) in enumerate(scalar_files)
@@ -314,9 +317,9 @@ function export_vtk(
     end
     verbose && println("  Updated scalar VTM file with references to scalar VTU files at: ", basename(scalar_vtm_path))
 
-    # Assemble multiblock for vector VTU files if export_vectors is true
+    # Assemble multiblock for vector VTU files if export_vector is true
     vector_vtm_path = ""
-    if export_vectors && !isempty(vector_files)
+    if export_vector && !isempty(vector_files)
         vector_vtm_path = outprefix * "_vector.vtm"
         vtm_vector = vtk_multiblock(outprefix * "_vector")
         for (i, f) in enumerate(vector_files)
@@ -360,17 +363,17 @@ function export_vtk(
     verbose && println("\n=== Export Summary ===")
     verbose && println("VTU files (scalars): $(length(scalar_files))")
     verbose && println("Scalar VTM: ", basename(scalar_vtm_path))
-    if export_vectors && !isempty(vector_files)
-        verbose && println("VTU files (vectors): $(length(vector_files))")
+    if export_vector && !isempty(vector_files)
+        verbose && println("VTU files (vector): $(length(vector_files))")
         verbose && println("Vector VTM: ", basename(vector_vtm_path))
     end
     scalars_str = join(string.(scalars), ", ")
     verbose && println("Available scalars: $scalars_str, AMR_Level")
-    if export_vectors
-        verbose && println("Available vector, named: vector")
+    if export_vector
+        verbose && println("Available vector, named: ", vector_name)
     end
 
-    return (scalar_files, vector_files, scalar_vtm_path, export_vectors ? vector_vtm_path : "")
+    return (scalar_files, vector_files, scalar_vtm_path, export_vector ? vector_vtm_path : "")
 end
 
 # Helper function to monitor performance during export
