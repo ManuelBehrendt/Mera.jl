@@ -82,7 +82,7 @@ function export_vtk(
     printtime("", verbose)
 
     boxlen = dataobject.boxlen
-    println("Available Threads: ", Threads.nthreads())
+    verbose &&  println("Available Threads: ", Threads.nthreads())
     if vector[1] === missing || vector[2] === missing || vector[3] === missing
         export_vector = false 
     else
