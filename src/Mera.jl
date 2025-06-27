@@ -247,7 +247,8 @@ include("functions/shellregion_clumps.jl")
 
 
 # volume rendering
-include("functions/export_vtk.jl")
+include("functions/export_hydro_to_vtk.jl")
+include("functions/export_particles_to_vtk.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
