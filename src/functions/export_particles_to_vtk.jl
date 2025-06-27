@@ -46,7 +46,6 @@ with associated scalar and vector data.
 This function creates a vertex-based VTK file suitable for particle visualization.
 Each particle becomes a vertex point with associated scalar and vector data.
 The function handles large particle datasets by limiting output size and supports multi-threading for performance.
-
 """
 function export_vtk(
     dataobject::PartDataType, outprefix::String;
@@ -65,12 +64,12 @@ function export_vtk(
     myargs::ArgumentsType=ArgumentsType()
 )
 
-
+    
     if !(myargs.verbose === missing) verbose = myargs.verbose end
     verbose = Mera.checkverbose(verbose)
     printtime("", verbose)
 
-    verbose &&  println("Available Threads: ", Threads.nthreads())
+    verbose && println("Available Threads: ", Threads.nthreads())
     if vector[1] === missing || vector[2] === missing || vector[3] === missing
         export_vector = false 
     else
@@ -88,17 +87,51 @@ function export_vtk(
     total_particles = length(dataobject.data)
     verbose && println("Total particles in dataset: $total_particles")
     
+    if total_particles == 0
+        @error "No particles found in dataobject. Cannot create VTK file."
+        return ""
+    end
+    
     # Limit particles if exceeding maximum
     n_particles = min(total_particles, max_particles)
     if n_particles < total_particles
         verbose && println("Limiting export to $n_particles particles (from $total_particles)")
     end
+    
+    # Ensure we have at least 1 particle
+    if n_particles == 0
+        @error "Number of particles to export is zero. Cannot create VTK file."
+        return ""
+    end
 
     # Extract and validate particle positions
     verbose && println("Extracting particle positions...")
-    x = getvar(dataobject, :x, positions_unit)[1:n_particles]
-    y = getvar(dataobject, :y, positions_unit)[1:n_particles]
-    z = getvar(dataobject, :z, positions_unit)[1:n_particles]
+    
+    # Data extraction with error handling
+    try
+        x_raw = getvar(dataobject, :x, positions_unit)
+        y_raw = getvar(dataobject, :y, positions_unit)
+        z_raw = getvar(dataobject, :z, positions_unit)
+        
+        # Check if getvar returned valid data
+        if x_raw === nothing || y_raw === nothing || z_raw === nothing
+            @error "Position data (x, y, z) could not be extracted from dataobject"
+            return ""
+        end
+        
+        if length(x_raw) < n_particles || length(y_raw) < n_particles || length(z_raw) < n_particles
+            @error "Position data arrays are shorter than expected particle count"
+            return ""
+        end
+        
+        x = x_raw[1:n_particles]
+        y = y_raw[1:n_particles]
+        z = z_raw[1:n_particles]
+        
+    catch e
+        @error "Failed to extract position data: $e"
+        return ""
+    end
 
     # Validate position data
     if length(x) != n_particles || length(y) != n_particles || length(z) != n_particles
@@ -106,7 +139,7 @@ function export_vtk(
         return ""
     end
 
-    # Create points matrix for VTK (3 × n_particles) - Pure point data with vertex cells
+    # Create points matrix for VTK (3 × n_particles)
     points = Matrix{Float64}(undef, 3, n_particles)
     Threads.@threads for i in 1:n_particles
         points[1, i] = x[i]
@@ -114,50 +147,110 @@ function export_vtk(
         points[3, i] = z[i]
     end
 
-    # CRITICAL FIX: Create vertex cells for particle data - each particle is a single vertex
+    # Create vertex cells - each particle is a single vertex
     cells = Vector{MeshCell}(undef, n_particles)
     Threads.@threads for i in 1:n_particles
         cells[i] = MeshCell(VTKCellTypes.VTK_VERTEX, (i,))
     end
 
-    # Prepare scalar data with validation
+    # Scalar data extraction with empty array protection
     verbose && println("Extracting scalar data...")
     sdata = Dict{Symbol, Vector{Float64}}()
+    
     for (s, sunit) in zip(scalars, scalars_unit)
-        if scalars_log10
-            arr = log10.( getvar(dataobject, s, sunit)[1:n_particles] )
-        else
-            arr = getvar(dataobject, s, sunit)[1:n_particles]
-        end
-        
-        # Validate scalar array length
-        if arr === nothing || length(arr) != n_particles
-            @error "Scalar array '$s' has incorrect length: $(arr === nothing ? 0 : length(arr)), expected $n_particles"
+        try
+            # Extract raw data with error handling
+            raw_data = getvar(dataobject, s, sunit)
+            
+            if raw_data === nothing
+                verbose && println("Warning: Scalar field '$s' not found, using zeros")
+                arr = zeros(Float64, n_particles)
+            elseif length(raw_data) == 0
+                verbose && println("Warning: Scalar field '$s' is empty, using zeros")
+                arr = zeros(Float64, n_particles)
+            elseif length(raw_data) < n_particles
+                verbose && println("Warning: Scalar field '$s' has insufficient data ($(length(raw_data)) < $n_particles), padding with zeros")
+                arr = Vector{Float64}(undef, n_particles)
+                arr[1:length(raw_data)] = raw_data[1:length(raw_data)]
+                arr[length(raw_data)+1:end] .= 0.0
+            else
+                # Normal case: sufficient data available
+                if scalars_log10
+                    arr = log10.(raw_data[1:n_particles])
+                else
+                    arr = Vector{Float64}(raw_data[1:n_particles])
+                end
+            end
+            
+            # Final validation - ensure array has correct length
+            if length(arr) != n_particles
+                @error "Scalar array '$s' has incorrect final length: $(length(arr)), expected $n_particles"
+                return ""
+            end
+            
+            # Check for any invalid values that could cause issues
+            if any(isnan, arr) || any(isinf, arr)
+                verbose && println("Warning: Scalar field '$s' contains NaN or Inf values, replacing with zeros")
+                replace!(arr, NaN => 0.0, Inf => 0.0, -Inf => 0.0)
+            end
+            
+            sdata[s] = arr
+            
+        catch e
+            @error "Failed to extract scalar data for '$s': $e"
             return ""
         end
-        
-        sdata[s] = Vector{Float64}(arr)
     end
 
-    # Prepare vector data if requested
+    # Vector data extraction if requested
     vec_matrix = nothing
     if export_vector
         verbose && println("Extracting vector data...")
         vdata = Dict{Symbol, Vector{Float64}}()
+        
         for v in vector
-            if vector_log10
-                arr = log10.( getvar(dataobject, v, vector_unit)[1:n_particles] )
-            else
-                arr = getvar(dataobject, v, vector_unit)[1:n_particles]
-            end
-            
-            # Validate vector component array length
-            if arr === nothing || length(arr) != n_particles
-                @error "Vector component '$v' has incorrect length: $(arr === nothing ? 0 : length(arr)), expected $n_particles"
+            try
+                # Extract raw vector component data with error handling
+                raw_data = getvar(dataobject, v, vector_unit)
+                
+                if raw_data === nothing
+                    verbose && println("Warning: Vector component '$v' not found, using zeros")
+                    arr = zeros(Float64, n_particles)
+                elseif length(raw_data) == 0
+                    verbose && println("Warning: Vector component '$v' is empty, using zeros")
+                    arr = zeros(Float64, n_particles)
+                elseif length(raw_data) < n_particles
+                    verbose && println("Warning: Vector component '$v' has insufficient data, padding with zeros")
+                    arr = Vector{Float64}(undef, n_particles)
+                    arr[1:length(raw_data)] = raw_data[1:length(raw_data)]
+                    arr[length(raw_data)+1:end] .= 0.0
+                else
+                    # Normal case: sufficient data available
+                    if vector_log10
+                        arr = log10.(raw_data[1:n_particles])
+                    else
+                        arr = Vector{Float64}(raw_data[1:n_particles])
+                    end
+                end
+                
+                # CRITICAL FIX: Validate vector component array length
+                if length(arr) != n_particles
+                    @error "Vector component '$v' has incorrect final length: $(length(arr)), expected $n_particles"
+                    return ""
+                end
+                
+                # Check for any invalid values
+                if any(isnan, arr) || any(isinf, arr)
+                    verbose && println("Warning: Vector component '$v' contains NaN or Inf values, replacing with zeros")
+                    replace!(arr, NaN => 0.0, Inf => 0.0, -Inf => 0.0)
+                end
+                
+                vdata[v] = arr
+                
+            catch e
+                @error "Failed to extract vector component '$v': $e"
                 return ""
             end
-            
-            vdata[v] = Vector{Float64}(arr)
         end
         
         # Create vector data matrix OUTSIDE vtk_grid block
@@ -180,17 +273,22 @@ function export_vtk(
     verbose && println("Writing particle VTU file...")
     combined_fname = outprefix
     
-
-    vtk_grid(combined_fname, points, cells; compress=compress, ascii=false) do vtk        
-        # Add all scalar data to the file
-        for (s, arr) in sdata
-            vtk[string(s), VTKPointData()] = arr
+    # Wrap vtk_grid in try-catch to handle WriteVTK errors
+    try
+        vtk_grid(combined_fname, points, cells; compress=compress, ascii=false) do vtk        
+            # Add all scalar data to the file
+            for (s, arr) in sdata
+                vtk[string(s), VTKPointData()] = arr
+            end
+            
+            # Add vector data if requested
+            if export_vector && vec_matrix !== nothing
+                vtk[vector_name, VTKPointData()] = vec_matrix
+            end
         end
-        
-        # Add vector data if requested
-        if export_vector && vec_matrix !== nothing
-            vtk[vector_name, VTKPointData()] = vec_matrix
-        end
+    catch e
+        @error "Failed to write VTK file: $e"
+        return ""
     end
     
     # WriteVTK.jl creates .vtu files for unstructured grids with vertex cells
@@ -220,7 +318,6 @@ function export_vtk(
     if export_vector
         verbose && println("Available vector: " * vector_name)
     end
-    #verbose && println("Particle data with vertex cells - use 'Point Gaussian' representation in ParaView")
 
-    return 
+    return combined_vtu_path
 end
