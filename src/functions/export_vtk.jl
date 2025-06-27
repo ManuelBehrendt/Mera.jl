@@ -1,50 +1,56 @@
 """
-function export_vtk(
-    data::HydroDataType, outprefix::String;
+
+```julia
+export_vtk(
+    dataobject::HydroDataType, outprefix::String;
     scalars::Vector{Symbol} = [:rho],
-    scalar_unit::Vector{Symbol} = [:nH],
-    export_vectors::Bool = false,
-    vectors::Vector{Symbol} = [:vx,:vy,:vz],
+    scalars_unit::Vector{Symbol} = [:nH],
+    scalars_log10::Bool=false,
+    vectors::Array{<:Any,1}=[missing, missing, missing],
     vectors_unit::Symbol = :km_s,
-    min_level::Int = dataobject.lmin,
-    max_level::Int = dataobject.lmax,
+    vectors_log10::Bool=false,
+    positions_unit::Symbol = :standard,
+    lmin::Int = dataobject.lmin,
+    lmax::Int = dataobject.lmax,
     chunk_size::Int = 50000,
     compress::Bool = true,
     interpolate_higher_levels::Bool = true,
     max_cells::Int = 10000000,
-    verbose::Bool = true
+    verbose::Bool = true,
+    myargs::ArgumentsType=ArgumentsType()
 )
-
+```
 Export Adaptive Mesh Refinement (AMR) data to VTK format for visualization in tools like ParaView.
 This function processes AMR data from MERA.jl, generating per-level VTU files for scalar and optionally vector data,
 and creates corresponding VTM multiblock container files to reference these VTU files.
 
-# Arguments
+##### Arguments
 - `dataobject::HydroDataType`: The AMR data structure from MERA.jl containing variables like level, position, and physical quantities.
 - `outprefix::String`: The base path and prefix for output files (e.g., "output/data" will create files like "output/data_L0.vtu").
 
-# Keyword Arguments
+##### Keyword Arguments
 - `scalars::Vector{Symbol} = [:rho]`: List of scalar variables to export (default is density, `:rho`).
-- `scalar_unit::Vector{Symbol} = [:nH]` : sets the unit for the list of scalars (default is hydrogen number density in cm^-3)
-- `export_vectors::Bool = false`: If `true`, export vector data as separate VTU files.
-- `vectors::Vector{Symbol} = [:vx, :vy, :vz]`: List of vector component variables to export (default is velocity components).
-- `vectors_unit::Symbol = :km_s`` : Sets the unit for the vector components in km/s (default)
-- `min_level::Int = lmin`: Minimum AMR level to process.
-- `max_level::Int = lmax`: Maximum AMR level to process; higher levels are interpolated down if `interpolate_higher_levels` is `true`.
-- `box_size::Float64 = 1.0`: Physical size of the simulation box in kpc (used for cell size calculations).
+- `scalars_unit::Vector{Symbol} = [:nH]` : sets the unit for the list of scalars (default is hydrogen number density in cm^-3)
+- `scalars_log10::Bool=false` : apply log10 to the scalars
+- `vectors::::Array{<:Any,1}=[missing, missing, missing]`: List of vector component variables to export (default is missing). if != missing, export vector data as separate VTU files
+- `vectors_unit::Symbol = :km_s` : Sets the unit for the vector components in km/s (default)
+- `vectors_log10::Bool=false` : apply log10 to the vector
+- `positions_unit::Symbol = :standard` : sets the unit of the cell positions (default code units); usefull in paraview to select regions 
+- `lmin::Int = lmin`: Minimum AMR level to process; smaller levels are excluded export
+- `lmax::Int = lmax`: Maximum AMR level to process; higher levels are interpolated down if `interpolate_higher_levels` is `true`.
 - `chunk_size::Int = 50000`: Size of data chunks for processing (currently unused but reserved for future optimizations).
 - `compress::Bool = true`: If `true` (default), compress VTU files to reduce size.
-- `interpolate_higher_levels::Bool = true`: If `true`, interpolate data from levels above `max_level` down to `max_level`.
+- `interpolate_higher_levels::Bool = true`: If `true`, interpolate data from levels above `lmax` down to `lmax`.
 - `max_cells::Int = 10000000`: Maximum number of cells to export per level (caps output if exceeded, prioritizing denser regions).
 - `verbose::Bool = true`: If `true` (default), print detailed progress and diagnostic messages.
 
-# Returns
+##### Returns
 - A tuple `(scalar_files, vector_files, vtm_path)` where:
   - `scalar_files::Vector{String}`: List of paths to scalar VTU files.
   - `vector_files::Vector{String}`: List of paths to vector VTU files (empty if `export_vectors` is `false`).
   - `vtm_path::String`: Path to the VTM multiblock file referencing scalar VTU files.
 
-# Notes
+##### Notes
 This function processes each AMR level independently, creating hexahedral cells for VTK output.
 It handles large datasets by freeing memory after each level and supports multi-threading for performance.
 The VTM file is manually updated to ensure references to VTU files are correctly included, as WriteVTK.jl (v1.21.2) does not natively support referencing pre-existing files in multiblock containers.
@@ -52,20 +58,33 @@ The VTM file is manually updated to ensure references to VTU files are correctly
 function export_vtk(
     dataobject::HydroDataType, outprefix::String;
     scalars::Vector{Symbol} = [:rho],
-    scalar_unit::Vector{Symbol} = [:nH],
-    export_vectors::Bool = false,
-    vectors::Vector{Symbol} = [:vx,:vy,:vz],
+    scalars_unit::Vector{Symbol} = [:nH],
+    scalars_log10::Bool=false,
+    vectors::Array{<:Any,1}=[missing, missing, missing],
     vectors_unit::Symbol = :km_s,
-    min_level::Int = dataobject.lmin,
-    max_level::Int = dataobject.lmax,
+    vectors_log10::Bool=false,
+    positions_unit::Symbol = :standard,
+    lmin::Int = dataobject.lmin,
+    lmax::Int = dataobject.lmax,
     chunk_size::Int = 50000,
     compress::Bool = true,
     interpolate_higher_levels::Bool = true,
     max_cells::Int = 10000000,
-    verbose::Bool = true
+    verbose::Bool = true,
+    myargs::ArgumentsType=ArgumentsType()
 )
 
-    box_size = dataobject.boxlen
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    verbose = Mera.checkverbose(verbose)
+    printtime("", verbose)
+
+    boxlen = dataobject.boxlen
+    println("Available Threads: ", Threads.nthreads())
+    if vectors[1] === missing || vectors[2] === missing || vectors[3] === missing
+        export_vectors = false 
+    else
+        export_vectors = true 
+    end
 
     # Ensure output directory exists for file writing
     outdir = dirname(outprefix)
@@ -78,12 +97,12 @@ function export_vtk(
     raw_levels = unique(getvar(dataobject, :level))
     all_levels = sort(Int.(raw_levels))
     actual_max = maximum(all_levels)
-    levels = filter(l -> min_level ≤ l ≤ max_level, all_levels)
-    isempty(levels) && error("No levels in [$min_level,$max_level]")
+    levels = filter(l -> lmin ≤ l ≤ lmax, all_levels)
+    isempty(levels) && error("No levels in [$lmin,$lmax]")
 
     verbose && println("Processing levels: $levels")
-    if interpolate_higher_levels && actual_max > max_level
-        verbose && println("Will interpolate levels $(filter(l->l>max_level, all_levels)) down to $max_level")
+    if interpolate_higher_levels && actual_max > lmax
+        verbose && println("Will interpolate levels $(filter(l->l>lmax, all_levels)) down to $lmax")
     end
 
     # Initialize lists to store paths of generated VTU files
@@ -92,7 +111,7 @@ function export_vtk(
 
     # Helper function to interpolate fine cells to a coarser grid at level L
     function interpolate_to_level_coarse(xa, ya, za, sdata, vdata, L::Int)
-        cs = box_size / 2^L
+        cs = boxlen / 2^L
         # Map fine cell coordinates to coarse grid indices
         coarse_idx = [(fld(xa[i], cs), fld(ya[i], cs), fld(za[i], cs)) for i in eachindex(xa)]
         # Group fine cells by their corresponding coarse cell index
@@ -102,7 +121,7 @@ function export_vtk(
         end
         N = length(idx_map)
         verbose && println("  Unique coarse cells at level $L: $N (out of max $(Int(2^L)^3))")
-        verbose && println("  Expected file size (uncompressed): ~$(round(N * 300 / 1024^3, digits=2)) GB")
+        #verbose && println("  Expected file size (uncompressed): ~$(round(N * 300 / 1024^3, digits=2)) GB")
 
         # Limit output cells if exceeding max_cells, prioritizing denser regions
         if N > max_cells
@@ -151,8 +170,8 @@ function export_vtk(
     for L in levels
         verbose && println("Level $L")
         mask = getvar(dataobject, :level) .== L
-        # Include higher levels for interpolation if at max_level and requested
-        if interpolate_higher_levels && L == max_level && actual_max > max_level
+        # Include higher levels for interpolation if at lmax and requested
+        if interpolate_higher_levels && L == lmax && actual_max > lmax
             mask .= getvar(dataobject, :level) .>= L
             verbose && println("  Including higher levels for interpolation")
         end
@@ -161,14 +180,18 @@ function export_vtk(
         n == 0 && (verbose && println("  skip empty"); continue)
 
         # Extract position data for cells at this level
-        x = getvar(dataobject, :x, mask=mask)
-        y = getvar(dataobject, :y, mask=mask)
-        z = getvar(dataobject, :z, mask=mask)
+        x = getvar(dataobject, :x, positions_unit, mask=mask)
+        y = getvar(dataobject, :y, positions_unit, mask=mask)
+        z = getvar(dataobject, :z, positions_unit, mask=mask)
 
         # Prepare scalar data dictionaries
         sdata = Dict{Symbol, Vector{Float64}}()
-        for (s, sunit) in zip(scalars, scalar_unit)
-            arr = getvar(dataobject, s, sunit, mask=mask)
+        for (s, sunit) in zip(scalars, scalars_unit)
+            if scalars_log10
+                arr = log10.( getvar(dataobject, s, sunit, mask=mask) )
+            else
+                arr = getvar(dataobject, s, sunit, mask=mask)
+            end
             sdata[s] = arr === nothing ? zeros(n) : Vector{Float64}(arr)
         end
 
@@ -176,13 +199,17 @@ function export_vtk(
         vdata = Dict{Symbol, Vector{Float64}}()
         if export_vectors
             for v in vectors
-                arr = getvar(dataobject, v, vectors_unit, mask=mask)
+                if vectors_log10
+                    arr = log10.( getvar(dataobject, v, vectors_unit, mask=mask) )
+                else
+                    arr = getvar(dataobject, v, vectors_unit, mask=mask)
+                end
                 vdata[v] = arr === nothing ? zeros(n) : Vector{Float64}(arr)
             end
         end
 
-        # Perform interpolation if higher levels are included at max_level
-        if interpolate_higher_levels && L == max_level && any(getvar(dataobject, :level, mask=mask) .> max_level)
+        # Perform interpolation if higher levels are included at lmax
+        if interpolate_higher_levels && L == lmax && any(getvar(dataobject, :level, mask=mask) .> lmax)
             verbose && println("  Interpolating down to level $L")
             x, y, z, sdata, vdata = interpolate_to_level_coarse(x, y, z, sdata, vdata, L)
             n = length(x)
@@ -192,7 +219,7 @@ function export_vtk(
         # Construct VTK mesh geometry with hexahedral cells
         pts = Matrix{Float64}(undef, 3, 8 * n)
         cells = Vector{MeshCell}(undef, n)
-        h = box_size / (2^L) / 2
+        h = boxlen / (2^L) / 2
         Threads.@threads for i in 1:n
             cx, cy, cz = x[i], y[i], z[i]
             base = (i - 1) * 8 + 1
@@ -222,7 +249,7 @@ function export_vtk(
 
         # Write VTU file for vector data if requested
         if export_vectors
-            vname = "$(outprefix)_L$(L)_vec"
+            vname = "$(outprefix)_vec_L$(L)"
             vtk_grid(vname, pts, cells; compress=compress, ascii=false) do vtk
                 mat = Matrix{Float64}(undef, 3, 8 * n)
                 for i in 1:n
@@ -233,7 +260,7 @@ function export_vtk(
                         mat[1, idx] = vx; mat[2, idx] = vy; mat[3, idx] = vz
                     end
                 end
-                vtk["velocity", VTKPointData()] = mat  # Attach vector data to points
+                vtk["vector", VTKPointData()] = mat  # Attach vector data to points
             end
             vec_path = vname * ".vtu"
             isfile(vec_path) || @error("Missing vector VTU: $vec_path")
@@ -293,7 +320,7 @@ function export_vtk(
         vector_vtm_path = outprefix * "_vector.vtm"
         vtm_vector = vtk_multiblock(outprefix * "_vector")
         for (i, f) in enumerate(vector_files)
-            block_name = "Level_$(levels[i])_vec"
+            block_name = "vec_Level_$(levels[i])"
             multiblock_add_block(vtm_vector, block_name)
             verbose && println("  Added block '$block_name' to vector VTM for $(basename(f))")
         end
@@ -309,7 +336,7 @@ function export_vtk(
   <vtkMultiBlockDataSet>
 """
         for (i, f) in enumerate(vector_files)
-            block_name = "Level_$(levels[i])_vec"
+            block_name = "vec_Level_$(levels[i])"
             vtu_basename = basename(f)
             vector_vtm_content *= """
     <Block index="$i" name="$block_name">
@@ -340,7 +367,7 @@ function export_vtk(
     scalars_str = join(string.(scalars), ", ")
     verbose && println("Available scalars: $scalars_str, AMR_Level")
     if export_vectors
-        verbose && println("Available vectors: velocity")
+        verbose && println("Available vector, named: vector")
     end
 
     return (scalar_files, vector_files, scalar_vtm_path, export_vectors ? vector_vtm_path : "")
