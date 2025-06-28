@@ -41,7 +41,7 @@ export_vtk(
 - **`vector_unit`:** Sets the unit for the vector components (default is km/s).
 - **`vector_name`:** The name of the vector field in the VTK file (default: "velocity").
 - **`vector_log10`:** Apply log10 to the vector components (default: false).
-- **`positions_unit`:** Sets the unit of the particle positions (default: code units).
+- **`positions_unit`:** Sets the unit of the particle positions (default: code units); usefull in paraview to select regions 
 - `chunk_size::Int = 50000`: Size of data chunks for processing (reserved for future optimizations).
 - **`compress`:** If `false` (default), disable compression.
 - **`max_particles`:** Maximum number of particles to export (caps output if exceeded), (default: 10_000_000)
