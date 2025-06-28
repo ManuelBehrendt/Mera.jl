@@ -25,7 +25,7 @@ export_vtk(
     chunk_size::Int = 50000,
     compress::Bool = true,
     interpolate_higher_levels::Bool = true,
-    max_cells::Int = 10000000,
+    max_cells::Int = 100_000_000,
     verbose::Bool = true,
     myargs::ArgumentsType=ArgumentsType()
 )
@@ -50,7 +50,7 @@ export_vtk(
 - **`chunk_size::Int = 50000`:** Size of data chunks for processing (currently unused but reserved for future optimizations).
 - **`compress`:** If `true` (default), enable compression.
 - **`interpolate_higher_levels`:** If `true`, interpolate data from higher levels down to given `lmax` .
-- **`max_cells`:** Maximum number of cells to export per level (caps output if exceeded, prioritizing denser regions), (default: 10_000_000)
+- **`max_cells`:** Maximum number of cells to export per level (caps output if exceeded, prioritizing denser regions), (default: 100_000_000)
 - **`verbose`:** If `true` (default), print detailed progress and diagnostic messages.
 
 """
@@ -69,7 +69,7 @@ function export_vtk(
     chunk_size::Int = 50000,
     compress::Bool = true,
     interpolate_higher_levels::Bool = true,
-    max_cells::Int = 10000000,
+    max_cells::Int = 100_000_000,
     verbose::Bool = true,
     myargs::ArgumentsType=ArgumentsType()
 )
