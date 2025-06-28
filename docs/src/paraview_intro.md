@@ -1,4 +1,4 @@
-# 08 Introduction
+# Introduction
 
 This section guides the export of simulation data in the VTK (Visualization Toolkit) format, a widely recognized standard for 3D visualization in scientific computing. The exported files are compatible with visualization tools like ParaView (an open-source software), allowing for detailed analysis and rendering of complex datasets. Both the exported hydro cells and particle data can be opened together in ParaView. For certain functions, multi-threading is used (this feature is experimental). To utilize this, load Julia or your Jupyter Notebook with multiple threads, and the multi-threading will be applied automatically. Paraview can also be used remotely running on a server with MPI.
 
