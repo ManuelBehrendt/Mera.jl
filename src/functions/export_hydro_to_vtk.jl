@@ -1,4 +1,13 @@
 """
+#### Export hydro data to VTK format for visualization in tools like ParaView.
+- export data that is present in your database and can be processed by getvar() (done internally)
+- select scalar(s) and their unit(s)
+- select a vector and its unit (like velocity)
+- export data in log10
+- creates binary files with optional compression
+- supports multi-threading
+-> generating per-level VTU files for scalar and optionally vector data 
+and creates corresponding VTM multiblock container files to reference these VTU files.
 
 ```julia
 export_vtk(
@@ -21,41 +30,29 @@ export_vtk(
     myargs::ArgumentsType=ArgumentsType()
 )
 ```
-Export Adaptive Mesh Refinement (AMR) data to VTK format for visualization in tools like ParaView.
-This function processes AMR data from MERA.jl, generating per-level VTU files for scalar and optionally vector data,
-and creates corresponding VTM multiblock container files to reference these VTU files.
 
-##### Arguments
+#### Arguments
+##### Required:
 - `dataobject::HydroDataType`: The AMR data structure from MERA.jl containing variables like level, position, and physical quantities.
 - `outprefix::String`: The base path and prefix for output files (e.g., "output/data" will create files like "output/data_L0.vtu").
 
-##### Keyword Arguments
-- `scalars::Vector{Symbol} = [:rho]`: List of scalar variables to export (default is density, `:rho`).
-- `scalars_unit::Vector{Symbol} = [:nH]` : sets the unit for the list of scalars (default is hydrogen number density in cm^-3)
-- `scalars_log10::Bool=false` : apply log10 to the scalars
-- `vector::::Array{<:Any,1}=[missing, missing, missing]`: List of vector component variables to export (default is missing). if != missing, export vector data as separate VTU files
-- `vector_unit::Symbol = :km_s` : Sets the unit for the vector components in km/s (default)
-- `vector_name::String = "velocity"`: The name of the vector field in the VTK file.
-- `vector_log10::Bool=false` : apply log10 to the vector
-- `positions_unit::Symbol = :standard` : sets the unit of the cell positions (default code units); usefull in paraview to select regions 
-- `lmin::Int = lmin`: Minimum AMR level to process; smaller levels are excluded export
-- `lmax::Int = lmax`: Maximum AMR level to process; higher levels are interpolated down if `interpolate_higher_levels` is `true`.
-- `chunk_size::Int = 50000`: Size of data chunks for processing (currently unused but reserved for future optimizations).
-- `compress::Bool = true`: If `true` (default), compress VTU files to reduce size.
-- `interpolate_higher_levels::Bool = true`: If `true`, interpolate data from levels above `lmax` down to `lmax`.
-- `max_cells::Int = 10000000`: Maximum number of cells to export per level (caps output if exceeded, prioritizing denser regions).
-- `verbose::Bool = true`: If `true` (default), print detailed progress and diagnostic messages.
+##### Predefined/Optional Keywords:
+- **`scalars`:** List of scalar variables to export (default is :rho);  from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
+- **`scalars_unit`**: Sets the unit for the list of scalars (default is hydrogen number density in cm^-3).
+- **`scalars_log10**`: Apply log10 to the scalars (default false).
+- **`vector`:** List of vector component variables to export (default is missing); exports vector data as separate VTU files
+- **`vector_unit`:** Sets the unit for the vector components (default is km/s).
+- **`vector_name`:** The name of the vector field in the VTK file (default: "velocity").
+- **`vector_log10`:** Apply log10 to the vector components (default: false).
+- **`positions_unit`:** Sets the unit of the cell positions (default: code units); usefull in paraview to select regions 
+- **`lmin`:** Minimum AMR level to process (default: simulations lmin); smaller levels are excluded in export
+- **`lmax`:** Maximum AMR level to process (default: simulations lmax); existing higher levels are interpolated down if `interpolate_higher_levels` is `true`, otherwise excluded from export
+- **`chunk_size::Int = 50000`:** Size of data chunks for processing (currently unused but reserved for future optimizations).
+- **`compress`:** If `true` (default), enable compression.
+- **`interpolate_higher_levels`:** If `true`, interpolate data from higher levels down to given `lmax` .
+- **`max_cells`:** Maximum number of cells to export per level (caps output if exceeded, prioritizing denser regions), (default: 10_000_000)
+- **`verbose`:** If `true` (default), print detailed progress and diagnostic messages.
 
-##### Returns
-- A tuple `(scalar_files, vector_files, vtm_path)` where:
-  - `scalar_files::Vector{String}`: List of paths to scalar VTU files.
-  - `vector_files::Vector{String}`: List of paths to vector VTU files (empty if `export_vector` is `false`).
-  - `vtm_path::String`: Path to the VTM multiblock file referencing scalar VTU files.
-
-##### Notes
-This function processes each AMR level independently, creating hexahedral cells for VTK output.
-It handles large datasets by freeing memory after each level and supports multi-threading for performance.
-The VTM file is manually updated to ensure references to VTU files are correctly included, as WriteVTK.jl (v1.21.2) does not natively support referencing pre-existing files in multiblock containers.
 """
 function export_vtk(
     dataobject::HydroDataType, outprefix::String;
@@ -391,5 +388,5 @@ function export_with_interpolation_monitoring(dataobject, outprefix; kwargs...)
     println("Final memory: $(round(final_memory, digits=2)) MB")
     println("Memory change: $(round(final_memory - initial_memory, digits=2)) MB")
     
-    return result
+    return #result
 end
