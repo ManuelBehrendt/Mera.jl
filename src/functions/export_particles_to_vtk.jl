@@ -36,7 +36,7 @@ export_vtk(
 ##### Predefined/Optional Keywords:
 - **`scalars`:** List of scalar variables to export (default is particle mass);  from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
 - **`scalars_unit`**: Sets the unit for the list of scalars (default is Msun).
-- **`scalars_log10**`: Apply log10 to the scalars (default false).
+- **`scalars_log10`:** Apply log10 to the scalars (default false).
 - **`vector`:** List of vector component variables to export (default is missing).
 - **`vector_unit`:** Sets the unit for the vector components (default is km/s).
 - **`vector_name`:** The name of the vector field in the VTK file (default: "velocity").
