@@ -226,7 +226,7 @@ Julia is a relatively new and modern language, and it combines high-level progra
 ﻿​
 Further features:
 - Package manager
-- Runs on multiple platform
+- Runs on multiple platforms
 - Multiple dispatch
 - Build-in parallelism
 - Metaprogramming
@@ -247,6 +247,7 @@ Further features:
 - Database framework used in Mera: [JuliaDB.jl](https://juliadb.org)
 - Interesting Packages: [JuliaAstro.jl](http://juliaastro.github.io), [JuliaObserver.com](https://juliaobserver.com)
 - Use Matplotlib in Julia: [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl)
+- Interactive data visualizations and plotting in Julia with Makie: [Makie.jl](https://docs.makie.org/stable/)
 - Call Python packages/functions from Julia: [PyCall.jl](https://github.com/JuliaPy/PyCall.jl)
 - Visual Studio Code based Julia IDE [julia-vscode](https://github.com/julia-vscode/julia-vscode)
 
