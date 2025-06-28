@@ -22,7 +22,7 @@ export_vtk(
     positions_unit::Symbol = :standard,
     chunk_size::Int = 50000,
     compress::Bool = false,
-    max_particles::Int = 10000000,
+    max_particles::Int = 100_000_000,
     verbose::Bool = true,
     myargs::ArgumentsType=ArgumentsType()
 )
@@ -44,7 +44,7 @@ export_vtk(
 - **`positions_unit`:** Sets the unit of the particle positions (default: code units); usefull in paraview to select regions 
 - `chunk_size::Int = 50000`: Size of data chunks for processing (reserved for future optimizations).
 - **`compress`:** If `false` (default), disable compression.
-- **`max_particles`:** Maximum number of particles to export (caps output if exceeded), (default: 10_000_000)
+- **`max_particles`:** Maximum number of particles to export (caps output if exceeded), (default: 100_000_000)
 - **`verbose`:** If `true` (default), print detailed progress and diagnostic messages.
 
 """
@@ -60,7 +60,7 @@ function export_vtk(
     positions_unit::Symbol = :standard,
     chunk_size::Int = 50000,
     compress::Bool = false,
-    max_particles::Int = 10000000,
+    max_particles::Int = 100_000_000,
     verbose::Bool = true,
     myargs::ArgumentsType=ArgumentsType()
 )
