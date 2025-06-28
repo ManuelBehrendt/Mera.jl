@@ -9,6 +9,7 @@
 -> generates VTU files; each particle is represented as a vertex point 
 with associated scalar and vector data.
 
+```julia
 export_vtk(
     dataobject::PartDataType, outprefix::String;
     scalars::Vector{Symbol} = [:mass],
@@ -25,6 +26,7 @@ export_vtk(
     verbose::Bool = true,
     myargs::ArgumentsType=ArgumentsType()
 )
+```
 
 #### Arguments
 ##### Required:
