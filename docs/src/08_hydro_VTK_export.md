@@ -1,4 +1,4 @@
-# 8. Hydro: Export Selected Variables to VTK 
+# Hydro: Export Selected Variables to VTK 
 
 ## Simulation Overview & Load Hydro Data
 
@@ -11,14 +11,14 @@ info = infodata(600, path)
 gas = loaddata(600, path, :hydro); # load full box
 ```
 
-    [Mera]: 2025-06-28T15:06:54.435
+    [Mera]: 2025-06-28T15:06:54.435
     
     Use datatype: hydro
     Code: RAMSES
     output [600] summary:
     mtime: 2024-09-08T15:29:04
     ctime: 2024-09-10T11:23:16.230
-    =======================================================
+    =======================================================
     simulation time: 891.71 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 5120
@@ -49,9 +49,9 @@ gas = loaddata(600, path, :hydro); # load full box
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: 2025-06-28T15:06:54.479
+    [Mera]: 2025-06-28T15:06:54.479
     
     Open Mera-file output_00600.jld2:
     
@@ -85,7 +85,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T15:07:40.866
+    [Mera]: 2025-06-28T15:07:40.866
     
     Available Threads: 1
     Created directory: output01
@@ -168,7 +168,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T16:04:43.533
+    [Mera]: 2025-06-28T16:04:43.533
     
     Available Threads: 1
     Processing levels: [6, 7, 8, 9, 10]
@@ -259,7 +259,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T15:35:19.707
+    [Mera]: 2025-06-28T15:35:19.707
     
     Available Threads: 1
     Created directory: output04
@@ -384,7 +384,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T15:45:52.426
+    [Mera]: 2025-06-28T15:45:52.426
     
     Available Threads: 1
     Created directory: output05
@@ -456,7 +456,7 @@ readdir("output05")
 
 **Open Scalar vtm File**
 
-<img src="images/01_hydro.jpg" alt="image" width="1000"/>
+![](images/01_hydro.jpg)
 
 
 ```julia
@@ -465,7 +465,7 @@ readdir("output05")
 
 **Select rho array, volume rendering and apply**
 
-<img src="images/02_hydro.jpg" alt="image" width="1000"/>
+![](images/02_hydro.jpg)
 
 
 ```julia
@@ -474,7 +474,7 @@ readdir("output05")
 
 **Choose a suitable colormap**
 
-<img src="images/03_hydro.jpg" alt="image" width="1000"/>
+![](images/03_hydro.jpg)
 
 
 ```julia
@@ -483,7 +483,7 @@ readdir("output05")
 
 **Select value range, opazity and visualize data histogram**
 
-<img src="images/04_hydro.jpg" alt="image" width="1000"/>
+![](images/04_hydro.jpg)
 
 
 ```julia
@@ -492,7 +492,7 @@ readdir("output05")
 
 **Change orientation, value range**
 
-<img src="images/05_hydro.jpg" alt="image" width="1000"/>
+![](images/05_hydro.jpg)
 
 
 ```julia
@@ -507,7 +507,7 @@ readdir("output05")
 gassub = subregion(gas, :cylinder, radius=1., height=1., range_unit=:kpc, center=[23.,23.,:bc]);
 ```
 
-    [Mera]: 2025-06-28T15:51:50.842
+    [Mera]: 2025-06-28T15:51:50.842
     
     center: [0.4791667, 0.4791667, 0.5] ==> [23.0 [kpc] :: 23.0 [kpc] :: 24.0 [kpc]]
     
@@ -542,7 +542,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T16:11:51.637
+    [Mera]: 2025-06-28T16:11:51.637
     
     Available Threads: 1
     Created directory: output06
@@ -619,7 +619,7 @@ readdir("output06")
 
 **Load Scalar**
 
-<img src="images/01_hydro2.jpg" alt="image" width="1000"/>
+![](images/01_hydro2.jpg)
 
 
 ```julia
@@ -628,7 +628,7 @@ readdir("output06")
 
 **Select rho data, volume rendering, color map, choose value range**
 
-<img src="images/02_hydro2.jpg" alt="image" width="1000"/>
+![](images/02_hydro2.jpg)
 
 
 ```julia
@@ -637,8 +637,7 @@ readdir("output06")
 
 **Load Vector data**
 
-<img src="images/03_hydro2.jpg" alt="image" width="1000"/>
-
+![](images/03_hydro2.jpg)
 
 
 ```julia
@@ -647,7 +646,7 @@ readdir("output06")
 
 **Select velocity data, magnitude volume rendering**
 
-<img src="images/04_hydro2.jpg" alt="image" width="1000"/>
+![](images/04_hydro2.jpg)
 
 
 ```julia
@@ -656,7 +655,7 @@ readdir("output06")
 
 **Edge-on view, apply 3D Glyphs on vector data, choose array and number of sample points**
 
-<img src="images/05_hydro2.jpg" alt="image" width="1000"/>
+![](images/05_hydro2.jpg)
 
 
 ```julia
@@ -665,7 +664,7 @@ readdir("output06")
 
 **Apply streamline tracer, point cloud and its size, number of points**
 
-<img src="images/06_hydro2.jpg" alt="image" width="1000"/>
+![](images/06_hydro2.jpg)
 
 
 ```julia

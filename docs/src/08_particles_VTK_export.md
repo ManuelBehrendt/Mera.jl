@@ -1,4 +1,4 @@
-# 8. Particles: Export Selected Variables to VTK 
+# Particles: Export Selected Variables to VTK 
 
 ## Simulation Overview & Load Particle Data
 
@@ -11,14 +11,14 @@ info = infodata(600, path)
 particles = loaddata(600, path, :particles); # load full box
 ```
 
-    [Mera]: 2025-06-28T16:52:16.672
+    [Mera]: 2025-06-28T16:52:16.672
     
     Use datatype: hydro
     Code: RAMSES
     output [600] summary:
     mtime: 2024-09-08T15:29:04
     ctime: 2024-09-10T11:23:16.230
-    =======================================================
+    =======================================================
     simulation time: 891.71 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 5120
@@ -49,9 +49,9 @@ particles = loaddata(600, path, :particles); # load full box
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: 2025-06-28T16:52:22.750
+    [Mera]: 2025-06-28T16:52:22.750
     
     Open Mera-file output_00600.jld2:
     
@@ -83,7 +83,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T16:54:51.056
+    [Mera]: 2025-06-28T16:54:51.056
     
     Available Threads: 1
     Total particles in dataset: 1353087
@@ -141,7 +141,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T16:57:30.111
+    [Mera]: 2025-06-28T16:57:30.111
     
     Available Threads: 1
     Total particles in dataset: 1353087
@@ -196,7 +196,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T16:58:14.003
+    [Mera]: 2025-06-28T16:58:14.003
     
     Available Threads: 1
     Created directory: output_part04
@@ -256,7 +256,7 @@ export_vtk(
 );
 ```
 
-    [Mera]: 2025-06-28T17:02:48.237
+    [Mera]: 2025-06-28T17:02:48.237
     
     Available Threads: 1
     Created directory: output_part05
@@ -291,7 +291,7 @@ readdir("output_part05")
 
 **Load Data-File**
 
-<img src="images/01_particles.jpg" alt="image" width="1000"/>
+![](images/01_particles.jpg)
 
 
 ```julia
@@ -300,7 +300,7 @@ readdir("output_part05")
 
 **Select age information**
 
-<img src="images/02_particles.jpg" alt="image" width="1000"/>
+![](images/02_particles.jpg)
 
 
 ```julia
@@ -311,7 +311,7 @@ readdir("output_part05")
 
 **Select Glyphs, arrow orientation, number of sample points**
 
-<img src="images/01_particles2.jpg" alt="image" width="1000"/>
+![](images/01_particles2.jpg)
 
 
 ```julia
