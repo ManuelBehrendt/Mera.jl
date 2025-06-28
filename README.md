@@ -211,7 +211,7 @@ julia> methods(viewfields)
 ## Further Notes
 
 - To use the **Jupyter** interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
-- The **tutorials** in the documentation can be downloaded from [GitHub]([https://github.com/ManuelBehrendt/Notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/59fc4b1194f02a24cb5f183a5cd9b4c05bb032b0/Mera-Docs)) as Jupyter notebooks
+- The **tutorials** in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Notebooks/tree/59fc4b1194f02a24cb5f183a5cd9b4c05bb032b0/Mera-Docs) as Jupyter notebooks
 -  To get a first impression, look at the **Hands-On Session** RUM2023` with downloadable simulation examples: 
     https://github.com/ManuelBehrendt/RUM2023
 - Mera is tested against the **RAMSES versions**: =< stable-17.09, stable-18-09, stable-19-10
