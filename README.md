@@ -33,7 +33,8 @@ Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
 - Interactive and script functionality
 - Many examples and tutorials
 - Compressed Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
-
+- Export multi-level data to vtk for volume rendering
+  
 ## Dependencies
 Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
 
