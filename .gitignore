@@ -34,6 +34,10 @@ tutorials/Untitled*
 tutorials/.ipynb_checkpoints/
 tutorials/dev/
 tutorials/simulations/
+tutorials/version_1/paraview/output*
+tutorials/version_1/paraview/*.toml
+tutorials/version_1/paraview/.jupyter
+tutorials/version_1/paraview/.ipynb_checkpoints/
 tutorials/version_1/.DS_Store
 tutorials/version_1/*.mera
 tutorials/version_1/Untitled*

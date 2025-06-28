@@ -30,7 +30,11 @@ makedocs(modules = [Mera],
 
                       "7-MERA-Files"    => "07_multi_Mera_Files.md",
 
-                      "8-Miscellaneous"    => "Miscellaneous.md",
+                      "8-Volume Rendering"     => Any[ "Intro"      =>  "paraview_intro.md",
+                                                       "Hydro"      =>  "08_hydro_VTK_export/08_hydro_VTK_export.md",
+                                                       "Particles"  =>  "08_particles_VTK_export/08_particles_VTK_export.md"],
+
+                      "9-Miscellaneous"    => "Miscellaneous.md",
                       "Examples"              => "examples.md",
                       
                       "API Documentation"     => "api.md"
