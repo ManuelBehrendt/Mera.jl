@@ -1,4 +1,14 @@
 """
+#### Export particle data to VTK format for visualization in tools like ParaView.
+- export data that is present in your database and can be processed by getvar() (done internally)
+- select scalar(s) and their unit(s)
+- select a vector and its unit (like velocity)
+- export data in log10
+- creates binary files with optional compression
+- supports multi-threading
+-> generates VTU files; each particle is represented as a vertex point 
+with associated scalar and vector data.
+
 export_vtk(
     dataobject::PartDataType, outprefix::String;
     scalars::Vector{Symbol} = [:mass],
@@ -16,36 +26,25 @@ export_vtk(
     myargs::ArgumentsType=ArgumentsType()
 )
 
-Export particle data to VTK format for visualization in tools like ParaView.
-This function processes particle data from MERA.jl, generating a VTU file containing 
-pure point data with vertex cells. Each particle is represented as a vertex point 
-with associated scalar and vector data.
+#### Arguments
+##### Required:
+- **`dataobject::PartDataType`:*** needs to be of type "PartDataType"
+- **`outprefix`:** The base path and prefix for output file (e.g., "foldername/particles" will create "foldername/particles.vtu").
 
-##### Arguments
-- `dataobject::PartDataType`: The particle data structure from MERA.jl containing particle positions and physical quantities.
-- `outprefix::String`: The base path and prefix for output file (e.g., "output/particles" will create "output/particles.vtu").
-
-##### Keyword Arguments
-- `scalars::Vector{Symbol} = [:mass]`: List of scalar variables to export (default is particle mass).
-- `scalars_unit::Vector{Symbol} = [:Msol]`: Sets the unit for the list of scalars (default is solar masses).
-- `scalars_log10::Bool=false`: Apply log10 to the scalars.
-- `vector::Array{<:Any,1}=[missing, missing, missing]`: List of vector component variables to export (default is missing). If != missing, export vector data in the same file.
-- `vector_unit::Symbol = :km_s`: Sets the unit for the vector components in km/s (default).
-- `vector_name::String = "velocity"`: The name of the vector field in the VTK file.
-- `vector_log10::Bool=false`: Apply log10 to the vector components.
-- `positions_unit::Symbol = :standard`: Sets the unit of the particle positions (default code units).
+##### Predefined/Optional Keywords:
+- **`scalars`:** List of scalar variables to export (default is particle mass);  from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
+- **`scalars_unit`**: Sets the unit for the list of scalars (default is Msun).
+- **`scalars_log10**`: Apply log10 to the scalars (default false).
+- **`vector`:** List of vector component variables to export (default is missing).
+- **`vector_unit`:** Sets the unit for the vector components (default is km/s).
+- **`vector_name`:** The name of the vector field in the VTK file (default: "velocity").
+- **`vector_log10`:** Apply log10 to the vector components (default: false).
+- **`positions_unit`:** Sets the unit of the particle positions (default: code units).
 - `chunk_size::Int = 50000`: Size of data chunks for processing (reserved for future optimizations).
-- `compress::Bool = false`: If `false` (default), disable compression to avoid header errors.
-- `max_particles::Int = 10000000`: Maximum number of particles to export (caps output if exceeded).
-- `verbose::Bool = true`: If `true` (default), print detailed progress and diagnostic messages.
+- **`compress`:** If `false` (default), disable compression.
+- **`max_particles`:** Maximum number of particles to export (caps output if exceeded), (default: 10_000_000)
+- **`verbose`:** If `true` (default), print detailed progress and diagnostic messages.
 
-##### Returns
-- A string with the path to the created VTU file containing all particle data.
-
-##### Notes
-This function creates a vertex-based VTK file suitable for particle visualization.
-Each particle becomes a vertex point with associated scalar and vector data.
-The function handles large particle datasets by limiting output size and supports multi-threading for performance.
 """
 function export_vtk(
     dataobject::PartDataType, outprefix::String;
@@ -319,5 +318,5 @@ function export_vtk(
         verbose && println("Available vector: " * vector_name)
     end
 
-    return combined_vtu_path
+    return 
 end
