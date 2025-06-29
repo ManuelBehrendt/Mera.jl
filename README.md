@@ -29,6 +29,7 @@ Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
 - The data is loaded and processed in a database framework [IndexedTables.jl]([https://juliadb.org](https://github.com/JuliaData/IndexedTables.jl))
 - Efficient workflow
 - Many functionalities for advanced analysis
+- Integrated into Julia's Ecosystem -> Interoperability and composability with other Julia packages
 - Easy to extend 
 - Interactive and script functionality
 - Many examples and tutorials
