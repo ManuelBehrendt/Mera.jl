@@ -56,7 +56,7 @@ Composable with LinearAlgebra for numerical operations, Makie for interactive pl
 - **Native Unicode \& Mathematical Notation**
 Supports λ, ∑, ∂ and other symbols in code, docstrings, and examples, enabling clear expression of complex equations and formulas.
 
-####6. **Advanced Features** (Reproducibility \& extensibility) - Professional/research-grade capabilities
+#### 6. **Advanced Features** (Reproducibility \& extensibility) - Professional/research-grade capabilities
 - **Reproducible Project Environments**
 Leverage Julia's built-in environments to lock and share dependency versions, guaranteeing consistent, repeatable analyses across machines and collaborators.
 - **Modular \& Extensible Architecture**
