@@ -23,18 +23,44 @@ Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
 > To get a first impression, look at the `Hands-On Session RUM2023` with downloadable simulation examples: 
     https://github.com/ManuelBehrendt/RUM2023
 
-## Package Features
-- Easy to install and update
-- Fast and memory lightweight data reading/saving and handling
-- The data is loaded and processed in a database framework [IndexedTables.jl]([https://juliadb.org](https://github.com/JuliaData/IndexedTables.jl))
-- Efficient workflow
-- Many functionalities for advanced analysis
-- Integrated into Julia's Ecosystem -> Interoperability and composability with other Julia packages
-- Easy to extend 
-- Interactive and script functionality
-- Many examples and tutorials
-- Compressed Mera-files, a significant faster way to read/store the RAMSES data for time sequence analysis
-- Export multi-level data to vtk for volume rendering
+## Key Features
+#### 1. **Getting Started** (Installation \& Documentation) - First impression and ease of entry
+- **Effortless Installation \& Updates**
+Install and update via Julia's package manager with a single command, ensuring immediate access to new features and fixes.
+- **Extensive Documentation \& Tutorials**
+Detailed API references, comprehensive documentation, downloadable Jupyter notebooks, and Hands-On Session RUM2023 materials facilitate rapid onboarding and practical learning.
+
+#### 2. **Core Performance** (Speed \& Data Handling) - Primary technical advantages
+- **Near-C/Fortran Performance**
+Just-In-Time (JIT) compilation delivers native-code speed for array and numerical computations, surpassing interpreted languages in throughput.
+"- **High-Performance Compressed Mera-Files**
+Proprietary format provides rapid reading, writing, and handling of large AMR and N-body datasets with minimal memory footprint, dramatically reducing I/O overhead when traversing simulation snapshots for time-series analysis.
+- **Database-Driven Data Processing**
+Built on IndexedTables.jl for scalable data management, enabling efficient querying and slicing of large simulation outputs.
+
+#### 3. **Workflow \& Analysis** (End-to-end pipeline \& toolkit) - Practical usage benefits
+- **Streamlined End-to-End Workflow**
+Unified pipeline from `getinfo(output=1, "sim_folder")` → `getdata()` → `projection()` → `heatmap()` reduces manual steps and accelerates workflow while allowing flexible data manipulation at each stage to customize your analysis.
+- **Comprehensive Analytical Toolkit**
+Native support for projections, statistical profiling, data filtering and masking, column density calculations, phase plots, profile analysis, export of multi-level data to VTK for volume rendering, and many more.
+
+#### 4. **Development Features** (Interactive use \& parallelism) - Development workflow advantages
+- **Interactive \& Scriptable Use Cases**
+Combine REPL-based exploration with batch scripting and Jupyter notebooks for both ad-hoc analysis and automated high-throughput workflows.
+- **Built-In Parallelism**
+Leverage Julia's multi-threading and distributed computing capabilities for accelerated processing of large datasets on multi-core and cluster environments.
+
+#### 5. **Ecosystem \& Integration** (Julia ecosystem \& Unicode) - Broader context benefits
+- **Seamless Julia Ecosystem Integration**
+Composable with LinearAlgebra for numerical operations, Makie for interactive plotting, PyPlot, and many other Julia packages.
+- **Native Unicode \& Mathematical Notation**
+Supports λ, ∑, ∂ and other symbols in code, docstrings, and examples, enabling clear expression of complex equations and formulas.
+
+####6. **Advanced Features** (Reproducibility \& extensibility) - Professional/research-grade capabilities
+- **Reproducible Project Environments**
+Leverage Julia's built-in environments to lock and share dependency versions, guaranteeing consistent, repeatable analyses across machines and collaborators.
+- **Modular \& Extensible Architecture**
+Plugin-style design allows seamless addition of custom data loaders, analysis routines, or export formats.
   
 ## Dependencies
 Find the main dependencies on [JuliaHub](https://juliahub.com/ui/Packages/Mera/7jlnw/1.4.2?page=1) or from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
