@@ -1,12 +1,13 @@
 # Home
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
+
 **MERA** is a package designed for working with large 3D adaptive mesh refinement (AMR) or uniform-grid datasets, as well as N-body particle data from astrophysical simulations. It is entirely written in the Julia programming language and currently supports the hydrodynamic code [RAMSES (GitHub, newer versions)](https://github.com/ramses-organisation/ramses), [RAMSES (Bitbucket, older versions)](https://bitbucket.org/rteyssie/ramses/overview). MERA offers essential functions for data extraction, manipulation, and custom analysis while aiming to avoid overly high-level abstractions (often referred to as "black boxes").
 
 
 > **Note**
-> For a first impression, the Documentation showcases a variety of examples. Additionally, check out the 'Hands-On Session RUM2023' that includes downloadable simulation examples: https://github.com/ManuelBehrendt/RUM2023
-
+> To get a first impression, look at the `Hands-On Session RUM2023` with downloadable simulation examples: 
+    https://github.com/ManuelBehrendt/RUM2023
 
 ## Key Features
 #### 1. **Getting Started** (Installation \& Documentation) - First impression and ease of entry
@@ -46,32 +47,34 @@ Supports λ, ∑, ∂ and other symbols in code, docstrings, and examples, enabl
 Leverage Julia's built-in environments to lock and share dependency versions, guaranteeing consistent, repeatable analyses across machines and collaborators.
 - **Modular \& Extensible Architecture**
 Plugin-style design allows seamless addition of custom data loaders, analysis routines, or export formats.
-
+  
 ## Dependencies
 Find the main dependencies from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
 
 ## Tests
 We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
 
+
 ## Julia Installation
 
 - Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
 - Binary download + installation instructions: https://julialang.org/downloads/
   
-- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble. But if you experience any problem installing PyPlot, try:
+- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble. But if you experience any problem installing PyPlot, link PyCall to the Python binary in the Conda installation:
+(instructions for OSX at https://github.com/JuliaPy/PyPlot.jl)
+
 ```julia
-import Pkg
-Pkg.add("Conda")
-using Conda
-Conda.add("matplotlib")
-ENV["PYTHON"] = ""  # Let PyCall use Conda's Python
+
+ENV["PYTHON"] = "/usr/bin/python3"
+# or for conda/miniconda
+ENV["PYTHON"] = "~/miniconda3/bin/python"
+# or for homebrew on M2 Mac
+ENV["PYTHON"] = "/opt/homebrew/bin/python3"
+using Pkg
+Pkg.add("PyCall")
 Pkg.build("PyCall")
 Pkg.add("PyPlot")
 ```
-or follow the instructions for OSX at https://github.com/JuliaPy/PyPlot.jl
-Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.11/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.x, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
-
-
 
 ## Package Installation
 The package is tested against Julia 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
@@ -104,7 +107,6 @@ Or, equivalently, in a Jupyter notebook:
 using Pkg
 Pkg.update("Mera")
 ```
-
 
 ## Reproducible Research 
 Julia ensures research verification and reproducibility through its sophisticated dual-file dependency management system. Each project generates two complementary files: `Project.toml`, which specifies direct dependencies with version compatibility constraints (e.g., "0.5" meaning "≥0.5.0 and <0.6.0" following semantic versioning rules), and `Manifest.toml`, which locks the exact versions of all dependencies—both direct and indirect—that were resolved and installed.
@@ -220,6 +222,7 @@ julia> methods(viewfields)
 - Mera is tested against the **RAMSES versions**: =< stable-17.09, stable-18-09, stable-19-10
 - The variables from the **descriptor-files** are currently only read and can be used in a future Mera version
 - For simulations with a **uniform grid**, the column **:level** is not created to reduce memory usage
+
 
 ## Useful Links
 - [Official Julia website](https://julialang.org)
