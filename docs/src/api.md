@@ -18,6 +18,12 @@ Modules = [Mera]
 Order = [:function]
 ```
 
+## Macros
+```@index
+Modules = [Mera]
+Order = [:macro]
+```
+
 ## Documentation Types
 ```@autodocs
   Modules = [Mera]
