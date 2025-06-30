@@ -55,6 +55,7 @@ using OnlineStats
 using ImageTransformations
 using ImageTransformations.Interpolations
 #using ImageFiltering
+using MacroTools
 
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
 using TimerOutputs
@@ -132,6 +133,9 @@ export
     notifyme,
 # volume rendering
     export_vtk,
+
+# macro MacroTools
+    @filter, @apply, @where,
 
 #types
     ScalesType001,
@@ -246,9 +250,12 @@ include("functions/shellregion_clumps.jl")
 # ============================================
 
 
-# volume rendering
+# Volume Rendering
 include("functions/export_hydro_to_vtk.jl")
 include("functions/export_particles_to_vtk.jl")
+
+# MacroTools
+include("macros/filter_data.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
