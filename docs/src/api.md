@@ -19,7 +19,7 @@ Order = [:function]
 ```
 
 ## Macros
-```@index
+```@autodocs
 Modules = [Mera]
 Order = [:macro]
 ```
