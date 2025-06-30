@@ -246,21 +246,6 @@ julia> methods(viewfields)
 - For simulations with a **uniform grid**, the column **:level** is not created to reduce memory usage
 
 
-
-## Why Julia?
-In scientific computing, we are dealing with a steadily increasing amount of data. Highest performance is required, and therefore, most science-related libraries are written in low-level languages like C or Fortran with relatively long development times. The reduced data is often processed in a high-level language like Python.
-Julia is a relatively new and modern language, and it combines high-level programming with high-performance numerical computing. The syntax is simple and great for math. The just-in-time compilation allows for interactive coding and to achieve an optimized machine code on the fly. Both enhance prototyping and code readability. Therefore, complex projects can be realized in relatively short development times.
-﻿​
-Further features:
-- Package manager
-- Runs on multiple platforms
-- Multiple dispatch
-- Build-in parallelism
-- Metaprogramming
-- Directly call C, Fortran, Python (e.g. Matplotlib), R libraries, ...
-….
-
-
 ## Useful Links
 - [Official Julia website](https://julialang.org)
 - Alternatively use the Julia version manager and make Julia 1.11.* the default: https://github.com/JuliaLang/juliaup
