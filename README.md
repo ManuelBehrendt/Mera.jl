@@ -85,22 +85,21 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 - Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
 - Binary download + installation instructions: https://julialang.org/downloads/
   
-- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble. But if you experience any problem installing PyPlot, try:
+- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble. But if you experience any problem installing PyPlot, link PyCall to the Python binary in the Conda installation:
+(instructions for OSX at https://github.com/JuliaPy/PyPlot.jl)
+
 ```julia
-import Pkg
-Pkg.add("Conda")
-using Conda
-Conda.add("matplotlib")
-ENV["PYTHON"] = ""  # Let PyCall use Conda's Python
+
+ENV["PYTHON"] = "/usr/bin/python3"
+# or for conda/miniconda
+ENV["PYTHON"] = "~/miniconda3/bin/python"
+# or for homebrew on M2 Mac
+ENV["PYTHON"] = "/opt/homebrew/bin/python3"
+using Pkg
+Pkg.add("PyCall")
 Pkg.build("PyCall")
 Pkg.add("PyPlot")
 ```
-or follow the instructions for OSX at https://github.com/JuliaPy/PyPlot.jl
-Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.11/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.x, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
-
-
-
-
 
 ## Package Installation
 The package is tested against Julia 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
