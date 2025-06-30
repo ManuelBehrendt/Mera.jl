@@ -80,10 +80,6 @@ We are developing **unit-test** and **end-to-end** testing strategies to encount
 [![Julia1.10](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml)| ubuntu-latest, macOS-latest |
 
 
-
-
-
-
 ## Julia Installation
 
 - Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
@@ -137,12 +133,11 @@ using Pkg
 Pkg.update("Mera")
 ```
 
+## Reproducible Research 
+Julia ensures research verification and reproducibility through its sophisticated dual-file dependency management system. Each project generates two complementary files: `Project.toml`, which specifies direct dependencies with version compatibility constraints (e.g., "0.5" meaning "≥0.5.0 and <0.6.0" following semantic versioning rules), and `Manifest.toml`, which locks the exact versions of all dependencies—both direct and indirect—that were resolved and installed.
+This dual approach provides both flexibility and precision: Project.toml defines version ranges that are compatible with your research, while Manifest.toml creates a complete snapshot, ensuring identical [Julia environments](https://pkgdocs.julialang.org/v1.11/environments/).
 
-## Reproducibility
-Reproducibility is an essential requirement of the scientific process. Therefore, I recommend working with environments.
-Create independent projects that contain their list of used package dependencies and their versions.
-The possibility of creating projects ensures reproducibility of your programs on your or other platforms if, e.g. the code is shared (toml-files are added to the project folder). For more information see [Julia environments]([https://julialang.github.io/Pkg.jl/v1.11/environments/](https://pkgdocs.julialang.org/v1.11/environments/)).
-In order to create a new project "activate" your working directory:
+In order to create a new project "activate" your working directory in the REPL:
 
 ```julia
 shell> cd MyProject
@@ -150,11 +145,19 @@ shell> cd MyProject
 
 (v1.11) pkg> activate .
 ```
-
 Now add packages like Mera and PyPlot in the favored version:
 
 ```julia
 (MyProject) pkg> add Package
+```
+
+
+ By sharing both files through version control, collaborators can recreate the precise computational setup using the following:
+
+```julia
+(v1.11) using Pkg
+(v1.11) Pkg.activate(".")
+(v1.11) Pkg.instantiate()
 ```
 
 ## Help and Documentation
