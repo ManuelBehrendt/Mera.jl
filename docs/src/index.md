@@ -68,9 +68,8 @@ ENV["PYTHON"] = ""  # Let PyCall use Conda's Python
 Pkg.build("PyCall")
 Pkg.add("PyPlot")
 ```
+or follow the instructions for OSX at https://github.com/JuliaPy/PyPlot.jl
 Another possibility is  to install/pin the package PyCall@1.92.3 ! https://pkgdocs.julialang.org/v1.11/managing-packages/#Pinning-a-package . If you encounter any problems with Julia 1.x, try the binary *macOS x86 (Intel or Rosetta)* instead of *macOS (Apple Silicon)*.
-
-
 
 
 
