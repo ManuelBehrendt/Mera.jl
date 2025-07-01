@@ -3,14 +3,14 @@
 using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
-info = getinfo(400, &quot;../../testing/simulations/manu_sim_sf_L14&quot;);
-particles = getparticles(info, :mass); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:29:31.468
+info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14&quot;);
+particles = getparticles(info, :mass); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:04.066
 
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55.041
-ctime: 2019-11-01T17:35:21.051
-=======================================================
+mtime: 2018-09-05T09:51:55
+ctime: 2025-06-29T20:06:45.267
+=======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
@@ -31,19 +31,21 @@ particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
 - Ndm:      2.547000e+03 
-particle variables: (:vx, :vy, :vz, :mass, :birth)
+particle-variables: 5  --&gt; (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
-clumps:        true
+rt:            false
+-------------------------------------------------------
+clumps:           true
 clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
 -------------------------------------------------------
-namelist-file: false
+namelist-file:    false
 timer-file:       false
 compilation-file: true
 makefile:         true
 patchfile:        true
-=======================================================
+=======================================================
 
-[Mera]: Get particle data: 2020-02-18T23:29:46.476
+[Mera]: Get particle data: 2025-06-30T20:24:04.247
 
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,) 
@@ -55,14 +57,14 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 
 
 
-Reading data...100%|████████████████████████████████████| Time: 0:00:03
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:19
 
 
 Found 5.089390e+05 particles
-Memory used for data table :19.4152889251709 MB
+Memory used for data table :19.415205001831055 MB
 -------------------------------------------------------</code></pre><h2 id="Cuboid-Region"><a class="docs-heading-anchor" href="#Cuboid-Region">Cuboid Region</a><a id="Cuboid-Region-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region" title="Permalink"></a></h2><h3 id="Create-projections-of-the-full-box:"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:">Create projections of the full box:</a><a id="Create-projections-of-the-full-box:-1"></a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:" title="Permalink"></a></h3><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
-proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><p>The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field cextent gives the extent related to a given center (default: [0.,0.,0.]).</p><pre><code class="language-julia hljs">propertynames(proj_z)</code></pre><pre><code class="nohighlight hljs">(:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :boxlen, :scale, :info)</code></pre><h4 id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Cuboid Region: The red lines show the region that we want to cutout as a sub-region from the full data:</a><a id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><p>The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field cextent gives the extent related to a given center (default: [0.,0.,0.]).</p><pre><code class="language-julia hljs">propertynames(proj_z)</code></pre><pre><code class="nohighlight hljs">(:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :scale, :info)</code></pre><h4 id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:">Cuboid Region: The red lines show the region that we want to cutout as a sub-region from the full data:</a><a id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cutout-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h4><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 
 subplot(1,3,1)
@@ -84,12 +86,12 @@ im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.r
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_9_0.png" alt="png"/></p><h4 id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles">Cuboid Region: Cutout the data assigned to the object <code>particles</code></a><a id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation &#39;[0:1]&#39; (default) or physical length-units, defined in e.g. info.scale :</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :cuboid,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_9_0.png" alt="png"/></p><h4 id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles">Cuboid Region: Cutout the data assigned to the object <code>particles</code></a><a id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Note: The selected regions can be given relative to a user given center or to the box corner <code>[0., 0., 0.]</code> by default. The user can choose between standard notation <code>[0:1]</code> (default) or physical length-units, defined in e.g. info.scale :</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :cuboid,
                                     xrange=[-4., 0.], 
                                     yrange=[-15. ,15.], 
                                     zrange=[-2. ,2.],
                                     center=[:boxcenter],
-                                    range_unit=:kpc );</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:10.393
+                                    range_unit=:kpc );</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:24.755
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -98,7 +100,7 @@ xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
-Memory used for data table :10.259977340698242 MB
+Memory used for data table :10.259893417358398 MB
 -------------------------------------------------------</code></pre><p>The function <code>subregion</code> creates a new object with the same type as the object created by the function <code>getparticles</code> :</p><pre><code class="language-julia hljs">typeof(part_subregion)</code></pre><pre><code class="nohighlight hljs">PartDataType</code></pre><h4 id="Cuboid-Region:-Projections-of-the-sub-region."><a class="docs-heading-anchor" href="#Cuboid-Region:-Projections-of-the-sub-region.">Cuboid Region: Projections of the sub-region.</a><a id="Cuboid-Region:-Projections-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Projections-of-the-sub-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=10, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=10, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=10, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -126,7 +128,7 @@ cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
                                     zrange=[-2. ,2.],
                                     center=[24.,24.,24.],
                                     range_unit=:kpc,
-                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:12.491
+                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:25.248
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -135,7 +137,7 @@ xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
-Memory used for data table :9.156118392944336 MB
+Memory used for data table :9.156034469604492 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -190,7 +192,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_25_0.png"
                             height=2.,
                             range_unit=:kpc, 
                             center=[13.,:bc,:bc],
-                            direction=:z);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:15.671
+                            direction=:z);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:26.016
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -201,7 +203,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :578.951171875 KB
+Memory used for data table :578.865234375 KB
 -------------------------------------------------------</code></pre><h4 id="Cylindrical-Region:-Projections-of-the-sub-region."><a class="docs-heading-anchor" href="#Cylindrical-Region:-Projections-of-the-sub-region.">Cylindrical Region: Projections of the sub-region.</a><a id="Cylindrical-Region:-Projections-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Projections-of-the-sub-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=10, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=10, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=10, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -256,7 +258,7 @@ cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
                                     range_unit=:kpc, 
                                     center=[ (24. -11.),:bc,:bc],
                                     direction=:z,
-                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:19.162
+                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:26.678
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -267,7 +269,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :18.8507137298584 MB
+Memory used for data table :18.850629806518555 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -321,7 +323,7 @@ ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_42_0.png" alt="png"/></p><h4 id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles">Spherical Region: Cutout the data assigned to the object <code>particles</code></a><a id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Select the radius of the sphere in the unit &quot;kpc&quot;, relative to the given center [13., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :sphere, 
                             radius=10.,
                             range_unit=:kpc, 
-                            center=[(24. -11.),24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:22.122
+                            center=[(24. -11.),24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:27.501
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -331,7 +333,7 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 
 Radius: 10.0 [kpc]
-Memory used for data table :8.807950973510742 MB
+Memory used for data table :8.807867050170898 MB
 -------------------------------------------------------</code></pre><h4 id="Spherical-Region:-Projections-of-the-sub-region."><a class="docs-heading-anchor" href="#Spherical-Region:-Projections-of-the-sub-region.">Spherical Region: Projections of the sub-region.</a><a id="Spherical-Region:-Projections-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Projections-of-the-sub-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -361,7 +363,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_47_0.png"
                             radius=10.,
                             range_unit=:kpc, 
                             center=[(24. -11.),24.,24.], 
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:23.142
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:27.882
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -371,7 +373,7 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 
 Radius: 10.0 [kpc]
-Memory used for data table :10.608144760131836 MB
+Memory used for data table :10.608060836791992 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -397,30 +399,29 @@ im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.r
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_51_0.png" alt="png"/></p><h2 id="Combined/Nested/Shell-Sub-Regions"><a class="docs-heading-anchor" href="#Combined/Nested/Shell-Sub-Regions">Combined/Nested/Shell Sub-Regions</a><a id="Combined/Nested/Shell-Sub-Regions-1"></a><a class="docs-heading-anchor-permalink" href="#Combined/Nested/Shell-Sub-Regions" title="Permalink"></a></h2><h4 id="The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)"><a class="docs-heading-anchor" href="#The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)">The sub-region and shell functions can be used in any combination with each other! (Combined with overlapping ranges or nested)</a><a id="The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)-1"></a><a class="docs-heading-anchor-permalink" href="#The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)" title="Permalink"></a></h4><p>One Example:</p><pre><code class="language-julia hljs">comb_region = subregion(particles, :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
-comb_region2 = subregion(comb_region, :sphere, radius=12., center=[40.,24.,24.], range_unit=:kpc, inverse=true, verbose=false)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_51_0.png" alt="png"/></p><h2 id="Combined/Nested/Shell-Sub-Regions"><a class="docs-heading-anchor" href="#Combined/Nested/Shell-Sub-Regions">Combined/Nested/Shell Sub-Regions</a><a id="Combined/Nested/Shell-Sub-Regions-1"></a><a class="docs-heading-anchor-permalink" href="#Combined/Nested/Shell-Sub-Regions" title="Permalink"></a></h2><h4 id="The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)"><a class="docs-heading-anchor" href="#The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)">The sub-region and shell functions can be used in any combination with each other! (Combined with overlapping ranges or nested)</a><a id="The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)-1"></a><a class="docs-heading-anchor-permalink" href="#The-sub-region-and-shell-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)" title="Permalink"></a></h4><p>One Example:</p><pre><code class="language-julia hljs">comb_region  = subregion(particles,    :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
+comb_region2 = subregion(comb_region,  :sphere, radius=12., center=[40.,24.,24.], range_unit=:kpc, inverse=true, verbose=false)
 comb_region3 = subregion(comb_region2, :sphere, radius=12., center=[8.,24.,24.], range_unit=:kpc, inverse=true, verbose=false);
 comb_region4 = subregion(comb_region3, :sphere, radius=12., center=[24.,5.,24.], range_unit=:kpc, inverse=true, verbose=false);
-comb_region5 = subregion(comb_region4, :sphere, radius=12., center=[24.,43.,24.], range_unit=:kpc, inverse=true, verbose=false);</code></pre><pre><code class="language-julia hljs">proj_z = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
-proj_y = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter],direction=:y, verbose=false);
-proj_x = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter],direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+comb_region5 = subregion(comb_region4, :sphere, radius=12., center=[24.,43.,24.], range_unit=:kpc, inverse=true, verbose=false);</code></pre><pre><code class="language-julia hljs">proj_z = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcenter],direction=:z, verbose=false);
+proj_y = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcenter],direction=:y, verbose=false);
+proj_x = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcenter],direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
-theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;)#, extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;y [kpc]&quot;)
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;) #, extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;)#, extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_57_0.png" alt="png"/></p><h2 id="Cylindrical-Shell"><a class="docs-heading-anchor" href="#Cylindrical-Shell">Cylindrical Shell</a><a id="Cylindrical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell" title="Permalink"></a></h2><h4 id="Create-projections-of-the-full-box:-4"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:-4">Create projections of the full box:</a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:-4" title="Permalink"></a></h4><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
@@ -455,7 +456,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_62_0.png"
                                 radius=[5.,10.], 
                                 height=2., 
                                 range_unit=:kpc, 
-                                center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:28.41
+                                center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:29.363
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -468,7 +469,7 @@ Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :7.282835006713867 MB
+Memory used for data table :7.282751083374023 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -502,7 +503,7 @@ cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
                                 height=2., 
                                 range_unit=:kpc, 
                                 center=[:boxcenter],
-                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:30.228
+                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:29.804
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -515,7 +516,7 @@ Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :12.133260726928711 MB
+Memory used for data table :12.133176803588867 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -575,7 +576,7 @@ ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_75_0.png" alt="png"/></p><h4 id="Spherical-Shell:"><a class="docs-heading-anchor" href="#Spherical-Shell:">Spherical Shell:</a><a id="Spherical-Shell:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:" title="Permalink"></a></h4><p>Select the inner and outer radius of the spherical shell in unit &quot;kpc&quot;, relative to the box center [24., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = shellregion( particles, :sphere,
                                 radius=[5.,10.],
                                 range_unit=:kpc, 
-                                center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:34.32
+                                center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:30.864
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -587,7 +588,7 @@ zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :7.592016220092773 MB
+Memory used for data table :7.59193229675293 MB
 -------------------------------------------------------</code></pre><h4 id="Spherical-Shell:-Projections-of-the-shell-region."><a class="docs-heading-anchor" href="#Spherical-Shell:-Projections-of-the-shell-region.">Spherical Shell: Projections of the shell-region.</a><a id="Spherical-Shell:-Projections-of-the-shell-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:-Projections-of-the-shell-region." title="Permalink"></a></h4><p>The coordinates center is the center of the box:</p><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -620,7 +621,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_80_0.png"
                                 radius=[5.,10.],
                                 range_unit=:kpc, 
                                 center=[:boxcenter], 
-                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2020-02-18T23:30:35.378
+                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:31.433
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -632,7 +633,7 @@ zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :11.824079513549805 MB
+Memory used for data table :11.823995590209961 MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
 proj_y = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, lmax=8, verbose=false);
 proj_x = projection(part_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
@@ -661,4 +662,4 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_84_0.png" alt="png"/></p><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">« Hydro</a><a class="docs-footer-nextpage" href="../../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Monday 30 June 2025 22:25">Monday 30 June 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_84_0.png" alt="png"/></p><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">« Hydro</a><a class="docs-footer-nextpage" href="../../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Tuesday 1 July 2025 08:00">Tuesday 1 July 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
