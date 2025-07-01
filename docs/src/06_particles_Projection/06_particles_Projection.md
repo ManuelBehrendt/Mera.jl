@@ -146,7 +146,7 @@ projection()
 
 ## Projection of a Single Quantity in Different Directions (z,y,x)
 
-Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]) on a grid corresponding to level=9. 
+Here we project the surface density in the z-direction of the data within a particular vertical range (domain=`[0:`1]`) on a grid corresponding to level=9. 
 Pass any object of *PartDataType* (here: "particles") to the *projection*-function and select a variable by a Symbol (here: :sd = :surfacedensity = :Σ in Msol/pc^3)
 
 
@@ -474,7 +474,7 @@ The following fields are helpful for further calculations or plots.
 
 
 ```julia
-projvel_z.ranges # normalized to the domain=[0:1]
+projvel_z.ranges # normalized to the domain=`[0:1]`
 ```
 
 
