@@ -1,5 +1,6 @@
 # Save/Convert/Load MERA-Files
 The RAMSES simulation data can be stored and accessed from files in the JLD2 file format.
+In our high-resolution galaxy simulations, which utilize more than 5,000 cores, we find that using compressed Mera files significantly reduces the space required—approximately five times less—and allows for data reading to be 31 times faster compared to the original RAMSES files. See the presentation for more details: https://github.com/ManuelBehrendt/Notebooks/blob/master/RUM2023/RUM2023.pdf
 
 
 ```julia
@@ -17,13 +18,13 @@ grav = getgravity(info, verbose=false, show_progress=false);
 # the same applies for clump-data...
 ```
 
-    [Mera]: 2025-06-21T22:36:43.204
+    [Mera]: 2025-06-30T19:41:10.099
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -54,7 +55,7 @@ grav = getgravity(info, verbose=false, show_progress=false);
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
@@ -66,7 +67,7 @@ The running number is taken from the original RAMSES outputs.
 savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
 ```
 
-    [Mera]: 2025-06-21T22:39:38.006
+    [Mera]: 2025-06-30T19:43:21.808
     
     
     Not existing file: output_00300.jld2
@@ -93,7 +94,7 @@ The following argument is mandatory: **fmode=:write** </div>
 savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=:write);
 ```
 
-    [Mera]: 2025-06-21T22:39:38.861
+    [Mera]: 2025-06-30T19:43:21.812
     
     
     Create file: output_00300.jld2
@@ -103,12 +104,12 @@ savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=:
     -----------------------------------
     DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
     -----------------------------------
-    I/O mode: write  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xc0, 0xa4, 0xfe, 0x2a, 0x01, 0x00, 0x00, 0x00, 0xc0, 0x26, 0x24, 0x82, 0x01, 0x00, 0x00, 0x00, 0xf0, 0xe3, 0xae], false)
+    I/O mode: write  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     -----------------------------------
     CodecLz4  0.4.6
     JLD2  0.5.13
     CodecBzip2  0.8.5
-    Mera  1.4.5
+    Mera  1.6.0
     CodecZlib  0.7.8
     -----------------------------------
     Memory size: 2.321 GB (uncompressed)
@@ -125,7 +126,7 @@ savedata(part, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=
 savedata(grav, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=:append);
 ```
 
-    [Mera]: 2025-06-21T22:40:33.359
+    [Mera]: 2025-06-30T19:43:26.941
     
     
     Create file: output_00300.jld2
@@ -135,19 +136,19 @@ savedata(grav, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=
     -----------------------------------
     DataType: particles  -  Data variables: (:level, :x, :y, :z, :id, :family, :tag, :vx, :vy, :vz, :mass, :birth)
     -----------------------------------
-    I/O mode: append  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xe0, 0x20, 0x71, 0x29, 0x01, 0x00, 0x00, 0x00, 0x70, 0x44, 0xc6, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x90, 0xe3, 0x2a], false)
+    I/O mode: append  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     -----------------------------------
     CodecLz4  0.4.6
     JLD2  0.5.13
     CodecBzip2  0.8.5
-    Mera  1.4.5
+    Mera  1.6.0
     CodecZlib  0.7.8
     -----------------------------------
     Memory size: 38.449 MB (uncompressed)
     Total file size: 1.306 GB
     -----------------------------------
     
-    [Mera]: 2025-06-21T22:40:35.362
+    [Mera]: 2025-06-30T19:43:27.169
     
     
     Create file: output_00300.jld2
@@ -157,12 +158,12 @@ savedata(grav, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=
     -----------------------------------
     DataType: gravity  -  Data variables: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
     -----------------------------------
-    I/O mode: append  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], false)
+    I/O mode: append  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     -----------------------------------
     CodecLz4  0.4.6
     JLD2  0.5.13
     CodecBzip2  0.8.5
-    Mera  1.4.5
+    Mera  1.6.0
     CodecZlib  0.7.8
     -----------------------------------
     Memory size: 1.688 GB (uncompressed)
@@ -180,48 +181,48 @@ savedata(grav, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", fmode=
 vd = viewdata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/")
 ```
 
-    [Mera]: 2025-06-21T22:40:39.995
+    [Mera]: 2025-06-30T19:43:30.379
     
     Mera-file output_00300.jld2 contains:
     
     Datatype: particles
     merafile_version: 1.0
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xe0, 0x20, 0x71, 0x29, 0x01, 0x00, 0x00, 0x00, 0x70, 0x44, 0xc6, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x90, 0xe3, 0x2a], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     CodecZlib: VersionNumber[v"0.7.8"]
     merafile_version: 1.0
     JLD2: VersionNumber[v"0.5.13"]
     CodecBzip2: VersionNumber[v"0.8.5"]
     JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
     CodecLz4: VersionNumber[v"0.4.6"]
-    Mera: VersionNumber[v"1.4.5"]
+    Mera: VersionNumber[v"1.6.0"]
     -------------------------
     Memory: 38.44882392883301 MB (uncompressed)
     
     
     Datatype: gravity
     merafile_version: 1.0
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     CodecZlib: VersionNumber[v"0.7.8"]
     merafile_version: 1.0
     JLD2: VersionNumber[v"0.5.13"]
     CodecBzip2: VersionNumber[v"0.8.5"]
     JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
     CodecLz4: VersionNumber[v"0.4.6"]
-    Mera: VersionNumber[v"1.4.5"]
+    Mera: VersionNumber[v"1.6.0"]
     -------------------------
     Memory: 1.68808214366436 GB (uncompressed)
     
     
     Datatype: hydro
     merafile_version: 1.0
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xc0, 0xa4, 0xfe, 0x2a, 0x01, 0x00, 0x00, 0x00, 0xc0, 0x26, 0x24, 0x82, 0x01, 0x00, 0x00, 0x00, 0xf0, 0xe3, 0xae], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     CodecZlib: VersionNumber[v"0.7.8"]
     merafile_version: 1.0
     JLD2: VersionNumber[v"0.5.13"]
     CodecBzip2: VersionNumber[v"0.8.5"]
     JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
     CodecLz4: VersionNumber[v"0.4.6"]
-    Mera: VersionNumber[v"1.4.5"]
+    Mera: VersionNumber[v"1.6.0"]
     -------------------------
     Memory: 2.3211056170985103 GB (uncompressed)
     
@@ -259,7 +260,7 @@ Get a detailed tree-view of the data-file:
 vd = viewdata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", showfull=true)
 ```
 
-    [Mera]: 2025-06-21T22:40:42.532
+    [Mera]: 2025-06-30T19:43:30.446
     
     Mera-file output_00300.jld2 contains:
     
@@ -314,42 +315,42 @@ vd = viewdata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", sh
     
     Datatype: particles
     merafile_version: 1.0
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xe0, 0x20, 0x71, 0x29, 0x01, 0x00, 0x00, 0x00, 0x70, 0x44, 0xc6, 0x2c, 0x01, 0x00, 0x00, 0x00, 0x90, 0xe3, 0x2a], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     CodecZlib: VersionNumber[v"0.7.8"]
     merafile_version: 1.0
     JLD2: VersionNumber[v"0.5.13"]
     CodecBzip2: VersionNumber[v"0.8.5"]
     JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
     CodecLz4: VersionNumber[v"0.4.6"]
-    Mera: VersionNumber[v"1.4.5"]
+    Mera: VersionNumber[v"1.6.0"]
     -------------------------
     Memory: 38.44882392883301 MB (uncompressed)
     
     
     Datatype: gravity
     merafile_version: 1.0
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     CodecZlib: VersionNumber[v"0.7.8"]
     merafile_version: 1.0
     JLD2: VersionNumber[v"0.5.13"]
     CodecBzip2: VersionNumber[v"0.8.5"]
     JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
     CodecLz4: VersionNumber[v"0.4.6"]
-    Mera: VersionNumber[v"1.4.5"]
+    Mera: VersionNumber[v"1.6.0"]
     -------------------------
     Memory: 1.68808214366436 GB (uncompressed)
     
     
     Datatype: hydro
     merafile_version: 1.0
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xc0, 0xa4, 0xfe, 0x2a, 0x01, 0x00, 0x00, 0x00, 0xc0, 0x26, 0x24, 0x82, 0x01, 0x00, 0x00, 0x00, 0xf0, 0xe3, 0xae], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     CodecZlib: VersionNumber[v"0.7.8"]
     merafile_version: 1.0
     JLD2: VersionNumber[v"0.5.13"]
     CodecBzip2: VersionNumber[v"0.8.5"]
     JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
     CodecLz4: VersionNumber[v"0.4.6"]
-    Mera: VersionNumber[v"1.4.5"]
+    Mera: VersionNumber[v"1.6.0"]
     -------------------------
     Memory: 2.3211056170985103 GB (uncompressed)
     
@@ -381,14 +382,14 @@ The following function **infodata** is comparable to **getinfo()** used for the 
 info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
 ```
 
-    [Mera]: 2025-06-21T22:40:42.775
+    [Mera]: 2025-06-30T19:43:30.522
     
     Use datatype: hydro
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -419,7 +420,7 @@ info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
@@ -430,14 +431,14 @@ In this case, it loaded the **InfoDataType** from the **hydro** data. Choose a d
 info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", :particles);
 ```
 
-    [Mera]: 2025-06-21T22:40:43.264
+    [Mera]: 2025-06-30T19:43:30.535
     
     Use datatype: particles
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -468,7 +469,7 @@ info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", 
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
@@ -481,7 +482,7 @@ info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", 
 gas = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", :hydro);
 ```
 
-    [Mera]: 2025-06-21T22:40:43.330
+    [Mera]: 2025-06-30T19:43:30.547
     
     Open Mera-file output_00300.jld2:
     
@@ -512,7 +513,7 @@ typeof(gas)
 part = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", :particles);
 ```
 
-    [Mera]: 2025-06-21T22:40:46.833
+    [Mera]: 2025-06-30T19:43:32.900
     
     Open Mera-file output_00300.jld2:
     
@@ -550,7 +551,7 @@ gas = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", :
                     range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T22:40:47.294
+    [Mera]: 2025-06-30T19:43:33.043
     
     Open Mera-file output_00300.jld2:
     
@@ -577,7 +578,7 @@ cvd = convertdata(300, path="/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"
                   fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
 ```
 
-    [Mera]: 2025-06-21T22:41:32.730
+    [Mera]: 2025-06-30T19:43:37.039
     
     Requested datatypes: [:hydro, :gravity, :particles, :clumps]
     
@@ -589,26 +590,26 @@ cvd = convertdata(300, path="/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"
     
     reading/writing lmax: 10 of 10
     -----------------------------------
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x96, 0x25], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x26, 0xca, 0xa3, 0x51, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], false)
     -----------------------------------
     - hydro
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:59
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:58
 
 
     - gravity
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:55
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:54
 
 
     - particles
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
 
 
     
@@ -638,7 +639,7 @@ cvd
     Dict{Any, Any} with 3 entries:
       "viewdata"     => Dict{Any, Any}("particles"=>Dict{Any, Any}("versions"=>Dict…
       "size"         => Dict{Any, Any}("folder"=>Any[6101111412, "Bytes"], "selecte…
-      "TimerOutputs" => Dict{Any, Any}("writing"=>─────────────────────────────────[0m…
+      "TimerOutputs" => Dict{Any, Any}("writing"=>─────────────────────────────────…
 
 
 
@@ -650,17 +651,17 @@ cvd["TimerOutputs"]["reading"]
 
 
 
-    ──────────────────────────────────────────────────────────────────────
-                                 Time                    Allocations      
+    ──────────────────────────────────────────────────────────────────────
+                                 Time                    Allocations      
                         ───────────────────────   ────────────────────────
-     Tot / % measured:        174s /  94.4%           82.3GiB /  83.0%    
+     Tot / % measured:        140s /  93.4%           58.9GiB /  78.2%    
     
     Section     ncalls     time    %tot     avg     alloc    %tot      avg
     ──────────────────────────────────────────────────────────────────────
-    hydro            1    96.6s   58.7%   96.6s   47.9GiB   70.2%  47.9GiB
-    gravity          1    58.9s   35.8%   58.9s   19.4GiB   28.4%  19.4GiB
-    particles        1    8.98s    5.5%   8.98s   0.98GiB    1.4%  0.98GiB
-    ──────────────────────────────────────────────────────────────────────
+    hydro            1    64.4s   49.4%   64.4s   26.2GiB   57.0%  26.2GiB
+    gravity          1    58.1s   44.5%   58.1s   19.4GiB   42.1%  19.4GiB
+    particles        1    7.90s    6.1%   7.90s    408MiB    0.9%   408MiB
+    ──────────────────────────────────────────────────────────────────────
 
 
 
@@ -672,17 +673,17 @@ cvd["TimerOutputs"]["writing"]
 
 
 
-    ──────────────────────────────────────────────────────────────────────
-                                 Time                    Allocations      
+    ──────────────────────────────────────────────────────────────────────
+                                 Time                    Allocations      
                         ───────────────────────   ────────────────────────
-     Tot / % measured:        174s /   5.0%           82.3GiB /  17.0%    
+     Tot / % measured:        140s /   6.5%           58.9GiB /  21.8%    
     
     Section     ncalls     time    %tot     avg     alloc    %tot      avg
     ──────────────────────────────────────────────────────────────────────
-    hydro            1    5.01s   56.9%   5.01s   7.18GiB   51.4%  7.18GiB
-    gravity          1    3.42s   38.9%   3.42s   6.63GiB   47.5%  6.63GiB
-    particles        1    368ms    4.2%   368ms    159MiB    1.1%   159MiB
-    ──────────────────────────────────────────────────────────────────────
+    hydro            1    5.13s   56.8%   5.13s   7.38GiB   57.3%  7.38GiB
+    gravity          1    3.69s   40.9%   3.69s   5.34GiB   41.5%  5.34GiB
+    particles        1    207ms    2.3%   207ms    151MiB    1.1%   151MiB
+    ──────────────────────────────────────────────────────────────────────
 
 
 
@@ -705,7 +706,7 @@ to = TimerOutput();
 end;
 ```
 
-    [Mera]: 2025-06-21T22:44:27.384
+    [Mera]: 2025-06-30T19:45:56.745
     
     Open Mera-file output_00300.jld2:
     
@@ -717,7 +718,7 @@ end;
     Memory used for data table :2.321105550043285 GB
     -------------------------------------------------------
     
-    [Mera]: 2025-06-21T22:44:34.296
+    [Mera]: 2025-06-30T19:46:03.017
     
     Open Mera-file output_00300.jld2:
     
@@ -739,17 +740,17 @@ to
 
 
 
-    ────────────────────────────────────────────────────────────────────────
-                                   Time                    Allocations      
+    ────────────────────────────────────────────────────────────────────────
+                                   Time                    Allocations      
                           ───────────────────────   ────────────────────────
-      Tot / % measured:        7.22s /  97.5%           14.0GiB /  99.7%    
+      Tot / % measured:        6.48s /  99.5%           14.0GiB / 100.0%    
     
     Section       ncalls     time    %tot     avg     alloc    %tot      avg
     ────────────────────────────────────────────────────────────────────────
-    MERA               1    7.05s  100.0%   7.05s   14.0GiB  100.0%  14.0GiB
-      hydro            1    6.91s   98.1%   6.91s   13.8GiB   98.7%  13.8GiB
-      particles        1    134ms    1.9%   134ms    180MiB    1.3%   180MiB
-    ────────────────────────────────────────────────────────────────────────
+    MERA               1    6.45s  100.0%   6.45s   14.0GiB  100.0%  14.0GiB
+      hydro            1    6.27s   97.3%   6.27s   13.8GiB   98.8%  13.8GiB
+      particles        1    173ms    2.7%   173ms    170MiB    1.2%   170MiB
+    ────────────────────────────────────────────────────────────────────────
 
 
 
@@ -768,7 +769,7 @@ cvd["size"]
     Dict{Any, Any} with 4 entries:
       "folder"   => Any[6101111412, "Bytes"]
       "selected" => Any[6.09885e9, "Bytes"]
-      "ondisc"   => Any[2318210927, "Bytes"]
+      "ondisc"   => Any[2318210919, "Bytes"]
       "used"     => Any[4.34515e9, "Bytes"]
 
 
@@ -784,7 +785,7 @@ println("=======================================================================
 ```
 
     ==============================================================================
-    In this example, the disk space is reduced by a factor of 2.631818934567553 !!
+    In this example, the disk space is reduced by a factor of 2.6318189436497947 !!
     ==============================================================================
 
 
@@ -802,7 +803,7 @@ cvd = convertdata(300, [:hydro, :particles],
                   fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
 ```
 
-    [Mera]: 2025-06-21T22:44:34.761
+    [Mera]: 2025-06-30T19:46:03.195
     
     Requested datatypes: [:hydro, :particles]
     
@@ -814,19 +815,19 @@ cvd = convertdata(300, [:hydro, :particles],
     
     reading/writing lmax: 10 of 10
     -----------------------------------
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xe3, 0x2a], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     -----------------------------------
     - hydro
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:57
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:57
 
 
     - particles
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
 
 
     
@@ -862,7 +863,7 @@ cvd = convertdata(300, [:hydro, :particles], compress=ZlibCompressor(),
                   fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
 ```
 
-    [Mera]: 2025-06-21T22:46:24.922
+    [Mera]: 2025-06-30T19:47:21.352
     
     Requested datatypes: [:hydro, :particles]
     
@@ -880,13 +881,13 @@ cvd = convertdata(300, [:hydro, :particles], compress=ZlibCompressor(),
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:57
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:56
 
 
     - particles
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
 
 
     
@@ -903,7 +904,7 @@ savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/",
             fmode=:write, compress=ZlibCompressor());
 ```
 
-    [Mera]: 2025-06-21T22:48:55.105
+    [Mera]: 2025-06-30T19:49:15.137
     
     
     Create file: output_00300.jld2
@@ -918,7 +919,7 @@ savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/",
     CodecLz4  0.4.6
     JLD2  0.5.13
     CodecBzip2  0.8.5
-    Mera  1.4.5
+    Mera  1.6.0
     CodecZlib  0.7.8
     -----------------------------------
     Memory size: 2.321 GB (uncompressed)
@@ -934,7 +935,7 @@ Get more information about the parameters of the compressor:
 ?ZlibCompressor
 ```
 
-    search: ZlibCompressor ZlibDecompressor GzipCompressor ZlibCompressorStream
+    search: ZlibCompressor ZlibDecompressor GzipCompressor ZlibCompressorStream
     
 
 
@@ -975,7 +976,7 @@ cvd = convertdata(300, [:hydro, :particles], comments=comment,
                   fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/");
 ```
 
-    [Mera]: 2025-06-21T22:49:38.415
+    [Mera]: 2025-06-30T19:49:57.972
     
     Requested datatypes: [:hydro, :particles]
     
@@ -987,19 +988,19 @@ cvd = convertdata(300, [:hydro, :particles], comments=comment,
     
     reading/writing lmax: 10 of 10
     -----------------------------------
-    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xe3, 0x2a], false)
+    Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x0f, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     -----------------------------------
     - hydro
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:57
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:58
 
 
     - particles
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
 
 
     
@@ -1021,7 +1022,7 @@ comment = "The simulation is...."
 savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", comments=comment, fmode=:write);
 ```
 
-    [Mera]: 2025-06-21T22:51:29.166
+    [Mera]: 2025-06-30T19:51:16.013
     
     
     Create file: output_00300.jld2
@@ -1031,12 +1032,12 @@ savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/", comment
     -----------------------------------
     DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
     -----------------------------------
-    I/O mode: write  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xe3, 0x2a], false)
+    I/O mode: write  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx} @0x0000000000000000, Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x90, 0xb3, 0x0d], false)
     -----------------------------------
     CodecLz4  0.4.6
     JLD2  0.5.13
     CodecBzip2  0.8.5
-    Mera  1.4.5
+    Mera  1.6.0
     CodecZlib  0.7.8
     -----------------------------------
     Memory size: 2.321 GB (uncompressed)

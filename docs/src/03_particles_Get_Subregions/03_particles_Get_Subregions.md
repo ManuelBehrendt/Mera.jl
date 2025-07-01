@@ -8,17 +8,17 @@ using Mera, PyPlot
 using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
-info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14");
 particles = getparticles(info, :mass); 
 ```
 
-    [Mera]: 2020-02-18T23:29:31.468
+    [Mera]: 2025-06-30T20:24:04.066
     
     Code: RAMSES
     output [400] summary:
-    mtime: 2018-09-05T09:51:55.041
-    ctime: 2019-11-01T17:35:21.051
-    =======================================================
+    mtime: 2018-09-05T09:51:55
+    ctime: 2025-06-29T20:06:45.267
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -39,19 +39,21 @@ particles = getparticles(info, :mass);
     - Npart:    5.091500e+05 
     - Nstars:   5.066030e+05 
     - Ndm:      2.547000e+03 
-    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
-    clumps:        true
+    rt:            false
+    -------------------------------------------------------
+    clumps:           true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
     -------------------------------------------------------
-    namelist-file: false
+    namelist-file:    false
     timer-file:       false
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: Get particle data: 2020-02-18T23:29:46.476
+    [Mera]: Get particle data: 2025-06-30T20:24:04.247
     
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(4,) = (:mass,) 
@@ -63,11 +65,11 @@ particles = getparticles(info, :mass);
     
 
 
-    Reading data...100%|████████████████████████████████████| Time: 0:00:03
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:19
 
 
     Found 5.089390e+05 particles
-    Memory used for data table :19.4152889251709 MB
+    Memory used for data table :19.415205001831055 MB
     -------------------------------------------------------
     
 
@@ -93,7 +95,7 @@ propertynames(proj_z)
 
 
 
-    (:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :boxlen, :scale, :info)
+    (:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :scale, :info)
 
 
 
@@ -134,7 +136,7 @@ cb = colorbar(im, label=labeltext);
 
 #### Cuboid Region: Cutout the data assigned to the object `particles`
 
-Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation '[0:1]' (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
 
 
 ```julia
@@ -146,7 +148,7 @@ part_subregion = subregion( particles, :cuboid,
                                     range_unit=:kpc );
 ```
 
-    [Mera]: 2020-02-18T23:30:10.393
+    [Mera]: 2025-06-30T20:24:24.755
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -155,7 +157,7 @@ part_subregion = subregion( particles, :cuboid,
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
-    Memory used for data table :10.259977340698242 MB
+    Memory used for data table :10.259893417358398 MB
     -------------------------------------------------------
     
 
@@ -227,7 +229,7 @@ part_subregion = subregion( particles, :cuboid,
                                     inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:30:12.491
+    [Mera]: 2025-06-30T20:24:25.248
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -236,7 +238,7 @@ part_subregion = subregion( particles, :cuboid,
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
-    Memory used for data table :9.156118392944336 MB
+    Memory used for data table :9.156034469604492 MB
     -------------------------------------------------------
     
 
@@ -340,7 +342,7 @@ part_subregion = subregion(particles, :cylinder,
                             direction=:z);
 ```
 
-    [Mera]: 2020-02-18T23:30:15.671
+    [Mera]: 2025-06-30T20:24:26.016
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -351,7 +353,7 @@ part_subregion = subregion(particles, :cylinder,
     
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :578.951171875 KB
+    Memory used for data table :578.865234375 KB
     -------------------------------------------------------
     
 
@@ -456,7 +458,7 @@ part_subregion = subregion(particles, :cylinder,
                                     inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:30:19.162
+    [Mera]: 2025-06-30T20:24:26.678
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -467,7 +469,7 @@ part_subregion = subregion(particles, :cylinder,
     
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :18.8507137298584 MB
+    Memory used for data table :18.850629806518555 MB
     -------------------------------------------------------
     
 
@@ -570,7 +572,7 @@ part_subregion = subregion( particles, :sphere,
                             center=[(24. -11.),24.,24.]);
 ```
 
-    [Mera]: 2020-02-18T23:30:22.122
+    [Mera]: 2025-06-30T20:24:27.501
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -580,7 +582,7 @@ part_subregion = subregion( particles, :sphere,
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     
     Radius: 10.0 [kpc]
-    Memory used for data table :8.807950973510742 MB
+    Memory used for data table :8.807867050170898 MB
     -------------------------------------------------------
     
 
@@ -640,7 +642,7 @@ part_subregion = subregion( particles, :sphere,
                             inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:30:23.142
+    [Mera]: 2025-06-30T20:24:27.882
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -650,7 +652,7 @@ part_subregion = subregion( particles, :sphere,
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     
     Radius: 10.0 [kpc]
-    Memory used for data table :10.608144760131836 MB
+    Memory used for data table :10.608060836791992 MB
     -------------------------------------------------------
     
 
@@ -704,8 +706,8 @@ One Example:
 
 
 ```julia
-comb_region = subregion(particles, :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
-comb_region2 = subregion(comb_region, :sphere, radius=12., center=[40.,24.,24.], range_unit=:kpc, inverse=true, verbose=false)
+comb_region  = subregion(particles,    :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
+comb_region2 = subregion(comb_region,  :sphere, radius=12., center=[40.,24.,24.], range_unit=:kpc, inverse=true, verbose=false)
 comb_region3 = subregion(comb_region2, :sphere, radius=12., center=[8.,24.,24.], range_unit=:kpc, inverse=true, verbose=false);
 comb_region4 = subregion(comb_region3, :sphere, radius=12., center=[24.,5.,24.], range_unit=:kpc, inverse=true, verbose=false);
 comb_region5 = subregion(comb_region4, :sphere, radius=12., center=[24.,43.,24.], range_unit=:kpc, inverse=true, verbose=false);
@@ -713,31 +715,30 @@ comb_region5 = subregion(comb_region4, :sphere, radius=12., center=[24.,43.,24.]
 
 
 ```julia
-proj_z = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
-proj_y = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter],direction=:y, verbose=false);
-proj_x = projection(comb_region5, :sd, unit=:Msol_pc2, center=[:boxcenter],direction=:x, verbose=false);
+proj_z = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcenter],direction=:z, verbose=false);
+proj_y = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcenter],direction=:y, verbose=false);
+proj_x = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcenter],direction=:x, verbose=false);
 ```
 
 
 ```julia
 figure(figsize=(15.5, 3.5))
 labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
-theta = LinRange(-pi, pi, 100)
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower")#, extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower") #, extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower")#, extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
@@ -811,7 +812,7 @@ part_subregion = shellregion( particles, :cylinder,
                                 center=[:boxcenter]);
 ```
 
-    [Mera]: 2020-02-18T23:30:28.41
+    [Mera]: 2025-06-30T20:24:29.363
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -824,7 +825,7 @@ part_subregion = shellregion( particles, :cylinder,
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :7.282835006713867 MB
+    Memory used for data table :7.282751083374023 MB
     -------------------------------------------------------
     
 
@@ -885,7 +886,7 @@ part_subregion = shellregion( particles, :cylinder,
                                 inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:30:30.228
+    [Mera]: 2025-06-30T20:24:29.804
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -898,7 +899,7 @@ part_subregion = shellregion( particles, :cylinder,
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :12.133260726928711 MB
+    Memory used for data table :12.133176803588867 MB
     -------------------------------------------------------
     
 
@@ -1009,7 +1010,7 @@ part_subregion = shellregion( particles, :sphere,
                                 center=[24.,24.,24.]);
 ```
 
-    [Mera]: 2020-02-18T23:30:34.32
+    [Mera]: 2025-06-30T20:24:30.864
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1021,7 +1022,7 @@ part_subregion = shellregion( particles, :sphere,
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
-    Memory used for data table :7.592016220092773 MB
+    Memory used for data table :7.59193229675293 MB
     -------------------------------------------------------
     
 
@@ -1084,7 +1085,7 @@ part_subregion = shellregion( particles, :sphere,
                                 inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:30:35.378
+    [Mera]: 2025-06-30T20:24:31.433
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1096,7 +1097,7 @@ part_subregion = shellregion( particles, :sphere,
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
-    Memory used for data table :11.824079513549805 MB
+    Memory used for data table :11.823995590209961 MB
     -------------------------------------------------------
     
 

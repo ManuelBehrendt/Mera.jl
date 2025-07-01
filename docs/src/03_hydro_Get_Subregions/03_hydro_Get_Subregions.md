@@ -8,17 +8,17 @@ using Mera, PyPlot
 using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
-info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14")
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14")
 gas  = gethydro(info, :rho, lmax=10, smallr=1e-5); 
 ```
 
-    [Mera]: 2020-02-18T23:23:22.753
+    [Mera]: 2025-06-30T00:09:25.396
     
     Code: RAMSES
     output [400] summary:
-    mtime: 2018-09-05T09:51:55.041
-    ctime: 2019-11-01T17:35:21.051
-    =======================================================
+    mtime: 2018-09-05T09:51:55
+    ctime: 2025-06-29T20:06:45.267
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -39,19 +39,21 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     - Npart:    5.091500e+05 
     - Nstars:   5.066030e+05 
     - Ndm:      2.547000e+03 
-    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
-    clumps:        true
+    rt:            false
+    -------------------------------------------------------
+    clumps:           true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
     -------------------------------------------------------
-    namelist-file: false
+    namelist-file:    false
     timer-file:       false
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: Get hydro data: 2020-02-18T23:23:32.417
+    [Mera]: Get hydro data: 2025-06-30T00:09:30.451
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1,) = (:rho,) 
@@ -64,10 +66,10 @@ gas  = gethydro(info, :rho, lmax=10, smallr=1e-5);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:02:49
+    Progress: 100%|█████████████████████████████████████████| Time: 0:02:48
 
 
-    Memory used for data table :186.1558656692505 MB
+    Memory used for data table :186.1557970046997 MB
     -------------------------------------------------------
     
 
@@ -83,9 +85,6 @@ proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verb
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:03
-
-
 The generated objects include, e.g. the extent of the processed domain, that can be used to declare the specific range of the plots, while the field `cextent` gives the extent related to a given center (default: [0.,0.,0.]).
 
 
@@ -96,7 +95,7 @@ propertynames(proj_z)
 
 
 
-    (:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ranges, :extent, :cextent, :ratio, :boxlen, :smallr, :smallc, :scale, :info)
+    (:maps, :maps_unit, :maps_lmax, :maps_weight, :maps_mode, :lmax_projected, :lmin, :lmax, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :smallr, :smallc, :scale, :info)
 
 
 
@@ -137,7 +136,7 @@ cb = colorbar(im, label=labeltext);
 
 #### Cuboid Region: Cutout the data assigned to the object `gas`
 
-Note: The selected regions can be given relative to a user given center or to the box corner '[0., 0., 0.]' by default. The user can choose between standard notation '[0:1]' (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
 
 
 ```julia
@@ -149,7 +148,7 @@ gas_subregion = subregion( gas, :cuboid,
                             range_unit=:kpc);
 ```
 
-    [Mera]: 2020-02-18T23:27:06.861
+    [Mera]: 2025-06-30T00:12:34.008
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -158,7 +157,7 @@ gas_subregion = subregion( gas, :cuboid,
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
-    Memory used for data table :47.87415790557861 MB
+    Memory used for data table :47.87408924102783 MB
     -------------------------------------------------------
     
 
@@ -231,7 +230,7 @@ gas_subregion = subregion( gas, :cuboid,
                             inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:27:09.597
+    [Mera]: 2025-06-30T00:12:36.167
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -240,7 +239,7 @@ gas_subregion = subregion( gas, :cuboid,
     ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
-    Memory used for data table :138.2824068069458 MB
+    Memory used for data table :138.28233814239502 MB
     -------------------------------------------------------
     
 
@@ -251,9 +250,6 @@ proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
-
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
-
 
 
 ```julia
@@ -297,10 +293,6 @@ proj_z = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verb
 proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
-
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
-
 
 #### Cylindrical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
 
@@ -350,7 +342,7 @@ gas_subregion = subregion(  gas, :cylinder,
                             center=[13., :bc, :bc]); # direction=:z, by default
 ```
 
-    [Mera]: 2020-02-18T23:27:24.715
+    [Mera]: 2025-06-30T00:12:39.548
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -361,7 +353,7 @@ gas_subregion = subregion(  gas, :cylinder,
     
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :9.945767402648926 MB
+    Memory used for data table :9.945698738098145 MB
     -------------------------------------------------------
     
 
@@ -471,7 +463,7 @@ gas_subregion = subregion(  gas, :cylinder,
                             inverse=true); # direction=:z, by default
 ```
 
-    [Mera]: 2020-02-18T23:27:29.071
+    [Mera]: 2025-06-30T00:12:41.182
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -482,7 +474,7 @@ gas_subregion = subregion(  gas, :cylinder,
     
     Radius: 3.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :176.2107973098755 MB
+    Memory used for data table :176.2107286453247 MB
     -------------------------------------------------------
     
 
@@ -538,9 +530,6 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
-
-
 #### Spherical Region: The red lines show the region that we want to cutout as a sub-region from the full data:
 
 
@@ -588,7 +577,7 @@ gas_subregion = subregion(  gas, :sphere,
                             center=[13.,:bc,:bc]);
 ```
 
-    [Mera]: 2020-02-18T23:27:42.261
+    [Mera]: 2025-06-30T00:12:44.373
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -598,7 +587,7 @@ gas_subregion = subregion(  gas, :sphere,
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     
     Radius: 10.0 [kpc]
-    Memory used for data table :57.03980731964111 MB
+    Memory used for data table :57.03973865509033 MB
     -------------------------------------------------------
     
 
@@ -658,7 +647,7 @@ gas_subregion = subregion(  gas, :sphere,
                             inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:27:46.433
+    [Mera]: 2025-06-30T00:12:45.460
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -668,7 +657,7 @@ gas_subregion = subregion(  gas, :sphere,
     zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
     
     Radius: 10.0 [kpc]
-    Memory used for data table :129.1167573928833 MB
+    Memory used for data table :129.11668872833252 MB
     -------------------------------------------------------
     
 
@@ -779,9 +768,6 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:02
-
-
 #### Cylindrical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:
 
 
@@ -833,7 +819,7 @@ gas_subregion = shellregion( gas, :cylinder,
                             center=[:boxcenter]);
 ```
 
-    [Mera]: 2020-02-18T23:28:03.834
+    [Mera]: 2025-06-30T00:12:50.089
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -846,7 +832,7 @@ gas_subregion = shellregion( gas, :cylinder,
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :53.790066719055176 MB
+    Memory used for data table :53.789998054504395 MB
     -------------------------------------------------------
     
 
@@ -909,7 +895,7 @@ gas_subregion = shellregion(gas, :cylinder,
                             inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:28:06.945
+    [Mera]: 2025-06-30T00:12:51.056
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -922,7 +908,7 @@ gas_subregion = shellregion(gas, :cylinder,
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
     Height: 2.0 [kpc]
-    Memory used for data table :132.36649799346924 MB
+    Memory used for data table :132.36642932891846 MB
     -------------------------------------------------------
     
 
@@ -981,11 +967,6 @@ proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y,
 proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
 ```
 
-    100%|███████████████████████████████████████████████████| Time: 0:00:02
-    100%|███████████████████████████████████████████████████| Time: 0:00:02
-    100%|███████████████████████████████████████████████████| Time: 0:00:01
-
-
 #### Spherical Shell: The red lines show the shell that we want to cutout as a sub-region from the full data:
 
 
@@ -1036,7 +1017,7 @@ gas_subregion = shellregion(gas, :sphere,
                             center=[24.,24.,24.]);
 ```
 
-    [Mera]: 2020-02-18T23:28:21.357
+    [Mera]: 2025-06-30T00:12:54.150
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1048,7 +1029,7 @@ gas_subregion = shellregion(gas, :sphere,
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
-    Memory used for data table :56.55305194854736 MB
+    Memory used for data table :56.55298328399658 MB
     -------------------------------------------------------
     
 
@@ -1111,7 +1092,7 @@ gas_subregion = shellregion(gas, :sphere,
                             inverse=true);
 ```
 
-    [Mera]: 2020-02-18T23:28:25.267
+    [Mera]: 2025-06-30T00:12:55.288
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1123,7 +1104,7 @@ gas_subregion = shellregion(gas, :sphere,
     Inner radius: 5.0 [kpc]
     Outer radius: 10.0 [kpc]
     Radius diff: 5.0 [kpc]
-    Memory used for data table :129.60351276397705 MB
+    Memory used for data table :129.60344409942627 MB
     -------------------------------------------------------
     
 
