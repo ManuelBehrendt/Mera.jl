@@ -5,16 +5,16 @@
 
 ```julia
 using Mera
-info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14");
 ```
 
-    [Mera]: 2020-02-12T20:41:16.814
+    [Mera]: 2025-06-30T00:00:48.396
     
     Code: RAMSES
     output [400] summary:
-    mtime: 2018-09-05T09:51:55.041
-    ctime: 2019-11-01T17:35:21.051
-    =======================================================
+    mtime: 2018-09-05T09:51:55
+    ctime: 2025-06-29T20:06:45.267
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -35,17 +35,19 @@ info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
     - Npart:    5.091500e+05 
     - Nstars:   5.066030e+05 
     - Ndm:      2.547000e+03 
-    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
-    clumps:        true
+    rt:            false
+    -------------------------------------------------------
+    clumps:           true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
     -------------------------------------------------------
-    namelist-file: false
+    namelist-file:    false
     timer-file:       false
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
@@ -61,7 +63,7 @@ Read the Clumps data from all files of the full box with all existing variables.
 clumps = getclumps(info);
 ```
 
-    [Mera]: Get clump data: 2020-02-12T20:41:23.656
+    [Mera]: Get clump data: 2025-06-30T00:00:48.576
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -69,8 +71,8 @@ clumps = getclumps(info);
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
     Read 12 colums: 
-    Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-    Memory used for data table :61.77734375 KB
+    [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
+    Memory used for data table :61.58203125 KB
     -------------------------------------------------------
     
 
@@ -82,7 +84,7 @@ The memory consumption of the data table is printed at the end. We provide a fun
 usedmemory(clumps);
 ```
 
-    Memory used: 331.672 KB
+    Memory used: 362.237 KB
 
 
 The assigned object is now of type: `ClumpsDataType`:
@@ -127,7 +129,7 @@ supertype( ClumpDataType )
 
 
 
-The data is stored as a **JuliaDB** table and the selected clump variables and parameters are assigned to fields:
+The data is stored with **IndexedTables.jl** and the selected clump variables and parameters are assigned to fields:
 
 
 ```julia
@@ -135,15 +137,15 @@ viewfields(clumps)
 ```
 
     
-    data ==> JuliaDB table: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+    data ==> JuliaDB table: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
     
-    info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :variable_list, :gravity_variable_list, :particles_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :clumps, :sinks, :rt, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+    info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
     
     boxlen	= 48.0
     ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
-    selected_clumpvars	= Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
+    selected_clumpvars	= [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
     
-    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Msol_pc3, :g_cm3, :Msol_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :Ba)
+    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
     
     
 
@@ -178,7 +180,7 @@ data_overview = dataoverview(clumps)
 
     Table with 2 rows, 13 columns:
     Columns:
-    #   colname    type
+    #   colname    type
     ───────────────────
     1   extrema    Any
     2   index      Any
@@ -200,7 +202,7 @@ If the number of columns is relatively long, the table is typically represented 
 
 
 ```julia
-using IndexedTables
+using Mera.IndexedTables
 ```
 
 
@@ -229,8 +231,8 @@ select(data_overview, :mass_cl) * info.scale.Msol
 
 
 
-    2-element Array{Float64,1}:
-     312073.3187055649       
+    2-element Vector{Float64}:
+     312073.3187055649
           8.605166312657958e8
 
 
@@ -277,7 +279,7 @@ clumps.data
 
     Table with 644 rows, 12 columns:
     Columns:
-    #   colname    type
+    #   colname    type
     ──────────────────────
     1   index      Float64
     2   lev        Float64

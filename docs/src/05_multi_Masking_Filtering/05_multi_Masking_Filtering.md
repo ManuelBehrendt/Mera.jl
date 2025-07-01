@@ -10,19 +10,19 @@
 
 ```julia
 using Mera
-info = getinfo(400, "../../testing/simulations/manu_sim_sf_L14");
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14");
 gas       = gethydro(info, lmax=8, smallr=1e-5);  
 particles = getparticles(info)
 clumps    = getclumps(info);
 ```
 
-    [Mera]: 2020-02-08T20:56:19.834
+    [Mera]: 2025-07-01T00:03:42.522
     
     Code: RAMSES
     output [400] summary:
-    mtime: 2018-09-05T09:51:55.041
-    ctime: 2019-11-01T17:35:21.051
-    =======================================================
+    mtime: 2018-09-05T09:51:55
+    ctime: 2025-06-29T20:06:45.267
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -43,19 +43,21 @@ clumps    = getclumps(info);
     - Npart:    5.091500e+05 
     - Nstars:   5.066030e+05 
     - Ndm:      2.547000e+03 
-    particle variables: (:vx, :vy, :vz, :mass, :birth)
+    particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
     -------------------------------------------------------
-    clumps:        true
+    rt:            false
+    -------------------------------------------------------
+    clumps:           true
     clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
     -------------------------------------------------------
-    namelist-file: false
+    namelist-file:    false
     timer-file:       false
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: Get hydro data: 2020-02-08T20:56:27.064
+    [Mera]: Get hydro data: 2025-07-01T00:03:44.766
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -68,13 +70,13 @@ clumps    = getclumps(info);
     Reading data...
 
 
-    100%|███████████████████████████████████████████████████| Time: 0:02:07[39m
+    Progress: 100%|█████████████████████████████████████████| Time: 0:02:38
 
 
-    Memory used for data table :71.28007793426514 MB
+    Memory used for data table :71.27991771697998 MB
     -------------------------------------------------------
     
-    [Mera]: Get particle data: 2020-02-08T20:58:39.435
+    [Mera]: Get particle data: 2025-07-01T00:06:27.050
     
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
@@ -84,11 +86,16 @@ clumps    = getclumps(info);
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
+
+
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:19
+
+
     Found 5.089390e+05 particles
-    Memory used for data table :34.947275161743164 MB
+    Memory used for data table :34.94713020324707 MB
     -------------------------------------------------------
     
-    [Mera]: Get clump data: 2020-02-08T20:58:41.769
+    [Mera]: Get clump data: 2025-07-01T00:06:47.821
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -96,8 +103,8 @@ clumps    = getclumps(info);
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
     Read 12 colums: 
-    Symbol[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-    Memory used for data table :61.77734375 KB
+    [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
+    Memory used for data table :61.58203125 KB
     -------------------------------------------------------
     
 
@@ -123,23 +130,23 @@ select(gas.data, :rho) # JuliaDB
 
 
 
-    849332-element Array{Float64,1}:
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     ⋮                     
+    849332-element Vector{Float64}:
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     ⋮
      0.00010967104288285959
-     0.0001088040126114162 
+     0.0001088040126114162
      0.00010915603617815434
      0.00010917096551347797
      0.00012465438542871006
@@ -164,23 +171,23 @@ getvar(gas, :rho) # MERA
 
 
 
-    849332-element Array{Float64,1}:
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     ⋮                     
+    849332-element Vector{Float64}:
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     ⋮
      0.00010967104288285959
-     0.0001088040126114162 
+     0.0001088040126114162
      0.00010915603617815434
      0.00010917096551347797
      0.00012465438542871006
@@ -207,7 +214,7 @@ select(gas.data, (:rho, :level)) #JuliaDB
 
 
     Table with 849332 rows, 2 columns:
-    rho          level
+    rho          level
     ──────────────────
     1.0e-5       6
     1.0e-5       6
@@ -246,7 +253,7 @@ getvar(gas, [:rho, :level]) # MERA
 
 
 
-    Dict{Any,Any} with 2 entries:
+    Dict{Any, Any} with 2 entries:
       :level => [6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0, 6.0  …  8.0, 8.0, 8.0…
       :rho   => [1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.…
 
@@ -286,23 +293,23 @@ vtuple.rho
 
 
 
-    849332-element Array{Float64,1}:
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     1.0e-5                
-     ⋮                     
+    849332-element Vector{Float64}:
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     1.0e-5
+     ⋮
      0.00010967104288285959
-     0.0001088040126114162 
+     0.0001088040126114162
      0.00010915603617815434
      0.00010917096551347797
      0.00012465438542871006
@@ -332,7 +339,7 @@ filtered_db = filter(p->p.level==6, gas.data ) # JuliaDB
 
     Table with 240956 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -363,7 +370,7 @@ filtered_db = filter(p->p.rho>= density, gas.data ) # JuliaDB
 
     Table with 210 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -412,8 +419,14 @@ sum(mass_filtered_tot)
 
 
 ### Create a New DataSetType from a Filtered Data Table
+The macros @filter is created by Mera and are not included in IndexedTables.jl.
 
 A new `DataSetType` can be constructed for the filtered data table that can be passed to the functions.
+
+
+```julia
+
+```
 
 
 ```julia
@@ -475,11 +488,12 @@ sum(var_filtered) # [Msol]
 
 
 
-    2.750632450062189e9
+    2.7506324500621886e9
 
 
 
 ### Use Pipeline Macros
+The macros @apply and @where are created by Mera and are not included in IndexedTables.jl.
 
 
 ```julia
@@ -502,7 +516,7 @@ sum(var_filtered) # [Msol]
 
 
 
-    2.750632450062189e9
+    2.7506324500621886e9
 
 
 
@@ -537,7 +551,7 @@ sum(var_filtered) # [Msol]
 
 
 
-    2.750632450062189e9
+    2.7506324500621886e9
 
 
 
@@ -580,7 +594,7 @@ sum(var_filtered)
 
 
 
-    2.750632450062189e9
+    2.7506324500621886e9
 
 
 
@@ -608,7 +622,7 @@ gas.data = transform(gas.data, :mach => mach) # JuliaDB
 
     Table with 849332 rows, 12 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -630,7 +644,7 @@ gas.data = transform(gas.data, :mach => mach) # JuliaDB
 proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc);
 ```
 
-    [Mera]: 2020-02-08T20:59:42.246
+    [Mera]: 2025-07-01T00:06:56.838
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -640,10 +654,13 @@ proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.
     zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
     
     Selected var(s)=(:mach, :sd) 
+    Weighting      = :mass
     
-
-
-    100%|███████████████████████████████████████████████████| Time: 0:00:07[39m
+    Effective resolution: 256^2
+    Map size: 86 x 86
+    Pixel size: 187.5 [pc]
+    Simulation min.: 187.5 [pc]
+    
 
 
 
@@ -655,7 +672,7 @@ colorbar();
 
 
     
-![png](output_53_0.png)
+![png](output_54_0.png)
     
 
 
@@ -671,7 +688,7 @@ gas.data = select(gas.data, Not(:mach)) # select all columns, not :mach
 
     Table with 849332 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -712,7 +729,7 @@ println( typeof(mask_v1) )
 ```
 
     849332
-    Array{Bool,1}
+    Vector{Bool}
 
 
 #### Version 2: Short Syntax
@@ -728,7 +745,7 @@ println( typeof(mask_v2) )
 ```
 
     849332
-    Array{Bool,1}
+    Vector{Bool}
 
 
 ##### Example 2
@@ -742,7 +759,7 @@ println( typeof(mask_v2b) )
 ```
 
     849332
-    BitArray{1}
+    BitVector
 
 
 #### Version 3: Longer Syntax
@@ -757,7 +774,7 @@ println( typeof(mask_v3) )
 ```
 
     849332
-    BitArray{1}
+    BitVector
 
 
 #### Combine Multiple Masks
@@ -778,7 +795,7 @@ println( length(mask_tot) )
 println( typeof(mask_tot) )
 ```
 
-    28320979
+    849332
     BitVector
 
 
@@ -818,8 +835,8 @@ println()
 ```
 
     
-    Particles Mtot masked: 1.4537556611888414e7 Msol
-    Particles Mtot:        5.804426008528437e9 Msol
+    Particles Mtot masked: 1.4537556611888412e7 Msol
+    Particles Mtot:        5.804426008528435e9 Msol
     
 
 
@@ -854,8 +871,8 @@ println()
 ```
 
     
-    Gas COM masked: (23.632781376611646, 24.017935187730938, 24.078280687627124) kpc
-    Gas COM:        (23.47221401632259, 23.93931869865653, 24.08483637116779) kpc
+    Gas COM masked: (23.632781376611643, 24.01793518773094, 24.078280687627124) kpc
+    Gas COM:        (23.472214016322592, 23.939318698656532, 24.084836371167793) kpc
     
 
 
@@ -871,8 +888,8 @@ println()
 ```
 
     
-    Particles COM masked: (22.766374936557934, 24.817294529838456, 24.020065595650212) kpc
-    Particles COM:        (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc
+    Particles COM masked: (22.766374936557934, 24.817294529838456, 24.02006559565021) kpc
+    Particles COM:        (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
     
 
 
@@ -886,8 +903,8 @@ println( "Joint COM (Gas + Particles) masked: ", center_of_mass([gas,particles],
 println( "Joint COM (Gas + Particles):        ", center_of_mass([gas,particles], :kpc) , " kpc" )
 ```
 
-    Joint COM (Gas + Particles) masked: (23.632014753139174, 24.01864248583754, 24.078229177095928) kpc
-    Joint COM (Gas + Particles):        (23.380528865533876, 23.976384982693947, 24.07195135758772) kpc
+    Joint COM (Gas + Particles) masked: (23.63201475313917, 24.018642485837542, 24.078229177095928) kpc
+    Joint COM (Gas + Particles):        (23.38052886553389, 23.97638498269396, 24.071951357587736) kpc
 
 
 
@@ -902,8 +919,8 @@ println()
 ```
 
     
-    Clumps COM masked:(22.979676622296815, 23.22447986984898, 24.11056806473746) kpc
-    Clumps COM:       (23.135765457064576, 23.741712325649264, 24.0050127185862) kpc
+    Clumps COM masked:(22.97967662229681, 23.224479869848984, 24.110568064737457) kpc
+    Clumps COM:       (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
     
 
 
@@ -921,8 +938,8 @@ println()
 ```
 
     
-    Gas bulk velocity masked: (-0.046336703401138456, -6.60993479840688, -1.000280146674773) km/s
-    Gas bulk velocity:        (-1.1999253584798182, -10.678485153330122, -0.44038538452508785) km/s
+    Gas bulk velocity masked: (-0.04633670340113768, -6.609934798406887, -1.000280146674773) km/s
+    Gas bulk velocity:        (-1.1999253584798222, -10.678485153330127, -0.44038538452508885) km/s
     
 
 
@@ -938,8 +955,8 @@ println()
 ```
 
     
-    Particles bulk velocity masked: (-27.702254113836513, -7.532075727552787, -1.3273993940211153) km/s
-    Particles bulk velocity:        (-11.623422700314535, -18.440572802490234, -0.3291927731417528) km/s
+    Particles bulk velocity masked: (-27.70225411383651, -7.532075727552787, -1.3273993940211153) km/s
+    Particles bulk velocity:        (-11.623422700314567, -18.440572802490294, -0.32919277314175355) km/s
     
 
 
@@ -963,8 +980,8 @@ println( "Clumps <peak_x>_clumps masked     : ",  stats_clumps_masked.mean,    "
 println()
 ```
 
-    Gas        <vx>_cells masked      : -0.04633670340114798 km/s (mass weighted)
-    Particles  <vx>_particles masked  : -27.702254113836517 km/s (mass weighted)
+    Gas        <vx>_cells masked      : -0.046336703401142106 km/s (mass weighted)
+    Particles  <vx>_particles masked  : -27.702254113836513 km/s (mass weighted)
     Clumps <peak_x>_clumps masked     : 22.907689025275953 kpc  (mass weighted)
     
 
@@ -981,13 +998,8 @@ println( "Clumps <peak_x>_allclumps    : ",  stats_clumps.mean,    " kpc  (mass 
 println()
 ```
 
-    Gas        <vx>_allcells     : -1.199925358479736 km/s (mass weighted)
-    Particles  <vx>_allparticles : -11.623422700314544 km/s (mass weighted)
+    Gas        <vx>_allcells     : -1.1999253584798266 km/s (mass weighted)
+    Particles  <vx>_allparticles : -11.623422700314569 km/s (mass weighted)
     Clumps <peak_x>_allclumps    : 23.13576545706458 kpc  (mass weighted)
     
 
-
-
-```julia
-
-```

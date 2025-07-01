@@ -14,13 +14,13 @@ Get information with the function ``getinfo`` about the simulation for a selecte
 info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # output=300 in given path
 ```
 
-    [Mera]: 2025-06-21T20:41:44.407
+    [Mera]: 2025-06-21T20:41:44.407
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -51,7 +51,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # out
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
@@ -69,7 +69,7 @@ methods(getinfo)
 
 
 
-# 4 methods for generic function <b>getinfo</b> from Mera:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L58" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:58</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:54</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L50" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:50</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L46" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:46</a></li> </ul>
+ 4 methods for generic function <b>getinfo</b> from Mera:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L58" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:58</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:54</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L50" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:50</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L46" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:46</a></li> </ul>
 
 
 
@@ -98,7 +98,7 @@ viewfields(info);
 
     output	= 300
     path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
-    fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
+    fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
     
     simcode	= RAMSES
     mtime	= 2023-04-09T05:34:09
@@ -131,7 +131,7 @@ viewfields(info);
     rt_variable_list	= Symbol[]
     clumps_variable_list	= Symbol[]
     sinks_variable_list	= Symbol[]
-    descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
+    descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
     
     amr	= true
     gravity	= true
@@ -140,26 +140,26 @@ viewfields(info);
     clumps	= false
     sinks	= false
     namelist	= true
-    namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+    namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
     
     headerfile	= true
     makefile	= true
-    files_content ==> subfields: (:makefile, :timerfile, :patchfile)
+    files_content ==> subfields: (:makefile, :timerfile, :patchfile)
     
     timerfile	= true
     compilationfile	= false
     patchfile	= true
     Narraysize	= 0
     
-    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
+    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
     
-    grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
+    grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
     
-    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
     
-    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
     
-    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
+    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
     
     
 
@@ -189,8 +189,8 @@ viewfields(info.scale)
 ```
 
     
-    [Mera]: Fields to scale from user/code units to selected units
-    =======================================================================
+    [Mera]: Fields to scale from user/code units to selected units
+    =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -347,8 +347,8 @@ viewfields(info.constants)
 ```
 
     
-    [Mera]: Constants given in cgs units
-    =========================================
+    [Mera]: Constants given in cgs units
+    =========================================
     Au	= 0.01495978707
     Mpc	= 3.08567758128e24
     kpc	= 3.08567758128e21
@@ -389,8 +389,8 @@ viewfields(con)
 ```
 
     
-    [Mera]: Constants given in cgs units
-    =========================================
+    [Mera]: Constants given in cgs units
+    =========================================
     Au	= 0.01495978707
     Mpc	= 3.08567758128e24
     kpc	= 3.08567758128e21
@@ -430,7 +430,7 @@ methods(viewfields)
 
 
 
-# 11 methods for generic function <b>viewfields</b> from Mera:<ul><li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L90" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L107" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:107</a></li> <li> viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L198" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:198</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L167" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:167</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L151" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:151</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L133" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:133</a></li> <li> viewfields(object::<b>ArgumentsType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:54</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L183" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:183</a></li> <li> viewfields(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L10" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:10</a></li> <li> viewfields(object::<b>ScalesType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L74" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:74</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L215" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:215</a></li> </ul>
+ 11 methods for generic function <b>viewfields</b> from Mera:<ul><li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L90" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L107" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:107</a></li> <li> viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L198" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:198</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L167" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:167</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L151" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:151</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L133" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:133</a></li> <li> viewfields(object::<b>ArgumentsType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:54</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L183" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:183</a></li> <li> viewfields(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L10" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:10</a></li> <li> viewfields(object::<b>ScalesType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L74" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:74</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L215" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:215</a></li> </ul>
 
 
 
@@ -442,7 +442,7 @@ methods(namelist)
 
 
 
-# 2 methods for generic function <b>namelist</b> from Mera:<ul><li> namelist(object::<b>Dict{Any, Any}</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L262" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:262</a></li> <li> namelist(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L244" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:244</a></li> </ul>
+ 2 methods for generic function <b>namelist</b> from Mera:<ul><li> namelist(object::<b>Dict{Any, Any}</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L262" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:262</a></li> <li> namelist(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L244" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:244</a></li> </ul>
 
 
 
@@ -455,7 +455,7 @@ viewallfields(info)
 
     output	= 300
     path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
-    fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
+    fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
     
     simcode	= RAMSES
     mtime	= 2023-04-09T05:34:09
@@ -488,7 +488,7 @@ viewallfields(info)
     rt_variable_list	= Symbol[]
     clumps_variable_list	= Symbol[]
     sinks_variable_list	= Symbol[]
-    descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
+    descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
     
     amr	= true
     gravity	= true
@@ -497,31 +497,31 @@ viewallfields(info)
     clumps	= false
     sinks	= false
     namelist	= true
-    namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+    namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
     
     headerfile	= true
     makefile	= true
-    files_content ==> subfields: (:makefile, :timerfile, :patchfile)
+    files_content ==> subfields: (:makefile, :timerfile, :patchfile)
     
     timerfile	= true
     compilationfile	= false
     patchfile	= true
     Narraysize	= 0
     
-    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
+    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
     
-    grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
+    grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
     
-    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
+    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
     
-    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
     
-    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
+    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
     
     
     
-    [Mera]: Fields to scale from user/code units to selected units
-    =======================================================================
+    [Mera]: Fields to scale from user/code units to selected units
+    =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -576,8 +576,8 @@ viewallfields(info)
     K_cm3	= 2.1080995598777838e7
     
     
-    [Mera]: Constants given in cgs units
-    =========================================
+    [Mera]: Constants given in cgs units
+    =========================================
     Au	= 0.01495978707
     Mpc	= 3.08567758128e24
     kpc	= 3.08567758128e21
@@ -604,8 +604,8 @@ viewallfields(info)
     yr	= 3.15576e7
     
     
-    [Mera]: Paths and file-names
-    =================================
+    [Mera]: Paths and file-names
+    =================================
     output	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300
     info	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/info_00300.txt
     amr	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/amr_00300.
@@ -626,8 +626,8 @@ viewallfields(info)
     patchfile	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/patches.txt
     
     
-    [Mera]: Descriptor overview
-    =================================
+    [Mera]: Descriptor overview
+    =================================
     hversion	= 1
     hydro	= [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
     htypes	= ["d", "d", "d", "d", "d", "d", "d"]
@@ -654,8 +654,8 @@ viewallfields(info)
     sinksfile	= false
     
     
-    [Mera]: Namelist file content
-    =================================
+    [Mera]: Namelist file content
+    =================================
     &COOLING_PARAMS
     cooling  	=.true. 
     z_ave  	=1.
@@ -721,8 +721,8 @@ viewallfields(info)
     &REFINE_PARAMS
     
     
-    [Mera]: Grid overview 
-    ============================
+    [Mera]: Grid overview 
+    ============================
     ngridmax	= 1000000
     nstep_coarse	= 6544
     nx	= 3
@@ -735,8 +735,8 @@ viewallfields(info)
     cpu_read ==> length(641)
     
     
-    [Mera]: Particle overview
-    ===============================
+    [Mera]: Particle overview
+    ===============================
     eta_sn	= 0.0
     age_sn	= 0.6706464407596582
     f_w	= 0.0
@@ -756,8 +756,8 @@ viewallfields(info)
     gas_tracer	= 0
     
     
-    [Mera]: Compilation file overview
-    ========================================
+    [Mera]: Compilation file overview
+    ========================================
     compile_date	= 
     patch_dir	= 
     remote_repo	= 
@@ -765,13 +765,13 @@ viewallfields(info)
     last_commit	= 
     
     
-    [Mera]: Makefile content
-    =================================
+    [Mera]: Makefile content
+    =================================
     !content deleted on purpose
     
     
-    [Mera]: Timer-file content
-    =================================
+    [Mera]: Timer-file content
+    =================================
      --------------------------------------------------------------------
     
          minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER
@@ -803,8 +803,8 @@ Gives an overview of the used disc space for the different data types of the sel
 storageoverview(info)
 ```
 
-    Overview of the used disc space for output: [300]
-    ------------------------------------------------------
+    Overview of the used disc space for output: [300]
+    ------------------------------------------------------
     Folder:         5.68 GB 	<2.26 MB>/file
     AMR-Files:      1.1 GB 	<1.75 MB>/file
     Hydro-Files:    2.87 GB 	<4.58 MB>/file

@@ -9,13 +9,13 @@ info = getinfo(300,  "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 gas  = gethydro(info, lmax=10); 
 ```
 
-    [Mera]: 2025-06-21T21:41:13.424
+    [Mera]: 2025-06-30T11:34:59.304
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -46,9 +46,9 @@ gas  = gethydro(info, lmax=10);
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: Get hydro data: 2025-06-21T21:41:16.897
+    [Mera]: Get hydro data: 2025-06-30T11:35:00.460
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -61,7 +61,7 @@ gas  = gethydro(info, lmax=10);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:58
+    Progress: 100%|█████████████████████████████████████████| Time: 0:01:00
 
 
     Memory used for data table :2.321086215786636 GB
@@ -79,7 +79,7 @@ gas.data
 
     Table with 28320979 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -155,7 +155,7 @@ proj_z = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], verbose=false) # Th
 proj_x = projection(gas, :sd, :Msol_pc2, direction = :x, zrange=[0.45,0.55], verbose=false); # Project the surface density in x-direction
 ```
 
-    [Mera]: 2025-06-21T21:42:56.064
+    [Mera]: 2025-06-30T11:36:07.788
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -183,7 +183,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                     center=[cv,cv,cv], range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:05.692
+    [Mera]: 2025-06-30T11:36:14.260
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -211,7 +211,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                         center=[:boxcenter], range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:08.371
+    [Mera]: 2025-06-30T11:36:16.030
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -237,7 +237,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                         center=[:bc], range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:10.456
+    [Mera]: 2025-06-30T11:36:17.768
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -265,7 +265,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                         center=[:bc, 24., :bc], range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:12.889
+    [Mera]: 2025-06-30T11:36:20.157
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -299,7 +299,7 @@ proj1_x = projection(gas, [:sd], units=[:Msol_pc2],
                         range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:15.377
+    [Mera]: 2025-06-30T11:36:21.883
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -331,7 +331,7 @@ proj1_z = projection(gas, [:sd, :vx], units=[:Msol_pc2, :km_s],
                         range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:18.038
+    [Mera]: 2025-06-30T11:36:24.320
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -363,7 +363,7 @@ proj1_z = projection(gas, [:sd , :vx], [:Msol_pc2, :km_s],
                         range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:21.222
+    [Mera]: 2025-06-30T11:36:26.941
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -394,7 +394,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz], :km_s,
                         range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:23.865
+    [Mera]: 2025-06-30T11:36:29.503
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -600,7 +600,7 @@ using PyPlot
 using ColorSchemes
 cmap3 = ColorMap(ColorSchemes.Blues.colors)
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
-cmap2 = ColorMap(reverse(ColorSchemes.roma.colors))
+cmap2 = ColorMap(reverse(ColorSchemes.romaO.colors))
 
 ```
 
@@ -723,7 +723,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz], :km_s,
                     center=[24.,24.,24.], range_unit=:kpc);
 ```
 
-    [Mera]: 2025-06-21T21:43:48.519
+    [Mera]: 2025-06-30T11:36:44.533
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -859,7 +859,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :
                     data_center_unit=:kpc); 
 ```
 
-    [Mera]: 2025-06-21T21:43:52.471
+    [Mera]: 2025-06-30T11:36:47.734
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1020,7 +1020,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder
                     lmax=6); 
 ```
 
-    [Mera]: 2025-06-21T21:44:10.576
+    [Mera]: 2025-06-30T11:37:04.163
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1132,7 +1132,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder
                     res=100); 
 ```
 
-    [Mera]: 2025-06-21T21:44:28.315
+    [Mera]: 2025-06-30T11:37:20.496
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1163,7 +1163,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder
                     pxsize=[100., :pc]); 
 ```
 
-    [Mera]: 2025-06-21T21:44:44.401
+    [Mera]: 2025-06-30T11:37:35.957
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1197,7 +1197,7 @@ proj_z = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.4, 0.6], yran
 proj_x = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.4, 0.6], yrange=[0.4, 0.6], direction=:x);
 ```
 
-    [Mera]: 2025-06-21T21:45:00.007
+    [Mera]: 2025-06-30T11:37:51.385
     
     domain:
     xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1212,7 +1212,7 @@ proj_x = projection(gas, :cs, :km_s, zrange=[0.45,0.55], xrange=[0.4, 0.6], yran
     Pixel size: 46.875 [pc]
     Simulation min.: 46.875 [pc]
     
-    [Mera]: 2025-06-21T21:45:02.194
+    [Mera]: 2025-06-30T11:37:53.419
     
     domain:
     xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1279,7 +1279,7 @@ proj_z = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask_tot)
 proj_x = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask_tot, direction=:x);
 ```
 
-    [Mera]: 2025-06-21T21:45:05.872
+    [Mera]: 2025-06-30T11:37:56.328
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1296,7 +1296,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], mask=mask_tot, dire
     
     :mask provided by function
     
-    [Mera]: 2025-06-21T21:45:07.601
+    [Mera]: 2025-06-30T11:37:57.947
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1352,7 +1352,7 @@ By default, the data is weighted by mass, except for the surface density. Choose
 proj_z = projection(gas, :cs, :km_s, weighting=[:volume]);
 ```
 
-    [Mera]: 2025-06-21T21:45:09.460
+    [Mera]: 2025-06-30T11:37:58.999
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1376,7 +1376,7 @@ Any quantity that is predefined (see: projection(), getvar()) or is part of the 
 proj_z = projection(gas, :cs, :km_s, weighting=[:volume, :cm3]);
 ```
 
-    [Mera]: 2025-06-21T21:45:37.661
+    [Mera]: 2025-06-30T11:38:03.015
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

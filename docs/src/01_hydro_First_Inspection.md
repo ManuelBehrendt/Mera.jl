@@ -8,13 +8,13 @@ using Mera
 info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
-    [Mera]: 2025-06-21T20:47:48.296
+    [Mera]: 2025-06-21T20:47:48.296
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -45,7 +45,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
@@ -110,8 +110,8 @@ viewfields(info.descriptor)
 ```
 
     
-    [Mera]: Descriptor overview
-    =================================
+    [Mera]: Descriptor overview
+    =================================
     hversion	= 1
     hydro	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
     htypes	= ["d", "d", "d", "d", "d", "d", "d"]
@@ -167,7 +167,7 @@ Read the AMR and the Hydro data from all files of the full box with all existing
 gas = gethydro(info);
 ```
 
-    [Mera]: Get hydro data: 2025-06-21T20:47:55.574
+    [Mera]: Get hydro data: 2025-06-21T20:47:55.574
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -180,7 +180,7 @@ gas = gethydro(info);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:01:19
+    Progress: 100%|█████████████████████████████████████████| Time: 0:01:19
 
 
     Memory used for data table :2.321086215786636 GB
@@ -248,9 +248,9 @@ viewfields(gas)
 ```
 
     
-    data ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+    data ==> JuliaDB table: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
     
-    info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+    info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
     
     lmin	= 6
     lmax	= 10
@@ -260,7 +260,7 @@ viewfields(gas)
     smallr	= 0.0
     smallc	= 0.0
     
-    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
+    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
     
     
 
@@ -274,7 +274,7 @@ A minimum density or sound speed can be set for the loaded data (e.g. to overwri
 gas = gethydro(info, smallr=1e-11);
 ```
 
-    [Mera]: Get hydro data: 2025-06-21T20:49:53.650
+    [Mera]: Get hydro data: 2025-06-21T20:49:53.650
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
@@ -287,7 +287,7 @@ gas = gethydro(info, smallr=1e-11);
     Reading data...
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:01:13
+    Progress: 100%|█████████████████████████████████████████| Time: 0:01:13
 
 
     Memory used for data table :2.321086215786636 GB
@@ -346,7 +346,7 @@ data_overview = dataoverview(gas)
     Calculating...
 
 
-     100%|███████████████████████████████████████████████████| Time: 0:03:09
+     100%|███████████████████████████████████████████████████| Time: 0:03:09
 
 
 
@@ -354,7 +354,7 @@ data_overview = dataoverview(gas)
 
     Table with 5 rows, 16 columns:
     Columns:
-    #   colname   type
+    #   colname   type
     ──────────────────
     1   level     Any
     2   mass      Any
@@ -464,7 +464,7 @@ gas.data
 
     Table with 28320979 rows, 11 columns:
     Columns:
-    #   colname  type
+    #   colname  type
     ────────────────────
     1   level    Int64
     2   cx       Int64
@@ -491,7 +491,7 @@ select(gas.data, (:level,:cx, :cy, :cz, :rho) )
 
 
     Table with 28320979 rows, 5 columns:
-    level  cx   cy   cz   rho
+    level  cx   cy   cz   rho
     ─────────────────────────────────
     6      1    1    1    3.18647e-9
     6      1    1    2    3.58591e-9
