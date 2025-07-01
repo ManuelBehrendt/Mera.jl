@@ -69,7 +69,12 @@ methods(getinfo)
 
 
 
- 4 methods for generic function <b>getinfo</b> from Mera:<ul><li> getinfo(; <i>output, path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L58" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:58</a></li> <li> getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:54</a></li> <li> getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L50" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:50</a></li> <li> getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/read_data/RAMSES/getinfo.jl#L46" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/read_data/RAMSES/getinfo.jl:46</a></li> </ul>
+ 4 methods for generic function <b>getinfo</b> from Mera: 
+ 
+ getinfo(; <i>output, path, namelist, verbose</i>) in Mera at ...\
+getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at ...\
+getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at ...\
+getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at ...
 
 
 
@@ -430,9 +435,19 @@ methods(viewfields)
 
 
 
- 11 methods for generic function <b>viewfields</b> from Mera:<ul><li> viewfields(object::<b>PartInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L90" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:90</a></li> <li> viewfields(object::<b>GridInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L107" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:107</a></li> <li> viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L198" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:198</a></li> <li> viewfields(object::<b>DescriptorType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L167" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:167</a></li> <li> viewfields(object::<b>FileNamesType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L151" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:151</a></li> <li> viewfields(object::<b>CompilationInfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L133" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:133</a></li> <li> viewfields(object::<b>ArgumentsType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L54" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:54</a></li> <li> viewfields(object::<b>Mera.FilesContentType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L183" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:183</a></li> <li> viewfields(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L10" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:10</a></li> <li> viewfields(object::<b>ScalesType001</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L74" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:74</a></li> <li> viewfields(object::<b>DataSetType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L215" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:215</a></li> </ul>
+11 methods for generic function <b>viewfields</b> from Mera:
 
-
+viewfields(object::<b>PartInfoType</b>) in Mera at ...\
+viewfields(object::<b>GridInfoType</b>) in Mera at ...\
+viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at ...\
+viewfields(object::<b>DescriptorType</b>) in Mera at ...\
+viewfields(object::<b>FileNamesType</b>) in Mera at ...\
+viewfields(object::<b>CompilationInfoType</b>) in Mera at...\
+viewfields(object::<b>ArgumentsType</b>) in Mera at...\
+ viewfields(object::<b>Mera.FilesContentType</b>) in Mera at...\
+ viewfields(object::<b>InfoType</b>) in Mera at ...\
+  viewfields(object::<b>ScalesType001</b>) in Mera at ...\
+   viewfields(object::<b>DataSetType</b>) in Mera at...
 
 
 ```julia
@@ -442,8 +457,10 @@ methods(namelist)
 
 
 
- 2 methods for generic function <b>namelist</b> from Mera:<ul><li> namelist(object::<b>Dict{Any, Any}</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L262" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:262</a></li> <li> namelist(object::<b>InfoType</b>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/ffdf2d66dd61df9880adc8447db8380750e93e54//src/functions/viewfields.jl#L244" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/viewfields.jl:244</a></li> </ul>
-
+ 2 methods for generic function <b>namelist</b> from Mera:
+ 
+ namelist(object::<b>Dict{Any, Any}</b>) in Mera at ...\
+  namelist(object::<b>InfoType</b>) in Mera at ...
 
 
 Get a detailed overview of all the fields from MERA composite types:
