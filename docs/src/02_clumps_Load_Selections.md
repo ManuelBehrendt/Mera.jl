@@ -314,7 +314,7 @@ clumps = getclumps(info,
 
 
 ### Use notation in physical units
-In the following example the ranges are given in units "kpc", relative to the box corner [0., 0., 0.] (default):
+In the following example the ranges are given in units "kpc", relative to the box corner `[0., 0., 0.]` (default):
 
 
 ```julia
