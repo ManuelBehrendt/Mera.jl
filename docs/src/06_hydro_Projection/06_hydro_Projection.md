@@ -145,7 +145,7 @@ projection()
 
 ## Projection of a Single Quantity in Different Directions (z,y,x)
 
-Here we project the surface density in the z-direction of the data within a particular vertical range (domain=[0:1]) onto a grid corresponding to the maximum loaded level. 
+Here we project the surface density in the z-direction of the data within a particular vertical range (domain=`[0:1]`) onto a grid corresponding to the maximum loaded level. 
 Pass any object of `HydroDataType` (here: "gas") to the `projection`-function and select a variable by a Symbol (here: :sd = :surfacedensity = :Σ in Msol/pc^3)
 
 
@@ -519,7 +519,7 @@ The following fields are helpful for further calculations or plots.
 
 
 ```julia
-proj1_z.ranges # normalized to the domain=[0:1]
+proj1_z.ranges # normalized to the domain=`[0:1]`
 ```
 
 

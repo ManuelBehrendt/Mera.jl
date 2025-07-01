@@ -301,7 +301,7 @@ gas_c.data
 ## Select Spatial Ranges
 
 ### Use RAMSES Standard Notation
-Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default. Here, we limit the loading of the data to a maximum level of 8:
+Ranges correspond to the domain `[0:1]^3` and are related to the box corner at `[0., 0., 0.]` by default. Here, we limit the loading of the data to a maximum level of 8:
 
 
 ```julia
@@ -332,7 +332,7 @@ gas = gethydro(info, lmax=8,
     
 
 
-The loaded data ranges are assigned to the field `ranges` as an array in  **RAMSES** standard notation (domain: [0:1]^3):
+The loaded data ranges are assigned to the field `ranges` as an array in  **RAMSES** standard notation (domain: `[0:1]^3`):
 
 
 ```julia

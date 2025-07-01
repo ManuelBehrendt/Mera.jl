@@ -242,7 +242,7 @@ clumps.data
 ## Select Spatial Ranges
 
 ### Use RAMSES Standard Notation
-Ranges correspond to the domain [0:1]^3 and are related to the box corner at [0., 0., 0.] by default.
+Ranges correspond to the domain `[0:1]^3` and are related to the box corner at `[0., 0., 0.]` by default.
 
 
 ```julia
@@ -266,7 +266,7 @@ clumps = getclumps(info,
     
 
 
-The loaded data ranges are assigned to the field `ranges` in an array in  **RAMSES** standard notation (domain: [0:1]^3):
+The loaded data ranges are assigned to the field `ranges` in an array in  **RAMSES** standard notation (domain: `[0:1]^3`):
 
 
 ```julia
