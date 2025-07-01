@@ -4,13 +4,13 @@ using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
 info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14&quot;);
-particles = getparticles(info, :mass); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:04.066
+particles = getparticles(info, :mass); </code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:42:28.434
 
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
-=======================================================
+=======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
@@ -43,9 +43,9 @@ timer-file:       false
 compilation-file: true
 makefile:         true
 patchfile:        true
-=======================================================
+=======================================================
 
-[Mera]: Get particle data: 2025-06-30T20:24:04.247
+[Mera]: Get particle data: 2025-07-01T22:42:32.248
 
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,) 
@@ -57,7 +57,7 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 
 
 
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:19
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:30
 
 
 Found 5.089390e+05 particles
@@ -86,12 +86,12 @@ im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.r
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_9_0.png" alt="png"/></p><h4 id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles">Cuboid Region: Cutout the data assigned to the object <code>particles</code></a><a id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Note: The selected regions can be given relative to a user given center or to the box corner <code>[0., 0., 0.]</code> by default. The user can choose between standard notation <code>[0:1]</code> (default) or physical length-units, defined in e.g. info.scale :</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :cuboid,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_9_0.png" alt="png"/></p><h4 id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles">Cuboid Region: Cutout the data assigned to the object <code>particles</code></a><a id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation <code>[0:1]</code> (default) or physical length-units, defined in e.g. info.scale :</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :cuboid,
                                     xrange=[-4., 0.], 
                                     yrange=[-15. ,15.], 
                                     zrange=[-2. ,2.],
                                     center=[:boxcenter],
-                                    range_unit=:kpc );</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:24.755
+                                    range_unit=:kpc );</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:10.127
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -128,7 +128,7 @@ cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
                                     zrange=[-2. ,2.],
                                     center=[24.,24.,24.],
                                     range_unit=:kpc,
-                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:25.248
+                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:10.866
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -192,7 +192,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_25_0.png"
                             height=2.,
                             range_unit=:kpc, 
                             center=[13.,:bc,:bc],
-                            direction=:z);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:26.016
+                            direction=:z);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:11.559
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -258,7 +258,7 @@ cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
                                     range_unit=:kpc, 
                                     center=[ (24. -11.),:bc,:bc],
                                     direction=:z,
-                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:26.678
+                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:12.444
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -323,7 +323,7 @@ ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_42_0.png" alt="png"/></p><h4 id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles"><a class="docs-heading-anchor" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles">Spherical Region: Cutout the data assigned to the object <code>particles</code></a><a id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-particles" title="Permalink"></a></h4><p>Select the radius of the sphere in the unit &quot;kpc&quot;, relative to the given center [13., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = subregion( particles, :sphere, 
                             radius=10.,
                             range_unit=:kpc, 
-                            center=[(24. -11.),24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:27.501
+                            center=[(24. -11.),24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:13.095
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -363,7 +363,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_47_0.png"
                             radius=10.,
                             range_unit=:kpc, 
                             center=[(24. -11.),24.,24.], 
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:27.882
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:13.338
 
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -409,19 +409,19 @@ proj_x = projection(comb_region5, :sd, unit=:Msol_pc2, lmax=8, center=[:boxcente
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;)#, extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;y [kpc]&quot;)
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;) #, extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;)#, extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_57_0.png" alt="png"/></p><h2 id="Cylindrical-Shell"><a class="docs-heading-anchor" href="#Cylindrical-Shell">Cylindrical Shell</a><a id="Cylindrical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell" title="Permalink"></a></h2><h4 id="Create-projections-of-the-full-box:-4"><a class="docs-heading-anchor" href="#Create-projections-of-the-full-box:-4">Create projections of the full box:</a><a class="docs-heading-anchor-permalink" href="#Create-projections-of-the-full-box:-4" title="Permalink"></a></h4><pre><code class="language-julia hljs">proj_z = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, lmax=8, verbose=false);
@@ -456,7 +456,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_62_0.png"
                                 radius=[5.,10.], 
                                 height=2., 
                                 range_unit=:kpc, 
-                                center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:29.363
+                                center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:14.277
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -503,7 +503,7 @@ cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);
                                 height=2., 
                                 range_unit=:kpc, 
                                 center=[:boxcenter],
-                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:29.804
+                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:14.517
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -576,7 +576,7 @@ ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_75_0.png" alt="png"/></p><h4 id="Spherical-Shell:"><a class="docs-heading-anchor" href="#Spherical-Shell:">Spherical Shell:</a><a id="Spherical-Shell:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:" title="Permalink"></a></h4><p>Select the inner and outer radius of the spherical shell in unit &quot;kpc&quot;, relative to the box center [24., 24., 24.]:</p><pre><code class="language-julia hljs">part_subregion = shellregion( particles, :sphere,
                                 radius=[5.,10.],
                                 range_unit=:kpc, 
-                                center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:30.864
+                                center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:15.050
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -621,7 +621,7 @@ cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_80_0.png"
                                 radius=[5.,10.],
                                 range_unit=:kpc, 
                                 center=[:boxcenter], 
-                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T20:24:31.433
+                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-07-01T22:43:15.381
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -662,4 +662,4 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_84_0.png" alt="png"/></p><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">« Hydro</a><a class="docs-footer-nextpage" href="../../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Tuesday 1 July 2025 14:36">Tuesday 1 July 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../output_84_0.png" alt="png"/></p><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">« Hydro</a><a class="docs-footer-nextpage" href="../../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.13.0 on <span class="colophon-date" title="Tuesday 1 July 2025 20:58">Tuesday 1 July 2025</span>. Using Julia version 1.11.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
