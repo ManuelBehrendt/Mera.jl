@@ -12,13 +12,13 @@ info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14
 particles = getparticles(info, :mass); 
 ```
 
-    [Mera]: 2025-06-30T20:24:04.066
+    [Mera]: 2025-07-01T22:42:28.434
     
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55
     ctime: 2025-06-29T20:06:45.267
-    =======================================================
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -51,9 +51,9 @@ particles = getparticles(info, :mass);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: Get particle data: 2025-06-30T20:24:04.247
+    [Mera]: Get particle data: 2025-07-01T22:42:32.248
     
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(4,) = (:mass,) 
@@ -65,7 +65,7 @@ particles = getparticles(info, :mass);
     
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:19
+    Progress: 100%|█████████████████████████████████████████| Time: 0:00:30
 
 
     Found 5.089390e+05 particles
@@ -136,7 +136,7 @@ cb = colorbar(im, label=labeltext);
 
 #### Cuboid Region: Cutout the data assigned to the object `particles`
 
-Note: The selected regions can be given relative to a user given center or to the box corner `[0., 0., 0.]` by default. The user can choose between standard notation `[0:1]` (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
 
 
 ```julia
@@ -148,7 +148,7 @@ part_subregion = subregion( particles, :cuboid,
                                     range_unit=:kpc );
 ```
 
-    [Mera]: 2025-06-30T20:24:24.755
+    [Mera]: 2025-07-01T22:43:10.127
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -229,7 +229,7 @@ part_subregion = subregion( particles, :cuboid,
                                     inverse=true);
 ```
 
-    [Mera]: 2025-06-30T20:24:25.248
+    [Mera]: 2025-07-01T22:43:10.866
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -342,7 +342,7 @@ part_subregion = subregion(particles, :cylinder,
                             direction=:z);
 ```
 
-    [Mera]: 2025-06-30T20:24:26.016
+    [Mera]: 2025-07-01T22:43:11.559
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -458,7 +458,7 @@ part_subregion = subregion(particles, :cylinder,
                                     inverse=true);
 ```
 
-    [Mera]: 2025-06-30T20:24:26.678
+    [Mera]: 2025-07-01T22:43:12.444
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -572,7 +572,7 @@ part_subregion = subregion( particles, :sphere,
                             center=[(24. -11.),24.,24.]);
 ```
 
-    [Mera]: 2025-06-30T20:24:27.501
+    [Mera]: 2025-07-01T22:43:13.095
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -642,7 +642,7 @@ part_subregion = subregion( particles, :sphere,
                             inverse=true);
 ```
 
-    [Mera]: 2025-06-30T20:24:27.882
+    [Mera]: 2025-07-01T22:43:13.338
     
     center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -726,19 +726,19 @@ figure(figsize=(15.5, 3.5))
 labeltext=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}"
 
 subplot(1,3,1)
-im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower")#, extent=proj_z.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_z.maps[:sd]) ), cmap=cmap, aspect=proj_z.ratio, origin="lower", extent=proj_z.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("y [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,2)
-im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower") #, extent=proj_y.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_y.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_y.cextent, vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 
 subplot(1,3,3)
-im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower")#, extent=proj_x.cextent, vmin=0, vmax=3)
+im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin="lower", extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
@@ -812,7 +812,7 @@ part_subregion = shellregion( particles, :cylinder,
                                 center=[:boxcenter]);
 ```
 
-    [Mera]: 2025-06-30T20:24:29.363
+    [Mera]: 2025-07-01T22:43:14.277
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -886,7 +886,7 @@ part_subregion = shellregion( particles, :cylinder,
                                 inverse=true);
 ```
 
-    [Mera]: 2025-06-30T20:24:29.804
+    [Mera]: 2025-07-01T22:43:14.517
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1010,7 +1010,7 @@ part_subregion = shellregion( particles, :sphere,
                                 center=[24.,24.,24.]);
 ```
 
-    [Mera]: 2025-06-30T20:24:30.864
+    [Mera]: 2025-07-01T22:43:15.050
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
@@ -1085,7 +1085,7 @@ part_subregion = shellregion( particles, :sphere,
                                 inverse=true);
 ```
 
-    [Mera]: 2025-06-30T20:24:31.433
+    [Mera]: 2025-07-01T22:43:15.381
     
     center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
     
