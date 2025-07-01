@@ -217,7 +217,10 @@ methods(msum)
 
 
 
- 2 methods for generic function <b>msum</b> from Mera:<ul><li> msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L22" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:22</a></li> <li> msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L18" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:18</a></li> </ul>
+ 2 methods for generic function <b>msum</b> from Mera:
+ 
+  msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at ...\
+   msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...
 
 
 
@@ -313,7 +316,12 @@ methods(center_of_mass)
 
 
 
- 4 methods for generic function <b>center_of_mass</b> from Mera:<ul><li> center_of_mass(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L106" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:106</a></li> <li> center_of_mass(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L102" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:102</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L50" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:50</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L46" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:46</a></li> </ul>
+ 4 methods for generic function <b>center_of_mass</b> from Mera:
+ 
+ center_of_mass(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at ...\
+  center_of_mass(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...\
+  center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at ...\
+center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...
 
 
 
@@ -325,7 +333,12 @@ methods(com)
 
 
 
- 4 methods for generic function <b>com</b> from Mera:<ul><li> com(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L165" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:165</a></li> <li> com(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L161" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:161</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L79" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:79</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L75" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:75</a></li> </ul>
+ 4 methods for generic function <b>com</b> from Mera:
+ 
+  com(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at ...\
+   com(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at...\
+    com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at ...\
+    com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...
 
 
 
@@ -385,7 +398,10 @@ methods(bulk_velocity)
 
 
 
- 2 methods for generic function <b>bulk_velocity</b> from Mera:<ul><li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L199" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:199</a></li> <li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L194" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:194</a></li> </ul>
+2 methods for generic function <b>bulk_velocity</b> from Mera:
+ 
+bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at ...\
+bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at ...
 
 
 
@@ -397,8 +413,10 @@ methods(average_velocity)
 
 
 
- 2 methods for generic function <b>average_velocity</b> from Mera:<ul><li> average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L240" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:240</a></li> <li> average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L236" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:236</a></li> </ul>
-
+ 2 methods for generic function <b>average_velocity</b> from Mera:
+ 
+average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at ...\
+average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at ...
 
 
 ## Mass Weighted Average
@@ -412,7 +430,9 @@ methods( average_mweighted )
 
 
 
- 1 method for generic function <b>average_mweighted</b> from Mera:<ul><li> average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/292a22d2938a49234887580dc7b36bab9e28350d//src/functions/basic_calc.jl#L171" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:171</a></li> </ul>
+ 1 method for generic function <b>average_mweighted</b> from Mera:
+ 
+ average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at ...
 
 
 
