@@ -387,7 +387,7 @@ gas = gethydro(info, lmax=8,
 
 
 ### Use notation in physical units
-In the following example the ranges are given in unit "kpc", relative to the box corner [0., 0., 0.] (default):
+In the following example the ranges are given in unit "kpc", relative to the box corner `[0., 0., 0.]` (default):
 
 
 ```julia
