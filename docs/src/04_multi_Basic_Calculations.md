@@ -217,10 +217,10 @@ methods(msum)
 
 
 
- 2 methods for generic function <b>msum</b> from Mera:
+ 2 methods for generic function **msum** from Mera:
  
-  msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at ...\
-   msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...
+  msum(dataobject::**ContainMassDataSetType**; *unit, mask*) in Mera at ...\
+   msum(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *mask*) in Mera at ...
 
 
 
@@ -316,12 +316,12 @@ methods(center_of_mass)
 
 
 
- 4 methods for generic function <b>center_of_mass</b> from Mera:
+ 4 methods for generic function **center_of_mass** from Mera:
  
- center_of_mass(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at ...\
-  center_of_mass(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...\
-  center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at ...\
-center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...
+ center_of_mass(dataobject::**Vector{HydroPartType}**; *unit, mask*) in Mera at ...\
+  center_of_mass(dataobject::**Vector{HydroPartType}**, unit::**Symbol**; *mask*) in Mera at ...\
+  center_of_mass(dataobject::**ContainMassDataSetType**; *unit, mask*) in Mera at ...\
+center_of_mass(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *mask*) in Mera at ...
 
 
 
@@ -333,12 +333,12 @@ methods(com)
 
 
 
- 4 methods for generic function <b>com</b> from Mera:
+ 4 methods for generic function **com** from Mera:
  
-  com(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at ...\
-   com(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at...\
-    com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at ...\
-    com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at ...
+  com(dataobject::**Vector{HydroPartType}**; *unit, mask*) in Mera at ...\
+   com(dataobject::**Vector{HydroPartType}**, unit::**Symbol**; *mask*) in Mera at...\
+    com(dataobject::**ContainMassDataSetType**; *unit, mask*) in Mera at ...\
+    com(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *mask*) in Mera at ...
 
 
 
@@ -398,10 +398,10 @@ methods(bulk_velocity)
 
 
 
-2 methods for generic function <b>bulk_velocity</b> from Mera:
+2 methods for generic function **bulk_velocity** from Mera:
  
-bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at ...\
-bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at ...
+bulk_velocity(dataobject::**ContainMassDataSetType**; *unit, weighting, mask*) in Mera at ...\
+bulk_velocity(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *weighting, mask*) in Mera at ...
 
 
 
@@ -413,10 +413,10 @@ methods(average_velocity)
 
 
 
- 2 methods for generic function <b>average_velocity</b> from Mera:
+ 2 methods for generic function **average_velocity** from Mera:
  
-average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at ...\
-average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at ...
+average_velocity(dataobject::**ContainMassDataSetType**; *unit, weighting, mask*) in Mera at ...\
+average_velocity(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *weighting, mask*) in Mera at ...
 
 
 ## Mass Weighted Average
@@ -430,9 +430,9 @@ methods( average_mweighted )
 
 
 
- 1 method for generic function <b>average_mweighted</b> from Mera:
+ 1 method for generic function **average_mweighted** from Mera:
  
- average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at ...
+ average_mweighted(dataobject::**ContainMassDataSetType**, var::**Symbol**; *mask*) in Mera at ...
 
 
 

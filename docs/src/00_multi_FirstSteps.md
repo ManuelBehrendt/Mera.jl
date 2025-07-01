@@ -69,12 +69,12 @@ methods(getinfo)
 
 
 
- 4 methods for generic function <b>getinfo</b> from Mera: 
+ 4 methods for generic function **getinfo** from Mera: 
  
- getinfo(; <i>output, path, namelist, verbose</i>) in Mera at ...\
-getinfo(path::<b>String</b>; <i>output, namelist, verbose</i>) in Mera at ...\
-getinfo(output::<b>Real</b>, path::<b>String</b>; <i>namelist, verbose</i>) in Mera at ...\
-getinfo(output::<b>Real</b>; <i>path, namelist, verbose</i>) in Mera at ...
+ getinfo(; *output, path, namelist, verbose*) in Mera at ...\
+getinfo(path::**String**; *output, namelist, verbose*) in Mera at ...\
+getinfo(output::**Real**, path::**String**; *namelist, verbose*) in Mera at ...\
+getinfo(output::**Real**; *path, namelist, verbose*) in Mera at ...
 
 
 
@@ -435,19 +435,19 @@ methods(viewfields)
 
 
 
-11 methods for generic function <b>viewfields</b> from Mera:
+11 methods for generic function **viewfields** from Mera:
 
-viewfields(object::<b>PartInfoType</b>) in Mera at ...\
-viewfields(object::<b>GridInfoType</b>) in Mera at ...\
-viewfields(object::<b>PhysicalUnitsType001</b>) in Mera at ...\
-viewfields(object::<b>DescriptorType</b>) in Mera at ...\
-viewfields(object::<b>FileNamesType</b>) in Mera at ...\
-viewfields(object::<b>CompilationInfoType</b>) in Mera at...\
-viewfields(object::<b>ArgumentsType</b>) in Mera at...\
- viewfields(object::<b>Mera.FilesContentType</b>) in Mera at...\
- viewfields(object::<b>InfoType</b>) in Mera at ...\
-  viewfields(object::<b>ScalesType001</b>) in Mera at ...\
-   viewfields(object::<b>DataSetType</b>) in Mera at...
+viewfields(object::**PartInfoType**) in Mera at ...\
+viewfields(object::**GridInfoType**) in Mera at ...\
+viewfields(object::**PhysicalUnitsType001**) in Mera at ...\
+viewfields(object::**DescriptorType**) in Mera at ...\
+viewfields(object::**FileNamesType**) in Mera at ...\
+viewfields(object::**CompilationInfoType**) in Mera at...\
+viewfields(object::**ArgumentsType**) in Mera at...\
+ viewfields(object::**Mera.FilesContentType**) in Mera at...\
+ viewfields(object::**InfoType**) in Mera at ...\
+  viewfields(object::**ScalesType001**) in Mera at ...\
+   viewfields(object::**DataSetType**) in Mera at...
 
 
 ```julia
@@ -457,10 +457,10 @@ methods(namelist)
 
 
 
- 2 methods for generic function <b>namelist</b> from Mera:
+ 2 methods for generic function **namelist** from Mera:
  
- namelist(object::<b>Dict{Any, Any}</b>) in Mera at ...\
-  namelist(object::<b>InfoType</b>) in Mera at ...
+ namelist(object::**Dict{Any, Any}**) in Mera at ...\
+  namelist(object::**InfoType**) in Mera at ...
 
 
 Get a detailed overview of all the fields from MERA composite types:
