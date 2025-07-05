@@ -369,7 +369,7 @@ function gethydrodata(dataobject::InfoType,
                     # Convert AMR grid data to cell-based data with spatial filtering
                     if ngrida > 0
                         vars_1D_local, pos_1D_local, cpus_1D_local = 
-                            loopovercellshydro_deprecated(twotondim, ngrida, ilevel, lmax,
+                            loopovercellshydro(twotondim, ngrida, ilevel, lmax,
                                               xg, xc, son, xbound,
                                               nx_full, ny_full, nz_full,
                                               grid, vara, vars_1D_local, pos_1D_local,
@@ -491,7 +491,7 @@ end
 # HELPER FUNCTION: PROCESS INDIVIDUAL CELLS AND APPLY SPATIAL FILTERING
 # ═══════════════════════════════════════════════════════════════════════════════════
 
-function loopovercellshydro_deprecated(twotondim::Int,
+function loopovercellshydro(twotondim::Int,
                             ngrida::Int32,
                             ilevel::Int,
                             lmax::Int,
