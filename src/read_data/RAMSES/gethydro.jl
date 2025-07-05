@@ -349,14 +349,15 @@ function gethydro(dataobject::InfoType;
     
     # Read hydro data using optimized multithreaded I/O
     if read_cpu
-        vars_1D, pos_1D, cpus_1D = gethydrodata(dataobject, length(nvarh_list),
-                                         nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
+        vars_1D, pos_1D, cpus_1D = gethydrodata_deprecated(dataobject, length(nvarh_list),
+                                     nvarh_corr, lmax, ranges,
+                                     print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
     else
-        vars_1D, pos_1D = gethydrodata(dataobject, length(nvarh_list),
-                                         nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
-        cpus_1D = nothing
+        vars_1D, pos_1D = gethydrodata_deprecated(dataobject, length(nvarh_list),
+                                    nvarh_corr, lmax, ranges,
+                                     print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
+    #                                                    ↑ ADD verbose HERE
+    cpus_1D = nothing
     end
 
     # ═══════════════════════════════════════════════════════════════════════════
