@@ -3,7 +3,6 @@
 - select variables
 - limit to a maximum level
 - limit to a spatial range
-- multi-threading
 - set a minimum density or sound speed
 - check for negative values in density and thermal pressure
 - print the name of each data-file before reading it
@@ -13,7 +12,7 @@
 
 
 ```julia
-gethydro(dataobject::InfoType;
+gethydro(   dataobject::InfoType;
             lmax::Real=dataobject.levelmax,
             vars::Array{Symbol,1}=[:all],
             xrange::Array{<:Any,1}=[missing, missing],
@@ -27,8 +26,7 @@ gethydro(dataobject::InfoType;
             print_filenames::Bool=false,
             verbose::Bool=true,
             show_progress::Bool=true,
-            myargs::ArgumentsType=ArgumentsType(),
-            max_threads::Int=Threads.nthreads())
+            myargs::ArgumentsType=ArgumentsType()  )
 ```
 #### Returns an object of type HydroDataType, containing the hydro-data table, the selected options and the simulation ScaleType and summary of the InfoType
 ```julia
@@ -62,8 +60,6 @@ julia> fieldnames(gas)
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
-- **`max_threads`: give a maximum number of threads that is smaller or equal to the number of assigned threads in the running environment
-
 
 ### Defined Methods - function defined for different arguments
 - gethydro( dataobject::InfoType; ...) # no given variables -> all variables loaded
@@ -114,8 +110,7 @@ julia> gas = gethydro( info, :rho ) # no array for a single variable needed
 ```
 
 """
-
-function gethydro(dataobject::InfoType, var::Symbol;
+function gethydro_deprecated( dataobject::InfoType, var::Symbol;
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -128,10 +123,10 @@ function gethydro(dataobject::InfoType, var::Symbol;
                     print_filenames::Bool=false,
                     verbose::Bool=true,
                     show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType(),
-                    max_threads::Int=Threads.nthreads())
+                    myargs::ArgumentsType=ArgumentsType() )
 
-    return gethydro(dataobject, vars=[var],
+
+    return gethydro_deprecated(dataobject, vars=[var],
                     lmax=lmax,
                     xrange=xrange, yrange=yrange, zrange=zrange, center=center,
                     range_unit=range_unit,
@@ -141,11 +136,11 @@ function gethydro(dataobject::InfoType, var::Symbol;
                     print_filenames=print_filenames,
                     verbose=verbose,
                     show_progress=show_progress,
-                    myargs=myargs,
-                    max_threads=max_threads)
+                    myargs=myargs)
 end
 
-function gethydro(dataobject::InfoType, vars::Array{Symbol,1};
+
+function gethydro_deprecated( dataobject::InfoType, vars::Array{Symbol,1};
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -158,10 +153,10 @@ function gethydro(dataobject::InfoType, vars::Array{Symbol,1};
                     print_filenames::Bool=false,
                     verbose::Bool=true,
                     show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType(),
-                    max_threads::Int=Threads.nthreads())
+                    myargs::ArgumentsType=ArgumentsType() )
 
-    return gethydro(dataobject,
+
+    return gethydro_deprecated(dataobject,
                     vars=vars,
                     lmax=lmax,
                     xrange=xrange, yrange=yrange, zrange=zrange, center=center,
@@ -172,11 +167,13 @@ function gethydro(dataobject::InfoType, vars::Array{Symbol,1};
                     print_filenames=print_filenames,
                     verbose=verbose,
                     show_progress=show_progress,
-                    myargs=myargs,
-                    max_threads=max_threads)
+                    myargs=myargs)
 end
 
-function gethydro(dataobject::InfoType;
+
+
+
+function gethydro_deprecated( dataobject::InfoType;
                     lmax::Real=dataobject.levelmax,
                     vars::Array{Symbol,1}=[:all],
                     xrange::Array{<:Any,1}=[missing, missing],
@@ -190,10 +187,9 @@ function gethydro(dataobject::InfoType;
                     print_filenames::Bool=false,
                     verbose::Bool=true,
                     show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType(),
-                    max_threads::Int=Threads.nthreads())
+                    myargs::ArgumentsType=ArgumentsType() )
 
-    # Take values from myargs if given
+    # take values from myargs if given
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
@@ -210,117 +206,53 @@ function gethydro(dataobject::InfoType;
     checklevelmax(dataobject, lmax)
     isamr = checkuniformgrid(dataobject, lmax)
 
-    # Create variable-list and vector-mask (nvarh_corr) for gethydrodata-function
+    # create variabe-list and vector-mask (nvarh_corr) for gethydrodata-function
+    # print selected variables on screen
     nvarh_list, nvarh_i_list, nvarh_corr, read_cpu, used_descriptors = prepvariablelist(dataobject, :hydro, vars, lmax, verbose)
 
-    # Convert given ranges and print overview on screen
+    # convert given ranges and print overview on screen
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
-    # Read hydro-data of the selected variables
+    # read hydro-data of the selected variables
     if read_cpu
-        vars_1D, pos_1D, cpus_1D = gethydrodata(dataobject, length(nvarh_list),
+        vars_1D, pos_1D, cpus_1D = gethydrodata( dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
+                                         print_filenames, show_progress, read_cpu, isamr )
     else
-        vars_1D, pos_1D = gethydrodata(dataobject, length(nvarh_list),
+        vars_1D, pos_1D          = gethydrodata( dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
+                                         print_filenames, show_progress, read_cpu, isamr )
     end
 
-    # Set minimum density in cells and check for negative values
-    vars_1D = manageminvalues(vars_1D, check_negvalues, smallr, smallc, nvarh_list, nvarh_corr)
+    # set minimum density in cells and check vor negative values
+    vars_1D = manageminvalues_deprecated(vars_1D, check_negvalues, smallr, smallc, nvarh_list, nvarh_corr)
 
-    # Prepare column names for the data table
-    names_constr = preptablenames(dataobject.nvarh, nvarh_list, used_descriptors, read_cpu, isamr)
+    # prepare column names for the data table
+    names_constr = preptablenames_deprecated(dataobject.nvarh, nvarh_list, used_descriptors, read_cpu, isamr)
 
-    # ═══════════════════════════════════════════════════════════════════════════════
-    # FAST TABLE CREATION
-    # ═══════════════════════════════════════════════════════════════════════════════
-    
-    if show_progress
-        println("Creating table from $(size(vars_1D, 2)) cells...")
-        table_start = time()
-    end
-
-    # Pre-calculate sizes for optimal memory allocation
-    ncells = size(vars_1D, 2)
-    nvars = length(nvarh_i_list)
-    
-    # Force garbage collection before table creation to maximize available memory
-    GC.gc()
-    
-    # FASTEST METHOD: Direct table creation with pre-extracted arrays
-    @time begin
-        if read_cpu && isamr
-            # AMR with CPU data - direct array passing for maximum speed
-            data = table(
-                pos_1D[4,:].data,                     # level - extracted once
-                cpus_1D[:],                           # cpu - direct reference
-                pos_1D[1,:].data,                     # cx - extracted once
-                pos_1D[2,:].data,                     # cy - extracted once
-                pos_1D[3,:].data,                     # cz - extracted once
-                # Pre-extract all variable arrays in one pass for efficiency
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:level, :cx, :cy, :cz],
-                presorted = true,                     # Skip sorting for massive speedup
-                copy = false                          # No internal copying
-            )
-            
-        elseif read_cpu && !isamr
-            # Uniform grid with CPU data
-            data = table(
-                cpus_1D[:],
-                pos_1D[1,:].data,
-                pos_1D[2,:].data,
-                pos_1D[3,:].data,
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:cx, :cy, :cz],
-                presorted = true,
-                copy = false
-            )
-            
-        elseif !read_cpu && isamr
-            # AMR without CPU data
-            data = table(
-                pos_1D[4,:].data,
-                pos_1D[1,:].data,
-                pos_1D[2,:].data,
-                pos_1D[3,:].data,
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:level, :cx, :cy, :cz],
-                presorted = true,
-                copy = false
-            )
-            
-        else
-            # Uniform grid without CPU data
-            data = table(
-                pos_1D[1,:].data,
-                pos_1D[2,:].data,
-                pos_1D[3,:].data,
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:cx, :cy, :cz],
-                presorted = true,
-                copy = false
-            )
+    # create data table
+    # decouple pos_1D/vars_1D from ElasticArray with ElasticArray.data
+    if read_cpu # load also cpu number related to cell
+        if isamr
+            @inbounds data = table(pos_1D[4,:].data, cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                        [vars_1D[nvarh_corr[i],: ].data for i in nvarh_i_list]...,
+                        names=collect(names_constr), pkey=[:level,:cx, :cy, :cz], presorted = false ) #[names_constr...]
+        else # if uniform grid
+            @inbounds data =  table(cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                        [vars_1D[nvarh_corr[i],: ].data for i in nvarh_i_list]...,
+                        names=collect(names_constr), pkey=[:cx, :cy, :cz], presorted = false ) #[names_constr...]
+        end
+    else
+        if isamr
+            @inbounds data =  table(pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                        [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
+                        names=collect(names_constr), pkey=[:level,:cx, :cy, :cz], presorted = false ) #[names_constr...]
+        else # if uniform grid
+            @inbounds data =  table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                        [vars_1D[ nvarh_corr[i],: ].data for i in nvarh_i_list]...,
+                        names=collect(names_constr), pkey=[:cx, :cy, :cz], presorted = false ) #[names_constr...]
         end
     end
-
-    if show_progress
-        table_time = time() - table_start
-        println("✓ table created in $(round(table_time, digits=3)) seconds")
-    end
-
-    # Clear references to help GC
-    vars_1D = nothing
-    pos_1D = nothing
-    if read_cpu cpus_1D = nothing end
-    GC.gc()
-
     printtablememory(data, verbose)
 
     # Return data
@@ -343,85 +275,87 @@ function gethydro(dataobject::InfoType;
     return hydrodata
 end
 
-function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bool, smallr::Real, smallc::Real, nvarh_list::Array{Int,1}, nvarh_corr::Array{Int,1})
-    # Optimized minimum value management with early returns
-    
-    # Set minimum density in cells (optimized with @inbounds)
+
+
+function manageminvalues_deprecated(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bool, smallr::Real, smallc::Real, nvarh_list::Array{Int,1}, nvarh_corr::Array{Int,1})
+
+    # set minimum density in cells
     if smallr != 0. && in(1, nvarh_list)
-        @inbounds @simd for i in eachindex(vars_1D[nvarh_corr[1],:])
-            if vars_1D[nvarh_corr[1],i] < smallr
-                vars_1D[nvarh_corr[1],i] = smallr
+
+        @inbounds vars_1D[1,:] =clamp.(vars_1D[nvarh_corr[1],:], smallr, maximum(vars_1D[nvarh_corr[1],:]) + 1 )
+
+    else
+        # check for negative values in density
+        if check_negvalues == true
+            if in(1, nvarh_list)
+                @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[1],:])
+                if count_nv > 0
+                    println()
+                    println("[Mera]: Found $count_nv negative value(s) in density data.")
+                end
             end
-        end
-    elseif check_negvalues && in(1, nvarh_list)
-        # Fast negative value check using count
-        @inbounds count_nv = count(<(0), vars_1D[nvarh_corr[1],:])
-        if count_nv > 0
-            println("[Mera]: Found $count_nv negative value(s) in density data.")
         end
     end
 
-    # Set minimum thermal pressure in cells (optimized with @inbounds)
-    if smallc != 0. && in(5, nvarh_list)
-        @inbounds @simd for i in eachindex(vars_1D[nvarh_corr[5],:])
-            if vars_1D[nvarh_corr[5],i] < smallc
-                vars_1D[nvarh_corr[5],i] = smallc
+    # set minimum thermal pressure in cells
+    if smallc != 0.  && in(5, nvarh_list)
+        @inbounds vars_1D[5,:] =clamp.(vars_1D[nvarh_corr[5],:], smallc, maximum(vars_1D[nvarh_corr[5],:]) + 1 )
+
+    else
+        # check for negative values in thermal pressure
+        if check_negvalues == true
+            if in(5, nvarh_list)
+                @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[5],:])
+                if count_nv > 0
+                    println()
+                    println("[Mera]: Found $count_nv negative value(s) in thermal pressure data.")
+                end
             end
-        end
-    elseif check_negvalues && in(5, nvarh_list)
-        # Fast negative value check using count
-        @inbounds count_nv = count(<(0), vars_1D[nvarh_corr[5],:])
-        if count_nv > 0
-            println("[Mera]: Found $count_nv negative value(s) in thermal pressure data.")
         end
     end
 
     return vars_1D
 end
 
+
 function preptablenames_deprecated(nvarh::Int, nvarh_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
-    # Ultra-optimized name preparation with minimal allocations
-    
-    # Pre-calculate total size to avoid array growth
-    total_names = (read_cpu ? (isamr ? 5 : 4) : (isamr ? 4 : 3)) + length(nvarh_list)
-    names_constr = Vector{Symbol}(undef, total_names)
-    
-    # Fill base names efficiently
-    idx = 1
-    if isamr
-        names_constr[idx] = :level
-        idx += 1
-    end
+
     if read_cpu
-        names_constr[idx] = :cpu
-        idx += 1
+        if isamr
+            names_constr = [Symbol("level") ,Symbol("cpu"), Symbol("cx"), Symbol("cy"), Symbol("cz")]
+        else    #if uniform grid
+            names_constr = [Symbol("cpu"), Symbol("cx"), Symbol("cy"), Symbol("cz")]
+        end
+                    #, Symbol("x"), Symbol("y"), Symbol("z")
+    else
+        if isamr
+            names_constr = [Symbol("level") , Symbol("cx"), Symbol("cy"), Symbol("cz")]
+        else    #if uniform grid
+            names_constr = [Symbol("cx"), Symbol("cy"), Symbol("cz")]
+        end
     end
-    names_constr[idx] = :cx; idx += 1
-    names_constr[idx] = :cy; idx += 1
-    names_constr[idx] = :cz; idx += 1
-    
-    # Add variable names with optimized lookup
-    has_descriptors = length(used_descriptors) > 0
-    for i in nvarh_list
-        if has_descriptors && haskey(used_descriptors, i)
-            names_constr[idx] = used_descriptors[i]
-        else
-            # Fast symbol creation without string interpolation where possible
-            names_constr[idx] = if i == 1
-                :rho
-            elseif i == 2
-                :vx
-            elseif i == 3
-                :vy
-            elseif i == 4
-                :vz
-            elseif i == 5
-                :p
-            else
-                Symbol("var$i")
+
+
+    for i=1:nvarh
+        if in(i, nvarh_list)
+            if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
+                if i == 1
+                    append!(names_constr, [Symbol("rho")] )
+                elseif i == 2
+                    append!(names_constr, [Symbol("vx")] )
+                elseif i == 3
+                    append!(names_constr, [Symbol("vy")] )
+                elseif i == 4
+                    append!(names_constr, [Symbol("vz")] )
+                elseif i == 5
+                    append!(names_constr, [Symbol("p")] )
+                elseif i > 5
+                    append!(names_constr, [Symbol("var$i")] )
+                end
+            else append!(names_constr, [used_descriptors[i]] )
+
             end
         end
-        idx += 1
     end
 
     return names_constr

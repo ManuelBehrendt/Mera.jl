@@ -75,6 +75,7 @@ export
     getinfo,
     createpath,
     gethydro,
+    gethydro_deprecated,
     getgravity,
     getparticles,
     getclumps,
@@ -200,6 +201,8 @@ include("read_data/RAMSES/hilbert3d.jl")
 # Data reader
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
+include("read_data/RAMSES/gethydro_deprecated.jl")
+include("read_data/RAMSES/reader_hydro_deprecated.jl")
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
