@@ -379,7 +379,7 @@ function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bo
     return vars_1D
 end
 
-function preptablenames_deprecated(nvarh::Int, nvarh_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
+function preptablenames(nvarh::Int, nvarh_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
     # Ultra-optimized name preparation with minimal allocations
     
     # Pre-calculate total size to avoid array growth
