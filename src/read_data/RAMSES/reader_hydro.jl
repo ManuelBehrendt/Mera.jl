@@ -1,4 +1,4 @@
-function gethydrodata_deprecated(dataobject::InfoType,
+function gethydrodata(dataobject::InfoType,
                      Nnvarh::Int,
                      nvarh_corr::Array{Int,1},
                      lmax::Real,
@@ -294,7 +294,7 @@ function gethydrodata_deprecated(dataobject::InfoType,
                     nx_full = Int32(2^ilevel)
                     ny_full = nx_full
                     nz_full = nx_full
-                    xc = geometry_deprecated(twotondim_float, ilevel, xc)  # Cell center offsets
+                    xc = geometry(twotondim_float, ilevel, xc)  # Cell center offsets
 
                     # Allocate work arrays for this level (only if grids exist)
                     ngrida = local_ngridfile[icpu, ilevel]
@@ -466,7 +466,7 @@ end
 # HELPER FUNCTION: CALCULATE CELL GEOMETRY FOR AMR GRIDS
 # ═══════════════════════════════════════════════════════════════════════════════════
 
-function geometry_deprecated(twotondim_float::Float64, ilevel::Int, xc::Array{Float64,2})
+function geometry(twotondim_float::Float64, ilevel::Int, xc::Array{Float64,2})
     """
     Calculate relative positions of cells within each AMR grid.
     For 3D: 8 cells per grid arranged in a 2×2×2 pattern.
