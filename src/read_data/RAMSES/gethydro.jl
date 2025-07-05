@@ -220,11 +220,11 @@ function gethydro(dataobject::InfoType;
     if read_cpu
         vars_1D, pos_1D, cpus_1D = gethydrodata(dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
+                                         print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
     else
         vars_1D, pos_1D = gethydrodata(dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
+                                         print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
     end
 
     # Set minimum density in cells and check for negative values
@@ -237,7 +237,7 @@ function gethydro(dataobject::InfoType;
     # FAST TABLE CREATION
     # ═══════════════════════════════════════════════════════════════════════════════
     
-    if show_progress
+    if verbose
         println("Creating table from $(size(vars_1D, 2)) cells...")
         table_start = time()
     end
@@ -310,7 +310,7 @@ function gethydro(dataobject::InfoType;
         end
     end
 
-    if show_progress
+    if verbose
         table_time = time() - table_start
         println("✓ table created in $(round(table_time, digits=3)) seconds")
     end
