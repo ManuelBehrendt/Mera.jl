@@ -263,7 +263,7 @@ function gethydro(dataobject::InfoType;
                 [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
                 names = names_constr,
                 pkey = [:level, :cx, :cy, :cz],
-                presorted = true,                     # Skip sorting for massive speedup
+                presorted = false,                     # Skip sorting for massive speedup
                 copy = false                          # No internal copying
             )
             
@@ -277,7 +277,7 @@ function gethydro(dataobject::InfoType;
                 [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
                 names = names_constr,
                 pkey = [:cx, :cy, :cz],
-                presorted = true,
+                presorted = false,
                 copy = false
             )
             
@@ -291,7 +291,7 @@ function gethydro(dataobject::InfoType;
                 [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
                 names = names_constr,
                 pkey = [:level, :cx, :cy, :cz],
-                presorted = true,
+                presorted = false,
                 copy = false
             )
             
@@ -304,7 +304,7 @@ function gethydro(dataobject::InfoType;
                 [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
                 names = names_constr,
                 pkey = [:cx, :cy, :cz],
-                presorted = true,
+                presorted = false,
                 copy = false
             )
         end
