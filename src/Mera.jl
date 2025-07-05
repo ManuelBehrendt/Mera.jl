@@ -79,6 +79,7 @@ export
     getgravity,
     getgravity_deprecated,
     getparticles,
+    getparticles_deprecated,
     getclumps,
 
 # mera files
@@ -212,6 +213,8 @@ include("read_data/RAMSES/reader_gravity_deprecated.jl")
 
 include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")
+include("read_data/RAMSES/getparticles_deprecated.jl")
+include("read_data/RAMSES/reader_particles_deprecated.jl")
 
 include("read_data/RAMSES/getclumps.jl")
 # ============================================
