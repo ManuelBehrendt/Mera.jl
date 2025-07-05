@@ -5,6 +5,7 @@ function gethydrodata(dataobject::InfoType,
                      ranges::Array{Float64,1},
                      print_filenames::Bool,
                      show_progress::Bool,
+                     verbose::Bool,
                      read_cpu::Bool,
                      read_level::Bool,
                      max_threads::Int=Threads.nthreads())
@@ -140,7 +141,7 @@ function gethydrodata(dataobject::InfoType,
     # SECTION 4: DISPLAY PROCESSING CONFIGURATION
     # ═══════════════════════════════════════════════════════════════════════════════
     
-    if show_progress 
+    if verbose 
         println("📊 Processing Configuration:")
         println("   Total CPU files available: $(dataobject.ncpu)")
         println("   Files to be processed: $ncpu_read")  # Shows effect of spatial filtering
@@ -449,7 +450,7 @@ function gethydrodata(dataobject::InfoType,
     # SECTION 9: FINAL OUTPUT AND RETURN
     # ═══════════════════════════════════════════════════════════════════════════════
     
-    if show_progress
+    if verbose
         println("✓ Data combination complete!")
         println("Final data size: $(size(vars_1D, 2)) cells, $(size(vars_1D, 1)) variables")
     end
