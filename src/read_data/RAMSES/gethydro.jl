@@ -1,4 +1,129 @@
 """
+    create_ultrafast_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarh_corr, nvarh_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
+
+Creates IndexedTable with controlled threading for optimal performance.
+
+# Threading Control:
+- Uses min(max_threads, available_threads, total_columns) for optimal load balancing
+- Prevents thread over-subscription for small datasets
+- Provides thread usage feedback when verbose=true
+"""
+function create_ultrafast_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarh_corr, nvarh_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
+    nvars = length(nvarh_i_list)
+    ncells = size(vars_1D, 2)
+    
+    # THREAD OPTIMIZATION LOGIC
+    total_cols = (read_cpu ? 1 : 0) + (isamr ? 4 : 3) + nvars
+    effective_threads = min(max_threads, Threads.nthreads(), total_cols)
+    
+    if verbose
+        println("  Threading: $(effective_threads) threads for $(total_cols) columns")
+        println("  Max threads requested: $(max_threads)")
+        println("  Available threads: $(Threads.nthreads())")
+    end
+    
+    # PRE-ALLOCATE ALL ARRAYS AT ONCE
+    all_arrays = Vector{Vector}(undef, total_cols)
+    
+    # CONTROLLED PARALLEL ARRAY EXTRACTION
+    if effective_threads == 1 || total_cols <= 4
+        # Use sequential processing for small datasets or single thread
+        if verbose
+            println("  Using sequential processing (optimal for small datasets)")
+        end
+        
+        for col_idx in 1:total_cols
+            all_arrays[col_idx] = extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list, 
+                                                     col_idx, read_cpu, isamr)
+        end
+    else
+        # Use parallel processing with thread control
+        if verbose
+            println("  Using parallel processing with $(effective_threads) threads")
+        end
+        
+        # Custom threading with limited threads
+        if effective_threads < Threads.nthreads()
+            # Process in batches to control thread usage
+            batch_size = ceil(Int, total_cols / effective_threads)
+            
+            @threads for batch_idx in 1:effective_threads
+                start_col = (batch_idx - 1) * batch_size + 1
+                end_col = min(batch_idx * batch_size, total_cols)
+                
+                for col_idx in start_col:end_col
+                    all_arrays[col_idx] = extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list, 
+                                                             col_idx, read_cpu, isamr)
+                end
+            end
+        else
+            # Use standard @threads for full parallelization
+            @threads for col_idx in 1:total_cols
+                all_arrays[col_idx] = extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list, 
+                                                         col_idx, read_cpu, isamr)
+            end
+        end
+    end
+    
+    # DIRECT TABLE CREATION - FASTEST METHOD
+    pkey = read_cpu ? (isamr ? [:level,:cx, :cy, :cz] : [:cx, :cy, :cz]) : 
+                     (isamr ? [:level,:cx, :cy, :cz] : [:cx, :cy, :cz])
+    
+    if verbose
+        println("  Creating IndexedTable with $(length(all_arrays)) columns...")
+    end
+    
+    return table(all_arrays..., names=names_constr, pkey=pkey, presorted=false, copy=false)
+end
+
+"""
+    extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list, col_idx, read_cpu, isamr)
+
+Helper function to extract data for a specific column index.
+Centralizes the column extraction logic for better maintainability.
+"""
+function extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list, col_idx, read_cpu, isamr)
+    if read_cpu && isamr
+        if col_idx == 1
+            return pos_1D[4,:].data  # level
+        elseif col_idx == 2
+            return cpus_1D[:]        # cpu
+        elseif col_idx <= 5
+            return pos_1D[col_idx-2,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 5
+            return vars_1D[nvarh_corr[nvarh_i_list[var_idx]],:].data
+        end
+    elseif read_cpu && !isamr
+        if col_idx == 1
+            return cpus_1D[:]        # cpu
+        elseif col_idx <= 4
+            return pos_1D[col_idx-1,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 4
+            return vars_1D[nvarh_corr[nvarh_i_list[var_idx]],:].data
+        end
+    elseif !read_cpu && isamr
+        if col_idx == 1
+            return pos_1D[4,:].data  # level
+        elseif col_idx <= 4
+            return pos_1D[col_idx-1,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 4
+            return vars_1D[nvarh_corr[nvarh_i_list[var_idx]],:].data
+        end
+    else
+        if col_idx <= 3
+            return pos_1D[col_idx,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 3
+            return vars_1D[nvarh_corr[nvarh_i_list[var_idx]],:].data
+        end
+    end
+end
+
+
+"""
 #### Read the leaf-cells of the hydro-data:
 - select variables
 - limit to a maximum level
@@ -114,7 +239,6 @@ julia> gas = gethydro( info, :rho ) # no array for a single variable needed
 ```
 
 """
-
 function gethydro(dataobject::InfoType, var::Symbol;
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
@@ -193,7 +317,11 @@ function gethydro(dataobject::InfoType;
                     myargs::ArgumentsType=ArgumentsType(),
                     max_threads::Int=Threads.nthreads())
 
-    # Take values from myargs if given
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PARAMETER PROCESSING AND VALIDATION
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    # Override default parameters with values from myargs struct if provided
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
@@ -203,6 +331,7 @@ function gethydro(dataobject::InfoType;
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    # Validate input parameters and setup processing environment
     verbose = checkverbose(verbose)
     show_progress = checkprogress(show_progress)
     printtime("Get hydro data: ", verbose)
@@ -210,120 +339,72 @@ function gethydro(dataobject::InfoType;
     checklevelmax(dataobject, lmax)
     isamr = checkuniformgrid(dataobject, lmax)
 
-    # Create variable-list and vector-mask (nvarh_corr) for gethydrodata-function
+    # Prepare variable selection and spatial filtering
     nvarh_list, nvarh_i_list, nvarh_corr, read_cpu, used_descriptors = prepvariablelist(dataobject, :hydro, vars, lmax, verbose)
-
-    # Convert given ranges and print overview on screen
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
-    # Read hydro-data of the selected variables
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MULTITHREADED DATA READING
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    # Read hydro data using optimized multithreaded I/O
     if read_cpu
         vars_1D, pos_1D, cpus_1D = gethydrodata(dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
+                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
     else
         vars_1D, pos_1D = gethydrodata(dataobject, length(nvarh_list),
                                          nvarh_corr, lmax, ranges,
-                                         print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
+                                         print_filenames, show_progress, read_cpu, isamr, max_threads)
+        cpus_1D = nothing
     end
 
-    # Set minimum density in cells and check for negative values
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DATA PROCESSING AND VALIDATION
+    # ═══════════════════════════════════════════════════════════════════════════
+    
     vars_1D = manageminvalues(vars_1D, check_negvalues, smallr, smallc, nvarh_list, nvarh_corr)
-
-    # Prepare column names for the data table
     names_constr = preptablenames(dataobject.nvarh, nvarh_list, used_descriptors, read_cpu, isamr)
 
-    # ═══════════════════════════════════════════════════════════════════════════════
-    # FAST TABLE CREATION
-    # ═══════════════════════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════════════════════
+    # OPTIMIZED TABLE CREATION WITH THREAD CONTROL
+    # ═══════════════════════════════════════════════════════════════════════════
     
     if verbose
-        println("Creating table from $(size(vars_1D, 2)) cells...")
+        println("Creating Table from $(size(vars_1D, 2)) cells with max $(max_threads) threads...")
         table_start = time()
     end
-
-    # Pre-calculate sizes for optimal memory allocation
-    ncells = size(vars_1D, 2)
-    nvars = length(nvarh_i_list)
     
-    # Force garbage collection before table creation to maximize available memory
+    # Memory management
+    GC.gc()
+    sleep(0.1)
     GC.gc()
     
-    # FASTEST METHOD: Direct table creation with pre-extracted arrays
+    # Create IndexedTable with controlled threading
     @time begin
-        if read_cpu && isamr
-            # AMR with CPU data - direct array passing for maximum speed
-            data = table(
-                pos_1D[4,:].data,                     # level - extracted once
-                cpus_1D[:],                           # cpu - direct reference
-                pos_1D[1,:].data,                     # cx - extracted once
-                pos_1D[2,:].data,                     # cy - extracted once
-                pos_1D[3,:].data,                     # cz - extracted once
-                # Pre-extract all variable arrays in one pass for efficiency
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:level, :cx, :cy, :cz],
-                presorted = false,                     # Skip sorting for massive speedup
-                copy = false                          # No internal copying
-            )
-            
-        elseif read_cpu && !isamr
-            # Uniform grid with CPU data
-            data = table(
-                cpus_1D[:],
-                pos_1D[1,:].data,
-                pos_1D[2,:].data,
-                pos_1D[3,:].data,
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:cx, :cy, :cz],
-                presorted = false,
-                copy = false
-            )
-            
-        elseif !read_cpu && isamr
-            # AMR without CPU data
-            data = table(
-                pos_1D[4,:].data,
-                pos_1D[1,:].data,
-                pos_1D[2,:].data,
-                pos_1D[3,:].data,
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:level, :cx, :cy, :cz],
-                presorted = false,
-                copy = false
-            )
-            
-        else
-            # Uniform grid without CPU data
-            data = table(
-                pos_1D[1,:].data,
-                pos_1D[2,:].data,
-                pos_1D[3,:].data,
-                [vars_1D[nvarh_corr[nvarh_i_list[i]],:].data for i in 1:nvars]...;
-                names = names_constr,
-                pkey = [:cx, :cy, :cz],
-                presorted = false,
-                copy = false
-            )
-        end
+        data = create_ultrafast_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarh_corr, nvarh_i_list, read_cpu, isamr, verbose, max_threads)
     end
-
+    
     if verbose
         table_time = time() - table_start
-        println("✓ table created in $(round(table_time, digits=3)) seconds")
+        println("✓ Table created in $(round(table_time, digits=3)) seconds")
     end
 
-    # Clear references to help GC
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MEMORY CLEANUP AND RESULT PREPARATION
+    # ═══════════════════════════════════════════════════════════════════════════
+    
     vars_1D = nothing
     pos_1D = nothing
-    if read_cpu cpus_1D = nothing end
+    cpus_1D = nothing
     GC.gc()
 
     printtablememory(data, verbose)
 
-    # Return data
+    # ═══════════════════════════════════════════════════════════════════════════
+    # RETURN STRUCTURED DATA OBJECT
+    # ═══════════════════════════════════════════════════════════════════════════
+    
     hydrodata = HydroDataType()
     hydrodata.data = data
     hydrodata.info = dataobject
@@ -340,39 +421,33 @@ function gethydro(dataobject::InfoType;
     hydrodata.smallr = smallr
     hydrodata.smallc = smallc
     hydrodata.scale = dataobject.scale
+    
     return hydrodata
 end
 
+# Keep your existing helper functions unchanged
 function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bool, smallr::Real, smallc::Real, nvarh_list::Array{Int,1}, nvarh_corr::Array{Int,1})
-    # Optimized minimum value management with early returns
-    
-    # Set minimum density in cells (optimized with @inbounds)
+    # DENSITY PROCESSING (variable index 1)
     if smallr != 0. && in(1, nvarh_list)
-        @inbounds @simd for i in eachindex(vars_1D[nvarh_corr[1],:])
-            if vars_1D[nvarh_corr[1],i] < smallr
-                vars_1D[nvarh_corr[1],i] = smallr
+        @inbounds vars_1D[nvarh_corr[1],:] = clamp.(vars_1D[nvarh_corr[1],:], smallr, maximum(vars_1D[nvarh_corr[1],:]) + 1)
+    else
+        if check_negvalues == true && in(1, nvarh_list)
+            @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[1],:])
+            if count_nv > 0
+                println("[Mera]: Found $count_nv negative value(s) in density data.")
             end
-        end
-    elseif check_negvalues && in(1, nvarh_list)
-        # Fast negative value check using count
-        @inbounds count_nv = count(<(0), vars_1D[nvarh_corr[1],:])
-        if count_nv > 0
-            println("[Mera]: Found $count_nv negative value(s) in density data.")
         end
     end
 
-    # Set minimum thermal pressure in cells (optimized with @inbounds)
+    # THERMAL PRESSURE PROCESSING (variable index 5)
     if smallc != 0. && in(5, nvarh_list)
-        @inbounds @simd for i in eachindex(vars_1D[nvarh_corr[5],:])
-            if vars_1D[nvarh_corr[5],i] < smallc
-                vars_1D[nvarh_corr[5],i] = smallc
+        @inbounds vars_1D[nvarh_corr[5],:] = clamp.(vars_1D[nvarh_corr[5],:], smallc, maximum(vars_1D[nvarh_corr[5],:]) + 1)
+    else
+        if check_negvalues == true && in(5, nvarh_list)
+            @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[5],:])
+            if count_nv > 0
+                println("[Mera]: Found $count_nv negative value(s) in thermal pressure data.")
             end
-        end
-    elseif check_negvalues && in(5, nvarh_list)
-        # Fast negative value check using count
-        @inbounds count_nv = count(<(0), vars_1D[nvarh_corr[5],:])
-        if count_nv > 0
-            println("[Mera]: Found $count_nv negative value(s) in thermal pressure data.")
         end
     end
 
@@ -380,49 +455,45 @@ function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bo
 end
 
 function preptablenames(nvarh::Int, nvarh_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
-    # Ultra-optimized name preparation with minimal allocations
-    
-    # Pre-calculate total size to avoid array growth
-    total_names = (read_cpu ? (isamr ? 5 : 4) : (isamr ? 4 : 3)) + length(nvarh_list)
-    names_constr = Vector{Symbol}(undef, total_names)
-    
-    # Fill base names efficiently
-    idx = 1
-    if isamr
-        names_constr[idx] = :level
-        idx += 1
-    end
+    # BUILD BASE COLUMN NAMES (position and metadata)
     if read_cpu
-        names_constr[idx] = :cpu
-        idx += 1
-    end
-    names_constr[idx] = :cx; idx += 1
-    names_constr[idx] = :cy; idx += 1
-    names_constr[idx] = :cz; idx += 1
-    
-    # Add variable names with optimized lookup
-    has_descriptors = length(used_descriptors) > 0
-    for i in nvarh_list
-        if has_descriptors && haskey(used_descriptors, i)
-            names_constr[idx] = used_descriptors[i]
+        if isamr
+            names_constr = [:level, :cpu, :cx, :cy, :cz]
         else
-            # Fast symbol creation without string interpolation where possible
-            names_constr[idx] = if i == 1
-                :rho
-            elseif i == 2
-                :vx
-            elseif i == 3
-                :vy
-            elseif i == 4
-                :vz
-            elseif i == 5
-                :p
+            names_constr = [:cpu, :cx, :cy, :cz]
+        end
+    else
+        if isamr
+            names_constr = [:level, :cx, :cy, :cz]
+        else
+            names_constr = [:cx, :cy, :cz]
+        end
+    end
+
+    # ADD HYDRO VARIABLE NAMES
+    for i=1:nvarh
+        if in(i, nvarh_list)
+            if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
+                var_name = if i == 1
+                    :rho
+                elseif i == 2
+                    :vx
+                elseif i == 3
+                    :vy
+                elseif i == 4
+                    :vz
+                elseif i == 5
+                    :p
+                else
+                    Symbol("var$i")
+                end
+                push!(names_constr, var_name)
             else
-                Symbol("var$i")
+                push!(names_constr, used_descriptors[i])
             end
         end
-        idx += 1
     end
 
     return names_constr
 end
+
