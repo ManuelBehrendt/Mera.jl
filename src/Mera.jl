@@ -77,6 +77,7 @@ export
     gethydro,
     gethydro_deprecated,
     getgravity,
+    getgravity_deprecated,
     getparticles,
     getclumps,
 
@@ -206,6 +207,8 @@ include("read_data/RAMSES/reader_hydro_deprecated.jl")
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
+include("read_data/RAMSES/getgravity_deprecated.jl")
+include("read_data/RAMSES/reader_gravity_deprecated.jl")
 
 include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")

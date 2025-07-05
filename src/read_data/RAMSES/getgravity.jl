@@ -1,8 +1,98 @@
 """
+    create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
+
+Creates IndexedTable for gravity data with controlled threading for optimal performance.
+"""
+function create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
+    nvars = length(nvarg_i_list)
+    ncells = size(vars_1D, 2)
+    
+    # THREAD OPTIMIZATION LOGIC
+    total_cols = (read_cpu ? 1 : 0) + (isamr ? 4 : 3) + nvars
+    effective_threads = min(max_threads, Threads.nthreads(), total_cols)
+    
+    if verbose
+        println("  Threading: $(effective_threads) threads for $(total_cols) columns")
+    end
+    
+    # PRE-ALLOCATE ALL ARRAYS AT ONCE
+    all_arrays = Vector{Vector}(undef, total_cols)
+    
+    # CONTROLLED PARALLEL ARRAY EXTRACTION
+    if effective_threads == 1 || total_cols <= 4
+        # Use sequential processing for small datasets
+        for col_idx in 1:total_cols
+            all_arrays[col_idx] = extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, 
+                                                             col_idx, read_cpu, isamr)
+        end
+    else
+        # Use parallel processing
+        @threads for col_idx in 1:total_cols
+            all_arrays[col_idx] = extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, 
+                                                             col_idx, read_cpu, isamr)
+        end
+    end
+    
+    # DIRECT TABLE CREATION - FASTEST METHOD
+    pkey = read_cpu ? (isamr ? [:level,:cx, :cy, :cz] : [:cx, :cy, :cz]) : 
+                     (isamr ? [:level,:cx, :cy, :cz] : [:cx, :cy, :cz])
+    
+    return table(all_arrays..., names=names_constr, pkey=pkey, presorted=false, copy=false)
+end
+
+"""
+    extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
+
+Helper function to extract gravity data for a specific column index.
+"""
+function extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
+    if read_cpu && isamr
+        if col_idx == 1
+            return pos_1D[4,:].data  # level
+        elseif col_idx == 2
+            return cpus_1D[:]        # cpu
+        elseif col_idx <= 5
+            return pos_1D[col_idx-2,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 5
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
+        end
+    elseif read_cpu && !isamr
+        if col_idx == 1
+            return cpus_1D[:]        # cpu
+        elseif col_idx <= 4
+            return pos_1D[col_idx-1,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 4
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
+        end
+    elseif !read_cpu && isamr
+        if col_idx == 1
+            return pos_1D[4,:].data  # level
+        elseif col_idx <= 4
+            return pos_1D[col_idx-1,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 4
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
+        end
+    else
+        if col_idx <= 3
+            return pos_1D[col_idx,:].data  # cx, cy, cz
+        else
+            var_idx = col_idx - 3
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
+        end
+    end
+end
+
+
+
+"""
 #### Read the leaf-cells of the gravity-data:
 - select variables
 - limit to a maximum level
 - limit to a spatial range
+- multi-threading
 - print the name of each data-file before reading it
 - toggle verbose mode
 - toggle progress bar
@@ -10,18 +100,18 @@
 
 
 ```julia
-getgravity(   dataobject::InfoType;
-            lmax::Real=dataobject.levelmax,
-            vars::Array{Symbol,1}=[:all],
-            xrange::Array{<:Any,1}=[missing, missing],
-            yrange::Array{<:Any,1}=[missing, missing],
-            zrange::Array{<:Any,1}=[missing, missing],
-            center::Array{<:Any,1}=[0., 0., 0.],
-            range_unit::Symbol=:standard,
-            print_filenames::Bool=false,
-            verbose::Bool=true,
-            show_progress::Bool=true,
-            myargs::ArgumentsType=ArgumentsType()  )
+getgravity(dataobject::InfoType, var::Symbol;
+                lmax::Real=dataobject.levelmax,
+                xrange::Array{<:Any,1}=[missing, missing],
+                yrange::Array{<:Any,1}=[missing, missing],
+                zrange::Array{<:Any,1}=[missing, missing],
+                center::Array{<:Any,1}=[0., 0., 0.],
+                range_unit::Symbol=:standard,
+                print_filenames::Bool=false,
+                verbose::Bool=true,
+                show_progress::Bool=true,
+                myargs::ArgumentsType=ArgumentsType(),
+                max_threads::Int=Threads.nthreads())
 ```
 #### Returns an object of type GravDataType, containing the gravity-data table, the selected options and the simulation ScaleType and summary of the InfoType
 ```julia
@@ -52,7 +142,7 @@ julia> fieldnames(grav)
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`show_progress`:** print progress bar on screen
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
-
+- **`max_threads`: give a maximum number of threads that is smaller or equal to the number of assigned threads in the running environment
 
 ### Defined Methods - function defined for different arguments
 - getgravity( dataobject::InfoType; ...) # no given variables -> all variables loaded
@@ -103,7 +193,7 @@ julia> grav = getgravity( info, :epot ) # no array for a single variable needed
 ```
 
 """
-function getgravity( dataobject::InfoType, var::Symbol;
+function getgravity(dataobject::InfoType, var::Symbol;
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -113,7 +203,8 @@ function getgravity( dataobject::InfoType, var::Symbol;
                     print_filenames::Bool=false,
                     verbose::Bool=true,
                     show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType()  )
+                    myargs::ArgumentsType=ArgumentsType(),
+                    max_threads::Int=Threads.nthreads())
 
     return getgravity(dataobject, vars=[var],
                     lmax=lmax,
@@ -122,10 +213,11 @@ function getgravity( dataobject::InfoType, var::Symbol;
                     print_filenames=print_filenames,
                     verbose=verbose,
                     show_progress=show_progress,
-                    myargs=myargs)
+                    myargs=myargs,
+                    max_threads=max_threads)
 end
 
-function getgravity( dataobject::InfoType, vars::Array{Symbol,1};
+function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],
                     yrange::Array{<:Any,1}=[missing, missing],
@@ -135,7 +227,8 @@ function getgravity( dataobject::InfoType, vars::Array{Symbol,1};
                     print_filenames::Bool=false,
                     verbose::Bool=true,
                     show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType()  )
+                    myargs::ArgumentsType=ArgumentsType(),
+                    max_threads::Int=Threads.nthreads())
 
     return getgravity(dataobject,
                     vars=vars,
@@ -145,25 +238,29 @@ function getgravity( dataobject::InfoType, vars::Array{Symbol,1};
                     print_filenames=print_filenames,
                     verbose=verbose,
                     show_progress=show_progress,
-                    myargs=myargs)
+                    myargs=myargs,
+                    max_threads=max_threads)
 end
 
+function getgravity(dataobject::InfoType;
+                    lmax::Real=dataobject.levelmax,
+                    vars::Array{Symbol,1}=[:all],
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    print_filenames::Bool=false,
+                    verbose::Bool=true,
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType(),
+                    max_threads::Int=Threads.nthreads())
 
-function getgravity( dataobject::InfoType;
-                      lmax::Real=dataobject.levelmax,
-                      vars::Array{Symbol,1}=[:all],
-                      xrange::Array{<:Any,1}=[missing, missing],
-                      yrange::Array{<:Any,1}=[missing, missing],
-                      zrange::Array{<:Any,1}=[missing, missing],
-                      center::Array{<:Any,1}=[0., 0., 0.],
-                      range_unit::Symbol=:standard,
-                      print_filenames::Bool=false,
-                      verbose::Bool=true,
-                      show_progress::Bool=true,
-                      myargs::ArgumentsType=ArgumentsType()  )
-
-
-    # take values from myargs if given
+    # ═══════════════════════════════════════════════════════════════════════════
+    # PARAMETER PROCESSING AND VALIDATION
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    # Override default parameters with values from myargs struct if provided
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
@@ -173,113 +270,177 @@ function getgravity( dataobject::InfoType;
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
+    # Validate input parameters and setup processing environment
     verbose = checkverbose(verbose)
+    show_progress = checkprogress(show_progress)
     printtime("Get gravity data: ", verbose)
     checkfortype(dataobject, :gravity)
     checklevelmax(dataobject, lmax)
     isamr = checkuniformgrid(dataobject, lmax)
-
-    # create variabe-list and vector-mask (nvarg_corr) for getgravitydata-function
-    # print selected variables on screen
+    read_level = isamr  # Set read_level based on AMR detection
+    
+    # Prepare variable selection and spatial filtering
     nvarg_list, nvarg_i_list, nvarg_corr, read_cpu, used_descriptors = prepvariablelist(dataobject, :gravity, vars, lmax, verbose)
-
-    # convert given ranges and print overview on screen
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
-
-    # read gravity-data of the selected variables
-    if read_cpu
-        vars_1D, pos_1D, cpus_1D = getgravitydata( dataobject, length(nvarg_list),
-                                         nvarg_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr  )
-    else
-        vars_1D, pos_1D          = getgravitydata( dataobject, length(nvarg_list),
-                                         nvarg_corr, lmax, ranges,
-                                         print_filenames, show_progress, read_cpu, isamr  )
+     # ═══════════════════════════════════════════════════════════════════════════
+    # MULTITHREADED DATA READING WITH ENHANCED OUTPUT
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    if verbose
+        println("Starting gravity data extraction...")
+        println("  Max threads requested: $(max_threads)")
+        println("  Available threads: $(Threads.nthreads())")
+        println("  Data type: $(read_level ? "AMR" : "Uniform grid")")
+        println("  CPU data: $(read_cpu ? "Yes" : "No")")
     end
 
-    # prepare column names for the data table
+    if read_cpu
+        vars_1D, pos_1D, cpus_1D = getgravitydata(dataobject, length(nvarg_list),
+                                         nvarg_corr, lmax, ranges,
+                                         print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
+    else
+        vars_1D, pos_1D = getgravitydata(dataobject, length(nvarg_list),
+                                         nvarg_corr, lmax, ranges,
+                                         print_filenames, show_progress, verbose, read_cpu, isamr, max_threads)
+        cpus_1D = nothing
+    end
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # DATA PROCESSING AND VALIDATION WITH OUTPUT
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    if verbose
+        println("Processing gravity data...")
+        println("  Variables: $(length(nvarg_list)) selected")
+        println("  Cells: $(size(vars_1D, 2)) total")
+        if isamr && size(pos_1D, 1) >= 4
+            levels = unique(pos_1D[4,:])
+            println("  AMR levels: $(sort(levels))")
+            for level in sort(levels)
+                count = sum(pos_1D[4,:] .== level)
+                println("    Level $level: $count cells")
+            end
+        end
+    end
+    
     names_constr = preptablenames_gravity(length(dataobject.gravity_variable_list), nvarg_list, used_descriptors, read_cpu, isamr)
 
-    # create data table
-    # decouple pos_1D/vars_1D from ElasticArray with ElasticArray.data
-    if read_cpu # load also cpu number related to cell
-        if isamr
-            @inbounds data = table( pos_1D[4,:].data, cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
-                     [vars_1D[nvarg_corr[i],: ].data for i in nvarg_i_list]...,
-                     names=collect(names_constr), pkey=[:level, :cx, :cy, :cz], presorted = false ) #[names_constr...]
-        else # if uniform grid
-            @inbounds data =  table(cpus_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
-                     [vars_1D[nvarg_corr[i],: ].data for i in nvarg_i_list]...,
-                     names=collect(names_constr), pkey=[:cx, :cy, :cz], presorted = false ) #[names_constr...]
-        end
-   else
-        if isamr
-            @inbounds data = table( pos_1D[4,:].data, pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
-                    [vars_1D[nvarg_corr[i],: ].data for i in nvarg_i_list]...,
-                    names=collect(names_constr), pkey=[:level, :cx, :cy, :cz], presorted = false  ) #[names_constr...]
-        else # if uniform grid
-            @inbounds data =  table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
-                    [vars_1D[ nvarg_corr[i],: ].data for i in nvarg_i_list]...,
-                    names=collect(names_constr), pkey=[:cx, :cy, :cz], presorted = false ) #[names_constr...]
-        end
-   end
+    # ═══════════════════════════════════════════════════════════════════════════
+    # OPTIMIZED TABLE CREATION WITH DETAILED OUTPUT
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    if verbose
+        println("Creating gravity table from $(size(vars_1D, 2)) cells with max $(max_threads) threads...")
+        table_start = time()
+    end
+    
+    # Memory management with feedback
+    if verbose
+        println("  Optimizing memory before table creation...")
+    end
+    GC.gc()
+    sleep(0.1)
+    GC.gc()
+    
+    # Create IndexedTable with controlled threading
+    @time begin
+        data = create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose, max_threads)
+    end
+    
+    if verbose
+        table_time = time() - table_start
+        println("✓ Gravity table created in $(round(table_time, digits=3)) seconds")
+        println("  Table structure:")
+        println("    Rows: $(length(data))")
+        println("    Columns: $(length(propertynames(data)))")
+        println("    Primary key: $(read_cpu ? (isamr ? "[:level, :cx, :cy, :cz]" : "[:cx, :cy, :cz]") : (isamr ? "[:level, :cx, :cy, :cz]" : "[:cx, :cy, :cz]"))")
+    end
 
-   printtablememory(data, verbose)
+    # ═══════════════════════════════════════════════════════════════════════════
+    # MEMORY CLEANUP AND RESULT PREPARATION WITH FEEDBACK
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    if verbose
+        println("Cleaning up intermediate arrays...")
+    end
+    
+    vars_1D = nothing
+    pos_1D = nothing
+    cpus_1D = nothing
+    GC.gc()
 
-   # Return data
-   gravitydata = GravDataType()
-   gravitydata.data = data
-   gravitydata.info = dataobject
-   gravitydata.lmin = dataobject.levelmin
-   gravitydata.lmax = lmax
-   gravitydata.boxlen = dataobject.boxlen
-   gravitydata.ranges = ranges
-   if read_cpu
-       gravitydata.selected_gravvars = [-1, nvarg_list...]
-   else
-       gravitydata.selected_gravvars  = nvarg_list
-   end
-   gravitydata.used_descriptors = used_descriptors
-   gravitydata.scale = dataobject.scale
-   return gravitydata
+    printtablememory(data, verbose)
+
+    # ═══════════════════════════════════════════════════════════════════════════
+    # RETURN STRUCTURED DATA OBJECT WITH SUMMARY
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    gravitydata = GravDataType()
+    gravitydata.data = data
+    gravitydata.info = dataobject
+    gravitydata.lmin = dataobject.levelmin
+    gravitydata.lmax = lmax
+    gravitydata.boxlen = dataobject.boxlen
+    gravitydata.ranges = ranges
+    if read_cpu
+        gravitydata.selected_gravvars = [-1, nvarg_list...]
+    else
+        gravitydata.selected_gravvars = nvarg_list
+    end
+    gravitydata.used_descriptors = used_descriptors
+    gravitydata.scale = dataobject.scale
+    
+    if verbose
+        println("✓ Gravity data extraction completed successfully!")
+        println("  Output: GravDataType with $(length(data)) cells")
+    end
+    
+    return gravitydata
 end
 
+"""
+    preptablenames_gravity(nvarg, nvarg_list, used_descriptors, read_cpu, isamr)
 
-
+Generates column names for gravity IndexedTable based on data configuration.
+"""
 function preptablenames_gravity(nvarg::Int, nvarg_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, isamr::Bool)
-
+    
+    # BUILD BASE COLUMN NAMES (position and metadata)
     if read_cpu
         if isamr
-            names_constr = [Symbol("level") ,Symbol("cpu"), Symbol("cx"), Symbol("cy"), Symbol("cz")]
-        else    #if uniform grid
-            names_constr = [Symbol("cpu"), Symbol("cx"), Symbol("cy"), Symbol("cz")]
+            names_constr = [:level, :cpu, :cx, :cy, :cz]
+        else
+            names_constr = [:cpu, :cx, :cy, :cz]
         end
-                    #, Symbol("x"), Symbol("y"), Symbol("z")
     else
         if isamr
-            names_constr = [Symbol("level") , Symbol("cx"), Symbol("cy"), Symbol("cz")]
-        else    #if uniform grid
-            names_constr = [Symbol("cx"), Symbol("cy"), Symbol("cz")]
+            names_constr = [:level, :cx, :cy, :cz]
+        else
+            names_constr = [:cx, :cy, :cz]
         end
     end
 
-     for i=1:nvarg
-         if in(i, nvarg_list)
-             if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
-                 if i == 1
-                     append!(names_constr, [Symbol("epot")] )
-                 elseif i == 2
-                     append!(names_constr, [Symbol("ax")] )
-                 elseif i == 3
-                     append!(names_constr, [Symbol("ay")] )
-                 elseif i == 4
-                     append!(names_constr, [Symbol("az")] )
-                 end
-            else append!(names_constr, [used_descriptors[i]] )
-
+    # ADD GRAVITY VARIABLE NAMES
+    for i=1:nvarg
+        if in(i, nvarg_list)
+            if length(used_descriptors) == 0 || !haskey(used_descriptors, i)
+                var_name = if i == 1
+                    :epot       # Gravitational potential
+                elseif i == 2
+                    :ax         # X-acceleration component
+                elseif i == 3
+                    :ay         # Y-acceleration component
+                elseif i == 4
+                    :az         # Z-acceleration component
+                else
+                    Symbol("gravvar$i")  # Generic name for additional variables
+                end
+                push!(names_constr, var_name)
+            else
+                push!(names_constr, used_descriptors[i])
             end
-         end
-     end
+        end
+    end
 
-     return names_constr
+    return names_constr
 end
