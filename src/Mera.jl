@@ -121,6 +121,7 @@ export
 
 #
     projection,
+    projection_deprecated,
     #slice,
     #profile,
     #remap,
@@ -234,6 +235,7 @@ include("functions/data_convert.jl")
 include("functions/projection.jl")
 #include("functions/slice.jl")
 include("functions/projection_hydro.jl")
+include("functions/projection_hydro_deprecated.jl")
 include("functions/projection_particles.jl")
 # ============================================
 
