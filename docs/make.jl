@@ -5,9 +5,14 @@ makedocs(modules = [Mera],
          doctest = false,
          clean = true,
          checkdocs = :all,
-         format = Documenter.HTML(prettyurls = get(ENV, "CI", nothing) == "true", sidebar_sitename = false),
-         authors = "Manuel Behrendt",
-		 pages = Any[ "Home"                  => "index.md",
+         format = Documenter.HTML(
+		prettyurls = get(ENV, "CI", nothing) == "true", 
+		size_threshold=nothing,  # Increase from 200 to 400 KiB
+        	size_threshold_warn=200,  # Optional: adjust warning threshold
+		sidebar_sitename = false),
+         
+		authors = "Manuel Behrendt",
+		pages = Any[ "Home"                  => "index.md",
 		              "First Steps"           => "00_multi_FirstSteps.md",
                       "1-Data Inspection"     => Any[ "Hydro"      =>  "01_hydro_First_Inspection.md",
                                                       "Particles"  =>  "01_particles_First_Inspection.md",
