@@ -23,7 +23,7 @@ function print_benchmark_introduction()
     path = "/path/to/a/simulation/output-folder"
 
     # Run your benchmark
-    results = benchmark_run(path; runs=100)
+    results = benchmark_run(path; runs=10)
 
     # Create visualization (full version)
     fig = visualize_benchmark(results)
