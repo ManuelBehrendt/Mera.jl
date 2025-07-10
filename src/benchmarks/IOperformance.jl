@@ -411,13 +411,14 @@ function benchmark_run(folder; runs::Int=1, max_threads_override=nothing)
     end
     println()
 
-    println("🔧 PERFORMANCE RECOMMENDATIONS:")
-    mb_mean < 5         && println("   • RAM copy <5 GB/s → optimize memory or upgrade RAM")
-    iops_max < 100      && println("   • IOPS <100 → faster SSD/NVMe or lower concurrency")
-    access_penalty > 3  && println("   • Random-access penalty >3× → use sequential workflows")
-    cache_speedup > 2   && println("   • Strong cache benefit → batch repeated reads")
-    syscall_ratio > 0.5 && println("   • High syscall cost → batch open/close calls")
-    tp_mean < 100       && println("   • Bandwidth <100 MB/s → storage or network bottleneck")
+    # not in use for now
+    #println("🔧 PERFORMANCE RECOMMENDATIONS:")
+    #mb_mean < 5         && println("   • RAM copy <5 GB/s → optimize memory or upgrade RAM")
+    #iops_max < 100      && println("   • IOPS <100 → faster SSD/NVMe or lower concurrency")
+    #access_penalty > 3  && println("   • Random-access penalty >3× → use sequential workflows")
+    #cache_speedup > 2   && println("   • Strong cache benefit → batch repeated reads")
+    #syscall_ratio > 0.5 && println("   • High syscall cost → batch open/close calls")
+    #tp_mean < 100       && println("   • Bandwidth <100 MB/s → storage or network bottleneck")
 
     println("\n✅ Benchmark completed with $runs combined run(s) using up to $max_test_threads threads")
     return res
