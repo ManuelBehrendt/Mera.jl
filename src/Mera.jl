@@ -176,8 +176,8 @@ export
     MaskArrayAbstractType,
 
 # benchmarks
-    benchmark_run, benchmark_run_comprehensive,
-    visualize_benchmark, visualize_benchmark_simple
+    benchmark_run, benchmark_run_comprehensive
+    #visualize_benchmark, visualize_benchmark_simple
 
 
 include("types.jl")
@@ -274,7 +274,7 @@ include("macros/filter_data.jl")
 
 # Benchmarks
 include("benchmarks/IOperformance.jl")
-include("benchmarks/IOperformance_viz.jl")
+#include("benchmarks/IOperformance_viz.jl")
 
 
 # Functions under development
