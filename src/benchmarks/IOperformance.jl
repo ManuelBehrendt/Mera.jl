@@ -123,7 +123,7 @@ function measure_memory_bandwidth_combined(files; runs=1, samples=10)
 end
 
 
-function measure_iops_scaling_combined(files; max_threads=Threads.nthreads(); runs=3, levels=[1,2,4,8])
+function measure_iops_scaling_combined(files; max_threads=Threads.nthreads(), runs=3, levels=[1,2,4,8])
     # Use all available threads if levels not specified
     if levels === nothing
         # Generate optimal thread levels for testing
