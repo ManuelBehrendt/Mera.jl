@@ -21,7 +21,8 @@ function print_benchmark_introduction()
    Example:
    using CairoMakie
    include("IOperformance_viz.jl")
-   # download viz code @: https://github.com/ManuelBehrendt/Mera.jl/blob/master/src/benchmarks/IOperformance_viz.jl
+   # download viz code @: 
+   https://github.com/ManuelBehrendt/Mera.jl/blob/master/src/benchmarks/IOperformance_viz.jl
     
    path = "/path/to/a/simulation/output-folder"
 
