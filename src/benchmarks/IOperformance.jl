@@ -32,9 +32,6 @@ function print_benchmark_introduction()
     # Create visualization (full version)
     fig = visualize_benchmark(results)
 
-    # Or use simple version for testing
-    # fig = visualize_benchmark_simple(results)
-
     # Save and display
     save("benchmark_results.pdf", fig)
     save("benchmark_results.png", fig)
