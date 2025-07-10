@@ -22,7 +22,7 @@ function print_benchmark_introduction()
    using CairoMakie
 
     # Run your benchmark
-    results = benchmark_run((path; runs=100)
+    results = benchmark_run(path; runs=100)
 
     # Create visualization (full version)
     fig = visualize_benchmark(results)
@@ -301,7 +301,7 @@ end
 
 # ═══════════════════════════ Combined Benchmark Runner ══════════════════════════
 
-function benchmark_run(_comprehensive(folder; runs::Int=1)
+function benchmark_run_comprehensive(folder; runs::Int=1)
     files = joinpath.(folder, filter(f->isfile(joinpath(folder,f)), readdir(folder)))
     isempty(files) && error("No files in $folder")
 
@@ -320,12 +320,12 @@ function benchmark_run(_comprehensive(folder; runs::Int=1)
     )
 end
 
-function benchmark_run((folder; runs::Int=1)
+function benchmark_run(folder; runs::Int=1)
     print_benchmark_introduction()
     print_section_header("COMPREHENSIVE BOTTLENECK ANALYSIS" * 
                         (runs > 1 ? " - $runs COMBINED RUNS" : ""))
     
-    res = benchmark_run(_comprehensive(folder; runs=runs)
+    res = benchmark_run_comprehensive(folder; runs=runs)
 
     print_section_header("RECOMMENDATIONS (based on combined statistics)")
     
