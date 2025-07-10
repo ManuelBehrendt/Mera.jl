@@ -41,6 +41,8 @@ using Dates
 using Statistics
 using Pkg
 using Base.Threads
+using Base: Semaphore, acquire, release 
+using Random
 
 # external libraries
 using FortranFiles
@@ -141,7 +143,7 @@ export
 # macro MacroTools
     @filter, @apply, @where,
 
-#types
+# types
     ScalesType001,
     ScalesType,
     ArgumentsType,
@@ -171,9 +173,11 @@ export
 
     MaskType,
     MaskArrayType,
-    MaskArrayAbstractType
+    MaskArrayAbstractType,
 
-
+# benchmarks
+    benchmark_run, benchmark_run_comprehensive,
+    visualize_benchmark, visualize_benchmark_simple
 
 
 include("types.jl")
@@ -267,6 +271,11 @@ include("functions/export_particles_to_vtk.jl")
 
 # MacroTools
 include("macros/filter_data.jl")
+
+# Benchmarks
+include("benchmarks/IOperformance.jl")
+include("benchmarks/IOperformance_viz.jl")
+
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
