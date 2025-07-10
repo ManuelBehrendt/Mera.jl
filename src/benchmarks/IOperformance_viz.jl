@@ -152,33 +152,3 @@ function visualize_benchmark(res; bins = 30)
     
     return fig
 end
-
-# Simplified fallback version for troubleshooting
-function visualize_benchmark_simple(res; bins = 30)
-    """
-    Ultra-simple version that focuses on core metrics only
-    """
-    fig = Figure(size = (800, 600))
-    
-    # Memory bandwidth histogram
-    ax1 = Axis(fig[1, 1], title = "Memory Bandwidth (GB/s)")
-    hist!(ax1, res.memory_bandwidth, bins = bins, color = :blue)
-    
-    # Throughput histogram
-    ax2 = Axis(fig[1, 2], title = "Throughput (MB/s)") 
-    hist!(ax2, res.throughput, bins = bins, color = :green)
-    
-    # IOPS scaling: collect and sort keys properly
-    ax3 = Axis(fig[2, 1], title = "IOPS Scaling", xlabel = "Threads", ylabel = "IOPS")
-    levels = sort(collect(keys(res.iops)))
-    iops_vals = [res.iops[l] for l in levels]
-    scatter!(ax3, levels, iops_vals, markersize = 12, color = :red)
-    lines!(ax3, levels, iops_vals, linewidth = 2, color = :darkred)
-    
-    # Cache comparison
-    ax4 = Axis(fig[2, 2], title = "Cache Effect (ms)")
-    barplot!(ax4, ["Cold", "Warm"], [res.cache.cold * 1000, res.cache.warm * 1000], 
-            color = [:gray, :gold])
-    
-    return fig
-end
