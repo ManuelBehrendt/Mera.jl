@@ -22,13 +22,16 @@ function print_benchmark_introduction()
    using CairoMakie
     path = "/path/to/a/simulation/output-folder"
 
+
     # Run your benchmark
     results = benchmark_run(path; runs=10)
 
     # Create visualization (full version)
+    fig = CairoMakie.Figure(size = (1200, 1600), fontsize = 12)
     fig = visualize_benchmark(results)
 
     # Or use simple version for testing
+    # fig = Figure(size = (800, 600))
     # fig = visualize_benchmark_simple(results)
 
     # Save and display
