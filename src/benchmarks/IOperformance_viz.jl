@@ -3,7 +3,8 @@
 #
 #  Usage:
 #  using CairoMakie
-#  results = benchmark_run(("/path/to/your/files"; runs=5)
+#  path = "/path/to/a/simulation/output-folder"
+#  results = benchmark_run(path; runs=5)
 #  fig = visualize_benchmark(results)
 #  save("benchmark_results.pdf", fig)
 ################################################################################
