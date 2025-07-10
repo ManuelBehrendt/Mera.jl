@@ -5,10 +5,20 @@
 #  using CairoMakie
 #  path = "/path/to/a/simulation/output-folder"
 #  results = benchmark_run(path; runs=5)
+#  fig = CairoMakie.Figure(size = (1200, 1600), fontsize = 12)
 #  fig = visualize_benchmark(results)
 #  save("benchmark_results.pdf", fig)
 ################################################################################
 
+
+# Or use simple version for testing
+# fig = Figure(size = (800, 600))
+# fig = visualize_benchmark_simple(results)
+
+# Save and display
+save("benchmark_results.pdf", fig)
+save("benchmark_results.png", fig)
+display(fig)
 
 function format_time_smart(seconds::Float64)
     if seconds >= 1.0
@@ -28,7 +38,6 @@ Fixed for all modern CairoMakie compatibility issues.
 """
 function visualize_benchmark(res; bins = 30)
     # Create figure with proper size syntax
-    fig = Figure(size = (1200, 1600), fontsize = 12)
     
     # Panel 1: Memory Bandwidth Distribution
     ax1 = Axis(fig[1, 1], 
@@ -158,8 +167,7 @@ function visualize_benchmark_simple(res; bins = 30)
     """
     Ultra-simple version that focuses on core metrics only
     """
-    fig = Figure(size = (800, 600))
-    
+
     # Memory bandwidth histogram
     ax1 = Axis(fig[1, 1], title = "Memory Bandwidth (GB/s)")
     hist!(ax1, res.memory_bandwidth, bins = bins, color = :blue)
