@@ -122,10 +122,24 @@ function measure_memory_bandwidth_combined(files; runs=1, samples=10)
     all_rates
 end
 
-function measure_iops_scaling_combined(files; runs=1, levels=[1,2,4,8,12,16,24,32,64])
+
+    function measure_iops_scaling_combined(files; runs=1, levels=nothing)
+    # Use all available threads if levels not specified
+    if levels === nothing
+        max_threads = Threads.nthreads()
+        levels = [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, max_threads]
+        # Filter to only test up to available threads
+        levels = filter(x -> x <= max_threads, levels)
+        # Ensure max_threads is included
+        if !(max_threads in levels)
+            push!(levels, max_threads)
+            sort!(levels)
+        end
+    end
+    
     print_test_explanation("IOPS SCALING TEST",
         "Open/close all files at several concurrency levels across multiple runs.",
-        "Finds peak IOPS.")
+        "Finds peak IOPS using up to $max_threads threads.")
     
     combined_results = Dict{Int,Vector{Float64}}()
     for level in levels
@@ -322,29 +336,88 @@ function benchmark_run_comprehensive(folder; runs::Int=1)
     )
 end
 
-function benchmark_run(folder; runs::Int=1)
+function benchmark_optimized(folder; runs::Int=1, max_threads_override=nothing)
     print_benchmark_introduction()
+    
+    # Detect optimal thread configuration
+    available_threads = Threads.nthreads()
+    max_test_threads = max_threads_override !== nothing ? max_threads_override : available_threads
+    
+    println("🧵 Thread Configuration:")
+    println("   Available threads: $available_threads")
+    println("   Testing up to: $max_test_threads threads")
+    println("   Recommendation: Launch Julia with 'julia -t auto' for optimal performance")
+    println()
+    
+    if available_threads == 1
+        println("⚠️  WARNING: Running with single thread. For better performance:")
+        println("   • Restart Julia with: julia -t auto")
+        println("   • Or specify thread count: julia -t $(Sys.CPU_THREADS)")
+        println()
+    end
+    
     print_section_header("COMPREHENSIVE BOTTLENECK ANALYSIS" * 
                         (runs > 1 ? " - $runs COMBINED RUNS" : ""))
     
-    res = benchmark_run_comprehensive(folder; runs=runs)
+    files = joinpath.(folder, filter(f->isfile(joinpath(folder,f)), readdir(folder)))
+    isempty(files) && error("No files in $folder")
 
-    print_section_header("RECOMMENDATIONS (based on combined statistics)")
+    println("🔄 Running comprehensive benchmark with $runs iterations...")
+    println("   All measurements will be combined for robust statistics")
+    println("   Files to analyze: $(length(files))")
+    println()
+
+    # Generate optimal thread levels for testing
+    thread_levels = [1, 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128]
+    thread_levels = filter(x -> x <= max_test_threads, thread_levels)
+    if !(max_test_threads in thread_levels)
+        push!(thread_levels, max_test_threads)
+        sort!(thread_levels)
+    end
+
+    res = (
+        memory_bandwidth = measure_memory_bandwidth_combined(files; runs=runs),
+        iops             = measure_iops_scaling_combined(files; runs=runs, levels=thread_levels),
+        access           = measure_access_patterns_combined(files; runs=runs),
+        cache            = measure_cache_effects_combined(files; runs=runs),
+        syscall          = measure_syscall_overhead_combined(files; runs=runs),
+        throughput       = measure_throughput_combined(files; runs=runs),
+        dir_ops          = measure_directory_ops_combined(folder; runs=runs),
+        total_runs       = runs,
+        thread_config    = (available=available_threads, tested=max_test_threads, levels=thread_levels)
+    )
+
+    # Enhanced recommendations including thread optimization
+    print_section_header("OPTIMIZATION RECOMMENDATIONS")
     
     mb_mean = mean(res.memory_bandwidth)
     tp_mean = mean(res.throughput)
-    iops_max = maximum(values(res.iops))
+    iops_results = res.iops
+    iops_max = maximum(values(iops_results))
+    optimal_threads = findfirst(x -> x == iops_max, iops_results)
     access_penalty = res.access.rand / res.access.seq
     cache_speedup = res.cache.cold / res.cache.warm
     syscall_ratio = res.syscall.oc / res.syscall.read
 
-    mb_mean < 5         && println("• RAM copy <5 GB/s → optimize memory or upgrade RAM.")
-    iops_max < 100      && println("• IOPS <100 → faster SSD/NVMe or lower concurrency.")
-    access_penalty > 3  && println("• Random-access penalty >3× → use sequential workflows.")
-    cache_speedup > 2   && println("• Strong cache benefit → batch repeated reads.")
-    syscall_ratio > 0.5 && println("• High syscall cost → batch open/close calls.")
-    tp_mean < 100       && println("• Bandwidth <100 MB/s → storage or network bottleneck.")
+    println("🧵 THREADING RECOMMENDATIONS:")
+    println("   • Optimal thread count for IOPS: $optimal_threads threads")
+    println("   • Maximum IOPS achieved: $(round(iops_max, digits=1))")
+    if optimal_threads < available_threads
+        println("   • Consider using $optimal_threads threads for this workload")
+    elseif optimal_threads == available_threads
+        println("   • System is well-utilized at maximum threads")
+    end
+    println()
 
-    println("\n✅ Finished. All statistics based on $runs combined run(s).")
+    println("🔧 PERFORMANCE RECOMMENDATIONS:")
+    mb_mean < 5         && println("   • RAM copy <5 GB/s → optimize memory or upgrade RAM")
+    iops_max < 100      && println("   • IOPS <100 → faster SSD/NVMe or lower concurrency")
+    access_penalty > 3  && println("   • Random-access penalty >3× → use sequential workflows")
+    cache_speedup > 2   && println("   • Strong cache benefit → batch repeated reads")
+    syscall_ratio > 0.5 && println("   • High syscall cost → batch open/close calls")
+    tp_mean < 100       && println("   • Bandwidth <100 MB/s → storage or network bottleneck")
+
+    println("\n✅ Benchmark completed with $runs combined run(s) using up to $max_test_threads threads")
     return res
 end
+
