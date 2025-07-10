@@ -401,17 +401,19 @@ function benchmark_run(folder; runs::Int=1, max_threads_override=nothing)
     cache_speedup = res.cache.cold / res.cache.warm
     syscall_ratio = res.syscall.oc / res.syscall.read
 
-    println("🧵 THREADING RECOMMENDATIONS:")
-    println("   • Optimal thread count for IOPS: $optimal_threads threads")
-    println("   • Maximum IOPS achieved: $(round(iops_max, digits=1))")
-    if optimal_threads < available_threads
-        println("   • Consider using $optimal_threads threads for this workload")
-    elseif optimal_threads == available_threads
-        println("   • System is well-utilized at maximum threads")
-    end
-    println()
+    # disable recommendations
 
-    # not in use for now
+    #println("🧵 THREADING RECOMMENDATIONS:")
+    #println("   • Optimal thread count for IOPS: $optimal_threads threads")
+    #println("   • Maximum IOPS achieved: $(round(iops_max, digits=1))")
+    #if optimal_threads < available_threads
+    #    println("   • Consider using $optimal_threads threads for this workload")
+    #elseif optimal_threads == available_threads
+    #    println("   • System is well-utilized at maximum threads")
+    #end
+    #println()
+
+    
     #println("🔧 PERFORMANCE RECOMMENDATIONS:")
     #mb_mean < 5         && println("   • RAM copy <5 GB/s → optimize memory or upgrade RAM")
     #iops_max < 100      && println("   • IOPS <100 → faster SSD/NVMe or lower concurrency")
