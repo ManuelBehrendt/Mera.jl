@@ -336,7 +336,7 @@ function benchmark_run_comprehensive(folder; runs::Int=1)
     )
 end
 
-function benchmark_optimized(folder; runs::Int=1, max_threads_override=nothing)
+function benchmark_run(folder; runs::Int=1, max_threads_override=nothing)
     print_benchmark_introduction()
     
     # Detect optimal thread configuration
