@@ -9,6 +9,7 @@
 #  save("benchmark_results.pdf", fig)
 ################################################################################
 
+import Printf.@sprintf
 
 function format_time_smart(seconds::Float64)
     if seconds >= 1.0
