@@ -123,7 +123,7 @@ function measure_memory_bandwidth_combined(files; runs=1, samples=10)
 end
 
 
-function measure_iops_scaling_combined(files, max_threads; runs=3, levels=[1,2,4,8])
+function measure_iops_scaling_combined(files; max_threads=Threads.nthreads(); runs=3, levels=[1,2,4,8])
     # Use all available threads if levels not specified
     if levels === nothing
         # Generate optimal thread levels for testing
@@ -379,7 +379,7 @@ function benchmark_run(folder; runs::Int=1, max_threads_override=nothing)
 
     res = (
         memory_bandwidth = measure_memory_bandwidth_combined(files; runs=runs),
-        iops             = measure_iops_scaling_combined(files; runs=runs, levels=thread_levels),
+        iops             = measure_iops_scaling_combined(files; max_threads=max_threads_override, runs=runs, levels=thread_levels),
         access           = measure_access_patterns_combined(files; runs=runs),
         cache            = measure_cache_effects_combined(files; runs=runs),
         syscall          = measure_syscall_overhead_combined(files; runs=runs),
