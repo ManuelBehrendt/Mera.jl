@@ -36,7 +36,9 @@ function visualize_benchmark(res; bins = 30)
                xlabel = "Memory Bandwidth (GB/s)", 
                ylabel = "Count",
                title = "Memory Copy Bandwidth Distribution")
-    hist!(ax1, res.memory_bandwidth, bins = bins, color = :steelblue, strokewidth = 1)
+    if !in(Inf, es.memory_bandwidth)
+        hist!(ax1, res.memory_bandwidth, bins = bins, color = :steelblue, strokewidth = 1)
+    end
     
     # Panel 2: IOPS Scaling
     ax2 = Axis(fig[1, 2], 
