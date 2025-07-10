@@ -20,6 +20,7 @@ function print_benchmark_introduction()
 
    Example:
    using CairoMakie
+    path = "/path/to/a/simulation/output-folder"
 
     # Run your benchmark
     results = benchmark_run(path; runs=100)
