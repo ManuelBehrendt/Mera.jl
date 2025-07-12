@@ -37,19 +37,18 @@ using WAV
 
 # Julia libraries
 using Printf
-import Printf.@sprintf
 using Dates
 using Statistics
 using Pkg
 using Base.Threads
 using Base: Semaphore, acquire, release 
-using Random
 
 # external libraries
 using FortranFiles
 #using JuliaDB
 using IndexedTables
 using DataStructures
+using Distributions
 using ElasticArrays
 using StructArrays
 using ProgressMeter
@@ -177,7 +176,7 @@ export
     MaskArrayAbstractType,
 
 # benchmarks
-    benchmark_run, benchmark_run_comprehensive
+    run_benchmark
     #visualize_benchmark, visualize_benchmark_simple
 
 
