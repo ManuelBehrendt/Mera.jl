@@ -276,7 +276,7 @@ include("macros/filter_data.jl")
 # Benchmarks
 include("benchmarks/IOperformance.jl")
 #include("benchmarks/IOperformance_viz.jl")
-include("RAMSES_reading/ramses_reading_stats.jl")
+include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
