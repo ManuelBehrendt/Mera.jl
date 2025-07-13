@@ -13,6 +13,8 @@
 #needed packages: 
 # using CairoMakie, Colors
 
+using Mera: mean, median, quantile, fit, TDist, Histogram, fmt_time
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  Plotting Helpers
 # ══════════════════════════════════════════════════════════════════════════════
