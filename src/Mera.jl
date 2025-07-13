@@ -51,6 +51,7 @@ using DataStructures
 using Distributions
 using ElasticArrays
 using StructArrays
+using JSON3
 using ProgressMeter
 using StatsBase
 using OnlineStats
@@ -176,9 +177,9 @@ export
     MaskArrayAbstractType,
 
 # benchmarks
-    run_benchmark
+    run_benchmark,
     #visualize_benchmark, visualize_benchmark_simple
-
+    run_reading_benchmark
 
 include("types.jl")
 include("types_old.jl")
@@ -275,7 +276,7 @@ include("macros/filter_data.jl")
 # Benchmarks
 include("benchmarks/IOperformance.jl")
 #include("benchmarks/IOperformance_viz.jl")
-
+include("RAMSES_reading/ramses_reading_stats.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
