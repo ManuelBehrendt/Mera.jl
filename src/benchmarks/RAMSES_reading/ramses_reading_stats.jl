@@ -1,5 +1,3 @@
-
-
 # Get information about the current thread configuration at Julia startup
 function get_startup_thread_info()
     # Number of compute threads available (for parallel processing)
@@ -29,7 +27,7 @@ function get_startup_thread_info()
 end
 
 # Run a single benchmark for a specific RAMSES output and thread configuration
-function run_single_rading_benchmark(path::String, output_number::Int, thread_info::Dict)
+function run_single_reading_benchmark(path::String, output_number::Int, thread_info::Dict)
     println("=" ^ 60)
     println("MERA: reading RAMSES files Benchmark - Single Configuration")
     println("Compute threads: $(thread_info["compute_threads"])")
@@ -63,7 +61,6 @@ function run_single_rading_benchmark(path::String, output_number::Int, thread_in
             
             # Clean up memory before timing
             GC.gc()
-            initial_memory = Base.gc_live_bytes()
             initial_gc = Base.gc_num()
             
             start_time = time()
@@ -84,13 +81,10 @@ function run_single_rading_benchmark(path::String, output_number::Int, thread_in
                 read_time = time() - start_time
                 push!(times, read_time)
                 
-                # Collect memory and GC statistics
-                final_memory = Base.gc_live_bytes()
                 final_gc = Base.gc_num()
-                memory_used = (final_memory - initial_memory) / 1024^2
                 gc_time = (final_gc.total_time - initial_gc.total_time) / 1e9
                 
-                println("    Time: $(round(read_time, digits=2))s, Memory: $(round(memory_used, digits=0))MB, GC: $(round(gc_time, digits=3))s")
+                println("    Time: $(round(read_time, digits=2))s, GC: $(round(gc_time, digits=3))s")
                 
                 # Release memory
                 data = nothing
@@ -172,12 +166,11 @@ end
 
 # Main function to run a single-thread configuration benchmark and save results
 function run_reading_benchmark(output_number, path)
-    
     # Gather thread configuration info
     thread_info = get_startup_thread_info()
     
     # Run the benchmark for this configuration
-    results = run_single_rading_benchmark(path, output_number, thread_info)
+    results = run_single_reading_benchmark(path, output_number, thread_info)
     
     # Print a summary of the benchmark results
     println("\n" * "=" ^ 60)
