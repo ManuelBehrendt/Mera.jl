@@ -179,7 +179,9 @@ export
 # benchmarks
     run_benchmark,
     #visualize_benchmark, visualize_benchmark_simple
-    run_reading_benchmark
+    run_reading_benchmark,
+    run_merafile_benchmark
+    
 
 include("types.jl")
 include("types_old.jl")
@@ -277,6 +279,7 @@ include("macros/filter_data.jl")
 include("benchmarks/IOperformance.jl")
 #include("benchmarks/IOperformance_viz.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
+include("benchmarks/RAMSES_reading/merafile_reading_stats.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
