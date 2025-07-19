@@ -32,6 +32,7 @@ using ImageTransformations.Interpolations
 #using ImageFiltering
 
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
+using TranscodingStreams
 using TimerOutputs
 using WAV
 
@@ -91,6 +92,8 @@ export
     viewdata,
     infodata,
     convertdata,
+    batch_convert_mera,
+    interactive_mera_converter,
 
 # data_overview
     printtime,
@@ -235,6 +238,7 @@ include("functions/data_load.jl")
 include("functions/data_view.jl")
 include("functions/data_info.jl")
 include("functions/data_convert.jl")
+include("functions/mera_convert.jl")
 # ============================================
 
 
