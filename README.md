@@ -120,8 +120,8 @@ Pkg.add("Mera")
 
 
 ## Updates
-Watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
-Note: Before updating, always read the release notes. In Pkg REPL mode run:
+> **Note**
+> Before updating, always read the release notes. In Pkg REPL mode run:
 
 ```julia
 pkg> update Mera
@@ -132,6 +132,44 @@ Or, equivalently, in a Jupyter notebook:
 using Pkg
 Pkg.update("Mera")
 ```
+
+### Subscribe to Email Notifications for Updates
+
+Want to stay informed about new releases of this Julia package? You can subscribe to email notifications through GitHub's built-in features or free third-party services. Below are simple instructions for each option. These methods ensure you get updates automatically when a new release is published.
+
+#### Using GitHub's Built-in Watching
+
+GitHub lets you watch the repository for release notifications, which can be sent via email if you configure your settings.
+
+- Go to the Mera.jl repository page on GitHub.
+- Click the "Watch" button in the top right.
+- Select "Custom" and check "Releases" to get notified only about new releases.
+- In your GitHub settings (under Notifications > Email), enable email delivery for watched repositories.
+- You'll receive an email with release details like the tag, notes, and link.
+
+This is free and native to GitHub—no extra accounts needed.
+
+#### Using NewReleases.io
+
+NewReleases.io monitors GitHub repositories and sends email alerts for new releases.
+
+- Visit https://newreleases.io/ and search for this repository (e.g., by its GitHub URL).
+- Sign up with your email and subscribe to the project.
+- You'll get emails whenever a new release or tag is published.
+- To unsubscribe, use the link in the emails or your account dashboard.
+
+It's free for basic use and supports various notification types beyond email.
+
+#### Using Libraries.io
+
+Libraries.io tracks open-source packages and provides email alerts for updates, including new releases.
+
+- Visit https://libraries.io/ and search for this package or repository.
+- Create a free account, follow the project, and enable email notifications.
+- You'll receive alerts on new versions and changes.
+- Unsubscribe or manage preferences from your profile settings.
+
+This service is great for developers tracking multiple libraries and is completely free.
 
 ## Reproducible Research 
 Julia ensures research verification and reproducibility through its sophisticated dual-file dependency management system. Each project generates two complementary files: `Project.toml`, which specifies direct dependencies with version compatibility constraints (e.g., "0.5" meaning "≥0.5.0 and <0.6.0" following semantic versioning rules), and `Manifest.toml`, which locks the exact versions of all dependencies—both direct and indirect—that were resolved and installed.
@@ -273,10 +311,12 @@ julia> methods(viewfields)
 New ideas, feature requests are very welcome! MERA can be easily extended for other grid-based or N-body based data. Write an email to: mera[>]manuelbehrendt.com
 
 
-## Supporting and Citing
-To credit the Mera software, please star the repository on GitHub. If you use the Mera software as part of your research, teaching, or other activities, I would be grateful if you could cite my work. To give proper academic credit, follow the link for BibTeX export:
-[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
+## Support This Project by Starring on GitHub
+If you find this Julia package useful please consider giving it a star on GitHub. Starring helps increase visibility, shows your support to the community, and motivates ongoing development with well-documented features.
 
+## Citing
+If you use the Mera software as part of your research, teaching, or other activities, I would be grateful if you could cite my work. To give proper academic credit, follow the link for BibTeX export:
+[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
 
 ## License
