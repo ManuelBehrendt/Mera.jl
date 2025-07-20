@@ -160,17 +160,6 @@ NewReleases.io monitors GitHub repositories and sends email alerts for new relea
 
 It's free for basic use and supports various notification types beyond email.
 
-#### Using Libraries.io
-
-Libraries.io tracks open-source packages and provides email alerts for updates, including new releases.
-
-- Visit https://libraries.io/ and search for this package or repository.
-- Create a free account, follow the project, and enable email notifications.
-- You'll receive alerts on new versions and changes.
-- Unsubscribe or manage preferences from your profile settings.
-
-This service is great for developers tracking multiple libraries and is completely free.
-
 ## Reproducible Research 
 Julia ensures research verification and reproducibility through its sophisticated dual-file dependency management system. Each project generates two complementary files: `Project.toml`, which specifies direct dependencies with version compatibility constraints (e.g., "0.5" meaning "≥0.5.0 and <0.6.0" following semantic versioning rules), and `Manifest.toml`, which locks the exact versions of all dependencies—both direct and indirect—that were resolved and installed.
 This dual approach provides both flexibility and precision: Project.toml defines version ranges that are compatible with your research, while Manifest.toml creates a complete snapshot, ensuring identical [Julia environments](https://pkgdocs.julialang.org/v1.11/environments/).
