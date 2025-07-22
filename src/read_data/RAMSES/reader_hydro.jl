@@ -505,54 +505,94 @@ function loopovercellshydro(twotondim::Int,
                             nz_full::Int32,
                             grid::Array{LevelType,1},  # Spatial bounds for filtering
                             vara::Array{Float64,3},    # Hydro variables
-                            vars_1D::ElasticArray{Float64,2,1},  # Output: variables
-                            pos_1D::ElasticArray{Int,2,1},       # Output: positions
+                            vars_1D_local::ElasticArray{Float64,2,1},  # Thread-local variables
+                            pos_1D_local::ElasticArray{Int,2,1},       # Thread-local positions
                             read_cpu::Bool,
-                            cpus_1D::Array{Int,1},     # Output: CPU numbers
+                            cpus_1D_local::Array{Int,1},     # Thread-local CPU numbers
                             k::Int,                    # Current file index
                             read_level::Bool)
     """
-    Process each cell in the AMR grids:
-    1. Calculate absolute cell coordinates
-    2. Check if cell is a leaf (not refined further)
-    3. Apply spatial filtering
-    4. Store data for cells that pass all filters
+    THREAD-SAFE VERSION: Process each cell in the AMR grids using thread-local arrays.
+    
+    Key changes for thread safety:
+    1. Only modifies thread-local arrays (no shared state)
+    2. Pre-allocates temporary arrays for better performance
+    3. Batch append operations to reduce memory allocations
+    4. Returns updated thread-local arrays
     """
     
+    # Pre-allocate temporary arrays for batch operations
+    max_cells = ngrida * twotondim  # Maximum possible cells to add
+    temp_vars = Vector{Float64}()
+    temp_positions = Vector{Int}()
+    temp_cpus = Vector{Int}()
+    
+    # Pre-allocate with estimated capacity to reduce reallocations
+    sizehint!(temp_vars, max_cells * size(vara, 3))
+    sizehint!(temp_positions, max_cells * (read_level ? 4 : 3))
+    if read_cpu
+        sizehint!(temp_cpus, max_cells)
+    end
+    
+    # Process cells with spatial filtering
     for ind=1:twotondim # Loop over cells in each grid (8 cells for 3D)
         for i=1:ngrida  # Loop over all grids at this level
             # Only process leaf cells (not refined further)
-            if !(son[i,ind]>0 && ilevel<lmax)
+            if !(son[i,ind] > 0 && ilevel < lmax)
                 
                 # Calculate absolute cell coordinates in the simulation domain
-                ix = floor(Int, (xg[i,1]+xc[ind,1]-xbound[1]) * nx_full) + 1
-                iy = floor(Int, (xg[i,2]+xc[ind,2]-xbound[2]) * ny_full) + 1
-                iz = floor(Int, (xg[i,3]+xc[ind,3]-xbound[3]) * nz_full) + 1
+                ix = floor(Int, (xg[i,1] + xc[ind,1] - xbound[1]) * nx_full) + 1
+                iy = floor(Int, (xg[i,2] + xc[ind,2] - xbound[2]) * ny_full) + 1
+                iz = floor(Int, (xg[i,3] + xc[ind,3] - xbound[3]) * nz_full) + 1
 
                 # Apply spatial filtering: only keep cells within requested bounds
-                if      ix >= grid[ilevel].imin &&
-                        iy >= grid[ilevel].jmin &&
-                        iz >= grid[ilevel].kmin &&
-                        ix <= grid[ilevel].imax &&
-                        iy <= grid[ilevel].jmax &&
-                        iz <= grid[ilevel].kmax
+                if ix >= grid[ilevel].imin &&
+                   iy >= grid[ilevel].jmin &&
+                   iz >= grid[ilevel].kmin &&
+                   ix <= grid[ilevel].imax &&
+                   iy <= grid[ilevel].jmax &&
+                   iz <= grid[ilevel].kmax
 
+                    # THREAD-SAFE: Collect data in temporary arrays
                     # Store hydro variables for this cell
-                    append!(vars_1D, vara[i,ind,:])
+                    for var_idx = 1:size(vara, 3)
+                        push!(temp_vars, vara[i, ind, var_idx])
+                    end
                     
                     # Store position (and level for AMR)
                     if read_level
-                        append!(pos_1D, [ix, iy, iz, ilevel])
+                        append!(temp_positions, [ix, iy, iz, ilevel])
                     else
-                        append!(pos_1D, [ix, iy, iz])
+                        append!(temp_positions, [ix, iy, iz])
                     end
                     
                     # Store CPU number if requested
-                    if read_cpu append!(cpus_1D, k) end
+                    if read_cpu 
+                        push!(temp_cpus, k) 
+                    end
                 end
             end
         end
     end # End loop over cells
 
-    return vars_1D, pos_1D, cpus_1D
+    # THREAD-SAFE: Batch append to thread-local arrays (single operation per array)
+    if !isempty(temp_vars)
+        # Reshape temp_vars for proper appending to 2D ElasticArray
+        nvars = size(vara, 3)
+        ncells = div(length(temp_vars), nvars)
+        vars_matrix = reshape(temp_vars, nvars, ncells)
+        append!(vars_1D_local, vars_matrix)
+        
+        # Append positions
+        pos_dims = read_level ? 4 : 3
+        pos_matrix = reshape(temp_positions, pos_dims, ncells)
+        append!(pos_1D_local, pos_matrix)
+        
+        # Append CPU numbers
+        if read_cpu
+            append!(cpus_1D_local, temp_cpus)
+        end
+    end
+
+    return vars_1D_local, pos_1D_local, cpus_1D_local
 end
