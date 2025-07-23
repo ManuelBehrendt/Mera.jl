@@ -115,7 +115,7 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
     level_cpus_list = Vector{Vector{Int}}()
     
     # Get file name using existing Mera.jl pattern
-    fname_grav = grav_files[icpu]
+    fname_grav = getproc2string(fnames.gravity, Int32(icpu))
     
     # Open and read gravity file
     if print_filenames println(fname_grav) end
@@ -355,7 +355,7 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
     # Read grid information from each CPU file header
     for icpu = 1:dataobject.ncpu
         try
-            f = FortranFile(fnames.grav[icpu])
+            f = FortranFile(grav_files[icpu])
             
             # Read header
             ncpu2 = read(f, Int32)
@@ -406,11 +406,85 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
             try
                 # Process single CPU file
                 cpu_vars, cpu_pos, cpu_cpus = process_gravity_cpu_file_safe(
-                    Int32(cpu_idx), grav_files, dataobject, overview,
+    Int32(cpu_idx), fnames, dataobject, overview,  # Pass fnames, not grav_files
+    ngridfile, ngridlevel, ngridbound, lmax, grid, nvarh, Nnvarh,
+    nvarh_corr, twotondim, twotondim_float, xbound,
+    read_cpu, read_level, cpu_idx, print_filenames)
+Corrected Code
+Here's the fixed version:
+
+julia
+function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, dataobject::InfoType,
+                                      overview::GridInfoType, ngridfile::Matrix{Int32}, 
+                                      ngridlevel::Matrix{Int32}, ngridbound::Matrix{Int32},
+                                      lmax::Int, grid::Vector{LevelType}, nvarh::Int, Nnvarh::Int,
+                                      nvarh_corr::Vector{Int}, twotondim::Int, twotondim_float::Float64,
+                                      xbound::Vector{Float64}, read_cpu::Bool, read_level::Bool, 
+                                      k::Int, print_filenames::Bool)
+    
+    # ... existing code until file name part ...
+    
+    # FIXED: Get file name using existing Mera.jl pattern
+    fname_grav = getproc2string(fnames.gravity, Int32(icpu))
+    
+    # ... rest of function remains the same ...
+end
+
+function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{Int},
+                       lmax::Int, ranges::Vector{Float64}, print_filenames::Bool,
+                       show_progress::Bool, verbose::Bool, read_cpu::Bool, 
+                       read_level::Bool, max_threads::Int)
+    
+    # ... existing setup code ...
+    
+    # Set up file names
+    fnames = createpath(dataobject.output, dataobject.path)
+    
+    # Create gravity file names using existing pattern
+    grav_files = Vector{String}(undef, dataobject.ncpu)
+    for icpu = 1:dataobject.ncpu
+        grav_files[icpu] = getproc2string(fnames.gravity, Int32(icpu))
+    end
+    
+    # ... existing grid setup code ...
+    
+    # FIXED: Grid reading loop
+    for icpu = 1:dataobject.ncpu
+        try
+            f = FortranFile(grav_files[icpu])  # Use grav_files, not fnames.grav
+            
+            # ... rest of grid reading code ...
+            
+        catch e
+            println("Warning: Could not read grid info from CPU $icpu: $e")
+        end
+    end
+    
+    # ... existing setup code ...
+    
+    @threads for thread_id = 1:effective_threads
+        # ... existing thread setup ...
+        
+        for cpu_idx in thread_cpu_list
+            try
+                # FIXED: Correct function call
+                cpu_vars, cpu_pos, cpu_cpus = process_gravity_cpu_file_safe(
+                    Int32(cpu_idx), fnames, dataobject, overview,  # Pass fnames
                     ngridfile, ngridlevel, ngridbound, lmax, grid, nvarh, Nnvarh,
                     nvarh_corr, twotondim, twotondim_float, xbound,
-                    vars_chunks[i], pos_chunks[i], cpus_chunks[i],
-                    read_cpu, read_level, cpu_idx, print_filenames)
+                    read_cpu, read_level, cpu_idx, print_filenames)  # Remove undefined variables
+                
+                # ... rest of processing remains the same ...
+Key Corrections Made
+File naming consistency: Use getproc2string(fnames.gravity, Int32(icpu)) in the processing function
+
+Grid reading fix: Use grav_files[icpu] instead of non-existent fnames.grav[icpu]
+
+Function call parameters: Remove undefined vars_chunks[i], pos_chunks[i], cpus_chunks[i] parameters
+
+Parameter passing: Pass fnames to the processing function, let it handle file name generation internally
+
+These fixes will make your code compile and run correctly while maintaining the thread-safe, ElasticArray-free processing you want.
                 
                 # Collect results if non-empty
                 if size(cpu_vars, 2) > 0
