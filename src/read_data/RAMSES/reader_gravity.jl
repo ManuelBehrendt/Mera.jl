@@ -104,10 +104,6 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
                                       nvarh_corr::Vector{Int}, twotondim::Int, twotondim_float::Float64,
                                       xbound::Vector{Float64}, read_cpu::Bool, read_level::Bool, 
                                       k::Int, print_filenames::Bool)
-    """
-    Process single CPU file using thread-safe regular arrays.
-    Returns combined data for all levels in this file.
-    """
     
     # Initialize collectors for all levels
     level_vars_list = Vector{Matrix{Float64}}()
@@ -124,73 +120,102 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
         # Open gravity FortranFile
         f = FortranFile(fname_grav)
         
-        # Skip header information
+        # Read header information
         ncpu2 = read(f, Int32)
         ndim2 = read(f, Int32)
         nlevelmax2 = read(f, Int32)
         nboundary2 = read(f, Int32)
         
-        # Read level information
-        for ilevel = 1:lmax
-            # Read number of grids at this level
-            if ngridlevel[ilevel, icpu] > 0
-                # Grid positions
-                if ndim2 > 0
-                    xg = Array{Float64}(undef, ngridlevel[ilevel, icpu], ndim2)
-                    read!(f, xg)
-                    xg = transpose(xg)
-                else
-                    xg = Array{Float64}(undef, 0, 0)
+        # CORRECTED: Read actual grid counts from file (like hydro reader)
+        local_ngridlevel = zeros(Int32, dataobject.ncpu, dataobject.grid_info.nlevelmax)
+        read!(f, local_ngridlevel)
+        
+        # Update global ngridlevel with actual file data
+        for il = 1:min(lmax, nlevelmax2)
+            ngridlevel[il, icpu] = local_ngridlevel[icpu, il]
+        end
+        
+        # PATTERN FROM HYDRO: Loop over all domains (CPUs + boundaries) for each level
+        for ilevel = 1:min(lmax, nlevelmax2)
+            ngrida = local_ngridlevel[icpu, ilevel]
+            
+            # Only process if this CPU has grids at this level
+            if ngrida > 0
+                # Pre-allocate arrays for this level
+                xg = zeros(Float64, ngrida, ndim2)
+                son = zeros(Int32, ngrida, twotondim)
+                vara = zeros(Float64, ngrida, twotondim, Nnvarh)
+                
+                # PATTERN FROM HYDRO: Loop over all domains to maintain file sync
+                for j = 1:(overview.nboundary + dataobject.ncpu)
+                    domain_ngrids = local_ngridlevel[j, ilevel]
+                    
+                    if domain_ngrids > 0
+                        # Skip grid index information (3 lines like hydro)
+                        skiplines(f, 3)
+                        
+                        # Read grid center coordinates
+                        for idim = 1:ndim2
+                            if j == icpu
+                                xg[:, idim] = read(f, (Float64, ngrida))
+                            else
+                                skiplines(f, 1)  # Skip other CPU's data
+                            end
+                        end
+                        
+                        # Skip parent and neighbor information (like hydro)
+                        skiplines(f, 1 + (2 * ndim2))
+                        
+                        # Read refinement information (son indices)
+                        for ind = 1:twotondim
+                            if j == icpu
+                                son[:, ind] = read(f, (Int32, ngrida))
+                            else
+                                skiplines(f, 1)
+                            end
+                        end
+                        
+                        # Skip CPU mapping and refinement flags
+                        skiplines(f, twotondim * 2)
+                        
+                        # Skip hydro data if present
+                        if nvarh > 0
+                            for ind = 1:twotondim
+                                for ivar = 1:nvarh
+                                    if j == icpu
+                                        skiplines(f, 1)  # Skip hydro variables
+                                    else
+                                        skiplines(f, 1)
+                                    end
+                                end
+                            end
+                        end
+                        
+                        # Read gravity data
+                        for ind = 1:twotondim
+                            for ivar = 1:Nnvarh
+                                if j == icpu
+                                    vara[:, ind, ivar] = read(f, (Float64, ngrida))
+                                else
+                                    skiplines(f, 1)  # Skip other CPU's data
+                                end
+                            end
+                        end
+                    end
                 end
                 
-                # Father grids
-                father = Array{Int32}(undef, ngridlevel[ilevel, icpu])
-                read!(f, father)
-                
-                # Next grids
-                next = Array{Int32}(undef, ngridlevel[ilevel, icpu])
-                read!(f, next)
-                
-                # Previous grids
-                prev = Array{Int32}(undef, ngridlevel[ilevel, icpu])
-                read!(f, prev)
-                
-                # Son grids
-                son = Array{Int32}(undef, ngridlevel[ilevel, icpu], twotondim)
-                read!(f, son)
-                son = transpose(son)
-                
-                # CPU map
-                cpu_map = Array{Int32}(undef, ngridlevel[ilevel, icpu], twotondim)
-                read!(f, cpu_map)
-                
-                # Refinement map
-                ref_map = Array{Int32}(undef, ngridlevel[ilevel, icpu], twotondim)
-                read!(f, ref_map)
-                
-                # Skip hydro data if present (gravity files may contain both)
-                if nvarh > 0
-                    skip_data = Array{Float64}(undef, ngridlevel[ilevel, icpu], twotondim, nvarh)
-                    read!(f, skip_data)
-                end
-                
-                # Read gravity data
-                vara = Array{Float64}(undef, ngridlevel[ilevel, icpu], twotondim, Nnvarh)
-                read!(f, vara)
-                
-                # Set up grid parameters
-                ngrida = ngridlevel[ilevel, icpu]
+                # PATTERN FROM HYDRO: Calculate geometry for this level
                 dx = 0.5^ilevel
                 nx_full = Int32(2^ilevel)
                 ny_full = Int32(2^ilevel)
                 nz_full = Int32(2^ilevel)
                 
-                # Cell offset positions
-                xc = Array{Float64}(undef, twotondim, 3)
+                # Cell offset positions (like hydro geometry function)
+                xc = zeros(Float64, twotondim, 3)
                 for ind = 1:twotondim
-                    iz = (ind-1) % 2
-                    iy = ((ind-1-iz) ÷ 2) % 2  
-                    ix = ((ind-1-iz) ÷ 4) % 2
+                    iz = floor(Int, (ind-1) / 4)
+                    iy = floor(Int, (ind-1-4*iz) / 2)  
+                    ix = floor(Int, (ind-1-2*iy-4*iz))
                     xc[ind, 1] = (ix - 0.5) * dx
                     xc[ind, 2] = (iy - 0.5) * dx
                     xc[ind, 3] = (iz - 0.5) * dx
@@ -222,6 +247,7 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
                 Matrix{Int}(undef, pos_dims, 0),
                 Int[])
     end
+    
     
     # Combine all levels for this CPU file
     if isempty(level_vars_list)
