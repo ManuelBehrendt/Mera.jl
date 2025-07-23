@@ -87,54 +87,6 @@ function extract_gravity_column_data_matrix(vars_1D, pos_1D, cpus_1D, nvarg_corr
     end
 end
 
-
-"""
-    extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
-
-Helper function to extract gravity data for a specific column index.
-"""
-function extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
-    if read_cpu && isamr
-        if col_idx == 1
-            return pos_1D[4,:].data  # level
-        elseif col_idx == 2
-            return cpus_1D[:]        # cpu
-        elseif col_idx <= 5
-            return pos_1D[col_idx-2,:].data  # cx, cy, cz
-        else
-            var_idx = col_idx - 5
-            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
-        end
-    elseif read_cpu && !isamr
-        if col_idx == 1
-            return cpus_1D[:]        # cpu
-        elseif col_idx <= 4
-            return pos_1D[col_idx-1,:].data  # cx, cy, cz
-        else
-            var_idx = col_idx - 4
-            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
-        end
-    elseif !read_cpu && isamr
-        if col_idx == 1
-            return pos_1D[4,:].data  # level
-        elseif col_idx <= 4
-            return pos_1D[col_idx-1,:].data  # cx, cy, cz
-        else
-            var_idx = col_idx - 4
-            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
-        end
-    else
-        if col_idx <= 3
-            return pos_1D[col_idx,:].data  # cx, cy, cz
-        else
-            var_idx = col_idx - 3
-            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:].data
-        end
-    end
-end
-
-
-
 """
 #### Read the leaf-cells of the gravity-data:
 - select variables
