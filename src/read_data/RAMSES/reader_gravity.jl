@@ -230,7 +230,7 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
                 Matrix{Int}(undef, pos_dims, 0),
                 Int[])
     end
-    
+
     # Calculate total cells across all levels
     total_cells = sum(size(vars, 2) for vars in level_vars_list)
     
@@ -467,12 +467,11 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
     if isempty(non_empty_results)
         if verbose println("No gravity data found in specified range") end
         pos_dims = read_level ? 4 : 3
-        return (ElasticArray(Matrix{Float64}(undef, Nnvarh, 0)),
-                ElasticArray(Matrix{Int}(undef, pos_dims, 0)),
+        return (Matrix{Float64}(undef, Nnvarh, 0),
+                Matrix{Int}(undef, pos_dims, 0),
                 Int[])
     end
-    
-    # Calculate final size and allocate result arrays
+        # Calculate final size and allocate result arrays
     total_final_cells = sum(size(r[1], 2) for r in non_empty_results)
     final_vars = Matrix{Float64}(undef, Nnvarh, total_final_cells)
     final_pos = Matrix{Int}(undef, read_level ? 4 : 3, total_final_cells)
@@ -496,6 +495,6 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         println("- Memory usage: $(Base.summarysize(final_vars) + Base.summarysize(final_pos)) bytes")
     end
     
-    # Convert to ElasticArrays only at the very end (for compatibility)
-    return ElasticArray(final_vars), ElasticArray(final_pos), final_cpus
+    # COMPLETELY ELASTICARRAY-FREE RETURN (your getgravity.jl expects this)
+    return final_vars, final_pos, final_cpus
 end
