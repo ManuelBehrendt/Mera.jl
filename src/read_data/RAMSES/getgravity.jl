@@ -34,12 +34,20 @@ function create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, 
         end
     end
     
-    # DIRECT TABLE CREATION - FASTEST METHOD
-    pkey = read_cpu ? (isamr ? [:level,:cx, :cy, :cz] : [:cx, :cy, :cz]) : 
-                     (isamr ? [:level,:cx, :cy, :cz] : [:cx, :cy, :cz])
+    # CORRECTED PRIMARY KEY LOGIC
+    pkey = if read_cpu && isamr
+        [:level, :cpu, :cx, :cy, :cz]
+    elseif read_cpu && !isamr
+        [:cpu, :cx, :cy, :cz]
+    elseif !read_cpu && isamr
+        [:level, :cx, :cy, :cz]
+    else  # !read_cpu && !isamr
+        [:cx, :cy, :cz]
+    end
     
     return table(all_arrays..., names=names_constr, pkey=pkey, presorted=false, copy=false)
 end
+
 
 """
 extract_gravity_column_data_matrix(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
