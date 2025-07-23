@@ -1,7 +1,7 @@
 """
-    create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
+create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
 
-Creates IndexedTable for gravity data with controlled threading for optimal performance.
+Creates IndexedTable for gravity data with controlled threading - ADAPTED for regular Matrix arrays.
 """
 function create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose=false, max_threads=Threads.nthreads())
     nvars = length(nvarg_i_list)
@@ -13,6 +13,7 @@ function create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, 
     
     if verbose
         println("  Threading: $(effective_threads) threads for $(total_cols) columns")
+        println("  Data type: Regular Matrix arrays (no ElasticArrays)")
     end
     
     # PRE-ALLOCATE ALL ARRAYS AT ONCE
@@ -22,14 +23,14 @@ function create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, 
     if effective_threads == 1 || total_cols <= 4
         # Use sequential processing for small datasets
         for col_idx in 1:total_cols
-            all_arrays[col_idx] = extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, 
-                                                             col_idx, read_cpu, isamr)
+            all_arrays[col_idx] = extract_gravity_column_data_matrix(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, 
+                                                                   col_idx, read_cpu, isamr)
         end
     else
         # Use parallel processing
         @threads for col_idx in 1:total_cols
-            all_arrays[col_idx] = extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, 
-                                                             col_idx, read_cpu, isamr)
+            all_arrays[col_idx] = extract_gravity_column_data_matrix(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, 
+                                                                   col_idx, read_cpu, isamr)
         end
     end
     
@@ -39,6 +40,53 @@ function create_ultrafast_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, 
     
     return table(all_arrays..., names=names_constr, pkey=pkey, presorted=false, copy=false)
 end
+
+"""
+extract_gravity_column_data_matrix(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
+
+ADAPTED VERSION: Works with regular Matrix arrays instead of ElasticArrays.
+Key change: Removes .data accessor since we're working with regular Julia arrays.
+"""
+function extract_gravity_column_data_matrix(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
+    if read_cpu && isamr
+        if col_idx == 1
+            return pos_1D[4,:]  # level - NO .data accessor needed
+        elseif col_idx == 2
+            return cpus_1D[:]   # cpu
+        elseif col_idx <= 5
+            return pos_1D[col_idx-2,:]  # cx, cy, cz - NO .data accessor needed
+        else
+            var_idx = col_idx - 5
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:]  # NO .data accessor needed
+        end
+    elseif read_cpu && !isamr
+        if col_idx == 1
+            return cpus_1D[:]   # cpu
+        elseif col_idx <= 4
+            return pos_1D[col_idx-1,:]  # cx, cy, cz - NO .data accessor needed
+        else
+            var_idx = col_idx - 4
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:]  # NO .data accessor needed
+        end
+    elseif !read_cpu && isamr
+        if col_idx == 1
+            return pos_1D[4,:]  # level - NO .data accessor needed
+        elseif col_idx <= 4
+            return pos_1D[col_idx-1,:]  # cx, cy, cz - NO .data accessor needed
+        else
+            var_idx = col_idx - 4
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:]  # NO .data accessor needed
+        end
+    else
+        if col_idx <= 3
+            return pos_1D[col_idx,:]  # cx, cy, cz - NO .data accessor needed
+        else
+            var_idx = col_idx - 3
+            return vars_1D[nvarg_corr[nvarg_i_list[var_idx]],:]  # NO .data accessor needed
+        end
+    end
+end
+
 
 """
     extract_gravity_column_data(vars_1D, pos_1D, cpus_1D, nvarg_corr, nvarg_i_list, col_idx, read_cpu, isamr)
