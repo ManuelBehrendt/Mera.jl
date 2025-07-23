@@ -312,36 +312,53 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
     xbound = [0.5, 0.5, 0.5]  # Box center
     
     # Grid filtering setup based on ranges
-    grid = Vector{LevelType}(undef, lmax)
-    for ilevel = 1:lmax
-        # Convert spatial ranges to grid coordinates
-        dx = boxlen / 2^ilevel
-        
-        # Default: full domain
-        grid[ilevel] = LevelType()
-        grid[ilevel].imin = 1
-        grid[ilevel].jmin = 1
-        grid[ilevel].kmin = 1
-        grid[ilevel].imax = 2^ilevel
-        grid[ilevel].jmax = 2^ilevel
-        grid[ilevel].kmax = 2^ilevel
-        
-        # Apply spatial filtering if ranges specified
-        if length(ranges) >= 6 && ranges[1] != ranges[2]  # xrange specified
-            grid[ilevel].imin = max(1, Int(floor((ranges[1] + boxlen/2) / dx)) + 1)
-            grid[ilevel].imax = min(2^ilevel, Int(ceil((ranges[2] + boxlen/2) / dx)) + 1)
-        end
-        
-        if length(ranges) >= 6 && ranges[3] != ranges[4]  # yrange specified  
-            grid[ilevel].jmin = max(1, Int(floor((ranges[3] + boxlen/2) / dx)) + 1)
-            grid[ilevel].jmax = min(2^ilevel, Int(ceil((ranges[4] + boxlen/2) / dx)) + 1)
-        end
-        
-        if length(ranges) >= 6 && ranges[5] != ranges[6]  # zrange specified
-            grid[ilevel].kmin = max(1, Int(floor((ranges[5] + boxlen/2) / dx)) + 1)  
-            grid[ilevel].kmax = min(2^ilevel, Int(ceil((ranges[6] + boxlen/2) / dx)) + 1)
-        end
+# Grid filtering setup based on ranges
+grid = fill(LevelType(0,0,0,0,0,0), lmax)
+for ilevel = 1:lmax
+    # Convert spatial ranges to grid coordinates
+    dx = boxlen / 2^ilevel
+    
+    # Calculate grid dimensions at this refinement level  
+    nx_full = Int32(2^ilevel)
+    ny_full = nx_full
+    nz_full = nx_full
+    
+    # Default: full domain bounds
+    xmin = 0.0
+    xmax = 1.0  
+    ymin = 0.0
+    ymax = 1.0
+    zmin = 0.0
+    zmax = 1.0
+    
+    # Apply spatial filtering if ranges specified
+    if length(ranges) >= 6 && ranges[1] != ranges[2]  # xrange specified
+        xmin = (ranges[1] + boxlen/2) / boxlen
+        xmax = (ranges[2] + boxlen/2) / boxlen
     end
+    
+    if length(ranges) >= 6 && ranges[3] != ranges[4]  # yrange specified  
+        ymin = (ranges[3] + boxlen/2) / boxlen  
+        ymax = (ranges[4] + boxlen/2) / boxlen
+    end
+    
+    if length(ranges) >= 6 && ranges[5] != ranges[6]  # zrange specified
+        zmin = (ranges[5] + boxlen/2) / boxlen
+        zmax = (ranges[6] + boxlen/2) / boxlen
+    end
+    
+    # Convert spatial bounds to grid indices at this level
+    imin = floor(Int32, xmin * nx_full) + 1
+    imax = floor(Int32, xmax * nx_full) + 1
+    jmin = floor(Int32, ymin * ny_full) + 1
+    jmax = floor(Int32, ymax * ny_full) + 1
+    kmin = floor(Int32, zmin * nz_full) + 1
+    kmax = floor(Int32, zmax * nz_full) + 1
+    
+    # Store grid bounds for this level
+    grid[ilevel] = LevelType(imin, imax, jmin, jmax, kmin, kmax)
+end
+
     
     # Read grid level information
     ngridfile = Matrix{Int32}(undef, lmax, dataobject.ncpu)
