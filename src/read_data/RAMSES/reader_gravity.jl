@@ -114,8 +114,8 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
     level_pos_list = Vector{Matrix{Int}}()
     level_cpus_list = Vector{Vector{Int}}()
     
-    # File names for this CPU
-    fname_grav = fnames.grav[icpu]
+    # Get file name using existing Mera.jl pattern
+    fname_grav = grav_files[icpu]
     
     # Open and read gravity file
     if print_filenames println(fname_grav) end
@@ -279,13 +279,14 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
     end
     
     # Set up file names
-    fnames = FileNamesType()
-    fnames.grav = Vector{String}(undef, dataobject.ncpu)
+    fnames = createpath(dataobject.output, dataobject.path)
+
+    # Create gravity file names using existing pattern
+    grav_files = Vector{String}(undef, dataobject.ncpu)
     for icpu = 1:dataobject.ncpu
-        cpu_string = string(icpu, pad=5)
-        fnames.grav[icpu] = joinpath(dataobject.path, "grav_$(cpu_string).out$(dataobject.output)")
+        grav_files[icpu] = getproc2string(fnames.gravity, Int32(icpu))
     end
-    
+
     # Grid information setup
     overview = GridInfoType()
     
@@ -405,9 +406,10 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
             try
                 # Process single CPU file
                 cpu_vars, cpu_pos, cpu_cpus = process_gravity_cpu_file_safe(
-                    Int32(cpu_idx), fnames, dataobject, overview,
+                    Int32(cpu_idx), grav_files, dataobject, overview,
                     ngridfile, ngridlevel, ngridbound, lmax, grid, nvarh, Nnvarh,
                     nvarh_corr, twotondim, twotondim_float, xbound,
+                    vars_chunks[i], pos_chunks[i], cpus_chunks[i],
                     read_cpu, read_level, cpu_idx, print_filenames)
                 
                 # Collect results if non-empty
