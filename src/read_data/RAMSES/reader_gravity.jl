@@ -1,333 +1,73 @@
-"""
-Thread-safe gravity data processing that eliminates ElasticArrays memory corruption.
-Fixed to follow working RAMSES gravity file structure.
-"""
+function getgravitydata(dataobject::InfoType,
+                       Nnvarh::Int,
+                       nvarh_corr::Array{Int,1},
+                       lmax::Real,
+                       ranges::Array{Float64,1},
+                       print_filenames::Bool,
+                       show_progress::Bool,
+                       verbose::Bool,
+                       read_cpu::Bool,
+                       read_level::Bool,
+                       max_threads::Int=Threads.nthreads())
 
-function process_level_safe(twotondim::Int, ngrida::Int32, ilevel::Int, lmax::Int,
-                           xg::Matrix{Float64}, xc::Matrix{Float64}, son::Matrix{Int32}, 
-                           xbound::Vector{Float64}, nx_full::Int32, ny_full::Int32, nz_full::Int32,
-                           grid::Vector{LevelType}, vara::Array{Float64,3}, 
-                           read_cpu::Bool, k::Int, read_level::Bool)
-    
-    # PHASE 1: Count valid cells to enable exact pre-allocation
-    cell_count = 0
-    for ind = 1:twotondim
-        for i = 1:ngrida
-            # Only process leaf cells (not refined further)
-            if !(son[i, ind] > 0 && ilevel < lmax)
-                # Calculate absolute cell coordinates
-                ix = floor(Int, (xg[i,1] + xc[ind,1] - xbound[1]) * nx_full) + 1
-                iy = floor(Int, (xg[i,2] + xc[ind,2] - xbound[2]) * ny_full) + 1
-                iz = floor(Int, (xg[i,3] + xc[ind,3] - xbound[3]) * nz_full) + 1
-                
-                # Apply spatial filtering
-                if ix >= grid[ilevel].imin && iy >= grid[ilevel].jmin && iz >= grid[ilevel].kmin &&
-                   ix <= grid[ilevel].imax && iy <= grid[ilevel].jmax && iz <= grid[ilevel].kmax
-                    cell_count += 1
-                end
-            end
-        end
-    end
-    
-    # Early return for empty levels
-    if cell_count == 0
-        nvars = size(vara, 3)
-        pos_dims = read_level ? 4 : 3
-        return (Matrix{Float64}(undef, nvars, 0),
-                Matrix{Int}(undef, pos_dims, 0),
-                Int[])
-    end
-    
-    # PHASE 2: Pre-allocate exact-size arrays (prevents memory corruption)
-    nvars = size(vara, 3)
-    pos_dims = read_level ? 4 : 3
-    
-    vars_matrix = Matrix{Float64}(undef, nvars, cell_count)
-    pos_matrix = Matrix{Int}(undef, pos_dims, cell_count)
-    cpus_vector = read_cpu ? Vector{Int}(undef, cell_count) : Int[]
-    
-    # PHASE 3: Fill pre-allocated arrays (thread-safe direct assignment)
-    cell_idx = 0
-    for ind = 1:twotondim
-        for i = 1:ngrida
-            if !(son[i, ind] > 0 && ilevel < lmax)
-                ix = floor(Int, (xg[i,1] + xc[ind,1] - xbound[1]) * nx_full) + 1
-                iy = floor(Int, (xg[i,2] + xc[ind,2] - xbound[2]) * ny_full) + 1
-                iz = floor(Int, (xg[i,3] + xc[ind,3] - xbound[3]) * nz_full) + 1
-                
-                if ix >= grid[ilevel].imin && iy >= grid[ilevel].jmin && iz >= grid[ilevel].kmin &&
-                   ix <= grid[ilevel].imax && iy <= grid[ilevel].jmax && iz <= grid[ilevel].kmax
-                    
-                    cell_idx += 1
-                    
-                    # Direct assignment to pre-allocated arrays (NO append operations)
-                    for var_idx = 1:nvars
-                        vars_matrix[var_idx, cell_idx] = vara[i, ind, var_idx]
-                    end
-                    
-                    # Store position data
-                    if read_level
-                        pos_matrix[1, cell_idx] = ix
-                        pos_matrix[2, cell_idx] = iy  
-                        pos_matrix[3, cell_idx] = iz
-                        pos_matrix[4, cell_idx] = ilevel
-                    else
-                        pos_matrix[1, cell_idx] = ix
-                        pos_matrix[2, cell_idx] = iy
-                        pos_matrix[3, cell_idx] = iz
-                    end
-                    
-                    # Store CPU number if requested
-                    if read_cpu
-                        cpus_vector[cell_idx] = k
-                    end
-                end
-            end
-        end
-    end
-    
-    return vars_matrix, pos_matrix, cpus_vector
-end
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 1: INITIALIZATION AND SETUP
+    # ═══════════════════════════════════════════════════════════════════════════════
 
-# Helper function from working reader
-function geometry(twotondim_float::Float64, ilevel::Int, xc::Array{Float64,2})
-    dx = 0.5^ilevel
-    for (ind, iind) in enumerate(1.:twotondim_float)
-        iiz = round((iind-1)/4, RoundDown)
-        iiy = round((iind-1-4*iiz)/2, RoundDown)
-        iix = round((iind-1-2*iiy-4*iiz), RoundDown)
-        xc[ind,1] = (iix-0.5)*dx
-        xc[ind,2] = (iiy-0.5)*dx
-        xc[ind,3] = (iiz-0.5)*dx
-    end
-    return xc
-end
+    kind = Float64 # Data type for all floating point arrays
+    xmin, xmax, ymin, ymax, zmin, zmax = ranges # Extract spatial bounds from input
 
-function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, dataobject::InfoType,
-                                      overview::GridInfoType, ngridfile::Matrix{Int32}, 
-                                      ngridlevel::Matrix{Int32}, ngridbound::Matrix{Int32},
-                                      lmax::Int, grid::Vector{LevelType}, nvarh::Int, Nnvarh::Int,
-                                      nvarh_corr::Vector{Int}, twotondim::Int, twotondim_float::Float64,
-                                      xbound::Vector{Float64}, read_cpu::Bool, read_level::Bool, 
-                                      k::Int, print_filenames::Bool)
-    
-    # Initialize collectors for all levels
-    level_vars_list = Vector{Matrix{Float64}}()
-    level_pos_list = Vector{Matrix{Int}}()
-    level_cpus_list = Vector{Vector{Int}}()
-    
-    kind = Float64
-    
-    try
-        # CORRECTED: Open SEPARATE AMR and gravity files (like working reader)
-        amrpath = getproc2string(fnames.amr, icpu)
-        f_amr = FortranFile(amrpath)
-        
-        gravpath = getproc2string(fnames.gravity, icpu)
-        if print_filenames println("Thread $(Threads.threadid()): $gravpath") end
-        f_grav = FortranFile(gravpath)
-        
-        # CORRECTED: Skip AMR header (21 lines like working reader)
-        skiplines(f_amr, 21)
-        
-        # CORRECTED: Read grid structure into thread-local arrays
-        read(f_amr, ngridlevel)
-        ngridfile[1:dataobject.ncpu, 1:dataobject.grid_info.nlevelmax] = ngridlevel
-        
-        skiplines(f_amr, 1)
-        
-        # Handle boundaries if present
-        if dataobject.grid_info.nboundary > 0
-            skiplines(f_amr, 2)
-            read(f_amr, ngridbound)
-            ngridfile[(dataobject.ncpu+1):(dataobject.ncpu+overview.nboundary), 1:dataobject.grid_info.nlevelmax] = ngridbound
-        end
-        
-        skiplines(f_amr, 6)
-        
-        # CORRECTED: Skip gravity header (4 lines)
-        skiplines(f_grav, 4)
-        
-        # CORRECTED: Process each level with proper domain loop
-        for ilevel = 1:lmax
-            # Geometry setup
-            dx = 0.5^ilevel
-            nx_full = Int32(2^ilevel)
-            ny_full = nx_full
-            nz_full = nx_full
-            xc = geometry(twotondim_float, ilevel, zeros(kind, 8, 3))
-            
-            # Allocate work arrays
-            ngrida = ngridfile[icpu, ilevel]
-            if ngrida > 0
-                xg = zeros(kind, ngrida, dataobject.ndim)
-                son = zeros(Int32, ngrida, twotondim)
-                vara = zeros(kind, ngrida, twotondim, Nnvarh)
-            end
-            
-            # CORRECTED: Loop over all domains (like working reader)
-            for j = 1:(overview.nboundary + dataobject.ncpu)
-                # Read AMR structure
-                if ngridfile[j, ilevel] > 0
-                    skiplines(f_amr, 3)
-                    
-                    # Read grid centers
-                    for idim = 1:dataobject.ndim
-                        if j == icpu && ngrida > 0
-                            xg[:, idim] = read(f_amr, (kind, ngrida))
-                        else
-                            skiplines(f_amr, 1)
-                        end
-                    end
-                    
-                    # Skip father and neighbor indices
-                    skiplines(f_amr, 1 + (2*dataobject.ndim))
-                    
-                    # Read son indices
-                    for ind = 1:twotondim
-                        if j == icpu && ngrida > 0
-                            son[:, ind] = read(f_amr, (Int32, ngrida))
-                        else
-                            skiplines(f_amr, 1)
-                        end
-                    end
-                    
-                    # Skip CPU and refinement maps
-                    skiplines(f_amr, twotondim * 2)
-                end
-                
-                # CORRECTED: Read gravity data with proper synchronization
-                skiplines(f_grav, 2)
-                
-                if ngridfile[j, ilevel] > 0
-                    # Read gravity variables
-                    for ind = 1:twotondim
-                        for ivar = 1:nvarh
-                            if j == icpu && ngrida > 0
-                                if nvarh_corr[ivar] != 0
-                                    vara[:, ind, nvarh_corr[ivar]] = read(f_grav, (kind, ngrida))
-                                else
-                                    skiplines(f_grav, 1)
-                                end
-                            else
-                                skiplines(f_grav, 1)
-                            end
-                        end
-                    end
-                end
-            end
-            
-            # Process cells for this level
-            if ngrida > 0
-                level_vars, level_pos, level_cpus = process_level_safe(
-                    twotondim, ngrida, ilevel, lmax, xg, xc, son, xbound,
-                    nx_full, ny_full, nz_full, grid, vara, read_cpu, k, read_level)
-                
-                # Collect non-empty results
-                if size(level_vars, 2) > 0
-                    push!(level_vars_list, level_vars)
-                    push!(level_pos_list, level_pos)
-                    if read_cpu
-                        push!(level_cpus_list, level_cpus)
-                    end
-                end
-            end
-        end
-        
-        # Close files
-        close(f_amr)
-        close(f_grav)
-        
-    catch e
-        println("Error in thread $(Threads.threadid()) processing CPU $icpu: $e")
-        # Return empty arrays on error
-        pos_dims = read_level ? 4 : 3
-        return (Matrix{Float64}(undef, Nnvarh, 0),
-                Matrix{Int}(undef, pos_dims, 0),
-                Int[])
-    end
-    
-    # Combine all levels for this CPU file
-    if isempty(level_vars_list)
-        pos_dims = read_level ? 4 : 3
-        return (Matrix{Float64}(undef, Nnvarh, 0),
-                Matrix{Int}(undef, pos_dims, 0),
-                Int[])
-    end
+    # Arrays for Hilbert space-filling curve calculation (used for spatial filtering)
+    idom = zeros(Int32, 8) # Domain indices in x-direction
+    jdom = zeros(Int32, 8) # Domain indices in y-direction
+    kdom = zeros(Int32, 8) # Domain indices in z-direction
+    bounding_min = zeros(Float64, 8) # Minimum Hilbert keys for each domain
+    bounding_max = zeros(Float64, 8) # Maximum Hilbert keys for each domain
+    cpu_min = zeros(Int32, 8) # First CPU containing each domain
+    cpu_max = zeros(Int32, 8) # Last CPU containing each domain
 
-    # Calculate total cells across all levels
-    total_cells = sum(size(vars, 2) for vars in level_vars_list)
-    
-    # Pre-allocate combined arrays
-    combined_vars = Matrix{Float64}(undef, Nnvarh, total_cells)
-    combined_pos = Matrix{Int}(undef, read_level ? 4 : 3, total_cells)
-    combined_cpus = read_cpu ? Vector{Int}() : Int[]
-    
-    # Efficiently combine level data
-    cell_offset = 0
-    for (i, level_vars) in enumerate(level_vars_list)
-        n_cells = size(level_vars, 2)
-        
-        # Copy data blocks (efficient memory operations)
-        combined_vars[:, cell_offset+1:cell_offset+n_cells] = level_vars
-        combined_pos[:, cell_offset+1:cell_offset+n_cells] = level_pos_list[i]
-        
-        if read_cpu
-            append!(combined_cpus, level_cpus_list[i])
-        end
-        
-        cell_offset += n_cells
-    end
-    
-    return combined_vars, combined_pos, combined_cpus
-end
-
-# CORRECTED: Use the working reader's complete approach
-function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{Int},
-                       lmax::Int, ranges::Vector{Float64}, print_filenames::Bool,
-                       show_progress::Bool, verbose::Bool, read_cpu::Bool, 
-                       read_level::Bool, max_threads::Int)
-    
-    # Use the working reader's complete spatial filtering logic
-    kind = Float64
-    xmin, xmax, ymin, ymax, zmin, zmax = ranges
-
-    # Initialize domain and CPU arrays (from working reader)
-    idom = zeros(Int32, 8)
-    jdom = zeros(Int32, 8)
-    kdom = zeros(Int32, 8)
-    bounding_min = zeros(Float64, 8)
-    bounding_max = zeros(Float64, 8)
-    cpu_min = zeros(Int32, 8)
-    cpu_max = zeros(Int32, 8)
-
-    # Setup simulation parameters (from working reader)
+    # Extract simulation metadata
     path = dataobject.path
-    overview = dataobject.grid_info  # CORRECTED: Use actual grid info
-    nvarh = length(dataobject.gravity_variable_list)
+    overview = dataobject.grid_info
+    nvarh = length(dataobject.gravity_variable_list) # Number of gravity variables
+    cpu_overview = dataobject.grid_info
 
-    twotondim = 2^dataobject.ndim
-    twotondim_float = 2.0^dataobject.ndim
+    # Calculate dimensions for AMR cell indexing
+    twotondim = 2^dataobject.ndim # Number of cells per grid (2^3=8 for 3D)
+    twotondim_float = 2.0^dataobject.ndim # Floating point version for calculations
 
-    # CORRECTED: Use proper xbound calculation
+    # Grid center coordinates for coordinate transformations
     xbound = [round(dataobject.grid_info.nx/2, RoundDown),
               round(dataobject.grid_info.ny/2, RoundDown),
               round(dataobject.grid_info.nz/2, RoundDown)]
 
-    # Hilbert space-filling curve calculation (from working reader)
+    # Arrays to store grid information for each CPU and refinement level
+    ngridfile = zeros(Int32, dataobject.ncpu+dataobject.grid_info.nboundary, dataobject.grid_info.nlevelmax)
+    ngridlevel = zeros(Int32, dataobject.ncpu, dataobject.grid_info.nlevelmax)
+    if dataobject.grid_info.nboundary > 0
+        ngridbound = zeros(Int32, dataobject.grid_info.nboundary, dataobject.grid_info.nlevelmax)
+    end
+
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 2: HILBERT SPACE-FILLING CURVE CALCULATION FOR SPATIAL FILTERING
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    # Determine maximum spatial extent to calculate appropriate refinement level
     dmax = maximum([xmax-xmin, ymax-ymin, zmax-zmin])
-    
+
+    # Find the refinement level where cell size becomes smaller than spatial range
     ilevel = 1
     for il=1:lmax
         ilevel = il
-        dx = 0.5^ilevel
-        if dx < dmax break end
+        dx = 0.5^ilevel # Cell size at this level
+        if dx < dmax break end # Stop when cells are smaller than range
     end
 
-    bit_length = ilevel-1
+    # Calculate Hilbert curve parameters for spatial domain decomposition
+    bit_length = ilevel - 1
     maxdom = 2^bit_length
 
-    # Calculate domain bounds (from working reader)
+    # Convert spatial coordinates to integer domain indices for Hilbert calculation
     if bit_length > 0
         imin = floor(Int32, xmin * maxdom)
         imax = imin + 1
@@ -336,20 +76,26 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         kmin = floor(Int32, zmin * maxdom)
         kmax = kmin + 1
     else
+        # Handle case where spatial range covers entire domain
         imin = imax = jmin = jmax = kmin = kmax = 0
     end
 
+    # Calculate Hilbert key scaling factor
     dkey = (2^(dataobject.grid_info.nlevelmax+1)/maxdom)^dataobject.ndim
+
+    # Determine number of domains to check (8 for 3D spatial filtering, 1 for full domain)
     ndom = bit_length > 0 ? 8 : 1
 
-    # Setup domain arrays (from working reader)
+    # Set up 8 corner domains for 3D spatial filtering using Hilbert space-filling curve
     idom = [imin, imax, imin, imax, imin, imax, imin, imax]
     jdom = [jmin, jmin, jmax, jmax, jmin, jmin, jmax, jmax]
     kdom = [kmin, kmin, kmin, kmin, kmax, kmax, kmax, kmax]
 
-    # Calculate bounding boxes (from working reader)
+    # Calculate Hilbert keys for each domain corner to determine spatial bounds
+    order_min = 0.0e0
     for i=1:ndom
         if bit_length > 0
+            # Calculate 3D Hilbert space-filling curve index for spatial ordering
             order_min = hilbert3d(idom[i], jdom[i], kdom[i], bit_length, 1)
         else
             order_min = 0.0e0
@@ -358,9 +104,14 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         bounding_max[i] = (order_min + 1.0) * dkey
     end
 
-    # Find CPU ranges for each domain (from working reader)
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 3: CPU FILE SELECTION BASED ON SPATIAL FILTERING
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    # Determine which CPU files contain data in the requested spatial range
     for impi=1:dataobject.ncpu
         for i=1:ndom
+            # Check if CPU domain overlaps with spatial range using Hilbert keys
             if (dataobject.grid_info.bound_key[impi] <= bounding_min[i] &&
                 dataobject.grid_info.bound_key[impi+1] > bounding_min[i])
                 cpu_min[i] = impi
@@ -372,27 +123,63 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         end
     end
 
-    # Build CPU list (from working reader)
+    # Build list of CPU files that need to be read (only those containing relevant data)
     cpu_read = copy(dataobject.grid_info.cpu_read)
     cpu_list = zeros(Int32, dataobject.ncpu)
     ncpu_read = Int32(0)
     for i=1:ndom
         for j=(cpu_min[i]):(cpu_max[i])
-            if cpu_read[j] == false
-                ncpu_read = ncpu_read + 1
+            if cpu_read[j] == false # Only add each CPU once
+                ncpu_read += 1
                 cpu_list[ncpu_read] = j
                 cpu_read[j] = true
             end
         end
     end
 
-    # Compute grid hierarchy (from working reader)
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 4: DISPLAY PROCESSING CONFIGURATION
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    if verbose
+        println("📊 Processing Configuration:")
+        println("   Total CPU files available: $(dataobject.ncpu)")
+        println("   Files to be processed: $ncpu_read") # Shows effect of spatial filtering
+        println("   Compute threads: $(min(max_threads, Threads.nthreads()))")
+        
+        # Check for parallel garbage collection threads (Julia 1.10+)
+        try
+            if isdefined(Base.Threads, :ngcthreads)
+                println("   GC threads: $(Base.Threads.ngcthreads())")
+            elseif isdefined(Base.GC, :gc_num_threads)
+                println("   GC threads: $(Base.GC.gc_num_threads())")
+            else
+                println("   GC threads: Not available (Julia < 1.10)")
+            end
+        catch
+            println("   GC threads: Not available in this version")
+        end
+        
+        # Show how many files were skipped due to spatial filtering
+        if ncpu_read < dataobject.ncpu
+            println("   📍 Spatial filtering active: $(dataobject.ncpu - ncpu_read) files skipped")
+        end
+        println()
+    end
+
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 5: GRID HIERARCHY SETUP FOR AMR DATA STRUCTURE
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    # Create grid hierarchy for adaptive mesh refinement (AMR) levels
     grid = fill(LevelType(0,0,0,0,0,0), lmax)
     for ilevel=1:lmax
+        # Calculate grid dimensions at this refinement level
         nx_full = Int32(2^ilevel)
         ny_full = nx_full
         nz_full = nx_full
 
+        # Convert spatial bounds to grid indices at this level
         imin = floor(Int32, xmin * nx_full) + 1
         imax = floor(Int32, xmax * nx_full) + 1
         jmin = floor(Int32, ymin * ny_full) + 1
@@ -400,140 +187,384 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         kmin = floor(Int32, zmin * nz_full) + 1
         kmax = floor(Int32, zmax * nz_full) + 1
 
+        # Store grid bounds for this level
         grid[ilevel] = LevelType(imin, imax, jmin, jmax, kmin, kmax)
     end
 
+    # Create file path structure for AMR and gravity data files
     fnames = createpath(dataobject.output, path)
 
-    # Thread management
-    effective_threads = min(max_threads, Threads.nthreads(), ncpu_read)
-    
-    if verbose
-        println("Processing $(ncpu_read) gravity files with $(effective_threads) threads...")
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 6: MULTITHREADING SETUP AND PROGRESS TRACKING
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    # Configure multithreading: divide CPU files into chunks for parallel processing
+    effective_threads = min(max_threads, Threads.nthreads())
+    chunk_size = max(1, ceil(Int, ncpu_read / effective_threads))
+    chunks = [cpu_list[i:min(i+chunk_size-1, ncpu_read)] for i in 1:chunk_size:ncpu_read]
+
+    # Pre-allocate array to store results from each thread
+    chunk_results = Vector{Any}(undef, length(chunks))
+
+    # Setup thread-safe progress tracking
+    progress_bar = nothing
+    progress_counter = Threads.Atomic{Int}(0) # Atomic counter for thread safety
+
+    if show_progress
+        progress_bar = Progress(ncpu_read,
+                               desc="Processing files: ",
+                               dt=0.1, # Update frequency
+                               showspeed=true, # Show files/second
+                               barlen=50, # Progress bar width
+                               color=:green) # Visual styling
     end
 
-    # Thread-safe result collection using Matrix arrays (no ElasticArrays in threading)
-    thread_results = Vector{Tuple{Matrix{Float64}, Matrix{Int}, Vector{Int}}}(undef, effective_threads)
-    
-    # Distribute CPU files among threads  
-    chunk_size = max(1, div(ncpu_read, effective_threads))
-    
-    # Progress tracking
-    progress_counter = Threads.Atomic{Int}(0)
-    
-    @threads for thread_id = 1:effective_threads
-        # Calculate thread's CPU file range
-        start_idx = (thread_id - 1) * chunk_size + 1
-        end_idx = thread_id == effective_threads ? ncpu_read : thread_id * chunk_size
-        
-        # Initialize thread-local collectors
-        thread_vars_list = Vector{Matrix{Float64}}()
-        thread_pos_list = Vector{Matrix{Int}}()
-        thread_cpus_list = Vector{Vector{Int}}()
-        
-        # Thread-local grid arrays
-        thread_ngridfile = zeros(Int32, dataobject.ncpu+dataobject.grid_info.nboundary, dataobject.grid_info.nlevelmax)
-        thread_ngridlevel = zeros(Int32, dataobject.ncpu, dataobject.grid_info.nlevelmax)
-        thread_ngridbound = zeros(Int32, dataobject.grid_info.nboundary, dataobject.grid_info.nlevelmax)
-        
-        # Process assigned CPU files
-        for idx = start_idx:end_idx
-            if idx <= ncpu_read
-                icpu = cpu_list[idx]
-                
-                try
-                    # Process single CPU file
-                    cpu_vars, cpu_pos, cpu_cpus = process_gravity_cpu_file_safe(
-                        Int32(icpu), fnames, dataobject, overview,
-                        thread_ngridfile, thread_ngridlevel, thread_ngridbound, 
-                        lmax, grid, nvarh, Nnvarh, nvarh_corr, twotondim, twotondim_float,
-                        xbound, read_cpu, read_level, idx, print_filenames)
-                    
-                    # Collect results if non-empty
-                    if size(cpu_vars, 2) > 0
-                        push!(thread_vars_list, cpu_vars)
-                        push!(thread_pos_list, cpu_pos)
-                        if read_cpu
-                            push!(thread_cpus_list, cpu_cpus)
-                        end
-                    end
-                    
-                    # Update progress
-                    if show_progress
-                        current_progress = Threads.atomic_add!(progress_counter, 1)
-                        if current_progress % 100 == 0
-                            println("Processed $current_progress / $ncpu_read files")
-                        end
-                    end
-                    
-                catch e
-                    println("Thread $thread_id: Error processing CPU $icpu: $e")
-                end
-            end
-        end
-        
-        # Combine thread results
-        if !isempty(thread_vars_list)
-            total_cells = sum(size(vars, 2) for vars in thread_vars_list)
-            thread_combined_vars = Matrix{Float64}(undef, Nnvarh, total_cells)
-            thread_combined_pos = Matrix{Int}(undef, read_level ? 4 : 3, total_cells)
-            thread_combined_cpus = Int[]
-            
-            cell_offset = 0
-            for (i, vars) in enumerate(thread_vars_list)
-                n_cells = size(vars, 2)
-                thread_combined_vars[:, cell_offset+1:cell_offset+n_cells] = vars
-                thread_combined_pos[:, cell_offset+1:cell_offset+n_cells] = thread_pos_list[i]
-                if read_cpu
-                    append!(thread_combined_cpus, thread_cpus_list[i])
-                end
-                cell_offset += n_cells
-            end
-            
-            thread_results[thread_id] = (thread_combined_vars, thread_combined_pos, thread_combined_cpus)
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 7: MAIN MULTITHREADED FILE PROCESSING LOOP
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    @threads for chunk_idx in 1:length(chunks)
+        tid = Threads.threadid() # Get current thread ID for debugging
+        chunk = chunks[chunk_idx] # Get list of CPU files for this thread
+
+        # Create thread-local data containers to avoid race conditions
+        vars_1D_local = ElasticArray{Float64}(undef, Nnvarh, 0) # Gravity variables
+        if read_level
+            pos_1D_local = ElasticArray{Int}(undef, 4, 0) # Position + level (AMR)
         else
-            pos_dims = read_level ? 4 : 3
-            thread_results[thread_id] = (Matrix{Float64}(undef, Nnvarh, 0),
-                                        Matrix{Int}(undef, pos_dims, 0),
-                                        Int[])
+            pos_1D_local = ElasticArray{Int}(undef, 3, 0) # Position only (uniform)
         end
+        cpus_1D_local = Int[] # CPU numbers for each cell
+
+        # Process each CPU file in this thread's chunk
+        for (local_k, icpu) in enumerate(chunk)
+            global_k = (chunk_idx - 1) * chunk_size + local_k # Global file index
+
+            # Thread-local geometry array (each thread needs its own copy)
+            xc = zeros(kind, 8, 3)
+
+            try
+                # ═══════════════════════════════════════════════════════════════
+                # SUBSECTION 7A: READ AMR STRUCTURE DATA
+                # ═══════════════════════════════════════════════════════════════
+
+                # Open AMR file containing grid structure information
+                amrpath = getproc2string(fnames.amr, icpu)
+                f_amr = FortranFile(amrpath)
+                skiplines(f_amr, 21) # Skip AMR file header
+
+                # Read grid count information for each level (thread-safe local copy)
+                local_ngridlevel = zeros(Int32, dataobject.ncpu, dataobject.grid_info.nlevelmax)
+                read(f_amr, local_ngridlevel)
+
+                # Create thread-local copy of grid file structure
+                local_ngridfile = zeros(Int32, dataobject.ncpu+dataobject.grid_info.nboundary, dataobject.grid_info.nlevelmax)
+                local_ngridfile[1:dataobject.ncpu, 1:dataobject.grid_info.nlevelmax] = local_ngridlevel
+
+                skiplines(f_amr, 1)
+
+                # Handle boundary conditions if present
+                if dataobject.grid_info.nboundary > 0
+                    skiplines(f_amr, 2)
+                    local_ngridbound = zeros(Int32, dataobject.grid_info.nboundary, dataobject.grid_info.nlevelmax)
+                    read(f_amr, local_ngridbound)
+                    local_ngridfile[(dataobject.ncpu+1):(dataobject.ncpu+overview.nboundary),1:dataobject.grid_info.nlevelmax] = local_ngridbound
+                end
+
+                skiplines(f_amr, 6) # Skip remaining AMR header
+
+                # ═══════════════════════════════════════════════════════════════
+                # SUBSECTION 7B: OPEN GRAVITY DATA FILE
+                # ═══════════════════════════════════════════════════════════════
+
+                # Open corresponding gravity file containing physical variables
+                gravpath = getproc2string(fnames.gravity, icpu)
+                if print_filenames println("Thread $tid processing: $gravpath") end
+
+                f_grav = FortranFile(gravpath)
+                skiplines(f_grav, 4) # Skip gravity file header
+
+                # ═══════════════════════════════════════════════════════════════
+                # SUBSECTION 7C: LOOP OVER AMR REFINEMENT LEVELS
+                # ═══════════════════════════════════════════════════════════════
+
+                for ilevel=1:lmax
+                    # Calculate geometry parameters for this refinement level
+                    dx = 0.5^ilevel # Cell size at this level
+                    nx_full = Int32(2^ilevel)
+                    ny_full = nx_full
+                    nz_full = nx_full
+                    xc = geometry(twotondim_float, ilevel, xc) # Cell center offsets
+
+                    # Allocate work arrays for this level (only if grids exist)
+                    ngrida = local_ngridfile[icpu, ilevel]
+                    if ngrida > 0
+                        xg = zeros(kind, ngrida, dataobject.ndim) # Grid center coordinates
+                        son = zeros(Int32, ngrida, twotondim) # Refinement flags
+                        vara = zeros(kind, ngrida, twotondim, Nnvarh) # Gravity variables
+                    end
+
+                    # ═══════════════════════════════════════════════════════════
+                    # SUBSECTION 7D: LOOP OVER ALL DOMAINS (CPUs + BOUNDARIES)
+                    # ═══════════════════════════════════════════════════════════
+
+                    for j=1:(overview.nboundary+dataobject.ncpu)
+                        # Read AMR grid structure data
+                        if local_ngridfile[j, ilevel] > 0
+                            skiplines(f_amr, 3) # Skip grid index information
+
+                            # Read grid center coordinates
+                            for idim=1:dataobject.ndim
+                                if j == icpu && ngrida > 0
+                                    xg[:,idim] = read(f_amr, (kind, ngrida))
+                                else
+                                    skiplines(f_amr, 1) # Skip other CPU's data
+                                end
+                            end
+
+                            # Skip parent and neighbor information
+                            skiplines(f_amr, 1 + (2*dataobject.ndim))
+
+                            # Read refinement information (son indices)
+                            for ind=1:twotondim
+                                if j == icpu && ngrida > 0
+                                    son[:,ind] = read(f_amr, (Int32, ngrida))
+                                else
+                                    skiplines(f_amr, 1)
+                                end
+                            end
+
+                            # Skip CPU mapping and refinement flags
+                            skiplines(f_amr, twotondim * 2)
+                        end
+
+                        # ═══════════════════════════════════════════════════════
+                        # SUBSECTION 7E: READ GRAVITY PHYSICAL VARIABLES
+                        # ═══════════════════════════════════════════════════════
+
+                        skiplines(f_grav, 2) # Skip gravity record headers
+
+                        if local_ngridfile[j, ilevel] > 0
+                            # Read all gravity variables for all cells in this grid
+                            for ind=1:twotondim # Loop over cells in each grid
+                                for ivar=1:nvarh # Loop over physical variables
+                                    if j == icpu && ngrida > 0
+                                        if nvarh_corr[ivar] != 0 # Only read requested variables
+                                            vara[:,ind,nvarh_corr[ivar]] = read(f_grav,(kind, ngrida))
+                                        else
+                                            skiplines(f_grav, 1) # Skip unwanted variables
+                                        end
+                                    else
+                                        skiplines(f_grav, 1) # Skip other CPU's data
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    # ═══════════════════════════════════════════════════════════
+                    # SUBSECTION 7F: PROCESS CELLS AND APPLY SPATIAL FILTERING
+                    # ═══════════════════════════════════════════════════════════
+
+                    # Convert AMR grid data to cell-based data with spatial filtering
+                    if ngrida > 0
+                        vars_1D_local, pos_1D_local, cpus_1D_local = 
+                            loopovercellsgravity(twotondim, ngrida, ilevel, lmax,
+                                               xg, xc, son, xbound,
+                                               nx_full, ny_full, nz_full,
+                                               grid, vara, vars_1D_local, pos_1D_local,
+                                               read_cpu, cpus_1D_local, global_k, read_level)
+                    end
+                end # End loop over AMR levels
+
+                # Close files for this CPU
+                close(f_amr)
+                close(f_grav)
+
+                # Update progress bar in thread-safe manner
+                if show_progress && progress_bar !== nothing
+                    current = Threads.atomic_add!(progress_counter, 1)
+                    ProgressMeter.update!(progress_bar, current)
+                end
+
+            catch e
+                # Handle errors while maintaining progress tracking
+                if show_progress && progress_bar !== nothing
+                    current = Threads.atomic_add!(progress_counter, 1)
+                    ProgressMeter.update!(progress_bar, current)
+                end
+                println("Error processing file $icpu: $e")
+                rethrow(e)
+            end
+
+            # Yield CPU control periodically for better thread scheduling
+            if local_k % 5 == 0
+                yield()
+            end
+        end # End loop over files in chunk
+
+        # Store this thread's results
+        chunk_results[chunk_idx] = (vars_1D_local, pos_1D_local, cpus_1D_local)
+
+        # Force garbage collection after each chunk to manage memory
+        GC.gc()
+        yield()
+    end # End multithreaded loop over chunks
+
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 8: COMBINE RESULTS FROM ALL THREADS
+    # ═══════════════════════════════════════════════════════════════════════════════
+
+    if show_progress && progress_bar !== nothing
+        finish!(progress_bar)
+        println("\n✓ File processing complete! Combining results...")
     end
-    
-    # Final combination of all thread results
-    non_empty_results = [r for r in thread_results if size(r[1], 2) > 0]
-    
-    if isempty(non_empty_results)
-        if verbose println("No gravity data found in specified range") end
-        pos_dims = read_level ? 4 : 3
-        return (Matrix{Float64}(undef, Nnvarh, 0),
-                Matrix{Int}(undef, pos_dims, 0),
-                Int[])
-    end
-    
-    # Calculate final size and allocate result arrays
-    total_final_cells = sum(size(r[1], 2) for r in non_empty_results)
-    final_vars = Matrix{Float64}(undef, Nnvarh, total_final_cells)
-    final_pos = Matrix{Int}(undef, read_level ? 4 : 3, total_final_cells)
-    final_cpus = Int[]
-    
-    # Combine all thread results efficiently
-    cell_offset = 0
-    for (vars, pos, cpus) in non_empty_results
-        n_cells = size(vars, 2)
-        final_vars[:, cell_offset+1:cell_offset+n_cells] = vars
-        final_pos[:, cell_offset+1:cell_offset+n_cells] = pos
-        if read_cpu
-            append!(final_cpus, cpus)
+
+    # Filter out any failed chunks (should be rare)
+    valid_results = filter(x -> x !== nothing, chunk_results)
+
+    if !isempty(valid_results)
+        # Extract data arrays from each thread's results
+        vars_chunks = [result[1] for result in valid_results] # Gravity variables
+        pos_chunks = [result[2] for result in valid_results] # Cell positions
+        cpus_chunks = [result[3] for result in valid_results] # CPU numbers
+
+        # Fast concatenation using reduce (much faster than repeated append!)
+        vars_1D = reduce(hcat, vars_chunks) # Horizontal concatenation for variables
+        pos_1D = reduce(hcat, pos_chunks) # Horizontal concatenation for positions
+        cpus_1D = reduce(vcat, cpus_chunks) # Vertical concatenation for CPU list
+    else
+        # Handle edge case where no data was found
+        vars_1D = ElasticArray{Float64}(undef, Nnvarh, 0)
+        if read_level
+            pos_1D = ElasticArray{Int}(undef, 4, 0)
+        else
+            pos_1D = ElasticArray{Int}(undef, 3, 0)
         end
-        cell_offset += n_cells
+        cpus_1D = Int[]
     end
-    
+
+    # ═══════════════════════════════════════════════════════════════════════════════
+    # SECTION 9: FINAL OUTPUT AND RETURN
+    # ═══════════════════════════════════════════════════════════════════════════════
+
     if verbose
-        println("Successfully processed gravity data:")
-        println("- Total cells: $total_final_cells")
-        println("- Files processed: $ncpu_read")
+        println("✓ Data combination complete!")
+        println("Final data size: $(size(vars_1D, 2)) cells, $(size(vars_1D, 1)) variables")
     end
-    
-    # Return Matrix arrays (ElasticArray-free)
-    return final_vars, final_pos, final_cpus
+
+    # Return results based on whether CPU information was requested
+    if read_cpu
+        return vars_1D, pos_1D, cpus_1D
+    else
+        return vars_1D, pos_1D
+    end
+end
+
+# ═══════════════════════════════════════════════════════════════════════════════════
+# HELPER FUNCTION: PROCESS INDIVIDUAL CELLS AND APPLY SPATIAL FILTERING FOR GRAVITY
+# ═══════════════════════════════════════════════════════════════════════════════════
+
+function loopovercellsgravity(twotondim::Int,
+                             ngrida::Int32,
+                             ilevel::Int,
+                             lmax::Int,
+                             xg::Array{Float64,2}, # Grid center coordinates
+                             xc::Array{Float64,2}, # Cell center offsets
+                             son::Array{Int32,2}, # Refinement flags
+                             xbound::Array{Float64,1}, # Domain center
+                             nx_full::Int32, # Grid resolution at this level
+                             ny_full::Int32,
+                             nz_full::Int32,
+                             grid::Array{LevelType,1}, # Spatial bounds for filtering
+                             vara::Array{Float64,3}, # Gravity variables
+                             vars_1D_local::ElasticArray{Float64,2,1}, # Thread-local variables
+                             pos_1D_local::ElasticArray{Int,2,1}, # Thread-local positions
+                             read_cpu::Bool,
+                             cpus_1D_local::Array{Int,1}, # Thread-local CPU numbers
+                             k::Int, # Current file index
+                             read_level::Bool)
+
+    """
+    THREAD-SAFE VERSION: Process each cell in the AMR grids using thread-local arrays.
+    Key changes for thread safety:
+    1. Only modifies thread-local arrays (no shared state)
+    2. Pre-allocates temporary arrays for better performance
+    3. Batch append operations to reduce memory allocations
+    4. Returns updated thread-local arrays
+    """
+
+    # Pre-allocate temporary arrays for batch operations
+    max_cells = ngrida * twotondim # Maximum possible cells to add
+    temp_vars = Vector{Float64}()
+    temp_positions = Vector{Int}()
+    temp_cpus = Vector{Int}()
+
+    # Pre-allocate with estimated capacity to reduce reallocations
+    sizehint!(temp_vars, max_cells * size(vara, 3))
+    sizehint!(temp_positions, max_cells * (read_level ? 4 : 3))
+    if read_cpu
+        sizehint!(temp_cpus, max_cells)
+    end
+
+    # Process cells with spatial filtering
+    for ind=1:twotondim # Loop over cells in each grid (8 cells for 3D)
+        for i=1:ngrida # Loop over all grids at this level
+            # Only process leaf cells (not refined further)
+            if !(son[i,ind] > 0 && ilevel < lmax)
+                # Calculate absolute cell coordinates in the simulation domain
+                ix = floor(Int, (xg[i,1] + xc[ind,1] - xbound[1]) * nx_full) + 1
+                iy = floor(Int, (xg[i,2] + xc[ind,2] - xbound[2]) * ny_full) + 1
+                iz = floor(Int, (xg[i,3] + xc[ind,3] - xbound[3]) * nz_full) + 1
+
+                # Apply spatial filtering: only keep cells within requested bounds
+                if ix >= grid[ilevel].imin &&
+                   iy >= grid[ilevel].jmin &&
+                   iz >= grid[ilevel].kmin &&
+                   ix <= grid[ilevel].imax &&
+                   iy <= grid[ilevel].jmax &&
+                   iz <= grid[ilevel].kmax
+
+                    # THREAD-SAFE: Collect data in temporary arrays
+                    # Store gravity variables for this cell
+                    for var_idx = 1:size(vara, 3)
+                        push!(temp_vars, vara[i, ind, var_idx])
+                    end
+
+                    # Store position (and level for AMR)
+                    if read_level
+                        append!(temp_positions, [ix, iy, iz, ilevel])
+                    else
+                        append!(temp_positions, [ix, iy, iz])
+                    end
+
+                    # Store CPU number if requested
+                    if read_cpu
+                        push!(temp_cpus, k)
+                    end
+                end
+            end
+        end
+    end # End loop over cells
+
+    # THREAD-SAFE: Batch append to thread-local arrays (single operation per array)
+    if !isempty(temp_vars)
+        # Reshape temp_vars for proper appending to 2D ElasticArray
+        nvars = size(vara, 3)
+        ncells = div(length(temp_vars), nvars)
+        vars_matrix = reshape(temp_vars, nvars, ncells)
+        append!(vars_1D_local, vars_matrix)
+
+        # Append positions
+        pos_dims = read_level ? 4 : 3
+        pos_matrix = reshape(temp_positions, pos_dims, ncells)
+        append!(pos_1D_local, pos_matrix)
+
+        # Append CPU numbers
+        if read_cpu
+            append!(cpus_1D_local, temp_cpus)
+        end
+    end
+
+    return vars_1D_local, pos_1D_local, cpus_1D_local
 end
