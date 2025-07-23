@@ -258,7 +258,7 @@ function process_gravity_cpu_file_safe(icpu::Int32, fnames::FileNamesType, datao
     return combined_vars, combined_pos, combined_cpus
 end
 
-function getgravitydata_safe(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{Int},
+function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{Int},
                             lmax::Int, ranges::Vector{Float64}, print_filenames::Bool,
                             show_progress::Bool, verbose::Bool, read_cpu::Bool, 
                             read_level::Bool, max_threads::Int)
@@ -499,76 +499,3 @@ function getgravitydata_safe(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vect
     return ElasticArray(final_vars), ElasticArray(final_pos), final_cpus
 end
 
-function getgravity_safe(dataobject::InfoType; 
-                        lmax::Int=dataobject.levelmax,
-                        vars::Vector{Symbol}=[:epot, :ax, :ay, :az],
-                        xrange::Vector{Missing}=[missing, missing],
-                        yrange::Vector{Missing}=[missing, missing], 
-                        zrange::Vector{Missing}=[missing, missing],
-                        center::Vector{Float64}=[0., 0., 0.],
-                        range_unit::Symbol=:standard,
-                        print_filenames::Bool=false,
-                        verbose::Bool=true,
-                        show_progress::Bool=true,
-                        myargs::ArgumentsType=ArgumentsType(),
-                        max_threads::Int=Threads.nthreads())
-    """
-    Main entry point for safe gravity data reading.
-    Replace your existing getgravity function with this version.
-    """
-    
-    # Variable setup for gravity data
-    gravity_vars = [:epot, :ax, :ay, :az]  # Standard gravity variables
-    Nnvarh = length(gravity_vars)
-    nvarh_corr = collect(1:Nnvarh)
-    
-    # Process spatial ranges
-    ranges = Float64[]
-    if !ismissing(xrange[1]) && !ismissing(xrange[2])
-        append!(ranges, [xrange[1], xrange[2]])
-    else
-        append!(ranges, [-Inf, Inf])
-    end
-    
-    if !ismissing(yrange[1]) && !ismissing(yrange[2])
-        append!(ranges, [yrange[1], yrange[2]])
-    else
-        append!(ranges, [-Inf, Inf])
-    end
-    
-    if !ismissing(zrange[1]) && !ismissing(zrange[2])
-        append!(ranges, [zrange[1], zrange[2]])
-    else
-        append!(ranges, [-Inf, Inf])
-    end
-    
-    # Set reading options
-    read_cpu = true
-    read_level = true
-    
-    # Call the safe data processing function
-    vars_1D, pos_1D, cpus_1D = getgravitydata_safe(
-        dataobject, Nnvarh, nvarh_corr, lmax, ranges,
-        print_filenames, show_progress, verbose, read_cpu, read_level, max_threads)
-    
-    # Package results into data structure (adapt to your specific data type)
-    gravity_data = Dict{Symbol, Any}()
-    gravity_data[:data] = vars_1D
-    gravity_data[:positions] = pos_1D
-    gravity_data[:cpus] = cpus_1D
-    gravity_data[:variables] = gravity_vars
-    gravity_data[:lmax] = lmax
-    gravity_data[:boxlen] = dataobject.boxlen
-    gravity_data[:scale] = dataobject.scale
-    gravity_data[:ranges] = ranges
-    
-    if verbose
-        println("Gravity data successfully loaded:")
-        println("- Variables: $(gravity_vars)")
-        println("- Total cells: $(size(vars_1D, 2))")
-        println("- Max AMR level: $lmax")
-        println("- Threading: $max_threads threads used")
-    end
-    
-    return gravity_data
-end
