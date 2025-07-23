@@ -278,7 +278,7 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         println("- Memory-safe mode: Regular arrays (no ElasticArrays)")
     end
     
-    # Set up file names
+    # Use existing createpath infrastructure for all file paths
     fnames = createpath(dataobject.output, dataobject.path)
 
     # Create gravity file names using existing pattern
@@ -290,8 +290,9 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
     # Grid information setup
     overview = GridInfoType()
     
-    # Read AMR structure from first file to get grid bounds
-    f_amr = FortranFile(joinpath(dataobject.path, "amr_00001.out$(dataobject.output)"))
+    # Use existing infrastructure for AMR file path
+    amr_filename = getproc2string(fnames.amr, Int32(1))  # CPU 1 AMR file
+    f_amr = FortranFile(amr_filename)
     
     # Skip AMR header
     ncpu_amr = read(f_amr, Int32)
@@ -352,10 +353,10 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
     fill!(ngridlevel, 0) 
     fill!(ngridbound, 0)
     
-    # Read grid information from each CPU file header
+    # Use existing file paths for grid reading loop
     for icpu = 1:dataobject.ncpu
         try
-            f = FortranFile(grav_files[icpu])
+            f = FortranFile(grav_files[icpu])  # Use properly constructed paths
             
             # Read header
             ncpu2 = read(f, Int32)
@@ -434,7 +435,7 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
             end
         end
         
-        # Combine thread results
+        # Combine thread results 
         if !isempty(thread_vars_list)
             total_cells = sum(size(vars, 2) for vars in thread_vars_list)
             thread_combined_vars = Matrix{Float64}(undef, Nnvarh, total_cells)
@@ -471,7 +472,8 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
                 Matrix{Int}(undef, pos_dims, 0),
                 Int[])
     end
-        # Calculate final size and allocate result arrays
+    
+    # Calculate final size and allocate result arrays
     total_final_cells = sum(size(r[1], 2) for r in non_empty_results)
     final_vars = Matrix{Float64}(undef, Nnvarh, total_final_cells)
     final_pos = Matrix{Int}(undef, read_level ? 4 : 3, total_final_cells)
@@ -495,6 +497,7 @@ function getgravitydata(dataobject::InfoType, Nnvarh::Int, nvarh_corr::Vector{In
         println("- Memory usage: $(Base.summarysize(final_vars) + Base.summarysize(final_pos)) bytes")
     end
     
-    # COMPLETELY ELASTICARRAY-FREE RETURN (your getgravity.jl expects this)
+    # COMPLETELY ELASTICARRAY-FREE RETURN
     return final_vars, final_pos, final_cpus
 end
+
