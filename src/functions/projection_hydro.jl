@@ -606,16 +606,13 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
 
             if use_variable_threading
                 #--------------------------------------------------------------
-                # VARIABLE-LEVEL PARALLELISM
+                # VARIABLE-LEVEL PARALLELISM (Thread-safe: thread-local results)
                 #--------------------------------------------------------------
-                
                 variable_tasks = []
                 variable_list = collect(keys(data_dict))
-                
-                # Create semaphore to limit concurrent variable processing
+                # Semaphore to limit concurrent variable processing
                 var_semaphore = Base.Semaphore(effective_threads)
-                
-                # Spawn tasks for each variable
+                # Each thread returns a tuple (ivar, processed_map)
                 for ivar in variable_list
                     var_task = Threads.@spawn begin
                         Base.acquire(var_semaphore)
@@ -630,13 +627,11 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
                     end
                     push!(variable_tasks, var_task)
                 end
-
-                # Collect results from parallel variable processing
-                for task in variable_tasks
-                    ivar, processed_map = fetch(task)
+                # Thread-local results: accumulate into imaps after all threads complete
+                thread_results = fetch.(variable_tasks)
+                for (ivar, processed_map) in thread_results
                     imaps[ivar] += processed_map
                 end
-                
             else
                 #--------------------------------------------------------------
                 # SINGLE-THREADED VARIABLE PROCESSING
