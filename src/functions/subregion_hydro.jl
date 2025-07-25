@@ -1,5 +1,52 @@
 # -----------------------------------------------------------------------------
 ##### CUBOID #####-------------------------------------------------------------
+"""
+    subregioncuboid(dataobject::HydroDataType; kwargs...)
+
+Select a cuboid (rectangular box) subregion from hydro data using AMR-aware filtering.
+
+This function extracts all hydro cells that lie within or intersect a specified rectangular
+region. It supports both cell-based and point-based selection modes for precise control
+over boundary handling in adaptive mesh refinement (AMR) simulations.
+
+# Arguments
+- `dataobject::HydroDataType`: Input hydro data object from `gethydro()`
+
+# Keywords
+- `xrange::Array{<:Any,1}=[missing, missing]`: X-coordinate range [min, max]
+- `yrange::Array{<:Any,1}=[missing, missing]`: Y-coordinate range [min, max]  
+- `zrange::Array{<:Any,1}=[missing, missing]`: Z-coordinate range [min, max]
+- `center::Array{<:Any,1}=[0., 0., 0.]`: Reference center for ranges
+- `range_unit::Symbol=:standard`: Units for ranges (:standard, :kpc, :Mpc, etc.)
+- `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
+- `inverse::Bool=false`: Select outside the region instead of inside
+- `verbose::Bool=verbose_mode`: Print progress information
+
+# Selection Modes
+- **Cell-based (`cell=true`)**: Includes cells that intersect the region boundary
+- **Point-based (`cell=false`)**: Includes only cells whose centers lie within the region
+
+# Returns
+- `HydroDataType`: New hydro data object containing filtered cells
+
+# Examples
+```julia
+# Select central 20x20x4 kpc box
+subregion = subregioncuboid(gas, 
+    xrange=[-10., 10.], yrange=[-10., 10.], zrange=[-2., 2.],
+    center=[:boxcenter], range_unit=:kpc)
+
+# Inverse selection (everything outside the box)
+subregion = subregioncuboid(gas,
+    xrange=[0.3, 0.7], yrange=[0.3, 0.7], zrange=[0.4, 0.6],
+    inverse=true)
+```
+
+# See Also
+- `subregioncylinder`: Cylindrical subregions
+- `subregionsphere`: Spherical subregions
+- `subregion`: Unified interface for all geometries
+"""
 function subregioncuboid(dataobject::HydroDataType;
     xrange::Array{<:Any,1}=[missing, missing],
     yrange::Array{<:Any,1}=[missing, missing],
@@ -13,11 +60,12 @@ function subregioncuboid(dataobject::HydroDataType;
     printtime("", verbose)
 
     boxlen = dataobject.boxlen
+    scale = dataobject.scale
     lmax = dataobject.lmax
     isamr = checkuniformgrid(dataobject, lmax)
 
     # convert given ranges and print overview on screen
-    ranges = prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center)
+    ranges = prepranges(dataobject.info, range_unit, verbose, xrange, yrange, zrange, center)
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
@@ -31,92 +79,152 @@ function subregioncuboid(dataobject::HydroDataType;
         if inverse == false
             if isamr
                 if cell == true
-                    sub_data = filter(p->   p.cx >=floor(Int, 2^p.level * xmin) &&
-                                            p.cx <=ceil(Int,  2^p.level * xmax) &&
-                                            p.cy >=floor(Int, 2^p.level * ymin) &&
-                                            p.cy <=ceil(Int,  2^p.level * ymax) &&
-                                            p.cz >=floor(Int, 2^p.level * zmin) &&
-                                            p.cz <=ceil(Int,  2^p.level * zmax), dataobject.data)
+                    # Cell-based selection: include cells that overlap with the range
+                    # A cell at index (cx, cy, cz) spans from (cx-0.5, cy-0.5, cz-0.5) to (cx+0.5, cy+0.5, cz+0.5) in grid units
+                    sub_data = filter(p->begin
+                        level_factor = 2^p.level
+                        # Cell boundaries in physical coordinates
+                        cell_xmin = (p.cx - 0.5) / level_factor
+                        cell_xmax = (p.cx + 0.5) / level_factor
+                        cell_ymin = (p.cy - 0.5) / level_factor
+                        cell_ymax = (p.cy + 0.5) / level_factor
+                        cell_zmin = (p.cz - 0.5) / level_factor
+                        cell_zmax = (p.cz + 0.5) / level_factor
+                        
+                        # Check for overlap: cell overlaps if its max > range_min AND its min < range_max
+                        (cell_xmax > xmin && cell_xmin < xmax) &&
+                        (cell_ymax > ymin && cell_ymin < ymax) &&
+                        (cell_zmax > zmin && cell_zmin < zmax)
+                    end, dataobject.data)
                 else
-                    sub_data = filter(p->   p.cx >=( 2^p.level * xmin) &&
-                                            p.cx <=( 2^p.level * xmax) &&
-                                            p.cy >=( 2^p.level * ymin) &&
-                                            p.cy <=( 2^p.level * ymax) &&
-                                            p.cz >=( 2^p.level * zmin) &&
-                                            p.cz <=( 2^p.level * zmax), dataobject.data)
+                    # Point-based selection: include cells whose centers lie within the range
+                    sub_data = filter(p->begin
+                        level_factor = 2^p.level
+                        cell_x = p.cx / level_factor
+                        cell_y = p.cy / level_factor
+                        cell_z = p.cz / level_factor
+                        
+                        cell_x >= xmin && cell_x <= xmax &&
+                        cell_y >= ymin && cell_y <= ymax &&
+                        cell_z >= zmin && cell_z <= zmax
+                    end, dataobject.data)
                 end
             else # for uniform grid
                 if cell == true
-                    sub_data = filter(p->   p.cx >=floor(Int, 2^lmax * xmin) &&
-                                            p.cx <=ceil(Int,  2^lmax * xmax) &&
-                                            p.cy >=floor(Int, 2^lmax * ymin) &&
-                                            p.cy <=ceil(Int,  2^lmax * ymax) &&
-                                            p.cz >=floor(Int, 2^lmax * zmin) &&
-                                            p.cz <=ceil(Int,  2^lmax * zmax), dataobject.data)
+                    # Cell-based selection for uniform grid
+                    sub_data = filter(p->begin
+                        level_factor = 2^lmax
+                        # Cell boundaries in physical coordinates
+                        cell_xmin = (p.cx - 0.5) / level_factor
+                        cell_xmax = (p.cx + 0.5) / level_factor
+                        cell_ymin = (p.cy - 0.5) / level_factor
+                        cell_ymax = (p.cy + 0.5) / level_factor
+                        cell_zmin = (p.cz - 0.5) / level_factor
+                        cell_zmax = (p.cz + 0.5) / level_factor
+                        
+                        # Check for overlap
+                        (cell_xmax > xmin && cell_xmin < xmax) &&
+                        (cell_ymax > ymin && cell_ymin < ymax) &&
+                        (cell_zmax > zmin && cell_zmin < zmax)
+                    end, dataobject.data)
                 else
-                    sub_data = filter(p->   p.cx >=( 2^lmax * xmin) &&
-                                            p.cx <=( 2^lmax * xmax) &&
-                                            p.cy >=( 2^lmax * ymin) &&
-                                            p.cy <=( 2^lmax * ymax) &&
-                                            p.cz >=( 2^lmax * zmin) &&
-                                            p.cz <=( 2^lmax * zmax), dataobject.data)
-                end
-
-            end
-        elseif inverse == true
-            if cell == true
-                if isamr
-                    sub_data = filter(p->   p.cx <floor(Int, 2^p.level * xmin) ||
-                                            p.cx >ceil(Int,  2^p.level * xmax) ||
-                                            p.cy <floor(Int, 2^p.level * ymin) ||
-                                            p.cy >ceil(Int,  2^p.level * ymax) ||
-                                            p.cz <floor(Int, 2^p.level * zmin) ||
-                                            p.cz >ceil(Int,  2^p.level * zmax) , dataobject.data)
-                else # for uniform grid
-                    sub_data = filter(p->   p.cx <floor(Int, 2^lmax * xmin) ||
-                                            p.cx >ceil(Int,  2^lmax * xmax) ||
-                                            p.cy <floor(Int, 2^lmax * ymin) ||
-                                            p.cy >ceil(Int,  2^lmax * ymax) ||
-                                            p.cz <floor(Int, 2^lmax * zmin) ||
-                                            p.cz >ceil(Int,  2^lmax * zmax) , dataobject.data)
-                end
-            else
-                if isamr
-                    sub_data = filter(p->   p.cx <( 2^p.level * xmin) ||
-                                            p.cx >( 2^p.level * xmax) ||
-                                            p.cy <( 2^p.level * ymin) ||
-                                            p.cy >( 2^p.level * ymax) ||
-                                            p.cz <( 2^p.level * zmin) ||
-                                            p.cz >( 2^p.level * zmax), dataobject.data)
-                else # for uniform grid
-                    sub_data = filter(p->   p.cx <( 2^lmax * xmin) ||
-                                            p.cx >( 2^lmax * xmax) ||
-                                            p.cy <( 2^lmax * ymin) ||
-                                            p.cy >( 2^lmax * ymax) ||
-                                            p.cz <( 2^lmax * zmin) ||
-                                            p.cz >( 2^lmax * zmax), dataobject.data)
+                    # Point-based selection for uniform grid
+                    sub_data = filter(p->begin
+                        level_factor = 2^lmax
+                        cell_x = p.cx / level_factor
+                        cell_y = p.cy / level_factor
+                        cell_z = p.cz / level_factor
+                        
+                        cell_x >= xmin && cell_x <= xmax &&
+                        cell_y >= ymin && cell_y <= ymax &&
+                        cell_z >= zmin && cell_z <= zmax
+                    end, dataobject.data)
                 end
             end
 
-                ranges = dataobject.ranges
+        else # inverse == true
+            ranges = dataobject.ranges
+            if isamr
+                if cell == true
+                    # Inverse cell-based selection: include cells that do NOT overlap with the range
+                    sub_data = filter(p->begin
+                        level_factor = 2^p.level
+                        # Cell boundaries in physical coordinates
+                        cell_xmin = (p.cx - 0.5) / level_factor
+                        cell_xmax = (p.cx + 0.5) / level_factor
+                        cell_ymin = (p.cy - 0.5) / level_factor
+                        cell_ymax = (p.cy + 0.5) / level_factor
+                        cell_zmin = (p.cz - 0.5) / level_factor
+                        cell_zmax = (p.cz + 0.5) / level_factor
+                        
+                        # No overlap: cell_max <= range_min OR cell_min >= range_max
+                        (cell_xmax <= xmin || cell_xmin >= xmax) ||
+                        (cell_ymax <= ymin || cell_ymin >= ymax) ||
+                        (cell_zmax <= zmin || cell_zmin >= zmax)
+                    end, dataobject.data)
+                else
+                    # Inverse point-based selection: include cells whose centers lie outside the range
+                    sub_data = filter(p->begin
+                        level_factor = 2^p.level
+                        cell_x = p.cx / level_factor
+                        cell_y = p.cy / level_factor
+                        cell_z = p.cz / level_factor
+                        
+                        cell_x < xmin || cell_x > xmax ||
+                        cell_y < ymin || cell_y > ymax ||
+                        cell_z < zmin || cell_z > zmax
+                    end, dataobject.data)
+                end
+            else # for uniform grid
+                if cell == true
+                    # Inverse cell-based selection for uniform grid
+                    sub_data = filter(p->begin
+                        level_factor = 2^lmax
+                        # Cell boundaries in physical coordinates
+                        cell_xmin = (p.cx - 0.5) / level_factor
+                        cell_xmax = (p.cx + 0.5) / level_factor
+                        cell_ymin = (p.cy - 0.5) / level_factor
+                        cell_ymax = (p.cy + 0.5) / level_factor
+                        cell_zmin = (p.cz - 0.5) / level_factor
+                        cell_zmax = (p.cz + 0.5) / level_factor
+                        
+                        # No overlap condition
+                        (cell_xmax <= xmin || cell_xmin >= xmax) ||
+                        (cell_ymax <= ymin || cell_ymin >= ymax) ||
+                        (cell_zmax <= zmin || cell_zmin >= zmax)
+                    end, dataobject.data)
+                else
+                    # Inverse point-based selection for uniform grid
+                    sub_data = filter(p->begin
+                        level_factor = 2^lmax
+                        cell_x = p.cx / level_factor
+                        cell_y = p.cy / level_factor
+                        cell_z = p.cz / level_factor
+                        
+                        cell_x < xmin || cell_x > xmax ||
+                        cell_y < ymin || cell_y > ymax ||
+                        cell_z < zmin || cell_z > zmax
+                    end, dataobject.data)
+                end
+            end
 
         end
 
-        printtablememory(sub_data, verbose)
+    printtablememory(sub_data, verbose)
 
-        hydrodata = HydroDataType()
-        hydrodata.data = sub_data
-        hydrodata.info = dataobject.info
-        hydrodata.lmin = dataobject.lmin
-        hydrodata.lmax = dataobject.lmax
-        hydrodata.boxlen = dataobject.boxlen
-        hydrodata.ranges = ranges
-        hydrodata.selected_hydrovars = dataobject.selected_hydrovars
-        hydrodata.used_descriptors = dataobject.used_descriptors
-        hydrodata.smallr = dataobject.smallr
-        hydrodata.smallc = dataobject.smallc
-        hydrodata.scale = dataobject.scale
-        return hydrodata
+    hydrodata = HydroDataType()
+    hydrodata.data = sub_data
+    hydrodata.info = dataobject.info
+    hydrodata.lmin = dataobject.lmin
+    hydrodata.lmax = dataobject.lmax
+    hydrodata.boxlen = dataobject.boxlen
+    hydrodata.ranges = ranges
+    hydrodata.selected_hydrovars = dataobject.selected_hydrovars
+    hydrodata.used_descriptors = dataobject.used_descriptors
+    hydrodata.smallr = dataobject.smallr
+    hydrodata.smallc = dataobject.smallc
+    hydrodata.scale = dataobject.scale
+    return hydrodata
 
     else
         return dataobject
@@ -126,37 +234,214 @@ function subregioncuboid(dataobject::HydroDataType;
 
 end
 
+# -----------------------------------------------------------------------------
+# UTILITY: Extract filtered ranges for projection
+# -----------------------------------------------------------------------------
+
+"""
+    get_filtered_ranges(hydrodata::HydroDataType)
+
+Extract spatial ranges from a HydroDataType for use with projection functions.
+
+Returns the ranges in the format expected by projection functions: 
+(xrange, yrange, zrange) as arrays of [min, max] values.
+
+# Arguments
+- `hydrodata::HydroDataType`: Data object containing filtered spatial ranges
+
+# Returns
+- `Tuple{Array,Array,Array}`: (xrange, yrange, zrange) for projection functions
+
+# Example
+```julia
+gas_subregion = subregioncuboid(gas, xrange=[0.4, 0.6], yrange=[0.4, 0.6])
+xr, yr, zr = get_filtered_ranges(gas_subregion)
+projection(gas_subregion, vars; xrange=xr, yrange=yr, zrange=zr, ...)
+```
+"""
+function get_filtered_ranges(hydrodata::HydroDataType)
+    r = hydrodata.ranges
+    return ([r[1], r[2]], [r[3], r[4]], [r[5], r[6]])
+end
+
+
+# -----------------------------------------------------------------------------
+# HELPER FUNCTION: Cell shift for legacy compatibility
+# -----------------------------------------------------------------------------
+
+"""
+    cell_shift(level::Int, value::Real, cell::Bool)
+
+Legacy compatibility function for shell region functions.
+
+This function provides backward compatibility with older shell region code
+that used cell_shift calls. The newer geometry helper functions 
+(get_radius_*, get_height_*) handle cell vs point-based selection internally,
+so this function simply returns the input value unchanged.
+
+# Arguments
+- `level::Int`: AMR level (unused in current implementation)
+- `value::Real`: The input value to be returned
+- `cell::Bool`: Cell vs point selection flag (unused in current implementation)
+
+# Returns
+- `Real`: The input value unchanged
+
+# Note
+This function exists for compatibility with legacy shell region functions.
+New code should use the geometry helper functions directly.
+"""
+function cell_shift(level::Int, value::Real, cell::Bool)
+    return value
+end
+
+
 
 # -----------------------------------------------------------------------------
 ##### CYLINDER #####-----------------------------------------------------------
 
-function cell_shift(level, value_shift, cell)
+"""
+    get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
 
+Calculate distance from cell to cylinder axis for cylindrical subregion selection.
+
+This function handles both cell-based and point-based selection modes:
+- Cell-based (cell=true): Returns minimum distance from cell boundary to cylinder axis
+- Point-based (cell=false): Returns distance from cell center to cylinder axis
+
+# Arguments
+- `cx, cy`: Cell coordinates in grid units
+- `level`: AMR level of the cell  
+- `cx_shift, cy_shift`: Cylinder axis position in physical coordinates [0,1]
+- `cell::Bool`: Selection mode (true=cell-based, false=point-based)
+
+# Returns
+- `Float64`: Distance from cell to cylinder axis in physical coordinates
+
+# Algorithm
+For cell-based selection, finds the closest point on the cell boundary to the
+axis using clamp operations. For point-based selection, uses cell center.
+"""
+function get_radius_cylinder(cx, cy, level, cx_shift, cy_shift, cell)
+    level_factor = 2^level
+    axis_x = cx_shift  # Axis position in physical coordinates
+    axis_y = cy_shift
+    
     if cell == false
-        return 2^level * value_shift
+        # Point-based: distance from cell center to axis
+        cell_x = cx / level_factor
+        cell_y = cy / level_factor
+        return sqrt((cell_x - axis_x)^2 + (cell_y - axis_y)^2)
     else
-        return (ceil(Int, 2^level * value_shift))
+        # Cell-based: minimum distance from cell boundary to axis
+        cell_xmin = (cx - 0.5) / level_factor
+        cell_xmax = (cx + 0.5) / level_factor
+        cell_ymin = (cy - 0.5) / level_factor
+        cell_ymax = (cy + 0.5) / level_factor
+        
+        # Find closest point on cell boundary to axis
+        closest_x = clamp(axis_x, cell_xmin, cell_xmax)
+        closest_y = clamp(axis_y, cell_ymin, cell_ymax)
+        
+        return sqrt((closest_x - axis_x)^2 + (closest_y - axis_y)^2)
     end
 end
 
 
-function get_radius_cylinder(x,y, level, cx_shift, cy_shift)
-    xcenter = 2^level * cx_shift
-    ycenter = 2^level * cy_shift
-    x = (x - xcenter)
-    y = (y - ycenter)
-    return sqrt( x^2 + y^2)
+"""
+    get_height_cylinder(cz, level, cz_shift, cell)
+
+Calculate distance from cell to cylinder center plane for cylindrical subregion selection.
+
+This function handles both cell-based and point-based selection modes:
+- Cell-based (cell=true): Returns minimum distance from cell boundary to center plane
+- Point-based (cell=false): Returns distance from cell center to center plane
+
+# Arguments
+- `cz`: Cell z-coordinate in grid units
+- `level`: AMR level of the cell
+- `cz_shift`: Cylinder center plane position in physical coordinates [0,1]
+- `cell::Bool`: Selection mode (true=cell-based, false=point-based)
+
+# Returns
+- `Float64`: Distance from cell to cylinder center plane in physical coordinates
+
+# Algorithm
+For cell-based selection, returns 0 if the center plane intersects the cell,
+otherwise returns distance to closest cell boundary. For point-based selection,
+returns absolute distance from cell center to center plane.
+"""
+function get_height_cylinder(cz, level, cz_shift, cell)
+    level_factor = 2^level
+    center_z = cz_shift  # Center plane position in physical coordinates
+    
+    if cell == false
+        # Point-based: distance from cell center to center plane
+        cell_z = cz / level_factor
+        return abs(cell_z - center_z)
+    else
+        # Cell-based: minimum distance from cell boundary to center plane
+        cell_zmin = (cz - 0.5) / level_factor
+        cell_zmax = (cz + 0.5) / level_factor
+        
+        # If center plane intersects cell, distance is 0
+        if center_z >= cell_zmin && center_z <= cell_zmax
+            return 0.0
+        else
+            # Distance to closest cell boundary
+            return min(abs(cell_zmin - center_z), abs(cell_zmax - center_z))
+        end
+    end
 end
 
 
+"""
+    subregioncylinder(dataobject::HydroDataType; kwargs...)
 
-function get_height_cylinder(z, level, cz_shift)
-    center = 2^level * cz_shift
-    z = (z - center)
-    return abs(z)
-end
+Select a cylindrical subregion from hydro data using AMR-aware filtering.
 
+This function extracts all hydro cells that lie within or intersect a specified cylindrical
+region. The cylinder is defined by a radius, height, center position, and orientation axis.
+It supports both cell-based and point-based selection modes for precise boundary handling.
 
+# Arguments
+- `dataobject::HydroDataType`: Input hydro data object from `gethydro()`
+
+# Keywords
+- `radius::Real=0.`: Cylinder radius in units specified by `range_unit`
+- `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
+- `center::Array{<:Any,1}=[0., 0., 0.]`: Cylinder center position
+- `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
+- `direction::Symbol=:z`: Cylinder axis orientation (:x, :y, or :z)
+- `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
+- `inverse::Bool=false`: Select outside the region instead of inside
+- `verbose::Bool=verbose_mode`: Print progress information
+
+# Selection Modes
+- **Cell-based (`cell=true`)**: Includes cells that intersect the cylinder boundary
+- **Point-based (`cell=false`)**: Includes only cells whose centers lie within the cylinder
+
+# Returns
+- `HydroDataType`: New hydro data object containing filtered cells
+
+# Examples
+```julia
+# Select 5 kpc radius, 4 kpc height cylinder along z-axis
+subregion = subregioncylinder(gas,
+    radius=5., height=4., center=[:boxcenter],
+    range_unit=:kpc, direction=:z)
+
+# Disk selection (very thin cylinder)
+disk = subregioncylinder(gas,
+    radius=10., height=0.5, center=[24., 24., 24.],
+    range_unit=:kpc, direction=:z)
+```
+
+# See Also
+- `subregioncuboid`: Rectangular subregions
+- `subregionsphere`: Spherical subregions
+- `subregion`: Unified interface for all geometries
+"""
 function subregioncylinder(dataobject::HydroDataType;
                             radius::Real=0.,
                             height::Real=0.,
@@ -183,61 +468,43 @@ function subregioncylinder(dataobject::HydroDataType;
 
     if inverse == false
         if isamr
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                                <= (cell_shift(p.level, radius_shift,cell))  &&
-
-                                get_height_cylinder(p.cz, p.level, cz_shift)
-                                <= (cell_shift(p.level, height_shift,cell)),
-
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift, cell) <= radius_shift &&
+                                get_height_cylinder(p.cz, p.level, cz_shift, cell) <= height_shift,
                                 dataobject.data)
         else # for uniform grid
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
-                                <= (cell_shift(lmax, radius_shift,cell))  &&
-
-                                get_height_cylinder(p.cz, lmax, cz_shift)
-                                <= (cell_shift(lmax, height_shift,cell)),
-
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift, cell) <= radius_shift &&
+                                get_height_cylinder(p.cz, lmax, cz_shift, cell) <= height_shift,
                                 dataobject.data)
         end
 
-    elseif inverse == true
-        if isamr
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift)
-                                > (cell_shift(p.level, radius_shift,cell))  ||
-
-                                get_height_cylinder(p.cz, p.level, cz_shift)
-                                > (cell_shift(p.level, height_shift,cell)),
-
-                                dataobject.data)
-        else # for uniform grid
-            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift)
-                                > (cell_shift(lmax, radius_shift,cell))  ||
-
-                                get_height_cylinder(p.cz, lmax, cz_shift)
-                                > (cell_shift(lmax, height_shift,cell)),
-
-                                dataobject.data)
-        end
-
+    else # inverse == true
         ranges = dataobject.ranges
-
+        if isamr
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, p.level, cx_shift, cy_shift, cell) > radius_shift ||
+                                get_height_cylinder(p.cz, p.level, cz_shift, cell) > height_shift,
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_cylinder(p.cx, p.cy, lmax, cx_shift, cy_shift, cell) > radius_shift ||
+                                get_height_cylinder(p.cz, lmax, cz_shift, cell) > height_shift,
+                                dataobject.data)
+        end
     end
-        printtablememory(sub_data, verbose)
+    
+    printtablememory(sub_data, verbose)
 
-
-        hydrodata = HydroDataType()
-        hydrodata.data = sub_data
-        hydrodata.info = dataobject.info
-        hydrodata.lmin = dataobject.lmin
-        hydrodata.lmax = dataobject.lmax
-        hydrodata.boxlen = dataobject.boxlen
-        hydrodata.ranges = ranges
-        hydrodata.selected_hydrovars = dataobject.selected_hydrovars
-        hydrodata.used_descriptors = dataobject.used_descriptors
-        hydrodata.smallr = dataobject.smallr
-        hydrodata.smallc = dataobject.smallc
-        hydrodata.scale = dataobject.scale
-        return hydrodata
+    hydrodata = HydroDataType()
+    hydrodata.data = sub_data
+    hydrodata.info = dataobject.info
+    hydrodata.lmin = dataobject.lmin
+    hydrodata.lmax = dataobject.lmax
+    hydrodata.boxlen = dataobject.boxlen
+    hydrodata.ranges = ranges
+    hydrodata.selected_hydrovars = dataobject.selected_hydrovars
+    hydrodata.used_descriptors = dataobject.used_descriptors
+    hydrodata.smallr = dataobject.smallr
+    hydrodata.smallc = dataobject.smallc
+    hydrodata.scale = dataobject.scale
+    return hydrodata
 
 end
 
@@ -245,17 +512,113 @@ end
 # -----------------------------------------------------------------------------
 ##### SPHERE #####-------------------------------------------------------------
 
-function get_radius_sphere(x,y,z, level, cx_shift, cy_shift, cz_shift)
-    xcenter = 2^level * cx_shift
-    ycenter = 2^level * cy_shift
-    zcenter = 2^level * cz_shift
-    x = (x - xcenter)
-    y = (y - ycenter)
-    z = (z - zcenter)
-    return sqrt( x^2 + y^2 + z^2)
+"""
+    get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell)
+
+Calculate distance from cell to sphere center for spherical subregion selection.
+
+This function handles both cell-based and point-based selection modes:
+- Cell-based (cell=true): Returns minimum distance from cell boundary to sphere center
+- Point-based (cell=false): Returns distance from cell center to sphere center
+
+# Arguments
+- `cx, cy, cz`: Cell coordinates in grid units
+- `level`: AMR level of the cell
+- `cx_shift, cy_shift, cz_shift`: Sphere center position in physical coordinates [0,1]
+- `cell::Bool`: Selection mode (true=cell-based, false=point-based)
+
+# Returns
+- `Float64`: Distance from cell to sphere center in physical coordinates
+
+# Algorithm
+For cell-based selection, finds the closest point on the cell boundary to the
+center using clamp operations on each dimension. For point-based selection,
+uses the Euclidean distance from cell center to sphere center.
+
+# Example
+```julia
+# Distance from cell at (10,20,30) on level 2 to sphere at (0.5,0.5,0.5)
+distance = get_radius_sphere(10, 20, 30, 2, 0.5, 0.5, 0.5, true)
+```
+"""
+function get_radius_sphere(cx, cy, cz, level, cx_shift, cy_shift, cz_shift, cell)
+    level_factor = 2^level
+    center_x = cx_shift  # Sphere center in physical coordinates
+    center_y = cy_shift
+    center_z = cz_shift
+    
+    if cell == false
+        # Point-based: distance from cell center to sphere center
+        cell_x = cx / level_factor
+        cell_y = cy / level_factor
+        cell_z = cz / level_factor
+        return sqrt((cell_x - center_x)^2 + (cell_y - center_y)^2 + (cell_z - center_z)^2)
+    else
+        # Cell-based: minimum distance from cell boundary to sphere center
+        cell_xmin = (cx - 0.5) / level_factor
+        cell_xmax = (cx + 0.5) / level_factor
+        cell_ymin = (cy - 0.5) / level_factor
+        cell_ymax = (cy + 0.5) / level_factor
+        cell_zmin = (cz - 0.5) / level_factor
+        cell_zmax = (cz + 0.5) / level_factor
+        
+        # Find closest point on cell boundary to sphere center
+        closest_x = clamp(center_x, cell_xmin, cell_xmax)
+        closest_y = clamp(center_y, cell_ymin, cell_ymax)
+        closest_z = clamp(center_z, cell_zmin, cell_zmax)
+        
+        return sqrt((closest_x - center_x)^2 + (closest_y - center_y)^2 + (closest_z - center_z)^2)
+    end
 end
 
 
+"""
+    subregionsphere(dataobject::HydroDataType; kwargs...)
+
+Select a spherical subregion from hydro data using AMR-aware filtering.
+
+This function extracts all hydro cells that lie within or intersect a specified spherical
+region. The sphere is defined by a radius and center position. It supports both cell-based
+and point-based selection modes for precise boundary handling in AMR simulations.
+
+# Arguments
+- `dataobject::HydroDataType`: Input hydro data object from `gethydro()`
+
+# Keywords
+- `radius::Real=0.`: Sphere radius in units specified by `range_unit`
+- `center::Array{<:Any,1}=[0., 0., 0.]`: Sphere center position
+- `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
+- `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
+- `inverse::Bool=false`: Select outside the region instead of inside
+- `verbose::Bool=verbose_mode`: Print progress information
+
+# Selection Modes
+- **Cell-based (`cell=true`)**: Includes cells that intersect the sphere boundary
+- **Point-based (`cell=false`)**: Includes only cells whose centers lie within the sphere
+
+# Returns
+- `HydroDataType`: New hydro data object containing filtered cells
+
+# Examples
+```julia
+# Select 10 kpc radius sphere centered at box center
+subregion = subregionsphere(gas,
+    radius=10., center=[:boxcenter], range_unit=:kpc)
+
+# Small sphere at specific coordinates
+subregion = subregionsphere(gas,
+    radius=2., center=[0.3, 0.4, 0.5], range_unit=:standard)
+
+# Everything outside a 5 kpc sphere (inverse selection)
+subregion = subregionsphere(gas,
+    radius=5., center=[24., 24., 24.], range_unit=:kpc, inverse=true)
+```
+
+# See Also
+- `subregioncuboid`: Rectangular subregions
+- `subregioncylinder`: Cylindrical subregions  
+- `subregion`: Unified interface for all geometries
+"""
 function subregionsphere(dataobject::HydroDataType;
                             radius::Real=0.,
                             center::Array{<:Any,1}=[0., 0., 0.],
@@ -283,31 +646,21 @@ function subregionsphere(dataobject::HydroDataType;
 
     if inverse == false
         if isamr
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
-
-                                <= cell_shift(p.level, radius_shift, cell),
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift, cell) <= radius_shift,
                                 dataobject.data)
         else # for uniform grid
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
-
-                                <= cell_shift(lmax, radius_shift, cell),
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift, cell) <= radius_shift,
                                 dataobject.data)
         end
-    elseif inverse == true
-        if isamr
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift)
-
-                                > cell_shift(p.level, radius_shift, cell),
-                                dataobject.data)
-        else # for uniform grid
-            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift)
-
-                                > cell_shift(lmax, radius_shift, cell),
-                                dataobject.data)
-        end
-
+    else # inverse == true
         ranges = dataobject.ranges
-
+        if isamr
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, p.level, cx_shift, cy_shift, cz_shift, cell) > radius_shift,
+                                dataobject.data)
+        else # for uniform grid
+            sub_data = filter(p-> get_radius_sphere(p.cx, p.cy, p.cz, lmax, cx_shift, cy_shift, cz_shift, cell) > radius_shift,
+                                dataobject.data)
+        end
     end
 
     printtablememory(sub_data, verbose)
