@@ -45,13 +45,9 @@ function fast_hist2d_weight!(h::Matrix{Float64}, x, y, w, range1, range2)
         # Convert AMR coordinates to histogram bin indices
         ix = Int(x[k]) - r1_min + 1
         iy = Int(y[k]) - r2_min + 1
-        
-        # Expanded bounds checking with single-cell tolerance for thin slices
-        if ix >= 0 && ix <= nx+1 && iy >= 0 && iy <= ny+1
-            # Clamp to valid indices and accumulate weight
-            ix_final = clamp(ix, 1, nx)
-            iy_final = clamp(iy, 1, ny)
-            h[ix_final, iy_final] += w[k]
+        # Only accumulate if indices are strictly within valid range
+        if 1 <= ix <= nx && 1 <= iy <= ny
+            h[ix, iy] += w[k]
         end
     end
     return h
@@ -72,13 +68,9 @@ function fast_hist2d_data!(h::Matrix{Float64}, x, y, data, w, range1, range2)
         # Convert AMR coordinates to histogram bin indices
         ix = Int(x[k]) - r1_min + 1
         iy = Int(y[k]) - r2_min + 1
-        
-        # Expanded bounds checking with single-cell tolerance for thin slices
-        if ix >= 0 && ix <= nx+1 && iy >= 0 && iy <= ny+1
-            # Clamp to valid indices and accumulate weighted data
-            ix_final = clamp(ix, 1, nx)
-            iy_final = clamp(iy, 1, ny)
-            h[ix_final, iy_final] += w[k] * data[k]
+        # Only accumulate if indices are strictly within valid range
+        if 1 <= ix <= nx && 1 <= iy <= ny
+            h[ix, iy] += w[k] * data[k]
         end
     end
     return h
