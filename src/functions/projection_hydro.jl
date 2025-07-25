@@ -1,28 +1,50 @@
-
-
 # ==============================================================================
 # INLINE STATUS DISPLAY UTILITIES
 # ==============================================================================
 
-# Global reference to track status message length for proper overwriting
+# Global reference to track status message length for proper terminal overwriting
 const _last_len = Ref(0)
 
 """
-Display inline status message that overwrites previous message
+    inline_status(msg::AbstractString)
+
+Display an inline status message that overwrites the previous message on the same line.
+
+This function provides clean, non-scrolling status updates during long-running operations
+by overwriting the previous message with proper padding to clear any leftover characters.
+Commonly used in AMR level processing loops to show progress without cluttering output.
+
+# Arguments
+- `msg::AbstractString`: Status message to display
+
+# Notes
+- Uses carriage return (\\r) to return cursor to beginning of line
+- Pads with spaces to ensure previous longer messages are completely overwritten  
+- Calls `flush(stdout)` to ensure immediate display
+- Updates global `_last_len` reference to track message length for next call
 """
 function inline_status(msg::AbstractString)
-    padding = max(0, _last_len[] - length(msg))
-    print("\r", msg, " "^padding)
-    flush(stdout)
-    _last_len[] = length(msg)
+    padding = max(0, _last_len[] - length(msg))  # Calculate padding needed
+    print("\r", msg, " "^padding)                # Overwrite with padding
+    flush(stdout)                                # Force immediate output
+    _last_len[] = length(msg)                   # Store length for next call
 end
 
 """
-Finish inline status display and move to new line
+    inline_status_done()
+
+Finish inline status display and move cursor to a new line.
+
+Call this function after completing a series of inline status updates to properly
+terminate the status line and return to normal line-by-line output mode.
+
+# Notes
+- Prints newline character to move to next line
+- Resets global `_last_len` reference to 0 for future status sequences
 """
 function inline_status_done()
-    print('\n')
-    _last_len[] = 0
+    print('\n')        # Move to new line
+    _last_len[] = 0     # Reset length tracker
 end
 
 # ==============================================================================
@@ -30,47 +52,82 @@ end
 # ==============================================================================
 
 """
-Fast 2D histogram for weight data with robust boundary handling
-- Uses integer coordinate mapping for AMR compatibility
-- Includes expanded bounds checking with single-cell tolerance
-- Thread-safe (single-threaded execution)
+    fast_hist2d_weight!(h::Matrix{Float64}, x, y, w, range1, range2) -> Matrix{Float64}
+
+Fast 2D histogram binning for weighted data with proper boundary handling.
+
+This function bins 2D coordinate data (x,y) into a histogram using associated weights.
+Uses `searchsortedlast` to find the correct bin for each data point, which is the
+standard approach for histogram binning where we need the bin containing each value.
+
+# Arguments
+- `h::Matrix{Float64}`: Pre-allocated histogram matrix to accumulate results (modified in-place)
+- `x::AbstractVector`: X-coordinates of data points
+- `y::AbstractVector`: Y-coordinates of data points  
+- `w::AbstractVector`: Weight values for each data point
+- `range1::AbstractRange`: Bin edges for X-dimension (n edges define n-1 bins)
+- `range2::AbstractRange`: Bin edges for Y-dimension (n edges define n-1 bins)
+
+# Returns
+- Modified histogram matrix `h` with accumulated weighted counts
+
+# Notes
+- Histogram array `h` must have dimensions `(length(range1)-1, length(range2)-1)`
+- Values outside the range boundaries are ignored (not binned)
+- Thread-safe for single histogram when called from different threads on different data
 """
 function fast_hist2d_weight!(h::Matrix{Float64}, x, y, w, range1, range2)
-    # Calculate range minimums for coordinate offset
-    r1_min = Int(minimum(range1))
-    r2_min = Int(minimum(range2))
-    nx, ny = size(h)
-    
-    @inbounds for k in eachindex(x)
-        # Convert AMR coordinates to histogram bin indices
-        ix = Int(x[k]) - r1_min + 1
-        iy = Int(y[k]) - r2_min + 1
-        # Only accumulate if indices are strictly within valid range
-        if 1 <= ix <= nx && 1 <= iy <= ny
-            h[ix, iy] += w[k]
+    for i in eachindex(x)
+        # Find bin indices using searchsortedlast (returns bin containing the value)
+        ix = searchsortedlast(range1, x[i])  # Bin index for x-coordinate
+        iy = searchsortedlast(range2, y[i])  # Bin index for y-coordinate
+        
+        # Bounds check: searchsortedlast returns 0 for values below range,
+        # length(range) for values above. Valid bins are 1 to length(range)-1
+        if 1 <= ix < length(range1) && 1 <= iy < length(range2)
+            h[ix, iy] += w[i]
         end
     end
     return h
 end
 
 """
-Fast 2D histogram for data values with weight scaling
-- Similar to weight histogram but includes data value multiplication
-- Maintains thread safety through single-threaded execution
+    fast_hist2d_data!(h::Matrix{Float64}, x, y, data, w, range1, range2) -> Matrix{Float64}
+
+Fast 2D histogram binning for data values with weight scaling.
+
+Similar to `fast_hist2d_weight!` but accumulates data values scaled by weights
+instead of just the weights themselves. Used for computing weighted averages
+where the final result is data_histogram / weight_histogram.
+
+# Arguments
+- `h::Matrix{Float64}`: Pre-allocated histogram matrix to accumulate results (modified in-place)
+- `x::AbstractVector`: X-coordinates of data points
+- `y::AbstractVector`: Y-coordinates of data points
+- `data::AbstractVector`: Data values to be accumulated (e.g., temperature, velocity)
+- `w::AbstractVector`: Weight values for each data point
+- `range1::AbstractRange`: Bin edges for X-dimension (n edges define n-1 bins)
+- `range2::AbstractRange`: Bin edges for Y-dimension (n edges define n-1 bins)
+
+# Returns
+- Modified histogram matrix `h` with accumulated weighted data values
+
+# Notes
+- Each bin accumulates `sum(data[i] * w[i])` for all points falling in that bin
+- Histogram array `h` must have dimensions `(length(range1)-1, length(range2)-1)`
+- Values outside the range boundaries are ignored (not binned)
+- Thread-safe for single histogram when called from different threads on different data
 """
 function fast_hist2d_data!(h::Matrix{Float64}, x, y, data, w, range1, range2)
-    # Calculate range minimums for coordinate offset
-    r1_min = Int(minimum(range1))
-    r2_min = Int(minimum(range2))
-    nx, ny = size(h)
-    
-    @inbounds for k in eachindex(x)
-        # Convert AMR coordinates to histogram bin indices
-        ix = Int(x[k]) - r1_min + 1
-        iy = Int(y[k]) - r2_min + 1
-        # Only accumulate if indices are strictly within valid range
-        if 1 <= ix <= nx && 1 <= iy <= ny
-            h[ix, iy] += w[k] * data[k]
+    for i in eachindex(x)
+        # Find bin indices using searchsortedlast (returns bin containing the value)
+        ix = searchsortedlast(range1, x[i])  # Bin index for x-coordinate
+        iy = searchsortedlast(range2, y[i])  # Bin index for y-coordinate
+        
+        # Bounds check: searchsortedlast returns 0 for values below range,
+        # length(range) for values above. Valid bins are 1 to length(range)-1
+        if 1 <= ix < length(range1) && 1 <= iy < length(range2)
+            h[ix, iy] += w[i] * data[i]  # Accumulate weighted data values
         end
     end
     return h
@@ -81,30 +138,76 @@ end
 # ==============================================================================
 
 """
-Wrapper for weight histogram - handles AMR vs uniform grid data
+    hist2d_weight(x, y, s, mask, w, isamr) -> Matrix{Float64}
+
+High-level wrapper for 2D weight histogram compatible with both AMR and uniform grid data.
+
+Creates a histogram accumulating weights for 2D coordinate data. Handles the difference
+between AMR data (where masking is applied to select relevant cells) and uniform grid
+data (where all data is used directly).
+
+# Arguments
+- `x::AbstractVector`: X-coordinates of all data points
+- `y::AbstractVector`: Y-coordinates of all data points  
+- `s::Vector{AbstractRange}`: Array containing [range1, range2] for bin edges
+- `mask::AbstractVector{Bool}`: Boolean mask to select subset of data (used for AMR)
+- `w::AbstractVector`: Weight values for each data point
+- `isamr::Bool`: Flag indicating AMR data (true) vs uniform grid (false)
+
+# Returns
+- `Matrix{Float64}`: 2D histogram with dimensions `(length(s[1])-1, length(s[2])-1)`
+
+# Notes
+- For AMR data: applies mask to select relevant cells before histogramming
+- For uniform grid: processes all data points without masking
+- Allocates new histogram matrix with proper dimensions for n-1 bins from n bin edges
 """
 function hist2d_weight(x, y, s, mask, w, isamr)
-    h = zeros(Float64, (length(s[1]), length(s[2])))
+    h = zeros(Float64, (length(s[1])-1, length(s[2])-1))  # n-1 bins for n bin edges
     if isamr
-        # AMR data: apply mask to select relevant cells
-        fast_hist2d_weight!(h, x[mask], y[mask], w[mask], s[1], s[2])
+        # AMR data: apply mask to select relevant cells for current AMR level
+        @views fast_hist2d_weight!(h, x[mask], y[mask], w[mask], s[1], s[2])
     else
-        # Uniform grid: use all data
+        # Uniform grid: use all data points directly
         fast_hist2d_weight!(h, x, y, w, s[1], s[2])
     end
     return h
 end
 
 """
-Wrapper for data histogram - handles AMR vs uniform grid data
+    hist2d_data(x, y, s, mask, w, data, isamr) -> Matrix{Float64}
+
+High-level wrapper for 2D data histogram compatible with both AMR and uniform grid data.
+
+Creates a histogram accumulating weighted data values for 2D coordinate data. The result
+can be divided by a corresponding weight histogram to obtain weighted averages per bin.
+Handles the difference between AMR and uniform grid data processing.
+
+# Arguments
+- `x::AbstractVector`: X-coordinates of all data points
+- `y::AbstractVector`: Y-coordinates of all data points
+- `s::Vector{AbstractRange}`: Array containing [range1, range2] for bin edges  
+- `mask::AbstractVector{Bool}`: Boolean mask to select subset of data (used for AMR)
+- `w::AbstractVector`: Weight values for each data point
+- `data::AbstractVector`: Data values to accumulate (e.g., temperature, density, velocity)
+- `isamr::Bool`: Flag indicating AMR data (true) vs uniform grid (false)
+
+# Returns
+- `Matrix{Float64}`: 2D histogram with dimensions `(length(s[1])-1, length(s[2])-1)`
+
+# Notes
+- For AMR data: applies mask to select relevant cells before histogramming
+- For uniform grid: processes all data points without masking  
+- Each bin contains `sum(data[i] * w[i])` for points in that bin
+- Allocates new histogram matrix with proper dimensions for n-1 bins from n bin edges
 """
 function hist2d_data(x, y, s, mask, w, data, isamr)
-    h = zeros(Float64, (length(s[1]), length(s[2])))
+    h = zeros(Float64, (length(s[1])-1, length(s[2])-1))  # n-1 bins for n bin edges
     if isamr
-        # AMR data: apply mask to select relevant cells
-        fast_hist2d_data!(h, x[mask], y[mask], data[mask], w[mask], s[1], s[2])
+        # AMR data: apply mask to select relevant cells for current AMR level
+        @views fast_hist2d_data!(h, x[mask], y[mask], data[mask], w[mask], s[1], s[2])
     else
-        # Uniform grid: use all data
+        # Uniform grid: use all data points directly
         fast_hist2d_data!(h, x, y, data, w, s[1], s[2])
     end
     return h
@@ -115,58 +218,99 @@ end
 # ==============================================================================
 
 """
-Determine if variable-level threading should be used
-- Only beneficial for multiple variables with multiple threads
-- Avoids threading overhead for single variables
+    should_use_variable_threading(n_variables::Int, max_threads::Int) -> Bool
+
+Determine whether variable-level parallelism should be used for projection processing.
+
+Variable-level threading processes multiple projection variables in parallel rather than
+parallelizing within each variable's computation. This is beneficial when projecting
+multiple variables simultaneously as it can utilize available CPU cores more efficiently.
+
+# Arguments
+- `n_variables::Int`: Number of variables being projected simultaneously
+- `max_threads::Int`: Maximum number of threads available for parallel processing
+
+# Returns
+- `Bool`: true if variable-level threading should be used, false for sequential processing
+
+# Notes
+- Returns true only when both conditions are met:
+  - More than one variable is being processed (n_variables > 1)
+  - Multiple threads are available (max_threads > 1)
+- Single variable or single-threaded scenarios use sequential processing
 """
 function should_use_variable_threading(n_variables::Int, max_threads::Int)
     return n_variables > 1 && max_threads > 1
 end
 
 """
-Process a single variable completely for threading
-- Generates histogram for the variable
-- Handles interpolation and size adjustments
-- Returns processed map ready for accumulation
+    process_variable_complete(ivar, xval, yval, leveldata, weightval, data_dict, 
+                             new_level_range1, new_level_range2, mask_level, 
+                             length1, length2, fcorrect, weight_scale, isamr) -> Tuple
+
+Process a single variable completely for threaded execution in AMR projection.
+
+This function handles the complete processing pipeline for one variable at one AMR level,
+including histogram computation, size adjustment, and error checking. Designed to be
+called from worker threads in variable-level parallel processing.
+
+# Arguments
+- `ivar::Symbol`: Variable identifier (e.g., :rho, :temperature, :vx)
+- `xval::AbstractVector`: X-coordinates for current AMR level
+- `yval::AbstractVector`: Y-coordinates for current AMR level
+- `leveldata::AbstractVector`: AMR level information for each cell
+- `weightval::AbstractVector`: Weight values (typically mass or volume)
+- `data_dict::Dict`: Dictionary containing data arrays for all variables
+- `new_level_range1::AbstractRange`: Bin edges for X-dimension at current AMR level
+- `new_level_range2::AbstractRange`: Bin edges for Y-dimension at current AMR level
+- `mask_level::AbstractVector{Bool}`: Mask selecting cells at current AMR level
+- `length1::Int`: Target histogram width (final projection resolution)
+- `length2::Int`: Target histogram height (final projection resolution)
+- `fcorrect::Float64`: AMR level correction factor for proper weighting
+- `weight_scale::Float64`: Unit scaling factor for weights
+- `isamr::Bool`: Flag indicating AMR vs uniform grid data
+
+# Returns
+- `Tuple{Symbol, Matrix{Float64}}`: (variable_name, processed_histogram_matrix)
+
+# Notes
+- Handles special variables (:sd, :mass) using weight histogram
+- Regular variables use data histogram with weight scaling
+- Automatically resizes histogram to target resolution if needed
+- Applies AMR correction factors and unit scaling
+- Thread-safe when called with different variables simultaneously
 """
 function process_variable_complete(ivar, xval, yval, leveldata, weightval, data_dict, 
                                  new_level_range1, new_level_range2, mask_level, 
-                                 length1, length2, overlap_size, fcorrect, weight_scale, isamr)
+                                 length1, length2, fcorrect, weight_scale, isamr)
     
-    # Generate histogram based on variable type
+    # Choose histogram method based on variable type
     if ivar == :sd || ivar == :mass
-        # Surface density and mass use weight-only histogram
+        # Surface density and mass use weight histogram (accumulate weights only)
         imap = hist2d_weight(xval, yval, [new_level_range1, new_level_range2], 
                            mask_level, data_dict[ivar], isamr)
     else
-        # Other variables use data-weighted histogram
+        # Regular variables use data histogram (accumulate weighted data values)
         imap = hist2d_data(xval, yval, [new_level_range1, new_level_range2], 
                          mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
     end
     
-    # Calculate target size for interpolation
-    target_size1 = length1 + overlap_size[1]
-    target_size2 = length2 + overlap_size[2]
-    
-    # Ensure minimum size of 1x1 to prevent errors
-    target_size1 = max(target_size1, 1)
-    target_size2 = max(target_size2, 1)
-    
-    # Interpolate to final resolution if needed
-    if size(imap) != (target_size1, target_size2)
-        imap_buff = imresize(imap, (target_size1, target_size2), 
+    # Resize histogram to target resolution if necessary
+    if size(imap) != (length1, length2)
+        # Use B-spline interpolation with constant boundary conditions
+        imap_buff = imresize(imap, (length1, length2), 
                            method=BSpline(Constant())) .* fcorrect
     else
+        # No resizing needed, just apply AMR correction factor
         imap_buff = imap .* fcorrect
     end
     
-    # Safe cropping with bounds checking
-    crop_end1 = min(target_size1, length1 + overlap_size[1]) - overlap_size[1]
-    crop_end2 = min(target_size2, length2 + overlap_size[2]) - overlap_size[2]
-    crop_end1 = max(crop_end1, 1)
-    crop_end2 = max(crop_end2, 1)
+    # Verify final array dimensions
+    if size(imap_buff) != (length1, length2)
+        error("Array size mismatch for variable $ivar: expected ($length1, $length2), got $(size(imap_buff))")
+    end
     
-    return ivar, imap_buff[1:crop_end1, 1:crop_end2]
+    return ivar, imap_buff
 end
 
 # ==============================================================================
@@ -174,47 +318,105 @@ end
 # ==============================================================================
 
 """
-Prepare coordinate ranges for a specific AMR level
-- Calculates level-specific coordinate ranges
-- Ensures minimum valid ranges to prevent errors
-- Handles different projection directions (x, y, z)
+    prep_level_range(direction, level, ranges, lmin) -> Tuple
+
+Prepare coordinate ranges and grid parameters for a specific AMR level.
+
+This function computes the appropriate coordinate ranges for histogram binning at a
+specific AMR refinement level. It handles the coordinate system transformation based
+on projection direction and ensures proper alignment between different AMR levels.
+
+# Arguments
+- `direction::Symbol`: Projection direction (:x, :y, or :z)
+- `level::Int`: Current AMR refinement level being processed  
+- `ranges::Vector{Float64}`: Physical coordinate ranges [xmin, xmax, ymin, ymax, zmin, zmax]
+- `lmin::Int`: Minimum AMR level in the dataset
+
+# Returns
+- `Tuple{AbstractRange, AbstractRange, Int, Int}`: 
+  - `new_level_range1`: Bin edges for first projected dimension
+  - `new_level_range2`: Bin edges for second projected dimension  
+  - `length_level1`: Number of bins in first dimension
+  - `length_level2`: Number of bins in second dimension
+
+# Algorithm Details
+1. **Level Scaling**: Applies 2^level scaling factor to convert physical ranges to grid indices
+2. **Precision Handling**: Uses small epsilon to avoid floating-point precision issues
+3. **Boundary Adjustment**: Ensures minimum range of 1 grid cell and proper bounds
+4. **AMR Alignment**: Aligns grid boundaries between different refinement levels
+5. **Range Creation**: Generates appropriate range objects for histogram binning
+
+# Notes
+- Different coordinate mappings based on projection direction:
+  - `:z` direction: projects along z, uses (x,y) coordinates
+  - `:y` direction: projects along y, uses (x,z) coordinates  
+  - `:x` direction: projects along x, uses (y,z) coordinates
+- Handles AMR level alignment to ensure consistent grid structure
+- Grid indices are 1-based following Julia conventions
 """
 function prep_level_range(direction, level, ranges, lmin)
-    # Calculate level-specific scaling factor
-    level_factor = 2^level
+    level_factor = 2^level  # Scaling factor for current AMR level
     
-    # Calculate coordinate ranges based on projection direction
+    # Small epsilon to handle floating-point precision issues
+    precision_epsilon = 1e-12
+    
+    # Extract appropriate range indices based on projection direction
     if direction == :z
-        # Z-projection: use x and y ranges
-        rl1 = floor(Int, ranges[1] * level_factor)
-        rl2 = ceil(Int, ranges[2] * level_factor)
-        rl3 = floor(Int, ranges[3] * level_factor)
-        rl4 = ceil(Int, ranges[4] * level_factor)
+        # Z-projection: use x and y ranges (indices 1,2,3,4)
+        rl1 = floor(Int, ranges[1] * level_factor - precision_epsilon)  # x_min
+        rl2 = ceil(Int, ranges[2] * level_factor + precision_epsilon)   # x_max
+        rl3 = floor(Int, ranges[3] * level_factor - precision_epsilon)  # y_min
+        rl4 = ceil(Int, ranges[4] * level_factor + precision_epsilon)   # y_max
     elseif direction == :y
-        # Y-projection: use x and z ranges
-        rl1 = floor(Int, ranges[1] * level_factor)
-        rl2 = ceil(Int, ranges[2] * level_factor)
-        rl3 = floor(Int, ranges[5] * level_factor)
-        rl4 = ceil(Int, ranges[6] * level_factor)
+        # Y-projection: use x and z ranges (indices 1,2,5,6)
+        rl1 = floor(Int, ranges[1] * level_factor - precision_epsilon)  # x_min
+        rl2 = ceil(Int, ranges[2] * level_factor + precision_epsilon)   # x_max
+        rl3 = floor(Int, ranges[5] * level_factor - precision_epsilon)  # z_min
+        rl4 = ceil(Int, ranges[6] * level_factor + precision_epsilon)   # z_max
     elseif direction == :x
-        # X-projection: use y and z ranges
-        rl1 = floor(Int, ranges[3] * level_factor)
-        rl2 = ceil(Int, ranges[4] * level_factor)
-        rl3 = floor(Int, ranges[5] * level_factor)
-        rl4 = ceil(Int, ranges[6] * level_factor)
+        # X-projection: use y and z ranges (indices 3,4,5,6)
+        rl1 = floor(Int, ranges[3] * level_factor - precision_epsilon)  # y_min
+        rl2 = ceil(Int, ranges[4] * level_factor + precision_epsilon)   # y_max
+        rl3 = floor(Int, ranges[5] * level_factor - precision_epsilon)  # z_min
+        rl4 = ceil(Int, ranges[6] * level_factor + precision_epsilon)   # z_max
     end
 
-    # Ensure minimum valid ranges to prevent errors
+    # Ensure minimum bounds and at least 1 cell width
     rl1 = max(1, rl1)
     rl2 = max(rl1 + 1, rl2)
     rl3 = max(1, rl3)
     rl4 = max(rl3 + 1, rl4)
     
-    # Create range objects for histogram binning
+    # AMR level alignment: ensure grid boundaries align between refinement levels
+    if level > lmin
+        alignment_factor = 2^(level - lmin)
+        
+        # Align lower boundaries to alignment grid
+        rl1_remainder = rl1 % alignment_factor
+        if rl1_remainder != 0
+            rl1 -= rl1_remainder
+        end
+        rl3_remainder = rl3 % alignment_factor
+        if rl3_remainder != 0
+            rl3 -= rl3_remainder
+        end
+        
+        # Align upper boundaries to alignment grid
+        rl2_remainder = (rl2 - rl1) % alignment_factor
+        if rl2_remainder != 0
+            rl2 += (alignment_factor - rl2_remainder)
+        end
+        rl4_remainder = (rl4 - rl3) % alignment_factor
+        if rl4_remainder != 0
+            rl4 += (alignment_factor - rl4_remainder)
+        end
+    end
+    
+    # Create coordinate ranges for histogram binning
     new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1)
     new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1)
-    length_level1 = length(new_level_range1) + 1
-    length_level2 = length(new_level_range2) + 1
+    length_level1 = length(new_level_range1)
+    length_level2 = length(new_level_range2)
 
     return new_level_range1, new_level_range2, length_level1, length_level2
 end
@@ -472,26 +674,22 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict()    # Processing mode information
 
     # Process variables that require AMR level iteration
-    if notonly_ranglecheck_vars
-        # Initialize weight map for normalization
-        newmap_w = zeros(Float64, (length1, length2))
-        
-        # Prepare data arrays and coordinate information
-        data_dict, xval, yval, leveldata, weightval, imaps = prep_data(
-            dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res,
-            selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, 
-            skipmask, rangez, length1, length2, isamr, simlmax
-        )
+        if notonly_ranglecheck_vars
+            newmap_w = zeros(Float64, (length1, length2))
+            
+            if verbose
+                println("Target projection array size: ($length1, $length2)")
+                println()
+            end
+            
+            data_dict, xval, yval, leveldata, weightval, imaps = prep_data(
+                dataobject, x_coord, y_coord, z_coord, mask, weighting[1],
+                selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, 
+                skipmask, ranges, length1, length2, isamr, simlmax
+            )
 
-        #----------------------------------------------------------------------
-        # THREADING STRATEGY SELECTION
-        #----------------------------------------------------------------------
-        
-        # Determine optimal threading strategy
-        use_variable_threading = should_use_variable_threading(length(keys(data_dict)), 
-                                                             effective_threads)
-        
-        # Verbose output of threading strategy
+            use_variable_threading = should_use_variable_threading(length(keys(data_dict)), 
+                                                                 effective_threads)        # Verbose output of threading strategy
         if verbose
             if use_variable_threading
                 println("=== Variable-Level Parallelism ===")
@@ -549,69 +747,42 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
                 inline_status("Level $(lpad(level,2)): $(lpad(n_cells,9)) cells  |  $(strategy_desc)  |  Progress: $level_counter/$total_levels")
             end
 
-            # Prepare level-specific coordinate ranges
             new_level_range1, new_level_range2, length_level1, length_level2 = 
                 prep_level_range(direction, level, ranges, lmin)
 
-            #------------------------------------------------------------------
-            # WEIGHT MAP PROCESSING (ALWAYS SINGLE-THREADED)
-            #------------------------------------------------------------------
-            
-            # Calculate level correction factor
+            if verbose && level_counter <= 3
+                println("  Level $level ranges: $(length(new_level_range1)) x $(length(new_level_range2)) -> target: ($length1, $length2)")
+            end
+
             fcorrect = (2^level / res) ^ 2
             
-            # Generate weight histogram for this level
             map_weight = hist2d_weight(xval, yval, [new_level_range1, new_level_range2], 
                                      mask_level, weightval, isamr) .* weight_scale
 
-            # Calculate overlap size for interpolation
-            fs = res / 2^level
-            overlap_size = round.(Int, [max(0, length(new_level_range1) * fs - length1), 
-                                       max(0, length(new_level_range2) * fs - length2)])
-            
-            # Process weight map with size handling
-            target_size1 = length1 + overlap_size[1]
-            target_size2 = length2 + overlap_size[2]
-            target_size1 = max(target_size1, 1)
-            target_size2 = max(target_size2, 1)
-            
-            # Interpolate weight map to final resolution
-            if size(map_weight) != (target_size1, target_size2)
-                nmap_buff = imresize(map_weight, (target_size1, target_size2), 
+            if size(map_weight) != (length1, length2)
+                nmap_buff = imresize(map_weight, (length1, length2), 
                                    method=BSpline(Constant())) .* fcorrect
             else
                 nmap_buff = map_weight .* fcorrect
             end
             
-            # Safe cropping with bounds checking
-            crop_end1 = min(target_size1, length1 + overlap_size[1]) - overlap_size[1]
-            crop_end2 = min(target_size2, length2 + overlap_size[2]) - overlap_size[2]
-            crop_end1 = max(crop_end1, 1)
-            crop_end2 = max(crop_end2, 1)
+            if size(nmap_buff) != (length1, length2)
+                error("Array size mismatch at level $level: expected ($length1, $length2), got $(size(nmap_buff))")
+            end
             
-            # Accumulate weight map
-            newmap_w += nmap_buff[1:crop_end1, 1:crop_end2]
-
-            #------------------------------------------------------------------
-            # VARIABLE PROCESSING (THREADING STRATEGY DEPENDENT)
-            #------------------------------------------------------------------
+            newmap_w += nmap_buff
 
             if use_variable_threading
-                #--------------------------------------------------------------
-                # VARIABLE-LEVEL PARALLELISM (Thread-safe: thread-local results)
-                #--------------------------------------------------------------
                 variable_tasks = []
                 variable_list = collect(keys(data_dict))
-                # Semaphore to limit concurrent variable processing
                 var_semaphore = Base.Semaphore(effective_threads)
-                # Each thread returns a tuple (ivar, processed_map)
                 for ivar in variable_list
                     var_task = Threads.@spawn begin
                         Base.acquire(var_semaphore)
                         try
                             process_variable_complete(ivar, xval, yval, leveldata, weightval, 
                                                     data_dict, new_level_range1, new_level_range2, 
-                                                    mask_level, length1, length2, overlap_size, 
+                                                    mask_level, length1, length2, 
                                                     fcorrect, weight_scale, isamr)
                         finally
                             Base.release(var_semaphore)
@@ -619,18 +790,15 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
                     end
                     push!(variable_tasks, var_task)
                 end
-                # Thread-local results: accumulate into imaps after all threads complete
                 thread_results = fetch.(variable_tasks)
                 for (ivar, processed_map) in thread_results
+                    if !haskey(imaps, ivar)
+                        imaps[ivar] = zeros(size(processed_map))
+                    end
                     imaps[ivar] += processed_map
                 end
             else
-                #--------------------------------------------------------------
-                # SINGLE-THREADED VARIABLE PROCESSING
-                #--------------------------------------------------------------
-                
                 for ivar in keys(data_dict)
-                    # Generate histogram based on variable type
                     if ivar == :sd || ivar == :mass
                         imap = hist2d_weight(xval, yval, [new_level_range1, new_level_range2], 
                                            mask_level, data_dict[ivar], isamr)
@@ -639,60 +807,86 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
                                          mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                     end
 
-                    # Apply the same size handling as weight map
-                    if size(imap) != (target_size1, target_size2)
-                        imap_buff = imresize(imap, (target_size1, target_size2), 
+                    if size(imap) != (length1, length2)
+                        imap_buff = imresize(imap, (length1, length2), 
                                            method=BSpline(Constant())) .* fcorrect
                     else
                         imap_buff = imap .* fcorrect
                     end
-                    
-                    # Accumulate processed map
-                    imaps[ivar] += imap_buff[1:crop_end1, 1:crop_end2]
+
+                    if size(imap_buff) != (length1, length2)
+                        error("Array size mismatch at level $level for variable $ivar: expected ($length1, $length2), got $(size(imap_buff))")
+                    end
+
+                    if !haskey(imaps, ivar)
+                        imaps[ivar] = zeros(size(imap_buff))
+                    end
+                    imaps[ivar] += imap_buff
                 end
             end
 
-            # Update progress meter
             if show_progress
                 next!(p)
             end
         end
 
-        # Finish inline status display
         if verbose
             inline_status_done()
         end
 
-        #----------------------------------------------------------------------
-        # POST-PROCESSING: VELOCITY DISPERSION MAPS
-        #----------------------------------------------------------------------
+        if verbose
+            println("Validating final projection array sizes...")
+        end
         
-        # Process velocity dispersion variables (single-threaded for safety)
+        if size(newmap_w) != (length1, length2)
+            error("Weight map size mismatch: expected ($length1, $length2), got $(size(newmap_w))")
+        end
+        
+        for (ivar, imap) in imaps
+            if size(imap) != (length1, length2)
+                error("Variable map size mismatch for $ivar: expected ($length1, $length2), got $(size(imap))")
+            end
+        end
+        
+        if verbose
+            println("✓ All projection arrays have consistent size: ($length1, $length2)")
+            println()
+        end
+
         for ivar in selected_vars
             if in(ivar, σcheck)
                 selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
                 selected_v = σ_to_v[ivar]
 
-                # Apply weighting normalization based on mode
                 if mode == :standard
-                    iv  = imaps[selected_v[1]] = imaps[selected_v[1]]  ./newmap_w 
-                    iv2 = imaps[selected_v[2]] = imaps[selected_v[2]]  ./newmap_w 
+                    iv_map = imaps[selected_v[1]]
+                    iv2_map = imaps[selected_v[2]]
+                    weight = newmap_w
+                    
+                    iv = zeros(size(iv_map))
+                    iv2 = zeros(size(iv2_map))
+                    
+                    nonzero_mask = weight .!= 0
+                    iv[nonzero_mask] .= iv_map[nonzero_mask] ./ weight[nonzero_mask]
+                    iv2[nonzero_mask] .= iv2_map[nonzero_mask] ./ weight[nonzero_mask]
+                    
+                    imaps[selected_v[1]] = iv
+                    imaps[selected_v[2]] = iv2
                 elseif mode == :sum
-                    iv  = imaps[selected_v[1]] = imaps[selected_v[1]]   
-                    iv2 = imaps[selected_v[2]] = imaps[selected_v[2]]   
+                    iv  = imaps[selected_v[1]]
+                    iv2 = imaps[selected_v[2]]
                 end
                 
-                # Remove intermediate velocity components from data dictionary
                 delete!(data_dict, selected_v[1])
                 delete!(data_dict, selected_v[2])
                 
-                # Calculate velocity dispersion: σ = sqrt(<v²> - <v>²)
-                imaps[ivar] = sqrt.( iv2 .- iv .^2 ) .* selected_unit
+                dispersion_squared = iv2 .- iv .^2
+                dispersion_squared = max.(dispersion_squared, 0.0)
+                imaps[ivar] = sqrt.(dispersion_squared) .* selected_unit
                 maps_unit[ivar] = unit_name
                 maps_weight[ivar] = weighting
                 maps_mode[ivar] = mode
                 
-                # Set units for velocity components
                 selected_unit, unit_name = getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
                 maps_unit[selected_v[1]]  = unit_name
                 imaps[selected_v[1]] = imaps[selected_v[1]] .* selected_unit
@@ -707,34 +901,28 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
             end
         end
 
-        #----------------------------------------------------------------------
-        # FINAL DATA PROCESSING AND UNIT ASSIGNMENT
-        #----------------------------------------------------------------------
-        
-        # Apply final normalization and unit conversion
         for ivar in keys(data_dict)
             selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
 
             if ivar == :sd
-                # Surface density: normalize by pixel area
                 maps_weight[ivar] = :nothing
                 maps_mode[ivar] = :nothing
                 imaps[ivar] = imaps[ivar] ./ (boxlen / res)^2 .* selected_unit
             elseif ivar == :mass
-                # Mass: simple unit conversion
                 maps_weight[ivar] = :nothing
                 maps_mode[ivar] = :sum
                 imaps[ivar] = imaps[ivar] .* selected_unit
             else
-                # Other variables: apply weighting normalization
                 maps_weight[ivar] = weighting
                 maps_mode[ivar] = mode
                 if mode == :standard
-                    # Weighted average: divide by weight map (avoid division by zero)
-                    safe_weight = newmap_w .+ 1e-30
-                    imaps[ivar] = imaps[ivar] ./ safe_weight .* selected_unit
+                    imap = imaps[ivar]
+                    weight = newmap_w
+                    result = zeros(size(imap))
+                    nonzero_mask = weight .!= 0
+                    result[nonzero_mask] .= (imap[nonzero_mask] ./ weight[nonzero_mask]) .* selected_unit
+                    imaps[ivar] = result
                 elseif mode == :sum
-                    # Sum mode: direct unit conversion
                     imaps[ivar] = imaps[ivar] .* selected_unit
                 end
             end
@@ -742,17 +930,11 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
         end
     end
 
-    #--------------------------------------------------------------------------
-    # GEOMETRIC MAPS CREATION (SINGLE-THREADED)
-    #--------------------------------------------------------------------------
-    
-    # Create radius maps (cylindrical and spherical)
     for ivar in selected_vars
         if in(ivar, rcheck)
             selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
             map_R = zeros(Float64, length1, length2)
             
-            # Calculate radius for each pixel
             @inbounds for i = 1:length1, j = 1:length2
                 x = i * dataobject.boxlen / res
                 y = j * dataobject.boxlen / res
@@ -767,17 +949,14 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
         end
     end
 
-    # Create azimuthal angle maps
     for ivar in selected_vars
         if in(ivar, anglecheck)
             map_ϕ = zeros(Float64, length1, length2)
             
-            # Calculate azimuthal angle for each pixel
             @inbounds for i = 1:length1, j = 1:length2
                 x = i * dataobject.boxlen /res - length1_center
                 y = j * dataobject.boxlen / res - length2_center
                 
-                # Handle all quadrants properly
                 if x > 0. && y >= 0.
                     map_ϕ[i,j] = atan(y / x)
                 elseif x > 0. && y < 0.
@@ -798,10 +977,6 @@ function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
         end
     end
 
-    #--------------------------------------------------------------------------
-    # RETURN RESULTS
-    #--------------------------------------------------------------------------
-    
     maps_lmax = SortedDict()
     return HydroMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, 
                         lmax_projected, lmin, simlmax, ranges, extent, extent_center, 
@@ -814,12 +989,11 @@ end
 # ==============================================================================
 
 """
-Check which variables require special map processing (radius, angle, velocity dispersion)
+Check which variables require special map processing
 """
 function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σcheck, σ_to_v)
     ranglecheck = [rcheck..., anglecheck...]
     
-    # Add required velocity components for velocity dispersion variables
     for i in σcheck
         idx = findall(x->x==i, selected_vars)
         if length(idx) >= 1
@@ -833,7 +1007,6 @@ function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σch
         end
     end
     
-    # Check if we have variables that need AMR level processing
     Nvars = length(selected_vars)
     cw = 0
     for iw in selected_vars
@@ -850,11 +1023,9 @@ Check if density variable is needed for mass weighting
 """
 function check_need_rho(dataobject, selected_vars, weighting, notonly_ranglecheck_vars)
     if weighting == :mass
-        # Add surface density if needed for mass weighting
         if !in(:sd, selected_vars) && notonly_ranglecheck_vars
             append!(selected_vars, [:sd])
         end
-        # Ensure density variable exists in data
         if !in(:rho, keys(dataobject.data[1]) )
             error("""[Mera]: For mass weighting variable "rho" is necessary.""")
         end
@@ -880,62 +1051,66 @@ function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
     r6 = ceil(Int,  ranges[6] * res)
 
     # Data center coordinates
-    rl1 = data_centerm[1] .* res
-    rl2 = data_centerm[2] .* res
-    rl3 = data_centerm[3] .* res
+    rl1 = data_centerm[1] * res
+    rl2 = data_centerm[2] * res
+    rl3 = data_centerm[3] * res
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
-    # Setup coordinate system based on projection direction
     if direction == :z
-        # Z-projection: project along z-axis
         rangez = [zmin, zmax]
         newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
         newrange2 = range(r3, stop=r4, length=(r4-r3)+1)
-        extent=[r1,r2,r3,r4]
-        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
-        extent_center = [0.,0.,0.,0.]
-        extent_center[1:2] = [extent[1]-rl1, extent[2]-rl1] * boxlen / res
-        extent_center[3:4] = [extent[3]-rl2, extent[4]-rl2] * boxlen / res
+        extent = [r1, r2, r3, r4]
+        ratio = (extent[2] - extent[1]) / (extent[4] - extent[3])
+        extent_center = [
+            (extent[1] - rl1) * boxlen / res,
+            (extent[2] - rl1) * boxlen / res,
+            (extent[3] - rl2) * boxlen / res,
+            (extent[4] - rl2) * boxlen / res
+        ]
         extent = extent .* boxlen ./ res
-        length1_center = (data_centerm[1] -xmin ) * boxlen
-        length2_center = (data_centerm[2] -ymin ) * boxlen
+        length1_center = (data_centerm[1] - xmin) * boxlen
+        length2_center = (data_centerm[2] - ymin) * boxlen
     elseif direction == :y
-        # Y-projection: project along y-axis
         x_coord = :cx
         y_coord = :cz
         z_coord = :cy
         rangez = [ymin, ymax]
         newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
         newrange2 = range(r5, stop=r6, length=(r6-r5)+1)
-        extent=[r1,r2,r5,r6]
-        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
-        extent_center = [0.,0.,0.,0.]
-        extent_center[1:2] = [extent[1]-rl1, extent[2]-rl1] * boxlen / res
-        extent_center[3:4] = [extent[3]-rl3, extent[4]-rl3] * boxlen / res
+        extent = [r1, r2, r5, r6]
+        ratio = (extent[2] - extent[1]) / (extent[4] - extent[3])
+        extent_center = [
+            (extent[1] - rl1) * boxlen / res,
+            (extent[2] - rl1) * boxlen / res,
+            (extent[3] - rl3) * boxlen / res,
+            (extent[4] - rl3) * boxlen / res
+        ]
         extent = extent .* boxlen ./ res
-        length1_center = (data_centerm[1] -xmin ) * boxlen
-        length2_center = (data_centerm[3] -zmin ) * boxlen
+        length1_center = (data_centerm[1] - xmin) * boxlen
+        length2_center = (data_centerm[3] - zmin) * boxlen
     elseif direction == :x
-        # X-projection: project along x-axis
         x_coord = :cy
         y_coord = :cz
         z_coord = :cx
         rangez = [xmin, xmax]
         newrange1 = range(r3, stop=r4, length=(r4-r3)+1)
         newrange2 = range(r5, stop=r6, length=(r6-r5)+1)
-        extent=[r3,r4,r5,r6]
-        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
-        extent_center = [0.,0.,0.,0.]
-        extent_center[1:2] = [extent[1]-rl2, extent[2]-rl2] * boxlen / res
-        extent_center[3:4] = [extent[3]-rl3, extent[4]-rl3] * boxlen / res
+        extent = [r3, r4, r5, r6]
+        ratio = (extent[2] - extent[1]) / (extent[4] - extent[3])
+        extent_center = [
+            (extent[1] - rl2) * boxlen / res,
+            (extent[2] - rl2) * boxlen / res,
+            (extent[3] - rl3) * boxlen / res,
+            (extent[4] - rl3) * boxlen / res
+        ]
         extent = extent .* boxlen ./ res
-        length1_center = (data_centerm[2] -ymin ) * boxlen
-        length2_center = (data_centerm[3] -zmin ) * boxlen
+        length1_center = (data_centerm[2] - ymin) * boxlen
+        length2_center = (data_centerm[3] - zmin) * boxlen
     end
 
-    # Calculate final grid dimensions
-    length1=length( newrange1) -1
-    length2=length( newrange2) -1
+    length1 = length(newrange1)
+    length2 = length(newrange2)
 
     return x_coord, y_coord, z_coord, extent, extent_center, ratio, length1, length2, 
            length1_center, length2_center, rangez
@@ -943,110 +1118,70 @@ end
 
 """
 Prepare data arrays and apply filtering for projection
-- Handles both AMR and uniform grid data
-- Applies z-direction filtering with special handling for thin slices
-- Includes radical solution for coarse level inclusion in thin slices
 """
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, 
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, weighting, 
                   selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, 
-                  skipmask, rangez, length1, length2, isamr, simlmax) 
+                  skipmask, ranges, length1, length2, isamr, simlmax)
     
-    # Get z-coordinate and level data
-    zval = getvar(dataobject, z_coord)
+    xval_all = getvar(dataobject, :cx)
+    yval_all = getvar(dataobject, :cy)
+    zval_all = getvar(dataobject, :cz)
+    
     if isamr
         lvl = getvar(dataobject, :level)
     else
-        lvl = simlmax
+        lvl = fill(simlmax, length(xval_all))
     end
 
-    # RADICAL SOLUTION: Bypass z-filtering for coarse levels in thin slices
-    # This ensures large coarse cells contribute to thin slice projections
-    slice_thickness = rangez[2] - rangez[1]
+    xmin, xmax, ymin, ymax, zmin, zmax = ranges
     
-    # Apply z-direction filtering with thin slice handling
-    if rangez[1] != 0.
-        if slice_thickness < 0.05  # Threshold for thin slices
-            # For thin slices: bypass z-filtering for levels 6-8, generous buffers for others
-            mask_zmin = (lvl .<= 8) .| (zval .>= floor.(Int, rangez[1] .* 2 .^lvl .- max.(5, 12 .- lvl)))
-        else
-            # Standard filtering for thick slices
-            mask_zmin = zval .>= floor.(Int, rangez[1] .* 2 .^lvl .- 1)
-        end
-        
-        # Apply mask
-        if !skipmask
-            mask = mask .* mask_zmin
-        else
-            mask = mask_zmin
-        end
-    end
+    cellsize = 1.0 ./ (2.0 .^ lvl)
     
-    # Apply upper z-boundary filtering
-    if rangez[2] != 1.
-        if slice_thickness < 0.05  # Threshold for thin slices
-            # For thin slices: bypass z-filtering for levels 6-8, generous buffers for others
-            mask_zmax = (lvl .<= 8) .| (zval .<= ceil.(Int, rangez[2] .* 2 .^lvl .+ max.(5, 12 .- lvl)))
-        else
-            # Standard filtering for thick slices
-            mask_zmax = zval .<= ceil.(Int, rangez[2] .* 2 .^lvl .+ 1)
-        end
-        
-        # Apply mask
-        if !skipmask
-            mask = mask .* mask_zmax
-        else
-            if rangez[1] != 0.
-                mask = mask .* mask_zmax
-            else
-                mask = mask_zmax
-            end
-        end
-    end
+    x_cell_left  = xval_all .- cellsize ./ 2.0
+    x_cell_right = xval_all .+ cellsize ./ 2.0
+    y_cell_left  = yval_all .- cellsize ./ 2.0  
+    y_cell_right = yval_all .+ cellsize ./ 2.0
+    z_cell_left  = zval_all .- cellsize ./ 2.0
+    z_cell_right = zval_all .+ cellsize ./ 2.0
+    
+    # 3D intersection filtering disabled to restore original behavior
 
-    # Extract coordinate and weight data based on masking
-    if length(mask) == 1
-        # No masking applied
+    if skipmask
         xval = select(dataobject.data, x_coord)
         yval = select(dataobject.data, y_coord)
         weightval = getvar(dataobject, weighting)
         if isamr
             leveldata = select(dataobject.data, :level)
         else
-            leveldata = simlmax
+            leveldata = fill(simlmax, length(xval))
         end
     else
-        # Apply mask to all data
         xval = select(dataobject.data, x_coord)[mask]
         yval = select(dataobject.data, y_coord)[mask]
         weightval = getvar(dataobject, weighting, mask=mask)
         if isamr
             leveldata = select(dataobject.data, :level)[mask]
         else 
-            leveldata = simlmax
+            leveldata = fill(simlmax, length(xval))
         end
     end
 
-    # Prepare data dictionary for variables requiring AMR processing
     data_dict = SortedDict()
     for ivar in selected_vars
-        # Skip geometric variables (processed separately)
         if !in(ivar, anglecheck) && !in(ivar, rcheck) && !in(ivar, σcheck)
-            # Initialize output map
             imaps[ivar] = zeros(Float64, (length1, length2))
             
-            # Get variable data
             if ivar !== :sd
-                if length(mask) == 1
+                if skipmask
                     data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
                 elseif !(ivar in σcheck)
                     data_dict[ivar] = getvar(dataobject, ivar, mask=mask, center=center, center_unit=range_unit)
                 end
             elseif ivar == :sd || ivar == :mass
-                # Surface density and mass use weight data
                 if weighting == :mass
                     data_dict[ivar] = weightval
                 else
-                    if length(mask) == 1
+                    if skipmask
                         data_dict[ivar] = getvar(dataobject, :mass)
                     else
                         data_dict[ivar] = getvar(dataobject, :mass, mask=mask)
