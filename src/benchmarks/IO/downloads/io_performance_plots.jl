@@ -1,17 +1,22 @@
-################################################################################
-#  IOperformance_viz.jl
-#
-#  Usage:
-#  using CairoMakie, Colors
-#  path = "/path/to/a/simulation/output-folder"
-#  results = run_benchmark(path; runs=5)
-#  fig = plot_results(results)
-#  save("benchmark_results.pdf", fig)
-#  display(fig)
-################################################################################
 
-#needed packages: 
-# using CairoMakie, Colors
+################################################################################
+#  io_performance_plots.jl
+#
+#  This file provides plotting helper functions for visualizing I/O benchmark results.
+#  This file and the benchmarking script in the same folder are intended to be used together.
+#  Usage:
+#    using CairoMakie, Colors
+#    path = "/path/to/a/simulation/output-folder"
+#    results = run_benchmark(path; runs=5)
+#    fig = plot_results(results)
+#    save("benchmark_results.pdf", fig)
+#    display(fig)
+#
+#  Origin: https://github.com/ManuelBehrendt/Mera.jl
+#  Author: Manuel Behrendt
+#  Date: July 2025
+#
+################################################################################
 
 using Mera: mean, median, quantile, fit, TDist, Histogram, fmt_time
 
