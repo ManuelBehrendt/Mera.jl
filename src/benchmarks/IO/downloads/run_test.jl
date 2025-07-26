@@ -21,9 +21,8 @@ include("io_performance_plots.jl")
 # Note: The many files in your provided folder are used for the benchmark
 # Increase number of runs (repeated tests) for more robust statistics
 # run this script in multi-threaded mode
-results = run_benchmark(
-            "/path/to/your/_data_folder/output_00250/"; 
-            runs=50)
+path="/path/to/your/_data_folder/output_00250/"
+results = run_benchmark(path; runs=50)
 
 # Generate visualization suite
 fig = plot_results(results)
