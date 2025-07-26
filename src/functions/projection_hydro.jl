@@ -653,9 +653,10 @@ return HydroMapsType
 - **`dataobject`:** HydroDataType containing loaded AMR/uniform-grid simulation data
 - **`vars`:** Array of variable symbols to project (see `dataobject.data` for available variables)
 
+
 ### Optional Keywords:
-- **`units`:** Physical units for output variables (default: [:standard])
-- **`pxsize`:** Pixel size in physical units [size, unit] (overrides res and lmax parameters)
+- **`units`:** Physical units for output variables (default: `[:standard]`)
+- **`pxsize`:** Pixel size in physical units: `[size, unit]`, it overrides res and lmax parameters
 - **`res`:** Number of pixels per dimension for final projection grid
 - **`lmax`:** Create 2^lmax pixel grid when res not specified
 - **`xrange`:** Spatial range [xmin, xmax] relative to center in range_unit
@@ -663,7 +664,7 @@ return HydroMapsType
 - **`zrange`:** Spatial range [zmin, zmax] relative to center in range_unit
 - **`range_unit`:** Unit for spatial ranges (:standard, :Mpc, :kpc, :pc, :ly, :au, :km, :cm)
 - **`center`:** Spatial center [x, y, z] for range calculations (supports :bc for box center)
-- **`weighting`:** Weighting scheme [:mass, unit] or [:volume, unit] (default: mass weighting)
+- **`weighting`:** Weighting scheme ``[weigtname, unit], default weightname is :mass
 - **`data_center`:** Reference point for derived quantities (default: same as center)
 - **`data_center_unit`:** Unit for data_center coordinates
 - **`direction`:** Projection direction (:x, :y, :z) - determines integration axis
