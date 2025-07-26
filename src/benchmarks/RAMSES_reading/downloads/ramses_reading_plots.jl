@@ -1,8 +1,5 @@
-using CairoMakie
-using JSON3
-using CSV
-using Glob
-using Dates
+using CairoMakie, Glob # to be installed by user
+using Mera: JSON3, CSV, Dates # Mera included
 
 # Set beautiful theme for publication-quality plots
 set_theme!(

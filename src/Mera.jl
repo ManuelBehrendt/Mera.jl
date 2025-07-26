@@ -281,10 +281,9 @@ include("functions/export_particles_to_vtk.jl")
 include("macros/filter_data.jl")
 
 # Benchmarks
-include("benchmarks/IOperformance.jl")
-#include("benchmarks/IOperformance_viz.jl")
+include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
-include("benchmarks/RAMSES_reading/merafile_reading_stats.jl")
+include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
