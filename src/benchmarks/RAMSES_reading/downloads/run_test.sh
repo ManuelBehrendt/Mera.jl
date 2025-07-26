@@ -1,7 +1,7 @@
 #!/bin/bash
 
 ###############################################################################
-# MERA RAMSES Multithreaded Benchmark Runner
+# MERA RAMSES files reader - Multithreaded Benchmark Runner
 #
 # Author: Manuel Behrendt
 # Year: 2025
@@ -13,11 +13,11 @@
 #   combinations, launching Julia for each, and records timing results for
 #   later analysis.
 #
-# Usage:
+# Usage (see also Mera documentation):
 #   - Place this script together with 'run_test.jl' in a directory.
-#   - Properly configured this script and the 'run_test.jl' file
+#   - Properly configure this script and the 'run_test.jl' file
 #   - The directory needs to have a Julia project evironment
-#   - Install Mera and the related benchmark dependencies -> see online documentation
+#   - Install Mera and the related benchmark dependencies
 #   - Run: bash run_tests.sh
 #
 # Features:
