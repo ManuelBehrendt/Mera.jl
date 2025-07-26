@@ -4,6 +4,7 @@ authors = ["Manuel Behrendt"]
 version = "1.8.0"
 
 [deps]
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecLz4 = "5ba52731-8f18-5e0d-9241-30f10d1ec561"
 CodecZlib = "944b1d66-785c-5afd-91f1-9de20f533193"
@@ -33,6 +34,7 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 CodecBzip2 = "= 0.8.5"
 CodecLz4 = "= 0.4.6"
 CodecZlib = "= 0.7.8"
+CSV = "= 0.10.15"
 DataStructures = "= 0.18.22"
 Distributions = "0.25.120"
 ElasticArrays = "= 1.2.12"
