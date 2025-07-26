@@ -18,6 +18,9 @@ src/benchmarks/RAMSES_reading/downloads/run_test_plots.jl
 src/benchmarks/RAMSES_reading/downloads/run_test.jl
 src/benchmarks/RAMSES_reading/downloads/run_test.sh
 
+src/benchmarks/IO/downloads/io_performance_plots.sh
+src/benchmarks/IO/downloads/run_test.sh
+
 # Jupyter files/folders
 .ipynb_checkpoints/
 *.ipynb
