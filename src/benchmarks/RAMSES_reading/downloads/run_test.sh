@@ -8,15 +8,17 @@
 #
 # Description:
 #   This script automates the benchmarking of RAMSES file reading performance
-#   using Mera.jl under various multithreading and garbage collection (GC)
+#   using the Mera package under various multithreading and garbage collection (GC)
 #   configurations. It cycles through a predefined set of compute and GC thread
 #   combinations, launching Julia for each, and records timing results for
 #   later analysis.
 #
 # Usage:
-#   - Place this script in the directory with your Mera.jl benchmarking code.
-#   - Ensure 'thread_stats.jl' is present and properly configured.
-#   - Run: bash run_thread_tests.sh
+#   - Place this script together with 'run_test.jl' in a directory.
+#   - Properly configured this script and the 'run_test.jl' file
+#   - The directory needs to have a Julia project evironment
+#   - Install Mera and the related benchmark dependencies -> see online documentation
+#   - Run: bash run_tests.sh
 #
 # Features:
 #   - Tests a range of compute:GC thread settings (e.g., 1:1, 2:1, 4:2, ...).
@@ -57,7 +59,7 @@ for config in "${configs[@]}"; do
     echo "=========================================="
     
     # Run Julia with specific thread configuration
-    julia +release -t $compute_threads --gcthreads $gc_threads  ramses_reading_stats.jl
+    julia +release -t $compute_threads --gcthreads $gc_threads  run_test.jl
     
     echo "Completed at: $(date)"
     echo
