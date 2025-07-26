@@ -48,6 +48,7 @@ using Base: Semaphore, acquire, release
 using FortranFiles
 #using JuliaDB
 using IndexedTables
+using CSV
 using DataStructures
 using Distributions
 using ElasticArrays
