@@ -187,8 +187,7 @@ export
     #visualize_benchmark, visualize_benchmark_simple
     run_reading_benchmark,
     run_merafile_benchmark,
-    benchmark_projection_hydro,
-    
+    benchmark_projection_hydro
 
 include("types.jl")
 
