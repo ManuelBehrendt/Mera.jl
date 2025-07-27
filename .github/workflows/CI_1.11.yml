@@ -39,5 +39,5 @@ jobs:
           fail_ci_if_error: false
       - uses: julia-actions/julia-uploadcoveralls@v1
         if: matrix.version == '1.11' && matrix.os == 'ubuntu-latest'
-          env:
-            COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        env:
+          COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
