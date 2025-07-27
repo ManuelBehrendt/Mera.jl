@@ -21,6 +21,10 @@ src/benchmarks/RAMSES_reading/downloads/run_test.sh
 src/benchmarks/IO/downloads/io_performance_plots.sh
 src/benchmarks/IO/downloads/run_test.sh
 
+# Projection benchmark scripts - exclude from git tracking
+src/benchmarks/Projections/downloads/plot_results.jl
+src/benchmarks/Projections/downloads/run_test.jl
+
 # Jupyter files/folders
 .ipynb_checkpoints/
 *.ipynb

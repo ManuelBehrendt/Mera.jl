@@ -4,6 +4,7 @@ authors = ["Manuel Behrendt"]
 version = "1.8.0"
 
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
 CodecLz4 = "5ba52731-8f18-5e0d-9241-30f10d1ec561"
@@ -31,10 +32,10 @@ WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
+CSV = "= 0.10.15"
 CodecBzip2 = "= 0.8.5"
 CodecLz4 = "= 0.4.6"
 CodecZlib = "= 0.7.8"
-CSV = "= 0.10.15"
 DataStructures = "= 0.18.22"
 Distributions = "0.25.120"
 ElasticArrays = "= 1.2.12"
