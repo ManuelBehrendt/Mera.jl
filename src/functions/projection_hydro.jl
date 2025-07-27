@@ -277,7 +277,6 @@ result = fast_hist2d_sparse!(sparse_dict, x, y, w, range1, range2, 5, 4)
 # result[(2,3)] = 10.0, result[(3,4)] = 20.0, result[(5,2)] = 15.0
 ```
 
-See also: [`fast_hist2d_weight!`](@ref), [`sparse_to_dense`](@ref), [`process_amr_level`](@ref)
 """
 @inline function fast_hist2d_sparse!(sparse_dict::Dict{Tuple{Int,Int}, Float64}, x, y, w, 
                              range1, range2, nx, ny)::Dict{Tuple{Int,Int}, Float64}
@@ -329,8 +328,6 @@ fast_hist2d_sparse!(sparse_dict, x, y, w, range1, range2, nx, ny)
 # 2. Convert to dense format for output
 final_histogram = sparse_to_dense(sparse_dict, nx, ny)
 ```
-
-See also: [`fast_hist2d_sparse!`](@ref)
 """
 function sparse_to_dense(sparse_dict::Dict{Tuple{Int,Int}, Float64}, nx, ny)
     h = zeros(Float64, nx, ny)
@@ -393,7 +390,6 @@ temp_map = sparse_to_dense(sparse_dict, 512, 512)
 - Uses `get(dict, key, 0.0)` pattern for safe accumulation
 - Maintains numerical accuracy through careful float arithmetic
 
-See also: [`fast_hist2d_sparse!`](@ref), [`sparse_to_dense`](@ref), [`process_amr_level`](@ref)
 """
 @inline function fast_hist2d_data_sparse!(sparse_dict::Dict{Tuple{Int,Int}, Float64}, x, y, data, w, 
                                  range1, range2, nx, ny)
@@ -483,7 +479,6 @@ fast_hist2d_weight_enhanced!(h, x_coords, y_coords, weights,
 - Falls back to nearest neighbor for isolated points
 - Uses continuous indexing for sub-pixel accuracy
 
-See also: [`fast_hist2d_weight!`](@ref), [`process_amr_level`](@ref)
 """
 function fast_hist2d_weight_enhanced!(h::Matrix{Float64}, x, y, w, range1, range2, coverage_radius)
     r1_min = minimum(range1)
@@ -588,7 +583,6 @@ hist_amr = hist2d_weight(x_pos, y_pos, [x_range, y_range], level_mask, mass, tru
 hist_uniform = hist2d_weight(x_pos, y_pos, [x_range, y_range], Bool[], mass, false)
 ```
 
-See also: [`fast_hist2d_weight!`](@ref), [`hist2d_data`](@ref), [`process_amr_level`](@ref)
 """
 function hist2d_weight(x, y, s, mask, w, isamr)
     h = zeros(Float64, (length(s[1]), length(s[2])))  # Full-size bins for mass conservation
@@ -662,7 +656,6 @@ hist_smooth = hist2d_weight_enhanced(x, y, ranges, mask, weights, true, 4.0)
 Uses `fast_hist2d_weight_enhanced!` with scale-factor-dependent coverage radius
 to balance detail preservation (fine levels) with gap filling (coarse levels).
 
-See also: [`hist2d_weight`](@ref), [`fast_hist2d_weight_enhanced!`](@ref), [`process_amr_level`](@ref)
 """
 function hist2d_weight_enhanced(x, y, s, mask, w, isamr, scale_factor)
     h = zeros(Float64, (length(s[1]), length(s[2])))
@@ -862,7 +855,6 @@ avg_temp = data_hist ./ max.(weight_hist, 1e-30)
 - **Uniform Mode**: Processes entire dataset without masking
 - **Consistent Output**: Same format regardless of input grid type
 
-See also: [`hist2d_weight`](@ref), [`fast_hist2d_data!`](@ref), [`hist2d_data_adaptive`](@ref)
 """
 function hist2d_data(x, y, s, mask, w, data, isamr)
     h = zeros(Float64, (length(s[1]), length(s[2])))  # Full-size bins for mass conservation
@@ -1088,8 +1080,6 @@ end
 - Validates array dimensions for consistency
 - Reports processing statistics when verbose=true
 - Provides clear error messages for debugging
-
-See also: [`process_variable_complete`](@ref), [`projection_hydro`](@ref), [`hist2d_data_adaptive`](@ref)
 """
 function process_amr_level(level, lmin, simlmax, xval, yval, leveldata, weightval, data_dict, 
                           target_range1, target_range2, length1, length2, res, weighted_map, 
