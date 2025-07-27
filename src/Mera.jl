@@ -18,6 +18,7 @@ module Mera
 
 
 # external libraries
+using BenchmarkTools
 using FortranFiles
 #using JuliaDB
 using IndexedTables
@@ -129,6 +130,7 @@ export
 #
     projection,
     projection_deprecated,
+    benchmark_projection_hydro,
     #slice,
     #profile,
     #remap,
@@ -184,11 +186,11 @@ export
     run_benchmark,
     #visualize_benchmark, visualize_benchmark_simple
     run_reading_benchmark,
-    run_merafile_benchmark
+    run_merafile_benchmark,
+    benchmark_projection_hydro,
     
 
 include("types.jl")
-include("types_old.jl")
 
 include("functions/miscellaneous.jl")
 include("functions/overview.jl")
@@ -249,6 +251,7 @@ include("functions/projection.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_hydro_deprecated.jl")
 include("functions/projection_particles.jl")
+
 # ============================================
 
 
@@ -284,6 +287,7 @@ include("macros/filter_data.jl")
 include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
+include("benchmarks/Projections/projection_benchmarks.jl")
 
 # Functions under development
 pkgdir = joinpath(@__DIR__, "dev/dev.jl")
