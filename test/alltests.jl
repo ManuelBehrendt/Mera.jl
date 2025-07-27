@@ -19,6 +19,16 @@ end
     include("projection/projection_hydro.jl")
 end
 
+@testset "04b projection hydro enhanced" begin
+    printscreen("projection hydro enhanced features:")
+    include("projection/projection_hydro_enhanced.jl")
+end
+
+@testset "04c projection histogram algorithms" begin
+    printscreen("projection histogram unit tests:")
+    include("projection/projection_histogram_tests.jl")
+end
+
 @testset "05 projection stars" begin
     printscreen("projection particle/stars:")
     include("projection/projection_particles.jl")
