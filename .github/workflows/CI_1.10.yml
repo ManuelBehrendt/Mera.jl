@@ -21,11 +21,29 @@ jobs:
         arch:
           - x64
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - uses: julia-actions/cache@v1
-      - uses: julia-actions/julia-buildpkg@v1
-      - uses: julia-actions/julia-runtest@v1
+      - uses: julia-actions/cache@v2
+
+      - name: Set single-threaded environment
+        run: |
+          echo "JULIA_NUM_THREADS=1" >> $GITHUB_ENV
+          echo "MERA_CI_MODE=true" >> $GITHUB_ENV
+          echo "MERA_SKIP_EXPERIMENTAL=true" >> $GITHUB_ENV
+          echo "MERA_ADVANCED_HISTOGRAM=false" >> $GITHUB_ENV
+          
+      - name: Build package
+        uses: julia-actions/julia-buildpkg@v1
+
+      - name: Run CI-compatible tests
+        uses: julia-actions/julia-runtest@v1
+        with:
+          test_args: '--threads=1'
+        env:
+          JULIA_NUM_THREADS: 1
+          MERA_CI_MODE: true
+          MERA_SKIP_EXPERIMENTAL: true
+          MERA_ADVANCED_HISTOGRAM: false
