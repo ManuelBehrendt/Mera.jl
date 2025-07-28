@@ -1,7 +1,7 @@
 
 if !(Sys.iswindows()) # skip test for windows
     @testset "file/folder-names" begin
-        printscreen("file/folder-names:")
+        println("file/folder-names:")
 
         @testset "createpath" begin
             
@@ -176,7 +176,7 @@ end
 
 # ===================================================================
 @testset "getinfo general" begin
-    printscreen("general tests:")
+    println("general tests:")
 
     verbose(true)
     @test verbose_status(true)   
@@ -207,7 +207,7 @@ end
 # ===================================================================
 @testset "getinfo" begin
     # main functionality
-    printscreen("getinfo:")
+    println("getinfo:")
     @test  infotest(output, path)
 
     # simulation details
@@ -233,7 +233,7 @@ end
 
 # ===================================================================
 @testset "info overview" begin
-    printscreen("info overview:")
+    println("info overview:")
     if haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS")
         println("  Skipping simoverview test in CI (known broken test)")
         @test true  # Skip the broken test in CI
@@ -248,7 +248,7 @@ end
 
 # ===================================================================
 @testset "hydro data inspection" begin
-    printscreen("hydro data inspection:")
+    println("hydro data inspection:")
     @test gethydro_infocheck(output, path)
     @test gethydro_allvars(output, path)
     @test gethydro_selectedvars(output, path)
@@ -269,14 +269,14 @@ end
 
 # ===================================================================
 @testset "hydro selected ranges" begin
-    printscreen("hydro selected ranges:")
+    println("hydro selected ranges:")
     @test hydro_range_codeunit(output, path)
 end       
 
 
 # ===================================================================
 @testset "particle data inspection" begin
-    printscreen("particle data inspection:")
+    println("particle data inspection:")
     @test getparticles_infocheck(output, path)
 
     info = getinfo(output, path, verbose=false)
@@ -305,14 +305,14 @@ end
 
 # ===================================================================
 @testset "particles selected data" begin
-    printscreen("particle selected ranges:")
+    println("particle selected ranges:")
     @test  particles_range_codeunit(output, path)
 end
 
 
 # ===================================================================
 @testset "gravity data inspection" begin
-    printscreen("gravity data inspection:")
+    println("gravity data inspection:")
     @test getgravity_infocheck(output, path)
     @test getgravity_allvars(output, path)
     @test getgravity_selectedvars(output, path)
@@ -327,7 +327,7 @@ end
 
 # ===================================================================
 @testset "gravity selected data" begin
-    printscreen("gravity selected ranges:")
+    println("gravity selected ranges:")
     @test  gravity_range_codeunit(output, path)
 end
 

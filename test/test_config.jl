@@ -42,39 +42,72 @@ function run_standard_tests()
         showprogress(false)
         
         @testset "02 getvar hydro" begin
-            printscreen("getvar hydro:")
+            println("getvar hydro:")
             include("values_hydro.jl")
         end
         
         @testset "03 getvar particles" begin
-            printscreen("getvar particles:")
+            println("getvar particles:")
             include("values_particles.jl")
         end
         
+        @testset "04 Basic Calculations" begin
+            include("basic_calculations_enhanced.jl")
+        end
+        
+        # Temporarily skip physical conservation tests - under development
+        # @testset "04b Physical Consistency & Conservation" begin
+        #     include("physical_consistency_conservation.jl")
+        # end
+        
+        @testset "05 Data Save/Load" begin
+            include("data_save_load.jl")
+        end
+        
+        @testset "06 Data Conversion & Utilities" begin
+            include("data_conversion_utilities.jl")
+        end
+        
+        @testset "07 Region Selection" begin
+            include("region_selection.jl")
+        end
+        
+        @testset "08 Data Overview & Inspection" begin
+            include("data_overview_inspection.jl")
+        end
+        
+        @testset "09 Gravity & Specialized Data" begin
+            include("gravity_specialized_data.jl")
+        end
+        
+        @testset "10 Edge Cases & Robustness" begin
+            include("error_diagnostics_robustness.jl")
+        end
+        
         @testset "04 projection hydro" begin
-            printscreen("projection hydro:")
+            println("projection hydro:")
             include("projection/projection_hydro.jl")
         end
         
         @testset "04b projection hydro enhanced (basic)" begin
-            printscreen("projection hydro enhanced (basic):")
+            println("projection hydro enhanced (basic):")
             # Run only essential enhanced tests (skip performance-intensive ones)
             include("projection/projection_hydro_enhanced_basic.jl")
         end
         
         @testset "05 projection stars" begin
-            printscreen("projection particle/stars:")
+            println("projection particle/stars:")
             include("projection/projection_particles.jl")
         end
         
         verbose(true)
         @testset "06 MERA files" begin
-            printscreen("Write/Read MERA files:")
+            println("Write/Read MERA files:")
             include("merafiles.jl")
         end
         
         @testset "07 Error Checks" begin
-            printscreen("data types:")
+            println("data types:")
             include("errors.jl")
         end
     end
@@ -96,13 +129,25 @@ function run_enhanced_tests()
         
         # Add enhanced-specific tests
         @testset "Enhanced Features" begin
+            @testset "Data Save/Load Operations" begin
+                include("data_save_load.jl")
+            end
+            
+            @testset "VTK Export Operations" begin
+                include("vtk_export.jl")
+            end
+            
+            @testset "Performance & Stability" begin
+                include("multithreading_performance.jl")
+            end
+            
             @testset "Advanced projection features" begin
-                printscreen("projection hydro enhanced (complete):")
+                println("projection hydro enhanced (complete):")
                 include("projection/projection_hydro_enhanced.jl")
             end
             
             @testset "Histogram algorithm verification" begin
-                printscreen("histogram algorithm unit tests:")
+                println("histogram algorithm unit tests:")
                 include("projection/projection_histogram_tests.jl")
             end
         end
@@ -191,45 +236,81 @@ function run_ci_tests()
         showprogress(false)
         
         @testset "02 getvar hydro" begin
-            printscreen("getvar hydro:")
+            println("getvar hydro:")
             include("values_hydro.jl")
         end
 
         @testset "03 getvar particles" begin
-            printscreen("getvar particles:")
+            println("getvar particles:")
             include("values_particles.jl")
         end
 
-        @testset "04 projection hydro" begin
-            printscreen("projection hydro:")
+        @testset "04 Basic Calculations (CI)" begin
+            # Include critical basic calculations tests
+            include("basic_calculations_enhanced.jl")
+        end
+        
+        # Temporarily skip physical conservation tests - under development
+        # @testset "04b Physical Consistency (CI)" begin
+        #     # Include essential physical validation tests
+        #     include("physical_consistency_conservation.jl")
+        # end
+
+        @testset "05 Data Conversion & Utilities (CI)" begin
+            # Include essential data utilities tests
+            include("data_conversion_utilities.jl")
+        end
+        
+        @testset "06 Data Overview & Inspection (CI)" begin
+            # Include data inspection tests
+            include("data_overview_inspection.jl")
+        end
+
+        @testset "07 Region Selection (Essential)" begin
+            # Include essential region selection tests
+            include("region_selection.jl")
+        end
+        
+        @testset "08 Gravity & Specialized Data (CI)" begin
+            # Include specialized data tests (will gracefully skip unavailable data)
+            include("gravity_specialized_data.jl")
+        end
+        
+        @testset "09 Edge Cases & Robustness (CI)" begin
+            # Include robustness tests for CI
+            include("error_diagnostics_robustness.jl")
+        end
+        
+        @testset "07 projection hydro" begin
+            println("projection hydro:")
             include("projection/projection_hydro.jl")
         end
 
-        @testset "04b projection hydro enhanced (CI)" begin
+        @testset "08 projection hydro enhanced (CI)" begin
             if haskey(ENV, "GITHUB_ACTIONS") || haskey(ENV, "CI")
                 println("  Enhanced projection tests skipped in GitHub Actions (memory/time constraints)")
                 @test true  # Placeholder to make testset valid and pass
             else
-                printscreen("projection hydro enhanced (CI-optimized):")
+                println("projection hydro enhanced (CI-optimized):")
                 # Use streamlined basic version for CI
                 include("projection/projection_hydro_enhanced_basic.jl")
             end
         end
 
         # Skip intensive histogram algorithm tests in CI
-        @testset "04c projection histogram algorithms (CI-SKIPPED)" begin
+        @testset "09 projection histogram algorithms (CI-SKIPPED)" begin
             println("  Histogram algorithm tests skipped in CI (set MERA_ADVANCED_HISTOGRAM=true to enable)")
             @test true  # Placeholder to make testset valid
         end
 
-        @testset "05 projection particles" begin
-            printscreen("projection particle/stars:")
+        @testset "10 projection particles" begin
+            println("projection particle/stars:")
             include("projection/projection_particles.jl")
         end
         
         verbose(true)
         @testset "06 MERA files" begin
-            printscreen("Write/Read MERA files:")
+            println("Write/Read MERA files:")
             include("merafiles.jl")
         end
         

@@ -322,10 +322,6 @@ end
                 else
                     # Unexpected error, but handle gracefully
                     @warn "Empty data handling test encountered unexpected error: $e"
-                    @test true  # Pass the test
-                else
-                    # Unexpected error, but handle gracefully
-                    @warn "Empty data handling test encountered unexpected error: $e"
                     # Test that we can at least create a projection with minimal data
                     p_normal = projection(gas, :mass, :Msol, mode=:sum, res=32,
                                         verbose=false, show_progress=false)

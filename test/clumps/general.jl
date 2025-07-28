@@ -31,7 +31,7 @@ end
 
 
     @testset "info overview" begin
-        printscreen("info overview:")
+        println("info overview:")
         if haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS")
             println("  Skipping simoverview test in CI (known broken test)")
             @test true  # Skip the broken test in CI
@@ -43,7 +43,7 @@ end
     end
 
     @testset "gravity data inspection" begin
-        printscreen("gravity data inspection:")
+        println("gravity data inspection:")
 
         
         @test clumps_dataoverview(output, path)
@@ -59,7 +59,7 @@ end
 
 # ===================================================================
 #@testset "clumps selected ranges" begin
-#    printscreen("clumps selected ranges:")
+#    println("clumps selected ranges:")
 #    
 #end   
 
