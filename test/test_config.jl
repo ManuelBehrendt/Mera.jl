@@ -299,6 +299,8 @@ function run_ci_tests()
         # Force single-thread mode for consistency
         if haskey(ENV, "JULIA_NUM_THREADS")
             println("CI mode: Using single thread (JULIA_NUM_THREADS=$(ENV["JULIA_NUM_THREADS"]))")
+        else
+            println("CI mode: Using single thread (no JULIA_NUM_THREADS set)")
         end
         
         # Create global test variables that the tests expect
