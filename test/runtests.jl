@@ -64,6 +64,7 @@ check_test_environment()
         if haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS") 
             println("CI environment detected - using optimized single-thread test suite")
             println("Skipping problematic tests that cause errors/breaks in automated CI")
+            println("Environment variables: CI=$(get(ENV, "CI", "unset")), GITHUB_ACTIONS=$(get(ENV, "GITHUB_ACTIONS", "unset"))")
             run_ci_tests()
         elseif haskey(ENV, "MERA_PERFORMANCE_TESTS") && ENV["MERA_PERFORMANCE_TESTS"] == "true"
             println("Performance testing mode enabled")
