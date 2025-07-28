@@ -173,8 +173,16 @@ end
                     rho = getvar(gas, :rho, :nH)
                     if length(rho) > 10
                         # Create density mask
-                        high_density_mask = rho .> median(rho)
-                        low_density_mask = rho .<= median(rho)
+                        if STATISTICS_AVAILABLE
+                            high_density_mask = rho .> median(rho)
+                            low_density_mask = rho .<= median(rho)
+                        else
+                            # Simple fallback without median
+                            sorted_rho = sort(rho)
+                            mid = sorted_rho[div(length(sorted_rho), 2)]
+                            high_density_mask = rho .> mid
+                            low_density_mask = rho .<= mid
+                        end
                         
                         mass_high = msum(gas, :Msol, mask=high_density_mask)
                         mass_low = msum(gas, :Msol, mask=low_density_mask)
