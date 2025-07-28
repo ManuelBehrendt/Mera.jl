@@ -6,7 +6,14 @@
 # ==============================================================================
 
 using Test
-using Statistics
+
+# Import Statistics if available, otherwise skip statistics-dependent tests
+const STATISTICS_AVAILABLE = try
+    using Statistics
+    true
+catch
+    false
+end
 
 # Load Mera if not already loaded
 if !isdefined(Main, :Mera)
