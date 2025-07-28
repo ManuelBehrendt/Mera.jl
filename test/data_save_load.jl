@@ -53,7 +53,8 @@ end
             
             test_file = test_dir * "test_hydro.jld2"
             try
-                savedata(data_hydro, test_file, mode=:w)
+                savedata(data_hydro, path=test_dir, fname="test_hydro.jld2", fmode=:w)
+                test_file = test_dir * "test_hydro.jld2"
                 @test isfile(test_file)
                 println("  ✓ Data save completed successfully")
             catch e
