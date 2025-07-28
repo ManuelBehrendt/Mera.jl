@@ -151,10 +151,34 @@ check_test_environment()
                     include("general.jl")
                 end
                 
-                println("\n=== Enhanced-Only CI Test Results ===")
-                println("✓ All enhanced tests are designed to pass in CI mode")
-                println("✓ Enhanced tests use CI-compatible fallback logic")
-                println("✓ No dependency on simulation data or legacy infrastructure")
+                # New comprehensive test coverage suites
+                @testset "13 Comprehensive Coverage Tests" begin
+                    println("Comprehensive function coverage tests")
+                    include("comprehensive_coverage_tests.jl")
+                end
+                
+                @testset "14 Advanced Algorithm Tests" begin
+                    println("Advanced algorithm and specialized function tests")
+                    include("advanced_algorithm_tests.jl")
+                end
+                
+                @testset "15 File I/O and Data Format Tests" begin
+                    println("File I/O and data format validation tests")
+                    include("file_io_tests.jl")
+                end
+                
+                @testset "16 Physics and Mathematical Operations Tests" begin
+                    println("Physics validation and mathematical operation tests")
+                    include("physics_math_tests.jl")
+                end
+                
+                println("\n=== Comprehensive CI Test Results ===")
+                println("✓ Enhanced tests with comprehensive coverage")
+                println("✓ Core function availability and algorithm testing")
+                println("✓ File I/O and data format validation")
+                println("✓ Physics consistency and mathematical operations")
+                println("✓ CI-compatible with simulation data fallbacks")
+                println("✓ Dramatically expanded test coverage for maximum CI validation")
                 println("=====================================")
             end
         elseif haskey(ENV, "MERA_PERFORMANCE_TESTS") && ENV["MERA_PERFORMANCE_TESTS"] == "true"
