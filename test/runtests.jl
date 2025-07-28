@@ -139,6 +139,31 @@ end
         end
     end
     
+    # High-coverage recovery tests
+    @testset "High Coverage Recovery" begin
+        if isfile("recovery_high_coverage_tests.jl")
+            include("recovery_high_coverage_tests.jl")
+        else
+            @test_broken "recovery_high_coverage_tests.jl not found" == "found"
+        end
+    end
+    
+    @testset "Original Computational Tests" begin
+        if isfile("original_computational_tests.jl")
+            include("original_computational_tests.jl")
+        else
+            @test_broken "original_computational_tests.jl not found" == "found"
+        end
+    end
+    
+    @testset "Original Values Integration" begin
+        if isfile("original_values_integration.jl")
+            include("original_values_integration.jl")
+        else
+            @test_broken "original_values_integration.jl not found" == "found"
+        end
+    end
+    
     @testset "Screen Output" begin
         if isfile("screen_output.jl")
             try
