@@ -5,42 +5,42 @@ end
 verbose(false)
 showprogress(false)
 @testset "02 getvar hydro" begin
-    printscreen("getvar hydro:")
+    println("getvar hydro:")
     include("values_hydro.jl")
 end
 
 @testset "03 getvar particles" begin
-    printscreen("getvar particles:")
+    println("getvar particles:")
     include("values_particles.jl")
 end
 
 @testset "04 projection hydro" begin
-    printscreen("projection hydro:")
+    println("projection hydro:")
     include("projection/projection_hydro.jl")
 end
 
 @testset "04b projection hydro enhanced" begin
-    printscreen("projection hydro enhanced features:")
+    println("projection hydro enhanced features:")
     include("projection/projection_hydro_enhanced.jl")
 end
 
 @testset "04c projection histogram algorithms" begin
-    printscreen("projection histogram unit tests:")
+    println("projection histogram unit tests:")
     include("projection/projection_histogram_tests.jl")
 end
 
 @testset "05 projection stars" begin
-    printscreen("projection particle/stars:")
+    println("projection particle/stars:")
     include("projection/projection_particles.jl")
 end
 
 verbose(true)
 @testset  "06 MERA files" begin
-    printscreen("Write/Read MERA files:")
+    println("Write/Read MERA files:")
     include("merafiles.jl")
 end
 
 @testset "07 Error Checks" begin
-    printscreen("data types:")
+    println("data types:")
     include("errors.jl")
 end

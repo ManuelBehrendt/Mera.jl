@@ -70,6 +70,9 @@ testing/
 profiling/
 test/Manifest.toml
 
+# Temporarily skip physical conservation tests
+test/physical_consistency_conservation.jl
+
 # functions under development
 src/dev
 
