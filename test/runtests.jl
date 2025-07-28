@@ -88,8 +88,68 @@ check_test_environment()
                 verbose(false)
                 showprogress(false)
                 
-                # Run minimal enhanced tests (stable for CI)
-                include("ci_enhanced_tests_minimal.jl")
+                # Run full enhanced tests with simulation data for better coverage
+                @testset "01 Basic Calculations (Enhanced)" begin
+                    println("Enhanced basic calculations tests (CI-compatible)")
+                    include("basic_calculations_enhanced.jl")  
+                end
+                
+                @testset "02 Data Conversion & Utilities (Enhanced)" begin
+                    println("Data conversion tests (CI-compatible)")
+                    include("data_conversion_utilities.jl")
+                end
+                
+                @testset "03 Data Overview & Inspection (Enhanced)" begin
+                    println("Data overview tests (CI-compatible)")
+                    include("data_overview_inspection.jl")
+                end
+
+                @testset "04 Region Selection (Enhanced)" begin
+                    println("Region selection tests (CI-compatible)")
+                    include("region_selection.jl")
+                end
+                
+                @testset "05 Gravity & Specialized Data (Enhanced)" begin
+                    println("Gravity tests (CI-compatible)")
+                    include("gravity_specialized_data.jl")
+                end
+                
+                @testset "06 Data Save & Load (Enhanced)" begin
+                    println("Data save/load tests (CI-compatible)")
+                    include("data_save_load.jl")
+                end
+                
+                @testset "07 Error Diagnostics & Robustness (Enhanced)" begin
+                    println("Error diagnostics tests (CI-compatible)")
+                    include("error_diagnostics_robustness.jl")
+                end
+                
+                @testset "08 VTK Export (Enhanced)" begin
+                    println("VTK export tests (CI-compatible)")
+                    include("vtk_export.jl")
+                end
+                
+                @testset "09 Multi-threading Performance (Enhanced)" begin
+                    println("Multi-threading tests (CI-compatible)")
+                    include("multithreading_performance.jl")
+                end
+                
+                @testset "10 Edge Cases & Robustness (Enhanced)" begin
+                    println("Edge cases tests (CI-compatible)")
+                    include("edge_cases_robustness.jl")
+                end
+                
+                # Add some core standard tests for better coverage
+                @testset "11 Core Values Validation" begin
+                    println("Core hydro and particle value tests")
+                    include("values_hydro.jl")
+                    include("values_particles.jl")
+                end
+                
+                @testset "12 General Functionality" begin
+                    println("General functionality tests")
+                    include("general.jl")
+                end
                 
                 println("\n=== Enhanced-Only CI Test Results ===")
                 println("✓ All enhanced tests are designed to pass in CI mode")
