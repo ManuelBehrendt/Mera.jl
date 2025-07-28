@@ -49,7 +49,7 @@ Leverage Julia's built-in environments to lock and share dependency versions, gu
 Plugin-style design allows seamless addition of custom data loaders, analysis routines, or export formats.
   
 ## Dependencies
-Find the main dependencies from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
+Find the main dependencies from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/raw/master/Project.toml).
 
 ## Tests
 We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
