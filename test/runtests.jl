@@ -148,6 +148,16 @@ end
         end
     end
     
+    # Basic Mera function coverage tests  
+    @testset "Comprehensive Mera Function Coverage Tests" begin
+        if isfile("comprehensive_mera_coverage_tests.jl")
+            include("comprehensive_mera_coverage_tests.jl")
+        else
+            @test_broken "comprehensive_mera_coverage_tests.jl not found" == "found"
+        end
+    end
+    end
+    
     @testset "Screen Output" begin
         if isfile("screen_output.jl")
             try
