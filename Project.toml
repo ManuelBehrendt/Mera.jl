@@ -32,6 +32,7 @@ WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
+BenchmarkTools = "1"
 CSV = "= 0.10.15"
 CodecBzip2 = "= 0.8.5"
 CodecLz4 = "= 0.4.6"
