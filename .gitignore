@@ -93,3 +93,8 @@ dev_workspace/
 todo.rtf
 todo_ordered.rtf
 nextreleases.rtf
+
+# Local testing files - metaprogramming development
+test/test_metaprog*.jl
+benchmark_metaprogramming.jl
+IMPLEMENTATION_COMPLETE.md
