@@ -234,6 +234,10 @@ function getparticles( dataobject::InfoType;
     # Convert user-specified ranges to code units and validate
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
+    # ===== AUTOMATIC I/O OPTIMIZATION =====
+    # Transparently optimize I/O settings based on simulation characteristics
+    ensure_optimal_io!(dataobject, verbose=false)
+
     # ===== DATA READING SECTION =====
     # Choose between parallel and serial data reading based on thread count
     # The function branches based on:

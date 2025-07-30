@@ -59,25 +59,23 @@ show_performance_log()
 """
 macro mera_timer(name, expr)
     return quote
-        let
-            t0 = time()
-            result = $(esc(expr))
-            t1 = time()
-            elapsed = t1 - t0
-            println("⏱️  $($name): $(round(elapsed, digits=3))s")
-            
-            # Store timing data - use eval to access module variable
-            try
-                if !haskey(Mera.MERA_PERFORMANCE_LOG, string($name))
-                    Mera.MERA_PERFORMANCE_LOG[string($name)] = Float64[]
-                end
-                push!(Mera.MERA_PERFORMANCE_LOG[string($name)], elapsed)
-            catch e
-                # Silently fail if logging doesn't work - timing still works
+        local t0 = time()
+        local result = $(esc(expr))
+        local t1 = time()
+        local elapsed = t1 - t0
+        println("⏱️  $($name): $(round(elapsed, digits=3))s")
+        
+        # Store timing data - use eval to access module variable
+        try
+            if !haskey(Mera.MERA_PERFORMANCE_LOG, string($name))
+                Mera.MERA_PERFORMANCE_LOG[string($name)] = Float64[]
             end
-            
-            result
+            push!(Mera.MERA_PERFORMANCE_LOG[string($name)], elapsed)
+        catch e
+            # Silently fail if logging doesn't work - timing still works
         end
+        
+        result
     end
 end
 
@@ -133,18 +131,18 @@ Displays mean, minimum, and maximum times across all iterations:
 """
 macro mera_benchmark(name, expr, iterations=5)
     quote
-        times = Float64[]
+        local times = Float64[]
         local result
         println("🔬 Benchmarking $($name) ($($iterations) iterations)...")
         for i in 1:$iterations
-            t0 = time()
+            local t0 = time()
             result = $(esc(expr))
-            t1 = time()
+            local t1 = time()
             push!(times, t1 - t0)
         end
-        mean_time = sum(times) / length(times)
-        min_time = minimum(times)
-        max_time = maximum(times)
+        local mean_time = sum(times) / length(times)
+        local min_time = minimum(times)
+        local max_time = maximum(times)
         println("⏱️  $($name): mean=$(round(mean_time, digits=3))s, min=$(round(min_time, digits=3))s, max=$(round(max_time, digits=3))s")
         result
     end

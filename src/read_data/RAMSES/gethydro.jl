@@ -344,6 +344,13 @@ function gethydro(dataobject::InfoType;
     ranges = prepranges(dataobject, range_unit, verbose, xrange, yrange, zrange, center)
 
     # ═══════════════════════════════════════════════════════════════════════════
+    # AUTOMATIC I/O OPTIMIZATION
+    # ═══════════════════════════════════════════════════════════════════════════
+    
+    # Transparently optimize I/O settings based on simulation characteristics
+    ensure_optimal_io!(dataobject, verbose=false)
+
+    # ═══════════════════════════════════════════════════════════════════════════
     # MULTITHREADED DATA READING
     # ═══════════════════════════════════════════════════════════════════════════
     

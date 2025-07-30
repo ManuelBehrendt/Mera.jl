@@ -1,3 +1,15 @@
+# Enhanced I/O utilities for RAMSES file operations
+# Added: 2025-07-30T21:05:53.034
+
+# Global buffer size optimization (can be tuned based on system)
+const MERA_OPTIMAL_BUFFER_SIZE = get(ENV, "MERA_BUFFER_SIZE", "65536") |> x -> parse(Int, x)
+const MERA_USE_LARGE_BUFFERS = get(ENV, "MERA_LARGE_BUFFERS", "true") == "true"
+
+# File metadata cache for repeated getinfo calls
+const MERA_INFO_CACHE = Dict{String, Any}()
+const MERA_CACHE_ENABLED = get(ENV, "MERA_CACHE_ENABLED", "true") == "true"
+
+
 function createconstants!(dataobject::InfoType)
     dataobject.constants = createconstants()
     return dataobject
