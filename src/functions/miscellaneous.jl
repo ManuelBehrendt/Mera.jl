@@ -297,7 +297,13 @@ end
 #todo: define file type?
 function skiplines(file, nlines::Int)
     for i=1:nlines
-        read(file)
+        try
+            read(file)
+        catch EOFError
+            # EOF reached during skip - this can be normal for some RAMSES files
+            # Just break silently rather than crashing
+            break
+        end
     end
     return
 end

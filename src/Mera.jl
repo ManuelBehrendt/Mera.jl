@@ -243,6 +243,10 @@ include("functions/data_convert.jl")
 include("functions/mera_convert.jl")
 # ============================================
 
+# Safe performance utilities
+include("functions/safe_performance.jl")
+# ============================================
+
 
 # projection, slice
 include("functions/projection.jl")
