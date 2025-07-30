@@ -144,6 +144,27 @@ export
     humanize,
     bell,
     notifyme,
+# adaptive I/O optimization
+    get_simulation_characteristics,
+    recommend_buffer_size,
+    configure_adaptive_io,
+    benchmark_buffer_sizes,
+    smart_io_setup,
+# user-friendly I/O configuration
+    optimize_mera_io,
+    configure_mera_io,
+    show_mera_config,
+    reset_mera_io,
+    benchmark_mera_io,
+    mera_io_status,
+# automatic I/O optimization (transparent)
+    ensure_optimal_io!,
+    reset_auto_optimization!,
+    show_auto_optimization_status,
+# enhanced I/O functions
+    enhanced_fortran_read,
+    show_mera_cache_stats,
+    clear_mera_cache!,
 # volume rendering
     export_vtk,
 
@@ -192,6 +213,10 @@ export
 include("types.jl")
 
 include("functions/miscellaneous.jl")
+include("functions/enhanced_io.jl")
+include("functions/adaptive_io.jl")
+include("functions/mera_io_config.jl")
+include("functions/auto_io_optimization.jl")
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
 
