@@ -227,6 +227,9 @@ include("functions/enhanced_io.jl")
 include("functions/adaptive_io.jl")
 include("functions/mera_io_config.jl")
 include("functions/auto_io_optimization.jl")
+include("functions/ramses_io_memory_pool.jl")
+
+
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
 
