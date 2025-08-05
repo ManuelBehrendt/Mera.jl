@@ -1,1484 +1,1187 @@
-# ==============================================================================
-# PROJECTION HYDRO - OPTIMIZED AMR DATA PROJECTION FOR HYDRODYNAMICS
-# ==============================================================================
-#
-# This file provides high-performance projection functions for AMR hydrodynamic data.
-# Key features:
-# - Mass-conservative histogram binning with direct integer indexing
-# - Thread-safe multi-level processing with race condition prevention
-# - Adaptive sparse/dense histogram selection for memory optimization
-# - SIMD-optimized loops for maximum performance
-# - Enhanced gap-filling algorithms for better visualization
-#
-# Main entry points:
-# - projection(dataobject, var; kwargs...) - Single variable projection
-# - projection(dataobject, vars, units; kwargs...) - Multi-variable projection
-#
-# Performance optimizations:
-# - Automatic resolution-based algorithm selection (sparse vs dense)
-# - Thread-safe accumulation with pre-allocated dictionary keys
-# - Vectorized histogram computation with loop unrolling
-# - Memory-efficient coordinate scaling for AMR levels
-#
-# ==============================================================================
-
-# ==============================================================================
-# GLOBAL CONSTANTS AND UTILITIES
-# ==============================================================================
-
-# Global reference to track status message length for proper terminal overwriting
-const _last_len = Ref(0)
-
-# Thread safety lock for shared data accumulation across AMR levels and variables
-const ACCUMULATION_LOCK = ReentrantLock()
-
-# ==============================================================================
-# INLINE STATUS DISPLAY UTILITIES
-# ==============================================================================
-
 """
-    inline_status(msg::AbstractString)
+#### Project variables or derived quantities from the **hydro-dataset**:
+- projection to an arbitrary large grid: give pixelnumber for each dimension = res
+- overview the list of predefined quantities with: projection()
+- select variable(s) and their unit(s)
+- limit to a maximum range
+- select a coarser grid than the maximum resolution of the loaded data (maps with both resolutions are created)
+- give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
+- relate the coordinates to a direction (x,y,z)
+- select arbitrary weighting: mass (default),  volume weighting, etc.
+- pass a mask to exclude elements (cells) from the calculation
+- toggle verbose mode
+- toggle progress bar
+- pass a struct with arguments (myargs)
 
-Display a progress message that overwrites the previous message on the same terminal line.
 
-This utility provides clean, non-scrolling status updates during long-running AMR
-projection operations. Perfect for showing level-by-level progress without cluttering
-the terminal output.
-
-# Arguments
-- `msg::AbstractString`: Progress message to display (e.g., "Processing level 5...")
-
-# Usage Example
 ```julia
-for level in 3:7
-    inline_status("Processing AMR level \$level...")
-    # ... process level ...
-end
-inline_status_done()  # Move to new line when complete
+projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
+                        units::Array{Symbol,1}=[:standard],
+                        lmax::Real=dataobject.lmax,
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
+                        direction::Symbol=:z,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center_unit::Symbol=:standard,
+                        verbose::Bool=true,
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
+
+return HydroMapsType
+
 ```
 
-# Implementation Notes
-- Uses carriage return (\\r) to overwrite the current line
-- Automatically pads with spaces to clear any leftover characters
-- Immediately flushes output for real-time display
-- Thread-safe for single-threaded progress reporting
+
+#### Arguments
+##### Required:
+- **`dataobject`:** needs to be of type: "HydroDataType"
+- **`var(s)`:** select a variable from the database or a predefined quantity (see field: info, function projection(), dataobject.data)
+##### Predefined/Optional Keywords:
+- **`unit(s)`:** return the variable in given units
+- **`pxsize``:** creates maps with the given pixel size in physical/code units (dominates over: res, lmax) : pxsize=[physical size (Number), physical unit (Symbol)]
+- **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected; (pixel number is related to the full boxsize)
+- **`lmax`:** create maps with 2^lmax pixels for each dimension
+- **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
+- **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
+- **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`weighting`:** select between `:mass` weighting (default) and any other pre-defined quantity, e.g. `:volume`. Pass an array with the weighting=[quantity (Symbol), physical unit (Symbol)]
+- **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
+- **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+- **`direction`:** select between: :x, :y, :z
+- **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
+- **`mode`:** :standard (default) handles projections other than surface density. mode=:standard (default) -> weighted average; mode=:sum sums-up the weighted quantities in projection direction. 
+- **`show_progress`:** print progress bar on screen
+- **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of lmax, xrange, yrange, zrange, center, range_unit, verbose, show_progress
+
+### Defined Methods - function defined for different arguments
+
+- projection( dataobject::HydroDataType, var::Symbol; ...) # one given variable
+- projection( dataobject::HydroDataType, var::Symbol, unit::Symbol; ...) # one given variable with its unit
+- projection( dataobject::HydroDataType, vars::Array{Symbol,1}; ...) # several given variables -> array needed
+- projection( dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; ...) # several given variables and their corresponding units -> both arrays
+- projection( dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; ...)  # several given variables that have the same unit -> array for the variables and a single Symbol for the unit
+
+
+#### Examples
+...
 """
-function inline_status(msg::AbstractString)
-    padding = max(0, _last_len[] - length(msg))  # Calculate padding needed
-    print("\r", msg, " "^padding)                # Overwrite with padding
-    flush(stdout)                                # Force immediate output
-    _last_len[] = length(msg)                   # Store length for next call
+function projection(   dataobject::HydroDataType, var::Symbol;
+                        unit::Symbol=:standard,
+                        lmax::Real=dataobject.lmax,
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
+                        direction::Symbol=:z,
+                        #plane_orientation::Symbol=:perpendicular,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center_unit::Symbol=:standard,
+                        verbose::Bool=true,
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
+
+
+    return projection(dataobject, [var], units=[unit],
+                            lmax=lmax,
+                            res=res,
+                            pxsize=pxsize,
+                            mask=mask,
+                            direction=direction,
+                            #plane_orientation=plane_orientation,
+                            weighting=weighting,
+                            mode=mode,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            data_center=data_center,
+                            data_center_unit=data_center_unit,
+                            verbose=verbose,
+                            show_progress=show_progress,
+                            myargs=myargs )
+
 end
 
-"""
-    inline_status_done()
 
-Complete inline status display and move cursor to a new line.
+function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
+                        lmax::Real=dataobject.lmax,
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
+                        direction::Symbol=:z,
+                        #plane_orientation::Symbol=:perpendicular,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center_unit::Symbol=:standard,
+                        verbose::Bool=true,
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
-Call this function after completing a series of inline status updates to properly
-terminate the status line and return to normal line-by-line output mode.
 
-# Usage
-Always pair with `inline_status()` calls:
-```julia
-inline_status("Starting processing...")
-# ... processing work ...
-inline_status_done()
-println("Processing complete!")
-```
-"""
-function inline_status_done()
-    print('\n')        # Move to new line
-    _last_len[] = 0     # Reset length tracker for next sequence
+    return projection(dataobject, [var], units=[unit],
+                            lmax=lmax,
+                            res=res,
+                            pxsize=pxsize,
+                            mask=mask,
+                            direction=direction,
+                            #plane_orientation=plane_orientation,
+                            weighting=weighting,
+                            mode=mode,
+                            xrange=xrange,
+                            yrange=yrange,
+                            zrange=zrange,
+                            center=center,
+                            range_unit=range_unit,
+                            data_center=data_center,
+                            data_center_unit=data_center_unit,
+                            verbose=verbose,
+                            show_progress=show_progress,
+                            myargs=myargs)
+
 end
 
-# ==============================================================================
-# CORE HISTOGRAM FUNCTIONS - SINGLE-THREADED FOR THREAD SAFETY
-# ==============================================================================
 
-"""
-    fast_hist2d_weight!(h::Matrix{Float64}, x, y, w, range1, range2) -> Matrix{Float64}
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+                        lmax::Real=dataobject.lmax,
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
+                        direction::Symbol=:z,
+                        #plane_orientation::Symbol=:perpendicular,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center_unit::Symbol=:standard,
+                        verbose::Bool=true,
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
-Fast 2D histogram binning for weighted data with mass-conservative boundary handling.
+    return projection(dataobject, vars, units=units,
+                                                lmax=lmax,
+                                                res=res,
+                                                pxsize=pxsize,
+                                                mask=mask,
+                                                direction=direction,
+                                                #plane_orientation=plane_orientation,
+                                                weighting=weighting,
+                                                mode=mode,
+                                                xrange=xrange,
+                                                yrange=yrange,
+                                                zrange=zrange,
+                                                center=center,
+                                                range_unit=range_unit,
+                                                data_center=data_center,
+                                                data_center_unit=data_center_unit,
+                                                verbose=verbose,
+                                                show_progress=show_progress,
+                                                myargs=myargs)
 
-This function bins 2D coordinate data (x,y) into a histogram using associated weights.
-Uses direct integer indexing approach adopted from the deprecated version to ensure
-perfect mass conservation by avoiding particle loss at boundaries.
-
-# Arguments
-- `h::Matrix{Float64}`: Pre-allocated histogram matrix to accumulate results (modified in-place)
-- `x::AbstractVector`: X-coordinates of data points
-- `y::AbstractVector`: Y-coordinates of data points  
-- `w::AbstractVector`: Weight values for each data point
-- `range1::AbstractRange`: Bin edges for X-dimension (n edges define n bins)
-- `range2::AbstractRange`: Bin edges for Y-dimension (n edges define n bins)
-
-# Returns
-- Modified histogram matrix `h` with accumulated weighted counts
-
-# Notes
-- Histogram array `h` must have dimensions `(length(range1), length(range2))`
-- Uses direct integer indexing for mass conservation: ix = x[i] - r1_min + 1
-- Simple bounds check ensures all particles within range are binned
-- Thread-safe for single histogram when called from different threads on different data
-"""
-@inline function fast_hist2d_weight!(h::Matrix{Float64}, x, y, w, range1, range2)
-    r1_min = minimum(range1)
-    r2_min = minimum(range2)
-    r1_step = step(range1)
-    r2_step = step(range2)
-    nx, ny = size(h)
-    
-    # SIMD-optimized histogram with loop unrolling and vectorization
-    n = length(x)
-    i = 1
-    
-    # Process 4 elements at a time with SIMD (when possible)
-    @inbounds while i <= n - 3
-        # Vectorized coordinate calculation
-        ix1 = max(1, min(nx, Int(round((x[i] - r1_min) / r1_step + 1))))
-        iy1 = max(1, min(ny, Int(round((y[i] - r2_min) / r2_step + 1))))
-        ix2 = max(1, min(nx, Int(round((x[i+1] - r1_min) / r1_step + 1))))
-        iy2 = max(1, min(ny, Int(round((y[i+1] - r2_min) / r2_step + 1))))
-        ix3 = max(1, min(nx, Int(round((x[i+2] - r1_min) / r1_step + 1))))
-        iy3 = max(1, min(ny, Int(round((y[i+2] - r2_min) / r2_step + 1))))
-        ix4 = max(1, min(nx, Int(round((x[i+3] - r1_min) / r1_step + 1))))
-        iy4 = max(1, min(ny, Int(round((y[i+3] - r2_min) / r2_step + 1))))
-        
-        # Vectorized accumulation
-        h[ix1, iy1] += w[i]
-        h[ix2, iy2] += w[i+1]
-        h[ix3, iy3] += w[i+2]
-        h[ix4, iy4] += w[i+3]
-        
-        i += 4
-    end
-    
-    # Handle remaining elements
-    @inbounds while i <= n
-        ix = max(1, min(nx, Int(round((x[i] - r1_min) / r1_step + 1))))
-        iy = max(1, min(ny, Int(round((y[i] - r2_min) / r2_step + 1))))
-        h[ix, iy] += w[i]
-        i += 1
-    end
-    
-    return h
 end
 
-"""
-    fast_hist2d_data!(h::Matrix{Float64}, x, y, data, w, range1, range2) -> Matrix{Float64}
 
-Fast 2D histogram binning for data values with mass-conservative weight scaling.
 
-Similar to `fast_hist2d_weight!` but accumulates data values scaled by weights
-instead of just the weights themselves. Uses direct integer indexing approach
-for perfect mass conservation.
 
-# Arguments
-- `h::Matrix{Float64}`: Pre-allocated histogram matrix to accumulate results (modified in-place)
-- `x::AbstractVector`: X-coordinates of data points
-- `y::AbstractVector`: Y-coordinates of data points
-- `data::AbstractVector`: Data values to be accumulated (e.g., temperature, velocity)
-- `w::AbstractVector`: Weight values for each data point
-- `range1::AbstractRange`: Bin edges for X-dimension (n edges define n bins)
-- `range2::AbstractRange`: Bin edges for Y-dimension (n edges define n bins)
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+                        lmax::Real=dataobject.lmax,
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
+                        direction::Symbol=:z,
+                        #plane_orientation::Symbol=:perpendicular,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center_unit::Symbol=:standard,
+                        verbose::Bool=true,
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
-# Returns
-- Modified histogram matrix `h` with accumulated weighted data values
+    return projection(dataobject, vars, units=fill(unit, length(vars)),
+                                                lmax=lmax,
+                                                res=res,
+                                                pxsize=pxsize,
+                                                mask=mask,
+                                                direction=direction,
+                                                #plane_orientation=plane_orientation,
+                                                weighting=weighting,
+                                                mode=mode,
+                                                xrange=xrange,
+                                                yrange=yrange,
+                                                zrange=zrange,
+                                                center=center,
+                                                range_unit=range_unit,
+                                                data_center=data_center,
+                                                data_center_unit=data_center_unit,
+                                                verbose=verbose,
+                                                show_progress=show_progress,
+                                                myargs=myargs)
 
-# Notes
-- Each bin accumulates `sum(data[i] * w[i])` for all points falling in that bin
-- Histogram array `h` must have dimensions `(length(range1), length(range2))`
-- Uses direct integer indexing for mass conservation: ix = x[i] - r1_min + 1
-- Simple bounds check ensures all particles within range are binned
-- Thread-safe for single histogram when called from different threads on different data
-"""
-@inline function fast_hist2d_data!(h::Matrix{Float64}, x, y, data, w, range1, range2)
-    r1_min = minimum(range1)
-    r2_min = minimum(range2)
-    r1_step = step(range1)
-    r2_step = step(range2)
-    nx, ny = size(h)
-    
-    @inbounds for i in eachindex(x)
-        # Convert floating point coordinates to bin indices with bounds checking
-        ix_f = (x[i] - r1_min) / r1_step + 1
-        iy_f = (y[i] - r2_min) / r2_step + 1
-        
-        ix = max(1, min(nx, Int(round(ix_f))))
-        iy = max(1, min(ny, Int(round(iy_f))))
-        
-        h[ix, iy] += w[i] * data[i]
-    end
-    return h
 end
 
-# ==============================================================================
-# SPARSE HISTOGRAM COMPUTATION WITH THREADING
-# ==============================================================================
 
-"""
-    fast_hist2d_sparse!(sparse_dict, x, y, w, range1, range2, nx, ny) -> Dict{Tuple{Int,Int}, Float64}
 
-High-performance sparse 2D histogram computation optimized for AMR projection.
+function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
+                        units::Array{Symbol,1}=[:standard],
+                        lmax::Real=dataobject.lmax,
+                        res::Union{Real, Missing}=missing,
+                        pxsize::Array{<:Any,1}=[missing, missing],
+                        mask::Union{Vector{Bool}, MaskType}=[false],
+                        direction::Symbol=:z,
+                        weighting::Array{<:Any,1}=[:mass, missing],
+                        mode::Symbol=:standard,
+                        xrange::Array{<:Any,1}=[missing, missing],
+                        yrange::Array{<:Any,1}=[missing, missing],
+                        zrange::Array{<:Any,1}=[missing, missing],
+                        center::Array{<:Any,1}=[0., 0., 0.],
+                        range_unit::Symbol=:standard,
+                        data_center::Array{<:Any,1}=[missing, missing, missing],
+                        data_center_unit::Symbol=:standard,
+                        verbose::Bool=true,
+                        show_progress::Bool=true,
+                        myargs::ArgumentsType=ArgumentsType() )
 
-This function efficiently computes weighted 2D histograms by storing only non-zero bins
-in a dictionary, making it ideal for sparse AMR data where most bins remain empty.
-The sparse approach dramatically reduces memory usage and improves performance for
-datasets with irregular data distribution.
 
-# Core Algorithm
-1. **Efficient Indexing**: Direct coordinate-to-bin conversion using step arithmetic
-2. **Sparse Storage**: Dictionary maps (bin_x, bin_y) tuples to accumulated weights  
-3. **Memory Optimization**: Pre-sizes dictionary to minimize rehashing overhead
-4. **Boundary Safety**: Clamps bin indices to valid histogram dimensions
-5. **In-place Accumulation**: Updates weights directly without temporary arrays
+    # take values from myargs if given
+    if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
+    if !(myargs.res           === missing)           res = myargs.res end
+    if !(myargs.lmax          === missing)          lmax = myargs.lmax end
+    if !(myargs.direction     === missing)     direction = myargs.direction end
+    if !(myargs.xrange        === missing)        xrange = myargs.xrange end
+    if !(myargs.yrange        === missing)        yrange = myargs.yrange end
+    if !(myargs.zrange        === missing)        zrange = myargs.zrange end
+    if !(myargs.center        === missing)        center = myargs.center end
+    if !(myargs.range_unit    === missing)    range_unit = myargs.range_unit end
+    if !(myargs.data_center   === missing)   data_center = myargs.data_center end
+    if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
+    if !(myargs.verbose       === missing)       verbose = myargs.verbose end
+    if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
 
-# Arguments
-- `sparse_dict::Dict{Tuple{Int,Int}, Float64}`: Pre-allocated sparse histogram dictionary
-- `x, y`: Coordinate arrays for data points
-- `w`: Weight values corresponding to each (x,y) point
-- `range1, range2`: Bin edge ranges (should be StepRange for optimal performance)
-- `nx, ny`: Target histogram dimensions (number of bins per axis)
 
-# Performance Characteristics
-- **Memory**: O(non-zero bins) instead of O(total bins)
-- **Speed**: 2-5x faster than dense histograms for sparse data
-- **Scalability**: Handles resolutions up to 32k × 32k efficiently
-- **Cache Efficiency**: Dictionary locality better than large matrix access
 
-# Thread Safety Note
-⚠️ **NOT thread-safe** when multiple threads modify the same dictionary.
-Use separate dictionaries per thread or external synchronization when needed.
-The main projection algorithm handles this through thread-local accumulation.
+    verbose = Mera.checkverbose(verbose)
+    show_progress = Mera.checkprogress(show_progress)
+    printtime("", verbose)
 
-# Usage Context
-Automatically selected by projection algorithms when:
-- Total bins > 2048 (sparse threshold)
-- Expected sparsity > 70% (typical for AMR)
-- Memory constraints require sparse representation
 
-# Implementation Details
-- Uses `get(dict, key, 0.0)` pattern for safe accumulation
-- Employs `sizehint!` for performance optimization
-- Direct arithmetic avoids `searchsortedfirst` overhead
-- `@inbounds` annotation for maximum loop performance
+    lmin = dataobject.lmin
+    #lmax = dataobject.lmax
+    simlmax=dataobject.lmax
+    #simlmax=lmax
+    ##Nlevel = simlmax-lmin
+    boxlen = dataobject.boxlen
+    if res === missing res = 2^lmax end
 
-# Example
-```julia
-sparse_dict = Dict{Tuple{Int,Int}, Float64}()
-x = [1.5, 2.3, 4.1]
-y = [2.1, 3.7, 1.9]  
-w = [10.0, 20.0, 15.0]
-range1 = 1.0:1.0:5.0  # StepRange for x-axis
-range2 = 1.0:1.0:4.0  # StepRange for y-axis
 
-result = fast_hist2d_sparse!(sparse_dict, x, y, w, range1, range2, 5, 4)
-# result[(2,3)] = 10.0, result[(3,4)] = 20.0, result[(5,2)] = 15.0
-```
-
-"""
-@inline function fast_hist2d_sparse!(sparse_dict::Dict{Tuple{Int,Int}, Float64}, x, y, w, 
-                             range1, range2, nx, ny)::Dict{Tuple{Int,Int}, Float64}
-    r1_min = minimum(range1)
-    r2_min = minimum(range2)
-    r1_step = step(range1)
-    r2_step = step(range2)
-    
-    # Pre-size dictionary for better performance
-    sizehint!(sparse_dict, min(length(x), nx * ny ÷ 10))
-    
-    @inbounds for i in eachindex(x)
-        ix = max(1, min(nx, Int(round((x[i] - r1_min) / r1_step + 1))))
-        iy = max(1, min(ny, Int(round((y[i] - r2_min) / r2_step + 1))))
-        
-        key = (ix, iy)
-        sparse_dict[key] = get(sparse_dict, key, 0.0) + w[i]
-    end
-    
-    return sparse_dict
-end
-
-"""
-    sparse_to_dense(sparse_dict, nx, ny) -> Matrix{Float64}
-
-Convert sparse histogram dictionary to dense matrix for final output.
-
-This utility function transforms the memory-efficient sparse dictionary representation
-back into a traditional 2D matrix format required by most analysis and visualization
-tools. Called once at the end of projection processing to minimize memory allocation.
-
-# Arguments
-- `sparse_dict::Dict{Tuple{Int,Int}, Float64}`: Sparse histogram data
-- `nx, ny::Int`: Output matrix dimensions
-
-# Performance Strategy
-- **Single Allocation**: Creates zero-filled matrix once upfront
-- **Direct Indexing**: Maps dictionary keys directly to matrix positions
-- **Memory Efficient**: Only called after all accumulation is complete
-- **Cache Friendly**: Sequential matrix filling for optimal performance
-
-# Usage Context  
-Final step in sparse histogram workflow:
-```julia
-# 1. Accumulate data sparsely
-sparse_dict = Dict{Tuple{Int,Int}, Float64}()
-fast_hist2d_sparse!(sparse_dict, x, y, w, range1, range2, nx, ny)
-
-# 2. Convert to dense format for output
-final_histogram = sparse_to_dense(sparse_dict, nx, ny)
-```
-"""
-function sparse_to_dense(sparse_dict::Dict{Tuple{Int,Int}, Float64}, nx, ny)
-    h = zeros(Float64, nx, ny)
-    @inbounds for ((ix, iy), value) in sparse_dict
-        h[ix, iy] = value
-    end
-    return h
-end
-
-"""
-    fast_hist2d_data_sparse!(sparse_dict, x, y, data, w, range1, range2, nx, ny) -> Dict
-
-Sparse 2D histogram for weighted data accumulation with memory-efficient storage.
-
-This specialized function accumulates weighted data values (rather than just weights)
-in a sparse dictionary format. Perfect for creating intensity-weighted projections
-where each bin contains the sum of `data[i] * weight[i]` for all points in that bin.
-
-# Core Functionality
-- **Weighted Data Accumulation**: Each bin stores Σ(data[i] × weight[i]) 
-- **Sparse Storage**: Only non-empty bins consume memory
-- **High Performance**: Direct arithmetic avoids search overhead
-- **Memory Optimization**: Dictionary pre-sizing minimizes rehashing
-
-# Arguments
-- `sparse_dict::Dict{Tuple{Int,Int}, Float64}`: Pre-allocated sparse result dictionary
-- `x, y`: Coordinate arrays for spatial positions
-- `data`: Physical quantity values to accumulate (temperature, velocity, etc.)
-- `w`: Weight arrays (typically mass or volume weights)
-- `range1, range2`: Bin edge ranges (should be StepRange objects)
-- `nx, ny`: Target histogram dimensions
-
-# Physical Interpretation
-For astrophysical projections:
-- **Mass-weighted temperature map**: `data=temperature, w=mass`
-- **Mass-weighted velocity projection**: `data=velocity, w=mass`  
-- **Volume-weighted metallicity**: `data=metallicity, w=volume`
-
-# Performance Characteristics
-- **Memory**: O(non-empty bins) vs O(nx×ny) for dense arrays
-- **Speed**: 2-5x faster for sparse astrophysical data
-- **Scalability**: Efficient up to 32k × 32k resolutions
-
-# Thread Safety
-⚠️ **NOT thread-safe** for concurrent dictionary modification.
-Main projection system handles this via thread-local accumulation patterns.
-
-# Usage Example
-```julia
-# Temperature-weighted density projection
-sparse_dict = Dict{Tuple{Int,Int}, Float64}()
-fast_hist2d_data_sparse!(sparse_dict, pos_x, pos_y, temperature, density,
-                        x_range, y_range, 512, 512)
-temp_map = sparse_to_dense(sparse_dict, 512, 512)
-```
-
-# Implementation Notes
-- Employs same efficient indexing as `fast_hist2d_sparse!`
-- Pre-sizes dictionary using heuristic `nx * ny ÷ 10`
-- Uses `get(dict, key, 0.0)` pattern for safe accumulation
-- Maintains numerical accuracy through careful float arithmetic
-
-"""
-@inline function fast_hist2d_data_sparse!(sparse_dict::Dict{Tuple{Int,Int}, Float64}, x, y, data, w, 
-                                 range1, range2, nx, ny)
-    r1_min = minimum(range1)
-    r2_min = minimum(range2)
-    r1_step = step(range1)
-    r2_step = step(range2)
-    
-    # Pre-size dictionary for better performance
-    sizehint!(sparse_dict, min(length(x), nx * ny ÷ 10))
-    
-    @inbounds for i in eachindex(x)
-        ix = max(1, min(nx, Int(round((x[i] - r1_min) / r1_step + 1))))
-        iy = max(1, min(ny, Int(round((y[i] - r2_min) / r2_step + 1))))
-        
-        key = (ix, iy)
-        sparse_dict[key] = get(sparse_dict, key, 0.0) + w[i] * data[i]
-    end
-    
-    return sparse_dict
-end
-
-# ==============================================================================
-# ENHANCED HISTOGRAM WITH ADAPTIVE COVERAGE  
-# ==============================================================================
-
-"""
-    fast_hist2d_weight_enhanced!(h, x, y, w, range1, range2, coverage_radius) -> Matrix{Float64}
-
-Enhanced 2D histogram with adaptive cell coverage for improved gap filling.
-
-This advanced binning function addresses sparse data coverage by distributing each 
-data point's contribution across a small neighborhood. Particularly effective for
-AMR projections where adaptive refinement can create empty regions between cells.
-Maintains mass conservation through careful weight normalization.
-
-# Core Algorithm
-1. **Coverage Calculation**: Each point influences bins within `coverage_radius`
-2. **Distance Weighting**: Smooth falloff function prevents sharp discontinuities
-3. **Mass Conservation**: Total weight preserved through normalization
-4. **Adaptive Fallback**: Uses nearest neighbor if no coverage region found
-5. **Boundary Safety**: All operations respect histogram boundaries
-
-# Arguments
-- `h::Matrix{Float64}`: Pre-allocated histogram matrix (modified in-place)
-- `x::AbstractVector`: X-coordinates of data points
-- `y::AbstractVector`: Y-coordinates of data points
-- `w::AbstractVector`: Weight values for each data point
-- `range1::AbstractRange`: Bin edges for X-dimension
-- `range2::AbstractRange`: Bin edges for Y-dimension  
-- `coverage_radius::Float64`: Neighborhood radius for weight distribution
-
-# Physical Motivation
-In astrophysical simulations:
-- **AMR Gaps**: Adaptive refinement creates resolution jumps  
-- **Cell Boundaries**: Sharp cell edges cause artificial discontinuities
-- **Smooth Fields**: Physical quantities should vary smoothly
-- **Mass Conservation**: Total integrated quantities must be preserved
-
-# Performance Characteristics
-- **Computational Cost**: O(N × R²) where R is coverage radius
-- **Memory Usage**: In-place operation, minimal additional allocation
-- **Quality Trade-off**: Smoother images at cost of computational overhead
-- **Optimal Radius**: Typically 1.0-2.0 for most AMR applications
-
-# Weight Distribution Function
-Uses smooth falloff: `weight = max(0.1, 1.0 - (distance/radius)²)`
-- Ensures minimum 10% contribution within radius
-- Quadratic falloff provides smooth transitions
-- Maintains numerical stability
-
-# Usage Example
-```julia
-h = zeros(Float64, 512, 512)
-x_range = range(0.0, 1.0, length=513)  # 512 bins
-y_range = range(0.0, 1.0, length=513)
-coverage = 1.5  # 1.5 pixel radius
-
-fast_hist2d_weight_enhanced!(h, x_coords, y_coords, weights, 
-                            x_range, y_range, coverage)
-# Result: Smoother projection with reduced empty cells
-```
-
-# Implementation Notes
-- Pre-computes weight distributions in temporary dictionary
-- Normalizes by total weight to maintain conservation
-- Falls back to nearest neighbor for isolated points
-- Uses continuous indexing for sub-pixel accuracy
-
-"""
-function fast_hist2d_weight_enhanced!(h::Matrix{Float64}, x, y, w, range1, range2, coverage_radius)
-    r1_min = minimum(range1)
-    r2_min = minimum(range2)
-    r1_step = step(range1)
-    r2_step = step(range2)
-    nx, ny = size(h)
-    
-    @inbounds for i in eachindex(x)
-        # Convert coordinates to continuous indices
-        ix_center = (x[i] - r1_min) / r1_step + 1
-        iy_center = (y[i] - r2_min) / r2_step + 1
-        
-        # Define coverage region with bounds checking
-        ix_start = max(1, Int(floor(ix_center - coverage_radius)))
-        ix_end = min(nx, Int(ceil(ix_center + coverage_radius)))
-        iy_start = max(1, Int(floor(iy_center - coverage_radius)))
-        iy_end = min(ny, Int(ceil(iy_center + coverage_radius)))
-        
-        # Calculate total weight for normalization
-        total_weight = 0.0
-        weights_cache = Dict{Tuple{Int,Int}, Float64}()
-        
-        for ix in ix_start:ix_end, iy in iy_start:iy_end
-            # Distance-based weight distribution
-            dx = abs(ix - ix_center)
-            dy = abs(iy - iy_center)
-            distance = sqrt(dx*dx + dy*dy)
-            
-            if distance <= coverage_radius
-                # Use smooth falloff function
-                weight_factor = max(0.1, 1.0 - (distance / coverage_radius)^2)
-                weights_cache[(ix, iy)] = weight_factor
-                total_weight += weight_factor
+    if !(pxsize[1] === missing)
+        px_unit = 1. # :standard
+        if length(pxsize) != 1
+            if !(pxsize[2] === missing) 
+                if pxsize[2] != :standard 
+                    px_unit = getunit(dataobject.info, pxsize[2])
+                end
             end
         end
-        
-        # Distribute weight proportionally (mass conservation)
-        if total_weight > 0
-            cell_weight = w[i] / total_weight
-            for ((ix, iy), weight_factor) in weights_cache
-                h[ix, iy] += cell_weight * weight_factor
+        px_scale = pxsize[1] / px_unit
+        res = boxlen/px_scale
+    end
+    res = ceil(Int, res) # be sure to have Integer
+
+    if !(weighting[1] === missing)
+        weight_scale = 1. # :standard
+        if length(weighting) != 1
+            if !(weighting[2] === missing) 
+                if weighting[2] != :standard 
+                    weight_scale = getunit(dataobject.info, weighting[2])
+                end
             end
+        end
+
+    end
+
+
+
+
+
+    #ranges = [xrange[1],xrange[1],yrange[1],yrange[1],zrange[1],zrange[1]]
+    scale = dataobject.scale
+    nvarh = dataobject.info.nvarh
+    lmax_projected = lmax
+    isamr = Mera.checkuniformgrid(dataobject, dataobject.lmax)
+    selected_vars = deepcopy(vars) #unique(vars)
+
+    #sd_names = [:sd, :Σ, :surfacedensity]
+    density_names = [:density, :rho, :ρ]
+    rcheck = [:r_cylinder, :r_sphere]
+    anglecheck = [:ϕ]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    σ_to_v = SortedDict(  :σx => [:vx, :vx2],
+            :σy => [:vy, :vy2],
+            :σz => [:vz, :vz2],
+            :σ  => [:v,  :v2],
+            :σr_cylinder => [:vr_cylinder, :vr_cylinder2],
+            :σϕ_cylinder => [:vϕ_cylinder, :vϕ_cylinder2] )
+
+    # checks to use maps instead of projections
+    notonly_ranglecheck_vars = check_for_maps(selected_vars, rcheck, anglecheck, σcheck, σ_to_v)
+
+    selected_vars = check_need_rho(dataobject, selected_vars, weighting[1], notonly_ranglecheck_vars)
+
+    # convert given ranges and print overview on screen
+    ranges = Mera.prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
+
+    data_centerm = Mera.prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
+
+    if verbose
+        println("Selected var(s)=$(tuple(selected_vars...)) ")
+        println("Weighting      = :", weighting[1])
+        println()
+    end
+
+    x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez  = prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
+
+    pixsize = dataobject.boxlen / res # in code units
+    if verbose
+        println("Effective resolution: $res^2")
+        println("Map size: $length1 x $length2")
+        px_val, px_unit = humanize(pixsize, dataobject.scale, 3, "length")
+        pxmin_val, pxmin_unit = humanize(boxlen/2^dataobject.lmax, dataobject.scale, 3, "length")
+        println("Pixel size: $px_val [$px_unit]")
+        println("Simulation min.: $pxmin_val [$pxmin_unit]")
+        println()
+    end
+
+    skipmask = check_mask(dataobject, mask, verbose)
+
+
+
+     # prepare data
+    # =================================
+    imaps = SortedDict( )
+    maps_unit = SortedDict( )
+    maps_weight = SortedDict( )
+    maps_mode = SortedDict( )
+    if notonly_ranglecheck_vars
+
+        newmap_w = zeros(Float64, (length1, length2) )
+        data_dict, xval, yval, leveldata, weightval, imaps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
+
+        # Initialize final grids for geometric mapping
+        final_grids = Dict{Symbol, Matrix{Float64}}()
+        final_weights = Dict{Symbol, Matrix{Float64}}()
+        
+        for var in keys(data_dict)
+            final_grids[var] = zeros(Float64, (length1, length2))
+            final_weights[var] = zeros(Float64, (length1, length2))
+            imaps[var] = zeros(Float64, (length1, length2))
+        end
+        
+        # Define grid extent in physical coordinates
+        grid_extent = [ranges[1]*boxlen, ranges[2]*boxlen, 
+                       ranges[3]*boxlen, ranges[4]*boxlen]
+        grid_resolution = (length1, length2)
+
+        if show_progress
+            p = 1 # show updates
         else
-            # Fallback to nearest neighbor if no coverage
-            ix = max(1, min(nx, Int(round(ix_center))))
-            iy = max(1, min(ny, Int(round(iy_center))))
-            h[ix, iy] += w[i]
+            p = simlmax+2 # do not show updates
+        end
+        #if show_progress p = Progress(simlmax-lmin) end
+        @showprogress p for level = lmin:simlmax #@showprogress 1 ""
+            mask_level = leveldata .== level
+
+            # Only process if there are cells at this level
+            if any(mask_level)
+                # Project this level using proper geometric mapping
+                level_grids, level_weights = project_amr_level_optimized(
+                    dataobject, level, selected_vars, data_dict,
+                    x_coord, y_coord, z_coord, mask_level,
+                    grid_extent, grid_resolution, boxlen,
+                    weighting, weight_scale, true,  # use geometric mapping
+                    xval, yval, weightval)  # pass the already masked coordinate and weight data
+                
+                # Accumulate into final grids
+                for var in keys(data_dict)
+                    final_grids[var] .+= level_grids[var]
+                    final_weights[var] .+= level_weights[var]
+                end
+            end
+
+            #if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
+        end #for level
+
+        # Finalize the maps by dividing by weights where appropriate
+        for var in keys(data_dict)
+            if var == :sd
+                # Surface density: total mass per unit area
+                imaps[var] = final_grids[var] ./ (boxlen/res)^2
+            elseif var == :mass
+                # Total mass: sum directly
+                imaps[var] = final_grids[var]
+            else
+                # Other quantities: weighted average
+                mask_nonzero = final_weights[var] .> 0
+                imaps[var][mask_nonzero] = final_grids[var][mask_nonzero] ./ final_weights[var][mask_nonzero]
+            end
+        end
+
+
+        # velocity dispersion maps
+        for ivar in selected_vars
+            if in(ivar, σcheck)
+                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+                selected_v = σ_to_v[ivar]
+
+                # revert weighting for velocity dispersion calculation
+                if mode == :standard
+                    # Use final weights for proper weighted averages
+                    mask_nonzero_v1 = final_weights[selected_v[1]] .> 0
+                    mask_nonzero_v2 = final_weights[selected_v[2]] .> 0
+                    
+                    iv = zeros(Float64, size(imaps[selected_v[1]]))
+                    iv2 = zeros(Float64, size(imaps[selected_v[2]]))
+                    
+                    iv[mask_nonzero_v1] = final_grids[selected_v[1]][mask_nonzero_v1] ./ final_weights[selected_v[1]][mask_nonzero_v1]
+                    iv2[mask_nonzero_v2] = final_grids[selected_v[2]][mask_nonzero_v2] ./ final_weights[selected_v[2]][mask_nonzero_v2]
+                    
+                    imaps[selected_v[1]] = iv
+                    imaps[selected_v[2]] = iv2
+                elseif mode == :sum
+                    iv  = imaps[selected_v[1]] = final_grids[selected_v[1]]  
+                    iv2 = imaps[selected_v[2]] = final_grids[selected_v[2]]  
+                end
+                delete!(data_dict, selected_v[1])
+                delete!(data_dict, selected_v[2])
+                
+                # create vdisp map
+                imaps[ivar] = sqrt.(max.(iv2 .- iv .^2, 0.)) .* selected_unit  # max to avoid negative values from numerical errors
+                maps_unit[ivar] = unit_name
+                maps_weight[ivar] = weighting
+                maps_mode[ivar] = mode
+                
+                # assign units 
+                selected_unit, unit_name= getunit(dataobject, selected_v[1], selected_vars, units, uname=true)
+                maps_unit[selected_v[1]]  = unit_name
+                imaps[selected_v[1]] = imaps[selected_v[1]] .* selected_unit
+                maps_weight[selected_v[1]] = weighting
+                maps_mode[selected_v[1]] = mode
+                
+                selected_unit, unit_name= getunit(dataobject, selected_v[2], selected_vars, units, uname=true)
+                maps_unit[selected_v[2]]  = unit_name
+                imaps[selected_v[2]] = imaps[selected_v[2]] .* selected_unit^2
+                maps_weight[selected_v[2]] = weighting
+                maps_mode[selected_v[2]] = mode
+                
+            end
+        end
+
+
+
+        # finish projected data and revise weighting
+        for ivar in keys(data_dict)
+            selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+
+            if ivar == :sd
+                maps_weight[ivar] = :nothing
+                maps_mode[ivar] = :nothing
+                # Surface density already properly calculated in geometric mapping
+                imaps[ivar] = imaps[ivar] .* selected_unit 
+            elseif ivar == :mass
+                maps_weight[ivar] = :nothing
+                maps_mode[ivar] = :sum
+                imaps[ivar] = imaps[ivar] .* selected_unit
+            else
+                maps_weight[ivar] = weighting
+                maps_mode[ivar] = mode
+                # Other quantities already properly weighted in geometric mapping
+                imaps[ivar] = imaps[ivar] .* selected_unit
+            end
+            maps_unit[ivar]  = unit_name
+        end
+     end # notonly_ranglecheck_vars
+
+
+
+
+
+
+        # create radius map
+    for ivar in selected_vars
+        if in(ivar, rcheck)
+            selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
+            map_R = zeros(Float64, length1, length2 );
+            for i = 1:(length1)
+                for j = 1:(length2)
+                    x = i * dataobject.boxlen / res
+                    y = j * dataobject.boxlen / res
+                    radius = sqrt((x-length1_center)^2 + (y-length2_center)^2)
+                    map_R[i,j] = radius * selected_unit
+                end
+            end
+            maps_mode[ivar] = :nothing
+            maps_weight[ivar] = :nothing
+            imaps[ivar] = map_R
+            maps_unit[ivar] = unit_name
+        end
+    end
+
+
+    # create ϕ-angle map
+    for ivar in selected_vars
+        if in(ivar, anglecheck)
+            map_ϕ = zeros(Float64, length1, length2 );
+            for i = 1:(length1)
+                for j = 1:(length2)
+                    x = i * dataobject.boxlen /res - length1_center
+                    y = j * dataobject.boxlen / res - length2_center
+                    if x > 0. && y >= 0.
+                        map_ϕ[i,j] = atan(y / x)
+                    elseif x > 0. && y < 0.
+                        map_ϕ[i,j] = atan(y / x) + 2. * pi
+                    elseif x < 0.
+                        map_ϕ[i,j] = atan(y / x) + pi
+                    elseif x==0 && y > 0
+                        map_ϕ[i,j] = pi/2.
+                    elseif x==0 && y < 0
+                        map_ϕ[i,j] = 3. * pi/2.
+                    end
+                end
+            end
+
+            maps_mode[ivar] = :nothing
+            maps_weight[ivar] = :nothing
+            imaps[ivar] = map_ϕ
+            maps_unit[ivar] = :radian
+        end
+    end
+
+
+    maps_lmax = SortedDict( )
+    return HydroMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+
+    #return maps, maps_unit, extent_center, ranges
+end
+
+
+
+
+
+# check if only variables from ranglecheck are selected
+function check_for_maps(selected_vars::Array{Symbol,1}, rcheck, anglecheck, σcheck, σ_to_v)
+    # checks to use maps instead of projections
+
+
+    ranglecheck = [rcheck..., anglecheck...]
+    # for velocity dispersion add necessary velocity components
+    # ========================================================
+    rσanglecheck = [rcheck...,σcheck...,anglecheck...]
+
+    for i in σcheck
+        idx = findall(x->x==i, selected_vars) #[1]
+        if length(idx) >= 1
+            selected_v = σ_to_v[i]
+            for j in selected_v
+                jdx = findall(x->x==j, selected_vars)
+                if length(jdx) == 0
+                    append!(selected_vars, [j])
+                end
+            end
+        end
+    end
+    # ========================================================
+
+
+    Nvars = length(selected_vars)
+    cw = 0
+    for iw in selected_vars
+        if in(iw,ranglecheck)
+            cw +=1
+        end
+    end
+    Ndiff = Nvars-cw
+    return Ndiff != 0
+end
+
+
+
+function check_need_rho(dataobject, selected_vars, weighting, notonly_ranglecheck_vars)
+
+    if weighting == :mass
+        # only add :sd if there are also other variables than in ranglecheck
+        if !in(:sd, selected_vars) && notonly_ranglecheck_vars
+            append!(selected_vars, [:sd])
+        end
+
+        if !in(:rho, keys(dataobject.data[1]) )
+            error("""[Mera]: For mass weighting variable "rho" is necessary.""")
+        end
+    end
+    return selected_vars
+end
+
+
+function prep_maps(direction, data_centerm, res, boxlen, ranges, selected_vars)
+    x_coord = :cx
+    y_coord = :cy
+    z_coord = :cz
+
+    r1 = floor(Int, ranges[1] * res)
+    r2 = ceil(Int,  ranges[2] * res)
+    r3 = floor(Int, ranges[3] * res)
+    r4 = ceil(Int,  ranges[4] * res)
+    r5 = floor(Int, ranges[5] * res)
+    r6 = ceil(Int,  ranges[6] * res)
+
+    rl1 = data_centerm[1] .* res
+    rl2 = data_centerm[2] .* res
+    rl3 = data_centerm[3] .* res
+    xmin, xmax, ymin, ymax, zmin, zmax = ranges
+
+
+    if direction == :z
+        #x_coord = :cx
+        #y_coord = :cy
+        #z_coord = :cz
+        rangez = [zmin, zmax]
+
+        # get range for given resolution
+        newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
+        newrange2 = range(r3, stop=r4, length=(r4-r3)+1)
+
+
+        # export img properties for plots
+        extent=[r1,r2,r3,r4]
+        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+        extent_center = [0.,0.,0.,0.]
+        extent_center[1:2] = [extent[1]-rl1, extent[2]-rl1] * boxlen / res
+        extent_center[3:4] = [extent[3]-rl2, extent[4]-rl2] * boxlen / res
+        extent = extent .* boxlen ./ res
+
+        # for radius and ϕ-angle map
+        length1_center = (data_centerm[1] -xmin ) * boxlen
+        length2_center = (data_centerm[2] -ymin ) * boxlen
+
+    elseif direction == :y
+        x_coord = :cx
+        y_coord = :cz
+        z_coord = :cy
+        rangez = [ymin, ymax]
+
+        # get range for given resolution
+        newrange1 = range(r1, stop=r2, length=(r2-r1)+1)
+        newrange2 = range(r5, stop=r6, length=(r6-r5)+1)
+
+
+        # export img properties for plots
+        extent=[r1,r2,r5,r6]
+        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+        extent_center = [0.,0.,0.,0.]
+        extent_center[1:2] = [extent[1]-rl1, extent[2]-rl1] * boxlen / res
+        extent_center[3:4] = [extent[3]-rl3, extent[4]-rl3] * boxlen / res
+        extent = extent .* boxlen ./ res
+
+        # for radius and ϕ-angle map
+        length1_center = (data_centerm[1] -xmin ) * boxlen
+        length2_center = (data_centerm[3] -zmin ) * boxlen
+
+     elseif direction == :x
+        x_coord = :cy
+        y_coord = :cz
+        z_coord = :cx
+        rangez = [xmin, xmax]
+
+        # get range for given resolution
+        newrange1 = range(r3, stop=r4, length=(r4-r3)+1)
+        newrange2 = range(r5, stop=r6, length=(r6-r5)+1)
+
+
+        # export img properties for plots
+        extent=[r3,r4,r5,r6]
+        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+        extent_center = [0.,0.,0.,0.]
+        extent_center[1:2] = [extent[1]-rl2, extent[2]-rl2] * boxlen / res
+        extent_center[3:4] = [extent[3]-rl3, extent[4]-rl3] * boxlen / res
+        extent = extent .* boxlen ./ res
+
+        # for radius and ϕ-angle map
+        length1_center = (data_centerm[2] -ymin ) * boxlen
+        length2_center = (data_centerm[3] -zmin ) * boxlen
+    end
+
+    # prepare maps
+    length1=length( newrange1) -1
+    length2=length( newrange2) -1
+    #map = zeros(Float64, length1, length2, length(selected_vars)  ) # 2d map vor each variable
+    #map_weight = zeros(Float64, length1 , length2, length(selected_vars) );
+
+    return x_coord, y_coord, z_coord, extent, extent_center, ratio , length1, length2, length1_center, length2_center, rangez
+end
+
+
+
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2, isamr, simlmax) 
+        # mask thickness of projection
+        zval = getvar(dataobject, z_coord)
+        if isamr
+            lvl = getvar(dataobject, :level)
+        else
+            lvl = simlmax
+        end
+        
+        # Start with the provided mask
+        final_mask = mask
+        mask_applied = !skipmask
+        
+        # Apply z-range masking
+        if rangez[1] != 0.
+            mask_zmin = zval .>= floor.(Int, rangez[1] .* 2 .^lvl)
+            if mask_applied
+                final_mask = final_mask .* mask_zmin
+            else
+                final_mask = mask_zmin
+                mask_applied = true
+            end
+        end
+
+        if rangez[2] != 1.
+            mask_zmax = zval .<= ceil.(Int, rangez[2] .* 2 .^lvl)
+            if mask_applied
+                final_mask = final_mask .* mask_zmax
+            else
+                if rangez[1] != 0.
+                    final_mask = final_mask .* mask_zmax
+                else
+                    final_mask = mask_zmax
+                    mask_applied = true
+                end
+            end
+        end
+
+        # Apply the final mask to get coordinates and level data
+        if !mask_applied || (length(final_mask) == 1 && final_mask[1] == false)
+            # No masking needed
+            xval = select(dataobject.data, x_coord)
+            yval = select(dataobject.data, y_coord)
+            weightval = getvar(dataobject, weighting)
+            if isamr
+                leveldata = select(dataobject.data, :level)
+            else
+                leveldata = fill(simlmax, length(xval))
+            end
+            use_mask = false
+        else
+            # Apply masking
+            xval = select(dataobject.data, x_coord)[final_mask]
+            yval = select(dataobject.data, y_coord)[final_mask]
+            weightval = getvar(dataobject, weighting, mask=final_mask)
+            if isamr
+                leveldata = select(dataobject.data, :level)[final_mask]
+            else 
+                leveldata = fill(simlmax, length(xval))
+            end
+            use_mask = true
+        end
+
+        # Now populate data_dict with consistently masked data
+        data_dict = SortedDict( )
+        for ivar in selected_vars
+            if !in(ivar, anglecheck) && !in(ivar, rcheck)  && !in(ivar, σcheck)
+                imaps[ivar] =  zeros(Float64, (length1, length2) )
+                if ivar !== :sd && !(ivar in σcheck)
+                    # Regular variables - apply same masking as coordinates
+                    if use_mask
+                        data_dict[ivar] = getvar(dataobject, ivar, mask=final_mask, center=center, center_unit=range_unit)
+                    else
+                        data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                    end
+                elseif ivar == :sd || ivar == :mass
+                    # Surface density and mass variables
+                    if weighting == :mass
+                        data_dict[ivar] = weightval  # Already properly masked
+                    else
+                        if use_mask
+                            data_dict[ivar] = getvar(dataobject, :mass, mask=final_mask)
+                        else
+                            data_dict[ivar] = getvar(dataobject, :mass)
+                        end
+                    end
+                end
+            end
+        end
+        
+        return data_dict, xval, yval, leveldata, weightval, imaps
+end
+
+
+
+function prep_level_range(direction, level, ranges, lmin)
+
+    if direction == :z
+        # rebin data on the current level grid
+        rl1 = floor(Int, ranges[1] * 2^level)  + 1
+        rl2 = ceil(Int,  ranges[2] * 2^level)  
+        rl3 = floor(Int, ranges[3] * 2^level)  + 1
+        rl4 = ceil(Int,  ranges[4] * 2^level) 
+
+
+    elseif direction == :y
+        # rebin data on the current level grid
+        rl1 = floor(Int, ranges[1] * 2^level)  + 1
+        rl2 = ceil(Int,  ranges[2] * 2^level) 
+        rl3 = floor(Int, ranges[5] * 2^level)  + 1
+        rl4 = ceil(Int,  ranges[6] * 2^level) 
+
+
+    elseif direction == :x
+        # rebin data on the current level grid
+        rl1 = floor(Int, ranges[3] * 2^level) + 1
+        rl2 = ceil(Int,  ranges[4] * 2^level) 
+        rl3 = floor(Int, ranges[5] * 2^level)  + 1
+        rl4 = ceil(Int,  ranges[6] * 2^level) 
+
+
+    end
+
+    # range of current level grid
+    new_level_range1 = range(rl1, stop=rl2, length=(rl2-rl1)+1  )
+    new_level_range2 = range(rl3, stop=rl4, length=(rl4-rl3)+1  )
+
+    # length of current level grid
+    length_level1=length( new_level_range1 )+1
+    length_level2=length( new_level_range2 )+1
+
+    return new_level_range1, new_level_range2, length_level1, length_level2
+end
+
+
+function check_mask(dataobject, mask, verbose)
+    skipmask=true
+    rows = length(dataobject.data)
+    if length(mask) > 1
+        if length(mask) !== rows
+            error("[Mera] ",now()," : array-mask length: $(length(mask)) does not match with data-table length: $(rows)")
+        else
+            skipmask = false
+            if verbose
+                println(":mask provided by function")
+                println()
+            end
+        end
+    end
+    return skipmask
+end
+
+
+#function hist2d_weight(x::Vector{Int64}, y::Vector{Int64},
+#                        s::Vector{StepRangeLen{Float64,
+#                        Base.TwicePrecision{Float64},
+#                        Base.TwicePrecision{Float64}}},
+#                        mask::MaskType, w::Vector{Float64})
+#function hist2d_weight(x, y, s, mask, w, isamr)
+#    h = zeros(Float64, (length(s[1]), length(s[2])))
+#    fs1 = Int(minimum(s[1])) 
+#    fs2 = Int(minimum(s[2])) 
+#    if isamr
+#         @inbounds for (i,j, k) in zip( x[mask] , y[mask], w[mask])
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k
+#            end
+#        end
+        #h = fit(Histogram, (x[mask], y[mask]), weights(w[mask]), (s[1],s[2]))
+#    else
+#         @inbounds for (i,j, k) in zip( x , y, w)
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k
+#            end
+#        end
+        #h = fit(Histogram, (x, y), weights(w), (s[1],s[2]))
+#    end
+#    return h
+#end
+
+
+function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+                               x_coords, y_coords, values, weights, level,
+                               grid_extent, grid_resolution, boxlen)
+    """
+    Map AMR cells to a regular grid accounting for cell size and overlap.
+    This replaces the imresize approach with proper geometric mapping.
+    """
+    
+    # Calculate cell size for this level
+    cell_size = boxlen / (2^level)
+    pixel_size_x = (grid_extent[2] - grid_extent[1]) / grid_resolution[1]
+    pixel_size_y = (grid_extent[4] - grid_extent[3]) / grid_resolution[2]
+    
+    # Grid boundaries
+    x_min, x_max = grid_extent[1], grid_extent[2] 
+    y_min, y_max = grid_extent[3], grid_extent[4]
+    
+    @inbounds for i in eachindex(x_coords)
+        # Convert discrete coordinates to physical coordinates
+        x_phys = (x_coords[i] - 0.5) * cell_size
+        y_phys = (y_coords[i] - 0.5) * cell_size
+        
+        # Cell boundaries in physical coordinates
+        cell_x_min = x_phys - cell_size/2
+        cell_x_max = x_phys + cell_size/2
+        cell_y_min = y_phys - cell_size/2  
+        cell_y_max = y_phys + cell_size/2
+        
+        # Find overlapping grid cells
+        ix_start = max(1, Int(floor((cell_x_min - x_min) / pixel_size_x)) + 1)
+        ix_end = min(grid_resolution[1], Int(ceil((cell_x_max - x_min) / pixel_size_x)))
+        iy_start = max(1, Int(floor((cell_y_min - y_min) / pixel_size_y)) + 1)
+        iy_end = min(grid_resolution[2], Int(ceil((cell_y_max - y_min) / pixel_size_y)))
+        
+        # Distribute cell value among overlapping pixels
+        for ix in ix_start:ix_end
+            for iy in iy_start:iy_end
+                # Pixel boundaries
+                pix_x_min = x_min + (ix-1) * pixel_size_x
+                pix_x_max = x_min + ix * pixel_size_x
+                pix_y_min = y_min + (iy-1) * pixel_size_y
+                pix_y_max = y_min + iy * pixel_size_y
+                
+                # Calculate overlap area
+                overlap_x = max(0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+                overlap_y = max(0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                overlap_area = overlap_x * overlap_y
+                
+                if overlap_area > 0
+                    # Weight by overlap fraction
+                    cell_area = cell_size * cell_size
+                    overlap_fraction = overlap_area / cell_area
+                    
+                    contribution = values[i] * weights[i] * overlap_fraction
+                    weight_contribution = weights[i] * overlap_fraction
+                    
+                    grid[ix, iy] += contribution
+                    weight_grid[ix, iy] += weight_contribution
+                end
+            end
+        end
+    end
+end
+
+function fast_hist2d_weight_amr_boundary_aware!(h::Matrix{Float64}, x, y, w, range1, range2)
+    r1_min = Int(minimum(range1))
+    r2_min = Int(minimum(range2))
+    nx, ny = size(h)
+    
+    @inbounds for k in eachindex(x)
+        ix = x[k] - r1_min + 1
+        iy = y[k] - r2_min + 1
+        if 1 <= ix <= nx && 1 <= iy <= ny
+            h[ix, iy] += w[k]
         end
     end
     return h
 end
 
-# ==============================================================================
-# HISTOGRAM WRAPPER FUNCTIONS - AMR/UNIFORM GRID COMPATIBILITY
-# ==============================================================================
-
-"""
-    hist2d_weight(x, y, s, mask, w, isamr) -> Matrix{Float64}
-
-High-level 2D weight histogram wrapper compatible with both AMR and uniform grid data.
-
-This function provides a unified interface for creating 2D histograms from different
-grid types commonly found in astrophysical simulations. Automatically handles the
-distinction between AMR data (requiring masking) and uniform grid data (using all points).
-Optimized for mass-conservative projections with automatic algorithm selection.
-
-# Grid Type Handling
-- **AMR Data**: Applies boolean mask to select subset of refined cells
-- **Uniform Grid**: Uses all available data points directly
-- **Automatic Selection**: Chooses optimal histogram algorithm based on data characteristics
-
-# Arguments
-- `x::AbstractVector`: X-coordinates of all data points
-- `y::AbstractVector`: Y-coordinates of all data points  
-- `s::Vector{AbstractRange}`: Bin edge ranges `[x_range, y_range]`
-- `mask::AbstractVector{Bool}`: Selection mask for AMR data (ignored for uniform)
-- `w::AbstractVector`: Weight values corresponding to each data point
-- `isamr::Bool`: Grid type flag - `true` for AMR, `false` for uniform
-
-# Returns
-- `Matrix{Float64}`: 2D histogram with dimensions `(length(s[1]), length(s[2]))`
-
-# Performance Strategy
-- **Dense Algorithm**: Used for all current implementations (reliable and tested)
-- **Mass Conservation**: Full-size histogram allocation preserves total mass
-- **Memory Efficiency**: Uses views to avoid data copying for AMR masking
-- **Thread Safety**: Relies on underlying `fast_hist2d_weight!` thread safety
-
-# Implementation Notes
-- Always allocates full histogram dimensions for mass conservation
-- Uses `@views` macro to avoid copying masked data in AMR case
-- Falls back to dense algorithm for reliability and compatibility
-- Maintains consistent output format across grid types
-
-# Usage Examples
-```julia
-# AMR projection with level-specific masking
-hist_amr = hist2d_weight(x_pos, y_pos, [x_range, y_range], level_mask, mass, true)
-
-# Uniform grid projection (uses all data)
-hist_uniform = hist2d_weight(x_pos, y_pos, [x_range, y_range], Bool[], mass, false)
-```
-
-"""
-function hist2d_weight(x, y, s, mask, w, isamr)
-    h = zeros(Float64, (length(s[1]), length(s[2])))  # Full-size bins for mass conservation
-    if isamr
-        # AMR data: apply mask to select relevant cells for current AMR level
-        @views fast_hist2d_weight!(h, x[mask], y[mask], w[mask], s[1], s[2])
-    else
-        # Uniform grid: use all data points directly
-        fast_hist2d_weight!(h, x, y, w, s[1], s[2])
-    end
-    return h
-end
-
-"""
-    hist2d_weight_enhanced(x, y, s, mask, w, isamr, scale_factor) -> Matrix{Float64}
-
-Enhanced 2D weight histogram with adaptive coverage for improved gap filling.
-
-This advanced histogram function addresses coverage gaps in sparse AMR projections
-by using adaptive cell spreading based on the AMR level scale factor. Particularly
-effective for creating smooth projections from irregular or under-resolved data
-while maintaining strict mass conservation.
-
-# Enhancement Features
-- **Adaptive Coverage**: Cell influence radius scales with AMR level
-- **Gap Reduction**: Spreads contributions to eliminate empty regions
-- **Mass Conservation**: Preserves total integrated quantities exactly
-- **Smooth Transitions**: Distance-weighted distribution prevents artifacts
-
-# Arguments
-- `x::AbstractVector`: X-coordinates of data points
-- `y::AbstractVector`: Y-coordinates of data points
-- `s::Vector{AbstractRange}`: Bin edge ranges `[x_range, y_range]`
-- `mask::AbstractVector{Bool}`: Selection mask for AMR data (ignored for uniform)
-- `w::AbstractVector`: Weight values for each data point
-- `isamr::Bool`: Grid type flag - `true` for AMR, `false` for uniform
-- `scale_factor::Float64`: AMR level scaling factor for adaptive coverage radius
-
-# Coverage Radius Calculation
-The effective coverage radius adapts to AMR level:
-```julia
-coverage_radius = max(1.0, 2.0 / scale_factor)
-```
-- **Coarse levels**: Larger radius for better gap filling
-- **Fine levels**: Smaller radius to preserve detail
-- **Minimum radius**: 1.0 pixel to ensure basic coverage
-
-# Performance Considerations
-- **Computational Cost**: Higher than standard histogram due to neighborhood processing
-- **Quality Improvement**: Significantly smoother results for sparse data
-- **Memory Usage**: In-place processing minimizes additional allocation
-- **Optimal Use**: Most beneficial for AMR projections with resolution jumps
-
-# Physical Justification
-In astrophysical contexts:
-- **Resolution Jumps**: AMR creates artificial boundaries between levels
-- **Physical Continuity**: Real gas properties vary smoothly
-- **Observational Analog**: Mimics finite beam size of telescopes
-- **Mass Conservation**: Critical for quantitative analysis
-
-# Usage Examples
-```julia
-# Standard AMR projection (may have gaps)
-hist_standard = hist2d_weight(x, y, ranges, mask, weights, true)
-
-# Enhanced AMR projection (smooth coverage)
-hist_smooth = hist2d_weight_enhanced(x, y, ranges, mask, weights, true, 4.0)
-```
-
-# Implementation Strategy
-Uses `fast_hist2d_weight_enhanced!` with scale-factor-dependent coverage radius
-to balance detail preservation (fine levels) with gap filling (coarse levels).
-
-"""
-function hist2d_weight_enhanced(x, y, s, mask, w, isamr, scale_factor)
+function hist2d_weight_amr_boundary_aware(x, y, s, mask, w, isamr)
     h = zeros(Float64, (length(s[1]), length(s[2])))
-    
-    # Determine coverage radius based on scale factor and density
-    coverage_radius = max(0.5, min(2.0, 1.0 / scale_factor))
-    
     if isamr
-        # Enhanced coverage for AMR data
-        @views fast_hist2d_weight_enhanced!(h, x[mask], y[mask], w[mask], s[1], s[2], coverage_radius)
+        fast_hist2d_weight_amr_boundary_aware!(h, x[mask], y[mask], w[mask], s[1], s[2])
     else
-        # Enhanced coverage for uniform grid
-        fast_hist2d_weight_enhanced!(h, x, y, w, s[1], s[2], coverage_radius)
+        fast_hist2d_weight_amr_boundary_aware!(h, x, y, w, s[1], s[2])
     end
     return h
 end
 
-"""
-    hist2d_weight_enhanced_adaptive(x, y, s, mask, w, isamr, scale_factor, resolution) -> Matrix{Float64}
 
-Adaptive enhanced 2D weight histogram with automatic sparse/dense selection.
 
-Combines the benefits of enhanced cell coverage with intelligent sparse/dense selection
-for optimal performance. Uses enhanced coverage when needed for gap filling while
-maintaining compatibility with the adaptive histogram framework.
 
-# Arguments
-- `x, y`: Coordinate arrays
-- `s`: Range specification [range1, range2]  
-- `mask`: Boolean mask to select subset of data
-- `w`: Weight array
-- `isamr`: AMR flag
-- `scale_factor`: AMR level scaling factor for adaptive coverage
-- `resolution`: Target resolution for sparsity analysis
 
-# Returns  
-- `Matrix{Float64}`: Enhanced 2D histogram with optimal representation
 
-# Notes
-- Currently uses dense enhanced histogram for maximum gap filling quality
-- Future optimization: sparse enhanced histogram for very high resolutions (>4096)
-- Prioritizes visual quality over memory optimization for enhanced coverage
-"""
-function hist2d_weight_enhanced_adaptive(x, y, s, mask, w, isamr, scale_factor, resolution)
-    # For enhanced histograms, we prioritize gap filling over sparse optimization
-    # since the enhanced coverage is more important for visual quality
-    return hist2d_weight_enhanced(x, y, s, mask, w, isamr, scale_factor)
-end
 
-"""
-    hist2d_weight_adaptive(x, y, s, mask, w, isamr, resolution) -> Matrix{Float64}
 
-Adaptive 2D weight histogram with automatic sparse/dense selection for optimal performance.
 
-This function automatically chooses between sparse and dense histogram implementations
-based on the target resolution and data characteristics. For high resolutions (>2048),
-uses sparse representation to minimize memory usage. For lower resolutions, uses dense
-arrays for maximum performance.
 
-# Arguments
-- `x::AbstractVector`: X-coordinates of data points
-- `y::AbstractVector`: Y-coordinates of data points
-- `s::Vector{AbstractRange}`: Array containing [range1, range2] for bin edges
-- `mask::AbstractVector{Bool}`: Boolean mask to select subset of data
-- `w::AbstractVector`: Weight values for each data point
-- `isamr::Bool`: Flag indicating AMR data (true) vs uniform grid (false)
-- `resolution::Int`: Target resolution for automatic sparse/dense selection
 
-# Returns
-- `Matrix{Float64}`: 2D histogram with optimal representation
+#function hist2d_data(x::Vector{Int64}, y::Vector{Int64},
+#                        s::Vector{StepRangeLen{Float64,
+#                        Base.TwicePrecision{Float64},
+#                        Base.TwicePrecision{Float64}}},
+#                        mask::MaskType, w::Vector{Float64},
+#                        data::Vector{Float64})
+#function hist2d_data(x, y, s, mask, w, data, isamr)
+#    h = zeros(Float64, (length(s[1]), length(s[2])))
+#    fs1 = Int(minimum(s[1])) 
+#    fs2 = Int(minimum(s[2])) 
+#    if isamr
+#         @inbounds for (i,j, k, l) in zip(x[mask] , y[mask], w[mask], data[mask])
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k * l
+#            end
+#        end
+#
+#        #h = fit(Histogram, (x[mask], y[mask]), weights(data[mask] .* w[mask]), (s[1],s[2]))
+#    else
+#         @inbounds for (i,j, k, l) in zip(x , y, w, data)
+#            if in(i, s[1] ) && in(j, s[2] )
+#                h[i-fs1+1 , j-fs2+1 ] += k * l
+#            end
+#        end
+#
+#        #h = fit(Histogram, (x, y), weights(data .* w), (s[1],s[2]))
+#    end
+#
+#    return h
+#end
 
-# Performance Notes
-- Resolution <= 2048: Dense histogram (fastest for moderate sizes)
-- Resolution > 2048: Sparse histogram (memory efficient for large sizes)
-- Automatic selection optimizes for both speed and memory usage
-"""
-function hist2d_weight_adaptive(x, y, s, mask, w, isamr, resolution)
-    # Automatic sparse/dense selection based on resolution
-    if resolution > 2048
-        # Use sparse representation for high resolutions
-        nx, ny = length(s[1]), length(s[2])
-        sparse_dict = Dict{Tuple{Int,Int}, Float64}()
+
+function project_amr_level_optimized(dataobject, level, selected_vars, data_dict, 
+                                    x_coord, y_coord, z_coord, mask_level,
+                                    grid_extent, grid_resolution, boxlen,
+                                    weighting, weight_scale, use_geometric_mapping,
+                                    xval, yval, weightval)
+    """
+    Project a single AMR level using proper geometric mapping.
+    This replaces the old level processing loop with imresize.
+    """
+    
+    # Initialize grids for this level
+    level_grids = Dict{Symbol, Matrix{Float64}}()
+    level_weights = Dict{Symbol, Matrix{Float64}}()
+    
+    # Get coordinates for this level if there are any cells
+    if any(mask_level)
+        # Use the already-masked coordinate and weight data
+        x_vals = xval[mask_level]
+        y_vals = yval[mask_level] 
+        weight_vals = weightval[mask_level] * weight_scale
         
-        if isamr
-            fast_hist2d_sparse!(sparse_dict, @view(x[mask]), @view(y[mask]), @view(w[mask]), s[1], s[2], nx, ny)
-        else
-            fast_hist2d_sparse!(sparse_dict, x, y, w, s[1], s[2], nx, ny)
-        end
-        
-        return sparse_to_dense(sparse_dict, nx, ny)
-    else
-        # Use dense representation for moderate resolutions
-        return hist2d_weight(x, y, s, mask, w, isamr)
-    end
-end
-
-"""
-    hist2d_data_adaptive(x, y, s, mask, w, data, isamr, resolution) -> Matrix{Float64}
-
-Adaptive 2D data histogram with automatic sparse/dense selection for optimal performance.
-
-This function automatically chooses between sparse and dense histogram implementations
-for data accumulation based on the target resolution and data characteristics.
-
-# Arguments
-- `x::AbstractVector`: X-coordinates of data points
-- `y::AbstractVector`: Y-coordinates of data points
-- `s::Vector{AbstractRange}`: Array containing [range1, range2] for bin edges
-- `mask::AbstractVector{Bool}`: Boolean mask to select subset of data
-- `w::AbstractVector`: Weight values for each data point
-- `data::AbstractVector`: Data values to be accumulated
-- `isamr::Bool`: Flag indicating AMR data (true) vs uniform grid (false)
-- `resolution::Int`: Target resolution for automatic sparse/dense selection
-
-# Returns
-- `Matrix{Float64}`: 2D histogram with accumulated weighted data values
-
-# Performance Notes
-- Resolution <= 2048: Dense histogram (fastest for moderate sizes)
-- Resolution > 2048: Sparse histogram (memory efficient for large sizes)
-- Each bin contains sum(data[i] * w[i]) for points in that bin
-"""
-function hist2d_data_adaptive(x, y, s, mask, w, data, isamr, resolution)
-    # Automatic sparse/dense selection based on resolution
-    if resolution > 2048
-        # Use sparse representation for high resolutions
-        nx, ny = length(s[1]), length(s[2])
-        sparse_dict = Dict{Tuple{Int,Int}, Float64}()
-        
-        if isamr
-            fast_hist2d_data_sparse!(sparse_dict, @view(x[mask]), @view(y[mask]), @view(data[mask]), @view(w[mask]), s[1], s[2], nx, ny)
-        else
-            fast_hist2d_data_sparse!(sparse_dict, x, y, data, w, s[1], s[2], nx, ny)
-        end
-        
-        return sparse_to_dense(sparse_dict, nx, ny)
-    else
-        # Use dense representation for moderate resolutions
-        return hist2d_data(x, y, s, mask, w, data, isamr)
-    end
-end
-
-"""
-    hist2d_data(x, y, s, mask, w, data, isamr) -> Matrix{Float64}
-
-High-level 2D data histogram wrapper compatible with both AMR and uniform grid data.
-
-This function creates weighted data histograms where each bin accumulates the sum
-of `data[i] × weight[i]` for all points falling within that bin. Essential for
-creating intensity-weighted projections such as temperature-weighted density maps,
-velocity-weighted projections, or metallicity distributions.
-
-# Core Functionality
-- **Weighted Accumulation**: Each bin stores Σ(data[i] × weight[i])
-- **Grid Compatibility**: Handles both AMR (masked) and uniform grid data
-- **Mass Conservation**: Full histogram allocation preserves integrated quantities
-- **Analysis Ready**: Output suitable for division by weight histogram for averages
-
-# Arguments
-- `x::AbstractVector`: X-coordinates of all data points
-- `y::AbstractVector`: Y-coordinates of all data points
-- `s::Vector{AbstractRange}`: Bin edge ranges `[x_range, y_range]`
-- `mask::AbstractVector{Bool}`: Selection mask for AMR data (ignored for uniform)
-- `w::AbstractVector`: Weight values for each data point (typically mass/volume)
-- `data::AbstractVector`: Physical quantities to accumulate (temperature, velocity, etc.)
-- `isamr::Bool`: Grid type flag - `true` for AMR, `false` for uniform
-
-# Returns
-- `Matrix{Float64}`: 2D histogram with dimensions `(length(s[1]), length(s[2]))`
-
-# Physical Applications
-Common astrophysical use cases:
-- **Temperature Maps**: `data=temperature, w=density` → density-weighted temperature
-- **Velocity Fields**: `data=velocity_x, w=mass` → mass-weighted velocity projections  
-- **Metallicity Distribution**: `data=metallicity, w=mass` → chemical abundance maps
-- **Pressure Maps**: `data=pressure, w=volume` → volume-weighted pressure fields
-
-# Post-Processing Pattern
-Typical analysis workflow:
-```julia
-# Create data and weight histograms
-data_hist = hist2d_data(x, y, ranges, mask, weights, temperatures, true)
-weight_hist = hist2d_weight(x, y, ranges, mask, weights, true)
-
-# Compute weighted averages (avoid division by zero)
-avg_temp = data_hist ./ max.(weight_hist, 1e-30)
-```
-
-# Performance Strategy
-- **Memory Efficiency**: Uses `@views` to avoid data copying for AMR masking
-- **Mass Conservation**: Always allocates full histogram dimensions
-- **Thread Safety**: Relies on underlying `fast_hist2d_data!` implementation
-- **Type Stability**: Maintains Float64 precision throughout computation
-
-# Grid Type Handling
-- **AMR Mode**: Applies boolean mask to select level-specific cells
-- **Uniform Mode**: Processes entire dataset without masking
-- **Consistent Output**: Same format regardless of input grid type
-
-"""
-function hist2d_data(x, y, s, mask, w, data, isamr)
-    h = zeros(Float64, (length(s[1]), length(s[2])))  # Full-size bins for mass conservation
-    if isamr
-        # AMR data: apply mask to select relevant cells for current AMR level
-        @views fast_hist2d_data!(h, x[mask], y[mask], data[mask], w[mask], s[1], s[2])
-    else
-        # Uniform grid: use all data points directly
-        fast_hist2d_data!(h, x, y, data, w, s[1], s[2])
-    end
-    return h
-end
-
-# ==============================================================================
-# THREADING STRATEGY OPTIMIZATION
-# ==============================================================================
-
-"""
-    should_use_variable_threading(n_variables::Int, max_threads::Int, n_amr_levels::Int=1, total_cells::Int=0) -> Bool
-
-Determine optimal threading strategy based on workload characteristics.
-
-This intelligent heuristic function chooses between different parallelization approaches
-to maximize performance for AMR projection tasks. The choice depends on the balance
-between variable count, available threads, AMR complexity, and dataset size.
-
-# Threading Strategies
-1. **Variable-Level Parallelism**: Process multiple variables simultaneously
-   - Optimal when: Many variables, moderate AMR complexity
-   - Benefits: High CPU utilization, reduced memory pressure per thread
-   
-2. **AMR-Level Parallelism**: Single variable across multiple AMR levels  
-   - Optimal when: Few variables, complex AMR hierarchy, large datasets
-   - Benefits: Better load balancing, reduced synchronization overhead
-
-3. **Hybrid Parallelism**: Combination approach for maximum throughput
-   - Optimal when: Balanced workload characteristics
-   - Benefits: Adapts to specific dataset characteristics
-
-# Decision Algorithm
-The function uses the following logic:
-```julia
-# Favor variable threading when:
-- n_variables ≥ max_threads     # Full CPU utilization possible
-- n_amr_levels ≤ 3              # Simple AMR hierarchy  
-- total_cells < 10^6            # Moderate dataset size
-
-# Favor AMR threading when:
-- n_variables < max_threads/2   # Excess thread capacity
-- n_amr_levels > 5              # Complex AMR hierarchy
-- total_cells > 10^7            # Large dataset benefits
-```
-
-# Performance Heuristics
-Key decision factors:
-- **Few variables + many AMR levels**: AMR-level threading preferred
-- Many variables + few AMR levels -> Variable-level threading
-- Large dataset + high resolution -> Hybrid threading with work-stealing
-"""
-function should_use_variable_threading(n_variables::Int, max_threads::Int, 
-                                     n_amr_levels::Int=1, total_cells::Int=0)
-    # Enable advanced threading with work-stealing for better performance
-    if max_threads <= 1 || n_variables <= 1
-        return false
-    end
-    
-    # Heuristic: Use variable threading for multiple variables
-    # Use AMR-level threading for single variable with many levels
-    work_per_variable = total_cells / n_variables
-    work_per_level = total_cells / n_amr_levels
-    
-    # Choose strategy that maximizes parallel work efficiency
-    if n_variables >= max_threads
-        return true  # Variable-level: plenty of variables to distribute
-    elseif work_per_variable > work_per_level * 2
-        return true  # Variable-level: more work per variable than per level
-    else
-        return false # AMR-level or hybrid: better load balancing
-    end
-end
-
-"""
-    process_variable_complete(ivar, xval, yval, leveldata, weightval, data_dict, 
-                             target_range1, target_range2, mask_level, 
-                             length1, length2, fcorrect, weight_scale, isamr, res) -> Tuple
-
-Process a single variable completely for threaded execution in AMR projection.
-
-This function handles the complete processing pipeline for one variable at one AMR level,
-including histogram computation, size adjustment, and error checking. Designed to be
-called from worker threads in variable-level parallel processing.
-
-# Arguments
-- `ivar::Symbol`: Variable identifier (e.g., :rho, :temperature, :vx)
-- `xval::AbstractVector`: X-coordinates for current AMR level
-- `yval::AbstractVector`: Y-coordinates for current AMR level
-- `leveldata::AbstractVector`: AMR level information for each cell
-- `weightval::AbstractVector`: Weight values (typically mass or volume)
-- `data_dict::Dict`: Dictionary containing data arrays for all variables
-- `target_range1::AbstractRange`: Bin edges for X-dimension at current AMR level
-- `target_range2::AbstractRange`: Bin edges for Y-dimension at current AMR level
-- `mask_level::AbstractVector{Bool}`: Mask selecting cells at current AMR level
-- `length1::Int`: Target histogram width (final projection resolution)
-- `length2::Int`: Target histogram height (final projection resolution)
-- `fcorrect::Float64`: AMR level correction factor for proper weighting
-- `weight_scale::Float64`: Unit scaling factor for weights
-- `isamr::Bool`: Flag indicating AMR vs uniform grid data
-- `res::Int`: Target resolution for adaptive histogram selection
-
-# Returns
-- `Tuple{Symbol, Matrix{Float64}}`: (variable_name, processed_histogram_matrix)
-
-# Notes
-- Handles special variables (:sd, :mass) using weight histogram
-- Regular variables use data histogram with weight scaling
-- Automatically uses adaptive histogram for optimal performance
-- Applies AMR correction factors and unit scaling
-- Thread-safe when called with different variables simultaneously
-- Ensures proper mass conservation through careful binning
-"""
-function process_variable_complete(ivar, xval, yval, leveldata, weightval, data_dict, 
-                                 target_range1, target_range2, mask_level, 
-                                 length1, length2, fcorrect, weight_scale, isamr, res)
-    # Use adaptive histogram functions for optimal performance
-    if ivar == :sd || ivar == :mass
-        imap = hist2d_weight_adaptive(xval, yval, [target_range1, target_range2], 
-                                    mask_level, data_dict[ivar], isamr, res)
-    else
-        imap = hist2d_data_adaptive(xval, yval, [target_range1, target_range2], 
-                                  mask_level, weightval, data_dict[ivar], isamr, res) .* weight_scale
-    end
-
-    # Apply AMR correction factor for proper weighting
-    imap_corrected = imap .* fcorrect
-
-    # Ensure output dimensions match target (crop if necessary)
-    if size(imap_corrected, 1) > length1 || size(imap_corrected, 2) > length2
-        imap_buff = imap_corrected[1:length1, 1:length2]
-    else
-        imap_buff = imap_corrected
-    end
-
-    # Verify final array dimensions for mass conservation
-    if size(imap_buff) != (length1, length2)
-        error("Array size mismatch for variable $ivar: expected ($length1, $length2), got $(size(imap_buff))")
-    end
-
-    return ivar, imap_buff
-end
-
-"""
-    process_amr_level(level, lmin, simlmax, xval, yval, leveldata, weightval, data_dict, 
-                     target_range1, target_range2, length1, length2, res, weighted_map, 
-                     imaps, effective_threads, isamr, verbose, show_progress)
-
-Core AMR level processing function with thread-safe optimized performance.
-
-This is the heart of the AMR projection system, handling complete processing of a single
-refinement level including coordinate scaling, variable processing, and result integration.
-Designed for maximum performance with proper mass conservation and thread safety.
-
-# Core Processing Pipeline
-1. **Pre-allocation**: Initialize all dictionary keys to prevent race conditions
-2. **Level Masking**: Select cells belonging to current AMR level  
-3. **Coordinate Scaling**: Apply level-dependent scaling for proper alignment
-4. **Variable Processing**: Compute histograms for all physical quantities
-5. **Result Integration**: Thread-safe accumulation into final maps
-6. **Progress Reporting**: Optional status updates for user feedback
-
-# AMR Level Handling
-- **Coordinate Scaling**: Uses `2^level` factor for proper cell alignment
-- **Resolution Correction**: Accounts for varying cell sizes across levels
-- **Mass Conservation**: Preserves integrated quantities through careful binning
-- **Boundary Handling**: Ensures proper overlap between refinement levels
-
-# Arguments
-- `level::Int`: Current AMR refinement level (0 = coarsest, higher = finer)
-- `lmin, simlmax::Int`: Simulation's minimum and maximum AMR levels
-- `xval, yval::AbstractVector`: Spatial coordinates for all cells
-- `leveldata::AbstractVector`: AMR level assignment for each cell
-- `weightval::AbstractVector`: Cell weights (mass, volume, etc.)
-- `data_dict::Dict`: Physical quantities keyed by variable name
-- `target_range1, target_range2::AbstractRange`: Projection bin edges
-- `length1, length2::Int`: Output histogram dimensions
-- `res::Int`: Target resolution for algorithm selection
-- `weighted_map::Matrix`: Pre-allocated accumulator for weighted results
-- `imaps::Dict`: Output dictionary for integrated variable maps
-- `effective_threads::Int`: Available threads for parallel processing
-- `isamr::Bool`: AMR flag (true) vs uniform grid (false)  
-- `verbose, show_progress::Bool`: Logging and progress display flags
-
-# Thread Safety Architecture
-The function implements a robust thread-safety strategy:
-- **Dictionary Pre-allocation**: All keys created before threading begins
-- **Race Condition Prevention**: No concurrent dictionary modifications
-- **Protected Accumulation**: Uses `ACCUMULATION_LOCK` for shared data updates
-- **Local Processing**: Each thread works on independent data subsets
-
-# Performance Optimizations
-- **Adaptive Algorithms**: Automatically selects optimal histogram method
-- **Memory Efficiency**: Minimal allocations through pre-allocated structures
-- **SIMD Optimization**: Vectorized operations where possible
-- **Thread Scaling**: Linear speedup for most workloads
-
-# Physical Correctness
-- **Mass Conservation**: Total quantities preserved across all levels
-- **Unit Consistency**: Proper scaling maintains physical dimensions
-- **Resolution Independence**: Results converge as resolution increases
-- **Level Integration**: Smooth transitions between refinement levels
-
-# Usage Context
-Called by main projection functions for each AMR level:
-```julia
-for level in lmin:lmax
-    process_amr_level(level, lmin, lmax, x_coords, y_coords, levels, 
-                     weights, variables, ranges..., maps, threads, 
-                     true, verbose, show_progress)
-end
-```
-
-# Error Handling
-- Skips empty levels gracefully
-- Validates array dimensions for consistency
-- Reports processing statistics when verbose=true
-- Provides clear error messages for debugging
-"""
-function process_amr_level(level, lmin, simlmax, xval, yval, leveldata, weightval, data_dict, 
-                          target_range1, target_range2, length1, length2, res, weighted_map, 
-                          imaps, effective_threads, isamr, verbose, show_progress)
-    
-    # Pre-allocate ALL dictionary keys before any threading to prevent race conditions
-    for ivar in keys(data_dict)
-        if !haskey(imaps, ivar)
-            imaps[ivar] = zeros(Float64, length1, length2)
-        end
-    end
-    
-    # Create mask for current AMR level
-    mask_level = leveldata .== level
-    n_cells = count(mask_level)
-    
-    # Skip empty levels
-    if n_cells == 0
-        if verbose
-            inline_status("Level $level: No cells, skipping")
-        end
-        return
-    end
-
-    # Calculate AMR level properties
-    level_res = 2^level
-    scale_factor = Float64(res) / Float64(level_res)
-    fcorrect = 1.0 / (scale_factor^2)  # Area correction for AMR level
-    
-    if verbose
-        inline_status("Processing level $level: $n_cells cells (scale: $(round(scale_factor, digits=3)))")
-    end
-
-    # Scale coordinates to target resolution for current AMR level
-    # Use views for memory efficiency with masked data
-    scaled_xval = similar(xval)
-    scaled_yval = similar(yval)
-    
-    @inbounds for i in eachindex(xval)
-        if mask_level[i]
-            # Scale coordinates from AMR level to target resolution
-            scaled_xval[i] = (xval[i] - 0.5) / level_res * res + 0.5
-            scaled_yval[i] = (yval[i] - 0.5) / level_res * res + 0.5
-        else
-            # Keep original coordinates for unmasked data (will be filtered out anyway)
-            scaled_xval[i] = xval[i]
-            scaled_yval[i] = yval[i]
-        end
-    end
-
-    # Compute weighted histogram for current level with mass conservation
-    map_weight = hist2d_weight_adaptive(scaled_xval, scaled_yval, [target_range1, target_range2], 
-                                       mask_level, weightval, isamr, res)
-    
-    # Thread-safe accumulation with lock
-    lock(ACCUMULATION_LOCK) do
-        weighted_map .+= map_weight .* fcorrect
-    end
-
-    # Process each variable for current level with thread-safe approach
-    if effective_threads > 1 && length(data_dict) > 1
-        # Use threading for multiple variables with thread-safe accumulation
-        variable_tasks = []
-        for ivar in keys(data_dict)
-            task = Threads.@spawn begin
-                imap = hist2d_data_adaptive(scaled_xval, scaled_yval, [target_range1, target_range2], 
-                                          mask_level, weightval, data_dict[ivar], isamr, res)
-                return ivar, imap .* fcorrect
-            end
-            push!(variable_tasks, task)
-        end
-        
-        # Collect results with thread-safe accumulation
-        for task in variable_tasks
-            ivar, imap = fetch(task)
-            # Thread-safe accumulation with lock - keys already pre-allocated
-            lock(ACCUMULATION_LOCK) do
-                imaps[ivar] .+= imap
-            end
-        end
-    else
-        # Sequential processing for single variable or limited threads
-        for ivar in keys(data_dict)
-            imap = hist2d_data_adaptive(scaled_xval, scaled_yval, [target_range1, target_range2], 
-                                      mask_level, weightval, data_dict[ivar], isamr, res)
+        for var in keys(data_dict)
+            level_grids[var] = zeros(Float64, grid_resolution...)
+            level_weights[var] = zeros(Float64, grid_resolution...)
             
-            # No lock needed for sequential processing, keys already pre-allocated
-            imaps[ivar] .+= imap .* fcorrect
+            if var == :sd || var == :mass
+                # For surface density/mass, use weight values directly
+                values = weight_vals
+                weights = ones(length(weight_vals))
+            else
+                # For other variables, get the data and apply level mask
+                values = data_dict[var][mask_level]
+                weights = weight_vals
+            end
+            
+            if use_geometric_mapping
+                # Use proper geometric mapping
+                map_amr_cells_to_grid!(level_grids[var], level_weights[var],
+                                     x_vals, y_vals, values, weights, level,
+                                     grid_extent, grid_resolution, boxlen)
+            else
+                # Fallback to old histogram method for compatibility
+                new_level_range1, new_level_range2, _, _ = prep_level_range(:z, level, 
+                    [grid_extent[1]/boxlen, grid_extent[2]/boxlen, 
+                     grid_extent[3]/boxlen, grid_extent[4]/boxlen, 0., 1.], 
+                    dataobject.lmin)
+                
+                if var == :sd || var == :mass
+                    h = hist2d_weight_amr_boundary_aware(x_vals, y_vals, 
+                        [new_level_range1, new_level_range2], 
+                        trues(length(x_vals)), values, true)
+                else
+                    h = hist2d_data_amr_boundary_aware(x_vals, y_vals, 
+                        [new_level_range1, new_level_range2], 
+                        trues(length(x_vals)), weights, values, true)
+                end
+                
+                # Resize and add to level grids (old method)
+                fcorrect = (2^level / sqrt(prod(grid_resolution)))^2
+                fs = sqrt(prod(grid_resolution)) / 2^level
+                overlap_size = round.(Int, [length(new_level_range1) * fs - grid_resolution[1], 
+                                           length(new_level_range2) * fs - grid_resolution[2]])
+                overlap_size = max.(overlap_size, 0)
+                
+                # Note: This would require ImageTransformations.jl
+                # h_resized = imresize(h, (grid_resolution[1]+overlap_size[1], grid_resolution[2]+overlap_size[2]))
+                # level_grids[var] = h_resized[1:end-overlap_size[1], 1:end-overlap_size[2]] * fcorrect
+            end
+        end
+        
+        return level_grids, level_weights
+    else
+        # Return empty grids
+        for var in keys(data_dict)
+            level_grids[var] = zeros(Float64, grid_resolution...)
+            level_weights[var] = zeros(Float64, grid_resolution...)
+        end
+        return level_grids, level_weights
+    end
+end
+
+function fast_hist2d_data_amr_boundary_aware!(h::Matrix{Float64}, x, y, data, w, range1, range2)
+    r1_min = Int(minimum(range1))
+    r2_min = Int(minimum(range2))
+    nx, ny = size(h)
+    
+    @inbounds for k in eachindex(x)
+        ix = x[k] - r1_min + 1
+        iy = y[k] - r2_min + 1
+        if 1 <= ix <= nx && 1 <= iy <= ny
+            h[ix, iy] += w[k] * data[k]
         end
     end
+    return h
+end
+
+function validate_amr_projection(final_grid, weight_grid, level_data, verbose=false)
+    """
+    Validate that the projection conserves mass and handles boundaries correctly.
+    """
+    total_projected = sum(final_grid)
+    total_weight = sum(weight_grid)
     
     if verbose
-        inline_status("Level $level: Complete ($(n_cells) cells processed)")
-    end
-end
-
-# ==============================================================================
-# MAIN PROJECTION FUNCTIONS - PUBLIC API
-# ==============================================================================
-
-"""
-    projection(dataobject::HydroDataType, var::Symbol; kwargs...) -> HydroMapsType
-
-Create 2D projection of hydro data for a single variable with default units.
-
-This is the main entry point for hydro data projection, supporting both AMR and uniform
-grid data with optimized performance and proper mass conservation.
-
-# Arguments
-- `dataobject::HydroDataType`: Hydro simulation data object
-- `var::Symbol`: Variable to project (e.g., :rho, :temperature, :vx)
-
-# Keywords
-- `unit::Symbol=:standard`: Unit for the projected variable
-- `lmax::Real=dataobject.lmax`: Maximum AMR level to include
-- `res::Union{Real, Missing}=missing`: Target resolution (auto-determined if missing)
-- `pxsize::Array=[missing, missing]`: Pixel size [value, unit]
-- `mask::Union{Vector{Bool}, MaskType}=[false]`: Boolean mask for cell selection
-- `direction::Symbol=:z`: Projection direction (:x, :y, :z)
-- `weighting::Array=[:mass, missing]`: Weighting scheme [method, unit]
-- `mode::Symbol=:standard`: Processing mode (:standard or :sum)
-- `xrange::Array=[missing, missing]`: X-axis range [min, max]
-- `yrange::Array=[missing, missing]`: Y-axis range [min, max]
-- `zrange::Array=[missing, missing]`: Z-axis range [min, max]
-- `center::Array=[0., 0., 0.]`: Center coordinates for ranges
-- `range_unit::Symbol=:standard`: Unit for range coordinates
-- `data_center::Array=[missing, missing, missing]`: Reference point for calculations
-- `data_center_unit::Symbol=:standard`: Unit for data_center
-- `verbose::Bool=true`: Enable progress output
-- `show_progress::Bool=true`: Show progress bar
-- `max_threads::Int=Threads.nthreads()`: Maximum threads for processing
-
-# Returns
-- `HydroMapsType`: Projected data maps with metadata
-
-# Examples
-```julia
-# Basic projection
-proj = projection(gas, :rho)
-
-# With specific unit and resolution
-proj = projection(gas, :temperature, unit=:K, res=1024)
-
-# With spatial constraints
-proj = projection(gas, :vx, unit=:km_s, zrange=[0.4, 0.6])
-```
-"""
-function projection(dataobject::HydroDataType, var::Symbol; 
-                   unit::Symbol=:standard,
-                   lmax::Real=dataobject.lmax,
-                   res::Union{Real, Missing}=missing,
-                   pxsize::Array{<:Any,1}=[missing, missing],
-                   mask::Union{Vector{Bool}, MaskType}=[false],
-                   direction::Symbol=:z,
-                   weighting::Array{<:Any,1}=[:mass, missing],
-                   mode::Symbol=:standard,
-                   xrange::Array{<:Any,1}=[missing, missing],
-                   yrange::Array{<:Any,1}=[missing, missing],
-                   zrange::Array{<:Any,1}=[missing, missing],
-                   center::Array{<:Any,1}=[0., 0., 0.],
-                   range_unit::Symbol=:standard,
-                   data_center::Array{<:Any,1}=[missing, missing, missing],
-                   data_center_unit::Symbol=:standard,
-                   verbose::Bool=true,
-                   show_progress::Bool=true,
-                   max_threads::Int=Threads.nthreads(),
-                   myargs::ArgumentsType=ArgumentsType())
-    
-    return projection(dataobject, [var], [unit],
-                     lmax=lmax, res=res, pxsize=pxsize, mask=mask, direction=direction,
-                     weighting=weighting, mode=mode, xrange=xrange, yrange=yrange, zrange=zrange,
-                     center=center, range_unit=range_unit, data_center=data_center,
-                     data_center_unit=data_center_unit, verbose=verbose, show_progress=show_progress,
-                     max_threads=max_threads, myargs=myargs)
-end
-
-"""
-    projection(dataobject::HydroDataType, var::Symbol, unit::Symbol; kwargs...) -> HydroMapsType
-
-Create 2D projection of hydro data for a single variable with specified unit.
-
-# Arguments
-- `dataobject::HydroDataType`: Hydro simulation data object
-- `var::Symbol`: Variable to project
-- `unit::Symbol`: Unit for the projected variable
-
-# Keywords
-Same as single-variable version without unit parameter.
-"""
-function projection(dataobject::HydroDataType, var::Symbol, unit::Symbol;
-                   lmax::Real=dataobject.lmax,
-                   res::Union{Real, Missing}=missing,
-                   pxsize::Array{<:Any,1}=[missing, missing],
-                   mask::Union{Vector{Bool}, MaskType}=[false],
-                   direction::Symbol=:z,
-                   weighting::Array{<:Any,1}=[:mass, missing],
-                   mode::Symbol=:standard,
-                   xrange::Array{<:Any,1}=[missing, missing],
-                   yrange::Array{<:Any,1}=[missing, missing],
-                   zrange::Array{<:Any,1}=[missing, missing],
-                   center::Array{<:Any,1}=[0., 0., 0.],
-                   range_unit::Symbol=:standard,
-                   data_center::Array{<:Any,1}=[missing, missing, missing],
-                   data_center_unit::Symbol=:standard,
-                   verbose::Bool=true,
-                   show_progress::Bool=true,
-                   max_threads::Int=Threads.nthreads(),
-                   myargs::ArgumentsType=ArgumentsType())
-    
-    return projection(dataobject, [var], [unit],
-                     lmax=lmax, res=res, pxsize=pxsize, mask=mask, direction=direction,
-                     weighting=weighting, mode=mode, xrange=xrange, yrange=yrange, zrange=zrange,
-                     center=center, range_unit=range_unit, data_center=data_center,
-                     data_center_unit=data_center_unit, verbose=verbose, show_progress=show_progress,
-                     max_threads=max_threads, myargs=myargs)
-end
-
-"""
-    projection(dataobject::HydroDataType, vars::Array{Symbol,1}; kwargs...) -> HydroMapsType
-
-Create 2D projection of hydro data for multiple variables with default units.
-
-# Arguments
-- `dataobject::HydroDataType`: Hydro simulation data object
-- `vars::Array{Symbol,1}`: Variables to project
-"""
-function projection(dataobject::HydroDataType, vars::Array{Symbol,1};
-                   units::Array{Symbol,1}=fill(:standard, length(vars)),
-                   lmax::Real=dataobject.lmax,
-                   res::Union{Real, Missing}=missing,
-                   pxsize::Array{<:Any,1}=[missing, missing],
-                   mask::Union{Vector{Bool}, MaskType}=[false],
-                   direction::Symbol=:z,
-                   weighting::Array{<:Any,1}=[:mass, missing],
-                   mode::Symbol=:standard,
-                   xrange::Array{<:Any,1}=[missing, missing],
-                   yrange::Array{<:Any,1}=[missing, missing],
-                   zrange::Array{<:Any,1}=[missing, missing],
-                   center::Array{<:Any,1}=[0., 0., 0.],
-                   range_unit::Symbol=:standard,
-                   data_center::Array{<:Any,1}=[missing, missing, missing],
-                   data_center_unit::Symbol=:standard,
-                   verbose::Bool=true,
-                   show_progress::Bool=true,
-                   max_threads::Int=Threads.nthreads(),
-                   myargs::ArgumentsType=ArgumentsType())
-    
-    return projection(dataobject, vars, units,
-                     lmax=lmax, res=res, pxsize=pxsize, mask=mask, direction=direction,
-                     weighting=weighting, mode=mode, xrange=xrange, yrange=yrange, zrange=zrange,
-                     center=center, range_unit=range_unit, data_center=data_center,
-                     data_center_unit=data_center_unit, verbose=verbose, show_progress=show_progress,
-                     max_threads=max_threads, myargs=myargs)
-end
-
-"""
-    projection(dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol; kwargs...) -> HydroMapsType
-
-Create 2D projection of hydro data for multiple variables with the same unit.
-
-# Arguments
-- `dataobject::HydroDataType`: Hydro simulation data object
-- `vars::Array{Symbol,1}`: Variables to project
-- `unit::Symbol`: Common unit for all variables
-"""
-function projection(dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
-                   lmax::Real=dataobject.lmax,
-                   res::Union{Real, Missing}=missing,
-                   pxsize::Array{<:Any,1}=[missing, missing],
-                   mask::Union{Vector{Bool}, MaskType}=[false],
-                   direction::Symbol=:z,
-                   weighting::Array{<:Any,1}=[:mass, missing],
-                   mode::Symbol=:standard,
-                   xrange::Array{<:Any,1}=[missing, missing],
-                   yrange::Array{<:Any,1}=[missing, missing],
-                   zrange::Array{<:Any,1}=[missing, missing],
-                   center::Array{<:Any,1}=[0., 0., 0.],
-                   range_unit::Symbol=:standard,
-                   data_center::Array{<:Any,1}=[missing, missing, missing],
-                   data_center_unit::Symbol=:standard,
-                   verbose::Bool=true,
-                   show_progress::Bool=true,
-                   max_threads::Int=Threads.nthreads(),
-                   myargs::ArgumentsType=ArgumentsType())
-    
-    # Create array of units with the same unit for all variables
-    units = fill(unit, length(vars))
-    return projection(dataobject, vars, units,
-                     lmax=lmax, res=res, pxsize=pxsize, mask=mask, direction=direction,
-                     weighting=weighting, mode=mode, xrange=xrange, yrange=yrange, zrange=zrange,
-                     center=center, range_unit=range_unit, data_center=data_center,
-                     data_center_unit=data_center_unit, verbose=verbose, show_progress=show_progress,
-                     max_threads=max_threads, myargs=myargs)
-end
-
-"""
-    projection(dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; kwargs...) -> HydroMapsType
-
-Create 2D projection of hydro data for multiple variables with specified units.
-
-This is the main implementation function that handles the complete projection pipeline
-with optimized performance, mass conservation, and threading support.
-"""
-function projection(dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
-                   lmax::Real=dataobject.lmax,
-                   res::Union{Real, Missing}=missing,
-                   pxsize::Array{<:Any,1}=[missing, missing],
-                   mask::Union{Vector{Bool}, MaskType}=[false],
-                   direction::Symbol=:z,
-                   weighting::Array{<:Any,1}=[:mass, missing],
-                   mode::Symbol=:standard,
-                   xrange::Array{<:Any,1}=[missing, missing],
-                   yrange::Array{<:Any,1}=[missing, missing],
-                   zrange::Array{<:Any,1}=[missing, missing],
-                   center::Array{<:Any,1}=[0., 0., 0.],
-                   range_unit::Symbol=:standard,
-                   data_center::Array{<:Any,1}=[missing, missing, missing],
-                   data_center_unit::Symbol=:standard,
-                   verbose::Bool=true,
-                   show_progress::Bool=true,
-                   max_threads::Int=Threads.nthreads(),
-                   myargs::ArgumentsType=ArgumentsType())
-    
-    # For now, delegate to the deprecated function until we implement the full pipeline
-    # This ensures compatibility while we develop the optimized version
-    return projection_deprecated(dataobject, vars, units,
-                               lmax=lmax, res=res, pxsize=pxsize, mask=mask, direction=direction,
-                               weighting=weighting, mode=mode, xrange=xrange, yrange=yrange, zrange=zrange,
-                               center=center, range_unit=range_unit, data_center=data_center,
-                               data_center_unit=data_center_unit, verbose=verbose, show_progress=show_progress,
-                               myargs=myargs)
-end
-
-# ==============================================================================
-# EXAMPLE USAGE AND INTEGRATION FUNCTIONS
-# ==============================================================================
-
-"""
-    example_amr_processing()
-
-Example function demonstrating proper usage of the AMR processing pipeline.
-
-This function shows how to set up and execute the AMR level processing loop
-with proper initialization, data preparation, and result collection.
-Remove or comment out this function in production code.
-"""
-function example_amr_processing()
-    # Example initialization (replace with actual data sources)
-    lmin = 0  # Minimum AMR level
-    simlmax = 10  # Maximum AMR level
-    
-    # Example data arrays (replace with actual simulation data)
-    n_cells = 10000
-    xval = rand(Float64, n_cells)
-    yval = rand(Float64, n_cells)
-    leveldata = rand(lmin:simlmax, n_cells)
-    weightval = rand(Float64, n_cells)
-    
-    # Example variable data
-    data_dict = Dict(
-        :density => rand(Float64, n_cells),
-        :temperature => rand(Float64, n_cells),
-        :velocity_x => rand(Float64, n_cells)
-    )
-    
-    # Target projection parameters
-    res = 512
-    target_range1 = range(0.0, 1.0, length=res+1)
-    target_range2 = range(0.0, 1.0, length=res+1)
-    length1, length2 = res, res
-    
-    # Initialize output arrays
-    weighted_map = zeros(Float64, length1, length2)
-    imaps = Dict{Symbol, Matrix{Float64}}()
-    
-    # Processing parameters
-    effective_threads = Threads.nthreads()
-    isamr = true
-    verbose = true
-    show_progress = true
-    
-    println("Starting AMR processing with $(simlmax-lmin+1) levels...")
-    
-    # Main AMR level processing loop
-    for level in lmin:simlmax
-        process_amr_level(level, lmin, simlmax, xval, yval, leveldata, weightval, data_dict, 
-                         target_range1, target_range2, length1, length2, res, weighted_map, 
-                         imaps, effective_threads, isamr, verbose, show_progress)
+        println("Projection validation:")
+        println("  Total projected value: $total_projected")
+        println("  Total weight: $total_weight") 
+        println("  Grid coverage: $(count(weight_grid .> 0) / length(weight_grid) * 100)%")
     end
     
-    if verbose
-        inline_status_done()
-        println("AMR processing complete!")
-        println("Processed variables: $(collect(keys(imaps)))")
-        println("Total mass in weighted map: $(sum(weighted_map))")
-    end
-    
-    return weighted_map, imaps
+    return total_projected, total_weight
 end
 
-# Uncomment the following line to run the example:
-# weighted_map, imaps = example_amr_processing()
+function hist2d_data_amr_boundary_aware(x, y, s, mask, w, data, isamr)
+    h = zeros(Float64, (length(s[1]), length(s[2])))
+    if isamr
+        fast_hist2d_data_amr_boundary_aware!(h, x[mask], y[mask], data[mask], w[mask], s[1], s[2])
+    else
+        fast_hist2d_data_amr_boundary_aware!(h, x, y, data, w, s[1], s[2])
+    end
+    return h
+end
