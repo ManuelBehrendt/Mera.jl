@@ -112,6 +112,8 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             direction=direction,
                             cell=cell,
                             inverse=inverse,
+                            smooth_boundary=false,  # Default to sharp boundaries for backward compatibility
+                            boundary_width=0.1,     # Default boundary width
                             verbose=verbose)
         else
             return subregioncylinder(dataobject,
