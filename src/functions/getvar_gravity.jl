@@ -197,47 +197,6 @@ function get_data(dataobject::GravDataType,
             cellsize = getvar(dataobject, :cellsize)
             vars_dict[:gravitational_work] = @. mass * a_mag * cellsize * selected_unit
 
-        # Jeans length from gravity: λ_J = √(π cs²/(G ρ)) - code units by default
-        elseif i == :jeans_length_gravity
-            if !has_hydro
-                error("jeans_length_gravity requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :jeans_length_gravity, vars, units)
-            # Use hydro's jeanslength calculation (same physics formula)
-            jeans_length_hydro = getvar(hydro_data, :jeanslength)
-            vars_dict[:jeans_length_gravity] = jeans_length_hydro .* selected_unit
-
-        # Jeans mass: M_J = (4π/3)(λ_J/2)³ρ - code units by default
-        elseif i == :jeans_mass_gravity
-            if !has_hydro
-                error("jeans_mass_gravity requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :jeans_mass_gravity, vars, units)
-            # Use hydro's jeanslength calculation for consistency
-            lambda_j = getvar(hydro_data, :jeanslength)
-            density = getvar(hydro_data, :rho)
-            vars_dict[:jeans_mass_gravity] = @. (4π/3) * (lambda_j/2)^3 * density * selected_unit
-
-        # Free-fall time: t_ff = √(3π/(32Gρ)) - code units by default
-        elseif i == :freefall_time_gravity
-            if !has_hydro
-                error("freefall_time_gravity requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :freefall_time_gravity, vars, units)
-            # Use hydro's freefall_time calculation (same physics formula)
-            freefall_time_hydro = getvar(hydro_data, :freefall_time)
-            vars_dict[:freefall_time_gravity] = freefall_time_hydro .* selected_unit
-
-        # Virial parameter: α_vir = 5σ²R/(GM) - code units by default
-        elseif i == :virial_parameter_local
-            if !has_hydro
-                error("virial_parameter_local requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :virial_parameter_local, vars, units)
-            # Use hydro's virial_parameter_local calculation (same physics formula)
-            virial_parameter_hydro = getvar(hydro_data, :virial_parameter_local)
-            vars_dict[:virial_parameter_local] = virial_parameter_hydro .* selected_unit
-
         # Gravitational force magnitude: F = mass × |a| - code units by default
         elseif i == :Fg
             if !has_hydro
