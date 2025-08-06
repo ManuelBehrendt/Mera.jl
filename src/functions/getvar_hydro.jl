@@ -12,6 +12,17 @@ function get_data(  dataobject::HydroDataType,
     vars_dict = Dict()
     #vars = unique(vars)
 
+    # Early mask application for performance optimization
+    if length(mask) > 1
+        # Filter the IndexedTables data first to process only masked rows
+        # This gives true O(masked_cells) performance instead of O(total_cells)
+        mask_indices = findall(mask)
+        masked_data = dataobject.data[mask_indices]
+        use_masked_data = false  # No need to apply mask again since data is pre-filtered
+    else
+        use_masked_data = false
+        masked_data = dataobject.data
+    end
 
     if direction == :z
         apos = :cx
@@ -41,7 +52,7 @@ function get_data(  dataobject::HydroDataType,
     end
 
 
-    column_names = propertynames(dataobject.data.columns)
+    column_names = propertynames(masked_data.columns)
 
     for i in vars
 
@@ -51,70 +62,75 @@ function get_data(  dataobject::HydroDataType,
             selected_unit = getunit(dataobject, i, vars, units)
             if i == :cx
                 if isamr
-                    vars_dict[i] =  select(dataobject.data, apos) .- 2 .^getvar(dataobject, :level) .* center[1]
+                    # For AMR, we need level information - but now using pre-filtered data
+                    vars_dict[i] = select(masked_data, apos) .- 2 .^select(masked_data, :level) .* center[1]
                 else # if uniform grid
-                    vars_dict[i] =  select(dataobject.data, apos) .- 2^lmax .* center[1]
+                    vars_dict[i] = select(masked_data, apos) .- 2^lmax .* center[1]
                 end
             elseif i == :cy
                 if isamr
-                    vars_dict[i] =  select(dataobject.data, bpos) .- 2 .^getvar(dataobject, :level) .* center[2]
+                    vars_dict[i] = select(masked_data, bpos) .- 2 .^select(masked_data, :level) .* center[2]
                 else # if uniform grid
-                    vars_dict[i] =  select(dataobject.data, bpos) .- 2^lmax .* center[2]
+                    vars_dict[i] = select(masked_data, bpos) .- 2^lmax .* center[2]
                 end
-            elseif i == :cx
+            elseif i == :cz
                 if isamr
-                    vars_dict[i] =  select(dataobject.data, cpos) .- 2 .^getvar(dataobject, :level) .* center[3]
+                    vars_dict[i] = select(masked_data, cpos) .- 2 .^select(masked_data, :level) .* center[3]
                 else # if uniform grid
-                    vars_dict[i] =  select(dataobject.data, cpos) .- 2^lmax .* center[3]
+                    vars_dict[i] = select(masked_data, cpos) .- 2^lmax .* center[3]
                 end
             else
-                #if selected_unit != 1.
-                    #println(i)
-                    vars_dict[i] = select(dataobject.data, i) .* selected_unit
-                #else
-                    #vars_dict[i] = select(dataobject.data, i)
-                #end
+                # For all other variables, just apply units to pre-filtered data
+                vars_dict[i] = select(masked_data, i) .* selected_unit
             end
 
         # quantities that are derived from the variables in the data table
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
-                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^row.level * selected_unit , dataobject.data)
+                # Use pre-filtered data for level information
+                vars_dict[:cellsize] = map(row-> dataobject.boxlen / 2^row.level * selected_unit, masked_data)
             else # if uniform grid
-                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , dataobject.data)
+                vars_dict[:cellsize] = map(row-> dataobject.boxlen / 2^lmax * selected_unit, masked_data)
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
-            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize) .^3 .* selected_unit)
+            # For volume calculation, we can use the cellsize from vars_dict if it's already calculated
+            if haskey(vars_dict, :cellsize)
+                vars_dict[:volume] = convert(Array{Float64,1}, vars_dict[:cellsize] .^3 .* selected_unit)
+            else
+                # Calculate cellsize on the fly using pre-filtered data
+                cellsize_vals = getvar(dataobject, :cellsize, mask=mask)
+                vars_dict[:volume] = convert(Array{Float64,1}, cellsize_vals .^3 .* selected_unit)
+            end
 
         elseif i == :jeanslength
             selected_unit = getunit(dataobject, :jeanslength, vars, units)
-            vars_dict[:jeanslength] = getvar(dataobject, :cs, unit=:cm_s)  .*
+            vars_dict[:jeanslength] = getvar(dataobject, :cs, unit=:cm_s, mask=mask)  .*
                                         sqrt(3. * pi / (32. * dataobject.info.constants.G))  ./
-                                        sqrt.( getvar(dataobject, :rho, unit=:g_cm3) ) ./ dataobject.info.scale.cm  .*  selected_unit
+                                        sqrt.( getvar(dataobject, :rho, unit=:g_cm3, mask=mask) ) ./ dataobject.info.scale.cm  .*  selected_unit
         elseif i == :jeansnumber
             selected_unit = getunit(dataobject, :jeansnumber, vars, units)
-            vars_dict[:jeansnumber] = getvar(dataobject, :jeanslength) ./ getvar(dataobject, :cellsize) ./ selected_unit
+            vars_dict[:jeansnumber] = getvar(dataobject, :jeanslength, mask=mask) ./ getvar(dataobject, :cellsize, mask=mask) ./ selected_unit
 
         elseif i == :jeansmass
             selected_unit = getunit(dataobject, :jeansmass, vars, units)
             # Jeans mass: M_J = (4π/3)(λ_J/2)³ρ
-            lambda_j = getvar(dataobject, :jeanslength)
-            rho = getvar(dataobject, :rho)
+            lambda_j = getvar(dataobject, :jeanslength, mask=mask)
+            rho = getvar(dataobject, :rho, mask=mask)
             vars_dict[:jeansmass] = @. (4π/3) * (lambda_j/2)^3 * rho * selected_unit
 
 
         elseif i == :freefall_time
             selected_unit = getunit(dataobject, :freefall_time, vars, units)
-            vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(dataobject, :rho, unit=:g_cm3)  ) .* selected_unit
+            vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(dataobject, :rho, unit=:g_cm3, mask=mask)  ) .* selected_unit
 
         elseif i == :virial_parameter_local
             selected_unit = getunit(dataobject, :virial_parameter_local, vars, units)
             # Virial parameter: α_vir = 5σ²R/(GM) where σ = cs (sound speed), R = cellsize
-            cs = getvar(dataobject, :cs)
-            mass = getvar(dataobject, :mass)
-            cellsize = getvar(dataobject, :cellsize)
+            cs = getvar(dataobject, :cs, mask=mask)
+            mass = getvar(dataobject, :mass, mask=mask)
+            cellsize = getvar(dataobject, :cellsize, mask=mask)
             G = dataobject.info.constants.G
             # α_vir ≈ 5c_s²R/(GM) where R ≈ cellsize
             vars_dict[:virial_parameter_local] = @. (5 * cs^2 * cellsize) / (G * mass) * selected_unit
@@ -126,12 +142,12 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :cs
             selected_unit = getunit(dataobject, :cs, vars, units)
             vars_dict[:cs] =   sqrt.( dataobject.info.gamma .*
-                                        select( dataobject.data, :p) ./
-                                        select( dataobject.data, :rho) ) .* selected_unit
+                                        select( masked_data, :p) ./
+                                        select( masked_data, :rho) ) .* selected_unit
 
         elseif i == :T || i == :Temp || i == :Temperature
             selected_unit = getunit(dataobject, i, vars, units)
-            vars_dict[i] =   select( dataobject.data, :p) ./ select( dataobject.data, :rho) .* selected_unit
+            vars_dict[i] =   select( masked_data, :p) ./ select( masked_data, :rho) .* selected_unit
 
         elseif i == :entropy_specific
             selected_unit = getunit(dataobject, :entropy_specific, vars, units)
@@ -141,8 +157,8 @@ function get_data(  dataobject::HydroDataType,
             k_B = dataobject.info.constants.k_B  # Boltzmann constant
             m_u = dataobject.info.constants.m_u  # Atomic mass unit
             
-            pressure = select(dataobject.data, :p)
-            density = select(dataobject.data, :rho)
+            pressure = select(masked_data, :p)
+            density = select(masked_data, :rho)
             
             # Calculate entropy per unit mass: S = (k_B / m_u) * ln(P / rho^gamma) / (gamma - 1)
             entropy_term = @. log(pressure / (density ^ gamma))
@@ -152,62 +168,96 @@ function get_data(  dataobject::HydroDataType,
             # Dimensionless entropy index: K = P/ρ^γ (adiabatic constant)
             # This is the exponential argument in the entropy formula
             gamma = dataobject.info.gamma
-            pressure = select(dataobject.data, :p)
-            density = select(dataobject.data, :rho)
+            pressure = select(masked_data, :p)
+            density = select(masked_data, :rho)
             vars_dict[:entropy_index] = pressure ./ (density .^ gamma)
 
         elseif i == :entropy_density
             # Entropy per unit volume: s = ρ × (specific entropy)
             # Units: [erg/(cm³·K)] or [J/(m³·K)]
             selected_unit = getunit(dataobject, :entropy_density, vars, units)
-            specific_entropy = getvar(dataobject, :entropy_specific, center=center)
-            density = select(dataobject.data, :rho)
+            # Calculate specific entropy directly if not already calculated
+            if haskey(vars_dict, :entropy_specific)
+                specific_entropy = vars_dict[:entropy_specific]
+            else
+                # Calculate specific entropy with mask
+                gamma = dataobject.info.gamma
+                k_B = dataobject.info.constants.k_B
+                m_u = dataobject.info.constants.m_u
+                pressure = select(masked_data, :p)
+                density = select(masked_data, :rho)
+                entropy_term = @. log(pressure / (density ^ gamma))
+                specific_entropy = (k_B / m_u) * entropy_term / (gamma - 1)
+            end
+            density = select(masked_data, :rho)
             vars_dict[:entropy_density] = density .* specific_entropy .* selected_unit
 
         elseif i == :entropy_per_particle
             # Entropy per particle: s_particle = s_specific × m_u
-            # Units: [erg/K per particle] - useful for X-ray astronomy
             selected_unit = getunit(dataobject, :entropy_per_particle, vars, units)
-            specific_entropy = getvar(dataobject, :entropy_specific, center=center)
+            if haskey(vars_dict, :entropy_specific)
+                specific_entropy = vars_dict[:entropy_specific]
+            else
+                # Calculate specific entropy with mask
+                gamma = dataobject.info.gamma
+                k_B = dataobject.info.constants.k_B
+                m_u = dataobject.info.constants.m_u
+                pressure = select(masked_data, :p)
+                density = select(masked_data, :rho)
+                entropy_term = @. log(pressure / (density ^ gamma))
+                specific_entropy = (k_B / m_u) * entropy_term / (gamma - 1)
+            end
             m_u = dataobject.info.constants.m_u
             vars_dict[:entropy_per_particle] = specific_entropy .* m_u .* selected_unit
 
         elseif i == :entropy_total
             # Total entropy: S_total = (specific entropy) × mass
-            # Units: [erg/K] or [J/K]
             selected_unit = getunit(dataobject, :entropy_total, vars, units)
-            specific_entropy = getvar(dataobject, :entropy_specific, center=center)
-            mass = getvar(dataobject, :mass)
+            if haskey(vars_dict, :entropy_specific)
+                specific_entropy = vars_dict[:entropy_specific]
+            else
+                # Calculate specific entropy with mask
+                gamma = dataobject.info.gamma
+                k_B = dataobject.info.constants.k_B
+                m_u = dataobject.info.constants.m_u
+                pressure = select(masked_data, :p)
+                density = select(masked_data, :rho)
+                entropy_term = @. log(pressure / (density ^ gamma))
+                specific_entropy = (k_B / m_u) * entropy_term / (gamma - 1)
+            end
+            # We still need to call getvar for mass since it's a complex calculation
+            # Pass the original mask since getvar handles its own masking
+            mass = getvar(dataobject, :mass, mask=mask)
             vars_dict[:entropy_total] = specific_entropy .* mass .* selected_unit
 
         elseif i == :vx2
             selected_unit = getunit(dataobject, :vx2, vars, units)
-            vars_dict[:vx2] =  select(dataobject.data, :vx).^2  .* selected_unit.^2
+            vars_dict[:vx2] =  select(masked_data, :vx).^2  .* selected_unit.^2
         elseif i == :vy2
             selected_unit = getunit(dataobject, :vy2, vars, units)
-            vars_dict[:vy2] =  select(dataobject.data, :vy).^2  .* selected_unit.^2
+            vars_dict[:vy2] =  select(masked_data, :vy).^2  .* selected_unit.^2
         elseif i == :vz2
             selected_unit = getunit(dataobject, :vz2, vars, units)
-            vars_dict[:vz2] =  select(dataobject.data, :vz).^2  .* selected_unit.^2
+            vars_dict[:vz2] =  select(masked_data, :vz).^2  .* selected_unit.^2
 
 
         elseif i == :v
             selected_unit = getunit(dataobject, :v, vars, units)
-            vars_dict[:v] =  sqrt.(select(dataobject.data, :vx).^2 .+
-                                   select(dataobject.data, :vy).^2 .+
-                                   select(dataobject.data, :vz).^2 ) .* selected_unit
+            vars_dict[:v] =  sqrt.(select(masked_data, :vx).^2 .+
+                                   select(masked_data, :vy).^2 .+
+                                   select(masked_data, :vz).^2 ) .* selected_unit
         elseif i == :v2
            selected_unit = getunit(dataobject, :v2, vars, units)
-           vars_dict[:v2] =      (select(dataobject.data, :vx).^2 .+
-                                  select(dataobject.data, :vy).^2 .+
-                                  select(dataobject.data, :vz).^2 ) .* selected_unit .^2
+           vars_dict[:v2] =      (select(masked_data, :vx).^2 .+
+                                  select(masked_data, :vy).^2 .+
+                                  select(masked_data, :vz).^2 ) .* selected_unit .^2
 
         elseif i == :vϕ_cylinder
 
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            vx = getvar(dataobject, :vx, mask=mask)
+            vy = getvar(dataobject, :vy, mask=mask)
 
             # vϕ = omega x radius
             # vϕ = |(x*vy - y*vx) / (x^2 + y^2)| * sqrt(x^2 + y^2)
@@ -224,21 +274,21 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :vϕ_cylinder2
 
             selected_unit = getunit(dataobject, :vϕ_cylinder2, vars, units)
-            vars_dict[:vϕ_cylinder2] = (getvar(dataobject, :vϕ_cylinder, center=center) .* selected_unit).^2
+            vars_dict[:vϕ_cylinder2] = (getvar(dataobject, :vϕ_cylinder, center=center, mask=mask) .* selected_unit).^2
 
 
         elseif i == :vz2
 
-            vz = getvar(dataobject, :vz)
+            vz = getvar(dataobject, :vz, mask=mask)
             selected_unit = getunit(dataobject, :vz2, vars, units)
             vars_dict[:vz2] =  (vz .* selected_unit ).^2
 
         elseif i == :vr_cylinder
 
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            vx = getvar(dataobject, :vx, mask=mask)
+            vy = getvar(dataobject, :vy, mask=mask)
 
             selected_unit = getunit(dataobject, :vr_cylinder, vars, units)
             vr = @. (x * vx + y * vy)  * (x^2 + y^2)^(-0.5) * selected_unit
@@ -509,10 +559,10 @@ function get_data(  dataobject::HydroDataType,
             if :bx in column_names && :by in column_names && :bz in column_names
                 # Alfvén speed: v_A = B / sqrt(μ₀ * ρ) in SI or B / sqrt(4π * ρ) in Gaussian CGS
                 # For RAMSES code units: B is dimensionless, need to convert to physical units
-                B_total = sqrt.(select(dataobject.data, :bx).^2 .+ 
-                               select(dataobject.data, :by).^2 .+ 
-                               select(dataobject.data, :bz).^2)
-                rho = select(dataobject.data, :rho)
+                B_total = sqrt.(select(masked_data, :bx).^2 .+ 
+                               select(masked_data, :by).^2 .+ 
+                               select(masked_data, :bz).^2)
+                rho = select(masked_data, :rho)
                 
                 # Convert B from code units to physical units (Gaussian CGS)
                 # In RAMSES: B_code = B_physical / sqrt(4π * ρ₀ * v₀²)
@@ -535,10 +585,10 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :mach_fast # Fast magnetosonic Mach number
             if :bx in column_names && :by in column_names && :bz in column_names
                 # Fast magnetosonic speed: v_f = sqrt(cs² + v_A²)
-                B_total = sqrt.(select(dataobject.data, :bx).^2 .+ 
-                               select(dataobject.data, :by).^2 .+ 
-                               select(dataobject.data, :bz).^2)
-                rho = select(dataobject.data, :rho)
+                B_total = sqrt.(select(masked_data, :bx).^2 .+ 
+                               select(masked_data, :by).^2 .+ 
+                               select(masked_data, :bz).^2)
+                rho = select(masked_data, :rho)
                 
                 # Convert B from code units to physical units (same as above)
                 unit_rho = dataobject.info.unit_d
@@ -561,10 +611,10 @@ function get_data(  dataobject::HydroDataType,
                 # Slow magnetosonic speed calculation
                 # Full formula: v_s = sqrt((cs² + v_A² - sqrt((cs² + v_A²)² - 4cs²v_A²cos²θ))/2)
                 # Isotropic approximation: v_s ≈ cs*v_A/sqrt(cs² + v_A²)
-                B_total = sqrt.(select(dataobject.data, :bx).^2 .+ 
-                               select(dataobject.data, :by).^2 .+ 
-                               select(dataobject.data, :bz).^2)
-                rho = select(dataobject.data, :rho)
+                B_total = sqrt.(select(masked_data, :bx).^2 .+ 
+                               select(masked_data, :by).^2 .+ 
+                               select(masked_data, :bz).^2)
+                rho = select(masked_data, :rho)
                 
                 # Convert B from code units to physical units (same as above)
                 unit_rho = dataobject.info.unit_d
@@ -591,8 +641,8 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :Etherm
             selected_unit = getunit(dataobject, :Etherm, vars, units)
             # Thermal energy per cell = pressure × volume (since pressure = thermal energy density)
-            pressure = select(dataobject.data, :p)
-            volume = getvar(dataobject, :volume)
+            pressure = select(masked_data, :p)
+            volume = getvar(dataobject, :volume, mask=mask)
             vars_dict[:Etherm] = pressure .* volume .* selected_unit
 
         elseif i == :r_cylinder
@@ -625,15 +675,12 @@ function get_data(  dataobject::HydroDataType,
 
     end
 
-
-
-
-    if length(mask) > 1
-        for i in keys(vars_dict)
-            vars_dict[i]=vars_dict[i][mask]
-        end
-    end
-
+    # Mask is already applied early in the process, so no need to apply it again
+    # if length(mask) > 1
+    #     for i in keys(vars_dict)
+    #         vars_dict[i]=vars_dict[i][mask]
+    #     end
+    # end
 
     if length(vars)==1
             return vars_dict[vars[1]]
