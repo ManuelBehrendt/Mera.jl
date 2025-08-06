@@ -176,15 +176,15 @@ function get_data(dataobject::GravDataType,
             epot = select(dataobject.data, :epot)
             vars_dict[:specific_gravitational_energy] = @. epot * selected_unit
 
-        # Gravitational potential energy per cell: U = mass × φ - code units by default
-        elseif i == :potential_energy_per_cell
+        # Gravitational potential energy per cell: U = mass × φ - code units by default  
+        elseif i == :epot
             if !has_hydro
-                error("potential_energy_per_cell requires hydro_data keyword argument with HydroDataType")
+                error("epot requires hydro_data keyword argument with HydroDataType")
             end
-            selected_unit = getunit(dataobject, :potential_energy_per_cell, vars, units)
+            selected_unit = getunit(dataobject, :epot, vars, units)
             epot = select(dataobject.data, :epot)
             mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
-            vars_dict[:potential_energy_per_cell] = @. mass * epot * selected_unit
+            vars_dict[:epot] = @. mass * epot * selected_unit
 
         # Gravitational work: W = m × a × cellsize - code units by default
         elseif i == :gravitational_work
