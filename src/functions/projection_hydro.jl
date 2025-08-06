@@ -408,21 +408,23 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             imaps[var] = zeros(Float64, (length1, length2))
         end
         
-        # Define grid extent in physical coordinates (direction-dependent)
-        if direction == :z
+        # Define grid extent in physical coordinates (direction-dependent) with type stability
+        grid_extent::NTuple{4,Float64} = if direction == :z
             # For z-direction: use xrange and yrange for 2D projection plane
-            grid_extent = [ranges[1]*boxlen, ranges[2]*boxlen, 
-                           ranges[3]*boxlen, ranges[4]*boxlen]
+            (ranges[1]*boxlen, ranges[2]*boxlen, 
+             ranges[3]*boxlen, ranges[4]*boxlen)
         elseif direction == :y  
             # For y-direction: use xrange and zrange for 2D projection plane
-            grid_extent = [ranges[1]*boxlen, ranges[2]*boxlen, 
-                           ranges[5]*boxlen, ranges[6]*boxlen]
+            (ranges[1]*boxlen, ranges[2]*boxlen, 
+             ranges[5]*boxlen, ranges[6]*boxlen)
         elseif direction == :x
             # For x-direction: use yrange and zrange for 2D projection plane
-            grid_extent = [ranges[3]*boxlen, ranges[4]*boxlen, 
-                           ranges[5]*boxlen, ranges[6]*boxlen]
+            (ranges[3]*boxlen, ranges[4]*boxlen, 
+             ranges[5]*boxlen, ranges[6]*boxlen)
+        else
+            error("Invalid direction: $direction")
         end
-        grid_resolution = (length1, length2)
+        grid_resolution::NTuple{2,Int} = (length1, length2)
 
         if show_progress
             p = 1 # show updates
@@ -944,79 +946,81 @@ end
 
 
 function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
-                               x_coords, y_coords, values, weights, level,
-                               grid_extent, grid_resolution, boxlen)
+                               x_coords::AbstractVector, y_coords::AbstractVector, 
+                               values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
+                               level::Int, grid_extent::NTuple{4,Float64}, 
+                               grid_resolution::NTuple{2,Int}, boxlen::Float64)
     """
     Map AMR cells to a regular grid accounting for cell size and overlap.
     This replaces the imresize approach with proper geometric mapping.
-    Optimized version with pre-computed values and reduced calculations.
+    Optimized version with pre-computed values, reduced calculations, and type stability.
     """
     
-    # Pre-compute constants outside loops
-    cell_size = boxlen / (2^level)
-    half_cell = cell_size * 0.5
-    cell_area = cell_size * cell_size
+    # Pre-compute constants outside loops with explicit types
+    cell_size::Float64 = boxlen / (2^level)
+    half_cell::Float64 = cell_size * 0.5
+    cell_area::Float64 = cell_size * cell_size
     
-    pixel_size_x = (grid_extent[2] - grid_extent[1]) / grid_resolution[1]
-    pixel_size_y = (grid_extent[4] - grid_extent[3]) / grid_resolution[2]
-    inv_pixel_size_x = 1.0 / pixel_size_x
-    inv_pixel_size_y = 1.0 / pixel_size_y
+    pixel_size_x::Float64 = (grid_extent[2] - grid_extent[1]) / grid_resolution[1]
+    pixel_size_y::Float64 = (grid_extent[4] - grid_extent[3]) / grid_resolution[2]
+    inv_pixel_size_x::Float64 = 1.0 / pixel_size_x
+    inv_pixel_size_y::Float64 = 1.0 / pixel_size_y
     
-    # Grid boundaries
-    x_min, x_max = grid_extent[1], grid_extent[2] 
-    y_min, y_max = grid_extent[3], grid_extent[4]
+    # Grid boundaries with explicit types
+    x_min::Float64, x_max::Float64 = grid_extent[1], grid_extent[2] 
+    y_min::Float64, y_max::Float64 = grid_extent[3], grid_extent[4]
     
-    # Pre-compute grid resolution bounds for bounds checking
-    max_ix = grid_resolution[1]
-    max_iy = grid_resolution[2]
+    # Pre-compute grid resolution bounds for bounds checking with explicit types
+    max_ix::Int = grid_resolution[1]
+    max_iy::Int = grid_resolution[2]
     
     @inbounds for i in eachindex(x_coords)
-        # Convert discrete coordinates to physical coordinates
-        x_phys = (x_coords[i] - 0.5) * cell_size
-        y_phys = (y_coords[i] - 0.5) * cell_size
+        # Convert discrete coordinates to physical coordinates with explicit types
+        x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
         
-        # Cell boundaries in physical coordinates
-        cell_x_min = x_phys - half_cell
-        cell_x_max = x_phys + half_cell
-        cell_y_min = y_phys - half_cell
-        cell_y_max = y_phys + half_cell
+        # Cell boundaries in physical coordinates with explicit types
+        cell_x_min::Float64 = x_phys - half_cell
+        cell_x_max::Float64 = x_phys + half_cell
+        cell_y_min::Float64 = y_phys - half_cell
+        cell_y_max::Float64 = y_phys + half_cell
         
-        # Find overlapping grid cells using pre-computed inverse
-        ix_start = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
-        ix_end = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
-        iy_start = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
-        iy_end = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
+        # Find overlapping grid cells using pre-computed inverse with explicit types
+        ix_start::Int = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
+        ix_end::Int = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
+        iy_start::Int = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
+        iy_end::Int = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
         
-        # Pre-compute weight contribution for this cell
-        weight_val = weights[i]
-        value_weight = values[i] * weight_val
+        # Pre-compute weight contribution for this cell with explicit types
+        weight_val::Float64 = weights[i]
+        value_weight::Float64 = values[i] * weight_val
         
         # Distribute cell value among overlapping pixels
-        for ix in ix_start:ix_end
-            # Pre-compute pixel x boundaries
-            pix_x_min = x_min + (ix-1) * pixel_size_x
-            pix_x_max = pix_x_min + pixel_size_x  # More efficient than x_min + ix * pixel_size_x
+        for ix::Int in ix_start:ix_end
+            # Pre-compute pixel x boundaries with explicit types
+            pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
+            pix_x_max::Float64 = pix_x_min + pixel_size_x  # More efficient than x_min + ix * pixel_size_x
             
-            # Calculate x overlap once per ix
-            overlap_x = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+            # Calculate x overlap once per ix with explicit type
+            overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
             
             if overlap_x > 0.0  # Early exit if no x overlap
-                for iy in iy_start:iy_end
-                    # Pre-compute pixel y boundaries
-                    pix_y_min = y_min + (iy-1) * pixel_size_y
-                    pix_y_max = pix_y_min + pixel_size_y
+                for iy::Int in iy_start:iy_end
+                    # Pre-compute pixel y boundaries with explicit types
+                    pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
+                    pix_y_max::Float64 = pix_y_min + pixel_size_y
                     
-                    # Calculate y overlap
-                    overlap_y = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                    # Calculate y overlap with explicit type
+                    overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
                     
                     if overlap_y > 0.0  # Early exit if no y overlap
-                        # Calculate overlap area and fraction
-                        overlap_area = overlap_x * overlap_y
-                        overlap_fraction = overlap_area / cell_area
+                        # Calculate overlap area and fraction with explicit types
+                        overlap_area::Float64 = overlap_x * overlap_y
+                        overlap_fraction::Float64 = overlap_area / cell_area
                         
-                        # Apply contributions
-                        contribution = value_weight * overlap_fraction
-                        weight_contribution = weight_val * overlap_fraction
+                        # Apply contributions with explicit types
+                        contribution::Float64 = value_weight * overlap_fraction
+                        weight_contribution::Float64 = weight_val * overlap_fraction
                         
                         grid[ix, iy] += contribution
                         weight_grid[ix, iy] += weight_contribution
@@ -1027,14 +1031,16 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
     end
 end
 
-function fast_hist2d_weight_amr_boundary_aware!(h::Matrix{Float64}, x, y, w, range1, range2)
-    r1_min = Int(minimum(range1))
-    r2_min = Int(minimum(range2))
-    nx, ny = size(h)
+function fast_hist2d_weight_amr_boundary_aware!(h::Matrix{Float64}, x::AbstractVector{<:Integer}, 
+                                               y::AbstractVector{<:Integer}, w::AbstractVector{Float64}, 
+                                               range1::AbstractRange{<:Integer}, range2::AbstractRange{<:Integer})
+    r1_min::Int = Int(minimum(range1))
+    r2_min::Int = Int(minimum(range2))
+    nx::Int, ny::Int = size(h)
     
     @inbounds for k in eachindex(x)
-        ix = x[k] - r1_min + 1
-        iy = y[k] - r2_min + 1
+        ix::Int = x[k] - r1_min + 1
+        iy::Int = y[k] - r2_min + 1
         if 1 <= ix <= nx && 1 <= iy <= ny
             h[ix, iy] += w[k]
         end
@@ -1094,39 +1100,45 @@ end
 #end
 
 
-function project_amr_level_optimized(dataobject, level, selected_vars, data_dict, 
-                                    x_coord, y_coord, z_coord, mask_level,
-                                    grid_extent, grid_resolution, boxlen,
-                                    weighting, weight_scale, use_geometric_mapping,
+function project_amr_level_optimized(dataobject, level::Int, selected_vars, data_dict, 
+                                    x_coord, y_coord, z_coord, mask_level::AbstractVector{Bool},
+                                    grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int}, boxlen::Float64,
+                                    weighting, weight_scale::Float64, use_geometric_mapping::Bool,
                                     xval, yval, weightval)
     """
     Project a single AMR level using proper geometric mapping.
     This replaces the old level processing loop with imresize.
+    Type-stable version with explicit parameter types.
     """
     
-    # Initialize grids for this level
+    # Initialize grids for this level with explicit types
     level_grids = Dict{Symbol, Matrix{Float64}}()
     level_weights = Dict{Symbol, Matrix{Float64}}()
     
     # Get coordinates for this level if there are any cells
     if any(mask_level)
-        # Use the already-masked coordinate and weight data
+        # Use the already-masked coordinate and weight data with type assertions
         x_vals = xval[mask_level]
         y_vals = yval[mask_level] 
-        weight_vals = weightval[mask_level] * weight_scale
+        weight_vals::Vector{Float64} = weightval[mask_level] * weight_scale
         
         for var in keys(data_dict)
             level_grids[var] = zeros(Float64, grid_resolution...)
             level_weights[var] = zeros(Float64, grid_resolution...)
             
-            if var == :sd || var == :mass
+            # Type-stable variable assignment
+            values::Vector{Float64} = if var == :sd || var == :mass
                 # For surface density/mass, use weight values directly
-                values = weight_vals
-                weights = ones(length(weight_vals))
+                weight_vals
             else
                 # For other variables, get the data and apply level mask
-                values = data_dict[var][mask_level]
-                weights = weight_vals
+                data_dict[var][mask_level]
+            end
+            
+            weights::Vector{Float64} = if var == :sd || var == :mass
+                ones(Float64, length(weight_vals))
+            else
+                weight_vals
             end
             
             if use_geometric_mapping
@@ -1175,14 +1187,17 @@ function project_amr_level_optimized(dataobject, level, selected_vars, data_dict
     end
 end
 
-function fast_hist2d_data_amr_boundary_aware!(h::Matrix{Float64}, x, y, data, w, range1, range2)
-    r1_min = Int(minimum(range1))
-    r2_min = Int(minimum(range2))
-    nx, ny = size(h)
+function fast_hist2d_data_amr_boundary_aware!(h::Matrix{Float64}, x::AbstractVector{<:Integer}, 
+                                            y::AbstractVector{<:Integer}, data::AbstractVector{Float64}, 
+                                            w::AbstractVector{Float64}, range1::AbstractRange{<:Integer}, 
+                                            range2::AbstractRange{<:Integer})
+    r1_min::Int = Int(minimum(range1))
+    r2_min::Int = Int(minimum(range2))
+    nx::Int, ny::Int = size(h)
     
     @inbounds for k in eachindex(x)
-        ix = x[k] - r1_min + 1
-        iy = y[k] - r2_min + 1
+        ix::Int = x[k] - r1_min + 1
+        iy::Int = y[k] - r2_min + 1
         if 1 <= ix <= nx && 1 <= iy <= ny
             h[ix, iy] += w[k] * data[k]
         end
