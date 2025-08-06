@@ -949,16 +949,26 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
     """
     Map AMR cells to a regular grid accounting for cell size and overlap.
     This replaces the imresize approach with proper geometric mapping.
+    Optimized version with pre-computed values and reduced calculations.
     """
     
-    # Calculate cell size for this level
+    # Pre-compute constants outside loops
     cell_size = boxlen / (2^level)
+    half_cell = cell_size * 0.5
+    cell_area = cell_size * cell_size
+    
     pixel_size_x = (grid_extent[2] - grid_extent[1]) / grid_resolution[1]
     pixel_size_y = (grid_extent[4] - grid_extent[3]) / grid_resolution[2]
+    inv_pixel_size_x = 1.0 / pixel_size_x
+    inv_pixel_size_y = 1.0 / pixel_size_y
     
     # Grid boundaries
     x_min, x_max = grid_extent[1], grid_extent[2] 
     y_min, y_max = grid_extent[3], grid_extent[4]
+    
+    # Pre-compute grid resolution bounds for bounds checking
+    max_ix = grid_resolution[1]
+    max_iy = grid_resolution[2]
     
     @inbounds for i in eachindex(x_coords)
         # Convert discrete coordinates to physical coordinates
@@ -966,41 +976,51 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
         y_phys = (y_coords[i] - 0.5) * cell_size
         
         # Cell boundaries in physical coordinates
-        cell_x_min = x_phys - cell_size/2
-        cell_x_max = x_phys + cell_size/2
-        cell_y_min = y_phys - cell_size/2  
-        cell_y_max = y_phys + cell_size/2
+        cell_x_min = x_phys - half_cell
+        cell_x_max = x_phys + half_cell
+        cell_y_min = y_phys - half_cell
+        cell_y_max = y_phys + half_cell
         
-        # Find overlapping grid cells
-        ix_start = max(1, Int(floor((cell_x_min - x_min) / pixel_size_x)) + 1)
-        ix_end = min(grid_resolution[1], Int(ceil((cell_x_max - x_min) / pixel_size_x)))
-        iy_start = max(1, Int(floor((cell_y_min - y_min) / pixel_size_y)) + 1)
-        iy_end = min(grid_resolution[2], Int(ceil((cell_y_max - y_min) / pixel_size_y)))
+        # Find overlapping grid cells using pre-computed inverse
+        ix_start = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
+        ix_end = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
+        iy_start = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
+        iy_end = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
+        
+        # Pre-compute weight contribution for this cell
+        weight_val = weights[i]
+        value_weight = values[i] * weight_val
         
         # Distribute cell value among overlapping pixels
         for ix in ix_start:ix_end
-            for iy in iy_start:iy_end
-                # Pixel boundaries
-                pix_x_min = x_min + (ix-1) * pixel_size_x
-                pix_x_max = x_min + ix * pixel_size_x
-                pix_y_min = y_min + (iy-1) * pixel_size_y
-                pix_y_max = y_min + iy * pixel_size_y
-                
-                # Calculate overlap area
-                overlap_x = max(0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
-                overlap_y = max(0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
-                overlap_area = overlap_x * overlap_y
-                
-                if overlap_area > 0
-                    # Weight by overlap fraction
-                    cell_area = cell_size * cell_size
-                    overlap_fraction = overlap_area / cell_area
+            # Pre-compute pixel x boundaries
+            pix_x_min = x_min + (ix-1) * pixel_size_x
+            pix_x_max = pix_x_min + pixel_size_x  # More efficient than x_min + ix * pixel_size_x
+            
+            # Calculate x overlap once per ix
+            overlap_x = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+            
+            if overlap_x > 0.0  # Early exit if no x overlap
+                for iy in iy_start:iy_end
+                    # Pre-compute pixel y boundaries
+                    pix_y_min = y_min + (iy-1) * pixel_size_y
+                    pix_y_max = pix_y_min + pixel_size_y
                     
-                    contribution = values[i] * weights[i] * overlap_fraction
-                    weight_contribution = weights[i] * overlap_fraction
+                    # Calculate y overlap
+                    overlap_y = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
                     
-                    grid[ix, iy] += contribution
-                    weight_grid[ix, iy] += weight_contribution
+                    if overlap_y > 0.0  # Early exit if no y overlap
+                        # Calculate overlap area and fraction
+                        overlap_area = overlap_x * overlap_y
+                        overlap_fraction = overlap_area / cell_area
+                        
+                        # Apply contributions
+                        contribution = value_weight * overlap_fraction
+                        weight_contribution = weight_val * overlap_fraction
+                        
+                        grid[ix, iy] += contribution
+                        weight_grid[ix, iy] += weight_contribution
+                    end
                 end
             end
         end
