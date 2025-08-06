@@ -116,6 +116,21 @@ function get_data(  dataobject::HydroDataType,
             selected_unit = getunit(dataobject, i, vars, units)
             vars_dict[i] =   select( dataobject.data, :p) ./ select( dataobject.data, :rho) .* selected_unit
 
+        elseif i == :entropy
+            selected_unit = getunit(dataobject, :entropy, vars, units)
+            # Entropy S = k_B * ln(P / rho^gamma) / (m_u * (gamma - 1))
+            # Full physical entropy calculation
+            gamma = dataobject.info.gamma
+            k_B = dataobject.info.constants.k_B  # Boltzmann constant
+            m_u = dataobject.info.constants.m_u  # Atomic mass unit
+            
+            pressure = select(dataobject.data, :p)
+            density = select(dataobject.data, :rho)
+            
+            # Calculate entropy per unit mass: S = (k_B / m_u) * ln(P / rho^gamma) / (gamma - 1)
+            entropy_term = @. log(pressure / (density ^ gamma))
+            vars_dict[:entropy] = (k_B / m_u) * entropy_term / (gamma - 1) .* selected_unit
+
         elseif i == :vx2
             selected_unit = getunit(dataobject, :vx2, vars, units)
             vars_dict[:vx2] =  select(dataobject.data, :vx).^2  .* selected_unit.^2
@@ -185,6 +200,57 @@ function get_data(  dataobject::HydroDataType,
 
             selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
             vars_dict[:vr_cylinder2] = (getvar(dataobject, :vr_cylinder, center=center) .* selected_unit).^2
+
+        elseif i == :vr_sphere
+
+            x = getvar(dataobject, :x, center=center)
+            y = getvar(dataobject, :y, center=center)
+            z = getvar(dataobject, :z, center=center)
+            vx = getvar(dataobject, :vx)
+            vy = getvar(dataobject, :vy)
+            vz = getvar(dataobject, :vz)
+
+            # vr_sphere = (x*vx + y*vy + z*vz) / sqrt(x^2 + y^2 + z^2)
+            selected_unit = getunit(dataobject, :vr_sphere, vars, units)
+            r_sphere = @. sqrt(x^2 + y^2 + z^2)
+            vr = @. (x * vx + y * vy + z * vz) / r_sphere * selected_unit
+            vr[isnan.(vr)] .= 0 # overwrite NaN due to radius = 0
+            vars_dict[:vr_sphere] = vr
+
+        # polar angle (from z-axis)
+        elseif i == :vθ_sphere
+
+            x = getvar(dataobject, :x, center=center)
+            y = getvar(dataobject, :y, center=center)
+            z = getvar(dataobject, :z, center=center)
+            vx = getvar(dataobject, :vx)
+            vy = getvar(dataobject, :vy)
+            vz = getvar(dataobject, :vz)
+
+            # vtheta_sphere = (z*(x*vx + y*vy) - (x^2 + y^2)*vz) / (sqrt(x^2 + y^2 + z^2) * sqrt(x^2 + y^2))
+            selected_unit = getunit(dataobject, :vθ_sphere, vars, units)
+            r_sphere = @. sqrt(x^2 + y^2 + z^2)
+            r_cylinder2 = @. x^2 + y^2
+            numerator = @. z * (x * vx + y * vy) - r_cylinder2 * vz
+            vtheta = @. numerator / (r_sphere * sqrt(r_cylinder2)) * selected_unit
+            vtheta[isnan.(vtheta)] .= 0 # overwrite NaN due to radius = 0
+            vars_dict[:vθ_sphere] = vtheta
+
+        #  azimuthal angle (in xy-plane)
+        elseif i == :vϕ_sphere
+
+            x = getvar(dataobject, :x, center=center)
+            y = getvar(dataobject, :y, center=center)
+            vx = getvar(dataobject, :vx)
+            vy = getvar(dataobject, :vy)
+
+            # vphi_sphere = (x*vy - y*vx) / sqrt(x^2 + y^2)
+            # This is the same as the cylindrical azimuthal component
+            selected_unit = getunit(dataobject, :vϕ_sphere, vars, units)
+            r_cylinder = @. sqrt(x^2 + y^2)
+            vphi = @. (x * vy - y * vx) / r_cylinder * selected_unit
+            vphi[isnan.(vphi)] .= 0 # overwrite NaN due to radius = 0
+            vars_dict[:vϕ_sphere] = vphi
 
         elseif i == :x
             selected_unit = getunit(dataobject, :x, vars, units)

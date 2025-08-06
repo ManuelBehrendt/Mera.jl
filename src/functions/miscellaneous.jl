@@ -34,27 +34,45 @@ function createconstants()
     constants.ly = 9.4607304725808e17  # [cm] Light year -> from IAU
     constants.Msol = 1.9891e33         # [g] Solar mass -> from IAU
     constants.Msun = constants.Msol
-    constants.Rsol = 6.96e10 #cm: Solar radius
+    constants.Rsol = 6.96e10           # [cm] Solar radius
     constants.Rsun = constants.Rsol
-    # Lsol = #erg s-2: Solar luminosity
+    constants.Lsol = 3.828e33          # [erg/s] Solar luminosity
+    constants.Lsun = constants.Lsol    # Alternative notation
     constants.Mearth = 5.9722e27       # [g]  Earth mass -> from IAU
     constants.Mjupiter = 1.89813e30    # [g]  Jupiter -> from IAU
 
-    constants.me = 9.1093897e-28 #g: electron mass
-    constants.mp = 1.6726231e-24 #g: proton mass
-    constants.mn = 1.6749286e-24 #g: neutron mass
+    constants.me = 9.1093837015e-28    # [g] electron mass - CODATA 2018
+    constants.mp = 1.67262192369e-24   # [g] proton mass - CODATA 2018
+    constants.mn = 1.67492749804e-24   # [g] neutron mass - CODATA 2018
     constants.mH = 1.66e-24            # [g]   H-Atom mass -> from RAMSES
-    constants.amu = 1.6605402e-24 #g: atomic mass unit
-    constants.NA = 6.0221367e23 # Avagadro's number
-    constants.c = 2.99792458e10 #cm s-1: speed of light in a vacuum
-    # h = #erg s: Planck constant
-    # hbar = #erg s
-    constants.G  = 6.67259e-8 # cm3 g-1 s-2 Gravitational constant
-    constants.kB = 1.3806200e-16       # [cm2 g s-2 K-1] Boltzmann constant -> cooling_module.f90 RAMSES
+    constants.amu = 1.66053906660e-24  # [g] atomic mass unit - CODATA 2018
+    constants.m_u = constants.amu      # Alternative notation
+    constants.NA = 6.02214076e23       # Avogadro's number - CODATA 2018
+    constants.c = 2.99792458e10        # [cm/s] speed of light in vacuum - exact
+    constants.h = 6.62607015e-27       # [erg·s] Planck constant - CODATA 2018 exact
+    constants.hbar = constants.h / (2 * pi) # [erg·s] Reduced Planck constant
+    constants.G  = 6.67430e-8          # [cm³/(g·s²)] Gravitational constant - CODATA 2018
+    constants.kB = 1.380649e-16        # [erg/K] Boltzmann constant - CODATA 2018 exact
+    constants.k_B = constants.kB       # Alternative notation
+    
+    # Additional astrophysical constants
+    constants.sigma_SB = 5.670374419e-5   # [erg/(cm²·s·K⁴)] Stefan-Boltzmann constant - CODATA 2018
+    constants.sigma_T = 6.6524587321e-25  # [cm²] Thomson scattering cross-section - CODATA 2018
+    constants.alpha_fs = 7.2973525693e-3  # Fine structure constant (dimensionless) - CODATA 2018
+    constants.R_gas = 8.314462618e7       # [erg/(mol·K)] Universal gas constant - CODATA 2018
+    constants.eV = 1.602176634e-12        # [erg] Electron volt - CODATA 2018 exact
+    constants.keV = constants.eV * 1e3 # [erg] Kilo electron volt
+    constants.MeV = constants.eV * 1e6 # [erg] Mega electron volt
+    constants.GeV = constants.eV * 1e9 # [erg] Giga electron volt
 
     constants.yr  = 3.15576e7           # [s]  Year -> from IAU
     constants.Myr = constants.yr *1e6
     constants.Gyr = constants.yr *1e9
+    
+    # Additional time units
+    constants.day = 86400.0            # [s] Day
+    constants.hr = 3600.0              # [s] Hour
+    constants.min = 60.0               # [s] Minute
 
     return constants
 end
@@ -137,7 +155,6 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
 
     scale.Msol_pc2  = unit_d * unit_l * pc^2 / Msol
     scale.Msun_pc2  = scale.Msol_pc2
-    scale.g_cm2     = unit_d * unit_l
 
     scale.Gyr       = unit_t / yr / 1e9
     scale.Myr       = unit_t / yr / 1e6
@@ -166,6 +183,44 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.g_cm_s2   = scale.Ba
     scale.p_kB      = scale.g_cm_s2 / kB # [K cm-3]
     scale.K_cm3     = scale.p_kB # p/kB
+
+    # Entropy-specific units for astrophysical applications
+    scale.erg_g_K   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / kB  # [erg/(g·K)] specific entropy
+    scale.keV_cm2   = scale.erg_g_K * kB / constants.eV * 1000.0 * (unit_l^2)   # [keV·cm²] entropy per particle (X-ray astro)
+    
+    # Magnetic field units (corrected formulas)
+    scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
+    scale.muG       = scale.Gauss * 1e6                                          # [μG] Micro-Gauss
+    scale.microG    = scale.muG                                                  # Alternative notation
+    scale.Tesla     = scale.Gauss * 1e-4                                         # [T] Tesla (SI)
+    
+    # Energy and luminosity scales (corrected)
+    scale.eV        = (unit_m * (unit_l / unit_t)^2) / constants.eV             # [eV] Electron volt
+    scale.keV       = scale.eV / 1e3                                             # [keV] Kilo electron volt  
+    scale.MeV       = scale.eV / 1e6                                             # [MeV] Mega electron volt
+    scale.erg_s     = unit_m * (unit_l / unit_t)^2 / unit_t                     # [erg/s] Luminosity
+    scale.Lsol      = scale.erg_s / constants.Lsol                              # [L☉] Solar luminosity
+    scale.Lsun      = scale.Lsol                                                 # Alternative notation
+    
+    # Particle number densities (corrected)
+    scale.cm_3      = 1. / (unit_l^3)                                            # [cm⁻³] Number density
+    scale.pc_3      = scale.cm_3 / (pc^3)                                        # [pc⁻³] Number density  
+    scale.n_e       = scale.nH                                                   # [e⁻/cm³] Electron density (assuming full ionization)
+    
+    # Cooling and heating rates
+    scale.erg_g_s   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / unit_t  # [erg/(g·s)] Specific cooling rate
+    scale.erg_cm3_s = unit_m / (unit_l * unit_t^3)                              # [erg/(cm³·s)] Volumetric cooling rate
+    
+    # Flux and surface brightness (corrected)
+    scale.erg_cm2_s = unit_m / (unit_l * unit_t^3)                              # [erg/(cm²·s)] Energy flux
+    scale.Jy        = scale.erg_cm2_s / 1e-23                                    # [Jy] Jansky (radio astronomy)
+    scale.mJy       = scale.Jy * 1e3                                             # [mJy] Milli-Jansky
+    scale.microJy   = scale.Jy * 1e6                                             # [μJy] Micro-Jansky
+    
+    # Column density (corrected)
+    scale.atoms_cm2 = unit_d * unit_l / mH                                      # [atoms/cm²] Column density
+    scale.NH_cm2    = scale.atoms_cm2                                            # [H/cm²] Hydrogen column density
+    scale.g_cm2     = unit_d * unit_l                                            # [g/cm²] Surface density
 
     return scale
 end
