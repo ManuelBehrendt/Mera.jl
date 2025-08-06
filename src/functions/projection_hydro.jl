@@ -408,9 +408,20 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             imaps[var] = zeros(Float64, (length1, length2))
         end
         
-        # Define grid extent in physical coordinates
-        grid_extent = [ranges[1]*boxlen, ranges[2]*boxlen, 
-                       ranges[3]*boxlen, ranges[4]*boxlen]
+        # Define grid extent in physical coordinates (direction-dependent)
+        if direction == :z
+            # For z-direction: use xrange and yrange for 2D projection plane
+            grid_extent = [ranges[1]*boxlen, ranges[2]*boxlen, 
+                           ranges[3]*boxlen, ranges[4]*boxlen]
+        elseif direction == :y  
+            # For y-direction: use xrange and zrange for 2D projection plane
+            grid_extent = [ranges[1]*boxlen, ranges[2]*boxlen, 
+                           ranges[5]*boxlen, ranges[6]*boxlen]
+        elseif direction == :x
+            # For x-direction: use yrange and zrange for 2D projection plane
+            grid_extent = [ranges[3]*boxlen, ranges[4]*boxlen, 
+                           ranges[5]*boxlen, ranges[6]*boxlen]
+        end
         grid_resolution = (length1, length2)
 
         if show_progress
