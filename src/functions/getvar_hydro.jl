@@ -325,6 +325,102 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :machz #thermal; no unit needed
             vars_dict[:machz] = getvar(dataobject, :vz) ./ getvar(dataobject, :cs)
 
+        # Additional Mach numbers for astrophysical applications
+        elseif i == :mach_r_cylinder # radial Mach number (cylindrical)
+            vars_dict[:mach_r_cylinder] = getvar(dataobject, :vr_cylinder, center=center) ./ getvar(dataobject, :cs)
+
+        elseif i == :mach_phi_cylinder # azimuthal Mach number (cylindrical)
+            vars_dict[:mach_phi_cylinder] = getvar(dataobject, :vϕ_cylinder, center=center) ./ getvar(dataobject, :cs)
+
+        elseif i == :mach_r_sphere # radial Mach number (spherical)
+            vars_dict[:mach_r_sphere] = getvar(dataobject, :vr_sphere, center=center) ./ getvar(dataobject, :cs)
+
+        elseif i == :mach_theta_sphere # polar Mach number (spherical)
+            vars_dict[:mach_theta_sphere] = getvar(dataobject, :vθ_sphere, center=center) ./ getvar(dataobject, :cs)
+
+        elseif i == :mach_phi_sphere # azimuthal Mach number (spherical)
+            vars_dict[:mach_phi_sphere] = getvar(dataobject, :vϕ_sphere, center=center) ./ getvar(dataobject, :cs)
+
+        # Magnetic Mach numbers (require magnetic field data)
+        elseif i == :mach_alfven # Alfvén Mach number
+            # Requires :bx, :by, :bz fields in the data
+            if :bx in column_names && :by in column_names && :bz in column_names
+                # Alfvén speed: v_A = B / sqrt(μ₀ * ρ) in SI or B / sqrt(4π * ρ) in Gaussian CGS
+                # For RAMSES code units: B is dimensionless, need to convert to physical units
+                B_total = sqrt.(select(dataobject.data, :bx).^2 .+ 
+                               select(dataobject.data, :by).^2 .+ 
+                               select(dataobject.data, :bz).^2)
+                rho = select(dataobject.data, :rho)
+                
+                # Convert B from code units to physical units (Gaussian CGS)
+                # In RAMSES: B_code = B_physical / sqrt(4π * ρ₀ * v₀²)
+                # So: B_physical = B_code * sqrt(4π * ρ₀ * v₀²)
+                unit_rho = dataobject.info.unit_d # g/cm³
+                unit_v = dataobject.info.unit_v   # cm/s
+                B_physical = B_total .* sqrt(4π * unit_rho * unit_v^2)
+                rho_physical = rho .* unit_rho
+                
+                # Alfvén speed in physical units: v_A = B / sqrt(4π * ρ) [cm/s]
+                v_alfven_physical = B_physical ./ sqrt.(4π .* rho_physical)
+                
+                # Convert back to code units for Mach number calculation
+                v_alfven = v_alfven_physical ./ unit_v
+                vars_dict[:mach_alfven] = getvar(dataobject, :v) ./ v_alfven
+            else
+                error("Magnetic field components (:bx, :by, :bz) not available for Alfvén Mach number calculation")
+            end
+
+        elseif i == :mach_fast # Fast magnetosonic Mach number
+            if :bx in column_names && :by in column_names && :bz in column_names
+                # Fast magnetosonic speed: v_f = sqrt(cs² + v_A²)
+                B_total = sqrt.(select(dataobject.data, :bx).^2 .+ 
+                               select(dataobject.data, :by).^2 .+ 
+                               select(dataobject.data, :bz).^2)
+                rho = select(dataobject.data, :rho)
+                
+                # Convert B from code units to physical units (same as above)
+                unit_rho = dataobject.info.unit_d
+                unit_v = dataobject.info.unit_v
+                B_physical = B_total .* sqrt(4π * unit_rho * unit_v^2)
+                rho_physical = rho .* unit_rho
+                
+                v_alfven_physical = B_physical ./ sqrt.(4π .* rho_physical)
+                v_alfven = v_alfven_physical ./ unit_v
+                
+                cs = getvar(dataobject, :cs)
+                v_fast = sqrt.(cs.^2 .+ v_alfven.^2)
+                vars_dict[:mach_fast] = getvar(dataobject, :v) ./ v_fast
+            else
+                error("Magnetic field components (:bx, :by, :bz) not available for fast magnetosonic Mach number calculation")
+            end
+
+        elseif i == :mach_slow # Slow magnetosonic Mach number  
+            if :bx in column_names && :by in column_names && :bz in column_names
+                # Slow magnetosonic speed calculation
+                # Full formula: v_s = sqrt((cs² + v_A² - sqrt((cs² + v_A²)² - 4cs²v_A²cos²θ))/2)
+                # Isotropic approximation: v_s ≈ cs*v_A/sqrt(cs² + v_A²)
+                B_total = sqrt.(select(dataobject.data, :bx).^2 .+ 
+                               select(dataobject.data, :by).^2 .+ 
+                               select(dataobject.data, :bz).^2)
+                rho = select(dataobject.data, :rho)
+                
+                # Convert B from code units to physical units (same as above)
+                unit_rho = dataobject.info.unit_d
+                unit_v = dataobject.info.unit_v
+                B_physical = B_total .* sqrt(4π * unit_rho * unit_v^2)
+                rho_physical = rho .* unit_rho
+                
+                v_alfven_physical = B_physical ./ sqrt.(4π .* rho_physical)
+                v_alfven = v_alfven_physical ./ unit_v
+                
+                cs = getvar(dataobject, :cs)
+                # Improved slow magnetosonic speed approximation
+                v_slow = (cs .* v_alfven) ./ sqrt.(cs.^2 .+ v_alfven.^2)
+                vars_dict[:mach_slow] = getvar(dataobject, :v) ./ v_slow
+            else
+                error("Magnetic field components (:bx, :by, :bz) not available for slow magnetosonic Mach number calculation")
+            end
+
 
         elseif i == :ekin
             selected_unit = getunit(dataobject, :ekin, vars, units)

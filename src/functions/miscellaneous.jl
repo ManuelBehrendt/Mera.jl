@@ -186,7 +186,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
 
     # Entropy-specific units for astrophysical applications
     scale.erg_g_K   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / kB  # [erg/(g·K)] specific entropy
-    scale.keV_cm2   = scale.erg_g_K * kB / constants.eV * 1000.0 * (unit_l^2)   # [keV·cm²] entropy per particle (X-ray astro)
+    scale.keV_cm2   = scale.erg_g_K * unit_d * unit_l^2 / constants.eV * 1000.0  # [keV·cm²] entropy per particle (X-ray astro)
     
     # Magnetic field units (corrected formulas)
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  

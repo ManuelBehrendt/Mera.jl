@@ -7,7 +7,9 @@
 using Mera
 ```
 
-Get information with the function ``getinfo`` about the simulation for a selected output and assign it to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function ``getinfo`` prints a small summary and the given units are printed in human-readable representation.
+Get information with the function ``getinfo`` about the simulation for a selected output and assign    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
+    
+    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :m_u, :NA, :c, :h, :hbar, :G, :kB, :k_B, :sigma_SB, :sigma_T, :alpha_fs, :R_gas, :eV, :keV, :MeV, :GeV, :Lsol, :Lsun, :Gyr, :Myr, :yr, :day, :hr, :min) to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function ``getinfo`` prints a small summary and the given units are printed in human-readable representation.
 
 
 ```julia
@@ -249,6 +251,12 @@ viewfields(info.scale)
     p_kB	= 2.1080995598777838e7
     K_cm3	= 2.1080995598777838e7
     
+    Note: Additional scales available for entropy (erg_g_K, keV_cm2), 
+    magnetic fields (Gauss, muG, Tesla), energy (eV, keV, MeV), 
+    luminosity (erg_s, Lsol), number densities (cm_3, pc_3, n_e),
+    cooling rates (erg_g_s, erg_cm3_s), flux (erg_cm2_s, Jy, mJy),
+    and column density (atoms_cm2, NH_cm2).
+    
 
 
 
@@ -259,7 +267,7 @@ list_field = propertynames( info.scale )
 
 
 
-    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
+    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2)
 
 
 
@@ -271,15 +279,38 @@ The underline in the unit representation corresponds to the fraction line, e.g.:
 |g_cm3          | g * cm^-3 |
 |Msun_pc2        | Msun * pc^-2|
 |g_cm2           | g * cm^-2|
-|            km_s| km * s^-1|
-|             m_s| m * s^-1|
-|            cm_s| cm * s^-1|
-|          g_cms2| g / (cm * s^2)|
-|          nH    | cm^-3 |
-|          T_mu  | T / μ |
-|          T_mu  | K / μ |
-|          p_kB  | p / kB |
-|          Ba    | = Barye (pressure) [cm^-1 * g * s^-2] |
+|km_s| km * s^-1|
+|m_s| m * s^-1|
+|cm_s| cm * s^-1|
+|g_cms2| g / (cm * s^2)|
+|nH    | cm^-3 |
+|T_mu  | T / μ |
+|K_mu  | K / μ |
+|p_kB  | p / kB |
+|Ba    | = Barye (pressure) [cm^-1 * g * s^-2] |
+|erg_g_K| erg / (g * K) |
+|keV_cm2| keV * cm^2 |
+|Gauss| Gauss (magnetic field) |
+|muG| μG (micro-Gauss) |
+|microG| μG (micro-Gauss) |
+|Tesla| Tesla (SI magnetic field) |
+|eV| electron volt |
+|keV| kilo electron volt |
+|MeV| mega electron volt |
+|erg_s| erg / s (luminosity) |
+|Lsol| L☉ (solar luminosity) |
+|Lsun| L☉ (solar luminosity) |
+|cm_3| cm^-3 (number density) |
+|pc_3| pc^-3 (number density) |
+|n_e| e^-/cm^3 (electron density) |
+|erg_g_s| erg / (g * s) (cooling rate) |
+|erg_cm3_s| erg / (cm^3 * s) (cooling rate) |
+|erg_cm2_s| erg / (cm^2 * s) (flux) |
+|Jy| Jansky (radio astronomy) |
+|mJy| milli-Jansky |
+|microJy| μJy (micro-Jansky) |
+|atoms_cm2| atoms / cm^2 (column density) |
+|NH_cm2| H atoms / cm^2 (H column density) |
 
 Access a scaling factor to use it in your calculations or plots by e.g.:
 
@@ -352,6 +383,51 @@ viewfields(info.constants)
 ```
 
     
+    [Mera]: Constants given in cgs units
+    =========================================
+    Au	= 1.495978707e13
+    Mpc	= 3.08567758128e24
+    kpc	= 3.08567758128e21
+    pc	= 3.08567758128e18
+    mpc	= 3.08567758128e15
+    ly	= 9.4607304725808e17
+    Msol	= 1.9891e33
+    Msun	= 1.9891e33
+    Mearth	= 5.9722e27
+    Mjupiter	= 1.89813e30
+    Rsol	= 6.96e10
+    Rsun	= 6.96e10
+    me	= 9.1093837015e-28
+    mp	= 1.67262192369e-24
+    mn	= 1.67492749804e-24
+    mH	= 1.66e-24
+    amu	= 1.66053906660e-24
+    m_u	= 1.66053906660e-24
+    NA	= 6.02214076e23
+    c	= 2.99792458e10
+    h	= 6.62607015e-27
+    hbar	= 1.0545718176e-27
+    G	= 6.67430e-8
+    kB	= 1.380649e-16
+    k_B	= 1.380649e-16
+    sigma_SB	= 5.670374419e-5
+    sigma_T	= 6.6524587321e-25
+    alpha_fs	= 7.2973525693e-3
+    R_gas	= 8.314462618e7
+    eV	= 1.602176634e-12
+    keV	= 1.602176634e-9
+    MeV	= 1.602176634e-6
+    GeV	= 1.602176634e-3
+    Lsol	= 3.828e33
+    Lsun	= 3.828e33
+    Gyr	= 3.15576e16
+    Myr	= 3.15576e13
+    yr	= 3.15576e7
+    day	= 86400.0
+    hr	= 3600.0
+    min	= 60.0
+
+    
     [Mera]: Constants given in cgs units
     =========================================
     Au	= 0.01495978707
@@ -390,7 +466,54 @@ con = info.constants;
 
 
 ```julia
+```julia
 viewfields(con)
+```
+
+    
+    [Mera]: Constants given in cgs units
+    =========================================
+    Au	= 1.495978707e13
+    Mpc	= 3.08567758128e24
+    kpc	= 3.08567758128e21
+    pc	= 3.08567758128e18
+    mpc	= 3.08567758128e15
+    ly	= 9.4607304725808e17
+    Msol	= 1.9891e33
+    Msun	= 1.9891e33
+    Mearth	= 5.9722e27
+    Mjupiter	= 1.89813e30
+    Rsol	= 6.96e10
+    Rsun	= 6.96e10
+    me	= 9.1093837015e-28
+    mp	= 1.67262192369e-24
+    mn	= 1.67492749804e-24
+    mH	= 1.66e-24
+    amu	= 1.66053906660e-24
+    m_u	= 1.66053906660e-24
+    NA	= 6.02214076e23
+    c	= 2.99792458e10
+    h	= 6.62607015e-27
+    hbar	= 1.0545718176e-27
+    G	= 6.67430e-8
+    kB	= 1.380649e-16
+    k_B	= 1.380649e-16
+    sigma_SB	= 5.670374419e-5
+    sigma_T	= 6.6524587321e-25
+    alpha_fs	= 7.2973525693e-3
+    R_gas	= 8.314462618e7
+    eV	= 1.602176634e-12
+    keV	= 1.602176634e-9
+    MeV	= 1.602176634e-6
+    GeV	= 1.602176634e-3
+    Lsol	= 3.828e33
+    Lsun	= 3.828e33
+    Gyr	= 3.15576e16
+    Myr	= 3.15576e13
+    yr	= 3.15576e7
+    day	= 86400.0
+    hr	= 3600.0
+    min	= 60.0
 ```
 
     
