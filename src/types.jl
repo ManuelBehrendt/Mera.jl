@@ -73,6 +73,46 @@ mutable struct ScalesType001
    g_cm_s2::Float64
    p_kB::Float64
    K_cm3::Float64
+
+   # Entropy units
+   erg_g_K::Float64
+   keV_cm2::Float64
+
+   # Magnetic field units
+   Gauss::Float64
+   muG::Float64
+   microG::Float64
+   Tesla::Float64
+
+   # Energy scales
+   eV::Float64
+   keV::Float64
+   MeV::Float64
+
+   # Luminosity
+   erg_s::Float64
+   Lsol::Float64
+   Lsun::Float64
+
+   # Number densities
+   cm_3::Float64
+   pc_3::Float64
+   n_e::Float64
+
+   # Cooling and heating rates
+   erg_g_s::Float64
+   erg_cm3_s::Float64
+
+   # Flux and surface brightness
+   erg_cm2_s::Float64
+   Jy::Float64
+   mJy::Float64
+   microJy::Float64
+
+   # Column density
+   atoms_cm2::Float64
+   NH_cm2::Float64
+
    ScalesType001() = new()
 end
 
@@ -109,6 +149,34 @@ Mutable Struct: Contains the physical constants in cgs units
     # hbar = #erg s
      G::Float64 # cm3 g-1 g-2 Gravitational constant
      kB::Float64 #erg k-1 Boltzmann constant
+     k_B::Float64 #erg k-1 Boltzmann constant (alternative notation)
+     
+     # Additional astrophysical constants
+     h::Float64 #erg·s Planck constant  
+     hbar::Float64 #erg·s Reduced Planck constant
+     sigma_SB::Float64 #erg/(cm²·s·K⁴) Stefan-Boltzmann constant
+     sigma_T::Float64 #cm² Thomson scattering cross-section
+     alpha_fs::Float64 #Fine structure constant (dimensionless)
+     R_gas::Float64 #erg/(mol·K) Universal gas constant
+     
+     # Energy units
+     eV::Float64 #erg Electron volt
+     keV::Float64 #erg Kilo electron volt
+     MeV::Float64 #erg Mega electron volt
+     GeV::Float64 #erg Giga electron volt
+     
+     # Luminosity
+     Lsol::Float64 #erg/s Solar luminosity
+     Lsun::Float64 #erg/s Solar luminosity (alternative notation)
+     
+     # Additional mass units
+     m_u::Float64 #g atomic mass unit (alternative notation)
+     
+     # Additional time units
+     day::Float64 #s Day
+     hr::Float64 #s Hour
+     min::Float64 #s Minute
+     
      Gyr::Float64 #sec: defined as 365.25 days
      Myr::Float64 #sec: defined as 365.25 days
      yr::Float64 #sec: defined as 365.25 days
