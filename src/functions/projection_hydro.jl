@@ -443,7 +443,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     x_coord, y_coord, z_coord, mask_level,
                     grid_extent, grid_resolution, boxlen,
                     weighting, weight_scale, true,  # use geometric mapping
-                    xval, yval, weightval)  # pass the already masked coordinate and weight data
+                    xval, yval, weightval; verbose=verbose)  # pass the already masked coordinate and weight data
                 
                 # Accumulate into final grids
                 for var in keys(data_dict)
@@ -953,7 +953,7 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
     """
     Map AMR cells to a regular grid accounting for cell size and overlap.
     This replaces the imresize approach with proper geometric mapping.
-    Optimized version with pre-computed values, reduced calculations, and type stability.
+    Optimized version with spatial indexing, pre-computed values, and type stability.
     """
     
     # Pre-compute constants outside loops with explicit types
@@ -970,11 +970,16 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
     x_min::Float64, x_max::Float64 = grid_extent[1], grid_extent[2] 
     y_min::Float64, y_max::Float64 = grid_extent[3], grid_extent[4]
     
+    # Spatial indexing: pre-compute cell bounds and grid ranges for all cells
+    n_cells = length(x_coords)
+    cell_ranges = Vector{NTuple{4,Int}}(undef, n_cells)  # (ix_start, ix_end, iy_start, iy_end)
+    
     # Pre-compute grid resolution bounds for bounds checking with explicit types
     max_ix::Int = grid_resolution[1]
     max_iy::Int = grid_resolution[2]
     
-    @inbounds for i in eachindex(x_coords)
+    # Phase 1: Spatial indexing - pre-compute all cell-to-grid mappings
+    @inbounds for i in 1:n_cells
         # Convert discrete coordinates to physical coordinates with explicit types
         x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
         y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
@@ -991,15 +996,37 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
         iy_start::Int = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
         iy_end::Int = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
         
+        # Store the grid range for this cell
+        cell_ranges[i] = (ix_start, ix_end, iy_start, iy_end)
+    end
+    
+    # Phase 2: Fast distribution using pre-computed spatial index
+    @inbounds for i in 1:n_cells
+        # Retrieve pre-computed grid ranges
+        ix_start, ix_end, iy_start, iy_end = cell_ranges[i]
+        
+        # Skip cells that don't overlap with grid
+        if ix_start > ix_end || iy_start > iy_end
+            continue
+        end
+        
+        # Pre-compute cell geometry (same as before but only once per cell)
+        x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
+        cell_x_min::Float64 = x_phys - half_cell
+        cell_x_max::Float64 = x_phys + half_cell
+        cell_y_min::Float64 = y_phys - half_cell
+        cell_y_max::Float64 = y_phys + half_cell
+        
         # Pre-compute weight contribution for this cell with explicit types
         weight_val::Float64 = weights[i]
         value_weight::Float64 = values[i] * weight_val
         
-        # Distribute cell value among overlapping pixels
+        # Distribute cell value among overlapping pixels using pre-computed ranges
         for ix::Int in ix_start:ix_end
             # Pre-compute pixel x boundaries with explicit types
             pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
-            pix_x_max::Float64 = pix_x_min + pixel_size_x  # More efficient than x_min + ix * pixel_size_x
+            pix_x_max::Float64 = pix_x_min + pixel_size_x
             
             # Calculate x overlap once per ix with explicit type
             overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
@@ -1024,6 +1051,148 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
                         
                         grid[ix, iy] += contribution
                         weight_grid[ix, iy] += weight_contribution
+                    end
+                end
+            end
+        end
+    end
+end
+
+# Adaptive dispatcher function that chooses the best algorithm
+function map_amr_cells_to_grid_adaptive!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+                                        x_coords::AbstractVector, y_coords::AbstractVector, 
+                                        values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
+                                        level::Int, grid_extent::NTuple{4,Float64}, 
+                                        grid_resolution::NTuple{2,Int}, boxlen::Float64; verbose::Bool=false)
+    """
+    Adaptive spatial indexing that chooses the best algorithm based on data characteristics.
+    """
+    n_cells = length(x_coords)
+    grid_area = grid_resolution[1] * grid_resolution[2]
+    
+    # Heuristics for algorithm selection
+    if n_cells > 50000 && grid_area > 10000
+        # Large dataset with large grid: use advanced spatial indexing
+        if verbose println("Using spatial indexing: $n_cells cells, $grid_area pixels") end
+        map_amr_cells_to_grid_with_spatial_index!(grid, weight_grid, x_coords, y_coords, 
+                                                values, weights, level, grid_extent, grid_resolution, boxlen)
+    else
+        # Smaller datasets: use optimized direct approach
+        if verbose println("Using direct approach: $n_cells cells, $grid_area pixels") end
+        map_amr_cells_to_grid!(grid, weight_grid, x_coords, y_coords, 
+                             values, weights, level, grid_extent, grid_resolution, boxlen)
+    end
+end
+function map_amr_cells_to_grid_with_spatial_index!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+                                                  x_coords::AbstractVector, y_coords::AbstractVector, 
+                                                  values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
+                                                  level::Int, grid_extent::NTuple{4,Float64}, 
+                                                  grid_resolution::NTuple{2,Int}, boxlen::Float64)
+    """
+    Advanced spatial indexing version with hierarchical grid bins for ultra-fast lookup.
+    Best for large datasets with many cells.
+    """
+    
+    # Pre-compute constants
+    cell_size::Float64 = boxlen / (2^level)
+    half_cell::Float64 = cell_size * 0.5
+    cell_area::Float64 = cell_size * cell_size
+    
+    pixel_size_x::Float64 = (grid_extent[2] - grid_extent[1]) / grid_resolution[1]
+    pixel_size_y::Float64 = (grid_extent[4] - grid_extent[3]) / grid_resolution[2]
+    inv_pixel_size_x::Float64 = 1.0 / pixel_size_x
+    inv_pixel_size_y::Float64 = 1.0 / pixel_size_y
+    
+    x_min::Float64, x_max::Float64 = grid_extent[1], grid_extent[2] 
+    y_min::Float64, y_max::Float64 = grid_extent[3], grid_extent[4]
+    max_ix::Int, max_iy::Int = grid_resolution[1], grid_resolution[2]
+    
+    # Create spatial bins for faster lookup (divide grid into larger bins)
+    bin_size::Int = max(8, Int(ceil(sqrt(length(x_coords)) / 16)))  # Adaptive bin sizing
+    n_bins_x::Int = Int(ceil(max_ix / bin_size))
+    n_bins_y::Int = Int(ceil(max_iy / bin_size))
+    
+    # Spatial index: map each bin to list of cells that might affect it
+    spatial_bins = [Vector{Int}() for _ in 1:n_bins_x, _ in 1:n_bins_y]
+    
+    # Phase 1: Build spatial index
+    @inbounds for i in eachindex(x_coords)
+        x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
+        
+        cell_x_min::Float64 = x_phys - half_cell
+        cell_x_max::Float64 = x_phys + half_cell
+        cell_y_min::Float64 = y_phys - half_cell
+        cell_y_max::Float64 = y_phys + half_cell
+        
+        # Find which bins this cell overlaps
+        ix_start::Int = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
+        ix_end::Int = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
+        iy_start::Int = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
+        iy_end::Int = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
+        
+        # Convert pixel ranges to bin ranges
+        bin_x_start::Int = max(1, Int(ceil(ix_start / bin_size)))
+        bin_x_end::Int = min(n_bins_x, Int(ceil(ix_end / bin_size)))
+        bin_y_start::Int = max(1, Int(ceil(iy_start / bin_size)))
+        bin_y_end::Int = min(n_bins_y, Int(ceil(iy_end / bin_size)))
+        
+        # Add cell to relevant bins
+        for bx in bin_x_start:bin_x_end
+            for by in bin_y_start:bin_y_end
+                push!(spatial_bins[bx, by], i)
+            end
+        end
+    end
+    
+    # Phase 2: Process each bin independently for better cache locality
+    @inbounds for bx in 1:n_bins_x
+        for by in 1:n_bins_y
+            cell_list = spatial_bins[bx, by]
+            isempty(cell_list) && continue
+            
+            # Process all cells in this bin
+            for cell_idx in cell_list
+                # Cell geometry calculations
+                x_phys::Float64 = (x_coords[cell_idx] - 0.5) * cell_size
+                y_phys::Float64 = (y_coords[cell_idx] - 0.5) * cell_size
+                
+                cell_x_min::Float64 = x_phys - half_cell
+                cell_x_max::Float64 = x_phys + half_cell
+                cell_y_min::Float64 = y_phys - half_cell
+                cell_y_max::Float64 = y_phys + half_cell
+                
+                # Precise pixel range for this cell
+                ix_start::Int = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
+                ix_end::Int = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
+                iy_start::Int = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
+                iy_end::Int = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
+                
+                # Pre-compute contributions
+                weight_val::Float64 = weights[cell_idx]
+                value_weight::Float64 = values[cell_idx] * weight_val
+                
+                # Distribute to overlapping pixels
+                for ix::Int in ix_start:ix_end
+                    pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
+                    pix_x_max::Float64 = pix_x_min + pixel_size_x
+                    overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+                    
+                    if overlap_x > 0.0
+                        for iy::Int in iy_start:iy_end
+                            pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
+                            pix_y_max::Float64 = pix_y_min + pixel_size_y
+                            overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                            
+                            if overlap_y > 0.0
+                                overlap_fraction::Float64 = (overlap_x * overlap_y) / cell_area
+                                contribution::Float64 = value_weight * overlap_fraction
+                                weight_contribution::Float64 = weight_val * overlap_fraction
+                                
+                                grid[ix, iy] += contribution
+                                weight_grid[ix, iy] += weight_contribution
+                            end
+                        end
                     end
                 end
             end
@@ -1104,7 +1273,7 @@ function project_amr_level_optimized(dataobject, level::Int, selected_vars, data
                                     x_coord, y_coord, z_coord, mask_level::AbstractVector{Bool},
                                     grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int}, boxlen::Float64,
                                     weighting, weight_scale::Float64, use_geometric_mapping::Bool,
-                                    xval, yval, weightval)
+                                    xval, yval, weightval; verbose::Bool=false)
     """
     Project a single AMR level using proper geometric mapping.
     This replaces the old level processing loop with imresize.
@@ -1142,10 +1311,10 @@ function project_amr_level_optimized(dataobject, level::Int, selected_vars, data
             end
             
             if use_geometric_mapping
-                # Use proper geometric mapping
-                map_amr_cells_to_grid!(level_grids[var], level_weights[var],
-                                     x_vals, y_vals, values, weights, level,
-                                     grid_extent, grid_resolution, boxlen)
+                # Use adaptive spatial indexing for optimal performance
+                map_amr_cells_to_grid_adaptive!(level_grids[var], level_weights[var],
+                                               x_vals, y_vals, values, weights, level,
+                                               grid_extent, grid_resolution, boxlen; verbose=verbose)
             else
                 # Fallback to old histogram method for compatibility
                 new_level_range1, new_level_range2, _, _ = prep_level_range(:z, level, 
