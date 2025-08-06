@@ -2,7 +2,7 @@
 # Added: 2025-07-30T21:05:53.034
 
 # Global buffer size optimization (can be tuned based on system)
-const MERA_OPTIMAL_BUFFER_SIZE = get(ENV, "MERA_BUFFER_SIZE", "65536") |> x -> parse(Int, x)
+const MERA_OPTIMAL_BUFFER_SIZE = get(ENV, "MERA_OPTIMAL_BUFFER_SIZE", "65536") |> x -> parse(Int, x)
 const MERA_USE_LARGE_BUFFERS = get(ENV, "MERA_LARGE_BUFFERS", "true") == "true"
 
 # File metadata cache for repeated getinfo calls
@@ -187,6 +187,18 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     # Entropy-specific units for astrophysical applications
     scale.erg_g_K   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / kB  # [erg/(g·K)] specific entropy
     scale.keV_cm2   = scale.erg_g_K * unit_d * unit_l^2 / constants.eV * 1000.0  # [keV·cm²] entropy per particle (X-ray astro)
+    
+    # Additional entropy unit scales
+    scale.erg_K         = scale.erg_g_K * unit_d * unit_l^3                      # [erg/K] total entropy
+    scale.J_K           = scale.erg_K / 1e7                                      # [J/K] SI total entropy  
+    scale.erg_cm3_K     = scale.erg_g_K * unit_d                                 # [erg/(cm³·K)] entropy density
+    scale.J_m3_K        = scale.erg_cm3_K * 1e1                                  # [J/(m³·K)] SI entropy density
+    scale.kB_per_particle = constants.k_B                                        # [erg/K per particle] Boltzmann constant
+    
+    # Angular momentum units
+    scale.J_s           = unit_m * (unit_l^2 / unit_t)                          # [J·s] Angular momentum (SI)
+    scale.g_cm2_s       = unit_m * (unit_l^2 / unit_t)                          # [g·cm²/s] Angular momentum (cgs)
+    scale.kg_m2_s       = scale.g_cm2_s * 1e-3 * 1e4                           # [kg·m²/s] Angular momentum (SI)
     
     # Magnetic field units (corrected formulas)
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  

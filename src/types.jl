@@ -77,6 +77,16 @@ mutable struct ScalesType001
    # Entropy units
    erg_g_K::Float64
    keV_cm2::Float64
+   erg_K::Float64
+   J_K::Float64
+   erg_cm3_K::Float64
+   J_m3_K::Float64
+   kB_per_particle::Float64
+
+   # Angular momentum units
+   J_s::Float64
+   g_cm2_s::Float64
+   kg_m2_s::Float64
 
    # Magnetic field units
    Gauss::Float64

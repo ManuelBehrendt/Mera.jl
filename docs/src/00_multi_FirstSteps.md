@@ -251,8 +251,8 @@ viewfields(info.scale)
     p_kB	= 2.1080995598777838e7
     K_cm3	= 2.1080995598777838e7
     
-    Note: Additional scales available for entropy (erg_g_K, keV_cm2), 
-    magnetic fields (Gauss, muG, Tesla), energy (eV, keV, MeV), 
+    Note: Additional scales available for entropy (erg_g_K, keV_cm2, erg_K, J_K, erg_cm3_K, J_m3_K, kB_per_particle), 
+    angular momentum (J_s, g_cm2_s, kg_m2_s), magnetic fields (Gauss, muG, Tesla), energy (eV, keV, MeV), 
     luminosity (erg_s, Lsol), number densities (cm_3, pc_3, n_e),
     cooling rates (erg_g_s, erg_cm3_s), flux (erg_cm2_s, Jy, mJy),
     and column density (atoms_cm2, NH_cm2).
@@ -267,7 +267,7 @@ list_field = propertynames( info.scale )
 
 
 
-    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2)
+    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2)
 
 
 
@@ -290,6 +290,14 @@ The underline in the unit representation corresponds to the fraction line, e.g.:
 |Ba    | = Barye (pressure) [cm^-1 * g * s^-2] |
 |erg_g_K| erg / (g * K) |
 |keV_cm2| keV * cm^2 |
+|erg_K| erg / K (total entropy) |
+|J_K| J / K (SI total entropy) |
+|erg_cm3_K| erg / (cm^3 * K) (entropy density) |
+|J_m3_K| J / (m^3 * K) (SI entropy density) |
+|kB_per_particle| erg / K per particle |
+|J_s| J * s (angular momentum, SI) |
+|g_cm2_s| g * cm^2 / s (angular momentum, cgs) |
+|kg_m2_s| kg * m^2 / s (angular momentum, SI) |
 |Gauss| Gauss (magnetic field) |
 |muG| μG (micro-Gauss) |
 |microG| μG (micro-Gauss) |
