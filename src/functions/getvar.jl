@@ -9,7 +9,8 @@ function getvar()
     println("              -derived hydro vars-")
     println(":x, :y, :z")
     println(":mass, :cellsize, :volume, :freefall_time")
-    println(":cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber")
+    println(":cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber, :jeansmass")
+    println(":virial_parameter_local")
     println(":T, :Temp, :Temperature with p/rho")
     println()
     println(":entropy_specific (specific entropy)")
@@ -37,12 +38,25 @@ function getvar()
     println(":x, :y, :z")
     println(":cellsize, :volume")
     println()
+    println("     -gravitational field properties-")
+    println(":a_magnitude")
+    println(":escape_speed")
+    println(":gravitational_redshift")
+    println()
+    println("     -gravitational energy analysis (requires hydro_data)-")
+    println(":gravitational_energy_density, :gravitational_binding_energy")
+    println(":total_binding_energy, :specific_gravitational_energy")
+    println(":potential_energy_per_cell, :gravitational_work")
+    println(":jeans_length_gravity, :jeans_mass_gravity")
+    println(":freefall_time_gravity, :virial_parameter_local")
+    println(":Fg, :poisson_source")
+    println()
     println("===========================[clumps]:===========================")
     println(":peak_x or :x, :peak_y or :y, :peak_z or :z")
     println(":v, :ekin,...")
     println()
     #println("===========================[sinks]:============================")
-    println("=====================[gas and particles]:=======================")
+    println("=====================[gas, particles or gravity]:=======================")
     println(":v, :ekin")
     println()
     println("related to a given center:")
@@ -67,6 +81,12 @@ function getvar()
     println(":l, :lx, :ly, :lz (Cartesian components)")
     println(":lr_cylinder, :lϕ_cylinder (cylindrical components)")
     println(":lr_sphere, :lθ_sphere, :lϕ_sphere (spherical components)")
+    println()
+    println("     -cylindrical acceleration components, gravity-")
+    println(":ar_cylinder, :aϕ_cylinder")
+    println()
+    println("     -spherical acceleration components, gravity-")
+    println(":ar_sphere, :aθ_sphere, :aϕ_sphere")
     println("----------------------------------------------------------------")
     return
 end
@@ -243,6 +263,129 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
 end
 
 
+# ========== GRAVITY-SPECIFIC GETVAR FUNCTIONS WITH HYDRO DATA SUPPORT ==========
+
+"""
+#### Get gravity data with optional hydro data for advanced energy analysis
+
+**Arguments:**
+- **`dataobject`:** needs to be of type: "GravDataType"
+- **`var`:** select a variable from the database or a predefined quantity
+
+**Keyword Arguments:**
+- **`hydro_data`:** optional hydro data object for energy calculations that require density/mass
+- **`center`:** center position (default: [0.,0.,0.])
+- **`direction`:** direction for cylindrical coordinates (default: :z)
+- ...
+
+**Examples:**
+```julia
+# Basic gravity analysis
+grav_data = getvar(grav, :epot)
+
+# Advanced energy analysis with hydro data
+energy_density = getvar(grav, :gravitational_energy_density, hydro_data=hydro)
+binding_energy = getvar(grav, :gravitational_binding_energy, hydro_data=hydro)
+```
+"""
+function getvar(   dataobject::GravDataType, var::Symbol;
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    unit::Symbol=:standard,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, var::Symbol, unit::Symbol;
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, unit::Symbol;
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    units = [unit for i in 1:length(vars)]
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    unit::Symbol=:standard,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    units = [unit for i in 1:length(vars)]
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
 
 
 

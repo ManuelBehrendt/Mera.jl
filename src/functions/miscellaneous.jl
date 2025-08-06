@@ -234,6 +234,75 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.NH_cm2    = scale.atoms_cm2                                            # [H/cm²] Hydrogen column density
     scale.g_cm2     = unit_d * unit_l                                            # [g/cm²] Surface density
 
+    # Gravitational and acceleration unit scales
+    scale.cm_s2     = unit_l / unit_t^2                                          # [cm/s²] Acceleration
+    scale.m_s2      = scale.cm_s2 / 100.0                                        # [m/s²] SI acceleration
+    scale.km_s2     = scale.cm_s2 / 1e5                                          # [km/s²] Acceleration
+    scale.pc_Myr2   = scale.cm_s2 * (scale.Myr^2 / scale.pc)                    # [pc/Myr²] Astronomical acceleration
+    
+    # Gravitational potential and energy unit scales
+    scale.erg_g     = (unit_l / unit_t)^2                                        # [erg/g] Specific energy/potential
+    scale.J_kg      = scale.erg_g / 1e7                                          # [J/kg] SI specific energy
+    scale.km2_s2    = scale.erg_g / 1e10                                         # [km²/s²] Velocity squared units
+    
+    # Gravitational energy analysis unit scales
+    scale.u_grav        = unit_d * scale.erg_g                                  # [erg/cm³] Gravitational energy density
+    scale.erg_cell      = unit_d * scale.erg_g * unit_l^3                       # [erg] Total energy per cell
+    scale.dyne          = unit_d * scale.cm_s2                                  # [dyne] Force
+    scale.s_2           = scale.cm_s2 / unit_l                                  # [s⁻²] Acceleration per length  
+    scale.lambda_J      = unit_l                                                # [cm] Jeans length scale
+    scale.M_J           = unit_d * unit_l^3                                     # [g] Jeans mass scale  
+    scale.t_ff          = unit_t                                                 # [s] Free-fall time scale
+    scale.alpha_vir     = 1.0                                                   # Dimensionless virial parameter
+    scale.delta_rho     = 1.0                                                   # Dimensionless density contrast
+    
+    # Missing gravity field unit scales
+    scale.a_mag         = scale.cm_s2                                           # [cm/s²] Acceleration magnitude
+    scale.v_esc         = scale.cm_s                                            # [cm/s] Escape velocity
+    scale.ax            = scale.cm_s2                                           # [cm/s²] x-acceleration component
+    scale.ay            = scale.cm_s2                                           # [cm/s²] y-acceleration component  
+    scale.az            = scale.cm_s2                                           # [cm/s²] z-acceleration component
+    scale.epot          = scale.erg_g                                           # [erg/g] Gravitational potential
+    
+    # Dimensionless ratios and angles
+    scale.dimensionless = 1.0                                                    # Dimensionless quantities
+    scale.rad           = 1.0                                                    # [rad] Radians
+    scale.deg           = 180.0 / π                                              # [deg] Degrees
+
+    # ===== DERIVED VARIABLE MAPPINGS TO PROPER UNIT NAMES =====
+    # These map derived variable names to their appropriate physical unit types
+    # Following the hydro pattern where getunit(obj, :variable_name, vars, units) works
+    
+    # Basic gravity components
+    scale.a_magnitude                  = scale.cm_s2                             # [cm/s²] Acceleration magnitude → acceleration unit
+    scale.escape_speed                 = scale.cm_s                              # [cm/s] Escape velocity → velocity unit
+    scale.gravitational_redshift       = scale.dimensionless                     # Dimensionless redshift → dimensionless
+    
+    # Gravitational energy analysis (map to proper physics units)
+    scale.gravitational_energy_density = scale.u_grav                           # [erg/cm³] Energy density → energy density unit
+    scale.gravitational_binding_energy = scale.u_grav                           # [erg/cm³] Binding energy density → energy density unit
+    scale.total_binding_energy         = scale.erg_cell                         # [erg] Total energy per cell → energy unit
+    scale.specific_gravitational_energy = scale.erg_g                           # [erg/g] Specific energy → specific energy unit
+    scale.potential_energy_per_cell    = scale.erg_cell                         # [erg] Potential energy per cell → energy unit
+    scale.gravitational_work           = scale.erg                              # [erg] Work/energy → energy unit
+    scale.jeans_length_gravity         = scale.cm                               # [cm] Jeans length → length unit
+    scale.jeans_mass_gravity           = scale.g                                # [g] Jeans mass → mass unit
+    scale.jeansmass                    = scale.g                                # [g] Jeans mass (hydro) → mass unit
+    scale.freefall_time_gravity        = scale.s                                # [s] Free-fall time → time unit
+    scale.virial_parameter_local       = scale.dimensionless                    # Dimensionless virial param → dimensionless
+    scale.Fg                          = scale.dyne                             # [dyne] Force → force unit
+    scale.poisson_source               = scale.s_2                              # [s⁻²] Poisson source term → acceleration/length unit
+    
+    # Coordinate system components (map to proper units)
+    scale.ar_cylinder                  = scale.cm_s2                            # [cm/s²] Cylindrical radial acceleration → acceleration unit
+    scale.aϕ_cylinder                  = scale.cm_s2                            # [cm/s²] Cylindrical azimuthal acceleration → acceleration unit
+    scale.ar_sphere                    = scale.cm_s2                            # [cm/s²] Spherical radial acceleration → acceleration unit
+    scale.aθ_sphere                    = scale.cm_s2                            # [cm/s²] Spherical polar acceleration → acceleration unit
+    scale.aϕ_sphere                    = scale.cm_s2                            # [cm/s²] Spherical azimuthal acceleration → acceleration unit
+    scale.r_cylinder                   = scale.cm                               # [cm] Cylindrical radius → length unit
+    scale.r_sphere                     = scale.cm                               # [cm] Spherical radius → length unit
+    scale.ϕ                            = scale.rad                              # [rad] Azimuthal angle → angle unit
+
     return scale
 end
 
