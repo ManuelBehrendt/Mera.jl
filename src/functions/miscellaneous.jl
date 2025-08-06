@@ -283,12 +283,13 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.gravitational_binding_energy = scale.u_grav                           # [erg/cm³] Binding energy density → energy density unit
     scale.total_binding_energy         = scale.erg_cell                         # [erg] Total energy per cell → energy unit
     scale.specific_gravitational_energy = scale.erg_g                           # [erg/g] Specific energy → specific energy unit
-    scale.potential_energy_per_cell    = scale.erg_cell                         # [erg] Potential energy per cell → energy unit
+    scale.epot                         = scale.erg_cell                         # [erg] Potential energy per cell → energy unit
     scale.gravitational_work           = scale.erg                              # [erg] Work/energy → energy unit
     scale.jeans_length_gravity         = scale.cm                               # [cm] Jeans length → length unit
     scale.jeans_mass_gravity           = scale.g                                # [g] Jeans mass → mass unit
     scale.jeansmass                    = scale.g                                # [g] Jeans mass (hydro) → mass unit
     scale.freefall_time_gravity        = scale.s                                # [s] Free-fall time → time unit
+    scale.ekin                         = scale.erg                              # [erg] Kinetic energy → energy unit
     scale.virial_parameter_local       = scale.dimensionless                    # Dimensionless virial param → dimensionless
     scale.Fg                          = scale.dyne                             # [dyne] Force → force unit
     scale.poisson_source               = scale.s_2                              # [s⁻²] Poisson source term → acceleration/length unit
