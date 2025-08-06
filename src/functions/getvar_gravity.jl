@@ -15,6 +15,18 @@ function get_data(dataobject::GravDataType,
     # Check if hydro data is available for combined calculations
     has_hydro = !isnothing(hydro_data)
 
+    # Early mask application for performance optimization
+    if length(mask) > 1
+        # Filter the IndexedTables data first to process only masked rows
+        # This gives true O(masked_cells) performance instead of O(total_cells)
+        mask_indices = findall(mask)
+        masked_data = dataobject.data[mask_indices]
+        use_masked_data = false  # No need to apply mask again since data is pre-filtered
+    else
+        use_masked_data = false
+        masked_data = dataobject.data
+    end
+
 
     if direction == :z
         apos = :cx
@@ -44,7 +56,7 @@ function get_data(dataobject::GravDataType,
     end
 
 
-    column_names = propertynames(dataobject.data.columns)
+    column_names = propertynames(masked_data.columns)
 
 
     for i in vars
@@ -55,28 +67,28 @@ function get_data(dataobject::GravDataType,
             selected_unit = getunit(dataobject, i, vars, units)
             if i == :cx
                 if isamr
-                    vars_dict[i] =  select(dataobject.data, apos) .- 2 .^getvar(dataobject, :level) .* center[1]
+                    vars_dict[i] =  select(masked_data, apos) .- 2 .^select(masked_data, :level) .* center[1]
                 else # if uniform grid
-                    vars_dict[i] =  select(dataobject.data, apos) .- 2^lmax .* center[1]
+                    vars_dict[i] =  select(masked_data, apos) .- 2^lmax .* center[1]
                 end
             elseif i == :cy
                 if isamr
-                    vars_dict[i] =  select(dataobject.data, bpos) .- 2 .^getvar(dataobject, :level) .* center[2]
+                    vars_dict[i] =  select(masked_data, bpos) .- 2 .^select(masked_data, :level) .* center[2]
                 else # if uniform grid
-                    vars_dict[i] =  select(dataobject.data, bpos) .- 2^lmax .* center[2]
+                    vars_dict[i] =  select(masked_data, bpos) .- 2^lmax .* center[2]
                 end
             elseif i == :cx
                 if isamr
-                    vars_dict[i] =  select(dataobject.data, cpos) .- 2 .^getvar(dataobject, :level) .* center[3]
+                    vars_dict[i] =  select(masked_data, cpos) .- 2 .^select(masked_data, :level) .* center[3]
                 else # if uniform grid
-                    vars_dict[i] =  select(dataobject.data, cpos) .- 2^lmax .* center[3]
+                    vars_dict[i] =  select(masked_data, cpos) .- 2^lmax .* center[3]
                 end
             else
                 #if selected_unit != 1.
                     #println(i)
-                    vars_dict[i] = select(dataobject.data, i) .* selected_unit
+                    vars_dict[i] = select(masked_data, i) .* selected_unit
                 #else
-                    #vars_dict[i] = select(dataobject.data, i)
+                    #vars_dict[i] = select(masked_data, i)
                 #end
             end
 
@@ -84,55 +96,55 @@ function get_data(dataobject::GravDataType,
         elseif i == :cellsize
             selected_unit = getunit(dataobject, :cellsize, vars, units)
             if isamr
-                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^row.level * selected_unit , dataobject.data)
+                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^row.level * selected_unit , masked_data)
             else # if uniform grid
-                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , dataobject.data)
+                vars_dict[:cellsize] =  map(row-> dataobject.boxlen / 2^lmax * selected_unit , masked_data)
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
-            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize) .^3 .* selected_unit)
+            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize, mask=mask) .^3 .* selected_unit)
 
 
         elseif i == :x
             selected_unit = getunit(dataobject, :x, vars, units)
             if isamr
-                vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2 .^getvar(dataobject, :level) .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  (select(masked_data, apos) .* boxlen ./ 2 .^select(masked_data, :level) .-  boxlen * center[1] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  (select(masked_data, apos) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
             end
         elseif i == :y
             selected_unit = getunit(dataobject, :y, vars, units)
             if isamr
-                vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  (select(masked_data, bpos) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[2] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  (select(masked_data, bpos) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
             end
         elseif i == :z
             selected_unit = getunit(dataobject, :z, vars, units)
             if isamr
-                vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  (select(masked_data, cpos) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[3] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  (getvar(dataobject, cpos, mask=mask) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
         # Gravitational acceleration magnitude - code units by default
         elseif i == :a_magnitude
             selected_unit = getunit(dataobject, :a_magnitude, vars, units)
-            ax = select(dataobject.data, :ax)
-            ay = select(dataobject.data, :ay)
-            az = select(dataobject.data, :az)
+            ax = select(masked_data, :ax)
+            ay = select(masked_data, :ay)
+            az = select(masked_data, :az)
             vars_dict[:a_magnitude] = @. sqrt(ax^2 + ay^2 + az^2) * selected_unit
 
         # Escape speed from gravitational potential - code units by default
         elseif i == :escape_speed
             selected_unit = getunit(dataobject, :escape_speed, vars, units)
-            epot = select(dataobject.data, :epot)
+            epot = select(masked_data, :epot)
             vars_dict[:escape_speed] = @. sqrt(-2 * epot) * selected_unit
 
         # Gravitational redshift (weak field approximation) - dimensionless by default
         elseif i == :gravitational_redshift
             selected_unit = getunit(dataobject, :gravitational_redshift, vars, units)
-            epot = select(dataobject.data, :epot)
+            epot = select(masked_data, :epot)
             c_speed = 2.99792458e10  # cm/s - speed of light
             vars_dict[:gravitational_redshift] = @. epot / (c_speed^2) * selected_unit
 
@@ -145,7 +157,7 @@ function get_data(dataobject::GravDataType,
                 error("gravitational_energy_density requires hydro_data keyword argument with HydroDataType")
             end
             selected_unit = getunit(dataobject, :gravitational_energy_density, vars, units)
-            epot = select(dataobject.data, :epot)  # gravitational potential
+            epot = select(masked_data, :epot)  # gravitational potential
             density = getvar(hydro_data, :rho)      # density from hydro data
             vars_dict[:gravitational_energy_density] = @. density * epot * selected_unit
 
@@ -155,7 +167,7 @@ function get_data(dataobject::GravDataType,
                 error("gravitational_binding_energy requires hydro_data keyword argument with HydroDataType")
             end
             selected_unit = getunit(dataobject, :gravitational_binding_energy, vars, units)
-            epot = select(dataobject.data, :epot)
+            epot = select(masked_data, :epot)
             density = getvar(hydro_data, :rho)
             vars_dict[:gravitational_binding_energy] = @. density * epot * selected_unit
 
@@ -165,15 +177,15 @@ function get_data(dataobject::GravDataType,
                 error("total_binding_energy requires hydro_data keyword argument with HydroDataType")
             end
             selected_unit = getunit(dataobject, :total_binding_energy, vars, units)
-            epot = select(dataobject.data, :epot)
+            epot = select(masked_data, :epot)
             density = getvar(hydro_data, :rho)
-            volume = getvar(dataobject, :volume)
+            volume = getvar(dataobject, :volume, mask=mask)
             vars_dict[:total_binding_energy] = @. density * epot * volume * selected_unit
 
         # Specific gravitational energy: E_specific = φ - code units by default
         elseif i == :specific_gravitational_energy
             selected_unit = getunit(dataobject, :specific_gravitational_energy, vars, units)
-            epot = select(dataobject.data, :epot)
+            epot = select(masked_data, :epot)
             vars_dict[:specific_gravitational_energy] = @. epot * selected_unit
 
         # Gravitational potential energy per cell: U = mass × φ - code units by default  
@@ -182,7 +194,7 @@ function get_data(dataobject::GravDataType,
                 error("epot requires hydro_data keyword argument with HydroDataType")
             end
             selected_unit = getunit(dataobject, :epot, vars, units)
-            epot = select(dataobject.data, :epot)
+            epot = select(masked_data, :epot)
             mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
             vars_dict[:epot] = @. mass * epot * selected_unit
 
@@ -192,9 +204,9 @@ function get_data(dataobject::GravDataType,
                 error("gravitational_work requires hydro_data keyword argument with HydroDataType")
             end
             selected_unit = getunit(dataobject, :gravitational_work, vars, units)
-            a_mag = getvar(dataobject, :a_magnitude)
+            a_mag = getvar(dataobject, :a_magnitude, mask=mask)
             mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
-            cellsize = getvar(dataobject, :cellsize)
+            cellsize = getvar(dataobject, :cellsize, mask=mask)
             vars_dict[:gravitational_work] = @. mass * a_mag * cellsize * selected_unit
 
         # Gravitational force magnitude: F = mass × |a| - code units by default
@@ -203,7 +215,7 @@ function get_data(dataobject::GravDataType,
                 error("Fg requires hydro_data keyword argument with HydroDataType")
             end
             selected_unit = getunit(dataobject, :Fg, vars, units)
-            a_mag = getvar(dataobject, :a_magnitude)
+            a_mag = getvar(dataobject, :a_magnitude, mask=mask)
             mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
             vars_dict[:Fg] = @. mass * a_mag * selected_unit
 
@@ -220,10 +232,10 @@ function get_data(dataobject::GravDataType,
         # Cylindrical acceleration components - code units by default
         elseif i == :ar_cylinder
             selected_unit = getunit(dataobject, :ar_cylinder, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            ax = select(dataobject.data, :ax)
-            ay = select(dataobject.data, :ay)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            ax = select(masked_data, :ax)
+            ay = select(masked_data, :ay)
             
             r_cylinder = @. sqrt(x^2 + y^2)
             ar = @. (x * ax + y * ay) / r_cylinder * selected_unit
@@ -232,10 +244,10 @@ function get_data(dataobject::GravDataType,
 
         elseif i == :aϕ_cylinder
             selected_unit = getunit(dataobject, :aϕ_cylinder, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            ax = select(dataobject.data, :ax)
-            ay = select(dataobject.data, :ay)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            ax = select(masked_data, :ax)
+            ay = select(masked_data, :ay)
             
             r_cylinder = @. sqrt(x^2 + y^2)
             aphi = @. (x * ay - y * ax) / r_cylinder * selected_unit
@@ -245,12 +257,12 @@ function get_data(dataobject::GravDataType,
         # Spherical acceleration components - code units by default
         elseif i == :ar_sphere
             selected_unit = getunit(dataobject, :ar_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
-            ax = select(dataobject.data, :ax)
-            ay = select(dataobject.data, :ay)
-            az = select(dataobject.data, :az)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            z = getvar(dataobject, :z, center=center, mask=mask)
+            ax = select(masked_data, :ax)
+            ay = select(masked_data, :ay)
+            az = select(masked_data, :az)
             
             r_sphere = @. sqrt(x^2 + y^2 + z^2)
             ar = @. (x * ax + y * ay + z * az) / r_sphere * selected_unit
@@ -259,12 +271,12 @@ function get_data(dataobject::GravDataType,
 
         elseif i == :aθ_sphere
             selected_unit = getunit(dataobject, :aθ_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
-            ax = select(dataobject.data, :ax)
-            ay = select(dataobject.data, :ay)
-            az = select(dataobject.data, :az)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            z = getvar(dataobject, :z, center=center, mask=mask)
+            ax = select(masked_data, :ax)
+            ay = select(masked_data, :ay)
+            az = select(masked_data, :az)
             
             r_sphere = @. sqrt(x^2 + y^2 + z^2)
             r_cylinder = @. sqrt(x^2 + y^2)
@@ -276,10 +288,10 @@ function get_data(dataobject::GravDataType,
 
         elseif i == :aϕ_sphere
             selected_unit = getunit(dataobject, :aϕ_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            ax = select(dataobject.data, :ax)
-            ay = select(dataobject.data, :ay)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            ax = select(masked_data, :ax)
+            ay = select(masked_data, :ay)
             
             r_cylinder = @. sqrt(x^2 + y^2)
             aphi = @. (x * ay - y * ax) / r_cylinder * selected_unit
@@ -289,36 +301,61 @@ function get_data(dataobject::GravDataType,
         # Radial distances (for gravity analysis) - code units by default
         elseif i == :r_cylinder
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
             vars_dict[:r_cylinder] = @. sqrt(x^2 + y^2) * selected_unit
 
         elseif i == :r_sphere
             selected_unit = getunit(dataobject, :r_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
+            z = getvar(dataobject, :z, center=center, mask=mask)
             vars_dict[:r_sphere] = @. sqrt(x^2 + y^2 + z^2) * selected_unit
 
         # Azimuthal angle - dimensionless/radians by default
         elseif i == :ϕ
             selected_unit = getunit(dataobject, :ϕ, vars, units)
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
+            x = getvar(dataobject, :x, center=center, mask=mask)
+            y = getvar(dataobject, :y, center=center, mask=mask)
             vars_dict[:ϕ] = @. atan(y, x) * selected_unit
 
+        # Fallback: if variable not found in gravity and hydro data is available, try hydro getvar
+        else
+            if has_hydro
+                try
+                    # Find the corresponding unit for this variable
+                    var_index = findfirst(==(i), vars)
+                    var_unit = var_index !== nothing ? units[var_index] : :standard
+                    
+                    # Try to get the variable from hydro data with proper parameters
+                    if length(mask) > 1
+                        # If mask is applied, we need to get the full data first, then apply mask
+                        hydro_result = getvar(hydro_data, i, unit=var_unit, 
+                                            center=center, direction=direction, ref_time=ref_time)
+                        vars_dict[i] = hydro_result[mask]
+                    else
+                        # No mask, get data directly
+                        vars_dict[i] = getvar(hydro_data, i, unit=var_unit, 
+                                            center=center, direction=direction, ref_time=ref_time)
+                    end
+                catch e
+                    error("Variable :$i not found in gravity data and could not be retrieved from hydro data. Error: $e")
+                end
+            else
+                error("Variable :$i not found in gravity data. Consider providing hydro_data keyword argument to access hydro variables")
+            end
         end
 
     end
 
 
 
-
-    if length(mask) > 1
-        for i in keys(vars_dict)
-            vars_dict[i]=vars_dict[i][mask]
-        end
-    end
+    # Mask is already applied early in the process, so no need to apply it again
+    # if length(mask) > 1
+    #     for i in keys(vars_dict)
+    #         vars_dict[i]=vars_dict[i][mask]
+    #     end
+    # end
 
 
     if length(vars)==1
