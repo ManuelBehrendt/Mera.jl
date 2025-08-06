@@ -290,6 +290,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.jeansmass                    = scale.g                                # [g] Jeans mass (hydro) → mass unit
     scale.freefall_time_gravity        = scale.s                                # [s] Free-fall time → time unit
     scale.ekin                         = scale.erg                              # [erg] Kinetic energy → energy unit
+    scale.Etherm                       = scale.erg                              # [erg] Thermal energy per cell → energy unit
     scale.virial_parameter_local       = scale.dimensionless                    # Dimensionless virial param → dimensionless
     scale.Fg                          = scale.dyne                             # [dyne] Force → force unit
     scale.poisson_source               = scale.s_2                              # [s⁻²] Poisson source term → acceleration/length unit
