@@ -123,6 +123,75 @@ mutable struct ScalesType001
    atoms_cm2::Float64
    NH_cm2::Float64
 
+   # Gravitational and acceleration units
+   cm_s2::Float64
+   m_s2::Float64
+   km_s2::Float64
+   pc_Myr2::Float64
+
+   # Gravitational potential and energy units
+   erg_g::Float64
+   J_kg::Float64
+   km2_s2::Float64
+
+   # Gravitational energy analysis units
+   u_grav::Float64         # Gravitational energy density [erg/cm³]
+   erg_cell::Float64       # Total energy per cell [erg]
+   dyne::Float64           # Force [dyne]
+   s_2::Float64            # Acceleration per length [s⁻²]
+   lambda_J::Float64       # Jeans length scale [cm]
+   M_J::Float64            # Jeans mass scale [g]
+   t_ff::Float64           # Free-fall time scale [s]
+   alpha_vir::Float64      # Dimensionless virial parameter
+   delta_rho::Float64      # Dimensionless density contrast
+   
+   # Missing gravity field unit scales
+   a_mag::Float64          # Acceleration magnitude [cm/s²]
+   v_esc::Float64          # Escape velocity [cm/s]
+   ax::Float64             # x-acceleration component [cm/s²]
+   ay::Float64             # y-acceleration component [cm/s²]
+   az::Float64             # z-acceleration component [cm/s²]
+   epot::Float64           # Gravitational potential [erg/g]
+
+   # ===== DERIVED VARIABLE MAPPINGS =====
+   # These map derived variable names to their appropriate physical unit types
+   # Following the hydro pattern: getunit(obj, :variable_name, vars, units)
+   
+   # Basic gravity components
+   a_magnitude::Float64                   # Acceleration magnitude [cm/s²]
+   escape_speed::Float64                  # Escape velocity [cm/s]  
+   gravitational_redshift::Float64        # Dimensionless redshift
+   
+   # Gravitational energy analysis  
+   gravitational_energy_density::Float64  # Energy density [erg/cm³]
+   gravitational_binding_energy::Float64  # Binding energy density [erg/cm³]
+   total_binding_energy::Float64          # Total energy per cell [erg]
+   specific_gravitational_energy::Float64 # Specific energy [erg/g]
+   potential_energy_per_cell::Float64     # Potential energy per cell [erg]
+   gravitational_work::Float64            # Work/energy [erg]
+   jeans_length_gravity::Float64          # Jeans length [cm]
+   jeans_mass_gravity::Float64            # Jeans mass [g]
+   jeansmass::Float64                     # Jeans mass (hydro) [g]
+   freefall_time_gravity::Float64         # Free-fall time [s]
+   virial_parameter_local::Float64        # Dimensionless virial param
+   Fg::Float64                            # Force [dyne]
+   poisson_source::Float64                # Poisson source term [s⁻²]
+   
+   # Coordinate system components
+   ar_cylinder::Float64                   # Cylindrical radial acceleration [cm/s²]
+   aϕ_cylinder::Float64                   # Cylindrical azimuthal acceleration [cm/s²]
+   ar_sphere::Float64                     # Spherical radial acceleration [cm/s²]
+   aθ_sphere::Float64                     # Spherical polar acceleration [cm/s²]
+   aϕ_sphere::Float64                     # Spherical azimuthal acceleration [cm/s²]
+   r_cylinder::Float64                    # Cylindrical radius [cm]
+   r_sphere::Float64                      # Spherical radius [cm]
+   ϕ::Float64                             # Azimuthal angle [rad]
+
+   # Dimensionless and angular units
+   dimensionless::Float64
+   rad::Float64
+   deg::Float64
+
    ScalesType001() = new()
 end
 

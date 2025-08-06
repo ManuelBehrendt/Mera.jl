@@ -97,10 +97,27 @@ function get_data(  dataobject::HydroDataType,
             selected_unit = getunit(dataobject, :jeansnumber, vars, units)
             vars_dict[:jeansnumber] = getvar(dataobject, :jeanslength) ./ getvar(dataobject, :cellsize) ./ selected_unit
 
+        elseif i == :jeansmass
+            selected_unit = getunit(dataobject, :jeansmass, vars, units)
+            # Jeans mass: M_J = (4π/3)(λ_J/2)³ρ
+            lambda_j = getvar(dataobject, :jeanslength)
+            rho = getvar(dataobject, :rho)
+            vars_dict[:jeansmass] = @. (4π/3) * (lambda_j/2)^3 * rho * selected_unit
+
 
         elseif i == :freefall_time
             selected_unit = getunit(dataobject, :freefall_time, vars, units)
             vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(dataobject, :rho, unit=:g_cm3)  ) .* selected_unit
+
+        elseif i == :virial_parameter_local
+            selected_unit = getunit(dataobject, :virial_parameter_local, vars, units)
+            # Virial parameter: α_vir = 5σ²R/(GM) where σ = cs (sound speed), R = cellsize
+            cs = getvar(dataobject, :cs)
+            mass = getvar(dataobject, :mass)
+            cellsize = getvar(dataobject, :cellsize)
+            G = dataobject.info.constants.G
+            # α_vir ≈ 5c_s²R/(GM) where R ≈ cellsize
+            vars_dict[:virial_parameter_local] = @. (5 * cs^2 * cellsize) / (G * mass) * selected_unit
 
         elseif i == :mass
             selected_unit = getunit(dataobject, :mass, vars, units)
