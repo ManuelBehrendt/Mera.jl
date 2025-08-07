@@ -211,6 +211,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
+                        max_threads::Int=Threads.nthreads(),
                         myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -232,6 +233,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                             data_center_unit=data_center_unit,
                             verbose=verbose,
                             show_progress=show_progress,
+                            max_threads=max_threads,
                             myargs=myargs )
 
 end
@@ -255,6 +257,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
+                        max_threads::Int=Threads.nthreads(),
                         myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -276,6 +279,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             data_center_unit=data_center_unit,
                             verbose=verbose,
                             show_progress=show_progress,
+                            max_threads=max_threads,
                             myargs=myargs)
 
 end
@@ -299,6 +303,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
+                        max_threads::Int=Threads.nthreads(),
                         myargs::ArgumentsType=ArgumentsType() )
 
     return projection(dataobject, vars, units=units,
@@ -319,6 +324,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                                                 data_center_unit=data_center_unit,
                                                 verbose=verbose,
                                                 show_progress=show_progress,
+                                                max_threads=max_threads,
                                                 myargs=myargs)
 
 end
@@ -344,6 +350,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
+                        max_threads::Int=Threads.nthreads(),
                         myargs::ArgumentsType=ArgumentsType() )
 
     return projection(dataobject, vars, units=fill(unit, length(vars)),
@@ -364,6 +371,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                                                 data_center_unit=data_center_unit,
                                                 verbose=verbose,
                                                 show_progress=show_progress,
+                                                max_threads=max_threads,
                                                 myargs=myargs)
 
 end
@@ -388,6 +396,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         data_center_unit::Symbol=:standard,
                         verbose::Bool=true,
                         show_progress::Bool=true,
+                        max_threads::Int=Threads.nthreads(),
                         myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -413,6 +422,10 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # Validate and normalize input parameters
     verbose = Mera.checkverbose(verbose)
     show_progress = Mera.checkprogress(show_progress)
+    
+    # Validate parallel processing parameters
+    max_threads = min(max_threads, Threads.nthreads())
+    
     printtime("", verbose)
 
     # Extract simulation parameters
@@ -566,96 +579,152 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         else
             p = simlmax+2 # do not show updates
         end
-        #if show_progress p = Progress(simlmax-lmin) end
-        @showprogress p for level = lmin:simlmax #@showprogress 1 ""
-            mask_level = leveldata .== level
-
-            # Only process if there are cells at this level
-            if any(mask_level)
-                # Get coordinates and data for this level
-                # Note: all arrays (xval, yval, leveldata, weightval, data_dict) 
-                # are already consistently masked in prep_data
-                x_level = xval[mask_level]
-                y_level = yval[mask_level]
-                weights_level = weightval[mask_level]
-                
-                # Apply geometric center alignment corrections if available
-                if isdefined(Main, :get_center_correction)
-                    try
-                        # Always try to initialize geometric correction system first
-                        # This is safe - if already initialized, it will be skipped
-                        if isdefined(Main, :initialize_geometric_correction)
-                            # Extract projection parameters - use leveldata which is already computed
-                            available_levels = sort(unique(leveldata))
-                            # Convert ranges to physical coordinates: [xmin, xmax, ymin, ymax, zmin, zmax]
-                            spatial_ranges = [ranges[1]*boxlen, ranges[2]*boxlen, ranges[3]*boxlen, ranges[4]*boxlen, ranges[5]*boxlen, ranges[6]*boxlen]
-                            # Use length1, length2 for resolution (these are the actual Mera.jl resolution variables)
-                            Main.initialize_geometric_correction((length1, length2), spatial_ranges, dataobject.boxlen, available_levels)
-                        end
-                        
-                        # CRITICAL FIX: Apply level-specific corrections, not range-averaged corrections
-                        # Each AMR level needs its own geometric correction for proper alignment
-                        correction = Main.get_center_correction(level:level)  # Use current level only
-                        
-                        # SAFETY CHECK: Ensure corrections are finite (prevent NaN crashes)
-                        if length(correction) >= 2 && all(isfinite.(correction)) && (correction[1] != 0.0 || correction[2] != 0.0)
-                            # Convert corrections from fractional to physical coordinates
-                            # Corrections are in boxlen-relative units, convert to coordinate units
-                            dx_phys = correction[1] * dataobject.boxlen
-                            dy_phys = correction[2] * dataobject.boxlen
-                            
-                            # Additional safety check for physical corrections
-                            if isfinite(dx_phys) && isfinite(dy_phys)
-                                x_level = x_level .+ dx_phys
-                                y_level = y_level .+ dy_phys
-                                
-                                if verbose
-                                    println("Applied geometric center correction for level $level: dx=$(round(correction[1], digits=6)), dy=$(round(correction[2], digits=6))")
-                                end
-                            elseif verbose
-                                println("Skipping geometric correction for level $level: non-finite physical corrections")
-                            end
-                        elseif verbose && !all(isfinite.(correction))
-                            println("Skipping geometric correction for level $level: non-finite correction values (thin slice projection)")
-                        end
-                    catch ex
-                        # Silently continue if center alignment correction fails
-                        if verbose
-                            println("Warning: Geometric center correction failed: $ex")
-                        end
-                    end
-                end
-                
-                # Process each variable for this level
-                for var in keys(data_dict)
-                    values_level = data_dict[var][mask_level]
-                    
-                    # Use memory pool for level grids
-                    level_grid, level_weight_temp = get_level_grids!(buffer, (length1, length2))
-                    
-                    # Use appropriate mapping based on variable type
-                    if var == :sd
-                        # Surface density: accumulate mass directly without mass weighting
-                        # Use unity weights to avoid double-weighting mass
-                        unity_weights = ones(Float64, length(weights_level))
-                        map_amr_cells_to_grid!(level_grid, level_weight_temp,
-                                             x_level, y_level, values_level, unity_weights,
-                                             level, grid_extent, grid_resolution, boxlen)
-                    else
-                        # Other variables: use mass weighting for proper averaging
-                        map_amr_cells_to_grid!(level_grid, level_weight_temp,
-                                             x_level, y_level, values_level, weights_level,
-                                             level, grid_extent, grid_resolution, boxlen)
-                    end
-                    
-                    # Accumulate into final grids - each variable has its own weights
-                    final_grids[var] .+= level_grid
-                    final_weights[var] .+= level_weight_temp
-                end
+        
+        # =======================================================================
+        # PARALLEL PROJECTION PROCESSING
+        # =======================================================================
+        
+        # Automatically decide whether to use parallel processing based on data characteristics
+        use_parallel = (simlmax - lmin > 1) && (max_threads > 1) && (Threads.nthreads() > 1)
+        
+        if use_parallel && verbose
+            println("🧵 Using parallel processing with $max_threads threads")
+            println("   Processing levels $lmin to $simlmax")
+        elseif verbose && !use_parallel
+            if (simlmax - lmin <= 1)
+                println("ℹ️  Sequential processing: single AMR level detected")
+            elseif (max_threads <= 1) || (Threads.nthreads() <= 1)
+                println("ℹ️  Sequential processing: insufficient threads available")
             end
+        end
+        
+        if use_parallel
+            # PARALLEL PATH: Use multi-threaded level processing
+            try
+                # Use parallel projection system
+                parallel_grids, parallel_weights, parallel_stats = project_amr_parallel(
+                    dataobject, keys(data_dict), data_dict, xval, yval, leveldata, weightval,
+                    grid_extent, (length1, length2), boxlen, lmin, simlmax;
+                    max_threads=max_threads, use_memory_pool=false, verbose=verbose
+                )
+                
+                # Copy results to final grids
+                for var in keys(data_dict)
+                    if haskey(parallel_grids, var)
+                        final_grids[var] = parallel_grids[var]
+                        final_weights[var] = parallel_weights[var]
+                    end
+                end
+                
+                if verbose
+                    println("✅ Parallel projection completed successfully")
+                    cells_per_sec = round(parallel_stats["cells_per_second"])
+                    efficiency_pct = round(parallel_stats["parallel_efficiency"] * 100, digits=1)
+                    println("   Performance: $cells_per_sec cells/sec")
+                    println("   Parallel efficiency: $efficiency_pct%")
+                end
+                
+            catch ex
+                if verbose
+                    println("⚠️  Parallel processing failed, falling back to sequential: $ex")
+                end
+                use_parallel = false  # Fall back to sequential processing
+            end
+        end
+        
+        if !use_parallel
+            # SEQUENTIAL PATH: Original level-by-level processing with progress bar
+            #if show_progress p = Progress(simlmax-lmin) end
+            @showprogress p for level = lmin:simlmax #@showprogress 1 ""
+                mask_level = leveldata .== level
 
-            #if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
-        end #for level
+                # Only process if there are cells at this level
+                if any(mask_level)
+                    # Get coordinates and data for this level
+                    # Note: all arrays (xval, yval, leveldata, weightval, data_dict) 
+                    # are already consistently masked in prep_data
+                    x_level = xval[mask_level]
+                    y_level = yval[mask_level]
+                    weights_level = weightval[mask_level]
+                    
+                    # Apply geometric center alignment corrections if available
+                    if isdefined(Main, :get_center_correction)
+                        try
+                            # Always try to initialize geometric correction system first
+                            # This is safe - if already initialized, it will be skipped
+                            if isdefined(Main, :initialize_geometric_correction)
+                                # Extract projection parameters - use leveldata which is already computed
+                                available_levels = sort(unique(leveldata))
+                                # Convert ranges to physical coordinates: [xmin, xmax, ymin, ymax, zmin, zmax]
+                                spatial_ranges = [ranges[1]*boxlen, ranges[2]*boxlen, ranges[3]*boxlen, ranges[4]*boxlen, ranges[5]*boxlen, ranges[6]*boxlen]
+                                # Use length1, length2 for resolution (these are the actual Mera.jl resolution variables)
+                                Main.initialize_geometric_correction((length1, length2), spatial_ranges, dataobject.boxlen, available_levels)
+                            end
+                            
+                            # CRITICAL FIX: Apply level-specific corrections, not range-averaged corrections
+                            # Each AMR level needs its own geometric correction for proper alignment
+                            correction = Main.get_center_correction(level:level)  # Use current level only
+                            
+                            # SAFETY CHECK: Ensure corrections are finite (prevent NaN crashes)
+                            if length(correction) >= 2 && all(isfinite.(correction)) && (correction[1] != 0.0 || correction[2] != 0.0)
+                                # Convert corrections from fractional to physical coordinates
+                                # Corrections are in boxlen-relative units, convert to coordinate units
+                                dx_phys = correction[1] * dataobject.boxlen
+                                dy_phys = correction[2] * dataobject.boxlen
+                                
+                                # Additional safety check for physical corrections
+                                if isfinite(dx_phys) && isfinite(dy_phys)
+                                    x_level = x_level .+ dx_phys
+                                    y_level = y_level .+ dy_phys
+                                    
+                                    if verbose
+                                        println("Applied geometric center correction for level $level: dx=$(round(correction[1], digits=6)), dy=$(round(correction[2], digits=6))")
+                                    end
+                                elseif verbose
+                                    println("Skipping geometric correction for level $level: non-finite physical corrections")
+                                end
+                            elseif verbose && !all(isfinite.(correction))
+                                println("Skipping geometric correction for level $level: non-finite correction values (thin slice projection)")
+                            end
+                        catch ex
+                            # Silently continue if center alignment correction fails
+                            if verbose
+                                println("Warning: Geometric center correction failed: $ex")
+                            end
+                        end
+                    end
+                    
+                    # Process each variable for this level
+                    for var in keys(data_dict)
+                        values_level = data_dict[var][mask_level]
+                        
+                        # Use memory pool for level grids
+                        level_grid, level_weight_temp = get_level_grids!(buffer, (length1, length2))
+                        
+                        # Use appropriate mapping based on variable type
+                        if var == :sd
+                            # Surface density: accumulate mass directly without mass weighting
+                            # Use unity weights to avoid double-weighting mass
+                            unity_weights = ones(Float64, length(weights_level))
+                            map_amr_cells_to_grid!(level_grid, level_weight_temp,
+                                                 x_level, y_level, values_level, unity_weights,
+                                                 level, grid_extent, grid_resolution, boxlen)
+                        else
+                            # Other variables: use mass weighting for proper averaging
+                            map_amr_cells_to_grid!(level_grid, level_weight_temp,
+                                                 x_level, y_level, values_level, weights_level,
+                                                 level, grid_extent, grid_resolution, boxlen)
+                        end
+                        
+                        # Accumulate into final grids - each variable has its own weights
+                        final_grids[var] .+= level_grid
+                        final_weights[var] .+= level_weight_temp
+                    end
+                end
+
+                #if show_progress next!(p, showvalues = [(:Level, level )]) end # ProgressMeter
+            end #for level
+        end # parallel vs sequential processing
 
         # Finalize the maps by dividing by weights where appropriate
         pixel_area = (boxlen/res)^2  # Physical area of each pixel in code units
