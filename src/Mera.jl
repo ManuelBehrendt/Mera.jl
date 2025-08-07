@@ -133,6 +133,10 @@ export
     projection,
     projection_deprecated,
     benchmark_projection_hydro,
+    # parallel projection functions
+    project_amr_parallel,
+    balance_workload,
+    show_threading_info,
     #slice,
     #profile,
     #profile_radial,
@@ -155,6 +159,9 @@ export
     smart_io_setup,
 # projection memory pool optimization
     get_projection_buffer,
+    get_main_grids!,
+    get_var_grid!,
+    get_level_grids!,
     show_projection_memory_stats,
     clear_projection_buffers!,
 # user-friendly I/O configuration
@@ -287,6 +294,7 @@ include("functions/safe_performance.jl")
 # projection, slice
 include("functions/projection.jl")
 #include("functions/slice.jl")
+include("functions/projection_parallel.jl")
 include("functions/projection_hydro.jl")
 include("functions/projection_hydro_deprecated.jl")
 include("functions/projection_particles.jl")
