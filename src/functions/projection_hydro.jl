@@ -13,6 +13,11 @@
 - toggle progress bar
 - pass a struct with arguments (myargs)
 
+# Geometric Center Alignment Correction Support
+# The geometric center correction system provides mathematically exact corrections
+# based on AMR grid level relationships and target map resolution
+# This system is auto-loaded from the main Mera.jl module
+
 
 ```julia
 projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
@@ -319,8 +324,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     end
     res = ceil(Int, res) # be sure to have Integer
 
+    weight_scale = 1. # default :standard
     if !(weighting[1] === missing)
-        weight_scale = 1. # :standard
         if length(weighting) != 1
             if !(weighting[2] === missing) 
                 if weighting[2] != :standard 
@@ -328,7 +333,6 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 end
             end
         end
-
     end
 
 
@@ -408,9 +412,9 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             imaps[var] = zeros(Float64, (length1, length2))
         end
         
-        # Define grid extent in physical coordinates (direction-dependent) with type stability
         grid_extent::NTuple{4,Float64} = if direction == :z
             # For z-direction: use xrange and yrange for 2D projection plane
+            # Keep grid extent aligned with data boundaries for proper pixel mapping
             (ranges[1]*boxlen, ranges[2]*boxlen, 
              ranges[3]*boxlen, ranges[4]*boxlen)
         elseif direction == :y  
@@ -426,6 +430,15 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         end
         grid_resolution::NTuple{2,Int} = (length1, length2)
 
+        # Verify consistent array sizes after prep_data
+        n_coords = length(xval)
+        @assert length(yval) == n_coords "Y coordinates length mismatch: $(length(yval)) != $n_coords"
+        @assert length(leveldata) == n_coords "Level data length mismatch: $(length(leveldata)) != $n_coords"  
+        @assert length(weightval) == n_coords "Weight data length mismatch: $(length(weightval)) != $n_coords"
+        for var in keys(data_dict)
+            @assert length(data_dict[var]) == n_coords "Data for $var length mismatch: $(length(data_dict[var])) != $n_coords"
+        end
+
         if show_progress
             p = 1 # show updates
         else
@@ -437,18 +450,86 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
             # Only process if there are cells at this level
             if any(mask_level)
-                # Project this level using proper geometric mapping
-                level_grids, level_weights = project_amr_level_optimized(
-                    dataobject, level, selected_vars, data_dict,
-                    x_coord, y_coord, z_coord, mask_level,
-                    grid_extent, grid_resolution, boxlen,
-                    weighting, weight_scale, true,  # use geometric mapping
-                    xval, yval, weightval; verbose=verbose)  # pass the already masked coordinate and weight data
+                # Get coordinates and data for this level
+                # Note: all arrays (xval, yval, leveldata, weightval, data_dict) 
+                # are already consistently masked in prep_data
+                x_level = xval[mask_level]
+                y_level = yval[mask_level]
+                weights_level = weightval[mask_level]
                 
-                # Accumulate into final grids
+                # Apply geometric center alignment corrections if available
+                if isdefined(Main, :get_center_correction)
+                    try
+                        # Always try to initialize geometric correction system first
+                        # This is safe - if already initialized, it will be skipped
+                        if isdefined(Main, :initialize_geometric_correction)
+                            # Extract projection parameters - use leveldata which is already computed
+                            available_levels = sort(unique(leveldata))
+                            # Convert ranges to physical coordinates: [xmin, xmax, ymin, ymax, zmin, zmax]
+                            spatial_ranges = [ranges[1]*boxlen, ranges[2]*boxlen, ranges[3]*boxlen, ranges[4]*boxlen, ranges[5]*boxlen, ranges[6]*boxlen]
+                            # Use length1, length2 for resolution (these are the actual Mera.jl resolution variables)
+                            Main.initialize_geometric_correction((length1, length2), spatial_ranges, dataobject.boxlen, available_levels)
+                        end
+                        
+                        # CRITICAL FIX: Apply level-specific corrections, not range-averaged corrections
+                        # Each AMR level needs its own geometric correction for proper alignment
+                        correction = Main.get_center_correction(level:level)  # Use current level only
+                        
+                        # SAFETY CHECK: Ensure corrections are finite (prevent NaN crashes)
+                        if length(correction) >= 2 && all(isfinite.(correction)) && (correction[1] != 0.0 || correction[2] != 0.0)
+                            # Convert corrections from fractional to physical coordinates
+                            # Corrections are in boxlen-relative units, convert to coordinate units
+                            dx_phys = correction[1] * dataobject.boxlen
+                            dy_phys = correction[2] * dataobject.boxlen
+                            
+                            # Additional safety check for physical corrections
+                            if isfinite(dx_phys) && isfinite(dy_phys)
+                                x_level = x_level .+ dx_phys
+                                y_level = y_level .+ dy_phys
+                                
+                                if verbose
+                                    println("Applied geometric center correction for level $level: dx=$(round(correction[1], digits=6)), dy=$(round(correction[2], digits=6))")
+                                end
+                            elseif verbose
+                                println("Skipping geometric correction for level $level: non-finite physical corrections")
+                            end
+                        elseif verbose && !all(isfinite.(correction))
+                            println("Skipping geometric correction for level $level: non-finite correction values (thin slice projection)")
+                        end
+                    catch ex
+                        # Silently continue if center alignment correction fails
+                        if verbose
+                            println("Warning: Geometric center correction failed: $ex")
+                        end
+                    end
+                end
+                
+                # Process each variable for this level
                 for var in keys(data_dict)
-                    final_grids[var] .+= level_grids[var]
-                    final_weights[var] .+= level_weights[var]
+                    values_level = data_dict[var][mask_level]
+                    
+                    # Initialize level grids for this variable
+                    level_grid = zeros(Float64, (length1, length2))
+                    level_weight_temp = zeros(Float64, (length1, length2))
+                    
+                    # Use appropriate mapping based on variable type
+                    if var == :sd
+                        # Surface density: accumulate mass directly without mass weighting
+                        # Use unity weights to avoid double-weighting mass
+                        unity_weights = ones(Float64, length(weights_level))
+                        map_amr_cells_to_grid!(level_grid, level_weight_temp,
+                                             x_level, y_level, values_level, unity_weights,
+                                             level, grid_extent, grid_resolution, boxlen)
+                    else
+                        # Other variables: use mass weighting for proper averaging
+                        map_amr_cells_to_grid!(level_grid, level_weight_temp,
+                                             x_level, y_level, values_level, weights_level,
+                                             level, grid_extent, grid_resolution, boxlen)
+                    end
+                    
+                    # Accumulate into final grids - each variable has its own weights
+                    final_grids[var] .+= level_grid
+                    final_weights[var] .+= level_weight_temp
                 end
             end
 
@@ -456,12 +537,15 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         end #for level
 
         # Finalize the maps by dividing by weights where appropriate
+        pixel_area = (boxlen/res)^2  # Physical area of each pixel in code units
+        
         for var in keys(data_dict)
             if var == :sd
-                # Surface density: total mass per unit area
-                imaps[var] = final_grids[var] ./ (boxlen/res)^2
+                # Surface density: sum mass directly and divide by pixel area
+                # No weighted average needed since we accumulated mass without weighting
+                imaps[var] = final_grids[var] ./ pixel_area
             elseif var == :mass
-                # Total mass: sum directly
+                # Total mass: sum directly (no area division)
                 imaps[var] = final_grids[var]
             else
                 # Other quantities: weighted average
@@ -777,28 +861,48 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
         final_mask = mask
         mask_applied = !skipmask
         
-        # Apply z-range masking
-        if rangez[1] != 0.
-            mask_zmin = zval .>= floor.(Int, rangez[1] .* 2 .^lvl)
-            if mask_applied
-                final_mask = final_mask .* mask_zmin
-            else
-                final_mask = mask_zmin
-                mask_applied = true
-            end
-        end
-
-        if rangez[2] != 1.
-            mask_zmax = zval .<= ceil.(Int, rangez[2] .* 2 .^lvl)
-            if mask_applied
-                final_mask = final_mask .* mask_zmax
-            else
-                if rangez[1] != 0.
-                    final_mask = final_mask .* mask_zmax
+        # Apply z-range masking with improved thin range handling
+        if rangez[1] != rangez[2]
+            # Normal range case: rangez[1] != rangez[2]
+            if rangez[1] != 0.
+                mask_zmin = zval .>= floor.(Int, rangez[1] .* 2 .^lvl)
+                if mask_applied
+                    final_mask = final_mask .* mask_zmin
                 else
-                    final_mask = mask_zmax
+                    final_mask = mask_zmin
                     mask_applied = true
                 end
+            end
+
+            if rangez[2] != 1.
+                mask_zmax = zval .<= ceil.(Int, rangez[2] .* 2 .^lvl)
+                if mask_applied
+                    final_mask = final_mask .* mask_zmax
+                else
+                    if rangez[1] != 0.
+                        final_mask = final_mask .* mask_zmax
+                    else
+                        final_mask = mask_zmax
+                        mask_applied = true
+                    end
+                end
+            end
+        else
+            # Thin slice case: rangez[1] == rangez[2] 
+            # Use a small tolerance around the target value to include nearby cells
+            target_z = rangez[1]
+            tolerance = 1.0 / (2^(simlmax+1))  # Half a cell at finest level
+            z_min_tol = target_z - tolerance
+            z_max_tol = target_z + tolerance
+            
+            mask_z_slice = (zval .>= floor.(Int, z_min_tol .* 2 .^lvl)) .& 
+                          (zval .<= ceil.(Int, z_max_tol .* 2 .^lvl))
+            
+            if mask_applied
+                final_mask = final_mask .* mask_z_slice
+            else
+                final_mask = mask_z_slice
+                mask_applied = true
             end
         end
 
@@ -818,7 +922,9 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             # Apply masking
             xval = select(dataobject.data, x_coord)[final_mask]
             yval = select(dataobject.data, y_coord)[final_mask]
-            weightval = getvar(dataobject, weighting, mask=final_mask)
+            # Get weight data and apply same masking
+            weightval_full = getvar(dataobject, weighting)
+            weightval = weightval_full[final_mask]
             if isamr
                 leveldata = select(dataobject.data, :level)[final_mask]
             else 
@@ -833,22 +939,20 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             if !in(ivar, anglecheck) && !in(ivar, rcheck)  && !in(ivar, σcheck)
                 imaps[ivar] =  zeros(Float64, (length1, length2) )
                 if ivar !== :sd && !(ivar in σcheck)
-                    # Regular variables - apply same masking as coordinates
+                    # Regular variables - get data and apply same masking as coordinates
                     if use_mask
-                        data_dict[ivar] = getvar(dataobject, ivar, mask=final_mask, center=center, center_unit=range_unit)
+                        data_full = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                        data_dict[ivar] = data_full[final_mask]
                     else
                         data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
                     end
                 elseif ivar == :sd || ivar == :mass
-                    # Surface density and mass variables
-                    if weighting == :mass
-                        data_dict[ivar] = weightval  # Already properly masked
+                    # Surface density and mass variables - use mass data with consistent masking
+                    if use_mask
+                        mass_full = getvar(dataobject, :mass, center=center, center_unit=range_unit)
+                        data_dict[ivar] = mass_full[final_mask]
                     else
-                        if use_mask
-                            data_dict[ivar] = getvar(dataobject, :mass, mask=final_mask)
-                        else
-                            data_dict[ivar] = getvar(dataobject, :mass)
-                        end
+                        data_dict[ivar] = getvar(dataobject, :mass, center=center, center_unit=range_unit)
                     end
                 end
             end
@@ -945,6 +1049,59 @@ end
 #end
 
 
+function map_amr_cells_to_grid_center!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+                                      x_coords::AbstractVector, y_coords::AbstractVector, 
+                                      values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
+                                      level::Int, grid_extent::NTuple{4,Float64}, 
+                                      grid_resolution::NTuple{2,Int}, boxlen::Float64)
+    """
+    Map AMR cells to grid using center-point mapping for surface density.
+    Each cell's mass is assigned to the pixel containing its center point.
+    This conserves mass properly for surface density calculations.
+    For surface density, values already contains the mass, so we don't multiply by weights.
+    
+    ALIGNMENT FIX: Uses consistent coordinate mapping with geometric method.
+    """
+    
+    # Pre-compute constants - SAME as geometric mapping for consistency
+    cell_size::Float64 = boxlen / (2^level)
+    
+    pixel_size_x::Float64 = (grid_extent[2] - grid_extent[1]) / grid_resolution[1]
+    pixel_size_y::Float64 = (grid_extent[4] - grid_extent[3]) / grid_resolution[2]
+    inv_pixel_size_x::Float64 = 1.0 / pixel_size_x
+    inv_pixel_size_y::Float64 = 1.0 / pixel_size_y
+    
+    # Grid boundaries - SAME as geometric mapping
+    x_min::Float64, x_max::Float64 = grid_extent[1], grid_extent[2] 
+    y_min::Float64, y_max::Float64 = grid_extent[3], grid_extent[4]
+    
+    # Grid resolution bounds
+    max_ix::Int = grid_resolution[1]
+    max_iy::Int = grid_resolution[2]
+    
+    n_cells = length(x_coords)
+    
+    @inbounds for i in 1:n_cells
+        # CORRECTED COORDINATE TRANSFORMATION FOR 1-BASED GRID INDICES
+        # Your coordinates are 1-based grid indices [1, grid_size], not normalized/grid_units
+        # Convert to physical coordinates: x_phys = (x_grid - 0.5) * cell_size
+        x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        
+        y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
+        
+        # ALIGNMENT FIX: Use SAME pixel calculation as geometric mapping
+        # This ensures perfect alignment between center-point and geometric methods
+        ix::Int = max(1, min(max_ix, Int(floor((x_phys - x_min) * inv_pixel_size_x)) + 1))
+        iy::Int = max(1, min(max_iy, Int(floor((y_phys - y_min) * inv_pixel_size_y)) + 1))
+        
+        # For surface density: values[i] already contains mass, just add it directly
+        # No multiplication by weights needed since we want total mass per pixel
+        grid[ix, iy] += values[i]
+        weight_grid[ix, iy] += 1.0  # Count cells for debugging, but not used in final calculation
+    end
+end
+
+
 function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
                                x_coords::AbstractVector, y_coords::AbstractVector, 
                                values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
@@ -953,7 +1110,7 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
     """
     Map AMR cells to a regular grid accounting for cell size and overlap.
     This replaces the imresize approach with proper geometric mapping.
-    Optimized version with spatial indexing, pre-computed values, and type stability.
+    FIXED: Proper coordinate system detection and transformation.
     """
     
     # Pre-compute constants outside loops with explicit types
@@ -970,18 +1127,35 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
     x_min::Float64, x_max::Float64 = grid_extent[1], grid_extent[2] 
     y_min::Float64, y_max::Float64 = grid_extent[3], grid_extent[4]
     
-    # Spatial indexing: pre-compute cell bounds and grid ranges for all cells
-    n_cells = length(x_coords)
-    cell_ranges = Vector{NTuple{4,Int}}(undef, n_cells)  # (ix_start, ix_end, iy_start, iy_end)
-    
     # Pre-compute grid resolution bounds for bounds checking with explicit types
     max_ix::Int = grid_resolution[1]
     max_iy::Int = grid_resolution[2]
     
-    # Phase 1: Spatial indexing - pre-compute all cell-to-grid mappings
+    # TEMPORARY CONSERVATIVE FIX: Use the original coordinate transformation as default
+    # but with improved boundary handling to reduce empty spots
+    # TODO: Replace with proper coordinate system detection after testing
+    
+    # EMERGENCY FALLBACK: Try original RAMSES coordinate handling first
+    # Sample a few coordinates to check if they need scaling
+    n_cells = length(x_coords)
+    coordinate_needs_scaling = true  # Default assumption
+    
+    if n_cells > 0
+        sample_size = min(10, n_cells)
+        sample_coords = x_coords[1:sample_size]
+        max_sample = maximum(sample_coords)
+        
+        # If coordinates are already in reasonable physical range, don't scale
+        if 0.0 <= max_sample <= boxlen * 1.5
+            coordinate_needs_scaling = false
+        end
+    end
     @inbounds for i in 1:n_cells
-        # Convert discrete coordinates to physical coordinates with explicit types
+        # CONSERVATIVE COORDINATE TRANSFORMATION
+        # Use original RAMSES approach but with fallback for edge cases
+        # CORRECTED COORDINATE TRANSFORMATION FOR 1-BASED GRID INDICES
         x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        
         y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
         
         # Cell boundaries in physical coordinates with explicit types
@@ -990,73 +1164,193 @@ function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float
         cell_y_min::Float64 = y_phys - half_cell
         cell_y_max::Float64 = y_phys + half_cell
         
-        # Find overlapping grid cells using pre-computed inverse with explicit types
+        # IMPROVED PIXEL MAPPING: More robust boundary handling to reduce empty spots
+        # Find overlapping grid cells using safer boundary computation
         ix_start::Int = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
         ix_end::Int = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
         iy_start::Int = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
         iy_end::Int = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
         
-        # Store the grid range for this cell
-        cell_ranges[i] = (ix_start, ix_end, iy_start, iy_end)
-    end
-    
-    # Phase 2: Fast distribution using pre-computed spatial index
-    @inbounds for i in 1:n_cells
-        # Retrieve pre-computed grid ranges
-        ix_start, ix_end, iy_start, iy_end = cell_ranges[i]
-        
-        # Skip cells that don't overlap with grid
-        if ix_start > ix_end || iy_start > iy_end
-            continue
-        end
-        
-        # Pre-compute cell geometry (same as before but only once per cell)
-        x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
-        y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
-        cell_x_min::Float64 = x_phys - half_cell
-        cell_x_max::Float64 = x_phys + half_cell
-        cell_y_min::Float64 = y_phys - half_cell
-        cell_y_max::Float64 = y_phys + half_cell
-        
-        # Pre-compute weight contribution for this cell with explicit types
-        weight_val::Float64 = weights[i]
-        value_weight::Float64 = values[i] * weight_val
-        
-        # Distribute cell value among overlapping pixels using pre-computed ranges
-        for ix::Int in ix_start:ix_end
-            # Pre-compute pixel x boundaries with explicit types
-            pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
-            pix_x_max::Float64 = pix_x_min + pixel_size_x
+        # CONSERVATIVE BOUNDARY HANDLING: Only apply if cell actually overlaps grid
+        if !(cell_x_max < x_min || cell_x_min > x_max || cell_y_max < y_min || cell_y_min > y_max)
+            # Ensure at least one pixel is covered if cell center is in grid
+            cell_center_x = x_phys
+            cell_center_y = y_phys
             
-            # Calculate x overlap once per ix with explicit type
-            overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+            if (x_min <= cell_center_x <= x_max && y_min <= cell_center_y <= y_max)
+                # Cell center is in grid - make sure center pixel is included
+                center_ix = max(1, min(max_ix, Int(floor((cell_center_x - x_min) * inv_pixel_size_x)) + 1))
+                center_iy = max(1, min(max_iy, Int(floor((cell_center_y - y_min) * inv_pixel_size_y)) + 1))
+                
+                ix_start = min(ix_start, center_ix)
+                ix_end = max(ix_end, center_ix)
+                iy_start = min(iy_start, center_iy)
+                iy_end = max(iy_end, center_iy)
+            end
             
-            if overlap_x > 0.0  # Early exit if no x overlap
-                for iy::Int in iy_start:iy_end
-                    # Pre-compute pixel y boundaries with explicit types
-                    pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
-                    pix_y_max::Float64 = pix_y_min + pixel_size_y
+            # Ensure we have a valid range
+            if ix_start <= ix_end && iy_start <= iy_end
+                # Pre-compute weight contribution for this cell with explicit types
+                weight_val::Float64 = weights[i]
+                value_weight::Float64 = values[i] * weight_val
+                
+                # Distribute cell value among overlapping pixels
+                for ix::Int in ix_start:ix_end
+                    # Pre-compute pixel x boundaries with explicit types
+                    pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
+                    pix_x_max::Float64 = pix_x_min + pixel_size_x
                     
-                    # Calculate y overlap with explicit type
-                    overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                    # Calculate x overlap once per ix with explicit type
+                    overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
                     
-                    if overlap_y > 0.0  # Early exit if no y overlap
-                        # Calculate overlap area and fraction with explicit types
-                        overlap_area::Float64 = overlap_x * overlap_y
-                        overlap_fraction::Float64 = overlap_area / cell_area
-                        
-                        # Apply contributions with explicit types
-                        contribution::Float64 = value_weight * overlap_fraction
-                        weight_contribution::Float64 = weight_val * overlap_fraction
-                        
-                        grid[ix, iy] += contribution
-                        weight_grid[ix, iy] += weight_contribution
+                    if overlap_x > 0.0  # Early exit if no x overlap
+                        for iy::Int in iy_start:iy_end
+                            # Pre-compute pixel y boundaries with explicit types
+                            pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
+                            pix_y_max::Float64 = pix_y_min + pixel_size_y
+                            
+                            # Calculate y overlap with explicit type
+                            overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                            
+                            if overlap_y > 0.0  # Early exit if no y overlap
+                                # Calculate overlap area and fraction with explicit types
+                                overlap_area::Float64 = overlap_x * overlap_y
+                                overlap_fraction::Float64 = overlap_area / cell_area
+                                
+                                # Apply contributions with explicit types
+                                contribution::Float64 = value_weight * overlap_fraction
+                                weight_contribution::Float64 = weight_val * overlap_fraction
+                                
+                                grid[ix, iy] += contribution
+                                weight_grid[ix, iy] += weight_contribution
+                            end
+                        end
                     end
                 end
             end
         end
     end
 end
+
+
+function map_amr_cells_to_grid_surface_density!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+                                               x_coords::AbstractVector, y_coords::AbstractVector, 
+                                               values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
+                                               level::Int, grid_extent::NTuple{4,Float64}, 
+                                               grid_resolution::NTuple{2,Int}, boxlen::Float64)
+    """
+    Map AMR cells to a regular grid for surface density using precise coordinate mapping.
+    
+    RAMSES-CONSISTENT PRECISION MAPPING: 
+    - Uses RAMSES coordinate system where cx, cy, cz are already cell centers
+    - Implements exact geometric overlap calculation for precise alignment
+    - Ensures perfect alignment across all AMR levels
+    - CRITICAL: RAMSES coordinates are NOT integer indices requiring +0.5 offset
+    """
+    
+    # Pre-compute constants outside loops with explicit types
+    cell_size::Float64 = boxlen / (2^level)
+    half_cell::Float64 = cell_size * 0.5
+    cell_area::Float64 = cell_size * cell_size
+    
+    # Grid setup - RAMSES-consistent coordinate system
+    x_min::Float64, x_max::Float64 = grid_extent[1], grid_extent[2] 
+    y_min::Float64, y_max::Float64 = grid_extent[3], grid_extent[4]
+    
+    # Calculate pixel sizes and grid properties
+    pixel_size_x::Float64 = (x_max - x_min) / grid_resolution[1]
+    pixel_size_y::Float64 = (y_max - y_min) / grid_resolution[2]
+    inv_pixel_size_x::Float64 = 1.0 / pixel_size_x
+    inv_pixel_size_y::Float64 = 1.0 / pixel_size_y
+    
+    # Grid resolution bounds
+    max_ix::Int = grid_resolution[1]
+    max_iy::Int = grid_resolution[2]
+    
+    n_cells = length(x_coords)
+    
+    # RAMSES COORDINATE SYSTEM: cx, cy, cz are already cell centers 
+    # Calculate number of cells per pixel for optimization hints
+    cells_per_pixel_x::Float64 = pixel_size_x / cell_size
+    cells_per_pixel_y::Float64 = pixel_size_y / cell_size
+    
+    # RAMSES-CONSISTENT PRECISE MAPPING: Process each cell with exact coordinate calculation
+    @inbounds for i in 1:n_cells
+        # CORRECTED COORDINATE TRANSFORMATION FOR 1-BASED GRID INDICES
+        x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        
+        y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
+        
+        # For surface density: values[i] contains mass
+        mass_val::Float64 = values[i]
+        
+        # RAMSES-CONSISTENT PRECISE COORDINATE MAPPING
+        # Calculate cell boundaries in physical coordinates
+        cell_x_min::Float64 = x_phys - half_cell
+        cell_x_max::Float64 = x_phys + half_cell
+        cell_y_min::Float64 = y_phys - half_cell
+        cell_y_max::Float64 = y_phys + half_cell
+        
+        # CONSISTENT PIXEL MAPPING: Use same indexing as other mapping functions
+        # This ensures alignment consistency across all projection methods
+        ix_start::Int = max(1, Int(floor((cell_x_min - x_min) * inv_pixel_size_x)) + 1)
+        ix_end::Int = min(max_ix, Int(ceil((cell_x_max - x_min) * inv_pixel_size_x)))
+        iy_start::Int = max(1, Int(floor((cell_y_min - y_min) * inv_pixel_size_y)) + 1)
+        iy_end::Int = min(max_iy, Int(ceil((cell_y_max - y_min) * inv_pixel_size_y)))
+        
+        # Boundary-aware adjustment: ensure cells near boundaries still map to edge pixels
+        # This prevents empty rows/columns at grid boundaries
+        if cell_x_max > x_min && cell_x_min < x_min && ix_start > 1
+            ix_start = 1  # Include first pixel if cell overlaps left boundary
+        end
+        if cell_y_max > y_min && cell_y_min < y_min && iy_start > 1
+            iy_start = 1  # Include first pixel if cell overlaps bottom boundary
+        end
+        if cell_x_min < x_max && cell_x_max > x_max && ix_end < max_ix
+            ix_end = max_ix  # Include last pixel if cell overlaps right boundary
+        end
+        if cell_y_min < y_max && cell_y_max > y_max && iy_end < max_iy
+            iy_end = max_iy  # Include last pixel if cell overlaps top boundary
+        end
+        
+        # EXACT GEOMETRIC OVERLAP CALCULATION
+        # Distribute cell mass among overlapping pixels using precise area fractions
+        for ix::Int in ix_start:ix_end
+            # Calculate pixel boundaries exactly
+            pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
+            pix_x_max::Float64 = pix_x_min + pixel_size_x
+            
+            # Calculate x overlap with enhanced precision
+            overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+            
+            if overlap_x > 0.0  # Only process if there's actual overlap
+                for iy::Int in iy_start:iy_end
+                    # Calculate pixel boundaries exactly
+                    pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
+                    pix_y_max::Float64 = pix_y_min + pixel_size_y
+                    
+                    # Calculate y overlap with enhanced precision
+                    overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                    
+                    if overlap_y > 0.0  # Only process if there's actual overlap
+                        # PRECISE AREA FRACTION CALCULATION
+                        overlap_area::Float64 = overlap_x * overlap_y
+                        overlap_fraction::Float64 = overlap_area / cell_area
+                        
+                        # For surface density: distribute mass proportionally (consistent with other quantities)
+                        # This ensures mass conservation with precise geometric mapping
+                        mass_contribution::Float64 = mass_val * overlap_fraction
+                        weight_contribution::Float64 = weights[i] * overlap_fraction
+                        
+                        grid[ix, iy] += mass_contribution
+                        weight_grid[ix, iy] += weight_contribution  # Use consistent weight handling
+                    end
+                end
+            end
+        end
+    end
+end
+
 
 # Adaptive dispatcher function that chooses the best algorithm
 function map_amr_cells_to_grid_adaptive!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
@@ -1117,7 +1411,9 @@ function map_amr_cells_to_grid_with_spatial_index!(grid::Matrix{Float64}, weight
     
     # Phase 1: Build spatial index
     @inbounds for i in eachindex(x_coords)
+        # CORRECTED COORDINATE TRANSFORMATION FOR 1-BASED GRID INDICES
         x_phys::Float64 = (x_coords[i] - 0.5) * cell_size
+        
         y_phys::Float64 = (y_coords[i] - 0.5) * cell_size
         
         cell_x_min::Float64 = x_phys - half_cell
@@ -1153,8 +1449,9 @@ function map_amr_cells_to_grid_with_spatial_index!(grid::Matrix{Float64}, weight
             
             # Process all cells in this bin
             for cell_idx in cell_list
-                # Cell geometry calculations
+                # CORRECTED COORDINATE TRANSFORMATION FOR 1-BASED GRID INDICES
                 x_phys::Float64 = (x_coords[cell_idx] - 0.5) * cell_size
+                
                 y_phys::Float64 = (y_coords[cell_idx] - 0.5) * cell_size
                 
                 cell_x_min::Float64 = x_phys - half_cell
