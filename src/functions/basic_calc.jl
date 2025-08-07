@@ -541,8 +541,8 @@ Generates specialized code for different weighting and masking combinations.
             if length(weights) > 1
                 w_sum = sum(weights)
                 mean_val = sum(array .* weights) / w_sum
-                median_val = median(array, weights(weights))
-                std_val = std(array, weights(weights), mean=mean_val, corrected=false)
+                median_val = median(array, Weights(weights))
+                std_val = std(array, Weights(weights), mean=mean_val, corrected=false)
                 min_val = minimum(array)
                 max_val = maximum(array)
                 skew_val = skewness(array, mean_val)
@@ -584,8 +584,8 @@ Generates specialized code for different weighting and masking combinations.
             if length(weights) > 1
                 w_sum = sum(weights)
                 mean_val = sum(array .* weights) / w_sum
-                median_val = median(array, weights(weights))
-                std_val = std(array, weights(weights), mean=mean_val, corrected=false)
+                median_val = median(array, Weights(weights))
+                std_val = std(array, Weights(weights), mean=mean_val, corrected=false)
                 skew_val = skewness(array, mean_val)
                 kurt_val = kurtosis(array, mean_val)
                 min_val = minimum(array)
