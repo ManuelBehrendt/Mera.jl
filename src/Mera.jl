@@ -153,6 +153,10 @@ export
     configure_adaptive_io,
     benchmark_buffer_sizes,
     smart_io_setup,
+# projection memory pool optimization
+    get_projection_buffer,
+    show_projection_memory_stats,
+    clear_projection_buffers!,
 # user-friendly I/O configuration
     optimize_mera_io,
     configure_mera_io,
@@ -221,6 +225,7 @@ include("functions/adaptive_io.jl")
 include("functions/mera_io_config.jl")
 include("functions/auto_io_optimization.jl")
 include("functions/ramses_io_memory_pool.jl")
+include("functions/projection_memory_pool.jl")
 
 
 include("functions/overview.jl")
@@ -340,7 +345,6 @@ println( "|       |    ___|    __  |       |")
 println( "| ||_|| |   |___|   |  | |   _   |")
 println( "|_|   |_|_______|___|  |_|__| |__|")
 println()
-========================================
 
 """
     __init__()

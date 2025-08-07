@@ -512,16 +512,25 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     maps_mode = SortedDict( )
     if notonly_ranglecheck_vars
 
-        newmap_w = zeros(Float64, (length1, length2) )
+        # Get memory pool buffer for this thread
+        buffer = get_projection_buffer()
+        newmap_w, _ = get_main_grids!(buffer, (length1, length2))
+        
         data_dict, xval, yval, leveldata, weightval, imaps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
 
-        # Initialize final grids for geometric mapping
+        # Initialize final grids using memory pool for geometric mapping
         final_grids = Dict{Symbol, Matrix{Float64}}()
         final_weights = Dict{Symbol, Matrix{Float64}}()
         
         for var in keys(data_dict)
-            final_grids[var] = zeros(Float64, (length1, length2))
-            final_weights[var] = zeros(Float64, (length1, length2))
+            var_grid, var_weight = get_var_grid!(buffer, var, (length1, length2))
+            # Get views of the correct size and zero them
+            final_grids[var] = @view var_grid[1:length1, 1:length2]
+            final_weights[var] = @view var_weight[1:length1, 1:length2]
+            fill!(final_grids[var], 0.0)
+            fill!(final_weights[var], 0.0)
+            
+            # For imaps, we still need separate allocation as it's used differently
             imaps[var] = zeros(Float64, (length1, length2))
         end
         
@@ -621,9 +630,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 for var in keys(data_dict)
                     values_level = data_dict[var][mask_level]
                     
-                    # Initialize level grids for this variable
-                    level_grid = zeros(Float64, (length1, length2))
-                    level_weight_temp = zeros(Float64, (length1, length2))
+                    # Use memory pool for level grids
+                    level_grid, level_weight_temp = get_level_grids!(buffer, (length1, length2))
                     
                     # Use appropriate mapping based on variable type
                     if var == :sd
@@ -680,8 +688,13 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     mask_nonzero_v1 = final_weights[selected_v[1]] .> 0
                     mask_nonzero_v2 = final_weights[selected_v[2]] .> 0
                     
-                    iv = zeros(Float64, size(imaps[selected_v[1]]))
-                    iv2 = zeros(Float64, size(imaps[selected_v[2]]))
+                    # Use memory pool for temporary velocity arrays
+                    iv_grid, _ = get_var_grid!(buffer, :temp_iv, (length1, length2))
+                    iv2_grid, _ = get_var_grid!(buffer, :temp_iv2, (length1, length2))
+                    iv = @view iv_grid[1:length1, 1:length2]
+                    iv2 = @view iv2_grid[1:length1, 1:length2]
+                    fill!(iv, 0.0)
+                    fill!(iv2, 0.0)
                     
                     iv[mask_nonzero_v1] = final_grids[selected_v[1]][mask_nonzero_v1] ./ final_weights[selected_v[1]][mask_nonzero_v1]
                     iv2[mask_nonzero_v2] = final_grids[selected_v[2]][mask_nonzero_v2] ./ final_weights[selected_v[2]][mask_nonzero_v2]
@@ -751,7 +764,10 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     for ivar in selected_vars
         if in(ivar, rcheck)
             selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-            map_R = zeros(Float64, length1, length2 );
+            # Use memory pool for radius map
+            map_R_grid, _ = get_var_grid!(buffer, :temp_radius, (length1, length2))
+            map_R = @view map_R_grid[1:length1, 1:length2]
+            fill!(map_R, 0.0)
             for i = 1:(length1)
                 for j = 1:(length2)
                     x = i * dataobject.boxlen / res
@@ -771,7 +787,10 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     # create ϕ-angle map
     for ivar in selected_vars
         if in(ivar, anglecheck)
-            map_ϕ = zeros(Float64, length1, length2 );
+            # Use memory pool for angle map
+            map_ϕ_grid, _ = get_var_grid!(buffer, :temp_angle, (length1, length2))
+            map_ϕ = @view map_ϕ_grid[1:length1, 1:length2]
+            fill!(map_ϕ, 0.0)
             for i = 1:(length1)
                 for j = 1:(length2)
                     x = i * dataobject.boxlen /res - length1_center
@@ -1162,7 +1181,7 @@ end
 #end
 
 
-function map_amr_cells_to_grid_center!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+function map_amr_cells_to_grid_center!(grid::AbstractMatrix{Float64}, weight_grid::AbstractMatrix{Float64}, 
                                       x_coords::AbstractVector, y_coords::AbstractVector, 
                                       values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
                                       level::Int, grid_extent::NTuple{4,Float64}, 
@@ -1230,8 +1249,8 @@ It handles the coordinate transformation from 1-based RAMSES grid indices to phy
 coordinates and properly accounts for cell size, overlap, and area weighting.
 
 # Arguments
-- `grid::Matrix{Float64}`: Output grid for accumulated values (modified in-place)
-- `weight_grid::Matrix{Float64}`: Output grid for accumulated weights (modified in-place)  
+- `grid::AbstractMatrix{Float64}`: Output grid for accumulated values (modified in-place)
+- `weight_grid::AbstractMatrix{Float64}`: Output grid for accumulated weights (modified in-place)  
 - `x_coords, y_coords::AbstractVector`: AMR cell coordinates (1-based grid indices)
 - `values::AbstractVector{Float64}`: Physical quantity values for each cell
 - `weights::AbstractVector{Float64}`: Weighting values for each cell (usually mass)
@@ -1252,7 +1271,7 @@ coordinates and properly accounts for cell size, overlap, and area weighting.
 - Pre-computes constants to avoid repeated calculations
 - Conservative boundary handling prevents coordinate edge cases
 """
-function map_amr_cells_to_grid!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+function map_amr_cells_to_grid!(grid::AbstractMatrix{Float64}, weight_grid::AbstractMatrix{Float64}, 
                                x_coords::AbstractVector, y_coords::AbstractVector, 
                                values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
                                level::Int, grid_extent::NTuple{4,Float64}, 
@@ -1404,7 +1423,7 @@ Same as `map_amr_cells_to_grid!` but optimized for surface density calculations.
 3. Distribute mass proportional to overlap area
 4. Maintain exact mass conservation across refinement levels
 """
-function map_amr_cells_to_grid_surface_density!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+function map_amr_cells_to_grid_surface_density!(grid::AbstractMatrix{Float64}, weight_grid::AbstractMatrix{Float64}, 
                                                x_coords::AbstractVector, y_coords::AbstractVector, 
                                                values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
                                                level::Int, grid_extent::NTuple{4,Float64}, 
@@ -1433,7 +1452,6 @@ function map_amr_cells_to_grid_surface_density!(grid::Matrix{Float64}, weight_gr
     
     # Cache grid bounds for efficient boundary checking
     max_ix::Int = grid_resolution[1]
-    max_iy::Int = grid_resolution[2]
     max_iy::Int = grid_resolution[2]
     
     n_cells = length(x_coords)
@@ -1544,7 +1562,7 @@ This function analyzes the dataset characteristics and automatically chooses bet
 Same as base mapping function, plus:
 - `verbose::Bool=false`: Print algorithm selection information
 """
-function map_amr_cells_to_grid_adaptive!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+function map_amr_cells_to_grid_adaptive!(grid::AbstractMatrix{Float64}, weight_grid::AbstractMatrix{Float64}, 
                                         x_coords::AbstractVector, y_coords::AbstractVector, 
                                         values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
                                         level::Int, grid_extent::NTuple{4,Float64}, 
@@ -1593,7 +1611,7 @@ This function implements a two-phase algorithm optimized for scenarios with many
 - **Same Coordinate System**: Uses identical RAMSES coordinate transformation as direct method
 - **Identical Results**: Produces exactly the same output as direct method, just faster
 """
-function map_amr_cells_to_grid_with_spatial_index!(grid::Matrix{Float64}, weight_grid::Matrix{Float64}, 
+function map_amr_cells_to_grid_with_spatial_index!(grid::AbstractMatrix{Float64}, weight_grid::AbstractMatrix{Float64}, 
                                                   x_coords::AbstractVector, y_coords::AbstractVector, 
                                                   values::AbstractVector{Float64}, weights::AbstractVector{Float64}, 
                                                   level::Int, grid_extent::NTuple{4,Float64}, 
