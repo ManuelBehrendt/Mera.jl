@@ -1229,11 +1229,6 @@ This is the core function that converts AMR simulation data to gridded projectio
 It handles the coordinate transformation from 1-based RAMSES grid indices to physical
 coordinates and properly accounts for cell size, overlap, and area weighting.
 
-# Critical Coordinate System Note
-RAMSES simulations use 1-based grid indices, so coordinates need transformation:
-- Grid index → Physical coordinate: (grid_index - 0.5) * cell_size
-- This ensures proper cell center alignment and eliminates projection gaps
-
 # Arguments
 - `grid::Matrix{Float64}`: Output grid for accumulated values (modified in-place)
 - `weight_grid::Matrix{Float64}`: Output grid for accumulated weights (modified in-place)  

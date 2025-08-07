@@ -412,7 +412,7 @@ function projection_deprecated(   dataobject::HydroDataType, vars::Array{Symbol,
 
             # bin data on current level grid and resize map
             fcorrect = (2^level /  res) ^ 2
-            map_weight = hist2d_weight_deprecated(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, isamr) .* weight_scale
+            map_weight = hist2d_weight_amr_boundary_aware(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, isamr) .* weight_scale
 
             fs =  res / 2^level
             overlap_size =  round.(Int, [length(new_level_range1) * fs - length1, length(new_level_range2) * fs- length2])
@@ -425,10 +425,10 @@ function projection_deprecated(   dataobject::HydroDataType, vars::Array{Symbol,
                 
                 if ivar == :sd || ivar == :mass
                     #if ivar == :mass println(ivar) end
-                    imap = hist2d_weight_deprecated(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar], isamr)
+                    imap = hist2d_weight_amr_boundary_aware(xval,yval, [new_level_range1,new_level_range2], mask_level, data_dict[ivar], isamr)
                 else
                     
-                    imap = hist2d_data_deprecated(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
+                    imap = hist2d_data_amr_boundary_aware(xval,yval, [new_level_range1,new_level_range2], mask_level, weightval, data_dict[ivar], isamr) .* weight_scale
                 end
 
                 
@@ -880,12 +880,6 @@ function check_mask_deprecated(dataobject, mask, verbose)
 end
 
 
-function nrange(start::Int, stop::Int, len::Int, nshift::Int)
-   return range(start, stop=stop + nshift, length=len + nshift )
-end
-
-
-
 #function hist2d_weight(x::Vector{Int64}, y::Vector{Int64},
 #                        s::Vector{StepRangeLen{Float64,
 #                        Base.TwicePrecision{Float64},
@@ -914,30 +908,10 @@ end
 #end
 
 
-function fast_hist2d_weight_deprecated!(h::Matrix{Float64}, x, y, w, range1, range2)
-    r1_min = Int(minimum(range1))
-    r2_min = Int(minimum(range2))
-    nx, ny = size(h)
-    
-    @inbounds for k in eachindex(x)
-        ix = x[k] - r1_min + 1
-        iy = y[k] - r2_min + 1
-        if 1 <= ix <= nx && 1 <= iy <= ny
-            h[ix, iy] += w[k]
-        end
-    end
-    return h
-end
-
-function hist2d_weight_deprecated(x, y, s, mask, w, isamr)
-    h = zeros(Float64, (length(s[1]), length(s[2])))
-    if isamr
-        fast_hist2d_weight_deprecated!(h, x[mask], y[mask], w[mask], s[1], s[2])
-    else
-        fast_hist2d_weight_deprecated!(h, x, y, w, s[1], s[2])
-    end
-    return h
-end
+# Note: Histogram functions fast_hist2d_weight_amr_boundary_aware!, 
+# hist2d_weight_amr_boundary_aware, fast_hist2d_data_amr_boundary_aware!,
+# and hist2d_data_amr_boundary_aware are now defined in the main 
+# projection_hydro.jl file to avoid method overwriting conflicts during precompilation
 
 
 
@@ -981,27 +955,5 @@ end
 #end
 
 
-function fast_hist2d_data_deprecated!(h::Matrix{Float64}, x, y, data, w, range1, range2)
-    r1_min = Int(minimum(range1))
-    r2_min = Int(minimum(range2))
-    nx, ny = size(h)
-    
-    @inbounds for k in eachindex(x)
-        ix = x[k] - r1_min + 1
-        iy = y[k] - r2_min + 1
-        if 1 <= ix <= nx && 1 <= iy <= ny
-            h[ix, iy] += w[k] * data[k]
-        end
-    end
-    return h
-end
-
-function hist2d_data_deprecated(x, y, s, mask, w, data, isamr)
-    h = zeros(Float64, (length(s[1]), length(s[2])))
-    if isamr
-        fast_hist2d_data_deprecated!(h, x[mask], y[mask], data[mask], w[mask], s[1], s[2])
-    else
-        fast_hist2d_data_deprecated!(h, x, y, data, w, s[1], s[2])
-    end
-    return h
-end
+# Note: Function fast_hist2d_data_amr_boundary_aware! and hist2d_data_amr_boundary_aware 
+# are now defined in the main projection_hydro.jl file
