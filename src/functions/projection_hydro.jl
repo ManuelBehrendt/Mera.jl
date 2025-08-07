@@ -44,6 +44,7 @@ projection(dataobject::HydroDataType, vars::Array{Symbol,1};
            data_center_unit::Symbol=:standard,
            verbose::Bool=true,
            show_progress::Bool=true,
+           verbose_threads::Bool=false,
            myargs::ArgumentsType=ArgumentsType())
 
 return HydroMapsType
@@ -74,8 +75,9 @@ return HydroMapsType
 
 #### Advanced Options:
 - **`data_center/data_center_unit`**: Alternative center for data calculations
-- **`verbose::Bool`**: Print diagnostic information during processing
+- **`verbose::Bool`**: Print diagnostic information during processing (includes basic thread info)
 - **`show_progress::Bool`**: Display progress bar for level-by-level processing
+- **`verbose_threads::Bool`**: Show detailed multithreading diagnostics (default: false)
 - **`myargs::ArgumentsType`**: Struct to pass multiple arguments simultaneously
 
 ### Method Variants
@@ -148,6 +150,30 @@ y_proj = projection(gas, :sd, :Msol_pc2,
                    center=[:bc], range_unit=:kpc)
 ```
 
+#### Threading Control
+```julia
+# Basic thread information always shown with verbose=true (default)
+density_map = projection(gas, :rho, :g_cm3, res=512)
+# Output: Available threads: 8
+#         Requested max_threads: 8
+#         Using threads: 5
+
+# Enable detailed threading diagnostics with verbose_threads=true
+density_map = projection(gas, :rho, :g_cm3, res=512, 
+                         verbose_threads=true)
+# Output: Available threads: 8
+#         Requested max_threads: 8
+#         Using threads: 5
+#         🧵 Using parallel processing with 5 threads
+#         ✅ Parallel projection completed successfully
+#         Performance: 1234567 cells/sec
+#         Parallel efficiency: 87.3%
+
+# Hide all output with verbose=false
+density_map = projection(gas, :rho, :g_cm3, res=512, 
+                         verbose=false)  # No threading output at all
+```
+
 #### Physical Pixel Size Control (pxsize)
 ```julia
 # High-resolution projection with 10 pc pixels
@@ -212,6 +238,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         max_threads::Int=Threads.nthreads(),
+                        verbose_threads::Bool=false,
                         myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -234,6 +261,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
                             verbose=verbose,
                             show_progress=show_progress,
                             max_threads=max_threads,
+                            verbose_threads=verbose_threads,
                             myargs=myargs )
 
 end
@@ -258,6 +286,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         max_threads::Int=Threads.nthreads(),
+                        verbose_threads::Bool=false,
                         myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -280,6 +309,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
                             verbose=verbose,
                             show_progress=show_progress,
                             max_threads=max_threads,
+                            verbose_threads=verbose_threads,
                             myargs=myargs)
 
 end
@@ -304,6 +334,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         max_threads::Int=Threads.nthreads(),
+                        verbose_threads::Bool=false,
                         myargs::ArgumentsType=ArgumentsType() )
 
     return projection(dataobject, vars, units=units,
@@ -325,6 +356,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::
                                                 verbose=verbose,
                                                 show_progress=show_progress,
                                                 max_threads=max_threads,
+                                                verbose_threads=verbose_threads,
                                                 myargs=myargs)
 
 end
@@ -351,6 +383,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         max_threads::Int=Threads.nthreads(),
+                        verbose_threads::Bool=false,
                         myargs::ArgumentsType=ArgumentsType() )
 
     return projection(dataobject, vars, units=fill(unit, length(vars)),
@@ -372,6 +405,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::S
                                                 verbose=verbose,
                                                 show_progress=show_progress,
                                                 max_threads=max_threads,
+                                                verbose_threads=verbose_threads,
                                                 myargs=myargs)
 
 end
@@ -397,6 +431,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         verbose::Bool=true,
                         show_progress::Bool=true,
                         max_threads::Int=Threads.nthreads(),
+                        verbose_threads::Bool=false,
                         myargs::ArgumentsType=ArgumentsType() )
 
 
@@ -418,6 +453,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.data_center_unit === missing) data_center_unit = myargs.data_center_unit end
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
+    if !(myargs.verbose_threads === missing) verbose_threads = myargs.verbose_threads end
 
     # Validate and normalize input parameters
     verbose = Mera.checkverbose(verbose)
@@ -587,10 +623,22 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         # Automatically decide whether to use parallel processing based on data characteristics
         use_parallel = (simlmax - lmin > 1) && (max_threads > 1) && (Threads.nthreads() > 1)
         
-        if use_parallel && verbose
+        # Always show basic thread information when verbose=true
+        if verbose
+            println("Available threads: $(Threads.nthreads())")
+            println("Requested max_threads: $max_threads")
+            if use_parallel
+                println("Using threads: $max_threads")
+            else
+                println("Using threads: 1 (sequential)")
+            end
+        end
+        
+        # Show detailed threading diagnostics only with verbose_threads=true
+        if use_parallel && verbose && verbose_threads
             println("🧵 Using parallel processing with $max_threads threads")
             println("   Processing levels $lmin to $simlmax")
-        elseif verbose && !use_parallel
+        elseif verbose && verbose_threads && !use_parallel
             if (simlmax - lmin <= 1)
                 println("ℹ️  Sequential processing: single AMR level detected")
             elseif (max_threads <= 1) || (Threads.nthreads() <= 1)
@@ -605,7 +653,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 parallel_grids, parallel_weights, parallel_stats = project_amr_parallel(
                     dataobject, keys(data_dict), data_dict, xval, yval, leveldata, weightval,
                     grid_extent, (length1, length2), boxlen, lmin, simlmax;
-                    max_threads=max_threads, use_memory_pool=false, verbose=verbose
+                    max_threads=max_threads, use_memory_pool=false, verbose=(verbose && verbose_threads)
                 )
                 
                 # Copy results to final grids
@@ -616,7 +664,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     end
                 end
                 
-                if verbose
+                if verbose && verbose_threads
                     println("✅ Parallel projection completed successfully")
                     cells_per_sec = round(parallel_stats["cells_per_second"])
                     efficiency_pct = round(parallel_stats["parallel_efficiency"] * 100, digits=1)
@@ -625,7 +673,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 end
                 
             catch ex
-                if verbose
+                if verbose && verbose_threads
                     println("⚠️  Parallel processing failed, falling back to sequential: $ex")
                 end
                 use_parallel = false  # Fall back to sequential processing

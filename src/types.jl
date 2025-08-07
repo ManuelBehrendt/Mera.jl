@@ -702,5 +702,6 @@ Base.@kwdef mutable struct ArgumentsType
 
     verbose::Union{Bool, Missing}           = missing
     show_progress::Union{Bool, Missing}     = missing
+    verbose_threads::Union{Bool, Missing}   = missing
 
 end
