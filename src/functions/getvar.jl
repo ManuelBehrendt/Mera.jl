@@ -282,9 +282,14 @@ end
 # Basic gravity analysis
 grav_data = getvar(grav, :epot)
 
-# Advanced energy analysis with hydro data
+# Advanced energy analysis with hydro data (keyword syntax)
 energy_density = getvar(grav, :gravitational_energy_density, hydro_data=hydro)
 binding_energy = getvar(grav, :gravitational_binding_energy, hydro_data=hydro)
+
+# NEW: Simplified positional syntax
+jeans_mass = getvar(grav, hydro, :jeansmass, :Msol)
+thermal_energy = getvar(grav, hydro, :Etherm, :erg)
+mixed_analysis = getvar(grav, hydro, [:epot, :T, :jeanslength], [:erg, :K, :pc])
 ```
 """
 function getvar(   dataobject::GravDataType, var::Symbol;
@@ -367,6 +372,118 @@ end
 
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
                     hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    unit::Symbol=:standard,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    units = [unit for i in 1:length(vars)]
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+
+# ========== NEW API: GRAVITY + HYDRO WITH POSITIONAL ARGUMENTS ==========
+
+"""
+#### Get gravity data with hydro data as second positional argument
+
+**New simplified syntax:**
+```julia
+# Single variable with unit
+getvar(grav, hydro, :jeansmass, :Msol)
+
+# Multiple variables with units  
+getvar(grav, hydro, [:jeansmass, :epot], [:Msol, :erg])
+
+# Multiple variables with same unit
+getvar(grav, hydro, [:T, :cs], :K)
+```
+"""
+function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol;
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    unit::Symbol=:standard,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.],
+                    center_unit::Symbol=:standard,
+                    direction::Symbol=:z,
+                    mask::MaskType=[false],
+                    ref_time::Real=dataobject.info.time)
+
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+
+    # construct corresponding DataSetType from filtered database to use the calculations below
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject);
+    end
+
+    units = [unit for i in 1:length(vars)]
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
                     center::Array{<:Any,1}=[0.,0.,0.],
                     center_unit::Symbol=:standard,

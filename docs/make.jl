@@ -45,15 +45,18 @@ makedocs(modules = [Mera],
                       
                       "11 Multi-Threading"      => "multi-threading/multi-threading_intro.md",
 
-                      "12 Benchmarks"           => Any["Server IO"                      => "benchmarks/IO/IOperformance.md",
+                      "12 Performance Monitoring"  => "performance_monitoring.md",
+
+                      "13 Benchmarks"           => Any["Server IO"                      => "benchmarks/IO/IOperformance.md",
                                                     "Parallel RAMSES-Files Reading"      => "benchmarks/RAMSES_reading/ramses_reading.md",
                                                     "Mera-Files Reading"                 => "benchmarks/JLD2_reading/Mera_files_reading.md",
                                                     "Parallel Projections"               => "benchmarks/Projection/multi_projections.md"],
 
-                      "13 Reference Guide"          => Any["Julia"                          => "quickreference/Julia_Quick_Reference.md",
-                                                        "Mera"                          => "quickreference/Mera_Quick_Reference.md"],
+                      "14 Reference Guide"          => Any["Julia"                          => "quickreference/Julia_Quick_Reference.md",
+                                                        "Mera"                          => "quickreference/Mera_Quick_Reference.md",
+                                                        "Performance"                   => "quickreference/Performance_Quick_Reference.md"],
 
-                      "14 API Documentation"     => "api.md"
+                      "15 API Documentation"     => "api.md"
                       ]
 		 )
 
