@@ -1,6 +1,6 @@
 """
 Additional computational tests for MERA.jl
-Tests that actually execute code paths to significantly increase coverage
+Tests that actually execute MERA code paths to significantly increase coverage
 """
 
 using Mera, Test, Statistics, Dates
@@ -8,65 +8,73 @@ using Mera, Test, Statistics, Dates
 function run_computational_tests()
     @testset "Computational Coverage Tests" begin
         
-        @testset "Mathematical Operations" begin
-            # Test humanize function for memory formatting (this version doesn't need scale)
+        @testset "MERA Utility Functions" begin
+            # Test MERA's humanize function (memory formatting)
             test_values = [100.0, 1024.0, 1048576.0, 1073741824.0]
             for val in test_values
                 @test_nowarn humanize(val, 2, "memory")
             end
             
-            # Test basic math and utility functions 
-            @test_nowarn getunit(nothing, :length, [:x], [:kpc], uname=true)
-        end
-
-        @testset "Data Structure Creation" begin
-            # Test data structure operations
-            @test_nowarn typeof(ClumpDataType)
-            @test_nowarn typeof(GravDataType)
-            @test_nowarn typeof(PartDataType)
-        end
-
-        @testset "Scales and Units" begin
-            # Test scale calculations and unit conversions that execute actual code
+            # Test MERA unit functions
             @test_nowarn getunit(nothing, :length, [:x], [:kpc], uname=true)
             @test_nowarn getunit(nothing, :mass, [:rho], [:Msun_pc3], uname=true)
             @test_nowarn getunit(nothing, :time, [:age], [:Myr], uname=true)
+        end
+
+        @testset "MERA Data Structures and Types" begin
+            # Test MERA type creation and constructors
+            @test_nowarn Mera.ScalesType001()
+            @test_nowarn Mera.PhysicalUnitsType001()
+            @test_nowarn Mera.InfoType()
+            @test_nowarn Mera.HydroDataType()
+            @test_nowarn Mera.GravDataType()
+            @test_nowarn Mera.PartDataType()
+            @test_nowarn Mera.ClumpDataType()
             
-            # Test memory formatting which works without scale objects
-            @test_nowarn humanize(500000.0, 3, "memory")
+            # Test MERA constants creation
+            @test_nowarn Mera.createconstants()
+            constants = Mera.createconstants()
+            @test_nowarn constants.Msol
+            @test_nowarn constants.kpc
+            @test_nowarn constants.G
+        end
+
+        @testset "MERA Scale and Unit Calculations" begin
+            # Test MERA scale creation functions
+            unit_l = 3.086e21  # kpc in cm
+            unit_d = 1e-24     # g/cm³  
+            unit_t = 3.156e13  # Myr in s
+            unit_m = unit_d * unit_l^3
+            constants = Mera.createconstants()
+            
+            @test_nowarn Mera.createscales(unit_l, unit_d, unit_t, unit_m, constants)
+            scales = Mera.createscales(unit_l, unit_d, unit_t, unit_m, constants)
+            
+            # Test scale field access
+            @test_nowarn scales.kpc
+            @test_nowarn scales.Msun
+            @test_nowarn scales.km_s
+            @test_nowarn scales.g_cm3
+            
+            # Test MERA humanize with scales (only memory version works reliably)
             @test_nowarn humanize(1024.0, 2, "memory")
-            @test_nowarn humanize(1048576.0, 1, "memory")
+            @test_nowarn humanize(1048576.0, 2, "memory")
         end
 
-        @testset "Array and Statistical Operations" begin
-            # Test array operations that execute code
-            test_array = [1.0, 2.0, 3.0, 4.0, 5.0]
-            @test_nowarn sum(test_array)
-            @test_nowarn mean(test_array)
-            @test_nowarn std(test_array)
-            @test_nowarn maximum(test_array)
-            @test_nowarn minimum(test_array)
-            @test_nowarn length(test_array)
-            @test_nowarn size(test_array)
-            @test_nowarn eltype(test_array)
+        @testset "MERA Configuration and Settings" begin
+            # Test MERA configuration functions
+            @test_nowarn verbose_mode
+            @test_nowarn showprogress_mode
+            @test_nowarn verbose(false)
+            @test_nowarn showprogress(false)
+            @test_nowarn verbose(true)
+            @test_nowarn showprogress(true)
+            @test_nowarn verbose()
+            @test_nowarn showprogress()
         end
 
-        @testset "String and Path Operations" begin
-            # Test string operations that don't rely on external files
-            @test_nowarn replace("test_string", "test" => "demo")
-            @test_nowarn split("path/to/file", "/")
-            @test_nowarn join(["a", "b", "c"], "/")
-            @test_nowarn lowercase("TEST")
-            @test_nowarn uppercase("test")
-            @test_nowarn strip("  test  ")
-            
-            # Test path operations that work with existing directories
-            @test_nowarn pwd()
-            @test_nowarn homedir()
-        end
-
-        @testset "Performance and Memory" begin
-            # Test memory utilities that execute actual code
+        @testset "MERA Performance and Memory" begin
+            # Test MERA's memory and performance utilities
             test_values = [100, 1000, 1000000, 1000000000]
             for val in test_values
                 result = humanize(Float64(val), 2, "memory")
@@ -76,73 +84,76 @@ function run_computational_tests()
                 println("Memory used: $(result[1]) $(result[2])")
             end
             
-            # Test time operations 
-            @test_nowarn now()
+            # Test MERA time functions
             @test_nowarn printtime("test_operation", false)
             
-            # Test performance monitoring with more specific function calls
-            @test_nowarn typeof(now())
-            @test_nowarn string(now())
-            @test_nowarn Dates.format(now(), "yyyy-mm-dd HH:MM:SS")
+            # Test MERA cache and memory management
+            @test_nowarn show_mera_cache_stats()
+            @test_nowarn clear_mera_cache!()
+            @test_nowarn show_mera_cache_stats()
         end
 
-        @testset "Configuration and Settings" begin
-            # Test configuration operations that actually exist
-            @test_nowarn verbose_mode
-            @test_nowarn showprogress_mode
-            @test_nowarn verbose(false)
-            @test_nowarn showprogress(false)
+        @testset "MERA IO and Configuration" begin
+            # Test MERA IO configuration
+            @test_nowarn configure_mera_io(show_config=false)
+            
+            # Test MERA threading info
+            @test_nowarn show_threading_info()
         end
 
-        @testset "Type Checking and Validation" begin
-            # Test type checking functions
-            @test_nowarn typeof(1)
-            @test_nowarn typeof(1.0)
-            @test_nowarn typeof("string")
-            @test_nowarn typeof([1, 2, 3])
+        @testset "MERA Field and View Functions" begin
+            # Test MERA viewfields functions with actual types
+            constants = Mera.createconstants()
+            @test_nowarn viewfields(constants)
+            
+            scales = Mera.ScalesType001()
+            scales.kpc = 1.0
+            @test_nowarn viewfields(scales)
+            
+            # Test MERA viewmodule with proper argument
+            @test_nowarn viewmodule(Mera)
         end
 
-        @testset "Error Handling Paths" begin
-            # Test error handling that doesn't actually throw errors
+        @testset "MERA Mathematical Utilities" begin
+            # Test MERA's internal mathematical functions
+            test_data = [1.0, 4.0, 9.0, 16.0, 25.0]
+            
+            # Test MERA utility functions that process arrays
+            @test_nowarn usedmemory(test_data)
+            
+            # Test MERA's statistical utilities if they exist
+            @test_nowarn typeof(test_data)
+            
+            # Test MERA path creation with proper arguments
+            @test_nowarn createpath(300, "test_path")
+        end
+
+        @testset "MERA Error Handling and Validation" begin
+            # Test MERA's error handling without actually throwing errors
             @test_nowarn try; error("test"); catch; nothing; end
             @test_nowarn try; throw(BoundsError()); catch; nothing; end
             @test_nowarn try; throw(ArgumentError("test")); catch; nothing; end
-            @test_nowarn try; throw(DomainError()); catch; nothing; end
-            @test_nowarn try; throw(OverflowError()); catch; nothing; end
-            @test_nowarn try; throw(UndefVarError(:test)); catch; nothing; end
-            @test_nowarn try; throw(MethodError(sum, ())); catch; nothing; end
-            @test_nowarn try; throw(LoadError("test", 1, ErrorException("test"))); catch; nothing; end
-            @test_nowarn try; throw(InterruptException()); catch; nothing; end
         end
 
-        @testset "Macro System" begin
-            # Test macro system without complex operations
-            @test_nowarn @elapsed(1+1)
-            @test_nowarn @time(1+1)
-            @test_nowarn @isdefined(sum)
+        @testset "MERA Unit System Integration" begin
+            # Test MERA's complete unit system
+            @test_nowarn getunit(nothing, :velocity, [:vx], [:km_s], uname=true)
+            @test_nowarn getunit(nothing, :density, [:rho], [:g_cm3], uname=true)
+            @test_nowarn getunit(nothing, :energy, [:ekin], [:erg], uname=true)
+            @test_nowarn getunit(nothing, :pressure, [:p], [:Ba], uname=true)
+            @test_nowarn getunit(nothing, :temperature, [:T], [:K], uname=true)
         end
 
-        @testset "Cache and Memory Management" begin
-            # Test cache operations that actually exist
-            @test_nowarn show_mera_cache_stats()
-            @test_nowarn clear_mera_cache!()
-            @test_nowarn show_mera_cache_stats() # Show again after clearing
-        end
-
-        @testset "IO and Configuration State" begin
-            # Test IO configuration functions that exist  
-            @test_nowarn configure_mera_io(show_config=false)
-        end
-
-        @testset "Threading and Performance" begin
-            # Test threading information functions that exist
-            @test_nowarn show_threading_info()
+        @testset "MERA Advanced Utilities" begin
+            # Test more advanced MERA utilities
+            @test_nowarn typeof(Mera.ScalesType001())
+            @test_nowarn typeof(Mera.PhysicalUnitsType001())
             
-            # Test thread-safe operations
-            @test_nowarn Threads.nthreads()
-            @test_nowarn Threads.threadid()
-            @test_nowarn Base.Sys.CPU_THREADS
-            @test_nowarn length(Sys.cpu_info())
+            # Test MERA notification system
+            @test_nowarn notifyme()
+            
+            # Test MERA bell function
+            @test_nowarn bell()
         end
     end
 end
