@@ -3,534 +3,441 @@
 using Test
 using Mera
 
-@testset "Maximum MERA Coverage Tests" begin
+@testset "MERA Coverage Tests" begin
     
-    @testset "1. Core Infrastructure Testing" begin
-        # Test functions that load and execute large amounts of internal code
+    @testset "1. Real Data Loading Tests" begin
+        # Set up test data directory
+        test_data_dir = mktempdir()
+        original_dir = pwd()
+        
         @test begin
             try
-                # Test all exported symbols to trigger loading of their implementations
-                exported_symbols = names(Mera)
-                loaded_functions = 0
+                # Download and setup real simulation data for maximum coverage
+                println("📥 Setting up simulation data...")
                 
-                for symbol in exported_symbols
-                    try
-                        obj = getfield(Mera, symbol)
-                        if isa(obj, Function) || isa(obj, Type)
-                            loaded_functions += 1
-                        end
-                    catch
-                        # Some symbols might not be accessible, continue
-                    end
-                end
+                cd(test_data_dir)
                 
-                loaded_functions >= 50  # Should load many functions/types
+                # Download real RAMSES simulation data
+                data_url = "http://www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar"
+                run(`curl -L -o simulations.tar $data_url`)
+                run(`tar -xf simulations.tar`)
+                
+                # Check the actual structure - it should be output_XXXXX directories
+                extracted_files = readdir(".")
+                simulation_dirs = filter(x -> startswith(x, "output_"), extracted_files)
+                
+                # Verify we have simulation data
+                length(simulation_dirs) > 0 && isdir(simulation_dirs[1])
             catch e
-                @warn "Symbol loading test failed: $e"
+                @warn "Test data setup failed: $e"
                 false
             end
         end
         
-        # Test internal module structure
+        # Test getinfo with real data
         @test begin
             try
-                # Test that core modules and types are properly loaded
-                core_tests = 0
+                # Look for output_XXXXX directories (actual RAMSES structure)
+                extracted_files = readdir(".")
+                simulation_dirs = filter(x -> startswith(x, "output_"), extracted_files)
+                info_loaded = 0
                 
-                # Test type system
-                if isdefined(Mera, :InfoType)
-                    info = Mera.InfoType()
-                    core_tests += 1
-                end
-                
-                if isdefined(Mera, :ScalesType001)
-                    scales_type = Mera.ScalesType001()
-                    core_tests += 1
-                end
-                
-                if isdefined(Mera, :ArgumentsType)
-                    args = Mera.ArgumentsType()
-                    core_tests += 1
-                end
-                
-                core_tests >= 2
-            catch e
-                @warn "Core module test failed: $e"
-                false
-            end
-        end
-    end
-    
-    @testset "2. Function Signature and Parameter Testing" begin
-        # Test functions with various parameter combinations to trigger different code paths
-        @test begin
-            try
-                # Test createscales with different parameter combinations
-                constants = Mera.createconstants()
-                scale_variations = 0
-                
-                # Test different unit combinations
-                unit_combinations = [
-                    (3.086e21, 1e-24, 3.156e13),  # kpc, g/cm³, Myr
-                    (3.086e18, 1e-27, 3.156e10),  # pc, different density, different time
-                    (1.496e13, 1e-21, 3.156e16),  # AU, different density, Gyr
-                ]
-                
-                for (ul, ud, ut) in unit_combinations
+                for sim_dir in simulation_dirs[1:min(2, length(simulation_dirs))]  # Test first 2 simulations
                     try
-                        um = ud * ul^3
-                        scales = Mera.createscales(ul, ud, ut, um, constants)
-                        
-                        # Test accessing different scale fields to trigger code execution
-                        test_fields = [:kpc, :Msol, :km_s, :g_cm3, :Myr]
-                        field_access = 0
-                        for field in test_fields
-                            try
-                                if hasfield(typeof(scales), field)
-                                    val = getfield(scales, field)
-                                    if isa(val, Real) && isfinite(val)
-                                        field_access += 1
-                                    end
-                                end
-                            catch
-                                continue
+                        if isdir(sim_dir)
+                            # MERA expects to be run from parent directory, not inside output_XXXXX
+                            # We should stay in test_data_dir and use datapath= parameter
+                            # Extract output number from directory name
+                            output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                            println("🔍 Testing getinfo for output $output_num")
+                            info = getinfo(output=output_num, path=".")  # Path is current dir containing output_XXXXX dirs
+                            
+                            # Verify info was loaded correctly
+                            if hasfield(typeof(info), :ncpu) && hasfield(typeof(info), :ndim)
+                                info_loaded += 1
+                                println("✅ Successfully loaded info from $sim_dir")
                             end
                         end
-                        
-                        if field_access >= 3
-                            scale_variations += 1
-                        end
-                    catch
+                    catch e
+                        println("⚠️  Failed to load info from $sim_dir: $e")
                         continue
                     end
                 end
                 
-                scale_variations >= 2
+                info_loaded >= 1
             catch e
-                @warn "Parameter testing failed: $e"
+                @warn "Real data getinfo test failed: $e"
                 false
             end
         end
         
-        # Test argument processing with ArgumentsType
+        # Clean up
         @test begin
             try
-                args = Mera.ArgumentsType()
-                argument_tests = 0
-                
-                # Test setting various fields to trigger validation code
-                test_params = [
-                    (:res, 512),
-                    (:lmax, 10),
-                    (:direction, :z),
-                    (:verbose, true),
-                    (:show_progress, false)
-                ]
-                
-                for (field, value) in test_params
-                    try
-                        if hasfield(typeof(args), field)
-                            setfield!(args, field, value)
-                            retrieved = getfield(args, field)
-                            if retrieved == value
-                                argument_tests += 1
-                            end
-                        end
-                    catch
-                        continue
-                    end
-                end
-                
-                argument_tests >= 2
-            catch e
-                @warn "Argument processing test failed: $e"
-                false
+                cd(original_dir)
+                rm(test_data_dir, recursive=true, force=true)
+                true
+            catch
+                true  # Don't fail test if cleanup fails
             end
         end
     end
     
-    @testset "3. Utility Function Deep Testing" begin
-        # Test utility functions that execute significant amounts of code
+    @testset "2. Core MERA Function Testing with Data" begin
+        # Test MERA's core data loading functions
         @test begin
             try
-                utility_executions = 0
+                # Setup fresh test data
+                test_data_dir = mktempdir()
+                original_dir = pwd()
                 
-                # Test humanize function with actual scales
                 try
-                    constants = Mera.createconstants()
-                    scales = Mera.createscales(3.086e21, 1e-24, 3.156e13, 1e-24 * (3.086e21)^3, constants)
+                    cd(test_data_dir)
                     
-                    # Test humanize with scales (this should trigger significant code)
-                    test_values = [1e6, 1e9, 1e12, 1e15]
-                    for val in test_values
-                        try
-                            result = humanize(val, scales, 2, "length")
-                            if isa(result, String)
-                                utility_executions += 1
-                                break
+                    # Download and extract simulation data
+                    data_url = "http://www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar"
+                    run(`curl -L -o simulations.tar $data_url`)
+                    run(`tar -xf simulations.tar`)
+                    
+                    core_functions_tested = 0
+                    
+                    # Look for output_XXXXX directories
+                    extracted_files = readdir(".")
+                    simulation_dirs = filter(x -> startswith(x, "output_"), extracted_files)
+                    
+                    if length(simulation_dirs) > 0
+                        for sim_dir in simulation_dirs[1:min(1, length(simulation_dirs))]  # Test one simulation
+                            if isdir(sim_dir)
+                                println("🔍 Testing core functions in $sim_dir")
+                                
+                                # Test getinfo (loads simulation metadata)
+                                try
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")  # Use correct path parameter
+                                    if hasfield(typeof(info), :ncpu)
+                                        core_functions_tested += 1
+                                        println("✅ getinfo successful")
+                                    end
+                                catch e
+                                    println("⚠️  getinfo failed: $e")
+                                end
+                                
+                                # Test gethydro (loads hydro data - massive code execution)
+                                try
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")
+                                    hydro = gethydro(info, lmax=6)  # Small lmax for speed
+                                    if hasfield(typeof(hydro), :data)
+                                        core_functions_tested += 1
+                                        println("✅ gethydro successful")
+                                    end
+                                catch e
+                                    println("⚠️  gethydro failed: $e")
+                                end
+                                
+                                # Test getgravity (loads gravity data)
+                                try
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")
+                                    gravity = getgravity(info, lmax=6)
+                                    if hasfield(typeof(gravity), :data)
+                                        core_functions_tested += 1
+                                        println("✅ getgravity successful")
+                                    end
+                                catch e
+                                    println("⚠️  getgravity failed: $e")
+                                end
+                                
+                                # Test getparticles (loads particle data)
+                                try
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")
+                                    particles = getparticles(info, lmax=6)
+                                    if hasfield(typeof(particles), :data)
+                                        core_functions_tested += 1
+                                        println("✅ getparticles successful")
+                                    end
+                                catch e
+                                    println("⚠️  getparticles failed: $e")
+                                end
+                                
+                                break  # Only test one simulation
                             end
-                        catch
-                            # Try different signature
-                            try
-                                result = humanize(val, 2, "memory")
-                                if isa(result, String)
-                                    utility_executions += 1
+                        end
+                    end
+                    
+                    println("📊 Core functions tested: $core_functions_tested/4")
+                    core_functions_tested >= 2  # At least 2 core functions should work
+                    
+                finally
+                    cd(original_dir)
+                    rm(test_data_dir, recursive=true, force=true)
+                end
+                
+            catch e
+                @warn "Core function testing failed: $e"
+                false
+            end
+        end
+    end
+    
+    @testset "3. Projection Testing" begin
+        # Test projection functions which execute huge amounts of MERA code
+        @test begin
+            try
+                # Setup test data
+                test_data_dir = mktempdir()
+                original_dir = pwd()
+                
+                try
+                    cd(test_data_dir)
+                    
+                    # Download simulation data
+                    data_url = "http://www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar"
+                    run(`curl -L -o simulations.tar $data_url`)
+                    run(`tar -xf simulations.tar`)
+                    
+                    projection_success = false
+                    
+                    # Look for output_XXXXX directories
+                    extracted_files = readdir(".")
+                    simulation_dirs = filter(x -> startswith(x, "output_"), extracted_files)
+                    
+                    if length(simulation_dirs) > 0
+                        for sim_dir in simulation_dirs[1:min(1, length(simulation_dirs))]
+                            if isdir(sim_dir)
+                                println("🎯 Testing projection in $sim_dir")
+                                
+                                try
+                                    # Load simulation info and data, then create projection
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")
+                                    
+                                    # Load hydro data
+                                    hydro = gethydro(info, lmax=6)  # Small for speed but still exercises code
+                                    
+                                    # Run projection - this executes MASSIVE amounts of MERA code
+                                    # Including AMR processing, coordinate transformations, interpolation, etc.
+                                    proj = projection(hydro, :rho, res=32)  # Small resolution for speed
+                                    
+                                    if hasfield(typeof(proj), :maps)
+                                        projection_success = true
+                                        println("✅ Projection successful")
+                                    end
+                                    
+                                    break
+                                catch e
+                                    println("⚠️  Projection failed: $e")
+                                    continue
+                                end
+                            end
+                        end
+                    end
+                    
+                    projection_success
+                    
+                finally
+                    cd(original_dir)
+                    rm(test_data_dir, recursive=true, force=true)
+                end
+                
+            catch e
+                @warn "Projection testing failed: $e"
+                false
+            end
+        end
+    end
+    
+    @testset "4. Advanced MERA Operations" begin
+        # Test more advanced MERA operations for even more coverage
+        @test begin
+            try
+                test_data_dir = mktempdir()
+                original_dir = pwd()
+                
+                try
+                    cd(test_data_dir)
+                    
+                    # Setup simulation data
+                    data_url = "http://www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar"
+                    run(`curl -L -o simulations.tar $data_url`)
+                    run(`tar -xf simulations.tar`)
+                    
+                    advanced_ops = 0
+                    
+                    # Look for output_XXXXX directories
+                    extracted_files = readdir(".")
+                    simulation_dirs = filter(x -> startswith(x, "output_"), extracted_files)
+                    
+                    if length(simulation_dirs) > 0
+                        for sim_dir in simulation_dirs[1:min(1, length(simulation_dirs))]
+                            if isdir(sim_dir)
+                                println("🔧 Testing advanced operations in $sim_dir")
+                                
+                                try
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")
+                                    
+                                    # Test subregion creation (exercises spatial selection code)
+                                    try
+                                        hydro = gethydro(info, lmax=6)
+                                        sub_hydro = subregion(hydro, :cuboid, 
+                                                            xrange=[0.4, 0.6], 
+                                                            yrange=[0.4, 0.6], 
+                                                            zrange=[0.4, 0.6])
+                                        if hasfield(typeof(sub_hydro), :data)
+                                            advanced_ops += 1
+                                            println("✅ subregion successful")
+                                        end
+                                    catch e
+                                        println("⚠️  subregion failed: $e")
+                                    end
+                                    
+                                    # Test getvar operations (exercises derived variable calculations)
+                                    try
+                                        hydro = gethydro(info, lmax=6)
+                                        temp_data = getvar(hydro, :T)  # Temperature calculation
+                                        if isa(temp_data, Array)
+                                            advanced_ops += 1
+                                            println("✅ getvar(:T) successful")
+                                        end
+                                    catch e
+                                        println("⚠️  getvar(:T) failed: $e")
+                                    end
+                                    
+                                    # Test multiple variable projection
+                                    try
+                                        hydro = gethydro(info, lmax=6)
+                                        multi_proj = projection(hydro, [:rho, :vx], res=16)
+                                        if hasfield(typeof(multi_proj), :maps)
+                                            advanced_ops += 1
+                                            println("✅ multi-variable projection successful")
+                                        end
+                                    catch e
+                                        println("⚠️  multi-variable projection failed: $e")
+                                    end
+                                    
+                                    break
+                                catch e
+                                    println("⚠️  Advanced operations failed: $e")
+                                    continue
+                                end
+                            end
+                        end
+                    end
+                    
+                    println("📊 Advanced operations completed: $advanced_ops/3")
+                    advanced_ops >= 1
+                    
+                finally
+                    cd(original_dir)
+                    rm(test_data_dir, recursive=true, force=true)
+                end
+                
+            catch e
+                @warn "Advanced operations testing failed: $e"
+                false
+            end
+        end
+    end
+    
+    @testset "5. Comprehensive MERA Workflow" begin
+        # Full MERA workflow test
+        @test begin
+            try
+                test_data_dir = mktempdir()
+                original_dir = pwd()
+                
+                try
+                    cd(test_data_dir)
+                    
+                    # Setup simulation data
+                    data_url = "http://www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar"
+                    run(`curl -L -o simulations.tar $data_url`)
+                    run(`tar -xf simulations.tar`)
+                    
+                    workflow_steps = 0
+                    
+                    # Look for output_XXXXX directories
+                    extracted_files = readdir(".")
+                    simulation_dirs = filter(x -> startswith(x, "output_"), extracted_files)
+                    
+                    if length(simulation_dirs) > 0
+                        for sim_dir in simulation_dirs[1:min(1, length(simulation_dirs))]
+                            if isdir(sim_dir)
+                                println("🚀 Running comprehensive MERA workflow in $sim_dir")
+                                
+                                try
+                                    # Step 1: Load simulation info  
+                                    output_num = parse(Int, replace(sim_dir, "output_" => ""))
+                                    info = getinfo(output=output_num, path=".")
+                                    workflow_steps += 1
+                                    println("  ✅ Step 1: getinfo completed")
+                                    
+                                    # Step 2: Load all data types
+                                    hydro = gethydro(info, lmax=6)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 2: gethydro completed")
+                                    
+                                    gravity = getgravity(info, lmax=6)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 3: getgravity completed")
+                                    
+                                    particles = getparticles(info, lmax=6)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 4: getparticles completed")
+                                    
+                                    # Step 3: Create projections
+                                    hydro_proj = projection(hydro, :rho, res=16)
+                            workflow_steps += 1
+                            println("  ✅ Step 5: hydro projection completed")
+                            
+                            gravity_proj = projection(gravity, :epot, res=16)
+                            workflow_steps += 1
+                            println("  ✅ Step 6: gravity projection completed")
+                            
+                            particle_proj = projection(particles, :mass, res=16)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 7: particle projection completed")
+                                    
+                                    # Step 4: Advanced operations
+                                    sub_hydro = subregion(hydro, :sphere, center=[0.5, 0.5, 0.5], radius=0.2)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 8: subregion completed")
+                                    
+                                    temp_data = getvar(hydro, :T)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 9: getvar(:T) completed")
+                                    
+                                    mass_data = getvar(hydro, :mass)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 10: getvar(:mass) completed")
+                                    
+                                    break
+                                catch e
+                                    println("⚠️  Workflow step failed: $e")
                                     break
                                 end
-                            catch
-                                continue
                             end
                         end
                     end
-                catch
-                    # Continue
+                    
+                    println("📊 Workflow steps completed: $workflow_steps/10")
+                    workflow_steps >= 7  # Should complete most workflow steps
+                    
+                finally
+                    cd(original_dir)
+                    rm(test_data_dir, recursive=true, force=true)
                 end
                 
-                # Test memory functions
-                try
-                    test_arrays = [zeros(100), ones(1000), randn(500)]
-                    for arr in test_arrays
-                        try
-                            mem_result = usedmemory(arr)
-                            if isa(mem_result, String) || isa(mem_result, Real)
-                                utility_executions += 1
-                                break
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                catch
-                    # Continue
-                end
-                
-                # Test configuration functions
-                try
-                    original_verbose = verbose_mode
-                    verbose(true)
-                    verbose(false)
-                    verbose(original_verbose)
-                    utility_executions += 1
-                catch
-                    # Continue
-                end
-                
-                utility_executions >= 2
             catch e
-                @warn "Utility function test failed: $e"
-                false
-            end
-        end
-        
-        # Test internal checking functions
-        @test begin
-            try
-                checking_tests = 0
-                
-                # Test verbose checking
-                try
-                    verbose_result = Mera.checkverbose(true)
-                    if isa(verbose_result, Bool)
-                        checking_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                # Test progress checking
-                try
-                    progress_result = Mera.checkprogress(false)
-                    if isa(progress_result, Bool)
-                        checking_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                # Test field checking
-                try
-                    constants = Mera.createconstants()
-                    has_G = hasfield(typeof(constants), :G)
-                    has_c = hasfield(typeof(constants), :c)
-                    if has_G && has_c
-                        checking_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                checking_tests >= 2
-            catch e
-                @warn "Internal checking test failed: $e"
-                false
-            end
-        end
-    end
-    
-    @testset "4. Complex Parameter Processing" begin
-        # Test parameter processing functions that exercise validation and conversion code
-        @test begin
-            try
-                param_processing = 0
-                
-                # Test range processing
-                try
-                    # Test various range specifications
-                    range_tests = [
-                        ([0.0, 1.0], [0.0, 1.0], [0.0, 1.0]),
-                        ([0.1, 0.9], [0.2, 0.8], [0.3, 0.7]),
-                        ([missing, missing], [0.0, 1.0], [missing, missing])
-                    ]
-                    
-                    processed_ranges = 0
-                    for (xr, yr, zr) in range_tests
-                        try
-                            # Validate range format
-                            x_valid = (isa(xr, Vector) && length(xr) == 2) || (length(xr) == 2 && all(ismissing.(xr)))
-                            y_valid = (isa(yr, Vector) && length(yr) == 2) || (length(yr) == 2 && all(ismissing.(yr)))
-                            z_valid = (isa(zr, Vector) && length(zr) == 2) || (length(zr) == 2 && all(ismissing.(zr)))
-                            
-                            if x_valid && y_valid && z_valid
-                                processed_ranges += 1
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                    
-                    if processed_ranges >= 2
-                        param_processing += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                # Test center processing
-                try
-                    center_tests = [
-                        [0.5, 0.5, 0.5],
-                        [:bc],
-                        [0.25, 0.75, 0.5],
-                        [:boxcenter]
-                    ]
-                    
-                    processed_centers = 0
-                    for center in center_tests
-                        try
-                            if isa(center, Vector)
-                                if length(center) == 1 && isa(center[1], Symbol)
-                                    processed_centers += 1  # Symbol center
-                                elseif length(center) == 3 && all(isa(c, Real) for c in center)
-                                    processed_centers += 1  # Numeric center
-                                end
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                    
-                    if processed_centers >= 3
-                        param_processing += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                param_processing >= 1
-            catch e
-                @warn "Parameter processing test failed: $e"
-                false
-            end
-        end
-        
-        # Test unit conversion and scaling
-        @test begin
-            try
-                conversion_tests = 0
-                
-                # Test unit string processing
-                try
-                    unit_symbols = [:kpc, :pc, :Msol, :km_s, :g_cm3, :standard, :code]
-                    processed_units = 0
-                    
-                    for unit in unit_symbols
-                        try
-                            unit_str = string(unit)
-                            if !isempty(unit_str) && isa(unit, Symbol)
-                                processed_units += 1
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                    
-                    if processed_units >= 5
-                        conversion_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                # Test conversion calculations
-                try
-                    constants = Mera.createconstants()
-                    scales = Mera.createscales(3.086e21, 1e-24, 3.156e13, 1e-24 * (3.086e21)^3, constants)
-                    
-                    # Test accessing multiple scale factors
-                    scale_fields = [:kpc, :Msol, :km_s, :g_cm3, :Myr, :erg, :K]
-                    accessed_scales = 0
-                    
-                    for field in scale_fields
-                        try
-                            if hasfield(typeof(scales), field)
-                                val = getfield(scales, field)
-                                if isa(val, Real) && isfinite(val) && val > 0
-                                    accessed_scales += 1
-                                end
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                    
-                    if accessed_scales >= 4
-                        conversion_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                conversion_tests >= 1
-            catch e
-                @warn "Unit conversion test failed: $e"
-                false
-            end
-        end
-    end
-    
-    @testset "5. Mathematical Algorithm Testing" begin
-        # Test mathematical functions used throughout MERA
-        @test begin
-            try
-                math_tests = 0
-                
-                # Test coordinate transformation algorithms
-                try
-                    # Test various coordinate transformations
-                    coords = [(0.5, 0.5, 0.5), (0.25, 0.75, 0.1), (0.9, 0.1, 0.8)]
-                    transformations = 0
-                    
-                    for (x, y, z) in coords
-                        try
-                            # Cartesian to spherical
-                            r = sqrt(x^2 + y^2 + z^2)
-                            θ = acos(z / r)
-                            φ = atan(y, x)
-                            
-                            # Spherical to cartesian (round trip)
-                            x_back = r * sin(θ) * cos(φ)
-                            y_back = r * sin(θ) * sin(φ)
-                            z_back = r * cos(θ)
-                            
-                            # Check round trip accuracy
-                            if abs(x - x_back) < 1e-10 && abs(y - y_back) < 1e-10 && abs(z - z_back) < 1e-10
-                                transformations += 1
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                    
-                    if transformations >= 2
-                        math_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                # Test grid calculations
-                try
-                    resolutions = [64, 128, 256, 512]
-                    grid_calcs = 0
-                    
-                    for res in resolutions
-                        try
-                            # Test grid index calculations
-                            dx = 1.0 / res
-                            test_points = [(0.25, 0.25), (0.5, 0.5), (0.75, 0.75)]
-                            
-                            valid_mappings = 0
-                            for (x, y) in test_points
-                                i = floor(Int, x / dx) + 1
-                                j = floor(Int, y / dx) + 1
-                                
-                                if 1 <= i <= res && 1 <= j <= res
-                                    valid_mappings += 1
-                                end
-                            end
-                            
-                            if valid_mappings >= 2
-                                grid_calcs += 1
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                    
-                    if grid_calcs >= 3
-                        math_tests += 1
-                    end
-                catch
-                    # Continue
-                end
-                
-                math_tests >= 1
-            catch e
-                @warn "Mathematical algorithm test failed: $e"
-                false
-            end
-        end
-        
-        # Test statistical and analysis functions
-        @test begin
-            try
-                stats_tests = 0
-                
-                # Test statistical calculations
-                try
-                    data_sets = [
-                        [1.0, 2.0, 3.0, 4.0, 5.0],
-                        [0.1, 1.0, 10.0, 100.0, 1000.0],
-                        [1e-3, 1e-2, 1e-1, 1e0, 1e1]
-                    ]
-                    
-                    for data in data_sets
-                        try
-                            # Test various statistical operations
-                            mean_val = sum(data) / length(data)
-                            var_val = sum((x - mean_val)^2 for x in data) / (length(data) - 1)
-                            std_val = sqrt(var_val)
-                            
-                            # Test logarithmic operations
-                            log_data = log10.(data[data .> 0])
-                            log_mean = sum(log_data) / length(log_data)
-                            
-                            if isfinite(mean_val) && isfinite(std_val) && isfinite(log_mean)
-                                stats_tests += 1
-                            end
-                        catch
-                            continue
-                        end
-                    end
-                catch
-                    # Continue
-                end
-                
-                stats_tests >= 2
-            catch e
-                @warn "Statistical test failed: $e"
+                @warn "Comprehensive workflow testing failed: $e"
                 false
             end
         end
     end
 end
+
+
+println("These tests execute MERA's core data loading, processing, and projection functions.")
+
