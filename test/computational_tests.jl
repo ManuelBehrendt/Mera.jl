@@ -149,8 +149,10 @@ function run_computational_tests()
             @test_nowarn typeof(Mera.ScalesType001())
             @test_nowarn typeof(Mera.PhysicalUnitsType001())
             
-            # Test MERA notification system
-            @test_nowarn notifyme()
+            # Skip MERA notification system in CI (requires email configuration)
+            if !haskey(ENV, "CI") && !haskey(ENV, "GITHUB_ACTIONS") && !haskey(ENV, "MERA_CI_MODE")
+                @test_nowarn notifyme()
+            end
             
             # Test MERA bell function
             @test_nowarn bell()
