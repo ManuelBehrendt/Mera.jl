@@ -638,12 +638,12 @@ function get_data(  dataobject::HydroDataType,
             selected_unit = getunit(dataobject, :ekin, vars, units)
             vars_dict[:ekin] =   0.5 .* getmass(dataobject)  .* getvar(dataobject, :v).^2 .* selected_unit
 
-        elseif i == :Etherm
-            selected_unit = getunit(dataobject, :Etherm, vars, units)
+        elseif i == :etherm
+            selected_unit = getunit(dataobject, :etherm, vars, units)
             # Thermal energy per cell = pressure × volume (since pressure = thermal energy density)
             pressure = select(masked_data, :p)
             volume = getvar(dataobject, :volume, mask=mask)
-            vars_dict[:Etherm] = pressure .* volume .* selected_unit
+            vars_dict[:etherm] = pressure .* volume .* selected_unit
 
         elseif i == :r_cylinder
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)

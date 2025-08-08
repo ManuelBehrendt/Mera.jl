@@ -12,7 +12,7 @@ function getvar()
     println(":cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber, :jeansmass")
     println(":virial_parameter_local")
     println(":T, :Temp, :Temperature with p/rho")
-    println(":Etherm (thermal energy per cell)")
+    println(":etherm (thermal energy per cell)")
     println()
     println(":entropy_specific (specific entropy)")
     println(":entropy_index (dimensionless adiabatic constant)")
@@ -288,7 +288,7 @@ binding_energy = getvar(grav, :gravitational_binding_energy, hydro_data=hydro)
 
 # NEW: Simplified positional syntax
 jeans_mass = getvar(grav, hydro, :jeansmass, :Msol)
-thermal_energy = getvar(grav, hydro, :Etherm, :erg)
+thermal_energy = getvar(grav, hydro, :etherm, :erg)
 mixed_analysis = getvar(grav, hydro, [:epot, :T, :jeanslength], [:erg, :K, :pc])
 ```
 """
