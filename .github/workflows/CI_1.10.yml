@@ -55,21 +55,5 @@ jobs:
           MERA_TEST_TIMEOUT: 1800
           MERA_DOWNLOAD_RETRIES: 3
 
-      - name: Process coverage
-        uses: julia-actions/julia-processcoverage@v1
-        if: matrix.version == '1.10' && matrix.os == 'ubuntu-latest'
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
-        if: matrix.version == '1.10' && matrix.os == 'ubuntu-latest'
-        with:
-          files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-          verbose: true
-
-      - name: Upload coverage to Coveralls
-        uses: julia-actions/julia-uploadcoveralls@v1
-        if: matrix.version == '1.10' && matrix.os == 'ubuntu-latest'
-        env:
-          COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+      # Note: Coverage processing and upload is handled only by CI_1.11.yml
+      # to avoid duplicate coverage reports and ensure single source of truth
