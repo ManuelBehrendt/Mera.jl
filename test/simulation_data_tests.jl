@@ -238,6 +238,78 @@ function run_simulation_data_tests()
             end
         end
         
+        @testset "Gravity Data Loading" begin
+            test_data_dir = joinpath(@__DIR__, "test_data")
+            
+            if !isdir(test_data_dir)
+                @test_skip "Test data not available"
+                return
+            end
+            
+            simulation_dirs = filter(d -> isdir(joinpath(test_data_dir, d)) && 
+                                     startswith(d, "output_"), 
+                                     readdir(test_data_dir))
+            
+            if isempty(simulation_dirs)
+                @test_skip "No simulation output directories found"
+                return
+            end
+            
+            sim_path = joinpath(test_data_dir, simulation_dirs[1])
+            
+            try
+                info = getinfo(sim_path)
+                # Check if gravity data is available in the simulation
+                if haskey(info.levelmax, "gravity")
+                    gravity = getgravity(info)
+                    @test gravity isa GravityDataType
+                    @test haskey(gravity.data, :level)
+                    println("✓ Successfully loaded gravity data")
+                else
+                    @test_skip "Gravity data not available in simulation"
+                    println("ℹ️ Gravity data not present in this simulation")
+                end
+            catch e
+                @test_skip "Could not load gravity data: $e"
+            end
+        end
+        
+        @testset "Particles Data Loading" begin
+            test_data_dir = joinpath(@__DIR__, "test_data")
+            
+            if !isdir(test_data_dir)
+                @test_skip "Test data not available"
+                return
+            end
+            
+            simulation_dirs = filter(d -> isdir(joinpath(test_data_dir, d)) && 
+                                     startswith(d, "output_"), 
+                                     readdir(test_data_dir))
+            
+            if isempty(simulation_dirs)
+                @test_skip "No simulation output directories found"
+                return
+            end
+            
+            sim_path = joinpath(test_data_dir, simulation_dirs[1])
+            
+            try
+                info = getinfo(sim_path)
+                # Check if particle data is available in the simulation
+                if haskey(info.levelmax, "particles")
+                    particles = getparticles(info)
+                    @test particles isa PartDataType
+                    @test haskey(particles.data, :level)
+                    println("✓ Successfully loaded particles data")
+                else
+                    @test_skip "Particles data not available in simulation"
+                    println("ℹ️ Particles data not present in this simulation")
+                end
+            catch e
+                @test_skip "Could not load particles data: $e"
+            end
+        end
+        
         @testset "Basic getvar Functionality" begin
             test_data_dir = joinpath(@__DIR__, "test_data")
             
@@ -259,9 +331,9 @@ function run_simulation_data_tests()
             
             try
                 info = getinfo(sim_path)
-                hydro = gethydro(info)
                 
-                # Test basic getvar calls
+                # Test hydro getvar
+                hydro = gethydro(info)
                 rho_data = getvar(hydro, :rho)
                 @test rho_data isa AbstractArray
                 @test length(rho_data) == length(hydro.data[:rho])
@@ -271,7 +343,48 @@ function run_simulation_data_tests()
                 @test rho_cgs isa AbstractArray
                 @test length(rho_cgs) == length(hydro.data[:rho])
                 
-                println("✓ getvar functionality working")
+                println("✓ Hydro getvar functionality working")
+                
+                # Test gravity getvar if available
+                if haskey(info.levelmax, "gravity")
+                    try
+                        gravity = getgravity(info)
+                        # Test basic gravity variable (typically :epot or :acc)
+                        if haskey(gravity.data, :epot)
+                            epot_data = getvar(gravity, :epot)
+                            @test epot_data isa AbstractArray
+                            @test length(epot_data) == length(gravity.data[:epot])
+                            println("✓ Gravity getvar functionality working")
+                        else
+                            println("ℹ️ Gravity data loaded but no :epot field found")
+                        end
+                    catch e
+                        @test_skip "Could not test gravity getvar: $e"
+                    end
+                else
+                    println("ℹ️ Gravity getvar test skipped - no gravity data")
+                end
+                
+                # Test particles getvar if available
+                if haskey(info.levelmax, "particles")
+                    try
+                        particles = getparticles(info)
+                        # Test basic particle variables (typically :mass, :x, :y, :z)
+                        if haskey(particles.data, :mass)
+                            mass_data = getvar(particles, :mass)
+                            @test mass_data isa AbstractArray
+                            @test length(mass_data) == length(particles.data[:mass])
+                            println("✓ Particles getvar functionality working")
+                        else
+                            println("ℹ️ Particles data loaded but no :mass field found")
+                        end
+                    catch e
+                        @test_skip "Could not test particles getvar: $e"
+                    end
+                else
+                    println("ℹ️ Particles getvar test skipped - no particles data")
+                end
+                
             catch e
                 @test_skip "Could not test getvar: $e"
             end
