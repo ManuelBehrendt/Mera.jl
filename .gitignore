@@ -13,6 +13,10 @@ deps/downloads/
 deps/usr/
 deps/src/
 validation_runs/
+test_backup_20250808_143045/
+src/Mera.jl*
+paper/
+
 # Benchmark scripts, only publish zip files
 src/benchmarks/RAMSES_reading/downloads/run_test_plots.jl
 src/benchmarks/RAMSES_reading/downloads/run_test.jl
