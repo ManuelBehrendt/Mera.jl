@@ -412,6 +412,47 @@ end
 
 
 
+# ========== CONVENIENCE OVERLOADS FOR HYDRO + GRAVITY DATA ==========
+
+"""
+#### Combined Hydro + Gravity Projection Functions
+
+These convenience overloads accept both HydroDataType and GravDataType arguments,
+enabling access to gravity-derived quantities while maintaining hydro mass weighting.
+
+```julia
+# Single variable projection
+projection(hydro, gravity, :epot)                    # Gravity potential with hydro weighting
+projection(hydro, gravity, :rho, :g_cm3)            # Hydro density (works as before)
+
+# Multiple variables with same units  
+projection(hydro, gravity, [:epot, :rho], :standard) # Mixed gravity/hydro variables
+
+# Multiple variables with different units
+projection(hydro, gravity, [:epot, :rho], [:erg, :g_cm3]) # Custom units per variable
+```
+"""
+function projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol; kwargs...)
+    return projection(hydro, [var]; gravity_data=gravity, kwargs...)
+end
+
+function projection(hydro::HydroDataType, gravity::GravDataType, var::Symbol, unit::Symbol; kwargs...)
+    return projection(hydro, [var], units=[unit]; gravity_data=gravity, kwargs...)
+end
+
+function projection(hydro::HydroDataType, gravity::GravDataType, vars::Array{Symbol,1}; kwargs...)
+    return projection(hydro, vars; gravity_data=gravity, kwargs...)
+end
+
+function projection(hydro::HydroDataType, gravity::GravDataType, vars::Array{Symbol,1}, unit::Symbol; kwargs...)
+    return projection(hydro, vars, units=fill(unit, length(vars)); gravity_data=gravity, kwargs...)
+end
+
+function projection(hydro::HydroDataType, gravity::GravDataType, vars::Array{Symbol,1}, units::Array{Symbol,1}; kwargs...)
+    return projection(hydro, vars, units=units; gravity_data=gravity, kwargs...)
+end
+
+
 function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
@@ -432,7 +473,8 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         show_progress::Bool=true,
                         max_threads::Int=Threads.nthreads(),
                         verbose_threads::Bool=false,
-                        myargs::ArgumentsType=ArgumentsType() )
+                        myargs::ArgumentsType=ArgumentsType(),
+                        gravity_data::Union{GravDataType,Nothing}=nothing )
 
 
     # ===============================================================
@@ -565,7 +607,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
         buffer = get_projection_buffer()
         newmap_w, _ = get_main_grids!(buffer, (length1, length2))
         
-        data_dict, xval, yval, leveldata, weightval, imaps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax)
+        data_dict, xval, yval, leveldata, weightval, imaps = prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting[1], res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask, rangez, length1, length2, isamr, simlmax, gravity_data)
 
         # Initialize final grids using memory pool for geometric mapping
         final_grids = Dict{Symbol, Matrix{Float64}}()
@@ -1097,7 +1139,7 @@ end
 
 
 
-function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2, isamr, simlmax) 
+function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weighting, res, selected_vars, imaps, center, range_unit, anglecheck, rcheck, σcheck, skipmask,rangez, length1, length2, isamr, simlmax, gravity_data::Union{GravDataType,Nothing}=nothing) 
         # mask thickness of projection
         zval = getvar(dataobject, z_coord)
         if isamr
@@ -1160,7 +1202,12 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             # No masking needed
             xval = select(dataobject.data, x_coord)
             yval = select(dataobject.data, y_coord)
-            weightval = getvar(dataobject, weighting)
+            # Get weight data using appropriate getvar call
+            if gravity_data !== nothing
+                weightval = getvar(gravity_data, dataobject, weighting, center=center, center_unit=range_unit)
+            else
+                weightval = getvar(dataobject, weighting)
+            end
             if isamr
                 leveldata = select(dataobject.data, :level)
             else
@@ -1172,7 +1219,11 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             xval = select(dataobject.data, x_coord)[final_mask]
             yval = select(dataobject.data, y_coord)[final_mask]
             # Get weight data and apply same masking
-            weightval_full = getvar(dataobject, weighting)
+            if gravity_data !== nothing
+                weightval_full = getvar(gravity_data, dataobject, weighting, center=center, center_unit=range_unit)
+            else
+                weightval_full = getvar(dataobject, weighting)
+            end
             weightval = weightval_full[final_mask]
             if isamr
                 leveldata = select(dataobject.data, :level)[final_mask]
@@ -1190,13 +1241,21 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
                 if ivar !== :sd && !(ivar in σcheck)
                     # Regular variables - get data and apply same masking as coordinates
                     if use_mask
-                        data_full = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                        if gravity_data !== nothing
+                            data_full = getvar(gravity_data, dataobject, ivar, center=center, center_unit=range_unit)
+                        else
+                            data_full = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                        end
                         data_dict[ivar] = data_full[final_mask]
                     else
-                        data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                        if gravity_data !== nothing
+                            data_dict[ivar] = getvar(gravity_data, dataobject, ivar, center=center, center_unit=range_unit)
+                        else
+                            data_dict[ivar] = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+                        end
                     end
                 elseif ivar == :sd || ivar == :mass
-                    # Surface density and mass variables - use mass data with consistent masking
+                    # Surface density and mass variables - always use hydro mass data with consistent masking
                     if use_mask
                         mass_full = getvar(dataobject, :mass, center=center, center_unit=range_unit)
                         data_dict[ivar] = mass_full[final_mask]

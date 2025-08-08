@@ -227,23 +227,23 @@ export
 include("types.jl")
 
 include("functions/miscellaneous.jl")
-include("functions/enhanced_io.jl")
-include("functions/adaptive_io.jl")
-include("functions/mera_io_config.jl")
-include("functions/auto_io_optimization.jl")
-include("functions/ramses_io_memory_pool.jl")
-include("functions/projection_memory_pool.jl")
+include("functions/io/enhanced_io.jl")
+include("functions/io/adaptive_io.jl")
+include("functions/io/mera_io_config.jl")
+include("functions/io/auto_io_optimization.jl")
+include("functions/io/ramses_io_memory_pool.jl")
+include("functions/projection/projection_memory_pool.jl")
 
 
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
 
 # Get variables/quantities
-include("functions/getvar.jl")
-include("functions/getvar_hydro.jl")
-include("functions/getvar_gravity.jl")
-include("functions/getvar_particles.jl")
-include("functions/getvar_clumps.jl")
+include("functions/getvar/getvar.jl")
+include("functions/getvar/getvar_hydro.jl")
+include("functions/getvar/getvar_gravity.jl")
+include("functions/getvar/getvar_particles.jl")
+include("functions/getvar/getvar_clumps.jl")
 # ============================================
 
 include("read_data/RAMSES/filepaths.jl")
@@ -278,44 +278,44 @@ include("read_data/RAMSES/getclumps.jl")
 
 # Mera files
 # new: JLD2 format
-include("functions/data_save.jl")
-include("functions/data_load.jl")
-include("functions/data_view.jl")
-include("functions/data_info.jl")
-include("functions/data_convert.jl")
-include("functions/mera_convert.jl")
+include("functions/data/data_save.jl")
+include("functions/data/data_load.jl")
+include("functions/data/data_view.jl")
+include("functions/data/data_info.jl")
+include("functions/data/data_convert.jl")
+include("functions/data/mera_convert.jl")
 # ============================================
 
 # Safe performance utilities
-include("functions/safe_performance.jl")
+include("functions/optimization/safe_performance.jl")
 # ============================================
 
 
 # projection, slice
-include("functions/projection.jl")
+include("functions/projection/projection.jl")
 #include("functions/slice.jl")
-include("functions/projection_parallel.jl")
-include("functions/projection_hydro.jl")
-include("functions/projection_hydro_deprecated.jl")
-include("functions/projection_particles.jl")
+include("functions/projection/projection_parallel.jl")
+include("functions/projection/projection_hydro.jl")
+include("functions/projection/projection_hydro_deprecated.jl")
+include("functions/projection/projection_particles.jl")
 
 # ============================================
 
 
 # Subregion
-include("functions/subregion.jl")
-include("functions/subregion_hydro.jl")
-include("functions/subregion_gravity.jl")
-include("functions/subregion_particles.jl")
-include("functions/subregion_clumps.jl")
+include("functions/regions/subregion.jl")
+include("functions/regions/subregion_hydro.jl")
+include("functions/regions/subregion_gravity.jl")
+include("functions/regions/subregion_particles.jl")
+include("functions/regions/subregion_clumps.jl")
 # ============================================
 
 # Shellregion
-include("functions/shellregion.jl")
-include("functions/shellregion_hydro.jl")
-include("functions/shellregion_gravity.jl")
-include("functions/shellregion_particles.jl")
-include("functions/shellregion_clumps.jl")
+include("functions/regions/shellregion.jl")
+include("functions/regions/shellregion_hydro.jl")
+include("functions/regions/shellregion_gravity.jl")
+include("functions/regions/shellregion_particles.jl")
+include("functions/regions/shellregion_clumps.jl")
 # ============================================
 
 # Profile functions
@@ -324,8 +324,8 @@ include("functions/shellregion_clumps.jl")
 
 
 # Volume Rendering
-include("functions/export_hydro_to_vtk.jl")
-include("functions/export_particles_to_vtk.jl")
+include("functions/data/export_hydro_to_vtk.jl")
+include("functions/data/export_particles_to_vtk.jl")
 
 # MacroTools
 include("macros/filter_data.jl")
