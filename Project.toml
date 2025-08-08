@@ -33,6 +33,14 @@ TranscodingStreams = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
 WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+
+[targets]
+test = ["Test", "Downloads", "Tar"]
+
 [compat]
 CSV = "= 0.10.15"
 CodecBzip2 = "= 0.8.5"
@@ -55,3 +63,6 @@ TimerOutputs = "= 0.5.29"
 WAV = "= 1.2.0"
 WriteVTK = "1.21.2"
 julia = "1.10"
+Test = "1"
+Downloads = "1"
+Tar = "1"
