@@ -173,7 +173,7 @@ mutable struct ScalesType001
    jeansmass::Float64                     # Jeans mass (hydro) [g]
    freefall_time_gravity::Float64         # Free-fall time [s]
    ekin::Float64                          # Kinetic energy [erg]
-   Etherm::Float64                        # Thermal energy per cell [erg]
+   etherm::Float64                        # Thermal energy per cell [erg]
    virial_parameter_local::Float64        # Dimensionless virial param
    Fg::Float64                            # Force [dyne]
    poisson_source::Float64                # Poisson source term [s⁻²]
