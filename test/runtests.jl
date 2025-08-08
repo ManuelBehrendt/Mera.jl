@@ -32,7 +32,6 @@ include("simulation_data_tests.jl")
     
     # 2. Core Functionality Tests (major coverage increase)
     @testset "Core Functionality" begin
-        include("core_functionality_tests.jl")
         run_core_functionality_tests()
     end
     
