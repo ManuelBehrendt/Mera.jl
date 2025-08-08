@@ -24,6 +24,9 @@ include("core_functionality_tests.jl")
 include("computational_tests.jl")
 include("pipeline_tests.jl")
 include("simulation_data_tests.jl")
+include("notebook_inspired_tests.jl")
+include("workflow_based_tests.jl")  # Re-enabled with fixes
+include("data_free_workflow_tests.jl")
 
 @testset "Mera.jl Test Suite" begin
     
@@ -47,7 +50,24 @@ include("simulation_data_tests.jl")
         run_pipeline_tests()
     end
     
-    # 5. Simulation Data Tests (with downloaded test data)
+    # 5. Notebook-Inspired Tests (real-world usage patterns)
+    @testset "Notebook Workflow Coverage" begin
+        run_notebook_inspired_tests()
+    end
+    
+    # 6. Workflow-Based Tests (comprehensive analysis patterns)
+    @testset "MERA Workflow Coverage" begin
+        # Run workflow-based tests without a wrapper function
+        # These tests are self-contained and use @testset internally
+    end
+    
+    # 7. Data-Free Workflow Tests (maximum coverage without data files)
+    @testset "Data-Free Workflow Coverage" begin
+        # Run data-free workflow tests without a wrapper function
+        # These tests focus on functions that don't require simulation data
+    end
+    
+    # 8. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
         run_simulation_data_tests()
     end
