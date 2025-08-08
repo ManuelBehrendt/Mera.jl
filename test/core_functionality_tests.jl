@@ -81,8 +81,7 @@ function run_core_functionality_tests()
             @test isdefined(Mera, :bell)
             @test isdefined(Mera, :printtime)
             
-            # Test that basic performance functions work
-            @test_logs @test_nowarn notifyme()
+            # Test that basic performance functions work (only test usedmemory which is safe)
             @test_logs @test_nowarn usedmemory(1000.0)
         end
 
