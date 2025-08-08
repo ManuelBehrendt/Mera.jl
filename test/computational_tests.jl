@@ -3,7 +3,7 @@ Additional computational tests for MERA.jl
 Tests that actually execute code paths to significantly increase coverage
 """
 
-using Statistics, Dates
+using Mera, Test, Statistics, Dates
 
 function run_computational_tests()
     @testset "Computational Coverage Tests" begin

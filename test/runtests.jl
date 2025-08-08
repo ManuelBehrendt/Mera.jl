@@ -22,6 +22,7 @@ end
 include("basic_module_tests.jl")
 include("core_functionality_tests.jl")
 include("computational_tests.jl")
+include("pipeline_tests.jl")
 include("simulation_data_tests.jl")
 
 @testset "Mera.jl Test Suite" begin
@@ -41,7 +42,12 @@ include("simulation_data_tests.jl")
         run_computational_tests()
     end
     
-    # 4. Simulation Data Tests (with downloaded test data)
+    # 4. Pipeline Coverage Tests (synthetic data processing)
+    @testset "Pipeline Coverage" begin
+        run_pipeline_tests()
+    end
+    
+    # 5. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
         run_simulation_data_tests()
     end
