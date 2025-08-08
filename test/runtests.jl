@@ -20,6 +20,7 @@ end
 
 # Include test modules
 include("basic_module_tests.jl")
+include("core_functionality_tests.jl")
 include("simulation_data_tests.jl")
 
 @testset "Mera.jl Test Suite" begin
@@ -29,7 +30,13 @@ include("simulation_data_tests.jl")
         run_basic_module_tests()
     end
     
-    # 2. Simulation Data Tests (with downloaded test data)
+    # 2. Core Functionality Tests (major coverage increase)
+    @testset "Core Functionality" begin
+        include("core_functionality_tests.jl")
+        run_core_functionality_tests()
+    end
+    
+    # 3. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
         run_simulation_data_tests()
     end
@@ -39,7 +46,8 @@ end
 if is_ci
     println("🤖 CI Test Summary:")
     println("   ✅ Basic module tests: Comprehensive functionality verification")
-    println("   📊 Code coverage: Generated for Codecov integration")
+    println("   � Core functionality tests: Deep function coverage for code metrics")
+    println("   �📊 Code coverage: Generated for Codecov integration")
     if haskey(ENV, "MERA_SKIP_DATA_TESTS") && ENV["MERA_SKIP_DATA_TESTS"] == "true"
         println("   ⏭️ Simulation data tests: Skipped by configuration")
     else
