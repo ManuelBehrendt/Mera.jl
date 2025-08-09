@@ -114,7 +114,7 @@ function run_computational_tests()
             constants = Mera.createconstants()
             @test_nowarn viewfields(constants)
             
-            scales = Mera.ScalesType001()
+            scales = Mera.ScalesType002()
             scales.kpc = 1.0
             @test_nowarn viewfields(scales)
             
