@@ -86,6 +86,21 @@ function viewfields(object::ScalesType002)
     return
 end
 
+# Backward compatibility for ScalesType001
+function viewfields(object::ScalesType001)
+    list_field = propertynames(object)
+
+    println()
+    printstyled("[Mera]: Fields to scale from user/code units to selected units\n", bold=true, color=:normal)
+    printstyled("=======================================================================\n", bold=true, color=:normal)
+    for i=list_field
+        #fname = fieldname(field, i)
+        println(i, "\t= ", getfield(object, i)) #, "\t\t", "[",typeof(getfield(object, i)),"]")
+    end
+    println()
+    return
+end
+
 
 function viewfields(object::PartInfoType)
 
@@ -196,6 +211,22 @@ end
 
 
 function viewfields(object::PhysicalUnitsType002)
+
+    list_field = propertynames(object)
+
+    println()
+    printstyled("[Mera]: Constants given in cgs units\n", bold=true, color=:normal)
+    printstyled("=========================================\n", bold=true, color=:normal)
+            for i=list_field
+                println(i, "\t= ", getfield(object, i) )
+            end
+
+    println()
+    return
+end
+
+# Backward compatibility for PhysicalUnitsType001
+function viewfields(object::PhysicalUnitsType001)
 
     list_field = propertynames(object)
 
