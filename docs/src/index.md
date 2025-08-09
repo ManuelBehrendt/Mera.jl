@@ -199,14 +199,14 @@ Get a list of the defined methods of a function:
 ```julia
 julia> methods(viewfields)
 # 10 methods for generic function "viewfields":
-[1] viewfields(object::PhysicalUnitsType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:181
+[1] viewfields(object::PhysicalUnitsType002) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:181
 [2] viewfields(object::Mera.FilesContentType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:166
 [3] viewfields(object::DescriptorType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:150
 [4] viewfields(object::FileNamesType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:134
 [5] viewfields(object::CompilationInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:116
 [6] viewfields(object::GridInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:90
 [7] viewfields(object::PartInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:73
-[8] viewfields(object::ScalesType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:57
+[8] viewfields(object::ScalesType002) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:57
 [9] viewfields(object::InfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:12
 [10] viewfields(object::DataSetType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:197
 ```
