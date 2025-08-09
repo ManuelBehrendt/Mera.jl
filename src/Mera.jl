@@ -187,10 +187,10 @@ export
 
 # types
     ScalesType001,
-    ScalesType,
+    ScalesType002,
     ArgumentsType,
     PhysicalUnitsType001,
-    PhysicalUnitsType,
+    PhysicalUnitsType002,
     GridInfoType,
     PartInfoType,
 
