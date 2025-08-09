@@ -136,9 +136,24 @@ function infodata(output::Int;
     end
     if verbose println("Use datatype: ", dtype) end
     inflink = string(dtype) * "/info"
-    dataobject = JLD2.load(fpath, inflink,
-                    typemap=Dict("Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
-                    "Mera.ScalesType" => JLD2.Upgrade(ScalesType001)))
+    
+    # Create comprehensive typemap matching the one in loaddata()
+    typemap = Dict(
+        # Map old PhysicalUnitsType versions to current one
+        "Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
+        "Mera.PhysicalUnitsType001" => PhysicalUnitsType001,
+        
+        # Map old ScalesType versions to current one using Upgrade for field conversion
+        "Mera.ScalesType" => JLD2.Upgrade(ScalesType002),
+        "Mera.ScalesType001" => JLD2.Upgrade(ScalesType002),
+        "Mera.ScalesType002" => ScalesType002,
+        
+        # Map old InfoType versions (if they exist)
+        "Mera.InfoType" => InfoType,
+        "Mera.InfoType001" => InfoType,
+    )
+    
+    dataobject = JLD2.load(fpath, inflink, typemap=typemap)
 
     # update constants and scales
     dataobject.constants = Mera.createconstants()

@@ -2,7 +2,7 @@
 """
 Mutable Struct: Contains the created scale factors from code to physical units
 """
-mutable struct ScalesType001
+mutable struct ScalesType002
 # exported
 
    # length
@@ -193,14 +193,88 @@ mutable struct ScalesType001
    rad::Float64
    deg::Float64
 
-   ScalesType001() = new()
+   ScalesType002() = new()
 end
 
+# needed for loading older JLD2 files
+mutable struct ScalesType001
+# exported
+
+   # length
+   Mpc::Float64
+   kpc::Float64
+   pc::Float64
+   mpc::Float64
+   ly::Float64
+   Au::Float64
+   km::Float64
+   m::Float64
+   cm::Float64
+   mm::Float64
+   μm::Float64
+
+   # volume
+   Mpc3::Float64
+   kpc3::Float64
+   pc3::Float64
+   mpc3::Float64
+   ly3::Float64
+   Au3::Float64
+   km3::Float64
+   m3::Float64
+   cm3::Float64
+   mm3::Float64
+   μm3::Float64
+
+   # density
+   Msol_pc3::Float64
+   Msun_pc3::Float64
+   g_cm3::Float64
+
+   # surface
+   Msol_pc2::Float64
+   Msun_pc2::Float64
+   g_cm2::Float64
+
+   # time
+   Gyr::Float64
+   Myr::Float64
+   yr::Float64
+   s::Float64
+   ms::Float64
+
+   # mass
+   Msol::Float64
+   Msun::Float64
+   Mearth::Float64
+   Mjupiter::Float64
+   g::Float64
+
+   # speed
+   km_s::Float64
+   m_s::Float64
+   cm_s::Float64
+
+
+   nH::Float64
+   erg::Float64
+   g_cms2::Float64
+
+   T_mu::Float64
+   K_mu::Float64
+   T::Float64
+   K::Float64
+   Ba::Float64
+   g_cm_s2::Float64
+   p_kB::Float64
+   K_cm3::Float64
+   ScalesType001() = new()
+end
 
 """
 Mutable Struct: Contains the physical constants in cgs units
 """
- mutable struct PhysicalUnitsType001
+ mutable struct PhysicalUnitsType002
 # exported
     # in cgs units
      Au::Float64#cm: Astronomical unit
@@ -260,9 +334,44 @@ Mutable Struct: Contains the physical constants in cgs units
      Gyr::Float64 #sec: defined as 365.25 days
      Myr::Float64 #sec: defined as 365.25 days
      yr::Float64 #sec: defined as 365.25 days
-     PhysicalUnitsType001() = new()
+     PhysicalUnitsType002() = new()
 end
 
+# needed for loading older JLD2 files
+mutable struct PhysicalUnitsType001
+# exported
+    # in cgs units
+     Au::Float64#cm: Astronomical unit
+     Mpc::Float64 #cm: Parsec
+     kpc::Float64 #cm: Parsec
+     pc::Float64 #cm: Parsec
+     mpc::Float64 #cm: MilliParsec
+     ly::Float64 #cm: Light year
+     Msol::Float64 #g: Solar mass
+     Msun::Float64 #g: Sun mass
+     Mearth::Float64 #g: Earth mass
+     Mjupiter::Float64 #g: Jupiter mass
+     Rsol::Float64 #cm: Solar radius
+     Rsun::Float64
+    # Lsol = #erg s-2: Solar luminosity
+    # Mearth = #g: Earh mass
+
+     me::Float64 #g: electron mass
+     mp::Float64 #g: proton mass
+     mn::Float64 #g: neutron mass
+     mH::Float64 #g: hydrogen mass
+     amu::Float64 #g: atomic mass unit
+     NA::Float64 # Avagadro's number
+     c::Float64 #cm s-1: speed of light in a vacuum
+    # h = #erg s: Planck constant
+    # hbar = #erg s
+     G::Float64 # cm3 g-1 g-2 Gravitational constant
+     kB::Float64 #erg k-1 Boltzmann constant
+     Gyr::Float64 #sec: defined as 365.25 days
+     Myr::Float64 #sec: defined as 365.25 days
+     yr::Float64 #sec: defined as 365.25 days
+     PhysicalUnitsType001() = new()
+end
 
 mutable struct FileNamesType
     output::String
@@ -447,11 +556,11 @@ mutable struct InfoType
     compilationfile::Bool
     patchfile::Bool
     Narraysize::Int
-    scale::ScalesType001
+    scale::ScalesType002
     grid_info::GridInfoType
     part_info::PartInfoType
     compilation::CompilationInfoType
-    constants::PhysicalUnitsType001
+    constants::PhysicalUnitsType002
     #overview::simulation_overview
     #cpu_overview::cpu_overview_type
     #boxcenter::Array{Float64,1}
@@ -506,7 +615,7 @@ mutable struct HydroDataType <: HydroPartType
     used_descriptors::Dict{Any,Any}
     smallr::Float64
     smallc::Float64
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     HydroDataType() = new()
 end
 
@@ -522,7 +631,7 @@ mutable struct GravDataType <: DataSetType
     ranges::Array{Float64,1}
     selected_gravvars::Array{Int,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     GravDataType() = new()
 end
 
@@ -540,7 +649,7 @@ mutable struct PartDataType <: HydroPartType
     ranges::Array{Float64,1}
     selected_partvars::Array{Symbol,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     PartDataType() = new()
 end
 
@@ -557,7 +666,7 @@ mutable struct ClumpDataType <: ContainMassDataSetType
     ranges::Array{Float64,1}
     selected_clumpvars::Array{Symbol,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     ClumpDataType() = new()
 end
 
@@ -615,7 +724,7 @@ mutable struct HydroMapsType <: DataMapsType
     boxlen::Float64
     smallr::Float64
     smallc::Float64
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     info::InfoType
 end
 
@@ -638,7 +747,7 @@ mutable struct PartMapsType <: DataMapsType
     effres::Int
     pixsize::Float64
     boxlen::Float64
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     info::InfoType
 end
 
@@ -655,7 +764,7 @@ mutable struct Histogram2DMapType
     yrange::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}
     extent::Array{Float64,1}
     ratio::Float64
-    scale::ScalesType001
+    scale::ScalesType002  # Updated to current type
     info::InfoType
 end
 
@@ -704,4 +813,180 @@ Base.@kwdef mutable struct ArgumentsType
     show_progress::Union{Bool, Missing}     = missing
     verbose_threads::Union{Bool, Missing}   = missing
 
+end
+
+# Conversion functions for backward compatibility with old JLD2 files
+function Base.convert(::Type{ScalesType002}, old::ScalesType001)
+    return ScalesType002(
+        old.Mpc, old.kpc, old.pc, old.mpc, old.ly, old.Au, old.km, old.m, old.cm, old.mm, old.μm,
+        old.Mpc3, old.kpc3, old.pc3, old.mpc3, old.ly3, old.Au3, old.km3, old.m3, old.cm3, old.mm3, old.μm3,
+        old.Msol_pc3, old.Msun_pc3, old.g_cm3,
+        old.Msol_pc2, old.Msun_pc2, old.g_cm2,
+        old.Gyr, old.Myr, old.yr, old.s, old.ms,
+        old.Msol, old.Msun, old.Mearth, old.Mjupiter, old.g,
+        old.km_s, old.m_s, old.cm_s,
+        old.nH, old.erg, old.g_cms2, old.T_mu, old.K_mu, old.T, old.K, old.Ba, old.g_cm_s2, old.p_kB, old.K_cm3
+    )
+end
+
+function Base.convert(::Type{PhysicalUnitsType002}, old::PhysicalUnitsType001)
+    # Create new PhysicalUnitsType002 and copy only existing fields from PhysicalUnitsType001
+    new_units = PhysicalUnitsType002()
+    
+    # Copy all fields that exist in both types
+    for field in intersect(fieldnames(PhysicalUnitsType001), fieldnames(PhysicalUnitsType002))
+        if hasfield(PhysicalUnitsType001, field) && hasfield(PhysicalUnitsType002, field)
+            setfield!(new_units, field, getfield(old, field))
+        end
+    end
+    
+    # Set default values for fields that are new in PhysicalUnitsType002
+    # These are reasonable physical constants in CGS units
+    if hasfield(PhysicalUnitsType002, :km)
+        new_units.km = 1.0e5  # cm
+    end
+    if hasfield(PhysicalUnitsType002, :m)
+        new_units.m = 1.0e2   # cm
+    end
+    if hasfield(PhysicalUnitsType002, :mm)
+        new_units.mm = 0.1    # cm
+    end
+    if hasfield(PhysicalUnitsType002, :μm)
+        new_units.μm = 1.0e-4 # cm
+    end
+    
+    # Volume units
+    if hasfield(PhysicalUnitsType002, :Mpc3)
+        new_units.Mpc3 = new_units.Mpc^3
+    end
+    if hasfield(PhysicalUnitsType002, :kpc3)
+        new_units.kpc3 = new_units.kpc^3
+    end
+    if hasfield(PhysicalUnitsType002, :pc3)
+        new_units.pc3 = new_units.pc^3
+    end
+    if hasfield(PhysicalUnitsType002, :mpc3)
+        new_units.mpc3 = new_units.mpc^3
+    end
+    if hasfield(PhysicalUnitsType002, :ly3)
+        new_units.ly3 = new_units.ly^3
+    end
+    if hasfield(PhysicalUnitsType002, :Au3)
+        new_units.Au3 = new_units.Au^3
+    end
+    if hasfield(PhysicalUnitsType002, :km3)
+        new_units.km3 = (1.0e5)^3  # cm^3
+    end
+    if hasfield(PhysicalUnitsType002, :m3)
+        new_units.m3 = (1.0e2)^3   # cm^3
+    end
+    if hasfield(PhysicalUnitsType002, :cm3)
+        new_units.cm3 = 1.0        # cm^3
+    end
+    if hasfield(PhysicalUnitsType002, :mm3)
+        new_units.mm3 = (0.1)^3    # cm^3
+    end
+    if hasfield(PhysicalUnitsType002, :μm3)
+        new_units.μm3 = (1.0e-4)^3 # cm^3
+    end
+    
+    # Add other missing fields with defaults
+    if hasfield(PhysicalUnitsType002, :s)
+        new_units.s = 1.0          # seconds
+    end
+    if hasfield(PhysicalUnitsType002, :ms)
+        new_units.ms = 1.0e-3      # seconds
+    end
+    if hasfield(PhysicalUnitsType002, :min)
+        new_units.min = 60.0       # seconds
+    end
+    if hasfield(PhysicalUnitsType002, :day)
+        new_units.day = 86400.0    # seconds
+    end
+    if hasfield(PhysicalUnitsType002, :hr)
+        new_units.hr = 3600.0      # seconds
+    end
+    
+    return new_units
+end
+
+# JLD2.jl rconvert methods for robust loading with field mapping
+# Handle ScalesType001 -> ScalesType002 upgrade using NamedTuple from JLD2
+function JLD2.rconvert(::Type{ScalesType002}, nt::NamedTuple)
+    scale = ScalesType002()
+    
+    # Copy all common fields from NamedTuple to new type
+    common_fields = intersect(keys(nt), fieldnames(ScalesType002))
+    for field in common_fields
+        if hasfield(typeof(nt), field) && hasfield(ScalesType002, field)
+            setfield!(scale, field, getfield(nt, field))
+        end
+    end
+    
+    # Set default values for new fields that don't exist in old type
+    new_fields = setdiff(fieldnames(ScalesType002), keys(nt))
+    for field in new_fields
+        # Set reasonable default values for new fields
+        if field == :erg_g_K
+            setfield!(scale, field, 1.0)
+        elseif field == :keV_cm2  
+            setfield!(scale, field, 1.0)
+        elseif field == :Gauss
+            setfield!(scale, field, 1.0)
+        elseif field == :dimensionless
+            setfield!(scale, field, 1.0)
+        elseif field == :rad
+            setfield!(scale, field, 1.0)
+        elseif field == :deg
+            setfield!(scale, field, 180.0 / π)
+        else
+            # For other new fields, set to 1.0 as reasonable default
+            setfield!(scale, field, 1.0)
+        end
+    end
+    
+    return scale
+end
+
+# Handle PhysicalUnitsType upgrades if needed
+function JLD2.rconvert(::Type{PhysicalUnitsType001}, nt::NamedTuple)
+    units = PhysicalUnitsType001()
+    
+    # Copy all available fields from NamedTuple
+    for field in intersect(keys(nt), fieldnames(PhysicalUnitsType001))
+        if hasfield(typeof(nt), field) && hasfield(PhysicalUnitsType001, field)
+            setfield!(units, field, getfield(nt, field))
+        end
+    end
+    
+    return units
+end
+
+# Handle PhysicalUnitsType002 conversions from NamedTuple
+function JLD2.rconvert(::Type{PhysicalUnitsType002}, nt::NamedTuple)
+    units = PhysicalUnitsType002()
+    
+    # Copy all available fields from NamedTuple
+    for field in intersect(keys(nt), fieldnames(PhysicalUnitsType002))
+        if hasfield(typeof(nt), field) && hasfield(PhysicalUnitsType002, field)
+            setfield!(units, field, getfield(nt, field))
+        end
+    end
+    
+    # Set default values for missing fields
+    missing_fields = setdiff(fieldnames(PhysicalUnitsType002), keys(nt))
+    for field in missing_fields
+        # Set reasonable defaults for missing physical constants
+        if field == :h
+            setfield!(units, field, 6.62607015e-27)  # Planck constant in erg⋅s
+        elseif field == :hbar
+            setfield!(units, field, 1.054571817e-27)  # Reduced Planck constant
+        elseif field == :sigma_SB
+            setfield!(units, field, 5.670374419e-5)   # Stefan-Boltzmann constant
+        else
+            setfield!(units, field, 1.0)  # Default fallback
+        end
+    end
+    
+    return units
 end
