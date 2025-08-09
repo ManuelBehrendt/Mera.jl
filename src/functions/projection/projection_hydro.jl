@@ -693,7 +693,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
             try
                 # Use parallel projection system
                 parallel_grids, parallel_weights, parallel_stats = project_amr_parallel(
-                    dataobject, keys(data_dict), data_dict, xval, yval, leveldata, weightval,
+                    dataobject, keys(data_dict), data_dict, xval, yval, leveldata, weightval .* weight_scale,
                     grid_extent, (length1, length2), boxlen, lmin, simlmax;
                     max_threads=max_threads, use_memory_pool=false, verbose=(verbose && verbose_threads)
                 )
@@ -735,7 +735,7 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     # are already consistently masked in prep_data
                     x_level = xval[mask_level]
                     y_level = yval[mask_level]
-                    weights_level = weightval[mask_level]
+                    weights_level = weightval[mask_level] * weight_scale  # Apply weight unit scaling
                     
                     # Apply geometric center alignment corrections if available
                     if isdefined(Main, :get_center_correction)
