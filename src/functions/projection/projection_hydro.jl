@@ -828,9 +828,15 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                 # Total mass: sum directly (no area division)
                 imaps[var] = final_grids[var]
             else
-                # Other quantities: weighted average
-                mask_nonzero = final_weights[var] .> 0
-                imaps[var][mask_nonzero] = final_grids[var][mask_nonzero] ./ final_weights[var][mask_nonzero]
+                # Handle mode-dependent calculation
+                if mode == :sum
+                    # Sum mode: return accumulated values without division by weights
+                    imaps[var] = final_grids[var]
+                else
+                    # Standard mode: weighted average
+                    mask_nonzero = final_weights[var] .> 0
+                    imaps[var][mask_nonzero] = final_grids[var][mask_nonzero] ./ final_weights[var][mask_nonzero]
+                end
             end
         end
 
