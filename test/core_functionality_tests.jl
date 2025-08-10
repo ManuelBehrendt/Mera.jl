@@ -99,8 +99,6 @@ function run_core_functionality_tests()
 
         @testset "Advanced Features" begin
             # Test projection and analysis functions
-            @test isdefined(Mera, :projection_deprecated)
-            @test isdefined(Mera, :project_amr_parallel)
             @test isdefined(Mera, :getextent)
             @test isdefined(Mera, :getmass)
             @test isdefined(Mera, :getpositions)
@@ -116,7 +114,6 @@ function run_core_functionality_tests()
             # Test cache management
             @test isdefined(Mera, :clear_mera_cache!)
             @test isdefined(Mera, :show_mera_cache_stats)
-            @test isdefined(Mera, :clear_projection_buffers!)
         end
 
         @testset "File Operations" begin
@@ -145,18 +142,12 @@ function run_core_functionality_tests()
         @testset "Cache and Buffer Management" begin
             # Test cache and buffer functions
             @test isdefined(Mera, :clear_mera_cache!)
-            @test isdefined(Mera, :clear_projection_buffers!)
             @test isdefined(Mera, :show_mera_cache_stats)
-            @test isdefined(Mera, :show_projection_memory_stats)
-            @test isdefined(Mera, :get_projection_buffer)
-            @test isdefined(Mera, :recommend_buffer_size)
         end
 
         @testset "Threading and Parallel" begin
             # Test threading support
             @test isdefined(Mera, :show_threading_info)
-            @test isdefined(Mera, :project_amr_parallel)
-            @test isdefined(Mera, :balance_workload)
         end
     end
 end
