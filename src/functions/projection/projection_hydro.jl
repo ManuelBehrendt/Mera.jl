@@ -21,6 +21,31 @@ if !@isdefined(MaskType)
     const MaskType = Union{Array{Bool,1},BitArray{1}}
 end
 
+if !@isdefined(ArgumentsType)
+    Base.@kwdef mutable struct ArgumentsType
+        pxsize::Union{Array{<:Any,1}, Missing}   = missing
+        res::Union{Real, Missing}               = missing
+        lmax::Union{Real, Missing}              = missing
+        xrange::Union{Array{<:Any,1}, Missing}  = missing
+        yrange::Union{Array{<:Any,1}, Missing}  = missing
+        zrange::Union{Array{<:Any,1}, Missing}  = missing
+        radius::Union{Array{<:Real,1}, Missing} = missing
+        height::Union{Real, Missing}            = missing
+        direction::Union{Symbol, Missing}       = missing
+        plane::Union{Symbol, Missing}           = missing
+        plane_ranges::Union{Array{<:Any,1}, Missing}  = missing
+        thickness::Union{Real, Missing}         = missing
+        position::Union{Real, Missing}          = missing
+        center::Union{Array{<:Any,1}, Missing}  = missing
+        range_unit::Union{Symbol, Missing}      = missing
+        data_center::Union{Array{<:Any,1}, Missing} = missing
+        data_center_unit::Union{Symbol, Missing} = missing
+        verbose::Union{Bool, Missing}           = missing
+        show_progress::Union{Bool, Missing}     = missing
+        verbose_threads::Union{Bool, Missing}   = missing
+    end
+end
+
 """
 # AMR Hydro Projection Functions
 
@@ -2424,3 +2449,49 @@ This implementation provides a robust, high-performance foundation for RAMSES AM
 data analysis with breakthrough parallel processing performance, proper coordinate 
 handling, and geometric precision suitable for production scientific computing.
 """
+
+"""
+    show_threading_info()
+
+Display information about Julia threading configuration and recommendations.
+"""
+function show_threading_info()
+    println("🧵 JULIA THREADING INFORMATION")
+    println("="^35)
+    println("Available threads: $(Threads.nthreads())")
+    println("CPU cores: $(Sys.CPU_THREADS)")
+    
+    if Threads.nthreads() == 1
+        println("\n⚠️  WARNING: Running with single thread!")
+        println("To enable multi-threading, restart Julia with:")
+        println("  julia -t auto    # Use all available cores")
+        println("  julia -t 4       # Use 4 threads")
+        println("Or set environment variable:")
+        println("  export JULIA_NUM_THREADS=auto")
+    else
+        println("✅ Multi-threading enabled")
+        
+        if Threads.nthreads() < Sys.CPU_THREADS
+            println("💡 Consider using more threads for better performance:")
+            println("  Available cores: $(Sys.CPU_THREADS)")
+            println("  Current threads: $(Threads.nthreads())")
+        end
+    end
+    
+    println("\n🚀 PERFORMANCE RECOMMENDATIONS")
+    println("="^32)
+    println("Variable-based parallel processing:")
+    println("  • 2+ variables: Automatic variable-based parallelization")
+    println("  • Single variable: Optimized sequential processing")
+    println("  • Threading scales linearly with variable count")
+    
+    println("\nOptimal thread counts:")
+    println("  • Small projections: 2-4 threads")
+    println("  • Medium projections: 4-8 threads") 
+    println("  • Large projections: 8+ threads (up to variable count)")
+    
+    println("\nMemory efficiency:")
+    println("  • Variable-based approach: Direct allocation, minimal overhead")
+    println("  • No memory pools or combining phases required")
+    println("  • Memory scales linearly with output grid size")
+end
