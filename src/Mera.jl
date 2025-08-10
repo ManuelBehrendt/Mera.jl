@@ -231,8 +231,6 @@ include("functions/io/enhanced_io.jl")
 include("functions/io/adaptive_io.jl")
 include("functions/io/mera_io_config.jl")
 include("functions/io/auto_io_optimization.jl")
-include("functions/io/ramses_io_memory_pool.jl")
-include("functions/projection/projection_memory_pool.jl")
 
 
 include("functions/overview.jl")
@@ -294,9 +292,7 @@ include("functions/optimization/safe_performance.jl")
 # projection, slice
 include("functions/projection/projection.jl")
 #include("functions/slice.jl")
-include("functions/projection/projection_parallel.jl")
 include("functions/projection/projection_hydro.jl")
-include("functions/projection/projection_hydro_deprecated.jl")
 include("functions/projection/projection_particles.jl")
 
 # ============================================
