@@ -131,11 +131,7 @@ export
 
 #
     projection,
-    projection_deprecated,
     benchmark_projection_hydro,
-    # parallel projection functions
-    project_amr_parallel,
-    balance_workload,
     show_threading_info,
     #slice,
     #profile,
@@ -153,17 +149,9 @@ export
     notifyme,
 # adaptive I/O optimization
     get_simulation_characteristics,
-    recommend_buffer_size,
     configure_adaptive_io,
     benchmark_buffer_sizes,
     smart_io_setup,
-# projection memory pool optimization
-    get_projection_buffer,
-    get_main_grids!,
-    get_var_grid!,
-    get_level_grids!,
-    show_projection_memory_stats,
-    clear_projection_buffers!,
 # user-friendly I/O configuration
     optimize_mera_io,
     configure_mera_io,
