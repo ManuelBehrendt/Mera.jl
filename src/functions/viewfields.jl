@@ -248,7 +248,7 @@ function viewfields(object::DataSetType)
     println()
     for i=list_field
         if i== :data
-            printstyled(i, " ==> JuliaDB table: ", colnames(object.data), "\n", bold=true, color=:normal)
+            printstyled(i, " ==> IndexedTables: ", colnames(object.data), "\n", bold=true, color=:normal)
             println()
         elseif i== :info
             printstyled(i, " ==> subfields: ", propertynames(object.info), "\n", bold=true, color=:normal)

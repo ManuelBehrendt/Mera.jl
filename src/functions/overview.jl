@@ -234,7 +234,7 @@ end
 function overview_amr(dataobject::HydroDataType, verbose::Bool=true)
 function overview_amr(dataobject::HydroDataType; verbose::Bool=true)
 
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function amroverview(dataobject::HydroDataType, verbose::Bool)
@@ -298,7 +298,7 @@ end
 function overview_amr(dataobject::GravDataType, verbose::Bool=true)
 function overview_amr(dataobject::GravDataType; verbose::Bool=true)
 
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function amroverview(dataobject::GravDataType, verbose::Bool)
@@ -367,7 +367,7 @@ end
 function overview_amr(dataobject::PartDataType, verbose::Bool=true)
 function overview_amr(dataobject::PartDataType; verbose::Bool=true)
 
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function amroverview(dataobject::PartDataType, verbose::Bool)
@@ -442,7 +442,7 @@ end
 function dataoverview(dataobject::HydroDataType, verbose::Bool=true)
 function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function dataoverview(dataobject::HydroDataType, verbose::Bool)
@@ -550,7 +550,7 @@ todo: needs to be tested
 function dataoverview(dataobject::GravDataType, verbose::Bool=true)
 function dataoverview(dataobject::GravDataType; verbose::Bool=true)
 
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function dataoverview(dataobject::GravDataType, verbose::Bool)
@@ -656,7 +656,7 @@ end
 
 ```julia
 function dataoverview(dataobject::ClumpDataType)
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function dataoverview(dataobject::ClumpDataType)
@@ -688,7 +688,7 @@ end
 function dataoverview(dataobject::PartDataType, verbose::Bool=true)
 function dataoverview(dataobject::PartDataType; verbose::Bool=true)
 
-return a JuliaDB table
+return a IndexedTables
 ```
 """
 function dataoverview(dataobject::PartDataType, verbose::Bool)
