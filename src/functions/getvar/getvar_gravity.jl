@@ -148,86 +148,19 @@ function get_data(dataobject::GravDataType,
             c_speed = 2.99792458e10  # cm/s - speed of light
             vars_dict[:gravitational_redshift] = @. epot / (c_speed^2) * selected_unit
 
-        # ===== GRAVITATIONAL ENERGY ANALYSIS (requires hydro data) =====
-        # All derived quantities return code units by default unless specific unit requested
-        
-        # Gravitational energy density: u_grav = ρ × φ - code units by default
-        elseif i == :gravitational_energy_density
-            if !has_hydro
-                error("gravitational_energy_density requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :gravitational_energy_density, vars, units)
-            epot = select(masked_data, :epot)  # gravitational potential
-            density = getvar(hydro_data, :rho)      # density from hydro data
-            vars_dict[:gravitational_energy_density] = @. density * epot * selected_unit
 
-        # Gravitational binding energy density: E_bind = ρ × φ - code units by default
-        elseif i == :gravitational_binding_energy
-            if !has_hydro
-                error("gravitational_binding_energy requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :gravitational_binding_energy, vars, units)
-            epot = select(masked_data, :epot)
-            density = getvar(hydro_data, :rho)
-            vars_dict[:gravitational_binding_energy] = @. density * epot * selected_unit
-
-        # Total binding energy per cell: E_total = ρ × φ × V - code units by default
-        elseif i == :total_binding_energy
-            if !has_hydro
-                error("total_binding_energy requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :total_binding_energy, vars, units)
-            epot = select(masked_data, :epot)
-            density = getvar(hydro_data, :rho)
-            volume = getvar(dataobject, :volume, mask=mask)
-            vars_dict[:total_binding_energy] = @. density * epot * volume * selected_unit
-
-        # Specific gravitational energy: E_specific = φ - code units by default
+        # Specific gravitational energy: E_specific = φ [erg/g]
+        # This is the gravitational potential energy per unit mass (identical to epot)
         elseif i == :specific_gravitational_energy
             selected_unit = getunit(dataobject, :specific_gravitational_energy, vars, units)
             epot = select(masked_data, :epot)
             vars_dict[:specific_gravitational_energy] = @. epot * selected_unit
 
-        # Gravitational potential energy per cell: U = mass × φ - code units by default  
+        # Base gravitational potential field: φ [erg/g] - already available as :epot column
         elseif i == :epot
-            if !has_hydro
-                error("epot requires hydro_data keyword argument with HydroDataType")
-            end
             selected_unit = getunit(dataobject, :epot, vars, units)
-            epot = select(masked_data, :epot)
-            mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
-            vars_dict[:epot] = @. mass * epot * selected_unit
+            vars_dict[:epot] = @. select(masked_data, :epot) * selected_unit
 
-        # Gravitational work: W = m × a × cellsize - code units by default
-        elseif i == :gravitational_work
-            if !has_hydro
-                error("gravitational_work requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :gravitational_work, vars, units)
-            a_mag = getvar(dataobject, :a_magnitude, mask=mask)
-            mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
-            cellsize = getvar(dataobject, :cellsize, mask=mask)
-            vars_dict[:gravitational_work] = @. mass * a_mag * cellsize * selected_unit
-
-        # Gravitational force magnitude: F = mass × |a| - code units by default
-        elseif i == :Fg
-            if !has_hydro
-                error("Fg requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :Fg, vars, units)
-            a_mag = getvar(dataobject, :a_magnitude, mask=mask)
-            mass = getvar(hydro_data, :mass)  # Use hydro's mass calculation
-            vars_dict[:Fg] = @. mass * a_mag * selected_unit
-
-        # Poisson source term: ∇²φ ≈ 4πGρ - code units by default
-        elseif i == :poisson_source
-            if !has_hydro
-                error("poisson_source requires hydro_data keyword argument with HydroDataType")
-            end
-            selected_unit = getunit(dataobject, :poisson_source, vars, units)
-            density = getvar(hydro_data, :rho)
-            G = dataobject.info.constants.G
-            vars_dict[:poisson_source] = @. 4π * G * density * selected_unit
 
         # Cylindrical acceleration components - code units by default
         elseif i == :ar_cylinder

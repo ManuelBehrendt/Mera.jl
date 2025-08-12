@@ -279,12 +279,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.gravitational_redshift       = scale.dimensionless                     # Dimensionless redshift → dimensionless
     
     # Gravitational energy analysis (map to proper physics units)
-    scale.gravitational_energy_density = scale.u_grav                           # [erg/cm³] Energy density → energy density unit
-    scale.gravitational_binding_energy = scale.u_grav                           # [erg/cm³] Binding energy density → energy density unit
-    scale.total_binding_energy         = scale.erg_cell                         # [erg] Total energy per cell → energy unit
     scale.specific_gravitational_energy = scale.erg_g                           # [erg/g] Specific energy → specific energy unit
-    scale.epot                         = scale.erg_cell                         # [erg] Potential energy per cell → energy unit
-    scale.gravitational_work           = scale.erg                              # [erg] Work/energy → energy unit
     scale.jeans_length_gravity         = scale.cm                               # [cm] Jeans length → length unit
     scale.jeans_mass_gravity           = scale.g                                # [g] Jeans mass → mass unit
     scale.jeansmass                    = scale.g                                # [g] Jeans mass (hydro) → mass unit
@@ -292,8 +287,6 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.ekin                         = scale.erg                              # [erg] Kinetic energy → energy unit
     scale.etherm                       = scale.erg                              # [erg] Thermal energy per cell → energy unit
     scale.virial_parameter_local       = scale.dimensionless                    # Dimensionless virial param → dimensionless
-    scale.Fg                          = scale.dyne                             # [dyne] Force → force unit
-    scale.poisson_source               = scale.s_2                              # [s⁻²] Poisson source term → acceleration/length unit
     
     # Coordinate system components (map to proper units)
     scale.ar_cylinder                  = scale.cm_s2                            # [cm/s²] Cylindrical radial acceleration → acceleration unit
@@ -467,11 +460,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.deg           = 180.0 / π                                              # [deg] Degrees
     
     # Complete set of specialized astrophysical unit scales for comprehensive gravitational analysis
-    scale.gravitational_energy_density = scale.u_grav                           # [erg/cm³] Gravitational energy density → same as u_grav
-    scale.gravitational_binding_energy  = scale.u_grav                          # [erg/cm³] Binding energy density → same as u_grav
-    scale.total_binding_energy          = scale.erg_cell                        # [erg] Total energy per cell → same as erg_cell
     scale.specific_gravitational_energy = scale.erg_g                           # [erg/g] Specific energy → same as erg_g
-    scale.gravitational_work            = scale.erg                             # [erg] Work/energy → energy unit
     scale.jeans_length_gravity          = scale.lambda_J                        # [cm] Jeans length → length unit
     scale.jeans_mass_gravity            = scale.M_J                             # [g] Jeans mass → mass unit
     scale.jeansmass                    = scale.g                                # [g] Jeans mass (hydro) → mass unit
@@ -479,8 +468,6 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.ekin                         = scale.erg                              # [erg] Kinetic energy → energy unit
     scale.etherm                       = scale.erg                              # [erg] Thermal energy per cell → energy unit
     scale.virial_parameter_local       = scale.dimensionless                    # Dimensionless virial param → dimensionless
-    scale.Fg                          = scale.dyne                             # [dyne] Force → force unit
-    scale.poisson_source               = scale.s_2                              # [s⁻²] Poisson source term → acceleration/length unit
     
     # Coordinate system components (map to proper units)
     scale.ar_cylinder                  = scale.cm_s2                            # [cm/s²] Cylindrical radial acceleration → acceleration unit
