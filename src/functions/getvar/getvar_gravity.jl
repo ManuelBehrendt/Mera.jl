@@ -21,10 +21,14 @@ function get_data(dataobject::GravDataType,
         # This gives true O(masked_cells) performance instead of O(total_cells)
         mask_indices = findall(mask)
         masked_data = dataobject.data[mask_indices]
-        use_masked_data = false  # No need to apply mask again since data is pre-filtered
+        # Create a temporary dataobject with filtered data for recursive calls
+        filtered_dataobject = deepcopy(dataobject)
+        filtered_dataobject.data = masked_data
+        use_mask_in_recursion = [false]  # Don't apply mask in recursive calls since data is pre-filtered
     else
-        use_masked_data = false
+        filtered_dataobject = dataobject
         masked_data = dataobject.data
+        use_mask_in_recursion = mask  # Use original mask for recursive calls
     end
 
 
@@ -102,7 +106,7 @@ function get_data(dataobject::GravDataType,
             end
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
-            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(dataobject, :cellsize, mask=mask) .^3 .* selected_unit)
+            vars_dict[:volume] =  convert(Array{Float64,1}, getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) .^3 .* selected_unit)
 
 
         elseif i == :x
@@ -124,7 +128,7 @@ function get_data(dataobject::GravDataType,
             if isamr
                 vars_dict[:z] =  (select(masked_data, cpos) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[3] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:z] =  (getvar(dataobject, cpos, mask=mask) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  (getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
         # Gravitational acceleration magnitude - code units by default
@@ -165,8 +169,8 @@ function get_data(dataobject::GravDataType,
         # Cylindrical acceleration components - code units by default
         elseif i == :ar_cylinder
             selected_unit = getunit(dataobject, :ar_cylinder, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
             ax = select(masked_data, :ax)
             ay = select(masked_data, :ay)
             
@@ -177,8 +181,8 @@ function get_data(dataobject::GravDataType,
 
         elseif i == :aϕ_cylinder
             selected_unit = getunit(dataobject, :aϕ_cylinder, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
             ax = select(masked_data, :ax)
             ay = select(masked_data, :ay)
             
@@ -190,9 +194,9 @@ function get_data(dataobject::GravDataType,
         # Spherical acceleration components - code units by default
         elseif i == :ar_sphere
             selected_unit = getunit(dataobject, :ar_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
-            z = getvar(dataobject, :z, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
             ax = select(masked_data, :ax)
             ay = select(masked_data, :ay)
             az = select(masked_data, :az)
@@ -204,9 +208,9 @@ function get_data(dataobject::GravDataType,
 
         elseif i == :aθ_sphere
             selected_unit = getunit(dataobject, :aθ_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
-            z = getvar(dataobject, :z, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
             ax = select(masked_data, :ax)
             ay = select(masked_data, :ay)
             az = select(masked_data, :az)
@@ -221,8 +225,8 @@ function get_data(dataobject::GravDataType,
 
         elseif i == :aϕ_sphere
             selected_unit = getunit(dataobject, :aϕ_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
             ax = select(masked_data, :ax)
             ay = select(masked_data, :ay)
             
@@ -234,22 +238,22 @@ function get_data(dataobject::GravDataType,
         # Radial distances (for gravity analysis) - code units by default
         elseif i == :r_cylinder
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
             vars_dict[:r_cylinder] = @. sqrt(x^2 + y^2) * selected_unit
 
         elseif i == :r_sphere
             selected_unit = getunit(dataobject, :r_sphere, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
-            z = getvar(dataobject, :z, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
             vars_dict[:r_sphere] = @. sqrt(x^2 + y^2 + z^2) * selected_unit
 
         # Azimuthal angle - dimensionless/radians by default
         elseif i == :ϕ
             selected_unit = getunit(dataobject, :ϕ, vars, units)
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
             vars_dict[:ϕ] = @. atan(y, x) * selected_unit
 
         # Fallback: if variable not found in gravity and hydro data is available, try hydro getvar

@@ -18,10 +18,14 @@ function get_data(  dataobject::HydroDataType,
         # This gives true O(masked_cells) performance instead of O(total_cells)
         mask_indices = findall(mask)
         masked_data = dataobject.data[mask_indices]
-        use_masked_data = false  # No need to apply mask again since data is pre-filtered
+        # Create a temporary dataobject with filtered data for recursive calls
+        filtered_dataobject = deepcopy(dataobject)
+        filtered_dataobject.data = masked_data
+        use_mask_in_recursion = [false]  # Don't apply mask in recursive calls since data is pre-filtered
     else
-        use_masked_data = false
+        filtered_dataobject = dataobject
         masked_data = dataobject.data
+        use_mask_in_recursion = mask  # Use original mask for recursive calls
     end
 
     if direction == :z
@@ -99,45 +103,50 @@ function get_data(  dataobject::HydroDataType,
             if haskey(vars_dict, :cellsize)
                 vars_dict[:volume] = convert(Array{Float64,1}, vars_dict[:cellsize] .^3 .* selected_unit)
             else
-                # Calculate cellsize on the fly using pre-filtered data
-                cellsize_vals = getvar(dataobject, :cellsize, mask=mask)
+                # Calculate cellsize on the fly using filtered data
+                cellsize_vals = getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion)
                 vars_dict[:volume] = convert(Array{Float64,1}, cellsize_vals .^3 .* selected_unit)
             end
 
         elseif i == :jeanslength
             selected_unit = getunit(dataobject, :jeanslength, vars, units)
-            vars_dict[:jeanslength] = getvar(dataobject, :cs, unit=:cm_s, mask=mask)  .*
+            vars_dict[:jeanslength] = getvar(filtered_dataobject, :cs, unit=:cm_s, mask=use_mask_in_recursion)  .*
                                         sqrt(3. * pi / (32. * dataobject.info.constants.G))  ./
-                                        sqrt.( getvar(dataobject, :rho, unit=:g_cm3, mask=mask) ) ./ dataobject.info.scale.cm  .*  selected_unit
+                                        sqrt.( getvar(filtered_dataobject, :rho, unit=:g_cm3, mask=use_mask_in_recursion) ) ./ dataobject.info.scale.cm  .*  selected_unit
         elseif i == :jeansnumber
             selected_unit = getunit(dataobject, :jeansnumber, vars, units)
-            vars_dict[:jeansnumber] = getvar(dataobject, :jeanslength, mask=mask) ./ getvar(dataobject, :cellsize, mask=mask) ./ selected_unit
+            vars_dict[:jeansnumber] = getvar(filtered_dataobject, :jeanslength, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) ./ selected_unit
 
         elseif i == :jeansmass
             selected_unit = getunit(dataobject, :jeansmass, vars, units)
             # Jeans mass: M_J = (4π/3)(λ_J/2)³ρ
-            lambda_j = getvar(dataobject, :jeanslength, mask=mask)
-            rho = getvar(dataobject, :rho, mask=mask)
+            lambda_j = getvar(filtered_dataobject, :jeanslength, mask=use_mask_in_recursion)
+            rho = getvar(filtered_dataobject, :rho, mask=use_mask_in_recursion)
             vars_dict[:jeansmass] = @. (4π/3) * (lambda_j/2)^3 * rho * selected_unit
 
 
         elseif i == :freefall_time
             selected_unit = getunit(dataobject, :freefall_time, vars, units)
-            vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(dataobject, :rho, unit=:g_cm3, mask=mask)  ) .* selected_unit
+            vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(filtered_dataobject, :rho, unit=:g_cm3, mask=use_mask_in_recursion)  ) .* selected_unit
 
         elseif i == :virial_parameter_local
             selected_unit = getunit(dataobject, :virial_parameter_local, vars, units)
             # Virial parameter: α_vir = 5σ²R/(GM) where σ = cs (sound speed), R = cellsize
-            cs = getvar(dataobject, :cs, mask=mask)
-            mass = getvar(dataobject, :mass, mask=mask)
-            cellsize = getvar(dataobject, :cellsize, mask=mask)
+            cs = getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            cellsize = getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion)
             G = dataobject.info.constants.G
             # α_vir ≈ 5c_s²R/(GM) where R ≈ cellsize
             vars_dict[:virial_parameter_local] = @. (5 * cs^2 * cellsize) / (G * mass) * selected_unit
 
         elseif i == :mass
             selected_unit = getunit(dataobject, :mass, vars, units)
-            vars_dict[:mass] =  getmass(dataobject) .* selected_unit
+            # Use masked_data instead of calling getmass which uses original dataobject.data
+            if isamr
+                vars_dict[:mass] = select( masked_data, (:rho, :level)=>p->p.rho * (boxlen / 2^p.level)^3 ) .* selected_unit
+            else # if uniform grid
+                vars_dict[:mass] = select( masked_data, :rho=>p->p * (boxlen / 2^lmax)^3 ) .* selected_unit
+            end
 
         elseif i == :cs
             selected_unit = getunit(dataobject, :cs, vars, units)
@@ -226,8 +235,8 @@ function get_data(  dataobject::HydroDataType,
                 specific_entropy = (k_B / m_u) * entropy_term / (gamma - 1)
             end
             # We still need to call getvar for mass since it's a complex calculation
-            # Pass the original mask since getvar handles its own masking
-            mass = getvar(dataobject, :mass, mask=mask)
+            # Use filtered dataobject to maintain consistency
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
             vars_dict[:entropy_total] = specific_entropy .* mass .* selected_unit
 
         elseif i == :vx2
@@ -254,10 +263,10 @@ function get_data(  dataobject::HydroDataType,
 
         elseif i == :vϕ_cylinder
 
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
-            vx = getvar(dataobject, :vx, mask=mask)
-            vy = getvar(dataobject, :vy, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
 
             # vϕ = omega x radius
             # vϕ = |(x*vy - y*vx) / (x^2 + y^2)| * sqrt(x^2 + y^2)
@@ -274,21 +283,21 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :vϕ_cylinder2
 
             selected_unit = getunit(dataobject, :vϕ_cylinder2, vars, units)
-            vars_dict[:vϕ_cylinder2] = (getvar(dataobject, :vϕ_cylinder, center=center, mask=mask) .* selected_unit).^2
+            vars_dict[:vϕ_cylinder2] = (getvar(filtered_dataobject, :vϕ_cylinder, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
 
 
         elseif i == :vz2
 
-            vz = getvar(dataobject, :vz, mask=mask)
+            vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
             selected_unit = getunit(dataobject, :vz2, vars, units)
             vars_dict[:vz2] =  (vz .* selected_unit ).^2
 
         elseif i == :vr_cylinder
 
-            x = getvar(dataobject, :x, center=center, mask=mask)
-            y = getvar(dataobject, :y, center=center, mask=mask)
-            vx = getvar(dataobject, :vx, mask=mask)
-            vy = getvar(dataobject, :vy, mask=mask)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
 
             selected_unit = getunit(dataobject, :vr_cylinder, vars, units)
             vr = @. (x * vx + y * vy)  * (x^2 + y^2)^(-0.5) * selected_unit
@@ -298,16 +307,16 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :vr_cylinder2
 
             selected_unit = getunit(dataobject, :vr_cylinder2, vars, units)
-            vars_dict[:vr_cylinder2] = (getvar(dataobject, :vr_cylinder, center=center) .* selected_unit).^2
+            vars_dict[:vr_cylinder2] = (getvar(filtered_dataobject, :vr_cylinder, center=center, mask=use_mask_in_recursion) .* selected_unit).^2
 
         elseif i == :vr_sphere
 
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
-            vz = getvar(dataobject, :vz)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
+            vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
 
             # vr_sphere = (x*vx + y*vy + z*vz) / sqrt(x^2 + y^2 + z^2)
             selected_unit = getunit(dataobject, :vr_sphere, vars, units)
@@ -319,12 +328,12 @@ function get_data(  dataobject::HydroDataType,
         # polar angle (from z-axis)
         elseif i == :vθ_sphere
 
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
-            vz = getvar(dataobject, :vz)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
+            vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
 
             # vtheta_sphere = (z*(x*vx + y*vy) - (x^2 + y^2)*vz) / (sqrt(x^2 + y^2 + z^2) * sqrt(x^2 + y^2))
             selected_unit = getunit(dataobject, :vθ_sphere, vars, units)
@@ -338,10 +347,10 @@ function get_data(  dataobject::HydroDataType,
         #  azimuthal angle (in xy-plane)
         elseif i == :vϕ_sphere
 
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
 
             # vphi_sphere = (x*vy - y*vx) / sqrt(x^2 + y^2)
             # This is the same as the cylindrical azimuthal component
@@ -354,60 +363,60 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :x
             selected_unit = getunit(dataobject, :x, vars, units)
             if isamr
-                vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2 .^getvar(dataobject, :level) .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  (getvar(filtered_dataobject, apos, mask=use_mask_in_recursion) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .-  boxlen * center[1] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:x] =  (getvar(dataobject, apos) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  (getvar(filtered_dataobject, apos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
             end
         elseif i == :y
             selected_unit = getunit(dataobject, :y, vars, units)
             if isamr
-                vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  (getvar(filtered_dataobject, bpos, mask=use_mask_in_recursion) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .- boxlen * center[2] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:y] =  (getvar(dataobject, bpos) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  (getvar(filtered_dataobject, bpos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
             end
         elseif i == :z
             selected_unit = getunit(dataobject, :z, vars, units)
             if isamr
-                vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2 .^getvar(dataobject, :level) .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  (getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .- boxlen * center[3] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:z] =  (getvar(dataobject, cpos) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  (getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
         elseif i == :hx # specific angular momentum
             # y * vz - z * vy
              selected_unit = getunit(dataobject, :hx, vars, units)
-             ypos = getvar(dataobject, :y, center=center)
-             zpos = getvar(dataobject, :z, center=center)
-             vy = getvar(dataobject, :vy, center=center)
-             vz = getvar(dataobject, :vz, center=center)
+             ypos = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+             zpos = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+             vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
+             vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
 
              vars_dict[:hx] = (ypos .* vz .- zpos .* vy) .* selected_unit
 
         elseif i == :hy # specific angular momentum
             # z * vx - x * vz
             selected_unit = getunit(dataobject, :hy, vars, units)
-            xpos = getvar(dataobject, :x, center=center)
-            zpos = getvar(dataobject, :z, center=center)
-            vx = getvar(dataobject, :vx, center=center)
-            vz = getvar(dataobject, :vz, center=center)
+            xpos = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            zpos = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
 
             vars_dict[:hy] = (zpos .* vx .- xpos .* vz) .* selected_unit
 
         elseif i == :hz # specific angular momentum
             # x * vy - y * vx
             selected_unit = getunit(dataobject, :hz, vars, units)
-            xpos = getvar(dataobject, :x, center=center)
-            ypos = getvar(dataobject, :y, center=center)
-            vx = getvar(dataobject, :vx, center=center)
-            vy = getvar(dataobject, :vy, center=center)
+            xpos = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            ypos = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
 
             vars_dict[:hz] = (xpos .* vy .- ypos .* vx) .* selected_unit
 
         elseif i == :h # specific angular momentum
             selected_unit = getunit(dataobject, :h, vars, units)
-            hx = getvar(dataobject, :hx, center=center)
-            hy = getvar(dataobject, :hy, center=center)
-            hz = getvar(dataobject, :hz, center=center)
+            hx = getvar(filtered_dataobject, :hx, center=center, mask=use_mask_in_recursion)
+            hy = getvar(filtered_dataobject, :hy, center=center, mask=use_mask_in_recursion)
+            hz = getvar(filtered_dataobject, :hz, center=center, mask=use_mask_in_recursion)
 
             vars_dict[:h] = sqrt.(hx .^2 .+ hy .^2 .+ hz .^2) .* selected_unit
 
@@ -415,29 +424,29 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :lx # angular momentum x-component
             # L_x = mass * h_x
             selected_unit = getunit(dataobject, :lx, vars, units)
-            mass = getvar(dataobject, :mass)
-            hx = getvar(dataobject, :hx, center=center)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            hx = getvar(filtered_dataobject, :hx, center=center, mask=use_mask_in_recursion)
             vars_dict[:lx] = mass .* hx .* selected_unit
 
         elseif i == :ly # angular momentum y-component
             # L_y = mass * h_y
             selected_unit = getunit(dataobject, :ly, vars, units)
-            mass = getvar(dataobject, :mass)
-            hy = getvar(dataobject, :hy, center=center)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            hy = getvar(filtered_dataobject, :hy, center=center, mask=use_mask_in_recursion)
             vars_dict[:ly] = mass .* hy .* selected_unit
 
         elseif i == :lz # angular momentum z-component
             # L_z = mass * h_z
             selected_unit = getunit(dataobject, :lz, vars, units)
-            mass = getvar(dataobject, :mass)
-            hz = getvar(dataobject, :hz, center=center)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            hz = getvar(filtered_dataobject, :hz, center=center, mask=use_mask_in_recursion)
             vars_dict[:lz] = mass .* hz .* selected_unit
 
         elseif i == :l # angular momentum magnitude
             # |L| = mass * |h|
             selected_unit = getunit(dataobject, :l, vars, units)
-            mass = getvar(dataobject, :mass)
-            h_magnitude = getvar(dataobject, :h, center=center)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            h_magnitude = getvar(filtered_dataobject, :h, center=center, mask=use_mask_in_recursion)
             vars_dict[:l] = mass .* h_magnitude .* selected_unit
 
         # Cylindrical angular momentum components
@@ -445,19 +454,19 @@ function get_data(  dataobject::HydroDataType,
             # L_r = mass * (r × v)_r = mass * (y*vz - z*vy) for cylindrical coordinates
             # This is equivalent to L_x in most coordinate systems
             selected_unit = getunit(dataobject, :lr_cylinder, vars, units)
-            mass = getvar(dataobject, :mass)
-            lx = getvar(dataobject, :lx, center=center)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            lx = getvar(filtered_dataobject, :lx, center=center, mask=use_mask_in_recursion)
             vars_dict[:lr_cylinder] = lx .* selected_unit
 
         elseif i == :lϕ_cylinder # azimuthal angular momentum (cylindrical)
             # L_φ = mass * r * v_φ = mass * sqrt(x^2 + y^2) * v_φ
             selected_unit = getunit(dataobject, :lϕ_cylinder, vars, units)
-            mass = getvar(dataobject, :mass)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
             
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
             
             r_cylinder = @. sqrt(x^2 + y^2)
             vphi = @. (x * vy - y * vx) / r_cylinder
@@ -472,14 +481,14 @@ function get_data(  dataobject::HydroDataType,
             # For spherical coordinates, radial component is typically zero for orbital motion
             # L_r = m * r * v_r = 0 for purely orbital motion
             selected_unit = getunit(dataobject, :lr_sphere, vars, units)
-            mass = getvar(dataobject, :mass)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
             
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
-            vz = getvar(dataobject, :vz)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
+            vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
             
             r_sphere = @. sqrt(x^2 + y^2 + z^2)
             vr = @. (x * vx + y * vy + z * vz) / r_sphere
@@ -490,14 +499,14 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :lθ_sphere # polar angular momentum (spherical)
             # L_θ = m * r * v_θ
             selected_unit = getunit(dataobject, :lθ_sphere, vars, units)
-            mass = getvar(dataobject, :mass)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
             
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            z = getvar(dataobject, :z, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
-            vz = getvar(dataobject, :vz)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
+            vz = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion)
             
             r_sphere = @. sqrt(x^2 + y^2 + z^2)
             r_cylinder2 = @. x^2 + y^2
@@ -511,12 +520,12 @@ function get_data(  dataobject::HydroDataType,
             # L_φ = m * r * sin(θ) * v_φ = m * sqrt(x^2 + y^2) * v_φ
             # This is the same as cylindrical azimuthal component
             selected_unit = getunit(dataobject, :lϕ_sphere, vars, units)
-            mass = getvar(dataobject, :mass)
+            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
             
-            x = getvar(dataobject, :x, center=center)
-            y = getvar(dataobject, :y, center=center)
-            vx = getvar(dataobject, :vx)
-            vy = getvar(dataobject, :vy)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vx = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion)
+            vy = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion)
             
             r_cylinder = @. sqrt(x^2 + y^2)
             vphi = @. (x * vy - y * vx) / r_cylinder
@@ -526,32 +535,32 @@ function get_data(  dataobject::HydroDataType,
 
 
         elseif i == :mach #thermal; no unit needed
-            vars_dict[:mach] = getvar(dataobject, :v) ./ getvar(dataobject, :cs)
+            vars_dict[:mach] = getvar(filtered_dataobject, :v, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :machx #thermal; no unit needed
-            vars_dict[:machx] = getvar(dataobject, :vx) ./ getvar(dataobject, :cs)
+            vars_dict[:machx] = getvar(filtered_dataobject, :vx, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :machy #thermal; no unit needed
-            vars_dict[:machy] = getvar(dataobject, :vy) ./ getvar(dataobject, :cs)
+            vars_dict[:machy] = getvar(filtered_dataobject, :vy, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :machz #thermal; no unit needed
-            vars_dict[:machz] = getvar(dataobject, :vz) ./ getvar(dataobject, :cs)
+            vars_dict[:machz] = getvar(filtered_dataobject, :vz, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         # Additional Mach numbers for astrophysical applications
         elseif i == :mach_r_cylinder # radial Mach number (cylindrical)
-            vars_dict[:mach_r_cylinder] = getvar(dataobject, :vr_cylinder, center=center) ./ getvar(dataobject, :cs)
+            vars_dict[:mach_r_cylinder] = getvar(filtered_dataobject, :vr_cylinder, center=center, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :mach_phi_cylinder # azimuthal Mach number (cylindrical)
-            vars_dict[:mach_phi_cylinder] = getvar(dataobject, :vϕ_cylinder, center=center) ./ getvar(dataobject, :cs)
+            vars_dict[:mach_phi_cylinder] = getvar(filtered_dataobject, :vϕ_cylinder, center=center, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :mach_r_sphere # radial Mach number (spherical)
-            vars_dict[:mach_r_sphere] = getvar(dataobject, :vr_sphere, center=center) ./ getvar(dataobject, :cs)
+            vars_dict[:mach_r_sphere] = getvar(filtered_dataobject, :vr_sphere, center=center, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :mach_theta_sphere # polar Mach number (spherical)
-            vars_dict[:mach_theta_sphere] = getvar(dataobject, :vθ_sphere, center=center) ./ getvar(dataobject, :cs)
+            vars_dict[:mach_theta_sphere] = getvar(filtered_dataobject, :vθ_sphere, center=center, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         elseif i == :mach_phi_sphere # azimuthal Mach number (spherical)
-            vars_dict[:mach_phi_sphere] = getvar(dataobject, :vϕ_sphere, center=center) ./ getvar(dataobject, :cs)
+            vars_dict[:mach_phi_sphere] = getvar(filtered_dataobject, :vϕ_sphere, center=center, mask=use_mask_in_recursion) ./ getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
 
         # Magnetic Mach numbers (require magnetic field data)
         elseif i == :mach_alfven # Alfvén Mach number
@@ -577,7 +586,7 @@ function get_data(  dataobject::HydroDataType,
                 
                 # Convert back to code units for Mach number calculation
                 v_alfven = v_alfven_physical ./ unit_v
-                vars_dict[:mach_alfven] = getvar(dataobject, :v) ./ v_alfven
+                vars_dict[:mach_alfven] = getvar(filtered_dataobject, :v, mask=use_mask_in_recursion) ./ v_alfven
             else
                 error("Magnetic field components (:bx, :by, :bz) not available for Alfvén Mach number calculation")
             end
@@ -599,9 +608,9 @@ function get_data(  dataobject::HydroDataType,
                 v_alfven_physical = B_physical ./ sqrt.(4π .* rho_physical)
                 v_alfven = v_alfven_physical ./ unit_v
                 
-                cs = getvar(dataobject, :cs)
+                cs = getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
                 v_fast = sqrt.(cs.^2 .+ v_alfven.^2)
-                vars_dict[:mach_fast] = getvar(dataobject, :v) ./ v_fast
+                vars_dict[:mach_fast] = getvar(filtered_dataobject, :v, mask=use_mask_in_recursion) ./ v_fast
             else
                 error("Magnetic field components (:bx, :by, :bz) not available for fast magnetosonic Mach number calculation")
             end
@@ -625,10 +634,10 @@ function get_data(  dataobject::HydroDataType,
                 v_alfven_physical = B_physical ./ sqrt.(4π .* rho_physical)
                 v_alfven = v_alfven_physical ./ unit_v
                 
-                cs = getvar(dataobject, :cs)
+                cs = getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
                 # Improved slow magnetosonic speed approximation
                 v_slow = (cs .* v_alfven) ./ sqrt.(cs.^2 .+ v_alfven.^2)
-                vars_dict[:mach_slow] = getvar(dataobject, :v) ./ v_slow
+                vars_dict[:mach_slow] = getvar(filtered_dataobject, :v, mask=use_mask_in_recursion) ./ v_slow
             else
                 error("Magnetic field components (:bx, :by, :bz) not available for slow magnetosonic Mach number calculation")
             end
@@ -636,36 +645,39 @@ function get_data(  dataobject::HydroDataType,
 
         elseif i == :ekin
             selected_unit = getunit(dataobject, :ekin, vars, units)
-            vars_dict[:ekin] =   0.5 .* getmass(dataobject)  .* getvar(dataobject, :v).^2 .* selected_unit
+            # Use filtered_dataobject for consistent array sizes with mask
+            mass_vals = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
+            v_vals = getvar(filtered_dataobject, :v, mask=use_mask_in_recursion)
+            vars_dict[:ekin] = 0.5 .* mass_vals .* v_vals.^2 .* selected_unit
 
         elseif i == :etherm
             selected_unit = getunit(dataobject, :etherm, vars, units)
             # Thermal energy per cell = pressure × volume (since pressure = thermal energy density)
             pressure = select(masked_data, :p)
-            volume = getvar(dataobject, :volume, mask=mask)
+            volume = getvar(filtered_dataobject, :volume, mask=use_mask_in_recursion)
             vars_dict[:etherm] = pressure .* volume .* selected_unit
 
         elseif i == :r_cylinder
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)
             if isamr
-                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( dataobject.data, (apos, bpos, :level)=>p->
+                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( masked_data, (apos, bpos, :level)=>p->
                                                 selected_unit * sqrt( (p[apos] * boxlen / 2^p.level - boxlen * center[1] )^2 +
                                                                    (p[bpos] * boxlen / 2^p.level - boxlen * center[2] )^2 ) ) )
             else # if uniform grid
 
-                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( dataobject.data, (apos, bpos)=>p->
+                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( masked_data, (apos, bpos)=>p->
                                                 selected_unit * sqrt( (p[apos] * boxlen / 2^lmax - boxlen * center[1] )^2 +
                                                                    (p[bpos] * boxlen / 2^lmax - boxlen * center[2] )^2 ) ) )
             end
         elseif i == :r_sphere
             selected_unit = getunit(dataobject, :r_sphere, vars, units)
             if isamr
-                vars_dict[:r_sphere] = select( dataobject.data, (apos, bpos, cpos, :level)=>p->
+                vars_dict[:r_sphere] = select( masked_data, (apos, bpos, cpos, :level)=>p->
                                         selected_unit * sqrt( (p[apos] * boxlen / 2^p.level -  boxlen * center[1]  )^2 +
                                                                (p[bpos] * boxlen / 2^p.level -  boxlen * center[2] )^2  +
                                                                (p[cpos] * boxlen / 2^p.level -  boxlen * center[3] )^2 ) )
             else # if uniform grid
-                vars_dict[:r_sphere] = select( dataobject.data, (apos, bpos, cpos)=>p->
+                vars_dict[:r_sphere] = select( masked_data, (apos, bpos, cpos)=>p->
                                         selected_unit * sqrt( (p[apos] * boxlen / 2^lmax -  boxlen * center[1]  )^2 +
                                                                (p[bpos] * boxlen / 2^lmax -  boxlen * center[2] )^2  +
                                                                (p[cpos] * boxlen / 2^lmax -  boxlen * center[3] )^2 ) )
