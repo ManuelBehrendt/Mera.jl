@@ -113,15 +113,41 @@ function export_vtk(
     # Helper function to interpolate fine cells to a coarser grid at level L
     function interpolate_to_level_coarse(xa, ya, za, sdata, vdata, L::Int)
         cs = boxlen / 2^L
-        # Map fine cell coordinates to coarse grid indices
-        coarse_idx = [(fld(xa[i], cs), fld(ya[i], cs), fld(za[i], cs)) for i in eachindex(xa)]
+        
+        # Verify data consistency before proceeding
+        ncoords = length(xa)
+        if length(ya) != ncoords || length(za) != ncoords
+            error("Coordinate arrays have mismatched lengths: x=$(length(xa)), y=$(length(ya)), z=$(length(za))")
+        end
+        
+        # Check that scalar data arrays have consistent sizes
+        scalar_sizes = [length(sdata[s]) for s in scalars if haskey(sdata, s)]
+        if !isempty(scalar_sizes)
+            min_size = minimum(scalar_sizes)
+            max_size = maximum(scalar_sizes)
+            if min_size != max_size
+                verbose && println("  Warning: Scalar data arrays have different sizes: min=$min_size, max=$max_size")
+            end
+            data_size = min_size  # Use minimum size for safety
+            if data_size != ncoords
+                verbose && println("  Warning: Data size ($data_size) differs from coordinate size ($ncoords), using min($data_size, $ncoords)")
+                safe_size = min(data_size, ncoords)
+            else
+                safe_size = ncoords
+            end
+        else
+            safe_size = ncoords
+        end
+        
+        # Map fine cell coordinates to coarse grid indices (only for valid indices)
+        coarse_idx = [(fld(xa[i], cs), fld(ya[i], cs), fld(za[i], cs)) for i in 1:safe_size]
         # Group fine cells by their corresponding coarse cell index
         idx_map = Dict{NTuple{3,Int}, Vector{Int}}()
         for (i, cidx) in enumerate(coarse_idx)
             push!(get!(idx_map, cidx, Int[]), i)
         end
         N = length(idx_map)
-        verbose && println("  Unique coarse cells at level $L: $N (out of max $(Int(2^L)^3))")
+        verbose && println("  Unique coarse cells at level $L: $N (out of max $(Int(2^L)^3)) [safe_size: $safe_size]")
         #verbose && println("  Expected file size (uncompressed): ~$(round(N * 300 / 1024^3, digits=2)) GB")
 
         # Limit output cells if exceeding max_cells, prioritizing denser regions
@@ -149,17 +175,38 @@ function export_vtk(
             # Set coarse cell center coordinates
             x2[i], y2[i], z2[i] = (gx + 0.5) * cs, (gy + 0.5) * cs, (gz + 0.5) * cs
             idxs = idx_map[pts[i]]
-            inv = 1.0 / length(idxs)
+            
+            # Filter indices to ensure they're within bounds of data arrays
+            valid_idxs = filter(j -> j <= safe_size, idxs)
+            if length(valid_idxs) != length(idxs)
+                verbose && println("  Warning: Filtered $(length(idxs) - length(valid_idxs)) out-of-bounds indices for coarse cell ($gx,$gy,$gz)")
+            end
+            
+            inv = 1.0 / length(valid_idxs)
             # Average scalar data over fine cells in this coarse cell
             for s in scalars
-                sumv = 0.0; @inbounds for j in idxs sumv += sdata[s][j] end
-                s2[s][i] = sumv * inv
+                if haskey(sdata, s) && length(sdata[s]) >= safe_size
+                    sumv = 0.0
+                    for j in valid_idxs
+                        sumv += sdata[s][j]
+                    end
+                    s2[s][i] = sumv * inv
+                else
+                    s2[s][i] = 0.0  # Default value for missing data
+                end
             end
             # Average vector data if requested
             if export_vector
                 for v in vector
-                    sumv = 0.0; @inbounds for j in idxs sumv += vdata[v][j] end
-                    v2[v][i] = sumv * inv
+                    if haskey(vdata, v) && length(vdata[v]) >= safe_size
+                        sumv = 0.0
+                        for j in valid_idxs
+                            sumv += vdata[v][j]
+                        end
+                        v2[v][i] = sumv * inv
+                    else
+                        v2[v][i] = 0.0  # Default value for missing data
+                    end
                 end
             end
         end
@@ -189,7 +236,28 @@ function export_vtk(
         sdata = Dict{Symbol, Vector{Float64}}()
         for (s, sunit) in zip(scalars, scalars_unit)
             if scalars_log10
-                arr = log10.( getvar(dataobject, s, sunit, mask=mask) )
+                raw_arr = getvar(dataobject, s, sunit, mask=mask)
+                if raw_arr !== nothing
+                    # Safe log10: handle negative and zero values
+                    safe_arr = similar(raw_arr, Float64)
+                    for i in eachindex(raw_arr)
+                        val = raw_arr[i]
+                        if val > 0
+                            safe_arr[i] = log10(val)
+                        elseif val == 0
+                            safe_arr[i] = -30.0  # Very small log value instead of -Inf
+                        else
+                            # For negative values, use log10 of absolute value with warning
+                            safe_arr[i] = log10(abs(val))
+                            if verbose && i <= 5  # Only warn for first few negative values
+                                println("  Warning: Negative value ($val) encountered for $s, using log10(abs(val))")
+                            end
+                        end
+                    end
+                    arr = safe_arr
+                else
+                    arr = nothing
+                end
             else
                 arr = getvar(dataobject, s, sunit, mask=mask)
             end
@@ -201,7 +269,28 @@ function export_vtk(
         if export_vector
             for v in vector
                 if vector_log10
-                    arr = log10.( getvar(dataobject, v, vector_unit, mask=mask) )
+                    raw_arr = getvar(dataobject, v, vector_unit, mask=mask)
+                    if raw_arr !== nothing
+                        # Safe log10: handle negative and zero values
+                        safe_arr = similar(raw_arr, Float64)
+                        for i in eachindex(raw_arr)
+                            val = raw_arr[i]
+                            if val > 0
+                                safe_arr[i] = log10(val)
+                            elseif val == 0
+                                safe_arr[i] = -30.0  # Very small log value instead of -Inf
+                            else
+                                # For negative values, use log10 of absolute value
+                                safe_arr[i] = log10(abs(val))
+                                if verbose && i <= 5  # Only warn for first few negative values
+                                    println("  Warning: Negative value ($val) encountered for $v, using log10(abs(val))")
+                                end
+                            end
+                        end
+                        arr = safe_arr
+                    else
+                        arr = nothing
+                    end
                 else
                     arr = getvar(dataobject, v, vector_unit, mask=mask)
                 end
