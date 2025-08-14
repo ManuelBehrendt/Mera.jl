@@ -84,6 +84,7 @@ value, unit = usedmemory(data, false)  # Returns (7.629, "MB") without printing
 
 # Direct byte value
 value, unit = usedmemory(1048576, false)  # Returns (1.0, "MB")
+``` 
 """
 function usedmemory(obj_value::Real, verbose::Bool=true)
 
@@ -115,16 +116,6 @@ function usedmemory(obj_value::Real, verbose::Bool=true)
 end
 
 
-function storageoverview(data, verbose)
-    storageoverview(dataobject, verbose=verbose)
-end
-
-function storageoverview(dataobject::InfoType, verbose::Bool)
-    return storageoverview(dataobject, verbose=verbose)
-end
-function storageoverview(dataobject::InfoType; verbose::Bool=true)
-    return storageoverview(dataobject, verbose)  
-end
 """
     storageoverview(dataobject::InfoType; verbose::Bool=true)
 
@@ -700,7 +691,6 @@ function dataoverview(dataobject::GravDataType; verbose::Bool=true)
                     cell_iterator= cell_iterator + 1
                     cells[Int(ilevel-lmin+1),cell_iterator] = epotmax
                     cell_iterator= cell_iterator + 1
-
                 else
                     if length(select(filtered_level, ifn)) != 0
                         value_minmax = reduce((min, max), filtered_level, select=ifn)
@@ -859,7 +849,9 @@ julia>N = checkoutputs("simulation001");
 function checkoutputs(path::String="./"; verbose::Bool=true)
 
     verbose = checkverbose(verbose)
-    if path == "" || path == " " path="./" end
+    if path == "" || path == " "
+        path = "./"
+    end
     
     folder = readdir(path)
 
@@ -910,7 +902,7 @@ function checkoutputs(path::String="./"; verbose::Bool=true)
         println()
     end
     return CheckOutputNumberType(existing_outputs, missing_outputs, path)
-"""
+end
 function checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
 
     verbose = checkverbose(verbose)
@@ -981,11 +973,13 @@ end
 returns Float
 
 ```julia
+```julia
 gettime(output::Real; path::String="./", unit::Symbol=:standard)
 gettime(dataobject::DataSetType; unit::Symbol=:standard)
 gettime(dataobject::InfoType, unit::Symbol=:standard)
 
 return time
+```
 ```
 
 #### Arguments Function 1
@@ -1013,35 +1007,21 @@ return time
 - **`unit`:** return the variable in given unit
 
 """
-function gettime(output::Real, path::String, unit::Symbol;)
-    return gettime(output, path=path, unit=unit)
-end
-
-function gettime(output::Real, path::String; unit::Symbol=:standard)
-    return gettime(output, path=path, unit=unit)
-end
-
+# Keyword-first definitions (primary)
 function gettime(output::Real; path::String="./", unit::Symbol=:standard)
     info = getinfo(output, path, verbose=false)
     return info.time * getunit(info, unit)
-end
-
-
-
-function gettime(dataobject::DataSetType, unit::Symbol;)
-    return gettime(dataobject, unit=unit)
 end
 
 function gettime(dataobject::DataSetType; unit::Symbol=:standard)
     return dataobject.info.time * getunit(dataobject.info, unit)
 end
 
-
-
-function gettime(dataobject::InfoType, unit::Symbol;)
-    return gettime(dataobject, unit=unit)
-end
-
 function gettime(dataobject::InfoType; unit::Symbol=:standard)
     return dataobject.time * getunit(dataobject, unit)
 end
+
+# Positional convenience wrappers
+gettime(output::Real, path::String, unit::Symbol) = gettime(output; path=path, unit=unit)
+gettime(dataobject::DataSetType, unit::Symbol) = gettime(dataobject; unit=unit)
+gettime(dataobject::InfoType, unit::Symbol) = gettime(dataobject; unit=unit)
