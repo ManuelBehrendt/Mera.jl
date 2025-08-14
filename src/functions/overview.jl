@@ -1,8 +1,22 @@
-
 """
-### print a Mera timestamp on the screen if the global variable: verbose_mode == true
+    printtime(text::String="", verbose::Bool=verbose_mode)
+
+Print a Mera timestamp with optional text message to the screen when verbose mode is enabled.
+
+# Arguments
+- `text::String=""`: Optional text message to display before the timestamp
+- `verbose::Bool=verbose_mode`: Control output display (uses global `verbose_mode` by default)
+
+# Examples
 ```julia
-function printtime(text::String="", verbose::Bool=verbose_mode)
+# Print timestamp with default message
+printtime()
+
+# Print timestamp with custom message
+printtime("Starting calculation")
+
+# Override verbose setting
+printtime("Debug info", true)
 ```
 """
 function printtime(text::String="", verbose::Bool=verbose_mode)
@@ -13,6 +27,21 @@ function printtime(text::String="", verbose::Bool=verbose_mode)
 end
 
 
+"""
+    printtablememory(data, verbose::Bool)
+
+Print memory usage information for a data table when verbose mode is enabled.
+
+# Arguments
+- `data`: Data object whose memory usage should be displayed
+- `verbose::Bool`: Whether to display the memory information
+
+# Examples
+```julia
+# Display memory usage for a data table
+printtablememory(hydro_data, true)
+```
+"""
 function printtablememory(data, verbose::Bool)
     if verbose
         arg_value, arg_unit = usedmemory(data, false)
@@ -22,15 +51,6 @@ function printtablememory(data, verbose::Bool)
     end
 end
 
-
-
-"""
-### Get the memory that is used for an object in human-readable units
-```julia
-function usedmemory(object, verbose::Bool=true)
-return value, unit
-```
-"""
 function usedmemory(object, verbose::Bool=true)
     obj_value = Base.summarysize(object)
 
@@ -38,7 +58,33 @@ function usedmemory(object, verbose::Bool=true)
 end
 
 
+"""
+    usedmemory(object, verbose::Bool=true)
+    usedmemory(obj_value::Real, verbose::Bool=true)
 
+Calculate and display memory usage of an object or raw byte value in human-readable units.
+
+# Arguments
+- `object`: Any Julia object whose memory usage should be calculated
+- `obj_value::Real`: Raw memory size in bytes
+- `verbose::Bool=true`: Whether to print the result to console
+
+# Returns
+- `value::Float64`: Memory usage value in the appropriate unit
+- `unit::String`: Unit string ("Bytes", "KB", "MB", "GB", or "TB")
+
+# Examples
+```julia
+# Check memory usage of a data object
+data = rand(1000, 1000)
+value, unit = usedmemory(data)  # Prints: "Memory used: 7.629 MB"
+
+# Silent calculation
+value, unit = usedmemory(data, false)  # Returns (7.629, "MB") without printing
+
+# Direct byte value
+value, unit = usedmemory(1048576, false)  # Returns (1.0, "MB")
+"""
 function usedmemory(obj_value::Real, verbose::Bool=true)
 
     value_buffer = obj_value
@@ -69,21 +115,38 @@ function usedmemory(obj_value::Real, verbose::Bool=true)
 end
 
 
+function storageoverview(data, verbose)
+    storageoverview(dataobject, verbose=verbose)
+end
 
-
-"""
-#### Print overview of the used storage per file type for a given timestep
-
-```julia
-function storageoverview(dataobject::InfoType, verbose::Bool=true)
-function storageoverview(dataobject::InfoType; verbose::Bool=true)
-
-return dictionary in bytes
-```
-"""
 function storageoverview(dataobject::InfoType, verbose::Bool)
     return storageoverview(dataobject, verbose=verbose)
 end
+function storageoverview(dataobject::InfoType; verbose::Bool=true)
+    return storageoverview(dataobject, verbose)  
+end
+"""
+    storageoverview(dataobject::InfoType; verbose::Bool=true)
+
+Provide a storage overview for loaded data, showing memory usage and data structure information.
+
+# Arguments  
+- `dataobject::InfoType`: Simulation info object
+- `verbose`: Control level of output detail
+
+# Description
+Displays comprehensive information about the storage characteristics of the selected simulation
+output. It helps users understand the resource requirements and structure of their data.
+
+# Examples
+```julia
+# Get storage overview for hydro data
+storageoverview(info, true)
+
+# Brief storage information
+storageoverview(info, false)
+```
+"""
 function storageoverview(dataobject::InfoType; verbose::Bool=true)
     # todo simplyfy to single function calls
 
@@ -228,19 +291,38 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
 end
 
 
-"""
-### Get the number of cells and/or the CPUs per level
-```julia
-function overview_amr(dataobject::HydroDataType, verbose::Bool=true)
-function overview_amr(dataobject::HydroDataType; verbose::Bool=true)
 
-return a IndexedTables
-```
-"""
 function amroverview(dataobject::HydroDataType, verbose::Bool)
     amroverview(dataobject, verbose=verbose)
 end
 
+"""
+    amroverview(dataobject::HydroDataType; verbose::Bool=true)
+    amroverview(dataobject::GravDataType; verbose::Bool=true) 
+    amroverview(dataobject::PartDataType; verbose::Bool=true)
+
+Generate an overview table showing the distribution of cells/particles across AMR levels.
+
+# Arguments
+- `dataobject`: AMR data object (HydroDataType, GravDataType, or PartDataType)
+- `verbose::Bool=true`: Display progress information during calculation
+
+# Returns
+- `IndexedTable`: Table with columns:
+  - `:level`: AMR refinement level
+  - `:cells`/`:particles`: Number of cells or particles at each level
+  - `:cellsize`: Physical size of cells at each level (Hydro/Grav only)
+  - `:cpus`: Number of CPU domains at each level (if CPU info available)
+
+# Examples
+```julia
+# Basic AMR overview for hydro data
+gas = gethydro(info, verbose=false)
+table = amroverview(gas)
+
+# Silent processing
+table = amroverview(gas, verbose=false)
+"""
 function amroverview(dataobject::HydroDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
@@ -292,19 +374,16 @@ function amroverview(dataobject::HydroDataType; verbose::Bool=true)
 end
 
 
-"""
-### Get the number of cells and/or the CPUs per level
-```julia
-function overview_amr(dataobject::GravDataType, verbose::Bool=true)
-function overview_amr(dataobject::GravDataType; verbose::Bool=true)
-
-return a IndexedTables
-```
-"""
 function amroverview(dataobject::GravDataType, verbose::Bool)
     amroverview(dataobject, verbose=verbose)
 end
 
+"""
+    amroverview(dataobject::GravDataType; verbose::Bool=true)
+
+Get the number of cells and CPUs per AMR level for gravity data.
+Returns an IndexedTable with columns level, cells, cellsize, and optionally cpus.
+"""
 function amroverview(dataobject::GravDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
@@ -361,19 +440,16 @@ end
 
 
 
-"""
-### Get the number of particles and/or the CPUs per level
-```julia
-function overview_amr(dataobject::PartDataType, verbose::Bool=true)
-function overview_amr(dataobject::PartDataType; verbose::Bool=true)
-
-return a IndexedTables
-```
-"""
 function amroverview(dataobject::PartDataType, verbose::Bool)
     amroverview(dataobject, verbose=verbose)
 end
 
+"""
+    amroverview(dataobject::PartDataType; verbose::Bool=true)
+
+Get the number of particles and CPUs per AMR level for particle data.
+Returns an IndexedTable with columns level, particles, and optionally cpus.
+"""
 function amroverview(dataobject::PartDataType; verbose::Bool=true)
 
     checkforAMR(dataobject)
@@ -435,20 +511,25 @@ function checkforAMR(dataobject::DataSetType)
 end
 
 
-"""
-### Get the mass and min/max value of each variable in the database per level
-
-```julia
-function dataoverview(dataobject::HydroDataType, verbose::Bool=true)
-function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
-
-return a IndexedTables
-```
-"""
 function dataoverview(dataobject::HydroDataType, verbose::Bool)
     return dataoverview(dataobject, verbose=verbose)
 end
 
+"""
+    dataoverview(dataobject::HydroDataType; verbose::Bool=true)
+
+Provide a comprehensive overview of hydro simulation data including variable statistics.
+
+# Arguments
+- `dataobject::HydroDataType`: Hydro simulation data object
+- `verbose::Bool=true`: Control level of output detail
+
+# Returns
+- `IndexedTable`: Mass and min/max values for each variable per refinement level
+
+# Description
+Analyzes hydro data and provides statistics across AMR levels.
+"""
 function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 
     verbose = checkverbose(verbose)
@@ -542,21 +623,16 @@ function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 end
 
 
-"""
-todo: needs to be tested
-### Get the total epot and min/max value of each variable in the database per level
-
-```julia
-function dataoverview(dataobject::GravDataType, verbose::Bool=true)
-function dataoverview(dataobject::GravDataType; verbose::Bool=true)
-
-return a IndexedTables
-```
-"""
 function dataoverview(dataobject::GravDataType, verbose::Bool)
     return dataoverview(dataobject, verbose=verbose)
 end
 
+"""
+    dataoverview(dataobject::GravDataType; verbose::Bool=true)
+
+Get total epot and min/max values of each gravity variable per level.
+Returns an IndexedTable summarizing epot and other variables.
+"""
 function dataoverview(dataobject::GravDataType; verbose::Bool=true)
 
     verbose = checkverbose(verbose)
@@ -652,12 +728,10 @@ end
 
 
 """
-### Get the extrema of each variable in the database
+    dataoverview(dataobject::ClumpDataType)
 
-```julia
-function dataoverview(dataobject::ClumpDataType)
-return a IndexedTables
-```
+Get the extrema (min/max) of each variable in the clump database.
+Returns an IndexedTable with extrema per variable.
 """
 function dataoverview(dataobject::ClumpDataType)
     fn = propertynames(dataobject.data.columns)
@@ -681,20 +755,16 @@ end
 
 
 
-"""
-### Get the min/max value of each variable in the database per level
-
-```julia
-function dataoverview(dataobject::PartDataType, verbose::Bool=true)
-function dataoverview(dataobject::PartDataType; verbose::Bool=true)
-
-return a IndexedTables
-```
-"""
 function dataoverview(dataobject::PartDataType, verbose::Bool)
     return dataoverview(dataobject, verbose=verbose)
 end
 
+"""
+    dataoverview(dataobject::PartDataType; verbose::Bool=true)
+
+Get the min/max value of each particle variable per AMR level.
+Returns an IndexedTable summarizing min/max per level.
+"""
 function dataoverview(dataobject::PartDataType; verbose::Bool=true)
 
     verbose = checkverbose(verbose)
@@ -790,6 +860,7 @@ function checkoutputs(path::String="./"; verbose::Bool=true)
 
     verbose = checkverbose(verbose)
     if path == "" || path == " " path="./" end
+    
     folder = readdir(path)
 
     # filter "output_" - names
@@ -839,22 +910,6 @@ function checkoutputs(path::String="./"; verbose::Bool=true)
         println()
     end
     return CheckOutputNumberType(existing_outputs, missing_outputs, path)
-end
-
-
-
-"""
-#### List the existing simulation snapshots in a given folder
-- returns a Dictonary with existing simulations and their folder names with:
-- field `outputs` with Array{Int,1} containing the output-numbers of the existing simulations
-- field `miss` with Array{Int,1} containing the output-numbers of empty simulation folders
-- field `path` as String
-
-```julia
-checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
-return Dict with named Tuple: simulation name and N=CheckOutputNumberType
-```
-
 """
 function checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
 

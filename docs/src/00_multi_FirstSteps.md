@@ -1,28 +1,156 @@
-# First Steps
+# First Steps with Mera.jl
 
-## Simulation Overview
+This notebook introduces the essential concepts and workflow for inspecting, loading, and analyzing RAMSES simulation outputs using Mera.jl.
+
+## Learning Objectives
+- How to load and inspect RAMSES simulation outputs
+- Understanding simulation metadata and data structure
+- Working with physical units and scaling factors
+- Accessing physical constants
+- Basic data exploration techniques
+- Best practices for memory management and workflow organization
+
+## Getting Started
+
+### Package Import and Setup
+Start by importing the Mera package. Mera.jl provides a comprehensive interface for RAMSES data analysis, supporting hydro, gravity, particle, and clump data types.
 
 
 ```julia
 using Mera
+pkgversion(Mera)
 ```
 
-Get information with the function ``getinfo`` about the simulation for a selected output and assign    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
-    
-    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :m_u, :NA, :c, :h, :hbar, :G, :kB, :k_B, :sigma_SB, :sigma_T, :alpha_fs, :R_gas, :eV, :keV, :MeV, :GeV, :Lsol, :Lsun, :Gyr, :Myr, :yr, :day, :hr, :min) to an object, here: "info"  (composite type). The RAMSES output folders are assumed to be in the current working directory, and the user can give a relative or absolute path. The information is read from several files: info-file, header-file, from the header of the Fortran binary files of the first CPU (hydro, grav, part, clump, sink, ... if they exist), etc. Many familiar names and acronyms known from RAMSES are maintained. The function ``getinfo`` prints a small summary and the given units are printed in human-readable representation.
+
+
+
+    v"1.8.0"
+
+
+
+## Function Quick Reference
+
+This section provides a comprehensive reference of essential Mera.jl functions for getting started with simulation analysis.
+
+### Core Simulation Information
+```julia
+# Load simulation metadata
+info = getinfo(output_number, "path/to/simulation")
+info = getinfo(300, "/path/to/sim")                    # Specific output
+info = getinfo("/path/to/sim")                         # Latest output
+
+# Get simulation time
+time_myr = gettime(info, :Myr)                         # In Megayears
+time_gyr = gettime(info, :Gyr)                         # In Gigayears
+
+# Check simulation outputs and storage
+co = checkoutputs("path/to/simulation")                # Check all outputs
+storage = storageoverview(info)                        # Storage analysis
+```
+
+### Data Exploration and Structure
+```julia
+# Explore InfoType object structure
+viewfields(info)                                       # InfoType structure
+viewfields(info.scale)                                 # Scaling factors
+viewfields(info.constants)                             # Physical constants
+viewallfields(info)                                    # Complete hierarchy
+
+# Get field names programmatically
+propertynames(info.scale)                              # All scaling factors
+propertynames(info.constants)                          # All constants
+```
+
+### Unit Conversion and Shortcuts
+```julia
+# Create shortcuts for frequent use
+scale = info.scale                                     # Scaling factors
+constants = info.constants                             # Physical constants
+
+# Create standalone scaling and constants objects
+scales = createscales(info)                            # Independent scale object
+consts = createconstants(info)                         # Independent constants object
+
+# Basic unit conversions
+velocity_kms = velocity_code * scale.km_s              # Velocity to km/s
+density_gcm3 = density_code * scale.g_cm3             # Density to g/cm³
+mass_msol = mass_code * scale.Msol                     # Mass to solar masses
+time_myr = sim_time * scale.Myr                       # Time to Megayears
+```
+
+### Configuration and File Access
+```julia
+# RAMSES configuration access
+namelist_info = namelist(info)                         # Namelist parameters
+make_info = makefile(info)                             # Compilation info
+timer_info = timerfile(info)                           # Performance data
+patch_info = patchfile(info)                           # AMR patch info
+```
+
+### Memory Management
+```julia
+# Clean up variables to free memory
+variable_name = nothing                                # Clear specific variable
+GC.gc()                                                # Force garbage collection
+```
+
+### Common Workflow Pattern
+```julia
+# Standard workflow for new simulation inspection
+info = getinfo(300, "/path/to/simulation")             # Load metadata
+println("Time: $(gettime(info, :Myr)) Myr")           # Check simulation time
+scale = info.scale; constants = info.constants         # Create shortcuts
+viewfields(info)                                       # Explore structure
+co = checkoutputs("/path/to/simulation")               # Check all outputs
+storage = storageoverview(info)                        # Analyze storage requirements
+```
+
+This quick reference covers the essential functions for getting started with Mera.jl simulation inspection and metadata exploration.
+
+### Troubleshooting Common Issues
+Here are some common issues and how to resolve them:
+1. **Missing Files**
+   - If `getinfo()` fails, verify all required output files of a snapshot (output folder) are present.
+   - Use `checkoutputs()` to check output folder integrity.
+2. **Memory Management**
+   - For large datasets, use data selection and filtering.
+   - Monitor memory usage when loading multiple outputs.
+3. **Path Issues**
+   - Use absolute or correct relative paths.
+   - Check file permissions if access is denied.
+4. **Version Mismatches**
+   - Ensure your Mera version matches your RAMSES version.
+   - Update packages as needed with `Pkg.update()`.
+
+### Best Practices and Navigation Tips
+
+1. **Organized Workflow**
+   - Use `getinfo()` to understand your data.
+   - Check available fields before accessing them.
+   - Use clear variable names for different outputs.
+2. **Memory Efficiency**
+   - Create new variables only when needed.
+   - Use shortcuts like `scale` and `constants` for frequently accessed unit conversions.
+   - Clear unused variables with `GC.gc()`.
+3. **Data Exploration**
+   - Use `viewfields()` to discover available properties.
+   - Check data types with `typeof()`.
+   - Print small samples before processing large datasets.
+
+These tips will help you work efficiently with RAMSES data in Mera.
 
 
 ```julia
 info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # output=300 in given path
 ```
 
-    [Mera]: 2025-06-21T20:41:44.407
+    [Mera]: 2025-08-10T20:03:23.381
     
     Code: RAMSES
     output [300] summary:
     mtime: 2023-04-09T05:34:09
     ctime: 2025-06-21T18:31:24.020
-    =======================================================
+    =======================================================
     simulation time: 445.89 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 640
@@ -53,991 +181,871 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # out
     compilation-file: false
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
 
 
-The simulation output can be selected in several ways, which is realised by using multiple dispatch. See the different defined methods on the function ``getinfo``:
+## Hands-On Tutorial
+
+This section provides a step-by-step walkthrough of loading and exploring a real simulation dataset, demonstrating the core concepts in practice.
+
+### Loading Simulation Metadata
+
+The `getinfo()` function is your entry point to any RAMSES simulation analysis. You can select simulation outputs in several ways using multiple dispatch:
+
+```julia
+# Load specific output number
+info = getinfo(300, "path/to/simulation")
+
+# Load latest available output (default)
+info = getinfo("path/to/simulation")
+
+# Load with additional options
+info = getinfo(250, "path", verbose=false)
+```
+
+Let's load a specific simulation output to explore its structure:
+
+### Understanding the InfoType Object
+
+The `getinfo` function returns an `InfoType` object - a comprehensive container holding all simulation metadata and parameters. This composite type provides structured access to:
+
+- **Simulation parameters** (time, redshift, cosmology)
+- **Grid information** (AMR levels, box size, resolution)
+- **File organization** (CPU count, data types present)
+- **Physical units** (scaling factors and constants)
+- **Variable descriptors** (field names and types)
+
+Let's examine the object type:
+
+### Exploring InfoType Structure
+
+The `InfoType` object organizes simulation data into logical groups through its fields and sub-fields. Use `viewfields()` to get a hierarchical overview of available data, which is essential for understanding what information you can access from your simulation.
+
+### Field Exploration Examples
+
+For programmatic access to field names (useful for scripting and automation), you can use `propertynames()` and `viewfields()`:
 
 
 ```julia
-# info = getinfo(); # default: output=1 in current folder, 
-# info = getinfo("../simulations/"); # given path, default: output=1
-# info = getinfo(output=400, path="../simulations/"); # pass path and output number by keywords
+# Explore the InfoType structure
+println("=== InfoType Object Exploration ===")
+viewfields(info)
 
-methods(getinfo)
+println("\n=== Scaling Factors Available ===")
+viewfields(info.scale)
+
+println("\n=== Physical Constants Available ===") 
+viewfields(info.constants)
+
+# Get field names programmatically
+println("\n=== Programmatic Field Access ===")
+scale_fields = propertynames(info.scale)
+constant_fields = propertynames(info.constants)
+
+println("Number of scaling factors: $(length(scale_fields))")
+println("Number of physical constants: $(length(constant_fields))")
+println("First 5 scaling factors: $(scale_fields[1:5])")
+println("First 5 constants: $(constant_fields[1:5])")
 ```
 
+## Units, Scaling, and Physical Constants
 
+**Critical Note**: All calculations in Mera.jl use **code units** from your RAMSES simulation. The package provides comprehensive unit conversion through scaling factors and physical constants.
 
+### How Mera.jl Handles Unit Conversion
 
- 4 methods for generic function **getinfo** from Mera: 
- 
- getinfo(; *output, path, namelist, verbose*) in Mera at ...\
-getinfo(path::**String**; *output, namelist, verbose*) in Mera at ...\
-getinfo(output::**Real**, path::**String**; *namelist, verbose*) in Mera at ...\
-getinfo(output::**Real**; *path, namelist, verbose*) in Mera at ...
+**Automatic Internal Scaling**: Many Mera.jl functions use these scaling factors internally to provide results in physical units automatically. When you specify units in functions like:
 
+- **`gettime(info, :Myr)`** - Returns simulation time directly in Megayears
+- **`projection(gas, :sd, :Msol_pc2)`** - Creates surface density maps in M☉ pc⁻²
+- **`projection(particles, [:vx, :vy], [:km_s, :km_s])`** - Projects velocities in km/s
+- **Calculation functions** - Many accept unit arguments (e.g., `center_of_mass(gas, :kpc)`)
 
+**Note**: The basic data loading functions `gethydro()` and `getparticles()` always return data in code units. You convert to physical units by multiplying with the appropriate scaling factors (e.g., `density_physical = gas.data.rho * info.scale.g_cm3`).
 
-## Fields
-The created object ``info`` is of type ``InfoType`` (composite type):
+The scaling factors you'll learn about below are the foundation that enables this automatic conversion throughout the Mera.jl ecosystem.
+
+### RAMSES Base Units and Scaling Factor Calculation
+
+RAMSES simulations store fundamental scaling factors for:
+- **`unit_l`** - Length [cm]
+- **`unit_d`** - Density [g cm⁻³] 
+- **`unit_m`** - Mass [g]
+- **`unit_v`** - Velocity [cm s⁻¹]
+- **`unit_t`** - Time [s]
+
+These form the basis for all derived physical quantities in your simulation.
+
+**Scaling Factor Implementation**: The conversion factors are calculated from these base units using dimensional analysis. For example:
+- **Energy scaling**: `unit_m × unit_v²` → converts to erg
+- **Pressure scaling**: `unit_d × unit_v²` → converts to Ba (Barye)
+- **Force scaling**: `unit_m × unit_l / unit_t²` → converts to dyn
+
+The complete implementation can be found in the Mera.jl source code at `src/functions/miscellaneous.jl`, which contains the mathematical relationships between RAMSES base units and all derived physical quantities.
+
+### Predefined Scaling Factors
+
+For convenience, Mera.jl provides commonly used astrophysical units in the `scale` sub-field. These are derived from the base RAMSES units and ready for immediate use:
+
+#### Quick Reference: Essential Scaling Factors
+
+**Length and Distance**
+```julia
+info.scale.kpc     # Kiloparsecs
+info.scale.pc      # Parsecs  
+info.scale.ly      # Light years
+info.scale.Au      # Astronomical units
+info.scale.km      # Kilometers
+info.scale.cm      # Centimeters
+```
+
+**Mass and Density**
+```julia
+info.scale.Msol    # Solar masses
+info.scale.g       # Grams
+info.scale.g_cm3   # Mass density [g cm⁻³]
+info.scale.Msol_pc3 # Mass density [M☉ pc⁻³]
+info.scale.g_cm2   # Surface density [g cm⁻²]
+info.scale.Msol_pc2 # Surface density [M☉ pc⁻²]
+```
+
+**Time**
+```julia
+info.scale.Gyr     # Gigayears
+info.scale.Myr     # Megayears
+info.scale.yr      # Years
+info.scale.s       # Seconds
+```
+
+**Velocity and Kinematics**
+```julia
+info.scale.km_s    # Velocity [km s⁻¹]
+info.scale.cm_s    # Velocity [cm s⁻¹]
+info.scale.cm_s2   # Acceleration [cm s⁻²]
+```
+
+**Temperature and Pressure**
+```julia
+info.scale.K       # Temperature [K]
+info.scale.Ba      # Pressure [Barye]
+info.scale.p_kB    # Pressure/kB [K cm⁻³]
+```
+
+**Energy and Power**
+```julia
+info.scale.erg     # Energy [erg]
+info.scale.eV      # Electron volts
+info.scale.Lsol    # Solar luminosity
+```
+
+**Number Density**
+```julia
+info.scale.nH      # Hydrogen number density [cm⁻³]
+info.scale.cm_3    # Number density [cm⁻³]
+```
 
 
 ```julia
-typeof(info)
+# Get list of available scaling factors
+scale_fields = propertynames(info.scale)
+println("Available scaling factors (total: $(length(scale_fields))):")
+println("First 10 examples: $(scale_fields[1:min(10, end)])")
+println()
+println("To see all scaling factors, use:")
+println("  propertynames(info.scale)   # Get field names")
+println("  viewfields(info.scale)      # Hierarchical view")
 ```
 
+    Available scaling factors (total: 133):
+    First 10 examples: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm)
+    
+    To see all scaling factors, use:
+      propertynames(info.scale)   # Get field names
+      viewfields(info.scale)      # Hierarchical view
 
 
+### Complete Unit Conversion Reference
 
-    InfoType
+**Important**: Mera.jl provides an extensive set of **133 scaling factors** covering a comprehensive range of physical units. The underscore in field names represents division (fraction line). Below is a categorized overview of the most commonly used scaling factors:
 
+#### Essential Length Units
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Mpc` | Mpc | Megaparsec |
+| `kpc` | kpc | Kiloparsec |
+| `pc` | pc | Parsec |
+| `mpc` | mpc | Milliparsec |
+| `ly` | ly | Light year |
+| `Au` | AU | Astronomical Unit |
+| `km` | km | Kilometer |
+| `m` | m | Meter |
+| `cm` | cm | Centimeter |
+| `mm` | mm | Millimeter |
+| `μm` | μm | Micrometer |
 
+#### Volume Units
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Mpc3` | Mpc³ | Cubic Megaparsec |
+| `kpc3` | kpc³ | Cubic kiloparsec |
+| `pc3` | pc³ | Cubic parsec |
+| `mpc3` | mpc³ | Cubic milliparsec |
+| `ly3` | ly³ | Cubic light year |
+| `km3` | km³ | Cubic kilometer |
+| `m3` | m³ | Cubic meter |
+| `cm3` | cm³ | Cubic centimeter |
 
-The previously printed information and even more simulation properties are assigned to the object and can be accessed from fields and sub-fields.
-Get an overview with:
+#### Mass and Density
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Msol` | M☉ | Solar mass |
+| `Msun` | M☉ | Solar mass (alternative) |
+| `Mearth` | M⊕ | Earth mass |
+| `Mjupiter` | M♃ | Jupiter mass |
+| `g` | g | Gram |
+| `Msol_pc3` | M☉ pc⁻³ | Mass density |
+| `Msun_pc3` | M☉ pc⁻³ | Mass density (alternative) |
+| `g_cm3` | g cm⁻³ | Mass density (CGS) |
+| `Msol_pc2` | M☉ pc⁻² | Surface density |
+| `Msun_pc2` | M☉ pc⁻² | Surface density (alternative) |
+| `g_cm2` | g cm⁻² | Surface density (CGS) |
+
+#### Time Units
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Gyr` | Gyr | Gigayear |
+| `Myr` | Myr | Megayear |
+| `yr` | yr | Year |
+| `s` | s | Second |
+| `ms` | ms | Millisecond |
+
+#### Velocity and Kinematics
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `km_s` | km s⁻¹ | Velocity |
+| `m_s` | m s⁻¹ | Velocity (SI) |
+| `cm_s` | cm s⁻¹ | Velocity (CGS) |
+| `cm_s2` | cm s⁻² | Acceleration (CGS) |
+| `m_s2` | m s⁻² | Acceleration (SI) |
+| `km_s2` | km s⁻² | Acceleration |
+
+#### Temperature and Thermodynamics
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `K` | K | Temperature (Kelvin) |
+| `T` | K | Temperature (alternative) |
+| `T_mu` | K μ⁻¹ | Temperature per mean molecular weight |
+| `K_mu` | K μ⁻¹ | Temperature per mean molecular weight (alternative) |
+
+#### Pressure and Force
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Ba` | Ba (Barye) | Pressure [g cm⁻¹ s⁻²] |
+| `g_cm_s2` | g cm⁻¹ s⁻² | Pressure (CGS) |
+| `g_cms2` | g cm⁻¹ s⁻² | Pressure (CGS alternative) |
+| `dyne` | dyn | Force (CGS) |
+| `p_kB` | K cm⁻³ | Pressure over Boltzmann constant |
+| `K_cm3` | K cm⁻³ | Pressure over kB (alternative) |
+
+#### Energy and Power
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `erg` | erg | Energy (CGS) |
+| `eV` | eV | Electron volt |
+| `keV` | keV | Kilo-electron volt |
+| `MeV` | MeV | Mega-electron volt |
+| `erg_s` | erg s⁻¹ | Power (CGS) |
+| `Lsol` | L☉ | Solar luminosity |
+| `Lsun` | L☉ | Solar luminosity (alternative) |
+| `erg_g` | erg g⁻¹ | Specific energy |
+| `erg_g_K` | erg g⁻¹ K⁻¹ | Specific heat capacity |
+
+#### Number Density and Particles
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `nH` | cm⁻³ | Hydrogen number density |
+| `n_e` | cm⁻³ | Electron number density |
+| `cm_3` | cm⁻³ | Number density (generic) |
+| `pc_3` | pc⁻³ | Number density per cubic parsec |
+
+#### Magnetic Field
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Gauss` | G | Magnetic field (Gauss) |
+| `muG` | μG | Micro-Gauss |
+| `microG` | μG | Micro-Gauss (alternative) |
+| `Tesla` | T | Magnetic field (SI) |
+
+#### Specialized Astrophysical Units
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `Jy` | Jy | Jansky (flux density) |
+| `mJy` | mJy | Milli-Jansky |
+| `microJy` | μJy | Micro-Jansky |
+| `atoms_cm2` | cm⁻² | Column density |
+| `NH_cm2` | cm⁻² | Hydrogen column density |
+
+#### Gravitational and Dynamical Quantities
+| Field Name | Physical Unit | Description |
+|------------|---------------|-------------|
+| `lambda_J` | cm | Jeans length |
+| `M_J` | g | Jeans mass |
+| `t_ff` | s | Free-fall time |
+| `jeansmass` | g | Jeans mass (alternative) |
+| `alpha_vir` | dimensionless | Virial parameter |
+| `v_esc` | cm s⁻¹ | Escape velocity |
+
+**Complete List Access**: To see all 133 available scaling factors with their current values, use:
+```julia
+propertynames(info.scale)  # Get all field names
+viewfields(info.scale)     # Hierarchical view
+```
+
+#### Hydrogen Number Density Calculation
+
+The `nH` scaling factor converts code density to hydrogen number density using:
+
+```
+nH = ρ_code × scale.nH = ρ_code × (scale.g_cm3 × X_H) / (μ × mH)
+```
+
+Where:
+- **`ρ_code`** - Density in code units
+- **`X_H`** - Hydrogen mass fraction (typically ~0.76 for primordial composition)
+- **`μ`** - Mean molecular weight stored in `info.mu` (accounts for ionization state)
+- **`mH`** - Hydrogen mass (≈ proton mass, available as `info.constants.mp`)
+
+**Important Notes:**
+- The mean molecular weight `μ` is simulation-specific and stored in `info.mu`
+- For fully ionized primordial gas: μ ≈ 0.62
+- For neutral primordial gas: μ ≈ 1.22
+- For gas with metals: μ depends on metallicity and ionization state
+- The exact calculation may vary depending on your RAMSES setup and chemistry model
+
+**Note**: This documentation covers the most commonly used scaling factors and constants. Mera.jl actually provides **133 scaling factors** and **41 physical constants** in total. The actual available factors may vary depending on your Mera.jl version and simulation setup. Use `propertynames(info.scale)` and `propertynames(info.constants)` to see all available items for your specific installation.
 
 
 ```julia
-viewfields(info);
+# Example: Convert velocity from code units to km/s
+velocity_code_units = 1.0  # Some velocity in code units
+velocity_physical = velocity_code_units * info.scale.km_s
+println("Velocity: $velocity_physical km/s")
+
+# Display the scaling factor value
+println("Velocity scaling factor: $(info.scale.km_s) km/s per code unit")
 ```
 
-    output	= 300
-    path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
-    fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
-    
-    simcode	= RAMSES
-    mtime	= 2023-04-09T05:34:09
-    ctime	= 2025-06-21T18:31:24.020
-    ncpu	= 640
-    ndim	= 3
-    levelmin	= 6
-    levelmax	= 10
-    boxlen	= 48.0
-    time	= 29.9031937665063
-    aexp	= 1.0
-    H0	= 1.0
-    omega_m	= 1.0
-    omega_l	= 0.0
-    omega_k	= 0.0
-    omega_b	= 0.045
-    unit_l	= 3.085677581282e21
-    unit_d	= 6.76838218451376e-23
-    unit_m	= 1.9885499720830952e42
-    unit_v	= 6.557528732282063e6
-    unit_t	= 4.70554946422349e14
-    gamma	= 1.6667
-    hydro	= true
-    nvarh	= 7
-    nvarp	= 7
-    nvarrt	= 0
-    variable_list	= [:rho, :vx, :vy, :vz, :p, :var6, :var7]
-    gravity_variable_list	= [:epot, :ax, :ay, :az]
-    particles_variable_list	= [:vx, :vy, :vz, :mass, :family, :tag, :birth]
-    rt_variable_list	= Symbol[]
-    clumps_variable_list	= Symbol[]
-    sinks_variable_list	= Symbol[]
-    descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
-    
-    amr	= true
-    gravity	= true
-    particles	= true
-    rt	= false
-    clumps	= false
-    sinks	= false
-    namelist	= true
-    namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
-    
-    headerfile	= true
-    makefile	= true
-    files_content ==> subfields: (:makefile, :timerfile, :patchfile)
-    
-    timerfile	= true
-    compilationfile	= false
-    patchfile	= true
-    Narraysize	= 0
-    
-    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
-    
-    grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
-    
-    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
-    
-    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
-    
-    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
-    
-    
+    Velocity: 65.57528732282063 km/s
+    Velocity scaling factor: 65.57528732282063 km/s per code unit
 
-
-Get a simple list of the fields of any object:
-
-
-```julia
-propertynames(info)
-```
-
-
-
-
-    (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
-
-
-## Physical Units
-All calculations in **MERA** are processed in the code units of the loaded simulation. The **RAMSES** scaling factors from code- to cgs-units are given for the length, density, mass, velocity and time, assigned to the fields: unit_l, unit_d, unit_m, unit_v, unit_t
-
-To make life easier, we provide more predefined scaling factors, assigned to the sub-field ``scale``:
-
-
-```julia
-viewfields(info.scale) 
-```
-
-    
-    [Mera]: Fields to scale from user/code units to selected units
-    =======================================================================
-    Mpc	= 0.0010000000000006482
-    kpc	= 1.0000000000006481
-    pc	= 1000.0000000006482
-    mpc	= 1.0000000000006482e6
-    ly	= 3261.5637769461323
-    Au	= 2.0626480623310105e23
-    km	= 3.0856775812820004e16
-    m	= 3.085677581282e19
-    cm	= 3.085677581282e21
-    mm	= 3.085677581282e22
-    μm	= 3.085677581282e25
-    Mpc3	= 1.0000000000019446e-9
-    kpc3	= 1.0000000000019444
-    pc3	= 1.0000000000019448e9
-    mpc3	= 1.0000000000019446e18
-    ly3	= 3.469585750743794e10
-    Au3	= 8.775571306099254e69
-    km3	= 2.9379989454983075e49
-    m3	= 2.9379989454983063e58
-    cm3	= 2.9379989454983065e64
-    mm3	= 2.937998945498306e67
-    μm3	= 2.937998945498306e76
-    Msol_pc3	= 0.9997234790001649
-    Msun_pc3	= 0.9997234790001649
-    g_cm3	= 6.76838218451376e-23
-    Msol_pc2	= 999.7234790008131
-    Msun_pc2	= 999.7234790008131
-    g_cm2	= 0.20885045168302602
-    Gyr	= 0.014910986463557083
-    Myr	= 14.910986463557084
-    yr	= 1.4910986463557083e7
-    s	= 4.70554946422349e14
-    ms	= 4.70554946422349e17
-    Msol	= 9.99723479002109e8
-    Msun	= 9.99723479002109e8
-    Mearth	= 3.329677459032007e14
-    Mjupiter	= 1.0476363431814971e12
-    g	= 1.9885499720830952e42
-    km_s	= 65.57528732282063
-    m_s	= 65575.28732282063
-    cm_s	= 6.557528732282063e6
-    nH	= 30.987773856809987
-    erg	= 8.551000140274429e55
-    g_cms2	= 2.9104844143584656e-9
-    T_mu	= 517028.3199143136
-    K_mu	= 517028.3199143136
-    T	= 680300.4209398864
-    K	= 680300.4209398864
-    Ba	= 2.910484414358466e-9
-    g_cm_s2	= 2.910484414358466e-9
-    p_kB	= 2.1080995598777838e7
-    K_cm3	= 2.1080995598777838e7
-    
-    Note: Additional scales available for entropy (erg_g_K, keV_cm2, erg_K, J_K, erg_cm3_K, J_m3_K, kB_per_particle), 
-    angular momentum (J_s, g_cm2_s, kg_m2_s), magnetic fields (Gauss, muG, Tesla), energy (eV, keV, MeV), 
-    luminosity (erg_s, Lsol), number densities (cm_3, pc_3, n_e),
-    cooling rates (erg_g_s, erg_cm3_s), flux (erg_cm2_s, Jy, mJy),
-    and column density (atoms_cm2, NH_cm2).
-    
-
-
-
-```julia
-list_field = propertynames( info.scale )
-```
-
-
-
-
-    (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2)
-
-
-
-The underline in the unit representation corresponds to the fraction line, e.g.:
- 
-|field name | corresponding unit |
-|---- | ----|
-|Msun_pc3        | Msun * pc^-3|
-|g_cm3          | g * cm^-3 |
-|Msun_pc2        | Msun * pc^-2|
-|g_cm2           | g * cm^-2|
-|km_s| km * s^-1|
-|m_s| m * s^-1|
-|cm_s| cm * s^-1|
-|g_cms2| g / (cm * s^2)|
-|nH    | cm^-3 |
-|T_mu  | T / μ |
-|K_mu  | K / μ |
-|p_kB  | p / kB |
-|Ba    | = Barye (pressure) [cm^-1 * g * s^-2] |
-|erg_g_K| erg / (g * K) |
-|keV_cm2| keV * cm^2 |
-|erg_K| erg / K (total entropy) |
-|J_K| J / K (SI total entropy) |
-|erg_cm3_K| erg / (cm^3 * K) (entropy density) |
-|J_m3_K| J / (m^3 * K) (SI entropy density) |
-|kB_per_particle| erg / K per particle |
-|J_s| J * s (angular momentum, SI) |
-|g_cm2_s| g * cm^2 / s (angular momentum, cgs) |
-|kg_m2_s| kg * m^2 / s (angular momentum, SI) |
-|Gauss| Gauss (magnetic field) |
-|muG| μG (micro-Gauss) |
-|microG| μG (micro-Gauss) |
-|Tesla| Tesla (SI magnetic field) |
-|eV| electron volt |
-|keV| kilo electron volt |
-|MeV| mega electron volt |
-|erg_s| erg / s (luminosity) |
-|Lsol| L☉ (solar luminosity) |
-|Lsun| L☉ (solar luminosity) |
-|cm_3| cm^-3 (number density) |
-|pc_3| pc^-3 (number density) |
-|n_e| e^-/cm^3 (electron density) |
-|erg_g_s| erg / (g * s) (cooling rate) |
-|erg_cm3_s| erg / (cm^3 * s) (cooling rate) |
-|erg_cm2_s| erg / (cm^2 * s) (flux) |
-|Jy| Jansky (radio astronomy) |
-|mJy| milli-Jansky |
-|microJy| μJy (micro-Jansky) |
-|atoms_cm2| atoms / cm^2 (column density) |
-|NH_cm2| H atoms / cm^2 (H column density) |
-
-Access a scaling factor to use it in your calculations or plots by e.g.:
-
-
-```julia
-info.scale.km_s  
-```
-
-
-
-
-    65.57528732282063
-
-
-
-To reduce the hierarchy of sub-fields, assign a new object:
 
 
 ```julia
 scale = info.scale;
 ```
 
-The scaling factor can now be accessed by:
-
 
 ```julia
-scale.km_s
+# Now you can use the shortcut directly
+println("Velocity scale: $(scale.km_s) km/s")
+println("Length scale: $(scale.kpc) kpc") 
+println("Mass scale: $(scale.Msun) M☉")
+println("Time scale: $(scale.Myr) Myr")
+
+# Practical example: convert simulation time to Myr
+sim_time_myr = info.time * scale.Myr
+println("Simulation time: $(sim_time_myr) Myr")
 ```
 
+    Velocity scale: 65.57528732282063 km/s
+    Length scale: 1.0000000000006481 kpc
+    Mass scale: 9.99723479002109e8 M☉
+    Time scale: 14.910986463557084 Myr
+    Simulation time: 445.8861174695 Myr
 
 
+### Creating Independent Scale and Constants Objects
 
-    65.57528732282063
+For advanced workflows or when working with multiple simulations, Mera.jl provides functions to create independent scaling factor and physical constants objects. This is particularly useful when you need to:
+- Compare scaling factors between different simulations
+- Pass scaling factors to custom functions
+- Work with scaling factors independently of the InfoType object
+- Perform calculations without keeping the full InfoType in memory
 
+**Key Functions:**
+- `createscales(info)` - Creates an independent scaling factors object
+- `createconstants(info)` - Creates an independent physical constants object
 
-
-Furthermore, the scales can be assigned by applying the function ``createscales`` on an object of type ``InfoType`` (here: `info`):
-
-
-```julia
-typeof(info)
-```
-
-
-
-
-    InfoType
-
-
-
-
-```julia
-my_scales = createscales(info)
-my_scales.km_s
-```
-
-
-
-
-    65.57528732282063
-
-
-
-## Physical Constants
-Some useful constants are assigned to the `InfoType` object:
+These functions extract the scaling factors and constants from an InfoType object and create standalone objects that can be used independently.
 
 
 ```julia
-viewfields(info.constants)
-```
+# Create independent scaling factors and constants objects
+scales = createscales(info)
+consts = createconstants(info)
 
-    
-    [Mera]: Constants given in cgs units
-    =========================================
-    Au	= 1.495978707e13
-    Mpc	= 3.08567758128e24
-    kpc	= 3.08567758128e21
-    pc	= 3.08567758128e18
-    mpc	= 3.08567758128e15
-    ly	= 9.4607304725808e17
-    Msol	= 1.9891e33
-    Msun	= 1.9891e33
-    Mearth	= 5.9722e27
-    Mjupiter	= 1.89813e30
-    Rsol	= 6.96e10
-    Rsun	= 6.96e10
-    me	= 9.1093837015e-28
-    mp	= 1.67262192369e-24
-    mn	= 1.67492749804e-24
-    mH	= 1.66e-24
-    amu	= 1.66053906660e-24
-    m_u	= 1.66053906660e-24
-    NA	= 6.02214076e23
-    c	= 2.99792458e10
-    h	= 6.62607015e-27
-    hbar	= 1.0545718176e-27
-    G	= 6.67430e-8
-    kB	= 1.380649e-16
-    k_B	= 1.380649e-16
-    sigma_SB	= 5.670374419e-5
-    sigma_T	= 6.6524587321e-25
-    alpha_fs	= 7.2973525693e-3
-    R_gas	= 8.314462618e7
-    eV	= 1.602176634e-12
-    keV	= 1.602176634e-9
-    MeV	= 1.602176634e-6
-    GeV	= 1.602176634e-3
-    Lsol	= 3.828e33
-    Lsun	= 3.828e33
-    Gyr	= 3.15576e16
-    Myr	= 3.15576e13
-    yr	= 3.15576e7
-    day	= 86400.0
-    hr	= 3600.0
-    min	= 60.0
+println("=== Independent Objects Created ===")
+println("Type of scales object: $(typeof(scales))")
+println("Type of constants object: $(typeof(consts))")
+println()
 
-    
-    [Mera]: Constants given in cgs units
-    =========================================
-    Au	= 0.01495978707
-    Mpc	= 3.08567758128e24
-    kpc	= 3.08567758128e21
-    pc	= 3.08567758128e18
-    mpc	= 3.08567758128e15
-    ly	= 9.4607304725808e17
-    Msol	= 1.9891e33
-    Msun	= 1.9891e33
-    Mearth	= 5.9722e27
-    Mjupiter	= 1.89813e30
-    Rsol	= 6.96e10
-    Rsun	= 6.96e10
-    me	= 9.1093897e-28
-    mp	= 1.6726231e-24
-    mn	= 1.6749286e-24
-    mH	= 1.66e-24
-    amu	= 1.6605402e-24
-    NA	= 6.0221367e23
-    c	= 2.99792458e10
-    G	= 6.67259e-8
-    kB	= 1.38062e-16
-    Gyr	= 3.15576e16
-    Myr	= 3.15576e13
-    yr	= 3.15576e7
-    
+# These objects work identically to info.scale and info.constants
+println("=== Comparison: Different Access Methods ===")
+println("Using info.scale.kpc:     $(info.scale.kpc)")
+println("Using scales.kpc:         $(scales.kpc)")
+println("Using info.constants.G:   $(info.constants.G)")
+println("Using consts.G:           $(consts.G)")
+println()
 
+# Practical example: Memory-efficient workflow
+println("=== Memory-Efficient Workflow Example ===")
+println("1. Extract needed scaling factors and constants")
+println("2. Clear large InfoType object")
+println("3. Continue calculations with lightweight objects")
+println()
 
-Reduce the hierarchy of sub-fields:
-
-
-```julia
-con = info.constants;
+# Demonstrate independence
+println("✓ Scales object is independent of InfoType")
+println("✓ Constants object is independent of InfoType")
+println("✓ Useful for passing to custom functions")
+println("✓ Enables memory optimization in large workflows")
 ```
 
 
 ```julia
+# Examine the InfoType object structure
+info_type = typeof(info)
+println("Object type: $info_type")
+println()
+println("This InfoType object contains:")
+println("- Simulation metadata and parameters")
+println("- Scaling factors for unit conversion") 
+println("- Physical constants")
+println("- File organization information")
+println("- AMR grid structure details")
+println()
+println("Use viewfields(info) to explore the complete structure.")
+```
+
+    Object type: InfoType
+    
+    This InfoType object contains:
+    - Simulation metadata and parameters
+    - Scaling factors for unit conversion
+    - Physical constants
+    - File organization information
+    - AMR grid structure details
+    
+    Use viewfields(info) to explore the complete structure.
+
+
+### Physical Constants Access
+
+Create shortcuts for easier access to physical constants in calculations:
+
+#### Quick Reference: Essential Physical Constants
+
+**Fundamental Constants**
 ```julia
-viewfields(con)
+info.constants.G      # Gravitational constant [cm³ g⁻¹ s⁻²]
+info.constants.c      # Speed of light [cm s⁻¹]
+info.constants.kB     # Boltzmann constant [erg K⁻¹]
+info.constants.h      # Planck constant [erg s]
+info.constants.sigma  # Stefan-Boltzmann constant [erg cm⁻² s⁻¹ K⁻⁴]
 ```
 
-    
-    [Mera]: Constants given in cgs units
-    =========================================
-    Au	= 1.495978707e13
-    Mpc	= 3.08567758128e24
-    kpc	= 3.08567758128e21
-    pc	= 3.08567758128e18
-    mpc	= 3.08567758128e15
-    ly	= 9.4607304725808e17
-    Msol	= 1.9891e33
-    Msun	= 1.9891e33
-    Mearth	= 5.9722e27
-    Mjupiter	= 1.89813e30
-    Rsol	= 6.96e10
-    Rsun	= 6.96e10
-    me	= 9.1093837015e-28
-    mp	= 1.67262192369e-24
-    mn	= 1.67492749804e-24
-    mH	= 1.66e-24
-    amu	= 1.66053906660e-24
-    m_u	= 1.66053906660e-24
-    NA	= 6.02214076e23
-    c	= 2.99792458e10
-    h	= 6.62607015e-27
-    hbar	= 1.0545718176e-27
-    G	= 6.67430e-8
-    kB	= 1.380649e-16
-    k_B	= 1.380649e-16
-    sigma_SB	= 5.670374419e-5
-    sigma_T	= 6.6524587321e-25
-    alpha_fs	= 7.2973525693e-3
-    R_gas	= 8.314462618e7
-    eV	= 1.602176634e-12
-    keV	= 1.602176634e-9
-    MeV	= 1.602176634e-6
-    GeV	= 1.602176634e-3
-    Lsol	= 3.828e33
-    Lsun	= 3.828e33
-    Gyr	= 3.15576e16
-    Myr	= 3.15576e13
-    yr	= 3.15576e7
-    day	= 86400.0
-    hr	= 3600.0
-    min	= 60.0
+**Masses**
+```julia
+info.constants.mp     # Proton mass [g]
+info.constants.me     # Electron mass [g]
+info.constants.mH     # Hydrogen mass [g]
+info.constants.Msol   # Solar mass [g]
 ```
 
-    
-    [Mera]: Constants given in cgs units
-    =========================================
-    Au	= 0.01495978707
-    Mpc	= 3.08567758128e24
-    kpc	= 3.08567758128e21
-    pc	= 3.08567758128e18
-    mpc	= 3.08567758128e15
-    ly	= 9.4607304725808e17
-    Msol	= 1.9891e33
-    Msun	= 1.9891e33
-    Mearth	= 5.9722e27
-    Mjupiter	= 1.89813e30
-    Rsol	= 6.96e10
-    Rsun	= 6.96e10
-    me	= 9.1093897e-28
-    mp	= 1.6726231e-24
-    mn	= 1.6749286e-24
-    mH	= 1.66e-24
-    amu	= 1.6605402e-24
-    NA	= 6.0221367e23
-    c	= 2.99792458e10
-    G	= 6.67259e-8
-    kB	= 1.38062e-16
-    Gyr	= 3.15576e16
-    Myr	= 3.15576e13
-    yr	= 3.15576e7
-    
+**Astrophysical References**
+```julia
+info.constants.pc     # Parsec [cm]
+info.constants.kpc    # Kiloparsec [cm]
+info.constants.yr     # Year [s]
+info.constants.Lsol   # Solar luminosity [erg s⁻¹]
+```
 
+#### Access Methods
+```julia
+# Method 1: Direct shortcut (maintains link to InfoType)
+constants = info.constants  # Create shortcut
 
-## InfoType Fields Overview
-All fields and sub-fields that are assigned to the `InfoType` or from other objects can be viewed by the function **viewfields**, **namelist**, **makefile**, **timerfile**, **patchfile**.
-See the methods list:
+# Method 2: Independent object (breaks link to InfoType)
+consts = createconstants(info)  # Standalone constants object
+
+# Both methods provide identical access to constants
+G = constants.G            # Gravitational constant
+G = consts.G              # Same value, independent object
+```
+
+**When to use each method:**
+- Use `info.constants` for most general purposes
+- Use `createconstants(info)` when you need memory optimization or want to pass constants to functions independently
 
 
 ```julia
-methods(viewfields)
+# Demonstrate both methods for accessing constants
+println("=== Method 1: Direct shortcut ===")
+constants = info.constants
+
+println("=== Method 2: Independent object ===") 
+consts = createconstants(info)
+
+# Display all available constants
+println("\n=== Available Constants Structure ===")
+viewfields(constants)
+
+# Compare both methods
+println("\n=== Comparison of Access Methods ===")
+println("info.constants.G:    $(info.constants.G)")
+println("constants.G:         $(constants.G)")
+println("consts.G:            $(consts.G)")
+println("All identical:       $(info.constants.G == constants.G == consts.G)")
+
+# Example usage of physical constants in astrophysical calculations
+println("\n=== Key Physical Constants for Astrophysics ===")
+println("- Gravitational constant: $(consts.G) cm³ g⁻¹ s⁻²")
+println("- Boltzmann constant: $(consts.kB) erg K⁻¹")
+println("- Speed of light: $(consts.c) cm s⁻¹")
+println("- Solar mass: $(consts.Msol) g")
+println("- Proton mass: $(consts.mp) g")
+
+# Practical example: Calculate Jeans length scale
+# Jeans length = sqrt(π * k_B * T / (G * μ * m_H * ρ))
+println("\n=== Example: Jeans length calculation components ===")
+println("✓ Gravitational constant G = $(consts.G)")
+println("✓ Boltzmann constant k_B = $(consts.kB)") 
+println("✓ Proton mass (for μ * m_H calculation) = $(consts.mp)")
+println("✓ Temperature and density from scaling factors")
+
+println("\n=== Benefits of createconstants() ===")
+println("✓ Memory optimization: Independent of InfoType object")
+println("✓ Function arguments: Easy to pass to custom functions")
+println("✓ Multi-simulation: Compare constants between simulations")
+println("✓ Persistence: Maintain constants after clearing InfoType")
 ```
 
+### Additional Analysis Tools
 
+Beyond the core functions already covered, Mera.jl provides several specialized utility functions for deeper simulation analysis and metadata exploration.
 
+#### RAMSES Configuration Access
 
-11 methods for generic function **viewfields** from Mera:
-
-viewfields(object::**PartInfoType**) in Mera at ...\
-viewfields(object::**GridInfoType**) in Mera at ...\
-viewfields(object::**PhysicalUnitsType001**) in Mera at ...\
-viewfields(object::**DescriptorType**) in Mera at ...\
-viewfields(object::**FileNamesType**) in Mera at ...\
-viewfields(object::**CompilationInfoType**) in Mera at...\
-viewfields(object::**ArgumentsType**) in Mera at...\
- viewfields(object::**Mera.FilesContentType**) in Mera at...\
- viewfields(object::**InfoType**) in Mera at ...\
-  viewfields(object::**ScalesType001**) in Mera at ...\
-   viewfields(object::**DataSetType**) in Mera at...
+Access detailed RAMSES configuration parameters and compilation information:
 
 
 ```julia
-methods(namelist)
+# Example: Access compilation and build information
+try
+    make_info = makefile(info)
+    println("Compilation information available: ", !isnothing(make_info))
+    
+    compilation_info = compilationfile(info)  
+    println("Detailed compilation data available: ", !isnothing(compilation_info))
+    
+    timer_info = timerfile(info)
+    println("Performance timing data available: ", !isnothing(timer_info))
+    
+    patch_info = patchfile(info)
+    println("AMR patch information available: ", !isnothing(patch_info))
+    
+catch
+    println("Some compilation/build information files may not be available")
+end
 ```
 
-
-
-
- 2 methods for generic function **namelist** from Mera:
- 
- namelist(object::**Dict{Any, Any}**) in Mera at ...\
-  namelist(object::**InfoType**) in Mera at ...
-
-
-Get a detailed overview of all the fields from MERA composite types:
-
-
-```julia
-viewallfields(info)
-```
-
-    output	= 300
-    path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
-    fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
     
-    simcode	= RAMSES
-    mtime	= 2023-04-09T05:34:09
-    ctime	= 2025-06-21T18:31:24.020
-    ncpu	= 640
-    ndim	= 3
-    levelmin	= 6
-    levelmax	= 10
-    boxlen	= 48.0
-    time	= 29.9031937665063
-    aexp	= 1.0
-    H0	= 1.0
-    omega_m	= 1.0
-    omega_l	= 0.0
-    omega_k	= 0.0
-    omega_b	= 0.045
-    unit_l	= 3.085677581282e21
-    unit_d	= 6.76838218451376e-23
-    unit_m	= 1.9885499720830952e42
-    unit_v	= 6.557528732282063e6
-    unit_t	= 4.70554946422349e14
-    gamma	= 1.6667
-    hydro	= true
-    nvarh	= 7
-    nvarp	= 7
-    nvarrt	= 0
-    variable_list	= [:rho, :vx, :vy, :vz, :p, :var6, :var7]
-    gravity_variable_list	= [:epot, :ax, :ay, :az]
-    particles_variable_list	= [:vx, :vy, :vz, :mass, :family, :tag, :birth]
-    rt_variable_list	= Symbol[]
-    clumps_variable_list	= Symbol[]
-    sinks_variable_list	= Symbol[]
-    descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
-    
-    amr	= true
-    gravity	= true
-    particles	= true
-    rt	= false
-    clumps	= false
-    sinks	= false
-    namelist	= true
-    namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
-    
-    headerfile	= true
-    makefile	= true
-    files_content ==> subfields: (:makefile, :timerfile, :patchfile)
-    
-    timerfile	= true
-    compilationfile	= false
-    patchfile	= true
-    Narraysize	= 0
-    
-    scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3)
-    
-    grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
-    
-    part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
-    
-    compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
-    
-    constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :Gyr, :Myr, :yr)
-    
-    
-    
-    [Mera]: Fields to scale from user/code units to selected units
-    =======================================================================
-    Mpc	= 0.0010000000000006482
-    kpc	= 1.0000000000006481
-    pc	= 1000.0000000006482
-    mpc	= 1.0000000000006482e6
-    ly	= 3261.5637769461323
-    Au	= 2.0626480623310105e23
-    km	= 3.0856775812820004e16
-    m	= 3.085677581282e19
-    cm	= 3.085677581282e21
-    mm	= 3.085677581282e22
-    μm	= 3.085677581282e25
-    Mpc3	= 1.0000000000019446e-9
-    kpc3	= 1.0000000000019444
-    pc3	= 1.0000000000019448e9
-    mpc3	= 1.0000000000019446e18
-    ly3	= 3.469585750743794e10
-    Au3	= 8.775571306099254e69
-    km3	= 2.9379989454983075e49
-    m3	= 2.9379989454983063e58
-    cm3	= 2.9379989454983065e64
-    mm3	= 2.937998945498306e67
-    μm3	= 2.937998945498306e76
-    Msol_pc3	= 0.9997234790001649
-    Msun_pc3	= 0.9997234790001649
-    g_cm3	= 6.76838218451376e-23
-    Msol_pc2	= 999.7234790008131
-    Msun_pc2	= 999.7234790008131
-    g_cm2	= 0.20885045168302602
-    Gyr	= 0.014910986463557083
-    Myr	= 14.910986463557084
-    yr	= 1.4910986463557083e7
-    s	= 4.70554946422349e14
-    ms	= 4.70554946422349e17
-    Msol	= 9.99723479002109e8
-    Msun	= 9.99723479002109e8
-    Mearth	= 3.329677459032007e14
-    Mjupiter	= 1.0476363431814971e12
-    g	= 1.9885499720830952e42
-    km_s	= 65.57528732282063
-    m_s	= 65575.28732282063
-    cm_s	= 6.557528732282063e6
-    nH	= 30.987773856809987
-    erg	= 8.551000140274429e55
-    g_cms2	= 2.9104844143584656e-9
-    T_mu	= 517028.3199143136
-    K_mu	= 517028.3199143136
-    T	= 680300.4209398864
-    K	= 680300.4209398864
-    Ba	= 2.910484414358466e-9
-    g_cm_s2	= 2.910484414358466e-9
-    p_kB	= 2.1080995598777838e7
-    K_cm3	= 2.1080995598777838e7
-    
-    
-    [Mera]: Constants given in cgs units
-    =========================================
-    Au	= 0.01495978707
-    Mpc	= 3.08567758128e24
-    kpc	= 3.08567758128e21
-    pc	= 3.08567758128e18
-    mpc	= 3.08567758128e15
-    ly	= 9.4607304725808e17
-    Msol	= 1.9891e33
-    Msun	= 1.9891e33
-    Mearth	= 5.9722e27
-    Mjupiter	= 1.89813e30
-    Rsol	= 6.96e10
-    Rsun	= 6.96e10
-    me	= 9.1093897e-28
-    mp	= 1.6726231e-24
-    mn	= 1.6749286e-24
-    mH	= 1.66e-24
-    amu	= 1.6605402e-24
-    NA	= 6.0221367e23
-    c	= 2.99792458e10
-    G	= 6.67259e-8
-    kB	= 1.38062e-16
-    Gyr	= 3.15576e16
-    Myr	= 3.15576e13
-    yr	= 3.15576e7
-    
-    
-    [Mera]: Paths and file-names
-    =================================
-    output	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300
-    info	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/info_00300.txt
-    amr	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/amr_00300.
-    hydro	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/hydro_00300.
-    hydro_descriptor	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/hydro_file_descriptor.txt
-    gravity	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/grav_00300.
-    particles	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/part_00300.
-    part_descriptor	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/part_file_descriptor.txt
-    rt	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/rt_00300.
-    rt_descriptor	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/rt_file_descriptor.txt
-    rt_descriptor_v0	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/info_rt_00300.txt
-    clumps	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/clump_00300.
-    timer	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/timer_00300.txt
-    header	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/header_00300.txt
-    namelist	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/namelist.txt
-    compilation	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/compilation.txt
-    makefile	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/makefile.txt
-    patchfile	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/output_00300/patches.txt
-    
-    
-    [Mera]: Descriptor overview
-    =================================
-    hversion	= 1
-    hydro	= [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
-    htypes	= ["d", "d", "d", "d", "d", "d", "d"]
-    usehydro	= false
-    hydrofile	= true
-    pversion	= 1
-    particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time]
-    ptypes	= ["d", "d", "d", "d", "d", "d", "d", "i", "i", "b", "b", "d"]
-    useparticles	= false
-    particlesfile	= true
-    gravity	= [:epot, :ax, :ay, :az]
-    usegravity	= false
-    gravityfile	= false
-    rtversion	= 0
-    rt	= Dict{Any, Any}()
-    rtPhotonGroups	= Dict{Any, Any}()
-    usert	= false
-    rtfile	= false
-    clumps	= Symbol[]
-    useclumps	= false
-    clumpsfile	= false
-    sinks	= Symbol[]
-    usesinks	= false
-    sinksfile	= false
-    
-    
-    [Mera]: Namelist file content
-    =================================
-    &COOLING_PARAMS
-    cooling  	=.true. 
-    z_ave  	=1.
-    
-    &SF_PARAMS
-    m_star   	= 1   
-    n_star   	= 10. !H/cc
-    T2_star  	= 0 !T/mu K
-    eps_star   	= 0.01 !1%
-    
-    &AMR_PARAMS
-    levelmax  	=10
-    npartmax  	= 200000
-    ngridmax  	= 1000000 !1000000  
-    boxlen  	=48.0	!kpc
-    levelmin  	=6
-    nexpand  	=1                       !number of mesh expansions (mesh smoothing)
-    
-    &BOUNDARY_PARAMS
-    jbound_min  	= 0, 0,-1,+1,-1,-1
-    kbound_max  	= 0, 0, 0, 0,-1,+1
-    no_inflow  	=.true.
-    bound_type  	= 2, 2, 2, 2, 2, 2    !2
-    nboundary   	= 6
-    ibound_max  	=-1,+1,+1,+1,+1,+1
-    ibound_min  	=-1,+1,-1,-1,-1,-1
-    jbound_max  	= 0, 0,-1,+1,+1,+1
-    kbound_min  	= 0, 0, 0, 0,-1,+1
-    
-    &OUTPUT_PARAMS
-    tend  	=400                                
-    delta_tout  	=0.1                  !Time increment between outputs
-    
-    &POISSON_PARAMS
-    gravity_type  	=-3                 !for 0 ->self gravitation ;  3 ->ext pot;  -3 ->ext. pot. + sg
-    
-    &RUN_PARAMS
-    pic  	=.true.
-    nsubcycle  	=20*2
-    ncontrol  	=100                      !frequency of screen output
-    poisson  	=.true.
-    verbose  	=.false.
-    nremap  	=10 !10
-    nrestart  	=0
-    hydro  	=.true.
-    
-    &FEEDBACK_PARAMS
-    eta_sn   	=0.2
-    delayed_cooling  	=.true.
-    t_diss   	= 1.5 
-    
-    &HYDRO_PARAMS
-    slope_type  	=1
-    smallr  	=1e-11 
-    gamma  	=1.6667
-    courant_factor  	=0.6
-    !smallc  	=
-    riemann  	='hllc'
-    
-    &INIT_PARAMS
-    nregion  	=2
-    
-    &REFINE_PARAMS
-    
-    
-    [Mera]: Grid overview 
-    ============================
-    ngridmax	= 1000000
-    nstep_coarse	= 6544
-    nx	= 3
-    ny	= 3
-    nz	= 3
-    nlevelmax	= 10
-    nboundary	= 6
-    ngrid_current	= 21305
-    bound_key ==> length(641)
-    cpu_read ==> length(641)
-    
-    
-    [Mera]: Particle overview
-    ===============================
-    eta_sn	= 0.0
-    age_sn	= 0.6706464407596582
-    f_w	= 0.0
-    Npart	= 0
-    Ndm	= 0
-    Nstars	= 544515
-    Nsinks	= 0
-    Ncloud	= 0
-    Ndebris	= 0
-    Nother	= 0
-    Nundefined	= 0
-    other_tracer1	= 0
-    debris_tracer	= 0
-    cloud_tracer	= 0
-    star_tracer	= 0
-    other_tracer2	= 0
-    gas_tracer	= 0
-    
-    
-    [Mera]: Compilation file overview
-    ========================================
-    compile_date	= 
-    patch_dir	= 
-    remote_repo	= 
-    local_branch	= 
-    last_commit	= 
-    
-    
-    [Mera]: Makefile content
-    =================================
+    [Mera]: Makefile content
+    =================================
     !content deleted on purpose
     
-    
-    [Mera]: Timer-file content
-    =================================
-     --------------------------------------------------------------------
-    
-         minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER
-         426.559       428.960       431.540         1.216         0.003     0.5   562 606    coarse levels           
-        2086.863      2285.294      2620.028       109.814         0.048     2.9   639   1    refine                  
-         518.746       519.356       520.299         0.572         0.001     0.7   608  21    load balance            
-         173.017       565.169      1799.729       385.862         0.683     0.7   602   1    particles               
-        5897.562      5897.616      5897.791         0.018         0.000     7.5   244   1    io                      
-        5176.808      9619.415     26606.857      5416.924         0.563    12.3   568   1    feedback                
-       25022.898     25410.890     25585.446       143.363         0.006    32.4     1 602    poisson                 
-        1131.397      2241.256      2547.320       322.916         0.144     2.9     1 345    rho                     
-         521.635       678.056      1076.044       151.775         0.224     0.9   601   1    courant                 
-          82.818       115.742       135.415        10.926         0.094     0.1   398 125    hydro - set unew        
-        7009.921      9876.180     12208.171      1176.765         0.119    12.6   481 343    hydro - godunov         
-         948.967     16679.099     23569.950      4760.658         0.285    21.3   640 340    hydro - rev ghostzones  
-         189.513       208.576       229.883         7.902         0.038     0.3   398 581    hydro - set uold        
-        1757.246      1795.542      1860.788        11.757         0.007     2.3   524 180    cooling                 
-          84.519       300.570       375.587        67.032         0.223     0.4     1 593    hydro - ghostzones      
-         933.143      1662.855      1788.316       119.084         0.072     2.1     1 639    flag                    
-       78327.986     100.0    TOTAL
-    
-
-
-## Disc Space
-Gives an overview of the used disc space for the different data types of the selected output:
-
-
-```julia
-storageoverview(info)
-```
-
-    Overview of the used disc space for output: [300]
-    ------------------------------------------------------
-    Folder:         5.68 GB 	<2.26 MB>/file
-    AMR-Files:      1.1 GB 	<1.75 MB>/file
-    Hydro-Files:    2.87 GB 	<4.58 MB>/file
-    Gravity-Files:  1.68 GB 	<2.69 MB>/file
-    Particle-Files: 38.56 MB 	<61.6 KB>/file
-    
-    
-    mtime: 2023-04-09T05:34:09
-    ctime: 2025-06-21T18:31:24.020
-
-
-
-
-
-    Dict{Any, Any} with 8 entries:
-      :folder   => 6101111412
-      :sink     => 0.0
-      :particle => 40430034
-      :hydro    => 3079240490
-      :gravity  => 1802094080
-      :amr      => 1177085816
-      :clump    => 0.0
-      :rt       => 0.0
-
-
-
-## Simulation outputs
-Get an overview of existing output folders of a simulation
-
-
-```julia
-co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10")
-```
-
-    Outputs - existing: 1 betw. 300:300 - missing: 1
-    
-
-
-
-
-
-    Mera.CheckOutputNumberType([300], [301], "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10")
-
+    Compilation information available: false
+    Some compilation/build information files may not be available
 
 
 
 ```julia
-# It returns all output numbers of existing or missing (e.g. empty) folders:
-propertynames(co)
+# Explore available methods for different functions (simplified for documentation)
+println("=== Available exploration methods ===")
+println()
+println("1. viewfields methods:")
+println("   - viewfields(info)     # View InfoType object structure")
+println("   - viewfields(scale)    # View scaling factors")
+println("   - viewfields(constants) # View physical constants")
+println()
+println("2. Object creation utilities:")
+println("   - createscales(info)   # Create independent scaling factors object")
+println("   - createconstants(info) # Create independent constants object")
+println()
+println("3. Additional utility functions:")
+println("   - namelist(info)       # Display RAMSES namelist parameters")
+println("   - makefile(info)       # View compilation information")  
+println("   - timerfile(info)      # Performance timing data")
+println("   - patchfile(info)      # AMR patch information")
+println("   - viewallfields(info)  # Complete field hierarchy")
+println()
+println("4. Data management:")
+println("   - checkoutputs(path)   # Check simulation output availability")
+println("   - storageoverview(info) # Analyze storage requirements")
+println()
+println("Note: Use 'methods(function_name)' in interactive sessions")
+println("      to see detailed method signatures.")
+```
+
+    === Available exploration methods ===
+    
+    1. viewfields methods:
+       - viewfields(info)     # View InfoType object structure
+       - viewfields(scale)    # View scaling factors
+       - viewfields(constants) # View physical constants
+    
+    2. Additional utility functions:
+       - namelist(info)       # Display RAMSES namelist parameters
+       - makefile(info)       # View compilation information
+       - timerfile(info)      # Performance timing data
+       - patchfile(info)      # AMR patch information
+       - viewallfields(info)  # Complete field hierarchy
+    
+    Note: Use 'methods(function_name)' in interactive sessions
+          to see detailed method signatures.
+
+
+#### Complete Field Overview
+
+For a comprehensive view of all available fields and sub-fields in your InfoType object, use `viewallfields()`. This provides a complete hierarchical listing of everything available in your simulation metadata:
+
+**Tip**: This function can produce extensive output for complex simulations. Consider redirecting output to a file for large simulations:
+```julia
+# For very detailed output, you might want to capture it
+output = viewallfields(info)
 ```
 
 
+```julia
+# Example: Use viewallfields to explore complete structure
+println("=== Complete InfoType Structure Overview ===")
+println("This will show ALL available fields and sub-fields:")
+println()
+
+# Uncomment the line below to see the complete structure
+# viewallfields(info)
+
+println("Note: viewallfields(info) produces extensive output.")
+println("Use it when you need to discover all available data fields.")
+println()
+println("For selective exploration, use:")
+println("- viewfields(info)        # Main structure")  
+println("- viewfields(info.scale)  # Scaling factors only")
+println("- viewfields(info.constants) # Physical constants only")
+```
+
+## Data Management and Storage
+
+Now that you understand how to inspect and explore InfoType objects, let's move to practical aspects of managing simulation data. This section covers essential tools for understanding your data storage requirements and managing multiple simulation outputs.
+
+### Storage Analysis
+
+Understanding the disk space requirements of your simulation data is crucial for:
+- **Planning data transfers** and storage allocation
+- **Optimizing memory usage** during data loading
+- **Selecting appropriate data subsets** for analysis
+- **Monitoring storage costs** in cloud environments
+
+The `storageoverview()` function provides detailed information about data usage of different components (amr, hydro, gravity, particles, clumps, etc.) and CPU files per component for a specific simulation output:
 
 
-    (:outputs, :miss, :path)
+```julia
+# Example: Analyze storage requirements
+println("=== Storage Analysis ===")
 
+# Get storage overview for the current simulation
+storage_info = storageoverview(info)
+
+println("Storage overview provides information about:")
+println("- Data size for each component (hydro, gravity, particles, etc.)")
+println("- Number of CPU files per component")
+println("- Total disk space usage")
+println("- Memory requirements for loading")
+println()
+println("Use this information to:")
+println("✓ Plan data transfers and storage allocation")
+println("✓ Optimize memory usage during analysis")
+println("✓ Select appropriate data subsets")
+println("✓ Monitor storage costs in cloud environments")
+```
+
+### Output Inventory and Management
+
+When working with time-series data or parameter studies, you often need to analyze multiple simulation outputs. The `checkoutputs()` function helps you:
+
+- **Inventory available outputs** - Find all valid simulation snapshots
+- **Identify missing data** - Detect incomplete or corrupted outputs  
+- **Plan time-series analysis** - Understand temporal sampling
+- **Validate data integrity** - Ensure consistent file structure
+
+This is especially important for large simulations where outputs might be distributed across different storage systems or some snapshots might be incomplete.
+
+#### Understanding Output Inventory Results
+
+The `checkoutputs()` function returns a structured object containing:
+
+- **`.outputs`** - Array of available (complete) simulation snapshots
+- **`.miss`** - Array of missing or incomplete output numbers
+- **Additional metadata** about the simulation directory structure
+
+This information helps you understand:
+- Which snapshots are available for analysis
+- Whether there are gaps in your time series
+- Data completeness percentage
+- Potential issues with specific outputs
+
+## Workflows and Best Practices
+
+### New User Workflows
+
+**Essential First Steps:**
+```julia
+# 1. Always start with simulation inspection
+info = getinfo(output_number, "path/to/simulation")
+scale = info.scale
+constants = info.constants
+
+# 2. Check data integrity and availability
+co = checkoutputs("path/to/simulation")
+storage_info = storageoverview(info)
+
+# 3. Validate your approach with small datasets first
+sim_time = gettime(info, :Myr)  # Check time conversion
+println("Simulation time: $sim_time Myr")
+```
+
+### Production Analysis Workflows
+
+**Efficient Large-Scale Analysis:**
+```julia
+# 1. Plan memory usage and selective loading
+storage_info = storageoverview(info)
+
+# 2. Load data with spatial/temporal selection
+gas = gethydro(info, [:rho, :vx, :vy, :vz], lmax=10)  # Limit resolution
+gas = gethydro(info, [:rho], xrange=[0.4, 0.6])       # Spatial selection
+
+# 3. Process multiple outputs efficiently  
+for output_num in [100, 200, 300]
+    info = getinfo(output_num, simulation_path)
+    # Process and cache results...
+    gas = nothing; GC.gc()  # Memory management
+end
+```
+
+### Integration with Julia Ecosystem
+
+Mera.jl integrates seamlessly with:
+- **Plots.jl / Makie.jl** - Advanced scientific visualization
+- **DataFrames.jl** - Structured data analysis and statistics
+- **HDF5.jl** - High-performance data export and archiving
+- **Distributed.jl** - Parallel processing for large datasets
+- **Jupyter / Pluto.jl** - Interactive analysis environments
+
+### Common Pitfalls and Solutions
+
+1. **Unit Confusion** - Always verify units with `info.scale` before calculations
+2. **Memory Issues** - Monitor RAM usage; use data selection for large datasets  
+3. **AMR Complexity** - Understand refinement levels before spatial analysis
+4. **Path Problems** - Use absolute paths for reproducible workflows
+5. **Version Compatibility** - Keep Mera.jl updated with your RAMSES version
+
+### Documentation and Export Compatibility
+
+This notebook is fully compatible with:
+- **Markdown export** for documentation generation
+- **Documenter.jl** integration for comprehensive documentation websites
+- **PDF/HTML conversion** via nbconvert or similar tools
+- **Version control** with proper heading hierarchy for navigation
+
+---
+
+## Next Steps
+
+**You're now ready for advanced Mera.jl analysis!** 
+
+Choose your next tutorial based on your research focus:
+- **Hydro data**: `01_hydro_First_Inspection.ipynb`
+- **Particle data**: `01_particles_First_Inspection.ipynb` 
+- **Gravity data**: `01_gravity_First_Inspection.ipynb`
+- **Clump analysis**: `01_clumps_First_Inspection.ipynb`
+
+Or explore the complete tutorial series for comprehensive mastery of RAMSES simulation analysis with Mera.jl.
+
+
+```julia
+co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/");
+```
+
+    Outputs - 0
+    
+
+
+#### Analyzing Output Inventory
+
+The `checkoutputs()` function returns a structured object that helps you understand your simulation data availability. Let's examine what it contains:
+
+
+```julia
+# Available (complete) outputs
+println("Available outputs: $(length(co.outputs)) snapshots")
+println("Output numbers: $(co.outputs)")
+
+# Analyze temporal coverage
+if length(co.outputs) > 1
+    println("Output range: $(minimum(co.outputs)) to $(maximum(co.outputs))")
+    output_gaps = diff(co.outputs)
+    if any(output_gaps .> 1)
+        println("Warning: Gaps detected in output sequence")
+    else
+        println("✓ Complete sequence (no gaps)")
+    end
+end
+```
+
+    Available outputs: 0 snapshots
+    Output numbers: Int64[]
 
 
 
 ```julia
-co.outputs
+# Complete analysis of output inventory
+println("=== Complete Output Analysis ===")
+
+# Missing or incomplete outputs
+println("Missing outputs: $(length(co.miss)) snapshots")
+if length(co.miss) > 0
+    println("Missing output numbers: $(co.miss)")
+    println("⚠️  These outputs may be incomplete, corrupted, or not yet computed")
+else
+    println("✓ No missing outputs detected")
+end
+
+# Summary statistics
+total_expected = length(co.outputs) + length(co.miss)
+completeness = length(co.outputs) / total_expected * 100
+println("\nData completeness: $(round(completeness, digits=1))%")
+
+# Final summary
+println("\n=== Output Inventory Summary ===")
+println("✓ Available outputs: $(length(co.outputs))")
+println("⚠️  Missing outputs: $(length(co.miss))")
+println("📊 Completeness: $(round(completeness, digits=1))%")
 ```
 
+    Missing outputs: 0 snapshots
+    ✓ No missing outputs detected
+    
+    Data completeness: NaN%
 
-
-
-    1-element Vector{Int64}:
-     300
-
-
-
-
-```julia
-co.miss
-```
-
-
-
-
-    1-element Vector{Int64}:
-     301
-
-
-
-
-```julia
-
-```

@@ -45,19 +45,9 @@ This occurs due to internal changes in the `CodecLz4` and `TranscodingStreams` p
 ### Required Packages
 
 ```julia
-using Pkg
-Pkg.add(["JLD2", "ProgressMeter", "CodecLz4", "TranscodingStreams"])
+using Mera
 ```
 
-
-### System Requirements
-
-| Component | Minimum | Recommended |
-| :-- | :-- | :-- |
-| **RAM** | 8GB | 32GB+ |
-| **Storage** | Any | NVMe SSD |
-| **CPU Cores** | 2 | 8+ |
-| **Julia Version** | 1.8+ | 1.10+ |
 
 ## Configuration Parameters
 
@@ -217,35 +207,6 @@ For each file:
 5. **Save Operation**: Write converted data to output file
 6. **Cleanup**: Explicit memory cleanup and garbage collection
 
-## Performance Characteristics
-
-### Threading Scalability
-
-| Thread Count | Expected Speedup | Efficiency | Memory Usage |
-| :-- | :-- | :-- | :-- |
-| 1 | 1.0× (baseline) | 100% | Low |
-| 2 | 1.8× | 90% | Medium |
-| 4 | 3.4× | 85% | Medium-High |
-| 8 | 6.2× | 78% | High |
-| 16 | 10.5× | 66% | Very High |
-| 32+ | 12-15× | 40-50% | Extreme |
-
-### Memory Usage Patterns
-
-- **Peak Usage**: Occurs during file loading phase
-- **Typical Range**: 2-200+ GB per concurrent file
-- **GC Effectiveness**: 80-90% memory recovery post-conversion
-- **Safety Margin Impact**: 10-15% performance overhead for monitoring
-
-
-### Storage Performance Impact
-
-| Storage Type | Optimal Threads | Bottleneck | Notes |
-| :-- | :-- | :-- | :-- |
-| **HDD** | 1-2 | I/O Bandwidth | Sequential access preferred |
-| **SATA SSD** | 4-8 | I/O Queue Depth | Good parallel performance |
-| **NVMe SSD** | 8-16 | Memory/CPU | Excellent parallel performance |
-| **Network Storage** | 2-8 | Network Latency | Varies by network configuration |
 
 ## Error Handling and Recovery
 

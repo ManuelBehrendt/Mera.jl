@@ -790,6 +790,11 @@ function bell()
 end
 
 
+
+function notifyme(msg::String)
+    return notifyme(msg=msg)
+end
+
 """
 ### Get an email notification, e.g., when your calculations are finished.
 
@@ -808,10 +813,6 @@ julia> notifyme("Calculation 1 finished!")
 ```
 
 """
-function notifyme(msg::String)
-    return notifyme(msg=msg)
-end
-
 function notifyme(;msg="done!")
     f = open(homedir() * "/email.txt")
         email = read(f, String)

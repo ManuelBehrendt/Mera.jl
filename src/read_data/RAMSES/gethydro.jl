@@ -123,6 +123,67 @@ function extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list,
 end
 
 
+function gethydro(dataobject::InfoType, var::Symbol;
+                    lmax::Real=dataobject.levelmax,
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
+                    check_negvalues::Bool=false,
+                    print_filenames::Bool=false,
+                    verbose::Bool=true,
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType(),
+                    max_threads::Int=Threads.nthreads())
+
+    return gethydro(dataobject, vars=[var],
+                    lmax=lmax,
+                    xrange=xrange, yrange=yrange, zrange=zrange, center=center,
+                    range_unit=range_unit,
+                    smallr=smallr,
+                    smallc=smallc,
+                    check_negvalues=check_negvalues,
+                    print_filenames=print_filenames,
+                    verbose=verbose,
+                    show_progress=show_progress,
+                    myargs=myargs,
+                    max_threads=max_threads)
+end
+
+function gethydro(dataobject::InfoType, vars::Array{Symbol,1};
+                    lmax::Real=dataobject.levelmax,
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    smallr::Real=0.,
+                    smallc::Real=0.,
+                    check_negvalues::Bool=false,
+                    print_filenames::Bool=false,
+                    verbose::Bool=true,
+                    show_progress::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType(),
+                    max_threads::Int=Threads.nthreads())
+
+    return gethydro(dataobject,
+                    vars=vars,
+                    lmax=lmax,
+                    xrange=xrange, yrange=yrange, zrange=zrange, center=center,
+                    range_unit=range_unit,
+                    smallr=smallr,
+                    smallc=smallc,
+                    check_negvalues=check_negvalues,
+                    print_filenames=print_filenames,
+                    verbose=verbose,
+                    show_progress=show_progress,
+                    myargs=myargs,
+                    max_threads=max_threads)
+end
+
 """
 #### Read the leaf-cells of the hydro-data:
 - select variables
@@ -239,67 +300,6 @@ julia> gas = gethydro( info, :rho ) # no array for a single variable needed
 ```
 
 """
-function gethydro(dataobject::InfoType, var::Symbol;
-                    lmax::Real=dataobject.levelmax,
-                    xrange::Array{<:Any,1}=[missing, missing],
-                    yrange::Array{<:Any,1}=[missing, missing],
-                    zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
-                    range_unit::Symbol=:standard,
-                    smallr::Real=0.,
-                    smallc::Real=0.,
-                    check_negvalues::Bool=false,
-                    print_filenames::Bool=false,
-                    verbose::Bool=true,
-                    show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType(),
-                    max_threads::Int=Threads.nthreads())
-
-    return gethydro(dataobject, vars=[var],
-                    lmax=lmax,
-                    xrange=xrange, yrange=yrange, zrange=zrange, center=center,
-                    range_unit=range_unit,
-                    smallr=smallr,
-                    smallc=smallc,
-                    check_negvalues=check_negvalues,
-                    print_filenames=print_filenames,
-                    verbose=verbose,
-                    show_progress=show_progress,
-                    myargs=myargs,
-                    max_threads=max_threads)
-end
-
-function gethydro(dataobject::InfoType, vars::Array{Symbol,1};
-                    lmax::Real=dataobject.levelmax,
-                    xrange::Array{<:Any,1}=[missing, missing],
-                    yrange::Array{<:Any,1}=[missing, missing],
-                    zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
-                    range_unit::Symbol=:standard,
-                    smallr::Real=0.,
-                    smallc::Real=0.,
-                    check_negvalues::Bool=false,
-                    print_filenames::Bool=false,
-                    verbose::Bool=true,
-                    show_progress::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType(),
-                    max_threads::Int=Threads.nthreads())
-
-    return gethydro(dataobject,
-                    vars=vars,
-                    lmax=lmax,
-                    xrange=xrange, yrange=yrange, zrange=zrange, center=center,
-                    range_unit=range_unit,
-                    smallr=smallr,
-                    smallc=smallc,
-                    check_negvalues=check_negvalues,
-                    print_filenames=print_filenames,
-                    verbose=verbose,
-                    show_progress=show_progress,
-                    myargs=myargs,
-                    max_threads=max_threads)
-end
-
 function gethydro(dataobject::InfoType;
                     lmax::Real=dataobject.levelmax,
                     vars::Array{Symbol,1}=[:all],

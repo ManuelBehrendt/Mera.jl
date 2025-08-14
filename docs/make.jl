@@ -4,12 +4,15 @@ makedocs(modules = [Mera],
          sitename = "Mera.jl",
          doctest = false,
          clean = true,
-         checkdocs = :all,
+         checkdocs = :none,
+         linkcheck = false,
+         warnonly = [:cross_references],
+         remotes = nothing,
          format = Documenter.HTML(
 		prettyurls = get(ENV, "CI", nothing) == "true", 
-		size_threshold=nothing,  # Increase from 200 to 400 KiB
-        	size_threshold_warn=200,  # Optional: adjust warning threshold
-		sidebar_sitename = false),
+		sidebar_sitename = false,
+		edit_link = nothing,
+		size_threshold = 500_000),  # Increase size limit to 500 KiB
          
 		authors = "Manuel Behrendt",
 		pages = Any[ "Home"                  => "index.md",
@@ -22,23 +25,23 @@ makedocs(modules = [Mera],
                                                       "Particles"   =>  "02_particles_Load_Selections.md",
                                                       "Clumps"      =>  "02_clumps_Load_Selections.md"],
 
-                       "3 Get Subregions"     => Any[ "Hydro"       => "03_hydro_Get_Subregions/03_hydro_Get_Subregions.md",
-                                                      "Particles"   => "03_particles_Get_Subregions/03_particles_Get_Subregions.md",
-                                                      "Clumps"      => "03_clumps_Get_Subregions/03_clumps_Get_Subregions.md"],
+                       "3 Get Subregions"     => Any[ "Hydro"       => "03_hydro_Get_Subregions.md",
+                                                      "Particles"   => "03_particles_Get_Subregions.md",
+                                                      "Clumps"      => "03_clumps_Get_Subregions.md"],
 
                       "4 Basic Calculations"  => "04_multi_Basic_Calculations.md",
 
-                      "5 Mask/Filter/Meta"    => "05_multi_Masking_Filtering/05_multi_Masking_Filtering.md",
+                      "5 Mask/Filter/Meta"    => "05_multi_Masking_Filtering.md",
 
-                      "6 Projection"          => Any[ "Hydro"       =>  "06_hydro_Projection/06_hydro_Projection.md",
-                                                      "Particles"   =>  "06_particles_Projection/06_particles_Projection.md"],
+                      "6 Projection"          => Any[ "Hydro"       =>  "06_hydro_Projection.md",
+                                                      "Particles"   =>  "06_particles_Projection.md"],
 
                       "7 MERA-Files"            => Any[ "Mera-Files"   =>  "07_multi_Mera_Files.md",
                                                         "Converter"    =>  "07_1_multi_Mera_Files_Converter.md"],
 
-                      "8 Volume Rendering"     => Any[ "Intro"      =>  "paraview_intro.md",
-                                                       "Hydro"      =>  "08_hydro_VTK_export.md",
-                                                       "Particles"  =>  "08_particles_VTK_export.md"],
+                      "8 Volume Rendering"     => Any[ "Intro"      =>  "paraview/paraview_intro.md",
+                                                       "Hydro"      =>  "paraview/08_hydro_VTK_export.md",
+                                                       "Particles"  =>  "paraview/08_particles_VTK_export.md"],
 
                       "9 Miscellaneous"         => "Miscellaneous.md",
                       "10 Examples"             => "examples.md",

@@ -1,3 +1,17 @@
+
+function viewdata(output::Int, path::String;
+                    fname = "output_",
+                    showfull::Bool=false,
+                    verbose::Bool=true)
+
+        return viewdata(output, path=path,
+                            fname=fname,
+                            showfull=showfull,
+                            verbose=verbose)
+
+end
+
+
 """
 #### Get overview of stored datatypes:
 - compression
@@ -27,20 +41,6 @@ return overview (dictionary)
 - **`showfull`:** shows the full data tree of the datafile
 - **`verbose:`:** informations are printed on the screen by default
 """
-function viewdata(output::Int, path::String;
-                    fname = "output_",
-                    showfull::Bool=false,
-                    verbose::Bool=true)
-
-        return viewdata(output, path=path,
-                            fname=fname,
-                            showfull=showfull,
-                            verbose=verbose)
-
-end
-
-# todo : simulation code
-# check known types
 function viewdata(output::Int;
                     path::String="./",
                     fname = "output_",

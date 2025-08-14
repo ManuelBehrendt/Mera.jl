@@ -1,3 +1,15 @@
+function getinfo(output::Real; path::String="", namelist::String="", verbose::Bool=true)
+    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
+end
+
+function getinfo(output::Real, path::String; namelist::String="", verbose::Bool=true)
+    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
+end
+
+function getinfo(path::String; output::Real=1, namelist::String="", verbose::Bool=true)
+    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
+end
+
 """
 #### Get the simulation overview from RAMSES info, descriptor and output header files
 ```julia
@@ -43,18 +55,6 @@ julia> patchfile(info)
 ```
 
 """
-function getinfo(output::Real; path::String="", namelist::String="", verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
-end
-
-function getinfo(output::Real, path::String; namelist::String="", verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
-end
-
-function getinfo(path::String; output::Real=1, namelist::String="", verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
-end
-
 function getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=true)
 
 

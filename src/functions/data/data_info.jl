@@ -1,3 +1,37 @@
+
+function infodata(output::Int, datatype::Symbol;
+                    path::String="./",
+                    fname = "output_",
+                    verbose::Bool=true)
+
+        return infodata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            verbose=verbose)
+end
+
+function infodata(output::Int, path::String, datatype::Symbol;
+                    fname = "output_",
+                    verbose::Bool=true)
+
+        return infodata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            verbose=verbose)
+end
+
+function infodata(output::Int, path::String;
+                    fname = "output_",
+                    datatype::Any=:nothing,
+                    verbose::Bool=true)
+
+        return infodata(output, path=path,
+                            fname=fname,
+                            datatype=datatype,
+                            verbose=verbose)
+end
+
+
 """
 #### Get the simulation overview from RAMSES, saved in JLD2 == function getinfo
 
@@ -49,38 +83,6 @@ julia> patchfile(info)
 ```
 
 """
-function infodata(output::Int, datatype::Symbol;
-                    path::String="./",
-                    fname = "output_",
-                    verbose::Bool=true)
-
-        return infodata(output, path=path,
-                            fname=fname,
-                            datatype=datatype,
-                            verbose=verbose)
-end
-
-function infodata(output::Int, path::String, datatype::Symbol;
-                    fname = "output_",
-                    verbose::Bool=true)
-
-        return infodata(output, path=path,
-                            fname=fname,
-                            datatype=datatype,
-                            verbose=verbose)
-end
-
-function infodata(output::Int, path::String;
-                    fname = "output_",
-                    datatype::Any=:nothing,
-                    verbose::Bool=true)
-
-        return infodata(output, path=path,
-                            fname=fname,
-                            datatype=datatype,
-                            verbose=verbose)
-end
-
 function infodata(output::Int;
                     path::String="./",
                     fname = "output_",

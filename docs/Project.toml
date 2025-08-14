@@ -1,6 +1,6 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Mera = "02f895e8-fdb1-4346-8fe6-c721699f5126"
 
 [compat]
 Documenter = "1.13"
-# Julia = "1.11"  # Temporarily commented to bypass validation error
