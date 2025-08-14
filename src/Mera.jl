@@ -83,11 +83,8 @@ export
     getinfo,
     createpath,
     gethydro,
-    gethydro_deprecated,
     getgravity,
-    getgravity_deprecated,
     getparticles,
-    getparticles_deprecated,
     getclumps,
 
 # mera files
