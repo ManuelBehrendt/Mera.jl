@@ -141,6 +141,7 @@ export
     viewmodule,
     construct_datatype,
     createscales,
+    createconstants,
     humanize,
     bell,
     notifyme,
