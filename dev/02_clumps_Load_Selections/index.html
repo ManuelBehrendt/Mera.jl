@@ -1,12 +1,66 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Clumps · Mera.jl</title><meta name="title" content="Clumps · Mera.jl"/><meta property="og:title" content="Clumps · Mera.jl"/><meta property="twitter:title" content="Clumps · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li class="is-active"><a class="tocitem" href>Clumps</a><ul class="internal"><li><a class="tocitem" href="#Simulation-Overview"><span>Simulation Overview</span></a></li><li><a class="tocitem" href="#Select-Variables"><span>Select Variables</span></a></li><li><a class="tocitem" href="#Select-Spatial-Ranges"><span>Select Spatial Ranges</span></a></li></ul></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview_intro/">Intro</a></li><li><a class="tocitem" href="../08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><span class="tocitem">12 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">13 Reference Guide</span><ul><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera</a></li></ul></li><li><a class="tocitem" href="../api/">14 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2 Load by Selection</a></li><li class="is-active"><a href>Clumps</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Clumps</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl/blob/master/docs/src/02_clumps_Load_Selections.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="2.-Clumps:-Load-Selected-Variables-and-Data-Ranges"><a class="docs-heading-anchor" href="#2.-Clumps:-Load-Selected-Variables-and-Data-Ranges">2. Clumps: Load Selected Variables and Data Ranges</a><a id="2.-Clumps:-Load-Selected-Variables-and-Data-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Clumps:-Load-Selected-Variables-and-Data-Ranges" title="Permalink"></a></h1><h2 id="Simulation-Overview"><a class="docs-heading-anchor" href="#Simulation-Overview">Simulation Overview</a><a id="Simulation-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
-info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-06-30T00:02:26.184
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Clumps · Mera.jl</title><meta name="title" content="Clumps · Mera.jl"/><meta property="og:title" content="Clumps · Mera.jl"/><meta property="twitter:title" content="Clumps · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li class="is-active"><a class="tocitem" href>Clumps</a><ul class="internal"><li><a class="tocitem" href="#Learning-Objectives"><span>Learning Objectives</span></a></li><li><a class="tocitem" href="#Quick-Reference:-Clump-Data-Selection-Functions"><span>Quick Reference: Clump Data Selection Functions</span></a></li><li><a class="tocitem" href="#Getting-Started:-Simulation-Setup"><span>Getting Started: Simulation Setup</span></a></li><li><a class="tocitem" href="#Variable-Selection-Techniques"><span>Variable Selection Techniques</span></a></li><li><a class="tocitem" href="#Spatial-Range-Selection-Techniques"><span>Spatial Range Selection Techniques</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><a class="tocitem" href="../performance_monitoring/">12 Performance Monitoring</a></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Reference Guide</span><ul><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera</a></li><li><a class="tocitem" href="../quickreference/Performance_Quick_Reference/">Performance</a></li></ul></li><li><a class="tocitem" href="../api/">15 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2 Load by Selection</a></li><li class="is-active"><a href>Clumps</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Clumps</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Clump-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Clump-Data:-Load-Selected-Variables-and-Spatial-Ranges">Clump Data: Load Selected Variables and Spatial Ranges</a><a id="Clump-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Clump-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective clump data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the clump data you need from large clump-finding simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective clump property loading for memory optimization</li><li>Apply spatial filtering and region selection techniques for clump analysis</li><li>Work with different coordinate systems and units for clump distributions</li><li>Understand center-relative coordinate systems for clump populations</li><li>Optimize clump data loading for large simulations</li></ul><h2 id="Quick-Reference:-Clump-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Clump-Data-Selection-Functions">Quick Reference: Clump Data Selection Functions</a><a id="Quick-Reference:-Clump-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Clump-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective clump data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
+clumps = getclumps(info)
+
+# Select specific variables by name
+clumps = getclumps(info, vars=[:index, :lev, :parent, :ncell])  # Core properties
+clumps = getclumps(info, vars=[:peak_x, :peak_y, :peak_z])      # Position data
+clumps = getclumps(info, vars=[:mass_cl, :rho_av, :relevance])  # Physical properties
+
+# Select variables without keyword (order matters: info, variables)
+clumps = getclumps(info, [:index, :lev, :parent])              # Multiple variables
+clumps = getclumps(info, :mass_cl)                             # Single variable
+
+# Common clump variable categories
+# Structural: :index, :lev, :parent, :ncell
+# Position: :peak_x, :peak_y, :peak_z  
+# Physical: :mass_cl, :rho_av, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;)
+# Kinematics: :vx, :vy, :vz
+# Analysis: :relevance</code></pre><h3 id="Spatial-Range-Selection"><a class="docs-heading-anchor" href="#Spatial-Range-Selection">Spatial Range Selection</a><a id="Spatial-Range-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># RAMSES standard notation (domain: [0:1]³)
+clumps = getclumps(info, xrange=[0.2, 0.8],         # X-range filter
+                         yrange=[0.2, 0.8],         # Y-range filter  
+                         zrange=[0.4, 0.6])         # Z-range filter
+
+# Center-relative coordinates (RAMSES units)
+clumps = getclumps(info, xrange=[-0.3, 0.3],        # Relative to center
+                         yrange=[-0.3, 0.3],
+                         zrange=[-0.1, 0.1],
+                         center=[0.5, 0.5, 0.5])
+
+# Physical units (e.g., kpc)
+clumps = getclumps(info, xrange=[2., 22.],           # Physical coordinates
+                         yrange=[2., 22.],
+                         zrange=[22., 26.],
+                         range_unit=:kpc)
+
+# Center-relative with physical units
+clumps = getclumps(info, xrange=[-16., 16.],         # Relative to center in kpc
+                         yrange=[-16., 16.],
+                         zrange=[-2., 2.],
+                         center=[24., 24., 24.],
+                         range_unit=:kpc)
+
+# Box center shortcuts
+clumps = getclumps(info, center=[:boxcenter])       # All dimensions centered
+clumps = getclumps(info, center=[:bc])              # Short form
+clumps = getclumps(info, center=[:bc, 24., :bc])    # Mixed: center x,z; fixed y</code></pre><h3 id="Performance-Optimization"><a class="docs-heading-anchor" href="#Performance-Optimization">Performance Optimization</a><a id="Performance-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Optimization" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Combined optimizations
+clumps = getclumps(info, [:index, :mass_cl, :peak_x, :peak_y, :peak_z], # Select variables
+                         xrange=[-10., 10.],         # Spatial range
+                         yrange=[-10., 10.],
+                         zrange=[-2., 2.],
+                         center=[:bc],               # Box center
+                         range_unit=:kpc)            # Physical units</code></pre><h3 id="Available-Physical-Units"><a class="docs-heading-anchor" href="#Available-Physical-Units">Available Physical Units</a><a id="Available-Physical-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Available-Physical-Units" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Check available units in simulation
+viewfields(info.scale)
+
+# Common length units
+:m, :km, :cm, :mm, :μm, :Mpc, :kpc, :pc, :ly, :au, :Rsun</code></pre><h2 id="Getting-Started:-Simulation-Setup"><a class="docs-heading-anchor" href="#Getting-Started:-Simulation-Setup">Getting Started: Simulation Setup</a><a id="Getting-Started:-Simulation-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Started:-Simulation-Setup" title="Permalink"></a></h2><p>Before exploring clump data selection techniques, let&#39;s load our simulation and examine its properties. This establishes the foundation for all subsequent clump data loading operations.</p><pre><code class="language-julia hljs">using Mera
+info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-12T12:05:45.736
 
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
-=======================================================
+=======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
@@ -39,7 +93,7 @@ timer-file:       false
 compilation-file: true
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Select-Variables"><a class="docs-heading-anchor" href="#Select-Variables">Select Variables</a><a id="Select-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Select-Variables" title="Permalink"></a></h2><p><strong>MERA</strong> reads the first line of a clump file to identify the number of columns and their names. </p><h3 id="Read-all-variables-(default)"><a class="docs-heading-anchor" href="#Read-all-variables-(default)">Read all variables (default)</a><a id="Read-all-variables-(default)-1"></a><a class="docs-heading-anchor-permalink" href="#Read-all-variables-(default)" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps = getclumps(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:29.060
+=======================================================</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load clump properties is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to clump variable selection, from loading everything to precise property targeting.</p><h3 id="Understanding-Clump-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Clump-Variable-References">Understanding Clump Variable References</a><a id="Understanding-Clump-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Clump-Variable-References" title="Permalink"></a></h3><p>Mera automatically reads clump file headers to identify available properties. Understanding these variables enables precise control over clump data loading.</p><p><strong>Core Clump Properties:</strong></p><table><tr><th style="text-align: right">Category</th><th style="text-align: right">Variables</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right"><strong>Structural</strong></td><td style="text-align: right"><code>:index</code>, <code>:lev</code>, <code>:parent</code>, <code>:ncell</code></td><td style="text-align: right">Hierarchy and grid information</td></tr><tr><td style="text-align: right"><strong>Position</strong></td><td style="text-align: right"><code>:peak_x</code>, <code>:peak_y</code>, <code>:peak_z</code></td><td style="text-align: right">Clump peak coordinates</td></tr><tr><td style="text-align: right"><strong>Density</strong></td><td style="text-align: right"><code>:rho_av</code>, <code>Symbol(&quot;rho-&quot;)</code>, <code>Symbol(&quot;rho+&quot;)</code></td><td style="text-align: right">Average and extreme densities</td></tr><tr><td style="text-align: right"><strong>Physical</strong></td><td style="text-align: right"><code>:mass_cl</code>, <code>:relevance</code></td><td style="text-align: right">Mass and significance measures</td></tr><tr><td style="text-align: right"><strong>Kinematics</strong></td><td style="text-align: right"><code>:vx</code>, <code>:vy</code>, <code>:vz</code></td><td style="text-align: right">Velocity components</td></tr></table><p><strong>Key Features:</strong></p><ul><li>Variable order must match clump file headers</li><li>Automatic header parsing and column identification</li><li>Extensible beyond default header length</li><li>Consistent naming across all Mera clump functions</li><li>Future support for descriptor file variable names</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available clump properties. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">clumps = getclumps(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:49.475
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -51,7 +105,7 @@ Read 12 colums:
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">clumps.data</code></pre><pre><code class="nohighlight hljs">Table with 644 rows, 12 columns:
 Columns:
-#   colname    type
+#   colname    type
 ──────────────────────
 1   index      Float64
 2   lev        Float64
@@ -64,7 +118,7 @@ Columns:
 9   rho+       Float64
 10  rho_av     Float64
 11  mass_cl    Float64
-12  relevance  Float64</code></pre><p>The colum names should not be changed, since they are assumed in some functions. The usage of individual descriptor variables will be implemented in the future.</p><h3 id="Select-several-variables-w/o-a-keyword"><a class="docs-heading-anchor" href="#Select-several-variables-w/o-a-keyword">Select several variables w/o a keyword</a><a id="Select-several-variables-w/o-a-keyword-1"></a><a class="docs-heading-anchor-permalink" href="#Select-several-variables-w/o-a-keyword" title="Permalink"></a></h3><p>Currently, the length of the loaded variable list can be modified. E.g. the list can be extended with more names if there are more columns in the data than given by the header in the files. </p><p>Load less than the found 12 columns from the header of the clump files; Pass an array with the variables to the keyword argument <code>vars</code>. The order of the variables has to be consistent with the header in the clump files:}</p><pre><code class="language-julia hljs">clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:31.597
+12  relevance  Float64</code></pre><p><strong>Important Note:</strong> Column names should be preserved as they are used by internal functions. Future updates will support descriptor file variable names for enhanced flexibility.</p><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific clump properties. You can use keyword arguments or positional arguments with flexible syntax.</p><p><strong>Subset Selection:</strong> Load fewer than the default columns found in clump file headers. The order must be consistent with the header structure:</p><pre><code class="language-julia hljs">clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:53.071
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -74,7 +128,7 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 Read 7 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]
 Memory used for data table :35.9912109375 KB
--------------------------------------------------------</code></pre><p>Pass an array that contains the variables without the keyword argument <code>vars</code>. The following order has to be preserved: InfoType-object, variables</p><pre><code class="language-julia hljs">clumps = getclumps(info, [ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:32.218
+-------------------------------------------------------</code></pre><p><strong>Alternative:</strong> Use positional arguments without the keyword. The following order must be preserved: InfoType object, then variables:</p><pre><code class="language-julia hljs">clumps = getclumps(info, [ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:53.580
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -110,7 +164,7 @@ index   lev  parent  ncell   peak_x   peak_y   peak_z
 2132.0  0.0  2132.0  615.0   28.626   12.8188  23.8755
 2137.0  0.0  2137.0  318.0   29.9736  15.0571  23.7202
 2140.0  0.0  2140.0  1719.0  27.1436  15.6401  23.9048
-2147.0  0.0  2147.0  1535.0  25.1953  9.93604  23.9897</code></pre><p>Load more than the found 12 columns from the header of the clump files. The order of the variables has to be consistent with the header in the clump files:</p><pre><code class="language-julia hljs">clumps = getclumps(info, vars=[  :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance, :vx, :vy, :vz]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:32.938
+2147.0  0.0  2147.0  1535.0  25.1953  9.93604  23.9897</code></pre><p><strong>Extended Selection:</strong> Load more than the default columns from clump file headers. The order must still be consistent with the header structure:</p><pre><code class="language-julia hljs">clumps = getclumps(info, vars=[  :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance, :vx, :vy, :vz]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:54.161
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -122,7 +176,7 @@ Read 15 colums:
 Memory used for data table :76.9365234375 KB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs">clumps.data</code></pre><pre><code class="nohighlight hljs">Table with 644 rows, 15 columns:
 Columns:
-#   colname    type
+#   colname    type
 ──────────────────────
 1   index      Float64
 2   lev        Float64
@@ -138,10 +192,10 @@ Columns:
 12  relevance  Float64
 13  vx         Float64
 14  vy         Float64
-15  vz         Float64</code></pre><h2 id="Select-Spatial-Ranges"><a class="docs-heading-anchor" href="#Select-Spatial-Ranges">Select Spatial Ranges</a><a id="Select-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Select-Spatial-Ranges" title="Permalink"></a></h2><h3 id="Use-RAMSES-Standard-Notation"><a class="docs-heading-anchor" href="#Use-RAMSES-Standard-Notation">Use RAMSES Standard Notation</a><a id="Use-RAMSES-Standard-Notation-1"></a><a class="docs-heading-anchor-permalink" href="#Use-RAMSES-Standard-Notation" title="Permalink"></a></h3><p>Ranges correspond to the domain <code>[0:1]^3</code> and are related to the box corner at <code>[0., 0., 0.]</code> by default.</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
+15  vz         Float64</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing clump analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different clump analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³ </li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise clump region selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales for clump analysis.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and clump hierarchy analysis</li></ul><p><strong>Clump Analysis Applications:</strong> This notation is particularly useful for comparing clump distributions with grid-based data and analyzing hierarchical structure relationships.</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
                     xrange=[0.2,0.8], 
                     yrange=[0.2,0.8], 
-                    zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:34.009
+                    zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:54.986
 
 domain:
 xmin::xmax: 0.2 :: 0.8  	==&gt; 9.6 [kpc] :: 38.4 [kpc]
@@ -151,17 +205,17 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
--------------------------------------------------------</code></pre><p>The loaded data ranges are assigned to the field <code>ranges</code> in an array in  <strong>RAMSES</strong> standard notation (domain: <code>[0:1]^3</code>):</p><pre><code class="language-julia hljs">clumps.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
+-------------------------------------------------------</code></pre><p><strong>Range Verification:</strong> The loaded clump data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">clumps.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
  0.2
  0.8
  0.2
  0.8
  0.4
- 0.6</code></pre><h3 id="Ranges-relative-to-a-given-center:"><a class="docs-heading-anchor" href="#Ranges-relative-to-a-given-center:">Ranges relative to a given center:</a><a id="Ranges-relative-to-a-given-center:-1"></a><a class="docs-heading-anchor-permalink" href="#Ranges-relative-to-a-given-center:" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps = getclumps(info, 
+ 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing clump distributions around specific massive objects, galaxies, or regions of interest:</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
                     xrange=[-0.3, 0.3], 
                     yrange=[-0.3, 0.3], 
                     zrange=[-0.1, 0.1], 
-                    center=[0.5, 0.5, 0.5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:35.986
+                    center=[0.5, 0.5, 0.5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:56.319
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -173,11 +227,11 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
--------------------------------------------------------</code></pre><h3 id="Use-notation-in-physical-units"><a class="docs-heading-anchor" href="#Use-notation-in-physical-units">Use notation in physical units</a><a id="Use-notation-in-physical-units-1"></a><a class="docs-heading-anchor-permalink" href="#Use-notation-in-physical-units" title="Permalink"></a></h3><p>In the following example the ranges are given in units &quot;kpc&quot;, relative to the box corner <code>[0., 0., 0.]</code> (default):</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
+-------------------------------------------------------</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical clump analysis. This system automatically handles unit conversions and maintains physical meaning for clump phenomena.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for clump analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection for clump analysis:</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
                     xrange=[2.,22.], 
                     yrange=[2.,22.], 
                     zrange=[22.,26.], 
-                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:36.467
+                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:56.745
 
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==&gt; 2.0 [kpc] :: 22.0 [kpc]
@@ -187,8 +241,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :12.64453125 KB
--------------------------------------------------------</code></pre><p>The possible physical length units for the keyword <code>range_unit</code> are defined in the field <code>scale</code> : </p><pre><code class="language-julia hljs">viewfields(info.scale) # or e.g.: clumps.info.scale</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to scale from user/code units to selected units
-=======================================================================
+-------------------------------------------------------</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale) # or e.g.: clumps.info.scale</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to scale from user/code units to selected units
+=======================================================================
 Mpc	= 0.0010000000000006482
 kpc	= 1.0000000000006481
 pc	= 1000.0000000006482
@@ -233,19 +287,100 @@ cm_s	= 6.557528732282063e6
 nH	= 30.987773856809987
 erg	= 8.551000140274429e55
 g_cms2	= 2.9104844143584656e-9
-T_mu	= 517028.3199143136
-K_mu	= 517028.3199143136
-T	= 680300.4209398864
-K	= 680300.4209398864
+T_mu	= 517017.45993377
+K_mu	= 517017.45993377
+T	= 680286.1314918026
+K	= 680286.1314918026
 Ba	= 2.910484414358466e-9
 g_cm_s2	= 2.910484414358466e-9
-p_kB	= 2.1080995598777838e7
-K_cm3	= 2.1080995598777838e7</code></pre><h3 id="Ranges-relative-to-a-given-center-e.g.-in-units-&quot;kpc&quot;:"><a class="docs-heading-anchor" href="#Ranges-relative-to-a-given-center-e.g.-in-units-&quot;kpc&quot;:">Ranges relative to a given center e.g. in units &quot;kpc&quot;:</a><a id="Ranges-relative-to-a-given-center-e.g.-in-units-&quot;kpc&quot;:-1"></a><a class="docs-heading-anchor-permalink" href="#Ranges-relative-to-a-given-center-e.g.-in-units-&quot;kpc&quot;:" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps = getclumps(info, 
+p_kB	= 2.1080552800592083e7
+K_cm3	= 2.1080552800592083e7
+erg_g_K	= 3.114563011649217e29
+keV_cm2	= 1.252773885965637e65
+erg_K	= 6.193464189866091e71
+J_K	= 6.193464189866091e64
+erg_cm3_K	= 2.1080552800592083e7
+J_m3_K	= 2.1080552800592083e8
+kB_per_particle	= 1.380649e-16
+J_s	= 4.023715412864333e70
+g_cm2_s	= 4.023715412864333e70
+kg_m2_s	= 4.023715412864333e71
+Gauss	= 0.00019124389093025845
+muG	= 191.24389093025846
+microG	= 191.24389093025846
+Tesla	= 1.9124389093025845e-8
+eV	= 5.3371144971238105e67
+keV	= 5.33711449712381e64
+MeV	= 5.33711449712381e61
+erg_s	= 1.8172160775884043e41
+Lsol	= 4.747168436751317e7
+Lsun	= 4.747168436751317e7
+cm_3	= 3.4036771916893676e-65
+pc_3	= 1.158501842524895e-120
+n_e	= 30.987773856809987
+erg_g_s	= 0.09138397843151959
+erg_cm3_s	= 6.185216915658869e-24
+erg_cm2_s	= 6.185216915658869e-24
+Jy	= 0.6185216915658869
+mJy	= 618.5216915658868
+microJy	= 618521.6915658868
+atoms_cm2	= 1.2581352511025663e23
+NH_cm2	= 1.2581352511025663e23
+cm_s2	= 1.3935734353956443e-8
+m_s2	= 1.3935734353956443e-10
+km_s2	= 1.3935734353956443e-13
+pc_Myr2	= 3.09843657823729e-9
+erg_g	= 4.30011830747048e13
+J_kg	= 4.30011830747048e6
+km2_s2	= 4300.1183074704795
+u_grav	= 2.910484414358466e-9
+erg_cell	= 8.55100014027443e55
+dyne	= 9.432237612943517e-31
+s_2	= 4.516263928056473e-30
+lambda_J	= 3.085677581282e21
+M_J	= 1.9885499720830952e42
+t_ff	= 4.70554946422349e14
+alpha_vir	= 1.0
+delta_rho	= 2.2016149994e-314
+a_mag	= 2.2016150073e-314
+v_esc	= 2.201615015e-314
+ax	= 2.201615023e-314
+ay	= 2.201615031e-314
+az	= 2.201615039e-314
+epot	= 2.201615047e-314
+a_magnitude	= 2.201615055e-314
+escape_speed	= 2.2016150627e-314
+gravitational_redshift	= 2.2016150706e-314
+gravitational_energy_density	= 2.910484414358466e-9
+gravitational_binding_energy	= 2.910484414358466e-9
+total_binding_energy	= 8.55100014027443e55
+specific_gravitational_energy	= 4.30011830747048e13
+gravitational_work	= 8.551000140274429e55
+jeans_length_gravity	= 3.085677581282e21
+jeans_mass_gravity	= 1.9885499720830952e42
+jeansmass	= 1.9885499720830952e42
+freefall_time_gravity	= 4.70554946422349e14
+ekin	= 8.551000140274429e55
+etherm	= 8.551000140274429e55
+virial_parameter_local	= 1.0
+Fg	= 9.432237612943517e-31
+poisson_source	= 4.516263928056473e-30
+ar_cylinder	= 1.3935734353956443e-8
+aϕ_cylinder	= 1.3935734353956443e-8
+ar_sphere	= 1.3935734353956443e-8
+aθ_sphere	= 1.3935734353956443e-8
+aϕ_sphere	= 1.3935734353956443e-8
+r_cylinder	= 3.085677581282e21
+r_sphere	= 3.085677581282e21
+ϕ	= 1.0
+dimensionless	= 1.0
+rad	= 1.0
+deg	= 57.29577951308232</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise clump analysis:</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
                     xrange=[-16.,16.], 
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[24.,24.,24.], 
-                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:36.917
+                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:57.151
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -257,12 +392,12 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
--------------------------------------------------------</code></pre><p>Use the short notation for the box center :bc or :boxcenter for all dimensions (x,y,z):</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
+-------------------------------------------------------</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying clump analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions  </li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric clump analysis around simulation center</li></ul><p><strong>Clump Analysis Benefits:</strong></p><ul><li>Perfect for studying clump distributions around massive central objects</li><li>Eliminates manual center calculation for clump analysis</li><li>Ensures precise geometric centering of clump selections</li><li>Simplifies symmetric region definitions for hierarchical studies</li><li>Reduces coordinate specification errors in clump filtering</li></ul><pre><code class="language-julia hljs">clumps = getclumps(info, 
                     xrange=[-16.,16.], 
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[:boxcenter], 
-                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:37.349
+                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:57.572
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -279,7 +414,7 @@ Memory used for data table :61.58203125 KB
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[:bc], 
-                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:37.926
+                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:58.051
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -291,12 +426,12 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
--------------------------------------------------------</code></pre><p>Use the box center notation for individual dimensions, here x,z:</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
+-------------------------------------------------------</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:</p><pre><code class="language-julia hljs">clumps = getclumps(info, 
                     xrange=[-16.,16.], 
                     yrange=[-16.,16.], 
                     zrange=[-2.,2.], 
                     center=[:bc, 24., :bc], 
-                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-06-30T00:02:38.364
+                    range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2025-08-12T12:05:58.459
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -308,4 +443,4 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
 Read 12 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_particles_Load_Selections/">« Particles</a><a class="docs-footer-nextpage" href="../03_hydro_Get_Subregions/03_hydro_Get_Subregions/">Hydro »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Tuesday 29 July 2025 20:59">Tuesday 29 July 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+-------------------------------------------------------</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive clump data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies for clump analysis. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Property Access:</strong> Loading structural, positional, physical, and kinematic clump properties</li><li><strong>Header-Based Loading:</strong> Automatic parsing of clump file headers for available variables</li><li><strong>Selective Loading:</strong> Optimizing memory usage by loading only required clump properties</li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Extensible Selection:</strong> Supporting both subset and extended variable loading</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Clump Focus:</strong> Targeting regions with significant clump populations and hierarchical structures</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources for clump studies</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales for clump phenomena</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems for clump distributions</li></ul><h3 id="Advanced-Clump-Techniques"><a class="docs-heading-anchor" href="#Advanced-Clump-Techniques">Advanced Clump Techniques</a><a id="Advanced-Clump-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Clump-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering for clump analysis</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified clump positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded clump data ranges and property consistency</li><li><strong>Multi-Physics Integration:</strong> Preparing clump data for combined hydrodynamic-structure analysis</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_particles_Load_Selections/">« Particles</a><a class="docs-footer-nextpage" href="../03_hydro_Get_Subregions/">Hydro »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 14 August 2025 11:46">Thursday 14 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

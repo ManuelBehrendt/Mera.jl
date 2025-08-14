@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Gravity Data: First Inspection · Mera.jl</title><meta name="title" content="Gravity Data: First Inspection · Mera.jl"/><meta property="og:title" content="Gravity Data: First Inspection · Mera.jl"/><meta property="twitter:title" content="Gravity Data: First Inspection · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><a class="tocitem" href="../performance_monitoring/">12 Performance Monitoring</a></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Reference Guide</span><ul><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera</a></li><li><a class="tocitem" href="../quickreference/Performance_Quick_Reference/">Performance</a></li></ul></li><li><a class="tocitem" href="../api/">15 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Gravity Data: First Inspection</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Gravity Data: First Inspection</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Gravity-Data:-First-Inspection"><a class="docs-heading-anchor" href="#Gravity-Data:-First-Inspection">Gravity Data: First Inspection</a><a id="Gravity-Data:-First-Inspection-1"></a><a class="docs-heading-anchor-permalink" href="#Gravity-Data:-First-Inspection" title="Permalink"></a></h1><p>This notebook provides a comprehensive introduction to loading and analyzing gravitational field data using Mera.jl. You&#39;ll learn the fundamentals of working with RAMSES gravity data and its relationship to AMR (Adaptive Mesh Refinement) structures.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Load and inspect gravitational simulation data</li><li>Understand gravitational potential and acceleration field organization</li><li>Analyze gravity data distributions across AMR levels</li><li>Handle different gravity variable types and unit conversions</li><li>Work with IndexedTables data structures for gravity field analysis</li><li>Apply memory management best practices for gravity data</li></ul><h2 id="Quick-Reference:-Essential-Gravity-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Essential-Gravity-Functions">Quick Reference: Essential Gravity Functions</a><a id="Quick-Reference:-Essential-Gravity-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Essential-Gravity-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of key Mera.jl functions for gravity data analysis.</p><h3 id="Data-Loading-Functions"><a class="docs-heading-anchor" href="#Data-Loading-Functions">Data Loading Functions</a><a id="Data-Loading-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Loading-Functions" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load simulation metadata with gravity information
+info = getinfo(output_number, &quot;path/to/simulation&quot;)
+info = getinfo(300, &quot;/path/to/sim&quot;)                   # Specific output
+info = getinfo(&quot;/path/to/sim&quot;)                        # Latest output
+
+# Load gravity data - basic usage
+grav = getgravity(info)                               # Load all variables, all levels</code></pre><h3 id="Data-Exploration-Functions"><a class="docs-heading-anchor" href="#Data-Exploration-Functions">Data Exploration Functions</a><a id="Data-Exploration-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Exploration-Functions" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Analyze data structure and properties
+overview_amr = amroverview(grav)                      # AMR grid structure analysis
+data_overview = dataoverview(grav)                   # Statistical overview of variables
+usedmemory(grav)                                      # Memory usage analysis
+
+# Explore object structure
+viewfields(grav)                                      # View GravDataType structure
+viewfields(info.descriptor)                          # View descriptor properties
+propertynames(grav)                                   # List all available fields</code></pre><h3 id="Variable-and-Descriptor-Management"><a class="docs-heading-anchor" href="#Variable-and-Descriptor-Management">Variable and Descriptor Management</a><a id="Variable-and-Descriptor-Management-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-and-Descriptor-Management" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Access and modify variable descriptors
+info.descriptor.gravity                               # Current gravity variable names
+info.descriptor.gravity[2] = :accel_x                # Customize variable names
+propertynames(info.descriptor)                       # All descriptor properties
+
+# Access predefined variables (always available)
+# :epot (gravitational potential field), :ax, :ay, :az (acceleration components)</code></pre><h3 id="IndexedTables-Operations"><a class="docs-heading-anchor" href="#IndexedTables-Operations">IndexedTables Operations</a><a id="IndexedTables-Operations-1"></a><a class="docs-heading-anchor-permalink" href="#IndexedTables-Operations" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Work with gravity data tables
+using Mera.IndexedTables
+
+# Select specific columns
+select(grav.data, (:level, :cx, :cy, :cz, :epot))    # View coordinates + potential
+select(data_overview, (:level, :epot_min, :epot_max, :epot_tot)) # Statistical summary
+
+# Extract column data
+column(data_overview, :epot_tot)                     # Extract total potential as array
+column(data_overview, :epot_min) * info.scale.J_g    # Convert with scaling
+
+# Transform data in-place
+transform(data_overview, :epot_tot =&gt; :epot_tot =&gt; value-&gt;value * info.scale.J_g)</code></pre><h3 id="Unit-Conversion"><a class="docs-heading-anchor" href="#Unit-Conversion">Unit Conversion</a><a id="Unit-Conversion-1"></a><a class="docs-heading-anchor-permalink" href="#Unit-Conversion" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Access scaling factors
+scale = grav.scale                                    # Shortcut to scaling factors
+constants = grav.info.constants                      # Physical constants
+
+# Common unit conversions for gravity data
+potential_physical = grav.data.epot * scale.J_g      # Potential field to J/g
+accel_cms2 = grav.data.ax * scale.cm_s2              # Acceleration to cm/s²
+force_dyn = mass_g * grav.data.ax * scale.cm_s2      # Force in dynes</code></pre><h3 id="Memory-Management"><a class="docs-heading-anchor" href="#Memory-Management">Memory Management</a><a id="Memory-Management-1"></a><a class="docs-heading-anchor-permalink" href="#Memory-Management" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Monitor and optimize memory usage
+usedmemory(grav)                                      # Check current memory usage
+grav = nothing; GC.gc()                              # Clear variable and garbage collect</code></pre><h3 id="Common-Analysis-Workflow"><a class="docs-heading-anchor" href="#Common-Analysis-Workflow">Common Analysis Workflow</a><a id="Common-Analysis-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Analysis-Workflow" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Standard gravity data analysis workflow
+info = getinfo(300, &quot;/path/to/simulation&quot;)           # Load simulation metadata
+grav = getgravity(info)                              # Load gravity data
+usedmemory(grav)                                      # Check memory usage
+
+# Analyze structure and properties
+amr_overview = amroverview(grav)                      # AMR grid analysis
+data_overview = dataoverview(grav)                   # Variable statistics
+viewfields(grav)                                      # Explore data structure
+
+# Convert units and extract specific data
+scale = grav.scale                                    # Create scaling shortcut
+potential_jg = select(grav.data, :epot) * scale.J_g  # Physical potential field
+field_dist = select(data_overview, (:level, :epot_tot)) # Potential distribution by level</code></pre><h3 id="Package-Import-and-Initial-Setup"><a class="docs-heading-anchor" href="#Package-Import-and-Initial-Setup">Package Import and Initial Setup</a><a id="Package-Import-and-Initial-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Package-Import-and-Initial-Setup" title="Permalink"></a></h3><p>Let&#39;s start by importing Mera.jl and loading simulation information for output 300:</p><pre><code class="language-julia hljs">using Mera
+info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-11T23:07:34.748
+
+Code: RAMSES
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2025-06-21T18:31:24.020
+=======================================================
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05 
+particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+=======================================================</code></pre><h3 id="Understanding-Gravity-Properties"><a class="docs-heading-anchor" href="#Understanding-Gravity-Properties">Understanding Gravity Properties</a><a id="Understanding-Gravity-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Gravity-Properties" title="Permalink"></a></h3><p>The output above provides a comprehensive overview of the loaded gravity data properties:</p><ul><li><strong>Gravity files status</strong> - Confirms existence and accessibility of gravity data files</li><li><strong>Variable count</strong> - Shows the number of predefined and available gravity variables</li><li><strong>Variable names</strong> - Lists the gravity variable names from the RAMSES descriptor file</li><li><strong>Data organization</strong> - Reveals how the gravity data is structured and stored</li></ul><h2 id="Variable-Names-and-Descriptors"><a class="docs-heading-anchor" href="#Variable-Names-and-Descriptors">Variable Names and Descriptors</a><a id="Variable-Names-and-Descriptors-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Names-and-Descriptors" title="Permalink"></a></h2><p><strong>Predefined Variable Names</strong>: Mera.jl recognizes standard gravity variable names such as <code>:epot</code>, <code>:ax</code>, <code>:ay</code>, <code>:az</code>. These provide a consistent interface for accessing gravitational field quantities across different simulations.</p><p><strong>Core Variables:</strong></p><ul><li><code>:epot</code> - Gravitational potential field (φ)</li><li><code>:ax</code>, <code>:ay</code>, <code>:az</code> - Gravitational acceleration components</li></ul><p><strong>Custom Variable Descriptors</strong>: In future versions, you will be able to use variable names directly from the gravity descriptor by setting <code>info.descriptor.usegravity = true</code>. Currently, you can customize variable names by modifying the descriptor array manually.</p><p>Let&#39;s examine the current gravity descriptor configuration:</p><pre><code class="language-julia hljs">info.descriptor.gravity</code></pre><pre><code class="nohighlight hljs">4-element Vector{Symbol}:
+ :epot
+ :ax
+ :ay
+ :az</code></pre><h3 id="Customizing-Variable-Names"><a class="docs-heading-anchor" href="#Customizing-Variable-Names">Customizing Variable Names</a><a id="Customizing-Variable-Names-1"></a><a class="docs-heading-anchor-permalink" href="#Customizing-Variable-Names" title="Permalink"></a></h3><p>You can modify variable names in the descriptor to better match your simulation setup or personal preferences. For example, changing the second gravity variable to a more descriptive name:</p><pre><code class="language-julia hljs">info.descriptor.gravity[2] = :a_x;</code></pre><pre><code class="language-julia hljs">info.descriptor.gravity</code></pre><pre><code class="nohighlight hljs">4-element Vector{Symbol}:
+ :epot
+ :a_x
+ :ay
+ :az</code></pre><h3 id="Exploring-Descriptor-Properties"><a class="docs-heading-anchor" href="#Exploring-Descriptor-Properties">Exploring Descriptor Properties</a><a id="Exploring-Descriptor-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Exploring-Descriptor-Properties" title="Permalink"></a></h3><p>Let&#39;s examine the complete structure of the descriptor object to understand all available configuration options:</p><pre><code class="language-julia hljs">viewfields(info.descriptor)</code></pre><pre><code class="nohighlight hljs">[Mera]: Descriptor overview
+=================================
+hversion	= 1
+hydro	= [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
+htypes	= [&quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;]
+usehydro	= false
+hydrofile	= true
+pversion	= 1
+particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time]
+ptypes	= [&quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;i&quot;, &quot;i&quot;, &quot;b&quot;, &quot;b&quot;, &quot;d&quot;]
+useparticles	= false
+particlesfile	= true
+gravity	= [:epot, :a_x, :ay, :az]
+usegravity	= false
+gravityfile	= false
+rtversion	= 0
+rt	= Dict{Any, Any}()
+rtPhotonGroups	= Dict{Any, Any}()
+usert	= false
+rtfile	= false
+clumps	= Symbol[]
+useclumps	= false
+clumpsfile	= false
+sinks	= Symbol[]
+usesinks	= false
+sinksfile	= false</code></pre><p>For a simple list of all available descriptor fields:</p><pre><code class="language-julia hljs">propertynames(info.descriptor)</code></pre><pre><code class="nohighlight hljs">(:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)</code></pre><h2 id="Loading-Gravity-Data"><a class="docs-heading-anchor" href="#Loading-Gravity-Data">Loading Gravity Data</a><a id="Loading-Gravity-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-Gravity-Data" title="Permalink"></a></h2><p>Now that we understand our simulation&#39;s structure and variable organization, let&#39;s load the actual gravitational field data. We&#39;ll use Mera&#39;s powerful data loading capabilities to read both the gravity field components and their associated AMR grid structure.</p><h3 id="Data-Loading-Overview"><a class="docs-heading-anchor" href="#Data-Loading-Overview">Data Loading Overview</a><a id="Data-Loading-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Loading-Overview" title="Permalink"></a></h3><p>The <code>getgravity()</code> function is the primary tool for loading gravitational field data from RAMSES simulations. It provides extensive options for:</p><ul><li><strong>Variable selection</strong> - Choose specific gravity quantities (potential, acceleration components)</li><li><strong>Spatial filtering</strong> - Focus on regions of interest  </li><li><strong>AMR level control</strong> - Select refinement levels</li><li><strong>Physical constraints</strong> - Set minimum values for AMR cells</li></ul><h3 id="Resetting-Simulation-Information"><a class="docs-heading-anchor" href="#Resetting-Simulation-Information">Resetting Simulation Information</a><a id="Resetting-Simulation-Information-1"></a><a class="docs-heading-anchor-permalink" href="#Resetting-Simulation-Information" title="Permalink"></a></h3><p>First, let&#39;s reload the simulation information to reset any changes we made to the descriptor:</p><pre><code class="language-julia hljs">info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;, verbose=false); # here, used to overwrite the previous changes</code></pre><h3 id="Loading-Complete-Gravity-Dataset"><a class="docs-heading-anchor" href="#Loading-Complete-Gravity-Dataset">Loading Complete Gravity Dataset</a><a id="Loading-Complete-Gravity-Dataset-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-Complete-Gravity-Dataset" title="Permalink"></a></h3><p>Now let&#39;s load the AMR and gravity data from all files. This will read:</p><ul><li><strong>Full simulation box</strong> - All spatial regions</li><li><strong>All gravity variables</strong> - Gravitational potential and acceleration components  </li><li><strong>All AMR levels</strong> - Complete refinement hierarchy</li><li><strong>Cell positions</strong> - Only leaf cells (actual data cells, not parent cells)</li></ul><pre><code class="language-julia hljs">grav = getgravity(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-11T23:14:27.514
+
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 1
+   GC threads: 1
+
+
+
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (26.31 ms/it)
+
+
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 28320979 cells, 4 variables
+Creating Table from 28320979 cells with max 1 threads...
+   Threading: 1 threads for 8 columns
+   Max threads requested: 1
+   Available threads: 1
+   Using sequential processing (optimal for small datasets)
+   Creating IndexedTable with 8 columns...
+  2.859041 seconds (701.54 k allocations: 3.933 GiB, 3.90% gc time)
+✓ Table created in 3.223 seconds
+Memory used for data table :1.6880627572536469 GB
+-------------------------------------------------------</code></pre><h3 id="Memory-Usage-Analysis"><a class="docs-heading-anchor" href="#Memory-Usage-Analysis">Memory Usage Analysis</a><a id="Memory-Usage-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Memory-Usage-Analysis" title="Permalink"></a></h3><p>The memory consumption of the loaded data is displayed automatically. For detailed memory analysis of any object, Mera.jl provides the <code>usedmemory()</code> function:</p><pre><code class="language-julia hljs">usedmemory(grav);</code></pre><pre><code class="nohighlight hljs">Memory used: 1.688 GB</code></pre><h2 id="Understanding-Data-Types"><a class="docs-heading-anchor" href="#Understanding-Data-Types">Understanding Data Types</a><a id="Understanding-Data-Types-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Data-Types" title="Permalink"></a></h2><p>The loaded data object is now of type <code>GravDataType</code>, which is specifically designed for gravitational field simulation data:</p><pre><code class="language-julia hljs">typeof(grav)</code></pre><pre><code class="nohighlight hljs">GravDataType</code></pre><h3 id="Type-Hierarchy"><a class="docs-heading-anchor" href="#Type-Hierarchy">Type Hierarchy</a><a id="Type-Hierarchy-1"></a><a class="docs-heading-anchor-permalink" href="#Type-Hierarchy" title="Permalink"></a></h3><p><code>GravDataType</code> is part of a well-organized type hierarchy. It&#39;s a sub-type of <code>DataSetType</code>:</p><pre><code class="language-julia hljs"># Which in turn is a subtype of the general `DataSetType`.
+supertype( GravDataType )</code></pre><pre><code class="nohighlight hljs">DataSetType</code></pre><p><img src="../assets/TypeHierarchy.png" alt="TypeHierarchy"/></p><h2 id="Data-Organization-and-Structure"><a class="docs-heading-anchor" href="#Data-Organization-and-Structure">Data Organization and Structure</a><a id="Data-Organization-and-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Organization-and-Structure" title="Permalink"></a></h2><p>The gravity data is stored in an <strong>IndexedTables</strong> table format, with user-selected variables and parameters organized into accessible fields. Let&#39;s explore the structure:</p><pre><code class="language-julia hljs">viewfields(grav)</code></pre><pre><code class="nohighlight hljs">data ==&gt; IndexedTables: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
+
+info ==&gt; subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
+
+lmin	= 6
+lmax	= 10
+boxlen	= 48.0
+ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+selected_gravvars	= [1, 2, 3, 4]
+
+scale ==&gt; subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)</code></pre><h3 id="Convenient-Data-Access"><a class="docs-heading-anchor" href="#Convenient-Data-Access">Convenient Data Access</a><a id="Convenient-Data-Access-1"></a><a class="docs-heading-anchor-permalink" href="#Convenient-Data-Access" title="Permalink"></a></h3><p>For convenience, all fields from the original <code>InfoType</code> object are now accessible through:</p><ul><li><strong><code>grav.info</code></strong> - All simulation metadata and parameters</li><li><strong><code>grav.scale</code></strong> - Scaling relations for converting from code units to physical units</li></ul><p>The data object also retains important structural information:</p><ul><li>Minimum and maximum AMR levels of the loaded data</li><li>Box dimensions and coordinate ranges</li><li>Selected spatial regions and filtering parameters</li><li>Number and properties of loaded gravity variables</li></ul><h3 id="Quick-Field-Reference"><a class="docs-heading-anchor" href="#Quick-Field-Reference">Quick Field Reference</a><a id="Quick-Field-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Field-Reference" title="Permalink"></a></h3><p>For a simple list of all available fields in the gravity data object:</p><pre><code class="language-julia hljs">propertynames(grav)</code></pre><pre><code class="nohighlight hljs">(:data, :info, :lmin, :lmax, :boxlen, :ranges, :selected_gravvars, :used_descriptors, :scale)</code></pre><h2 id="Data-Analysis-and-Exploration"><a class="docs-heading-anchor" href="#Data-Analysis-and-Exploration">Data Analysis and Exploration</a><a id="Data-Analysis-and-Exploration-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Analysis-and-Exploration" title="Permalink"></a></h2><p>Now that we have loaded our gravity data, let&#39;s explore its structure and properties in detail. This section demonstrates the key analysis functions available in Mera.jl.</p><h3 id="Analysis-Overview"><a class="docs-heading-anchor" href="#Analysis-Overview">Analysis Overview</a><a id="Analysis-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#Analysis-Overview" title="Permalink"></a></h3><p>We&#39;ll cover two main types of analysis:</p><ul><li><p><strong>AMR Structure Analysis</strong> - Understanding the adaptive mesh refinement hierarchy and how gravitational fields are organized across refinement levels, analyzing spatial distribution of field data</p></li><li><p><strong>Statistical Data Overview</strong> - Computing basic statistical properties of gravity variables, understanding potential and acceleration field distributions, ranges, and assessing data quality </p></li></ul><h3 id="AMR-Grid-Structure-Analysis"><a class="docs-heading-anchor" href="#AMR-Grid-Structure-Analysis">AMR Grid Structure Analysis</a><a id="AMR-Grid-Structure-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#AMR-Grid-Structure-Analysis" title="Permalink"></a></h3><p>The <code>amroverview()</code> function provides detailed information about the adaptive mesh refinement structure associated with our gravity data. The analysis includes:</p><ul><li><strong>Level distribution</strong> - Number of cells at each refinement level</li></ul><p>The results are returned as an <strong>IndexedTables</strong> table in code units, ready for further analysis:</p><pre><code class="language-julia hljs">overview_amr = amroverview(grav)</code></pre><pre><code class="nohighlight hljs">Counting...
+
+
+
+
+
+Table with 5 rows, 3 columns:
+level  cells     cellsize
+─────────────────────────
+6      66568     0.75
+7      374908    0.375
+8      7806793   0.1875
+9      12774134  0.09375
+10     7298576   0.046875</code></pre><h3 id="Statistical-Data-Analysis"><a class="docs-heading-anchor" href="#Statistical-Data-Analysis">Statistical Data Analysis</a><a id="Statistical-Data-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Statistical-Data-Analysis" title="Permalink"></a></h3><p>The <code>dataoverview()</code> function computes comprehensive statistics for all gravity variables in our dataset. This analysis provides:</p><ul><li><strong>Variable ranges</strong> - Minimum and maximum values for gravitational potential and acceleration components</li></ul><p>The calculated information is stored in code units and can be accessed for further analysis:</p><pre><code class="language-julia hljs">data_overview = dataoverview(grav)</code></pre><pre><code class="nohighlight hljs">Calculating...
+
+
+
+
+
+Table with 5 rows, 10 columns:
+Columns:
+#   colname   type
+──────────────────
+1   level     Any
+2   epot_tot  Any
+3   epot_min  Any
+4   epot_max  Any
+5   ax_min    Any
+6   ax_max    Any
+7   ay_min    Any
+8   ay_max    Any
+9   az_min    Any
+10  az_max    Any</code></pre><h3 id="Working-with-IndexedTables"><a class="docs-heading-anchor" href="#Working-with-IndexedTables">Working with IndexedTables</a><a id="Working-with-IndexedTables-1"></a><a class="docs-heading-anchor-permalink" href="#Working-with-IndexedTables" title="Permalink"></a></h3><p>When dealing with tables containing many columns, only a summary view is typically displayed. To access specific columns, use the <code>select()</code> function.</p><p><strong>Important Notes:</strong></p><ul><li>Column names are specified as quoted Symbols (<code>:column_name</code>)</li><li>For more details, see the <a href="https://docs.julialang.org/en/v1/manual/metaprogramming/#Symbols-1">Julia documentation on Symbols</a></li><li>The <code>select()</code> function maintains data order and relationships</li></ul><p>Let&#39;s select specific columns to examine level-wise potential statistics:</p><pre><code class="language-julia hljs">using Mera.IndexedTables # to import the IndexedTables package, which is a dependency of Mera</code></pre><pre><code class="language-julia hljs">select(data_overview, (:level,:epot_tot, :epot_min, :epot_max ) )</code></pre><pre><code class="nohighlight hljs">Table with 5 rows, 4 columns:
+level  epot_tot    epot_min   epot_max
+───────────────────────────────────────
+6      -9309.98    -0.157858  -0.105458
+7      -61891.4    -0.175757  -0.151563
+8      -1.66608e6  -0.292519  -0.172968
+9      -4.35579e6  -0.579801  -0.225363
+10     -3.57477e6  -0.986489  -0.271161</code></pre><h3 id="Single-column-Extraction-Example"><a class="docs-heading-anchor" href="#Single-column-Extraction-Example">Single column Extraction Example</a><a id="Single-column-Extraction-Example-1"></a><a class="docs-heading-anchor-permalink" href="#Single-column-Extraction-Example" title="Permalink"></a></h3><p>Extract total potential data from a specific column. The <code>column()</code> function retrieves data from a specific table column, maintaining the order consistent with the table structure:</p><pre><code class="language-julia hljs">column(data_overview, :epot_tot)</code></pre><pre><code class="nohighlight hljs">5-element Vector{Any}:
+  -9309.980771585666
+ -61891.37272811445
+     -1.6660843210800427e6
+     -4.355786574891018e6
+     -3.5747698183847037e6</code></pre><h2 id="Data-Structure-Deep-Dive"><a class="docs-heading-anchor" href="#Data-Structure-Deep-Dive">Data Structure Deep Dive</a><a id="Data-Structure-Deep-Dive-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Structure-Deep-Dive" title="Permalink"></a></h2><p>Now let&#39;s examine the detailed structure of our gravity data. Understanding this organization is crucial for effective data manipulation and analysis.</p><h3 id="IndexedTables-Storage-Format"><a class="docs-heading-anchor" href="#IndexedTables-Storage-Format">IndexedTables Storage Format</a><a id="IndexedTables-Storage-Format-1"></a><a class="docs-heading-anchor-permalink" href="#IndexedTables-Storage-Format" title="Permalink"></a></h3><p>The gravity data is stored in <code>grav.data</code> as an <strong>IndexedTables</strong> table (in code units), which provides several key advantages:</p><ul><li><strong>Row-based organization</strong>: Each row represents a single cell in the simulation</li><li><strong>Column-based access</strong>: Each column represents a specific gravitational field property</li><li><strong>Efficient operations</strong>: Built-in support for filtering, mapping, and aggregation</li><li><strong>Memory efficiency</strong>: Optimized storage and access patterns for gravitational field data</li><li><strong>Functional interface</strong>: Clean, composable operations for data manipulation</li></ul><p>For comprehensive information on working with this data structure:</p><ul><li>Mera.jl documentation and tutorials</li><li><a href="https://juliadb.juliadata.org/latest/">JuliaDB API Reference</a></li><li>IndexedTables.jl documentation</li></ul><h3 id="Understanding-the-Data-Layout"><a class="docs-heading-anchor" href="#Understanding-the-Data-Layout">Understanding the Data Layout</a><a id="Understanding-the-Data-Layout-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-the-Data-Layout" title="Permalink"></a></h3><p>The table structure reflects the AMR grid organization:</p><p><strong>Spatial Coordinates</strong></p><ul><li><strong>Integer cell positions</strong> (cx, cy, cz) form a uniform 3D array within each refinement level</li><li><strong>Level-specific ranges</strong>: Each refinement level has its own coordinate system<ul><li>Level 8: coordinates range from 1-256</li><li>Level 14: coordinates range from 1-16384</li></ul></li><li><strong>Sparse occupancy</strong>: Not all coordinate positions exist due to adaptive refinement</li></ul><p><strong>Critical Data Integrity Notes</strong></p><ul><li><strong>Coordinate preservation</strong>: The integers cx, cy, cz are essential for grid reconstruction</li><li><strong>Do not modify</strong>: These coordinates maintain the AMR spatial relationships</li><li><strong>Unique identifiers</strong>: Each (level, cx, cy, cz) combination uniquely identifies a cell</li></ul><p>Let&#39;s examine the complete data table:</p><pre><code class="language-julia hljs">grav.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 8 columns:
+level  cx   cy   cz   epot       ax         ay         az
+───────────────────────────────────────────────────────────────────
+6      1    1    1    -0.105458  0.0713717  0.0713739  0.0714421
+6      1    1    2    -0.106574  0.0736603  0.0736626  0.071396
+6      1    1    3    -0.107689  0.0759945  0.0759969  0.0712471
+6      1    1    4    -0.1088    0.0783709  0.0783733  0.0709879
+6      1    1    5    -0.109906  0.0807857  0.0807883  0.0706111
+6      1    1    6    -0.111006  0.0832346  0.0832372  0.0701094
+6      1    1    7    -0.112097  0.0857126  0.0857152  0.0694754
+6      1    1    8    -0.113176  0.0882139  0.0882167  0.068702
+6      1    1    9    -0.114243  0.0907326  0.0907354  0.0677824
+6      1    1    10   -0.115294  0.0932614  0.0932643  0.0667098
+6      1    1    11   -0.116327  0.095793   0.095796   0.0654782
+6      1    1    12   -0.117339  0.0983188  0.0983218  0.064082
+⋮
+10     814  493  514  -0.28418   -0.734355  0.0468811  -0.00847598
+10     814  494  509  -0.284171  -0.733368  0.0443188  0.0287892
+10     814  494  510  -0.284196  -0.73424   0.0441712  0.0222774
+10     814  494  511  -0.284214  -0.734832  0.0441283  0.0151562
+10     814  494  512  -0.284225  -0.735242  0.0440921  0.00732157
+10     814  494  513  -0.284228  -0.73512   0.0441534  -0.000562456
+10     814  494  514  -0.284224  -0.734709  0.0442907  -0.00837105
+10     814  495  511  -0.284256  -0.735055  0.0415764  0.0151266
+10     814  495  512  -0.284267  -0.73541   0.0415465  0.00732422
+10     814  496  511  -0.284295  -0.735248  0.0390693  0.0150688
+10     814  496  512  -0.284306  -0.735572  0.0390361  0.00736339</code></pre><h3 id="Focused-Data-Examination"><a class="docs-heading-anchor" href="#Focused-Data-Examination">Focused Data Examination</a><a id="Focused-Data-Examination-1"></a><a class="docs-heading-anchor-permalink" href="#Focused-Data-Examination" title="Permalink"></a></h3><p>For a more detailed view of specific columns, we can select key fields to understand the gravity data organization better:</p><pre><code class="language-julia hljs">select(grav.data, (:level,:cx, :cy, :cz, :epot) )</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
+level  cx   cy   cz   epot
+───────────────────────────────
+6      1    1    1    -0.105458
+6      1    1    2    -0.106574
+6      1    1    3    -0.107689
+6      1    1    4    -0.1088
+6      1    1    5    -0.109906
+6      1    1    6    -0.111006
+6      1    1    7    -0.112097
+6      1    1    8    -0.113176
+6      1    1    9    -0.114243
+6      1    1    10   -0.115294
+6      1    1    11   -0.116327
+6      1    1    12   -0.117339
+⋮
+10     814  493  514  -0.28418
+10     814  494  509  -0.284171
+10     814  494  510  -0.284196
+10     814  494  511  -0.284214
+10     814  494  512  -0.284225
+10     814  494  513  -0.284228
+10     814  494  514  -0.284224
+10     814  495  511  -0.284256
+10     814  495  512  -0.284267
+10     814  496  511  -0.284295
+10     814  496  512  -0.284306</code></pre><h2 id="Summary-and-Next-Steps"><a class="docs-heading-anchor" href="#Summary-and-Next-Steps">Summary and Next Steps</a><a id="Summary-and-Next-Steps-1"></a><a class="docs-heading-anchor-permalink" href="#Summary-and-Next-Steps" title="Permalink"></a></h2><h3 id="What-You&#39;ve-Learned"><a class="docs-heading-anchor" href="#What-You&#39;ve-Learned">What You&#39;ve Learned</a><a id="What-You&#39;ve-Learned-1"></a><a class="docs-heading-anchor-permalink" href="#What-You&#39;ve-Learned" title="Permalink"></a></h3><p>In this tutorial, you&#39;ve mastered the fundamentals of working with gravitational field data in Mera.jl:</p><ol><li><strong>Data Loading</strong>: How to load gravity data using <code>getgravity()</code> with various options</li><li><strong>Structure Understanding</strong>: The organization of gravitational field data and its relationship to AMR grids</li><li><strong>Variable Management</strong>: Working with predefined gravity variable names and field components</li><li><strong>Data Analysis</strong>: Using <code>amroverview()</code> and <code>dataoverview()</code> for comprehensive gravity analysis</li><li><strong>Unit Handling</strong>: Converting between code units and physical units for gravitational quantities</li><li><strong>Memory Management</strong>: Monitoring and optimizing memory usage for gravity field datasets</li><li><strong>Data Manipulation</strong>: Using IndexedTables operations for efficient gravity data processing</li></ol><h3 id="Key-Takeaways"><a class="docs-heading-anchor" href="#Key-Takeaways">Key Takeaways</a><a id="Key-Takeaways-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Takeaways" title="Permalink"></a></h3><ul><li>Gravity data is stored in IndexedTables format for efficient access and manipulation</li><li>AMR coordinates (level, cx, cy, cz) are critical for spatial relationships and should not be modified</li><li>Always be conscious of units - raw data is in code units</li><li>Memory management is crucial for large gravity field datasets</li><li>Gravitational potential and acceleration components provide complementary field information</li><li>Mera.jl provides powerful tools for statistical analysis and gravity data exploration</li></ul><h3 id="Continue-Your-Learning"><a class="docs-heading-anchor" href="#Continue-Your-Learning">Continue Your Learning</a><a id="Continue-Your-Learning-1"></a><a class="docs-heading-anchor-permalink" href="#Continue-Your-Learning" title="Permalink"></a></h3><p>Now that you understand gravity data fundamentals, you can explore:</p><ul><li><strong>Advanced gravity analysis</strong>: Field calculations, force computations, and potential energy analysis</li><li><strong>Multi-component field analysis</strong>: Combining potential and acceleration data for comprehensive field studies</li><li><strong>Multi-physics analysis</strong>: Combining gravity data with hydro and particle data</li><li><strong>Time series analysis</strong>: Working with multiple simulation outputs to study gravitational evolution</li><li><strong>Performance optimization</strong>: Advanced techniques for large-scale gravity data processing</li></ul><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 14 August 2025 11:46">Thursday 14 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
