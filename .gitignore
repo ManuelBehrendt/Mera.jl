@@ -14,7 +14,8 @@ deps/usr/
 deps/src/
 validation_runs/
 test_backup_20250808_143045/
-src/Mera.jl*
+# Do not ignore the main entrypoint; only ignore backups
+src/Mera.jl.bak*
 paper/
 
 # Benchmark scripts, only publish zip files
