@@ -18,6 +18,32 @@
 #
 # end
 
+
+function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
+                    xrange::Array{<:Any,1}=[missing, missing],
+                    yrange::Array{<:Any,1}=[missing, missing],
+                    zrange::Array{<:Any,1}=[missing, missing],
+                    center::Array{<:Any,1}=[0., 0., 0.],
+                    range_unit::Symbol=:standard,
+                    print_filenames::Bool=false,
+                    verbose::Bool=true,
+                    myargs::ArgumentsType=ArgumentsType() )
+
+    return  getclumps(dataobject,
+                    vars=vars,
+                    xrange=xrange,
+                    yrange=yrange,
+                    zrange=zrange,
+                    center=center,
+                    range_unit=range_unit,
+                    print_filenames=print_filenames,
+                    verbose=verbose,
+                    myargs=myargs)
+
+end
+
+
+
 """
 #### Read the clump-data:
 - selected variables
@@ -57,14 +83,24 @@ julia> fieldnames(clumps)
 - **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
 ##### Predefined/Optional Keywords:
 - **`vars`:** Currently, the length of the loaded variable list can be modified *(see examples below).
+ - **`vars`:** List of clump columns to read; default `[:all]` uses the file header. The order must match the columns in the clump files. You may specify fewer names (to read a subset) or more names if the data contains more columns than listed in the header.
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
-- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
+ - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
+     Note: spatial filtering uses the columns :peak_x, :peak_y, :peak_z. If you set any ranges, ensure these columns are included in `vars` (or use `vars=[:all]`).
+- **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of type Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`print_filenames`:** print on screen the current processed particle file of each CPU
+- **`print_filenames`:** print on screen the current processed clump file of each CPU
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
 - **`myargs`:** pass a struct of ArgumentsType to pass several arguments at once and to overwrite default values of xrange, yrange, zrange, center, range_unit, verbose
+
+#### Important notes
+- Spatial selection is applied to the clump peak position only (columns `:peak_x`, `:peak_y`, `:peak_z`). It does not test the full clump extent/volume.
+- All clump columns are parsed as `Float64` from the text files. Cast to other types as needed after loading.
+- Column names with dashes in the header must be requested as symbols with quotes, e.g. `Symbol("rho-")` and `Symbol("rho+")`.
+- For faster I/O, pass a smaller `vars` list to read only the columns you need.
+- When supplying a custom `vars` list, ensure the data files contain at least that many columns and that the order matches the file columns; otherwise parsing will fail.
 
 ### Defined Methods - function defined for different arguments
 - getclumps(dataobject::InfoType; ...) # no given variables -> all variables loaded
@@ -100,14 +136,14 @@ julia> clumps = getclumps(  info,
                             xrange=[-10.,10.],
                             yrange=[-10.,10.],
                             zrange=[-2.,2.],
-                            center=[33., bc:, 10.],
+                            center=[33., :bc, 10.],
                             range_unit=:kpc )
 
 # Example 4:
 # Load less than the found 12 columns from the header of the clump files;
 # Pass an array with the variables to the keyword argument *vars*.
 # The order of the variables has to be consistent with the header in the clump files:
-julia> lumps = getclumps(info, [ :index, :lev, :parent, :ncell,
+julia> clumps = getclumps(info, [ :index, :lev, :parent, :ncell,
                                  :peak_x, :peak_y, :peak_z ])
 
 # Example 5:
@@ -124,32 +160,6 @@ julia> clumps = getclumps(info, [   :index, :lev, :parent, :ncell,
 ```
 
 """
-function getclumps(dataobject::InfoType, vars::Array{Symbol,1};
-                    xrange::Array{<:Any,1}=[missing, missing],
-                    yrange::Array{<:Any,1}=[missing, missing],
-                    zrange::Array{<:Any,1}=[missing, missing],
-                    center::Array{<:Any,1}=[0., 0., 0.],
-                    range_unit::Symbol=:standard,
-                    print_filenames::Bool=false,
-                    verbose::Bool=true,
-                    myargs::ArgumentsType=ArgumentsType() )
-
-    return  getclumps(dataobject,
-                    vars=vars,
-                    xrange=xrange,
-                    yrange=yrange,
-                    zrange=zrange,
-                    center=center,
-                    range_unit=range_unit,
-                    print_filenames=print_filenames,
-                    verbose=verbose,
-                    myargs=myargs)
-
-end
-
-
-
-
 function getclumps(dataobject::InfoType;
                     vars::Array{Symbol,1}=[:all],
                     xrange::Array{<:Any,1}=[missing, missing],

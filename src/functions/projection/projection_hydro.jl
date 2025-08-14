@@ -46,278 +46,7 @@ if !@isdefined(ArgumentsType)
     end
 end
 
-"""
-# AMR Hydro Projection Functions
 
-This module provides high-performance functionality for projecting AMR (Adaptive Mesh Refinement) 
-hydrodynamic simulation data onto regular 2D grids. The projection engine handles multi-level AMR 
-data with proper coordinate transformations, geometric mapping, and optimized parallel processing.
-
-## Architecture Overview
-
-The projection system uses **variable-based parallelization** where each thread processes one 
-variable across all AMR levels. This approach eliminates the costly combining phase that 
-traditional chunked parallelization requires, resulting in significant performance improvements.
-
-### Key Design Principles:
-- **Thread Safety**: No shared mutable state between threads
-- **Memory Efficiency**: Direct allocation without memory pools  
-- **Performance**: Variable-based parallelization eliminates combining overhead
-- **Conservation**: Mass-preserving cell-to-pixel mapping
-- **Flexibility**: Support for multiple projection directions and coordinate systems
-
-## Core Functionality
-
-### Data Projection Features:
-- **Multi-resolution mapping**: Projects AMR cells from different refinement levels onto uniform grids
-- **Variable projection**: Supports density, surface density, velocity, pressure, temperature and derived quantities
-- **Flexible grid sizing**: Custom resolution, pixel size, or automatic sizing based on AMR levels
-- **Spatial filtering**: Range-based data selection in x, y, z dimensions with thin slice support
-- **Weighting schemes**: Mass weighting (default), volume weighting, or custom weighting functions
-- **Direction control**: Project along x, y, or z directions with proper coordinate remapping
-
-### AMR-Specific Features:
-- **Conservative mapping**: Mass-conserving cell-to-pixel mapping with geometric overlap calculations
-- **Level-specific processing**: Individual handling of each AMR refinement level for accuracy
-- **Boundary handling**: Robust treatment of cell boundaries and partial overlaps
-- **Coordinate transformations**: Automatic handling of different AMR coordinate systems
-
-## Main Projection Function
-
-Create high-performance 2D projections of AMR hydro data with full control over resolution, 
-spatial ranges, and processing options. This function automatically selects between sequential 
-and variable-based parallel processing based on data characteristics.
-
-### Function Signature
-
-```julia
-projection(dataobject::HydroDataType, vars::Array{Symbol,1};julia
-projection(dataobject::HydroDataType, vars::Array{Symbol,1};
-           units::Array{Symbol,1}=[:standard],
-           lmax::Real=dataobject.lmax,
-           res::Union{Real, Missing}=missing,
-           pxsize::Array{<:Any,1}=[missing, missing],
-           mask::Union{Vector{Bool}, MaskType}=[false],
-           direction::Symbol=:z,
-           weighting::Array{<:Any,1}=[:mass, missing],
-           mode::Symbol=:standard,
-           xrange::Array{<:Any,1}=[missing, missing],
-           yrange::Array{<:Any,1}=[missing, missing],
-           zrange::Array{<:Any,1}=[missing, missing],
-           center::Array{<:Any,1}=[0., 0., 0.],
-           range_unit::Symbol=:standard,
-           data_center::Array{<:Any,1}=[missing, missing, missing],
-           data_center_unit::Symbol=:standard,
-           verbose::Bool=true,
-           show_progress::Bool=true,
-           verbose_threads::Bool=false,
-           myargs::ArgumentsType=ArgumentsType())
-
-return HydroMapsType
-```
-
-### Arguments
-
-#### Required Parameters:
-- **`dataobject::HydroDataType`**: AMR hydro simulation data loaded by Mera.jl
-  - Must contain spatial coordinates and hydro variables
-  - Supports RAMSES, ENZO, and other AMR formats
-- **`vars::Array{Symbol,1}`**: Variables to project (e.g., [:rho, :vx, :vy] or [:sd])
-  - Multiple variables trigger automatic variable-based parallelization
-  - Single variables use optimized sequential processing
-
-#### Grid Resolution Control:
-- **`res::Union{Real, Missing}`**: Pixel count per dimension (e.g., res=512 → 512×512 grid)
-  - Higher values increase precision but require more memory
-  - Recommended: 256-1024 for most applications
-- **`lmax::Real`**: Use 2^lmax pixels when res not specified (default: dataobject.lmax)
-  - Automatically matches finest AMR level resolution
-- **`pxsize::Array`**: Physical pixel size [value, unit] (overrides res/lmax)
-  - Direct control over spatial resolution
-
-#### Spatial Range Control:
-- **`xrange/yrange/zrange::Array`**: Spatial bounds [min, max] relative to center
-  - Define the physical region to project (e.g., [-10, 10] for ±10 units)
-  - Units controlled by range_unit parameter
-- **`center::Array`**: Projection center coordinates (use [:bc] for box center)
-  - Can be physical coordinates or special values like [:bc], [:com]
-- **`range_unit::Symbol`**: Units for ranges/center (:kpc, :Mpc, :pc, :standard, etc.)
-  - Ensures consistent spatial scaling across different simulations
-- **`direction::Symbol`**: Projection direction (:x, :y, :z)
-  - Determines which spatial dimension is integrated over
-
-#### Data Processing Options:
-- **`weighting::Array`**: Variable for weighting [quantity, unit] (default: [:mass])
-  - Controls how cell values are averaged: mass-weighted, volume-weighted, etc.
-  - Use [:none] for simple geometric averaging
-- **`mode::Symbol`**: Processing mode (:standard or :sum)
-  - :standard → weighted averages (typical for intensive quantities)
-  - :sum → accumulative totals (for extensive quantities like mass)
-- **`mask::Union{Vector{Bool}, MaskType}`**: Boolean mask to exclude cells
-  - Filter out unwanted regions or apply custom selection criteria
-- **`units::Array{Symbol,1}`**: Output units for projected variables
-  - Convert results to desired physical units automatically
-
-#### Advanced Options:
-- **`data_center/data_center_unit`**: Alternative center for data calculations
-  - When different from projection center (useful for coordinate transformations)
-- **`verbose::Bool`**: Print diagnostic information during processing (default: true)
-  - Shows progress, memory usage, and basic threading information
-- **`show_progress::Bool`**: Display progress bar for level-by-level processing (default: true)
-  - Visual feedback for long-running projections
-- **`verbose_threads::Bool`**: Show detailed multithreading diagnostics (default: false)
-  - Enable for debugging parallel performance or thread behavior
-- **`myargs::ArgumentsType`**: Struct to pass multiple arguments simultaneously
-  - Convenient for passing common parameter sets
-
-### Method Variants
-
-The projection function supports multiple calling patterns for convenience:
-
-```julia
-# Single variable projection
-projection(dataobject, :rho)                    # Density with default settings
-projection(dataobject, :rho, unit=:g_cm3)      # Density in specific units
-
-# Multiple variables with same units  
-projection(dataobject, [:v, :vx, :vy], :km_s) # Multiple vars, single unit
-
-# Multiple variables with different units
-projection(dataobject, [:rho, :sd], [:g_cm3, :Msol_pc2]) # Different units per variable
-
-# Surface density projection (special handling)
-projection(dataobject, :sd, :Msol_pc2)         # Surface density in solar masses per pc²
-```
-
-### Usage Examples
-
-#### Basic Density Projection
-```julia
-# Simple density map of full simulation box (sequential processing)
-density_map = projection(gas, :rho, unit=:g_cm3, res=512)
-
-# High resolution central region with optimal settings
-density_map = projection(gas, :rho, unit=:g_cm3, 
-                        xrange=[-10, 10], yrange=[-10, 10], 
-                        center=[:bc], range_unit=:kpc, res=1024)
-```
-
-#### Multi-Variable Analysis (Parallel Processing)
-```julia
-# Velocity field analysis (automatic variable-based parallelization)
-velocity_maps = projection(gas, [:vx, :vy, :vz], unit=:km_s,
-                          direction=:z, res=512)
-# Output: 🧵 Using parallel processing with 3 threads (one per variable)
-
-# Combined density and velocity (optimal parallel performance)
-hydro_maps = projection(gas, [:rho, :vx, :vy], [:g_cm3, :km_s, :km_s],
-                       xrange=[-5, 5], yrange=[-5, 5], 
-                       center=[:bc], range_unit=:kpc)
-# Output: ✅ Parallel projection completed successfully
-```
-
-#### Advanced AMR Projections
-```julia
-# High-precision thin slice (demonstrates AMR coordinate handling)
-thin_slice = projection(gas, :sd, :Msol_pc2,
-                       zrange=[0.49, 0.51], center=[:bc],
-                       range_unit=:standard, direction=:z, res=1024)
-
-# Volume-weighted projection for physical accuracy
-volume_proj = projection(gas, :rho, 
-                        weighting=[:volume, :cm3],
-                        mode=:sum, res=512)
-
-# Large multi-variable projection (optimal parallel performance)
-comprehensive = projection(gas, [:rho, :vx, :vy, :vz, :cs], 
-                          [:g_cm3, :km_s, :km_s, :km_s, :km_s],
-                          res=2048, verbose_threads=true)
-# Shows detailed threading diagnostics for performance analysis
-```
-
-#### Direction-Specific Projections
-```julia
-# X-direction projection (YZ plane) - parallel processing for multiple variables
-x_proj = projection(gas, [:rho, :vx], [:g_cm3, :km_s],
-                   direction=:x, yrange=[-10, 10], zrange=[-5, 5],
-                   center=[:bc], range_unit=:kpc)
-
-# Y-direction projection (XZ plane) - sequential processing for single variable
-y_proj = projection(gas, :sd, :Msol_pc2,
-                   direction=:y, xrange=[-20, 20], zrange=[-10, 10],
-                   center=[:bc], range_unit=:kpc)
-```
-
-#### Threading Control and Performance Monitoring
-```julia
-# Basic thread information (always shown with verbose=true)
-density_map = projection(gas, :rho, :g_cm3, res=512)
-# Output: Available threads: 8
-#         Requested max_threads: 8
-#         Processing mode: Sequential (single variable)
-
-# Detailed threading diagnostics for performance analysis
-multi_var = projection(gas, [:rho, :vx, :vy, :vz], res=1024, 
-                      verbose_threads=true)
-# Output: Available threads: 8
-#         Requested max_threads: 8
-#         Processing mode: Variable-based parallel (4 threads)
-#         🧵 Thread allocation: rho→T1, vx→T2, vy→T3, vz→T4
-#         ✅ Parallel projection completed successfully
-#         Performance: 2.1M cells/sec, Efficiency: 91.7%
-#
-# Note: verbose_threads=true shows detailed per-thread performance metrics
-```
-
-# Hide all output with verbose=false
-density_map = projection(gas, :rho, :g_cm3, res=512, 
-                         verbose=false)  # No threading output at all
-```
-
-#### Physical Pixel Size Control (pxsize)
-```julia
-# High-resolution projection with 10 pc pixels
-high_res = projection(gas, :rho, :g_cm3,
-                     pxsize=[10., :pc], 
-                     xrange=[-1, 1], yrange=[-1, 1], 
-                     center=[:bc], range_unit=:kpc)
-
-# Ultra-high resolution with 1 pc pixels for detailed structure
-ultra_high = projection(gas, :sd, :Msol_pc2,
-                       pxsize=[1., :pc],
-                       xrange=[-500, 500], yrange=[-500, 500],
-                       center=[:bc], range_unit=:pc)
-
-# Large-scale map with 100 pc pixels for overview
-overview = projection(gas, [:rho, :temperature], [:g_cm3, :K],
-                     pxsize=[100., :pc],
-                     xrange=[-10, 10], yrange=[-10, 10],
-                     center=[:bc], range_unit=:kpc)
-
-# Custom units: 0.1 kpc (100 pc) pixels  
-custom_scale = projection(gas, :vx, :km_s,
-                         pxsize=[0.1, :kpc],
-                         xrange=[-5, 5], yrange=[-5, 5],
-                         center=[:bc], range_unit=:kpc)
-
-# Very fine scale: sub-parsec resolution
-fine_detail = projection(gas, :density, :g_cm3,
-                        pxsize=[0.1, :pc],
-                        xrange=[-10, 10], yrange=[-10, 10], 
-                        center=[:bc], range_unit=:pc)
-```
-
-### Return Value
-
-Returns `HydroMapsType` containing:
-- **`.maps`**: Dictionary of projected variable maps (2D arrays)
-- **`.extent`**: Physical extent of projection [xmin, xmax, ymin, ymax]
-- **`.pixsize`**: Physical size of each pixel
-- **`.lmax_projected`**: Maximum AMR level included in projection
-- **`.ranges`**: Normalized coordinate ranges used
-- **`.center`**: Physical center coordinates of projection
-
-"""
 function projection(   dataobject::HydroDataType, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Real=dataobject.lmax,
@@ -553,6 +282,278 @@ function projection(hydro::HydroDataType, gravity::GravDataType, vars::Array{Sym
 end
 
 
+"""
+# AMR Hydro Projection Functions
+
+This module provides high-performance functionality for projecting AMR (Adaptive Mesh Refinement) 
+hydrodynamic simulation data onto regular 2D grids. The projection engine handles multi-level AMR 
+data with proper coordinate transformations, geometric mapping, and optimized parallel processing.
+
+## Architecture Overview
+
+The projection system uses **variable-based parallelization** where each thread processes one 
+variable across all AMR levels. This approach eliminates the costly combining phase that 
+traditional chunked parallelization requires, resulting in significant performance improvements.
+
+### Key Design Principles:
+- **Thread Safety**: No shared mutable state between threads
+- **Memory Efficiency**: Direct allocation without memory pools  
+- **Performance**: Variable-based parallelization eliminates combining overhead
+- **Conservation**: Mass-preserving cell-to-pixel mapping
+- **Flexibility**: Support for multiple projection directions and coordinate systems
+
+## Core Functionality
+
+### Data Projection Features:
+- **Multi-resolution mapping**: Projects AMR cells from different refinement levels onto uniform grids
+- **Variable projection**: Supports density, surface density, velocity, pressure, temperature and derived quantities
+- **Flexible grid sizing**: Custom resolution, pixel size, or automatic sizing based on AMR levels
+- **Spatial filtering**: Range-based data selection in x, y, z dimensions with thin slice support
+- **Weighting schemes**: Mass weighting (default), volume weighting, or custom weighting functions
+- **Direction control**: Project along x, y, or z directions with proper coordinate remapping
+
+### AMR-Specific Features:
+- **Conservative mapping**: Mass-conserving cell-to-pixel mapping with geometric overlap calculations
+- **Level-specific processing**: Individual handling of each AMR refinement level for accuracy
+- **Boundary handling**: Robust treatment of cell boundaries and partial overlaps
+- **Coordinate transformations**: Automatic handling of different AMR coordinate systems
+
+## Main Projection Function
+
+Create high-performance 2D projections of AMR hydro data with full control over resolution, 
+spatial ranges, and processing options. This function automatically selects between sequential 
+and variable-based parallel processing based on data characteristics.
+
+### Function Signature
+
+```julia
+projection(dataobject::HydroDataType, vars::Array{Symbol,1};julia
+projection(dataobject::HydroDataType, vars::Array{Symbol,1};
+           units::Array{Symbol,1}=[:standard],
+           lmax::Real=dataobject.lmax,
+           res::Union{Real, Missing}=missing,
+           pxsize::Array{<:Any,1}=[missing, missing],
+           mask::Union{Vector{Bool}, MaskType}=[false],
+           direction::Symbol=:z,
+           weighting::Array{<:Any,1}=[:mass, missing],
+           mode::Symbol=:standard,
+           xrange::Array{<:Any,1}=[missing, missing],
+           yrange::Array{<:Any,1}=[missing, missing],
+           zrange::Array{<:Any,1}=[missing, missing],
+           center::Array{<:Any,1}=[0., 0., 0.],
+           range_unit::Symbol=:standard,
+           data_center::Array{<:Any,1}=[missing, missing, missing],
+           data_center_unit::Symbol=:standard,
+           verbose::Bool=true,
+           show_progress::Bool=true,
+           verbose_threads::Bool=false,
+           myargs::ArgumentsType=ArgumentsType())
+
+return HydroMapsType
+```
+
+### Arguments
+
+#### Required Parameters:
+- **`dataobject::HydroDataType`**: AMR hydro simulation data loaded by Mera.jl
+  - Must contain spatial coordinates and hydro variables
+  - Supports RAMSES, ENZO, and other AMR formats
+- **`vars::Array{Symbol,1}`**: Variables to project (e.g., [:rho, :vx, :vy] or [:sd])
+  - Multiple variables trigger automatic variable-based parallelization
+  - Single variables use optimized sequential processing
+
+#### Grid Resolution Control:
+- **`res::Union{Real, Missing}`**: Pixel count per dimension (e.g., res=512 → 512×512 grid)
+  - Higher values increase precision but require more memory
+  - Recommended: 256-1024 for most applications
+- **`lmax::Real`**: Use 2^lmax pixels when res not specified (default: dataobject.lmax)
+  - Automatically matches finest AMR level resolution
+- **`pxsize::Array`**: Physical pixel size `[value, unit]` (overrides res/lmax)
+  - Direct control over spatial resolution
+
+#### Spatial Range Control:
+- **`xrange/yrange/zrange::Array`**: Spatial bounds [min, max] relative to center
+  - Define the physical region to project (e.g., [-10, 10] for ±10 units)
+  - Units controlled by range_unit parameter
+- **`center::Array`**: Projection center coordinates (use [:bc] for box center)
+  - Can be physical coordinates or special values like [:bc], [:com]
+- **`range_unit::Symbol`**: Units for ranges/center (:kpc, :Mpc, :pc, :standard, etc.)
+  - Ensures consistent spatial scaling across different simulations
+- **`direction::Symbol`**: Projection direction (:x, :y, :z)
+  - Determines which spatial dimension is integrated over
+
+#### Data Processing Options:
+- **`weighting::Array`**: Variable for weighting `[quantity, unit]` (default: `[:mass]`)
+  - Controls how cell values are averaged: mass-weighted, volume-weighted, etc.
+  - Use `[:none]` for simple geometric averaging
+- **`mode::Symbol`**: Processing mode (:standard or :sum)
+  - :standard → weighted averages (typical for intensive quantities)
+  - :sum → accumulative totals (for extensive quantities like mass)
+- **`mask::Union{Vector{Bool}, MaskType}`**: Boolean mask to exclude cells
+  - Filter out unwanted regions or apply custom selection criteria
+- **`units::Array{Symbol,1}`**: Output units for projected variables
+  - Convert results to desired physical units automatically
+
+#### Advanced Options:
+- **`data_center/data_center_unit`**: Alternative center for data calculations
+  - When different from projection center (useful for coordinate transformations)
+- **`verbose::Bool`**: Print diagnostic information during processing (default: true)
+  - Shows progress, memory usage, and basic threading information
+- **`show_progress::Bool`**: Display progress bar for level-by-level processing (default: true)
+  - Visual feedback for long-running projections
+- **`verbose_threads::Bool`**: Show detailed multithreading diagnostics (default: false)
+  - Enable for debugging parallel performance or thread behavior
+- **`myargs::ArgumentsType`**: Struct to pass multiple arguments simultaneously
+  - Convenient for passing common parameter sets
+
+### Method Variants
+
+The projection function supports multiple calling patterns for convenience:
+
+```julia
+# Single variable projection
+projection(dataobject, :rho)                    # Density with default settings
+projection(dataobject, :rho, unit=:g_cm3)      # Density in specific units
+
+# Multiple variables with same units  
+projection(dataobject, [:v, :vx, :vy], :km_s) # Multiple vars, single unit
+
+# Multiple variables with different units
+projection(dataobject, [:rho, :sd], [:g_cm3, :Msol_pc2]) # Different units per variable
+
+# Surface density projection (special handling)
+projection(dataobject, :sd, :Msol_pc2)         # Surface density in solar masses per pc²
+```
+
+### Usage Examples
+
+#### Basic Density Projection
+```julia
+# Simple density map of full simulation box (sequential processing)
+density_map = projection(gas, :rho, unit=:g_cm3, res=512)
+
+# High resolution central region with optimal settings
+density_map = projection(gas, :rho, unit=:g_cm3, 
+                        xrange=[-10, 10], yrange=[-10, 10], 
+                        center=[:bc], range_unit=:kpc, res=1024)
+```
+
+#### Multi-Variable Analysis (Parallel Processing)
+```julia
+# Velocity field analysis (automatic variable-based parallelization)
+velocity_maps = projection(gas, [:vx, :vy, :vz], unit=:km_s,
+                          direction=:z, res=512)
+# Output: 🧵 Using parallel processing with 3 threads (one per variable)
+
+# Combined density and velocity (optimal parallel performance)
+hydro_maps = projection(gas, [:rho, :vx, :vy], [:g_cm3, :km_s, :km_s],
+                       xrange=[-5, 5], yrange=[-5, 5], 
+                       center=[:bc], range_unit=:kpc)
+# Output: ✅ Parallel projection completed successfully
+```
+
+#### Advanced AMR Projections
+```julia
+# High-precision thin slice (demonstrates AMR coordinate handling)
+thin_slice = projection(gas, :sd, :Msol_pc2,
+                       zrange=[0.49, 0.51], center=[:bc],
+                       range_unit=:standard, direction=:z, res=1024)
+
+# Volume-weighted projection for physical accuracy
+volume_proj = projection(gas, :rho, 
+                        weighting=[:volume, :cm3],
+                        mode=:sum, res=512)
+
+# Large multi-variable projection (optimal parallel performance)
+comprehensive = projection(gas, [:rho, :vx, :vy, :vz, :cs], 
+                          [:g_cm3, :km_s, :km_s, :km_s, :km_s],
+                          res=2048, verbose_threads=true)
+# Shows detailed threading diagnostics for performance analysis
+```
+
+#### Direction-Specific Projections
+```julia
+# X-direction projection (YZ plane) - parallel processing for multiple variables
+x_proj = projection(gas, [:rho, :vx], [:g_cm3, :km_s],
+                   direction=:x, yrange=[-10, 10], zrange=[-5, 5],
+                   center=[:bc], range_unit=:kpc)
+
+# Y-direction projection (XZ plane) - sequential processing for single variable
+y_proj = projection(gas, :sd, :Msol_pc2,
+                   direction=:y, xrange=[-20, 20], zrange=[-10, 10],
+                   center=[:bc], range_unit=:kpc)
+```
+
+#### Threading Control and Performance Monitoring
+```julia
+# Basic thread information (always shown with verbose=true)
+density_map = projection(gas, :rho, :g_cm3, res=512)
+# Output: Available threads: 8
+#         Requested max_threads: 8
+#         Processing mode: Sequential (single variable)
+
+# Detailed threading diagnostics for performance analysis
+multi_var = projection(gas, [:rho, :vx, :vy, :vz], res=1024, 
+                      verbose_threads=true)
+# Output: Available threads: 8
+#         Requested max_threads: 8
+#         Processing mode: Variable-based parallel (4 threads)
+#         🧵 Thread allocation: rho→T1, vx→T2, vy→T3, vz→T4
+#         ✅ Parallel projection completed successfully
+#         Performance: 2.1M cells/sec, Efficiency: 91.7%
+#
+# Note: verbose_threads=true shows detailed per-thread performance metrics
+```
+
+# Hide all output with verbose=false
+density_map = projection(gas, :rho, :g_cm3, res=512, 
+                         verbose=false)  # No threading output at all
+```
+
+#### Physical Pixel Size Control (pxsize)
+```julia
+# High-resolution projection with 10 pc pixels
+high_res = projection(gas, :rho, :g_cm3,
+                     pxsize=[10., :pc], 
+                     xrange=[-1, 1], yrange=[-1, 1], 
+                     center=[:bc], range_unit=:kpc)
+
+# Ultra-high resolution with 1 pc pixels for detailed structure
+ultra_high = projection(gas, :sd, :Msol_pc2,
+                       pxsize=[1., :pc],
+                       xrange=[-500, 500], yrange=[-500, 500],
+                       center=[:bc], range_unit=:pc)
+
+# Large-scale map with 100 pc pixels for overview
+overview = projection(gas, [:rho, :temperature], [:g_cm3, :K],
+                     pxsize=[100., :pc],
+                     xrange=[-10, 10], yrange=[-10, 10],
+                     center=[:bc], range_unit=:kpc)
+
+# Custom units: 0.1 kpc (100 pc) pixels  
+custom_scale = projection(gas, :vx, :km_s,
+                         pxsize=[0.1, :kpc],
+                         xrange=[-5, 5], yrange=[-5, 5],
+                         center=[:bc], range_unit=:kpc)
+
+# Very fine scale: sub-parsec resolution
+fine_detail = projection(gas, :density, :g_cm3,
+                        pxsize=[0.1, :pc],
+                        xrange=[-10, 10], yrange=[-10, 10], 
+                        center=[:bc], range_unit=:pc)
+```
+
+### Return Value
+
+Returns `HydroMapsType` containing:
+- **`.maps`**: Dictionary of projected variable maps (2D arrays)
+- **`.extent`**: Physical extent of projection [xmin, xmax, ymin, ymax]
+- **`.pixsize`**: Physical size of each pixel
+- **`.lmax_projected`**: Maximum AMR level included in projection
+- **`.ranges`**: Normalized coordinate ranges used
+- **`.center`**: Physical center coordinates of projection
+
+"""
 function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,

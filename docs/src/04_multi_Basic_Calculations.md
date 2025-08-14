@@ -1,12 +1,125 @@
-# 4. Basic Calculations
-The following functions process different types of `DataSetType`: 
-- ContainMassDataSetType,
--    HydroPartType,
--    HydroDataType,
--    PartDataType,
--    ClumpDataType. 
+# 4. Multi-Physics Basic Calculations and Statistical Analysis
 
-## Load The Data
+This comprehensive tutorial demonstrates essential computational methods for analyzing multi-physics simulation data using MERA.jl. Learn to calculate fundamental quantities, statistical measures, and derived properties across hydro, particle, and clump datasets with proper unit handling and weighting schemes.
+
+## Learning Objectives
+
+By the end of this tutorial, you will be able to:
+
+- **Calculate fundamental quantities** - Total mass, center-of-mass, and bulk velocities across all data types
+- **Apply proper unit conversions** - Seamlessly work with physical units and automatic scaling
+- **Perform statistical analysis** - Compute weighted and unweighted statistical measures
+- **Extract derived quantities** - Use `getvar()` for predefined and custom variable calculations
+- **Implement weighting schemes** - Apply mass, volume, and density weighting for accurate averages
+- **Combine multi-physics data** - Joint calculations across hydro, particle, and clump datasets
+- **Optimize computational workflows** - Efficient data processing and memory management
+
+## Technical Foundation
+
+### MERA Data Type Hierarchy
+
+MERA organizes simulation data through a sophisticated type system that enables unified computational methods across different physics components:
+
+**Core Data Types:**
+- `ContainMassDataSetType` - Abstract supertype for mass-containing datasets
+- `HydroDataType` - Hydrodynamic data with fluid properties (density, velocity, pressure)
+- `PartDataType` - Particle data with discrete mass elements and positions
+- `ClumpDataType` - Clump catalog data 
+- `HydroPartType` - Combined hydro-particle data for mixed-physics analysis
+![TypeHierarchy](./assets/TypeHierarchy.png)
+**Unified Interface Benefits:**
+- **Consistent function signatures** - Same functions work across all data types
+- **Automatic unit handling** - Built-in scaling between code and physical units
+- **Type-aware calculations** - Optimized algorithms for each data structure
+- **Extensible framework** - Easy addition of new calculation methods
+
+### Fundamental Calculation Functions
+
+**Mass and Position Functions:**
+- `msum(data, unit)` - Total mass calculation with automatic unit conversion
+- `center_of_mass(data, unit)` / `com(data, unit)` - Mass-weighted center calculation
+- `bulk_velocity(data, unit)` - Mass-weighted average velocity calculation
+- `average_mweighted(data, var, unit)` - General mass-weighted averaging
+
+**Statistical Analysis Functions:**
+- `wstat(values, weights)` - Comprehensive weighted statistical analysis
+- `getvar(data, vars, units)` - Variable extraction with unit conversion
+- `getpositions(data, unit, center)` - Position extraction with coordinate transformation
+- `getextent(data, unit, center)` - Domain boundary calculation
+
+### Unit System Architecture
+
+**Code Units (Default):**
+- Internal simulation units optimized for numerical precision
+- Dimensionless or normalized to characteristic scales
+- Direct output from computational algorithms
+
+**Physical Units (Converted):**
+- Standard astronomical units (Msol, kpc, Myr, km/s, etc.)
+- Automatic scaling using `info.scale` conversion factors
+- User-specified through function parameters
+
+**Conversion Hierarchy:**
+```julia
+# Manual scaling (explicit)
+result_physical = result_code * info.scale.unit
+
+# Automatic scaling (recommended)
+result_physical = function(data, :unit) 
+```
+
+### Weighting Schemes
+
+**Mass Weighting (Default):**
+- Appropriate for most physical quantities
+- Emphasizes high-mass regions
+- Standard for velocity, position averaging
+
+**Volume Weighting:**
+- Used for density-related quantities
+- Accounts for spatial resolution effects
+- Important for grid-based hydrodynamic data
+
+**No Weighting:**
+- Simple arithmetic averaging
+- Useful for discrete particle properties
+- Equal treatment of all data elements
+
+## Quick Reference
+
+```julia
+# Basic mass calculations
+msum(gas, :Msol)                    # Total gas mass
+msum([gas, particles], :Msol)       # Combined mass
+
+# Center-of-mass calculations  
+com(gas, :kpc)                      # Gas center-of-mass
+com([gas, particles], :kpc)         # Joint center-of-mass
+
+# Velocity analysis
+bulk_velocity(gas, :km_s)           # Mass-weighted velocity
+bulk_velocity(gas, :km_s, weighting=:volume)  # Volume-weighted
+
+# Statistical analysis
+wstat(getvar(gas, :rho, :g_cm3))    # Unweighted statistics
+wstat(getvar(gas, :vx, :km_s), weight=getvar(gas, :mass))  # Weighted
+
+# Variable extraction
+getvar(gas, :mass, :Msol)           # Single variable
+getvar(gas, [:mass, :ekin], [:Msol, :erg])  # Multiple variables
+
+# Coordinate related
+getpositions(gas, :kpc, center=[:boxcenter])  # Position arrays
+getextent(gas, :kpc, center=[:boxcenter])     # Domain boundaries
+
+# Time and scaling information
+gettime(info, :Myr)                 # Simulation time
+viewfields(info.scale)              # Available unit conversions
+```
+
+## Data Setup and Initialization
+
+Load multi-physics simulation data for comprehensive analysis demonstrations:
 
 
 ```julia
@@ -17,13 +130,13 @@ particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
 ```
 
-    [Mera]: 2025-06-30T09:30:13.374
+    [Mera]: 2025-08-12T15:50:40.108
     
     Code: RAMSES
     output [400] summary:
     mtime: 2018-09-05T09:51:55
     ctime: 2025-06-29T20:06:45.267
-    =======================================================
+    =======================================================
     simulation time: 594.98 [Myr]
     boxlen: 48.0 [kpc]
     ncpu: 2048
@@ -56,9 +169,9 @@ clumps    = getclumps(info);
     compilation-file: true
     makefile:         true
     patchfile:        true
-    =======================================================
+    =======================================================
     
-    [Mera]: Get hydro data: 2025-06-30T09:30:13.766
+    [Mera]: Get hydro data: 2025-08-12T15:50:44.290
     
     Key vars=(:level, :cx, :cy, :cz)
     Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz) 
@@ -68,17 +181,35 @@ clumps    = getclumps(info);
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
-    Reading data...
+    📊 Processing Configuration:
+       Total CPU files available: 2048
+       Files to be processed: 2048
+       Compute threads: 8
+       GC threads: 4
+    
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:02:47
+    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 ( 6.16 ms/it)
 
 
+    
+    ✓ File processing complete! Combining results...
+    ✓ Data combination complete!
+    Final data size: 849332 cells, 4 variables
+    Creating Table from 849332 cells with max 8 threads...
+      Threading: 8 threads for 8 columns
+      Max threads requested: 8
+      Available threads: 8
+      Using parallel processing with 8 threads
+      Creating IndexedTable with 8 columns...
+      0.744006 seconds (3.67 M allocations: 325.785 MiB, 0.71% gc time, 111.95% compilation time)
+    ✓ Table created in 0.932 seconds
     Memory used for data table :51.839996337890625 MB
     -------------------------------------------------------
     
-    [Mera]: Get particle data: 2025-06-30T09:33:01.147
+    [Mera]: Get particle data: 2025-08-12T15:51:01.287
     
+    Using threaded processing with 8 threads
     Key vars=(:level, :x, :y, :z, :id)
     Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass) 
     
@@ -87,16 +218,14 @@ clumps    = getclumps(info);
     ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
     
-
-
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:24
-
-
+    Processing 2048 CPU files using 8 threads
+    Mode: Threaded processing
+    Combining results from 8 thread(s)...
     Found 5.089390e+05 particles
     Memory used for data table :31.064148902893066 MB
     -------------------------------------------------------
     
-    [Mera]: Get clump data: 2025-06-30T09:33:26.262
+    [Mera]: Get clump data: 2025-08-12T15:51:02.804
     
     domain:
     xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -110,8 +239,17 @@ clumps    = getclumps(info);
     
 
 
-### Note
-Many functions can provide the results in selected units. The internal scaling from code to physical units makes use of the following defined relations:
+### Unit Conversion System
+
+MERA provides comprehensive unit conversion capabilities through the `info.scale` object, which contains conversion factors between code units and physical units. Understanding this system is crucial for accurate scientific analysis.
+
+**Core Conversion Principles:**
+- **Code units** - Internal simulation units optimized for numerical stability
+- **Physical units** - Standard astronomical units for scientific interpretation
+- **Automatic scaling** - Functions handle conversions internally when units are specified
+- **Consistent framework** - Same unit system across all data types and functions
+
+Many functions can provide results in selected units through automatic internal scaling:
 
 
 ```julia
@@ -119,8 +257,8 @@ viewfields(info.scale)
 ```
 
     
-    [Mera]: Fields to scale from user/code units to selected units
-    =======================================================================
+    [Mera]: Fields to scale from user/code units to selected units
+    =======================================================================
     Mpc	= 0.0010000000000006482
     kpc	= 1.0000000000006481
     pc	= 1000.0000000006482
@@ -165,21 +303,119 @@ viewfields(info.scale)
     nH	= 30.987773856809987
     erg	= 8.551000140274429e55
     g_cms2	= 2.9104844143584656e-9
-    T_mu	= 517028.3199143136
-    K_mu	= 517028.3199143136
-    T	= 680300.4209398864
-    K	= 680300.4209398864
+    T_mu	= 517017.45993377
+    K_mu	= 517017.45993377
+    T	= 680286.1314918026
+    K	= 680286.1314918026
     Ba	= 2.910484414358466e-9
     g_cm_s2	= 2.910484414358466e-9
-    p_kB	= 2.1080995598777838e7
-    K_cm3	= 2.1080995598777838e7
+    p_kB	= 2.1080552800592083e7
+    K_cm3	= 2.1080552800592083e7
+    erg_g_K	= 3.114563011649217e29
+    keV_cm2	= 1.252773885965637e65
+    erg_K	= 6.193464189866091e71
+    J_K	= 6.193464189866091e64
+    erg_cm3_K	= 2.1080552800592083e7
+    J_m3_K	= 2.1080552800592083e8
+    kB_per_particle	= 1.380649e-16
+    J_s	= 4.023715412864333e70
+    g_cm2_s	= 4.023715412864333e70
+    kg_m2_s	= 4.023715412864333e71
+    Gauss	= 0.00019124389093025845
+    muG	= 191.24389093025846
+    microG	= 191.24389093025846
+    Tesla	= 1.9124389093025845e-8
+    eV	= 5.3371144971238105e67
+    keV	= 5.33711449712381e64
+    MeV	= 5.33711449712381e61
+    erg_s	= 1.8172160775884043e41
+    Lsol	= 4.747168436751317e7
+    Lsun	= 4.747168436751317e7
+    cm_3	= 3.4036771916893676e-65
+    pc_3	= 1.158501842524895e-120
+    n_e	= 30.987773856809987
+    erg_g_s	= 0.09138397843151959
+    erg_cm3_s	= 6.185216915658869e-24
+    erg_cm2_s	= 6.185216915658869e-24
+    Jy	= 0.6185216915658869
+    mJy	= 618.5216915658868
+    microJy	= 618521.6915658868
+    atoms_cm2	= 1.2581352511025663e23
+    NH_cm2	= 1.2581352511025663e23
+    cm_s2	= 1.3935734353956443e-8
+    m_s2	= 1.3935734353956443e-10
+    km_s2	= 1.3935734353956443e-13
+    pc_Myr2	= 3.09843657823729e-9
+    erg_g	= 4.30011830747048e13
+    J_kg	= 4.30011830747048e6
+    km2_s2	= 4300.1183074704795
+    u_grav	= 2.910484414358466e-9
+    erg_cell	= 8.55100014027443e55
+    dyne	= 9.432237612943517e-31
+    s_2	= 4.516263928056473e-30
+    lambda_J	= 3.085677581282e21
+    M_J	= 1.9885499720830952e42
+    t_ff	= 4.70554946422349e14
+    alpha_vir	= 1.0
+    delta_rho	= 5.0e-324
+    a_mag	= 6.5265106214e-314
+    v_esc	= 5.0e-324
+    ax	= 6.526510637e-314
+    ay	= 5.0e-324
+    az	= 6.526510653e-314
+    epot	= 5.0e-324
+    a_magnitude	= 6.526510669e-314
+    escape_speed	= 5.0e-324
+    gravitational_redshift	= 6.5265106846e-314
+    gravitational_energy_density	= 5.0e-324
+    gravitational_binding_energy	= 6.5265107004e-314
+    total_binding_energy	= 5.0e-324
+    specific_gravitational_energy	= 4.30011830747048e13
+    gravitational_work	= 5.0e-324
+    jeans_length_gravity	= 3.085677581282e21
+    jeans_mass_gravity	= 1.9885499720830952e42
+    jeansmass	= 1.9885499720830952e42
+    freefall_time_gravity	= 4.70554946422349e14
+    ekin	= 8.551000140274429e55
+    etherm	= 8.551000140274429e55
+    virial_parameter_local	= 1.0
+    Fg	= 5.0e-324
+    poisson_source	= 6.526510811e-314
+    ar_cylinder	= 1.3935734353956443e-8
+    aϕ_cylinder	= 1.3935734353956443e-8
+    ar_sphere	= 1.3935734353956443e-8
+    aθ_sphere	= 1.3935734353956443e-8
+    aϕ_sphere	= 1.3935734353956443e-8
+    r_cylinder	= 3.085677581282e21
+    r_sphere	= 3.085677581282e21
+    ϕ	= 1.0
+    dimensionless	= 1.0
+    rad	= 1.0
+    deg	= 57.29577951308232
     
 
 
+## Total Mass Calculations
 
-## Total Mass
+Mass calculations form the foundation of astrophysical analysis, providing essential information about the distribution of matter across different simulation components. MERA's `msum()` function offers sophisticated mass calculation capabilities with automatic unit conversion and support for multi-physics datasets.
 
-The function `msum` calculates the total mass of the data that is assigned to the provided object. For the hydro-data, the mass is derived from the density and cell-size (level) of all elements. `info.scale.Msol` (or e.g.: gas.info.scale.Msol) scales the result from code units to solar masses:
+### Key Features:
+- **Universal data type support** - Works with hydro, particle, and clump data
+- **Automatic unit conversion** - Built-in scaling to physical units
+- **Multi-dataset combinations** - Joint mass calculations across data types
+- **Precision handling** - Optimized algorithms for numerical accuracy
+
+### Physical Basis:
+- **Hydrodynamic mass** - Derived from density and cell volume (ρ × V)
+- **Particle mass** - Direct summation of discrete particle masses
+- **Clump mass** - Hierarchical structure mass accounting
+
+### Basic Mass Calculation
+
+The `msum()` function calculates the total mass of data assigned to any MERA object. For hydrodynamic data, mass is derived from density and cell-size (level) of all elements, while particle data uses direct mass summation.
+
+**Manual Unit Conversion:**
+The traditional approach requires manual scaling using `info.scale.Msol` (or equivalent):
 
 
 ```julia
@@ -189,11 +425,14 @@ println( "Clumps Mtot:    ", msum(clumps)    * info.scale.Msol, " Msol" )
 ```
 
     Gas Mtot:       2.6703951073850353e10 Msol
-    Particles Mtot: 5.804426008528444e9 Msol
+    Particles Mtot: 5.804426008528429e9 Msol
     Clumps Mtot:    1.3743280681841675e10 Msol
 
 
-The units for the results can be calculated by the function itself by providing an unit-argument:
+### Automatic Unit Conversion
+
+**Recommended Approach:**
+The modern approach uses built-in unit conversion by providing a unit argument directly to the function:
 
 
 ```julia
@@ -202,9 +441,9 @@ println( "Particles Mtot: ", msum(particles, :Msol) , " Msol" )
 println( "Clumps Mtot:    ", msum(clumps, :Msol)    , " Msol" )
 ```
 
-    Gas Mtot:       2.670395107385036e10 Msol
-    Particles Mtot: 5.804426008528436e9 Msol
-    Clumps Mtot:    1.3743280681841673e10 Msol
+    Gas Mtot:       2.6703951073850353e10 Msol
+    Particles Mtot: 5.804426008528429e9 Msol
+    Clumps Mtot:    1.3743280681841675e10 Msol
 
 
 The following methods are defined on the function `msum`:
@@ -217,10 +456,7 @@ methods(msum)
 
 
 
- 2 methods for generic function **msum** from Mera:
- 
-  msum(dataobject::**ContainMassDataSetType**; *unit, mask*) in Mera at ...\
-   msum(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *mask*) in Mera at ...
+# 2 methods for generic function <b>msum</b> from Mera:<ul><li> msum(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L56" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:56</a></li> <li> msum(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L52" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:52</a></li> </ul>
 
 
 
@@ -234,9 +470,9 @@ println( "Particles COM: ", center_of_mass(particles) .* info.scale.kpc, " kpc" 
 println( "Clumps COM:    ", center_of_mass(clumps)    .* info.scale.kpc, " kpc" );
 ```
 
-    Gas COM:       (23.32748735447764, 23.83541991952592, 24.04172014803584) kpc
-    Particles COM: (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc
-    Clumps COM:    (23.135765457064576, 23.741712325649267, 24.005012718586205) kpc
+    Gas COM:       (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
+    Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
+    Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 
 
 The units for the results can be calculated by the function itself by providing a unit-argument:
@@ -248,9 +484,9 @@ println( "Particles COM: ", center_of_mass(particles, :kpc) , " kpc" )
 println( "Clumps COM:    ", center_of_mass(clumps, :kpc)    , " kpc" );
 ```
 
-    Gas COM:       (23.32748735447764, 23.83541991952592, 24.04172014803584) kpc
-    Particles COM: (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc
-    Clumps COM:    (23.135765457064576, 23.741712325649267, 24.005012718586205) kpc
+    Gas COM:       (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
+    Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
+    Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 
 
 A shorter name for the function `center_of_mass` is defined as `com` :
@@ -262,9 +498,9 @@ println( "Particles COM: ", com(particles, :kpc) , " kpc" )
 println( "Clumps COM:    ", com(clumps, :kpc)    , " kpc" );
 ```
 
-    Gas COM:       (23.32748735447764, 23.83541991952592, 24.04172014803584) kpc
-    Particles COM: (22.891354761211332, 24.174147282680273, 24.003205056545575) kpc
-    Clumps COM:    (23.135765457064576, 23.741712325649267, 24.005012718586205) kpc
+    Gas COM:       (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
+    Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
+    Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 
 
 The result of the coordinates (x, y, z) can be assigned e.g. to a tuple or to three single variables:
@@ -280,8 +516,8 @@ x_pos, y_pos, z_pos = com(gas, :kpc);  #create variables
 println("Single vars: ", x_pos, "  ", y_pos, "  ", z_pos, "  kpc")
 ```
 
-    Tuple:      (23.32748735447764, 23.83541991952592, 24.04172014803584) kpc
-    Single vars: 23.32748735447764  23.83541991952592  24.04172014803584  kpc
+    Tuple:      (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
+    Single vars: 23.32748735447764  23.835419919525915  24.04172014803584  kpc
 
 
 Calculate the joint centre-of-mass from the hydro and particle data. Provide the hydro and particle data with an array (independent order):
@@ -292,8 +528,8 @@ println( "Joint COM (Gas + Particles): ", center_of_mass([gas,particles], :kpc) 
 println( "Joint COM (Particles + Gas): ", center_of_mass([particles,gas], :kpc) , " kpc" )
 ```
 
-    Joint COM (Gas + Particles): (23.24961513830681, 23.895900266222746, 24.03484321295537) kpc
-    Joint COM (Particles + Gas): (23.24961513830681, 23.895900266222746, 24.03484321295537) kpc
+    Joint COM (Gas + Particles): (23.249615138763833, 23.895900266693467, 24.034843213428744) kpc
+    Joint COM (Particles + Gas): (23.249615138306556, 23.895900266223183, 24.03484321295532) kpc
 
 
 Use the shorter name `com` that is defined as the function `center_of_mass` :
@@ -304,8 +540,8 @@ println( "Joint COM (Gas + Particles): ", com([gas,particles], :kpc) , " kpc" )
 println( "Joint COM (Particles + Gas): ", com([particles,gas], :kpc) , " kpc" )
 ```
 
-    Joint COM (Gas + Particles): (23.24961513830681, 23.895900266222746, 24.03484321295537) kpc
-    Joint COM (Particles + Gas): (23.24961513830681, 23.895900266222746, 24.03484321295537) kpc
+    Joint COM (Gas + Particles): (23.249615138763833, 23.895900266693467, 24.034843213428744) kpc
+    Joint COM (Particles + Gas): (23.249615138306556, 23.895900266223183, 24.03484321295532) kpc
 
 
 
@@ -316,12 +552,7 @@ methods(center_of_mass)
 
 
 
- 4 methods for generic function **center_of_mass** from Mera:
- 
- center_of_mass(dataobject::**Vector{HydroPartType}**; *unit, mask*) in Mera at ...\
-  center_of_mass(dataobject::**Vector{HydroPartType}**, unit::**Symbol**; *mask*) in Mera at ...\
-  center_of_mass(dataobject::**ContainMassDataSetType**; *unit, mask*) in Mera at ...\
-center_of_mass(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *mask*) in Mera at ...
+# 4 methods for generic function <b>center_of_mass</b> from Mera:<ul><li> center_of_mass(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L244" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:244</a></li> <li> center_of_mass(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L240" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:240</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L121" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:121</a></li> <li> center_of_mass(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L117" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:117</a></li> </ul>
 
 
 
@@ -333,18 +564,13 @@ methods(com)
 
 
 
- 4 methods for generic function **com** from Mera:
- 
-  com(dataobject::**Vector{HydroPartType}**; *unit, mask*) in Mera at ...\
-   com(dataobject::**Vector{HydroPartType}**, unit::**Symbol**; *mask*) in Mera at...\
-    com(dataobject::**ContainMassDataSetType**; *unit, mask*) in Mera at ...\
-    com(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *mask*) in Mera at ...
+# 4 methods for generic function <b>com</b> from Mera:<ul><li> com(dataobject::<b>Vector{HydroPartType}</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L311" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:311</a></li> <li> com(dataobject::<b>Vector{HydroPartType}</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L307" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:307</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>; <i>unit, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L160" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:160</a></li> <li> com(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L156" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:156</a></li> </ul>
 
 
 
 ## Bulk Velocity
 
-The function `bulk_velocity` or `average_velocity` calculates the average velocity (w/o mass-weight) of the data that is assigned to the provided object. It can also be used for the clump data if it has velocity components: vx, vy, vz. The default is with mass-weighting:
+The function `bulk_velocity` or `average_velocity` calculates the average velocity (with and without mass-weight) of the data that is assigned to the provided object. It can also be used for the clump data if it has velocity components: vx, vy, vz. The default is with mass-weighting:
 
 
 ```julia
@@ -352,8 +578,8 @@ println( "Gas:       ", bulk_velocity(gas, :km_s)       , " km/s" )
 println( "Particles: ", bulk_velocity(particles, :km_s) , " km/s" )
 ```
 
-    Gas:       (-1.4418303105424646, -11.708719305767852, -0.539324349686299) km/s
-    Particles: (-11.623422700314535, -18.440572802490234, -0.3291927731417527) km/s
+    Gas:       (-1.441830310542467, -11.708719305767854, -0.5393243496862989) km/s
+    Particles: (-11.623422700314567, -18.440572802490294, -0.32919277314175355) km/s
 
 
 
@@ -362,8 +588,8 @@ println( "Gas:       ", average_velocity(gas, :km_s)       , " km/s" )
 println( "Particles: ", average_velocity(particles, :km_s) , " km/s" )
 ```
 
-    Gas:       (-1.4418303105424646, -11.708719305767852, -0.539324349686299) km/s
-    Particles: (-11.623422700314535, -18.440572802490234, -0.3291927731417527) km/s
+    Gas:       (-1.441830310542467, -11.708719305767854, -0.5393243496862989) km/s
+    Particles: (-11.623422700314567, -18.440572802490294, -0.32919277314175355) km/s
 
 
 Without mass-weighting:
@@ -376,8 +602,8 @@ println( "Gas:       ", bulk_velocity(gas, :km_s, weighting=:volume)       , " k
 println( "Particles: ", bulk_velocity(particles, :km_s, weighting=:no) , " km/s" )
 ```
 
-    Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158428) km/s
-    Particles: (-11.594477384589647, -18.388591187193725, -0.30977462952679713) km/s
+    Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
+    Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 
 
 
@@ -386,8 +612,8 @@ println( "Gas:       ", average_velocity(gas, :km_s, weighting=:volume)       , 
 println( "Particles: ", average_velocity(particles, :km_s, weighting=:no) , " km/s" )
 ```
 
-    Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158428) km/s
-    Particles: (-11.594477384589647, -18.388591187193725, -0.30977462952679713) km/s
+    Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
+    Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 
 
 
@@ -398,10 +624,7 @@ methods(bulk_velocity)
 
 
 
-2 methods for generic function **bulk_velocity** from Mera:
- 
-bulk_velocity(dataobject::**ContainMassDataSetType**; *unit, weighting, mask*) in Mera at ...\
-bulk_velocity(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *weighting, mask*) in Mera at ...
+# 2 methods for generic function <b>bulk_velocity</b> from Mera:<ul><li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L434" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:434</a></li> <li> bulk_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L429" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:429</a></li> </ul>
 
 
 
@@ -413,10 +636,8 @@ methods(average_velocity)
 
 
 
- 2 methods for generic function **average_velocity** from Mera:
- 
-average_velocity(dataobject::**ContainMassDataSetType**; *unit, weighting, mask*) in Mera at ...\
-average_velocity(dataobject::**ContainMassDataSetType**, unit::**Symbol**; *weighting, mask*) in Mera at ...
+# 2 methods for generic function <b>average_velocity</b> from Mera:<ul><li> average_velocity(dataobject::<b>ContainMassDataSetType</b>; <i>unit, weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L485" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:485</a></li> <li> average_velocity(dataobject::<b>ContainMassDataSetType</b>, unit::<b>Symbol</b>; <i>weighting, mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L481" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:481</a></li> </ul>
+
 
 
 ## Mass Weighted Average
@@ -430,9 +651,7 @@ methods( average_mweighted )
 
 
 
- 1 method for generic function **average_mweighted** from Mera:
- 
- average_mweighted(dataobject::**ContainMassDataSetType**, var::**Symbol**; *mask*) in Mera at ...
+# 1 method for generic function <b>average_mweighted</b> from Mera:<ul><li> average_mweighted(dataobject::<b>ContainMassDataSetType</b>, var::<b>Symbol</b>; <i>mask</i>) in Mera at <a href="https://github.com/ManuelBehrendt/Mera.jl/tree/44b920cc9849caed51c57ab3cbf5ed01f9724db6//src/functions/basic_calc.jl#L332" target="_blank">/Users/mabe/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:332</a></li> </ul>
 
 
 
@@ -447,10 +666,12 @@ info = getinfo(1, "/Volumes/FASTStorage/Simulations/Mera-Tests//manu_stable_2019
 gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false); 
 ```
 
-    Reading data...
+    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:10 ( 0.33  s/it)
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:20
+    
+    ✓ File processing complete! Combining results...
+      4.449519 seconds (399.56 k allocations: 5.428 GiB, 2.31% gc time)
 
 
 Use `getvar` to extract variables or derive predefined quantities from the database, dependent on the data type.
@@ -470,10 +691,19 @@ getvar()
                   -derived hydro vars-
     :x, :y, :z
     :mass, :cellsize, :volume, :freefall_time
-    :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber
+    :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber, :jeansmass
+    :virial_parameter_local
     :T, :Temp, :Temperature with p/rho
+    :etherm (thermal energy per cell)
     
-    :h, :hx, :hy, :hz (specific angular momentum)
+    :entropy_specific (specific entropy)
+    :entropy_index (dimensionless adiabatic constant)
+    :entropy_density (entropy per unit volume)
+    :entropy_per_particle (entropy per particle)
+    :entropy_total (total entropy per cell/particle)
+    
+              -magnetohydrodynamic Mach numbers-
+    :mach_alfven, :mach_fast, :mach_slow
     
     ==========================[particles]:==========================
            -all the non derived particle vars-
@@ -491,19 +721,47 @@ getvar()
     :x, :y, :z
     :cellsize, :volume
     
+         -gravitational field properties-
+    :a_magnitude
+    :escape_speed
+    :gravitational_redshift
+    :specific_gravitational_energy
+    
     ===========================[clumps]:===========================
     :peak_x or :x, :peak_y or :y, :peak_z or :z
     :v, :ekin,...
     
-    =====================[gas or particles]:=======================
+    =====================[gas, particles or gravity]:=======================
     :v, :ekin
     
     related to a given center:
     ---------------------------
-    :r_cylinder, :r_sphere (radial components)
-    :ϕ
-    :vr_cylinder
-    :vϕ_cylinder
+    :r_cylinder, :r_sphere (radial distances)
+    :ϕ (azimuthal angle)
+    
+         -cylindrical velocity components-
+    :vr_cylinder, :vϕ_cylinder
+    
+         -spherical velocity components-
+    :vr_sphere, :vθ_sphere, :vϕ_sphere
+    
+         -coordinate-dependent Mach numbers-
+    :mach_r_cylinder, :mach_phi_cylinder
+    :mach_r_sphere, :mach_theta_sphere, :mach_phi_sphere
+    
+         -specific angular momentum-
+    :h, :hx, :hy, :hz
+    
+         -angular momentum-
+    :l, :lx, :ly, :lz (Cartesian components)
+    :lr_cylinder, :lϕ_cylinder (cylindrical components)
+    :lr_sphere, :lθ_sphere, :lϕ_sphere (spherical components)
+    
+         -cylindrical acceleration components, gravity-
+    :ar_cylinder, :aϕ_cylinder
+    
+         -spherical acceleration components, gravity-
+    :ar_sphere, :aθ_sphere, :aϕ_sphere
     ----------------------------------------------------------------
 
 
@@ -522,7 +780,7 @@ mass3 = getvar(gas, :mass, unit=:Msol) # unit calculation, provided by a keyword
 mass4 = getvar(gas, :mass, :Msol) # unit calculation provided by an argument [Msol]
 
 # construct a three dimensional array to compare the three created arrays column wise:  
-mass_overview = [mass1 mass2 mass3 mass4] 
+mass_overview = ass1 mass2 mass3 mass4] 
 ```
 
 
@@ -723,10 +981,19 @@ getvar()
                   -derived hydro vars-
     :x, :y, :z
     :mass, :cellsize, :volume, :freefall_time
-    :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber
+    :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber, :jeansmass
+    :virial_parameter_local
     :T, :Temp, :Temperature with p/rho
+    :etherm (thermal energy per cell)
     
-    :h, :hx, :hy, :hz (specific angular momentum)
+    :entropy_specific (specific entropy)
+    :entropy_index (dimensionless adiabatic constant)
+    :entropy_density (entropy per unit volume)
+    :entropy_per_particle (entropy per particle)
+    :entropy_total (total entropy per cell/particle)
+    
+              -magnetohydrodynamic Mach numbers-
+    :mach_alfven, :mach_fast, :mach_slow
     
     ==========================[particles]:==========================
            -all the non derived particle vars-
@@ -744,19 +1011,47 @@ getvar()
     :x, :y, :z
     :cellsize, :volume
     
+         -gravitational field properties-
+    :a_magnitude
+    :escape_speed
+    :gravitational_redshift
+    :specific_gravitational_energy
+    
     ===========================[clumps]:===========================
     :peak_x or :x, :peak_y or :y, :peak_z or :z
     :v, :ekin,...
     
-    =====================[gas or particles]:=======================
+    =====================[gas, particles or gravity]:=======================
     :v, :ekin
     
     related to a given center:
     ---------------------------
-    :r_cylinder, :r_sphere (radial components)
-    :ϕ
-    :vr_cylinder
-    :vϕ_cylinder
+    :r_cylinder, :r_sphere (radial distances)
+    :ϕ (azimuthal angle)
+    
+         -cylindrical velocity components-
+    :vr_cylinder, :vϕ_cylinder
+    
+         -spherical velocity components-
+    :vr_sphere, :vθ_sphere, :vϕ_sphere
+    
+         -coordinate-dependent Mach numbers-
+    :mach_r_cylinder, :mach_phi_cylinder
+    :mach_r_sphere, :mach_theta_sphere, :mach_phi_sphere
+    
+         -specific angular momentum-
+    :h, :hx, :hy, :hz
+    
+         -angular momentum-
+    :l, :lx, :ly, :lz (Cartesian components)
+    :lr_cylinder, :lϕ_cylinder (cylindrical components)
+    :lr_sphere, :lθ_sphere, :lϕ_sphere (spherical components)
+    
+         -cylindrical acceleration components, gravity-
+    :ar_cylinder, :aϕ_cylinder
+    
+         -spherical acceleration components, gravity-
+    :ar_sphere, :aθ_sphere, :aϕ_sphere
     ----------------------------------------------------------------
 
 
@@ -907,7 +1202,7 @@ radius = sqrt.(x.^2 .+ y.^2) .* info.scale.kpc
 
 
 ### Use IndexedTables Functions
-see <https://juliadb.org>
+see <https://juliadb.juliadata.org/stable/>
 
 
 ```julia
@@ -948,7 +1243,7 @@ Comparison of the results:
 
 
 ```julia
-[mass1 mass2 mass3]
+ass1 mass2 mass3]
 ```
 
 
@@ -984,7 +1279,42 @@ Comparison of the results:
 
 
 
-## Statistical Quantities
+## Statistical Analysis
+
+Statistical analysis provides essential insights into the distribution and characteristics of simulation data. MERA's `wstat` function offers comprehensive statistical calculations with support for both unweighted and mass-weighted analysis across all data types.
+
+### Key Features
+
+- **Comprehensive Statistics**: Mean, median, standard deviation, min/max, quartiles, and more
+- **Weighted Analysis**: Mass-weighted, volume-weighted, or custom weighting schemes
+- **Multi-Physics Support**: Consistent interface across hydro, particle, and clump data
+- **Memory Efficient**: Optimized calculations for large datasets
+- **Physical Units**: Automatic unit conversion for all statistical quantities
+
+### Statistical Quantities Available
+
+The `wstat` function returns a structured object containing:
+- **mean**: Arithmetic or weighted mean
+- **median**: 50th percentile value
+- **std**: Standard deviation
+- **min/max**: Extreme values
+- **q25/q75**: 25th and 75th percentiles
+- **count**: Number of data points
+
+### Quick Reference
+
+```julia
+# Unweighted statistics
+stats = wstat(getvar(data, :variable, :unit))
+
+# Weighted statistics
+stats = wstat(getvar(data, :variable, :unit), weight=getvar(data, :mass))
+
+# Access results
+println("Mean: ", stats.mean)
+println("Std:  ", stats.std)
+println("Range: ", stats.min, " to ", stats.max)
+```
 
 
 ```julia
@@ -994,11 +1324,12 @@ particles = getparticles(info, [:mass, :vx, :vy, :vz], verbose=false)
 clumps    = getclumps(info, verbose=false);
 ```
 
-    Reading data...
+    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:12 ( 6.08 ms/it)
 
 
-    Progress: 100%|█████████████████████████████████████████| Time: 0:02:47
-    Progress: 100%|█████████████████████████████████████████| Time: 0:00:19
+    
+    ✓ File processing complete! Combining results...
+      0.037452 seconds (52.20 k allocations: 123.612 MiB)
 
 
 Pass any kind of Array{<:Real,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:
@@ -1039,9 +1370,9 @@ println( "Particles  <vx>_allparticles : ",  stats_particles.mean, " km/s" )
 println( "Clumps <rho_av>_allclumps    : ",  stats_clumps.mean,    " Msol/pc^3" )
 ```
 
-    Gas        <vx>_allcells     : -2.9318774650713717 km/s
+    Gas        <vx>_allcells     : -2.931877465071372 km/s
     Particles  <vx>_allparticles : -11.594477384589647 km/s
-    Clumps <rho_av>_allclumps    : 594.7315900915926 Msol/pc^3
+    Clumps <rho_av>_allclumps    : 594.7315900915924 Msol/pc^3
 
 
 
@@ -1094,8 +1425,8 @@ println( "Particles  <vx>_allparticles : ",  stats_particles.mean, " km/s (mass 
 println( "Clumps <peak_x>_allclumps    : ",  stats_clumps.mean,    " kpc  (mass weighted)" )
 ```
 
-    Gas        <vx>_allcells     : -1.1999253584798584 km/s (mass weighted)
-    Particles  <vx>_allparticles : -11.623422700314533 km/s (mass weighted)
+    Gas        <vx>_allcells     : -1.1999253584798235 km/s (mass weighted)
+    Particles  <vx>_allparticles : -11.623422700314565 km/s (mass weighted)
     Clumps <peak_x>_allclumps    : 23.135765457064576 kpc  (mass weighted)
 
 
@@ -1123,7 +1454,7 @@ stats_gas = wstat( getvar(gas, :rho, :g_cm3), weight=getvar(gas, :volume) );
 println( "Gas  <rho>_allcells : ",  stats_gas.mean,  " g/cm^3 (volume weighted)" )
 ```
 
-    Gas  <rho>_allcells : 1.8958545012297553e-26 g/cm^3 (volume weighted)
+    Gas  <rho>_allcells : 1.8958545012297404e-26 g/cm^3 (volume weighted)
 
 
 ## Helpful Functions
@@ -1247,7 +1578,16 @@ gettime(gas, :Myr)
 
 
 
+## Summary
 
-```julia
+This tutorial demonstrated MERA's powerful capabilities for basic calculations and statistical analysis across multi-physics simulation data. The unified interface enables seamless analysis of hydro, particle, and clump data with consistent syntax and automatic unit handling.
 
-```
+### Key Takeaways
+
+#### Essential Functions Covered
+- **`msum`**: Mass summation with automatic unit conversion
+- **`center_of_mass`**: Mass-weighted spatial averaging
+- **`bulk_velocity`**: Mass-weighted velocity centroids
+- **`wstat`**: Comprehensive statistical analysis with weighting options
+- **`getvar`**: Flexible variable extraction with unit conversion
+

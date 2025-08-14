@@ -1,28 +1,4 @@
-"""
-#### Read the leaf-cells of the gravity-data with multi-threading support:
-- select variables
-- limit to a maximum level  
-- limit to a spatial range
-- parallel file processing with configurable thread count
-- thread-safe progress tracking
-- comprehensive verbose output
-- pass a struct with arguments (myargs)
-
-getgravity(dataobject::InfoType;
-lmax::Real=dataobject.levelmax,
-vars::Array{Symbol,1}=[:all],
-xrange::Array{<:Any,1}=[missing, missing],
-yrange::Array{<:Any,1}=[missing, missing],
-zrange::Array{<:Any,1}=[missing, missing],
-center::Array{<:Any,1}=[0., 0., 0.],
-range_unit::Symbol=:standard,
-print_filenames::Bool=false,
-verbose::Bool=true,
-show_progress::Bool=true,
-myargs::ArgumentsType=ArgumentsType(),
-max_threads::Int=Threads.nthreads())
-
-"""
+ 
 
 function getgravity(dataobject::InfoType, var::Symbol;
                    lmax::Real=dataobject.levelmax,
@@ -73,6 +49,78 @@ function getgravity(dataobject::InfoType, vars::Array{Symbol,1};
                      max_threads=max_threads)
 end
 
+"""
+Read gravity leaf-cells with optional spatial selection and multithreading.
+
+- Select variables (e.g., :epot, :ax, :ay, :az; include :cpu to add CPU column)
+- Limit to a maximum refinement level (lmax)
+- Select by spatial range around a center in a chosen unit
+- Parallel file processing (configurable max_threads) with progress bar
+- Verbose output with timestamps and table memory overview
+- Pass an ArgumentsType struct (myargs) to override multiple keywords at once
+
+```julia
+getgravity(dataobject::InfoType;
+        lmax::Real=dataobject.levelmax,
+        vars::Array{Symbol,1}=[:all],
+        xrange::Array{<:Any,1}=[missing, missing],
+        yrange::Array{<:Any,1}=[missing, missing],
+        zrange::Array{<:Any,1}=[missing, missing],
+        center::Array{<:Any,1}=[0., 0., 0.],
+        range_unit::Symbol=:standard,
+        print_filenames::Bool=false,
+        verbose::Bool=true,
+        show_progress::Bool=true,
+        myargs::ArgumentsType=ArgumentsType(),
+        max_threads::Int=Threads.nthreads())
+```
+
+Returns a GravDataType with:
+- data: IndexedTable with position columns (:cx,:cy,:cz), optionally :level and/or :cpu, followed by selected variables
+- info, lmin, lmax, boxlen, ranges, selected_gravvars, used_descriptors, scale
+
+Arguments
+- Required
+    - dataobject: InfoType from getinfo
+- Keywords
+    - lmax: maximum refinement level to read (validated against the dataset)
+    - vars: gravity variables to load; default [:all]. Known names include :epot, :ax, :ay, :az. Include :cpu to add CPU column.
+    - xrange, yrange, zrange: [min,max] in units of range_unit relative to center; use missing to skip. Zero-length [0,0] is expanded to full box.
+    - center: selection center; default [0.,0.,0.]; you can use symbols like [:bc] for box center (also combinations like [val, :bc, :bc]).
+    - range_unit: units for ranges/center (e.g., :standard, :kpc, :pc, :Mpc, :km, :cm; Symbol)
+    - print_filenames: print each processed file path
+    - verbose: print timestamps and summaries
+    - show_progress: show a progress bar during reading
+    - myargs: ArgumentsType struct to override lmax, ranges, center, range_unit, verbose, show_progress
+    - max_threads: cap threads used for table creation and column extraction (≤ available threads)
+
+Defined methods
+- getgravity(dataobject::InfoType; ...)               # no vars → all variables loaded
+- getgravity(dataobject::InfoType, var::Symbol; ...)  # single variable (Symbol)
+- getgravity(dataobject::InfoType, vars::Array{Symbol,1}; ...)  # multiple variables
+
+Examples
+```julia
+# Read all gravity variables at all levels, whole box
+g = getgravity(info)
+
+# Read only potential and acceleration components within a kpc-scale box around the center
+g = getgravity(info, vars=[:epot, :ax, :ay, :az],
+                             xrange=[-5,5], yrange=[-5,5], zrange=[-2,2],
+                             center=[:bc], range_unit=:kpc)
+
+# Include CPU column
+g = getgravity(info, vars=[:cpu, :epot])
+
+# Override several keywords at once via myargs
+g = getgravity(info, myargs=ArgumentsType(lmax=12, range_unit=:kpc, verbose=false))
+```
+
+Important notes
+- Spatial selection is evaluated at cell centers (:cx,:cy,:cz).
+- AMR vs uniform grid affects included columns and primary key: AMR adds :level.
+- Variable names can also come from file descriptors; unknown indices are named :gravN.
+"""
 function getgravity(dataobject::InfoType;
                    lmax::Real=dataobject.levelmax,
                    vars::Array{Symbol,1}=[:all],
