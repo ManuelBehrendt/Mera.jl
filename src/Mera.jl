@@ -142,6 +142,7 @@ export
     construct_datatype,
     createscales,
     createconstants,
+    createconstants!,
     humanize,
     bell,
     notifyme,
