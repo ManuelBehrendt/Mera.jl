@@ -57,7 +57,6 @@ makedocs(modules = [Mera],
 
                       "13 Reference Guide"          => Any["Julia"                          => "quickreference/Julia_Quick_Reference.md",
                                                         "Mera"                          => "quickreference/Mera_Quick_Reference.md",
-                                                        "Performance"                   => "quickreference/Performance_Quick_Reference.md"],
 
                       "14 API Documentation"     => "api.md"
                       ]
