@@ -8,15 +8,23 @@ using Tar
 println("🧪 Mera.jl Test Suite")
 println("=" ^ 50)
 
+using Test
+using Mera
+
 # Check if we're in CI environment
-is_ci = haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS") || haskey(ENV, "MERA_CI_MODE")
-if is_ci
-    println("🤖 Running in CI environment")
-    println("   Julia version: $(VERSION)")
-    println("   Threads: $(Threads.nthreads())")
-    println("   Architecture: $(Sys.ARCH)")
-    println("   OS: $(Sys.KERNEL)")
-end
+const IS_CI = get(ENV, "CI", "false") == "true" || 
+              get(ENV, "GITHUB_ACTIONS", "false") == "true" ||
+              get(ENV, "MERA_CI_MODE", "false") == "true"
+
+println("� Starting Mera.jl Test Suite...")
+println("CI Environment: $IS_CI")
+println("Julia Version: $(VERSION)")
+println("Available threads: $(Threads.nthreads())")
+
+# Include comprehensive unit tests  
+include("comprehensive_unit_tests.jl")
+include("comprehensive_unit_tests_simple.jl")
+include("physics_and_performance_tests.jl")
 
 # Include test modules
 include("basic_module_tests.jl")
@@ -78,13 +86,23 @@ include("comprehensive_unit_tests_simple.jl")  # New simple comprehensive Mera f
         run_simple_comprehensive_tests()
     end
     
+    # 10. Physics and Performance Tests
+    @testset "Physics and Performance Tests" begin
+        if isdefined(Main, :run_physics_and_performance_tests)
+            run_physics_and_performance_tests()
+        else
+            @test_skip "Physics and performance tests function not available"
+            println("⚠️  Physics and performance tests not available")
+        end
+    end
+    
 end
 
-if is_ci
+if IS_CI
     println("🤖 CI Test Summary:")
     println("   ✅ Basic module tests: Comprehensive functionality verification")
-    println("   � Core functionality tests: Deep function coverage for code metrics")
-    println("   �📊 Code coverage: Generated for Codecov integration")
+    println("   🧪 Core functionality tests: Deep function coverage for code metrics")
+    println("   📊 Code coverage: Generated for Codecov integration")
     if haskey(ENV, "MERA_SKIP_DATA_TESTS") && ENV["MERA_SKIP_DATA_TESTS"] == "true"
         println("   ⏭️ Simulation data tests: Skipped by configuration")
     else
