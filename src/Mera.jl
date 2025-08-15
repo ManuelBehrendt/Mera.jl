@@ -271,8 +271,8 @@ include("functions/data/data_convert.jl")
 include("functions/data/mera_convert.jl")
 # ============================================
 
-# Safe performance utilities
-include("functions/optimization/safe_performance.jl")
+# Safe performance utilities (moved to dev/)
+# include("functions/optimization/safe_performance.jl")
 # ============================================
 
 
