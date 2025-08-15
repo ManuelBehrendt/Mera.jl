@@ -55,7 +55,7 @@ function run_core_functionality_tests()
             @test_throws Exception getinfo(output=0)
         end
 
-        @testset "Module Structure" begin
+    @testset "Module Structure" begin
             # Test that the module has expected exports
             exported_symbols = names(Mera)
             @test length(exported_symbols) > 100
@@ -64,8 +64,7 @@ function run_core_functionality_tests()
             @test Symbol("@apply") in exported_symbols
             @test Symbol("@filter") in exported_symbols
             @test Symbol("@where") in exported_symbols
-            @test Symbol("@mera_timer") in exported_symbols
-            @test Symbol("@mera_benchmark") in exported_symbols
+            # Removed macros (@mera_timer, @mera_benchmark) no longer tested
             
             # Test analysis functions
             @test :center_of_mass in exported_symbols
@@ -108,7 +107,7 @@ function run_core_functionality_tests()
             # Test benchmarking
             @test isdefined(Mera, :run_benchmark)
             @test isdefined(Mera, :benchmark_projection_hydro)
-            @test isdefined(Mera, :suggest_optimizations)
+            # suggest_optimizations removed from code base; no longer tested
             @test isdefined(Mera, :show_auto_optimization_status)
             
             # Test cache management
