@@ -17,23 +17,7 @@
 ---
 
 
-> 
-> **Start the REPL:** Open a terminal and run `julia`.
-> 
-> **Run a script:** `julia myscript.jl`
-> 
-> **Install a package:**
-> 1. Enter package mode: type `]` in the REPL
-> 2. Add a package: `add DataFrames`
-> 3. Back to Julia: press Backspace or Ctrl+C
-> 
-> **Get help:** Type `?` in the REPL, then a function name (e.g., `?mean`).
-> **Hello World Plot:**
-> ```julia
-> using CairoMakie
-> scatter(1:5, rand(5))
-> ```
-> *(Install with `] add CairoMakie` if needed)*
+
 
 ## 2. Getting Started with Julia
 
@@ -98,8 +82,6 @@
 
 ## 5. Common Pitfalls & Tips
 
-## Common Pitfalls & Tips
-
 | Pitfall / Tip | Julia | Python | Note |
 | :-- | :-- | :-- | :-- |
 | Indexing | `A[1]` (1-based) | `A[0]` (0-based) | Julia starts at 1! |
@@ -118,7 +100,6 @@
 
 ## 6. REPL & Package Manager Shortcuts
 
-## REPL & Package Manager Shortcuts
 
 | Shortcut | Action |
 | :-- | :-- |
@@ -137,48 +118,6 @@
 > **Quick wins and idioms for users migrating from Python, MATLAB, or IDL:**
 
 ### Python → Julia
-
-
-## Migration Quick Wins (Python → Julia)
-
-> **Quick wins and idioms for Python users:**
-
-| Python | Julia | Notes |
-| :-- | :-- | :-- |
-| `list.append(x)` | `push!(a, x)` | Mutates array |
-| `a + b` (lists) | `vcat(a, b)` or `[a; b]` | Concatenate arrays |
-| `a.extend(b)` | `append!(a, b)` | Extend array |
-| `a * 3` (repeat) | `repeat(a, 3)` | Repeat array |
-| `dict = {}` | `d = Dict()` | Dictionaries |
-| `for i, v in enumerate(a):` | `for (i, v) in pairs(a)` | 1-based |
-| `for i in range(len(a)):` | `for i in eachindex(a)` | Efficient iteration |
-| `len(a)` | `length(a)` |  |
-| `a.shape` | `size(a)` |  |
-| `a.T` | `transpose(a)` |  |
-| `range(10)` | `1:10` | Inclusive |
-| `np.array([1,2,3])` | `[1,2,3]` | |
-| `np.sum(a)` | `sum(a)` | |
-| `np.mean(a)` | `mean(a)` | |
-| `np.where(a > 0)` | `findall(>(0), a)` | Indices where condition true |
-| `a[mask]` | `a[mask]` | Boolean indexing |
-| `a[:, 0]` | `a[:, 1]` | 1-based column access |
-| `a[::-1]` | `reverse(a)` | Reverse array |
-| `np.unique(a)` | `unique(a)` | |
-| `np.argsort(a)` | `sortperm(a)` | Indices that sort array |
-| `np.dot(a, b)` | `dot(a, b)` | Dot product |
-| `np.linalg.norm(a)` | `norm(a)` | Vector norm |
-| `np.all(a .> 0)` | `all(>(0), a)` | All elements true |
-| `np.any(a .> 0)` | `any(>(0), a)` | Any element true |
-| `np.isnan(a)` | `isnan.(a)` | Elementwise isnan |
-| `np.isfinite(a)` | `isfinite.(a)` | |
-| `np.arange(0, 10, 2)` | `0:2:8` | Range with step |
-| `np.linspace(0,1,5)` | `range(0,1,length=5)` | |
-| `np.reshape(a, (2,3))` | `reshape(a, 2, 3)` | |
-| `np.sum(a, axis=1)` | `sum(a, dims=2)` | Sum along dimension |
-| `np.max(a, axis=0)` | `maximum(a, dims=1)` | |
-| `np.loadtxt("file.txt")` | `readdlm("file.txt")` | Delimited text |
-| `np.savetxt("file.txt", a)` | `writedlm("file.txt", a)` | |
-| `import pdb; pdb.set_trace()` | `using Debugger; @enter f(x)` | Debugging |
 
 ### MATLAB → Julia
 | MATLAB | Julia | Notes |
@@ -205,9 +144,6 @@
 
 ---
 
-
----
-
 ## Finding Packages & Getting Help
 
 > - Search for packages: [juliahub.com](https://juliahub.com/) or [pkg.julialang.org](https://pkg.julialang.org/)
@@ -218,9 +154,6 @@
 > - Save/load data with JLD2, HDF5, CSV (not the whole workspace).
 > - Community: Julia Discourse, Slack, Zulip, StackOverflow, GitHub.
 
----
-
- 
 ---
 
 ## I. Essential Packages & Ecosystem
@@ -315,12 +248,6 @@
 | Pluto | Notebook | Reactive, browser-based |
 | Quarto | Notebook/docs | Multi-language, Julia support |
 | Weave | Literate programming | Markdown+code, report generation |
-
-
----
-
-
----
 
 
 ---
@@ -521,11 +448,6 @@ fill_sum!(A)
 
 ---
 
-
----
-
----
-
 ## IVa. Multiple Dispatch, Functional & Object-Oriented Programming
 
 > Julia is built around multiple dispatch and functional programming, with minimal object orientation. This enables flexible, high-performance code.
@@ -626,6 +548,8 @@ xlabel("x"); ylabel("y")
 
 ---
 
+
+---
 
 ## IVb. Metaprogramming
 
@@ -897,31 +821,6 @@ lines!(1:10, sin.(1:10))                 # Add line to same plot
 - `typeof(x)` - Show type of variable
 
 
-
 ---
 
-
-## How to Print or Export This Guide for a Compact Handout
-
-You can print or export this markdown guide as a readable, compact handout using your browser or editor. Here’s how:
-
-1. Open the HTML version of this guide in your browser (or use a markdown preview/editor).
-2. Press `Ctrl+P` (Windows/Linux) or `Cmd+P` (macOS) to open the print dialog.
-3. In the print settings:
-   - **Destination:** Select "Save as PDF" or your printer.
-   - **Paper size:** Set to **A4**.
-   - **Orientation:** Set to **Landscape**.
-   - **Font size:** Choose a large, readable font (10–12pt recommended).
-   - **Margins:** Set to "Narrow" or "None" for more space.
-   - **Options:** Enable "Background graphics" for colors/tables.
-   - **Pages per sheet:** For a compact handout, set to 2 or 4 pages per sheet (this prints multiple pages on one physical sheet).
-4. Preview to ensure the content is readable and fits your needs, then print or save as PDF.
-
-**Tips:**
-- Use a 10–12pt font for best readability.
-- Set table/code block wrapping to avoid overflow.
-- Use "pages per sheet" for a compact, portable handout.
-- Preview before printing to ensure all content is clear and legible.
-
----
 
