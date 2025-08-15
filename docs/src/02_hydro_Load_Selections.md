@@ -30,7 +30,7 @@ gas = gethydro(info, :vx)                             # Single variable
 # Common variable names and numbers
 # :varn1 or :cpu  → CPU number (= -1)
 # :var1 or :rho   → Density
-# :var2 or :vx    → X-velocity  
+# :var2 or :vx    → X-velocity
 # :var3 or :vy    → Y-velocity
 # :var4 or :vz    → Z-velocity
 # :var5 or :p     → Pressure
@@ -40,7 +40,7 @@ gas = gethydro(info, :vx)                             # Single variable
 ```julia
 # RAMSES standard notation (domain: [0:1]³)
 gas = gethydro(info, xrange=[0.2, 0.8],              # X-range filter
-                     yrange=[0.2, 0.8],              # Y-range filter  
+                     yrange=[0.2, 0.8],              # Y-range filter
                      zrange=[0.4, 0.6])              # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -96,52 +96,52 @@ viewfields(info.scale)
 
 Before exploring data selection techniques, let's load our simulation and examine its properties. This establishes the foundation for all subsequent data loading operations.
 
-
 ```julia
 using Mera
 info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
-    [Mera]: 2025-08-12T11:11:57.742
-    
-    Code: RAMSES
-    output [300] summary:
-    mtime: 2023-04-09T05:34:09
-    ctime: 2025-06-21T18:31:24.020
-    =======================================================
-    simulation time: 445.89 [Myr]
-    boxlen: 48.0 [kpc]
-    ncpu: 640
-    ndim: 3
-    -------------------------------------------------------
-    amr:           true
-    level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
-    -------------------------------------------------------
-    hydro:         true
-    hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-    hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
-    γ: 1.6667
-    -------------------------------------------------------
-    gravity:       true
-    gravity-variables: (:epot, :ax, :ay, :az)
-    -------------------------------------------------------
-    particles:     true
-    - Nstars:   5.445150e+05 
-    particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
-    particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
-    -------------------------------------------------------
-    rt:            false
-    clumps:           false
-    -------------------------------------------------------
-    namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
-    -------------------------------------------------------
-    timer-file:       true
-    compilation-file: false
-    makefile:         true
-    patchfile:        true
-    =======================================================
-    
+```
+[Mera]: 2025-08-14T14:26:46.643
 
+Code: RAMSES
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2025-06-21T18:31:24.020
+=======================================================
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+=======================================================
+
+```
 
 ## Variable Selection Techniques
 
@@ -173,341 +173,344 @@ Mera provides flexible ways to reference hydrodynamic variables. Understanding t
 
 The simplest approach is to load all available variables. This is the default behavior when no specific variables are requested.
 
-
 ```julia
 gas = gethydro(info);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:12:02.253
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:26:49.727
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:15 (24.12 ms/it)
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 28320979 cells, 7 variables
-    Creating Table from 28320979 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      4.789886 seconds (5.60 M allocations: 5.502 GiB, 2.56% gc time, 19.33% compilation time)
-    ✓ Table created in 4.975 seconds
-    Memory used for data table :2.321086215786636 GB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:25 (40.16 ms/it)
 
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 28320979 cells, 7 variables
+Creating Table from 28320979 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+ 28.692257 seconds (623.39 M allocations: 26.965 GiB, 5.05% gc time, 3.59% compilation time)
+✓ Table created in 28.875 seconds
+Memory used for data table :2.321086215786636 GB
+-------------------------------------------------------
+
+```
 
 ```julia
 gas.data
 ```
 
-
-
-
-    Table with 28320979 rows, 11 columns:
-    Columns:
-    #   colname  type
-    ────────────────────
-    1   level    Int64
-    2   cx       Int64
-    3   cy       Int64
-    4   cz       Int64
-    5   rho      Float64
-    6   vx       Float64
-    7   vy       Float64
-    8   vz       Float64
-    9   p        Float64
-    10  var6     Float64
-    11  var7     Float64
-
-
+```
+Table with 28320979 rows, 11 columns:
+Columns:
+#   colname  type
+────────────────────
+1   level    Int64
+2   cx       Int64
+3   cy       Int64
+4   cz       Int64
+5   rho      Float64
+6   vx       Float64
+7   vy       Float64
+8   vz       Float64
+9   p        Float64
+10  var6     Float64
+11  var7     Float64
+```
 
 ### Selecting Multiple Variables
 
 Mera provides multiple ways to select specific variables. You can use keyword arguments or positional arguments with flexible syntax.
 
-
 ```julia
-gas_a = gethydro(info, vars=[:rho, :p]); 
+gas_a = gethydro(info, vars=[:rho, :p]);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:12:26.816
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 5) = (:rho, :p) 
-    
-    domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:27:49.310
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 5) = (:rho, :p)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.48 ms/it)
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 28320979 cells, 2 variables
-    Creating Table from 28320979 cells with max 8 threads...
-      Threading: 6 threads for 6 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 6 threads
-      Creating IndexedTable with 6 columns...
-      2.397390 seconds (1.94 M allocations: 3.143 GiB, 0.83% gc time, 16.43% compilation time)
-    ✓ Table created in 2.59 seconds
-    Memory used for data table :1.2660471182316542 GB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.95 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 28320979 cells, 2 variables
+Creating Table from 28320979 cells with max 8 threads...
+  Threading: 6 threads for 6 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 6 threads
+  Creating IndexedTable with 6 columns...
+  2.227194 seconds (2.11 M allocations: 3.179 GiB, 1.11% gc time, 18.30% compilation time)
+✓ Table created in 2.402 seconds
+Memory used for data table :1.2660471182316542 GB
+-------------------------------------------------------
+
+```
 
 **Alternative:** Use variable numbers instead of symbolic names. This approach provides identical functionality:
 
-
 ```julia
-gas_a = gethydro(info, vars=[:var1, :var5]); 
+gas_a = gethydro(info, vars=[:var1, :var5]);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:12:44.151
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 5) = (:rho, :p) 
-    
-    domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:28:20.836
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 5) = (:rho, :p)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.32 ms/it)
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 28320979 cells, 2 variables
-    Creating Table from 28320979 cells with max 8 threads...
-      Threading: 6 threads for 6 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 6 threads
-      Creating IndexedTable with 6 columns...
-      1.937623 seconds (701.42 k allocations: 3.075 GiB, 0.46% gc time)
-    ✓ Table created in 2.121 seconds
-    Memory used for data table :1.2660471182316542 GB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.22 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 28320979 cells, 2 variables
+Creating Table from 28320979 cells with max 8 threads...
+  Threading: 6 threads for 6 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 6 threads
+  Creating IndexedTable with 6 columns...
+  2.332279 seconds (701.42 k allocations: 3.049 GiB, 0.33% gc time)
+✓ Table created in 2.51 seconds
+Memory used for data table :1.2660471182316542 GB
+-------------------------------------------------------
+
+```
 
 **Keyword-free syntax:** When following the specific order (InfoType object, then variables), keyword arguments are optional:
 
-
 ```julia
-gas_a = gethydro(info, [:rho, :p]); 
+gas_a = gethydro(info, [:rho, :p]);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:00.857
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 5) = (:rho, :p) 
-    
-    domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:28:51.993
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 5) = (:rho, :p)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.79 ms/it)
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 28320979 cells, 2 variables
-    Creating Table from 28320979 cells with max 8 threads...
-      Threading: 6 threads for 6 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 6 threads
-      Creating IndexedTable with 6 columns...
-      2.200007 seconds (701.43 k allocations: 3.025 GiB, 0.33% gc time)
-    ✓ Table created in 2.375 seconds
-    Memory used for data table :1.2660471182316542 GB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.70 ms/it)
 
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 28320979 cells, 2 variables
+Creating Table from 28320979 cells with max 8 threads...
+  Threading: 6 threads for 6 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 6 threads
+  Creating IndexedTable with 6 columns...
+  2.211744 seconds (701.42 k allocations: 3.071 GiB, 0.39% gc time)
+✓ Table created in 2.386 seconds
+Memory used for data table :1.2660471182316542 GB
+-------------------------------------------------------
+
+```
 
 ```julia
 gas_a.data
 ```
 
-
-
-
-    Table with 28320979 rows, 6 columns:
-    level  cx   cy   cz   rho          p
-    ─────────────────────────────────────────────
-    6      1    1    1    3.18647e-9   1.06027e-9
-    6      1    1    2    3.58591e-9   1.33677e-9
-    6      1    1    3    3.906e-9     1.58181e-9
-    6      1    1    4    4.27441e-9   1.93168e-9
-    6      1    1    5    4.61042e-9   2.37842e-9
-    6      1    1    6    4.83977e-9   2.8197e-9
-    6      1    1    7    4.974e-9     3.20883e-9
-    6      1    1    8    5.08112e-9   3.56075e-9
-    6      1    1    9    5.20596e-9   3.89183e-9
-    6      1    1    10   5.38372e-9   4.20451e-9
-    6      1    1    11   5.67209e-9   4.50256e-9
-    6      1    1    12   6.14423e-9   4.78595e-9
-    ⋮
-    10     814  493  514  0.000321702  2.18179e-6
-    10     814  494  509  1.42963e-6   3.35949e-6
-    10     814  494  510  1.4351e-6    3.38092e-6
-    10     814  494  511  0.00029515   2.55696e-6
-    10     814  494  512  0.000395273  2.5309e-6
-    10     814  494  513  0.000321133  2.16472e-6
-    10     814  494  514  0.000319678  2.17348e-6
-    10     814  495  511  0.00024646   2.19846e-6
-    10     814  495  512  0.000269009  2.20717e-6
-    10     814  496  511  0.000235329  2.10577e-6
-    10     814  496  512  0.000242422  2.09634e-6
-
-
+```
+Table with 28320979 rows, 6 columns:
+level  cx   cy   cz   rho          p
+─────────────────────────────────────────────
+6      1    1    1    3.18647e-9   1.06027e-9
+6      1    1    2    3.58591e-9   1.33677e-9
+6      1    1    3    3.906e-9     1.58181e-9
+6      1    1    4    4.27441e-9   1.93168e-9
+6      1    1    5    4.61042e-9   2.37842e-9
+6      1    1    6    4.83977e-9   2.8197e-9
+6      1    1    7    4.974e-9     3.20883e-9
+6      1    1    8    5.08112e-9   3.56075e-9
+6      1    1    9    5.20596e-9   3.89183e-9
+6      1    1    10   5.38372e-9   4.20451e-9
+6      1    1    11   5.67209e-9   4.50256e-9
+6      1    1    12   6.14423e-9   4.78595e-9
+⋮
+10     814  493  514  0.000321702  2.18179e-6
+10     814  494  509  1.42963e-6   3.35949e-6
+10     814  494  510  1.4351e-6    3.38092e-6
+10     814  494  511  0.00029515   2.55696e-6
+10     814  494  512  0.000395273  2.5309e-6
+10     814  494  513  0.000321133  2.16472e-6
+10     814  494  514  0.000319678  2.17348e-6
+10     814  495  511  0.00024646   2.19846e-6
+10     814  495  512  0.000269009  2.20717e-6
+10     814  496  511  0.000235329  2.10577e-6
+10     814  496  512  0.000242422  2.09634e-6
+```
 
 ### Selecting Single Variables
 
 For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:
 
-
 ```julia
-gas_c = gethydro(info, :vx ); 
+gas_c = gethydro(info, :vx );
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:17.716
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(2,) = (:vx,) 
-    
-    domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:29:23.580
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(2,) = (:vx,)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.31 ms/it)
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 28320979 cells, 1 variables
-    Creating Table from 28320979 cells with max 8 threads...
-      Threading: 5 threads for 5 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 5 threads
-      Creating IndexedTable with 5 columns...
-      1.676649 seconds (1.70 M allocations: 2.657 GiB, 0.90% gc time, 12.66% compilation time)
-    ✓ Table created in 1.851 seconds
-    Memory used for data table :1.0550392987206578 GB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.69 ms/it)
 
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 28320979 cells, 1 variables
+Creating Table from 28320979 cells with max 8 threads...
+  Threading: 5 threads for 5 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 5 threads
+  Creating IndexedTable with 5 columns...
+  2.032942 seconds (1.86 M allocations: 2.671 GiB, 0.99% gc time, 12.28% compilation time)
+✓ Table created in 2.211 seconds
+Memory used for data table :1.0550392987206578 GB
+-------------------------------------------------------
+
+```
 
 ```julia
 gas_c.data
 ```
 
-
-
-
-    Table with 28320979 rows, 5 columns:
-    level  cx   cy   cz   vx
-    ────────────────────────────────
-    6      1    1    1    -1.25532
-    6      1    1    2    -1.23262
-    6      1    1    3    -1.2075
-    6      1    1    4    -1.16462
-    6      1    1    5    -1.10493
-    6      1    1    6    -1.02686
-    6      1    1    7    -0.948004
-    6      1    1    8    -0.879731
-    6      1    1    9    -0.824484
-    6      1    1    10   -0.782768
-    6      1    1    11   -0.754141
-    6      1    1    12   -0.737723
-    ⋮
-    10     814  493  514  0.268398
-    10     814  494  509  0.00398492
-    10     814  494  510  0.00496945
-    10     814  494  511  0.303842
-    10     814  494  512  0.305647
-    10     814  494  513  0.266079
-    10     814  494  514  0.26508
-    10     814  495  511  0.289612
-    10     814  495  512  0.290753
-    10     814  496  511  0.285209
-    10     814  496  512  0.285463
-
-
+```
+Table with 28320979 rows, 5 columns:
+level  cx   cy   cz   vx
+────────────────────────────────
+6      1    1    1    -1.25532
+6      1    1    2    -1.23262
+6      1    1    3    -1.2075
+6      1    1    4    -1.16462
+6      1    1    5    -1.10493
+6      1    1    6    -1.02686
+6      1    1    7    -0.948004
+6      1    1    8    -0.879731
+6      1    1    9    -0.824484
+6      1    1    10   -0.782768
+6      1    1    11   -0.754141
+6      1    1    12   -0.737723
+⋮
+10     814  493  514  0.268398
+10     814  494  509  0.00398492
+10     814  494  510  0.00496945
+10     814  494  511  0.303842
+10     814  494  512  0.305647
+10     814  494  513  0.266079
+10     814  494  514  0.26508
+10     814  495  511  0.289612
+10     814  495  512  0.290753
+10     814  496  511  0.285209
+10     814  496  512  0.285463
+```
 
 ## Spatial Range Selection Techniques
 
 Spatial filtering is essential for focusing analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different analysis needs.
 
 **Available Coordinate Systems:**
-- **RAMSES Standard:** Normalized domain [0:1]³ 
+- **RAMSES Standard:** Normalized domain [0:1]³
 - **Center-Relative:** Coordinates relative to specified points
 - **Physical Units:** Real astronomical units (kpc, pc, etc.)
 - **Box-Centered:** Convenient shortcuts for simulation center
@@ -526,124 +529,126 @@ The RAMSES standard provides a normalized coordinate system that simplifies nume
 
 **Performance Optimization:** Use `lmax` to limit maximum refinement levels for faster loading and preview analysis. This example demonstrates level 8 restriction:
 
-
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[0.2,0.8], 
-                yrange=[0.2,0.8], 
-                zrange=[0.4,0.6]); 
+gas = gethydro(info, lmax=8,
+                xrange=[0.2,0.8],
+                yrange=[0.2,0.8],
+                zrange=[0.4,0.6]);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:33.720
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    domain:
-    xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
-    ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
-    zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:29:55.127
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:08 (12.92 ms/it)
+domain:
+xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
+ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
+zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 1233232 cells, 7 variables
-    Creating Table from 1233232 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.067645 seconds (48.46 k allocations: 237.337 MiB)
-    ✓ Table created in 0.242 seconds
-    Memory used for data table :103.4980878829956 MB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.61 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 1233232 cells, 7 variables
+Creating Table from 1233232 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  1.162434 seconds (25.95 M allocations: 1.151 GiB)
+✓ Table created in 1.34 seconds
+Memory used for data table :103.4980878829956 MB
+-------------------------------------------------------
+
+```
 
 **Range Verification:** The loaded data ranges are stored in the `ranges` field using RAMSES standard notation (domain: [0:1]³):
-
 
 ```julia
 gas.ranges
 ```
 
-
-
-
-    6-element Vector{Float64}:
-     0.2
-     0.8
-     0.2
-     0.8
-     0.4
-     0.6
-
-
+```
+6-element Vector{Float64}:
+ 0.2
+ 0.8
+ 0.2
+ 0.8
+ 0.4
+ 0.6
+```
 
 ### Center-Relative Coordinate Selection
 
 Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing regions around specific features or objects:
 
-
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-0.3, 0.3], 
-                yrange=[-0.3, 0.3], 
-                zrange=[-0.1, 0.1], 
-                center=[0.5, 0.5, 0.5]); 
+gas = gethydro(info, lmax=8,
+                xrange=[-0.3, 0.3],
+                yrange=[-0.3, 0.3],
+                zrange=[-0.1, 0.1],
+                center=[0.5, 0.5, 0.5]);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:43.007
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
-    domain:
-    xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
-    ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
-    zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:30:15.127
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.45 ms/it)
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
+domain:
+xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
+ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
+zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 1233232 cells, 7 variables
-    Creating Table from 1233232 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.065543 seconds (48.59 k allocations: 264.877 MiB)
-    ✓ Table created in 0.25 seconds
-    Memory used for data table :103.4980878829956 MB
-    -------------------------------------------------------
-    
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
+```
+
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.32 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 1233232 cells, 7 variables
+Creating Table from 1233232 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  1.161734 seconds (25.95 M allocations: 1.160 GiB)
+✓ Table created in 1.339 seconds
+Memory used for data table :103.4980878829956 MB
+-------------------------------------------------------
+
+```
 
 ### Physical Unit Coordinate System
 
@@ -657,257 +662,263 @@ Working with physical units provides intuitive scale references for astronomical
 
 The following example demonstrates kiloparsec (kpc) coordinate selection:
 
-
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[2.,22.], 
-                yrange=[2.,22.], 
-                zrange=[22.,26.], 
-                range_unit=:kpc); 
+gas = gethydro(info, lmax=8,
+                xrange=[2.,22.],
+                yrange=[2.,22.],
+                zrange=[22.,26.],
+                range_unit=:kpc);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:44.913
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    domain:
-    xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
-    ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
-    zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:30:32.839
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.35 ms/it)
+domain:
+xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
+ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 229992 cells, 7 variables
-    Creating Table from 229992 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.012057 seconds (22.22 k allocations: 45.331 MiB)
-    ✓ Table created in 0.19 seconds
-    Memory used for data table :19.302836418151855 MB
-    -------------------------------------------------------
-    
+```
 
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:11 (18.75 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 229992 cells, 7 variables
+Creating Table from 229992 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  0.209679 seconds (4.85 M allocations: 220.809 MiB)
+✓ Table created in 0.388 seconds
+Memory used for data table :19.302836418151855 MB
+-------------------------------------------------------
+
+```
 
 **Available Physical Units:** The `range_unit` keyword accepts various length units defined in the simulation's `scale` field:
-
 
 ```julia
 viewfields(info.scale)  # or e.g.: gas.info.scale
 ```
 
-    
-    [Mera]: Fields to scale from user/code units to selected units
-    =======================================================================
-    Mpc	= 0.0010000000000006482
-    kpc	= 1.0000000000006481
-    pc	= 1000.0000000006482
-    mpc	= 1.0000000000006482e6
-    ly	= 3261.5637769461323
-    Au	= 2.0626480623310105e23
-    km	= 3.0856775812820004e16
-    m	= 3.085677581282e19
-    cm	= 3.085677581282e21
-    mm	= 3.085677581282e22
-    μm	= 3.085677581282e25
-    Mpc3	= 1.0000000000019446e-9
-    kpc3	= 1.0000000000019444
-    pc3	= 1.0000000000019448e9
-    mpc3	= 1.0000000000019446e18
-    ly3	= 3.469585750743794e10
-    Au3	= 8.775571306099254e69
-    km3	= 2.9379989454983075e49
-    m3	= 2.9379989454983063e58
-    cm3	= 2.9379989454983065e64
-    mm3	= 2.937998945498306e67
-    μm3	= 2.937998945498306e76
-    Msol_pc3	= 0.9997234790001649
-    Msun_pc3	= 0.9997234790001649
-    g_cm3	= 6.76838218451376e-23
-    Msol_pc2	= 999.7234790008131
-    Msun_pc2	= 999.7234790008131
-    g_cm2	= 0.20885045168302602
-    Gyr	= 0.014910986463557083
-    Myr	= 14.910986463557084
-    yr	= 1.4910986463557083e7
-    s	= 4.70554946422349e14
-    ms	= 4.70554946422349e17
-    Msol	= 9.99723479002109e8
-    Msun	= 9.99723479002109e8
-    Mearth	= 3.329677459032007e14
-    Mjupiter	= 1.0476363431814971e12
-    g	= 1.9885499720830952e42
-    km_s	= 65.57528732282063
-    m_s	= 65575.28732282063
-    cm_s	= 6.557528732282063e6
-    nH	= 30.987773856809987
-    erg	= 8.551000140274429e55
-    g_cms2	= 2.9104844143584656e-9
-    T_mu	= 517017.45993377
-    K_mu	= 517017.45993377
-    T	= 680286.1314918026
-    K	= 680286.1314918026
-    Ba	= 2.910484414358466e-9
-    g_cm_s2	= 2.910484414358466e-9
-    p_kB	= 2.1080552800592083e7
-    K_cm3	= 2.1080552800592083e7
-    erg_g_K	= 3.114563011649217e29
-    keV_cm2	= 1.252773885965637e65
-    erg_K	= 6.193464189866091e71
-    J_K	= 6.193464189866091e64
-    erg_cm3_K	= 2.1080552800592083e7
-    J_m3_K	= 2.1080552800592083e8
-    kB_per_particle	= 1.380649e-16
-    J_s	= 4.023715412864333e70
-    g_cm2_s	= 4.023715412864333e70
-    kg_m2_s	= 4.023715412864333e71
-    Gauss	= 0.00019124389093025845
-    muG	= 191.24389093025846
-    microG	= 191.24389093025846
-    Tesla	= 1.9124389093025845e-8
-    eV	= 5.3371144971238105e67
-    keV	= 5.33711449712381e64
-    MeV	= 5.33711449712381e61
-    erg_s	= 1.8172160775884043e41
-    Lsol	= 4.747168436751317e7
-    Lsun	= 4.747168436751317e7
-    cm_3	= 3.4036771916893676e-65
-    pc_3	= 1.158501842524895e-120
-    n_e	= 30.987773856809987
-    erg_g_s	= 0.09138397843151959
-    erg_cm3_s	= 6.185216915658869e-24
-    erg_cm2_s	= 6.185216915658869e-24
-    Jy	= 0.6185216915658869
-    mJy	= 618.5216915658868
-    microJy	= 618521.6915658868
-    atoms_cm2	= 1.2581352511025663e23
-    NH_cm2	= 1.2581352511025663e23
-    cm_s2	= 1.3935734353956443e-8
-    m_s2	= 1.3935734353956443e-10
-    km_s2	= 1.3935734353956443e-13
-    pc_Myr2	= 3.09843657823729e-9
-    erg_g	= 4.30011830747048e13
-    J_kg	= 4.30011830747048e6
-    km2_s2	= 4300.1183074704795
-    u_grav	= 2.910484414358466e-9
-    erg_cell	= 8.55100014027443e55
-    dyne	= 9.432237612943517e-31
-    s_2	= 4.516263928056473e-30
-    lambda_J	= 3.085677581282e21
-    M_J	= 1.9885499720830952e42
-    t_ff	= 4.70554946422349e14
-    alpha_vir	= 1.0
-    delta_rho	= 5.0e-322
-    a_mag	= 5.04e-322
-    v_esc	= 5.1e-322
-    ax	= 5.14e-322
-    ay	= 5.2e-322
-    az	= 5.24e-322
-    epot	= 5.3e-322
-    a_magnitude	= 5.34e-322
-    escape_speed	= 5.4e-322
-    gravitational_redshift	= 5.43e-322
-    gravitational_energy_density	= 2.910484414358466e-9
-    gravitational_binding_energy	= 2.910484414358466e-9
-    total_binding_energy	= 8.55100014027443e55
-    specific_gravitational_energy	= 4.30011830747048e13
-    gravitational_work	= 8.551000140274429e55
-    jeans_length_gravity	= 3.085677581282e21
-    jeans_mass_gravity	= 1.9885499720830952e42
-    jeansmass	= 1.9885499720830952e42
-    freefall_time_gravity	= 4.70554946422349e14
-    ekin	= 8.551000140274429e55
-    etherm	= 8.551000140274429e55
-    virial_parameter_local	= 1.0
-    Fg	= 9.432237612943517e-31
-    poisson_source	= 4.516263928056473e-30
-    ar_cylinder	= 1.3935734353956443e-8
-    aϕ_cylinder	= 1.3935734353956443e-8
-    ar_sphere	= 1.3935734353956443e-8
-    aθ_sphere	= 1.3935734353956443e-8
-    aϕ_sphere	= 1.3935734353956443e-8
-    r_cylinder	= 3.085677581282e21
-    r_sphere	= 3.085677581282e21
-    ϕ	= 1.0
-    dimensionless	= 1.0
-    rad	= 1.0
-    deg	= 57.29577951308232
-    
+```
 
+[Mera]: Fields to scale from user/code units to selected units
+=======================================================================
+Mpc	= 0.0010000000000006482
+kpc	= 1.0000000000006481
+pc	= 1000.0000000006482
+mpc	= 1.0000000000006482e6
+ly	= 3261.5637769461323
+Au	= 2.0626480623310105e23
+km	= 3.0856775812820004e16
+m	= 3.085677581282e19
+cm	= 3.085677581282e21
+mm	= 3.085677581282e22
+μm	= 3.085677581282e25
+Mpc3	= 1.0000000000019446e-9
+kpc3	= 1.0000000000019444
+pc3	= 1.0000000000019448e9
+mpc3	= 1.0000000000019446e18
+ly3	= 3.469585750743794e10
+Au3	= 8.775571306099254e69
+km3	= 2.9379989454983075e49
+m3	= 2.9379989454983063e58
+cm3	= 2.9379989454983065e64
+mm3	= 2.937998945498306e67
+μm3	= 2.937998945498306e76
+Msol_pc3	= 0.9997234790001649
+Msun_pc3	= 0.9997234790001649
+g_cm3	= 6.76838218451376e-23
+Msol_pc2	= 999.7234790008131
+Msun_pc2	= 999.7234790008131
+g_cm2	= 0.20885045168302602
+Gyr	= 0.014910986463557083
+Myr	= 14.910986463557084
+yr	= 1.4910986463557083e7
+s	= 4.70554946422349e14
+ms	= 4.70554946422349e17
+Msol	= 9.99723479002109e8
+Msun	= 9.99723479002109e8
+Mearth	= 3.329677459032007e14
+Mjupiter	= 1.0476363431814971e12
+g	= 1.9885499720830952e42
+km_s	= 65.57528732282063
+m_s	= 65575.28732282063
+cm_s	= 6.557528732282063e6
+nH	= 30.987773856809987
+erg	= 8.551000140274429e55
+g_cms2	= 2.9104844143584656e-9
+T_mu	= 517017.45993377
+K_mu	= 517017.45993377
+T	= 680286.1314918026
+K	= 680286.1314918026
+Ba	= 2.910484414358466e-9
+g_cm_s2	= 2.910484414358466e-9
+p_kB	= 2.1080552800592083e7
+K_cm3	= 2.1080552800592083e7
+erg_g_K	= 3.114563011649217e29
+keV_cm2	= 1.252773885965637e65
+erg_K	= 6.193464189866091e71
+J_K	= 6.193464189866091e64
+erg_cm3_K	= 2.1080552800592083e7
+J_m3_K	= 2.1080552800592083e8
+kB_per_particle	= 1.380649e-16
+J_s	= 4.023715412864333e70
+g_cm2_s	= 4.023715412864333e70
+kg_m2_s	= 4.023715412864333e71
+Gauss	= 0.00019124389093025845
+muG	= 191.24389093025846
+microG	= 191.24389093025846
+Tesla	= 1.9124389093025845e-8
+eV	= 5.3371144971238105e67
+keV	= 5.33711449712381e64
+MeV	= 5.33711449712381e61
+erg_s	= 1.8172160775884043e41
+Lsol	= 4.747168436751317e7
+Lsun	= 4.747168436751317e7
+cm_3	= 3.4036771916893676e-65
+pc_3	= 1.158501842524895e-120
+n_e	= 30.987773856809987
+erg_g_s	= 0.09138397843151959
+erg_cm3_s	= 6.185216915658869e-24
+erg_cm2_s	= 6.185216915658869e-24
+Jy	= 0.6185216915658869
+mJy	= 618.5216915658868
+microJy	= 618521.6915658868
+atoms_cm2	= 1.2581352511025663e23
+NH_cm2	= 1.2581352511025663e23
+cm_s2	= 1.3935734353956443e-8
+m_s2	= 1.3935734353956443e-10
+km_s2	= 1.3935734353956443e-13
+pc_Myr2	= 3.09843657823729e-9
+erg_g	= 4.30011830747048e13
+J_kg	= 4.30011830747048e6
+km2_s2	= 4300.1183074704795
+u_grav	= 2.910484414358466e-9
+erg_cell	= 8.55100014027443e55
+dyne	= 9.432237612943517e-31
+s_2	= 4.516263928056473e-30
+lambda_J	= 3.085677581282e21
+M_J	= 1.9885499720830952e42
+t_ff	= 4.70554946422349e14
+alpha_vir	= 1.0
+delta_rho	= 2.68258472e-314
+a_mag	= 2.727176105e-314
+v_esc	= 2.68258472e-314
+ax	= 2.727176105e-314
+ay	= 2.68258472e-314
+az	= 2.727176105e-314
+epot	= 2.68258472e-314
+a_magnitude	= 2.727176105e-314
+escape_speed	= 2.68258472e-314
+gravitational_redshift	= 2.727176105e-314
+gravitational_energy_density	= 2.68258472e-314
+gravitational_binding_energy	= 2.727176105e-314
+total_binding_energy	= 2.68258472e-314
+specific_gravitational_energy	= 4.30011830747048e13
+gravitational_work	= 2.68258472e-314
+jeans_length_gravity	= 3.085677581282e21
+jeans_mass_gravity	= 1.9885499720830952e42
+jeansmass	= 1.9885499720830952e42
+freefall_time_gravity	= 4.70554946422349e14
+ekin	= 8.551000140274429e55
+etherm	= 8.551000140274429e55
+virial_parameter_local	= 1.0
+Fg	= 2.68258472e-314
+poisson_source	= 2.727176105e-314
+ar_cylinder	= 1.3935734353956443e-8
+aϕ_cylinder	= 1.3935734353956443e-8
+ar_sphere	= 1.3935734353956443e-8
+aθ_sphere	= 1.3935734353956443e-8
+aϕ_sphere	= 1.3935734353956443e-8
+r_cylinder	= 3.085677581282e21
+r_sphere	= 3.085677581282e21
+ϕ	= 1.0
+dimensionless	= 1.0
+rad	= 1.0
+deg	= 57.29577951308232
+
+```
 
 **Center-Relative with Physical Units:** Combine center-relative positioning with physical unit specifications for precise regional analysis:
 
-
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16.,16.], 
-                yrange=[-16.,16.], 
-                zrange=[-2.,2.], 
-                center=[24.,24.,24.], 
-                range_unit=:kpc); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16.,16.],
+                yrange=[-16.,16.],
+                zrange=[-2.,2.],
+                center=[24.,24.,24.],
+                range_unit=:kpc);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:46.734
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
-    domain:
-    xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:30:45.391
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.33 ms/it)
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
+domain:
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 650848 cells, 7 variables
-    Creating Table from 650848 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.033809 seconds (60.40 k allocations: 126.366 MiB)
-    ✓ Table created in 0.209 seconds
-    Memory used for data table :54.622477531433105 MB
-    -------------------------------------------------------
-    
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
+```
+
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:10 (16.15 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 650848 cells, 7 variables
+Creating Table from 650848 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  0.599757 seconds (13.73 M allocations: 622.916 MiB)
+✓ Table created in 0.778 seconds
+Memory used for data table :54.622477531433105 MB
+-------------------------------------------------------
+
+```
 
 ### Box Center Coordinate Shortcuts
 
 Mera provides convenient shortcuts for box-centered coordinate systems, simplifying analysis focused on the simulation center.
 
 **Available Shortcuts:**
-- `:bc` or `:boxcenter` - Center coordinate for all dimensions  
+- `:bc` or `:boxcenter` - Center coordinate for all dimensions
 - Can be applied to individual dimensions selectively
 - Combines seamlessly with physical units and range specifications
 - Ideal for symmetric analysis around simulation center
@@ -918,157 +929,166 @@ Mera provides convenient shortcuts for box-centered coordinate systems, simplify
 - Simplifies symmetric region definitions
 - Reduces coordinate specification errors
 
-
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:boxcenter], 
-                range_unit=:kpc); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:boxcenter],
+                range_unit=:kpc);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:48.531
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
-    domain:
-    xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:30:56.645
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.31 ms/it)
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
+domain:
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 650848 cells, 7 variables
-    Creating Table from 650848 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.033690 seconds (60.40 k allocations: 126.366 MiB)
-    ✓ Table created in 0.208 seconds
-    Memory used for data table :54.622477531433105 MB
-    -------------------------------------------------------
-    
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
-
-
-```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc], 
-                range_unit=:kpc); 
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:50.353
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
-    domain:
-    xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.79 ms/it)
 
+```
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.44 ms/it)
+```
 
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 650848 cells, 7 variables
+Creating Table from 650848 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  0.607037 seconds (13.73 M allocations: 622.916 MiB)
+✓ Table created in 0.782 seconds
+Memory used for data table :54.622477531433105 MB
+-------------------------------------------------------
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 650848 cells, 7 variables
-    Creating Table from 650848 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.035380 seconds (60.40 k allocations: 126.366 MiB)
-    ✓ Table created in 0.222 seconds
-    Memory used for data table :54.622477531433105 MB
-    -------------------------------------------------------
-    
+```
 
+```julia
+gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc],
+                range_unit=:kpc);
+```
+
+```
+[Mera]: Get hydro data: 2025-08-14T14:30:59.404
+
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
+
+```
+
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.73 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 650848 cells, 7 variables
+Creating Table from 650848 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  0.615515 seconds (13.73 M allocations: 622.916 MiB)
+✓ Table created in 0.79 seconds
+Memory used for data table :54.622477531433105 MB
+-------------------------------------------------------
+
+```
 
 **Selective Dimension Centering:** Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:
 
-
 ```julia
-gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc, 24., :bc], 
-                range_unit=:kpc); 
+gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc, 24., :bc],
+                range_unit=:kpc);
 ```
 
-    [Mera]: Get hydro data: 2025-08-12T11:13:52.233
-    
-    Key vars=(:level, :cx, :cy, :cz)
-    Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-    
-    center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-    
-    domain:
-    xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-    zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-    
-    📊 Processing Configuration:
-       Total CPU files available: 640
-       Files to be processed: 640
-       Compute threads: 8
-       GC threads: 4
-    
+```
+[Mera]: Get hydro data: 2025-08-14T14:31:02.085
 
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
-    Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.34 ms/it)
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
+domain:
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
-    
-    ✓ File processing complete! Combining results...
-    ✓ Data combination complete!
-    Final data size: 650848 cells, 7 variables
-    Creating Table from 650848 cells with max 8 threads...
-      Threading: 8 threads for 11 columns
-      Max threads requested: 8
-      Available threads: 8
-      Using parallel processing with 8 threads
-      Creating IndexedTable with 11 columns...
-      0.035499 seconds (60.40 k allocations: 126.366 MiB)
-    ✓ Table created in 0.21 seconds
-    Memory used for data table :54.622477531433105 MB
-    -------------------------------------------------------
-    
+📊 Processing Configuration:
+   Total CPU files available: 640
+   Files to be processed: 640
+   Compute threads: 8
+   GC threads: 4
 
+```
+
+```
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.73 ms/it)
+
+```
+
+```
+
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 650848 cells, 7 variables
+Creating Table from 650848 cells with max 8 threads...
+  Threading: 8 threads for 11 columns
+  Max threads requested: 8
+  Available threads: 8
+  Using parallel processing with 8 threads
+  Creating IndexedTable with 11 columns...
+  0.616928 seconds (13.73 M allocations: 622.924 MiB)
+✓ Table created in 0.794 seconds
+Memory used for data table :54.622477531433105 MB
+-------------------------------------------------------
+
+```
 
 ## Summary
 
@@ -1076,11 +1096,11 @@ This notebook demonstrated comprehensive data selection techniques in Mera.jl, c
 
 ### Variable Selection Mastery
 - **Flexible Reference Systems:** Using both symbolic (`:rho`) and numeric (`:var1`) variable references
-- **Selective Loading:** Choosing specific variables to optimize memory usage  
+- **Selective Loading:** Choosing specific variables to optimize memory usage
 - **Syntax Variations:** Keyword and positional argument approaches for different coding styles
 - **Single vs. Multiple Variables:** Appropriate syntax for different selection scenarios
 
-### Spatial Filtering Expertise  
+### Spatial Filtering Expertise
 - **Coordinate Systems:** RAMSES standard, physical units, center-relative, and box-centered approaches
 - **Performance Optimization:** Using `lmax` restrictions and tight spatial bounds
 - **Unit Flexibility:** Working with various astronomical length scales
