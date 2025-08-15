@@ -495,23 +495,23 @@ readdir("output05")
 
 **Open Scalar vtm File**
 
-![](images/01_hydro.jpg)
+![](../images/01_hydro.jpg)
 
 **Select rho array, volume rendering and apply**
 
-![](images/02_hydro.jpg)
+![](../images/02_hydro.jpg)
 
 **Choose a suitable colormap**
 
-![](images/03_hydro.jpg)
+![](../images/03_hydro.jpg)
 
 **Select value range, opazity and visualize data histogram**
 
-![](images/04_hydro.jpg)
+![](../images/04_hydro.jpg)
 
 **Change orientation, value range**
 
-![](images/05_hydro.jpg)
+![](../images/05_hydro.jpg)
 
 ```julia
 # => save state
@@ -633,27 +633,27 @@ readdir("output06")
 
 **Load Scalar**
 
-![](images/01_hydro2.jpg)
+![](../images/01_hydro2.jpg)
 
 **Select rho data, volume rendering, color map, choose value range**
 
-![](images/02_hydro2.jpg)
+![](../images/02_hydro2.jpg)
 
 **Load Vector data**
 
-![](images/03_hydro2.jpg)
+![](../images/03_hydro2.jpg)
 
 **Select velocity data, magnitude volume rendering**
 
-![](images/04_hydro2.jpg)
+![](../images/04_hydro2.jpg)
 
 **Edge-on view, apply 3D Glyphs on vector data, choose array and number of sample points**
 
-![](images/05_hydro2.jpg)
+![](../images/05_hydro2.jpg)
 
 **Apply streamline tracer, point cloud and its size, number of points**
 
-![](images/06_hydro2.jpg)
+![](../images/06_hydro2.jpg)
 
 ```julia
 # => save state

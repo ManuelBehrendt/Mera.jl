@@ -871,6 +871,8 @@ imshow( ( permutedims(proj_z.maps[:mach]) ), origin="lower", extent=proj_z.cexte
 colorbar();
 ```
 
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_60_1.png)
+
 ```
 Figure(PyObject <Figure size 640x480 with 2 Axes>)
 ```

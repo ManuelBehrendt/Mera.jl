@@ -834,6 +834,8 @@ cb = colorbar(im,
              pad=0.2)
 ```
 
+![](06_hydro_Projection_files/06_hydro_Projection_47_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
 ```
@@ -870,6 +872,8 @@ xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ```
+
+![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
@@ -1025,6 +1029,8 @@ imshow( permutedims(proj_z.maps[:σz]) , cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
+![](06_hydro_Projection_files/06_hydro_Projection_59_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x550 with 10 Axes>)
 ```
@@ -1178,6 +1184,8 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
+![](06_hydro_Projection_files/06_hydro_Projection_64_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x850 with 18 Axes>)
 ```
@@ -1324,6 +1332,8 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
+![](06_hydro_Projection_files/06_hydro_Projection_70_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x850 with 18 Axes>)
 ```
@@ -1415,6 +1425,8 @@ title("σy [km/s]")
 imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar();
 ```
+
+![](06_hydro_Projection_files/06_hydro_Projection_73_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x850 with 18 Axes>)
@@ -1526,6 +1538,8 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
+![](06_hydro_Projection_files/06_hydro_Projection_76_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x850 with 18 Axes>)
 ```
@@ -1614,6 +1628,8 @@ xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(c_s) \ [km \ s^{-1}]}",orientation="horizontal", pad=0.2);
 ```
+
+![](06_hydro_Projection_files/06_hydro_Projection_80_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
@@ -1768,6 +1784,8 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
+![](06_hydro_Projection_files/06_hydro_Projection_88_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
 ```
@@ -1903,6 +1921,8 @@ cb = colorbar(im, label=L"\mathrm{log10(v) \ [km \ s^{-1}]}");
 
 # Note: Ultra-thin slices provide all cells that intersect the 2D plane
 ```
+
+![](06_hydro_Projection_files/06_hydro_Projection_95_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x350 with 2 Axes>)

@@ -55,12 +55,10 @@ makedocs(modules = [Mera],
                                                     "Mera-Files Reading"                 => "benchmarks/JLD2_reading/Mera_files_reading.md",
                                                     "Parallel Projections"               => "benchmarks/Projection/multi_projections.md"],
 
-                      "13 Reference Guide"          => Any["Julia"                          => "quickreference/Julia_Quick_Reference.md",
-                                                        "Mera"                          => "quickreference/Mera_Quick_Reference.md",
+                      "13 Julia Quick Reference" => "quickreference/Julia_Quick_Reference.md",
 
                       "14 API Documentation"     => "api.md"
-                      ]
-		 )
-
+                    ]
+)
 
 deploydocs(repo = "github.com/ManuelBehrendt/Mera.jl.git")

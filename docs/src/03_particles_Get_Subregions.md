@@ -15,7 +15,7 @@ Upon completing this tutorial, you will be able to:
 
 **Key Functions**: `subregion()`, `shellregion()`, `projection()`, `getparticles()`
 **Data Types**: Particle data from RAMSES simulations
-**Coordinate Systems**: Physical units (kpc), box-relative coordinates [0:1]
+**Coordinate Systems**: Physical units (kpc), box-relative coordinates `[0:1]`
 **Visualization**: Surface density projections with PyPlot integration
 
 ## Quick Reference
@@ -72,7 +72,7 @@ shellregion(particles, :sphere, radius=[5., 10.],
 
 | Unit Type | Specification | Range | Description |
 |-----------|---------------|-------|-------------|
-| Box coordinates | Default | [0:1] | Normalized to simulation box |
+| Box coordinates | Default | `[0:1]` | Normalized to simulation box |
 | Physical units | `range_unit=:kpc` | Real distances | Kiloparsecs (customizable) |
 | Box center | `[:boxcenter]` | Box center | Automatic center calculation |
 
@@ -165,7 +165,7 @@ proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], directi
 proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);
 ```
 
-**Projection Properties**: The generated projection objects contain essential metadata including the `extent` field (processed domain boundaries) and `cextent` field (extent relative to the specified center, defaulting to [0,0,0]). These properties are crucial for consistent visualization scaling and coordinate alignment across different projections.
+**Projection Properties**: The generated projection objects contain essential metadata including the `extent` field (processed domain boundaries) and `cextent` field (extent relative to the specified center, defaulting to `[0,0,0]`). These properties are crucial for consistent visualization scaling and coordinate alignment across different projections.
 
 ```julia
 propertynames(proj_z)
@@ -205,6 +205,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_10_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -213,7 +215,7 @@ Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 
 Apply spatial filtering to extract the defined cuboid region from the particle data. The `subregion()` function creates a new data object containing only particles within the specified boundaries.
 
-**Coordinate Reference Systems**: Spatial selections can be specified relative to a user-defined center or the simulation box corner [0,0,0] (default). Users can choose between normalized box coordinates [0:1] (default) or physical length units. The `range_unit` parameter enables direct specification in physical units like kiloparsecs, as defined in the simulation's scale information (`info.scale`).
+**Coordinate Reference Systems**: Spatial selections can be specified relative to a user-defined center or the simulation box corner `[0,0,0]` (default). Users can choose between normalized box coordinates `[0:1]` (default) or physical length units. The `range_unit` parameter enables direct specification in physical units like kiloparsecs, as defined in the simulation's scale information (`info.scale`).
 
 ```julia
 part_subregion = subregion( particles, :cuboid,
@@ -284,6 +286,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_18_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -349,6 +353,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_22_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -397,6 +403,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_26_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -469,6 +477,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_31_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -509,6 +519,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_35_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -578,6 +590,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_39_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -624,6 +638,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_43_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -693,6 +709,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_48_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -758,6 +776,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_52_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -808,6 +828,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_58_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -862,6 +884,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_63_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -933,6 +957,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_67_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -1006,6 +1032,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_71_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -1057,6 +1085,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_76_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -1131,6 +1161,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_81_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -1200,6 +1232,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_85_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)

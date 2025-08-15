@@ -1,251 +1,215 @@
 # Home
+*High-performance RAMSES AMR + particle + gravity analysis in pure Julia with a unified, extensible API.*
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
+**Mera** is a Julia package designed for working with large 3D adaptive mesh refinement (AMR) and N-body particle datasets from astrophysical simulations. Written entirely in Julia, it currently supports the hydrodynamic code [RAMSES](https://github.com/ramses-organisation/ramses), providing essential functions for data extraction, manipulation, and analysis while avoiding overly high-level abstractions.
 
-**MERA** is a package designed for working with large 3D adaptive mesh refinement (AMR) or uniform-grid datasets, as well as N-body particle data from astrophysical simulations. It is entirely written in the Julia programming language and currently supports the hydrodynamic code [RAMSES (GitHub, newer versions)](https://github.com/ramses-organisation/ramses), [RAMSES (Bitbucket, older versions)](https://bitbucket.org/rteyssie/ramses/overview). MERA offers essential functions for data extraction, manipulation, and custom analysis while aiming to avoid overly high-level abstractions (often referred to as "black boxes").
+!!! note "How to Cite Mera"
+    If you use Mera in your research, please cite it to support continued development and help other researchers discover this tool. Click the DOI badge above for BibTeX citation format for your used Mera version, and star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl) to show your support.
 
+## Overview & First Steps
 
-> **Note**
-> To get a first impression, look at the `Hands-On Session RUM2023` with downloadable simulation examples: 
-    https://github.com/ManuelBehrendt/RUM2023
+### Key Features
+- Native RAMSES format support (no conversion needed)
+- Load selected regions (lower memory)
+- Multi-threaded analysis & I/O for very large datasets with progress bars
+- 50+ built-in astrophysics variables (units handled)
+- 2D projections, masks, filters, pipeline macros (simple syntax)
+- AMR VTK export for ParaView (volume rendering)
+- Compressed Mera-Files for fast reload & sharing of RAMSES snapshots
+- Reproducible environments (Project + Manifest)
+- One API for hydro, particles, clumps, gravity
 
-## Key Features
-#### 1. **Getting Started** (Installation \& Documentation) - First impression and ease of entry
-- **Effortless Installation \& Updates**
-Install and update via Julia's package manager with a single command, ensuring immediate access to new features and fixes.
-- **Extensive Documentation \& Tutorials**
-Detailed API references, comprehensive documentation, downloadable Jupyter notebooks, and Hands-On Session RUM2023 materials facilitate rapid onboarding and practical learning.
-
-#### 2. **Core Performance** (Speed \& Data Handling) - Primary technical advantages
-- **Near-C/Fortran Performance**
-Just-In-Time (JIT) compilation delivers native-code speed for array and numerical computations, surpassing interpreted languages in throughput.
-"- **High-Performance Compressed Mera-Files**
-Proprietary format provides rapid reading, writing, and handling of large AMR and N-body datasets with minimal memory footprint, dramatically reducing I/O overhead when traversing simulation snapshots for time-series analysis.
-- **Database-Driven Data Processing**
-Built on IndexedTables.jl for scalable data management, enabling efficient querying and slicing of large simulation outputs.
-
-#### 3. **Workflow \& Analysis** (End-to-end pipeline \& toolkit) - Practical usage benefits
-- **Streamlined End-to-End Workflow**
-Unified pipeline from `getinfo(output=1, "sim_folder")` → `getdata()` → `projection()` → `heatmap()` reduces manual steps and accelerates workflow while allowing flexible data manipulation at each stage to customize your analysis.
-- **Comprehensive Analytical Toolkit**
-Native support for projections, statistical profiling, data filtering and masking, column density calculations, phase plots, profile analysis, export of multi-level data to VTK for volume rendering, and many more.
-
-#### 4. **Development Features** (Interactive use \& parallelism) - Development workflow advantages
-- **Interactive \& Scriptable Use Cases**
-Combine REPL-based exploration with batch scripting and Jupyter notebooks for both ad-hoc analysis and automated high-throughput workflows.
-- **Built-In Parallelism**
-Leverage Julia's multi-threading and distributed computing capabilities for accelerated processing of large datasets on multi-core and cluster environments.
-
-#### 5. **Ecosystem \& Integration** (Julia ecosystem \& Unicode) - Broader context benefits
-- **Seamless Julia Ecosystem Integration**
-Composable with LinearAlgebra for numerical operations, Makie for interactive plotting, PyPlot, and many other Julia packages.
-- **Native Unicode \& Mathematical Notation**
-Supports λ, ∑, ∂ and other symbols in code, docstrings, and examples, enabling clear expression of complex equations and formulas.
-
-#### 6. **Advanced Features** (Reproducibility \& extensibility) - Professional/research-grade capabilities
-- **Reproducible Project Environments**
-Leverage Julia's built-in environments to lock and share dependency versions, guaranteeing consistent, repeatable analyses across machines and collaborators.
-- **Modular \& Extensible Architecture**
-Plugin-style design allows seamless addition of custom data loaders, analysis routines, or export formats.
-  
-## Dependencies
-Find the main dependencies from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/raw/master/Project.toml).
-
-## Tests
-We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
-
-
-## Julia Installation
-
-- Juliaup, an installer and version manager: https://github.com/JuliaLang/juliaup
-- Binary download + installation instructions: https://julialang.org/downloads/
-  
-- Apple Silicon: M-Chips: Julia 1.x can be installed without any trouble. But if you experience any problem installing PyPlot, link PyCall to the Python binary in the Conda installation:
-(instructions for OSX at https://github.com/JuliaPy/PyPlot.jl)
-
+### Installation (2 minutes)
 ```julia
+# Install Julia from https://julialang.org/downloads/ or use Juliaup:
+# curl -fsSL https://install.julialang.org | sh
 
-ENV["PYTHON"] = "/usr/bin/python3"
-# or for conda/miniconda
-ENV["PYTHON"] = "~/miniconda3/bin/python"
-# or for homebrew on M2 Mac
-ENV["PYTHON"] = "/opt/homebrew/bin/python3"
 using Pkg
-Pkg.add("PyCall")
-Pkg.build("PyCall")
-Pkg.add("PyPlot")
+Pkg.add("Mera")
+using Mera
 ```
 
-## Package Installation
-The package is tested against Julia 1.10.x, 1.11.x and can be installed with the Julia package manager: https://pkgdocs.julialang.org/v1/
+### First Example (seconds/minutes)
+```julia
+# Load simulation data
+info = getinfo(output=1, "/path/to/simulation")
+gas = gethydro(info)
 
-### Julia REPL
-From the Julia REPL, type ] to enter the Pkg REPL mode and run:
+# Extract temperature and create projection  
+temperature = getvar(gas, :T, :K)
+proj = projection(gas, :rho, direction=:z)
+
+# That's it! You're analyzing simulation data!
+```
+
+!!! tip "Join the Community!"
+    Got interesting results? Share your science in our [Show and Tell](https://github.com/ManuelBehrendt/Mera.jl/discussions/categories/show-and-tell)! Ask questions, share tips, and connect with other researchers in [GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions).
+
+!!! note "Quick Navigation"
+    - **Ready to dive in?** → [Documentation Guide](#documentation-guide)
+    - **Need Help?** → [Community & Support](#community--support) for assistance and discussions
+
+## Multiple Dispatch in Action
+
+Mera uses Julia's multiple dispatch so the **same function calls work differently** depending on the data type – the function automatically chooses the right method.
+
+### Same Function, Different Behavior
 
 ```julia
-pkg> add Mera
+using Mera
+
+info = getinfo(300, "/path/to/simulation")
+
+gas    = gethydro(info)    # HydroDataType
+parts  = getparticles(info) # PartDataType
+clumps = getclumps(info)   # ClumpDataType
+
+# Same function call, different behavior based on type:
+getvar(gas, :mass)      # → Cell mass (density × volume)
+getvar(parts, :mass)    # → Particle mass (discrete values)
+getvar(clumps, :mass)   # → Clump total mass (summed)
+
+# Same projection call, different physics:
+projection(gas, :rho, :g_cm3)   # → Density projection 
+projection(parts, :age, :Myr) # → Age particle projection
 ```
-### Jupyter Notebook
-Or, equivalently, via the Pkg API in the Jupyter notebook use
+
+### Data Loaders & Available Operations
+
+| Function | Dataset Type | Common Variables | Notes |
+|----------|-------------|------------------|-------|
+| `gethydro` | `HydroDataType` | `:rho`, `:T`, `:v`, `:p` | Cell-centered fields |
+| `getparticles` | `PartDataType` | `:mass`, `:age`, `:v`, `:id` | Discrete particles |
+| `getclumps` | `ClumpDataType` | `:mass_cl`, `:r_cl`, `:peak` | Bound structures |
+| `getgravity` | `GravDataType` | `:epot`, `:ax` | Potential fields |
+
+**Multiple dispatch benefit**: You write `getvar(data, :mass)` once – Julia automatically selects the right method based on whether `data` is hydro, particles, or clumps.
+
+## Learning Pathways
+
+**New to Julia and/or Mera?**
+- **Install Julia**: [Quick installation guide](#julia-setup-guide) with Juliaup, VS Code, and Jupyter setup
+- **Learn Basics**: Start with [First Steps](00_multi_FirstSteps.md) for Mera concepts and workflow  
+- **Quick References**: [Julia Quick Reference](quickreference/Julia_Quick_Reference.md) for syntax lookup 
+- **Migration Guides**: Coming from [Python](quickreference/Julia_Quick_Reference.md#migration-quick-wins-python--julia), [MATLAB](quickreference/Julia_Quick_Reference.md#matlab--julia), or [IDL](quickreference/Julia_Quick_Reference.md#idl--julia)? See comprehensive migration guides
+- **Community Help**: Get assistance and share experiences in [GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions)
+- **API Reference**: Jump to [API Documentation](api.md) for complete function reference
+- **Performance**: Check [Multi-Threading](multi-threading/multi-threading_intro.md) and [Benchmarks](benchmarks/IO/IOperformance.md) for HPC optimization
+
+
+## Documentation Guide
+
+This documentation is organized as a progressive learning path:
+
+| Section | Purpose | Best For |
+|---------|---------|----------|
+| **[First Steps](00_multi_FirstSteps.md)** | Core concepts and basic workflow | Everyone starts here |
+| **[Data Inspection](01_hydro_First_Inspection.md)** | Understand your simulation data | New users, data exploration |
+| **[Load by Selection](02_hydro_Load_Selections.md)** | Efficient data loading strategies | Performance optimization |
+| **[Get Subregions](03_hydro_Get_Subregions.md)** | **Smart region selection and coordinate handling** | **Targeted physics analysis** |
+| **[Basic Calculations](04_multi_Basic_Calculations.md)** | **Statistics, units, and rich physics via getvar()** | **Scientific analysis, derived quantities** |
+| **[Mask/Filter/Meta](05_multi_Masking_Filtering.md)** | Advanced data filtering | Complex selections |
+| **[Projection](06_hydro_Projection.md)** | 2D projections and visualizations | Publication-quality plots |
+| **[Mera-Files](07_multi_Mera_Files.md)** | Save/load compressed datasets | Data management |
+| **[Volume Rendering](paraview/paraview_intro.md)** | 3D visualizations with ParaView | Advanced visualization |
+| **[Miscellaneous](Miscellaneous.md)** | **Utility functions: ArgumentsType, verbose controls, notifications** | **Productivity tools, workflow helpers** |
+| **[Examples](examples.md)** | **Practical tutorials: data export/import, batch processing, external formats** | **Real-world workflows, integration patterns** |
+| **[Multi-Threading](multi-threading/multi-threading_intro.md)** | **Comprehensive parallel processing guide** | **HPC users, performance optimization** |
+| **[Benchmarks](benchmarks/IO/IOperformance.md)** | **Comprehensive performance testing suite** | **Performance analysis, hardware optimization** |
+| **[Julia Reference](quickreference/Julia_Quick_Reference.md)** | **Quick lookup for Julia syntax and migration** | **Daily reference, newcomers** |
+| **[Mera Reference](quickreference/Mera_Quick_Reference.md)** | **Complete function reference with examples** | **API lookup, function discovery** |
+| **[API Documentation](api.md)** | Complete function and type reference | Developers, advanced users |
+
+
+## [Installation & Requirements](@id julia-setup-guide)
 
 ```julia
 using Pkg
 Pkg.add("Mera")
+using Mera
 ```
 
+**Requirements**: Julia 1.10+, 8GB+ RAM recommended  
+**Platforms**: macOS (including Apple Silicon), Linux, Windows
 
-## Updates
-Watch on [GitHub](https://github.com/ManuelBehrendt/Mera.jl).
-Note: Before updating, always read the release notes. In Pkg REPL mode run:
-
-```julia
-pkg> update Mera
-```
-Or, equivalently, in a Jupyter notebook:
-
-```julia
-using Pkg
-Pkg.update("Mera")
-```
-
-## Reproducible Research 
-Julia ensures research verification and reproducibility through its sophisticated dual-file dependency management system. Each project generates two complementary files: `Project.toml`, which specifies direct dependencies with version compatibility constraints (e.g., "0.5" meaning "≥0.5.0 and <0.6.0" following semantic versioning rules), and `Manifest.toml`, which locks the exact versions of all dependencies—both direct and indirect—that were resolved and installed.
-This dual approach provides both flexibility and precision: Project.toml defines version ranges that are compatible with your research, while Manifest.toml creates a complete snapshot, ensuring identical [Julia environments](https://pkgdocs.julialang.org/v1.11/environments/).
-
-In order to create a new project "activate" your working directory in the REPL:
+### Environment & Reproducibility
+Create reproducible projects with `Project.toml` + `Manifest.toml`:
 
 ```julia
 shell> cd MyProject
-/Users/you/MyProject
-
 (v1.11) pkg> activate .
-```
-Now add packages like Mera and PyPlot in the favored version:
-
-```julia
-(MyProject) pkg> add Package
+(MyProject) pkg> add Mera PyPlot
 ```
 
+Recreate elsewhere: `Pkg.activate("."); Pkg.instantiate()`
 
- By sharing both files through version control, collaborators can recreate the precise computational setup using the following:
-
-```julia
-(v1.11) using Pkg
-(v1.11) Pkg.activate(".")
-(v1.11) Pkg.instantiate()
-```
-
-## Help and Documentation
-The exported functions and types in MERA are listed in the API documentation, but can also be accessed in the REPL or Jupyter notebook.
-
-In the REPL use e.g. for the function *getinfo*:
-```julia
-julia> ? # upon typing ?, the prompt changes (in place) to: help?>
-
-help?> getinfo
-search: getinfo SegmentationFault getindex getpositions MissingException
-
-  Get the simulation overview from RAMSES info, descriptor and output header files
-  ----------------------------------------------------------------------------------
-
-  getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=verbose_mode)
-  return InfoType
-
-  Keyword Arguments
-  -------------------
-
-    •    output: timestep number (default=1)
-
-    •    path: the path to the output folder relative to the current folder or absolute path
-
-    •    namelist: give the path to a namelist file (by default the namelist.txt-file in the output-folder is read)
-
-    •    verbose:: informations are printed on the screen by default: gloval variable verbose_mode=true
-
-  Examples
-  ----------
-...........
-```
-
-In the Jupyter notebook use e.g.:
-
-```julia
-?getinfo
-search: getinfo SegmentationFault getindex getpositions MissingException
-
-  Get the simulation overview from RAMSES info, descriptor and output header files
-  ----------------------------------------------------------------------------------
-
-  getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=verbose_mode)
-  return InfoType
-
-  Keyword Arguments
-  -------------------
-
-    •    output: timestep number (default=1)
-
-    •    path: the path to the output folder relative to the current folder or absolute path
-
-    •    namelist: give the path to a namelist file (by default the namelist.txt-file in the output-folder is read)
-
-    •    verbose:: informations are printed on the screen by default: gloval variable verbose_mode=true
-
-  Examples
-  ----------
-...........
-```
-
-Get a list of the defined methods of a function:
-```julia
-julia> methods(viewfields)
-# 10 methods for generic function "viewfields":
-[1] viewfields(object::PhysicalUnitsType002) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:181
-[2] viewfields(object::Mera.FilesContentType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:166
-[3] viewfields(object::DescriptorType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:150
-[4] viewfields(object::FileNamesType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:134
-[5] viewfields(object::CompilationInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:116
-[6] viewfields(object::GridInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:90
-[7] viewfields(object::PartInfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:73
-[8] viewfields(object::ScalesType002) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:57
-[9] viewfields(object::InfoType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:12
-[10] viewfields(object::DataSetType) in Mera at /Users/mabe/Documents/Projects/dev/Mera/src/functions/viewfields.jl:197
-```
+### Mera Resources
+- **Documentation**: Comprehensive guides with [Benchmarks](benchmarks/IO/IOperformance.md) and examples
+- **Community**: [GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) for help, tips, and science sharing
+- **Issues**: [GitHub Issues](https://github.com/ManuelBehrendt/Mera.jl/issues) for bug reports and feature requests
 
 
-
-## Further Notes
-
-- To use the **Jupyter** interactive environment, please install IJulia (see [IJulia](https://github.com/JuliaLang/IJulia.jl)) and/or the standalone "JupyterLab Desktop" app: https://github.com/jupyterlab/jupyterlab-desktop
-- The **tutorials** in the documentation can be downloaded from [GitHub](https://github.com/ManuelBehrendt/Notebooks/tree/59fc4b1194f02a24cb5f183a5cd9b4c05bb032b0/Mera-Docs) as Jupyter notebooks
--  To get a first impression, look at the **Hands-On Session** RUM2023` with downloadable simulation examples: 
-    https://github.com/ManuelBehrendt/RUM2023
-- Mera is tested against the **RAMSES versions**: =< stable-17.09, stable-18-09, stable-19-10
-- The variables from the **descriptor-files** are currently only read and can be used in a future Mera version
-- For simulations with a **uniform grid**, the column **:level** is not created to reduce memory usage
+### Julia Ecosystem
+- **Official**: [Julia Manual](https://docs.julialang.org/) | [Discourse Forum](https://discourse.julialang.org/) | [Slack Chat](https://julialang.org/slack/)
+- **Packages**: [JuliaHub Registry](https://juliahub.com/) | [JuliaAstro Community](https://juliaastro.org/)
+- **Development**: [VS Code Extension](https://github.com/julia-vscode/julia-vscode) | [Performance Tips](https://docs.julialang.org/en/v1/manual/performance-tips/)
 
 
-## Useful Links
-- [Official Julia website](https://julialang.org)
-- Alternatively use the Julia version manager and make Julia 1.11.* the default: https://github.com/JuliaLang/juliaup
-- [Learning Julia](https://julialang.org/learning/)
-- [Wikibooks](https://en.wikibooks.org/wiki/Introducing_Julia)
-- [Julia Cheatsheet](https://juliadocs.github.io/Julia-Cheat-Sheet/)
-- [Free book ThinkJulia](https://benlauwens.github.io/ThinkJulia.jl/latest/book.html)
-- [Synthax comparison: MATLAB–Python–Julia](https://cheatsheets.quantecon.org)
-- [Julia forum JuliaDiscourse](https://discourse.julialang.org)
-- [Courses on YouTube](https://www.youtube.com/user/JuliaLanguage)
-- Database framework used in Mera: [JuliaDB.jl](https://juliadb.org)
-- Interesting Packages: [JuliaAstro.jl](http://juliaastro.github.io), [JuliaObserver.com](https://juliaobserver.com)
-- Use Matplotlib in Julia: [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl)
-- Interactive data visualizations and plotting in Julia with Makie: [Makie.jl](https://docs.makie.org/stable/)
-- Call Python packages/functions from Julia: [PyCall.jl](https://github.com/JuliaPy/PyCall.jl)
-- Visual Studio Code based Julia IDE [julia-vscode](https://github.com/julia-vscode/julia-vscode)
+## Recommended Julia Packages
+
+### Core Add‑On Packages
+`Pkg.add(["PyPlot", "CairoMakie"])` – then expand as needed. Extended list: [recommended packages](recommended_packages.md).
+
+!!! note "Included"
+    `BenchmarkTools`, `ProgressMeter`, and `JLD2` ship through Mera (access as `Mera.BenchmarkTools`, `Mera.ProgressMeter`, `Mera.JLD2`). Full list of included dependencies in [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/raw/master/Project.toml)
+
+## About Mera
+
+**Development & Testing**: Mera is actively developed with comprehensive unit and end-to-end testing across multiple Julia versions and operating systems. Find dependencies in [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/raw/master/Project.toml).
+
+**RAMSES Compatibility**: Tested against RAMSES versions ≤ stable-17.09, stable-18-09, stable-19-10.
+
+**Project Status**: Ready for production use with ongoing feature development and performance optimization.
+
+## Community & Support
+
+### Get Help & Connect
+- **Ask Questions**: [GitHub Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) - Get help from the community and maintainers
+- **Share Your Science**: [Show and Tell](https://github.com/ManuelBehrendt/Mera.jl/discussions/categories/show-and-tell) - Showcase your research and visualizations  
+- **Report Issues**: [GitHub Issues](https://github.com/ManuelBehrendt/Mera.jl/issues) - Bug reports and feature requests
+- **Email**: mera[>]manuelbehrendt.com - Direct contact for collaborations
+
+### Join the Conversation
+💡 **Ideas & Feedback**: Help shape Mera's future development  
+🔬 **Research Applications**: Discuss science use cases and methods  
+⚡ **Performance Tips**: Share optimization strategies and benchmarks  
+🤝 **Collaboration**: Find collaborators and share experiences  
+
+*New to Discussions? Just introduce yourself and ask questions - the community is welcoming!*
+
+### Getting Help & Learning
+- **REPL Help**: `?getinfo` for function docs, `methods(getinfo)` for available methods
+- **Tutorials**: [Jupyter notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/59fc4b1194f02a24cb5f183a5cd9b4c05bb032b0/Mera-Docs) and [RUM2023 session](https://github.com/ManuelBehrendt/RUM2023)
+- **Julia Ecosystem**: [Official Website](https://julialang.org) | [Learning Resources](https://julialang.org/learning/) | [Discourse Forum](https://discourse.julialang.org) | [YouTube Channel](https://www.youtube.com/user/JuliaLanguage)
+- **Key Packages**: [JuliaAstro](http://juliaastro.github.io) | [PyPlot.jl](https://github.com/JuliaPy/PyPlot.jl) | [Makie.jl](https://docs.makie.org/stable/) | [VS Code Extension](https://github.com/julia-vscode/julia-vscode)
+
+### Contributing
+New ideas and feature requests are very welcome! MERA can be easily extended for other grid-based or N-body based data. Write an email to: mera[>]manuelbehrendt.com
 
 
-## Contact for Questions and Contributing
-- If you have any questions about the package, please feel free to write an email to: mera[>]manuelbehrendt.com
-- For bug reports, etc., please submit an issue on [GitHub](https://github.com/ManuelBehrendt/Mera.jl)
-New ideas, feature requests are very welcome! MERA can be easily extended for other grid-based or N-body based data. Write an email to: mera[>]manuelbehrendt.com
+### Stay Updated
+Want to stay informed about new Mera releases? Subscribe to email notifications:
+
+**GitHub's Built-in Watching** (Free & Native):
+- Go to the [Mera.jl repository](https://github.com/ManuelBehrendt/Mera.jl)
+- Click "Watch" → "Custom" → check "Releases"
+- Enable email delivery in your GitHub notification settings
+
+**NewReleases.io** (Third-party service):
+- Visit [newreleases.io](https://newreleases.io/) and search for Mera.jl
+- Sign up and subscribe for automatic email alerts
+- Free for basic use with easy unsubscribe options
 
 
 ## Supporting and Citing

@@ -615,6 +615,8 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
+![](06_particles_Projection_files/06_particles_Projection_41_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
 ```
@@ -648,6 +650,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
+![](06_particles_Projection_files/06_particles_Projection_44_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
 ```
@@ -680,6 +684,8 @@ xlabel("x [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
+
+![](06_particles_Projection_files/06_particles_Projection_47_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
@@ -807,6 +813,8 @@ title("σz [km/s]")
 imshow( (permutedims(proj_z.maps[:σz])  ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar();
 ```
+
+![](06_particles_Projection_files/06_particles_Projection_56_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x550 with 12 Axes>)
@@ -942,6 +950,8 @@ title("σy [km/s]")
 imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj_z.cextent)
 colorbar();
 ```
+
+![](06_particles_Projection_files/06_particles_Projection_61_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x850 with 18 Axes>)
@@ -1083,6 +1093,8 @@ imshow( (permutedims(proj_z.maps[:σy] )), cmap=cmap2, origin="lower", extent=pr
 colorbar();
 ```
 
+![](06_particles_Projection_files/06_particles_Projection_67_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x850 with 18 Axes>)
 ```
@@ -1173,6 +1185,8 @@ cb = colorbar(im, label=L"\mathrm{log10(Birth) \ [Myr]}",orientation="horizontal
 tight_layout()
 ```
 
+![](06_particles_Projection_files/06_particles_Projection_75_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
 ```
@@ -1213,6 +1227,8 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
+![](06_particles_Projection_files/06_particles_Projection_80_1.png)
+
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
 ```
@@ -1251,6 +1267,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{Age \ [Myr]}",orientation="horizontal", pad=0.2);
 tight_layout()
 ```
+
+![](06_particles_Projection_files/06_particles_Projection_85_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)
@@ -1315,6 +1333,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal", pad=0.2);
 tight_layout()
 ```
+
+![](06_particles_Projection_files/06_particles_Projection_90_1.png)
 
 ```
 Figure(PyObject <Figure size 1000x350 with 4 Axes>)

@@ -236,6 +236,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext)
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -322,6 +324,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_15_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -394,6 +398,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_19_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -449,6 +455,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_24_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -526,6 +534,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_31_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -566,6 +576,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_34_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -634,6 +646,8 @@ Progress: 100%|█████████████████████�
 
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_3.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -689,6 +703,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_40_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -764,6 +780,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_47_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -836,6 +854,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -891,6 +911,8 @@ ylabel("z [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_58_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -951,6 +973,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -1024,6 +1048,8 @@ ylabel("z [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_67_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -1104,6 +1130,8 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
 
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_71_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
 ```
@@ -1158,6 +1186,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_75_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -1231,6 +1261,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_80_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)
@@ -1308,6 +1340,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 cb = colorbar(im, label=labeltext);
 ```
+
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_84_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 6 Axes>)

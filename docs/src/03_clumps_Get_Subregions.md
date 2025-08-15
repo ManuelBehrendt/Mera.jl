@@ -35,7 +35,7 @@ Clumps in MERA represent identified overdense regions in simulations, containing
 - `:shell` - Hollow versions of geometric shapes with inner/outer boundaries
 
 **Coordinate Systems:**
-- **Standard notation** [0:1] - Normalized box coordinates (default)
+- **Standard notation** `[0:1]` - Normalized box coordinates (default)
 - **Physical units** - Real length units (kpc, Mpc, pc, etc.)
 - **Center references** - `:boxcenter`, or custom coordinates
 - **Relative positioning** - Offsets from specified reference points
@@ -150,7 +150,7 @@ Cuboid (rectangular box) selections are the most fundamental geometric filtering
 
 ### Key Features:
 - **Independent axis control** - Separate range specification for x, y, z dimensions
-- **Flexible coordinate systems** - Standard [0:1] or physical units (kpc, Mpc, etc.)
+- **Flexible coordinate systems** - Standard `[0:1]` or physical units (kpc, Mpc, etc.)
 - **Custom center references** - `:boxcenter`, or user-defined coordinates
 - **Inverse selection capability** - Extract data outside the specified region
 
@@ -207,13 +207,15 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_11_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
 
 ### Cuboid Region: Cutout the data assigned to the object `clumps`
 
-Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner `[0., 0., 0.]` by default. The user can choose between standard notation `[0:1]` (default) or physical length-units, defined in e.g. info.scale :
 
 ```julia
 clumps_subregion = subregion( clumps, :cuboid,
@@ -285,6 +287,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_19_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -319,6 +323,8 @@ ylim(rz_sub)
 xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_22_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -383,6 +389,8 @@ ylim(rz_sub)
 xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -453,6 +461,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_31_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -521,6 +531,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_36_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -562,6 +574,8 @@ ylim(rz_sub)
 xlabel("kpc")
 ylabel("kpc");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_39_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -628,6 +642,8 @@ ylim(rz)
 xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_43_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -699,6 +715,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]")
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_48_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -768,6 +786,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_52_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -811,6 +831,8 @@ ylim(rz_sub)
 xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_55_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -876,6 +898,8 @@ ylim(rz)
 xlabel("y [kpc]")
 ylabel("z [kpc]")
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_59_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -979,6 +1003,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_66_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -1049,6 +1075,8 @@ ylim(rz)
 xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_70_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -1121,6 +1149,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_74_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -1183,6 +1213,8 @@ ylim(rz)
 xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_79_1.png)
 
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
@@ -1253,6 +1285,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_83_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -1322,6 +1356,8 @@ xlabel("y [kpc]")
 ylabel("z [kpc]");
 ```
 
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_87_1.png)
+
 ```
 Figure(PyObject <Figure size 1550x350 with 3 Axes>)
 ```
@@ -1344,7 +1380,7 @@ Through this comprehensive tutorial, you have gained expertise in advanced spati
 - **Center references** - Flexible coordinate system positioning
 
 **Coordinate System Flexibility:**
-- **Standard notation** [0:1] - Normalized simulation coordinates
+- **Standard notation** `[0:1]` - Normalized simulation coordinates
 - **Physical units** - Real astronomical distances with automatic conversion
 - **Custom centers** - User-defined reference points for analysis
 - **Box-centered shortcuts** - Convenient `:boxcenter` positioning
