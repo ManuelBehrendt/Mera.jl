@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl</title><meta name="title" content="Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl"/><meta property="og:title" content="Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl"/><meta property="twitter:title" content="Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><a class="tocitem" href="../performance_monitoring/">12 Performance Monitoring</a></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Reference Guide</span><ul><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera</a></li><li><a class="tocitem" href="../quickreference/Performance_Quick_Reference/">Performance</a></li></ul></li><li><a class="tocitem" href="../api/">15 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Gravity Data: Load Selected Variables and Spatial Ranges</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Gravity Data: Load Selected Variables and Spatial Ranges</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges">Gravity Data: Load Selected Variables and Spatial Ranges</a><a id="Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective gravitational field data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the gravity data you need from large gravitational field simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective gravitational field variable loading for memory optimization</li><li>Apply spatial filtering and region selection techniques for gravity analysis</li><li>Work with different coordinate systems and units for gravitational fields</li><li>Understand center-relative coordinate systems for gravitational phenomena</li><li>Optimize gravity data loading for large simulations</li></ul><h2 id="Quick-Reference:-Gravity-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Gravity-Data-Selection-Functions">Quick Reference: Gravity Data Selection Functions</a><a id="Quick-Reference:-Gravity-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Gravity-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective gravitational field data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl</title><meta name="title" content="Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl"/><meta property="og:title" content="Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl"/><meta property="twitter:title" content="Gravity Data: Load Selected Variables and Spatial Ranges · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><span class="tocitem">12 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">13 Julia Quick Reference</a></li><li><a class="tocitem" href="../api/">14 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Gravity Data: Load Selected Variables and Spatial Ranges</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Gravity Data: Load Selected Variables and Spatial Ranges</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges">Gravity Data: Load Selected Variables and Spatial Ranges</a><a id="Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Gravity-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective gravitational field data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the gravity data you need from large gravitational field simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective gravitational field variable loading for memory optimization</li><li>Apply spatial filtering and region selection techniques for gravity analysis</li><li>Work with different coordinate systems and units for gravitational fields</li><li>Understand center-relative coordinate systems for gravitational phenomena</li><li>Optimize gravity data loading for large simulations</li></ul><h2 id="Quick-Reference:-Gravity-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Gravity-Data-Selection-Functions">Quick Reference: Gravity Data Selection Functions</a><a id="Quick-Reference:-Gravity-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Gravity-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective gravitational field data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
 grav = getgravity(info)
 
 # Select specific variables by name
@@ -17,7 +17,7 @@ grav = getgravity(info, :epot)                        # Single variable
 # :var3 or :ay    → Y-acceleration component
 # :var4 or :az    → Z-acceleration component</code></pre><h3 id="Spatial-Range-Selection"><a class="docs-heading-anchor" href="#Spatial-Range-Selection">Spatial Range Selection</a><a id="Spatial-Range-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># RAMSES standard notation (domain: [0:1]³)
 grav = getgravity(info, xrange=[0.2, 0.8],           # X-range filter
-                        yrange=[0.2, 0.8],           # Y-range filter  
+                        yrange=[0.2, 0.8],           # Y-range filter
                         zrange=[0.4, 0.6])           # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -57,13 +57,13 @@ viewfields(info.scale)
 
 # Common length units
 :m, :km, :cm, :mm, :μm, :Mpc, :kpc, :pc, :ly, :au, :Rsun</code></pre><h2 id="Getting-Started:-Simulation-Setup"><a class="docs-heading-anchor" href="#Getting-Started:-Simulation-Setup">Getting Started: Simulation Setup</a><a id="Getting-Started:-Simulation-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Started:-Simulation-Setup" title="Permalink"></a></h2><p>Before exploring gravitational field data selection techniques, let&#39;s load our simulation and examine its properties. This establishes the foundation for all subsequent gravity data loading operations.</p><pre><code class="language-julia hljs">using Mera
-info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-12T11:39:41.636
+info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:16:02.979
 
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
-=======================================================
+=======================================================
 simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
@@ -81,7 +81,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -94,10 +94,11 @@ timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load gravitational field variables is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to gravity variable selection, from loading everything to precise field component targeting.</p><h3 id="Understanding-Gravitational-Field-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Gravitational-Field-Variable-References">Understanding Gravitational Field Variable References</a><a id="Understanding-Gravitational-Field-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Gravitational-Field-Variable-References" title="Permalink"></a></h3><p>Mera provides access to gravitational field components through predefined variable names. Understanding these reference methods enables precise control over gravity data loading.</p><p><strong>Core Gravitational Field Variables:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Symbol Format</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">CPU Number</td><td style="text-align: right"><code>:cpu</code></td><td style="text-align: right"><code>:varn1</code></td><td style="text-align: right">Processor identification (= -1)</td></tr><tr><td style="text-align: right">Gravitational Potential</td><td style="text-align: right"><code>:epot</code></td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Gravitational potential field</td></tr><tr><td style="text-align: right">X-Acceleration</td><td style="text-align: right"><code>:ax</code></td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Acceleration component in x-direction</td></tr><tr><td style="text-align: right">Y-Acceleration</td><td style="text-align: right"><code>:ay</code></td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Acceleration component in y-direction</td></tr><tr><td style="text-align: right">Z-Acceleration</td><td style="text-align: right"><code>:az</code></td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Acceleration component in z-direction</td></tr></table><p><strong>Key Features:</strong></p><ul><li>Variable order is flexible in function calls</li><li>Both symbolic (<code>:epot</code>) and numeric (<code>:var1</code>) formats supported</li><li>Future updates will support descriptor file variable names</li><li>Consistent naming across all Mera gravity functions</li><li>Direct access to potential and acceleration components</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available gravitational field variables. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">grav = getgravity(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:39:46.167
+=======================================================
+</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load gravitational field variables is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to gravity variable selection, from loading everything to precise field component targeting.</p><h3 id="Understanding-Gravitational-Field-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Gravitational-Field-Variable-References">Understanding Gravitational Field Variable References</a><a id="Understanding-Gravitational-Field-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Gravitational-Field-Variable-References" title="Permalink"></a></h3><p>Mera provides access to gravitational field components through predefined variable names. Understanding these reference methods enables precise control over gravity data loading.</p><p><strong>Core Gravitational Field Variables:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Symbol Format</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">CPU Number</td><td style="text-align: right"><code>:cpu</code></td><td style="text-align: right"><code>:varn1</code></td><td style="text-align: right">Processor identification (= -1)</td></tr><tr><td style="text-align: right">Gravitational Potential</td><td style="text-align: right"><code>:epot</code></td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Gravitational potential field</td></tr><tr><td style="text-align: right">X-Acceleration</td><td style="text-align: right"><code>:ax</code></td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Acceleration component in x-direction</td></tr><tr><td style="text-align: right">Y-Acceleration</td><td style="text-align: right"><code>:ay</code></td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Acceleration component in y-direction</td></tr><tr><td style="text-align: right">Z-Acceleration</td><td style="text-align: right"><code>:az</code></td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Acceleration component in z-direction</td></tr></table><p><strong>Key Features:</strong></p><ul><li>Variable order is flexible in function calls</li><li>Both symbolic (<code>:epot</code>) and numeric (<code>:var1</code>) formats supported</li><li>Future updates will support descriptor file variable names</li><li>Consistent naming across all Mera gravity functions</li><li>Direct access to potential and acceleration components</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available gravitational field variables. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">grav = getgravity(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:16:05.687
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -109,13 +110,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.58 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:54 (85.00 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -125,11 +121,12 @@ Creating Table from 28320979 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 8 columns...
-  4.158495 seconds (4.42 M allocations: 4.361 GiB, 2.88% gc time, 17.19% compilation time)
-✓ Table created in 4.482 seconds
+  2.932913 seconds (4.42 M allocations: 4.361 GiB, 4.78% gc time, 25.70% compilation time)
+✓ Table created in 3.285 seconds
 Memory used for data table :1.6880627572536469 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">grav.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 8 columns:
-level  cx   cy   cz   epot       ax         ay         az
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">grav.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 8 columns:
+level  cx   cy   cz   epot       ax         ay         az
 ───────────────────────────────────────────────────────────────────
 6      1    1    1    -0.105458  0.0713717  0.0713739  0.0714421
 6      1    1    2    -0.106574  0.0736603  0.0736626  0.071396
@@ -154,10 +151,10 @@ Memory used for data table :1.6880627572536469 GB
 10     814  495  511  -0.284256  -0.735055  0.0415764  0.0151266
 10     814  495  512  -0.284267  -0.73541   0.0415465  0.00732422
 10     814  496  511  -0.284295  -0.735248  0.0390693  0.0150688
-10     814  496  512  -0.284306  -0.735572  0.0390361  0.00736339</code></pre><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific gravitational field components. You can use keyword arguments or positional arguments with flexible syntax.</p><pre><code class="language-julia hljs">grav_a = getgravity(info, vars=[:epot, :ax]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:42:12.886
+10     814  496  512  -0.284306  -0.735572  0.0390361  0.00736339</code></pre><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific gravitational field components. You can use keyword arguments or positional arguments with flexible syntax.</p><pre><code class="language-julia hljs">grav_a = getgravity(info, vars=[:epot, :ax]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:17:07.069
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2) = (:epot, :ax) 
+Using var(s)=(1, 2) = (:epot, :ax)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -169,13 +166,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.74 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:53 (82.82 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -185,13 +177,14 @@ Creating Table from 28320979 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 6 columns...
-  2.336830 seconds (1.93 M allocations: 3.274 GiB, 1.14% gc time, 11.12% compilation time)
-✓ Table created in 2.683 seconds
+  2.199879 seconds (1.93 M allocations: 3.171 GiB, 5.26% gc time, 12.50% compilation time)
+✓ Table created in 2.55 seconds
 Memory used for data table :1.2660471182316542 GB
--------------------------------------------------------</code></pre><p><strong>Alternative:</strong> Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:</p><pre><code class="language-julia hljs">grav_a = getgravity(info, vars=[:var1, :var2]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:42:33.906
+-------------------------------------------------------
+</code></pre><p><strong>Alternative:</strong> Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:</p><pre><code class="language-julia hljs">grav_a = getgravity(info, vars=[:var1, :var2]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:18:02.987
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2) = (:epot, :ax) 
+Using var(s)=(1, 2) = (:epot, :ax)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -203,13 +196,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.65 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:52 (82.73 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -219,13 +207,14 @@ Creating Table from 28320979 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 6 columns...
-  1.900983 seconds (701.51 k allocations: 3.205 GiB, 0.42% gc time)
-✓ Table created in 2.241 seconds
+  1.880610 seconds (701.51 k allocations: 3.103 GiB, 5.54% gc time)
+✓ Table created in 2.224 seconds
 Memory used for data table :1.2660471182316542 GB
--------------------------------------------------------</code></pre><p><strong>Keyword-free syntax:</strong> When following the specific order (InfoType object, then variables), keyword arguments are optional:</p><pre><code class="language-julia hljs">grav_a = getgravity(info, [:epot, :ax]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:42:52.984
+-------------------------------------------------------
+</code></pre><p><strong>Keyword-free syntax:</strong> When following the specific order (InfoType object, then variables), keyword arguments are optional:</p><pre><code class="language-julia hljs">grav_a = getgravity(info, [:epot, :ax]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:18:58.637
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2) = (:epot, :ax) 
+Using var(s)=(1, 2) = (:epot, :ax)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -237,13 +226,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.44 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:52 (82.64 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -253,39 +237,40 @@ Creating Table from 28320979 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 6 columns...
-  1.672757 seconds (701.51 k allocations: 3.339 GiB, 1.10% gc time)
-✓ Table created in 2.038 seconds
+  1.743203 seconds (701.51 k allocations: 3.088 GiB, 6.12% gc time)
+✓ Table created in 2.073 seconds
 Memory used for data table :1.2660471182316542 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">grav_a.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
-level  cx   cy   cz   epot
-───────────────────────────────
-6      1    1    1    -0.105458
-6      1    1    2    -0.106574
-6      1    1    3    -0.107689
-6      1    1    4    -0.1088
-6      1    1    5    -0.109906
-6      1    1    6    -0.111006
-6      1    1    7    -0.112097
-6      1    1    8    -0.113176
-6      1    1    9    -0.114243
-6      1    1    10   -0.115294
-6      1    1    11   -0.116327
-6      1    1    12   -0.117339
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">grav_a.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 6 columns:
+level  cx   cy   cz   epot       ax
+──────────────────────────────────────────
+6      1    1    1    -0.105458  0.0713717
+6      1    1    2    -0.106574  0.0736603
+6      1    1    3    -0.107689  0.0759945
+6      1    1    4    -0.1088    0.0783709
+6      1    1    5    -0.109906  0.0807857
+6      1    1    6    -0.111006  0.0832346
+6      1    1    7    -0.112097  0.0857126
+6      1    1    8    -0.113176  0.0882139
+6      1    1    9    -0.114243  0.0907326
+6      1    1    10   -0.115294  0.0932614
+6      1    1    11   -0.116327  0.095793
+6      1    1    12   -0.117339  0.0983188
 ⋮
-10     814  493  514  -0.28418
-10     814  494  509  -0.284171
-10     814  494  510  -0.284196
-10     814  494  511  -0.284214
-10     814  494  512  -0.284225
-10     814  494  513  -0.284228
-10     814  494  514  -0.284224
-10     814  495  511  -0.284256
-10     814  495  512  -0.284267
-10     814  496  511  -0.284295
-10     814  496  512  -0.284306</code></pre><h3 id="Selecting-Single-Variables"><a class="docs-heading-anchor" href="#Selecting-Single-Variables">Selecting Single Variables</a><a id="Selecting-Single-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Single-Variables" title="Permalink"></a></h3><p>For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:</p><pre><code class="language-julia hljs">grav_c = getgravity(info, :ax ); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:41:06.962
+10     814  493  514  -0.28418   -0.734355
+10     814  494  509  -0.284171  -0.733368
+10     814  494  510  -0.284196  -0.73424
+10     814  494  511  -0.284214  -0.734832
+10     814  494  512  -0.284225  -0.735242
+10     814  494  513  -0.284228  -0.73512
+10     814  494  514  -0.284224  -0.734709
+10     814  495  511  -0.284256  -0.735055
+10     814  495  512  -0.284267  -0.73541
+10     814  496  511  -0.284295  -0.735248
+10     814  496  512  -0.284306  -0.735572</code></pre><h3 id="Selecting-Single-Variables"><a class="docs-heading-anchor" href="#Selecting-Single-Variables">Selecting Single Variables</a><a id="Selecting-Single-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Single-Variables" title="Permalink"></a></h3><p>For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:</p><pre><code class="language-julia hljs">grav_c = getgravity(info, :ax );</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:19:54.212
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(2,) = (:ax,) 
+Using var(s)=(2,) = (:ax,)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -297,13 +282,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:15 (24.87 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:53 (83.04 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 1 variables
@@ -313,11 +293,12 @@ Creating Table from 28320979 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 5 columns...
-  1.647629 seconds (1.59 M allocations: 2.716 GiB, 1.63% gc time, 11.28% compilation time)
-✓ Table created in 1.97 seconds
+  1.714860 seconds (1.70 M allocations: 2.720 GiB, 6.65% gc time, 12.49% compilation time)
+✓ Table created in 2.04 seconds
 Memory used for data table :1.0550392987206578 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">grav_c.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
-level  cx   cy   cz   ax
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">grav_c.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
+level  cx   cy   cz   ax
 ───────────────────────────────
 6      1    1    1    0.0713717
 6      1    1    2    0.0736603
@@ -342,13 +323,13 @@ Memory used for data table :1.0550392987206578 GB
 10     814  495  511  -0.735055
 10     814  495  512  -0.73541
 10     814  496  511  -0.735248
-10     814  496  512  -0.735572</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing gravitational field analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different gravitational analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³ </li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise gravitational field region selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales for gravitational field analysis.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and field calculations</li></ul><p><strong>Performance Optimization:</strong> Use <code>lmax</code> to limit maximum refinement levels for faster loading and preview analysis. This is particularly useful for gravitational field analysis where you might not need the finest resolution everywhere.</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[0.2,0.8], 
-                yrange=[0.2,0.8], 
-                zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:41:25.423
+10     814  496  512  -0.735572</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing gravitational field analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different gravitational analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³</li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise gravitational field region selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales for gravitational field analysis.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and field calculations</li></ul><p><strong>Performance Optimization:</strong> Use <code>lmax</code> to limit maximum refinement levels for faster loading and preview analysis. This is particularly useful for gravitational field analysis where you might not need the finest resolution everywhere.</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[0.2,0.8],
+                yrange=[0.2,0.8],
+                zrange=[0.4,0.6]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:20:49.943
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 domain:
 xmin::xmax: 0.2 :: 0.8  	==&gt; 9.6 [kpc] :: 38.4 [kpc]
@@ -360,13 +341,8 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:09 (15.32 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:53 (82.82 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 4 variables
@@ -376,23 +352,24 @@ Creating Table from 1233232 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 8 columns...
-  0.050745 seconds (48.50 k allocations: 182.995 MiB)
-✓ Table created in 0.37 seconds
+  0.048671 seconds (48.50 k allocations: 182.994 MiB)
+✓ Table created in 0.348 seconds
 Memory used for data table :75.27139282226562 MB
--------------------------------------------------------</code></pre><p><strong>Range Verification:</strong> The loaded gravitational field data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">grav.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
+-------------------------------------------------------
+</code></pre><p><strong>Range Verification:</strong> The loaded gravitational field data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">grav.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
  0.2
  0.8
  0.2
  0.8
  0.4
- 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing gravitational fields around specific massive objects, galaxies, or regions of interest:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[-0.3, 0.3], 
-                yrange=[-0.3, 0.3], 
-                zrange=[-0.1, 0.1], 
-                center=[0.5, 0.5, 0.5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:41:36.423
+ 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing gravitational fields around specific massive objects, galaxies, or regions of interest:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[-0.3, 0.3],
+                yrange=[-0.3, 0.3],
+                zrange=[-0.1, 0.1],
+                center=[0.5, 0.5, 0.5]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:21:44.118
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -406,13 +383,8 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:05 ( 9.19 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:53 (83.23 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 4 variables
@@ -422,17 +394,18 @@ Creating Table from 1233232 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 8 columns...
-  0.049389 seconds (48.50 k allocations: 181.463 MiB)
-✓ Table created in 0.357 seconds
+  0.050126 seconds (48.50 k allocations: 181.463 MiB)
+✓ Table created in 0.371 seconds
 Memory used for data table :75.27139282226562 MB
--------------------------------------------------------</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical gravitational field analysis. This system automatically handles unit conversions and maintains physical meaning for gravitational phenomena.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for gravitational analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection for gravitational field analysis:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[2.,22.], 
-                yrange=[2.,22.], 
-                zrange=[22.,26.], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:41:42.805
+-------------------------------------------------------
+</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical gravitational field analysis. This system automatically handles unit conversions and maintains physical meaning for gravitational phenomena.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for gravitational analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection for gravitational field analysis:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[2.,22.],
+                yrange=[2.,22.],
+                zrange=[22.,26.],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:22:37.892
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==&gt; 2.0 [kpc] :: 22.0 [kpc]
@@ -444,13 +417,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:05 ( 8.78 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:47 (73.99 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 229992 cells, 4 variables
@@ -460,11 +428,13 @@ Creating Table from 229992 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 8 columns...
-  0.009465 seconds (22.26 k allocations: 34.646 MiB)
-✓ Table created in 0.309 seconds
+  0.009363 seconds (22.26 k allocations: 34.645 MiB)
+✓ Table created in 0.31 seconds
 Memory used for data table :14.038482666015625 MB
--------------------------------------------------------</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: grav.info.scale</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to scale from user/code units to selected units
-=======================================================================
+-------------------------------------------------------
+</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: grav.info.scale</code></pre><pre><code class="nohighlight hljs">
+[Mera]: Fields to scale from user/code units to selected units
+=======================================================================
 Mpc	= 0.0010000000000006482
 kpc	= 1.0000000000006481
 pc	= 1000.0000000006482
@@ -563,21 +533,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 1.04e-322
-a_mag	= 2.212143001e-314
-v_esc	= 1.1e-322
-ax	= 2.2121430166e-314
-ay	= 1.14e-322
-az	= 2.212143048e-314
-epot	= 1.14e-322
-a_magnitude	= 2.212143064e-314
-escape_speed	= 1.1e-322
-gravitational_redshift	= 2.21214308e-314
-gravitational_energy_density	= 2.910484414358466e-9
-gravitational_binding_energy	= 2.910484414358466e-9
-total_binding_energy	= 8.55100014027443e55
+delta_rho	= 0.0
+a_mag	= 0.0
+v_esc	= 0.0
+ax	= 0.0
+ay	= 0.0
+az	= 0.0
+epot	= 0.0
+a_magnitude	= 0.0
+escape_speed	= 0.0
+gravitational_redshift	= 0.0
+gravitational_energy_density	= 0.0
+gravitational_binding_energy	= 0.0
+total_binding_energy	= 0.0
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 8.551000140274429e55
+gravitational_work	= 0.0
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -585,8 +555,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 9.432237612943517e-31
-poisson_source	= 4.516263928056473e-30
+Fg	= 0.0
+poisson_source	= 0.0
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -597,15 +567,16 @@ r_sphere	= 3.085677581282e21
 ϕ	= 1.0
 dimensionless	= 1.0
 rad	= 1.0
-deg	= 57.29577951308232</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise gravitational field analysis:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[-16.,16.], 
-                yrange=[-16.,16.], 
-                zrange=[-2.,2.], 
-                center=[24.,24.,24.], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:41:48.920
+deg	= 57.29577951308232
+</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise gravitational field analysis:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[-16.,16.],
+                yrange=[-16.,16.],
+                zrange=[-2.,2.],
+                center=[24.,24.,24.],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:23:25.730
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -619,13 +590,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:05 ( 9.35 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:42 (66.54 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -635,18 +601,19 @@ Creating Table from 650848 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 8 columns...
-  0.030504 seconds (60.31 k allocations: 96.546 MiB)
-✓ Table created in 0.335 seconds
+  0.027922 seconds (60.31 k allocations: 96.546 MiB)
+✓ Table created in 0.347 seconds
 Memory used for data table :39.725494384765625 MB
--------------------------------------------------------</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying gravitational field analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions  </li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric gravitational field analysis around simulation center</li></ul><p><strong>Gravitational Field Benefits:</strong></p><ul><li>Perfect for studying gravitational effects around massive central objects</li><li>Eliminates manual center calculation for field analysis</li><li>Ensures precise geometric centering of gravitational field selections</li><li>Simplifies symmetric region definitions for potential and acceleration studies</li><li>Reduces coordinate specification errors in field filtering</li></ul><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:boxcenter], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:41:55.395
+-------------------------------------------------------
+</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying gravitational field analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions</li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric gravitational field analysis around simulation center</li></ul><p><strong>Gravitational Field Benefits:</strong></p><ul><li>Perfect for studying gravitational effects around massive central objects</li><li>Eliminates manual center calculation for field analysis</li><li>Ensures precise geometric centering of gravitational field selections</li><li>Simplifies symmetric region definitions for potential and acceleration studies</li><li>Reduces coordinate specification errors in field filtering</li></ul><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:boxcenter],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:24:08.803
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -660,13 +627,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:05 ( 8.42 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:53 (83.04 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -676,18 +638,19 @@ Creating Table from 650848 cells with max 1 threads...
    Available threads: 1
    Using sequential processing (optimal for small datasets)
    Creating IndexedTable with 8 columns...
-  0.028419 seconds (60.31 k allocations: 96.547 MiB)
-✓ Table created in 0.351 seconds
+  0.029511 seconds (60.31 k allocations: 96.547 MiB)
+✓ Table created in 0.339 seconds
 Memory used for data table :39.725494384765625 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:42:01.332
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-14T14:25:02.468
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
+Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -701,64 +664,9 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 1
    GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:05 ( 8.37 ms/it)
-
-
-
-✓ File processing complete! Combining results...
-✓ Data combination complete!
-Final data size: 650848 cells, 4 variables
-Creating Table from 650848 cells with max 1 threads...
-   Threading: 1 threads for 8 columns
-   Max threads requested: 1
-   Available threads: 1
-   Using sequential processing (optimal for small datasets)
-   Creating IndexedTable with 8 columns...
-  0.027701 seconds (60.31 k allocations: 96.548 MiB)
-✓ Table created in 0.323 seconds
-Memory used for data table :39.725494384765625 MB
--------------------------------------------------------</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc, 24., :bc], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get gravity data: 2025-08-12T11:42:07.167
-
-Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
-
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
-domain:
-xmin::xmax: 0.1666667 :: 0.8333333  	==&gt; 8.0 [kpc] :: 40.0 [kpc]
-ymin::ymax: 0.1666667 :: 0.8333333  	==&gt; 8.0 [kpc] :: 40.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
-📊 Processing Configuration:
-   Total CPU files available: 640
-   Files to be processed: 640
-   Compute threads: 1
-   GC threads: 1
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:05 ( 8.12 ms/it)
-
-
-
-✓ File processing complete! Combining results...
-✓ Data combination complete!
-Final data size: 650848 cells, 4 variables
-Creating Table from 650848 cells with max 1 threads...
-   Threading: 1 threads for 8 columns
-   Max threads requested: 1
-   Available threads: 1
-   Using sequential processing (optimal for small datasets)
-   Creating IndexedTable with 8 columns...
-  0.026509 seconds (60.31 k allocations: 96.547 MiB)
-✓ Table created in 0.33 seconds
-Memory used for data table :39.725494384765625 MB
--------------------------------------------------------</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive gravitational field data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies for gravity data analysis. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Reference Systems:</strong> Using both symbolic (<code>:epot</code>) and numeric (<code>:var1</code>) variable references</li><li><strong>Field Component Selection:</strong> Choosing specific gravitational field components (potential vs. accelerations)</li><li><strong>Selective Loading:</strong> Optimizing memory usage by loading only required field variables</li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Single vs. Multiple Variables:</strong> Appropriate syntax for different gravitational analysis scenarios</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Gravitational Focus:</strong> Targeting regions with significant gravitational effects</li><li><strong>Performance Optimization:</strong> Using <code>lmax</code> restrictions and tight spatial bounds for field analysis</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales for gravitational phenomena</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems for field studies</li></ul><h3 id="Advanced-Gravitational-Techniques"><a class="docs-heading-anchor" href="#Advanced-Gravitational-Techniques">Advanced Gravitational Techniques</a><a id="Advanced-Gravitational-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Gravitational-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering for gravity analysis</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources for field calculations</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified gravitational field positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded field data ranges and component consistency</li><li><strong>Multi-Physics Integration:</strong> Preparing gravity data for combined hydro-gravity analysis</li></ul></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 14 August 2025 11:46">Thursday 14 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+</code></pre><pre><code class="nohighlight hljs">Processing files:  81%|████████████████████████████████████████▋         |  ETA: 0:00:10 (82.44 ms/it)</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc, 24., :bc],
+                range_unit=:kpc);</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive gravitational field data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies for gravity data analysis. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Reference Systems:</strong> Using both symbolic (<code>:epot</code>) and numeric (<code>:var1</code>) variable references</li><li><strong>Field Component Selection:</strong> Choosing specific gravitational field components (potential vs. accelerations)</li><li><strong>Selective Loading:</strong> Optimizing memory usage by loading only required field variables</li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Single vs. Multiple Variables:</strong> Appropriate syntax for different gravitational analysis scenarios</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Gravitational Focus:</strong> Targeting regions with significant gravitational effects</li><li><strong>Performance Optimization:</strong> Using <code>lmax</code> restrictions and tight spatial bounds for field analysis</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales for gravitational phenomena</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems for field studies</li></ul><h3 id="Advanced-Gravitational-Techniques"><a class="docs-heading-anchor" href="#Advanced-Gravitational-Techniques">Advanced Gravitational Techniques</a><a id="Advanced-Gravitational-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Gravitational-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering for gravity analysis</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources for field calculations</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified gravitational field positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded field data ranges and component consistency</li><li><strong>Multi-Physics Integration:</strong> Preparing gravity data for combined hydro-gravity analysis</li></ul></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Friday 15 August 2025 20:34">Friday 15 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

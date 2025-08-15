@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Particles · Mera.jl</title><meta name="title" content="Particles · Mera.jl"/><meta property="og:title" content="Particles · Mera.jl"/><meta property="twitter:title" content="Particles · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li class="is-active"><a class="tocitem" href>Particles</a><ul class="internal"><li><a class="tocitem" href="#Learning-Objectives"><span>Learning Objectives</span></a></li><li><a class="tocitem" href="#Quick-Reference:-Particle-Data-Selection-Functions"><span>Quick Reference: Particle Data Selection Functions</span></a></li><li><a class="tocitem" href="#Getting-Started:-Simulation-Setup"><span>Getting Started: Simulation Setup</span></a></li><li><a class="tocitem" href="#Variable-Selection-Techniques"><span>Variable Selection Techniques</span></a></li><li><a class="tocitem" href="#Spatial-Range-Selection-Techniques"><span>Spatial Range Selection Techniques</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><a class="tocitem" href="../performance_monitoring/">12 Performance Monitoring</a></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Reference Guide</span><ul><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera</a></li><li><a class="tocitem" href="../quickreference/Performance_Quick_Reference/">Performance</a></li></ul></li><li><a class="tocitem" href="../api/">15 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2 Load by Selection</a></li><li class="is-active"><a href>Particles</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Particles</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges">Particle Data: Load Selected Variables and Spatial Ranges</a><a id="Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective particle data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the particle data you need from large N-body simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective particle variable loading for memory optimization</li><li>Apply spatial filtering and region selection techniques for particle populations</li><li>Work with different coordinate systems and units for particle analysis</li><li>Understand center-relative coordinate systems for particle distributions</li><li>Optimize particle data loading for large simulations</li></ul><h2 id="Quick-Reference:-Particle-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Particle-Data-Selection-Functions">Quick Reference: Particle Data Selection Functions</a><a id="Quick-Reference:-Particle-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Particle-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective particle data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Particles · Mera.jl</title><meta name="title" content="Particles · Mera.jl"/><meta property="og:title" content="Particles · Mera.jl"/><meta property="twitter:title" content="Particles · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li class="is-active"><a class="tocitem" href>Particles</a><ul class="internal"><li><a class="tocitem" href="#Learning-Objectives"><span>Learning Objectives</span></a></li><li><a class="tocitem" href="#Quick-Reference:-Particle-Data-Selection-Functions"><span>Quick Reference: Particle Data Selection Functions</span></a></li><li><a class="tocitem" href="#Getting-Started:-Simulation-Setup"><span>Getting Started: Simulation Setup</span></a></li><li><a class="tocitem" href="#Variable-Selection-Techniques"><span>Variable Selection Techniques</span></a></li><li><a class="tocitem" href="#Spatial-Range-Selection-Techniques"><span>Spatial Range Selection Techniques</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><span class="tocitem">12 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">13 Julia Quick Reference</a></li><li><a class="tocitem" href="../api/">14 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2 Load by Selection</a></li><li class="is-active"><a href>Particles</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Particles</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges">Particle Data: Load Selected Variables and Spatial Ranges</a><a id="Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Particle-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective particle data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the particle data you need from large N-body simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective particle variable loading for memory optimization</li><li>Apply spatial filtering and region selection techniques for particle populations</li><li>Work with different coordinate systems and units for particle analysis</li><li>Understand center-relative coordinate systems for particle distributions</li><li>Optimize particle data loading for large simulations</li></ul><h2 id="Quick-Reference:-Particle-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Particle-Data-Selection-Functions">Quick Reference: Particle Data Selection Functions</a><a id="Quick-Reference:-Particle-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Particle-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective particle data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
 particles = getparticles(info)
 
 # Select specific variables by name
@@ -25,7 +25,7 @@ particles = getparticles(info, :vx)                       # Single variable
 # :var5             → birth
 # :var6, :var7...   → Additional variables</code></pre><h3 id="Spatial-Range-Selection"><a class="docs-heading-anchor" href="#Spatial-Range-Selection">Spatial Range Selection</a><a id="Spatial-Range-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># RAMSES standard notation (domain: [0:1]³)
 particles = getparticles(info, xrange=[0.2, 0.8],        # X-range filter
-                              yrange=[0.2, 0.8],        # Y-range filter  
+                              yrange=[0.2, 0.8],        # Y-range filter
                               zrange=[0.4, 0.6])        # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -61,13 +61,13 @@ viewfields(info.scale)
 
 # Common length units
 :m, :km, :cm, :mm, :μm, :Mpc, :kpc, :pc, :ly, :au, :Rsun</code></pre><h2 id="Getting-Started:-Simulation-Setup"><a class="docs-heading-anchor" href="#Getting-Started:-Simulation-Setup">Getting Started: Simulation Setup</a><a id="Getting-Started:-Simulation-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Started:-Simulation-Setup" title="Permalink"></a></h2><p>Before exploring particle data selection techniques, let&#39;s load our simulation and examine its properties. This establishes the foundation for all subsequent particle data loading operations.</p><pre><code class="language-julia hljs">using Mera
-info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-12T11:21:48.491
+info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:25:51.113
 
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
-=======================================================
+=======================================================
 simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
@@ -85,7 +85,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -98,11 +98,12 @@ timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load particle variables is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to particle variable selection, from loading everything to precise property targeting.</p><h3 id="Understanding-Particle-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Particle-Variable-References">Understanding Particle Variable References</a><a id="Understanding-Particle-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Particle-Variable-References" title="Permalink"></a></h3><p>Mera provides flexible ways to reference particle properties with support for different RAMSES versions. Understanding these reference methods enables precise control over particle data loading.</p><p><strong>RAMSES 2018 and Later Variable References:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Symbol Format</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">X-Velocity</td><td style="text-align: right"><code>:vx</code></td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Velocity component in x-direction</td></tr><tr><td style="text-align: right">Y-Velocity</td><td style="text-align: right"><code>:vy</code></td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Velocity component in y-direction</td></tr><tr><td style="text-align: right">Z-Velocity</td><td style="text-align: right"><code>:vz</code></td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Velocity component in z-direction</td></tr><tr><td style="text-align: right">Mass</td><td style="text-align: right"><code>:mass</code></td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Particle mass</td></tr><tr><td style="text-align: right">Family</td><td style="text-align: right"><code>:family</code></td><td style="text-align: right"><code>:var5</code></td><td style="text-align: right">Particle family identifier</td></tr><tr><td style="text-align: right">Tag</td><td style="text-align: right"><code>:tag</code></td><td style="text-align: right"><code>:var6</code></td><td style="text-align: right">Particle tag</td></tr><tr><td style="text-align: right">Birth Time</td><td style="text-align: right"><code>:birth</code></td><td style="text-align: right"><code>:var7</code></td><td style="text-align: right">Birth time/redshift</td></tr><tr><td style="text-align: right">Metallicity</td><td style="text-align: right"><code>:metals</code></td><td style="text-align: right"><code>:var8</code></td><td style="text-align: right">Metal content</td></tr><tr><td style="text-align: right">Additional</td><td style="text-align: right">-</td><td style="text-align: right"><code>:var9</code>, <code>:var10</code>, ...</td><td style="text-align: right">Extended properties</td></tr></table><p><strong>RAMSES 2017 and Earlier:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">X-Velocity</td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Velocity component in x-direction</td></tr><tr><td style="text-align: right">Y-Velocity</td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Velocity component in y-direction</td></tr><tr><td style="text-align: right">Z-Velocity</td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Velocity component in z-direction</td></tr><tr><td style="text-align: right">Mass</td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Particle mass</td></tr><tr><td style="text-align: right">Birth Time</td><td style="text-align: right"><code>:var5</code></td><td style="text-align: right">Birth time/redshift</td></tr><tr><td style="text-align: right">Additional</td><td style="text-align: right"><code>:var6</code>, <code>:var7</code>, ...</td><td style="text-align: right">Extended properties</td></tr></table><p><strong>Always Available (Position and Identification):</strong></p><ul><li>Position data: <code>:level</code>, <code>:x</code>, <code>:y</code>, <code>:z</code></li><li>Identifiers: <code>:id</code>, <code>:cpu</code> (or <code>:varn1</code>)</li></ul><p><strong>Key Features:</strong></p><ul><li>Version-dependent variable naming conventions</li><li>Both symbolic and numeric formats supported  </li><li>Future support for descriptor file variable names</li><li>Consistent API across RAMSES versions</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available particle variables. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">particles = getparticles(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:54.152
+=======================================================
+</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load particle variables is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to particle variable selection, from loading everything to precise property targeting.</p><h3 id="Understanding-Particle-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Particle-Variable-References">Understanding Particle Variable References</a><a id="Understanding-Particle-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Particle-Variable-References" title="Permalink"></a></h3><p>Mera provides flexible ways to reference particle properties with support for different RAMSES versions. Understanding these reference methods enables precise control over particle data loading.</p><p><strong>RAMSES 2018 and Later Variable References:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Symbol Format</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">X-Velocity</td><td style="text-align: right"><code>:vx</code></td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Velocity component in x-direction</td></tr><tr><td style="text-align: right">Y-Velocity</td><td style="text-align: right"><code>:vy</code></td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Velocity component in y-direction</td></tr><tr><td style="text-align: right">Z-Velocity</td><td style="text-align: right"><code>:vz</code></td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Velocity component in z-direction</td></tr><tr><td style="text-align: right">Mass</td><td style="text-align: right"><code>:mass</code></td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Particle mass</td></tr><tr><td style="text-align: right">Family</td><td style="text-align: right"><code>:family</code></td><td style="text-align: right"><code>:var5</code></td><td style="text-align: right">Particle family identifier</td></tr><tr><td style="text-align: right">Tag</td><td style="text-align: right"><code>:tag</code></td><td style="text-align: right"><code>:var6</code></td><td style="text-align: right">Particle tag</td></tr><tr><td style="text-align: right">Birth Time</td><td style="text-align: right"><code>:birth</code></td><td style="text-align: right"><code>:var7</code></td><td style="text-align: right">Birth time/redshift</td></tr><tr><td style="text-align: right">Metallicity</td><td style="text-align: right"><code>:metals</code></td><td style="text-align: right"><code>:var8</code></td><td style="text-align: right">Metal content</td></tr><tr><td style="text-align: right">Additional</td><td style="text-align: right">-</td><td style="text-align: right"><code>:var9</code>, <code>:var10</code>, ...</td><td style="text-align: right">Extended properties</td></tr></table><p><strong>RAMSES 2017 and Earlier:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">X-Velocity</td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Velocity component in x-direction</td></tr><tr><td style="text-align: right">Y-Velocity</td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Velocity component in y-direction</td></tr><tr><td style="text-align: right">Z-Velocity</td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Velocity component in z-direction</td></tr><tr><td style="text-align: right">Mass</td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Particle mass</td></tr><tr><td style="text-align: right">Birth Time</td><td style="text-align: right"><code>:var5</code></td><td style="text-align: right">Birth time/redshift</td></tr><tr><td style="text-align: right">Additional</td><td style="text-align: right"><code>:var6</code>, <code>:var7</code>, ...</td><td style="text-align: right">Extended properties</td></tr></table><p><strong>Always Available (Position and Identification):</strong></p><ul><li>Position data: <code>:level</code>, <code>:x</code>, <code>:y</code>, <code>:z</code></li><li>Identifiers: <code>:id</code>, <code>:cpu</code> (or <code>:varn1</code>)</li></ul><p><strong>Key Features:</strong></p><ul><li>Version-dependent variable naming conventions</li><li>Both symbolic and numeric formats supported</li><li>Future support for descriptor file variable names</li><li>Consistent API across RAMSES versions</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available particle variables. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">particles = getparticles(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:51.527
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -114,9 +115,10 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">particles.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 12 columns:
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">particles.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 12 columns:
 Columns:
-#   colname  type
+#   colname  type
 ────────────────────
 1   level    Int32
 2   x        Float64
@@ -129,11 +131,11 @@ Columns:
 9   vy       Float64
 10  vz       Float64
 11  mass     Float64
-12  birth    Float64</code></pre><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific particle properties. You can use keyword arguments or positional arguments with flexible syntax.</p><pre><code class="language-julia hljs">particles_a = getparticles(info, vars=[:mass, :birth]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:57.261
+12  birth    Float64</code></pre><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific particle properties. You can use keyword arguments or positional arguments with flexible syntax.</p><pre><code class="language-julia hljs">particles_a = getparticles(info, vars=[:mass, :birth]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:57.214
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(4, 7) = (:mass, :birth) 
+Using var(s)=(4, 7) = (:mass, :birth)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -145,11 +147,12 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :25.965506553649902 MB
--------------------------------------------------------</code></pre><p><strong>Alternative:</strong> Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:</p><pre><code class="language-julia hljs">particles_a = getparticles(info, vars=[:var4, :var7]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:57.650
+-------------------------------------------------------
+</code></pre><p><strong>Alternative:</strong> Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:</p><pre><code class="language-julia hljs">particles_a = getparticles(info, vars=[:var4, :var7]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:57.384
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(4, 7) = (:mass, :birth) 
+Using var(s)=(4, 7) = (:mass, :birth)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -161,11 +164,12 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :25.965506553649902 MB
--------------------------------------------------------</code></pre><p><strong>Keyword-free syntax:</strong> When following the specific order (InfoType object, then variables), keyword arguments are optional:</p><pre><code class="language-julia hljs">particles_a = getparticles(info, [:mass, :birth]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:57.867
+-------------------------------------------------------
+</code></pre><p><strong>Keyword-free syntax:</strong> When following the specific order (InfoType object, then variables), keyword arguments are optional:</p><pre><code class="language-julia hljs">particles_a = getparticles(info, [:mass, :birth]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:57.586
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(4, 7) = (:mass, :birth) 
+Using var(s)=(4, 7) = (:mass, :birth)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -177,8 +181,9 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :25.965506553649902 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">particles_a.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 9 columns:
-level  x        y        z        id      family  tag  mass        birth
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">particles_a.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 9 columns:
+level  x        y        z        id      family  tag  mass        birth
 ──────────────────────────────────────────────────────────────────────────
 9      9.17918  22.4404  24.0107  128710  2       0    8.00221e-7  8.86726
 9      9.23642  21.5559  24.0144  126838  2       0    8.00221e-7  8.71495
@@ -203,11 +208,11 @@ Memory used for data table :25.965506553649902 MB
 10     37.9919  22.873   24.0271  132010  2       0    8.00221e-7  9.12003
 10     37.9966  23.092   24.0281  136766  2       0    8.00221e-7  9.45574
 10     38.0328  22.8404  24.0265  141557  2       0    8.00221e-7  9.77493
-10     38.0953  22.8757  24.0231  133214  2       0    8.00221e-7  9.20251</code></pre><h3 id="Selecting-Single-Variables"><a class="docs-heading-anchor" href="#Selecting-Single-Variables">Selecting Single Variables</a><a id="Selecting-Single-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Single-Variables" title="Permalink"></a></h3><p>For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:</p><pre><code class="language-julia hljs">particles_c = getparticles(info, :vx ); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:58.289
+10     38.0953  22.8757  24.0231  133214  2       0    8.00221e-7  9.20251</code></pre><h3 id="Selecting-Single-Variables"><a class="docs-heading-anchor" href="#Selecting-Single-Variables">Selecting Single Variables</a><a id="Selecting-Single-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Single-Variables" title="Permalink"></a></h3><p>For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:</p><pre><code class="language-julia hljs">particles_c = getparticles(info, :vx );</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:57.750
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1,) = (:vx,) 
+Using var(s)=(1,) = (:vx,)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -219,8 +224,9 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :21.81110191345215 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">particles_c.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 8 columns:
-level  x        y        z        id      family  tag  vx
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">particles_c.data</code></pre><pre><code class="nohighlight hljs">Table with 544515 rows, 8 columns:
+level  x        y        z        id      family  tag  vx
 ─────────────────────────────────────────────────────────────────
 9      9.17918  22.4404  24.0107  128710  2       0    0.670852
 9      9.23642  21.5559  24.0144  126838  2       0    0.810008
@@ -245,14 +251,14 @@ Memory used for data table :21.81110191345215 MB
 10     37.9919  22.873   24.0271  132010  2       0    0.0570142
 10     37.9966  23.092   24.0281  136766  2       0    -0.0185658
 10     38.0328  22.8404  24.0265  141557  2       0    0.0391784
-10     38.0953  22.8757  24.0231  133214  2       0    -0.0510545</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing analysis on specific particle populations within regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different particle analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³ </li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise particle population selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales for particle analysis.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and particle comparisons</li></ul><p><strong>Particle-Specific Advantage:</strong> This notation is particularly effective for comparing particle distributions with grid-based hydro data, enabling multi-physics analysis.</p><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[0.2,0.8], 
-                            yrange=[0.2,0.8], 
-                            zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:59.053
+10     38.0953  22.8757  24.0231  133214  2       0    -0.0510545</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing analysis on specific particle populations within regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different particle analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³</li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise particle population selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales for particle analysis.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and particle comparisons</li></ul><p><strong>Particle-Specific Advantage:</strong> This notation is particularly effective for comparing particle distributions with grid-based hydro data, enabling multi-physics analysis.</p><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[0.2,0.8],
+                            yrange=[0.2,0.8],
+                            zrange=[0.4,0.6]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:57.910
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 domain:
 xmin::xmax: 0.2 :: 0.8  	==&gt; 9.6 [kpc] :: 38.4 [kpc]
@@ -264,21 +270,22 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.444850e+05 particles
 Memory used for data table :38.42660331726074 MB
--------------------------------------------------------</code></pre><p><strong>Range Verification:</strong> The loaded particle data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">particles.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
+-------------------------------------------------------
+</code></pre><p><strong>Range Verification:</strong> The loaded particle data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">particles.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
  0.2
  0.8
  0.2
  0.8
  0.4
- 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing particle populations around specific features, galaxies, or objects of interest:</p><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[-0.3, 0.3], 
-                            yrange=[-0.3, 0.3], 
-                            zrange=[-0.1, 0.1], 
-                            center=[0.5, 0.5, 0.5]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:21:59.998
+ 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing particle populations around specific features, galaxies, or objects of interest:</p><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[-0.3, 0.3],
+                            yrange=[-0.3, 0.3],
+                            zrange=[-0.1, 0.1],
+                            center=[0.5, 0.5, 0.5]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:58.878
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -292,15 +299,16 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.444850e+05 particles
 Memory used for data table :38.42660331726074 MB
--------------------------------------------------------</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical particle analysis. This system automatically handles unit conversions and maintains physical meaning for particle distributions.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for particle analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection for particle populations:</p><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[2.,22.], 
-                            yrange=[2.,22.], 
-                            zrange=[22.,26.], 
-                            range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:22:00.240
+-------------------------------------------------------
+</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical particle analysis. This system automatically handles unit conversions and maintains physical meaning for particle distributions.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for particle analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection for particle populations:</p><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[2.,22.],
+                            yrange=[2.,22.],
+                            zrange=[22.,26.],
+                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:59.879
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==&gt; 2.0 [kpc] :: 22.0 [kpc]
@@ -312,8 +320,10 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 3.091600e+04 particles
 Memory used for data table :2.183063507080078 MB
--------------------------------------------------------</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: gas.info.scale</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to scale from user/code units to selected units
-=======================================================================
+-------------------------------------------------------
+</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: gas.info.scale</code></pre><pre><code class="nohighlight hljs">
+[Mera]: Fields to scale from user/code units to selected units
+=======================================================================
 Mpc	= 0.0010000000000006482
 kpc	= 1.0000000000006481
 pc	= 1000.0000000006482
@@ -412,21 +422,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.3344771646e-314
-a_mag	= 2.3790685495e-314
-v_esc	= 2.3344771646e-314
-ax	= 2.3790685495e-314
-ay	= 2.3344771646e-314
-az	= 2.3790685495e-314
-epot	= 2.3344771646e-314
-a_magnitude	= 2.3790685495e-314
-escape_speed	= 2.3344771646e-314
-gravitational_redshift	= 2.3790685495e-314
-gravitational_energy_density	= 2.910484414358466e-9
-gravitational_binding_energy	= 2.910484414358466e-9
-total_binding_energy	= 8.55100014027443e55
+delta_rho	= 3.85e-322
+a_mag	= 3.85e-322
+v_esc	= 2.205313559e-314
+ax	= 2.205313575e-314
+ay	= 3.9e-322
+az	= 3.95e-322
+epot	= 2.2053135907e-314
+a_magnitude	= 2.2053136223e-314
+escape_speed	= 4.0e-322
+gravitational_redshift	= 4.0e-322
+gravitational_energy_density	= 2.205313638e-314
+gravitational_binding_energy	= 2.205313654e-314
+total_binding_energy	= 4.05e-322
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 8.551000140274429e55
+gravitational_work	= 2.2053136697e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -434,8 +444,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 9.432237612943517e-31
-poisson_source	= 4.516263928056473e-30
+Fg	= 2.205313733e-314
+poisson_source	= 2.205313749e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -446,16 +456,17 @@ r_sphere	= 3.085677581282e21
 ϕ	= 1.0
 dimensionless	= 1.0
 rad	= 1.0
-deg	= 57.29577951308232</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise particle population analysis:</p><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[50.,50.,50.], 
-                            range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:22:00.421
+deg	= 57.29577951308232
+</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise particle population analysis:</p><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[50.,50.,50.],
+                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:25:59.976
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 center: [1.0416667, 1.0416667, 1.0416667] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 
@@ -469,16 +480,17 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 0.000000e+00 particles
 Memory used for data table :1.10546875 KB
--------------------------------------------------------</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying particle analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions  </li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric particle analysis around simulation center</li></ul><p><strong>Particle-Specific Benefits:</strong></p><ul><li>Perfect for galaxy-centered particle analysis</li><li>Eliminates manual center calculation for particle distributions</li><li>Ensures precise geometric centering of particle selections</li><li>Simplifies symmetric region definitions for particle populations</li><li>Reduces coordinate specification errors in particle filtering</li></ul><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[:boxcenter], 
-                            range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:22:00.698
+-------------------------------------------------------
+</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying particle analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions</li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric particle analysis around simulation center</li></ul><p><strong>Particle-Specific Benefits:</strong></p><ul><li>Perfect for galaxy-centered particle analysis</li><li>Eliminates manual center calculation for particle distributions</li><li>Ensures precise geometric centering of particle selections</li><li>Simplifies symmetric region definitions for particle populations</li><li>Reduces coordinate specification errors in particle filtering</li></ul><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:boxcenter],
+                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:26:00.023
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -492,16 +504,17 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[:bc], 
-                            range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:22:00.966
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:bc],
+                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:26:00.990
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -515,16 +528,17 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :38.428720474243164 MB
--------------------------------------------------------</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 50 kpc:</p><pre><code class="language-julia hljs">particles = getparticles(  info, 
-                            xrange=[-16.,16.], 
-                            yrange=[-16.,16.], 
-                            zrange=[-2.,2.], 
-                            center=[:bc, 50., :bc], 
-                            range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-12T11:22:01.325
+-------------------------------------------------------
+</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 50 kpc:</p><pre><code class="language-julia hljs">particles = getparticles(  info,
+                            xrange=[-16.,16.],
+                            yrange=[-16.,16.],
+                            zrange=[-2.,2.],
+                            center=[:bc, 50., :bc],
+                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2025-08-14T14:26:01.950
 
 Using threaded processing with 8 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
 
 center: [0.5, 1.0416667, 0.5] ==&gt; [24.0 [kpc] :: 50.0 [kpc] :: 24.0 [kpc]]
 
@@ -538,4 +552,5 @@ Mode: Threaded processing
 Combining results from 8 thread(s)...
 Found 2.078000e+03 particles
 Memory used for data table :151.4609375 KB
--------------------------------------------------------</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive particle data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies for N-body particle data. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Reference Systems:</strong> Using both symbolic (<code>:mass</code>) and numeric (<code>:var4</code>) variable references</li><li><strong>Version Compatibility:</strong> Handling RAMSES 2017/2018+ variable naming differences</li><li><strong>Selective Loading:</strong> Choosing specific particle properties to optimize memory usage  </li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Single vs. Multiple Variables:</strong> Appropriate syntax for different selection scenarios</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Particle-Specific Applications:</strong> Galaxy-centered analysis and particle population filtering</li><li><strong>Performance Optimization:</strong> Using spatial bounds and targeted particle selections</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales for particle analysis</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems for particle distributions</li></ul><h3 id="Advanced-Particle-Techniques"><a class="docs-heading-anchor" href="#Advanced-Particle-Techniques">Advanced Particle Techniques</a><a id="Advanced-Particle-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Particle-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering for particles</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources for large N-body datasets</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified particle positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded particle data ranges and population counts</li><li><strong>Multi-Physics Integration:</strong> Preparing particle data for combined hydro-particle analysis</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_hydro_Load_Selections/">« Hydro</a><a class="docs-footer-nextpage" href="../02_clumps_Load_Selections/">Clumps »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 14 August 2025 11:46">Thursday 14 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+-------------------------------------------------------
+</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive particle data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies for N-body particle data. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Reference Systems:</strong> Using both symbolic (<code>:mass</code>) and numeric (<code>:var4</code>) variable references</li><li><strong>Version Compatibility:</strong> Handling RAMSES 2017/2018+ variable naming differences</li><li><strong>Selective Loading:</strong> Choosing specific particle properties to optimize memory usage</li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Single vs. Multiple Variables:</strong> Appropriate syntax for different selection scenarios</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Particle-Specific Applications:</strong> Galaxy-centered analysis and particle population filtering</li><li><strong>Performance Optimization:</strong> Using spatial bounds and targeted particle selections</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales for particle analysis</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems for particle distributions</li></ul><h3 id="Advanced-Particle-Techniques"><a class="docs-heading-anchor" href="#Advanced-Particle-Techniques">Advanced Particle Techniques</a><a id="Advanced-Particle-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Particle-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering for particles</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources for large N-body datasets</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified particle positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded particle data ranges and population counts</li><li><strong>Multi-Physics Integration:</strong> Preparing particle data for combined hydro-particle analysis</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../02_hydro_Load_Selections/">« Hydro</a><a class="docs-footer-nextpage" href="../02_clumps_Load_Selections/">Clumps »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Friday 15 August 2025 20:34">Friday 15 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

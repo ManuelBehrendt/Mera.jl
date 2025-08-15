@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><meta name="title" content="Hydro · Mera.jl"/><meta property="og:title" content="Hydro · Mera.jl"/><meta property="twitter:title" content="Hydro · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Learning-Objectives"><span>Learning Objectives</span></a></li><li><a class="tocitem" href="#Quick-Reference:-Data-Selection-Functions"><span>Quick Reference: Data Selection Functions</span></a></li><li><a class="tocitem" href="#Getting-Started:-Simulation-Setup"><span>Getting Started: Simulation Setup</span></a></li><li><a class="tocitem" href="#Variable-Selection-Techniques"><span>Variable Selection Techniques</span></a></li><li><a class="tocitem" href="#Spatial-Range-Selection-Techniques"><span>Spatial Range Selection Techniques</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><a class="tocitem" href="../performance_monitoring/">12 Performance Monitoring</a></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Reference Guide</span><ul><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera</a></li><li><a class="tocitem" href="../quickreference/Performance_Quick_Reference/">Performance</a></li></ul></li><li><a class="tocitem" href="../api/">15 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2 Load by Selection</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges">Hydro Data: Load Selected Variables and Spatial Ranges</a><a id="Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the data you need from large hydrodynamic simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective variable loading for memory optimization</li><li>Apply spatial filtering and region selection techniques</li><li>Work with different coordinates and units</li><li>Understand center-relative coordinate systems</li><li>Optimize data loading for large simulations</li></ul><h2 id="Quick-Reference:-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Data-Selection-Functions">Quick Reference: Data Selection Functions</a><a id="Quick-Reference:-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Hydro · Mera.jl</title><meta name="title" content="Hydro · Mera.jl"/><meta property="og:title" content="Hydro · Mera.jl"/><meta property="twitter:title" content="Hydro · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li class="is-active"><a class="tocitem" href>Hydro</a><ul class="internal"><li><a class="tocitem" href="#Learning-Objectives"><span>Learning Objectives</span></a></li><li><a class="tocitem" href="#Quick-Reference:-Data-Selection-Functions"><span>Quick Reference: Data Selection Functions</span></a></li><li><a class="tocitem" href="#Getting-Started:-Simulation-Setup"><span>Getting Started: Simulation Setup</span></a></li><li><a class="tocitem" href="#Variable-Selection-Techniques"><span>Variable Selection Techniques</span></a></li><li><a class="tocitem" href="#Spatial-Range-Selection-Techniques"><span>Spatial Range Selection Techniques</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../examples/">10 Examples</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">11 Multi-Threading</a></li><li><span class="tocitem">12 Benchmarks</span><ul><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">13 Julia Quick Reference</a></li><li><a class="tocitem" href="../api/">14 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">2 Load by Selection</a></li><li class="is-active"><a href>Hydro</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Hydro</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges"><a class="docs-heading-anchor" href="#Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges">Hydro Data: Load Selected Variables and Spatial Ranges</a><a id="Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Hydro-Data:-Load-Selected-Variables-and-Spatial-Ranges" title="Permalink"></a></h1><p>This notebook provides a comprehensive guide to selective data loading and spatial filtering in Mera.jl. You&#39;ll learn advanced techniques for efficiently loading only the data you need from large hydrodynamic simulations.</p><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><ul><li>Master selective variable loading for memory optimization</li><li>Apply spatial filtering and region selection techniques</li><li>Work with different coordinates and units</li><li>Understand center-relative coordinate systems</li><li>Optimize data loading for large simulations</li></ul><h2 id="Quick-Reference:-Data-Selection-Functions"><a class="docs-heading-anchor" href="#Quick-Reference:-Data-Selection-Functions">Quick Reference: Data Selection Functions</a><a id="Quick-Reference:-Data-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference:-Data-Selection-Functions" title="Permalink"></a></h2><p>This section provides a comprehensive reference of Mera.jl functions for selective data loading and spatial filtering.</p><h3 id="Variable-Selection"><a class="docs-heading-anchor" href="#Variable-Selection">Variable Selection</a><a id="Variable-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Load all variables (default behavior)
 gas = gethydro(info)
 
 # Select specific variables by name
@@ -13,12 +13,12 @@ gas = gethydro(info, :vx)                             # Single variable
 # Common variable names and numbers
 # :varn1 or :cpu  → CPU number (= -1)
 # :var1 or :rho   → Density
-# :var2 or :vx    → X-velocity  
+# :var2 or :vx    → X-velocity
 # :var3 or :vy    → Y-velocity
 # :var4 or :vz    → Z-velocity
 # :var5 or :p     → Pressure</code></pre><h3 id="Spatial-Range-Selection"><a class="docs-heading-anchor" href="#Spatial-Range-Selection">Spatial Range Selection</a><a id="Spatial-Range-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># RAMSES standard notation (domain: [0:1]³)
 gas = gethydro(info, xrange=[0.2, 0.8],              # X-range filter
-                     yrange=[0.2, 0.8],              # Y-range filter  
+                     yrange=[0.2, 0.8],              # Y-range filter
                      zrange=[0.4, 0.6])              # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -58,13 +58,13 @@ viewfields(info.scale)
 
 # Common length units
 :m, :km, :cm, :mm, :μm, :Mpc, :kpc, :pc, :ly, :au, :Rsun</code></pre><h2 id="Getting-Started:-Simulation-Setup"><a class="docs-heading-anchor" href="#Getting-Started:-Simulation-Setup">Getting Started: Simulation Setup</a><a id="Getting-Started:-Simulation-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Getting-Started:-Simulation-Setup" title="Permalink"></a></h2><p>Before exploring data selection techniques, let&#39;s load our simulation and examine its properties. This establishes the foundation for all subsequent data loading operations.</p><pre><code class="language-julia hljs">using Mera
-info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-12T11:11:57.742
+info = getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10&quot;);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:26:46.643
 
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
-=======================================================
+=======================================================
 simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
@@ -82,7 +82,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05 
+- Nstars:   5.445150e+05
 particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -95,10 +95,11 @@ timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
-=======================================================</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load variables is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to variable selection, from loading everything to precise variable targeting.</p><h3 id="Understanding-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Variable-References">Understanding Variable References</a><a id="Understanding-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Variable-References" title="Permalink"></a></h3><p>Mera provides flexible ways to reference hydrodynamic variables. Understanding these reference methods enables precise control over data loading.</p><p><strong>Core Variable References:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Symbol Format</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">CPU Number</td><td style="text-align: right"><code>:cpu</code></td><td style="text-align: right"><code>:varn1</code></td><td style="text-align: right">Processor identification (= -1)</td></tr><tr><td style="text-align: right">Density</td><td style="text-align: right"><code>:rho</code></td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Mass density</td></tr><tr><td style="text-align: right">X-Velocity</td><td style="text-align: right"><code>:vx</code></td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Velocity component in x-direction</td></tr><tr><td style="text-align: right">Y-Velocity</td><td style="text-align: right"><code>:vy</code></td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Velocity component in y-direction</td></tr><tr><td style="text-align: right">Z-Velocity</td><td style="text-align: right"><code>:vz</code></td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Velocity component in z-direction</td></tr><tr><td style="text-align: right">Pressure</td><td style="text-align: right"><code>:p</code></td><td style="text-align: right"><code>:var5</code></td><td style="text-align: right">Gas pressure</td></tr><tr><td style="text-align: right">Additional</td><td style="text-align: right">-</td><td style="text-align: right"><code>:var6</code>, <code>:var7</code>, ...</td><td style="text-align: right">Extended variables</td></tr></table><p><strong>Key Features:</strong></p><ul><li>Variable order is flexible in function calls</li><li>Both symbolic (<code>:rho</code>) and numeric (<code>:var1</code>) formats supported</li><li>Future updates will support descriptor file variable names</li><li>Consistent naming across all Mera hydro functions</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available variables. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:12:02.253
+=======================================================
+</code></pre><h2 id="Variable-Selection-Techniques"><a class="docs-heading-anchor" href="#Variable-Selection-Techniques">Variable Selection Techniques</a><a id="Variable-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Techniques" title="Permalink"></a></h2><p>Understanding how to selectively load variables is crucial for efficient memory usage and faster analysis. Mera provides flexible approaches to variable selection, from loading everything to precise variable targeting.</p><h3 id="Understanding-Variable-References"><a class="docs-heading-anchor" href="#Understanding-Variable-References">Understanding Variable References</a><a id="Understanding-Variable-References-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Variable-References" title="Permalink"></a></h3><p>Mera provides flexible ways to reference hydrodynamic variables. Understanding these reference methods enables precise control over data loading.</p><p><strong>Core Variable References:</strong></p><table><tr><th style="text-align: right">Variable</th><th style="text-align: right">Symbol Format</th><th style="text-align: right">Number Format</th><th style="text-align: right">Description</th></tr><tr><td style="text-align: right">CPU Number</td><td style="text-align: right"><code>:cpu</code></td><td style="text-align: right"><code>:varn1</code></td><td style="text-align: right">Processor identification (= -1)</td></tr><tr><td style="text-align: right">Density</td><td style="text-align: right"><code>:rho</code></td><td style="text-align: right"><code>:var1</code></td><td style="text-align: right">Mass density</td></tr><tr><td style="text-align: right">X-Velocity</td><td style="text-align: right"><code>:vx</code></td><td style="text-align: right"><code>:var2</code></td><td style="text-align: right">Velocity component in x-direction</td></tr><tr><td style="text-align: right">Y-Velocity</td><td style="text-align: right"><code>:vy</code></td><td style="text-align: right"><code>:var3</code></td><td style="text-align: right">Velocity component in y-direction</td></tr><tr><td style="text-align: right">Z-Velocity</td><td style="text-align: right"><code>:vz</code></td><td style="text-align: right"><code>:var4</code></td><td style="text-align: right">Velocity component in z-direction</td></tr><tr><td style="text-align: right">Pressure</td><td style="text-align: right"><code>:p</code></td><td style="text-align: right"><code>:var5</code></td><td style="text-align: right">Gas pressure</td></tr><tr><td style="text-align: right">Additional</td><td style="text-align: right">-</td><td style="text-align: right"><code>:var6</code>, <code>:var7</code>, ...</td><td style="text-align: right">Extended variables</td></tr></table><p><strong>Key Features:</strong></p><ul><li>Variable order is flexible in function calls</li><li>Both symbolic (<code>:rho</code>) and numeric (<code>:var1</code>) formats supported</li><li>Future updates will support descriptor file variable names</li><li>Consistent naming across all Mera hydro functions</li></ul><h3 id="Loading-All-Variables-(Default-Behavior)"><a class="docs-heading-anchor" href="#Loading-All-Variables-(Default-Behavior)">Loading All Variables (Default Behavior)</a><a id="Loading-All-Variables-(Default-Behavior)-1"></a><a class="docs-heading-anchor-permalink" href="#Loading-All-Variables-(Default-Behavior)" title="Permalink"></a></h3><p>The simplest approach is to load all available variables. This is the default behavior when no specific variables are requested.</p><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:26:49.727
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -110,13 +111,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:15 (24.12 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:25 (40.16 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -126,12 +122,13 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  4.789886 seconds (5.60 M allocations: 5.502 GiB, 2.56% gc time, 19.33% compilation time)
-✓ Table created in 4.975 seconds
+ 28.692257 seconds (623.39 M allocations: 26.965 GiB, 5.05% gc time, 3.59% compilation time)
+✓ Table created in 28.875 seconds
 Memory used for data table :2.321086215786636 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 11 columns:
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">gas.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 11 columns:
 Columns:
-#   colname  type
+#   colname  type
 ────────────────────
 1   level    Int64
 2   cx       Int64
@@ -143,10 +140,10 @@ Columns:
 8   vz       Float64
 9   p        Float64
 10  var6     Float64
-11  var7     Float64</code></pre><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific variables. You can use keyword arguments or positional arguments with flexible syntax.</p><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:rho, :p]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:12:26.816
+11  var7     Float64</code></pre><h3 id="Selecting-Multiple-Variables"><a class="docs-heading-anchor" href="#Selecting-Multiple-Variables">Selecting Multiple Variables</a><a id="Selecting-Multiple-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Multiple-Variables" title="Permalink"></a></h3><p>Mera provides multiple ways to select specific variables. You can use keyword arguments or positional arguments with flexible syntax.</p><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:rho, :p]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:27:49.310
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 5) = (:rho, :p) 
+Using var(s)=(1, 5) = (:rho, :p)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -158,13 +155,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.48 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.95 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -174,13 +166,14 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 6 threads
   Creating IndexedTable with 6 columns...
-  2.397390 seconds (1.94 M allocations: 3.143 GiB, 0.83% gc time, 16.43% compilation time)
-✓ Table created in 2.59 seconds
+  2.227194 seconds (2.11 M allocations: 3.179 GiB, 1.11% gc time, 18.30% compilation time)
+✓ Table created in 2.402 seconds
 Memory used for data table :1.2660471182316542 GB
--------------------------------------------------------</code></pre><p><strong>Alternative:</strong> Use variable numbers instead of symbolic names. This approach provides identical functionality:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:var1, :var5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:12:44.151
+-------------------------------------------------------
+</code></pre><p><strong>Alternative:</strong> Use variable numbers instead of symbolic names. This approach provides identical functionality:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, vars=[:var1, :var5]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:28:20.836
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 5) = (:rho, :p) 
+Using var(s)=(1, 5) = (:rho, :p)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -192,13 +185,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.32 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.22 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -208,13 +196,14 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 6 threads
   Creating IndexedTable with 6 columns...
-  1.937623 seconds (701.42 k allocations: 3.075 GiB, 0.46% gc time)
-✓ Table created in 2.121 seconds
+  2.332279 seconds (701.42 k allocations: 3.049 GiB, 0.33% gc time)
+✓ Table created in 2.51 seconds
 Memory used for data table :1.2660471182316542 GB
--------------------------------------------------------</code></pre><p><strong>Keyword-free syntax:</strong> When following the specific order (InfoType object, then variables), keyword arguments are optional:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, [:rho, :p]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:00.857
+-------------------------------------------------------
+</code></pre><p><strong>Keyword-free syntax:</strong> When following the specific order (InfoType object, then variables), keyword arguments are optional:</p><pre><code class="language-julia hljs">gas_a = gethydro(info, [:rho, :p]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:28:51.993
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 5) = (:rho, :p) 
+Using var(s)=(1, 5) = (:rho, :p)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -226,13 +215,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.79 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.70 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -242,11 +226,12 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 6 threads
   Creating IndexedTable with 6 columns...
-  2.200007 seconds (701.43 k allocations: 3.025 GiB, 0.33% gc time)
-✓ Table created in 2.375 seconds
+  2.211744 seconds (701.42 k allocations: 3.071 GiB, 0.39% gc time)
+✓ Table created in 2.386 seconds
 Memory used for data table :1.2660471182316542 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas_a.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 6 columns:
-level  cx   cy   cz   rho          p
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">gas_a.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 6 columns:
+level  cx   cy   cz   rho          p
 ─────────────────────────────────────────────
 6      1    1    1    3.18647e-9   1.06027e-9
 6      1    1    2    3.58591e-9   1.33677e-9
@@ -271,10 +256,10 @@ Memory used for data table :1.2660471182316542 GB
 10     814  495  511  0.00024646   2.19846e-6
 10     814  495  512  0.000269009  2.20717e-6
 10     814  496  511  0.000235329  2.10577e-6
-10     814  496  512  0.000242422  2.09634e-6</code></pre><h3 id="Selecting-Single-Variables"><a class="docs-heading-anchor" href="#Selecting-Single-Variables">Selecting Single Variables</a><a id="Selecting-Single-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Single-Variables" title="Permalink"></a></h3><p>For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:</p><pre><code class="language-julia hljs">gas_c = gethydro(info, :vx ); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:17.716
+10     814  496  512  0.000242422  2.09634e-6</code></pre><h3 id="Selecting-Single-Variables"><a class="docs-heading-anchor" href="#Selecting-Single-Variables">Selecting Single Variables</a><a id="Selecting-Single-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Selecting-Single-Variables" title="Permalink"></a></h3><p>For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:</p><pre><code class="language-julia hljs">gas_c = gethydro(info, :vx );</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:29:23.580
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(2,) = (:vx,) 
+Using var(s)=(2,) = (:vx,)
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -286,13 +271,8 @@ zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 (21.31 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:28 (44.69 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 1 variables
@@ -302,11 +282,12 @@ Creating Table from 28320979 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 5 threads
   Creating IndexedTable with 5 columns...
-  1.676649 seconds (1.70 M allocations: 2.657 GiB, 0.90% gc time, 12.66% compilation time)
-✓ Table created in 1.851 seconds
+  2.032942 seconds (1.86 M allocations: 2.671 GiB, 0.99% gc time, 12.28% compilation time)
+✓ Table created in 2.211 seconds
 Memory used for data table :1.0550392987206578 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas_c.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
-level  cx   cy   cz   vx
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">gas_c.data</code></pre><pre><code class="nohighlight hljs">Table with 28320979 rows, 5 columns:
+level  cx   cy   cz   vx
 ────────────────────────────────
 6      1    1    1    -1.25532
 6      1    1    2    -1.23262
@@ -331,13 +312,13 @@ Memory used for data table :1.0550392987206578 GB
 10     814  495  511  0.289612
 10     814  495  512  0.290753
 10     814  496  511  0.285209
-10     814  496  512  0.285463</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³ </li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise region selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and grid calculations</li></ul><p><strong>Performance Optimization:</strong> Use <code>lmax</code> to limit maximum refinement levels for faster loading and preview analysis. This example demonstrates level 8 restriction:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[0.2,0.8], 
-                yrange=[0.2,0.8], 
-                zrange=[0.4,0.6]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:33.720
+10     814  496  512  0.285463</code></pre><h2 id="Spatial-Range-Selection-Techniques"><a class="docs-heading-anchor" href="#Spatial-Range-Selection-Techniques">Spatial Range Selection Techniques</a><a id="Spatial-Range-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection-Techniques" title="Permalink"></a></h2><p>Spatial filtering is essential for focusing analysis on specific regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different analysis needs.</p><p><strong>Available Coordinate Systems:</strong></p><ul><li><strong>RAMSES Standard:</strong> Normalized domain [0:1]³</li><li><strong>Center-Relative:</strong> Coordinates relative to specified points</li><li><strong>Physical Units:</strong> Real astronomical units (kpc, pc, etc.)</li><li><strong>Box-Centered:</strong> Convenient shortcuts for simulation center</li></ul><p>This flexibility allows precise region selection for targeted analysis while optimizing memory usage and computational efficiency.</p><h3 id="RAMSES-Standard-Coordinate-System"><a class="docs-heading-anchor" href="#RAMSES-Standard-Coordinate-System">RAMSES Standard Coordinate System</a><a id="RAMSES-Standard-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#RAMSES-Standard-Coordinate-System" title="Permalink"></a></h3><p>The RAMSES standard provides a normalized coordinate system that simplifies numerical calculations and ensures consistency across different simulation scales.</p><p><strong>Coordinate System Properties:</strong></p><ul><li><strong>Domain Range:</strong> [0:1]³ in all dimensions</li><li><strong>Origin:</strong> Located at [0., 0., 0.]</li><li><strong>Benefits:</strong> Scale-independent, numerically stable</li><li><strong>Usage:</strong> Ideal for relative positioning and grid calculations</li></ul><p><strong>Performance Optimization:</strong> Use <code>lmax</code> to limit maximum refinement levels for faster loading and preview analysis. This example demonstrates level 8 restriction:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[0.2,0.8],
+                yrange=[0.2,0.8],
+                zrange=[0.4,0.6]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:29:55.127
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 domain:
 xmin::xmax: 0.2 :: 0.8  	==&gt; 9.6 [kpc] :: 38.4 [kpc]
@@ -349,13 +330,8 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:08 (12.92 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.61 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 7 variables
@@ -365,23 +341,24 @@ Creating Table from 1233232 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.067645 seconds (48.46 k allocations: 237.337 MiB)
-✓ Table created in 0.242 seconds
+  1.162434 seconds (25.95 M allocations: 1.151 GiB)
+✓ Table created in 1.34 seconds
 Memory used for data table :103.4980878829956 MB
--------------------------------------------------------</code></pre><p><strong>Range Verification:</strong> The loaded data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">gas.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
+-------------------------------------------------------
+</code></pre><p><strong>Range Verification:</strong> The loaded data ranges are stored in the <code>ranges</code> field using RAMSES standard notation (domain: [0:1]³):</p><pre><code class="language-julia hljs">gas.ranges</code></pre><pre><code class="nohighlight hljs">6-element Vector{Float64}:
  0.2
  0.8
  0.2
  0.8
  0.4
- 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing regions around specific features or objects:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[-0.3, 0.3], 
-                yrange=[-0.3, 0.3], 
-                zrange=[-0.1, 0.1], 
-                center=[0.5, 0.5, 0.5]); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:43.007
+ 0.6</code></pre><h3 id="Center-Relative-Coordinate-Selection"><a class="docs-heading-anchor" href="#Center-Relative-Coordinate-Selection">Center-Relative Coordinate Selection</a><a id="Center-Relative-Coordinate-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Center-Relative-Coordinate-Selection" title="Permalink"></a></h3><p>Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing regions around specific features or objects:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[-0.3, 0.3],
+                yrange=[-0.3, 0.3],
+                zrange=[-0.1, 0.1],
+                center=[0.5, 0.5, 0.5]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:30:15.127
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -395,13 +372,8 @@ zmin::zmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.45 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.32 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 7 variables
@@ -411,17 +383,18 @@ Creating Table from 1233232 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.065543 seconds (48.59 k allocations: 264.877 MiB)
-✓ Table created in 0.25 seconds
+  1.161734 seconds (25.95 M allocations: 1.160 GiB)
+✓ Table created in 1.339 seconds
 Memory used for data table :103.4980878829956 MB
--------------------------------------------------------</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical analysis. This system automatically handles unit conversions and maintains physical meaning.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[2.,22.], 
-                yrange=[2.,22.], 
-                zrange=[22.,26.], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:44.913
+-------------------------------------------------------
+</code></pre><h3 id="Physical-Unit-Coordinate-System"><a class="docs-heading-anchor" href="#Physical-Unit-Coordinate-System">Physical Unit Coordinate System</a><a id="Physical-Unit-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Unit-Coordinate-System" title="Permalink"></a></h3><p>Working with physical units provides intuitive scale references for astronomical analysis. This system automatically handles unit conversions and maintains physical meaning.</p><p><strong>Key Advantages:</strong></p><ul><li><strong>Intuitive Scaling:</strong> Use familiar astronomical units (kpc, pc, Mpc)</li><li><strong>Automatic Conversion:</strong> Mera handles unit transformations internally</li><li><strong>Reference Point:</strong> Coordinates measured from box corner [0., 0., 0.]</li><li><strong>Flexibility:</strong> Mix different units as needed for analysis</li></ul><p>The following example demonstrates kiloparsec (kpc) coordinate selection:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[2.,22.],
+                yrange=[2.,22.],
+                zrange=[22.,26.],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:30:32.839
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==&gt; 2.0 [kpc] :: 22.0 [kpc]
@@ -433,13 +406,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.35 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:11 (18.75 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 229992 cells, 7 variables
@@ -449,11 +417,13 @@ Creating Table from 229992 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.012057 seconds (22.22 k allocations: 45.331 MiB)
-✓ Table created in 0.19 seconds
+  0.209679 seconds (4.85 M allocations: 220.809 MiB)
+✓ Table created in 0.388 seconds
 Memory used for data table :19.302836418151855 MB
--------------------------------------------------------</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: gas.info.scale</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to scale from user/code units to selected units
-=======================================================================
+-------------------------------------------------------
+</code></pre><p><strong>Available Physical Units:</strong> The <code>range_unit</code> keyword accepts various length units defined in the simulation&#39;s <code>scale</code> field:</p><pre><code class="language-julia hljs">viewfields(info.scale)  # or e.g.: gas.info.scale</code></pre><pre><code class="nohighlight hljs">
+[Mera]: Fields to scale from user/code units to selected units
+=======================================================================
 Mpc	= 0.0010000000000006482
 kpc	= 1.0000000000006481
 pc	= 1000.0000000006482
@@ -552,21 +522,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 5.0e-322
-a_mag	= 5.04e-322
-v_esc	= 5.1e-322
-ax	= 5.14e-322
-ay	= 5.2e-322
-az	= 5.24e-322
-epot	= 5.3e-322
-a_magnitude	= 5.34e-322
-escape_speed	= 5.4e-322
-gravitational_redshift	= 5.43e-322
-gravitational_energy_density	= 2.910484414358466e-9
-gravitational_binding_energy	= 2.910484414358466e-9
-total_binding_energy	= 8.55100014027443e55
+delta_rho	= 2.68258472e-314
+a_mag	= 2.727176105e-314
+v_esc	= 2.68258472e-314
+ax	= 2.727176105e-314
+ay	= 2.68258472e-314
+az	= 2.727176105e-314
+epot	= 2.68258472e-314
+a_magnitude	= 2.727176105e-314
+escape_speed	= 2.68258472e-314
+gravitational_redshift	= 2.727176105e-314
+gravitational_energy_density	= 2.68258472e-314
+gravitational_binding_energy	= 2.727176105e-314
+total_binding_energy	= 2.68258472e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 8.551000140274429e55
+gravitational_work	= 2.68258472e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -574,8 +544,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 9.432237612943517e-31
-poisson_source	= 4.516263928056473e-30
+Fg	= 2.68258472e-314
+poisson_source	= 2.727176105e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -586,15 +556,16 @@ r_sphere	= 3.085677581282e21
 ϕ	= 1.0
 dimensionless	= 1.0
 rad	= 1.0
-deg	= 57.29577951308232</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise regional analysis:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[-16.,16.], 
-                yrange=[-16.,16.], 
-                zrange=[-2.,2.], 
-                center=[24.,24.,24.], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:46.734
+deg	= 57.29577951308232
+</code></pre><p><strong>Center-Relative with Physical Units:</strong> Combine center-relative positioning with physical unit specifications for precise regional analysis:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[-16.,16.],
+                yrange=[-16.,16.],
+                zrange=[-2.,2.],
+                center=[24.,24.,24.],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:30:45.391
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -608,13 +579,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.33 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:10 (16.15 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 7 variables
@@ -624,18 +590,19 @@ Creating Table from 650848 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.033809 seconds (60.40 k allocations: 126.366 MiB)
-✓ Table created in 0.209 seconds
+  0.599757 seconds (13.73 M allocations: 622.916 MiB)
+✓ Table created in 0.778 seconds
 Memory used for data table :54.622477531433105 MB
--------------------------------------------------------</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions  </li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric analysis around simulation center</li></ul><p><strong>Benefits:</strong></p><ul><li>Eliminates manual center calculation</li><li>Ensures precise geometric centering</li><li>Simplifies symmetric region definitions</li><li>Reduces coordinate specification errors</li></ul><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:boxcenter], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:48.531
+-------------------------------------------------------
+</code></pre><h3 id="Box-Center-Coordinate-Shortcuts"><a class="docs-heading-anchor" href="#Box-Center-Coordinate-Shortcuts">Box Center Coordinate Shortcuts</a><a id="Box-Center-Coordinate-Shortcuts-1"></a><a class="docs-heading-anchor-permalink" href="#Box-Center-Coordinate-Shortcuts" title="Permalink"></a></h3><p>Mera provides convenient shortcuts for box-centered coordinate systems, simplifying analysis focused on the simulation center.</p><p><strong>Available Shortcuts:</strong></p><ul><li><code>:bc</code> or <code>:boxcenter</code> - Center coordinate for all dimensions</li><li>Can be applied to individual dimensions selectively</li><li>Combines seamlessly with physical units and range specifications</li><li>Ideal for symmetric analysis around simulation center</li></ul><p><strong>Benefits:</strong></p><ul><li>Eliminates manual center calculation</li><li>Ensures precise geometric centering</li><li>Simplifies symmetric region definitions</li><li>Reduces coordinate specification errors</li></ul><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:boxcenter],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:30:56.645
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -649,13 +616,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.31 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.79 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 7 variables
@@ -665,18 +627,19 @@ Creating Table from 650848 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.033690 seconds (60.40 k allocations: 126.366 MiB)
-✓ Table created in 0.208 seconds
+  0.607037 seconds (13.73 M allocations: 622.916 MiB)
+✓ Table created in 0.782 seconds
 Memory used for data table :54.622477531433105 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:50.353
+-------------------------------------------------------
+</code></pre><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:30:59.404
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -690,13 +653,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.44 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.73 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 7 variables
@@ -706,18 +664,19 @@ Creating Table from 650848 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.035380 seconds (60.40 k allocations: 126.366 MiB)
-✓ Table created in 0.222 seconds
+  0.615515 seconds (13.73 M allocations: 622.916 MiB)
+✓ Table created in 0.79 seconds
 Memory used for data table :54.622477531433105 MB
--------------------------------------------------------</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8, 
-                xrange=[-16., 16.], 
-                yrange=[-16., 16.], 
-                zrange=[-2., 2.], 
-                center=[:bc, 24., :bc], 
-                range_unit=:kpc); </code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-12T11:13:52.233
+-------------------------------------------------------
+</code></pre><p><strong>Selective Dimension Centering:</strong> Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:</p><pre><code class="language-julia hljs">gas = gethydro(info, lmax=8,
+                xrange=[-16., 16.],
+                yrange=[-16., 16.],
+                zrange=[-2., 2.],
+                center=[:bc, 24., :bc],
+                range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2025-08-14T14:31:02.085
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -731,13 +690,8 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 8
    GC threads: 4
-
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.34 ms/it)
-
-
-
+</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.73 ms/it)
+</code></pre><pre><code class="nohighlight hljs">
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 7 variables
@@ -747,7 +701,8 @@ Creating Table from 650848 cells with max 8 threads...
   Available threads: 8
   Using parallel processing with 8 threads
   Creating IndexedTable with 11 columns...
-  0.035499 seconds (60.40 k allocations: 126.366 MiB)
-✓ Table created in 0.21 seconds
+  0.616928 seconds (13.73 M allocations: 622.924 MiB)
+✓ Table created in 0.794 seconds
 Memory used for data table :54.622477531433105 MB
--------------------------------------------------------</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Reference Systems:</strong> Using both symbolic (<code>:rho</code>) and numeric (<code>:var1</code>) variable references</li><li><strong>Selective Loading:</strong> Choosing specific variables to optimize memory usage  </li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Single vs. Multiple Variables:</strong> Appropriate syntax for different selection scenarios</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Performance Optimization:</strong> Using <code>lmax</code> restrictions and tight spatial bounds</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems</li></ul><h3 id="Advanced-Techniques"><a class="docs-heading-anchor" href="#Advanced-Techniques">Advanced Techniques</a><a id="Advanced-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded data ranges and dimensions</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_clumps_First_Inspection/">« Clumps</a><a class="docs-footer-nextpage" href="../02_particles_Load_Selections/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 14 August 2025 11:46">Thursday 14 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+-------------------------------------------------------
+</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook demonstrated comprehensive data selection techniques in Mera.jl, covering both variable selection and spatial filtering strategies. Key concepts covered include:</p><h3 id="Variable-Selection-Mastery"><a class="docs-heading-anchor" href="#Variable-Selection-Mastery">Variable Selection Mastery</a><a id="Variable-Selection-Mastery-1"></a><a class="docs-heading-anchor-permalink" href="#Variable-Selection-Mastery" title="Permalink"></a></h3><ul><li><strong>Flexible Reference Systems:</strong> Using both symbolic (<code>:rho</code>) and numeric (<code>:var1</code>) variable references</li><li><strong>Selective Loading:</strong> Choosing specific variables to optimize memory usage</li><li><strong>Syntax Variations:</strong> Keyword and positional argument approaches for different coding styles</li><li><strong>Single vs. Multiple Variables:</strong> Appropriate syntax for different selection scenarios</li></ul><h3 id="Spatial-Filtering-Expertise"><a class="docs-heading-anchor" href="#Spatial-Filtering-Expertise">Spatial Filtering Expertise</a><a id="Spatial-Filtering-Expertise-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Filtering-Expertise" title="Permalink"></a></h3><ul><li><strong>Coordinate Systems:</strong> RAMSES standard, physical units, center-relative, and box-centered approaches</li><li><strong>Performance Optimization:</strong> Using <code>lmax</code> restrictions and tight spatial bounds</li><li><strong>Unit Flexibility:</strong> Working with various astronomical length scales</li><li><strong>Center Definitions:</strong> Absolute positioning and relative coordinate systems</li></ul><h3 id="Advanced-Techniques"><a class="docs-heading-anchor" href="#Advanced-Techniques">Advanced Techniques</a><a id="Advanced-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Techniques" title="Permalink"></a></h3><ul><li><strong>Combined Selection:</strong> Integrating variable selection with spatial filtering</li><li><strong>Memory Management:</strong> Balancing analysis needs with computational resources</li><li><strong>Coordinate Shortcuts:</strong> Using box center notation for simplified positioning</li><li><strong>Quality Assurance:</strong> Verifying loaded data ranges and dimensions</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../01_clumps_First_Inspection/">« Clumps</a><a class="docs-footer-nextpage" href="../02_particles_Load_Selections/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Friday 15 August 2025 20:34">Friday 15 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

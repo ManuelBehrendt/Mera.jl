@@ -1,5 +1,31 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>11 Multi-Threading · Mera.jl</title><meta name="title" content="11 Multi-Threading · Mera.jl"/><meta property="og:title" content="11 Multi-Threading · Mera.jl"/><meta property="twitter:title" content="11 Multi-Threading · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../../examples/">10 Examples</a></li><li class="is-active"><a class="tocitem" href>11 Multi-Threading</a><ul class="internal"><li><a class="tocitem" href="#Table-of-Contents"><span>Table of Contents</span></a></li><li><a class="tocitem" href="#1-Introduction-to-Multi-Threading-and-GC"><span>1 Introduction to Multi-Threading &amp; GC</span></a></li><li><a class="tocitem" href="#2-Memory-Management-and-Garbage-Collection"><span>2 Memory Management &amp; Garbage Collection</span></a></li><li><a class="tocitem" href="#3-Understanding-Oversubscription-and-max_threads"><span>3 Understanding Oversubscription &amp; <code>max_threads</code></span></a></li><li><a class="tocitem" href="#4-Setting-Up-Julia-for-Threading"><span>4 Setting Up Julia for Threading</span></a></li><li><a class="tocitem" href="#5-MERA&#39;s-Internally-Threaded-Functions"><span>5 MERA&#39;s Internally Threaded Functions</span></a></li><li><a class="tocitem" href="#6-Core-Threading-Patterns"><span>6 Core Threading Patterns</span></a></li><li><a class="tocitem" href="#7-Advanced-Threading-Patterns"><span>7 Advanced Threading Patterns</span></a></li><li><a class="tocitem" href="#8-Thread-Safe-Programming"><span>8 Thread-Safe Programming</span></a></li><li><a class="tocitem" href="#9-Transforming-Single-Threaded-Tutorials"><span>9 Transforming Single-Threaded Tutorials</span></a></li><li><a class="tocitem" href="#10-Benchmarking-and-Performance-Tuning"><span>10 Benchmarking &amp; Performance Tuning</span></a></li><li><a class="tocitem" href="#11-Best-Practices-and-Troubleshooting"><span>11 Best Practices &amp; Troubleshooting</span></a></li><li><a class="tocitem" href="#12-Complete-Working-Examples"><span>12 Complete Working Examples</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><a class="tocitem" href="../../performance_monitoring/">12 Performance Monitoring</a></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Reference Guide</span><ul><li><a class="tocitem" href="../../quickreference/Julia_Quick_Reference/">Julia</a></li><li><a class="tocitem" href="../../quickreference/Mera_Quick_Reference/">Mera</a></li><li><a class="tocitem" href="../../quickreference/Performance_Quick_Reference/">Performance</a></li></ul></li><li><a class="tocitem" href="../../api/">15 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>11 Multi-Threading</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>11 Multi-Threading</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Multi-Threading-and-Garbage-Collection-in-MERA"><a class="docs-heading-anchor" href="#Multi-Threading-and-Garbage-Collection-in-MERA">Multi-Threading &amp; Garbage Collection in MERA</a><a id="Multi-Threading-and-Garbage-Collection-in-MERA-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-Threading-and-Garbage-Collection-in-MERA" title="Permalink"></a></h1><p><em>Complete guide for high-performance RAMSES simulation analysis with Julia 1.10+</em></p><p><strong>Main Takeaways</strong>  </p><ul><li>Julia&#39;s <strong>composable threading</strong> and <strong>parallel GC</strong> for multi-GB AMR loads, projections, and VTK exports </li><li><strong>Oversubscription</strong> creates performance bottlenecks—use MERA&#39;s <code>max_threads</code> keyword to prevent this when combining threading levels  </li><li><strong>Benchmark</strong> each threaded function to find your server&#39;s optimal thread counts  </li><li>Examples to transform your existing code into parallel workflows with minimal changes</li></ul><h2 id="Table-of-Contents"><a class="docs-heading-anchor" href="#Table-of-Contents">Table of Contents</a><a id="Table-of-Contents-1"></a><a class="docs-heading-anchor-permalink" href="#Table-of-Contents" title="Permalink"></a></h2><ol><li><a href="#1-introduction">Introduction to Multi-Threading &amp; GC</a></li><li><a href="#2-memory-management--garbage-collection">Memory Management &amp; Garbage Collection</a>  </li><li><a href="#3-understanding-oversubscription--max_threads">Understanding Oversubscription &amp; max_threads</a></li><li><a href="#4-setting-up-julia-for-threading">Setting Up Julia for Threading</a></li><li><a href="#5-MERAll-internally-threaded-functions">MERA&#39;s Internally Threaded Functions</a></li><li><a href="#6-core-threading-patterns">Core Threading Patterns</a></li><li><a href="#7-advanced-threading-patterns">Advanced Threading Patterns</a></li><li><a href="#8-thread-safe-programming">Thread-Safe Programming</a></li><li><a href="#9-transforming-single-threaded-tutorials">Transforming Single-Threaded Tutorials</a></li><li><a href="#10-benchmarking--performance-tuning">Benchmarking &amp; Performance Tuning</a></li><li><a href="#11-best-practices--troubleshooting">Best Practices &amp; Troubleshooting</a></li><li><a href="#12-complete-working-examples">Complete Working Examples</a></li></ol><h2 id="1-Introduction-to-Multi-Threading-and-GC"><a class="docs-heading-anchor" href="#1-Introduction-to-Multi-Threading-and-GC">1 Introduction to Multi-Threading &amp; GC</a><a id="1-Introduction-to-Multi-Threading-and-GC-1"></a><a class="docs-heading-anchor-permalink" href="#1-Introduction-to-Multi-Threading-and-GC" title="Permalink"></a></h2><h3 id="1.1-Why-Multi-Threading-Matters-for-Scientists"><a class="docs-heading-anchor" href="#1.1-Why-Multi-Threading-Matters-for-Scientists">1.1 Why Multi-Threading Matters for Scientists</a><a id="1.1-Why-Multi-Threading-Matters-for-Scientists-1"></a><a class="docs-heading-anchor-permalink" href="#1.1-Why-Multi-Threading-Matters-for-Scientists" title="Permalink"></a></h3><p>Julia&#39;s <strong>native multi-threading</strong> lets you utilize your available cores within pure Julia code—no external libraries, MPI, or complex setup required.</p><p><strong>For MERA users</strong>, this means the following functions are already internally parallized:</p><ul><li><strong>AMR data loading</strong> (<code>gethydro</code>/<code>getgravity</code>) reads levels concurrently  </li><li><strong>Particle streaming</strong> (<code>getparticles</code>) processes files in parallel  </li><li><strong>Projection creation</strong> (<code>projection</code>) spawns one thread per variable for hydro data</li><li><strong>VTK export</strong> (<code>export_vtk</code>) writes chunks simultaneously  </li></ul><h3 id="1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading"><a class="docs-heading-anchor" href="#1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading">1.2 Julia&#39;s Unique Advantage: Composable Threading</a><a id="1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading" title="Permalink"></a></h3><p>Unlike languages that retrofit parallelism, Julia was designed with <strong>composable threading</strong> from the ground up. When one multi-threaded function calls another multi-threaded function, Julia&#39;s scheduler coordinates all threads globally without oversubscribing resources.</p><p>This architectural advantage is crucial for scientific computing where you might:</p><ul><li>Process multiple simulation snapshots simultaneously</li><li>Run different analysis algorithms in parallel  </li><li>Export visualization data while computing results</li><li>Perform parameter sweeps with thousands of iterations</li></ul><h3 id="1.3-Parallel-Garbage-Collection"><a class="docs-heading-anchor" href="#1.3-Parallel-Garbage-Collection">1.3 Parallel Garbage Collection</a><a id="1.3-Parallel-Garbage-Collection-1"></a><a class="docs-heading-anchor-permalink" href="#1.3-Parallel-Garbage-Collection" title="Permalink"></a></h3><p>Julia 1.10+ introduces <strong>parallel garbage collection</strong>—the GC&#39;s mark phase runs on multiple threads, dramatically reducing pause times for allocation-heavy applications. This is especially important when processing large RAMSES datasets that create many temporary objects.</p><h2 id="2-Memory-Management-and-Garbage-Collection"><a class="docs-heading-anchor" href="#2-Memory-Management-and-Garbage-Collection">2 Memory Management &amp; Garbage Collection</a><a id="2-Memory-Management-and-Garbage-Collection-1"></a><a class="docs-heading-anchor-permalink" href="#2-Memory-Management-and-Garbage-Collection" title="Permalink"></a></h2><h3 id="2.1-Stack-vs-Heap-Memory"><a class="docs-heading-anchor" href="#2.1-Stack-vs-Heap-Memory">2.1 Stack vs Heap Memory</a><a id="2.1-Stack-vs-Heap-Memory-1"></a><a class="docs-heading-anchor-permalink" href="#2.1-Stack-vs-Heap-Memory" title="Permalink"></a></h3><p>Understanding Julia&#39;s memory model helps optimize threaded code:</p><p><strong>Stack Memory</strong></p><ul><li>Fast, linear LIFO (Last-In-First-Out) structure</li><li>Stores local variables, function parameters, return addresses</li><li>Fixed size, known at compile time</li><li>Automatically freed when function returns</li></ul><p><strong>Heap Memory</strong>  </p><ul><li>Flexible region for dynamic objects</li><li>Arrays, dictionaries, complex data structures</li><li>Size determined at runtime</li><li>Managed by garbage collector</li></ul><pre><code class="language-julia hljs">function memory_example()
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>11 Multi-Threading · Mera.jl</title><meta name="title" content="11 Multi-Threading · Mera.jl"/><meta property="og:title" content="11 Multi-Threading · Mera.jl"/><meta property="twitter:title" content="11 Multi-Threading · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">4 Basic Calculations</a></li><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">5 Mask/Filter/Meta</a></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li></ul></li><li><a class="tocitem" href="../../Miscellaneous/">9 Miscellaneous</a></li><li><a class="tocitem" href="../../examples/">10 Examples</a></li><li class="is-active"><a class="tocitem" href>11 Multi-Threading</a><ul class="internal"><li><a class="tocitem" href="#Quick-Start-Guide"><span>Quick Start Guide</span></a></li><li><a class="tocitem" href="#Quick-Reference"><span>Quick Reference</span></a></li><li><a class="tocitem" href="#1-Introduction-to-Multi-Threading-and-GC"><span>1 Introduction to Multi-Threading &amp; GC</span></a></li><li><a class="tocitem" href="#2-Memory-Management-and-Garbage-Collection"><span>2 Memory Management &amp; Garbage Collection</span></a></li><li><a class="tocitem" href="#3-Understanding-Resource-Contention-and-max_threads"><span>3 Understanding Resource Contention &amp; <code>max_threads</code></span></a></li><li><a class="tocitem" href="#4-Setting-Up-Julia-for-Threading"><span>4 Setting Up Julia for Threading</span></a></li><li><a class="tocitem" href="#5-Mera&#39;s-Internally-Threaded-Functions"><span>5 Mera&#39;s Internally Threaded Functions</span></a></li><li><a class="tocitem" href="#6-Core-Threading-Patterns"><span>6 Core Threading Patterns</span></a></li><li><a class="tocitem" href="#7-Advanced-Threading-Patterns"><span>7 Advanced Threading Patterns</span></a></li><li><a class="tocitem" href="#8-Thread-Safe-Programming"><span>8 Thread-Safe Programming</span></a></li><li><a class="tocitem" href="#9-Transforming-Single-Threaded-Tutorials"><span>9 Transforming Single-Threaded Tutorials</span></a></li><li><a class="tocitem" href="#10-Benchmarking-and-Performance-Tuning"><span>10 Benchmarking &amp; Performance Tuning</span></a></li><li><a class="tocitem" href="#11-Best-Practices-and-Troubleshooting"><span>11 Best Practices &amp; Troubleshooting</span></a></li><li><a class="tocitem" href="#12-Complete-Working-Examples"><span>12 Complete Working Examples</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li><li><span class="tocitem">12 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><a class="tocitem" href="../../quickreference/Julia_Quick_Reference/">13 Julia Quick Reference</a></li><li><a class="tocitem" href="../../api/">14 API Documentation</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>11 Multi-Threading</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>11 Multi-Threading</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Multi-Threading-and-Garbage-Collection-in-Mera"><a class="docs-heading-anchor" href="#Multi-Threading-and-Garbage-Collection-in-Mera">Multi-Threading &amp; Garbage Collection in Mera</a><a id="Multi-Threading-and-Garbage-Collection-in-Mera-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-Threading-and-Garbage-Collection-in-Mera" title="Permalink"></a></h1><p><em>Complete guide for high-performance RAMSES simulation analysis with Julia 1.10+</em></p><p><strong>Main Takeaways</strong>  </p><ul><li>Julia&#39;s <strong>composable threading</strong> and <strong>parallel GC</strong> for multi-GB AMR loads, projections, and VTK exports </li><li>Concurrent threading at multiple levels can saturate I/O and memory—use Mera&#39;s <code>max_threads</code> keyword to control internal concurrency  </li><li><strong>Benchmark</strong> each threaded function to find your server&#39;s optimal thread counts  </li><li>Examples to transform your existing code into parallel workflows with minimal changes</li></ul><h2 id="Quick-Start-Guide"><a class="docs-heading-anchor" href="#Quick-Start-Guide">Quick Start Guide</a><a id="Quick-Start-Guide-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Start-Guide" title="Permalink"></a></h2><h3 id="For-Complete-Beginners"><a class="docs-heading-anchor" href="#For-Complete-Beginners">For Complete Beginners</a><a id="For-Complete-Beginners-1"></a><a class="docs-heading-anchor-permalink" href="#For-Complete-Beginners" title="Permalink"></a></h3><p><strong>New to Julia threading AND Mera?</strong> Start here:</p><ol><li><strong>Setup</strong>: Start Julia with <code>julia -t auto</code></li><li><strong>Verify</strong>: Run Section 4.1 setup verification </li><li><strong>Learn basics</strong>: Read Sections 1-3 (threading concepts, memory, resource contention)</li><li><strong>Practice fundamentals</strong>: Try Section 6.0 practice exercises</li><li><strong>Understand patterns</strong>: Study Section 6 (outer-loop vs inner-kernel vs mixed)</li><li><strong>Apply</strong>: Use Section 12 complete examples on your data</li></ol><h3 id="For-Julia-Users-New-to-Mera-Threading"><a class="docs-heading-anchor" href="#For-Julia-Users-New-to-Mera-Threading">For Julia Users New to Mera Threading</a><a id="For-Julia-Users-New-to-Mera-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#For-Julia-Users-New-to-Mera-Threading" title="Permalink"></a></h3><p><strong>Know Julia threading but new to Mera?</strong> Follow this path:</p><ol><li><strong>Mera specifics</strong>: Jump to Section 5 (function support and <code>max_threads</code>)</li><li><strong>Practice</strong>: Try Section 6.0 exercises to see Mera patterns</li><li><strong>Choose pattern</strong>: Section 6 for your use case</li><li><strong>Transform code</strong>: Section 9 to adapt existing workflows  </li><li><strong>Optimize</strong>: Section 10 for performance tuning</li></ol><h3 id="For-Experienced-Users"><a class="docs-heading-anchor" href="#For-Experienced-Users">For Experienced Users</a><a id="For-Experienced-Users-1"></a><a class="docs-heading-anchor-permalink" href="#For-Experienced-Users" title="Permalink"></a></h3><p><strong>Already familiar with both?</strong> Quick navigation:</p><ul><li><strong>Reference</strong>: Section 5 (function support), Quick Reference below</li><li><strong>Patterns</strong>: Section 6 (core), Section 7 (advanced)</li><li><strong>Examples</strong>: Section 9 (transformations), Section 12 (production)</li><li><strong>Troubleshooting</strong>: Section 10 (performance), Section 11 (best practices)</li></ul><h3 id="By-Specific-Goal"><a class="docs-heading-anchor" href="#By-Specific-Goal">By Specific Goal</a><a id="By-Specific-Goal-1"></a><a class="docs-heading-anchor-permalink" href="#By-Specific-Goal" title="Permalink"></a></h3><p><strong>What do you want to achieve?</strong></p><ul><li><strong>Process multiple snapshots/parameters</strong> → Section 6.1 (Outer-Loop Pattern)</li><li><strong>Analyze single large dataset</strong> → Section 6.2 (Inner-Kernel Pattern)  </li><li><strong>Build complex multi-stage workflows</strong> → Section 6.3 (Mixed) + Section 7 (Advanced)</li><li><strong>Fix memory/GC issues</strong> → Section 2 (Memory/GC) + Section 11.2 (Troubleshooting)</li><li><strong>Improve performance</strong> → Section 10 (Benchmarking) + Section 11.1 (Best Practices)</li><li><strong>Make existing code threaded</strong> → Section 9 (Tutorial Transformations)</li><li><strong>Thread safety problems</strong> → Section 8 (Thread-Safe Programming)</li></ul><h2 id="Quick-Reference"><a class="docs-heading-anchor" href="#Quick-Reference">Quick Reference</a><a id="Quick-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference" title="Permalink"></a></h2><h3 id="Essential-Commands"><a class="docs-heading-anchor" href="#Essential-Commands">Essential Commands</a><a id="Essential-Commands-1"></a><a class="docs-heading-anchor-permalink" href="#Essential-Commands" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Start Julia with threading
+julia -t auto
+
+# Check threading status
+using Base.Threads
+nthreads()  # Should be &gt; 1
+
+# Basic verification test
+@threads for i in 1:nthreads()
+    println(&quot;Thread $(threadid()) working&quot;)
+end</code></pre><h3 id="Core-Patterns"><a class="docs-heading-anchor" href="#Core-Patterns">Core Patterns</a><a id="Core-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Core-Patterns" title="Permalink"></a></h3><table><tr><th style="text-align: right">Pattern</th><th style="text-align: right">When to Use</th><th style="text-align: right">Code Template</th></tr><tr><td style="text-align: right"><strong>Outer-Loop</strong></td><td style="text-align: right">Multiple snapshots/parameters</td><td style="text-align: right"><code>@threads for item in items</code>&lt;br/&gt;<code>mera_func(item; max_threads=1)</code></td></tr><tr><td style="text-align: right"><strong>Inner-Kernel</strong></td><td style="text-align: right">Single large dataset</td><td style="text-align: right"><code>mera_func(data)  # Uses all threads</code>&lt;br/&gt;<code>projection(data, [:var1, :var2])</code></td></tr><tr><td style="text-align: right"><strong>Mixed</strong></td><td style="text-align: right">Controlled resource allocation</td><td style="text-align: right"><code>@spawn mera_func(data; max_threads=N)</code></td></tr></table><h3 id="Function-Threading-Support"><a class="docs-heading-anchor" href="#Function-Threading-Support">Function Threading Support</a><a id="Function-Threading-Support-1"></a><a class="docs-heading-anchor-permalink" href="#Function-Threading-Support" title="Permalink"></a></h3><table><tr><th style="text-align: right">Function</th><th style="text-align: right">Internal Threading</th><th style="text-align: right"><code>max_threads</code></th><th style="text-align: right">Notes</th></tr><tr><td style="text-align: right"><code>gethydro</code></td><td style="text-align: right">✅</td><td style="text-align: right">✅</td><td style="text-align: right">Parallel file loading</td></tr><tr><td style="text-align: right"><code>getgravity</code></td><td style="text-align: right">✅</td><td style="text-align: right">✅</td><td style="text-align: right">Same as gethydro</td></tr><tr><td style="text-align: right"><code>getparticles</code></td><td style="text-align: right">✅</td><td style="text-align: right">✅</td><td style="text-align: right">Same as gethydro</td></tr><tr><td style="text-align: right"><code>projection</code></td><td style="text-align: right">✅</td><td style="text-align: right">✅</td><td style="text-align: right">1 thread per variable</td></tr><tr><td style="text-align: right"><code>export_vtk</code></td><td style="text-align: right">✅</td><td style="text-align: right">✗</td><td style="text-align: right">Auto-threading only</td></tr><tr><td style="text-align: right"><code>getinfo</code></td><td style="text-align: right">✗</td><td style="text-align: right">✗</td><td style="text-align: right">Lightweight, single-thread</td></tr></table><h3 id="Thread-Safe-Data-Collection"><a class="docs-heading-anchor" href="#Thread-Safe-Data-Collection">Thread-Safe Data Collection</a><a id="Thread-Safe-Data-Collection-1"></a><a class="docs-heading-anchor-permalink" href="#Thread-Safe-Data-Collection" title="Permalink"></a></h3><pre><code class="language-julia hljs"># ✅ Safe: Pre-allocated arrays
+results = Vector{Float64}(undef, n)
+@threads for i in 1:n
+    results[i] = compute(i)  # Each thread → different index
+end
+
+# ✅ Safe: Atomic operations  
+total = Atomic{Float64}(0.0)
+@threads for i in 1:n
+    atomic_add!(total, compute(i))
+end
+
+# ❌ Unsafe: Race conditions
+total = 0.0
+@threads for i in 1:n
+    global total += compute(i)  # Multiple threads → same variable
+end</code></pre><h3 id="Common-Gotchas"><a class="docs-heading-anchor" href="#Common-Gotchas">Common Gotchas</a><a id="Common-Gotchas-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Gotchas" title="Permalink"></a></h3><ul><li><strong>Resource contention</strong>: Use <code>max_threads</code> to optimize I/O and memory bandwidth usage</li><li><strong>Memory allocation</strong>: High GC time (&gt;15%) → pre-allocate arrays</li><li><strong>Thread verification</strong>: Always check <code>nthreads() &gt; 1</code> before threading</li><li><strong>Error handling</strong>: Wrap threaded code in <code>try-catch</code> blocks</li></ul><h3 id="Performance-Rules-of-Thumb"><a class="docs-heading-anchor" href="#Performance-Rules-of-Thumb">Performance Rules of Thumb</a><a id="Performance-Rules-of-Thumb-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Rules-of-Thumb" title="Permalink"></a></h3><ul><li><strong>I/O bound</strong>: More threads (4-8) help</li><li><strong>CPU bound</strong>: Match physical cores</li><li><strong>Memory bound</strong>: Fewer threads (2-4) </li><li><strong>Network storage</strong>: Even fewer threads, benefit from compression</li></ul><h2 id="1-Introduction-to-Multi-Threading-and-GC"><a class="docs-heading-anchor" href="#1-Introduction-to-Multi-Threading-and-GC">1 Introduction to Multi-Threading &amp; GC</a><a id="1-Introduction-to-Multi-Threading-and-GC-1"></a><a class="docs-heading-anchor-permalink" href="#1-Introduction-to-Multi-Threading-and-GC" title="Permalink"></a></h2><h3 id="1.1-Why-Multi-Threading-Matters-for-Scientists"><a class="docs-heading-anchor" href="#1.1-Why-Multi-Threading-Matters-for-Scientists">1.1 Why Multi-Threading Matters for Scientists</a><a id="1.1-Why-Multi-Threading-Matters-for-Scientists-1"></a><a class="docs-heading-anchor-permalink" href="#1.1-Why-Multi-Threading-Matters-for-Scientists" title="Permalink"></a></h3><p>Julia&#39;s <strong>native multi-threading</strong> lets you utilize your available cores within pure Julia code—no external libraries, MPI, or complex setup required.</p><p><strong>For Mera users</strong>, this means the following functions are already internally parallelized:</p><ul><li><strong>AMR data loading</strong> (<code>gethydro</code>/<code>getgravity</code>) reads levels concurrently  </li><li><strong>Particle streaming</strong> (<code>getparticles</code>) processes files in parallel  </li><li><strong>Projection creation</strong> (<code>projection</code>) spawns one thread per variable for hydro data</li><li><strong>VTK export</strong> (<code>export_vtk</code>) writes chunks simultaneously  </li></ul><h3 id="1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading"><a class="docs-heading-anchor" href="#1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading">1.2 Julia&#39;s Unique Advantage: Composable Threading</a><a id="1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#1.2-Julia&#39;s-Unique-Advantage:-Composable-Threading" title="Permalink"></a></h3><p>Unlike languages that retrofit parallelism, Julia was designed with <strong>composable threading</strong> from the ground up. When one multi-threaded function calls another multi-threaded function, Julia&#39;s scheduler coordinates all threads globally without oversubscribing resources.</p><p>This architectural advantage is crucial for scientific computing where you might:</p><ul><li>Process multiple simulation snapshots simultaneously</li><li>Run different analysis algorithms in parallel  </li><li>Export visualization data while computing results</li><li>Perform parameter sweeps with thousands of iterations</li></ul><h3 id="1.3-Parallel-Garbage-Collection"><a class="docs-heading-anchor" href="#1.3-Parallel-Garbage-Collection">1.3 Parallel Garbage Collection</a><a id="1.3-Parallel-Garbage-Collection-1"></a><a class="docs-heading-anchor-permalink" href="#1.3-Parallel-Garbage-Collection" title="Permalink"></a></h3><p>Julia 1.10+ introduces <strong>parallel garbage collection</strong>—the GC&#39;s mark phase runs on multiple threads, dramatically reducing pause times for allocation-heavy applications. This is especially important when processing large RAMSES datasets that create many temporary objects.</p><h2 id="2-Memory-Management-and-Garbage-Collection"><a class="docs-heading-anchor" href="#2-Memory-Management-and-Garbage-Collection">2 Memory Management &amp; Garbage Collection</a><a id="2-Memory-Management-and-Garbage-Collection-1"></a><a class="docs-heading-anchor-permalink" href="#2-Memory-Management-and-Garbage-Collection" title="Permalink"></a></h2><h3 id="2.1-Stack-vs-Heap-Memory"><a class="docs-heading-anchor" href="#2.1-Stack-vs-Heap-Memory">2.1 Stack vs Heap Memory</a><a id="2.1-Stack-vs-Heap-Memory-1"></a><a class="docs-heading-anchor-permalink" href="#2.1-Stack-vs-Heap-Memory" title="Permalink"></a></h3><p>Understanding Julia&#39;s memory model helps optimize threaded code:</p><p><strong>Stack Memory</strong></p><ul><li>Fast, linear LIFO (Last-In-First-Out) structure</li><li>Stores local variables, function parameters, return addresses</li><li>Fixed size, known at compile time</li><li>Automatically freed when function returns</li></ul><p><strong>Heap Memory</strong>  </p><ul><li>Flexible region for dynamic objects</li><li>Arrays, dictionaries, complex data structures</li><li>Size determined at runtime</li><li>Managed by garbage collector</li></ul><pre><code class="language-julia hljs">function memory_example()
     x = 5.0                    # Stack: small, fixed-size local
     arr = rand(10^6)           # Heap: large, dynamic array
     return sum(arr)            # Stack freed automatically, arr marked for GC
@@ -54,17 +80,47 @@ function update_fast!(state, forces, dt)
     @. state.velocities += forces * dt             # In-place
     @. state.positions += state.velocities * dt    # In-place  
     return state
-end</code></pre><h2 id="3-Understanding-Oversubscription-and-max_threads"><a class="docs-heading-anchor" href="#3-Understanding-Oversubscription-and-max_threads">3 Understanding Oversubscription &amp; <code>max_threads</code></a><a id="3-Understanding-Oversubscription-and-max_threads-1"></a><a class="docs-heading-anchor-permalink" href="#3-Understanding-Oversubscription-and-max_threads" title="Permalink"></a></h2><h3 id="3.1-What-Is-Oversubscription?"><a class="docs-heading-anchor" href="#3.1-What-Is-Oversubscription?">3.1 What Is Oversubscription?</a><a id="3.1-What-Is-Oversubscription?-1"></a><a class="docs-heading-anchor-permalink" href="#3.1-What-Is-Oversubscription?" title="Permalink"></a></h3><p><strong>Oversubscription</strong> occurs when you have more runnable threads than physical CPU cores. The operating system must constantly switch between threads, leading to:</p><ul><li><strong>Context switch overhead</strong>: Saving and restoring thread state takes time</li><li><strong>Cache thrashing</strong>: Threads compete for the same CPU caches, reducing efficiency</li><li><strong>Memory bandwidth contention</strong>: Multiple threads saturate memory channels</li><li><strong>False sharing</strong>: Different threads modify variables on the same cache line</li></ul><h3 id="3.2-Why-Oversubscription-Happens-with-MERA"><a class="docs-heading-anchor" href="#3.2-Why-Oversubscription-Happens-with-MERA">3.2 Why Oversubscription Happens with MERA</a><a id="3.2-Why-Oversubscription-Happens-with-MERA-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-Why-Oversubscription-Happens-with-MERA" title="Permalink"></a></h3><p>While Julia&#39;s composable threading usually prevents oversubscription, it can still occur in MERA workflows:</p><pre><code class="language-julia hljs"># PROBLEMATIC: Can create too many threads
-@threads for snapshot in snapshots              # 8 outer threads
-    gas = gethydro(info; lmax=10)               # 8 inner threads each
-    projection(gas, [:rho, :T, :vx, :vy])      # 4 more threads per call
+end</code></pre><h2 id="3-Understanding-Resource-Contention-and-max_threads"><a class="docs-heading-anchor" href="#3-Understanding-Resource-Contention-and-max_threads">3 Understanding Resource Contention &amp; <code>max_threads</code></a><a id="3-Understanding-Resource-Contention-and-max_threads-1"></a><a class="docs-heading-anchor-permalink" href="#3-Understanding-Resource-Contention-and-max_threads" title="Permalink"></a></h2><p>Note: With Julia-only threading you typically don&#39;t oversubscribe OS threads; the main risk in nested parallel workflows is resource contention (I/O, memory bandwidth, cache/NUMA).</p><h3 id="3.1-What-Is-Oversubscription?"><a class="docs-heading-anchor" href="#3.1-What-Is-Oversubscription?">3.1 What Is Oversubscription?</a><a id="3.1-What-Is-Oversubscription?-1"></a><a class="docs-heading-anchor-permalink" href="#3.1-What-Is-Oversubscription?" title="Permalink"></a></h3><p><strong>Oversubscription</strong> occurs when you have more runnable threads than physical CPU cores. The operating system must constantly switch between threads, leading to:</p><ul><li><strong>Context switch overhead</strong>: Saving and restoring thread state takes time</li><li><strong>Cache thrashing</strong>: Threads compete for the same CPU caches, reducing efficiency</li><li><strong>Memory bandwidth contention</strong>: Multiple threads saturate memory channels</li><li><strong>False sharing</strong>: Different threads modify variables on the same cache line</li></ul><h3 id="3.2-Why-Resource-Contention-Happens-with-Mera"><a class="docs-heading-anchor" href="#3.2-Why-Resource-Contention-Happens-with-Mera">3.2 Why Resource Contention Happens with Mera</a><a id="3.2-Why-Resource-Contention-Happens-with-Mera-1"></a><a class="docs-heading-anchor-permalink" href="#3.2-Why-Resource-Contention-Happens-with-Mera" title="Permalink"></a></h3><p><strong>Great question!</strong> Julia&#39;s composable threading <em>does</em> work excellently, and since Mera uses only Julia&#39;s native threading capabilities, the scheduler should coordinate everything properly. However, there are still practical scenarios where controlling threading improves performance:</p><p><strong>1. Resource Contention vs Thread Management</strong> Julia prevents creating too many OS threads, but it can&#39;t prevent resource bottlenecks:</p><pre><code class="language-julia hljs"># Julia manages this perfectly at the thread level:
+@threads for snapshot in snapshots              # 8 tasks
+    gas = gethydro(info; lmax=10)               # Each uses all threads internally
+    projection(gas, [:rho, :T, :vx, :vy])      # More internal threading
 end
-# Total: 8 × (8 + 4) = 96 threads on an 8-core machine!</code></pre><h3 id="3.3-The-max_threads-Solution"><a class="docs-heading-anchor" href="#3.3-The-max_threads-Solution">3.3 The <code>max_threads</code> Solution</a><a id="3.3-The-max_threads-Solution-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-The-max_threads-Solution" title="Permalink"></a></h3><p>MERA functions accept a <code>max_threads::Integer</code> keyword to cap internal threading:</p><pre><code class="language-julia hljs"># SOLUTION: Control thread allocation
-@threads for snapshot in snapshots              # 8 outer threads
-    gas = gethydro(info; lmax=10, max_threads=1)    # Serial loader
-    projection(gas, [:rho, :T]; max_threads=2)      # 2 threads per projection
+# But all 8 processes hit storage/memory simultaneously</code></pre><p><strong>2. Memory Bandwidth Saturation</strong> Multiple threads reading large AMR datasets can saturate:</p><ul><li><strong>Memory bandwidth</strong>: 8 threads × 2GB/thread = 16GB/s (may exceed RAM bandwidth)</li><li><strong>Storage I/O</strong>: Network filesystems often perform better with fewer concurrent readers</li><li><strong>CPU caches</strong>: Context switching between many active memory-intensive tasks</li></ul><p><strong>3. NUMA Effects on Multi-Socket Systems</strong> On large servers with multiple CPU sockets:</p><ul><li>Memory access is faster when threads stay on the same NUMA node</li><li>Too many concurrent threads can cause cross-socket memory traffic</li></ul><p><strong>4. Julia&#39;s Fair Scheduling vs Performance Optimization</strong> Julia&#39;s scheduler is fair but not necessarily optimal for scientific workloads:</p><ul><li>Equal resource sharing among all tasks</li><li>May not account for the specific I/O patterns of large file reads</li></ul><h3 id="3.3-The-max_threads-Solution"><a class="docs-heading-anchor" href="#3.3-The-max_threads-Solution">3.3 The <code>max_threads</code> Solution</a><a id="3.3-The-max_threads-Solution-1"></a><a class="docs-heading-anchor-permalink" href="#3.3-The-max_threads-Solution" title="Permalink"></a></h3><p>Mera functions accept a <code>max_threads::Integer</code> keyword to provide explicit control over resource usage:</p><pre><code class="language-julia hljs"># SOLUTION: Optimize resource usage rather than prevent contention
+@threads for snapshot in snapshots              # 8 outer threads (Julia tasks)
+    gas = gethydro(info; lmax=10, max_threads=2)    # Limit concurrent I/O
+    projection(gas, [:rho, :T]; max_threads=2)      # Control memory pressure
 end
-# Total: 8 outer + managed inner threads = controlled load</code></pre><p><strong><code>max_threads</code> Options:</strong></p><ul><li><code>max_threads = Threads.nthreads()</code> (default): Use all available threads</li><li><code>max_threads = 1</code>: Run completely serially  </li></ul><h2 id="4-Setting-Up-Julia-for-Threading"><a class="docs-heading-anchor" href="#4-Setting-Up-Julia-for-Threading">4 Setting Up Julia for Threading</a><a id="4-Setting-Up-Julia-for-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#4-Setting-Up-Julia-for-Threading" title="Permalink"></a></h2><h3 id="4.1-Basic-Thread-Configuration"><a class="docs-heading-anchor" href="#4.1-Basic-Thread-Configuration">4.1 Basic Thread Configuration</a><a id="4.1-Basic-Thread-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#4.1-Basic-Thread-Configuration" title="Permalink"></a></h3><p>By default, Julia starts with a single thread:</p><pre><code class="language-julia hljs">julia&gt; Threads.nthreads()
+# Result: Better memory/I/O utilization patterns</code></pre><p><strong>Why Use <code>max_threads</code> With Julia&#39;s Smart Scheduling?</strong></p><ol><li><strong>I/O Optimization</strong>: Network storage often performs better with fewer concurrent readers</li><li><strong>Memory Bandwidth</strong>: Large datasets benefit from controlled memory access patterns  </li><li><strong>Cache Efficiency</strong>: Fewer active threads = better CPU cache utilization</li><li><strong>NUMA Awareness</strong>: Better memory locality on multi-socket systems</li><li><strong>Performance Tuning</strong>: Precise optimization for your specific hardware and data sizes</li></ol><p><strong><code>max_threads</code> Options:</strong></p><ul><li><code>max_threads = Threads.nthreads()</code> (default): Use all available threads</li><li><code>max_threads = 1</code>: Run completely serially</li><li><code>max_threads = N</code>: Optimize for N concurrent operations</li></ul><p><strong>The Real Benefit</strong>: <code>max_threads</code> isn&#39;t about preventing Julia from breaking - it&#39;s about optimizing for the physical realities of large scientific datasets, storage systems, and memory hierarchies.  </p><h2 id="4-Setting-Up-Julia-for-Threading"><a class="docs-heading-anchor" href="#4-Setting-Up-Julia-for-Threading">4 Setting Up Julia for Threading</a><a id="4-Setting-Up-Julia-for-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#4-Setting-Up-Julia-for-Threading" title="Permalink"></a></h2><h3 id="4.1-Quick-Setup-Verification"><a class="docs-heading-anchor" href="#4.1-Quick-Setup-Verification">4.1 Quick Setup Verification</a><a id="4.1-Quick-Setup-Verification-1"></a><a class="docs-heading-anchor-permalink" href="#4.1-Quick-Setup-Verification" title="Permalink"></a></h3><p><strong>Step 1: Check Your Current Threading Status</strong></p><p>Run this to see your current configuration:</p><pre><code class="language-julia hljs">using Base.Threads
+
+println(&quot;Julia Threading Environment:&quot;)
+println(&quot;=&quot; ^ 50)
+println(&quot;Number of threads available: &quot;, nthreads())
+println(&quot;Thread IDs: &quot;, 1:nthreads())
+println(&quot;Current thread: &quot;, threadid())
+
+# Check if we have multiple threads
+if nthreads() == 1
+    println(&quot;\n⚠️  WARNING: Running with only 1 thread!&quot;)
+    println(&quot;To enable multithreading:&quot;)
+    println(&quot;1. Exit Julia&quot;)
+    println(&quot;2. Restart with: julia -t auto (uses all CPU cores)&quot;)
+    println(&quot;3. Or use: julia -t 4 (for exactly 4 threads)&quot;)
+    println(&quot;4. Most benefits of this tutorial require multiple threads&quot;)
+else
+    println(&quot;\n✅ SUCCESS: Multi-threading is available!&quot;)
+    println(&quot;You have &quot;, nthreads(), &quot; threads ready for parallel processing&quot;)
+end</code></pre><p><strong>Step 2: Basic Threading Test</strong></p><p>Verify threading works by running this simple test:</p><pre><code class="language-julia hljs"># Basic threading demonstration
+println(&quot;\nBasic Threading Test:&quot;)
+println(&quot;Available threads: &quot;, nthreads())
+
+# Simple parallel task - each thread identifies itself
+@threads for i in 1:nthreads()
+    println(&quot;Thread &quot;, threadid(), &quot; processing task &quot;, i)
+    sleep(0.1)  # Simulate work
+end
+
+println(&quot;✅ Basic threading test completed!&quot;)
+println(&quot;Note: If you see output from multiple thread IDs, threading is working correctly.&quot;)</code></pre><h3 id="4.2-Basic-Thread-Configuration"><a class="docs-heading-anchor" href="#4.2-Basic-Thread-Configuration">4.2 Basic Thread Configuration</a><a id="4.2-Basic-Thread-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#4.2-Basic-Thread-Configuration" title="Permalink"></a></h3><p>By default, Julia starts with a single thread:</p><pre><code class="language-julia hljs">julia&gt; Threads.nthreads()
 1</code></pre><p>Enable multi-threading at startup:</p><pre><code class="language-bash hljs"># Command line argument (recommended)
 julia --threads=8                    # 8 threads total
 julia --threads=auto                 # Auto-detect optimal count  
@@ -72,7 +128,7 @@ julia -t 4                          # Short form
 
 # Environment variable method
 export JULIA_NUM_THREADS=8
-julia</code></pre><h3 id="4.2-Advanced-Configuration-(Julia-1.10)"><a class="docs-heading-anchor" href="#4.2-Advanced-Configuration-(Julia-1.10)">4.2 Advanced Configuration (Julia 1.10+)</a><a id="4.2-Advanced-Configuration-(Julia-1.10)-1"></a><a class="docs-heading-anchor-permalink" href="#4.2-Advanced-Configuration-(Julia-1.10)" title="Permalink"></a></h3><p>Julia 1.10+ supports <strong>two thread pools</strong> and <strong>parallel GC</strong>:</p><pre><code class="language-bash hljs"># 8 compute threads, 2 interactive threads, 4 GC threads
+julia</code></pre><h3 id="4.3-Advanced-Configuration-(Julia-1.10)"><a class="docs-heading-anchor" href="#4.3-Advanced-Configuration-(Julia-1.10)">4.3 Advanced Configuration (Julia 1.10+)</a><a id="4.3-Advanced-Configuration-(Julia-1.10)-1"></a><a class="docs-heading-anchor-permalink" href="#4.3-Advanced-Configuration-(Julia-1.10)" title="Permalink"></a></h3><p>Julia 1.10+ supports <strong>two thread pools</strong> and <strong>parallel GC</strong>:</p><pre><code class="language-bash hljs"># 8 compute threads, 2 interactive threads, 4 GC threads
 julia --threads=8,2 --gcthreads=4
 
 # Auto-configure everything (recommended for beginners)
@@ -82,12 +138,41 @@ println(&quot;Compute threads: &quot;, nthreads(:default))
 println(&quot;Interactive threads: &quot;, nthreads(:interactive))  
 println(&quot;Current thread: &quot;, threadid())
 println(&quot;Current pool: &quot;, threadpool())
-# println(&quot;GC threads: &quot;, ngcthreads())  # before Julia 1.10+
+# Note: GC thread count available in Julia 1.10+ with specific functions
 
 # Optimize BLAS for linear algebra
 using LinearAlgebra
 BLAS.set_num_threads(min(4, nthreads()))
-println(&quot;BLAS threads: &quot;, BLAS.get_num_threads())</code></pre><h3 id="4.3-Recommended-Configurations"><a class="docs-heading-anchor" href="#4.3-Recommended-Configurations">4.3 Recommended Configurations</a><a id="4.3-Recommended-Configurations-1"></a><a class="docs-heading-anchor-permalink" href="#4.3-Recommended-Configurations" title="Permalink"></a></h3><p><strong>For laptops/workstations (4-8 cores):</strong></p><pre><code class="language-bash hljs">julia --threads=auto --gcthreads=auto</code></pre><p><strong>For smaller servers (16+ cores):</strong></p><pre><code class="language-bash hljs">julia --threads=12,2 --gcthreads=6</code></pre><p><strong>For larger servers:</strong></p><pre><code class="language-bash hljs">julia --threads=32,4 --gcthreads=16</code></pre><h2 id="5-MERA&#39;s-Internally-Threaded-Functions"><a class="docs-heading-anchor" href="#5-MERA&#39;s-Internally-Threaded-Functions">5 MERA&#39;s Internally Threaded Functions</a><a id="5-MERA&#39;s-Internally-Threaded-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#5-MERA&#39;s-Internally-Threaded-Functions" title="Permalink"></a></h2><h3 id="5.1-Overview-of-Threaded-Functions"><a class="docs-heading-anchor" href="#5.1-Overview-of-Threaded-Functions">5.1 Overview of Threaded Functions</a><a id="5.1-Overview-of-Threaded-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#5.1-Overview-of-Threaded-Functions" title="Permalink"></a></h3><table><tr><th style="text-align: right">Function</th><th style="text-align: right">Threading Strategy</th><th style="text-align: right">Default Threads</th><th style="text-align: right"><code>max_threads</code></th></tr><tr><td style="text-align: right"><code>gethydro</code></td><td style="text-align: right">One task processes multiple files sequentially (load balancing)</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right">-&gt;</td><td style="text-align: right">For final table creation: parallel by column</td><td style="text-align: right"></td><td style="text-align: right"></td></tr><tr><td style="text-align: right"><code>getgravity</code></td><td style="text-align: right">Same strategy as <code>gethydro</code></td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"><code>getparticles</code></td><td style="text-align: right">Same strategy as <code>gethydro</code></td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"><code>projection</code></td><td style="text-align: right">one task per variable:</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"></td><td style="text-align: right">Nthreads &gt; Nvariables : semaphore control</td><td style="text-align: right"></td><td style="text-align: right"></td></tr><tr><td style="text-align: right"></td><td style="text-align: right">Nthreads &lt; Nvariables: semaphore-controlled queue</td><td style="text-align: right"></td><td style="text-align: right"></td></tr><tr><td style="text-align: right"><code>export_vtk</code></td><td style="text-align: right">hydro: multi-level (interpolation + mesh)</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">-</td></tr><tr><td style="text-align: right"></td><td style="text-align: right">particles: each particle processed independently</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">-</td></tr></table><h2 id="6-Core-Threading-Patterns"><a class="docs-heading-anchor" href="#6-Core-Threading-Patterns">6 Core Threading Patterns</a><a id="6-Core-Threading-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#6-Core-Threading-Patterns" title="Permalink"></a></h2><h3 id="6.1-Pattern-1:-Outer-Loop-Parallelism"><a class="docs-heading-anchor" href="#6.1-Pattern-1:-Outer-Loop-Parallelism">6.1 Pattern 1: Outer-Loop Parallelism</a><a id="6.1-Pattern-1:-Outer-Loop-Parallelism-1"></a><a class="docs-heading-anchor-permalink" href="#6.1-Pattern-1:-Outer-Loop-Parallelism" title="Permalink"></a></h3><p><strong>When to use:</strong> Processing multiple independent snapshots, parameter combinations, or spatial regions.</p><p><strong>Strategy:</strong> Parallelize the outer loop, disable internal threading.</p><pre><code class="language-julia hljs">using MERA, Base.Threads
+println(&quot;BLAS threads: &quot;, BLAS.get_num_threads())</code></pre><h3 id="4.4-Recommended-Configurations"><a class="docs-heading-anchor" href="#4.4-Recommended-Configurations">4.4 Recommended Configurations</a><a id="4.4-Recommended-Configurations-1"></a><a class="docs-heading-anchor-permalink" href="#4.4-Recommended-Configurations" title="Permalink"></a></h3><p><strong>For laptops/workstations (4-8 cores):</strong></p><pre><code class="language-bash hljs">julia --threads=auto --gcthreads=auto</code></pre><p><strong>For smaller servers (16+ cores):</strong></p><pre><code class="language-bash hljs">julia --threads=12,2 --gcthreads=6</code></pre><p><strong>For larger servers:</strong></p><pre><code class="language-bash hljs">julia --threads=32,4 --gcthreads=16</code></pre><h2 id="5-Mera&#39;s-Internally-Threaded-Functions"><a class="docs-heading-anchor" href="#5-Mera&#39;s-Internally-Threaded-Functions">5 Mera&#39;s Internally Threaded Functions</a><a id="5-Mera&#39;s-Internally-Threaded-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#5-Mera&#39;s-Internally-Threaded-Functions" title="Permalink"></a></h2><h3 id="5.1-Overview-of-Threaded-Functions"><a class="docs-heading-anchor" href="#5.1-Overview-of-Threaded-Functions">5.1 Overview of Threaded Functions</a><a id="5.1-Overview-of-Threaded-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#5.1-Overview-of-Threaded-Functions" title="Permalink"></a></h3><table><tr><th style="text-align: right">Function</th><th style="text-align: right">Threading Strategy</th><th style="text-align: right">Default Threads</th><th style="text-align: right"><code>max_threads</code></th></tr><tr><td style="text-align: right"><code>gethydro</code></td><td style="text-align: right">Parallel across files/levels with dynamic load balancing; final table creation parallel by column</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"><code>getgravity</code></td><td style="text-align: right">Same strategy as <code>gethydro</code></td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"><code>getparticles</code></td><td style="text-align: right">Same strategy as <code>gethydro</code></td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"><code>projection</code></td><td style="text-align: right">One task per variable (bounded by available/max_threads); dynamic queueing if variables &gt; threads</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✓</td></tr><tr><td style="text-align: right"><code>export_vtk</code></td><td style="text-align: right">Internally threaded (hydro and particles); thread count auto-managed</td><td style="text-align: right"><code>Threads.nthreads()</code></td><td style="text-align: right">✗</td></tr></table><h2 id="6-Core-Threading-Patterns"><a class="docs-heading-anchor" href="#6-Core-Threading-Patterns">6 Core Threading Patterns</a><a id="6-Core-Threading-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#6-Core-Threading-Patterns" title="Permalink"></a></h2><h3 id="6.0-Quick-Practice:-Threading-Fundamentals"><a class="docs-heading-anchor" href="#6.0-Quick-Practice:-Threading-Fundamentals">6.0 Quick Practice: Threading Fundamentals</a><a id="6.0-Quick-Practice:-Threading-Fundamentals-1"></a><a class="docs-heading-anchor-permalink" href="#6.0-Quick-Practice:-Threading-Fundamentals" title="Permalink"></a></h3><p>Before diving into Mera-specific patterns, let&#39;s practice basic threading concepts:</p><pre><code class="language-julia hljs">using Base.Threads
+
+# Practice 1: Simple parallel simulation
+function simulate_mera_workflow(snapshot_name)
+    thread_id = threadid()
+    println(&quot;Thread $thread_id processing $snapshot_name&quot;)
+    
+    # Simulate Mera operations with realistic timing
+    sleep(0.05)  # getinfo() - fast
+    sleep(0.2)   # gethydro() - slower
+    sleep(0.1)   # projection() - moderate
+    
+    return &quot;Processed $snapshot_name on thread $thread_id&quot;
+end
+
+# Test external threading pattern
+println(&quot;🧪 Testing External Threading Pattern:&quot;)
+snapshots = [&quot;snap_001&quot;, &quot;snap_002&quot;, &quot;snap_003&quot;, &quot;snap_004&quot;]
+results = Vector{String}(undef, length(snapshots))
+
+start_time = time()
+@threads for i in eachindex(snapshots)
+    results[i] = simulate_mera_workflow(snapshots[i])
+end
+elapsed = round(time() - start_time, digits=2)
+
+println(&quot;⏱️  Completed in $(elapsed)s&quot;)
+for result in results
+    println(&quot;  &quot;, result)
+end</code></pre><p><strong>Expected Output:</strong> You should see different thread IDs processing different snapshots simultaneously.</p><h3 id="6.1-Pattern-1:-Outer-Loop-Parallelism"><a class="docs-heading-anchor" href="#6.1-Pattern-1:-Outer-Loop-Parallelism">6.1 Pattern 1: Outer-Loop Parallelism</a><a id="6.1-Pattern-1:-Outer-Loop-Parallelism-1"></a><a class="docs-heading-anchor-permalink" href="#6.1-Pattern-1:-Outer-Loop-Parallelism" title="Permalink"></a></h3><p><strong>When to use:</strong> Processing multiple independent snapshots, parameter combinations, or spatial regions.</p><p><strong>Strategy:</strong> Parallelize the outer loop, disable internal threading.</p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 # Process multiple snapshots in parallel
 snapshots = 100:25:400
@@ -97,7 +182,7 @@ results = Vector{NamedTuple}(undef, length(snapshots))
     snapshot = snapshots[i]
     info = getinfo(snapshot, SIMPATH)
     
-    # Disable internal threading to avoid oversubscription
+    # Disable internal threading to reduce contention
     gas = gethydro(info; lmax=10, max_threads=1)
     particles = getparticles(info; max_threads=1)
     
@@ -113,7 +198,7 @@ results = Vector{NamedTuple}(undef, length(snapshots))
         stellar_mass = stellar_mass,
         total_mass = gas_mass + stellar_mass
     )
-end</code></pre><h3 id="6.2-Pattern-2:-Inner-Kernel-Parallelism"><a class="docs-heading-anchor" href="#6.2-Pattern-2:-Inner-Kernel-Parallelism">6.2 Pattern 2: Inner-Kernel Parallelism</a><a id="6.2-Pattern-2:-Inner-Kernel-Parallelism-1"></a><a class="docs-heading-anchor-permalink" href="#6.2-Pattern-2:-Inner-Kernel-Parallelism" title="Permalink"></a></h3><p><strong>When to use:</strong> Processing a single large dataset with multiple analysis types.</p><p><strong>Strategy:</strong> Let MERA&#39;s internal threading handle parallelism.</p><pre><code class="language-julia hljs">using MERA
+end</code></pre><h3 id="6.2-Pattern-2:-Inner-Kernel-Parallelism"><a class="docs-heading-anchor" href="#6.2-Pattern-2:-Inner-Kernel-Parallelism">6.2 Pattern 2: Inner-Kernel Parallelism</a><a id="6.2-Pattern-2:-Inner-Kernel-Parallelism-1"></a><a class="docs-heading-anchor-permalink" href="#6.2-Pattern-2:-Inner-Kernel-Parallelism" title="Permalink"></a></h3><p><strong>When to use:</strong> Processing a single large dataset with multiple analysis types.</p><p><strong>Strategy:</strong> Let Mera&#39;s internal threading handle parallelism.</p><pre><code class="language-julia hljs">using Mera
 
 # Load single large dataset with full parallelization
 info = getinfo(400, SIMPATH)
@@ -122,7 +207,7 @@ gas = gethydro(info; lmax=12)  # Uses all available threads internally
 # Create multiple projections - one thread per variable
 # Each variable gets its own thread automatically
 vars = [:rho, :p, :T, :vx, :vy, :vz]
-p = projection(gas, vars; lmax=11) # or use: projections = projection(gas, variables; pxsize=[100., :pc]) </code></pre><h3 id="6.3-Pattern-3:-Mixed-Parallelism"><a class="docs-heading-anchor" href="#6.3-Pattern-3:-Mixed-Parallelism">6.3 Pattern 3: Mixed Parallelism</a><a id="6.3-Pattern-3:-Mixed-Parallelism-1"></a><a class="docs-heading-anchor-permalink" href="#6.3-Pattern-3:-Mixed-Parallelism" title="Permalink"></a></h3><p><strong>When to use:</strong> Balancing multiple tasks with controlled resource allocation.</p><p><strong>Strategy:</strong> Combine outer parallelism with capped inner threading.</p><pre><code class="language-julia hljs">using MERA, Base.Threads
+p = projection(gas, vars; lmax=11) # or use: projections = projection(gas, vars; pxsize=[100., :pc]) </code></pre><h3 id="6.3-Pattern-3:-Mixed-Parallelism"><a class="docs-heading-anchor" href="#6.3-Pattern-3:-Mixed-Parallelism">6.3 Pattern 3: Mixed Parallelism</a><a id="6.3-Pattern-3:-Mixed-Parallelism-1"></a><a class="docs-heading-anchor-permalink" href="#6.3-Pattern-3:-Mixed-Parallelism" title="Permalink"></a></h3><p><strong>When to use:</strong> Balancing multiple tasks with controlled resource allocation.</p><p><strong>Strategy:</strong> Combine outer parallelism with capped inner threading.</p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 function analyze_simulation_comprehensive(info)
     # Allocate threads carefully across tasks
@@ -152,7 +237,7 @@ function analyze_simulation_comprehensive(info)
     end)
     
     return fetch.(tasks)  # Wait for all tasks to complete
-end</code></pre><h2 id="7-Advanced-Threading-Patterns"><a class="docs-heading-anchor" href="#7-Advanced-Threading-Patterns">7 Advanced Threading Patterns</a><a id="7-Advanced-Threading-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#7-Advanced-Threading-Patterns" title="Permalink"></a></h2><h3 id="7.1-Producer-Consumer-Pipeline"><a class="docs-heading-anchor" href="#7.1-Producer-Consumer-Pipeline">7.1 Producer-Consumer Pipeline</a><a id="7.1-Producer-Consumer-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#7.1-Producer-Consumer-Pipeline" title="Permalink"></a></h3><p><strong>Use case:</strong> Streaming data processing with multiple stages.</p><pre><code class="language-julia hljs">using MERA, Base.Threads
+end</code></pre><h2 id="7-Advanced-Threading-Patterns"><a class="docs-heading-anchor" href="#7-Advanced-Threading-Patterns">7 Advanced Threading Patterns</a><a id="7-Advanced-Threading-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#7-Advanced-Threading-Patterns" title="Permalink"></a></h2><h3 id="7.1-Producer-Consumer-Pipeline"><a class="docs-heading-anchor" href="#7.1-Producer-Consumer-Pipeline">7.1 Producer-Consumer Pipeline</a><a id="7.1-Producer-Consumer-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#7.1-Producer-Consumer-Pipeline" title="Permalink"></a></h3><p><strong>Use case:</strong> Streaming data processing with multiple stages.</p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 function parallel_analysis_pipeline(snapshot_range, SIMPATH, analysis_functions)
     # Stage 1: Data loading (producer)
@@ -209,7 +294,7 @@ end
 analysis_functions = [
     (:total_mass, gas -&gt; msum(gas, :Msol)),
     (:mean_density, gas -&gt; mean(getvar(gas, :rho, :nH))),
-    (:mass_array, gas -&gt; getvar(gas, :mass))]</code></pre><h3 id="7.2-Adaptive-Load-Balancing"><a class="docs-heading-anchor" href="#7.2-Adaptive-Load-Balancing">7.2 Adaptive Load Balancing</a><a id="7.2-Adaptive-Load-Balancing-1"></a><a class="docs-heading-anchor-permalink" href="#7.2-Adaptive-Load-Balancing" title="Permalink"></a></h3><p><strong>Use case:</strong> Workloads with highly variable execution times (Pseudocode).</p><pre><code class="language-julia hljs">using MERA, Base.Threads
+    (:mass_array, gas -&gt; getvar(gas, :mass))]</code></pre><h3 id="7.2-Adaptive-Load-Balancing"><a class="docs-heading-anchor" href="#7.2-Adaptive-Load-Balancing">7.2 Adaptive Load Balancing</a><a id="7.2-Adaptive-Load-Balancing-1"></a><a class="docs-heading-anchor-permalink" href="#7.2-Adaptive-Load-Balancing" title="Permalink"></a></h3><p><strong>Use case:</strong> Workloads with highly variable execution times (Pseudocode).</p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 function adaptive_analysis(data_items)
     # Use @spawn for dynamic load balancing
@@ -231,7 +316,7 @@ function adaptive_analysis(data_items)
     
     # Fetch all results (tasks complete in variable order)
     return fetch.(tasks)
-end</code></pre><p>&lt;!–### 7.3 Hierarchical Parallelism</p><p><strong>Use case:</strong> Multi-level parallel decomposition.</p><pre><code class="language-julia hljs">using MERA, Base.Threads
+end</code></pre><p>&lt;!–### 7.3 Hierarchical Parallelism</p><p><strong>Use case:</strong> Multi-level parallel decomposition.</p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 function hierarchical_analysis(simulation_paths)
     # Level 1: Parallel across simulations
@@ -243,7 +328,7 @@ function hierarchical_analysis(simulation_paths)
             
             # Level 2: Parallel across snapshots within simulation
             snapshot_results = Vector{Any}(undef, length(snapshots))
-            @threads for (i, snap) in enuMERAte(snapshots)
+            @threads for (i, snap) in enumerate(snapshots)
                 info = getinfo(snap, sim_path)
                 gas = gethydro(info; lmax=9, max_threads=1)  # Serial at level 3
                 
@@ -260,7 +345,43 @@ function hierarchical_analysis(simulation_paths)
     end
     
     return fetch.(simulation_tasks)
-end</code></pre><p>–&gt;</p><h2 id="8-Thread-Safe-Programming"><a class="docs-heading-anchor" href="#8-Thread-Safe-Programming">8 Thread-Safe Programming</a><a id="8-Thread-Safe-Programming-1"></a><a class="docs-heading-anchor-permalink" href="#8-Thread-Safe-Programming" title="Permalink"></a></h2><h3 id="8.1-Race-Conditions-and-Thread-Safety"><a class="docs-heading-anchor" href="#8.1-Race-Conditions-and-Thread-Safety">8.1 Race Conditions and Thread Safety</a><a id="8.1-Race-Conditions-and-Thread-Safety-1"></a><a class="docs-heading-anchor-permalink" href="#8.1-Race-Conditions-and-Thread-Safety" title="Permalink"></a></h3><p><strong>Race conditions</strong> occur when multiple threads access shared data simultaneously without synchronization, leading to unpredictable results:</p><pre><code class="language-julia hljs"># DANGEROUS: Race condition
+end</code></pre><p>–&gt;</p><h2 id="8-Thread-Safe-Programming"><a class="docs-heading-anchor" href="#8-Thread-Safe-Programming">8 Thread-Safe Programming</a><a id="8-Thread-Safe-Programming-1"></a><a class="docs-heading-anchor-permalink" href="#8-Thread-Safe-Programming" title="Permalink"></a></h2><h3 id="8.0-Quick-Practice:-Thread-Safety-Fundamentals"><a class="docs-heading-anchor" href="#8.0-Quick-Practice:-Thread-Safety-Fundamentals">8.0 Quick Practice: Thread Safety Fundamentals</a><a id="8.0-Quick-Practice:-Thread-Safety-Fundamentals-1"></a><a class="docs-heading-anchor-permalink" href="#8.0-Quick-Practice:-Thread-Safety-Fundamentals" title="Permalink"></a></h3><p>Understanding thread safety is crucial. Let&#39;s see the difference between safe and unsafe operations:</p><pre><code class="language-julia hljs">using Base.Threads
+
+# ❌ UNSAFE: Race condition demonstration
+function unsafe_accumulation()
+    total = 0
+    @threads for i in 1:1000
+        total += i  # DANGER: Multiple threads writing to same variable
+    end
+    return total
+end
+
+# ✅ SAFE: Using atomic operations
+function safe_accumulation()
+    total = Atomic{Int}(0)
+    @threads for i in 1:1000
+        atomic_add!(total, i)  # SAFE: Atomic operation
+    end
+    return total[]
+end
+
+# ✅ SAFE: Pre-allocated array (each thread writes to different index)
+function safe_array_approach()
+    results = Vector{Int}(undef, 1000)
+    @threads for i in 1:1000
+        results[i] = i  # SAFE: Each thread writes to different index
+    end
+    return sum(results)
+end
+
+# Test all approaches
+println(&quot;🧪 Thread Safety Demonstration:&quot;)
+expected = sum(1:1000)  # Should be 500500
+
+println(&quot;Expected result: &quot;, expected)
+println(&quot;Unsafe result: &quot;, unsafe_accumulation(), &quot; (may vary!)&quot;)
+println(&quot;Safe atomic result: &quot;, safe_accumulation())
+println(&quot;Safe array result: &quot;, safe_array_approach())</code></pre><p><strong>What You&#39;ll Learn:</strong> The unsafe version may give different results each time, while safe versions are consistent.</p><h3 id="8.1-Race-Conditions-and-Thread-Safety"><a class="docs-heading-anchor" href="#8.1-Race-Conditions-and-Thread-Safety">8.1 Race Conditions and Thread Safety</a><a id="8.1-Race-Conditions-and-Thread-Safety-1"></a><a class="docs-heading-anchor-permalink" href="#8.1-Race-Conditions-and-Thread-Safety" title="Permalink"></a></h3><p><strong>Race conditions</strong> occur when multiple threads access shared data simultaneously without synchronization, leading to unpredictable results:</p><pre><code class="language-julia hljs"># DANGEROUS: Race condition
 total = 0.0
 @threads for i in 1:1_000_000
     global total += compute_value(i)  # Multiple threads writing to same variable
@@ -286,46 +407,44 @@ println(&quot; success=&quot;,success)</code></pre><h3 id="8.3-Thread-Safe-Data-
 results = Vector{Float64}(undef, n_calculations)
 @threads for i in 1:n_calculations
     results[i] = monte_carlo_step(i)  # No race condition
-end</code></pre><p><strong>Pattern 2: Thread-Local Accumulators with Atomic Finalization</strong></p><pre><code class="language-julia hljs">using MERA, Base.Threads
+end</code></pre><p><strong>Pattern 2: Thread-Local Accumulators with Atomic Finalization</strong></p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 function thread_safe_stellar_histogram(particle_data)
     ages = getvar(particle_data, :age, :Myr)
     masses = getvar(particle_data, :mass, :Msol)
     
-    # Define bins and atomic counters
-    age_bins = 0.0:50.0:500.0  # 0-50, 50-100, ..., 450-500 Myr
-    mass_per_bin = [Atomic{Float64}(0.0) for _ in 1:(length(age_bins)-1)]
-    
-    # Thread-safe binning
+    # Define bin edges and atomic counters (0-50, 50-100, ..., 450-500 Myr)
+    age_edges = collect(0.0:50.0:500.0)
+    nbins = length(age_edges) - 1
+    mass_per_bin = [Threads.Atomic{Float64}(0.0) for _ in 1:nbins]
+
+    # Thread-safe binning: each thread atomically adds into its bin
     @threads for i in eachindex(ages)
         age = ages[i]
         mass = masses[i]
-        
-        # Find appropriate bin
-        bin_index = searchsortedfirst(age_bins, age) - 1
-        if 1 0.0, 7)) for _ in 1:nthreads()]
-    
-    @threads for i in eachindex(data)
-        tid = threadid()
-        new_sum = partial_sums[tid].value + data[i]
-        partial_sums[tid] = PaddedFloat64(new_sum, partial_sums[tid].padding)
+
+        bin_index = searchsortedfirst(age_edges, age) - 1
+        if 1 &lt;= bin_index &lt;= nbins
+            Threads.atomic_add!(mass_per_bin[bin_index], mass)
+        end
     end
-    
-    return sum(ps.value for ps in partial_sums)
-end</code></pre><h3 id="8.4-Locks-for-Complex-Data-Structures"><a class="docs-heading-anchor" href="#8.4-Locks-for-Complex-Data-Structures">8.4 Locks for Complex Data Structures</a><a id="8.4-Locks-for-Complex-Data-Structures-1"></a><a class="docs-heading-anchor-permalink" href="#8.4-Locks-for-Complex-Data-Structures" title="Permalink"></a></h3><p>For complex shared data structures that can&#39;t use atomics:</p><pre><code class="language-julia hljs">using Base.Threads: ReentrantLock
+
+    # Materialize atomic results into a plain Float64 vector
+    return [a[] for a in mass_per_bin]
+end</code></pre><h3 id="8.4-Locks-for-Complex-Data-Structures"><a class="docs-heading-anchor" href="#8.4-Locks-for-Complex-Data-Structures">8.4 Locks for Complex Data Structures</a><a id="8.4-Locks-for-Complex-Data-Structures-1"></a><a class="docs-heading-anchor-permalink" href="#8.4-Locks-for-Complex-Data-Structures" title="Permalink"></a></h3><p>For complex shared data structures that can&#39;t use atomics:</p><pre><code class="language-julia hljs">using Base.Threads: ReentrantLock, lock
 
 # Thread-safe access to complex data structures
-lock = ReentrantLock()
+lk = ReentrantLock()
 shared_results = Dict{String, Vector{Float64}}()
 
 @threads for analysis_id in analysis_ids
     result_vector = perform_complex_analysis(analysis_id)
     
     # Thread-safe dictionary update
-    lock(lock) do
+    lock(lk) do
         shared_results[analysis_id] = result_vector
     end
-end</code></pre><h2 id="9-Transforming-Single-Threaded-Tutorials"><a class="docs-heading-anchor" href="#9-Transforming-Single-Threaded-Tutorials">9 Transforming Single-Threaded Tutorials</a><a id="9-Transforming-Single-Threaded-Tutorials-1"></a><a class="docs-heading-anchor-permalink" href="#9-Transforming-Single-Threaded-Tutorials" title="Permalink"></a></h2><h3 id="9.1-Tutorial-Transformation-Overview"><a class="docs-heading-anchor" href="#9.1-Tutorial-Transformation-Overview">9.1 Tutorial Transformation Overview</a><a id="9.1-Tutorial-Transformation-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#9.1-Tutorial-Transformation-Overview" title="Permalink"></a></h3><table><tr><th style="text-align: right">Original Tutorial</th><th style="text-align: right">Multi-Threading Opportunity</th><th style="text-align: right">Pattern Type</th></tr><tr><td style="text-align: right">01<em>hydro</em>First_Inspection.ipynb</td><td style="text-align: right">Load multiple snapshots in parallel</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">02<em>hydro</em>Load_Selections.ipynb</td><td style="text-align: right">Filter multiple regions simultaneously</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">03<em>hydro</em>Get_Subregions.ipynb</td><td style="text-align: right">Extract subregions in parallel</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">06<em>hydro</em>Projection.ipynb</td><td style="text-align: right">Project multiple variables at once</td><td style="text-align: right">Inner-kernel</td></tr><tr><td style="text-align: right">06<em>particles</em>Projection.ipynb</td><td style="text-align: right">Parallel particle projections</td><td style="text-align: right">Mixed</td></tr><tr><td style="text-align: right">08<em>hydro</em>VTK_export.ipynb</td><td style="text-align: right">Export multiple outputs simultaneously</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">08<em>particles</em>VTK_export.ipynb</td><td style="text-align: right">Parallel particle exports</td><td style="text-align: right">Mixed</td></tr></table><h3 id="9.2-Example-1:-Parallel-First-Inspection"><a class="docs-heading-anchor" href="#9.2-Example-1:-Parallel-First-Inspection">9.2 Example 1: Parallel First Inspection</a><a id="9.2-Example-1:-Parallel-First-Inspection-1"></a><a class="docs-heading-anchor-permalink" href="#9.2-Example-1:-Parallel-First-Inspection" title="Permalink"></a></h3><p><em>Transforming 01<em>hydro</em>First_Inspection.ipynb</em></p><p><strong>Original (single-threaded):</strong></p><pre><code class="language-julia hljs">using MERA
+end</code></pre><h2 id="9-Transforming-Single-Threaded-Tutorials"><a class="docs-heading-anchor" href="#9-Transforming-Single-Threaded-Tutorials">9 Transforming Single-Threaded Tutorials</a><a id="9-Transforming-Single-Threaded-Tutorials-1"></a><a class="docs-heading-anchor-permalink" href="#9-Transforming-Single-Threaded-Tutorials" title="Permalink"></a></h2><h3 id="9.1-Tutorial-Transformation-Overview"><a class="docs-heading-anchor" href="#9.1-Tutorial-Transformation-Overview">9.1 Tutorial Transformation Overview</a><a id="9.1-Tutorial-Transformation-Overview-1"></a><a class="docs-heading-anchor-permalink" href="#9.1-Tutorial-Transformation-Overview" title="Permalink"></a></h3><table><tr><th style="text-align: right">Original Tutorial</th><th style="text-align: right">Multi-Threading Opportunity</th><th style="text-align: right">Pattern Type</th></tr><tr><td style="text-align: right">01<em>hydro</em>First_Inspection.ipynb</td><td style="text-align: right">Load multiple snapshots in parallel</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">02<em>hydro</em>Load_Selections.ipynb</td><td style="text-align: right">Filter multiple regions simultaneously</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">03<em>hydro</em>Get_Subregions.ipynb</td><td style="text-align: right">Extract subregions in parallel</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">06<em>hydro</em>Projection.ipynb</td><td style="text-align: right">Project multiple variables at once</td><td style="text-align: right">Inner-kernel</td></tr><tr><td style="text-align: right">06<em>particles</em>Projection.ipynb</td><td style="text-align: right">Parallel particle projections</td><td style="text-align: right">Mixed</td></tr><tr><td style="text-align: right">08<em>hydro</em>VTK_export.ipynb</td><td style="text-align: right">Export multiple outputs simultaneously</td><td style="text-align: right">Outer-loop</td></tr><tr><td style="text-align: right">08<em>particles</em>VTK_export.ipynb</td><td style="text-align: right">Parallel particle exports</td><td style="text-align: right">Mixed</td></tr></table><h3 id="9.2-Example-1:-Parallel-First-Inspection"><a class="docs-heading-anchor" href="#9.2-Example-1:-Parallel-First-Inspection">9.2 Example 1: Parallel First Inspection</a><a id="9.2-Example-1:-Parallel-First-Inspection-1"></a><a class="docs-heading-anchor-permalink" href="#9.2-Example-1:-Parallel-First-Inspection" title="Permalink"></a></h3><p><em>Transforming 01<em>hydro</em>First_Inspection.ipynb</em></p><p><strong>Original (single-threaded):</strong></p><pre><code class="language-julia hljs">using Mera
 
 # Load and inspect one snapshot
 info = getinfo(100, SIMPATH)
@@ -333,15 +452,15 @@ gas = gethydro(info; lmax=10)
 
 println(&quot;Time: &quot;, gettime(info, :Myr), &quot; Myr&quot;)
 println(&quot;Total mass: &quot;, msum(gas, :Msol), &quot; Msol&quot;)
-println(&quot;Number of cells: &quot;, length(gas.data))</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using MERA, Base.Threads
+println(&quot;Number of cells: &quot;, length(gas.data))</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 # Inspect multiple snapshots in parallel
 snapshots = 100:25:400
 results = Vector{NamedTuple}(undef, length(snapshots))
 
-@threads for (i, snapshot) in enuMERAte(snapshots)
+@threads for (i, snapshot) in enumerate(snapshots)
     info = getinfo(snapshot, SIMPATH)
-    # Use max_threads=1 to avoid oversubscription in outer loop
+    # Use max_threads=1 to reduce contention in outer loop
     gas = gethydro(info; lmax=10, max_threads=1)
     
     results[i] = (
@@ -365,7 +484,7 @@ mass_center = msum(gas_center, :Msol)
 
 # Disk region  
 gas_disk = gethydro(info; xrange=[-10,10], yrange=[-10,10], zrange=[-1,1])
-mass_disk = msum(gas_disk, :Msol)</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using MERA, Base.Threads
+mass_disk = msum(gas_disk, :Msol)</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 # Define multiple spatial selections
 selections = [
@@ -377,7 +496,7 @@ selections = [
 
 results = Vector{NamedTuple}(undef, length(selections))
 
-@threads for (i, sel) in enuMERAte(selections)
+@threads for (i, sel) in enumerate(selections)
     info = getinfo(200, SIMPATH)
     # Extract selection parameters (excluding name)
     selection_kwargs = [(k,v) for (k,v) in pairs(sel) if k != :name]
@@ -405,7 +524,7 @@ gas = gethydro(info; lmax=11)
 # Sequential projections
 rho_map = projection(gas, :rho; direction=:z, lmax=9)  
 temp_map = projection(gas, :T; direction=:z, lmax=9)
-vel_map = projection(gas, :vz; direction=:z, lmax=9)</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using MERA
+vel_map = projection(gas, :vz; direction=:z, lmax=9)</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using Mera
 
 info = getinfo(300, SIMPATH)
 gas = gethydro(info; lmax=11)  # Full parallelization for loading
@@ -415,8 +534,9 @@ variables = [:rho, :T, :vz, :p]
 projections = projection(gas, variables; direction=:z, lmax=9)
 
 # Access individual projections
-rho_map = projections  # If single variable, returns the map directly
-# For multiple variables, projections contains all maps
+# If you pass a single variable, projection(gas, :rho; ...) returns the map directly.
+# For multiple variables, access by key if projections is keyed by variable, e.g.:
+# rho_map = projections[:rho]
 
 # Alternative: Use @spawn for more control
 tasks = [Threads.@spawn projection(gas, var; direction=:z, lmax=9, max_threads=2) 
@@ -427,7 +547,7 @@ gas = gethydro(info; lmax=10)
 
 export_vtk(gas, &quot;hydro_snapshot_250&quot;;
           scalars=[:rho, :p, :T],
-          scalars_unit=[:nH, :K, :K])</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using MERA, Base.Threads
+          scalars_unit=[:nH, :K, :K])</code></pre><p><strong>Multi-threaded version:</strong></p><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 # Export multiple snapshots in parallel
 snapshots = 200:50:400
@@ -444,13 +564,12 @@ mkpath(export_dir)  # Create directory
         time_myr = gettime(info, :Myr)
         filename = joinpath(export_dir, &quot;hydro_$(snapshot)_t$(time_myr)Myr&quot;)
         
-        # VTK export can use more threads for I/O
+        # VTK export
         export_vtk(gas, filename;
                   scalars=[:rho, :p, :T],
                   scalars_unit=[:nH, :K, :K],
                   vector=[:vx, :vy, :vz],
-                  vector_unit=:km_s,
-                  max_threads=4)  # I/O benefits from more threads
+                  vector_unit=:km_s)
         
         println(&quot;Exported snapshot $snapshot&quot;)
         
@@ -459,7 +578,7 @@ mkpath(export_dir)  # Create directory
     end
 end
 
-println(&quot;VTK export completed for $(length(snapshots)) snapshots&quot;)</code></pre><h2 id="10-Benchmarking-and-Performance-Tuning"><a class="docs-heading-anchor" href="#10-Benchmarking-and-Performance-Tuning">10 Benchmarking &amp; Performance Tuning</a><a id="10-Benchmarking-and-Performance-Tuning-1"></a><a class="docs-heading-anchor-permalink" href="#10-Benchmarking-and-Performance-Tuning" title="Permalink"></a></h2><h3 id="10.1-Finding-Optimal-max_threads-Values"><a class="docs-heading-anchor" href="#10.1-Finding-Optimal-max_threads-Values">10.1 Finding Optimal <code>max_threads</code> Values</a><a id="10.1-Finding-Optimal-max_threads-Values-1"></a><a class="docs-heading-anchor-permalink" href="#10.1-Finding-Optimal-max_threads-Values" title="Permalink"></a></h3><p>Different functions have different optimal thread counts. Benchmark systematically:</p><pre><code class="language-julia hljs">using MERA, BenchmarkTools
+println(&quot;VTK export completed for $(length(snapshots)) snapshots&quot;)</code></pre><h2 id="10-Benchmarking-and-Performance-Tuning"><a class="docs-heading-anchor" href="#10-Benchmarking-and-Performance-Tuning">10 Benchmarking &amp; Performance Tuning</a><a id="10-Benchmarking-and-Performance-Tuning-1"></a><a class="docs-heading-anchor-permalink" href="#10-Benchmarking-and-Performance-Tuning" title="Permalink"></a></h2><h3 id="10.1-Finding-Optimal-max_threads-Values"><a class="docs-heading-anchor" href="#10.1-Finding-Optimal-max_threads-Values">10.1 Finding Optimal <code>max_threads</code> Values</a><a id="10.1-Finding-Optimal-max_threads-Values-1"></a><a class="docs-heading-anchor-permalink" href="#10.1-Finding-Optimal-max_threads-Values" title="Permalink"></a></h3><p>Different functions have different optimal thread counts. Benchmark systematically:</p><pre><code class="language-julia hljs">using Mera, BenchmarkTools
 
 function benchmark_gethydro(info)
     println(&quot;Benchmarking gethydro with different max_threads:&quot;)
@@ -481,17 +600,15 @@ function benchmark_projection(gas)
 end
 
 function benchmark_export_vtk(gas, temp_prefix)
-    println(&quot;Benchmarking export_vtk with different max_threads:&quot;)
+    println(&quot;Benchmarking export_vtk (note: export_vtk uses internal threading automatically):&quot;)
     
-    for t in (1, 2, 4, 8, min(8, Threads.nthreads()))
-        filename = &quot;$(temp_prefix)_$(t)threads&quot;
-        time = @belapsed begin
-            export_vtk($gas, $filename; scalars=[:rho], max_threads=$t)
-            # Clean up
-            rm(&quot;$(filename).vti&quot;, force=true)
-        end
-        println(&quot;  max_threads=$t → $(round(time, digits=3)) seconds&quot;)
+    filename = &quot;$(temp_prefix)_test&quot;
+    time = @belapsed begin
+        export_vtk($gas, $filename; scalars=[:rho])
+        # Clean up
+        rm(&quot;$(filename).vti&quot;, force=true)
     end
+    println(&quot;  export_vtk time → $(round(time, digits=3)) seconds&quot;)
 end
 
 # Run benchmarks
@@ -516,16 +633,12 @@ Benchmarking projection with different max_threads:
     
     # Clear previous allocations
     GC.gc()
-    initial_gc = GC.gc_num()
     
     # Run analysis with detailed timing
-    result = @time analysis_function(data)
+    t = @timed analysis_function(data)
     
-    # Calculate memory statistics
-    final_gc = GC.gc_num()
-    
-    allocated_mb = (final_gc.allocd - initial_gc.allocd) / 1024^2
-    gc_time_ms = (final_gc.total_time - initial_gc.total_time) / 1e6
+    allocated_mb = t.bytes / 1024^2
+    gc_time_ms = t.gctime * 1000
     
     println(&quot;  Total allocated: $(round(allocated_mb, digits=1)) MB&quot;)
     println(&quot;  GC time: $(round(gc_time_ms, digits=1)) ms&quot;)
@@ -538,7 +651,7 @@ Benchmarking projection with different max_threads:
         println(&quot;     - Processing data in smaller chunks&quot;)
     end
     
-    return result
+    return t.value
 end
 
 # Example usage
@@ -550,20 +663,24 @@ function test_analysis(snapshots)
     end
 end
 
-result = monitor_memory_usage(test_analysis, 100:10:150)</code></pre><h3 id="10.3-Thread-Utilization-Analysis"><a class="docs-heading-anchor" href="#10.3-Thread-Utilization-Analysis">10.3 Thread Utilization Analysis</a><a id="10.3-Thread-Utilization-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#10.3-Thread-Utilization-Analysis" title="Permalink"></a></h3><p>Check if threads are being used efficiently:</p><pre><code class="language-julia hljs">function analyze_thread_utilization(workload_function)
+result = monitor_memory_usage(test_analysis, 100:10:150)</code></pre><h3 id="10.3-Thread-Utilization-Analysis"><a class="docs-heading-anchor" href="#10.3-Thread-Utilization-Analysis">10.3 Thread Utilization Analysis</a><a id="10.3-Thread-Utilization-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#10.3-Thread-Utilization-Analysis" title="Permalink"></a></h3><p>Check if threads are being used efficiently:</p><pre><code class="language-julia hljs">using Statistics
+
+function analyze_thread_utilization(workload_function, args...; tasks=Threads.nthreads())
     # Track work distribution across threads
     work_counters = [Threads.Atomic{Int}(0) for _ in 1:Threads.nthreads()]
     
     # Modified workload that tracks thread usage
-    function tracked_workload(args...)
+    function tracked_workload()
         tid = Threads.threadid()
         Threads.atomic_add!(work_counters[tid], 1)
         return workload_function(args...)
     end
     
-    # Run the workload
+    # Run the workload across tasks
     start_time = time()
-    result = tracked_workload()
+    @threads for _ in 1:tasks
+        tracked_workload()
+    end
     end_time = time()
     
     # Analyze utilization
@@ -574,7 +691,7 @@ result = monitor_memory_usage(test_analysis, 100:10:150)</code></pre><h3 id="10.
     println(&quot;  Total execution time: $(round(end_time - start_time, digits=2))s&quot;)
     println(&quot;  Total work units: $total_work&quot;)
     
-    for (i, count) in enuMERAte(work_counts)
+    for (i, count) in enumerate(work_counts)
         if count &gt; 0
             percentage = round(count / total_work * 100, digits=1)
             println(&quot;  Thread $i: $count tasks ($(percentage)%)&quot;)
@@ -594,7 +711,7 @@ result = monitor_memory_usage(test_analysis, 100:10:150)</code></pre><h3 id="10.
         end
     end
     
-    return result
+    return nothing
 end</code></pre><h2 id="11-Best-Practices-and-Troubleshooting"><a class="docs-heading-anchor" href="#11-Best-Practices-and-Troubleshooting">11 Best Practices &amp; Troubleshooting</a><a id="11-Best-Practices-and-Troubleshooting-1"></a><a class="docs-heading-anchor-permalink" href="#11-Best-Practices-and-Troubleshooting" title="Permalink"></a></h2><h3 id="11.1-Threading-Best-Practices"><a class="docs-heading-anchor" href="#11.1-Threading-Best-Practices">11.1 Threading Best Practices</a><a id="11.1-Threading-Best-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#11.1-Threading-Best-Practices" title="Permalink"></a></h3><p><strong>1. Choose One Level of Parallelism</strong></p><pre><code class="language-julia hljs"># GOOD: Outer loop parallelism
 @threads for snapshot in snapshots
     gas = gethydro(info; max_threads=1)  # Inner serial
@@ -607,13 +724,13 @@ projections = projection(gas, variables)  # One thread per variable
 # AVOID: Uncontrolled nesting
 @threads for snapshot in snapshots
     gas = gethydro(info)  # Full threads
-    projection(gas, variables)  # More full threads = oversubscription
+    projection(gas, variables)  # More full threads = contention and slowdowns
 end</code></pre><p><strong>2. Cap Threads Appropriately</strong></p><pre><code class="language-julia hljs"># Rule of thumb for max_threads:
 # - I/O bound: Higher thread counts (4-8)
 # - CPU bound: Match physical cores  
 # - Memory bound: Lower thread counts (2-4)
 
-export_vtk(gas, filename; max_threads=8)        # I/O benefits from more threads
+export_vtk(gas, filename)                       # Uses internal threading automatically
 projection(gas, vars; max_threads=4)            # CPU bound, moderate threads
 gethydro(info; max_threads=2)                   # Memory bound, fewer threads</code></pre><p><strong>3. Monitor and Profile</strong></p><pre><code class="language-julia hljs"># Always check GC overhead
 @time result = your_analysis_function()
@@ -668,7 +785,7 @@ end</code></pre><p><strong>Detect Race Conditions</strong></p><pre><code class="
     end
     
     println(&quot;No race conditions detected over $n_trials trials&quot;)
-end</code></pre><h2 id="12-Complete-Working-Examples"><a class="docs-heading-anchor" href="#12-Complete-Working-Examples">12 Complete Working Examples</a><a id="12-Complete-Working-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#12-Complete-Working-Examples" title="Permalink"></a></h2><h3 id="12.1-Multi-Simulation-Analysis-Pipeline"><a class="docs-heading-anchor" href="#12.1-Multi-Simulation-Analysis-Pipeline">12.1 Multi-Simulation Analysis Pipeline</a><a id="12.1-Multi-Simulation-Analysis-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#12.1-Multi-Simulation-Analysis-Pipeline" title="Permalink"></a></h3><pre><code class="language-julia hljs">using MERA, Base.Threads
+end</code></pre><h2 id="12-Complete-Working-Examples"><a class="docs-heading-anchor" href="#12-Complete-Working-Examples">12 Complete Working Examples</a><a id="12-Complete-Working-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#12-Complete-Working-Examples" title="Permalink"></a></h2><h3 id="12.1-Multi-Simulation-Analysis-Pipeline"><a class="docs-heading-anchor" href="#12.1-Multi-Simulation-Analysis-Pipeline">12.1 Multi-Simulation Analysis Pipeline</a><a id="12.1-Multi-Simulation-Analysis-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#12.1-Multi-Simulation-Analysis-Pipeline" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Mera, Base.Threads
 using Statistics, Printf
 
 function comprehensive_analysis_pipeline(simulation_paths)
@@ -677,10 +794,10 @@ function comprehensive_analysis_pipeline(simulation_paths)
     create projections, and export results with full threading control.
     &quot;&quot;&quot;
     
-    all_results = []
+    all_results = Vector{Any}(undef, length(simulation_paths))
     
     # Outer level: Parallel across simulations
-    @threads for sim_path in simulation_paths
+    @threads for (j, sim_path) in enumerate(simulation_paths)
         println(&quot;Analyzing simulation: $sim_path&quot;)
         
         try
@@ -725,8 +842,8 @@ function comprehensive_analysis_pipeline(simulation_paths)
                 ))
             end
             
-            # Thread-safe addition to global results
-            push!(all_results, (simulation=sim_path, snapshots=sim_results))
+            # Write to preallocated slot (thread-safe)
+            all_results[j] = (simulation=sim_path, snapshots=sim_results)
             
         catch e
             @error &quot;Failed to analyze simulation $sim_path: $e&quot;
@@ -753,7 +870,7 @@ for sim_result in results
                 snap_result.time_myr, snap_result.gas_mass, 
                 snap_result.stellar_mass, snap_result.mean_temperature)
     end
-end</code></pre><h3 id="12.2-Parameter-Study-with-Threading"><a class="docs-heading-anchor" href="#12.2-Parameter-Study-with-Threading">12.2 Parameter Study with Threading</a><a id="12.2-Parameter-Study-with-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#12.2-Parameter-Study-with-Threading" title="Permalink"></a></h3><pre><code class="language-julia hljs">using MERA, Base.Threads
+end</code></pre><h3 id="12.2-Parameter-Study-with-Threading"><a class="docs-heading-anchor" href="#12.2-Parameter-Study-with-Threading">12.2 Parameter Study with Threading</a><a id="12.2-Parameter-Study-with-Threading-1"></a><a class="docs-heading-anchor-permalink" href="#12.2-Parameter-Study-with-Threading" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Mera, Base.Threads
 
 function parallel_parameter_study()
     &quot;&quot;&quot;
@@ -774,7 +891,7 @@ function parallel_parameter_study()
     results = Vector{NamedTuple}(undef, length(param_combinations))
     
     # Process parameter combinations in parallel
-    @threads for (i, params) in enuMERAte(param_combinations)
+    @threads for (i, params) in enumerate(param_combinations)
         try
             info = getinfo(300, SIMPATH)
             
@@ -833,7 +950,7 @@ function parallel_parameter_study()
 end
 
 # Run parameter study
-study_results = parallel_parameter_study()</code></pre><h3 id="12.3-Time-Series-Analysis-with-Memory-Management"><a class="docs-heading-anchor" href="#12.3-Time-Series-Analysis-with-Memory-Management">12.3 Time Series Analysis with Memory Management</a><a id="12.3-Time-Series-Analysis-with-Memory-Management-1"></a><a class="docs-heading-anchor-permalink" href="#12.3-Time-Series-Analysis-with-Memory-Management" title="Permalink"></a></h3><pre><code class="language-julia hljs">using MERA, Base.Threads
+study_results = parallel_parameter_study()</code></pre><h3 id="12.3-Time-Series-Analysis-with-Memory-Management"><a class="docs-heading-anchor" href="#12.3-Time-Series-Analysis-with-Memory-Management">12.3 Time Series Analysis with Memory Management</a><a id="12.3-Time-Series-Analysis-with-Memory-Management-1"></a><a class="docs-heading-anchor-permalink" href="#12.3-Time-Series-Analysis-with-Memory-Management" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Mera, Base.Threads
 using Statistics
 
 function memory_efficient_time_series(snapshot_range, chunk_size=5)
@@ -917,4 +1034,74 @@ println(&quot;Time series analysis completed:&quot;)
 println(&quot;  Successful snapshots: $(results.n_successful)&quot;)
 println(&quot;  Failed snapshots: $(results.n_failed)&quot;)
 println(&quot;  Time range: $(minimum(results.times)) - $(maximum(results.times)) Myr&quot;)
-println(&quot;  Gas mass range: $(minimum(results.gas_masses)) - $(maximum(results.gas_masses)) Msol&quot;)</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This comprehensive guide provides everything needed to harness Julia&#39;s multi-threading capabilities with MERA:</p><p><strong>Key Takeaways:</strong></p><ol><li><strong>Understand oversubscription</strong> and use <code>max_threads</code> to prevent it</li><li><strong>Choose your parallelization level</strong> - outer loops or inner kernels, not both uncontrolled</li><li><strong>Benchmark systematically</strong> to find optimal thread counts for your hardware  </li><li><strong>Monitor GC performance</strong> and tune for large dataset processing</li><li><strong>Transform existing tutorials</strong> with minimal code changes for immediate benefits</li></ol><p><strong>Threading Patterns:</strong></p><ul><li><strong>Outer-loop</strong>: Multiple snapshots/parameters → <code>@threads</code> + <code>max_threads=1</code> inner</li><li><strong>Inner-kernel</strong>: Single large dataset → full internal threading in MERA calls</li><li><strong>Mixed</strong>: Controlled combination with explicit thread budgets</li></ul><p><strong>Best Practices:</strong></p><ul><li>Start Julia with balanced thread pools: <code>julia --threads=auto --gcthreads=auto</code></li><li>Use atomic operations for thread-safe data collection</li><li>Avoid false sharing with proper data structure design</li><li>Profile and benchmark before optimizing</li></ul><p>By following these patterns, you can transform single-threaded analysis scripts into high-throughput, scalable workflows that fully utilize modern multi-core processors—all within pure Julia code, no external dependencies required.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../examples/">« 10 Examples</a><a class="docs-footer-nextpage" href="../../performance_monitoring/">12 Performance Monitoring »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Thursday 14 August 2025 11:46">Thursday 14 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+println(&quot;  Gas mass range: $(minimum(results.gas_masses)) - $(maximum(results.gas_masses)) Msol&quot;)</code></pre><h3 id="12.4-Time-Series-from-Single-File-JLD2-“Mera-Files”"><a class="docs-heading-anchor" href="#12.4-Time-Series-from-Single-File-JLD2-“Mera-Files”">12.4 Time Series from Single-File JLD2 “Mera Files”</a><a id="12.4-Time-Series-from-Single-File-JLD2-“Mera-Files”-1"></a><a class="docs-heading-anchor-permalink" href="#12.4-Time-Series-from-Single-File-JLD2-“Mera-Files”" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Base.Threads, Mera
+using Statistics
+
+&quot;&quot;&quot;
+Analyze a time series of single-file JLD2 outputs (&quot;Mera files&quot;) using Mera.loaddata.
+
+Assumptions:
+- Files are named like: output_XXXXX.jld2 (standard Mera format)
+- Data type is one of :hydro, :particles, :gravity, :clumps
+
+Arguments:
+- dir::AbstractString: directory with output_*.jld2 files
+- datatype::Symbol: which dataset to load from each file (default :hydro)
+
+Returns NamedTuple with vectors for outputs, files, times (Myr), total_mass, mean_density.
+&quot;&quot;&quot;
+function analyze_merafiles_timeseries(dir::AbstractString; datatype::Symbol=:hydro)
+    # Discover files and parse output numbers
+    allfiles = readdir(dir; join=true)
+    merafiles = filter(f -&gt; endswith(lowercase(f), &quot;.jld2&quot;) &amp;&amp; occursin(r&quot;output_\d+\.jld2$&quot;, lowercase(basename(f))), allfiles)
+    if isempty(merafiles)
+        error(&quot;No Mera .jld2 files (output_XXXXX.jld2) found in: $dir&quot;)
+    end
+
+    outputs = map(merafiles) do f
+        m = match(r&quot;output_(\d+)\.jld2$&quot;, basename(f))
+        isnothing(m) &amp;&amp; error(&quot;Unrecognized filename: $(basename(f))&quot;)
+        parse(Int, m.captures[1])
+    end
+
+    # Sort by output number
+    p = sortperm(outputs)
+    outputs = outputs[p]
+    files = merafiles[p]
+    n = length(files)
+
+    # Preallocate results
+    times = fill(Float64(NaN), n)
+    total_mass = Vector{Float64}(undef, n)
+    mean_density = Vector{Float64}(undef, n)
+
+    # Threaded outer loop; internal routines manage their own threading
+    @threads for i in 1:n
+        out = outputs[i]
+        # Load the requested dataset from the Mera file directory
+        data_obj = loaddata(out, dir, datatype)
+
+        # Get time directly from the data object (Myr)
+        times[i] = gettime(data_obj, :Myr)
+
+        # Compute metrics (adapt as needed for non-hydro datatypes)
+        total_mass[i] = msum(data_obj, :Msol)
+        mean_density[i] = try
+            mean(getvar(data_obj, :rho, :nH))
+        catch
+            NaN
+        end
+    end
+
+    return (outputs=outputs, files=files, times=times, total_mass=total_mass, mean_density=mean_density)
+end
+
+# Example usage
+dir = &quot;/path/to/your/merafiles&quot;  # update this
+res = analyze_merafiles_timeseries(dir; datatype=:hydro)
+
+println(&quot;Analyzed $(length(res.files)) Mera JLD2 files&quot;)
+finite_times = filter(isfinite, res.times)
+println(&quot;Time range (Myr): &quot;, isempty(finite_times) ? (NaN, NaN) : (minimum(finite_times), maximum(finite_times)))
+println(&quot;Mass range (Msol): &quot;, (minimum(res.total_mass), maximum(res.total_mass)))
+println(&quot;Mean density range (nH): &quot;, (minimum(res.mean_density), maximum(res.mean_density)))</code></pre><p>Notes:</p><ul><li>Uses Mera.loaddata(output, dir, datatype) to read canonical “Mera files.”</li><li>Adjust metrics for non-hydro data (e.g., particles don’t have :rho).</li><li>Tune parallelism by batching outputs if your storage is slow; see Section 3 on I/O contention.</li></ul><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This comprehensive guide provides everything needed to harness Julia&#39;s multi-threading capabilities with Mera:</p><p><strong>Key Takeaways:</strong></p><ol><li><strong>Understand resource contention</strong> and use <code>max_threads</code> to control it</li><li><strong>Choose your parallelization level</strong> - outer loops or inner kernels, not both uncontrolled</li><li><strong>Benchmark systematically</strong> to find optimal thread counts for your hardware  </li><li><strong>Monitor GC performance</strong> and tune for large dataset processing</li><li><strong>Transform existing tutorials</strong> with minimal code changes for immediate benefits</li></ol><p><strong>Threading Patterns:</strong></p><ul><li><strong>Outer-loop</strong>: Multiple snapshots/parameters → <code>@threads</code> + <code>max_threads=1</code> inner</li><li><strong>Inner-kernel</strong>: Single large dataset → full internal threading in Mera calls</li><li><strong>Mixed</strong>: Controlled combination with explicit thread budgets</li></ul><p><strong>Best Practices:</strong></p><ul><li>Start Julia with balanced thread pools: <code>julia --threads=auto --gcthreads=auto</code></li><li>Use atomic operations for thread-safe data collection</li><li>Avoid false sharing with proper data structure design</li><li>Profile and benchmark before optimizing</li></ul><p>By following these patterns, you can transform single-threaded analysis scripts into high-throughput, scalable workflows that fully utilize modern multi-core processors—all within pure Julia code, no external dependencies required.</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../examples/">« 10 Examples</a><a class="docs-footer-nextpage" href="../../benchmarks/IO/IOperformance/">Server IO »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Friday 15 August 2025 20:34">Friday 15 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
