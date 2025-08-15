@@ -27,6 +27,7 @@ include("simulation_data_tests.jl")
 include("notebook_inspired_tests.jl")
 include("workflow_based_tests.jl")  # Re-enabled with fixes
 include("data_free_workflow_tests.jl")
+include("comprehensive_unit_tests_simple.jl")  # New simple comprehensive Mera function tests
 
 @testset "Mera.jl Test Suite" begin
     
@@ -70,6 +71,11 @@ include("data_free_workflow_tests.jl")
     # 8. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
         run_simulation_data_tests()
+    end
+    
+    # 9. Comprehensive Mera Function Unit Tests
+    @testset "Comprehensive Mera Unit Tests" begin
+        run_simple_comprehensive_tests()
     end
     
 end
