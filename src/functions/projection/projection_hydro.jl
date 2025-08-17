@@ -327,7 +327,6 @@ and variable-based parallel processing based on data characteristics.
 ### Function Signature
 
 ```julia
-projection(dataobject::HydroDataType, vars::Array{Symbol,1};julia
 projection(dataobject::HydroDataType, vars::Array{Symbol,1};
            units::Array{Symbol,1}=[:standard],
            lmax::Real=dataobject.lmax,
