@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples and Real-World Use Cases · Mera.jl</title><meta name="title" content="Examples and Real-World Use Cases · Mera.jl"/><meta property="og:title" content="Examples and Real-World Use Cases · Mera.jl"/><meta property="twitter:title" content="Examples and Real-World Use Cases · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li><li><span class="tocitem">4 Basic Calculations</span><ul><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><span class="tocitem">5 Mask/Filter/Meta</span><ul><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li><li><span class="tocitem">9 Miscellaneous</span><ul><li><a class="tocitem" href="../../Miscellaneous/">Tutorial</a></li><li><a class="tocitem" href="../../api/miscellaneous/">API Reference</a></li></ul></li><li><span class="tocitem">10 Examples</span><ul><li><a class="tocitem" href="../../examples/">Tutorial</a></li><li><a class="tocitem" href="../../api/examples/">API Reference</a></li></ul></li><li><span class="tocitem">11 Multi-Threading</span><ul><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><span class="tocitem">12 Notifications</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../bell/">Bell (Local Audio)</a></li><li><a class="tocitem" href="../email/">Email</a></li><li><a class="tocitem" href="../zulip/">Zulip (Team Chat)</a></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Julia Quick Reference</span><ul><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><a class="tocitem" href="../../api/">15 Complete API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Examples and Real-World Use Cases</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples and Real-World Use Cases</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples-and-Real-World-Use-Cases"><a class="docs-heading-anchor" href="#Examples-and-Real-World-Use-Cases">Examples and Real-World Use Cases</a><a id="Examples-and-Real-World-Use-Cases-1"></a><a class="docs-heading-anchor-permalink" href="#Examples-and-Real-World-Use-Cases" title="Permalink"></a></h1><p>Practical examples demonstrating notification system integration in research workflows.</p><h2 id="Research-Workflow-Examples"><a class="docs-heading-anchor" href="#Research-Workflow-Examples">🔬 Research Workflow Examples</a><a id="Research-Workflow-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Research-Workflow-Examples" title="Permalink"></a></h2><h3 id="Astrophysics-Pipeline"><a class="docs-heading-anchor" href="#Astrophysics-Pipeline">Astrophysics Pipeline</a><a id="Astrophysics-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#Astrophysics-Pipeline" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Mera
+
+function analyze_galaxy_survey(survey_name, redshift_range)
+    &quot;&quot;&quot;Complete galaxy analysis pipeline with comprehensive monitoring&quot;&quot;&quot;
+    
+    # Initialize progress tracking for major steps
+    tracker = create_progress_tracker(6,
+                                     task_name=&quot;Galaxy Survey: $survey_name&quot;,
+                                     time_interval=300,  # 5-minute updates
+                                     zulip_channel=&quot;astrophysics&quot;,
+                                     zulip_topic=&quot;Survey Analysis&quot;)
+    
+    pipeline_start = time()
+    results = Dict()
+    
+    try
+        # Step 1: Data Loading
+        update_progress!(tracker, 1, &quot;Loading survey data...&quot;)
+        
+        survey_data = timed_notify(&quot;Survey data loading&quot;) do
+            # Load massive survey dataset
+            data = load_ramses_data(survey_name)
+            filter_by_redshift(data, redshift_range)
+        end
+        
+        results[&quot;galaxies_loaded&quot;] = length(survey_data.galaxies)
+        
+        # Step 2: Quality Assessment
+        update_progress!(tracker, 2, &quot;Performing quality assessment...&quot;)
+        
+        quality_report = safe_execute(&quot;Data quality assessment&quot;) do
+            assess_data_quality(survey_data)
+        end
+        
+        # Step 3: Morphological Classification  
+        update_progress!(tracker, 3, &quot;Classifying galaxy morphologies...&quot;)
+        
+        # Sub-progress for detailed classification
+        morphology_tracker = create_progress_tracker(length(survey_data.galaxies),
+                                                    task_name=&quot;Morphology Classification&quot;,
+                                                    progress_interval=5,  # Every 5%
+                                                    time_interval=120)    # 2-minute updates
+        
+        morphologies = []
+        for (i, galaxy) in enumerate(survey_data.galaxies)
+            morph = classify_morphology(galaxy)
+            push!(morphologies, morph)
+            update_progress!(morphology_tracker, i)
+            
+            # Special notification for rare objects
+            if morph.type == &quot;peculiar&quot;
+                notifyme(&quot;🌌 Peculiar galaxy found!&quot;,
+                        message=&quot;Galaxy ID: $(galaxy.id), Redshift: $(galaxy.z)&quot;,
+                        zulip_channel=&quot;discoveries&quot;,
+                        zulip_topic=&quot;Unusual Objects&quot;)
+            end
+        end
+        
+        complete_progress!(morphology_tracker, 
+            &quot;Classification complete: $(count_morphology_types(morphologies))&quot;)
+        results[&quot;morphologies&quot;] = morphologies
+        
+        # Step 4: Statistical Analysis
+        update_progress!(tracker, 4, &quot;Computing statistical measures...&quot;)
+        
+        stats = timed_notify(&quot;Statistical analysis&quot;,
+                           include_details=true) do
+            compute_galaxy_statistics(survey_data, morphologies)
+        end
+        results[&quot;statistics&quot;] = stats
+        
+        # Step 5: Visualization Generation
+        update_progress!(tracker, 5, &quot;Generating plots and visualizations...&quot;)
+        
+        plot_files = safe_execute(&quot;Visualization generation&quot;) do
+            plots = []
+            
+            # Mass function plot
+            mass_plot = plot_mass_function(survey_data)
+            save(mass_plot, &quot;mass_function_$survey_name.png&quot;)
+            push!(plots, &quot;mass_function_$survey_name.png&quot;)
+            
+            # Morphology distribution
+            morph_plot = plot_morphology_distribution(morphologies)
+            save(morph_plot, &quot;morphology_dist_$survey_name.png&quot;)
+            push!(plots, &quot;morphology_dist_$survey_name.png&quot;)
+            
+            # Redshift distribution
+            z_plot = plot_redshift_distribution(survey_data, redshift_range)
+            save(z_plot, &quot;redshift_dist_$survey_name.png&quot;)
+            push!(plots, &quot;redshift_dist_$survey_name.png&quot;)
+            
+            return plots
+        end
+        
+        # Step 6: Report Generation
+        update_progress!(tracker, 6, &quot;Finalizing scientific report...&quot;)
+        
+        report_path = generate_science_report(survey_name, results, plot_files)
+        
+        # Success notification with complete results
+        complete_progress!(tracker,
+            &quot;🎉 Galaxy survey analysis completed successfully!&quot;)
+        
+        # Send comprehensive results
+        notifyme(&quot;📊 Galaxy Survey Results: $survey_name&quot;,
+                message=&quot;&quot;&quot;
+                **Survey Analysis Complete** 🌌
+                
+                📈 **Key Results:**
+                • Galaxies analyzed: $(results[&quot;galaxies_loaded&quot;])
+                • Redshift range: $redshift_range
+                • Morphology types: $(length(unique([m.type for m in morphologies])))
+                • Peculiar objects: $(count(m -&gt; m.type == &quot;peculiar&quot;, morphologies))
+                
+                📋 **Quality Metrics:**
+                • Data completeness: $(quality_report.completeness)%
+                • Signal-to-noise: $(round(quality_report.snr_median, digits=2))
+                
+                🔗 **Outputs:**
+                • Scientific report: $(basename(report_path))
+                • Visualization plots: $(length(plot_files))
+                &quot;&quot;&quot;,
+                attachments=[report_path] + plot_files,
+                start_time=pipeline_start,
+                include_timing=true,
+                zulip_channel=&quot;astrophysics&quot;,
+                zulip_topic=&quot;Final Results&quot;)
+        
+        return results
+        
+    catch e
+        # Pipeline failure with context
+        complete_progress!(tracker,
+            &quot;❌ Galaxy survey analysis failed at step $(tracker[:current])&quot;)
+        
+        notifyme(&quot;💥 Survey Analysis Failure: $survey_name&quot;,
+                exception_context=e,
+                start_time=pipeline_start,
+                include_context=true,
+                capture_output=() -&gt; begin
+                    println(&quot;Survey: $survey_name&quot;)
+                    println(&quot;Redshift range: $redshift_range&quot;) 
+                    println(&quot;Failed at step: $(tracker[:current])/6&quot;)
+                    println(&quot;Partial results: $(keys(results))&quot;)
+                    if haskey(results, &quot;galaxies_loaded&quot;)
+                        println(&quot;Galaxies processed: $(results[&quot;galaxies_loaded&quot;])&quot;)
+                    end
+                    return &quot;Survey failure context captured&quot;
+                end,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Analysis Failures&quot;)
+        rethrow(e)
+    end
+end
+
+# Usage
+results = analyze_galaxy_survey(&quot;COSMOS_Deep&quot;, (0.5, 2.0))</code></pre><h3 id="Machine-Learning-Training-Pipeline"><a class="docs-heading-anchor" href="#Machine-Learning-Training-Pipeline">Machine Learning Training Pipeline</a><a id="Machine-Learning-Training-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#Machine-Learning-Training-Pipeline" title="Permalink"></a></h3><pre><code class="language-julia hljs">function train_cosmology_model(model_config, training_data)
+    &quot;&quot;&quot;Neural network training with comprehensive monitoring&quot;&quot;&quot;
+    
+    # Setup training progress
+    total_epochs = model_config.epochs
+    tracker = create_progress_tracker(total_epochs,
+                                     task_name=&quot;Cosmology Model Training&quot;,
+                                     time_interval=600,     # 10-minute updates
+                                     progress_interval=10,  # Every 10 epochs
+                                     zulip_channel=&quot;ml-training&quot;,
+                                     zulip_topic=&quot;Deep Learning&quot;)
+    
+    training_start = time()
+    best_loss = Inf
+    patience_counter = 0
+    
+    try
+        # Initial setup notification
+        notifyme(&quot;🚀 Starting cosmology model training&quot;,
+                message=&quot;&quot;&quot;
+                **Training Configuration** 🤖
+                
+                🔧 **Model Parameters:**
+                • Architecture: $(model_config.architecture)
+                • Learning rate: $(model_config.lr)
+                • Batch size: $(model_config.batch_size)
+                • Total epochs: $total_epochs
+                
+                📊 **Dataset:**
+                • Training samples: $(length(training_data.train))
+                • Validation samples: $(length(training_data.val))
+                • Test samples: $(length(training_data.test))
+                &quot;&quot;&quot;,
+                zulip_channel=&quot;ml-training&quot;,
+                zulip_topic=&quot;Training Start&quot;)
+        
+        # Training loop with monitoring
+        model = initialize_model(model_config)
+        
+        for epoch in 1:total_epochs
+            epoch_start = time()
+            
+            # Training step
+            train_loss = train_epoch!(model, training_data.train)
+            val_loss = validate_model(model, training_data.val)
+            
+            # Check for improvement
+            if val_loss &lt; best_loss
+                best_loss = val_loss
+                patience_counter = 0
+                save_model(model, &quot;best_model.jld2&quot;)
+                
+                # Notify on significant improvements
+                if epoch &gt; 10 &amp;&amp; val_loss &lt; 0.9 * best_loss
+                    notifyme(&quot;📈 Model improvement!&quot;,
+                            message=&quot;Epoch $epoch: New best validation loss: $(round(val_loss, digits=6))&quot;,
+                            zulip_channel=&quot;ml-training&quot;,
+                            zulip_topic=&quot;Training Progress&quot;)
+                end
+            else
+                patience_counter += 1
+            end
+            
+            # Progress update with metrics
+            epoch_time = time() - epoch_start
+            eta = epoch_time * (total_epochs - epoch)
+            
+            update_progress!(tracker, epoch,
+                &quot;&quot;&quot;Epoch $epoch complete
+                📊 Train Loss: $(round(train_loss, digits=6))
+                📈 Val Loss: $(round(val_loss, digits=6))
+                ⏱️ Epoch Time: $(round(epoch_time, digits=1))s
+                🎯 ETA: $(format_duration(eta))&quot;&quot;&quot;)
+            
+            # Early stopping check
+            if patience_counter &gt;= model_config.patience
+                update_progress!(tracker, epoch,
+                    &quot;🛑 Early stopping triggered (patience exceeded)&quot;)
+                break
+            end
+            
+            # Checkpoint every 50 epochs
+            if epoch % 50 == 0
+                checkpoint_path = &quot;checkpoint_epoch_$epoch.jld2&quot;
+                save_model(model, checkpoint_path)
+                
+                notifyme(&quot;💾 Training checkpoint saved&quot;,
+                        message=&quot;Epoch $epoch checkpoint created&quot;,
+                        attachments=[checkpoint_path],
+                        zulip_channel=&quot;ml-training&quot;,
+                        zulip_topic=&quot;Checkpoints&quot;)
+            end
+        end
+        
+        # Final evaluation
+        final_epoch = min(epoch, total_epochs)
+        test_metrics = evaluate_model(model, training_data.test)
+        
+        complete_progress!(tracker,
+            &quot;🎉 Model training completed successfully!&quot;)
+        
+        # Generate training report
+        training_report = generate_training_report(model, test_metrics, training_start)
+        training_plots = create_training_plots(model.history)
+        
+        # Final results notification
+        notifyme(&quot;🤖 Cosmology Model Training Complete&quot;,
+                message=&quot;&quot;&quot;
+                **Training Results** 🎯
+                
+                📊 **Final Metrics:**
+                • Best validation loss: $(round(best_loss, digits=6))
+                • Test accuracy: $(round(test_metrics.accuracy, digits=4))
+                • Test R²: $(round(test_metrics.r2, digits=4))
+                • Training epochs: $final_epoch
+                
+                ⏱️ **Performance:**
+                • Total training time: $(format_duration(time() - training_start))
+                • Average epoch time: $(round((time() - training_start)/final_epoch, digits=1))s
+                • Convergence: $(patience_counter &lt; model_config.patience ? &quot;✅&quot; : &quot;⚠️ Early stop&quot;)
+                
+                📁 **Outputs:**
+                • Best model: best_model.jld2
+                • Training report: $(basename(training_report))
+                • Plots: $(length(training_plots)) files
+                &quot;&quot;&quot;,
+                attachments=[training_report, &quot;best_model.jld2&quot;] + training_plots,
+                start_time=training_start,
+                include_timing=true,
+                zulip_channel=&quot;ml-training&quot;,
+                zulip_topic=&quot;Final Results&quot;)
+        
+        return model, test_metrics
+        
+    catch e
+        # Training failure notification
+        complete_progress!(tracker,
+            &quot;❌ Model training failed at epoch $(tracker[:current])&quot;)
+        
+        notifyme(&quot;💥 Training Failure&quot;,
+                exception_context=e,
+                start_time=training_start,
+                include_context=true,
+                capture_output=() -&gt; begin
+                    println(&quot;Model: $(model_config.architecture)&quot;)
+                    println(&quot;Failed at epoch: $(tracker[:current])/$total_epochs&quot;)
+                    println(&quot;Best validation loss: $best_loss&quot;)
+                    println(&quot;Patience counter: $patience_counter/$(model_config.patience)&quot;)
+                    return &quot;Training failure context&quot;
+                end,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;ML Failures&quot;)
+        rethrow(e)
+    end
+end</code></pre><h3 id="High-Performance-Computing-Batch-Jobs"><a class="docs-heading-anchor" href="#High-Performance-Computing-Batch-Jobs">High-Performance Computing Batch Jobs</a><a id="High-Performance-Computing-Batch-Jobs-1"></a><a class="docs-heading-anchor-permalink" href="#High-Performance-Computing-Batch-Jobs" title="Permalink"></a></h3><pre><code class="language-julia hljs">function run_simulation_campaign(parameter_grid, cluster_config)
+    &quot;&quot;&quot;Large-scale simulation campaign with cluster monitoring&quot;&quot;&quot;
+    
+    total_jobs = length(parameter_grid)
+    campaign_tracker = create_progress_tracker(total_jobs,
+                                              task_name=&quot;Simulation Campaign&quot;,
+                                              time_interval=1800,    # 30-minute updates
+                                              progress_interval=1,   # Every job
+                                              zulip_channel=&quot;hpc-jobs&quot;,
+                                              zulip_topic=&quot;Campaigns&quot;)
+    
+    campaign_start = time()
+    completed_jobs = 0
+    failed_jobs = 0
+    job_results = Dict()
+    
+    try
+        # Campaign initialization
+        notifyme(&quot;🚀 Starting simulation campaign&quot;,
+                message=&quot;&quot;&quot;
+                **HPC Campaign Launch** 🖥️
+                
+                📊 **Job Configuration:**
+                • Total simulations: $total_jobs
+                • Parameter dimensions: $(length(keys(parameter_grid[1])))
+                • Estimated runtime: $(estimate_campaign_time(parameter_grid, cluster_config))
+                
+                🖥️ **Cluster Setup:**
+                • Nodes allocated: $(cluster_config.nodes)
+                • Cores per node: $(cluster_config.cores_per_node)
+                • Memory per node: $(cluster_config.memory_gb)GB
+                • Queue: $(cluster_config.queue)
+                &quot;&quot;&quot;,
+                zulip_channel=&quot;hpc-jobs&quot;,
+                zulip_topic=&quot;Campaign Start&quot;)
+        
+        # Submit and monitor jobs
+        for (job_id, params) in enumerate(parameter_grid)
+            job_start = time()
+            
+            try
+                # Submit job to cluster
+                slurm_id = submit_slurm_job(params, cluster_config)
+                
+                # Monitor job execution
+                result = timed_notify(&quot;Simulation Job $job_id&quot;) do
+                    monitor_slurm_job(slurm_id, params)
+                end
+                
+                job_results[job_id] = result
+                completed_jobs += 1
+                
+                # Success update
+                job_time = time() - job_start
+                throughput = completed_jobs / (time() - campaign_start) * 3600  # jobs/hour
+                
+                update_progress!(campaign_tracker, job_id,
+                    &quot;&quot;&quot;✅ Job $job_id completed (SLURM: $slurm_id)
+                    ⏱️ Runtime: $(format_duration(job_time))
+                    📈 Throughput: $(round(throughput, digits=2)) jobs/hour
+                    💾 Output size: $(get_file_size(result.output_path))&quot;&quot;&quot;)
+                
+                # Special notifications for interesting results
+                if has_interesting_result(result)
+                    notifyme(&quot;🌟 Interesting simulation result!&quot;,
+                            message=&quot;&quot;&quot;
+                            Job $job_id produced notable results:
+                            $(describe_interesting_features(result))
+                            
+                            Parameters: $(format_parameters(params))
+                            &quot;&quot;&quot;,
+                            attachments=[result.summary_plot],
+                            zulip_channel=&quot;discoveries&quot;,
+                            zulip_topic=&quot;Notable Results&quot;)
+                end
+                
+            catch e
+                failed_jobs += 1
+                
+                # Log job failure
+                safe_execute(&quot;Job failure logging&quot;) do
+                    log_simulation_failure(job_id, params, e)
+                end
+                
+                update_progress!(campaign_tracker, job_id,
+                    &quot;❌ Job $job_id failed: $(typeof(e))&quot;)
+                
+                # Critical failure threshold
+                failure_rate = failed_jobs / job_id
+                if failure_rate &gt; 0.2 &amp;&amp; job_id &gt; 10  # &gt;20% failure after 10 jobs
+                    notifyme(&quot;🚨 High simulation failure rate!&quot;,
+                            message=&quot;&quot;&quot;
+                            **Campaign Alert** ⚠️
+                            
+                            Current failure rate: $(round(failure_rate*100, digits=1))%
+                            Failed jobs: $failed_jobs
+                            Completed jobs: $completed_jobs
+                            
+                            Recent failure: Job $job_id
+                            Error: $(typeof(e))
+                            
+                            Consider investigating before continuing.
+                            &quot;&quot;&quot;,
+                            zulip_channel=&quot;alerts&quot;,
+                            zulip_topic=&quot;High Priority&quot;)
+                end
+            end
+            
+            # Adaptive delay based on cluster load
+            if get_cluster_load() &gt; 0.9
+                sleep(30)  # Wait for cluster to cool down
+            end
+        end
+        
+        # Campaign completion analysis
+        success_rate = completed_jobs / total_jobs
+        total_runtime = time() - campaign_start
+        
+        complete_progress!(campaign_tracker,
+            &quot;🎉 Simulation campaign completed!&quot;)
+        
+        # Generate campaign report
+        campaign_report = generate_campaign_report(job_results, parameter_grid, 
+                                                  success_rate, total_runtime)
+        result_summary = create_result_summary_plots(job_results)
+        
+        # Final campaign notification
+        notifyme(&quot;📊 Simulation Campaign Results&quot;,
+                message=&quot;&quot;&quot;
+                **Campaign Complete** 🎯
+                
+                📈 **Success Metrics:**
+                • Completed jobs: $completed_jobs/$total_jobs ($(round(success_rate*100, digits=1))%)
+                • Failed jobs: $failed_jobs
+                • Average job time: $(round(total_runtime/total_jobs, digits=1))s
+                • Total runtime: $(format_duration(total_runtime))
+                
+                🔬 **Scientific Results:**
+                • Parameter space coverage: $(calculate_coverage(job_results, parameter_grid))%
+                • Interesting results: $(count_interesting_results(job_results))
+                • Data generated: $(calculate_total_data_size(job_results))
+                
+                📁 **Outputs:**
+                • Campaign report: $(basename(campaign_report))
+                • Summary plots: $(length(result_summary))
+                • Result database: campaign_results.h5
+                &quot;&quot;&quot;,
+                attachments=[campaign_report] + result_summary,
+                start_time=campaign_start,
+                include_timing=true,
+                zulip_channel=&quot;hpc-jobs&quot;,
+                zulip_topic=&quot;Final Results&quot;)
+        
+        return job_results
+        
+    catch e
+        # Campaign failure
+        complete_progress!(campaign_tracker,
+            &quot;❌ Simulation campaign failed&quot;)
+        
+        notifyme(&quot;💥 Campaign Failure&quot;,
+                exception_context=e,
+                start_time=campaign_start,
+                include_context=true,
+                capture_output=() -&gt; begin
+                    println(&quot;Campaign progress: $completed_jobs/$total_jobs completed&quot;)
+                    println(&quot;Success rate: $(round(completed_jobs/max(1,completed_jobs+failed_jobs)*100, digits=1))%&quot;)
+                    println(&quot;Failed jobs: $failed_jobs&quot;)
+                    println(&quot;Cluster config: $(cluster_config.queue), $(cluster_config.nodes) nodes&quot;)
+                    return &quot;Campaign failure context&quot;
+                end,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Campaign Failures&quot;)
+        rethrow(e)
+    end
+end</code></pre><h2 id="Daily-Operations-Examples"><a class="docs-heading-anchor" href="#Daily-Operations-Examples">🔄 Daily Operations Examples</a><a id="Daily-Operations-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Daily-Operations-Examples" title="Permalink"></a></h2><h3 id="Automated-Data-Processing"><a class="docs-heading-anchor" href="#Automated-Data-Processing">Automated Data Processing</a><a id="Automated-Data-Processing-1"></a><a class="docs-heading-anchor-permalink" href="#Automated-Data-Processing" title="Permalink"></a></h3><pre><code class="language-julia hljs">function daily_data_processing()
+    &quot;&quot;&quot;Automated daily processing with error recovery&quot;&quot;&quot;
+    
+    notifyme(&quot;🌅 Starting daily data processing&quot;,
+            zulip_channel=&quot;operations&quot;,
+            zulip_topic=&quot;Daily Tasks&quot;)
+    
+    daily_start = time()
+    
+    try
+        # Check for new data
+        new_files = safe_execute(&quot;Data discovery&quot;) do
+            discover_new_data_files(&quot;/data/raw/&quot;)
+        end
+        
+        if isempty(new_files)
+            notifyme(&quot;ℹ️ No new data to process today&quot;,
+                    zulip_channel=&quot;operations&quot;,
+                    zulip_topic=&quot;Daily Tasks&quot;)
+            return
+        end
+        
+        # Process each file
+        processed_files = []
+        
+        file_tracker = create_progress_tracker(length(new_files),
+                                              task_name=&quot;Daily File Processing&quot;)
+        
+        for (i, file) in enumerate(new_files)
+            try
+                processed_file = timed_notify(&quot;Processing $(basename(file))&quot;) do
+                    process_data_file(file)
+                end
+                
+                push!(processed_files, processed_file)
+                update_progress!(file_tracker, i, &quot;✅ $(basename(file))&quot;)
+                
+            catch e
+                update_progress!(file_tracker, i, &quot;❌ $(basename(file)): $(typeof(e))&quot;)
+                
+                # Continue with other files
+                continue
+            end
+        end
+        
+        complete_progress!(file_tracker,
+            &quot;Daily processing complete: $(length(processed_files))/$(length(new_files)) files&quot;)
+        
+        # Generate daily summary
+        notifyme(&quot;📊 Daily Processing Summary&quot;,
+                message=&quot;&quot;&quot;
+                **Daily Data Processing Complete** 📈
+                
+                📁 **Files Processed:** $(length(processed_files))/$(length(new_files))
+                ⏱️ **Processing Time:** $(format_duration(time() - daily_start))
+                💾 **Data Volume:** $(calculate_data_volume(processed_files))
+                &quot;&quot;&quot;,
+                start_time=daily_start,
+                include_timing=true,
+                zulip_channel=&quot;operations&quot;,
+                zulip_topic=&quot;Daily Summary&quot;)
+        
+    catch e
+        notifyme(&quot;💥 Daily processing failed&quot;,
+                exception_context=e,
+                start_time=daily_start,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Daily Failures&quot;)
+    end
+end
+
+# Schedule daily execution
+using Cron
+@cron &quot;0 2 * * *&quot; daily_data_processing()  # Run at 2 AM daily</code></pre><h3 id="System-Health-Monitoring"><a class="docs-heading-anchor" href="#System-Health-Monitoring">System Health Monitoring</a><a id="System-Health-Monitoring-1"></a><a class="docs-heading-anchor-permalink" href="#System-Health-Monitoring" title="Permalink"></a></h3><pre><code class="language-julia hljs">function system_health_check()
+    &quot;&quot;&quot;Comprehensive system monitoring with alerts&quot;&quot;&quot;
+    
+    health_start = time()
+    alerts = []
+    
+    try
+        # Check disk space
+        disk_usage = safe_execute(&quot;Disk space check&quot;) do
+            get_disk_usage(&quot;/&quot;)
+        end
+        
+        if disk_usage &gt; 90
+            push!(alerts, &quot;💾 Disk usage critical: $(disk_usage)%&quot;)
+        elseif disk_usage &gt; 80
+            push!(alerts, &quot;⚠️ Disk usage high: $(disk_usage)%&quot;)
+        end
+        
+        # Check memory usage
+        memory_info = safe_execute(&quot;Memory check&quot;) do
+            get_memory_usage()
+        end
+        
+        if memory_info.usage_percent &gt; 95
+            push!(alerts, &quot;🧠 Memory usage critical: $(memory_info.usage_percent)%&quot;)
+        end
+        
+        # Check running jobs
+        active_jobs = safe_execute(&quot;Job status check&quot;) do
+            get_active_slurm_jobs()
+        end
+        
+        stuck_jobs = filter(job -&gt; job.runtime &gt; 24*3600, active_jobs)  # &gt; 24 hours
+        if !isempty(stuck_jobs)
+            push!(alerts, &quot;🕐 $(length(stuck_jobs)) jobs running &gt;24h&quot;)
+        end
+        
+        # Send health report
+        if isempty(alerts)
+            notifyme(&quot;💚 System health check: All systems normal&quot;,
+                    capture_output=() -&gt; begin
+                        println(&quot;Disk usage: $(disk_usage)%&quot;)
+                        println(&quot;Memory usage: $(memory_info.usage_percent)%&quot;) 
+                        println(&quot;Active jobs: $(length(active_jobs))&quot;)
+                        println(&quot;System load: $(get_system_load())&quot;)
+                        return &quot;Health check complete&quot;
+                    end,
+                    start_time=health_start,
+                    zulip_channel=&quot;monitoring&quot;,
+                    zulip_topic=&quot;Health Checks&quot;)
+        else
+            notifyme(&quot;🚨 System Health Alerts&quot;,
+                    message=join(alerts, &quot;\n&quot;),
+                    capture_output=get_detailed_system_info_command(),
+                    zulip_channel=&quot;alerts&quot;,
+                    zulip_topic=&quot;System Health&quot;)
+        end
+        
+    catch e
+        notifyme(&quot;💥 Health check failed&quot;,
+                exception_context=e,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Monitoring Failures&quot;)
+    end
+end
+
+# Schedule regular health checks
+@cron &quot;*/30 * * * *&quot; system_health_check()  # Every 30 minutes</code></pre><h2 id="Integration-Patterns"><a class="docs-heading-anchor" href="#Integration-Patterns">📋 Integration Patterns</a><a id="Integration-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Integration-Patterns" title="Permalink"></a></h2><h3 id="With-Package-Development"><a class="docs-heading-anchor" href="#With-Package-Development">With Package Development</a><a id="With-Package-Development-1"></a><a class="docs-heading-anchor-permalink" href="#With-Package-Development" title="Permalink"></a></h3><pre><code class="language-julia hljs"># In your package tests
+function comprehensive_package_tests()
+    notifyme(&quot;🧪 Starting package test suite&quot;,
+            zulip_channel=&quot;development&quot;,
+            zulip_topic=&quot;Testing&quot;)
+    
+    test_start = time()
+    
+    try
+        # Run comprehensive tests
+        result = timed_notify(&quot;Package tests&quot;) do
+            Pkg.test(&quot;YourPackage&quot;)
+        end
+        
+        notifyme(&quot;✅ Package tests passed&quot;,
+                start_time=test_start,
+                include_timing=true,
+                zulip_channel=&quot;development&quot;,
+                zulip_topic=&quot;Test Results&quot;)
+        
+    catch e
+        notifyme(&quot;❌ Package tests failed&quot;,
+                exception_context=e,
+                start_time=test_start,
+                zulip_channel=&quot;development&quot;,
+                zulip_topic=&quot;Test Failures&quot;)
+    end
+end</code></pre><h3 id="With-Jupyter-Notebooks"><a class="docs-heading-anchor" href="#With-Jupyter-Notebooks">With Jupyter Notebooks</a><a id="With-Jupyter-Notebooks-1"></a><a class="docs-heading-anchor-permalink" href="#With-Jupyter-Notebooks" title="Permalink"></a></h3><pre><code class="language-julia hljs"># In notebook cells
+notifyme(&quot;📓 Notebook analysis complete&quot;,
+        message=&quot;Cell execution finished&quot;,
+        attachments=[&quot;results.png&quot;, &quot;data_summary.csv&quot;])</code></pre><h3 id="With-Distributed-Computing"><a class="docs-heading-anchor" href="#With-Distributed-Computing">With Distributed Computing</a><a id="With-Distributed-Computing-1"></a><a class="docs-heading-anchor-permalink" href="#With-Distributed-Computing" title="Permalink"></a></h3><pre><code class="language-julia hljs">@everywhere using Mera
+
+# On worker processes
+@everywhere function worker_notification(worker_id, result)
+    notifyme(&quot;Worker $worker_id completed task&quot;,
+            message=&quot;Result: $result&quot;,
+            zulip_channel=&quot;distributed&quot;,
+            zulip_topic=&quot;Worker Updates&quot;)
+end</code></pre><p>These examples demonstrate how to integrate the notification system into real-world research workflows, providing comprehensive monitoring, error handling, and result sharing across your team.</p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Sunday 17 August 2025 13:47">Sunday 17 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

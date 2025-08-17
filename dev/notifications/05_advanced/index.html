@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Advanced Features: Timing, Progress, and Exception Handling · Mera.jl</title><meta name="title" content="Advanced Features: Timing, Progress, and Exception Handling · Mera.jl"/><meta property="og:title" content="Advanced Features: Timing, Progress, and Exception Handling · Mera.jl"/><meta property="twitter:title" content="Advanced Features: Timing, Progress, and Exception Handling · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li><li><span class="tocitem">4 Basic Calculations</span><ul><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><span class="tocitem">5 Mask/Filter/Meta</span><ul><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li><li><span class="tocitem">9 Miscellaneous</span><ul><li><a class="tocitem" href="../../Miscellaneous/">Tutorial</a></li><li><a class="tocitem" href="../../api/miscellaneous/">API Reference</a></li></ul></li><li><span class="tocitem">10 Examples</span><ul><li><a class="tocitem" href="../../examples/">Tutorial</a></li><li><a class="tocitem" href="../../api/examples/">API Reference</a></li></ul></li><li><span class="tocitem">11 Multi-Threading</span><ul><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><span class="tocitem">12 Notifications</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../bell/">Bell (Local Audio)</a></li><li><a class="tocitem" href="../email/">Email</a></li><li><a class="tocitem" href="../zulip/">Zulip (Team Chat)</a></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Julia Quick Reference</span><ul><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><a class="tocitem" href="../../api/">15 Complete API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Advanced Features: Timing, Progress, and Exception Handling</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Advanced Features: Timing, Progress, and Exception Handling</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Advanced-Features:-Timing,-Progress,-and-Exception-Handling"><a class="docs-heading-anchor" href="#Advanced-Features:-Timing,-Progress,-and-Exception-Handling">Advanced Features: Timing, Progress, and Exception Handling</a><a id="Advanced-Features:-Timing,-Progress,-and-Exception-Handling-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Features:-Timing,-Progress,-and-Exception-Handling" title="Permalink"></a></h1><p>Master the advanced notification features for production workflows.</p><h2 id="Time-Tracking"><a class="docs-heading-anchor" href="#Time-Tracking">⏱️ Time Tracking</a><a id="Time-Tracking-1"></a><a class="docs-heading-anchor-permalink" href="#Time-Tracking" title="Permalink"></a></h2><h3 id="Automatic-Timing"><a class="docs-heading-anchor" href="#Automatic-Timing">Automatic Timing</a><a id="Automatic-Timing-1"></a><a class="docs-heading-anchor-permalink" href="#Automatic-Timing" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Track execution time automatically
+start_time = time()
+heavy_computation()
+notifyme(&quot;Computation finished!&quot;, 
+         start_time=start_time,
+         include_timing=true)</code></pre><p>Output includes:</p><ul><li>Execution time in seconds</li><li>Human-readable format (hours, minutes, seconds)</li><li>Timestamp information</li></ul><h3 id="Detailed-Performance-Metrics"><a class="docs-heading-anchor" href="#Detailed-Performance-Metrics">Detailed Performance Metrics</a><a id="Detailed-Performance-Metrics-1"></a><a class="docs-heading-anchor-permalink" href="#Detailed-Performance-Metrics" title="Permalink"></a></h3><pre><code class="language-julia hljs">notifyme(&quot;Analysis complete!&quot;, 
+         include_timing=true,
+         timing_details=true)  # Includes memory allocations, GC stats</code></pre><h3 id="Timed-Function-Wrapper"><a class="docs-heading-anchor" href="#Timed-Function-Wrapper">Timed Function Wrapper</a><a id="Timed-Function-Wrapper-1"></a><a class="docs-heading-anchor-permalink" href="#Timed-Function-Wrapper" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Automatically time any function
+result = timed_notify(&quot;Heavy matrix computation&quot;) do
+    A = randn(5000, 5000)
+    B = randn(5000, 5000)
+    A * B
+end
+
+# With custom settings
+result = timed_notify(&quot;Deep learning training&quot;,
+                     include_details=true,
+                     zulip_channel=&quot;ml-experiments&quot;,
+                     zulip_topic=&quot;Training Runs&quot;) do
+    train_neural_network(data, epochs=100)
+end</code></pre><h2 id="Progress-Tracking"><a class="docs-heading-anchor" href="#Progress-Tracking">📊 Progress Tracking</a><a id="Progress-Tracking-1"></a><a class="docs-heading-anchor-permalink" href="#Progress-Tracking" title="Permalink"></a></h2><h3 id="Basic-Progress-Tracker"><a class="docs-heading-anchor" href="#Basic-Progress-Tracker">Basic Progress Tracker</a><a id="Basic-Progress-Tracker-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Progress-Tracker" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Create progress tracker for 1000 items
+tracker = create_progress_tracker(1000, 
+                                 task_name=&quot;Galaxy Analysis&quot;,
+                                 time_interval=300,      # Notify every 5 minutes
+                                 progress_interval=10)   # Notify every 10%
+
+# Process items with progress updates
+for i in 1:1000
+    process_galaxy(i)
+    update_progress!(tracker, i)
+    
+    # Add custom message at milestones
+    if i == 500
+        update_progress!(tracker, i, &quot;Halfway done! Results looking good! 🎯&quot;)
+    end
+end
+
+# Send completion notification
+complete_progress!(tracker, &quot;All galaxies processed successfully! 🌌&quot;)</code></pre><h3 id="Advanced-Progress-Tracking"><a class="docs-heading-anchor" href="#Advanced-Progress-Tracking">Advanced Progress Tracking</a><a id="Advanced-Progress-Tracking-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Progress-Tracking" title="Permalink"></a></h3><pre><code class="language-julia hljs"># High-frequency processing with smart notifications
+tracker = create_progress_tracker(1_000_000,
+                                 task_name=&quot;Particle Simulation&quot;, 
+                                 time_interval=60,       # Every minute
+                                 progress_interval=5,    # Every 5%
+                                 zulip_channel=&quot;simulations&quot;,
+                                 zulip_topic=&quot;Long Jobs&quot;)
+
+start_time = time()
+for i in 1:1_000_000
+    simulate_particle(i)
+    
+    # Update progress (notifications sent automatically at intervals)
+    update_progress!(tracker, i)
+    
+    # Custom updates for special events
+    if i % 100_000 == 0
+        elapsed = time() - start_time
+        rate = i / elapsed
+        update_progress!(tracker, i, 
+            &quot;Checkpoint: $(rate) particles/sec, ETA: $(remaining_time_estimate)&quot;)
+    end
+end
+
+complete_progress!(tracker, 
+    &quot;Simulation complete! Final statistics ready for analysis.&quot;)</code></pre><h3 id="Progress-with-Error-Handling"><a class="docs-heading-anchor" href="#Progress-with-Error-Handling">Progress with Error Handling</a><a id="Progress-with-Error-Handling-1"></a><a class="docs-heading-anchor-permalink" href="#Progress-with-Error-Handling" title="Permalink"></a></h3><pre><code class="language-julia hljs">tracker = create_progress_tracker(1000, task_name=&quot;Data Processing&quot;)
+errors = 0
+
+for i in 1:1000
+    try
+        process_data_item(i)
+        update_progress!(tracker, i)
+    catch e
+        errors += 1
+        if errors &gt; 10  # Too many errors
+            complete_progress!(tracker, 
+                &quot;❌ Processing stopped: too many errors ($errors)&quot;)
+            break
+        end
+        
+        # Log error and continue
+        update_progress!(tracker, i, &quot;⚠️ Error in item $i: $(typeof(e))&quot;)
+    end
+end
+
+if errors &lt;= 10
+    complete_progress!(tracker, 
+        &quot;✅ Processing complete with $errors errors&quot;)
+end</code></pre><h2 id="Exception-Handling"><a class="docs-heading-anchor" href="#Exception-Handling">🛡️ Exception Handling</a><a id="Exception-Handling-1"></a><a class="docs-heading-anchor-permalink" href="#Exception-Handling" title="Permalink"></a></h2><h3 id="Basic-Exception-Notification"><a class="docs-heading-anchor" href="#Basic-Exception-Notification">Basic Exception Notification</a><a id="Basic-Exception-Notification-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Exception-Notification" title="Permalink"></a></h3><pre><code class="language-julia hljs">try
+    risky_computation()
+catch e
+    notifyme(&quot;❌ Computation failed!&quot;,
+             exception_context=e,
+             zulip_channel=&quot;errors&quot;,
+             zulip_topic=&quot;Critical Failures&quot;)
+end</code></pre><h3 id="Safe-Execution-Wrapper"><a class="docs-heading-anchor" href="#Safe-Execution-Wrapper">Safe Execution Wrapper</a><a id="Safe-Execution-Wrapper-1"></a><a class="docs-heading-anchor-permalink" href="#Safe-Execution-Wrapper" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Automatically handle exceptions with rich context
+result = safe_execute(&quot;Critical data analysis&quot;) do
+    load_massive_dataset()
+    perform_complex_analysis()
+    generate_final_report()
+end
+
+# With custom error handling
+result = safe_execute(&quot;Simulation batch job&quot;,
+                     zulip_channel=&quot;critical-errors&quot;,
+                     include_context=true) do
+    run_simulation_batch(parameters)
+end</code></pre><h3 id="Exception-Context-Details"><a class="docs-heading-anchor" href="#Exception-Context-Details">Exception Context Details</a><a id="Exception-Context-Details-1"></a><a class="docs-heading-anchor-permalink" href="#Exception-Context-Details" title="Permalink"></a></h3><p>Exception notifications include:</p><ul><li><strong>Error type and message</strong></li><li><strong>Stack trace</strong> (configurable depth)</li><li><strong>System context</strong> (Julia version, hostname, memory)</li><li><strong>Execution timing</strong> (if <code>start_time</code> provided)</li><li><strong>Custom context</strong> (working directory, etc.)</li></ul><pre><code class="language-julia hljs"># Rich exception context
+safe_execute(&quot;Database backup&quot;,
+             include_context=true,
+             max_file_size=50_000_000) do  # Allow larger log files
+    backup_database()
+    verify_backup_integrity()
+end</code></pre><h2 id="Combining-Advanced-Features"><a class="docs-heading-anchor" href="#Combining-Advanced-Features">🔄 Combining Advanced Features</a><a id="Combining-Advanced-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Combining-Advanced-Features" title="Permalink"></a></h2><h3 id="Complete-Workflow-Example"><a class="docs-heading-anchor" href="#Complete-Workflow-Example">Complete Workflow Example</a><a id="Complete-Workflow-Example-1"></a><a class="docs-heading-anchor-permalink" href="#Complete-Workflow-Example" title="Permalink"></a></h3><pre><code class="language-julia hljs">function run_complete_analysis(dataset_name)
+    # Initialize progress tracking
+    tracker = create_progress_tracker(5,
+                                     task_name=&quot;Complete Analysis: $dataset_name&quot;,
+                                     zulip_channel=&quot;research&quot;,
+                                     zulip_topic=&quot;Analysis Pipeline&quot;)
+    
+    overall_start = time()
+    results = Dict()
+    
+    try
+        # Step 1: Data loading
+        update_progress!(tracker, 1, &quot;Loading dataset...&quot;)
+        data = timed_notify(&quot;Data loading&quot;) do
+            load_dataset(dataset_name)
+        end
+        results[&quot;data_size&quot;] = size(data)
+        
+        # Step 2: Preprocessing
+        update_progress!(tracker, 2, &quot;Preprocessing data...&quot;)
+        processed_data = safe_execute(&quot;Data preprocessing&quot;) do
+            preprocess_data(data)
+        end
+        
+        # Step 3: Analysis
+        update_progress!(tracker, 3, &quot;Running analysis...&quot;)
+        analysis_results = timed_notify(&quot;Main analysis&quot;,
+                                      include_details=true) do
+            analyze_data(processed_data)
+        end
+        results[&quot;analysis&quot;] = analysis_results
+        
+        # Step 4: Visualization
+        update_progress!(tracker, 4, &quot;Generating plots...&quot;)
+        plot_files = safe_execute(&quot;Visualization generation&quot;) do
+            create_analysis_plots(analysis_results, output_dir=&quot;plots/&quot;)
+        end
+        
+        # Step 5: Reporting
+        update_progress!(tracker, 5, &quot;Finalizing report...&quot;)
+        report_path = generate_report(results, plot_files)
+        
+        # Success notification with complete results
+        complete_progress!(tracker,
+            &quot;🎉 Analysis pipeline completed successfully!&quot;)
+        
+        # Send final results with attachments
+        notifyme(&quot;📊 Analysis Results: $dataset_name&quot;,
+                attachments=[report_path] + plot_files,
+                start_time=overall_start,
+                include_timing=true,
+                capture_output=() -&gt; begin
+                    println(&quot;Dataset: $dataset_name&quot;)
+                    println(&quot;Data shape: $(results[&quot;data_size&quot;])&quot;)
+                    println(&quot;Analysis type: $(typeof(results[&quot;analysis&quot;]))&quot;)
+                    println(&quot;Generated plots: $(length(plot_files))&quot;)
+                    println(&quot;Report: $report_path&quot;)
+                    return &quot;Pipeline summary complete&quot;
+                end,
+                zulip_channel=&quot;research&quot;,
+                zulip_topic=&quot;Final Results&quot;)
+        
+        return results
+        
+    catch e
+        # Pipeline failure notification
+        complete_progress!(tracker,
+            &quot;❌ Analysis pipeline failed at step $(tracker[:current])&quot;)
+        
+        notifyme(&quot;💥 Analysis Pipeline Failure: $dataset_name&quot;,
+                exception_context=e,
+                start_time=overall_start,
+                include_context=true,
+                capture_output=() -&gt; begin
+                    println(&quot;Failed pipeline: $dataset_name&quot;)
+                    println(&quot;Completed steps: $(tracker[:current])/5&quot;)
+                    println(&quot;Partial results available: $(keys(results))&quot;)
+                    return &quot;Failure context captured&quot;
+                end,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Pipeline Failures&quot;)
+        
+        rethrow(e)
+    end
+end
+
+# Usage
+results = run_complete_analysis(&quot;galaxy_survey_2024&quot;)</code></pre><h3 id="Batch-Job-Monitoring"><a class="docs-heading-anchor" href="#Batch-Job-Monitoring">Batch Job Monitoring</a><a id="Batch-Job-Monitoring-1"></a><a class="docs-heading-anchor-permalink" href="#Batch-Job-Monitoring" title="Permalink"></a></h3><pre><code class="language-julia hljs">function process_batch_jobs(job_list)
+    batch_tracker = create_progress_tracker(length(job_list),
+                                           task_name=&quot;Batch Job Processing&quot;,
+                                           time_interval=600,  # 10 minutes
+                                           progress_interval=1,  # Every job
+                                           zulip_channel=&quot;batch-jobs&quot;)
+    
+    successful_jobs = 0
+    failed_jobs = 0
+    
+    for (i, job) in enumerate(job_list)
+        job_start = time()
+        
+        try
+            result = timed_notify(&quot;Job: $(job.name)&quot;) do
+                execute_job(job)
+            end
+            
+            successful_jobs += 1
+            update_progress!(batch_tracker, i,
+                &quot;✅ Job $(job.name) completed successfully&quot;)
+            
+        catch e
+            failed_jobs += 1
+            
+            # Log individual job failure
+            safe_execute(&quot;Job failure logging&quot;) do
+                log_job_failure(job, e)
+            end
+            
+            update_progress!(batch_tracker, i,
+                &quot;❌ Job $(job.name) failed: $(typeof(e))&quot;)
+        end
+    end
+    
+    # Final batch summary
+    complete_progress!(batch_tracker,
+        &quot;&quot;&quot;✅ Batch processing complete!
+        
+        📊 **Summary:**
+        • Successful: $successful_jobs
+        • Failed: $failed_jobs  
+        • Success rate: $(round(successful_jobs/length(job_list)*100, digits=1))%
+        &quot;&quot;&quot;)
+end</code></pre><h2 id="Best-Practices"><a class="docs-heading-anchor" href="#Best-Practices">📋 Best Practices</a><a id="Best-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Best-Practices" title="Permalink"></a></h2><h3 id="Performance-Considerations"><a class="docs-heading-anchor" href="#Performance-Considerations">Performance Considerations</a><a id="Performance-Considerations-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Considerations" title="Permalink"></a></h3><ul><li><strong>Progress intervals</strong>: Don&#39;t update too frequently (&lt; every second)</li><li><strong>Time tracking</strong>: Minimal overhead, safe for production use</li><li><strong>Exception context</strong>: May capture large stack traces, consider channel privacy</li><li><strong>File attachments</strong>: Use size limits for batch operations</li></ul><h3 id="Error-Handling-Strategy"><a class="docs-heading-anchor" href="#Error-Handling-Strategy">Error Handling Strategy</a><a id="Error-Handling-Strategy-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Handling-Strategy" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Layered error handling
+function robust_workflow()
+    try
+        # High-level workflow with progress tracking
+        run_main_workflow()
+    catch e
+        if isa(e, OutOfMemoryError)
+            notifyme(&quot;🔥 Out of memory in main workflow!&quot;,
+                    exception_context=e,
+                    capture_output=get_memory_info_command(),
+                    zulip_channel=&quot;critical-alerts&quot;)
+        elseif isa(e, InterruptException)
+            notifyme(&quot;⚠️ Workflow interrupted by user&quot;,
+                    zulip_channel=&quot;monitoring&quot;)
+        else
+            # General error with full context
+            safe_execute(&quot;Error logging&quot;) do
+                log_detailed_error(e)
+            end
+        end
+        rethrow(e)
+    end
+end</code></pre><h3 id="Notification-Organization"><a class="docs-heading-anchor" href="#Notification-Organization">Notification Organization</a><a id="Notification-Organization-1"></a><a class="docs-heading-anchor-permalink" href="#Notification-Organization" title="Permalink"></a></h3><ul><li><strong>Use specific channels</strong> for different types of notifications</li><li><strong>Meaningful topics</strong> help organize conversation threads</li><li><strong>Progress updates</strong> in dedicated channels avoid spam</li><li><strong>Error notifications</strong> in high-priority channels for quick response</li><li><strong>Success notifications</strong> with results in appropriate project channels</li></ul></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Sunday 17 August 2025 13:47">Sunday 17 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

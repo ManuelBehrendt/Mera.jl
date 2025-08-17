@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Bell (Local Audio) · Mera.jl</title><meta name="title" content="Bell (Local Audio) · Mera.jl"/><meta property="og:title" content="Bell (Local Audio) · Mera.jl"/><meta property="twitter:title" content="Bell (Local Audio) · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li><li><span class="tocitem">4 Basic Calculations</span><ul><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><span class="tocitem">5 Mask/Filter/Meta</span><ul><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li><li><span class="tocitem">9 Miscellaneous</span><ul><li><a class="tocitem" href="../../Miscellaneous/">Tutorial</a></li><li><a class="tocitem" href="../../api/miscellaneous/">API Reference</a></li></ul></li><li><span class="tocitem">10 Examples</span><ul><li><a class="tocitem" href="../../examples/">Tutorial</a></li><li><a class="tocitem" href="../../api/examples/">API Reference</a></li></ul></li><li><span class="tocitem">11 Multi-Threading</span><ul><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><span class="tocitem">12 Notifications</span><ul><li><a class="tocitem" href="../">Overview</a></li><li class="is-active"><a class="tocitem" href>Bell (Local Audio)</a><ul class="internal"><li><a class="tocitem" href="#Why-Start-with-Bell?"><span>Why Start with Bell?</span></a></li><li><a class="tocitem" href="#The-bell()-Function"><span>The <code>bell()</code> Function</span></a></li><li><a class="tocitem" href="#Testing-Local-Audio"><span>Testing Local Audio</span></a></li><li><a class="tocitem" href="#Practical-Examples"><span>Practical Examples</span></a></li><li><a class="tocitem" href="#Integration-Patterns"><span>Integration Patterns</span></a></li><li><a class="tocitem" href="#Creative-Audio-Patterns"><span>Creative Audio Patterns</span></a></li><li><a class="tocitem" href="#Best-Practices-for-Bell-Notifications"><span>Best Practices for Bell Notifications</span></a></li><li><a class="tocitem" href="#Graduation-Path"><span>Graduation Path</span></a></li><li><a class="tocitem" href="#Bell-Notification-Checklist"><span>Bell Notification Checklist</span></a></li></ul></li><li><a class="tocitem" href="../email/">Email</a></li><li><a class="tocitem" href="../zulip/">Zulip (Team Chat)</a></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Julia Quick Reference</span><ul><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><a class="tocitem" href="../../api/">15 Complete API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">12 Notifications</a></li><li class="is-active"><a href>Bell (Local Audio)</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Bell (Local Audio)</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Bell-(Local-Audio)-Notifications"><a class="docs-heading-anchor" href="#Bell-(Local-Audio)-Notifications">Bell (Local Audio) Notifications</a><a id="Bell-(Local-Audio)-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Bell-(Local-Audio)-Notifications" title="Permalink"></a></h1><p>Start with the simplest notification method - local audio feedback for immediate alerts.</p><h2 id="Why-Start-with-Bell?"><a class="docs-heading-anchor" href="#Why-Start-with-Bell?">Why Start with Bell?</a><a id="Why-Start-with-Bell?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-Start-with-Bell?" title="Permalink"></a></h2><p><strong>✅ Works immediately</strong> - No setup, configuration, or accounts needed   <strong>✅ Perfect for learning</strong> - Test notification patterns without complexity   <strong>✅ Great for development</strong> - Quick feedback during coding and testing   <strong>✅ Universal</strong> - Works on any computer with audio output  </p><h2 id="The-bell()-Function"><a class="docs-heading-anchor" href="#The-bell()-Function">The <code>bell()</code> Function</a><a id="The-bell()-Function-1"></a><a class="docs-heading-anchor-permalink" href="#The-bell()-Function" title="Permalink"></a></h2><p>The simplest notification is a local system beep. This works only on your local computer and requires audio output.</p><pre><code class="language-julia hljs">using Mera
+
+# Simple beep when computation finishes
+bell()</code></pre><h3 id="When-to-Use-bell()"><a class="docs-heading-anchor" href="#When-to-Use-bell()">When to Use <code>bell()</code></a><a id="When-to-Use-bell()-1"></a><a class="docs-heading-anchor-permalink" href="#When-to-Use-bell()" title="Permalink"></a></h3><p><strong>✅ Perfect for:</strong></p><ul><li>Short computations (minutes to an hour)</li><li>When you&#39;re working at your computer</li><li>Quick feedback that something completed</li><li>Testing and development work</li><li>Learning notification patterns</li></ul><p><strong>❌ Limitations:</strong></p><ul><li>Only works locally (not on remote servers)</li><li>Requires audio system and speakers/headphones</li><li>No information about what completed</li><li>Easy to miss if you&#39;re away from computer</li><li>Can&#39;t share with team members</li></ul><h2 id="Testing-Local-Audio"><a class="docs-heading-anchor" href="#Testing-Local-Audio">Testing Local Audio</a><a id="Testing-Local-Audio-1"></a><a class="docs-heading-anchor-permalink" href="#Testing-Local-Audio" title="Permalink"></a></h2><p>Before using <code>bell()</code> in your workflows, test that your system supports audio notifications:</p><pre><code class="language-julia hljs"># Test if your system supports audio notifications
+println(&quot;Testing local audio notification in 3 seconds...&quot;)
+sleep(3)
+bell()
+println(&quot;Did you hear a beep? If yes, local audio works!&quot;)</code></pre><h3 id="Troubleshooting-Audio"><a class="docs-heading-anchor" href="#Troubleshooting-Audio">Troubleshooting Audio</a><a id="Troubleshooting-Audio-1"></a><a class="docs-heading-anchor-permalink" href="#Troubleshooting-Audio" title="Permalink"></a></h3><p><strong>No sound?</strong> Here&#39;s how to fix common audio issues:</p><p><strong>macOS:</strong></p><ul><li>Check system volume in menu bar</li><li>Ensure &quot;Play user interface sound effects&quot; is enabled in System Preferences → Sound</li><li>Test with: <code>run(\</code>say &quot;test&quot;`)` to verify system speech</li></ul><p><strong>Linux:</strong></p><ul><li>Ensure your audio system (PulseAudio/ALSA) is working</li><li>Test with: <code>run(\</code>speaker-test -t sine -f 1000 -l 1`)` for audio test</li><li>Check volume with: <code>alsamixer</code> or <code>pavucontrol</code></li></ul><p><strong>Windows:</strong></p><ul><li>Check Windows sound settings and volume mixer</li><li>Ensure system sounds are enabled in Control Panel → Sound</li><li>Test with: <code>run(\</code>echo \u0007`)` for simple beep</li></ul><p><strong>Remote Servers/SSH:</strong></p><ul><li>Audio notifications don&#39;t work over SSH connections</li><li>Consider using email or Zulip instead for remote work</li></ul><h2 id="Practical-Examples"><a class="docs-heading-anchor" href="#Practical-Examples">Practical Examples</a><a id="Practical-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Examples" title="Permalink"></a></h2><h3 id="Basic-Usage-Patterns"><a class="docs-heading-anchor" href="#Basic-Usage-Patterns">Basic Usage Patterns</a><a id="Basic-Usage-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Usage-Patterns" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Mera
+
+# Example 1: Simple computation notification
+function quick_analysis_with_bell()
+    println(&quot;Starting quick data analysis...&quot;)
+    
+    # Simulate some computation
+    data = rand(1000, 1000)
+    result = sum(data)
+    
+    # Alert when done
+    bell()
+    println(&quot;Analysis complete! Result: $result&quot;)
+    return result
+end
+
+quick_analysis_with_bell()</code></pre><h3 id="Multiple-Computation-Steps"><a class="docs-heading-anchor" href="#Multiple-Computation-Steps">Multiple Computation Steps</a><a id="Multiple-Computation-Steps-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-Computation-Steps" title="Permalink"></a></h3><pre><code class="language-julia hljs">function multi_step_analysis()
+    println(&quot;Starting multi-step analysis...&quot;)
+    
+    # Step 1
+    println(&quot;Step 1: Loading data...&quot;)
+    data = rand(5000, 5000)
+    bell()  # Quick beep for step completion
+    
+    # Step 2
+    println(&quot;Step 2: Processing...&quot;)
+    processed = data .* 2
+    bell()  # Another step done
+    
+    # Step 3
+    println(&quot;Step 3: Final analysis...&quot;)
+    result = sum(processed)
+    
+    # Final completion - maybe multiple beeps?
+    bell()
+    sleep(0.2)
+    bell()
+    
+    println(&quot;All steps complete! Final result: $result&quot;)
+    return result
+end
+
+multi_step_analysis()</code></pre><h3 id="Error-Handling-with-Bell"><a class="docs-heading-anchor" href="#Error-Handling-with-Bell">Error Handling with Bell</a><a id="Error-Handling-with-Bell-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Handling-with-Bell" title="Permalink"></a></h3><pre><code class="language-julia hljs">function safe_computation_with_bell()
+    println(&quot;Starting computation with error handling...&quot;)
+    
+    try
+        # Simulate computation that might fail
+        data = rand(1000)
+        
+        # Simulate potential error condition
+        if data[1] &lt; 0.1  # 10% chance of &quot;error&quot;
+            error(&quot;Simulated computation error!&quot;)
+        end
+        
+        result = sum(data)
+        
+        # Success notification
+        bell()
+        println(&quot;✅ Computation successful! Result: $result&quot;)
+        return result
+        
+    catch e
+        # Error notification - different pattern
+        println(&quot;❌ Computation failed: $e&quot;)
+        # Quick double beep for errors
+        bell()
+        sleep(0.1)
+        bell()
+        return nothing
+    end
+end
+
+safe_computation_with_bell()</code></pre><h3 id="Timing-Awareness-with-Bell"><a class="docs-heading-anchor" href="#Timing-Awareness-with-Bell">Timing Awareness with Bell</a><a id="Timing-Awareness-with-Bell-1"></a><a class="docs-heading-anchor-permalink" href="#Timing-Awareness-with-Bell" title="Permalink"></a></h3><pre><code class="language-julia hljs">function timed_computation_with_bell()
+    println(&quot;Starting timed computation...&quot;)
+    start_time = time()
+    
+    # Simulate work
+    sleep(2)  # Replace with your actual computation
+    result = 42
+    
+    elapsed = time() - start_time
+    
+    # Different beep patterns based on duration
+    if elapsed &lt; 1.0
+        bell()  # Quick single beep for fast tasks
+        println(&quot;⚡ Fast computation complete ($(round(elapsed, digits=2))s)&quot;)
+    elseif elapsed &lt; 10.0
+        bell()
+        sleep(0.2)
+        bell()  # Double beep for medium tasks
+        println(&quot;⏱️ Medium computation complete ($(round(elapsed, digits=2))s)&quot;)
+    else
+        # Triple beep for long tasks
+        for i in 1:3
+            bell()
+            sleep(0.2)
+        end
+        println(&quot;🕐 Long computation complete ($(round(elapsed, digits=2))s)&quot;)
+    end
+    
+    return result
+end
+
+timed_computation_with_bell()</code></pre><h2 id="Integration-Patterns"><a class="docs-heading-anchor" href="#Integration-Patterns">Integration Patterns</a><a id="Integration-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Integration-Patterns" title="Permalink"></a></h2><h3 id="With-Loops-and-Progress"><a class="docs-heading-anchor" href="#With-Loops-and-Progress">With Loops and Progress</a><a id="With-Loops-and-Progress-1"></a><a class="docs-heading-anchor-permalink" href="#With-Loops-and-Progress" title="Permalink"></a></h3><pre><code class="language-julia hljs">function loop_with_audio_feedback()
+    items = 1:20
+    println(&quot;Processing $(length(items)) items...&quot;)
+    
+    for (i, item) in enumerate(items)
+        # Simulate work
+        sleep(0.1)
+        
+        # Progress audio feedback every 25%
+        if i % 5 == 0
+            bell()
+            println(&quot;Progress: $i/$(length(items)) items completed&quot;)
+        end
+    end
+    
+    # Final completion
+    bell()
+    sleep(0.2)
+    bell()
+    println(&quot;✅ All items processed!&quot;)
+end
+
+loop_with_audio_feedback()</code></pre><h3 id="With-File-Operations"><a class="docs-heading-anchor" href="#With-File-Operations">With File Operations</a><a id="With-File-Operations-1"></a><a class="docs-heading-anchor-permalink" href="#With-File-Operations" title="Permalink"></a></h3><pre><code class="language-julia hljs">function file_processing_with_bell()
+    println(&quot;Processing files...&quot;)
+    
+    # Simulate finding files
+    files = [&quot;data1.csv&quot;, &quot;data2.csv&quot;, &quot;data3.csv&quot;]
+    
+    processed_files = []
+    
+    for file in files
+        println(&quot;Processing $file...&quot;)
+        
+        # Simulate file processing
+        sleep(0.5)
+        
+        # Quick beep for each file
+        bell()
+        push!(processed_files, &quot;processed_$file&quot;)
+    end
+    
+    # Final success pattern
+    bell()
+    sleep(0.3)
+    bell()
+    
+    println(&quot;✅ All files processed: $processed_files&quot;)
+    return processed_files
+end
+
+file_processing_with_bell()</code></pre><h2 id="Creative-Audio-Patterns"><a class="docs-heading-anchor" href="#Creative-Audio-Patterns">Creative Audio Patterns</a><a id="Creative-Audio-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Creative-Audio-Patterns" title="Permalink"></a></h2><p>You can create different audio patterns to distinguish between different types of events:</p><pre><code class="language-julia hljs"># Define audio pattern functions
+function success_beep()
+    bell()
+end
+
+function warning_beep()
+    bell()
+    sleep(0.1)
+    bell()
+end
+
+function error_beep()
+    for i in 1:3
+        bell()
+        sleep(0.1)
+    end
+end
+
+function milestone_beep()
+    bell()
+    sleep(0.2)
+    bell()
+    sleep(0.2)
+    bell()
+end
+
+# Usage examples
+function computation_with_audio_patterns()
+    println(&quot;Starting computation with audio patterns...&quot;)
+    
+    try
+        # Simulate different stages
+        println(&quot;Stage 1...&quot;)
+        sleep(1)
+        success_beep()  # Single beep for normal progress
+        
+        println(&quot;Stage 2...&quot;)
+        sleep(1)
+        warning_beep()  # Double beep for warnings
+        println(&quot;⚠️ Warning: High memory usage detected&quot;)
+        
+        println(&quot;Stage 3...&quot;)
+        sleep(1)
+        milestone_beep()  # Triple beep for milestones
+        println(&quot;🎯 Major milestone reached!&quot;)
+        
+        println(&quot;Final stage...&quot;)
+        sleep(1)
+        success_beep()
+        println(&quot;✅ Computation complete!&quot;)
+        
+    catch e
+        error_beep()  # Quick triple beep for errors
+        println(&quot;❌ Error occurred: $e&quot;)
+    end
+end
+
+computation_with_audio_patterns()</code></pre><h2 id="Best-Practices-for-Bell-Notifications"><a class="docs-heading-anchor" href="#Best-Practices-for-Bell-Notifications">Best Practices for Bell Notifications</a><a id="Best-Practices-for-Bell-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Best-Practices-for-Bell-Notifications" title="Permalink"></a></h2><h3 id="Good-Practices"><a class="docs-heading-anchor" href="#Good-Practices">Good Practices</a><a id="Good-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Good-Practices" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Clear, immediate feedback
+function good_bell_usage()
+    println(&quot;Starting analysis...&quot;)
+    # ... do work ...
+    bell()
+    println(&quot;Analysis complete!&quot;)
+end
+
+# Different patterns for different events
+function differentiated_feedback()
+    if success
+        bell()  # Single beep for success
+    else
+        bell(); sleep(0.1); bell()  # Double beep for issues
+    end
+end
+
+# Use with meaningful messages
+function informative_bell_usage()
+    bell()
+    println(&quot;✅ Temperature analysis complete - 15 hot spots found&quot;)
+end</code></pre><h3 id="Poor-Practices"><a class="docs-heading-anchor" href="#Poor-Practices">Poor Practices</a><a id="Poor-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Poor-Practices" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Don&#39;t spam with too many beeps
+function bad_bell_usage()
+    for i in 1:100
+        process_item(i)
+        bell()  # This will be very annoying!
+    end
+end
+
+# Don&#39;t use without context
+function unclear_bell_usage()
+    bell()  # What completed? What should I do?
+end
+
+# Don&#39;t rely on bell for critical alerts
+function unreliable_bell_usage()
+    if critical_error
+        bell()  # Might be missed if user is away
+    end
+end</code></pre><h2 id="Graduation-Path"><a class="docs-heading-anchor" href="#Graduation-Path">Graduation Path</a><a id="Graduation-Path-1"></a><a class="docs-heading-anchor-permalink" href="#Graduation-Path" title="Permalink"></a></h2><p>Once you&#39;re comfortable with <code>bell()</code>, you&#39;re ready to move to more powerful notification methods:</p><h3 id="**Next-Step:-Email-Notifications**"><a class="docs-heading-anchor" href="#**Next-Step:-Email-Notifications**"><strong>Next Step: Email Notifications</strong></a><a id="**Next-Step:-Email-Notifications**-1"></a><a class="docs-heading-anchor-permalink" href="#**Next-Step:-Email-Notifications**" title="Permalink"></a></h3><pre><code class="language-julia hljs"># From this:
+bell()
+println(&quot;Analysis complete!&quot;)
+
+# To this:
+notifyme(&quot;Analysis complete!&quot;)  # Sends email notification</code></pre><p><a href="../email/">→ Continue to Email Notifications</a></p><h3 id="**Eventually:-Team-Collaboration**"><a class="docs-heading-anchor" href="#**Eventually:-Team-Collaboration**"><strong>Eventually: Team Collaboration</strong></a><a id="**Eventually:-Team-Collaboration**-1"></a><a class="docs-heading-anchor-permalink" href="#**Eventually:-Team-Collaboration**" title="Permalink"></a></h3><pre><code class="language-julia hljs"># And finally:
+notifyme(&quot;Analysis complete!&quot;, zulip_channel=&quot;research-results&quot;)</code></pre><p><a href="../zulip/">→ Learn about Zulip Integration</a></p><h2 id="Bell-Notification-Checklist"><a class="docs-heading-anchor" href="#Bell-Notification-Checklist">Bell Notification Checklist</a><a id="Bell-Notification-Checklist-1"></a><a class="docs-heading-anchor-permalink" href="#Bell-Notification-Checklist" title="Permalink"></a></h2><p><strong>Getting Started:</strong></p><ul><li>[ ] Test <code>bell()</code> function on your system</li><li>[ ] Verify audio output is working</li><li>[ ] Try basic computation with bell notification</li><li>[ ] Test different audio patterns</li></ul><p><strong>Development Integration:</strong></p><ul><li>[ ] Add bell notifications to development scripts</li><li>[ ] Use for testing and debugging feedback</li><li>[ ] Create audio patterns for different event types</li><li>[ ] Integrate with error handling</li></ul><p><strong>Ready for More:</strong></p><ul><li>[ ] Comfortable with basic notification patterns</li><li>[ ] Want notifications when away from computer</li><li>[ ] Need to share results with team members</li><li>[ ] Ready to learn email notifications</li></ul><p><strong>Key Takeaway:</strong> <code>bell()</code> is perfect for immediate local feedback, but for anything more sophisticated, you&#39;ll need email or Zulip notifications!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Overview</a><a class="docs-footer-nextpage" href="../email/">Email »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Sunday 17 August 2025 13:47">Sunday 17 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

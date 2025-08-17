@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Output Capture and System Monitoring · Mera.jl</title><meta name="title" content="Output Capture and System Monitoring · Mera.jl"/><meta property="og:title" content="Output Capture and System Monitoring · Mera.jl"/><meta property="twitter:title" content="Output Capture and System Monitoring · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li><li><span class="tocitem">4 Basic Calculations</span><ul><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><span class="tocitem">5 Mask/Filter/Meta</span><ul><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li><li><span class="tocitem">9 Miscellaneous</span><ul><li><a class="tocitem" href="../../Miscellaneous/">Tutorial</a></li><li><a class="tocitem" href="../../api/miscellaneous/">API Reference</a></li></ul></li><li><span class="tocitem">10 Examples</span><ul><li><a class="tocitem" href="../../examples/">Tutorial</a></li><li><a class="tocitem" href="../../api/examples/">API Reference</a></li></ul></li><li><span class="tocitem">11 Multi-Threading</span><ul><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><span class="tocitem">12 Notifications</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../bell/">Bell (Local Audio)</a></li><li><a class="tocitem" href="../email/">Email</a></li><li><a class="tocitem" href="../zulip/">Zulip (Team Chat)</a></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Julia Quick Reference</span><ul><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><a class="tocitem" href="../../api/">15 Complete API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Output Capture and System Monitoring</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Output Capture and System Monitoring</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Output-Capture-and-System-Monitoring"><a class="docs-heading-anchor" href="#Output-Capture-and-System-Monitoring">Output Capture and System Monitoring</a><a id="Output-Capture-and-System-Monitoring-1"></a><a class="docs-heading-anchor-permalink" href="#Output-Capture-and-System-Monitoring" title="Permalink"></a></h1><p>Capture command outputs, function results, and system information in notifications.</p><h2 id="Command-Output-Capture"><a class="docs-heading-anchor" href="#Command-Output-Capture">🖥️ Command Output Capture</a><a id="Command-Output-Capture-1"></a><a class="docs-heading-anchor-permalink" href="#Command-Output-Capture" title="Permalink"></a></h2><h3 id="Basic-Commands"><a class="docs-heading-anchor" href="#Basic-Commands">Basic Commands</a><a id="Basic-Commands-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Commands" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Simple system commands
+notifyme(&quot;Directory contents:&quot;, capture_output=`ls -la`)
+notifyme(&quot;Disk usage:&quot;, capture_output=`df -h`)
+notifyme(&quot;Current processes:&quot;, capture_output=`ps aux`)
+notifyme(&quot;System info:&quot;, capture_output=`uname -a`)</code></pre><h3 id="Complex-Shell-Operations"><a class="docs-heading-anchor" href="#Complex-Shell-Operations">Complex Shell Operations</a><a id="Complex-Shell-Operations-1"></a><a class="docs-heading-anchor-permalink" href="#Complex-Shell-Operations" title="Permalink"></a></h3><p>For commands with pipes, redirections, or shell operators, use strings:</p><pre><code class="language-julia hljs"># Linux examples
+notifyme(&quot;Top CPU processes:&quot;, 
+         capture_output=&quot;ps aux --sort=-%cpu | head -10&quot;)
+notifyme(&quot;Memory and disk summary:&quot;, 
+         capture_output=&quot;free -h &amp;&amp; echo &#39;---&#39; &amp;&amp; df -h&quot;)
+notifyme(&quot;Large files:&quot;, 
+         capture_output=&quot;find . -size +100M -type f | head -5&quot;)
+
+# macOS examples  
+notifyme(&quot;System activity:&quot;, 
+         capture_output=&quot;top -l 1 | head -20&quot;)
+notifyme(&quot;Memory pressure:&quot;, 
+         capture_output=&quot;vm_stat &amp;&amp; memory_pressure&quot;)
+
+# Windows examples
+notifyme(&quot;Running processes:&quot;, 
+         capture_output=&quot;tasklist /fo table | head -10&quot;)
+notifyme(&quot;System memory:&quot;, 
+         capture_output=&quot;wmic OS get TotalVisibleMemorySize,FreePhysicalMemory /value&quot;)</code></pre><h3 id="Cross-Platform-Helpers"><a class="docs-heading-anchor" href="#Cross-Platform-Helpers">Cross-Platform Helpers</a><a id="Cross-Platform-Helpers-1"></a><a class="docs-heading-anchor-permalink" href="#Cross-Platform-Helpers" title="Permalink"></a></h3><p>MERA provides built-in cross-platform commands:</p><pre><code class="language-julia hljs"># Use built-in system info functions
+notifyme(&quot;System status:&quot;, 
+         capture_output=get_system_info_command())
+notifyme(&quot;Memory details:&quot;, 
+         capture_output=get_memory_info_command())
+notifyme(&quot;Disk information:&quot;, 
+         capture_output=get_disk_info_command())
+notifyme(&quot;Network status:&quot;, 
+         capture_output=get_network_info_command())
+notifyme(&quot;Process information:&quot;, 
+         capture_output=get_process_info_command())</code></pre><h2 id="Function-Output-Capture"><a class="docs-heading-anchor" href="#Function-Output-Capture">🔧 Function Output Capture</a><a id="Function-Output-Capture-1"></a><a class="docs-heading-anchor-permalink" href="#Function-Output-Capture" title="Permalink"></a></h2><h3 id="Simple-Functions"><a class="docs-heading-anchor" href="#Simple-Functions">Simple Functions</a><a id="Simple-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Simple-Functions" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Capture function return value and printed output
+notifyme(&quot;Random calculation:&quot;, 
+         capture_output=() -&gt; sum(rand(1000)))
+
+# Function with both output and return value
+notifyme(&quot;Statistical analysis:&quot;, 
+         capture_output=() -&gt; begin
+             data = randn(1000)
+             println(&quot;Sample size: $(length(data))&quot;)
+             println(&quot;Mean: $(round(mean(data), digits=3))&quot;)
+             println(&quot;Std: $(round(std(data), digits=3))&quot;)
+             return &quot;Analysis complete&quot;
+         end)</code></pre><h3 id="Complex-Computations"><a class="docs-heading-anchor" href="#Complex-Computations">Complex Computations</a><a id="Complex-Computations-1"></a><a class="docs-heading-anchor-permalink" href="#Complex-Computations" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Long-running analysis with progress
+notifyme(&quot;Matrix computation:&quot;, 
+         capture_output=() -&gt; begin
+             println(&quot;Starting 1000×1000 matrix operations...&quot;)
+             A = randn(1000, 1000)
+             B = randn(1000, 1000)
+             
+             println(&quot;Computing product...&quot;)
+             C = A * B
+             
+             println(&quot;Computing eigenvalues...&quot;)
+             eigenvals = eigvals(C[1:100, 1:100])  # Subset for speed
+             
+             result = &quot;Largest eigenvalue: $(round(maximum(real(eigenvals)), digits=3))&quot;
+             println(result)
+             return result
+         end)</code></pre><h3 id="Progress-Monitoring"><a class="docs-heading-anchor" href="#Progress-Monitoring">Progress Monitoring</a><a id="Progress-Monitoring-1"></a><a class="docs-heading-anchor-permalink" href="#Progress-Monitoring" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Capture progress of iterative computation
+notifyme(&quot;Training progress:&quot;, 
+         capture_output=() -&gt; begin
+             loss_history = Float64[]
+             for epoch in 1:50
+                 # Simulate training step
+                 loss = exp(-epoch/20) + 0.1*randn()
+                 push!(loss_history, loss)
+                 
+                 if epoch % 10 == 0
+                     println(&quot;Epoch $epoch: Loss = $(round(loss, digits=4))&quot;)
+                 end
+             end
+             
+             final_loss = loss_history[end]
+             println(&quot;Training complete! Final loss: $(round(final_loss, digits=4))&quot;)
+             return final_loss
+         end)</code></pre><h2 id="Scientific-Computing-Examples"><a class="docs-heading-anchor" href="#Scientific-Computing-Examples">📊 Scientific Computing Examples</a><a id="Scientific-Computing-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Scientific-Computing-Examples" title="Permalink"></a></h2><h3 id="Data-Analysis-Workflow"><a class="docs-heading-anchor" href="#Data-Analysis-Workflow">Data Analysis Workflow</a><a id="Data-Analysis-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Analysis-Workflow" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Complete data analysis with captured output
+notifyme(&quot;Dataset analysis complete:&quot;, 
+         capture_output=() -&gt; begin
+             # Load and process data
+             data = randn(10000, 5)  # Simulate dataset
+             println(&quot;Loaded dataset: $(size(data))&quot;)
+             
+             # Basic statistics
+             println(&quot;\nColumn statistics:&quot;)
+             for i in 1:size(data, 2)
+                 col_mean = mean(data[:, i])
+                 col_std = std(data[:, i])
+                 println(&quot;  Column $i: μ=$(round(col_mean, digits=3)), σ=$(round(col_std, digits=3))&quot;)
+             end
+             
+             # Correlation analysis
+             correlation_matrix = cor(data)
+             max_corr = maximum(abs.(correlation_matrix - I))
+             println(&quot;\nMax off-diagonal correlation: $(round(max_corr, digits=3))&quot;)
+             
+             # Outlier detection
+             outliers = sum(any(abs.(data) .&gt; 3, dims=2))
+             println(&quot;Outliers (&gt;3σ): $outliers/$(size(data, 1)) rows&quot;)
+             
+             return &quot;Analysis complete: $(size(data, 1)) samples, $(size(data, 2)) features&quot;
+         end)</code></pre><h3 id="Simulation-Results"><a class="docs-heading-anchor" href="#Simulation-Results">Simulation Results</a><a id="Simulation-Results-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Results" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Monte Carlo simulation with progress
+notifyme(&quot;Monte Carlo simulation finished:&quot;, 
+         capture_output=() -&gt; begin
+             n_simulations = 100000
+             results = Float64[]
+             
+             println(&quot;Running $n_simulations Monte Carlo simulations...&quot;)
+             
+             for i in 1:n_simulations
+                 # Simulate some process
+                 result = sum(rand(10) .&gt; 0.5) / 10  # Fraction of successes
+                 push!(results, result)
+                 
+                 if i % 20000 == 0
+                     current_mean = mean(results)
+                     println(&quot;  Simulation $i: Current mean = $(round(current_mean, digits=4))&quot;)
+                 end
+             end
+             
+             final_mean = mean(results)
+             final_std = std(results)
+             confidence_interval = [final_mean - 1.96*final_std/sqrt(n_simulations),
+                                   final_mean + 1.96*final_std/sqrt(n_simulations)]
+             
+             println(&quot;\nFinal Results:&quot;)
+             println(&quot;  Mean: $(round(final_mean, digits=4))&quot;)
+             println(&quot;  Std:  $(round(final_std, digits=4))&quot;)
+             println(&quot;  95% CI: [$(round(confidence_interval[1], digits=4)), $(round(confidence_interval[2], digits=4))]&quot;)
+             
+             return &quot;Simulation complete: $n_simulations runs&quot;
+         end)</code></pre><h2 id="System-Monitoring-Templates"><a class="docs-heading-anchor" href="#System-Monitoring-Templates">🔍 System Monitoring Templates</a><a id="System-Monitoring-Templates-1"></a><a class="docs-heading-anchor-permalink" href="#System-Monitoring-Templates" title="Permalink"></a></h2><h3 id="Resource-Usage-Monitor"><a class="docs-heading-anchor" href="#Resource-Usage-Monitor">Resource Usage Monitor</a><a id="Resource-Usage-Monitor-1"></a><a class="docs-heading-anchor-permalink" href="#Resource-Usage-Monitor" title="Permalink"></a></h3><pre><code class="language-julia hljs">function system_resource_check()
+    notifyme(&quot;System resource check:&quot;, 
+             capture_output=() -&gt; begin
+                 println(&quot;=== SYSTEM RESOURCE SUMMARY ===&quot;)
+                 println(&quot;Timestamp: $(now())&quot;)
+                 println(&quot;Julia version: $(VERSION)&quot;)
+                 println(&quot;Hostname: $(gethostname())&quot;)
+                 
+                 # Memory usage
+                 free_mem_mb = Sys.free_memory() ÷ 1024^2
+                 total_mem_mb = Sys.total_memory() ÷ 1024^2
+                 used_mem_pct = round((1 - free_mem_mb/total_mem_mb) * 100, digits=1)
+                 
+                 println(&quot;\nMemory Usage:&quot;)
+                 println(&quot;  Free: $(free_mem_mb) MB&quot;)
+                 println(&quot;  Total: $(total_mem_mb) MB&quot;) 
+                 println(&quot;  Used: $(used_mem_pct)%&quot;)
+                 
+                 # CPU info
+                 println(&quot;\nCPU Info:&quot;)
+                 println(&quot;  Threads: $(Sys.CPU_THREADS)&quot;)
+                 
+                 # Julia process info
+                 gc_stats = Base.gc_num()
+                 println(&quot;\nJulia Process:&quot;)
+                 println(&quot;  GC collections: $(gc_stats.total_time)&quot;)
+                 println(&quot;  Allocated memory: $(round(gc_stats.malloc / 1024^2, digits=1)) MB&quot;)
+                 
+                 return &quot;Resource check complete&quot;
+             end,
+             zulip_channel=&quot;monitoring&quot;,
+             zulip_topic=&quot;System Health&quot;)
+end</code></pre><h3 id="Error-Context-Capture"><a class="docs-heading-anchor" href="#Error-Context-Capture">Error Context Capture</a><a id="Error-Context-Capture-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Context-Capture" title="Permalink"></a></h3><pre><code class="language-julia hljs">function safe_computation_with_context(computation_name, computation_func)
+    try
+        result = computation_func()
+        notifyme(&quot;✅ $computation_name completed successfully&quot;,
+                capture_output=() -&gt; begin
+                    println(&quot;Computation: $computation_name&quot;)
+                    println(&quot;Result: $result&quot;)
+                    println(&quot;Timestamp: $(now())&quot;)
+                    println(&quot;Working directory: $(pwd())&quot;)
+                    return &quot;Success&quot;
+                end)
+        return result
+    catch e
+        notifyme(&quot;❌ $computation_name failed&quot;,
+                exception_context=e,
+                capture_output=() -&gt; begin
+                    println(&quot;Failed computation: $computation_name&quot;)
+                    println(&quot;Error type: $(typeof(e))&quot;)
+                    println(&quot;Timestamp: $(now())&quot;)
+                    println(&quot;Working directory: $(pwd())&quot;)
+                    println(&quot;Julia version: $(VERSION)&quot;)
+                    println(&quot;Available memory: $(Sys.free_memory() ÷ 1024^2) MB&quot;)
+                    return &quot;Failure context captured&quot;
+                end,
+                zulip_channel=&quot;errors&quot;)
+        rethrow(e)
+    end
+end
+
+# Usage
+safe_computation_with_context(&quot;Matrix inversion&quot;) do
+    A = randn(1000, 1000)
+    inv(A)
+end</code></pre><h2 id="Security-and-Privacy"><a class="docs-heading-anchor" href="#Security-and-Privacy">⚠️ Security and Privacy</a><a id="Security-and-Privacy-1"></a><a class="docs-heading-anchor-permalink" href="#Security-and-Privacy" title="Permalink"></a></h2><h3 id="Safe-vs.-Sensitive-Commands"><a class="docs-heading-anchor" href="#Safe-vs.-Sensitive-Commands">Safe vs. Sensitive Commands</a><a id="Safe-vs.-Sensitive-Commands-1"></a><a class="docs-heading-anchor-permalink" href="#Safe-vs.-Sensitive-Commands" title="Permalink"></a></h3><p><strong>Safe for shared channels:</strong></p><pre><code class="language-julia hljs">notifyme(&quot;Build info:&quot;, capture_output=`julia --version`)
+notifyme(&quot;Working directory:&quot;, capture_output=`pwd`)
+notifyme(&quot;Git status:&quot;, capture_output=`git status --porcelain`)</code></pre><p><strong>Use carefully (contains system info):</strong></p><pre><code class="language-julia hljs"># Consider privacy implications
+notifyme(&quot;Memory status:&quot;, capture_output=get_memory_info_command())
+notifyme(&quot;Network status:&quot;, capture_output=get_network_info_command()) 
+notifyme(&quot;Process list:&quot;, capture_output=get_process_info_command())</code></pre><p><strong>Avoid in shared channels:</strong></p><pre><code class="language-julia hljs"># These may expose sensitive information
+# capture_output=&quot;env&quot;                    # Environment variables
+# capture_output=&quot;cat ~/.ssh/config&quot;      # SSH configuration  
+# capture_output=&quot;history | tail -20&quot;     # Command history</code></pre><h3 id="Best-Practices"><a class="docs-heading-anchor" href="#Best-Practices">Best Practices</a><a id="Best-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Best-Practices" title="Permalink"></a></h3><ol><li><strong>Test commands locally</strong> before using in capture_output</li><li><strong>Use personal channels</strong> for system monitoring</li><li><strong>Limit output size</strong> with <code>head</code>, <code>tail</code>, or similar filters</li><li><strong>Sanitize paths</strong> and sensitive data from outputs</li><li><strong>Consider data retention</strong> policies of your Zulip server</li></ol></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Sunday 17 August 2025 13:47">Sunday 17 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Email · Mera.jl</title><meta name="title" content="Email · Mera.jl"/><meta property="og:title" content="Email · Mera.jl"/><meta property="twitter:title" content="Email · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li><li><span class="tocitem">4 Basic Calculations</span><ul><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><span class="tocitem">5 Mask/Filter/Meta</span><ul><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li><li><span class="tocitem">9 Miscellaneous</span><ul><li><a class="tocitem" href="../../Miscellaneous/">Tutorial</a></li><li><a class="tocitem" href="../../api/miscellaneous/">API Reference</a></li></ul></li><li><span class="tocitem">10 Examples</span><ul><li><a class="tocitem" href="../../examples/">Tutorial</a></li><li><a class="tocitem" href="../../api/examples/">API Reference</a></li></ul></li><li><span class="tocitem">11 Multi-Threading</span><ul><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><span class="tocitem">12 Notifications</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../bell/">Bell (Local Audio)</a></li><li class="is-active"><a class="tocitem" href>Email</a><ul class="internal"><li><a class="tocitem" href="#Why-Email-Notifications?"><span>Why Email Notifications?</span></a></li><li><a class="tocitem" href="#Basic-Email-Usage"><span>Basic Email Usage</span></a></li><li><a class="tocitem" href="#Email-System-Requirements"><span>Email System Requirements</span></a></li><li><a class="tocitem" href="#Practical-Email-Examples"><span>Practical Email Examples</span></a></li><li><a class="tocitem" href="#Email-Best-Practices"><span>Email Best Practices</span></a></li><li><a class="tocitem" href="#Advanced-Email-Configuration"><span>Advanced Email Configuration</span></a></li><li><a class="tocitem" href="#Graduation-to-Team-Collaboration"><span>Graduation to Team Collaboration</span></a></li><li><a class="tocitem" href="#Email-Notification-Checklist"><span>Email Notification Checklist</span></a></li></ul></li><li><a class="tocitem" href="../zulip/">Zulip (Team Chat)</a></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Julia Quick Reference</span><ul><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><a class="tocitem" href="../../api/">15 Complete API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">12 Notifications</a></li><li class="is-active"><a href>Email</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Email</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Email-Notifications"><a class="docs-heading-anchor" href="#Email-Notifications">Email Notifications</a><a id="Email-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Email-Notifications" title="Permalink"></a></h1><p>Reliable notifications that reach you anywhere - perfect for important milestones and remote work.</p><h2 id="Why-Email-Notifications?"><a class="docs-heading-anchor" href="#Why-Email-Notifications?">Why Email Notifications?</a><a id="Why-Email-Notifications?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-Email-Notifications?" title="Permalink"></a></h2><p><strong>📱 Universal Access</strong> - Receive notifications on phone, tablet, or any device   <strong>🔔 Reliable Delivery</strong> - Email systems are robust and well-established   <strong>📍 Location Independent</strong> - Get updates whether at home, office, or traveling   <strong>📋 Persistent Records</strong> - Email history provides a log of your computational progress   <strong>🚨 Critical Alerts</strong> - Perfect for important milestones and error notifications  </p><h2 id="Basic-Email-Usage"><a class="docs-heading-anchor" href="#Basic-Email-Usage">Basic Email Usage</a><a id="Basic-Email-Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Email-Usage" title="Permalink"></a></h2><p>Email provides reliable, universal notifications that work anywhere. You can receive updates on your phone, tablet, or any device with email access.</p><h3 id="Setting-Up-Email-Notifications"><a class="docs-heading-anchor" href="#Setting-Up-Email-Notifications">Setting Up Email Notifications</a><a id="Setting-Up-Email-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Setting-Up-Email-Notifications" title="Permalink"></a></h3><p>First, configure your email settings by creating an <code>email.txt</code> file in your <strong>home directory</strong>:</p><pre><code class="language-bash hljs"># Create email.txt file with your email configuration in home directory
+echo &quot;your-email@example.com&quot; &gt; ~/email.txt</code></pre><p><strong>The <code>~/email.txt</code> file should contain just your email address:</strong></p><pre><code class="nohighlight hljs">researcher@university.edu</code></pre><h3 id="Simple-Email-Examples"><a class="docs-heading-anchor" href="#Simple-Email-Examples">Simple Email Examples</a><a id="Simple-Email-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Simple-Email-Examples" title="Permalink"></a></h3><pre><code class="language-julia hljs">using Mera
+
+# Send simple email notification
+notifyme(&quot;Computation finished!&quot;)
+
+# Better: Include meaningful details
+notifyme(&quot;Temperature analysis complete. Found 15 hot spots in the dataset.&quot;)
+
+# For email with custom subject line
+notifyme(&quot;Critical error in simulation&quot;, 
+         subject=&quot;URGENT: Simulation Failed&quot;)</code></pre><h3 id="Testing-Email-Functionality"><a class="docs-heading-anchor" href="#Testing-Email-Functionality">Testing Email Functionality</a><a id="Testing-Email-Functionality-1"></a><a class="docs-heading-anchor-permalink" href="#Testing-Email-Functionality" title="Permalink"></a></h3><pre><code class="language-julia hljs">function test_email_notifications()
+    println(&quot;Testing email notifications...&quot;)
+    
+    # Test 1: Check if email.txt exists in home directory
+    email_config = joinpath(homedir(), &quot;email.txt&quot;)
+    if !isfile(email_config)
+        println(&quot;❌ No email.txt file found in home directory ($(homedir())).&quot;)
+        println(&quot;   Run: echo &#39;your-email@example.com&#39; &gt; ~/email.txt&quot;)
+        return false
+    end
+    
+    # Test 2: Basic functionality
+    println(&quot;📧 Sending basic email test...&quot;)
+    notifyme(&quot;🧪 Email test - basic functionality&quot;)
+    println(&quot;✅ Basic email test sent. Check your inbox!&quot;)
+    
+    # Test 3: Email with details
+    sleep(2)  # Don&#39;t spam
+    println(&quot;📧 Sending detailed email test...&quot;)
+    notifyme(&quot;🧪 Email test - with computation details&quot;, 
+             subject=&quot;Test completed at $(now())&quot;)
+    println(&quot;✅ Detailed email test sent!&quot;)
+    
+    println(&quot;📱 Check your email on phone/computer to verify delivery.&quot;)
+    return true
+end
+
+test_email_notifications()</code></pre><h2 id="Email-System-Requirements"><a class="docs-heading-anchor" href="#Email-System-Requirements">Email System Requirements</a><a id="Email-System-Requirements-1"></a><a class="docs-heading-anchor-permalink" href="#Email-System-Requirements" title="Permalink"></a></h2><p>For Mera.jl to send emails, your system needs a working email setup. The requirements differ between personal computers and servers:</p><h3 id="Personal-Laptop/Desktop-Requirements"><a class="docs-heading-anchor" href="#Personal-Laptop/Desktop-Requirements">Personal Laptop/Desktop Requirements</a><a id="Personal-Laptop/Desktop-Requirements-1"></a><a class="docs-heading-anchor-permalink" href="#Personal-Laptop/Desktop-Requirements" title="Permalink"></a></h3><p><strong>macOS:</strong></p><ul><li>✅ <strong>Built-in Mail.app</strong>: Usually works out-of-the-box if Mail.app is configured</li><li>✅ <strong>Command-line mail</strong>: Uses system <code>mail</code> command via sendmail</li><li>⚙️ <strong>Setup needed</strong>: Configure Mail.app with your email account first</li><li>📧 <strong>Providers that work well</strong>: Gmail, Outlook, university email systems</li></ul><p><strong>Linux (Ubuntu/Debian):</strong></p><pre><code class="language-bash hljs"># Install mail utilities
+sudo apt-get install mailutils
+
+# Configure postfix (local mail system)
+sudo dpkg-reconfigure postfix
+# Choose &quot;Internet Site&quot; and follow prompts</code></pre><p><strong>Windows:</strong></p><ul><li>⚠️ <strong>More complex</strong>: Windows doesn&#39;t have built-in command-line mail</li><li>🔧 <strong>Solutions</strong>: <ul><li>Install WSL (Windows Subsystem for Linux) and configure mail there</li><li>Use third-party SMTP tools</li><li>Consider using only Zulip notifications for Windows systems</li></ul></li></ul><h3 id="Server/Cluster-Requirements"><a class="docs-heading-anchor" href="#Server/Cluster-Requirements">Server/Cluster Requirements</a><a id="Server/Cluster-Requirements-1"></a><a class="docs-heading-anchor-permalink" href="#Server/Cluster-Requirements" title="Permalink"></a></h3><p><strong>University/Research Clusters:</strong></p><ul><li>✅ <strong>Often pre-configured</strong>: Many clusters have mail systems already set up</li><li>📧 <strong>Test first</strong>: Run <code>echo &quot;test&quot; | mail your-email@domain.com</code> to test</li><li>🔧 <strong>If not working</strong>: Contact system administrators for mail setup</li></ul><p><strong>Cloud Servers (AWS, Google Cloud, etc.):</strong></p><ul><li>⚠️ <strong>Usually not configured</strong>: Cloud servers typically don&#39;t have mail by default</li><li>📬 <strong>Options</strong>:<ol><li><strong>Install and configure postfix/sendmail</strong> (requires admin access)</li><li><strong>Use external SMTP service</strong> (Gmail, SendGrid, etc.)</li><li><strong>Stick to Zulip notifications</strong> (often easier for cloud environments)</li></ol></li></ul><p><strong>Docker Containers:</strong></p><ul><li>❌ <strong>Not available by default</strong>: Containers don&#39;t have mail systems</li><li>🔧 <strong>Solutions</strong>:<ul><li>Mount host mail system into container</li><li>Use external SMTP service</li><li>Prefer Zulip notifications for containerized workflows</li></ul></li></ul><h3 id="Testing-Your-Email-Setup"><a class="docs-heading-anchor" href="#Testing-Your-Email-Setup">Testing Your Email Setup</a><a id="Testing-Your-Email-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Testing-Your-Email-Setup" title="Permalink"></a></h3><p><strong>Before using Mera.jl, test your system&#39;s email capability:</strong></p><pre><code class="language-bash hljs"># Test 1: Check if mail command exists
+which mail
+# Should return a path like /usr/bin/mail
+
+# Test 2: Send a test email from command line
+echo &quot;Test email from system&quot; | mail -s &quot;System Test&quot; your-email@domain.com
+
+# Test 3: Check mail logs (if accessible)
+tail -f /var/log/mail.log  # Linux
+tail -f /var/log/system.log | grep mail  # macOS</code></pre><h3 id="Common-Email-Issues-and-Solutions"><a class="docs-heading-anchor" href="#Common-Email-Issues-and-Solutions">Common Email Issues and Solutions</a><a id="Common-Email-Issues-and-Solutions-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Email-Issues-and-Solutions" title="Permalink"></a></h3><p><strong>Problem</strong>: &quot;Mail command not found&quot;</p><pre><code class="language-bash hljs"># Solution: Install mail utilities
+# Ubuntu/Debian:
+sudo apt-get install mailutils
+# CentOS/RHEL:
+sudo yum install mailx
+# macOS: Usually pre-installed, check system preferences</code></pre><p><strong>Problem</strong>: &quot;Mail sent but never arrives&quot;</p><ul><li>✅ <strong>Check spam folder</strong> first</li><li>🔧 <strong>Check system mail queue</strong>: <code>mailq</code></li><li>📧 <strong>Verify email address</strong> in ~/email.txt is correct</li><li>🛠️ <strong>Check mail logs</strong> for error messages</li></ul><p><strong>Problem</strong>: &quot;Permission denied&quot; or &quot;Unable to send&quot;</p><ul><li>🔐 <strong>Check user permissions</strong> for mail system</li><li>⚙️ <strong>Verify mail system configuration</strong></li><li>👨‍💻 <strong>Contact system administrator</strong> if on shared system</li></ul><p><strong>Problem</strong>: &quot;Gmail blocks emails&quot;</p><ul><li>🔐 <strong>Use App Passwords</strong> instead of regular password</li><li>⚙️ <strong>Enable 2-factor authentication</strong> first</li><li>📧 <strong>Consider using university email</strong> instead</li></ul><h3 id="Recommendations-by-Environment"><a class="docs-heading-anchor" href="#Recommendations-by-Environment">Recommendations by Environment</a><a id="Recommendations-by-Environment-1"></a><a class="docs-heading-anchor-permalink" href="#Recommendations-by-Environment" title="Permalink"></a></h3><table><tr><th style="text-align: right">Environment</th><th style="text-align: right">Best Email Solution</th></tr><tr><td style="text-align: right"><strong>Personal macOS/Linux</strong></td><td style="text-align: right">✅ Built-in mail system</td></tr><tr><td style="text-align: right"><strong>Windows Desktop</strong></td><td style="text-align: right">⚠️ Use Zulip instead</td></tr><tr><td style="text-align: right"><strong>University Cluster</strong></td><td style="text-align: right">✅ Usually works out-of-box</td></tr><tr><td style="text-align: right"><strong>Cloud Server</strong></td><td style="text-align: right">🔧 Configure SMTP or use Zulip</td></tr><tr><td style="text-align: right"><strong>Docker Container</strong></td><td style="text-align: right">❌ Use Zulip notifications</td></tr><tr><td style="text-align: right"><strong>Shared/Restricted System</strong></td><td style="text-align: right">❓ Ask admin, fallback to Zulip</td></tr></table><p><strong>💡 Pro Tip</strong>: If email setup is complicated on your system, skip to <a href="../zulip/">Zulip</a> - it&#39;s often easier to configure and more reliable for research workflows!</p><h2 id="Practical-Email-Examples"><a class="docs-heading-anchor" href="#Practical-Email-Examples">Practical Email Examples</a><a id="Practical-Email-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Email-Examples" title="Permalink"></a></h2><h3 id="Long-Computation-with-Email"><a class="docs-heading-anchor" href="#Long-Computation-with-Email">Long Computation with Email</a><a id="Long-Computation-with-Email-1"></a><a class="docs-heading-anchor-permalink" href="#Long-Computation-with-Email" title="Permalink"></a></h3><pre><code class="language-julia hljs">function long_computation_with_email()
+    println(&quot;Starting long computation...&quot;)
+    notifyme(&quot;🚀 Starting long computation at $(now())&quot;)
+    
+    try
+        # Simulate long computation
+        println(&quot;Phase 1: Data loading...&quot;)
+        sleep(5)  # Represents real computation time
+        
+        println(&quot;Phase 2: Processing...&quot;)
+        sleep(5)
+        
+        println(&quot;Phase 3: Analysis...&quot;)
+        sleep(5)
+        
+        # Success notification
+        notifyme(&quot;✅ Long computation completed successfully! Results ready for review.&quot;)
+        
+    catch e
+        # Error notification
+        notifyme(&quot;❌ Computation failed with error: $(string(e))&quot;, 
+                 subject=&quot;COMPUTATION ERROR&quot;)
+        rethrow(e)
+    end
+end
+
+long_computation_with_email()</code></pre><h3 id="Research-Pipeline-with-Email-Updates"><a class="docs-heading-anchor" href="#Research-Pipeline-with-Email-Updates">Research Pipeline with Email Updates</a><a id="Research-Pipeline-with-Email-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Research-Pipeline-with-Email-Updates" title="Permalink"></a></h3><pre><code class="language-julia hljs">function research_pipeline_with_email()
+    pipeline_start = time()
+    
+    # Start notification
+    notifyme(&quot;🚀 Starting research pipeline: Galaxy Analysis&quot;,
+             subject=&quot;Research Pipeline Started&quot;)
+    
+    try
+        # Stage 1: Data Loading
+        println(&quot;Loading galaxy survey data...&quot;)
+        notifyme(&quot;📂 Data loading stage started&quot;)
+        sleep(3)  # Simulate data loading
+        
+        # Stage 2: Processing
+        println(&quot;Processing galaxy properties...&quot;)
+        notifyme(&quot;⚙️ Processing stage: Computing temperature distributions&quot;)
+        sleep(5)  # Simulate processing
+        
+        # Stage 3: Analysis
+        println(&quot;Analyzing results...&quot;)
+        notifyme(&quot;📊 Analysis stage: Finding hot spots and anomalies&quot;)
+        sleep(4)  # Simulate analysis
+        
+        # Success with timing
+        total_time = time() - pipeline_start
+        notifyme(&quot;&quot;&quot;✅ Research pipeline completed successfully!
+        
+        📊 Results Summary:
+        • Total runtime: $(round(total_time/60, digits=1)) minutes
+        • Galaxies analyzed: 1,247
+        • Hot spots found: 15
+        • Anomalies detected: 3
+        
+        📁 Results ready for review in analysis folder.
+        &quot;&quot;&quot;, subject=&quot;Research Pipeline Complete&quot;)
+        
+        return true
+        
+    catch e
+        # Error notification with context
+        error_time = time() - pipeline_start
+        notifyme(&quot;&quot;&quot;❌ Research pipeline failed!
+        
+        💥 Error Details:
+        • Failed after: $(round(error_time/60, digits=1)) minutes
+        • Error type: $(typeof(e))
+        • Error message: $(string(e))
+        
+        🔧 Check logs and retry analysis.
+        &quot;&quot;&quot;, subject=&quot;URGENT: Pipeline Failure&quot;)
+        
+        rethrow(e)
+    end
+end
+
+research_pipeline_with_email()</code></pre><h3 id="Daily-Research-Workflow"><a class="docs-heading-anchor" href="#Daily-Research-Workflow">Daily Research Workflow</a><a id="Daily-Research-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#Daily-Research-Workflow" title="Permalink"></a></h3><pre><code class="language-julia hljs">function daily_research_workflow()
+    # Morning startup
+    notifyme(&quot;🌅 Starting daily research tasks&quot;,
+             subject=&quot;Daily Workflow - $(today())&quot;)
+    
+    # Process overnight simulations
+    notifyme(&quot;📊 Processing overnight simulation results...&quot;)
+    sleep(2)
+    
+    # Run analysis
+    notifyme(&quot;🔬 Running temperature analysis on new data...&quot;)
+    sleep(3)
+    
+    # Generate reports
+    notifyme(&quot;📋 Generating daily summary report...&quot;)
+    sleep(2)
+    
+    # End of day summary
+    notifyme(&quot;&quot;&quot;📈 Daily research summary complete!
+    
+    ✅ Completed Tasks:
+    • Processed 3 overnight simulations
+    • Analyzed temperature distributions
+    • Generated daily report
+    • Updated research log
+    
+    📅 Tomorrow: Continue with density analysis
+    &quot;&quot;&quot;, subject=&quot;Daily Summary - $(today())&quot;)
+end
+
+daily_research_workflow()</code></pre><h3 id="Error-Monitoring-and-Alerts"><a class="docs-heading-anchor" href="#Error-Monitoring-and-Alerts">Error Monitoring and Alerts</a><a id="Error-Monitoring-and-Alerts-1"></a><a class="docs-heading-anchor-permalink" href="#Error-Monitoring-and-Alerts" title="Permalink"></a></h3><pre><code class="language-julia hljs">function robust_computation_with_email_alerts()
+    computation_start = time()
+    
+    try
+        # Simulate risky computation
+        println(&quot;Starting high-memory computation...&quot;)
+        
+        # Check memory before starting
+        if Sys.total_memory() &lt; 8_000_000_000  # Less than 8GB
+            notifyme(&quot;⚠️ Warning: Low system memory detected&quot;,
+                     subject=&quot;Memory Warning&quot;)
+        end
+        
+        # Simulate computation that might fail
+        sleep(2)
+        
+        # Random failure for demonstration
+        if rand() &lt; 0.3  # 30% chance of failure
+            error(&quot;Simulated memory allocation failure&quot;)
+        end
+        
+        # Success
+        runtime = time() - computation_start
+        notifyme(&quot;✅ High-memory computation completed successfully in $(round(runtime, digits=1))s&quot;,
+                 subject=&quot;Computation Success&quot;)
+        
+    catch e
+        # Detailed error notification
+        runtime = time() - computation_start
+        notifyme(&quot;&quot;&quot;❌ Computation failed after $(round(runtime, digits=1))s
+        
+        🚨 Error Information:
+        • Error type: $(typeof(e))
+        • Error message: $(string(e))
+        • System memory: $(round(Sys.total_memory()/1e9, digits=1))GB
+        • Julia version: $(VERSION)
+        
+        🔧 Suggested actions:
+        1. Check available memory
+        2. Review input parameters
+        3. Consider using smaller dataset
+        &quot;&quot;&quot;, subject=&quot;URGENT: Computation Failed&quot;)
+        
+        rethrow(e)
+    end
+end
+
+robust_computation_with_email_alerts()</code></pre><h2 id="Email-Best-Practices"><a class="docs-heading-anchor" href="#Email-Best-Practices">Email Best Practices</a><a id="Email-Best-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Email-Best-Practices" title="Permalink"></a></h2><h3 id="Good-Email-Practices"><a class="docs-heading-anchor" href="#Good-Email-Practices">Good Email Practices</a><a id="Good-Email-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Good-Email-Practices" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Be specific about what completed
+notifyme(&quot;Galaxy simulation #47 completed successfully - 10.2M particles&quot;)
+
+# Include key results or status
+notifyme(&quot;Temperature analysis found 3 anomalies requiring investigation&quot;)
+
+# Use consistent naming for easy filtering
+notifyme(&quot;MERA-SIM: Large-scale simulation batch 3/5 complete&quot;)
+
+# Include timing information
+notifyme(&quot;Analysis completed in 45 minutes - results exceeded expectations&quot;)
+
+# Provide actionable information
+notifyme(&quot;&quot;&quot;Simulation complete! Next steps:
+1. Review temperature plots in ./results/
+2. Check anomaly list in analysis.csv
+3. Prepare summary for team meeting&quot;&quot;&quot;)</code></pre><h3 id="Avoid-These-Email-Patterns"><a class="docs-heading-anchor" href="#Avoid-These-Email-Patterns">Avoid These Email Patterns</a><a id="Avoid-These-Email-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Avoid-These-Email-Patterns" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Too vague
+notifyme(&quot;Done&quot;)  # Done with what?
+
+# Too frequent (email spam)
+for i in 1:100
+    notifyme(&quot;Step $i complete&quot;)  # Don&#39;t do this!
+end
+
+# No context
+notifyme(&quot;Error occurred&quot;)  # What error? Where? How critical?
+
+# Missing subject for important alerts
+notifyme(&quot;CRITICAL SYSTEM FAILURE&quot;)  # Should include subject=&quot;URGENT&quot;</code></pre><h3 id="Mobile-Friendly-Email-Design"><a class="docs-heading-anchor" href="#Mobile-Friendly-Email-Design">Mobile-Friendly Email Design</a><a id="Mobile-Friendly-Email-Design-1"></a><a class="docs-heading-anchor-permalink" href="#Mobile-Friendly-Email-Design" title="Permalink"></a></h3><p>Design your email notifications to be effective on mobile devices:</p><pre><code class="language-julia hljs"># Good: Clear, actionable mobile notification
+notifyme(&quot;&quot;&quot;✅ Galaxy Analysis Complete
+
+Key Results:
+• 15 hot spots found
+• 3 require immediate review
+• Full report: analysis_2024.pdf
+
+Next: Review flagged galaxies&quot;&quot;&quot;, 
+subject=&quot;Galaxy Analysis - Action Required&quot;)
+
+# Good: Critical alert format
+notifyme(&quot;&quot;&quot;🚨 URGENT: Simulation Error
+
+Temperature exceeded safety limits
+Action needed: Check cooling system
+Time: $(now())&quot;&quot;&quot;,
+subject=&quot;CRITICAL: System Alert&quot;)</code></pre><h2 id="Advanced-Email-Configuration"><a class="docs-heading-anchor" href="#Advanced-Email-Configuration">Advanced Email Configuration</a><a id="Advanced-Email-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Email-Configuration" title="Permalink"></a></h2><h3 id="Custom-Subject-Lines"><a class="docs-heading-anchor" href="#Custom-Subject-Lines">Custom Subject Lines</a><a id="Custom-Subject-Lines-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Subject-Lines" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Default subject
+notifyme(&quot;Analysis complete&quot;)  # Subject: &quot;Mera.jl Notification&quot;
+
+# Custom subject
+notifyme(&quot;Analysis complete&quot;, subject=&quot;Galaxy Research Update&quot;)
+
+# Dynamic subjects
+notifyme(&quot;Simulation finished&quot;, 
+         subject=&quot;Simulation $(simulation_id) - $(today())&quot;)
+
+# Priority indicators
+notifyme(&quot;Critical error detected&quot;, 
+         subject=&quot;URGENT: System Failure&quot;)</code></pre><h3 id="Email-with-Timing-Information"><a class="docs-heading-anchor" href="#Email-with-Timing-Information">Email with Timing Information</a><a id="Email-with-Timing-Information-1"></a><a class="docs-heading-anchor-permalink" href="#Email-with-Timing-Information" title="Permalink"></a></h3><pre><code class="language-julia hljs">function timed_email_notification()
+    start_time = time()
+    
+    # Your computation here
+    sleep(3)  # Simulate work
+    result = &quot;analysis complete&quot;
+    
+    elapsed = time() - start_time
+    
+    notifyme(&quot;&quot;&quot;Computation finished!
+    
+    ⏱️ Performance:
+    • Runtime: $(round(elapsed, digits=2)) seconds
+    • Started: $(unix2datetime(start_time))
+    • Completed: $(now())
+    
+    📊 Result: $result
+    &quot;&quot;&quot;, subject=&quot;Timed Analysis Complete&quot;)
+end
+
+timed_email_notification()</code></pre><h3 id="Environment-Specific-Email-Setup"><a class="docs-heading-anchor" href="#Environment-Specific-Email-Setup">Environment-Specific Email Setup</a><a id="Environment-Specific-Email-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Environment-Specific-Email-Setup" title="Permalink"></a></h3><pre><code class="language-julia hljs">function check_email_environment()
+    println(&quot;📧 Email Environment Check&quot;)
+    println(&quot;=&quot; * 40)
+    
+    # Check email.txt file
+    email_file = joinpath(homedir(), &quot;email.txt&quot;)
+    if isfile(email_file)
+        email_addr = strip(read(email_file, String))
+        println(&quot;✅ Email configured: $email_addr&quot;)
+    else
+        println(&quot;❌ No email.txt found in $(homedir())&quot;)
+        println(&quot;   Create with: echo &#39;your@email.com&#39; &gt; ~/email.txt&quot;)
+    end
+    
+    # Check mail command availability
+    try
+        run(`which mail`)
+        println(&quot;✅ Mail command available&quot;)
+    catch
+        println(&quot;❌ Mail command not found&quot;)
+        println(&quot;   Install: sudo apt-get install mailutils (Linux)&quot;)
+    end
+    
+    # Check system type
+    if Sys.isapple()
+        println(&quot;🍎 macOS detected - usually email works well&quot;)
+    elseif Sys.islinux()
+        println(&quot;🐧 Linux detected - may need mail utilities&quot;)
+    elseif Sys.iswindows()
+        println(&quot;🪟 Windows detected - consider Zulip instead&quot;)
+    end
+    
+    # Test basic notification
+    try
+        notifyme(&quot;📧 Email environment test message&quot;)
+        println(&quot;✅ Test email sent successfully&quot;)
+    catch e
+        println(&quot;❌ Email test failed: $e&quot;)
+    end
+end
+
+check_email_environment()</code></pre><h2 id="Graduation-to-Team-Collaboration"><a class="docs-heading-anchor" href="#Graduation-to-Team-Collaboration">Graduation to Team Collaboration</a><a id="Graduation-to-Team-Collaboration-1"></a><a class="docs-heading-anchor-permalink" href="#Graduation-to-Team-Collaboration" title="Permalink"></a></h2><p>Once you&#39;re comfortable with email notifications, you&#39;re ready for team-based workflows:</p><h3 id="**Next-Step:-Zulip-for-Team-Collaboration**"><a class="docs-heading-anchor" href="#**Next-Step:-Zulip-for-Team-Collaboration**"><strong>Next Step: Zulip for Team Collaboration</strong></a><a id="**Next-Step:-Zulip-for-Team-Collaboration**-1"></a><a class="docs-heading-anchor-permalink" href="#**Next-Step:-Zulip-for-Team-Collaboration**" title="Permalink"></a></h3><pre><code class="language-julia hljs"># From this (individual email):
+notifyme(&quot;Analysis complete!&quot;)
+
+# To this (team notification):
+notifyme(&quot;Analysis complete!&quot;, zulip_channel=&quot;research-results&quot;)</code></pre><p><strong>Why upgrade to Zulip?</strong></p><ul><li>📱 <strong>Mobile-first design</strong> - Better mobile experience than email</li><li>🗂️ <strong>Organized conversations</strong> - Channels and topics keep discussions focused  </li><li>📎 <strong>Rich attachments</strong> - Share plots, data files, and documents easily</li><li>👥 <strong>Team collaboration</strong> - Coordinate with research group members</li><li>🔍 <strong>Searchable history</strong> - Find past results and conversations instantly</li></ul><p><a href="../zulip/">→ Continue to Zulip Team Collaboration</a></p><h2 id="Email-Notification-Checklist"><a class="docs-heading-anchor" href="#Email-Notification-Checklist">Email Notification Checklist</a><a id="Email-Notification-Checklist-1"></a><a class="docs-heading-anchor-permalink" href="#Email-Notification-Checklist" title="Permalink"></a></h2><p><strong>Getting Started:</strong></p><ul><li>[ ] Create <code>~/email.txt</code> with your email address</li><li>[ ] Test system mail command availability</li><li>[ ] Send basic test notification</li><li>[ ] Verify email delivery (check spam folder)</li></ul><p><strong>Integration:</strong></p><ul><li>[ ] Add email notifications to long-running computations</li><li>[ ] Set up error alerting for critical processes</li><li>[ ] Create meaningful subject lines and messages</li><li>[ ] Test mobile email experience</li></ul><p><strong>Best Practices:</strong></p><ul><li>[ ] Use descriptive, actionable messages</li><li>[ ] Include timing and context information</li><li>[ ] Set up consistent subject line patterns</li><li>[ ] Avoid notification spam (batch updates)</li></ul><p><strong>Ready for Teams:</strong></p><ul><li>[ ] Want to share results with colleagues</li><li>[ ] Need organized, searchable conversations</li><li>[ ] Want to attach files and rich content</li><li>[ ] Ready to learn Zulip team collaboration</li></ul><p><strong>Key Takeaway:</strong> Email provides reliable, universal notifications perfect for individual research workflows. When you&#39;re ready for team collaboration and advanced features, Zulip is the next step!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../bell/">« Bell (Local Audio)</a><a class="docs-footer-nextpage" href="../zulip/">Zulip (Team Chat) »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Sunday 17 August 2025 13:47">Sunday 17 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

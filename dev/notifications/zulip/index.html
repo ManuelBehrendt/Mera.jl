@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Zulip (Team Chat) · Mera.jl</title><meta name="title" content="Zulip (Team Chat) · Mera.jl"/><meta property="og:title" content="Zulip (Team Chat) · Mera.jl"/><meta property="twitter:title" content="Zulip (Team Chat) · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">First Steps</a></li><li><span class="tocitem">1 Data Inspection</span><ul><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><span class="tocitem">2 Load by Selection</span><ul><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><span class="tocitem">3 Get Subregions</span><ul><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li><li><span class="tocitem">4 Basic Calculations</span><ul><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><span class="tocitem">5 Mask/Filter/Meta</span><ul><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><span class="tocitem">6 Projection</span><ul><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li><li><span class="tocitem">7 MERA-Files</span><ul><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><span class="tocitem">8 Volume Rendering</span><ul><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li><li><span class="tocitem">9 Miscellaneous</span><ul><li><a class="tocitem" href="../../Miscellaneous/">Tutorial</a></li><li><a class="tocitem" href="../../api/miscellaneous/">API Reference</a></li></ul></li><li><span class="tocitem">10 Examples</span><ul><li><a class="tocitem" href="../../examples/">Tutorial</a></li><li><a class="tocitem" href="../../api/examples/">API Reference</a></li></ul></li><li><span class="tocitem">11 Multi-Threading</span><ul><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><span class="tocitem">12 Notifications</span><ul><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../bell/">Bell (Local Audio)</a></li><li><a class="tocitem" href="../email/">Email</a></li><li class="is-active"><a class="tocitem" href>Zulip (Team Chat)</a><ul class="internal"><li><a class="tocitem" href="#Why-Zulip-for-Research?"><span>Why Zulip for Research?</span></a></li><li><a class="tocitem" href="#What-is-Zulip?"><span>What is Zulip?</span></a></li><li><a class="tocitem" href="#Setting-Up-Zulip-Notifications"><span>Setting Up Zulip Notifications</span></a></li><li><a class="tocitem" href="#Organizing-Your-Research-with-Streams"><span>Organizing Your Research with Streams</span></a></li><li><a class="tocitem" href="#Basic-Zulip-Usage"><span>Basic Zulip Usage</span></a></li><li><a class="tocitem" href="#File-Attachments-and-Rich-Content"><span>File Attachments and Rich Content</span></a></li><li><a class="tocitem" href="#Time-Tracking-and-Performance-Monitoring"><span>Time Tracking and Performance Monitoring</span></a></li><li><a class="tocitem" href="#Progress-Tracking-for-Long-Workflows"><span>Progress Tracking for Long Workflows</span></a></li><li><a class="tocitem" href="#Exception-Handling-and-Error-Reporting"><span>Exception Handling and Error Reporting</span></a></li><li><a class="tocitem" href="#Complete-Research-Workflow-Examples"><span>Complete Research Workflow Examples</span></a></li><li><a class="tocitem" href="#Privacy-and-Security-Best-Practices"><span>Privacy and Security Best Practices</span></a></li><li><a class="tocitem" href="#Mobile-Optimization"><span>Mobile Optimization</span></a></li><li><a class="tocitem" href="#Troubleshooting-Common-Issues"><span>Troubleshooting Common Issues</span></a></li><li><a class="tocitem" href="#Zulip-Notification-Checklist"><span>Zulip Notification Checklist</span></a></li></ul></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><span class="tocitem">13 Benchmarks</span><ul><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/Projection/multi_projections/">Parallel Projections</a></li></ul></li><li><span class="tocitem">14 Julia Quick Reference</span><ul><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><a class="tocitem" href="../../api/">15 Complete API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">12 Notifications</a></li><li class="is-active"><a href>Zulip (Team Chat)</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Zulip (Team Chat)</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Zulip-(Team-Chat)-Notifications"><a class="docs-heading-anchor" href="#Zulip-(Team-Chat)-Notifications">Zulip (Team Chat) Notifications</a><a id="Zulip-(Team-Chat)-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Zulip-(Team-Chat)-Notifications" title="Permalink"></a></h1><p>Advanced team collaboration with organized, searchable notifications perfect for research groups.</p><h2 id="Why-Zulip-for-Research?"><a class="docs-heading-anchor" href="#Why-Zulip-for-Research?">Why Zulip for Research?</a><a id="Why-Zulip-for-Research?-1"></a><a class="docs-heading-anchor-permalink" href="#Why-Zulip-for-Research?" title="Permalink"></a></h2><p><strong>🧵 Organized Conversations</strong> - Streams and topics keep research discussions focused   <strong>📱 Mobile-First Design</strong> - Full-featured mobile apps for anywhere access   <strong>🔍 Powerful Search</strong> - Find any conversation, result, or file instantly   <strong>🤖 Bot-Friendly</strong> - Perfect for automated notifications from computations   <strong>👥 Team Collaboration</strong> - Coordinate with research group members effectively   <strong>📚 Persistent History</strong> - All conversations saved and searchable forever   <strong>📎 Rich Content</strong> - Share files, plots, and documents with intelligent handling</p><h2 id="What-is-Zulip?"><a class="docs-heading-anchor" href="#What-is-Zulip?">What is Zulip?</a><a id="What-is-Zulip?-1"></a><a class="docs-heading-anchor-permalink" href="#What-is-Zulip?" title="Permalink"></a></h2><p><strong>Zulip</strong> (<a href="https://zulip.com">https://zulip.com</a>) is a modern, open-source team chat platform designed for productive scientific conversations. Unlike regular chat apps, Zulip organizes communication to reduce noise and increase focus.</p><h3 id="Understanding-Streams-and-Topics"><a class="docs-heading-anchor" href="#Understanding-Streams-and-Topics">Understanding Streams and Topics</a><a id="Understanding-Streams-and-Topics-1"></a><a class="docs-heading-anchor-permalink" href="#Understanding-Streams-and-Topics" title="Permalink"></a></h3><p>Zulip&#39;s unique structure makes it perfect for research workflows:</p><p><strong>Streams</strong> = Broad categories (like folders)   <strong>Topics</strong> = Specific discussions within streams (like files in folders)</p><pre><code class="nohighlight hljs">Stream: &quot;galaxy-research&quot; 
+├─ Topic: &quot;Temperature Analysis - Aug 2024&quot;
+├─ Topic: &quot;Density Profiles - Aug 2024&quot;  
+├─ Topic: &quot;Error Resolution - Memory Issues&quot;
+└─ Topic: &quot;Paper 1 - Key Results&quot;</code></pre><p>This organization means your computational notifications stay organized and searchable, even months later.</p><h2 id="Setting-Up-Zulip-Notifications"><a class="docs-heading-anchor" href="#Setting-Up-Zulip-Notifications">Setting Up Zulip Notifications</a><a id="Setting-Up-Zulip-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Setting-Up-Zulip-Notifications" title="Permalink"></a></h2><h3 id="Step-1:-Join-or-Create-Organization"><a class="docs-heading-anchor" href="#Step-1:-Join-or-Create-Organization">Step 1: Join or Create Organization</a><a id="Step-1:-Join-or-Create-Organization-1"></a><a class="docs-heading-anchor-permalink" href="#Step-1:-Join-or-Create-Organization" title="Permalink"></a></h3><ol><li><strong>Join existing research group</strong> at <code>yourlab.zulipchat.com</code></li><li><strong>Or create new organization</strong> at <a href="https://zulip.com">https://zulip.com</a></li><li><strong>Install mobile app</strong> (iOS/Android) for notifications anywhere</li></ol><h3 id="Step-2:-Create-MERA-Bot"><a class="docs-heading-anchor" href="#Step-2:-Create-MERA-Bot">Step 2: Create MERA Bot</a><a id="Step-2:-Create-MERA-Bot-1"></a><a class="docs-heading-anchor-permalink" href="#Step-2:-Create-MERA-Bot" title="Permalink"></a></h3><p><strong>Why a bot?</strong> Bots allow automated notifications without using your personal account.</p><p><strong>Creating the bot:</strong></p><ol><li><p><strong>Access Bot Settings</strong></p><ul><li>Go to your Zulip organization (e.g., <code>yourlab.zulipchat.com</code>)</li><li>Click your profile picture (top right) → <strong>Personal settings</strong></li><li>Navigate to <strong>Bots</strong> tab in the left sidebar</li></ul></li><li><p><strong>Create New Bot</strong></p><ul><li>Click <strong>Add a new bot</strong></li><li><strong>Bot type</strong>: Choose <strong>Generic bot</strong> (most common)</li><li><strong>Full name</strong>: <code>MERA Computation Bot</code> (or your preferred name)</li><li><strong>Username</strong>: <code>mera-bot</code> (will become <code>mera-bot@yourlab.zulipchat.com</code>)</li><li><strong>Description</strong>: <code>Automated notifications from MERA.jl computations</code></li><li>Click <strong>Create bot</strong></li></ul></li><li><p><strong>Get Bot Credentials</strong>   After creation, you&#39;ll see:</p><ul><li><strong>📧 Bot email</strong>: <code>mera-bot@yourlab.zulipchat.com</code></li><li><strong>🔑 API key</strong>: Long string like <code>abcd1234...</code> (click 👁️ to reveal)</li><li><strong>🌐 Domain</strong>: Your organization domain <code>yourlab.zulipchat.com</code></li></ul></li></ol><h3 id="Step-3:-Configure-Bot-Credentials"><a class="docs-heading-anchor" href="#Step-3:-Configure-Bot-Credentials">Step 3: Configure Bot Credentials</a><a id="Step-3:-Configure-Bot-Credentials-1"></a><a class="docs-heading-anchor-permalink" href="#Step-3:-Configure-Bot-Credentials" title="Permalink"></a></h3><p>Create <code>zulip.txt</code> in your <strong>home directory</strong>:</p><pre><code class="language-bash hljs"># Create zulip.txt in your home directory
+cat &gt; ~/zulip.txt &lt;&lt; EOF
+your-bot-email@yourdomain.zulipchat.com
+your-bot-api-key-here
+your-zulip-domain.zulipchat.com
+EOF</code></pre><p><strong>What goes in <code>~/zulip.txt</code>:</strong></p><pre><code class="nohighlight hljs">Line 1: Bot email address (e.g., mera-bot@yourlab.zulipchat.com)
+Line 2: Bot API key (long string from bot settings)
+Line 3: Zulip server domain (e.g., yourlab.zulipchat.com)</code></pre><h3 id="Step-4:-Secure-Your-Configuration"><a class="docs-heading-anchor" href="#Step-4:-Secure-Your-Configuration">Step 4: Secure Your Configuration</a><a id="Step-4:-Secure-Your-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#Step-4:-Secure-Your-Configuration" title="Permalink"></a></h3><pre><code class="language-bash hljs"># Set proper file permissions for security
+chmod 600 ~/zulip.txt  # Only you can read/write</code></pre><h3 id="Step-5:-Test-Your-Setup"><a class="docs-heading-anchor" href="#Step-5:-Test-Your-Setup">Step 5: Test Your Setup</a><a id="Step-5:-Test-Your-Setup-1"></a><a class="docs-heading-anchor-permalink" href="#Step-5:-Test-Your-Setup" title="Permalink"></a></h3><pre><code class="language-julia hljs">function test_zulip_setup()
+    println(&quot;Testing Zulip configuration...&quot;)
+    
+    # Check if zulip.txt exists
+    zulip_config = joinpath(homedir(), &quot;zulip.txt&quot;)
+    if !isfile(zulip_config)
+        println(&quot;❌ No zulip.txt file found in home directory&quot;)
+        println(&quot;   Create it following the setup instructions&quot;)
+        return false
+    end
+    
+    # Test basic functionality
+    println(&quot;💬 Sending test message to #general...&quot;)
+    try
+        notifyme(&quot;🧪 Zulip test - basic functionality&quot;, 
+                 zulip_channel=&quot;general&quot;)
+        println(&quot;✅ Test message sent! Check your Zulip app.&quot;)
+        return true
+    catch e
+        println(&quot;❌ Test failed: $e&quot;)
+        return false
+    end
+end
+
+test_zulip_setup()</code></pre><h2 id="Organizing-Your-Research-with-Streams"><a class="docs-heading-anchor" href="#Organizing-Your-Research-with-Streams">Organizing Your Research with Streams</a><a id="Organizing-Your-Research-with-Streams-1"></a><a class="docs-heading-anchor-permalink" href="#Organizing-Your-Research-with-Streams" title="Permalink"></a></h2><h3 id="Recommended-Stream-Structure"><a class="docs-heading-anchor" href="#Recommended-Stream-Structure">Recommended Stream Structure</a><a id="Recommended-Stream-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Recommended-Stream-Structure" title="Permalink"></a></h3><p><strong>Core Research Streams:</strong></p><ul><li><strong>📊 <code>results</code></strong> (Public) - Completed analyses, successful simulations</li><li><strong>🚨 <code>alerts</code></strong> (Public/Private) - Critical errors, urgent attention needed  </li><li><strong>⏱️ <code>timing</code></strong> (Public) - Performance monitoring, execution time tracking</li><li><strong>🧪 <code>runtests</code></strong> (Public) - Testing, debugging, experimental code</li></ul><p><strong>Project-Specific Streams:</strong></p><ul><li><strong>🌌 <code>galaxy-formation</code></strong> (Private) - Specific research project</li><li><strong>📝 <code>paper-submissions</code></strong> (Private) - Publication-related updates</li><li><strong>💾 <code>data-processing</code></strong> (Public) - ETL pipelines, data preparation</li></ul><p><strong>Administrative Streams:</strong></p><ul><li><strong>📢 <code>general</code></strong> (Public) - General lab announcements  </li><li><strong>🔧 <code>infrastructure</code></strong> (Private) - Server issues, maintenance</li><li><strong>👥 <code>team-updates</code></strong> (Private) - Personnel and project status</li></ul><h3 id="Stream-Privacy-Levels"><a class="docs-heading-anchor" href="#Stream-Privacy-Levels">Stream Privacy Levels</a><a id="Stream-Privacy-Levels-1"></a><a class="docs-heading-anchor-permalink" href="#Stream-Privacy-Levels" title="Permalink"></a></h3><table><tr><th style="text-align: right">Stream Type</th><th style="text-align: right">Visibility</th><th style="text-align: right">Who Can Join</th><th style="text-align: right">Best For</th></tr><tr><td style="text-align: right"><strong>🌐 Public</strong></td><td style="text-align: right">Everyone in org</td><td style="text-align: right">Anyone</td><td style="text-align: right">Team updates, shared results</td></tr><tr><td style="text-align: right"><strong>🔒 Private</strong></td><td style="text-align: right">Only members</td><td style="text-align: right">Invite only</td><td style="text-align: right">Sensitive research, specific teams</td></tr><tr><td style="text-align: right"><strong>👁️ Web Public</strong></td><td style="text-align: right">Internet-visible</td><td style="text-align: right">Anyone</td><td style="text-align: right">Open research, published results</td></tr></table><h2 id="Basic-Zulip-Usage"><a class="docs-heading-anchor" href="#Basic-Zulip-Usage">Basic Zulip Usage</a><a id="Basic-Zulip-Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Zulip-Usage" title="Permalink"></a></h2><h3 id="Simple-Notifications"><a class="docs-heading-anchor" href="#Simple-Notifications">Simple Notifications</a><a id="Simple-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#Simple-Notifications" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Send to default stream (general)
+notifyme(&quot;Computation complete!&quot;)
+
+# Send to specific stream
+notifyme(&quot;Analysis finished!&quot;, zulip_channel=&quot;results&quot;)
+
+# Send with topic for organization
+notifyme(&quot;Temperature analysis complete&quot;, 
+         zulip_channel=&quot;galaxy-research&quot;,
+         zulip_topic=&quot;Temperature Study - Aug 2024&quot;)</code></pre><h3 id="Meaningful-Research-Updates"><a class="docs-heading-anchor" href="#Meaningful-Research-Updates">Meaningful Research Updates</a><a id="Meaningful-Research-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Meaningful-Research-Updates" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Good: Specific, actionable notification
+notifyme(&quot;&quot;&quot;🌌 Galaxy simulation complete!
+
+📊 Key Results:
+• Simulated time: 2.5 Gyr
+• Final galaxy count: 1,247
+• Major mergers: 23
+• Hot spots detected: 15
+
+📁 Outputs ready in ./sim_results/
+&quot;&quot;&quot;, zulip_channel=&quot;galaxy-research&quot;,
+    zulip_topic=&quot;Large Scale Simulation - Aug 2024&quot;)</code></pre><h2 id="File-Attachments-and-Rich-Content"><a class="docs-heading-anchor" href="#File-Attachments-and-Rich-Content">File Attachments and Rich Content</a><a id="File-Attachments-and-Rich-Content-1"></a><a class="docs-heading-anchor-permalink" href="#File-Attachments-and-Rich-Content" title="Permalink"></a></h2><p>Zulip excels at sharing research outputs with intelligent file handling.</p><h3 id="Single-Image-Attachment"><a class="docs-heading-anchor" href="#Single-Image-Attachment">Single Image Attachment</a><a id="Single-Image-Attachment-1"></a><a class="docs-heading-anchor-permalink" href="#Single-Image-Attachment" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Share a single plot
+notifyme(&quot;Temperature analysis complete - see results!&quot;, 
+         image_path=&quot;temperature_plot.png&quot;,
+         zulip_channel=&quot;results&quot;)
+
+# Handle missing files gracefully
+notifyme(&quot;Analysis complete&quot;, 
+         image_path=&quot;missing_plot.png&quot;,  # File doesn&#39;t exist
+         zulip_channel=&quot;results&quot;)
+# Result: &quot;⚠️ Warning: Image file not found: missing_plot.png&quot;</code></pre><h3 id="Multiple-File-Attachments"><a class="docs-heading-anchor" href="#Multiple-File-Attachments">Multiple File Attachments</a><a id="Multiple-File-Attachments-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-File-Attachments" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Attach specific files
+notifyme(&quot;Paper figures ready for review!&quot;, 
+         attachments=[&quot;figure1.png&quot;, &quot;figure2.png&quot;, &quot;table1.csv&quot;],
+         zulip_channel=&quot;publications&quot;,
+         zulip_topic=&quot;Paper 1 - Figures&quot;)
+
+# Mix of existing and missing files
+notifyme(&quot;Partial results ready&quot;, 
+         attachments=[&quot;plot1.png&quot;, &quot;missing.png&quot;, &quot;plot2.png&quot;],
+         zulip_channel=&quot;results&quot;)
+# Missing files are reported as warnings</code></pre><h3 id="Folder-Based-Attachments"><a class="docs-heading-anchor" href="#Folder-Based-Attachments">Folder-Based Attachments</a><a id="Folder-Based-Attachments-1"></a><a class="docs-heading-anchor-permalink" href="#Folder-Based-Attachments" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Share all images from a folder
+notifyme(&quot;All analysis plots ready!&quot;, 
+         attachment_folder=&quot;./analysis_plots/&quot;,
+         zulip_channel=&quot;galaxy-research&quot;)
+
+# Limit number of files
+notifyme(&quot;Top 5 recent results&quot;, 
+         attachment_folder=&quot;./plots/&quot;,
+         max_attachments=5,
+         zulip_channel=&quot;results&quot;)</code></pre><h3 id="Convenience-Function-for-Research"><a class="docs-heading-anchor" href="#Convenience-Function-for-Research">Convenience Function for Research</a><a id="Convenience-Function-for-Research-1"></a><a class="docs-heading-anchor-permalink" href="#Convenience-Function-for-Research" title="Permalink"></a></h3><pre><code class="language-julia hljs"># send_results() - Perfect for research workflows
+send_results(&quot;Analysis pipeline complete!&quot;, 
+             &quot;./final_results/&quot;,
+             zulip_channel=&quot;research-results&quot;,
+             zulip_topic=&quot;Pipeline Run - $(today())&quot;)</code></pre><h3 id="Smart-File-Features"><a class="docs-heading-anchor" href="#Smart-File-Features">Smart File Features</a><a id="Smart-File-Features-1"></a><a class="docs-heading-anchor-permalink" href="#Smart-File-Features" title="Permalink"></a></h3><p><strong>🔄 Automatic Optimization</strong>: Images resized and compressed for fast mobile viewing   <strong>📊 File Sorting</strong>: Newest files first when using folders   <strong>🚫 Duplicate Prevention</strong>: Same file won&#39;t be attached multiple times   <strong>⚠️ Error Reporting</strong>: Missing files reported clearly in the message   <strong>📱 Mobile-Friendly</strong>: Optimized for viewing on phones and tablets  </p><h2 id="Time-Tracking-and-Performance-Monitoring"><a class="docs-heading-anchor" href="#Time-Tracking-and-Performance-Monitoring">Time Tracking and Performance Monitoring</a><a id="Time-Tracking-and-Performance-Monitoring-1"></a><a class="docs-heading-anchor-permalink" href="#Time-Tracking-and-Performance-Monitoring" title="Permalink"></a></h2><h3 id="Basic-Time-Tracking"><a class="docs-heading-anchor" href="#Basic-Time-Tracking">Basic Time Tracking</a><a id="Basic-Time-Tracking-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Time-Tracking" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Manual timing
+start_time = time()
+heavy_computation()
+notifyme(&quot;Computation finished!&quot;, 
+         start_time=start_time, 
+         zulip_channel=&quot;timing&quot;)
+
+# Automatic timing
+notifyme(&quot;Analysis complete!&quot;, 
+         include_timing=true, 
+         timing_details=true,
+         zulip_channel=&quot;timing&quot;)</code></pre><h3 id="Automated-Timing-with-timed_notify()"><a class="docs-heading-anchor" href="#Automated-Timing-with-timed_notify()">Automated Timing with <code>timed_notify()</code></a><a id="Automated-Timing-with-timed_notify()-1"></a><a class="docs-heading-anchor-permalink" href="#Automated-Timing-with-timed_notify()" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Automatically time any computation
+result = timed_notify(&quot;Galaxy formation simulation&quot;) do
+    simulate_galaxy_formation(parameters)
+end
+
+# With custom channel and detailed metrics
+result = timed_notify(&quot;Temperature analysis&quot;, 
+                     include_details=true,
+                     zulip_channel=&quot;research-timing&quot;,
+                     zulip_topic=&quot;Performance Monitoring&quot;) do
+    analyze_temperature_distribution(data)
+end</code></pre><h2 id="Progress-Tracking-for-Long-Workflows"><a class="docs-heading-anchor" href="#Progress-Tracking-for-Long-Workflows">Progress Tracking for Long Workflows</a><a id="Progress-Tracking-for-Long-Workflows-1"></a><a class="docs-heading-anchor-permalink" href="#Progress-Tracking-for-Long-Workflows" title="Permalink"></a></h2><h3 id="Basic-Progress-Tracking"><a class="docs-heading-anchor" href="#Basic-Progress-Tracking">Basic Progress Tracking</a><a id="Basic-Progress-Tracking-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Progress-Tracking" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Simple progress tracker
+tracker = create_progress_tracker(100, task_name=&quot;Data Processing&quot;)
+for i in 1:100
+    process_item(i)
+    update_progress!(tracker, i)
+end
+complete_progress!(tracker, &quot;All items processed!&quot;)</code></pre><h3 id="Advanced-Progress-with-Zulip-Integration"><a class="docs-heading-anchor" href="#Advanced-Progress-with-Zulip-Integration">Advanced Progress with Zulip Integration</a><a id="Advanced-Progress-with-Zulip-Integration-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Progress-with-Zulip-Integration" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Comprehensive progress tracking
+tracker = create_progress_tracker(1000, 
+                                 task_name=&quot;Galaxy Catalog Processing&quot;,
+                                 time_interval=300,     # Notify every 5 minutes
+                                 progress_interval=10,  # Notify every 10% progress
+                                 zulip_channel=&quot;progress&quot;,
+                                 zulip_topic=&quot;Large Scale Processing&quot;)
+
+# Process items with automatic smart notifications
+for i in 1:1000
+    process_galaxy(galaxies[i])
+    
+    # This automatically sends notifications at time/progress intervals
+    update_progress!(tracker, i)
+    
+    # Add custom messages at milestones
+    if i == 500
+        update_progress!(tracker, i, &quot;🎯 Halfway done - results looking excellent!&quot;)
+    end
+end
+
+# Send completion notification with full summary
+complete_progress!(tracker, &quot;✅ All galaxies processed successfully!&quot;)</code></pre><h2 id="Exception-Handling-and-Error-Reporting"><a class="docs-heading-anchor" href="#Exception-Handling-and-Error-Reporting">Exception Handling and Error Reporting</a><a id="Exception-Handling-and-Error-Reporting-1"></a><a class="docs-heading-anchor-permalink" href="#Exception-Handling-and-Error-Reporting" title="Permalink"></a></h2><h3 id="Basic-Exception-Notification"><a class="docs-heading-anchor" href="#Basic-Exception-Notification">Basic Exception Notification</a><a id="Basic-Exception-Notification-1"></a><a class="docs-heading-anchor-permalink" href="#Basic-Exception-Notification" title="Permalink"></a></h3><pre><code class="language-julia hljs">try
+    risky_computation()
+catch e
+    notifyme(&quot;❌ Computation failed!&quot;, 
+             exception_context=e, 
+             zulip_channel=&quot;alerts&quot;,
+             zulip_topic=&quot;Critical Errors&quot;)
+end</code></pre><h3 id="Advanced-Error-Handling-with-safe_execute()"><a class="docs-heading-anchor" href="#Advanced-Error-Handling-with-safe_execute()">Advanced Error Handling with <code>safe_execute()</code></a><a id="Advanced-Error-Handling-with-safe_execute()-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Error-Handling-with-safe_execute()" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Automatic exception handling with rich context
+result = safe_execute(&quot;Critical galaxy simulation&quot;) do
+    run_galaxy_simulation(complex_parameters)
+end
+
+# Custom error reporting
+result = safe_execute(&quot;Temperature field calculation&quot;,
+                     zulip_channel=&quot;critical-errors&quot;,
+                     zulip_topic=&quot;System Failures&quot;,
+                     include_context=true) do
+    calculate_temperature_field(massive_dataset)
+end</code></pre><h2 id="Complete-Research-Workflow-Examples"><a class="docs-heading-anchor" href="#Complete-Research-Workflow-Examples">Complete Research Workflow Examples</a><a id="Complete-Research-Workflow-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Complete-Research-Workflow-Examples" title="Permalink"></a></h2><h3 id="Daily-Research-Pipeline"><a class="docs-heading-anchor" href="#Daily-Research-Pipeline">Daily Research Pipeline</a><a id="Daily-Research-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#Daily-Research-Pipeline" title="Permalink"></a></h3><pre><code class="language-julia hljs">function daily_research_workflow()
+    # Start notification
+    notifyme(&quot;🌅 Starting daily research tasks&quot;, 
+             zulip_channel=&quot;daily-updates&quot;,
+             zulip_topic=&quot;Research Log - $(today())&quot;)
+    
+    daily_tracker = create_progress_tracker(4, 
+                                           task_name=&quot;Daily Research Tasks&quot;,
+                                           time_interval=1800,  # 30 minutes
+                                           zulip_channel=&quot;daily-updates&quot;,
+                                           zulip_topic=&quot;Research Log - $(today())&quot;)
+    
+    try
+        # Morning: Data processing
+        update_progress!(daily_tracker, 1, &quot;Processing overnight simulations&quot;)
+        morning_results = timed_notify(&quot;Morning data processing&quot;,
+                                      zulip_channel=&quot;timing&quot;) do
+            process_overnight_simulations()
+        end
+        
+        # Afternoon: Analysis  
+        update_progress!(daily_tracker, 2, &quot;Running temperature analysis&quot;)
+        analysis_results = timed_notify(&quot;Temperature analysis&quot;, 
+                                       include_details=true,
+                                       zulip_channel=&quot;timing&quot;) do
+            analyze_temperature_profiles(morning_results)
+        end
+        
+        # Evening: Visualization
+        update_progress!(daily_tracker, 3, &quot;Creating plots and visualizations&quot;)
+        plots = safe_execute(&quot;Plot generation&quot;,
+                           zulip_channel=&quot;results&quot;) do
+            create_publication_plots(analysis_results)
+        end
+        
+        # Final: Results sharing
+        update_progress!(daily_tracker, 4, &quot;Sharing results with team&quot;)
+        send_results(&quot;📊 Daily research results ready!&quot;, plots,
+                    zulip_channel=&quot;daily-results&quot;,
+                    zulip_topic=&quot;Results - $(today())&quot;)
+        
+        complete_progress!(daily_tracker, &quot;✅ Productive research day completed!&quot;)
+        
+    catch e
+        notifyme(&quot;❌ Daily workflow failed&quot;, 
+                exception_context=e,
+                zulip_channel=&quot;alerts&quot;,
+                zulip_topic=&quot;Workflow Failures&quot;)
+        rethrow(e)
+    end
+end
+
+daily_research_workflow()</code></pre><h3 id="Long-Running-Simulation-with-Team-Updates"><a class="docs-heading-anchor" href="#Long-Running-Simulation-with-Team-Updates">Long-Running Simulation with Team Updates</a><a id="Long-Running-Simulation-with-Team-Updates-1"></a><a class="docs-heading-anchor-permalink" href="#Long-Running-Simulation-with-Team-Updates" title="Permalink"></a></h3><pre><code class="language-julia hljs">function galaxy_formation_simulation()
+    # Initialize team notification
+    notifyme(&quot;&quot;&quot;🚀 Starting major galaxy formation simulation
+    
+    📊 Simulation Parameters:
+    • Duration: 5 Gyr cosmic time
+    • Particles: 10M dark matter + 2M gas
+    • Resolution: 1 kpc spatial
+    • Expected runtime: ~24 hours
+    
+    📱 Progress updates will be posted here every hour.
+    &quot;&quot;&quot;, zulip_channel=&quot;galaxy-research&quot;,
+        zulip_topic=&quot;Major Simulation Run - $(today())&quot;)
+    
+    # Set up progress tracking for team
+    sim_tracker = create_progress_tracker(100,
+                                         task_name=&quot;Galaxy Formation Simulation&quot;,
+                                         time_interval=3600,   # Hourly updates  
+                                         progress_interval=5,  # Every 5%
+                                         zulip_channel=&quot;galaxy-research&quot;,
+                                         zulip_topic=&quot;Major Simulation Run - $(today())&quot;)
+    
+    simulation_results = timed_notify(&quot;Full simulation execution&quot;, 
+                                     include_details=true,
+                                     zulip_channel=&quot;timing&quot;) do
+        
+        for timestep in 1:100
+            # Run simulation step
+            evolve_galaxies_one_timestep(timestep)
+            
+            # Update progress (auto-notifies at intervals)
+            update_progress!(sim_tracker, timestep)
+            
+            # Special notifications at key physics milestones
+            if timestep == 25
+                update_progress!(sim_tracker, timestep, 
+                    &quot;🌟 First quarter complete - galaxy cores forming!&quot;)
+            elseif timestep == 50
+                update_progress!(sim_tracker, timestep, 
+                    &quot;💫 Halfway point - major merger events occurring!&quot;)
+            elseif timestep == 75
+                update_progress!(sim_tracker, timestep, 
+                    &quot;⭐ Final quarter - galaxy stabilization phase!&quot;)
+            end
+        end
+        
+        return collect_simulation_results()
+    end
+    
+    # Completion with results
+    complete_progress!(sim_tracker, &quot;🎉 Simulation completed successfully!&quot;)
+    
+    # Share final results with team
+    send_results(&quot;&quot;&quot;🌌 Galaxy Formation Simulation Complete!
+    
+    🎯 **Key Findings:**
+    • Final galaxy count: $(length(simulation_results.galaxies))
+    • Major mergers: $(simulation_results.merger_count)
+    • Average galaxy mass: $(round(simulation_results.avg_mass, digits=2))e11 M☉
+    
+    📊 **Performance:**
+    • Total runtime: See timing details above
+    • Memory peak: $(simulation_results.peak_memory)GB
+    • Data generated: $(simulation_results.data_size)
+    
+    🔬 **Next Steps:**
+    • Review temperature distributions
+    • Analyze merger histories  
+    • Prepare summary for group meeting
+    &quot;&quot;&quot;, 
+    simulation_results.output_files,
+    zulip_channel=&quot;galaxy-research&quot;,
+    zulip_topic=&quot;Major Simulation Run - $(today())&quot;)
+    
+    return simulation_results
+end
+
+galaxy_formation_simulation()</code></pre><h3 id="Paper-Collaboration-Workflow"><a class="docs-heading-anchor" href="#Paper-Collaboration-Workflow">Paper Collaboration Workflow</a><a id="Paper-Collaboration-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#Paper-Collaboration-Workflow" title="Permalink"></a></h3><pre><code class="language-julia hljs">function paper_preparation_workflow()
+    # Start paper collaboration
+    notifyme(&quot;&quot;&quot;📝 Starting paper figure preparation
+    
+    📄 **Paper**: &quot;Temperature Distributions in Early Galaxies&quot;
+    👥 **Authors**: Research Team
+    🎯 **Target**: ApJ submission next week
+    
+    📋 **Today&#39;s Tasks:**
+    • Generate final figures
+    • Run statistical validation
+    • Create supplementary material
+    &quot;&quot;&quot;, zulip_channel=&quot;publications&quot;,
+        zulip_topic=&quot;Early Galaxies Paper - Figures&quot;)
+    
+    paper_tracker = create_progress_tracker(5,
+                                           task_name=&quot;Paper Figure Preparation&quot;,
+                                           zulip_channel=&quot;publications&quot;,
+                                           zulip_topic=&quot;Early Galaxies Paper - Figures&quot;)
+    
+    try
+        # Figure 1: Main result
+        update_progress!(paper_tracker, 1, &quot;Creating Figure 1 - main temperature plot&quot;)
+        fig1 = timed_notify(&quot;Figure 1 generation&quot;) do
+            create_main_temperature_figure()
+        end
+        
+        # Figure 2: Comparison
+        update_progress!(paper_tracker, 2, &quot;Creating Figure 2 - comparison with observations&quot;)
+        fig2 = timed_notify(&quot;Figure 2 generation&quot;) do
+            create_observation_comparison()
+        end
+        
+        # Figure 3: Validation
+        update_progress!(paper_tracker, 3, &quot;Creating Figure 3 - statistical validation&quot;)
+        fig3 = timed_notify(&quot;Figure 3 generation&quot;) do
+            create_validation_plots()
+        end
+        
+        # Supplementary material
+        update_progress!(paper_tracker, 4, &quot;Generating supplementary figures&quot;)
+        supp_figs = safe_execute(&quot;Supplementary figure generation&quot;) do
+            create_supplementary_figures()
+        end
+        
+        # Final assembly
+        update_progress!(paper_tracker, 5, &quot;Assembling final figure package&quot;)
+        all_figures = [fig1, fig2, fig3] + supp_figs
+        
+        complete_progress!(paper_tracker, &quot;📄 All paper figures completed!&quot;)
+        
+        # Share with co-authors
+        send_results(&quot;&quot;&quot;📊 Paper figures ready for review!
+        
+        📄 **Figure Package Complete:**
+        • Figure 1: Main temperature distribution results
+        • Figure 2: Comparison with Hubble observations  
+        • Figure 3: Statistical validation and error analysis
+        • Supplementary: Additional 6 supporting figures
+        
+        👥 **Next Steps:**
+        • Co-author review by Friday
+        • Address feedback over weekend
+        • Submit Monday morning
+        
+        💬 **Feedback**: Please review and comment in this thread
+        &quot;&quot;&quot;,
+        all_figures,
+        zulip_channel=&quot;publications&quot;, 
+        zulip_topic=&quot;Early Galaxies Paper - Figures&quot;)
+        
+    catch e
+        notifyme(&quot;❌ Paper figure generation failed&quot;,
+                exception_context=e,
+                zulip_channel=&quot;publications&quot;,
+                zulip_topic=&quot;Early Galaxies Paper - Issues&quot;)
+        rethrow(e)
+    end
+end
+
+paper_preparation_workflow()</code></pre><h2 id="Privacy-and-Security-Best-Practices"><a class="docs-heading-anchor" href="#Privacy-and-Security-Best-Practices">Privacy and Security Best Practices</a><a id="Privacy-and-Security-Best-Practices-1"></a><a class="docs-heading-anchor-permalink" href="#Privacy-and-Security-Best-Practices" title="Permalink"></a></h2><h3 id="Stream-Privacy-Guidelines"><a class="docs-heading-anchor" href="#Stream-Privacy-Guidelines">Stream Privacy Guidelines</a><a id="Stream-Privacy-Guidelines-1"></a><a class="docs-heading-anchor-permalink" href="#Stream-Privacy-Guidelines" title="Permalink"></a></h3><pre><code class="language-julia hljs"># ✅ Good: Use appropriate privacy levels
+notifyme(&quot;Published results ready&quot;, zulip_channel=&quot;public-results&quot;)        # Public
+notifyme(&quot;Preliminary findings&quot;, zulip_channel=&quot;team-private&quot;)             # Private
+notifyme(&quot;Critical system error&quot;, zulip_channel=&quot;admin-alerts&quot;)            # Private
+
+# ❌ Poor: Wrong privacy level
+notifyme(&quot;Unpublished breakthrough data&quot;, zulip_channel=&quot;general&quot;)         # Too public
+notifyme(&quot;General team update&quot;, zulip_channel=&quot;secret-project&quot;)            # Too private</code></pre><h3 id="Security-Considerations"><a class="docs-heading-anchor" href="#Security-Considerations">Security Considerations</a><a id="Security-Considerations-1"></a><a class="docs-heading-anchor-permalink" href="#Security-Considerations" title="Permalink"></a></h3><p><strong>🔐 Bot Security:</strong></p><pre><code class="language-bash hljs"># Secure your bot credentials
+chmod 600 ~/zulip.txt  # Only you can read/write</code></pre><p><strong>📋 Content Guidelines:</strong></p><ul><li>Never include passwords, API keys, or credentials in messages</li><li>Be mindful of sensitive data in attached files</li><li>Use private streams for unpublished research</li><li>Consider your institution&#39;s data sharing policies</li></ul><p><strong>👥 Team Management:</strong></p><ul><li>Regularly review stream membership</li><li>Archive old project streams when complete</li><li>Use meaningful stream and topic names</li><li>Establish team guidelines for notification usage</li></ul><h2 id="Mobile-Optimization"><a class="docs-heading-anchor" href="#Mobile-Optimization">Mobile Optimization</a><a id="Mobile-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Mobile-Optimization" title="Permalink"></a></h2><h3 id="Mobile-Friendly-Messages"><a class="docs-heading-anchor" href="#Mobile-Friendly-Messages">Mobile-Friendly Messages</a><a id="Mobile-Friendly-Messages-1"></a><a class="docs-heading-anchor-permalink" href="#Mobile-Friendly-Messages" title="Permalink"></a></h3><pre><code class="language-julia hljs"># ✅ Good: Clear, scannable mobile format
+notifyme(&quot;&quot;&quot;✅ Analysis Complete
+
+Key Results:
+• 15 hot spots found
+• 3 need immediate review
+• Runtime: 45 minutes
+
+Next: Review flagged items&quot;&quot;&quot;, 
+zulip_channel=&quot;results&quot;)
+
+# ❌ Poor: Too verbose for mobile
+notifyme(&quot;&quot;&quot;The comprehensive analysis of the temperature distribution
+across the galaxy formation simulation has been completed successfully
+after running for approximately 45 minutes of computational time. 
+During this analysis, we discovered 15 hot spots of particular interest,
+with 3 of them requiring immediate detailed review...&quot;&quot;&quot;,
+zulip_channel=&quot;results&quot;)</code></pre><h3 id="Smart-Notification-Settings"><a class="docs-heading-anchor" href="#Smart-Notification-Settings">Smart Notification Settings</a><a id="Smart-Notification-Settings-1"></a><a class="docs-heading-anchor-permalink" href="#Smart-Notification-Settings" title="Permalink"></a></h3><p><strong>Configure Zulip mobile app:</strong></p><ul><li><strong>Follow important streams</strong>: Get push notifications for critical updates</li><li><strong>Mute noisy streams</strong>: Disable notifications for testing/debugging streams  </li><li><strong>Keyword alerts</strong>: Get notified when your name or project is mentioned</li><li><strong>Do Not Disturb</strong>: Set quiet hours for work-life balance</li></ul><h2 id="Troubleshooting-Common-Issues"><a class="docs-heading-anchor" href="#Troubleshooting-Common-Issues">Troubleshooting Common Issues</a><a id="Troubleshooting-Common-Issues-1"></a><a class="docs-heading-anchor-permalink" href="#Troubleshooting-Common-Issues" title="Permalink"></a></h2><h3 id="Connection-Problems"><a class="docs-heading-anchor" href="#Connection-Problems">Connection Problems</a><a id="Connection-Problems-1"></a><a class="docs-heading-anchor-permalink" href="#Connection-Problems" title="Permalink"></a></h3><p><strong>Problem</strong>: &quot;Stream does not exist&quot; error</p><pre><code class="language-julia hljs"># Solution: Check stream name and bot subscription
+notifyme(&quot;Test message&quot;, zulip_channel=&quot;results&quot;)  # Check spelling
+# Ensure bot is subscribed to stream via Zulip web interface</code></pre><p><strong>Problem</strong>: &quot;API authentication failed&quot;</p><pre><code class="language-julia hljs"># Solution: Verify credentials in ~/zulip.txt
+# Check format:
+# Line 1: bot-name@domain.zulipchat.com
+# Line 2: API key (long string)
+# Line 3: domain.zulipchat.com</code></pre><h3 id="File-Attachment-Issues"><a class="docs-heading-anchor" href="#File-Attachment-Issues">File Attachment Issues</a><a id="File-Attachment-Issues-1"></a><a class="docs-heading-anchor-permalink" href="#File-Attachment-Issues" title="Permalink"></a></h3><p><strong>Problem</strong>: Files not uploading</p><pre><code class="language-julia hljs"># Check file size and permissions
+filepath = &quot;large_file.png&quot;
+filesize = stat(filepath).size
+println(&quot;File size: $(filesize ÷ 1024 ÷ 1024) MB&quot;)
+
+# Use size limits for large files
+notifyme(&quot;Results with large files&quot;, 
+         attachments=[filepath],
+         max_file_size=50_000_000,  # 50MB limit
+         zulip_channel=&quot;results&quot;)</code></pre><h3 id="Performance-Issues"><a class="docs-heading-anchor" href="#Performance-Issues">Performance Issues</a><a id="Performance-Issues-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Issues" title="Permalink"></a></h3><p><strong>Problem</strong>: Notifications too frequent</p><pre><code class="language-julia hljs"># ❌ Poor: Too many notifications
+for i in 1:1000
+    notifyme(&quot;Step $i done&quot;, zulip_channel=&quot;progress&quot;)  # Spam!
+end
+
+# ✅ Better: Use progress tracking
+tracker = create_progress_tracker(1000, 
+                                 time_interval=60,      # 1 minute
+                                 progress_interval=10)  # 10%
+for i in 1:1000
+    update_progress!(tracker, i)  # Smart throttling
+end
+complete_progress!(tracker, &quot;All done!&quot;)</code></pre><h2 id="Zulip-Notification-Checklist"><a class="docs-heading-anchor" href="#Zulip-Notification-Checklist">Zulip Notification Checklist</a><a id="Zulip-Notification-Checklist-1"></a><a class="docs-heading-anchor-permalink" href="#Zulip-Notification-Checklist" title="Permalink"></a></h2><p><strong>Getting Started:</strong></p><ul><li>[ ] Join or create Zulip organization</li><li>[ ] Install mobile app and configure notifications</li><li>[ ] Create MERA bot and get credentials</li><li>[ ] Create and secure <code>~/zulip.txt</code> file</li><li>[ ] Test basic notifications to #general</li></ul><p><strong>Stream Organization:</strong></p><ul><li>[ ] Create appropriate streams for your research</li><li>[ ] Set proper privacy levels (public/private)</li><li>[ ] Subscribe bot to relevant streams</li><li>[ ] Establish stream naming conventions</li><li>[ ] Configure mobile notification preferences</li></ul><p><strong>Advanced Features:</strong></p><ul><li>[ ] Test file attachments and error handling</li><li>[ ] Set up progress tracking for long workflows</li><li>[ ] Implement timing and performance monitoring</li><li>[ ] Add exception handling to critical processes</li><li>[ ] Test timed<em>notify and safe</em>execute functions</li></ul><p><strong>Team Collaboration:</strong></p><ul><li>[ ] Establish team notification guidelines</li><li>[ ] Create project-specific streams and topics</li><li>[ ] Set up automated progress updates</li><li>[ ] Configure error alerting workflows</li><li>[ ] Test mobile experience and accessibility</li></ul><p><strong>Production Ready:</strong></p><ul><li>[ ] All team members onboarded to notification system</li><li>[ ] Critical workflows have proper error handling</li><li>[ ] Progress tracking for all long-running jobs</li><li>[ ] Results sharing integrated into research pipeline</li><li>[ ] Mobile notifications optimized for your workflow</li></ul><p><strong>Key Takeaway:</strong> Zulip transforms notifications from simple alerts into a comprehensive research collaboration platform. With organized streams, rich attachments, and advanced features, it scales from individual use to large research teams while keeping everything searchable and accessible!</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../email/">« Email</a><a class="docs-footer-nextpage" href="../../api/notifications/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Sunday 17 August 2025 13:47">Sunday 17 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
