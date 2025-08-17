@@ -157,17 +157,13 @@ include("notification_robustness_tests.jl")  # Notification edge & error handlin
         println("🔔 Running Zulip notification tests (conditional on configuration)...")
     end
     
-    # 12. Notification System Tests (local only, requires config files)
-    if !IS_CI
-        @testset "Notification System Tests" begin
-            println("🔔 Running comprehensive notification system tests...")
-            println("   📧 Tests email notifications if ~/email.txt exists")
-            println("   💬 Tests Zulip notifications if ~/zulip.txt exists")
-            println("   🧪 All test messages sent to 'runtests' channel only")
-            # Tests are included via notification_tests.jl and run automatically
-        end
-    else
-        @test_skip "Notification tests skipped in CI environment"
+    # 12. (Removed legacy notification_tests.jl suite — consolidated into:
+    #     - zulip_notification_tests.jl (feature + optional basic mode)
+    #     - notifications_simple_test.jl (local smoke test)
+    #     - notification_robustness_tests.jl (edge/error paths)
+    #     Keeping numbering stable for external references.)
+    if IS_CI
+        @test_skip "Legacy consolidated notification suite skipped (CI)"
     end
     
 end
