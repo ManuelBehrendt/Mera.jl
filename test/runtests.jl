@@ -16,15 +16,23 @@ const IS_CI = get(ENV, "CI", "false") == "true" ||
               get(ENV, "GITHUB_ACTIONS", "false") == "true" ||
               get(ENV, "MERA_CI_MODE", "false") == "true"
 
-println("� Starting Mera.jl Test Suite...")
+println("🚀 Starting Mera.jl Test Suite...")
 println("CI Environment: $IS_CI")
 println("Julia Version: $(VERSION)")
 println("Available threads: $(Threads.nthreads())")
 
-# Include comprehensive unit tests  
+# Optional toggles (set env var to "true" to skip)
+const SKIP_AQUA = get(ENV, "MERA_SKIP_AQUA", "false") == "true"
+const SKIP_HEAVY = get(ENV, "MERA_SKIP_HEAVY", "false") == "true"  # skip heavy data/performance sets
+
+# Include comprehensive unit tests (existing)
 include("comprehensive_unit_tests.jl")
 include("comprehensive_unit_tests_simple.jl")
 include("physics_and_performance_tests.jl")
+
+# New: basic functionality sanity & Aqua quality
+include("basic_functionality_sanity.jl")
+include("aqua_quality_tests.jl")
 
 # Include test modules
 include("basic_module_tests.jl")
@@ -36,14 +44,52 @@ include("notebook_inspired_tests.jl")
 include("workflow_based_tests.jl")  # Re-enabled with fixes
 include("data_free_workflow_tests.jl")
 include("comprehensive_unit_tests_simple.jl")  # New simple comprehensive Mera function tests
+##
+# Zulip notification tests can be lengthy (image generation, large messages, combined scenarios).
+# For CI or when heavy tests are skipped, default to BASIC mode unless user explicitly overrides.
+if (IS_CI || SKIP_HEAVY) && !haskey(ENV, "MERA_BASIC_ZULIP_TESTS")
+    ENV["MERA_BASIC_ZULIP_TESTS"] = "true"
+    println("🔔 Enabling basic Zulip notification test mode (MERA_BASIC_ZULIP_TESTS=true) for faster run")
+end
+
+# Automatically switch Zulip notifications to dry-run mode in CI or fast test contexts to avoid
+# network latency / flakiness unless the user explicitly requests real network tests via
+# MERA_ZULIP_ENABLE_NETWORK=true or pre-sets MERA_ZULIP_DRY_RUN.
+if (IS_CI || get(ENV, "MERA_AQUA_LEVEL", "") in ("fast", "ci_min")) &&
+   !haskey(ENV, "MERA_ZULIP_DRY_RUN") && get(ENV, "MERA_ZULIP_ENABLE_NETWORK", "false") != "true"
+    ENV["MERA_ZULIP_DRY_RUN"] = "true"
+    println("🔔 Enabling Zulip dry-run mode (MERA_ZULIP_DRY_RUN=true) – set MERA_ZULIP_ENABLE_NETWORK=true to send real messages")
+end
+include("zulip_notification_tests.jl")  # Comprehensive (auto-basic) Zulip notification tests
+
+# Include notification tests (only run locally if configured)
+if !IS_CI  # Only include notification tests when not in CI
+    include("notifications_simple_test.jl")
+end
+
+include("notification_robustness_tests.jl")  # Notification edge & error handling tests
 
 @testset "Mera.jl Test Suite" begin
     
+    # 0. Meta / Quality Tests (Aqua) run first for early failure visibility
+    @testset "Aqua Quality" begin
+        if SKIP_AQUA
+            @test_skip "Aqua tests skipped via MERA_SKIP_AQUA"
+        else
+            MeraAquaQualityTests.run_aqua_quality_tests()
+        end
+    end
+
     # 1. Basic Module Loading Tests
     @testset "Module Loading" begin
         run_basic_module_tests()
     end
     
+    # 1b. Basic Functionality Sanity (very lightweight)
+    @testset "Basic Functionality Sanity" begin
+        MeraBasicFunctionalitySanity.run_basic_functionality_sanity_tests()
+    end
+
     # 2. Core Functionality Tests (major coverage increase)
     @testset "Core Functionality" begin
         run_core_functionality_tests()
@@ -78,7 +124,11 @@ include("comprehensive_unit_tests_simple.jl")  # New simple comprehensive Mera f
     
     # 8. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
-        run_simulation_data_tests()
+        if SKIP_HEAVY
+            @test_skip "Simulation data tests skipped via MERA_SKIP_HEAVY"
+        else
+            run_simulation_data_tests()
+        end
     end
     
     # 9. Comprehensive Mera Function Unit Tests
@@ -86,14 +136,38 @@ include("comprehensive_unit_tests_simple.jl")  # New simple comprehensive Mera f
         run_simple_comprehensive_tests()
     end
     
-    # 10. Physics and Performance Tests
+    # 10. Physics and Performance Tests (optionally heavy)
     @testset "Physics and Performance Tests" begin
-        if isdefined(Main, :run_physics_and_performance_tests)
-            run_physics_and_performance_tests()
+        if SKIP_HEAVY
+            @test_skip "Physics/performance tests skipped via MERA_SKIP_HEAVY"
         else
-            @test_skip "Physics and performance tests function not available"
-            println("⚠️  Physics and performance tests not available")
+            if isdefined(Main, :run_physics_and_performance_tests)
+                run_physics_and_performance_tests()
+            else
+                @test_skip "Physics and performance tests function not available"
+                println("⚠️  Physics and performance tests not available")
+            end
         end
+    end
+    
+    # 11. Zulip Notification Tests (conditional on zulip.txt existence)
+    @testset "Zulip Notification Tests" begin
+        # Note: These tests automatically check for ~/zulip.txt and skip if not configured
+        # All test messages are sent to "runtests" channel to avoid spam
+        println("🔔 Running Zulip notification tests (conditional on configuration)...")
+    end
+    
+    # 12. Notification System Tests (local only, requires config files)
+    if !IS_CI
+        @testset "Notification System Tests" begin
+            println("🔔 Running comprehensive notification system tests...")
+            println("   📧 Tests email notifications if ~/email.txt exists")
+            println("   💬 Tests Zulip notifications if ~/zulip.txt exists")
+            println("   🧪 All test messages sent to 'runtests' channel only")
+            # Tests are included via notification_tests.jl and run automatically
+        end
+    else
+        @test_skip "Notification tests skipped in CI environment"
     end
     
 end

@@ -28,6 +28,7 @@ using StructArrays
 using ProgressMeter
 using StatsBase
 using OnlineStats
+using Images
 using ImageTransformations
 using ImageTransformations.Interpolations
 #using ImageFiltering
@@ -52,11 +53,14 @@ using FortranFiles
 #using JuliaDB
 using IndexedTables
 using CSV
+using FileIO
 using DataStructures
 using Distributions
 using ElasticArrays
 using StructArrays
 using JSON3
+using HTTP
+using JSON
 using ProgressMeter
 using StatsBase
 using OnlineStats
@@ -146,6 +150,19 @@ export
     humanize,
     bell,
     notifyme,
+    send_results,
+    timed_notify,
+    create_progress_tracker,
+    update_progress!,
+    complete_progress!,
+    safe_execute,
+    simple_base64encode,
+    optimize_image_for_zulip,
+    get_system_info_command,
+    get_memory_info_command,
+    get_disk_info_command,
+    get_network_info_command,
+    get_process_info_command,
 # adaptive I/O optimization
     get_simulation_characteristics,
     configure_adaptive_io,
@@ -214,6 +231,7 @@ export
 include("types.jl")
 
 include("functions/miscellaneous.jl")
+include("functions/notifications.jl")
 include("functions/io/enhanced_io.jl")
 include("functions/io/adaptive_io.jl")
 include("functions/io/mera_io_config.jl")
