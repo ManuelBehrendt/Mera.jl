@@ -38,6 +38,9 @@ include("aqua_quality_tests.jl")
 include("basic_module_tests.jl")
 include("core_functionality_tests.jl")
 include("computational_tests.jl")
+include("projection_edge_case_tests.jl")        # Added: projection API edge & threading invariants
+include("macro_filter_apply_tests.jl")          # Added: @filter/@where/@apply macro correctness tests
+include("io_config_tests.jl")                   # Added: IO configuration environment side-effect tests
 include("pipeline_tests.jl")
 include("simulation_data_tests.jl")
 include("notebook_inspired_tests.jl")
