@@ -43,6 +43,7 @@ include("phase1_data_integration_tests_fixed.jl")           # Core Phase 1: Perf
 include("phase1b_improved_integration_tests.jl")            # Phase 1B: Perfect 49/49 tests (6-8% coverage)
 include("phase1c_minimal_hydro_tests.jl")                   # Phase 1C: Perfect 51/51 tests (6-8% coverage)
 include("phase1d_data_utilities_tests.jl")                  # Phase 1D: Data utilities & advanced functions (8-12% coverage)
+include("phase1e_streamlined_tests.jl")              # Phase 1E: Streamlined particle/optimization (5-8% coverage)
 
 # Include test modules
 include("basic_module_tests.jl")
