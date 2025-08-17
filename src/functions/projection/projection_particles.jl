@@ -59,7 +59,7 @@ projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                 show_progress::Bool=true,
                 myargs::ArgumentsType=ArgumentsType()  )
 
-return HydroMapsType
+return PartMapsType
 
 ```
 
