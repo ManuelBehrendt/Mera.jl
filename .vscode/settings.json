@@ -1,0 +1,84 @@
+{
+    // Julia Language Server Configuration
+    "julia.executablePath": "",
+    "julia.environmentPath": "",
+    "julia.useRevise": true,
+    "julia.enableTelemetry": false,
+    "julia.symbolCacheDownload": true,
+    
+    // Coverage Gutters Configuration
+    "coverage-gutters.coverageFileNames": [
+        "lcov.info",
+        "*.lcov", 
+        "coverage.xml",
+        "*.cov"
+    ],
+    "coverage-gutters.showLineCoverage": true,
+    "coverage-gutters.showBranchCoverage": true,
+    "coverage-gutters.showRulerCoverage": true,
+    "coverage-gutters.showGutterCoverage": true,
+    "coverage-gutters.defaultSearchPaths": [
+        "",
+        "src/",
+        "test/",
+        "coverage/"
+    ],
+    "coverage-gutters.coverageReportFileName": "lcov.info",
+    "coverage-gutters.altSfCompare": false,
+    "coverage-gutters.ignoredPathGlobs": "**/node_modules/**",
+    "coverage-gutters.highlightdark": "rgba(128, 128, 128, 0.1)",
+    "coverage-gutters.noHighlightDark": "rgba(255, 0, 0, 0.2)",
+    "coverage-gutters.partialHighlightDark": "rgba(255, 255, 0, 0.2)",
+    
+    // File associations
+    "files.associations": {
+        "*.jl": "julia",
+        "*.cov": "julia",
+        "Project.toml": "toml",
+        "Manifest.toml": "toml"
+    },
+    
+    // Editor settings for Julia
+    "editor.rulers": [92],
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "[julia]": {
+        "editor.tabSize": 4,
+        "editor.insertSpaces": true,
+        "editor.rulers": [92],
+        "editor.detectIndentation": false
+    },
+    
+    // Terminal configuration
+    "terminal.integrated.env.osx": {
+        "JULIA_NUM_THREADS": "auto"
+    },
+    "terminal.integrated.env.linux": {
+        "JULIA_NUM_THREADS": "auto"
+    },
+    "terminal.integrated.env.windows": {
+        "JULIA_NUM_THREADS": "auto"
+    },
+    
+    // Test configuration
+    "julia.enableCrashReporter": false,
+    "julia.formatOnSave": false,
+    "julia.lint.run": true,
+    
+    // Git configuration
+    "git.ignoreLimitWarning": true,
+    "files.exclude": {
+        "**/.git": true,
+        "**/*.cov": false,
+        "**/lcov.info": false,
+        "**/*.jl.*.cov": false
+    },
+    
+    // Search configuration
+    "search.exclude": {
+        "coverage/": true,
+        "docs/build/": true,
+        "*.cov": false,
+        "lcov.info": false
+    }
+}

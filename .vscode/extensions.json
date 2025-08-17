@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "julialang.language-julia",
+        "ryanluker.vscode-coverage-gutters",
+        "ms-vscode.test-adapter-converter",
+        "eamodio.gitlens",
+        "ms-python.python",
+        "ms-toolsai.jupyter"
+    ]
+}
