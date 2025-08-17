@@ -41,7 +41,8 @@ include("aqua_quality_tests.jl")
 # Phase 1 Integration Tests - Major coverage boost using real simulation data
 include("phase1_data_integration_tests_fixed.jl")           # Core Phase 1: Perfect 70/70 tests (14.63% coverage)
 include("phase1b_improved_integration_tests.jl")            # Phase 1B: Perfect 49/49 tests (6-8% coverage)
-include("phase1c_minimal_hydro_tests.jl")           # Phase 1C-Minimal: Hydro Projection Functions (1,200+ lines)
+include("phase1c_minimal_hydro_tests.jl")                   # Phase 1C: Perfect 51/51 tests (6-8% coverage)
+include("phase1d_data_utilities_tests.jl")                  # Phase 1D: Data utilities & advanced functions (8-12% coverage)
 
 # Include test modules
 include("basic_module_tests.jl")
