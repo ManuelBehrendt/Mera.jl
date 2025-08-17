@@ -48,16 +48,26 @@ makedocs(modules = [Mera],
                       
                       "11 Multi-Threading"      => "multi-threading/multi-threading_intro.md",
 
-                      #"12 Performance Monitoring"  => "performance_monitoring.md",
+                      "12 Notifications"        => Any["Overview"           => "notifications/index.md",
+                                                         "Bell (Local Audio)"   => "notifications/bell.md",
+                                                         "Email"             => "notifications/email.md", 
+                                                         "Zulip (Team Chat)" => "notifications/zulip.md"],
 
-                      "12 Benchmarks"           => Any["Server IO"                      => "benchmarks/IO/IOperformance.md",
+                      #"13 Performance Monitoring"  => "performance_monitoring.md",
+
+                      "13 Benchmarks"           => Any["Server IO"                      => "benchmarks/IO/IOperformance.md",
                                                     "Parallel RAMSES-Files Reading"      => "benchmarks/RAMSES_reading/ramses_reading.md",
                                                     "Mera-Files Reading"                 => "benchmarks/JLD2_reading/Mera_files_reading.md",
                                                     "Parallel Projections"               => "benchmarks/Projection/multi_projections.md"],
 
-                      "13 Julia Quick Reference" => "quickreference/Julia_Quick_Reference.md",
+                      "14 Julia Quick Reference" => Any["Getting Started"           => "quickreference/01_getting_started.md",
+                                                         "From Other Languages"      => "quickreference/02_migrators.md", 
+                                                         "Essential Packages"        => "quickreference/03_packages.md",
+                                                         "Julia Fundamentals"        => "quickreference/04_mera_patterns.md",
+                                                         "Performance & Debugging"   => "quickreference/05_performance.md",
+                                                         "Resources & Community"     => "quickreference/06_resources.md"],
 
-                      "14 API Documentation"     => "api.md"
+                      "15 API Documentation"     => "api.md"
                     ]
 )
 
