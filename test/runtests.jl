@@ -62,7 +62,7 @@ include("phase2g_mathematical_algorithms_tests.jl")         # Phase 2G: Mathemat
 include("phase2h_profile_analysis_tests.jl")                # Phase 2H: Profile analysis & physical quantities (12-18% coverage)
 include("phase2i_specialized_physics_tests.jl")             # Phase 2I: Specialized physics algorithms & simulations (15-20% coverage)
 include("phase2j_visualization_systems_tests.jl")           # Phase 2J: Visualization systems & advanced plotting (12-16% coverage)
-include("phase2k_metadata_memory_optimization.jl")            # Phase 2K: Metadata & memory management coverage (15-25% coverage)
+include("phase2k_boundary_domain_tests.jl")                 # Phase 2K: Boundary conditions & domain decomposition (15-20% coverage)
 
 # Data-free workflow tests (Phase 2L)
 include("data_free_workflow_tests.jl")
