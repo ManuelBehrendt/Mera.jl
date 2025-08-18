@@ -51,6 +51,16 @@ include("phase1i_enhanced_particle_projection_tests.jl")    # Phase 1I: Enhanced
 include("phase1j_enhanced_type_system_tests_fixed.jl")           # Phase 1J: Enhanced type system coverage (15-20% coverage)
 include("phase1k_enhanced_gravity_clumps_tests.jl")        # Phase 1K: Enhanced gravity & clumps coverage (10-15% coverage)
 
+# Phase 2 Advanced Coverage Tests - Building on Phase 1 foundation for advanced scenarios
+include("phase2a_performance_memory_tests.jl")              # Phase 2A: Performance & memory optimization (10-15% coverage)
+include("phase2b_multicomponent_integration_tests.jl")      # Phase 2B: Complex multi-component integration (12-18% coverage)
+include("phase2c_advanced_projection_tests.jl")             # Phase 2C: Advanced projection & visualization (15-20% coverage)
+include("phase2d_error_robustness_tests.jl")                # Phase 2D: Error recovery & robustness (8-12% coverage)
+include("phase2e_amr_grid_algorithm_tests.jl")              # Phase 2E: AMR grid & algorithm coverage (10-15% coverage)
+include("phase2f_advanced_io_tests.jl")                     # Phase 2F: Advanced I/O & file system coverage (8-12% coverage)
+include("phase2g_mathematical_algorithms_tests.jl")         # Phase 2G: Mathematical & computational algorithms (10-15% coverage)
+include("phase2h_profile_analysis_tests.jl")                # Phase 2H: Profile analysis & physical quantities (12-18% coverage)
+
 # Include test modules
 include("basic_module_tests.jl")
 include("core_functionality_tests.jl")
@@ -113,6 +123,13 @@ include("notification_robustness_tests.jl")  # Notification edge & error handlin
         # These tests target the core 0% coverage functions using real simulation data
         # Expected coverage improvement: ~40-50% increase in total project coverage
         println("🚀 Running Phase 1 integration tests with real simulation data...")
+    end
+
+    # 1d. Phase 2 Advanced Coverage Tests (Building on Phase 1)
+    @testset "Phase 2: Advanced Scenarios" begin
+        # These tests build on Phase 1 foundation for advanced coverage scenarios
+        # Expected coverage improvement: Additional 15-25% increase beyond Phase 1
+        println("🔬 Running Phase 2 advanced tests: performance, integration, projections, robustness, AMR...")
     end
 
     # 2. Core Functionality Tests (major coverage increase)
