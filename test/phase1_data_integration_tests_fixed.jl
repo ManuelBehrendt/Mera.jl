@@ -19,13 +19,18 @@ const TEST_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
 const MW_L10_PATH = joinpath(TEST_DATA_ROOT, "mw_L10", "output_00300")
 const SPIRAL_PATH = joinpath(TEST_DATA_ROOT, "spiral_ugrid", "output_00001")
 
-# Check if test data is available
+# Check if test data is available and if external data tests are enabled
 const TEST_DATA_AVAILABLE = isdir(TEST_DATA_ROOT)
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 
 @testset "Phase 1: Core Data Integration Tests (Fixed)" begin
     
-    if !TEST_DATA_AVAILABLE
-        @test_skip "Integration tests skipped - simulation data not available"
+    if !TEST_DATA_AVAILABLE || SKIP_EXTERNAL_DATA
+        if SKIP_EXTERNAL_DATA
+            @test_skip "Integration tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        else
+            @test_skip "Integration tests skipped - simulation data not available"
+        end
         return
     end
 

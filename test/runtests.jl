@@ -19,15 +19,19 @@ const IS_CI = get(ENV, "CI", "false") == "true" ||
 # Check if we're running local coverage (full test with coverage upload)
 const IS_LOCAL_COVERAGE = get(ENV, "MERA_LOCAL_COVERAGE", "false") == "true"
 
-println("🚀 Starting Mera.jl Test Suite...")
-println("CI Environment: $IS_CI")
-println("Local Coverage Mode: $IS_LOCAL_COVERAGE")
-println("Julia Version: $(VERSION)")
-println("Available threads: $(Threads.nthreads())")
-
 # Optional toggles (set env var to "true" to skip)
 const SKIP_AQUA = get(ENV, "MERA_SKIP_AQUA", "false") == "true"
 const SKIP_HEAVY = get(ENV, "MERA_SKIP_HEAVY", "false") == "true"  # skip heavy data/performance sets
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"  # skip tests requiring external simulation data
+
+println("🚀 Starting Mera.jl Test Suite...")
+println("CI Environment: $IS_CI")
+println("Local Coverage Mode: $IS_LOCAL_COVERAGE")
+println("Skip External Data: $SKIP_EXTERNAL_DATA")
+println("Skip Heavy Tests: $SKIP_HEAVY")
+println("Skip Aqua Tests: $SKIP_AQUA")
+println("Julia Version: $(VERSION)")
+println("Available threads: $(Threads.nthreads())")
 
 # Include comprehensive unit tests (existing)
 include("comprehensive_unit_tests.jl")
@@ -182,10 +186,12 @@ include("notification_robustness_tests.jl")  # Notification edge & error handlin
         println("🎯 Running Phase 3 projection and uniform grid tests...")
         println("   Testing hydro projections, particle projections, uniform grid readers")
         println("   Testing Mera file I/O workflow (savedata/loaddata cycle)")
-        println("   Using test data: /Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid")
-        if SKIP_HEAVY
+        if SKIP_EXTERNAL_DATA
+            @test_skip "Phase 3 projection tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        elseif SKIP_HEAVY
             @test_skip "Phase 3 projection tests skipped via MERA_SKIP_HEAVY"
         else
+            println("   Using test data: /Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid")
             # Run all Phase 3 test modules
             @testset "Hydro Projection Tests" begin
                 # projection_hydro_tests.jl is included and run automatically

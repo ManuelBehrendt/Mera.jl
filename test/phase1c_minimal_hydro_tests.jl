@@ -9,6 +9,7 @@ using Mera
 const TEST_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
 const MW_L10_PATH = joinpath(TEST_DATA_ROOT, "mw_L10", "output_00300")
 const TEST_DATA_AVAILABLE = isdir(TEST_DATA_ROOT)
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 
 println("================================================================================")
 println("🎯 PHASE 1C MINIMAL: HYDRO PROJECTION FUNCTIONS TESTS")
@@ -19,9 +20,13 @@ println("Note: Minimal approach focusing only on verified working hydro function
 println("================================================================================")
 
 @testset "Phase 1C Minimal: Hydro Projection Functions Tests" begin
-    if !TEST_DATA_AVAILABLE
-        @warn "Simulation test data not found at: $TEST_DATA_ROOT"
-        @warn "Skipping Phase 1C tests - cannot test projection functions without real data"
+    if !TEST_DATA_AVAILABLE || SKIP_EXTERNAL_DATA
+        if SKIP_EXTERNAL_DATA
+            @test_skip "Phase 1C tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        else
+            @warn "Simulation test data not found at: $TEST_DATA_ROOT"
+            @warn "Skipping Phase 1C tests - cannot test projection functions without real data"
+        end
         return
     end
     

@@ -10,11 +10,15 @@ using Mera
 # Test data paths
 const SPIRAL_UGRID_PATH = "/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid"
 const SPIRAL_UGRID_OUTPUT = SPIRAL_UGRID_PATH  # Mera will append output_00001 automatically
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 
 @testset "Particle Projection Tests" begin
     
     @testset "Data Loading and Basic Setup" begin
-        if isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
+        if SKIP_EXTERNAL_DATA
+            @test_skip "Particle projection tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+            return
+        elseif isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
             @testset "Uniform Grid Particle Data Loading" begin
                 @test_nowarn info = getinfo(SPIRAL_UGRID_OUTPUT, verbose=false)
                 info = getinfo(SPIRAL_UGRID_OUTPUT, verbose=false)

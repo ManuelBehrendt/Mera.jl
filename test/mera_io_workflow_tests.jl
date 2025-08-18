@@ -20,19 +20,23 @@ using Statistics
 # Test data paths
 const SPIRAL_UGRID_PATH = "/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid"
 const SPIRAL_UGRID_OUTPUT = SPIRAL_UGRID_PATH  # Mera will append output_00001 automatically
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 
 @testset "Mera File I/O Workflow Tests" begin
     
     @testset "Data Availability Check" begin
-        if !isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
+        if SKIP_EXTERNAL_DATA
+            @test_skip "Mera I/O workflow tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+            return
+        elseif !isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
             @test_skip "Spiral uniform grid data not found at $SPIRAL_UGRID_OUTPUT - skipping Mera I/O tests"
             return
         end
         @test isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
     end
     
-    # Skip remaining tests if data not available
-    if !isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
+    # Skip remaining tests if data not available or external data disabled
+    if SKIP_EXTERNAL_DATA || !isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
         return
     end
     

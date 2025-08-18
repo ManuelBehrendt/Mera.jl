@@ -6,7 +6,15 @@ using Test
 using Mera
 using Statistics
 
+# Check if external simulation data tests should be skipped
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
 @testset "Phase 2C: Advanced Projection & Visualization Coverage" begin
+    if SKIP_EXTERNAL_DATA
+        @test_skip "Phase 2C tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        return
+    end
+    
     println("🎨 Phase 2C: Starting Advanced Projection & Visualization Tests")
     println("   Target: Advanced projection algorithms and visualization optimization")
     
