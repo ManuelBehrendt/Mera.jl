@@ -4,7 +4,17 @@
 
 using Test
 using Mera
-using Statistics  # Import for median function
+
+# Simple median function to avoid Statistics dependency issues in CI
+function simple_median(x)
+    sorted_x = sort(x)
+    n = length(sorted_x)
+    if n % 2 == 1
+        return sorted_x[(n + 1) ÷ 2]
+    else
+        return (sorted_x[n ÷ 2] + sorted_x[n ÷ 2 + 1]) / 2
+    end
+end
 
 # Test data paths
 const TEST_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
@@ -96,10 +106,10 @@ println()
         @testset "Array Operations" begin
             rho_values = getvar(hydro, :rho)
             
-            # Test various array operations (with Statistics import for median)
+            # Test various array operations (using simple median)
             log_rho = log10.(rho_values)
             rho_normalized = rho_values ./ maximum(rho_values)
-            rho_median = median(rho_values)  # Now properly imported
+            rho_median = simple_median(rho_values)
             rho_filtered = filter(x -> x > rho_median, rho_values)
             
             @test all(isfinite, log_rho)
