@@ -12,8 +12,7 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
 @testset "Phase 2B: Complex Multi-Component Integration Coverage" begin
     if SKIP_EXTERNAL_DATA
         @test_skip "Phase 2B tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
-        return
-    end
+    else
     
     println("🌟 Phase 2B: Starting Complex Multi-Component Integration Tests")
     println("   Target: Advanced component interactions and complex workflow patterns")
@@ -362,4 +361,5 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
     println("   Advanced component interactions comprehensively tested")
     println("   Complex workflow patterns and integration scenarios validated")
     println("   Expected coverage boost: 10-18% in integration and workflow modules")
+    end  # Close the else clause
 end
