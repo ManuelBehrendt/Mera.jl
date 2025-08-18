@@ -4,6 +4,7 @@ authors = ["Manuel Behrendt"]
 version = "1.8.0"
 
 [deps]
+ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
@@ -38,6 +39,7 @@ WAV = "8149f6b0-98f6-5db9-b78f-408fbbb8ef88"
 WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [compat]
+ArrayInterface = "< 8"
 BenchmarkTools = "1"
 CSV = "0.10"
 CodecBzip2 = "0.8"
@@ -49,7 +51,7 @@ Downloads = "1"
 ElasticArrays = "1.2"
 FortranFiles = "0.6"
 HTTP = "1"
-ImageTransformations = "0.10"
+ImageTransformations = "0.9, 0.10"
 IndexedTables = "1.0"
 JLD2 = "0.5"
 JSON = "0.21"
@@ -67,7 +69,7 @@ WAV = "1.2"
 WriteVTK = "1.21"
 Aqua = "0.8"
 julia = "1.10"
-Images = "0.26"
+Images = "0.24, 0.25, 0.26"
 FileIO = "1"
 PyPlot = "2"
 
