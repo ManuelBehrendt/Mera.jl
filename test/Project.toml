@@ -2,12 +2,13 @@ name = "MeraTests"
 version = "0.1.0"
 
 [deps]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
-Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+Mera = "02f895e8-fdb1-4346-8fe6-c721699f5126"
+Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
-julia = "1.10"
 JSON = "0.21"
+julia = "1.10"

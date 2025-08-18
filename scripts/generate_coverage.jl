@@ -23,17 +23,40 @@ Pkg.activate(".")
 # Check if Coverage.jl is available
 try
     using Coverage
+    using Printf
+    using Dates
 catch
     println("📦 Installing Coverage.jl...")
     Pkg.add("Coverage")
     using Coverage
+    using Printf
+    using Dates
 end
 
 println("🔍 Processing coverage files from src/ directory...")
 
 try
-    # Process coverage files
-    coverage_data = process_folder("src")
+    # Process coverage files from specific source directories
+    # Exclude dev and benchmark directories that may have parsing issues
+    main_src_files = filter(readdir("src")) do file
+        !in(file, ["dev", "benchmarks"]) && (isfile(joinpath("src", file)) || isdir(joinpath("src", file)))
+    end
+    
+    coverage_data = FileCoverage[]
+    for item in main_src_files
+        item_path = joinpath("src", item)
+        if isfile(item_path) && endswith(item, ".jl")
+            # Process individual file
+            file_coverage = process_file(item_path)
+            if file_coverage !== nothing
+                push!(coverage_data, file_coverage)
+            end
+        elseif isdir(item_path) && !in(item, ["dev", "benchmarks"])
+            # Process subdirectory but skip problematic ones
+            dir_coverage = process_folder(item_path)
+            append!(coverage_data, dir_coverage)
+        end
+    end
     
     if isempty(coverage_data)
         println("⚠️ No coverage data found!")
