@@ -93,16 +93,34 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
         
         @testset "1.4 Gravity Advanced Loading Options" begin
             # Test verbose modes (covers logging branches in gravity)
-            @test_nowarn getgravity(info, verbose=true, show_progress=false)
-            @test_nowarn getgravity(info, verbose=false, show_progress=false)
+            @test begin
+                result = getgravity(info, verbose=true, show_progress=false)
+                typeof(result) <: NamedTuple
+            end
+            @test begin
+                result = getgravity(info, verbose=false, show_progress=false)
+                typeof(result) <: NamedTuple
+            end
             
             # Test progress bar control (covers progress handling in gravity)
-            @test_nowarn getgravity(info, verbose=false, show_progress=true)
-            @test_nowarn getgravity(info, verbose=false, show_progress=false)
+            @test begin
+                result = getgravity(info, verbose=false, show_progress=true)
+                typeof(result) <: NamedTuple
+            end
+            @test begin
+                result = getgravity(info, verbose=false, show_progress=false)
+                typeof(result) <: NamedTuple
+            end
             
             # Test threading control if available
-            @test_nowarn getgravity(info, verbose=false, show_progress=false, max_threads=1)
-            @test_nowarn getgravity(info, verbose=false, show_progress=false, max_threads=2)
+            @test begin
+                result = getgravity(info, verbose=false, show_progress=false, max_threads=1)
+                typeof(result) <: NamedTuple
+            end
+            @test begin
+                result = getgravity(info, verbose=false, show_progress=false, max_threads=2)
+                typeof(result) <: NamedTuple
+            end
             
             println("[ Info: ✅ Gravity advanced loading options coverage improved")
         end
