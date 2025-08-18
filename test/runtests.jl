@@ -60,6 +60,9 @@ include("phase2e_amr_grid_algorithm_tests.jl")              # Phase 2E: AMR grid
 include("phase2f_advanced_io_tests.jl")                     # Phase 2F: Advanced I/O & file system coverage (8-12% coverage)
 include("phase2g_mathematical_algorithms_tests.jl")         # Phase 2G: Mathematical & computational algorithms (10-15% coverage)
 include("phase2h_profile_analysis_tests.jl")                # Phase 2H: Profile analysis & physical quantities (12-18% coverage)
+include("phase2i_specialized_physics_tests.jl")             # Phase 2I: Specialized physics algorithms & simulations (15-20% coverage)
+include("phase2j_visualization_systems_tests.jl")           # Phase 2J: Visualization systems & advanced plotting (12-16% coverage)
+include("phase2k_boundary_domain_tests.jl")                 # Phase 2K: Boundary conditions & domain decomposition (15-20% coverage)
 
 # Include test modules
 include("basic_module_tests.jl")
