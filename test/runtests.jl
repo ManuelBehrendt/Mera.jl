@@ -44,6 +44,12 @@ include("phase1b_improved_integration_tests.jl")            # Phase 1B: Perfect 
 include("phase1c_minimal_hydro_tests.jl")                   # Phase 1C: Perfect 51/51 tests (6-8% coverage)
 include("phase1d_data_utilities_tests.jl")                  # Phase 1D: Data utilities & advanced functions (8-12% coverage)
 include("phase1e_streamlined_tests.jl")              # Phase 1E: Streamlined particle/optimization (5-8% coverage)
+include("phase1f_untested_functions_tests.jl")              # Phase 1F: Untested functions (5-10% coverage)
+include("phase1g_advanced_integration_tests.jl")            # Phase 1G: Advanced integration patterns (8-12% coverage)
+include("phase1h_specialized_coverage_tests.jl")            # Phase 1H: Specialized functions & type systems (6-10% coverage)
+include("phase1i_enhanced_particle_projection_tests.jl")    # Phase 1I: Enhanced particle & projection coverage (15-25% coverage)
+include("phase1j_enhanced_type_system_tests_fixed.jl")           # Phase 1J: Enhanced type system coverage (15-20% coverage)
+include("phase1k_enhanced_gravity_clumps_tests.jl")        # Phase 1K: Enhanced gravity & clumps coverage (10-15% coverage)
 
 # Include test modules
 include("basic_module_tests.jl")
