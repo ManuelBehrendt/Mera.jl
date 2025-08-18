@@ -14,6 +14,14 @@ end
 using Mera
 
 function setup_test_data()
+    # Check if external data should be skipped before attempting download
+    if (haskey(ENV, "MERA_SKIP_EXTERNAL_DATA") && ENV["MERA_SKIP_EXTERNAL_DATA"] == "true") ||
+       (haskey(ENV, "MERA_SKIP_HEAVY") && ENV["MERA_SKIP_HEAVY"] == "true") ||
+       (haskey(ENV, "MERA_SKIP_DATA_TESTS") && ENV["MERA_SKIP_DATA_TESTS"] == "true")
+        println("⏭️ External data download skipped by environment variable")
+        return false
+    end
+    
     # Download and extract test simulation data (always fresh for each test run)
     test_data_dir = joinpath(@__DIR__, "test_data")
     
@@ -144,13 +152,23 @@ end
 function run_simulation_data_tests()
     # Check if we're in CI and should skip data-heavy tests
     is_ci = haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS") || haskey(ENV, "MERA_CI_MODE")
-    skip_data_tests = haskey(ENV, "MERA_SKIP_DATA_TESTS") && ENV["MERA_SKIP_DATA_TESTS"] == "true"
+    skip_data_tests = (haskey(ENV, "MERA_SKIP_DATA_TESTS") && ENV["MERA_SKIP_DATA_TESTS"] == "true") ||
+                      (haskey(ENV, "MERA_SKIP_EXTERNAL_DATA") && ENV["MERA_SKIP_EXTERNAL_DATA"] == "true") ||
+                      (haskey(ENV, "MERA_SKIP_HEAVY") && ENV["MERA_SKIP_HEAVY"] == "true")
     
     @testset "Real Simulation Data Tests" begin
         
         if skip_data_tests
-            @test_skip "Simulation data tests skipped (MERA_SKIP_DATA_TESTS=true)"
-            println("⏭️ Simulation data tests skipped by environment variable")
+            if haskey(ENV, "MERA_SKIP_EXTERNAL_DATA") && ENV["MERA_SKIP_EXTERNAL_DATA"] == "true"
+                @test_skip "Simulation data tests skipped (MERA_SKIP_EXTERNAL_DATA=true)"
+                println("⏭️ Simulation data tests skipped - external data disabled")
+            elseif haskey(ENV, "MERA_SKIP_HEAVY") && ENV["MERA_SKIP_HEAVY"] == "true"
+                @test_skip "Simulation data tests skipped (MERA_SKIP_HEAVY=true)"
+                println("⏭️ Simulation data tests skipped - heavy tests disabled")
+            else
+                @test_skip "Simulation data tests skipped (MERA_SKIP_DATA_TESTS=true)"
+                println("⏭️ Simulation data tests skipped by environment variable")
+            end
             return
         end
         

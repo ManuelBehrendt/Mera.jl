@@ -19,6 +19,19 @@ const IS_CI = get(ENV, "CI", "false") == "true" ||
 # Check if we're running local coverage (full test with coverage upload)
 const IS_LOCAL_COVERAGE = get(ENV, "MERA_LOCAL_COVERAGE", "false") == "true"
 
+# Automatically set CI-friendly defaults BEFORE any tests run
+if IS_CI && !IS_LOCAL_COVERAGE
+    # In CI environment, automatically skip external data downloads and heavy tests
+    ENV["MERA_SKIP_EXTERNAL_DATA"] = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "true")
+    ENV["MERA_SKIP_HEAVY"] = get(ENV, "MERA_SKIP_HEAVY", "true")
+    # Also set Aqua to fast level for CI
+    ENV["MERA_AQUA_LEVEL"] = get(ENV, "MERA_AQUA_LEVEL", "fast")
+    println("🤖 CI Environment detected - setting safe defaults:")
+    println("   MERA_SKIP_EXTERNAL_DATA=$(ENV["MERA_SKIP_EXTERNAL_DATA"])")
+    println("   MERA_SKIP_HEAVY=$(ENV["MERA_SKIP_HEAVY"])")
+    println("   MERA_AQUA_LEVEL=$(ENV["MERA_AQUA_LEVEL"])")
+end
+
 # Optional toggles (set env var to "true" to skip)
 const SKIP_AQUA = get(ENV, "MERA_SKIP_AQUA", "false") == "true"
 const SKIP_HEAVY = get(ENV, "MERA_SKIP_HEAVY", "false") == "true"  # skip heavy data/performance sets
