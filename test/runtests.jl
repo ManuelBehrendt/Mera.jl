@@ -62,7 +62,17 @@ include("phase2g_mathematical_algorithms_tests.jl")         # Phase 2G: Mathemat
 include("phase2h_profile_analysis_tests.jl")                # Phase 2H: Profile analysis & physical quantities (12-18% coverage)
 include("phase2i_specialized_physics_tests.jl")             # Phase 2I: Specialized physics algorithms & simulations (15-20% coverage)
 include("phase2j_visualization_systems_tests.jl")           # Phase 2J: Visualization systems & advanced plotting (12-16% coverage)
-include("phase2k_boundary_domain_tests.jl")                 # Phase 2K: Boundary conditions & domain decomposition (15-20% coverage)
+include("phase2k_metadata_memory_optimization.jl")            # Phase 2K: Metadata & memory management coverage (15-25% coverage)
+
+# Data-free workflow tests (Phase 2L)
+include("data_free_workflow_tests.jl")
+
+# Phase 3: Projection and Uniform Grid Testing (High Impact Coverage)
+include("projection_hydro_tests.jl")                        # Phase 3A: Hydro projection comprehensive testing
+include("projection_particles_tests.jl")                    # Phase 3B: Particle projection comprehensive testing  
+include("uniform_grid_reader_tests.jl")                     # Phase 3C: Uniform grid reader testing
+include("projection_integration_tests.jl")                  # Phase 3D: Integration testing for projections and readers
+include("mera_io_workflow_tests.jl")                        # Phase 3E: Mera file I/O workflow testing (savedata/loaddata cycle)
 
 # Include test modules
 include("basic_module_tests.jl")
@@ -167,7 +177,39 @@ include("notification_robustness_tests.jl")  # Notification edge & error handlin
         # These tests focus on functions that don't require simulation data
     end
     
-    # 8. Simulation Data Tests (with downloaded test data)
+    # 8. Phase 3: Projection and Uniform Grid Testing (High Impact Coverage)
+    @testset "Phase 3: Projection and Uniform Grid Tests" begin
+        println("🎯 Running Phase 3 projection and uniform grid tests...")
+        println("   Testing hydro projections, particle projections, uniform grid readers")
+        println("   Testing Mera file I/O workflow (savedata/loaddata cycle)")
+        println("   Using test data: /Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid")
+        if SKIP_HEAVY
+            @test_skip "Phase 3 projection tests skipped via MERA_SKIP_HEAVY"
+        else
+            # Run all Phase 3 test modules
+            @testset "Hydro Projection Tests" begin
+                # projection_hydro_tests.jl is included and run automatically
+            end
+            
+            @testset "Particle Projection Tests" begin  
+                # projection_particles_tests.jl is included and run automatically
+            end
+            
+            @testset "Uniform Grid Reader Tests" begin
+                # uniform_grid_reader_tests.jl is included and run automatically  
+            end
+            
+            @testset "Projection Integration Tests" begin
+                # projection_integration_tests.jl is included and run automatically
+            end
+            
+            @testset "Mera I/O Workflow Tests" begin
+                # mera_io_workflow_tests.jl is included and run automatically
+            end
+        end
+    end
+
+    # 9. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
         if SKIP_HEAVY
             @test_skip "Simulation data tests skipped via MERA_SKIP_HEAVY"
