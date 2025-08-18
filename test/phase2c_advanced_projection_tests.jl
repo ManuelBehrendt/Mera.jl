@@ -404,3 +404,5 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
     println("   Expected coverage boost: 12-20% in projection and visualization modules")
     end  # Close the else clause
 end
+    end  # Close the else clause
+end
