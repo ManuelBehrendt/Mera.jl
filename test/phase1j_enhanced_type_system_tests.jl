@@ -75,9 +75,9 @@ using Mera
             args.data_center = missing
             @test args.data_center === missing
             
-            # Test Union type assignments (covers Union type branches)
-            args.mask = [true, false, true]
-            @test args.mask == [true, false, true]
+            # Test array assignments (covers array type branches)
+            args.xrange = [0.4, 0.6]
+            @test args.xrange == [0.4, 0.6]
             
             args.weighting = :mass
             @test args.weighting == :mass
@@ -155,21 +155,21 @@ using Mera
             @test_nowarn PhysicalUnitsType001()
             units = PhysicalUnitsType001()
             
-            # Test field access (covers field getter code paths)
-            @test hasfield(typeof(units), :length)
-            @test hasfield(typeof(units), :density)
-            @test hasfield(typeof(units), :time)
-            @test hasfield(typeof(units), :mass)
-            @test hasfield(typeof(units), :velocity)
-            @test hasfield(typeof(units), :temperature)
-            @test hasfield(typeof(units), :energy)
-            @test hasfield(typeof(units), :pressure)
+            # Test actual field existence (using real fields)
+            @test hasfield(typeof(units), :Au)
+            @test hasfield(typeof(units), :Mpc)
+            @test hasfield(typeof(units), :kpc)
+            @test hasfield(typeof(units), :Msol)
+            @test hasfield(typeof(units), :Gyr)
+            @test hasfield(typeof(units), :kB)
+            @test hasfield(typeof(units), :G)
+            @test hasfield(typeof(units), :c)
             
             # Test that fields are accessible
-            @test typeof(units.length) <: Real
-            @test typeof(units.density) <: Real
-            @test typeof(units.time) <: Real
-            @test typeof(units.mass) <: Real
+            @test typeof(units.Au) <: Real
+            @test typeof(units.Mpc) <: Real
+            @test typeof(units.kpc) <: Real
+            @test typeof(units.Msol) <: Real
             
             println("[ Info: ✅ PhysicalUnitsType001 constructor coverage improved")
         end
@@ -212,9 +212,9 @@ using Mera
             @test typeof(info.output) <: Integer
             @test typeof(info.path) <: String
             @test typeof(info.fnames) <: Any
-            @test typeof(info.simcode) <: Symbol
-            @test typeof(info.mtime) <: Real
-            @test typeof(info.ctime) <: Real
+            @test typeof(info.simcode) <: String  # simcode is String, not Symbol
+            @test typeof(info.mtime) <: Dates.DateTime  # mtime is DateTime, not Real
+            @test typeof(info.ctime) <: Dates.DateTime  # ctime is DateTime, not Real
             @test typeof(info.ncpu) <: Integer
             @test typeof(info.ndim) <: Integer
             @test typeof(info.levelmin) <: Integer
@@ -236,11 +236,11 @@ using Mera
         
         @testset "4.2 Extended InfoType Field Access" begin
             # Test additional fields (covers extended field access)
+            @test typeof(info.unit_l) <: Real
+            @test typeof(info.unit_d) <: Real
             @test typeof(info.unit_m) <: Real
             @test typeof(info.unit_v) <: Real
-            @test typeof(info.unit_T2) <: Real
-            @test typeof(info.unit_nH) <: Real
-            @test typeof(info.unit_B) <: Real
+            @test typeof(info.unit_t) <: Real
             @test hasfield(typeof(info), :scale)
             @test hasfield(typeof(info), :grid_info)
             @test hasfield(typeof(info), :part_info)
@@ -260,7 +260,7 @@ using Mera
         
         @testset "4.3 InfoType Variable Lists" begin
             # Test variable list fields (covers variable list access code paths)
-            @test hasfield(typeof(info), :hydro_variable_list)
+            @test hasfield(typeof(info), :variable_list)  # Use correct field name
             @test hasfield(typeof(info), :gravity_variable_list)
             @test hasfield(typeof(info), :particles_variable_list)
             @test hasfield(typeof(info), :clumps_variable_list)
@@ -268,7 +268,7 @@ using Mera
             @test hasfield(typeof(info), :rt_variable_list)
             
             # Test that variable lists are accessible
-            @test typeof(info.hydro_variable_list) <: Array
+            @test typeof(info.variable_list) <: Array
             @test typeof(info.gravity_variable_list) <: Array
             @test typeof(info.particles_variable_list) <: Array
             
@@ -279,9 +279,20 @@ using Mera
     @testset "5. DataType Struct Field Coverage" begin
         println("[ Info: 🔍 Testing DataType struct field access patterns")
         
+        # Check if external data is available
+        skip_external_data = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+        
+        if skip_external_data
+            @test_skip "External simulation test data not available for this environment"
+            return
+        end
+        
+        # Get simulation info for data object testing
+        info_local = getinfo(path="/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14/", output=400, verbose=false)
+        
         # Get real data objects for field testing
-        hydro_data = gethydro(info, verbose=false, show_progress=false)
-        particles_data = getparticles(info, verbose=false, show_progress=false)
+        hydro_data = gethydro(info_local, verbose=false, show_progress=false)
+        particles_data = getparticles(info_local, verbose=false, show_progress=false)
         
         @testset "5.1 HydroDataType Field Access" begin
             # Test HydroDataType fields (covers field access code paths)
