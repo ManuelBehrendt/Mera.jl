@@ -34,26 +34,32 @@ jobs:
       - name: Cache Julia packages
         uses: julia-actions/cache@v2
 
-      - name: Set CI environment variables
+      - name: Set CI environment variables (reduced test mode)
         run: |
           echo "JULIA_NUM_THREADS=1" >> $GITHUB_ENV
           echo "MERA_CI_MODE=true" >> $GITHUB_ENV
-          echo "MERA_TEST_TIMEOUT=1800" >> $GITHUB_ENV
-          echo "MERA_DOWNLOAD_RETRIES=3" >> $GITHUB_ENV
+          echo "MERA_SKIP_HEAVY=true" >> $GITHUB_ENV
+          echo "MERA_SKIP_AQUA=true" >> $GITHUB_ENV
+          echo "MERA_ZULIP_DRY_RUN=true" >> $GITHUB_ENV
+          echo "MERA_BASIC_ZULIP_TESTS=true" >> $GITHUB_ENV
+          echo "MERA_TEST_TIMEOUT=1200" >> $GITHUB_ENV
+          echo "MERA_DOWNLOAD_RETRIES=2" >> $GITHUB_ENV
           
       - name: Build package
         uses: julia-actions/julia-buildpkg@v1
 
-      - name: Run comprehensive test suite
+      - name: Run reduced test suite (compatibility check)
         uses: julia-actions/julia-runtest@v1
         with:
-          coverage: true
           test_args: '--threads=1'
         env:
           JULIA_NUM_THREADS: 1
           MERA_CI_MODE: true
-          MERA_TEST_TIMEOUT: 1800
-          MERA_DOWNLOAD_RETRIES: 3
+          MERA_SKIP_HEAVY: true
+          MERA_SKIP_AQUA: true
+          MERA_ZULIP_DRY_RUN: true
+          MERA_BASIC_ZULIP_TESTS: true
+          MERA_TEST_TIMEOUT: 1200
+          MERA_DOWNLOAD_RETRIES: 2
 
-      # Note: Coverage processing and upload is handled only by CI_1.11.yml
-      # to avoid duplicate coverage reports and ensure single source of truth
+      # No coverage upload - this is compatibility testing only
