@@ -329,54 +329,66 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
             elseif isa(capture_output, Function)
                 # Capture output from function execution with timeout protection
                 timeout_seconds = try
-                    parse(Float64, get(ENV, "MERA_CAPTURE_TIMEOUT", "5"))
+                    parse(Float64, get(ENV, "MERA_CAPTURE_TIMEOUT", "3"))
                 catch
-                    5.0
+                    3.0
                 end
-                original_stdout = stdout
-                (rd, wr) = redirect_stdout()
+                
+                # Use safer capture method with explicit timeout handling
+                captured_text = ""
                 result_ref = Ref{Any}(nothing)
                 err_ref = Ref{Any}(nothing)
-
+                output_buffer = IOBuffer()
+                
+                # Create task with proper error handling
                 task = @async begin
                     try
-                        result_ref[] = capture_output()
+                        # Redirect stdout to buffer
+                        old_stdout = stdout
+                        redirect_stdout(output_buffer)
+                        try
+                            result_ref[] = capture_output()
+                        finally
+                            redirect_stdout(old_stdout)
+                        end
                     catch e
                         err_ref[] = e
-                    finally
-                        try; close(wr); catch; end
                     end
                 end
 
-                start_t = time()
-                while !istaskdone(task) && (time() - start_t) < timeout_seconds
-                    sleep(0.05)
+                # Wait for completion with timeout
+                start_time = time()
+                timeout_reached = false
+                
+                while !istaskdone(task) && (time() - start_time) < timeout_seconds
+                    sleep(0.01)  # Smaller sleep for better responsiveness
                 end
-
+                
                 if !istaskdone(task)
-                    # Timed out – cancel task
+                    timeout_reached = true
+                    # Force task termination
                     try
                         Base.throwto(task, InterruptException())
+                        sleep(0.1)  # Give task time to clean up
                     catch
-                    end
-                    try; close(wr); catch; end
-                    captured_text = String(read(rd)) * "\n⚠️ Function capture timed out after $(timeout_seconds)s"
-                    try; close(rd); catch; end
-                else
-                    # Completed
-                    try
-                        captured_text = String(read(rd))
-                    catch
-                        captured_text = ""
-                    end
-                    try; close(rd); catch; end
-                    if err_ref[] !== nothing
-                        captured_text *= "\n⚠️ Function raised error: $(err_ref[])"
-                    elseif result_ref[] !== nothing && !isa(result_ref[], Nothing)
-                        captured_text *= "\nFunction result: $(result_ref[])"
                     end
                 end
-                redirect_stdout(original_stdout)
+                
+                # Extract captured output
+                try
+                    captured_text = String(take!(output_buffer))
+                catch
+                    captured_text = ""
+                end
+                
+                # Add timeout message if needed
+                if timeout_reached
+                    captured_text *= "\n⚠️ Function capture timed out after $(timeout_seconds)s"
+                elseif err_ref[] !== nothing
+                    captured_text *= "\n⚠️ Function raised error: $(err_ref[])"
+                elseif result_ref[] !== nothing && !isa(result_ref[], Nothing)
+                    captured_text *= "\nFunction result: $(result_ref[])"
+                end
             elseif isa(capture_output, String)
                 # Treat as a shell command string - use shell to handle pipes and operators
                 if Sys.iswindows()
