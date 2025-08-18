@@ -24,7 +24,7 @@ println("=======================================================================
         if SKIP_EXTERNAL_DATA
             @test_skip "Phase 1C tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
         else
-            @warn "Simulation test data not found at: $TEST_DATA_ROOT"
+            @warn "External simulation test data not available for this environment"
             @warn "Skipping Phase 1C tests - cannot test projection functions without real data"
         end
         return

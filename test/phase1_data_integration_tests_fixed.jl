@@ -305,9 +305,9 @@ else
     @info """
     ⚠️  Phase 1 Integration Tests Skipped
     
-    Simulation test data not found at: $TEST_DATA_ROOT
+    External simulation test data not available for this environment
     To run these comprehensive tests:
-    1. Ensure the test data directory is accessible
+    1. Ensure the test data directory is accessible locally
     2. Re-run the test suite
     
     These tests would significantly improve coverage for core functionality.

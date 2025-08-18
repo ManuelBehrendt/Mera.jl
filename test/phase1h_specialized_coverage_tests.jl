@@ -22,7 +22,7 @@ println("=======================================================================
 
 @testset "Phase 1H: Specialized Function Coverage Tests" begin
     if !TEST_DATA_AVAILABLE
-        @warn "Simulation test data not found at: $TEST_DATA_ROOT"
+        @warn "External simulation test data not available for this environment"
         @warn "Skipping Phase 1H tests - cannot test without real data"
         return
     end
