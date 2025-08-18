@@ -9,6 +9,14 @@ using Mera
     println("⚡ Phase 1K: Starting Enhanced Gravity and Clumps Data Processing Coverage Tests")
     println("   Target: Boost gravity coverage from ~60% to 85%+ through comprehensive testing")
     
+    # Check if external data is available
+    const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+    
+    if SKIP_EXTERNAL_DATA
+        @test_skip "External simulation test data not available for this environment"
+        return
+    end
+    
     # Get simulation info from spiral_clumps simulation with clumps data
     info = getinfo(path="/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/", output=100, verbose=false)
     

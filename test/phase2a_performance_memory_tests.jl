@@ -6,7 +6,15 @@ using Test
 using Mera
 using Statistics
 
+# Check if external simulation data tests should be skipped
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
 @testset "Phase 2A: Performance & Memory Optimization Coverage" begin
+    if SKIP_EXTERNAL_DATA
+        @test_skip "Phase 2A tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        return
+    end
+    
     println("🚀 Phase 2A: Starting Advanced Performance & Memory Optimization Tests")
     println("   Target: Performance-critical code paths and memory optimization scenarios")
     

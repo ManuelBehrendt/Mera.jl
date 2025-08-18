@@ -9,6 +9,14 @@ using Mera
     println("🔬 Phase 1I: Starting Enhanced Particle & Projection Coverage Tests")
     println("   Target: Boost coverage from ~30% to 60%+ through comprehensive testing")
     
+    # Check if external data is available
+    const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+    
+    if SKIP_EXTERNAL_DATA
+        @test_skip "External simulation test data not available for this environment"
+        return
+    end
+    
     # Get simulation info from the correct data path
     info = getinfo(path="/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14/", output=400, verbose=false)
     

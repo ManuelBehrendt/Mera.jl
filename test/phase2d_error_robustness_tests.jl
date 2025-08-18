@@ -6,7 +6,15 @@ using Test
 using Mera
 using Statistics
 
+# Check if external simulation data tests should be skipped
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
 @testset "Phase 2D: Error Recovery & Robustness Coverage" begin
+    if SKIP_EXTERNAL_DATA
+        @test_skip "Phase 2D tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        return
+    end
+    
     println("🛡️ Phase 2D: Starting Error Recovery & Robustness Tests")
     println("   Target: Error handling, edge cases, and system robustness scenarios")
     

@@ -6,7 +6,15 @@ using Test
 using Mera
 using Statistics
 
+# Check if external simulation data tests should be skipped
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
 @testset "Phase 2F: Advanced I/O and File System Coverage" begin
+    if SKIP_EXTERNAL_DATA
+        @test_skip "Phase 2F tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        return
+    end
+    
     println("📁 Phase 2F: Starting Advanced I/O and File System Tests")
     println("   Target: File handling, RAMSES format validation, parallel I/O optimization")
     
