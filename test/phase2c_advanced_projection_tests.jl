@@ -12,8 +12,7 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
 @testset "Phase 2C: Advanced Projection & Visualization Coverage" begin
     if SKIP_EXTERNAL_DATA
         @test_skip "Phase 2C tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
-        return
-    end
+    else
     
     println("🎨 Phase 2C: Starting Advanced Projection & Visualization Tests")
     println("   Target: Advanced projection algorithms and visualization optimization")
@@ -403,4 +402,5 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
     println("   Advanced projection algorithms comprehensively tested")
     println("   Visualization optimization and multi-component integration validated")
     println("   Expected coverage boost: 12-20% in projection and visualization modules")
+    end  # Close the else clause
 end

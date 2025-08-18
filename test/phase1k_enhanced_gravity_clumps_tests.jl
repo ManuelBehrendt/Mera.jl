@@ -14,8 +14,7 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
     
     if SKIP_EXTERNAL_DATA
         @test_skip "External simulation test data not available for this environment"
-        return
-    end
+    else
     
     # Get simulation info from spiral_clumps simulation with clumps data
     info = getinfo(path="/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/", output=100, verbose=false)
@@ -395,4 +394,5 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
     println("🎯 Phase 1K: Enhanced Gravity and Clumps Data Processing Coverage Tests Complete")
     println("   Expected coverage boost: Gravity ~60% → 85%+, Clumps exploration complete")
     println("   Major improvement in gravity functionality reliability and completeness")
+    end  # Close the else clause
 end
