@@ -50,12 +50,13 @@ println("=======================================================================
             # Test unit conversions using scale
             @test info.scale.kpc > 0
             @test info.scale.pc > 0
-            @test info.scale.Mpc > info.scale.kpc
-            @test info.scale.kpc > info.scale.pc
+            # Scale factors: smaller physical units have larger conversion factors
+            @test info.scale.Mpc < info.scale.kpc  # 1 sim unit = fewer Mpc than kpc
+            @test info.scale.kpc < info.scale.pc   # 1 sim unit = fewer kpc than pc
             
-            # Test time units
-            @test info.scale.Gyr > info.scale.Myr
-            @test info.scale.Myr > info.scale.yr
+            # Test time units - larger time units have smaller conversion factors
+            @test info.scale.Gyr < info.scale.Myr  # 1 sim unit = fewer Gyr than Myr
+            @test info.scale.Myr < info.scale.yr   # 1 sim unit = fewer Myr than yr
             
             # Test mass units - check if they exist first
             @test info.scale.Msol > 0
@@ -398,7 +399,9 @@ println("=======================================================================
             @test haskey(namelist, "&HYDRO_PARAMS")
             
             println("[ Info: ✅ Compilation and version info validated: namelist sections=$(length(keys(namelist))), compilation=$(info.compilationfile)")
-        end        @testset "4.3 Extended Attribute Access" begin
+        end
+        
+        @testset "4.3 Extended Attribute Access" begin
             println("Testing extended attribute access...")
             
             # Test array size information
