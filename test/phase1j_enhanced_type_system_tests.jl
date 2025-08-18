@@ -197,9 +197,9 @@ using Mera
         println("[ Info: 🔍 Testing InfoType field access patterns")
         
         # Check if external data is available
-        const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+        skip_external_data = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
         
-        if SKIP_EXTERNAL_DATA
+        if skip_external_data
             @test_skip "External simulation test data not available for this environment"
             return
         end
