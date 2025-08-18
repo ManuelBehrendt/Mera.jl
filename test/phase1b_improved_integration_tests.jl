@@ -1,4 +1,17 @@
-# Phase 1B Improvedconst TEST_DATA_AVAILABLE = isdir(TEST_DATA_ROOT)
+# Phase 1B Improved Integration Tests - Optimized & Fixed Edition
+# Building on Phase 1 perfect success (70/70 tests, 14.63% coverage)
+# Target: Additional 6-8% coverage improvement through corrected API usage
+
+using Test
+using Mera
+using Statistics  # Import for median function
+
+# Test data paths
+const TEST_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
+const MW_L10_PATH = joinpath(TEST_DATA_ROOT, "mw_L10", "output_00300")
+const SPIRAL_PATH = joinpath(TEST_DATA_ROOT, "spiral_ugrid", "output_00001")
+
+const TEST_DATA_AVAILABLE = isdir(TEST_DATA_ROOT)
 const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 
 @testset "Phase 1B: Improved Integration Tests" begin
@@ -10,26 +23,13 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
             @test_skip "Phase 1B tests skipped - simulation data not available"
         end
         return
-    ended Integration Tests - Optimized & Fixed Edition
-# Building on Phase 1 perfect success (70/70 tests, 14.63% coverage)
-# Target: Additional 6-8% coverage improvement through corrected API usage
-
-using Test
-using Mera
-using Statistics  # Import for median function
+    end
 
 println("🚀 PHASE 1B IMPROVED: Extended Integration Tests")
 println("🎯 Building on Phase 1 perfect success: 70/70 tests, 14.63% coverage")
 println("🎯 Target: Additional 6-8% coverage improvement (20-22% total)")
 println("🔧 Fixed API compatibility issues from Phase 1B")
 println()
-
-# Test data paths (from successful Phase 1)
-const TEST_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
-const MW_L10_PATH = joinpath(TEST_DATA_ROOT, "mw_L10", "output_00300")
-
-# Check if test data is available
-const TEST_DATA_AVAILABLE = isdir(TEST_DATA_ROOT)
 
 @testset "Phase 1B Improved: Extended Integration Tests" begin
     
@@ -409,3 +409,5 @@ println("🎉 Phase 1B Improved Integration Tests Complete!")
 println("📊 Expected Additional Coverage: 6-8% improvement") 
 println("🎯 Total Expected Coverage: ~20-22% (Phase 1: 14.63% + Phase 1B: 6-8%)")
 println("🔧 Fixed API compatibility issues and error handling patterns")
+
+end  # End of "Phase 1B: Improved Integration Tests"

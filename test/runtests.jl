@@ -191,7 +191,7 @@ include("notification_robustness_tests.jl")  # Notification edge & error handlin
         elseif SKIP_HEAVY
             @test_skip "Phase 3 projection tests skipped via MERA_SKIP_HEAVY"
         else
-            println("   Using test data: /Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid")
+            println("   Using available test data (local or downloaded)")
             # Run all Phase 3 test modules
             @testset "Hydro Projection Tests" begin
                 # projection_hydro_tests.jl is included and run automatically
