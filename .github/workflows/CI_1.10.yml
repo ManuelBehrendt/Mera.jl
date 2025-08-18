@@ -40,6 +40,7 @@ jobs:
           echo "MERA_CI_MODE=true" >> $GITHUB_ENV
           echo "MERA_SKIP_HEAVY=true" >> $GITHUB_ENV
           echo "MERA_SKIP_AQUA=true" >> $GITHUB_ENV
+          echo "MERA_SKIP_EXTERNAL_DATA=true" >> $GITHUB_ENV
           echo "MERA_ZULIP_DRY_RUN=true" >> $GITHUB_ENV
           echo "MERA_BASIC_ZULIP_TESTS=true" >> $GITHUB_ENV
           echo "MERA_TEST_TIMEOUT=1200" >> $GITHUB_ENV
@@ -57,6 +58,7 @@ jobs:
           MERA_CI_MODE: true
           MERA_SKIP_HEAVY: true
           MERA_SKIP_AQUA: true
+          MERA_SKIP_EXTERNAL_DATA: true
           MERA_ZULIP_DRY_RUN: true
           MERA_BASIC_ZULIP_TESTS: true
           MERA_TEST_TIMEOUT: 1200

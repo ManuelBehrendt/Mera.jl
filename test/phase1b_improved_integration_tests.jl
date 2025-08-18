@@ -1,4 +1,16 @@
-# Phase 1B Improved: Extended Integration Tests - Optimized & Fixed Edition
+# Phase 1B Improvedconst TEST_DATA_AVAILABLE = isdir(TEST_DATA_ROOT)
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
+@testset "Phase 1B: Improved Integration Tests" begin
+    
+    if !TEST_DATA_AVAILABLE || SKIP_EXTERNAL_DATA
+        if SKIP_EXTERNAL_DATA
+            @test_skip "Phase 1B tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        else
+            @test_skip "Phase 1B tests skipped - simulation data not available"
+        end
+        return
+    ended Integration Tests - Optimized & Fixed Edition
 # Building on Phase 1 perfect success (70/70 tests, 14.63% coverage)
 # Target: Additional 6-8% coverage improvement through corrected API usage
 

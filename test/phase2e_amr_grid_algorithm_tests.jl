@@ -6,7 +6,15 @@ using Test
 using Mera
 using Statistics
 
+# Check if external simulation data tests should be skipped
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
 @testset "Phase 2E: AMR Grid & Algorithm Coverage" begin
+    if SKIP_EXTERNAL_DATA
+        @test_skip "Phase 2E tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        return
+    end
+    
     println("🌐 Phase 2E: Starting AMR Grid & Algorithm Tests")
     println("   Target: AMR algorithms, grid operations, and spatial indexing coverage")
     

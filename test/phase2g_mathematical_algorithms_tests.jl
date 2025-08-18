@@ -7,11 +7,19 @@ using Mera
 using Statistics
 using LinearAlgebra
 
+# Check if external simulation data tests should be skipped
+const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+
 @testset "Phase 2G: Mathematical and Computational Algorithm Coverage" begin
-    println("🧮 Phase 2G: Starting Mathematical and Computational Algorithm Tests")
-    println("   Target: Mathematical functions, coordinate systems, computational algorithms")
+    if SKIP_EXTERNAL_DATA
+        @test_skip "Phase 2G tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
+        return
+    end
     
-    # Get simulation data for mathematical testing
+    println("🧮 Phase 2G: Starting Mathematical and Computational Algorithm Tests")
+    println("   Target: Mathematical and computational core algorithm coverage")
+    
+    # Get simulation info for mathematical algorithm testing
     info = getinfo(path="/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14/", output=400, verbose=false)
     hydro = gethydro(info, lmax=8, verbose=false, show_progress=false)
     
