@@ -196,6 +196,14 @@ using Mera
     @testset "4. InfoType Field Coverage" begin
         println("[ Info: 🔍 Testing InfoType field access patterns")
         
+        # Check if external data is available
+        const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
+        
+        if SKIP_EXTERNAL_DATA
+            @test_skip "External simulation test data not available for this environment"
+            return
+        end
+        
         # Get real InfoType for field testing
         info = getinfo(path="/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14/", output=400, verbose=false)
         
