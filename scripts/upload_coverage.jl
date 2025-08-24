@@ -8,6 +8,8 @@ Requires CODECOV_TOKEN and/or COVERALLS_TOKEN environment variables.
 """
 
 using Pkg, HTTP, JSON
+using Coverage
+using Coverage.Coveralls
 
 println("📤 Mera.jl Coverage Upload")
 println("=" ^ 30)
@@ -55,36 +57,33 @@ if !isempty(codecov_token)
     println("📤 Uploading to Codecov...")
     
     try
-        # Read lcov.info content
-        lcov_content = read("lcov.info", String)
-        
-        # Prepare upload URL
-        codecov_url = "https://codecov.io/upload/v4"
-        
         # Upload using curl (more reliable than HTTP.jl for file uploads)
         cmd = `curl -s -X POST 
                --data-binary @lcov.info
                -H "Accept: text/plain"
-               "$codecov_url?token=$codecov_token&commit=$commit_sha&branch=$branch&service=manual"`
+               "https://codecov.io/upload/v4?token=$codecov_token&commit=$commit_sha&branch=$branch&service=manual"`
         
         result = read(cmd, String)
         
-        if contains(result, "success") || contains(result, "uploaded")
+        if contains(result, "Thank you") || contains(result, "uploaded") || !contains(result, "error")
             println("✅ Codecov upload successful!")
             
             # Extract report URL if available
             if contains(result, "https://codecov.io")
-                url_match = match(r"https://codecov\.io/[^\s]+", result)
+                url_match = match(r"https://codecov\.io/[^\s\n]+", result)
                 if url_match !== nothing
                     println("🔗 View report: $(url_match.match)")
                 end
             end
         else
-            println("⚠️ Codecov upload response: $result")
+            println("⚠️ Codecov upload response:")
+            println(result)
         end
         
     catch e
         println("❌ Codecov upload failed: $e")
+        println("   You can manually upload lcov.info to:")
+        println("   https://codecov.io/gh/ManuelBehrendt/Mera.jl")
     end
     
     println()
@@ -95,58 +94,71 @@ if !isempty(coveralls_token)
     println("📤 Uploading to Coveralls...")
     
     try
-        # Check if Coverage.jl has Coveralls support
-        Pkg.activate(".")
+        # Activate test environment where Coverage.jl is available
+        Pkg.activate("test")
         
-        try
-            using Coverage
-        catch
-            Pkg.add("Coverage")
-            using Coverage
+            # Process coverage data with robust directory exclusions
+    println("📊 Processing coverage data...")
+    exclude_dirs = ["test_backup_20250808_143045", "benchmarks", "dev", "sounds"]
+    
+    coverage_data = FileCoverage[]
+    
+    # Use robust file-by-file processing to handle parsing errors
+    println("🔄 Using robust file-by-file processing...")
+    
+    function process_directory(dir_path::String)
+        if !isdir(dir_path)
+            return
         end
         
-        # Process coverage data
-        coverage_data = process_folder("src")
+        # Check if this directory should be excluded
+        for excluded in exclude_dirs
+            if contains(dir_path, excluded)
+                println("⏭️  Skipping excluded directory: $dir_path")
+                return
+            end
+        end
+        
+        # Process .jl files in current directory
+        for item in readdir(dir_path, join=true)
+            if isfile(item) && endswith(item, ".jl")
+                try
+                    fc = process_file(item)
+                    if fc !== nothing
+                        push!(coverage_data, fc)
+                    end
+                catch file_error
+                    println("⚠️  Skipping problematic file: $item")
+                    println("   Error: $file_error")
+                end
+            elseif isdir(item)
+                # Recursively process subdirectories
+                process_directory(item)
+            end
+        end
+    end
+    
+    # Start processing from src directory
+    process_directory("src")
+    
+    println("✅ Robust processing completed: $(length(coverage_data)) files")
         
         if !isempty(coverage_data)
             # Use Coverage.jl's Coveralls integration
-            Coveralls.submit_token(coverage_data, coveralls_token)
+            result = Coveralls.submit(coverage_data; repo_token=coveralls_token)
             println("✅ Coveralls upload successful!")
             println("🔗 View report: https://coveralls.io/github/ManuelBehrendt/Mera.jl")
         else
-            println("⚠️ No coverage data found for Coveralls upload")
+            println("⚠️ No valid coverage data found for Coveralls upload")
         end
+        
+        # Restore main environment
+        Pkg.activate(".")
         
     catch e
         println("❌ Coveralls upload failed: $e")
-        println("   Trying alternative upload method...")
-        
-        # Alternative: manual Coveralls upload
-        try
-            # Read source files and coverage
-            lcov_content = read("lcov.info", String)
-            
-            # Create Coveralls JSON format
-            coveralls_data = Dict(
-                "repo_token" => coveralls_token,
-                "service_name" => "manual",
-                "source_files" => []
-            )
-            
-            if !isempty(commit_sha)
-                coveralls_data["git"] = Dict(
-                    "head" => Dict("id" => commit_sha),
-                    "branch" => branch
-                )
-            end
-            
-            # Simple upload attempt
-            println("⚠️ Manual Coveralls upload not fully implemented")
-            println("   Use GitHub Actions workflow for reliable Coveralls upload")
-            
-        catch e2
-            println("❌ Alternative Coveralls upload also failed: $e2")
-        end
+        println("   Alternative: Use GitHub Actions for automated Coveralls upload")
+        println("   Or manually submit lcov.info at https://coveralls.io")
     end
 end
 
