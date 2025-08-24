@@ -72,6 +72,19 @@ function createpath(output::Real, path::String; namelist::String="")
         Timer_file  = "timer_$output.txt"
         Header_file = "header_$output.txt"
 
+    else # output >= 100000
+        Path_folder = "output_$output"
+        Info_file   = "info_$output.txt"
+        AMR_file    = "amr_$output."
+        Hydro_file  = "hydro_$output."
+        Grav_file   = "grav_$output."
+        RT_file     = "rt_$output."
+        RT_descriptor = "info_rt_$output.txt"
+        Part_file   = "part_$output."
+        Clump_file  = "clump_$output."
+        Timer_file  = "timer_$output.txt"
+        Header_file = "header_$output.txt"
+
     end
 
     fnames = FileNamesType()
