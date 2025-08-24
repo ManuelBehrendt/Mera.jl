@@ -1,7 +1,6 @@
 {
     // Julia Language Server Configuration
     "julia.executablePath": "",
-    "julia.environmentPath": "",
     "julia.useRevise": true,
     "julia.enableTelemetry": false,
     "julia.symbolCacheDownload": true,
