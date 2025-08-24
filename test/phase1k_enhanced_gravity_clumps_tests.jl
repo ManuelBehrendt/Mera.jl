@@ -92,35 +92,17 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
         end
         
         @testset "1.4 Gravity Advanced Loading Options" begin
-            # Test verbose modes (covers logging branches in gravity)
-            @test begin
-                result = getgravity(info, verbose=true, show_progress=false)
-                typeof(result) <: NamedTuple
-            end
-            @test begin
-                result = getgravity(info, verbose=false, show_progress=false)
-                typeof(result) <: NamedTuple
-            end
+            # Test verbose modes (covers logging branches in gravity) - validating return type
+            @test typeof(getgravity(info, verbose=true, show_progress=false)) <: GravDataType
+            @test typeof(getgravity(info, verbose=false, show_progress=false)) <: GravDataType
             
-            # Test progress bar control (covers progress handling in gravity)
-            @test begin
-                result = getgravity(info, verbose=false, show_progress=true)
-                typeof(result) <: NamedTuple
-            end
-            @test begin
-                result = getgravity(info, verbose=false, show_progress=false)
-                typeof(result) <: NamedTuple
-            end
+            # Test progress bar control (covers progress handling in gravity) - validating return type
+            @test typeof(getgravity(info, verbose=false, show_progress=true)) <: GravDataType
+            @test typeof(getgravity(info, verbose=false, show_progress=false)) <: GravDataType
             
-            # Test threading control if available
-            @test begin
-                result = getgravity(info, verbose=false, show_progress=false, max_threads=1)
-                typeof(result) <: NamedTuple
-            end
-            @test begin
-                result = getgravity(info, verbose=false, show_progress=false, max_threads=2)
-                typeof(result) <: NamedTuple
-            end
+            # Test threading control if available - validating return type
+            @test typeof(getgravity(info, verbose=false, show_progress=false, max_threads=1)) <: GravDataType
+            @test typeof(getgravity(info, verbose=false, show_progress=false, max_threads=2)) <: GravDataType
             
             println("[ Info: ✅ Gravity advanced loading options coverage improved")
         end
