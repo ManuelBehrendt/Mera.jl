@@ -5,9 +5,8 @@ Configurable Aqua.jl driven quality checks for Mera.
 
 Environment variables (all optional):
   MERA_SKIP_AQUA            Master switch (true => skip everything)
-  MERA_AQUA_LEVEL           One of: ci_min | fast | full | debug (default: fast)
-      ci_min : undefined_exports + deps_compat only
-      fast   : ci_min + unbound_args + stale_deps + project_extras
+  MERA_AQUA_LEVEL           One of: fast | full | debug (default: fast)
+      fast   : undefined_exports + deps_compat + unbound_args + stale_deps + project_extras
       full   : fast + ambiguities(non-recursive) + piracy
       debug  : full + ambiguities(recursive=true)
   MERA_SKIP_AQUA_AMBIGUITIES  Skip ambiguity test even if level includes it
@@ -90,8 +89,8 @@ function run_aqua_quality_tests()
     @info "Aqua configuration" level=LEVEL strict=STRICT_MODE run_ambiguities run_piracy recursive_amb baseline=BASELINE_PATH
 
     @testset "Aqua.jl Quality Checks ($LEVEL)" begin
-        # Core always-on for all levels except ci_min reduces set
-        if LEVEL in ("ci_min", "fast", "full", "debug")
+        # Core always-on for all levels
+        if LEVEL in ("fast", "full", "debug")
             @testset "Undefined Exports" begin
                 Aqua.test_undefined_exports(Mera)
             end
@@ -128,7 +127,8 @@ function run_aqua_quality_tests()
                 end
             end
         end
-        if LEVEL != "ci_min"
+        # Additional tests for fast, full, and debug levels
+        if LEVEL in ("fast", "full", "debug")
             @testset "Unbound Args" begin
                 Aqua.test_unbound_args(Mera)
             end

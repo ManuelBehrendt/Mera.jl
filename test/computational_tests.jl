@@ -163,7 +163,8 @@ function run_computational_tests()
             @test_nowarn typeof(Mera.PhysicalUnitsType001())
             
             # Skip MERA notification system in CI (requires email configuration)
-            if !haskey(ENV, "CI") && !haskey(ENV, "GITHUB_ACTIONS") && !haskey(ENV, "MERA_CI_MODE")
+            # Run performance benchmarks only in local environment
+            if !haskey(ENV, "MERA_SKIP_HEAVY") || ENV["MERA_SKIP_HEAVY"] != "true"
                 @test_nowarn notifyme()
             end
             

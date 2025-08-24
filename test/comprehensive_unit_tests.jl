@@ -67,17 +67,15 @@ function run_comprehensive_unit_tests()
             
             @testset "Mera Audio Notification Functions" begin
                 # Test Mera's bell and notifyme functions (skip on CI due to system dependencies)
-                # These functions require system audio and mail client which aren't available in CI
+                # These functions require system audio and mail client which may not be available
                 
-                # Detect CI environment
-                is_ci = get(ENV, "CI", "false") == "true" || 
-                        haskey(ENV, "GITHUB_ACTIONS") || 
-                        get(ENV, "MERA_CI_MODE", "false") == "true"
+                # Check if we should skip heavy/system-dependent tests
+                skip_heavy = get(ENV, "MERA_SKIP_HEAVY", "false") == "true"
                 
-                if is_ci
-                    @test_skip "bell() - skipped on CI (requires audio system)"
-                    @test_skip "notifyme() - skipped on CI (requires mail client and ~/email.txt)"
-                    @test_skip "notifyme(message) - skipped on CI (requires mail client)"
+                if skip_heavy
+                    @test_skip "bell() - skipped (requires audio system)"
+                    @test_skip "notifyme() - skipped (requires mail client and ~/email.txt)"
+                    @test_skip "notifyme(message) - skipped (requires mail client)"
                     
                     # Still test that the functions exist and are exported
                     @test isdefined(Mera, :bell)
