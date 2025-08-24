@@ -25,8 +25,6 @@ function setup_test_data()
     # Download and extract test simulation data (always fresh for each test run)
     test_data_dir = joinpath(@__DIR__, "test_data")
     
-    # Check if we're in CI environment
-    is_ci = haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS") || haskey(ENV, "MERA_CI_MODE")
     download_timeout = parse(Int, get(ENV, "MERA_TEST_TIMEOUT", "900"))  # 15 minutes default
     max_retries = parse(Int, get(ENV, "MERA_DOWNLOAD_RETRIES", "2"))
     
@@ -37,9 +35,6 @@ function setup_test_data()
     end
     
     println("📥 Setting up fresh test data...")
-    if is_ci
-        println("   Running in CI environment - using robust download strategy")
-    end
     
     # Create test data directory
     mkpath(test_data_dir)
@@ -150,8 +145,7 @@ function cleanup_test_data()
 end
 
 function run_simulation_data_tests()
-    # Check if we're in CI and should skip data-heavy tests
-    is_ci = haskey(ENV, "CI") || haskey(ENV, "GITHUB_ACTIONS") || haskey(ENV, "MERA_CI_MODE")
+    # Check if we should skip data-heavy tests
     skip_data_tests = (haskey(ENV, "MERA_SKIP_DATA_TESTS") && ENV["MERA_SKIP_DATA_TESTS"] == "true") ||
                       (haskey(ENV, "MERA_SKIP_EXTERNAL_DATA") && ENV["MERA_SKIP_EXTERNAL_DATA"] == "true") ||
                       (haskey(ENV, "MERA_SKIP_HEAVY") && ENV["MERA_SKIP_HEAVY"] == "true")

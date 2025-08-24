@@ -148,7 +148,8 @@ function run_notebook_inspired_tests()
             # Test utility functions commonly used throughout notebooks
             
             # Bell and notification functions (user interaction)
-            if !haskey(ENV, "CI") && !haskey(ENV, "GITHUB_ACTIONS") && !haskey(ENV, "MERA_CI_MODE")
+            # Run performance benchmarks only in local environment
+            if !haskey(ENV, "MERA_SKIP_HEAVY") || ENV["MERA_SKIP_HEAVY"] != "true"
                 @test_nowarn try; bell(); catch; nothing; end
                 @test_nowarn try; notifyme(); catch; nothing; end
             end

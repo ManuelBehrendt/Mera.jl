@@ -11,26 +11,8 @@ println("=" ^ 50)
 using Test
 using Mera
 
-# Check if we're in CI environment
-const IS_CI = get(ENV, "CI", "false") == "true" || 
-              get(ENV, "GITHUB_ACTIONS", "false") == "true" ||
-              get(ENV, "MERA_CI_MODE", "false") == "true"
-
 # Check if we're running local coverage (full test with coverage upload)
 const IS_LOCAL_COVERAGE = get(ENV, "MERA_LOCAL_COVERAGE", "false") == "true"
-
-# Automatically set CI-friendly defaults BEFORE any tests run
-if IS_CI && !IS_LOCAL_COVERAGE
-    # In CI environment, automatically skip external data downloads and heavy tests
-    ENV["MERA_SKIP_EXTERNAL_DATA"] = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "true")
-    ENV["MERA_SKIP_HEAVY"] = get(ENV, "MERA_SKIP_HEAVY", "true")
-    # Also set Aqua to fast level for CI
-    ENV["MERA_AQUA_LEVEL"] = get(ENV, "MERA_AQUA_LEVEL", "fast")
-    println("🤖 CI Environment detected - setting safe defaults:")
-    println("   MERA_SKIP_EXTERNAL_DATA=$(ENV["MERA_SKIP_EXTERNAL_DATA"])")
-    println("   MERA_SKIP_HEAVY=$(ENV["MERA_SKIP_HEAVY"])")
-    println("   MERA_AQUA_LEVEL=$(ENV["MERA_AQUA_LEVEL"])")
-end
 
 # Optional toggles (set env var to "true" to skip)
 const SKIP_AQUA = get(ENV, "MERA_SKIP_AQUA", "false") == "true"
@@ -38,7 +20,6 @@ const SKIP_HEAVY = get(ENV, "MERA_SKIP_HEAVY", "false") == "true"  # skip heavy 
 const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"  # skip tests requiring external simulation data
 
 println("🚀 Starting Mera.jl Test Suite...")
-println("CI Environment: $IS_CI")
 println("Local Coverage Mode: $IS_LOCAL_COVERAGE")
 println("Skip External Data: $SKIP_EXTERNAL_DATA")
 println("Skip Heavy Tests: $SKIP_HEAVY")
@@ -123,23 +104,23 @@ include("validate_fixes.jl")                   # Validation of recent fixes
 include("quick_phase1f_test.jl")              # Quick Phase 1F validation
 include("quick_phase1h_test.jl")              # Quick Phase 1H validation
 ##
-# For CI or when heavy tests are skipped, default to BASIC mode unless user explicitly overrides.
 # For local coverage mode, allow full Zulip tests unless explicitly set to basic.
-if (IS_CI && !IS_LOCAL_COVERAGE) || (SKIP_HEAVY && !IS_LOCAL_COVERAGE) && !haskey(ENV, "MERA_BASIC_ZULIP_TESTS")
+# For heavy test skipping, default to BASIC mode unless user explicitly overrides.
+if SKIP_HEAVY && !IS_LOCAL_COVERAGE && !haskey(ENV, "MERA_BASIC_ZULIP_TESTS")
     ENV["MERA_BASIC_ZULIP_TESTS"] = "true"
     println("🔔 Enabling basic Zulip notification test mode (MERA_BASIC_ZULIP_TESTS=true) for faster run")
 end
 
-# Automatically switch Zulip notifications to dry-run mode in CI (but not local coverage) unless user overrides
-if (IS_CI && !IS_LOCAL_COVERAGE) || (get(ENV, "MERA_AQUA_LEVEL", "") in ("fast", "ci_min")) &&
+# Automatically switch Zulip notifications to dry-run mode when heavy tests are skipped unless user overrides
+if SKIP_HEAVY && !IS_LOCAL_COVERAGE &&
    !haskey(ENV, "MERA_ZULIP_DRY_RUN") && get(ENV, "MERA_ZULIP_ENABLE_NETWORK", "false") != "true"
     ENV["MERA_ZULIP_DRY_RUN"] = "true"
     println("🔔 Enabling Zulip dry-run mode (MERA_ZULIP_DRY_RUN=true) – set MERA_ZULIP_ENABLE_NETWORK=true to send real messages")
 end
 include("zulip_notification_tests.jl")  # Comprehensive (auto-basic) Zulip notification tests
 
-# Include notification tests (only run locally if configured, or in local coverage mode)
-if !IS_CI || IS_LOCAL_COVERAGE
+# Include notification tests (run locally if configured, or in local coverage mode)
+if IS_LOCAL_COVERAGE || !SKIP_HEAVY
     include("notifications_simple_test.jl")
 end
 
