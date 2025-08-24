@@ -3,9 +3,9 @@
 
 
 Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
-|**Last release** | **Documentation** | **Coverage (dev)** | **Cite**|                                                                            
-|:------------|:----------------- |:------------ |:------------------ |
-|![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) |[![][docs-stable-img]][docs-stable-url]| [![codecov][codecov-img]][codecov-url] | [![][doi-img]][doi-url] |
+|**Last release** | **Documentation** | **Cite**|                                                                            
+|:------------|:----------------- |:------------------ |
+|![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) |[![][docs-stable-img]][docs-stable-url]| [![][doi-img]][doi-url] |
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
 [docs-stable-url]: https://manuelbehrendt.github.io/Mera.jl/stable/
@@ -80,6 +80,9 @@ We have developed comprehensive **unit-test** and **end-to-end** testing strateg
 - Run tests locally with: `julia --project=. -e "using Pkg; Pkg.test()"`
 - 62 comprehensive test files covering all major functionality
 - Supports multi-threading and extensive coverage analysis
+
+**Code Coverage (Development Version):**
+[![codecov][codecov-img]][codecov-url]
 
 
 ## Julia Installation
