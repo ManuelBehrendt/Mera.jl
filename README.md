@@ -3,15 +3,18 @@
 
 
 Documentation: https://manuelbehrendt.github.io/Mera.jl/stable/
-|**Last release** | **Documentation** | **Cite**|                                                                            
-|:------------|:----------------- |:------------------ |
-|![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) |[![][docs-stable-img]][docs-stable-url]| [![][doi-img]][doi-url] |
+|**Last release** | **Documentation** | **Coverage (dev)** | **Cite**|                                                                            
+|:------------|:----------------- |:------------ |:------------------ |
+|![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl) |[![][docs-stable-img]][docs-stable-url]| [![codecov][codecov-img]][codecov-url] | [![][doi-img]][doi-url] |
 
 [docs-stable-img]: https://img.shields.io/badge/docs-stable%20release-blue.svg
 [docs-stable-url]: https://manuelbehrendt.github.io/Mera.jl/stable/
 
 [docs-latest-img]: https://img.shields.io/badge/docs-in_development-orange.svg
 [docs-latest-url]: https://manuelbehrendt.github.io/Mera.jl/dev/
+
+[codecov-img]: https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30
+[codecov-url]: https://codecov.io/gh/ManuelBehrendt/Mera.jl
 
 [doi-img]: https://zenodo.org/badge/229728152.svg
 [doi-url]: https://zenodo.org/badge/latestdoi/229728152
