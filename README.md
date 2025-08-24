@@ -66,18 +66,17 @@ Plugin-style design allows seamless addition of custom data loaders, analysis ro
 Find the main dependencies from the development version listed in the file [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/blob/master/Project.toml).
 
 ## Tests
-We are developing **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. After new commits are pushed to GitHub, **different operating system environments** and **Julia versions** run **automated tests**, e. g. on outputs from various RAMSES simulations, to ensure important functionalities of MERA. The *test* folder contains all tests with the main function in the **runtest.jl** file.
+We have developed comprehensive **unit-test** and **end-to-end** testing strategies to encounter bugs like general errors, incorrect data returns, and functionality issues. Tests are run locally to ensure important functionalities of MERA work correctly on various RAMSES simulation outputs. The *test* folder contains all tests with the main orchestration function in the **runtests.jl** file.
 
 **Development Version**|
 |:---------------------|
-|[![Coverage Status](https://coveralls.io/repos/github/ManuelBehrendt/Mera.jl/badge.svg?branch=master&kill_cache=2)](https://coveralls.io/github/ManuelBehrendt/Mera.jl?branch=master) [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl) [![CompatHelper](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml) | 
+|[![CompatHelper](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CompatHelper.yml) | 
 [![Documentation](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/documentation.yml) [![][docs-latest-img]][docs-latest-url]|
 
-
-**Runtests for development version:** | **OS** |
-|:---------------------|:---------------------|
-[![Julia1.11](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.11.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.11.yml)| ubuntu-latest, macOS-latest |
-[![Julia1.10](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI_1.10.yml)| ubuntu-latest, macOS-latest |
+**Local Testing:**
+- Run tests locally with: `julia --project=. -e "using Pkg; Pkg.test()"`
+- 62 comprehensive test files covering all major functionality
+- Supports multi-threading and extensive coverage analysis
 
 
 ## Julia Installation
