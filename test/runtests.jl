@@ -51,6 +51,13 @@ include("comprehensive_unit_tests.jl")
 include("comprehensive_unit_tests_simple.jl")
 include("physics_and_performance_tests.jl")
 
+# Enhanced comprehensive test suites (recently added)
+include("computational_tests_new.jl")                       # Enhanced computational coverage tests
+include("mathematical_analysis_advanced_tests.jl")         # Advanced mathematical analysis coverage
+include("memory_management_advanced_tests.jl")             # Memory management and optimization tests
+include("enhanced_coverage_tests.jl")                      # Enhanced coverage validation
+include("maximum_coverage_tests.jl")                       # Maximum coverage achievement tests
+
 # New: basic functionality sanity & Aqua quality
 include("basic_functionality_sanity.jl")
 include("aqua_quality_tests.jl")
@@ -91,6 +98,12 @@ include("uniform_grid_reader_tests.jl")                     # Phase 3C: Uniform 
 include("projection_integration_tests.jl")                  # Phase 3D: Integration testing for projections and readers
 include("mera_io_workflow_tests.jl")                        # Phase 3E: Mera file I/O workflow testing (savedata/loaddata cycle)
 
+# Advanced projection and I/O testing (recently added)
+include("advanced_projection_features_tests.jl")            # Advanced projection features and edge cases
+include("mera_file_io_tests.jl")                           # Comprehensive Mera file I/O testing
+include("vtk_export_comprehensive_tests.jl")               # VTK export comprehensive validation
+include("ramses_reader_edge_cases_tests.jl")               # RAMSES reader edge cases and robustness
+
 # Include test modules
 include("basic_module_tests.jl")
 include("core_functionality_tests.jl")
@@ -104,6 +117,11 @@ include("notebook_inspired_tests.jl")
 include("workflow_based_tests.jl")  # Re-enabled with fixes
 include("data_free_workflow_tests.jl")
 include("comprehensive_unit_tests_simple.jl")  # New simple comprehensive Mera function tests
+
+# Validation and quick tests (recently added)
+include("validate_fixes.jl")                   # Validation of recent fixes
+include("quick_phase1f_test.jl")              # Quick Phase 1F validation
+include("quick_phase1h_test.jl")              # Quick Phase 1H validation
 ##
 # For CI or when heavy tests are skipped, default to BASIC mode unless user explicitly overrides.
 # For local coverage mode, allow full Zulip tests unless explicitly set to basic.
@@ -126,6 +144,11 @@ if !IS_CI || IS_LOCAL_COVERAGE
 end
 
 include("notification_robustness_tests.jl")  # Notification edge & error handling tests
+
+# Enhanced/alternative test versions (recently added)
+# Note: These provide improved or simplified versions of existing tests
+include("pipeline_tests_fixed.jl")              # Fixed version of pipeline tests
+include("vtk_export_comprehensive_tests_simplified.jl")  # Simplified VTK export tests
 
 @testset "Mera.jl Test Suite" begin
     
