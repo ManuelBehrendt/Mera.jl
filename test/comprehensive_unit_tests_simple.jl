@@ -111,7 +111,7 @@ function run_simple_comprehensive_tests()
             @test isa(:Myr, Symbol)
             
             # Test getunit function exists with correct signature
-            @test hasmethod(getunit, (Any, Symbol, Array{Symbol,1}, Array{Symbol,1}))
+            @test hasmethod(getunit, (Any, Symbol, Vector{Symbol}, Vector{Symbol}))
         end
         
         @testset "View Functions" begin
