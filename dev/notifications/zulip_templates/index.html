@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Zulip Templates · Mera.jl</title><meta name="title" content="Zulip Templates · Mera.jl"/><meta property="og:title" content="Zulip Templates · Mera.jl"/><meta property="twitter:title" content="Zulip Templates · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/notifications/zulip_templates/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/notifications/zulip_templates/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/notifications/zulip_templates/"/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script><link href="../../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../../assets/custom.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../../"><img src="../../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><a class="tocitem" href="../../00_multi_FirstSteps/">Getting Started</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../../api/data_inspection/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../../api/data_loading/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../../api/subregions/">API Reference</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Basic Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../../api/calculations/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Mask/Filter/Meta</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../../api/masking_filtering/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Projection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../../api/projections/">API Reference</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../../api/mera_files/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../../api/volume_rendering/">API Reference</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox" checked/><label class="tocitem" for="menuitem-6"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-6-1" type="checkbox"/><label class="tocitem" for="menuitem-6-1"><span class="docs-label">Multi-Threading</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../../api/multithreading/">API Reference</a></li></ul></li><li><a class="tocitem" href="../../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-6-3" type="checkbox" checked/><label class="tocitem" for="menuitem-6-3"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../">Overview</a></li><li><a class="tocitem" href="../01_quick_start/">Quick Start</a></li><li><a class="tocitem" href="../02_setup/">Setup Guide</a></li><li><a class="tocitem" href="../bell/">Bell (Local Audio)</a></li><li><a class="tocitem" href="../email/">Email</a></li><li><a class="tocitem" href="../zulip/">Zulip (Team Chat)</a></li><li class="is-active"><a class="tocitem" href>Zulip Templates</a><ul class="internal"><li><a class="tocitem" href="#Channel-and-Topic-Organization"><span>🏗️ Channel &amp; Topic Organization</span></a></li><li><a class="tocitem" href="#Research-Workflow-Templates"><span>📊 Research Workflow Templates</span></a></li><li><a class="tocitem" href="#Publication-and-Paper-Workflows"><span>📝 Publication &amp; Paper Workflows</span></a></li><li><a class="tocitem" href="#System-Maintenance-Templates"><span>🛠️ System Maintenance Templates</span></a></li><li><a class="tocitem" href="#Custom-Message-Templates"><span>🎨 Custom Message Templates</span></a></li><li><a class="tocitem" href="#Configuration-Helpers"><span>🔧 Configuration Helpers</span></a></li><li><a class="tocitem" href="#Integration-Patterns"><span>📚 Integration Patterns</span></a></li></ul></li><li><a class="tocitem" href="../03_attachments/">File Attachments</a></li><li><a class="tocitem" href="../04_output_capture/">Output Capture</a></li><li><a class="tocitem" href="../05_advanced/">Advanced Features</a></li><li><a class="tocitem" href="../06_examples/">Examples</a></li><li><a class="tocitem" href="../07_troubleshooting/">Troubleshooting</a></li><li><a class="tocitem" href="../../api/notifications/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-4" type="checkbox"/><label class="tocitem" for="menuitem-6-4"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Julia Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Examples &amp; Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../../examples/">Examples</a></li><li><a class="tocitem" href="../../Miscellaneous/">Miscellaneous</a></li><li><a class="tocitem" href="../../api/">Complete API Reference</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Advanced Features</a></li><li><a class="is-disabled">Notifications</a></li><li class="is-active"><a href>Zulip Templates</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Zulip Templates</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Zulip-Templates-and-Examples"><a class="docs-heading-anchor" href="#Zulip-Templates-and-Examples">Zulip Templates &amp; Examples 📋</a><a id="Zulip-Templates-and-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Zulip-Templates-and-Examples" title="Permalink"></a></h1><p><strong>Ready-to-use notification patterns for research workflows</strong></p><p>This guide provides practical templates and examples for common research scenarios using Zulip integration. Copy these patterns and adapt them to your specific needs.</p><h2 id="Channel-and-Topic-Organization"><a class="docs-heading-anchor" href="#Channel-and-Topic-Organization">🏗️ Channel &amp; Topic Organization</a><a id="Channel-and-Topic-Organization-1"></a><a class="docs-heading-anchor-permalink" href="#Channel-and-Topic-Organization" title="Permalink"></a></h2><h3 id="Recommended-Channel-Structure"><a class="docs-heading-anchor" href="#Recommended-Channel-Structure">Recommended Channel Structure</a><a id="Recommended-Channel-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Recommended-Channel-Structure" title="Permalink"></a></h3><pre><code class="nohighlight hljs">📁 Your Research Organization
+├── 🔬 personal-alerts     # Your private notifications
+├── 👥 team-research       # Shared research updates  
+├── 🖥️ simulations        # Simulation runs and results
+├── 📊 data-analysis      # Analysis pipelines and plots
+├── 📝 publications       # Paper-related results
+├── 🚨 errors            # Error notifications and debugging
+├── 💾 backups           # Backup and maintenance alerts
+└── 🎯 milestones        # Project milestones and achievements</code></pre><h3 id="Topic-Naming-Conventions"><a class="docs-heading-anchor" href="#Topic-Naming-Conventions">Topic Naming Conventions</a><a id="Topic-Naming-Conventions-1"></a><a class="docs-heading-anchor-permalink" href="#Topic-Naming-Conventions" title="Permalink"></a></h3><p><strong>Good topic names:</strong></p><ul><li><code>&quot;Temperature Analysis - Aug 2024&quot;</code></li><li><code>&quot;Galaxy Survey Processing - NGC4321&quot;</code></li><li><code>&quot;Parameter Sweep #47 - Mass Function&quot;</code></li><li><code>&quot;Paper 1 - Final Figures&quot;</code></li></ul><p><strong>Avoid:</strong></p><ul><li><code>&quot;Results&quot;</code> (too vague)</li><li><code>&quot;Test&quot;</code> (not searchable later)</li><li><code>&quot;Untitled&quot;</code> (no context)</li></ul><h2 id="Research-Workflow-Templates"><a class="docs-heading-anchor" href="#Research-Workflow-Templates">📊 Research Workflow Templates</a><a id="Research-Workflow-Templates-1"></a><a class="docs-heading-anchor-permalink" href="#Research-Workflow-Templates" title="Permalink"></a></h2><h3 id="1.-Daily-Analysis-Pipeline"><a class="docs-heading-anchor" href="#1.-Daily-Analysis-Pipeline">1. Daily Analysis Pipeline</a><a id="1.-Daily-Analysis-Pipeline-1"></a><a class="docs-heading-anchor-permalink" href="#1.-Daily-Analysis-Pipeline" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;Template for daily/routine analysis workflows&quot;&quot;&quot;
+
+function daily_temperature_analysis(survey_name::String, date::String)
+    # Initialize with clear identification
+    notifyme(&quot;🌅 Starting daily temperature analysis&quot;, 
+             zulip_channel=&quot;data-analysis&quot;,
+             zulip_topic=&quot;Temperature Pipeline - $date&quot;)
+    
+    start_time = time()
+    
+    try
+        # Step 1: Data loading
+        data = load_survey_data(survey_name)
+        notifyme(&quot;✅ Loaded $(length(data.galaxies)) galaxies from $survey_name&quot;,
+                 zulip_channel=&quot;data-analysis&quot;,
+                 zulip_topic=&quot;Temperature Pipeline - $date&quot;)
+        
+        # Step 2: Analysis with progress tracking
+        results = analyze_temperatures(data)
+        
+        # Step 3: Generate plots
+        plot_path = create_temperature_plots(results)
+        
+        # Step 4: Final notification with results
+        notifyme(&quot;🎉 **Daily temperature analysis complete!**\\n\\n&quot; *
+                &quot;• Galaxies analyzed: $(length(data.galaxies))\\n&quot; *
+                &quot;• Mean temperature: $(round(results.mean_temp, digits=2)) K\\n&quot; *
+                &quot;• Analysis time: $(round((time()-start_time)/60, digits=1)) minutes&quot;,
+                image_path=plot_path,
+                start_time=start_time,
+                zulip_channel=&quot;data-analysis&quot;,
+                zulip_topic=&quot;Temperature Pipeline - $date&quot;)
+        
+        return results
+        
+    catch e
+        notifyme(&quot;❌ Daily temperature analysis FAILED for $date&quot;,
+                exception_context=e,
+                start_time=start_time,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Pipeline Failures - $date&quot;)
+        rethrow(e)
+    end
+end</code></pre><h3 id="2.-Long-Running-Simulation-Monitor"><a class="docs-heading-anchor" href="#2.-Long-Running-Simulation-Monitor">2. Long-Running Simulation Monitor</a><a id="2.-Long-Running-Simulation-Monitor-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Long-Running-Simulation-Monitor" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;Template for monitoring overnight/weekend simulations&quot;&quot;&quot;
+
+function run_galaxy_formation_simulation(config_name::String)
+    # Create dedicated topic for this simulation
+    topic = &quot;Galaxy Formation - $config_name - $(Dates.format(now(), &quot;yyyy-mm-dd&quot;))&quot;
+    
+    # Initial startup notification
+    notifyme(&quot;🚀 **Starting Galaxy Formation Simulation**\\n\\n&quot; *
+            &quot;• Configuration: $config_name\\n&quot; *
+            &quot;• Expected duration: ~8-12 hours\\n&quot; *
+            &quot;• Progress updates every 30 minutes&quot;,
+            zulip_channel=&quot;simulations&quot;,
+            zulip_topic=topic)
+    
+    # Progress tracking setup
+    total_timesteps = 1000
+    tracker = create_progress_tracker(total_timesteps,
+                                    task_name=&quot;Galaxy Formation ($config_name)&quot;,
+                                    time_interval=1800,  # 30-minute updates
+                                    progress_interval=5,  # Every 5%
+                                    zulip_channel=&quot;simulations&quot;,
+                                    zulip_topic=topic)
+    
+    start_time = time()
+    
+    try
+        simulation_data = initialize_simulation(config_name)
+        
+        # Main simulation loop with monitoring
+        for timestep in 1:total_timesteps
+            evolve_timestep!(simulation_data, timestep)
+            update_progress!(tracker, timestep)
+            
+            # Special checkpoints
+            if timestep in [100, 250, 500, 750]
+                checkpoint_path = save_checkpoint(simulation_data, timestep)
+                notifyme(&quot;📸 **Checkpoint saved at timestep $timestep**\\n\\n&quot; *
+                        &quot;• Galaxies formed: $(count_galaxies(simulation_data))\\n&quot; *
+                        &quot;• Current redshift: $(current_redshift(simulation_data))&quot;,
+                        image_path=checkpoint_path,
+                        zulip_channel=&quot;simulations&quot;,
+                        zulip_topic=topic)
+            end
+        end
+        
+        # Final results
+        final_plots = create_final_plots(simulation_data)
+        complete_progress!(tracker, 
+                          &quot;🌌 **Simulation completed successfully!**\\n\\n&quot; *
+                          &quot;• Final galaxy count: $(count_galaxies(simulation_data))\\n&quot; *
+                          &quot;• Total mass assembled: $(total_mass(simulation_data)) M☉\\n&quot; *
+                          &quot;• Data saved to: $(save_simulation_results(simulation_data))&quot;)
+        
+        # Share all final plots
+        send_results(&quot;📊 **Final simulation results - $config_name**&quot;,
+                    final_plots,
+                    zulip_channel=&quot;simulations&quot;,
+                    zulip_topic=topic)
+        
+        return simulation_data
+        
+    catch e
+        notifyme(&quot;💥 **SIMULATION CRASHED** - $config_name\\n\\n&quot; *
+                &quot;• Failed at timestep: $(get_current_timestep())\\n&quot; *
+                &quot;• Checkpoint data may be recoverable\\n&quot; *
+                &quot;• Check error logs for debugging&quot;,
+                exception_context=e,
+                start_time=start_time,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Simulation Failures&quot;)
+        rethrow(e)
+    end
+end</code></pre><h3 id="3.-Parameter-Study-Management"><a class="docs-heading-anchor" href="#3.-Parameter-Study-Management">3. Parameter Study Management</a><a id="3.-Parameter-Study-Management-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Parameter-Study-Management" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;Template for parameter sweeps and systematic studies&quot;&quot;&quot;
+
+function run_parameter_sweep(parameter_name::String, parameter_values::Vector)
+    sweep_id = &quot;$(parameter_name)_sweep_$(Dates.format(now(), &quot;yyyymmdd_HHMM&quot;))&quot;
+    topic = &quot;Parameter Sweep - $parameter_name&quot;
+    
+    # Initialize sweep
+    notifyme(&quot;🔬 **Starting Parameter Sweep**\\n\\n&quot; *
+            &quot;• Parameter: $parameter_name\\n&quot; *
+            &quot;• Values: $(length(parameter_values)) points\\n&quot; *
+            &quot;• Range: $(minimum(parameter_values)) - $(maximum(parameter_values))\\n&quot; *
+            &quot;• Sweep ID: $sweep_id&quot;,
+            zulip_channel=&quot;data-analysis&quot;,
+            zulip_topic=topic)
+    
+    results = Dict()
+    failed_params = []
+    
+    # Track overall progress
+    tracker = create_progress_tracker(length(parameter_values),
+                                    task_name=&quot;Parameter Sweep ($parameter_name)&quot;,
+                                    time_interval=600,  # 10-minute updates
+                                    progress_interval=10,  # Every 10%
+                                    zulip_channel=&quot;data-analysis&quot;,
+                                    zulip_topic=topic)
+    
+    for (i, param_value) in enumerate(parameter_values)
+        try
+            # Run single parameter point
+            result = safe_execute(&quot;$parameter_name = $param_value&quot;) do
+                run_analysis_with_parameter(parameter_name, param_value)
+            end
+            
+            results[param_value] = result
+            update_progress!(tracker, i)
+            
+        catch e
+            push!(failed_params, param_value)
+            notifyme(&quot;⚠️ **Parameter point failed: $parameter_name = $param_value**&quot;,
+                    exception_context=e,
+                    zulip_channel=&quot;errors&quot;,
+                    zulip_topic=&quot;Parameter Sweep Failures&quot;)
+            continue
+        end
+    end
+    
+    # Generate summary plots
+    summary_plots = create_parameter_sweep_plots(results, parameter_name)
+    
+    # Final summary
+    success_count = length(results)
+    failure_count = length(failed_params)
+    
+    complete_progress!(tracker,
+                      &quot;📈 **Parameter sweep completed!**\\n\\n&quot; *
+                      &quot;• Successful runs: $success_count/$(length(parameter_values))\\n&quot; *
+                      &quot;• Failed parameters: $failed_params\\n&quot; *
+                      &quot;• Results saved to: $(save_parameter_results(results, sweep_id))&quot;)
+    
+    # Share summary plots
+    send_results(&quot;📊 **Parameter sweep summary - $parameter_name**&quot;,
+                summary_plots,
+                zulip_channel=&quot;data-analysis&quot;,
+                zulip_topic=topic)
+    
+    return results, failed_params
+end</code></pre><h2 id="Publication-and-Paper-Workflows"><a class="docs-heading-anchor" href="#Publication-and-Paper-Workflows">📝 Publication &amp; Paper Workflows</a><a id="Publication-and-Paper-Workflows-1"></a><a class="docs-heading-anchor-permalink" href="#Publication-and-Paper-Workflows" title="Permalink"></a></h2><h3 id="4.-Paper-Figure-Generation"><a class="docs-heading-anchor" href="#4.-Paper-Figure-Generation">4. Paper Figure Generation</a><a id="4.-Paper-Figure-Generation-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Paper-Figure-Generation" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;Template for generating publication-quality figures&quot;&quot;&quot;
+
+function generate_paper_figures(paper_name::String, figure_specs::Dict)
+    topic = &quot;Paper: $paper_name - Figures&quot;
+    
+    notifyme(&quot;📝 **Starting figure generation for $paper_name**\\n\\n&quot; *
+            &quot;• Figures to generate: $(length(figure_specs))\\n&quot; *
+            &quot;• Target journal: $(get(figure_specs, :journal, \&quot;TBD\&quot;))\\n&quot; *
+            &quot;• Figure specifications loaded&quot;,
+            zulip_channel=&quot;publications&quot;,
+            zulip_topic=topic)
+    
+    figure_paths = String[]
+    
+    for (fig_name, spec) in figure_specs
+        try
+            notifyme(&quot;🎨 Generating Figure: $fig_name&quot;,
+                    zulip_channel=&quot;publications&quot;, 
+                    zulip_topic=topic)
+            
+            fig_path = timed_notify(&quot;Figure $fig_name generation&quot;) do
+                create_publication_figure(fig_name, spec)
+            end
+            
+            push!(figure_paths, fig_path)
+            
+            # Send individual figure for quick review
+            notifyme(&quot;✅ **Figure ready: $fig_name**\\n\\n&quot; *
+                    &quot;• Resolution: $(spec.resolution) DPI\\n&quot; *
+                    &quot;• Format: $(spec.format)\\n&quot; *
+                    &quot;• Size: $(get_file_size(fig_path)) MB&quot;,
+                    image_path=fig_path,
+                    zulip_channel=&quot;publications&quot;,
+                    zulip_topic=topic)
+            
+        catch e
+            notifyme(&quot;❌ **Failed to generate figure: $fig_name**&quot;,
+                    exception_context=e,
+                    zulip_channel=&quot;errors&quot;,
+                    zulip_topic=&quot;Publication Failures&quot;)
+        end
+    end
+    
+    # Final collection
+    send_results(&quot;📚 **All figures complete - $paper_name**\\n\\n&quot; *
+                &quot;Ready for manuscript integration!&quot;,
+                figure_paths,
+                max_files=20,  # Allow more files for papers
+                zulip_channel=&quot;publications&quot;,
+                zulip_topic=topic)
+    
+    return figure_paths
+end</code></pre><h3 id="5.-Team-Collaboration-Template"><a class="docs-heading-anchor" href="#5.-Team-Collaboration-Template">5. Team Collaboration Template</a><a id="5.-Team-Collaboration-Template-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Team-Collaboration-Template" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;Template for team-shared analysis with role-specific notifications&quot;&quot;&quot;
+
+function shared_galaxy_analysis(dataset_name::String, team_members::Dict)
+    analysis_id = &quot;$(dataset_name)_$(Dates.format(now(), &quot;yyyymmdd&quot;))&quot;
+    topic = &quot;Team Analysis - $dataset_name&quot;
+    
+    # Notify start to team channel
+    notifyme(&quot;👥 **Team Analysis Started: $dataset_name**\\n\\n&quot; *
+            &quot;• Analysis ID: $analysis_id\\n&quot; *
+            &quot;• Team members: $(join(keys(team_members), \&quot;, \&quot;))\\n&quot; *
+            &quot;• Estimated completion: 2-3 hours\\n&quot; *
+            &quot;• Progress updates will be posted here&quot;,
+            zulip_channel=&quot;team-research&quot;,
+            zulip_topic=topic)
+    
+    # Notify individual team members in their channels
+    for (member, role) in team_members
+        member_channel = &quot;personal-$(lowercase(member))&quot;
+        notifyme(&quot;🎯 **Your role in $dataset_name analysis:**\\n\\n&quot; *
+                &quot;• Role: $role\\n&quot; *
+                &quot;• Analysis ID: $analysis_id\\n&quot; *
+                &quot;• Updates in #team-research &gt; $topic&quot;,
+                zulip_channel=member_channel,
+                zulip_topic=&quot;Team Assignments&quot;)
+    end
+    
+    start_time = time()
+    
+    try
+        # Step 1: Data preparation
+        data = prepare_team_dataset(dataset_name)
+        notifyme(&quot;📊 **Data prepared for team analysis**\\n\\n&quot; *
+                &quot;• Galaxies: $(length(data.galaxies))\\n&quot; *
+                &quot;• Redshift range: $(data.z_min) - $(data.z_max)\\n&quot; *
+                &quot;• Data validation: ✅ Complete&quot;,
+                zulip_channel=&quot;team-research&quot;,
+                zulip_topic=topic)
+        
+        # Step 2: Parallel analysis sections
+        results = run_parallel_analysis(data, team_members)
+        
+        # Step 3: Integration and final plots
+        integrated_results = integrate_team_results(results)
+        final_plots = create_team_summary_plots(integrated_results)
+        
+        # Final team notification
+        notifyme(&quot;🎉 **Team analysis complete - $dataset_name!**\\n\\n&quot; *
+                &quot;• Total execution time: $(round((time()-start_time)/3600, digits=1)) hours\\n&quot; *
+                &quot;• All team sections completed successfully\\n&quot; *
+                &quot;• Results ready for review and discussion&quot;,
+                start_time=start_time,
+                zulip_channel=&quot;team-research&quot;,
+                zulip_topic=topic)
+        
+        # Send plots to team
+        send_results(&quot;📈 **Team analysis results - $dataset_name**&quot;,
+                    final_plots,
+                    zulip_channel=&quot;team-research&quot;,
+                    zulip_topic=topic)
+        
+        # Individual completion notifications
+        for member in keys(team_members)
+            member_channel = &quot;personal-$(lowercase(member))&quot;
+            notifyme(&quot;✅ **Team analysis completed!**\\n\\n&quot; *
+                    &quot;Results available in #team-research &gt; $topic\\n&quot; *
+                    &quot;Your contributions have been integrated successfully.&quot;,
+                    zulip_channel=member_channel,
+                    zulip_topic=&quot;Team Assignments&quot;)
+        end
+        
+        return integrated_results
+        
+    catch e
+        # Team-wide error notification
+        notifyme(&quot;💥 **Team analysis failed - $dataset_name**\\n\\n&quot; *
+                &quot;Please check individual error channels for details\\n&quot; *
+                &quot;Analysis ID: $analysis_id&quot;,
+                exception_context=e,
+                start_time=start_time,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;Team Analysis Failures&quot;)
+        rethrow(e)
+    end
+end</code></pre><h2 id="System-Maintenance-Templates"><a class="docs-heading-anchor" href="#System-Maintenance-Templates">🛠️ System Maintenance Templates</a><a id="System-Maintenance-Templates-1"></a><a class="docs-heading-anchor-permalink" href="#System-Maintenance-Templates" title="Permalink"></a></h2><h3 id="6.-Backup-and-Maintenance-Notifications"><a class="docs-heading-anchor" href="#6.-Backup-and-Maintenance-Notifications">6. Backup &amp; Maintenance Notifications</a><a id="6.-Backup-and-Maintenance-Notifications-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Backup-and-Maintenance-Notifications" title="Permalink"></a></h3><pre><code class="language-julia hljs">&quot;&quot;&quot;Template for system maintenance and backup operations&quot;&quot;&quot;
+
+function weekly_maintenance_routine()
+    topic = &quot;System Maintenance - $(Dates.format(now(), \&quot;yyyy-mm-dd\&quot;))&quot;
+    
+    notifyme(&quot;🔧 **Weekly maintenance routine starting**\\n\\n&quot; *
+            &quot;• Backup verification\\n&quot; *
+            &quot;• Disk space cleanup\\n&quot; *
+            &quot;• System health check\\n&quot; *
+            &quot;• Estimated time: 30-45 minutes&quot;,
+            zulip_channel=&quot;backups&quot;,
+            zulip_topic=topic)
+    
+    maintenance_start = time()
+    results = Dict()
+    
+    # System info before maintenance
+    notifyme(&quot;📊 **Pre-maintenance system status:**&quot;,
+            capture_output=get_system_info_command(),
+            zulip_channel=&quot;backups&quot;,
+            zulip_topic=topic)
+    
+    try
+        # Backup verification
+        backup_status = verify_backups()
+        results[:backup] = backup_status
+        
+        notifyme(&quot;💾 **Backup verification:** $(backup_status.status)\\n\\n&quot; *
+                &quot;• Last backup: $(backup_status.last_backup)\\n&quot; *
+                &quot;• Size: $(backup_status.total_size) GB\\n&quot; *
+                &quot;• Integrity: $(backup_status.integrity_check)&quot;,
+                zulip_channel=&quot;backups&quot;,
+                zulip_topic=topic)
+        
+        # Disk cleanup
+        cleanup_results = clean_temp_files()
+        results[:cleanup] = cleanup_results
+        
+        notifyme(&quot;🧹 **Disk cleanup completed**\\n\\n&quot; *
+                &quot;• Space freed: $(cleanup_results.space_freed) GB\\n&quot; *
+                &quot;• Files removed: $(cleanup_results.files_count)\\n&quot; *
+                &quot;• Directories cleaned: $(length(cleanup_results.directories))&quot;,
+                zulip_channel=&quot;backups&quot;,
+                zulip_topic=topic)
+        
+        # Final system status
+        notifyme(&quot;✅ **Weekly maintenance completed!**\\n\\n&quot; *
+                &quot;• Total time: $(round((time()-maintenance_start)/60, digits=1)) minutes\\n&quot; *
+                &quot;• All checks passed\\n&quot; *
+                &quot;• System ready for next week&quot;,
+                start_time=maintenance_start,
+                capture_output=get_disk_info_command(),
+                zulip_channel=&quot;backups&quot;,
+                zulip_topic=topic)
+        
+        return results
+        
+    catch e
+        notifyme(&quot;🚨 **Maintenance routine failed!**\\n\\n&quot; *
+                &quot;Manual intervention required\\n&quot; *
+                &quot;Check system logs for details&quot;,
+                exception_context=e,
+                start_time=maintenance_start,
+                zulip_channel=&quot;errors&quot;,
+                zulip_topic=&quot;System Maintenance Failures&quot;)
+        rethrow(e)
+    end
+end</code></pre><h2 id="Custom-Message-Templates"><a class="docs-heading-anchor" href="#Custom-Message-Templates">🎨 Custom Message Templates</a><a id="Custom-Message-Templates-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Message-Templates" title="Permalink"></a></h2><h3 id="Rich-Formatting-Examples"><a class="docs-heading-anchor" href="#Rich-Formatting-Examples">Rich Formatting Examples</a><a id="Rich-Formatting-Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Rich-Formatting-Examples" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Progress update with emojis and formatting
+function format_progress_update(current, total, task_name, details)
+    progress_percent = round((current/total) * 100, digits=1)
+    progress_bar = create_text_progress_bar(current, total, width=10)
+    
+    return &quot;&quot;&quot;
+    📊 **$task_name Progress Update**
+    
+    $progress_bar $progress_percent% ($current/$total)
+    
+    **Details:**
+    $(join([&quot;• $detail&quot; for detail in details], &quot;\n&quot;))
+    
+    **ETA:** $(estimate_remaining_time(current, total)) minutes
+    &quot;&quot;&quot;
+end
+
+# Error report with context
+function format_error_notification(error, context, suggestions)
+    return &quot;&quot;&quot;
+    ❌ **Error Detected**
+    
+    **Error Type:** $(typeof(error))
+    **Message:** $(string(error))
+    
+    **Context:**
+    $(join([&quot;• $ctx&quot; for ctx in context], &quot;\n&quot;))
+    
+    **Suggested Actions:**
+    $(join([&quot;🔧 $suggestion&quot; for suggestion in suggestions], &quot;\n&quot;))
+    
+    **Timestamp:** $(now())
+    &quot;&quot;&quot;
+end
+
+# Results summary with statistics
+function format_results_summary(results, metrics, plots)
+    return &quot;&quot;&quot;
+    🎉 **Analysis Complete!**
+    
+    **Key Results:**
+    $(join([&quot;• $key: $value&quot; for (key, value) in results], &quot;\n&quot;))
+    
+    **Performance Metrics:**
+    $(join([&quot;📊 $metric: $value&quot; for (metric, value) in metrics], &quot;\n&quot;))
+    
+    **Generated Plots:** $(length(plots))
+    📈 Ready for review and publication
+    &quot;&quot;&quot;
+end</code></pre><h2 id="Configuration-Helpers"><a class="docs-heading-anchor" href="#Configuration-Helpers">🔧 Configuration Helpers</a><a id="Configuration-Helpers-1"></a><a class="docs-heading-anchor-permalink" href="#Configuration-Helpers" title="Permalink"></a></h2><h3 id="Environment-Specific-Settings"><a class="docs-heading-anchor" href="#Environment-Specific-Settings">Environment-Specific Settings</a><a id="Environment-Specific-Settings-1"></a><a class="docs-heading-anchor-permalink" href="#Environment-Specific-Settings" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Development vs Production notifications
+function get_notification_config(environment)
+    if environment == &quot;development&quot;
+        return (
+            channel = &quot;dev-testing&quot;,
+            topic = &quot;Development Tests&quot;,
+            frequency = :verbose  # More frequent updates
+        )
+    elseif environment == &quot;production&quot;
+        return (
+            channel = &quot;production-alerts&quot;,
+            topic = &quot;Production Runs&quot;,
+            frequency = :important  # Only critical updates
+        )
+    else
+        return (
+            channel = &quot;research&quot;,
+            topic = &quot;Analysis Results&quot;,
+            frequency = :normal
+        )
+    end
+end
+
+# Team-specific channel routing
+function route_to_team_channels(message_type, content)
+    routing = Dict(
+        :error =&gt; (&quot;errors&quot;, &quot;System Errors&quot;),
+        :progress =&gt; (&quot;progress&quot;, &quot;Task Updates&quot;),
+        :results =&gt; (&quot;results&quot;, &quot;Analysis Results&quot;),
+        :publication =&gt; (&quot;publications&quot;, &quot;Paper Work&quot;),
+        :backup =&gt; (&quot;backups&quot;, &quot;System Maintenance&quot;)
+    )
+    
+    channel, topic = routing[message_type]
+    
+    notifyme(content,
+            zulip_channel=channel,
+            zulip_topic=topic)
+end</code></pre><h2 id="Integration-Patterns"><a class="docs-heading-anchor" href="#Integration-Patterns">📚 Integration Patterns</a><a id="Integration-Patterns-1"></a><a class="docs-heading-anchor-permalink" href="#Integration-Patterns" title="Permalink"></a></h2><h3 id="With-External-Tools"><a class="docs-heading-anchor" href="#With-External-Tools">With External Tools</a><a id="With-External-Tools-1"></a><a class="docs-heading-anchor-permalink" href="#With-External-Tools" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Integration with job schedulers (SLURM, PBS, etc.)
+function slurm_job_notification(job_id, status, details=&quot;&quot;)
+    topic = &quot;HPC Jobs - $(Dates.format(now(), \&quot;yyyy-mm\&quot;))&quot;
+    
+    status_emoji = Dict(
+        &quot;RUNNING&quot; =&gt; &quot;🏃&quot;,
+        &quot;COMPLETED&quot; =&gt; &quot;✅&quot;, 
+        &quot;FAILED&quot; =&gt; &quot;❌&quot;,
+        &quot;CANCELLED&quot; =&gt; &quot;🛑&quot;,
+        &quot;TIMEOUT&quot; =&gt; &quot;⏰&quot;
+    )[status]
+    
+    notifyme(&quot;$status_emoji **SLURM Job $status**\\n\\n&quot; *
+            &quot;• Job ID: $job_id\\n&quot; *
+            &quot;• Status: $status\\n&quot; *
+            &quot;$details&quot;,
+            zulip_channel=&quot;hpc-jobs&quot;,
+            zulip_topic=topic)
+end
+
+# Integration with Git workflows
+function git_analysis_complete(commit_hash, analysis_results)
+    notifyme(&quot;🔬 **Analysis complete for commit $(commit_hash[1:8])**\\n\\n&quot; *
+            &quot;• Commit: $commit_hash\\n&quot; *
+            &quot;• Results: $(analysis_results.summary)\\n&quot; *
+            &quot;• Plots generated: $(length(analysis_results.plots))\\n\\n&quot; *
+            &quot;Ready for code review and integration&quot;,
+            attachments=analysis_results.plots,
+            zulip_channel=&quot;code-analysis&quot;,
+            zulip_topic=&quot;Automated Analysis Results&quot;)
+end</code></pre><hr/><p><strong>Next Steps:</strong></p><ul><li>Copy relevant templates to your workflow</li><li>Customize channel and topic names for your team</li><li>Test templates with simple examples first</li><li>Adapt message formatting to your preferences</li><li>Set up appropriate error handling for your use cases</li></ul><p><strong>See also:</strong></p><ul><li><a href="../02_setup/">Setup Guide</a> - Channel creation and bot configuration</li><li><a href="../05_advanced/">Advanced Features</a> - Progress tracking and exception handling</li><li><a href="../06_examples/">Examples</a> - More real-world research examples</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../zulip/">« Zulip (Team Chat)</a><a class="docs-footer-nextpage" href="../03_attachments/">File Attachments »</a><div class="flexbox-break"></div><p class="footer-message">© 2024 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 25 August 2025 12:25">Monday 25 August 2025</span>. Using Julia version 1.11.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
