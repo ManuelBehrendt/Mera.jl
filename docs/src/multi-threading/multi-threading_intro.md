@@ -118,6 +118,239 @@ end
 - **Memory bound**: Fewer threads (2-4) 
 - **Network storage**: Even fewer threads, benefit from compression
 
+## Threading Decision Framework
+
+### When TO Use Threading
+
+**✅ Perfect for Threading:**
+- Processing multiple snapshots/parameters in parallel
+- Analyzing single large datasets with multiple variables
+- Time series analysis across many simulation outputs
+- Parameter sweeps with independent calculations
+- I/O-heavy operations (loading, exporting data)
+
+**📊 Threading Decision Tree:**
+```
+Do you have multiple independent tasks?
+├─ YES → Use Outer-Loop Pattern (@threads + max_threads=1)
+│   └─ Examples: Multiple snapshots, parameter studies
+│
+└─ NO → Is your dataset large with multiple variables?
+    ├─ YES → Use Inner-Kernel Pattern (full threading)
+    │   └─ Examples: Multi-variable projections, complex analysis
+    │
+    └─ NO → Consider Mixed Pattern or stay single-threaded
+        └─ Examples: Small datasets, simple calculations
+```
+
+### When NOT to Use Threading
+
+**❌ Threading Won't Help:**
+- **Single small calculations** - Threading overhead > benefit
+- **Memory-starved systems** - Will make GC worse
+- **Single snapshot + single variable** - Already optimized
+- **Network bottlenecked I/O** - May actually slow things down
+- **Thread-unsafe external libraries** - Will cause crashes
+
+**⚖️ Cost-Benefit Analysis:**
+```
+Threading Overhead vs. Parallel Benefit
+
+HIGH BENEFIT:                    LOW/NEGATIVE BENEFIT:
+▓▓▓▓▓▓▓▓░░ Many snapshots        ░░▓▓░░░░░░ Single calculation
+▓▓▓▓▓▓▓░░░ Large datasets        ░▓▓▓░░░░░░ Small arrays
+▓▓▓▓▓▓░░░░ I/O bound tasks       ░░▓▓▓▓░░░░ CPU saturated
+▓▓▓▓▓░░░░░ Multiple variables    ░░░▓▓▓▓▓░░ Memory limited
+```
+
+**🧠 Quick Decision Checklist:**
+1. **Multiple independent items?** → Threading likely beneficial
+2. **Single item but large/complex?** → Inner parallelism may help
+3. **Small, simple calculation?** → Skip threading
+4. **Unsure?** → Benchmark both approaches (see Section 10)
+
+### Visual Threading Concepts
+
+**Thread Pool Allocation:**
+```
+Available Threads: [T1] [T2] [T3] [T4] [T5] [T6] [T7] [T8]
+
+Outer-Loop Pattern:
+Snapshot 1 → [T1] gethydro(max_threads=1)
+Snapshot 2 → [T2] gethydro(max_threads=1)  
+Snapshot 3 → [T3] gethydro(max_threads=1)
+Snapshot 4 → [T4] gethydro(max_threads=1)
+
+Inner-Kernel Pattern:
+Variable :rho → [T1] [T2] projection
+Variable :T   → [T3] [T4] projection
+Variable :vx  → [T5] [T6] projection
+Variable :vy  → [T7] [T8] projection
+```
+
+**Resource Contention Visualization:**
+```
+Without max_threads (Bad):
+Thread 1: [████████████████] I/O + CPU intensive
+Thread 2: [████████████████] I/O + CPU intensive  ← Bandwidth fight
+Thread 3: [████████████████] I/O + CPU intensive
+Thread 4: [████████████████] I/O + CPU intensive
+
+With max_threads=1 (Good):
+Thread 1: [████████████████] Full I/O bandwidth
+Thread 2: [────────────────] Waiting
+Thread 3: [────────────────] Waiting
+Thread 4: [────────────────] Waiting
+```
+
+## Self-Assessment Checkpoints
+
+### Checkpoint 1: Threading Readiness ✓
+Before proceeding, verify:
+- [ ] Julia started with `-t auto` or `-t N` (N > 1)
+- [ ] `Threads.nthreads() > 1` returns true
+- [ ] You understand the difference between outer-loop and inner-kernel patterns
+- [ ] You can identify whether your task is I/O, CPU, or memory bound
+
+**Test your setup:**
+```julia
+using Base.Threads
+println("Threads available: $(nthreads())")
+@threads for i in 1:4
+    println("Thread $(threadid()) processing task $i")
+    sleep(0.1)
+end
+```
+
+### Checkpoint 2: Pattern Selection ✓
+Can you choose the right pattern?
+
+**Scenario A:** Analyze snapshots 100, 200, 300, 400 for total mass
+- **Your choice:** Outer-loop / Inner-kernel / Mixed?
+- **Correct:** Outer-loop (`@threads` over snapshots, `max_threads=1`)
+
+**Scenario B:** Create density, temperature, and velocity projections from one large dataset
+- **Your choice:** Outer-loop / Inner-kernel / Mixed?
+- **Correct:** Inner-kernel (let `projection()` handle multiple variables)
+
+**Scenario C:** Export VTK files for 10 different spatial regions from the same snapshot
+- **Your choice:** Outer-loop / Inner-kernel / Mixed?
+- **Correct:** Mixed or Outer-loop (depends on region size and memory)
+
+## Try This: Hands-On Threading Exercises
+
+### Exercise 1: Basic Threading Test
+```julia
+using Base.Threads
+
+# Simulate Mera workflow timing
+function mock_mera_analysis(snapshot_id)
+    thread_id = threadid()
+    println("Thread $thread_id starting snapshot $snapshot_id")
+    
+    # Simulate getinfo (fast)
+    sleep(0.01)
+    
+    # Simulate gethydro (slower)  
+    sleep(0.2)
+    
+    # Simulate projection (moderate)
+    sleep(0.1)
+    
+    println("Thread $thread_id finished snapshot $snapshot_id")
+    return (snapshot=snapshot_id, thread=thread_id, total_mass=rand(1e10:1e12))
+end
+
+# Test threaded vs serial
+snapshots = 1:8
+
+println("=== SERIAL VERSION ===")
+@time serial_results = [mock_mera_analysis(s) for s in snapshots]
+
+println("\n=== THREADED VERSION ===") 
+results = Vector{Any}(undef, length(snapshots))
+@time @threads for i in eachindex(snapshots)
+    results[i] = mock_mera_analysis(snapshots[i])
+end
+
+println("Speedup: $(length(serial_results)*0.31 / (time_threaded))x")
+```
+
+**Expected behavior:** You should see multiple thread IDs working simultaneously, and significant speedup.
+
+### Exercise 2: Resource Contention Simulation
+```julia
+# Simulate resource contention
+function io_heavy_task(task_id, max_threads)
+    println("Task $task_id using max_threads=$max_threads")
+    
+    # Simulate heavy I/O (like reading large files)
+    if max_threads == 1
+        sleep(0.3)  # Serial I/O - efficient
+    else
+        sleep(0.5)  # Parallel I/O - contention overhead
+    end
+    
+    return "Task $task_id completed"
+end
+
+# Compare contention patterns
+println("=== HIGH CONTENTION (max_threads=auto) ===")
+@time @threads for i in 1:8
+    io_heavy_task(i, Threads.nthreads())
+end
+
+println("\n=== LOW CONTENTION (max_threads=1) ===")
+@time @threads for i in 1:8
+    io_heavy_task(i, 1)
+end
+```
+
+**Learning goal:** Understand why `max_threads=1` can sometimes be faster.
+
+### Exercise 3: Thread Safety Practice
+```julia
+using Base.Threads
+
+# UNSAFE version - race condition
+function unsafe_accumulation(n)
+    total = 0.0
+    @threads for i in 1:n
+        total += i  # DANGER: Multiple threads writing same variable
+    end
+    return total
+end
+
+# SAFE version - atomic operations
+function safe_accumulation(n)
+    total = Atomic{Float64}(0.0)
+    @threads for i in 1:n
+        atomic_add!(total, i)
+    end
+    return total[]
+end
+
+# SAFE version - pre-allocated array
+function safe_array_accumulation(n)
+    results = Vector{Float64}(undef, n)
+    @threads for i in 1:n
+        results[i] = i  # Safe: each thread writes different index
+    end
+    return sum(results)
+end
+
+# Test all approaches
+n = 10000
+expected = sum(1:n)
+
+println("Expected result: $expected")
+println("Unsafe result: $(unsafe_accumulation(n)) (may be wrong!)")
+println("Safe atomic result: $(safe_accumulation(n))")
+println("Safe array result: $(safe_array_accumulation(n))")
+```
+
+**Learning goal:** See race conditions in action and learn safe alternatives.
+
 ## 1 Introduction to Multi-Threading & GC
 
 ### 1.1 Why Multi-Threading Matters for Scientists
@@ -150,17 +383,40 @@ Julia 1.10+ introduces **parallel garbage collection**—the GC's mark phase run
 
 Understanding Julia's memory model helps optimize threaded code:
 
+**Memory Architecture Visualization:**
+```
+┌─────────── PROCESS MEMORY SPACE ───────────┐
+│                                            │
+│  ┌─ STACK (Thread 1) ──┐  ┌─ STACK (Thread 2) ──┐
+│  │ function_call()     │  │ function_call()     │
+│  │ local_vars = 5.0    │  │ local_vars = 3.2    │
+│  │ return_address      │  │ return_address      │
+│  │ ▲ GROWS UP          │  │ ▲ GROWS UP          │
+│  └─────────────────────┘  └─────────────────────┘
+│                                                  │
+│  ┌──────── SHARED HEAP (All Threads) ──────────┐
+│  │  [Array 1] [Dict 1] [Large Matrix]         │
+│  │  [Array 2] [Struct] [String Data]          │
+│  │  ┌─ Garbage Collection ─┐                   │
+│  │  │ Mark → Sweep → Free  │                   │
+│  │  └─────────────────────┘                   │
+│  └─────────────────────────────────────────────┘
+└────────────────────────────────────────────────┘
+```
+
 **Stack Memory**
 - Fast, linear LIFO (Last-In-First-Out) structure
 - Stores local variables, function parameters, return addresses
 - Fixed size, known at compile time
 - Automatically freed when function returns
+- **Thread-safe**: Each thread has its own stack
 
 **Heap Memory**  
 - Flexible region for dynamic objects
 - Arrays, dictionaries, complex data structures
 - Size determined at runtime
 - Managed by garbage collector
+- **Shared**: All threads access the same heap
 
 ```julia
 function memory_example()
@@ -174,11 +430,36 @@ end
 
 Julia implements a **generational, mark-and-sweep collector**:
 
+**Garbage Collection Visualization:**
+```
+BEFORE GC:                    MARK PHASE:                    SWEEP PHASE:
+┌─ HEAP ─────────┐           ┌─ HEAP ─────────┐           ┌─ HEAP ─────────┐
+│ [A]━━━━━━━[B]  │  Thread 1 │ [A]✓━━━━━━━[B]✓ │  Thread 1 │ [A]     [B]    │
+│  ▲         ▲   │    ┃      │  ▲         ▲   │    ┃      │  ▲       ▲     │
+│  ┃         ┗━━━│━━━━┃━━━━━▶│  ┣MARK     ┗━━━│━━━━┣━━━━▶│  ┗━━━━━━━┛      │
+│ ROOT      [C]  │  Thread 2 │ ROOT✓    [C]✗  │  Thread 2 │ ROOT      [FREE] │
+│            ▲   │    ┃      │            ▲   │    ┃      │           [FREE] │
+│           [D]━━│━━━━┗━━━━━▶│           [D]✗━━│━━━━┗━━━━▶│           [FREE] │
+└────────────────┘           └────────────────┘           └────────────────┘
+   Unreachable objects        ✓=Reachable ✗=Unreachable    Freed memory
+```
+
 **Mark Phase**: Starting from "roots" (global variables, local variables on call stacks), the GC traces all reachable objects. Julia 1.10+ parallelizes this phase across multiple threads.
 
 **Sweep Phase**: Unreachable objects are deallocated and memory returned to the system.
 
 **Generational Strategy**: Most objects die young. The GC focuses on recently allocated objects, which are statistically more likely to be garbage.
+
+**Multi-Threaded GC Benefits:**
+```
+SINGLE-THREADED GC:          PARALLEL GC (Julia 1.10+):
+                            
+GC Thread: [████████████]    GC Thread 1: [███████]
+Program:   [─wait─.......... Program:     [███████] ← Less waiting
+                            GC Thread 2: [███████]
+Total:     [████████████──]  Total:       [████████] ← Faster overall
+           ↑ 12 time units                ↑ 8 time units
+```
 
 ### 2.3 Monitoring GC Performance
 
@@ -299,12 +580,52 @@ end
 ```
 
 **2. Memory Bandwidth Saturation**
+
+**System Resource Bottleneck Visualization:**
+```
+┌─────── CPU CORES (8 available) ────────┐
+│ [Core1] [Core2] [Core3] [Core4]        │
+│ [Core5] [Core6] [Core7] [Core8]        │  ✓ Usually not the bottleneck
+└─────────────────────────────────────────┘
+                    │
+                    ▼
+┌──────── MEMORY BANDWIDTH ──────────────┐
+│ RAM: 64 GB                             │
+│ Bandwidth: 25.6 GB/s ←── BOTTLENECK   │  ⚠️ Often saturated first!
+│ 8 threads × 2GB/s = 16GB/s (63% util) │
+└─────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────── STORAGE I/O ────────────────┐
+│ SSD: 500 MB/s                          │
+│ Network Storage: 100 MB/s ←── BOTTLENECK│  ⚠️ Worst with many threads
+│ 8 concurrent reads = 800 MB/s demand   │
+└─────────────────────────────────────────┘
+```
+
 Multiple threads reading large AMR datasets can saturate:
 - **Memory bandwidth**: 8 threads × 2GB/thread = 16GB/s (may exceed RAM bandwidth)
 - **Storage I/O**: Network filesystems often perform better with fewer concurrent readers
 - **CPU caches**: Context switching between many active memory-intensive tasks
 
 **3. NUMA Effects on Multi-Socket Systems**
+
+**NUMA Architecture Visualization:**
+```
+┌─── SOCKET 0 ────┐    ┌─── SOCKET 1 ────┐
+│ [CPU0-3] MEM0   │    │ [CPU4-7] MEM1   │
+│      ▲          │    │      ▲          │
+│      │ FAST     │    │      │ FAST     │
+└──────┼──────────┘    └──────┼──────────┘
+       │                      │
+       └──── SLOW LINK ───────┘
+              (QPI/UPI)
+
+OPTIMAL:              SUBOPTIMAL:
+Thread1@CPU0 → MEM0   Thread1@CPU0 → MEM1  ← Cross-socket penalty
+Thread2@CPU1 → MEM0   Thread2@CPU4 → MEM0  ← Cross-socket penalty
+```
+
 On large servers with multiple CPU sockets:
 - Memory access is faster when threads stay on the same NUMA node
 - Too many concurrent threads can cause cross-socket memory traffic
@@ -463,6 +784,29 @@ julia --threads=32,4 --gcthreads=16
 ## 5 Mera's Internally Threaded Functions
 
 ### 5.1 Overview of Threaded Functions
+
+**Mera Function Threading Architecture:**
+```
+┌─ MERA FUNCTION CALL ──────────────────────────────────────────┐
+│                                                               │
+│  gethydro(info; lmax=10, max_threads=4)                      │
+│                     ↓                                         │
+│  ┌─ PARALLEL FILE LOADING ─┐   ┌─ PARALLEL TABLE CREATION ─┐  │
+│  │ Thread 1: amr_001.out01 │   │ Thread 1: :rho column    │  │
+│  │ Thread 2: amr_002.out01 │   │ Thread 2: :vx column     │  │
+│  │ Thread 3: amr_003.out01 │   │ Thread 3: :vy column     │  │
+│  │ Thread 4: amr_004.out01 │   │ Thread 4: :vz column     │  │
+│  └─────────────────────────┘   └───────────────────────────┘  │
+│                                                               │
+│  projection(gas, [:rho, :T, :vx]; max_threads=3)             │
+│                     ↓                                         │
+│  ┌─ PARALLEL VARIABLE PROCESSING ──────────────────────────┐  │
+│  │ Thread 1: Process :rho → density map                   │  │
+│  │ Thread 2: Process :T   → temperature map               │  │
+│  │ Thread 3: Process :vx  → velocity map                  │  │
+│  └─────────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────────┘
+```
 
 | Function      | Threading Strategy                                        | Default Threads        | `max_threads` |
 |---------------|-----------------------------------------------------------|------------------------|---------------|
@@ -1365,40 +1709,259 @@ Symptom: Program crashes, hangs, or produces wrong answers
 - **Unsafe library usage**: Many C libraries aren't thread-safe  
 - **Stack overflow**: Large recursion depths on multiple threads
 
-### 11.3 Debugging Multi-Threaded Code
+### 11.3 Advanced Debugging with `verbose_threads`
 
-**Use Thread-Safe Debugging**
+Mera provides powerful built-in debugging capabilities through the `verbose_threads` parameter.
+
+**Enable Threading Diagnostics**
+```julia
+# Enable detailed threading diagnostics for projections
+proj = projection(gas, [:rho, :T, :vx, :vy]; 
+                 verbose_threads=true,
+                 max_threads=4,
+                 verbose=true)
+```
+
+**What `verbose_threads=true` Shows You:**
+```
+🧵 THREADING DIAGNOSTICS:
+====================================
+Thread assignment:
+  Variable :rho → Thread 1
+  Variable :T   → Thread 2  
+  Variable :vx  → Thread 3
+  Variable :vy  → Thread 4
+
+Load balancing:
+  Thread 1: 2.341s (28.5% of total time)
+  Thread 2: 2.287s (27.8% of total time)  ← Well balanced
+  Thread 3: 2.398s (29.2% of total time)
+  Thread 4: 2.195s (26.7% of total time)
+
+Memory allocation per thread:
+  Thread 1: 245.7 MB allocated
+  Thread 2: 243.1 MB allocated
+  Thread 3: 251.2 MB allocated
+  Thread 4: 238.9 MB allocated
+
+Performance metrics:
+  Total parallel time: 2.398s (max thread time)
+  Sequential estimate: 9.221s (sum of thread times)
+  Parallel efficiency: 96.2% (excellent)
+  Load balance score: 0.94 (0.8+ is good)
+```
+
+**Interpreting Threading Diagnostics:**
+
+1. **Load Balance Score:**
+   - `0.9+` = Excellent load balancing
+   - `0.8-0.9` = Good load balancing  
+   - `<0.8` = Poor load balancing, consider fewer threads
+
+2. **Parallel Efficiency:**
+   - `90%+` = Great threading benefit
+   - `70-90%` = Reasonable threading benefit
+   - `<70%` = Threading overhead too high, reduce threads
+
+3. **Memory Allocation Patterns:**
+   - Similar allocation across threads = good
+   - One thread allocating much more = potential bottleneck
+
+**Debugging Threading Performance Issues**
+
+```julia
+using Mera
+
+# Load test data
+info = getinfo(400, SIMPATH)  
+gas = gethydro(info; lmax=10)
+
+# Test 1: Check if threading helps
+println("=== SINGLE THREAD TEST ===")
+@time proj_serial = projection(gas, [:rho, :T]; 
+                               max_threads=1, 
+                               verbose_threads=true)
+
+println("\n=== MULTI THREAD TEST ===")
+@time proj_parallel = projection(gas, [:rho, :T]; 
+                                 max_threads=4, 
+                                 verbose_threads=true)
+
+# Compare the diagnostics to identify bottlenecks
+```
+
+**Common Issues Diagnosed by `verbose_threads`:**
+
+1. **Poor Load Balancing:**
+```
+Thread 1: 1.234s (45% of time)  ← Overloaded
+Thread 2: 0.892s (32% of time)
+Thread 3: 0.634s (23% of time)  ← Underutilized
+```
+**Fix:** Use fewer threads or different data partitioning
+
+2. **Memory Contention:**
+```
+Thread 1: 145.7 MB allocated
+Thread 2: 2891.3 MB allocated  ← Memory hog
+Thread 3: 151.2 MB allocated
+```
+**Fix:** Reduce threads or check for memory leaks in specific variables
+
+3. **Resource Starvation:**
+```
+Total parallel time: 4.521s
+Sequential estimate: 3.987s  ← Parallel slower than serial!
+Parallel efficiency: 88.2%
+```
+**Fix:** Use `max_threads=1` or investigate I/O bottlenecks
+
+**Advanced Debugging Tools**
+
+**Thread-Safe Debug Output:**
 ```julia
 using Base.Threads: SpinLock
 
 debug_lock = SpinLock()
 function thread_safe_debug(msg)
     lock(debug_lock) do
-        println("Thread $(threadid()): $msg")
+        timestamp = round(time(), digits=3)
+        println("[$timestamp] Thread $(threadid()): $msg")
     end
 end
 
+# Use in threaded code
 @threads for i in 1:10
-    thread_safe_debug("Processing item $i")
+    thread_safe_debug("Starting work on item $i")
     # ... work ...
     thread_safe_debug("Completed item $i")
 end
 ```
 
-**Detect Race Conditions**
+**Performance Profiling with Threading:**
+```julia
+using Profile
+
+# Profile threaded code
+@profile begin
+    @threads for i in 1:8
+        info = getinfo(i*50 + 100, SIMPATH)
+        gas = gethydro(info; lmax=9, max_threads=1)
+        proj = projection(gas, :rho; max_threads=2, verbose_threads=true)
+    end
+end
+
+# View profile results
+Profile.print()
+# Look for thread contention, memory allocation hotspots
+```
+
+**Memory Leak Detection:**
+```julia
+function detect_memory_growth(test_function, n_iterations=10)
+    println("Memory growth analysis:")
+    
+    initial_memory = Base.gc_live_bytes()
+    println("Initial memory: $(round(initial_memory/1024^2, digits=2)) MB")
+    
+    for i in 1:n_iterations
+        test_function()
+        GC.gc()  # Force cleanup
+        current_memory = Base.gc_live_bytes()
+        growth = (current_memory - initial_memory) / 1024^2
+        
+        println("Iteration $i: $(round(growth, digits=2)) MB growth")
+        
+        if growth > 100  # More than 100MB growth
+            @warn "Potential memory leak detected at iteration $i"
+        end
+    end
+end
+
+# Test for memory leaks in threaded code
+test_func() = begin
+    @threads for i in 1:4
+        gas = gethydro(getinfo(100+i, SIMPATH); lmax=8, max_threads=1)
+        projection(gas, :rho; verbose_threads=true)
+    end
+end
+
+detect_memory_growth(test_func)
+```
+
+**Race Condition Detection:**
 ```julia
 function test_for_race_conditions(test_function, n_trials=100)
-    reference_result = test_function()  # Serial reference
+    println("Testing for race conditions over $n_trials trials...")
     
+    # Get reference result (serial)
+    reference_result = test_function()
+    
+    # Test multiple times
+    failures = 0
     for trial in 1:n_trials
         result = test_function()
         if result != reference_result
-            error("Race condition detected in trial $trial!")
+            failures += 1
+            println("⚠️ Race condition detected in trial $trial!")
+            println("Expected: $reference_result")
+            println("Got: $result")
+        end
+        
+        if trial % 20 == 0
+            println("Completed $trial/$n_trials trials, $failures failures")
         end
     end
     
-    println("No race conditions detected over $n_trials trials")
+    if failures == 0
+        println("✅ No race conditions detected over $n_trials trials")
+    else
+        println("❌ Race conditions detected in $failures/$n_trials trials")
+    end
 end
+```
+
+**Threading Environment Diagnostics:**
+```julia
+function diagnose_threading_environment()
+    println("🔍 THREADING ENVIRONMENT DIAGNOSIS")
+    println("="^50)
+    
+    # Basic thread info
+    println("Available threads: $(Threads.nthreads())")
+    println("CPU cores: $(Sys.CPU_THREADS)")
+    
+    # Check for Julia version threading features
+    println("Julia version: $(VERSION)")
+    if VERSION >= v"1.9"
+        println("✅ Composable threading supported")
+    else
+        println("⚠️ Consider upgrading Julia for better threading")
+    end
+    
+    # Test basic threading
+    println("\n🧪 Basic threading test:")
+    thread_times = Vector{Float64}(undef, Threads.nthreads())
+    @threads for i in 1:Threads.nthreads()
+        start_time = time()
+        sleep(0.1)  # Simulate work
+        thread_times[i] = time() - start_time
+    end
+    
+    for (i, t) in enumerate(thread_times)
+        println("Thread $i: $(round(t*1000, digits=1))ms")
+    end
+    
+    # Check for thread starvation
+    if maximum(thread_times) - minimum(thread_times) > 0.05
+        println("⚠️ Potential thread scheduling issues detected")
+    else
+        println("✅ Threading appears to work correctly")
+    end
+end
+
+# Run diagnosis
+diagnose_threading_environment()
 ```
 
 ## 12 Complete Working Examples

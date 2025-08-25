@@ -4,7 +4,7 @@ Functions for notifications and progress tracking.
 
 ## Notification Functions
 
-- [`bell`](@ref) - Audio notifications
+- `bell` - Audio notifications
 - [`notifyme`](@ref) - General notification system
 - [`send_results`](@ref) - Send computation results
 - [`timed_notify`](@ref) - Time-based notifications

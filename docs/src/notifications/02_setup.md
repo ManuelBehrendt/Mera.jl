@@ -6,18 +6,61 @@ Complete setup instructions for MERA notifications.
 
 ### Requirements
 - System mail client (macOS/Linux built-in, Windows requires setup)
-- Valid email address
+- Valid email address that can receive emails
 
-### Setup
-1. Create `~/email.txt` with your email:
-   ```
-   your.email@example.com
-   ```
+### Step-by-Step Setup
 
-2. Test email functionality:
-   ```bash
-   echo "Test message" | mail -s "Test Subject" your.email@example.com
-   ```
+#### Step 1: Create Email Configuration
+
+**Option A: Using Terminal (Linux/macOS)**
+```bash
+# Navigate to home directory
+cd ~
+
+# Create email.txt with your email address
+echo "your.email@example.com" > email.txt
+
+# Verify the file was created correctly
+cat email.txt
+```
+
+**Option B: Manual Creation**
+1. Create a new text file named `email.txt` in your home directory
+2. Add **only one line** containing your email address
+3. **Important**: No extra spaces, quotes, or empty lines
+4. Save the file
+
+**Example `email.txt` content:**
+```
+researcher@university.edu
+```
+
+#### Step 2: Verify Mail System
+
+**Check if mail command exists:**
+```bash
+which mail
+# Should return a path like /usr/bin/mail (macOS/Linux)
+```
+
+**Test email functionality:**
+```bash
+echo "MERA setup test" | mail -s "Test from MERA" your.email@example.com
+```
+
+#### Step 3: Platform-Specific Notes
+
+**macOS**: Built-in mail command works out of the box
+**Linux**: Usually pre-installed; install if needed:
+```bash
+# Ubuntu/Debian
+sudo apt-get install mailutils
+
+# CentOS/RHEL
+sudo yum install mailx
+```
+
+**Windows**: Requires additional setup (consider using Zulip only)
 
 ## 💬 Zulip Configuration
 
@@ -35,11 +78,36 @@ Complete setup instructions for MERA notifications.
 
 ### Step 2: Create Configuration File
 
-Create `~/zulip.txt`:
-```
+**Option A: Using Terminal (Linux/macOS)**
+```bash
+# Navigate to home directory
+cd ~
+
+# Create zulip.txt with your bot credentials
+cat > zulip.txt << EOF
 mera-bot@zulip.yourdomain.com
 your-api-key-here
 https://zulip.yourdomain.com
+EOF
+
+# Set secure permissions
+chmod 600 zulip.txt
+```
+
+**Option B: Manual Creation**
+1. Create a new text file named `zulip.txt` in your home directory
+2. Add exactly three lines:
+   - **Line 1**: Your bot email (e.g., `mera-bot@yourlab.zulipchat.com`)
+   - **Line 2**: Your bot API key (long string from bot settings)
+   - **Line 3**: Your Zulip server URL (e.g., `https://yourlab.zulipchat.com`)
+3. Save the file
+4. **Important**: No extra spaces, empty lines, or comments
+
+**Example `zulip.txt` content:**
+```
+mera-computation-bot@mylab.zulipchat.com
+a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6
+https://mylab.zulipchat.com
 ```
 
 ### Step 3: Create Channels
@@ -49,6 +117,33 @@ Create these recommended channels in Zulip:
 - `research` - Research-related alerts
 - `errors` - Error notifications
 - `progress` - Long-running job updates
+
+## ⚡ Important: Multiple Methods Behavior
+
+**Key Point**: If you configure both email and Zulip, `notifyme()` sends to **BOTH** methods simultaneously.
+
+### Notification Matrix
+
+| Configuration | `notifyme("Hello!")` sends to: |
+|---------------|-------------------------------|
+| Only `~/email.txt` | ✅ Email only |
+| Only `~/zulip.txt` | ✅ Zulip only |  
+| **Both files exist** | ✅ **Both email AND Zulip** |
+| No config files | ❌ Nothing (silent) |
+
+### Examples
+
+```julia
+# With both email.txt and zulip.txt configured:
+notifyme("Analysis complete!")
+# Result: Email sent to your.email@example.com
+#         AND Zulip message sent to #alerts channel
+
+# If you want only email for this message:
+# Temporarily rename zulip.txt or use system-specific method
+```
+
+**💡 Tip**: Most users find the "send to all configured methods" behavior useful for important notifications, but be aware that you'll get multiple notifications for each call.
 
 ## 🔧 Verification
 

@@ -510,9 +510,9 @@ areas = area.(shapes)   # Broadcasting over array of shapes
 
 | Backend | Use Case | Activation |
 | :-- | :-- | :-- |
-| CairoMakie | Publication 2D plots | `using CairoMakie; CairoMakie.activate!()` |
-| GLMakie | Interactive 3D plots | `using GLMakie; GLMakie.activate!()` |
-| WGLMakie | Web-based plots | `using WGLMakie; WGLMakie.activate!()` |
+| CairoMakie | Publication 2D plots | `using CairoMakie; activate!()` |
+| GLMakie | Interactive 3D plots | `using GLMakie; activate!()` |
+| WGLMakie | Web-based plots | `using WGLMakie; activate!()` |
 
 ### Common Plotting Examples
 
@@ -729,7 +729,7 @@ my_function.(array)                        # Works with any function
 | :-- | :-- | :-- |
 | `np.array([^1][^2][^3])` | `[^1][^2][^3]` | [base] |
 | `np.zeros((2,3))` | `zeros(2, 3)` | [base] |
-| `np.linspace(0,1,10)` | `range(0, 1, 10)` | [base] |
+| `np.linspace(0,1,10)` | `range(0, 1, length=10)` | [base] |
 | `np.random.randn(100)` | `randn(100)` | Random |
 | `np.mean(x)` | `mean(x)` | Statistics |
 | `np.linalg.solve(A,b)` | `A \ b` | [base] |

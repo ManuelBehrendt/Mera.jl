@@ -2,6 +2,14 @@
 
 **Core Julia programming concepts for scientific computing**
 
+## Learning Objectives
+By the end of this guide, you should be able to:
+- [ ] Create and manipulate arrays using Julia's syntax
+- [ ] Perform mathematical and statistical operations 
+- [ ] Use control flow and functions effectively
+- [ ] Apply multiple dispatch patterns
+- [ ] Work with units, measurements, and DataFrames
+
 ## Arrays, Math & Astrophysical Data
 
 > **Julia's array and math syntax is similar to MATLAB and Python (NumPy), but with 1-based indexing!**
@@ -20,6 +28,23 @@
 | Reshape, flatten | `reshape(A, 3,4)`, `vec(A)` |  |
 | Indexing/slicing | `A[2:4, 1:2]`, `A[end, 1:end-1]` | Inclusive ranges |
 | Boolean indexing | `A[A .> 0]` | Broadcast comparison |
+
+### ✅ Try This (8-12 minutes)
+**Exercise**: Complete "Working with Arrays" from Julia Academy  
+**Link**: https://juliaacademy.com/p/intro-to-julia (Section 3)  
+**Goal**: Master Julia's array syntax, indexing, and operations  
+**Time**: 8-12 minutes  
+
+**Interactive Practice**: Follow "Julia Arrays Tutorial"  
+**Link**: https://docs.julialang.org/en/v1/manual/arrays/  
+**Focus**: Broadcasting, slicing, multidimensional arrays
+
+**Scientific Computing**: Work through "Think Julia" Chapter 10  
+**Link**: https://benlauwens.github.io/ThinkJulia.jl/latest/book.html  
+**Goal**: Arrays in scientific computing context
+
+### 📖 Why This Matters
+**Foundation for all computation**: Arrays are the fundamental data structure in scientific computing. Mastering Julia's array syntax and 1-based indexing is crucial for working with simulation data, observational datasets, and numerical computations in MERA.jl.
 
 ### Linear Algebra & Math
 
@@ -162,6 +187,12 @@ fill_sum!(A)
 
 ## Functions & Multiple Dispatch
 
+### Learning Objectives for This Section
+- [ ] Write functions using Julia's syntax
+- [ ] Understand and apply multiple dispatch
+- [ ] Use broadcasting effectively
+- [ ] Recognize when to use different function forms
+
 > **Multiple dispatch** is Julia's core paradigm: functions can have different methods for different argument types. Use broadcasting (`.`) to apply functions elementwise.
 
 ```julia
@@ -177,6 +208,23 @@ area(triangle::Triangle) = 0.5 * triangle.base * triangle.height
 sin.(x)                                    # Apply sin to each element
 my_function.(array)                        # Works with any function
 ```
+
+### ✅ Try This (10-15 minutes)
+**Exercise**: Complete "Functions and Multiple Dispatch" from Julia Academy  
+**Link**: https://juliaacademy.com/p/intro-to-julia (Section 6)  
+**Goal**: Master Julia's multiple dispatch paradigm  
+**Time**: 10-15 minutes  
+
+**Deep Dive**: Work through "Julia Manual - Methods"  
+**Link**: https://docs.julialang.org/en/v1/manual/methods/  
+**Focus**: Method definition, dispatch, specialization
+
+**Advanced Practice**: Explore "Think Julia" Chapter 17  
+**Link**: https://benlauwens.github.io/ThinkJulia.jl/latest/book.html  
+**Goal**: Multiple dispatch in practice, type system
+
+### 📖 Why This Matters
+**Julia's superpower**: Multiple dispatch allows you to write generic, reusable code that automatically chooses the right method based on argument types. This enables seamless interoperability between packages and makes Julia code both flexible and fast.
 
 ### Multiple Dispatch (Core Paradigm)
 
@@ -261,3 +309,45 @@ lines!(1:10, sin.(1:10))                 # Add line to same plot
 @btime sort(rand(1000))                  # Benchmark operation
 @showprogress for i in 1:10^6 end       # Progress bar
 ```
+
+## ✅ Check Your Understanding - Julia Fundamentals
+Before moving on, you should now be able to:
+- [ ] Create and manipulate arrays with 1-based indexing
+- [ ] Use broadcasting (`.`) for element-wise operations
+- [ ] Write functions and understand multiple dispatch
+- [ ] Work with control flow (loops, conditionals)
+- [ ] Handle DataFrames and CSV files
+- [ ] Apply units and error propagation
+- [ ] Use basic statistical and mathematical functions
+
+### 🚀 Hands-on Validation (25-30 minutes)
+**Comprehensive Project**: Complete the "Scientific Computing with Julia" workshop  
+**Link**: https://github.com/mitmath/julia-mit (Problem sets)  
+**Goal**: Apply all Julia fundamentals in scientific computing context  
+**Time**: 25-30 minutes  
+
+**Multiple Dispatch Challenge**: Work through "Type System" examples  
+**Link**: https://docs.julialang.org/en/v1/manual/types/  
+**Focus**: Create custom types and methods for scientific data
+
+**Performance Validation**: Complete "Think Julia" exercises  
+**Link**: https://benlauwens.github.io/ThinkJulia.jl/latest/book.html (Exercise sections)  
+**Goal**: Demonstrate efficient Julia programming patterns
+
+### 🚀 What's Next?
+**Continue your Julia journey:**
+
+- **Need better performance?** → [Performance & Debugging Guide](05_performance.md) - Learn optimization techniques
+- **Want more resources?** → [Additional Resources](06_resources.md) - Community, tutorials, and references  
+- **Ready for real projects?** → Apply these fundamentals to your scientific computing tasks
+- **Working with MERA.jl?** → These patterns apply directly to astrophysical simulation analysis
+
+**Expected next reading time**: 30-60 minutes depending on your focus
+
+### 📖 Key Takeaways
+**Julia's core strengths**: 
+- **Multiple dispatch** enables elegant, extensible code
+- **1-based indexing** matches mathematical notation
+- **Broadcasting** makes element-wise operations intuitive
+- **Type system** enables both flexibility and performance
+- **Package ecosystem** provides specialized tools for every domain

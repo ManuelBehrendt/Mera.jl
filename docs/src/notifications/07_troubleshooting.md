@@ -8,46 +8,62 @@ Common issues and solutions for the notification system.
 
 #### Problem: No emails are being sent
 ```julia
-# Check email configuration
-notifyme("Test email", email="your@email.com")
+# Check email configuration  
+notifyme("Test email")
 # ❌ Nothing received
 ```
 
 **Solutions:**
 
-1. **Verify SMTP settings:**
-```julia
-# Check if SMTP server is accessible
-using SMTPClient
+1. **Check email.txt configuration:**
+```bash
+# Verify file exists and has correct content
+cat ~/email.txt
+# Should show: your.email@example.com (no extra lines/spaces)
 
-# Test connection manually
-smtp_server = "smtp.gmail.com"
-smtp_port = 587
-username = "your_email@gmail.com"
-password = "your_app_password"
-
-try
-    # This should succeed if settings are correct
-    conn = SMTPClient.connect(smtp_server, smtp_port)
-    SMTPClient.authenticate(conn, username, password)
-    SMTPClient.disconnect(conn)
-    println("✅ SMTP connection successful")
-catch e
-    println("❌ SMTP connection failed: $e")
-end
+# Check file permissions
+ls -la ~/email.txt
 ```
 
-2. **Check app password (Gmail/Outlook):**
-   - Gmail: Use App Password, not regular password
-   - Outlook: May require app-specific password
-   - 2FA must be enabled for app passwords
-
-3. **Environment variables:**
+2. **Verify system mail command:**
 ```bash
-# Check if variables are set
-echo $EMAIL_USER
-echo $EMAIL_SMTP_SERVER
-echo $EMAIL_SMTP_PORT
+# Check if mail command exists
+which mail
+
+# Test manual email sending
+echo "Test from command line" | mail -s "Test Subject" your@email.com
+```
+
+3. **Cross-platform mail setup:**
+
+**macOS**: Built-in mail command should work
+```bash
+# Should return /usr/bin/mail
+which mail
+```
+
+**Linux**: Install mail utilities if missing
+```bash
+# Ubuntu/Debian
+sudo apt-get install mailutils
+
+# CentOS/RHEL  
+sudo yum install mailx
+
+# Test after installation
+echo "Test" | mail -s "Test" your@email.com
+```
+
+**Windows**: System mail not available by default
+- Consider using Zulip notifications only
+- Alternative: Install Windows Subsystem for Linux (WSL)
+
+4. **Check for mail configuration:**
+```bash
+# Some systems require mail server configuration
+# Check system logs
+tail -f /var/log/mail.log  # Linux
+tail -f /var/log/system.log | grep mail  # macOS
 
 # Set if missing
 export EMAIL_USER="your@email.com"
