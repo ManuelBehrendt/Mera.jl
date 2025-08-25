@@ -13,7 +13,8 @@
 
 **New to Julia threading AND Mera?** Start here:
 
-1. **Setup**: Start Julia with `julia -t auto`
+1. **Setup**: Start Julia with `julia -t auto` (uses all available CPU cores)
+   - **HPC users**: Check core count first with `julia -e "println(Sys.CPU_THREADS)"`, then use explicit count
 2. **Verify**: Run Section 4.1 setup verification 
 3. **Learn basics**: Read Sections 1-3 (threading concepts, memory, resource contention)
 4. **Practice fundamentals**: Try Section 6.0 practice exercises
@@ -54,7 +55,7 @@
 ### Essential Commands
 ```julia
 # Start Julia with threading
-julia -t auto
+julia -t auto  # Uses all available CPU cores
 
 # Check threading status
 using Base.Threads
@@ -207,7 +208,8 @@ Thread 4: [────────────────] Waiting
 
 ### Checkpoint 1: Threading Readiness ✓
 Before proceeding, verify:
-- [ ] Julia started with `-t auto` or `-t N` (N > 1)
+- [ ] Julia started with `-t auto` (uses all CPU cores) or `-t N` (explicit count)
+- [ ] On HPC clusters: Check `Sys.CPU_THREADS` and use explicit counts instead of `auto`
 - [ ] `Threads.nthreads() > 1` returns true
 - [ ] You understand the difference between outer-loop and inner-kernel patterns
 - [ ] You can identify whether your task is I/O, CPU, or memory bound
@@ -685,7 +687,7 @@ if nthreads() == 1
     println("\n⚠️  WARNING: Running with only 1 thread!")
     println("To enable multithreading:")
     println("1. Exit Julia")
-    println("2. Restart with: julia -t auto (uses all CPU cores)")
+    println("2. Restart with: julia -t auto (uses all available CPU cores)")
     println("3. Or use: julia -t 4 (for exactly 4 threads)")
     println("4. Most benefits of this tutorial require multiple threads")
 else
@@ -712,7 +714,33 @@ println("✅ Basic threading test completed!")
 println("Note: If you see output from multiple thread IDs, threading is working correctly.")
 ```
 
-### 4.2 Basic Thread Configuration
+### 4.2 Important Notes on Thread Count Selection
+
+!!! warning "HPC Cluster Usage"
+    **On shared HPC systems and large compute clusters:**
+    - `julia -t auto` uses **ALL available CPU cores** on the node, which may be 32, 64, or more cores
+    - This can cause **oversubscription** and poor performance on shared systems
+    - Always check available cores first: `julia -e "println(\"CPU cores: \", Sys.CPU_THREADS)"`
+    - **Recommended:** Use explicit thread counts instead: `julia -t 16` or `julia -t 32`
+    - Consider your job scheduler's resource allocation (e.g., SLURM `--cpus-per-task`)
+
+!!! tip "Choosing Thread Counts"
+    **Personal computers/workstations:** `julia -t auto` is usually optimal
+    
+    **HPC clusters:** Check system resources first:
+    ```bash
+    # Check total CPU cores
+    julia -e "println(\"Total CPU cores: \", Sys.CPU_THREADS)"
+    
+    # Check NUMA topology (if available)
+    lscpu | grep -E "CPU\(s\)|NUMA"
+    
+    # Use explicit counts based on your allocation
+    julia -t 16  # For 16-core allocation
+    julia -t 32  # For 32-core allocation
+    ```
+
+### 4.3 Basic Thread Configuration
 
 By default, Julia starts with a single thread:
 ```julia
@@ -724,15 +752,15 @@ Enable multi-threading at startup:
 ```bash
 # Command line argument (recommended)
 julia --threads=8                    # 8 threads total
-julia --threads=auto                 # Auto-detect optimal count  
-julia -t 4                          # Short form
+julia --threads=auto                 # Uses all available CPU cores
+julia -t 4                          # Short form (explicit count)
 
 # Environment variable method
 export JULIA_NUM_THREADS=8
 julia
 ```
 
-### 4.3 Advanced Configuration (Julia 1.10+)
+### 4.4 Advanced Configuration (Julia 1.10+)
 
 Julia 1.10+ supports **two thread pools** and **parallel GC**:
 
@@ -741,7 +769,7 @@ Julia 1.10+ supports **two thread pools** and **parallel GC**:
 julia --threads=8,2 --gcthreads=4
 
 # Auto-configure everything (recommended for beginners)
-julia --threads=auto --gcthreads=auto
+julia --threads=auto --gcthreads=auto  # Uses all available CPU cores
 ```
 
 **Thread Pools:**
@@ -764,11 +792,11 @@ BLAS.set_num_threads(min(4, nthreads()))
 println("BLAS threads: ", BLAS.get_num_threads())
 ```
 
-### 4.4 Recommended Configurations
+### 4.5 Recommended Configurations
 
 **For laptops/workstations (4-8 cores):**
 ```bash
-julia --threads=auto --gcthreads=auto
+julia --threads=auto --gcthreads=auto  # Uses all available CPU cores
 ```
 
 **For smaller servers (16+ cores):**
@@ -776,10 +804,34 @@ julia --threads=auto --gcthreads=auto
 julia --threads=12,2 --gcthreads=6
 ```
 
-**For larger servers:**
+**For larger servers (32+ cores):**
 ```bash
 julia --threads=32,4 --gcthreads=16
 ```
+
+!!! warning "HPC Cluster Configurations"
+    **Always use explicit thread counts on shared HPC systems:**
+    
+    **SLURM job with 16 cores:**
+    ```bash
+    #SBATCH --cpus-per-task=16
+    julia --threads=16,2 --gcthreads=8
+    ```
+    
+    **SLURM job with 32 cores:**
+    ```bash
+    #SBATCH --cpus-per-task=32
+    julia --threads=32,4 --gcthreads=16
+    ```
+    
+    **Check your allocation before starting:**
+    ```bash
+    echo "Allocated CPUs: $SLURM_CPUS_PER_TASK"
+    echo "Total node CPUs: $(nproc)"
+    julia -e "println(\"Detected CPUs: \", Sys.CPU_THREADS)"
+    ```
+    
+    **Never use `julia -t auto` on shared nodes** - it may claim all 64+ cores!
 
 ## 5 Mera's Internally Threaded Functions
 
@@ -1931,6 +1983,12 @@ function diagnose_threading_environment()
     println("Available threads: $(Threads.nthreads())")
     println("CPU cores: $(Sys.CPU_THREADS)")
     
+    # HPC cluster warning
+    if Sys.CPU_THREADS > 16 && Threads.nthreads() == Sys.CPU_THREADS
+        println("⚠️  You're using all $(Sys.CPU_THREADS) cores - appropriate for personal systems only!")
+        println("   On HPC clusters, use explicit thread counts to avoid oversubscription")
+    end
+    
     # Check for Julia version threading features
     println("Julia version: $(VERSION)")
     if VERSION >= v"1.9"
@@ -2331,7 +2389,7 @@ This comprehensive guide provides everything needed to harness Julia's multi-thr
 - **Mixed**: Controlled combination with explicit thread budgets
 
 **Best Practices:**
-- Start Julia with balanced thread pools: `julia --threads=auto --gcthreads=auto`
+- Start Julia with balanced thread pools: `julia --threads=auto --gcthreads=auto` (uses all available CPU cores)
 - Use atomic operations for thread-safe data collection
 - Avoid false sharing with proper data structure design
 - Profile and benchmark before optimizing

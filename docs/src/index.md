@@ -10,7 +10,7 @@
 
 **Julia Performance Advantage**: Compiled language speed for numerical computations while maintaining interactive development  
 **RAMSES-Native Processing**: Direct binary file reading with optimized AMR algorithms and Hilbert space-filling curve support  
-**Physically Consistent Analysis**: Conservative projection methods preserving mass, momentum, and energy across resolution levels  
+**AMR-Aware Analysis**: Proper handling of multi-resolution grids with correct level weighting  
 **Reproducible Research Pipeline**: Complete environment management with Project.toml/Manifest.toml for computational reproducibility
 
 ## Quick Start: Choose Your Path
