@@ -505,6 +505,10 @@
                 console.log(`🎵 Navigation detected: ${oldUrl} → ${currentUrl}`);
                 console.log(`🎵 Audio state before navigation - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
                 
+                // Remember if audio was playing before navigation
+                const wasPlayingBeforeNav = window.meraIsPlaying && !window.meraGlobalAudio.paused;
+                const audioSrcBeforeNav = window.meraGlobalAudio?.src;
+                
                 // Force save state immediately on navigation
                 saveAudioState();
                 
@@ -520,11 +524,33 @@
                     try {
                         const restored = await restoreAudioState();
                         console.log(`🎵 Restoration result: ${restored}`);
-                        if (!restored) {
-                            updateUI();
+                        if (!restored && wasPlayingBeforeNav && audioSrcBeforeNav) {
+                            // Force continuation if audio was playing before navigation
+                            console.log('🎵 Restoration failed, forcing audio continuation...');
+                            window.meraGlobalAudio.src = audioSrcBeforeNav;
+                            window.meraIsPlaying = true;
+                            try {
+                                await window.meraGlobalAudio.play();
+                                console.log('🎵 Successfully forced audio continuation');
+                            } catch (e) {
+                                console.log('🎵 Could not force play:', e);
+                                window.meraIsPlaying = false;
+                            }
                         }
+                        updateUI();
                     } catch (e) {
                         console.error('Error restoring audio after navigation:', e);
+                        // Last resort: if we know audio was playing, try to continue it
+                        if (wasPlayingBeforeNav && audioSrcBeforeNav) {
+                            console.log('🎵 Exception during restore, attempting fallback continuation...');
+                            window.meraGlobalAudio.src = audioSrcBeforeNav;
+                            window.meraIsPlaying = true;
+                            try {
+                                window.meraGlobalAudio.play();
+                            } catch (playError) {
+                                window.meraIsPlaying = false;
+                            }
+                        }
                         updateUI();
                     }
                     
