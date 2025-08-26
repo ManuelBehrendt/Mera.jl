@@ -513,7 +513,7 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
                 "content" => msg
             ]
             try
-                HTTP.request("POST", url, headers, HTTP.Form(form_data); readtimeout=zulip_timeout, connect_timeout=zulip_timeout)
+                HTTP.request("POST", url, headers, HTTP.Form(form_data); connect_timeout=Int(zulip_timeout), readtimeout=Int(zulip_timeout))
             catch e
                 println("Warning: Zulip primary message POST failed (timeout=$(zulip_timeout)s): $e")
             end
@@ -556,7 +556,7 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
                             "Content-Type" => content_type
                         ]
                         try
-                            resp = HTTP.request("POST", upload_url, img_headers, body_bytes; readtimeout=zulip_timeout, connect_timeout=zulip_timeout)
+                            resp = HTTP.request("POST", upload_url, img_headers, body_bytes; connect_timeout=Int(zulip_timeout), readtimeout=Int(zulip_timeout))
                             file_info = JSON.parse(String(resp.body))
                             if was_optimized && optimized_path != file_path
                                 try
@@ -590,7 +590,7 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
                         "content" => attachments_msg
                     ]
                     try
-                        HTTP.request("POST", url, headers, HTTP.Form(attachment_form_data); readtimeout=zulip_timeout, connect_timeout=zulip_timeout)
+                        HTTP.request("POST", url, headers, HTTP.Form(attachment_form_data); connect_timeout=Int(zulip_timeout), readtimeout=Int(zulip_timeout))
                     catch e
                         println("Warning: Zulip attachment message POST failed: $e")
                     end
