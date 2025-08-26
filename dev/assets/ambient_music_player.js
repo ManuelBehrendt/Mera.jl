@@ -29,11 +29,6 @@ class MeraAmbientPlayer {
                 <div class="mera-player-toggle" id="mera-player-toggle">
                     🎵 Study Music
                 </div>
-                <div class="mera-volume-control">
-                    <label for="mera-volume">🔊 Volume:</label>
-                    <input type="range" id="mera-volume" min="0" max="100" value="15">
-                    <span id="mera-volume-display">15%</span>
-                </div>
                 <div class="mera-player-controls" id="mera-player-controls" style="display: none;">
                     <div class="mera-player-header">
                         <span class="mera-player-title">🎵 Study Music</span>
@@ -42,6 +37,11 @@ class MeraAmbientPlayer {
                     <div class="mera-player-buttons">
                         <button id="mera-play-btn" class="mera-btn mera-play">🔀 Random Track</button>
                         <button id="mera-pause-btn" class="mera-btn mera-pause" style="display: none;">⏸️ Pause</button>
+                    </div>
+                    <div class="mera-volume-control">
+                        <label for="mera-volume">🔊 Volume:</label>
+                        <input type="range" id="mera-volume" min="0" max="100" value="15">
+                        <span id="mera-volume-display">15%</span>
                     </div>
                     <div class="mera-player-status">
                         <div id="mera-status-text">Ready to play</div>
@@ -98,32 +98,35 @@ class MeraAmbientPlayer {
             <style id="mera-player-styles">
                 .mera-music-player {
                     position: relative;
-                    margin: 8px 0;
+                    margin: 0;
                     z-index: 100;
                     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                     max-width: 220px;
                 }
                 
                 .mera-player-toggle {
-                    padding: 6px 12px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    border-radius: 6px;
+                    padding: 1px 8px;
+                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+                    border-radius: 2px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     cursor: pointer;
-                    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
-                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                    font-size: 12px;
-                    color: white;
-                    font-weight: 500;
+                    box-shadow: 0 0 2px rgba(0,0,0,0.05);
+                    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+                    font-size: 9px;
+                    color: rgba(255,255,255,0.8);
+                    font-weight: 300;
                     border: none;
                     width: 100%;
+                    height: 12px;
                 }
                 
                 .mera-player-toggle:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+                    transform: translateY(-1px);
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+                    color: rgba(255,255,255,0.9);
                 }
                 
                 .mera-player-controls {
@@ -507,8 +510,11 @@ class MeraAmbientPlayer {
             
             this.audio.addEventListener('ended', () => {
                 if (this.isPlaying) {
-                    this.audio.currentTime = 0;
-                    this.audio.play();
+                    this.loadRandomTrack().then(() => {
+                        if (this.audio) {
+                            this.audio.play();
+                        }
+                    });
                 }
             });
             
