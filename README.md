@@ -85,8 +85,17 @@ Seamless interoperability with the Julia ecosystem enables advanced analyses bey
 ## Requirements
 
 - Julia 1.10+ (1.11+ recommended)
-- Compatible with RAMSES outputs from stable-17.09 through stable-19.10
+- Compatible with RAMSES outputs from stable-17.09 through stable-19.10, and RAMSES 2025.05
 - Linux and macOS (Windows not tested)
+
+### RAMSES Version Compatibility Matrix
+
+| RAMSES Version | Compatibility Status | Notes |
+|----------------|---------------------|-------|
+| stable-17.09   | ✅ Fully Supported | Validated |
+| stable-18.xx   | ✅ Fully Supported | Validated |
+| stable-19.10   | ✅ Fully Supported | Current stable |
+| 2025.05        | 🧪 Beta Support    | Core functionality validated, new features in testing |
 
 ## Stay Updated
 
