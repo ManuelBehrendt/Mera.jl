@@ -89,12 +89,23 @@
         
         sys.audio.addEventListener('play', () => {
             sys.isPlaying = true;
+            localStorage.setItem('mera-was-playing', 'true');
+            localStorage.setItem('mera-current-track', sys.currentTrack);
+            localStorage.setItem('mera-audio-time', sys.audio.currentTime.toString());
             console.log('🎵 Audio started playing');
         });
         
         sys.audio.addEventListener('pause', () => {
             sys.isPlaying = false;
+            localStorage.setItem('mera-was-playing', 'false');
             console.log('🎵 Audio paused');
+        });
+        
+        sys.audio.addEventListener('timeupdate', () => {
+            if (sys.isPlaying) {
+                localStorage.setItem('mera-audio-time', sys.audio.currentTime.toString());
+                localStorage.setItem('mera-current-track', sys.currentTrack);
+            }
         });
         
         // Play function
@@ -124,7 +135,49 @@
             return sys.playTrack(randomTrack);
         };
         
+        // Save state before page unload (critical for main topic navigation)
+        window.addEventListener('beforeunload', () => {
+            if (sys.isPlaying) {
+                localStorage.setItem('mera-was-playing', 'true');
+                localStorage.setItem('mera-current-track', sys.currentTrack);
+                localStorage.setItem('mera-audio-time', sys.audio.currentTime.toString());
+                console.log('🎵 State saved before page unload');
+            }
+        });
+        
         console.log('🎵 Isolated audio system created');
+    }
+    
+    // Force immediate audio restoration on page load
+    if (localStorage.getItem('mera-was-playing') === 'true') {
+        const savedTrack = localStorage.getItem('mera-current-track');
+        const savedTime = parseFloat(localStorage.getItem('mera-audio-time') || '0');
+        
+        if (savedTrack && window.meraAudioSystem) {
+            console.log(`🎵 Restoring: ${savedTrack} at ${savedTime}s`);
+            const sys = window.meraAudioSystem;
+            
+            // Restore the track
+            const path = getMusicPath(savedTrack);
+            sys.audio.src = path;
+            sys.currentTrack = savedTrack;
+            sys.isPlaying = true;
+            
+            // Set up restoration when audio is ready
+            const restorePlayback = () => {
+                sys.audio.currentTime = savedTime;
+                sys.audio.play().then(() => {
+                    console.log('🎵 Successfully restored audio after page reload');
+                }).catch(e => {
+                    console.log('🎵 Auto-resume blocked by browser:', e);
+                    sys.isPlaying = false;
+                });
+                sys.audio.removeEventListener('loadedmetadata', restorePlayback);
+            };
+            
+            sys.audio.addEventListener('loadedmetadata', restorePlayback);
+            sys.audio.load(); // Force load the audio
+        }
     }
     
     // Make path calculation globally available
