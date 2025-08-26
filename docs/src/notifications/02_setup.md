@@ -2,6 +2,8 @@
 
 Complete setup instructions for MERA notifications.
 
+**⚠️ Platform Support**: Tested on macOS and Linux. Windows support not tested - use with caution on Windows systems.
+
 ## 📧 Email Configuration
 
 ### Requirements
@@ -60,7 +62,7 @@ sudo apt-get install mailutils
 sudo yum install mailx
 ```
 
-**Windows**: Requires additional setup (consider using Zulip only)
+**Windows**: Requires additional setup (consider using Zulip only). **Note**: Windows support not tested.
 
 ## 💬 Zulip Configuration
 

@@ -26,6 +26,7 @@ https://zulip.yourdomain.com
 - `notifyme()` only sends notifications if you've created config files above
 - Without configuration, it runs silently
 - **Sends to ALL configured methods** - if both `email.txt` and `zulip.txt` exist, you get both email AND Zulip messages
+- **Windows support**: Not tested on Windows systems
 
 ```julia
 # Basic notification (email/Zulip if configured, otherwise silent)

@@ -2,6 +2,8 @@
 
 Common issues and solutions for the notification system.
 
+**⚠️ Platform Note**: Troubleshooting guidance primarily for macOS and Linux. Windows support not tested.
+
 ## 🔧 Common Issues
 
 ### Email Notifications Not Working

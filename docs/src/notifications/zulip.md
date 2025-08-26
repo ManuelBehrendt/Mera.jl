@@ -2,6 +2,8 @@
 
 Advanced team collaboration with organized, searchable notifications perfect for research groups.
 
+**⚠️ Platform Note**: Windows support not tested. Functionality verified on macOS and Linux.
+
 ## Why Zulip for Research?
 
 **🧵 Organized Conversations** - Streams and topics keep research discussions focused  

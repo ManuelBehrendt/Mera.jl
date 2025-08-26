@@ -2,6 +2,8 @@
 
 Reliable notifications that reach you anywhere - perfect for important milestones and remote work.
 
+**⚠️ Platform Note**: Email notifications tested on macOS and Linux. Windows support not tested.
+
 ## Why Email Notifications?
 
 **📱 Universal Access** - Receive notifications on phone, tablet, or any device  

@@ -15,7 +15,7 @@ The MERA notifications system transforms how you monitor long-running simulation
 **📎 File Attachments** - Automatic plot sharing, data files, and results  
 **⏱️ Execution Tracking** - Built-in timing with progress monitoring  
 **🚨 Exception Handling** - Intelligent error reporting with stack traces  
-**🖥️ Cross-Platform** - Full support for macOS, Linux, and Windows  
+**🖥️ Cross-Platform** - Full support for macOS, Linux, and Windows (Windows support not tested)  
 **🔬 Research-Optimized** - Designed for scientific computing workflows
 
 ## Quick Start

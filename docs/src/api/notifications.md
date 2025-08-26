@@ -2,6 +2,8 @@
 
 Functions for notifications and progress tracking.
 
+**⚠️ Platform Support**: Tested on macOS and Linux. Windows support not tested.
+
 ## Notification Functions
 
 - `bell` - Audio notifications

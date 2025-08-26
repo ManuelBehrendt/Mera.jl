@@ -2,6 +2,8 @@
 
 This comprehensive tutorial explains how to set up and use the powerful `notifyme` function in Mera.jl for complete workflow notifications. The system supports text messages, captured outputs, optimized image uploads, and multi-platform compatibility.
 
+**⚠️ Platform Support**: Tested on macOS and Linux. Windows support not tested.
+
 > ⚠️ **Privacy Notice**: This tutorial includes helper functions for system monitoring (memory, disk, network, processes). These functions can expose sensitive system information. **Use them judiciously** and only in trusted environments. Most examples in this tutorial use safe alternatives like `pwd`, `hostname`, and `julia --version` for demonstration purposes.
 
 ## 🚀 Complete Feature Overview
