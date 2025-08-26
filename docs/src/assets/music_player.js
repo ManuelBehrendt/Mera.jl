@@ -4,6 +4,13 @@
 (function() {
     'use strict';
     
+    // Track script execution count to detect reloads
+    if (typeof window.meraScriptCounter === 'undefined') {
+        window.meraScriptCounter = 0;
+    }
+    window.meraScriptCounter++;
+    console.log(`🎵 SCRIPT EXECUTION #${window.meraScriptCounter} - URL: ${window.location.pathname}`);
+    
     // Global audio element that persists across all pages
     if (!window.meraGlobalAudio) {
         window.meraGlobalAudio = new Audio();
@@ -14,8 +21,46 @@
         window.meraGlobalAudio.addEventListener('play', saveAudioState);
         window.meraGlobalAudio.addEventListener('pause', saveAudioState);
         
+        // Critical playback event listeners that must persist across pages
+        const endedHandler = async () => {
+            console.log(`🎵 ENDED EVENT FIRED - isPlaying: ${window.meraIsPlaying}, currentTime: ${window.meraGlobalAudio.currentTime}`);
+            if (window.meraIsPlaying) {
+                try {
+                    console.log('🎵 Attempting to play next random track...');
+                    await playRandomTrack(); // Play next random track
+                    console.log('🎵 Successfully moved to next track');
+                } catch (error) {
+                    console.error('🎵 Failed to play next track:', error);
+                    window.meraIsPlaying = false;
+                    updateUI();
+                }
+            } else {
+                console.log('🎵 Not playing next track because isPlaying is false');
+            }
+        };
+        
+        // Remove any existing ended listener first to prevent duplicates
+        if (window.meraGlobalAudio._endedHandler) {
+            window.meraGlobalAudio.removeEventListener('ended', window.meraGlobalAudio._endedHandler);
+        }
+        window.meraGlobalAudio.addEventListener('ended', endedHandler);
+        window.meraGlobalAudio._endedHandler = endedHandler;
+        
+        window.meraGlobalAudio.addEventListener('pause', () => {
+            window.meraIsPlaying = false;
+            updateUI();
+        });
+        
+        window.meraGlobalAudio.addEventListener('play', () => {
+            window.meraIsPlaying = true;
+            updateUI();
+        });
+        
         // Save state before page unload
         window.addEventListener('beforeunload', saveAudioState);
+        
+        // Mark that critical listeners are attached
+        window.meraGlobalAudio._criticalListenersAttached = true;
     }
     
     // Music library
@@ -33,7 +78,16 @@
         { file: 'vega.mp3', name: 'Vega' }
     ];
     
-    let isPlaying = false;
+    // Use global playing state that persists across page loads
+    if (typeof window.meraIsPlaying === 'undefined') {
+        window.meraIsPlaying = false;
+    }
+    
+    // Synchronize playing state with actual audio state on script load
+    if (window.meraGlobalAudio) {
+        window.meraIsPlaying = !window.meraGlobalAudio.paused && window.meraGlobalAudio.src;
+        console.log(`🎵 Script loaded - Audio state: playing=${window.meraIsPlaying}, paused=${window.meraGlobalAudio.paused}, src=${window.meraGlobalAudio.src ? 'yes' : 'no'}, currentTime=${window.meraGlobalAudio.currentTime}`);
+    }
     
     // Save audio state to localStorage
     function saveAudioState() {
@@ -46,11 +100,62 @@
                 timestamp: Date.now()
             };
             localStorage.setItem('mera-audio-state', JSON.stringify(state));
+            console.log('🎵 State saved:', state);
+        }
+    }
+    
+    // Calculate correct music path for current page
+    function getMusicPath(filename) {
+        const currentUrl = window.location.href;
+        const currentPath = window.location.pathname;
+        
+        // Handle local file:// protocol
+        if (currentUrl.startsWith('file://')) {
+            // For local development, files are in docs/build/
+            // Current path: /Users/.../docs/build/some_file.html
+            // Assets path: /Users/.../docs/build/assets/music/
+            const pathSegments = currentPath.split('/');
+            const buildIndex = pathSegments.indexOf('build');
+            
+            if (buildIndex !== -1 && pathSegments.length > buildIndex + 1) {
+                // Count subdirectories after build/ (excluding the filename)
+                const levelsDeep = pathSegments.length - buildIndex - 2; // -2 for build and filename
+                if (levelsDeep > 0) {
+                    // We're in a subdirectory, need to go back
+                    const backPath = '../'.repeat(levelsDeep);
+                    const result = `${backPath}assets/music/${filename}`;
+                    console.log(`🎵 Local file path calculation: levels=${levelsDeep}, path=${result}`);
+                    return result;
+                } else {
+                    // We're directly in build/ directory
+                    const result = `assets/music/${filename}`;
+                    console.log(`🎵 Local file path calculation: direct in build, path=${result}`);
+                    return result;
+                }
+            } else {
+                // Fallback
+                console.log(`🎵 Local file path fallback used`);
+                return `assets/music/${filename}`;
+            }
+        }
+        
+        // Handle web URLs (GitHub Pages, etc.)
+        if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath === '/Mera.jl/') {
+            // Root level
+            return `assets/music/${filename}`;
+        } else if (currentPath.includes('/Mera.jl/')) {
+            // GitHub Pages - calculate relative path back to root
+            const pathSegments = currentPath.split('/').filter(segment => segment && segment !== 'Mera.jl');
+            const backPath = '../'.repeat(Math.max(0, pathSegments.length - 1));
+            return `${backPath}assets/music/${filename}`;
+        } else {
+            // Default fallback
+            return `/assets/music/${filename}`;
         }
     }
     
     // Restore audio state from localStorage
-    function restoreAudioState() {
+    async function restoreAudioState() {
         try {
             const savedState = localStorage.getItem('mera-audio-state');
             if (savedState) {
@@ -58,29 +163,63 @@
                 
                 // Only restore if state is recent (within 10 seconds)
                 if (Date.now() - state.timestamp < 10000) {
-                    window.meraGlobalAudio.src = state.src;
+                    // Extract filename from saved src and recalculate path
+                    const filename = state.src.split('/').pop();
+                    const correctPath = getMusicPath(filename);
+                    
+                    console.log(`🎵 Restoring audio from: ${correctPath}`);
+                    
+                    // Reset audio element
+                    window.meraGlobalAudio.pause();
+                    window.meraGlobalAudio.currentTime = 0;
+                    window.meraGlobalAudio.src = correctPath;
                     window.meraGlobalAudio.volume = state.volume;
                     
-                    // Set the time and play state
-                    window.meraGlobalAudio.currentTime = state.currentTime;
-                    
-                    if (!state.paused) {
-                        isPlaying = true;
-                        window.meraGlobalAudio.play().then(() => {
-                            console.log('🎵 Audio restored and playing');
+                    // Wait for audio to load before setting time and playing
+                    return new Promise((resolve) => {
+                        const onCanPlay = async () => {
+                            window.meraGlobalAudio.removeEventListener('canplaythrough', onCanPlay);
+                            window.meraGlobalAudio.removeEventListener('error', onError);
+                            
+                            // Set the saved time position
+                            window.meraGlobalAudio.currentTime = state.currentTime;
+                            
+                            if (!state.paused) {
+                                try {
+                                    await window.meraGlobalAudio.play();
+                                    window.meraIsPlaying = true;
+                                    console.log('🎵 Audio restored and playing');
+                                } catch (e) {
+                                    console.log('Auto-resume prevented by browser policy:', e);
+                                    window.meraIsPlaying = false;
+                                }
+                            } else {
+                                window.meraIsPlaying = false;
+                            }
+                            
+                            // Ensure global playing state matches audio state
+                            window.meraIsPlaying = !window.meraGlobalAudio.paused;
+                            
                             updateUI();
-                        }).catch(e => {
-                            console.log('Auto-resume prevented by browser policy:', e);
-                            isPlaying = false;
+                            console.log('🎵 Audio state restored:', state);
+                            resolve(true);
+                        };
+                        
+                        const onError = (error) => {
+                            window.meraGlobalAudio.removeEventListener('canplaythrough', onCanPlay);
+                            window.meraGlobalAudio.removeEventListener('error', onError);
+                            console.error('Audio restoration error:', error);
+                            window.meraIsPlaying = false;
                             updateUI();
-                        });
-                    } else {
-                        isPlaying = false;
-                        updateUI();
-                    }
-                    
-                    console.log('🎵 Audio state restored:', state);
-                    return true;
+                            resolve(false);
+                        };
+                        
+                        window.meraGlobalAudio.addEventListener('canplaythrough', onCanPlay, { once: true });
+                        window.meraGlobalAudio.addEventListener('error', onError, { once: true });
+                        
+                        // Force load
+                        window.meraGlobalAudio.load();
+                    });
                 }
             }
         } catch (e) {
@@ -116,7 +255,7 @@
         const status = document.getElementById('mera-top-status');
         
         if (playBtn && pauseBtn && status) {
-            if (isPlaying) {
+            if (window.meraIsPlaying) {
                 playBtn.style.display = 'none';
                 pauseBtn.style.display = 'inline-block';
                 status.textContent = `Playing: ${getCurrentTrackName()}`;
@@ -135,26 +274,62 @@
     // Load and play track
     async function playRandomTrack() {
         const track = getRandomTrack();
-        const musicPath = `assets/music/${track.file}`;
+        const musicPath = getMusicPath(track.file);
         
+        console.log(`🎵 Loading track from: ${musicPath}`);
+        
+        // Reset audio element first
+        window.meraGlobalAudio.pause();
+        window.meraGlobalAudio.currentTime = 0;
+        
+        // Set new source and wait for it to load
         window.meraGlobalAudio.src = musicPath;
         
-        try {
-            await window.meraGlobalAudio.play();
-            isPlaying = true;
-            updateUI();
-            console.log(`🎵 Playing: ${track.name}`);
-        } catch (error) {
-            console.error('Error playing music:', error);
-            const status = document.getElementById('mera-top-status');
-            if (status) status.textContent = 'Error playing music';
-        }
+        // Wait for the audio to be ready to play
+        return new Promise((resolve, reject) => {
+            const onCanPlay = async () => {
+                window.meraGlobalAudio.removeEventListener('canplaythrough', onCanPlay);
+                window.meraGlobalAudio.removeEventListener('error', onError);
+                
+                try {
+                    await window.meraGlobalAudio.play();
+                    window.meraIsPlaying = true;
+                    updateUI();
+                    console.log(`🎵 Playing: ${track.name}`);
+                    resolve();
+                } catch (error) {
+                    console.error('Error playing music:', error);
+                    const status = document.getElementById('mera-top-status');
+                    if (status) status.textContent = 'Error playing music';
+                    window.meraIsPlaying = false;
+                    updateUI();
+                    reject(error);
+                }
+            };
+            
+            const onError = (error) => {
+                window.meraGlobalAudio.removeEventListener('canplaythrough', onCanPlay);
+                window.meraGlobalAudio.removeEventListener('error', onError);
+                console.error('Audio loading error:', error);
+                const status = document.getElementById('mera-top-status');
+                if (status) status.textContent = 'Music file not found';
+                window.meraIsPlaying = false;
+                updateUI();
+                reject(error);
+            };
+            
+            window.meraGlobalAudio.addEventListener('canplaythrough', onCanPlay, { once: true });
+            window.meraGlobalAudio.addEventListener('error', onError, { once: true });
+            
+            // Force load
+            window.meraGlobalAudio.load();
+        });
     }
     
     // Pause music
     function pauseMusic() {
         window.meraGlobalAudio.pause();
-        isPlaying = false;
+        window.meraIsPlaying = false;
         updateUI();
     }
     
@@ -258,7 +433,14 @@
         const volumeSlider = document.getElementById('mera-top-volume');
         
         if (playBtn) {
-            playBtn.addEventListener('click', playRandomTrack);
+            playBtn.addEventListener('click', async () => {
+                try {
+                    await playRandomTrack();
+                    console.log('🎵 Successfully started music');
+                } catch (error) {
+                    console.error('🎵 Failed to start music:', error);
+                }
+            });
         }
         
         if (pauseBtn) {
@@ -271,55 +453,85 @@
             });
         }
         
-        // Handle audio events
-        window.meraGlobalAudio.addEventListener('ended', () => {
-            if (isPlaying) {
-                playRandomTrack(); // Play next random track
-            }
-        });
-        
-        window.meraGlobalAudio.addEventListener('pause', () => {
-            isPlaying = false;
-            updateUI();
-        });
-        
-        window.meraGlobalAudio.addEventListener('play', () => {
-            isPlaying = true;
-            updateUI();
-        });
+        // UI event listeners are handled here, audio events are global
+        // Mark UI listeners as attached
+        window.meraGlobalAudio._listenersAttached = true;
     }
     
     // Initialize immediately when script loads
-    function initialize() {
+    async function initialize() {
         createTopBar();
         
         // Try to restore previous audio state immediately
-        const restored = restoreAudioState();
-        if (!restored) {
+        try {
+            const restored = await restoreAudioState();
+            if (!restored) {
+                updateUI();
+            }
+        } catch (e) {
+            console.error('Error during initialization:', e);
             updateUI();
         }
         
         // Monitor for page changes and recreate if needed
         let currentUrl = window.location.href;
-        setInterval(() => {
+        setInterval(async () => {
             if (window.location.href !== currentUrl) {
+                const oldUrl = currentUrl;
                 currentUrl = window.location.href;
-                console.log('🎵 Page change detected, ensuring music player persistence...');
+                console.log(`🎵 Page change detected: ${oldUrl} → ${currentUrl}`);
+                console.log(`🎵 Audio state before page change - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
                 
-                setTimeout(() => {
+                // Force save state immediately on page change
+                saveAudioState();
+                
+                setTimeout(async () => {
+                    console.log(`🎵 Audio state after timeout - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
+                    
                     if (!document.getElementById('mera-top-bar')) {
                         console.log('🎵 Recreating music player after page change...');
                         createTopBar();
                     }
                     
                     // Always try to restore audio state after page change
-                    const restored = restoreAudioState();
-                    if (!restored) {
+                    try {
+                        const restored = await restoreAudioState();
+                        console.log(`🎵 Restoration result: ${restored}`);
+                        if (!restored) {
+                            updateUI();
+                        }
+                    } catch (e) {
+                        console.error('Error restoring audio after page change:', e);
                         updateUI();
+                    }
+                    
+                    // Ensure event listeners are still attached after page change
+                    if (window.meraGlobalAudio && !window.meraGlobalAudio._listenersAttached) {
+                        console.log('🎵 Reattaching event listeners after page change...');
+                        setupEventListeners();
+                        window.meraGlobalAudio._listenersAttached = true;
                     }
                 }, 100);
             }
         }, 500);
+        
+        // Also monitor for DOM changes that might indicate page content updates
+        if ('MutationObserver' in window) {
+            const observer = new MutationObserver(() => {
+                // Check if top bar still exists
+                if (!document.getElementById('mera-top-bar')) {
+                    console.log('🎵 Top bar missing due to DOM changes, recreating...');
+                    createTopBar();
+                }
+            });
+            
+            // Observe the main content area for changes
+            const mainContent = document.querySelector('main, .docs-main, #docs-main, .content');
+            if (mainContent) {
+                observer.observe(mainContent, { childList: true, subtree: true });
+                console.log('🎵 DOM observer attached to main content');
+            }
+        }
         
         // Also save state every 2 seconds during playback
         setInterval(() => {

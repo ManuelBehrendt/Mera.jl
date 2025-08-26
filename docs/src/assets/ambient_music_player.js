@@ -5,13 +5,47 @@
 
 class MeraAmbientPlayer {
     constructor() {
-        this.audio = null;
-        this.isPlaying = false;
+        // Create a truly persistent iframe for the audio element
+        this.ensurePersistentAudio();
+        
+        // Use global audio element to persist across page navigation
+        if (!window.meraGlobalAudio) {
+            window.meraGlobalAudio = new Audio();
+            window.meraGlobalAudio.volume = 0.15;
+            
+            // Set up continuous state saving (store reference to avoid memory leaks)
+            const saveState = () => {
+                if (window.meraAmbientPlayer) {
+                    window.meraAmbientPlayer.saveCurrentAudioState();
+                }
+            };
+            
+            // Save state more frequently for better persistence
+            window.meraGlobalAudio.addEventListener('timeupdate', saveState);
+            window.meraGlobalAudio.addEventListener('play', saveState);
+            window.meraGlobalAudio.addEventListener('pause', saveState);
+            window.addEventListener('beforeunload', saveState);
+            
+            // Also save state every 2 seconds during playback
+            setInterval(() => {
+                if (!window.meraGlobalAudio.paused && window.meraAmbientPlayer) {
+                    window.meraAmbientPlayer.saveCurrentAudioState();
+                }
+            }, 2000);
+        }
+        this.audio = window.meraGlobalAudio;
+        
+        // Restore previous audio state
+        this.restoreAudioState();
+        
+        this.isPlaying = this.audio && !this.audio.paused;
         this.volume = 0.15; // Default volume (15%) - perfect for studying
         this.musicUrl = null; // Will be set when music file is available
         this.playerVisible = false;
         this.currentTrack = null;
         this.availableTracks = [];
+        this.unloadListenerSet = false;
+        this.timeUpdateListenerSet = false;
         
         this.init();
     }
@@ -20,9 +54,21 @@ class MeraAmbientPlayer {
         this.createPlayerUI();
         this.loadUserPreferences();
         this.setupEventListeners();
+        
+        // Restore player state if music was playing before page navigation
+        if (this.isPlaying) {
+            this.updatePlayButtonState();
+            this.updateStatus(`Playing: ${this.getCurrentTrackName()}`);
+        }
     }
     
     createPlayerUI() {
+        // Check if player UI already exists
+        if (document.getElementById('mera-persistent-frame') || document.getElementById('mera-ambient-player')) {
+            console.log('🎵 Player UI already exists, skipping creation');
+            return;
+        }
+        
         // Create compact music player below MERA logo
         const playerHTML = `
             <div id="mera-ambient-player" class="mera-music-player">
@@ -59,35 +105,111 @@ class MeraAmbientPlayer {
         const maxAttempts = 5;
         
         const tryInjectPlayer = () => {
-            const navElement = document.querySelector('nav.docs-sidebar') || 
-                              document.querySelector('.docs-sidebar') ||
-                              document.querySelector('aside') ||
-                              document.querySelector('#documenter .docs-sidebar');
-            
-            if (navElement) {
-                // Add to navigation sidebar below logo, centered
-                const centered = `<div style="display: flex; justify-content: center; padding: 0 10px;">${playerHTML}</div>`;
-                navElement.insertAdjacentHTML('afterbegin', centered);
-                console.log('🎵 Music player injected into Documenter sidebar');
-                return true;
-            } else if (attempts < maxAttempts) {
-                attempts++;
-                console.log(`Attempt ${attempts}: Waiting for Documenter sidebar to load...`);
-                setTimeout(tryInjectPlayer, 500);
-                return false;
-            } else {
-                // Fallback: add to top of main content
-                const mainContent = document.querySelector('main') || 
-                                   document.querySelector('.docs-main') || 
-                                   document.body;
-                const centered = `<div style="display: flex; justify-content: center; padding: 10px;">${playerHTML}</div>`;
-                mainContent.insertAdjacentHTML('afterbegin', centered);
-                console.log('🎵 Music player added to main content (fallback)');
+            // Create persistent top bar that never reloads
+            if (!document.getElementById('mera-top-bar')) {
+                // Create fixed top bar
+                const topBar = document.createElement('div');
+                topBar.id = 'mera-top-bar';
+                topBar.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    height: 45px;
+                    background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+                    z-index: 999999;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 0 20px;
+                    backdrop-filter: blur(10px);
+                    border-bottom: 1px solid rgba(255,255,255,0.2);
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    box-sizing: border-box;
+                `;
+                
+                topBar.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span style="color: white; font-weight: 600; font-size: 14px;">🎵 MERA Study Music</span>
+                        <button id="mera-top-play-btn" style="
+                            padding: 4px 12px;
+                            background: rgba(255,255,255,0.2);
+                            border: 1px solid rgba(255,255,255,0.3);
+                            border-radius: 4px;
+                            color: white;
+                            cursor: pointer;
+                            font-size: 12px;
+                        ">🔀 Play Random</button>
+                        <button id="mera-top-pause-btn" style="
+                            padding: 4px 12px;
+                            background: rgba(255,255,255,0.2);
+                            border: 1px solid rgba(255,255,255,0.3);
+                            border-radius: 4px;
+                            color: white;
+                            cursor: pointer;
+                            font-size: 12px;
+                            display: none;
+                        ">⏸️ Pause</button>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span id="mera-top-status" style="color: rgba(255,255,255,0.9); font-size: 12px;">Ready to play</span>
+                        <input type="range" id="mera-top-volume" min="0" max="100" value="15" style="
+                            width: 80px;
+                            height: 4px;
+                            background: rgba(255,255,255,0.3);
+                            outline: none;
+                            border-radius: 2px;
+                        ">
+                        <span style="color: rgba(255,255,255,0.9); font-size: 12px;">15%</span>
+                    </div>
+                `;
+                
+                // Insert at the very beginning of document.body
+                document.body.insertBefore(topBar, document.body.firstChild);
+                
+                // Make the top bar more persistent by using a higher z-index and attaching to documentElement
+                try {
+                    document.documentElement.appendChild(topBar);
+                    document.body.removeChild(topBar);
+                    console.log('🎵 Top bar attached to documentElement for better persistence');
+                } catch (e) {
+                    console.log('🎵 Top bar remains in document.body');
+                }
+                
+                // Adjust main content to account for top bar with extra space for MERA logo
+                document.documentElement.style.paddingTop = '45px';
+                document.body.style.paddingTop = '45px';
+                
+                // Force any existing content down with margin
+                const allElements = document.querySelectorAll('body > *:not(#mera-top-bar)');
+                allElements.forEach(el => {
+                    if (el.style.marginTop === '' || parseInt(el.style.marginTop) < 45) {
+                        el.style.marginTop = '45px';
+                    }
+                });
+                
+                // Set up event listeners for top bar controls
+                this.setupTopBarControls();
+                
+                // Set up page change monitoring to recreate the bar if needed
+                this.setupPageChangeMonitoring();
+                
+                console.log('🎵 Persistent top bar music player created');
                 return true;
             }
+            
+            return false;
         };
         
-        tryInjectPlayer();
+        // Retry mechanism for sidebar injection
+        if (!tryInjectPlayer()) {
+            let retryCount = 0;
+            const retryInterval = setInterval(() => {
+                if (tryInjectPlayer() || retryCount++ > 10) {
+                    clearInterval(retryInterval);
+                }
+            }, 200);
+        }
         
         // Add CSS styles
         this.addStyles();
@@ -322,38 +444,343 @@ class MeraAmbientPlayer {
         document.head.insertAdjacentHTML('beforeend', styles);
     }
     
+    getPlayerCSS() {
+        return `
+            .mera-music-player {
+                position: relative;
+                margin: 0;
+                z-index: 100;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                max-width: 220px;
+            }
+            
+            .mera-player-toggle {
+                padding: 1px 8px;
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.5) 0%, rgba(118, 75, 162, 0.5) 100%);
+                border-radius: 2px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 0 2px rgba(0,0,0,0.05);
+                transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+                font-size: 9px;
+                color: rgba(255,255,255,0.8);
+                font-weight: 300;
+                border: none;
+                width: 100%;
+                height: 12px;
+            }
+            
+            .mera-player-toggle:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+                background: linear-gradient(135deg, rgba(102, 126, 234, 0.6) 0%, rgba(118, 75, 162, 0.6) 100%);
+                color: rgba(255,255,255,0.9);
+            }
+            
+            .mera-player-controls {
+                background: rgba(255, 255, 255, 0.98);
+                border-radius: 8px;
+                padding: 12px;
+                margin-top: 6px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255,255,255,0.2);
+            }
+            
+            .mera-player-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            
+            .mera-player-title {
+                font-weight: 600;
+                font-size: 12px;
+                color: #333;
+            }
+            
+            .mera-player-close {
+                background: none;
+                border: none;
+                font-size: 16px;
+                cursor: pointer;
+                color: #666;
+                padding: 0;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .mera-player-buttons {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 10px;
+            }
+            
+            .mera-btn {
+                padding: 6px 12px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 11px;
+                font-weight: 500;
+                transition: all 0.2s;
+            }
+            
+            .mera-play, .mera-pause {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+            
+            .mera-play:hover, .mera-pause:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            }
+            
+            .mera-volume-control {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            
+            .mera-volume-control label {
+                font-size: 10px;
+                color: #666;
+                min-width: 40px;
+            }
+            
+            .mera-volume-control input[type="range"] {
+                flex: 1;
+                height: 4px;
+                border-radius: 2px;
+                background: #ddd;
+                outline: none;
+            }
+            
+            .mera-player-status {
+                font-size: 10px;
+                color: #666;
+                text-align: center;
+            }
+        `;
+    }
+    
+    ensurePersistentAudio() {
+        // Create a hidden iframe with a data URL that contains the audio element
+        if (!document.getElementById('mera-audio-frame')) {
+            const iframe = document.createElement('iframe');
+            iframe.id = 'mera-audio-frame';
+            iframe.style.cssText = 'position:fixed;top:-1000px;left:-1000px;width:1px;height:1px;opacity:0;pointer-events:none;';
+            iframe.src = 'data:text/html,<html><body><script>window.persistentAudio=new Audio();window.persistentAudio.volume=0.15;</script></body></html>';
+            
+            document.documentElement.appendChild(iframe);
+            console.log('🎵 Created persistent audio iframe');
+        }
+    }
+    
+    saveCurrentAudioState() {
+        if (window.meraGlobalAudio && window.meraGlobalAudio.src) {
+            const state = {
+                src: window.meraGlobalAudio.src,
+                currentTime: window.meraGlobalAudio.currentTime,
+                volume: window.meraGlobalAudio.volume,
+                paused: window.meraGlobalAudio.paused,
+                timestamp: Date.now()
+            };
+            localStorage.setItem('mera-audio-state', JSON.stringify(state));
+            console.log('🎵 Audio state saved:', state);
+        }
+    }
+    
+    restoreAudioState() {
+        try {
+            const savedState = localStorage.getItem('mera-audio-state');
+            if (savedState && window.meraGlobalAudio) {
+                const state = JSON.parse(savedState);
+                
+                // Only restore if state is recent (within 30 seconds)
+                if (Date.now() - state.timestamp < 30000) {
+                    window.meraGlobalAudio.src = state.src;
+                    window.meraGlobalAudio.volume = state.volume;
+                    
+                    // Wait for audio to load before setting time and playing
+                    window.meraGlobalAudio.addEventListener('loadedmetadata', () => {
+                        window.meraGlobalAudio.currentTime = state.currentTime;
+                        
+                        if (!state.paused) {
+                            this.isPlaying = true;
+                            window.meraGlobalAudio.play().then(() => {
+                                console.log('🎵 Audio restored and playing');
+                                this.updatePlayButton();
+                                this.updateStatus(`Resumed: ${this.getCurrentTrackName()}`);
+                            }).catch(e => {
+                                console.log('Auto-resume prevented:', e);
+                                this.updateStatus(`Click play to resume: ${this.getCurrentTrackName()}`);
+                            });
+                        }
+                    }, { once: true });
+                    
+                    console.log('🎵 Audio state restored:', state);
+                }
+            }
+        } catch (e) {
+            console.error('Error restoring audio state:', e);
+        }
+    }
+    
+    setupTopBarControls() {
+        const playBtn = document.getElementById('mera-top-play-btn');
+        const pauseBtn = document.getElementById('mera-top-pause-btn');
+        const volumeSlider = document.getElementById('mera-top-volume');
+        
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                if (this.availableTracks.length === 0) {
+                    this.initializeMusicLibrary();
+                }
+                this.play();
+            });
+        }
+        
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                this.pause();
+            });
+        }
+        
+        if (volumeSlider) {
+            volumeSlider.addEventListener('input', (e) => {
+                this.setVolume(e.target.value / 100);
+                // Update volume display
+                const volumeDisplay = volumeSlider.nextElementSibling;
+                if (volumeDisplay) {
+                    volumeDisplay.textContent = `${e.target.value}%`;
+                }
+            });
+        }
+    }
+    
+    setupPageChangeMonitoring() {
+        // Monitor for URL changes (Documenter navigation)
+        let currentUrl = window.location.href;
+        const checkForPageChange = () => {
+            if (window.location.href !== currentUrl) {
+                currentUrl = window.location.href;
+                console.log('🎵 Page change detected, ensuring top bar persistence...');
+                
+                // Save current audio state
+                this.saveCurrentAudioState();
+                
+                // Small delay to let new page load, then recreate top bar if needed
+                setTimeout(() => {
+                    if (!document.getElementById('mera-top-bar')) {
+                        console.log('🎵 Top bar missing after page change, recreating...');
+                        this.createPlayerUI();
+                        this.setupTopBarControls();
+                        
+                        // Restore audio state
+                        this.restoreAudioState();
+                        
+                        // Update UI state
+                        if (window.meraGlobalAudio && !window.meraGlobalAudio.paused) {
+                            this.isPlaying = true;
+                            this.updatePlayButton();
+                            this.updateStatus(`Playing: ${this.getCurrentTrackName()}`);
+                        }
+                    } else {
+                        // Top bar exists, just update its state
+                        this.restoreAudioState();
+                        if (window.meraGlobalAudio && !window.meraGlobalAudio.paused) {
+                            this.updatePlayButton();
+                            this.updateStatus(`Playing: ${this.getCurrentTrackName()}`);
+                        }
+                    }
+                }, 200);
+            }
+        };
+        
+        // Check for URL changes more frequently
+        if (!window.meraPageMonitor) {
+            window.meraPageMonitor = setInterval(checkForPageChange, 500);
+        }
+    }
+    
     setupEventListeners() {
+        console.log('🎵 Setting up event listeners...');
+        
+        // Save state before page unload (only set once)
+        if (!this.unloadListenerSet) {
+            window.addEventListener('beforeunload', () => {
+                this.saveUserPreferences();
+            });
+            this.unloadListenerSet = true;
+        }
+        
+        // Also save state periodically during playback
+        if (this.audio && !this.timeUpdateListenerSet) {
+            this.audio.addEventListener('timeupdate', () => {
+                if (this.isPlaying) {
+                    this.saveUserPreferences();
+                }
+            });
+            this.timeUpdateListenerSet = true;
+        }
+        
         // Toggle player visibility
         const toggleButton = document.getElementById('mera-player-toggle');
         if (toggleButton) {
             console.log('✅ Found toggle button, setting up click handler');
-            toggleButton.addEventListener('click', () => {
+            // Remove any existing listeners first
+            if (this.togglePlayerHandler) {
+                toggleButton.removeEventListener('click', this.togglePlayerHandler);
+            }
+            // Bind the handler to preserve 'this' context
+            this.togglePlayerHandler = () => {
                 console.log('🎵 Study Music button clicked!');
                 this.togglePlayer();
-            });
+            };
+            toggleButton.addEventListener('click', this.togglePlayerHandler);
         } else {
             console.error('❌ Toggle button not found - ID: mera-player-toggle');
         }
         
         // Close player
-        document.getElementById('mera-player-close').addEventListener('click', () => {
-            this.hidePlayer();
-        });
+        const closeBtn = document.getElementById('mera-player-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.hidePlayer();
+            });
+        }
         
         // Play button
-        document.getElementById('mera-play-btn').addEventListener('click', () => {
-            this.play();
-        });
+        const playBtn = document.getElementById('mera-play-btn');
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                this.play();
+            });
+        }
         
         // Pause button  
-        document.getElementById('mera-pause-btn').addEventListener('click', () => {
-            this.pause();
-        });
+        const pauseBtn = document.getElementById('mera-pause-btn');
+        if (pauseBtn) {
+            pauseBtn.addEventListener('click', () => {
+                this.pause();
+            });
+        }
         
         // Volume control
-        document.getElementById('mera-volume').addEventListener('input', (e) => {
-            this.setVolume(e.target.value / 100);
-        });
+        const volumeSlider = document.getElementById('mera-volume');
+        if (volumeSlider) {
+            volumeSlider.addEventListener('input', (e) => {
+                this.setVolume(e.target.value / 100);
+            });
+        }
         
         // Optional: Click outside to close (disabled for sidebar integration)
         // document.addEventListener('click', (e) => {
@@ -419,6 +846,12 @@ class MeraAmbientPlayer {
         const selectedTrack = this.availableTracks[randomIndex];
         console.log(`Selected random track: ${selectedTrack.name} (index: ${randomIndex})`);
         return selectedTrack;
+    }
+    
+    getCurrentTrackName() {
+        if (!this.audio || !this.audio.src) return 'Unknown Track';
+        const filename = this.audio.src.split('/').pop();
+        return this.getTrackDisplayName(filename);
     }
     
     getTrackDisplayName(filename) {
@@ -590,30 +1023,64 @@ class MeraAmbientPlayer {
             this.audio.volume = this.volume;
         }
         
-        document.getElementById('mera-volume').value = this.volume * 100;
-        document.getElementById('mera-volume-display').textContent = Math.round(this.volume * 100) + '%';
+        // Update volume display - check iframe first, then main document
+        const iframe = document.getElementById('mera-persistent-frame');
+        let volumeSlider = null;
+        let volumeDisplay = null;
+        
+        if (iframe && iframe.contentDocument) {
+            volumeSlider = iframe.contentDocument.getElementById('mera-volume');
+            volumeDisplay = iframe.contentDocument.getElementById('mera-volume-display');
+        } else {
+            volumeSlider = document.getElementById('mera-volume');
+            volumeDisplay = document.getElementById('mera-volume-display');
+        }
+        
+        if (volumeSlider) {
+            volumeSlider.value = this.volume * 100;
+        }
+        if (volumeDisplay) {
+            volumeDisplay.textContent = Math.round(this.volume * 100) + '%';
+        }
+        
         this.saveUserPreferences();
     }
     
     updatePlayButton() {
-        const playBtn = document.getElementById('mera-play-btn');
-        const pauseBtn = document.getElementById('mera-pause-btn');
+        // Update play buttons in top bar
+        const playBtn = document.getElementById('mera-top-play-btn');
+        const pauseBtn = document.getElementById('mera-top-pause-btn');
         
-        if (this.isPlaying) {
-            playBtn.style.display = 'none';
-            pauseBtn.style.display = 'inline-block';
-        } else {
-            playBtn.style.display = 'inline-block';
-            pauseBtn.style.display = 'none';
+        if (playBtn && pauseBtn) {
+            if (this.isPlaying) {
+                playBtn.style.display = 'none';
+                pauseBtn.style.display = 'inline-block';
+            } else {
+                playBtn.style.display = 'inline-block';
+                pauseBtn.style.display = 'none';
+            }
         }
     }
     
     updateStatus(message) {
-        document.getElementById('mera-status-text').textContent = message;
+        // Update status in top bar
+        const topBarStatus = document.getElementById('mera-top-status');
+        if (topBarStatus) {
+            topBarStatus.textContent = message;
+        }
     }
     
     updateCurrentTrack(trackName) {
-        const trackElement = document.getElementById('mera-current-track');
+        // Update current track in iframe first, then main document
+        const iframe = document.getElementById('mera-persistent-frame');
+        let trackElement = null;
+        
+        if (iframe && iframe.contentDocument) {
+            trackElement = iframe.contentDocument.getElementById('mera-current-track');
+        } else {
+            trackElement = document.getElementById('mera-current-track');
+        }
+        
         if (trackElement) {
             trackElement.textContent = trackName ? `♪ ${trackName}` : '';
         }
@@ -622,7 +1089,9 @@ class MeraAmbientPlayer {
     saveUserPreferences() {
         const prefs = {
             volume: this.volume,
-            wasPlaying: this.isPlaying
+            wasPlaying: this.isPlaying,
+            currentTrack: this.audio ? this.audio.src : null,
+            currentTime: this.audio ? this.audio.currentTime : 0
         };
         localStorage.setItem('mera-music-prefs', JSON.stringify(prefs));
     }
@@ -631,11 +1100,15 @@ class MeraAmbientPlayer {
         const prefs = localStorage.getItem('mera-music-prefs');
         if (prefs) {
             const parsed = JSON.parse(prefs);
-            this.setVolume(parsed.volume || 0.3);
+            this.setVolume(parsed.volume || 0.15);
             
-            // Don't auto-play on load, but remember preference
-            if (parsed.wasPlaying) {
-                this.updateStatus('Previously playing - click play to resume');
+            // Restore track info but don't auto-play
+            if (parsed.wasPlaying && parsed.currentTrack && window.meraGlobalAudio) {
+                window.meraGlobalAudio.src = parsed.currentTrack;
+                window.meraGlobalAudio.currentTime = parsed.currentTime || 0;
+                this.isPlaying = false; // Don't auto-play
+                this.updateStatus(`Ready to resume: ${this.getCurrentTrackName()}`);
+                this.updatePlayButton();
             }
         }
     }
@@ -664,9 +1137,50 @@ class MeraAmbientPlayer {
     }
 }
 
+// Store player initialization in window for persistence across page reloads
+if (!window.meraPlayerPersistent) {
+    window.meraPlayerPersistent = true;
+    
+    // Create a persistent interval that checks for and recreates the player
+    setInterval(() => {
+        if (!document.getElementById('mera-top-bar') && document.body) {
+            console.log('🎵 Recreating music player after page reload...');
+            initializeMeraPlayer();
+        }
+    }, 100);
+}
+
 // Initialize player when DOM is ready with multiple fallbacks
 function initializeMeraPlayer() {
     console.log('🎵 Starting MERA music player initialization...');
+    
+    // Check if player already exists
+    if (window.meraAmbientPlayer) {
+        console.log('🎵 Player instance already exists, reconnecting...');
+        // Ensure the existing player reconnects to the UI
+        window.meraAmbientPlayer.createPlayerUI();
+        window.meraAmbientPlayer.setupEventListeners();
+        
+        // Make sure music library is initialized
+        if (window.meraAmbientPlayer.availableTracks.length === 0) {
+            window.meraAmbientPlayer.initializeMusicLibrary();
+        }
+        
+        // Sync player state with actual audio state
+        if (window.meraGlobalAudio) {
+            window.meraAmbientPlayer.isPlaying = !window.meraGlobalAudio.paused;
+            if (window.meraAmbientPlayer.isPlaying) {
+                window.meraAmbientPlayer.updatePlayButton();
+                window.meraAmbientPlayer.updateStatus(`Playing: ${window.meraAmbientPlayer.getCurrentTrackName()}`);
+            } else {
+                window.meraAmbientPlayer.updatePlayButton();
+                if (window.meraGlobalAudio.src) {
+                    window.meraAmbientPlayer.updateStatus(`Ready: ${window.meraAmbientPlayer.getCurrentTrackName()}`);
+                }
+            }
+        }
+        return;
+    }
     
     window.meraAmbientPlayer = new MeraAmbientPlayer();
     
