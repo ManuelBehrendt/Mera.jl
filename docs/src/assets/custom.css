@@ -1,0 +1,65 @@
+/* MERA.jl Custom Documentation Styles */
+
+/* Music Player Top Bar Support */
+body {
+    padding-top: 45px !important;
+}
+
+#documenter {
+    margin-top: 0 !important;
+}
+
+/* Push sidebar down to avoid overlap with music player */
+nav.docs-sidebar,
+.docs-sidebar,
+aside {
+    padding-top: 40px !important;
+    margin-top: 0 !important;
+}
+
+/* Also target any sidebar content */
+.docs-sidebar .docs-logo,
+.docs-sidebar > .docs-sidebar-releases,
+.docs-sidebar > .docs-menu {
+    margin-top: 20px !important;
+}
+
+/* Reduce main content top padding */
+.docs-main {
+    padding-top: 0 !important;
+}
+
+/* Target main content more specifically */
+main, 
+article,
+.content {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Music Player Volume Slider Styling */
+#mera-top-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+}
+
+#mera-top-volume::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    border: none;
+}
+
+/* Music Player Button Hover Effects */
+button[id^="mera-top-"]:hover {
+    background: rgba(255,255,255,0.3) !important;
+}
+
+/* Placeholder for existing custom styles */
+/* This file ensures compatibility with the current build system */
