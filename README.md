@@ -4,7 +4,11 @@
 
 **High-Performance RAMSES Data Analysis in Pure Julia**
 
+📚 **[Complete Documentation](https://manuelbehrendt.github.io/Mera.jl/stable/)** <-
+
 [![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)](https://github.com/ManuelBehrendt/Mera.jl/releases) [![Documentation](https://img.shields.io/badge/docs-stable%20release-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152) [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
+
+*Note: Coverage badge reflects development branch testing coverage*
 
 MERA is a Julia package for analyzing RAMSES astrophysical simulation data. Built entirely in Julia, it provides efficient numerical performance through JIT compilation while maintaining high-level language accessibility. MERA handles multi-resolution AMR grids and particle datasets with a unified API designed for computational research workflows.
 
