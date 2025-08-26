@@ -69,7 +69,7 @@ Compressed MERA-files with LZ4/Zlib/Bzip2 compression enable rapid I/O operation
 Native support for projections, phase diagrams, statistical analysis, and VTK export for 3D visualization. All functions designed for both interactive exploration and batch processing.
 
 **RAMSES-Optimized Reader**  
-Direct binary reading of RAMSES outputs with automatic unit conversion, ghost cell handling, and multi-level AMR support. Compatible with RAMSES versions through stable-19.10.
+Direct binary reading of RAMSES outputs with automatic unit conversion, ghost cell handling, and multi-level AMR support. Compatible with RAMSES versions from stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta support).
 
 **Julia Ecosystem Integration**  
 Seamless interoperability with the Julia ecosystem enables advanced analyses beyond MERA's core functionality. Data structures integrate naturally with statistical, machine learning, and visualization packages for extended computational workflows.

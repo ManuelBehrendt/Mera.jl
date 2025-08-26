@@ -155,7 +155,7 @@ projection(particles, :age) # → Stellar age distribution
 ## Production Ready
 
 - **Status**: Production-ready with active development and comprehensive testing
-- **RAMSES Compatibility**: Versions up to stable-19-10
+- **RAMSES Compatibility**: Versions stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta)
 - **Testing**: Multi-platform CI/CD with extensive coverage ([see our testing approach](advanced_features/testing_guide.html))
 - **Dependencies**: Full list in [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/raw/master/Project.toml)
 
