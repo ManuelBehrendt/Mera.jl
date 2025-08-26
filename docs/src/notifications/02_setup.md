@@ -104,6 +104,7 @@ chmod 600 zulip.txt
    - **Line 3**: Your Zulip server URL (e.g., `https://yourlab.zulipchat.com`)
 3. Save the file
 4. **Important**: No extra spaces, empty lines, or comments
+5. **Critical**: Server URL must include `https://` prefix (not just `yourlab.zulipchat.com`)
 
 **Example `zulip.txt` content:**
 ```
@@ -179,6 +180,7 @@ notifyme("Setup test - with output",
 **Zulip authentication failed:**
 - Verify bot type is "Generic" not "Incoming webhook"
 - Check API key has no extra characters
+- **Ensure server URL includes `https://` prefix** (common mistake)
 - Ensure bot has access to target channels
 - Test bot permissions in Zulip web interface
 
