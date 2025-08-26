@@ -99,6 +99,9 @@ todo.rtf
 todo_ordered.rtf
 nextreleases.rtf
 
+# IDE configuration
+.vscode/
+
 # Local testing files - metaprogramming development
 test/test_metaprog*.jl
 benchmark_metaprogramming.jl
