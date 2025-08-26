@@ -148,35 +148,63 @@
         console.log('🎵 Isolated audio system created');
     }
     
-    // Force immediate audio restoration on page load
+    // Force immediate audio restoration on page load - more aggressive approach
     if (localStorage.getItem('mera-was-playing') === 'true') {
         const savedTrack = localStorage.getItem('mera-current-track');
         const savedTime = parseFloat(localStorage.getItem('mera-audio-time') || '0');
         
+        console.log(`🎵 Page loaded - attempting to restore: ${savedTrack} at ${savedTime}s`);
+        
         if (savedTrack && window.meraAudioSystem) {
-            console.log(`🎵 Restoring: ${savedTrack} at ${savedTime}s`);
             const sys = window.meraAudioSystem;
-            
-            // Restore the track
             const path = getMusicPath(savedTrack);
-            sys.audio.src = path;
-            sys.currentTrack = savedTrack;
-            sys.isPlaying = true;
             
-            // Set up restoration when audio is ready
-            const restorePlayback = () => {
-                sys.audio.currentTime = savedTime;
-                sys.audio.play().then(() => {
-                    console.log('🎵 Successfully restored audio after page reload');
-                }).catch(e => {
-                    console.log('🎵 Auto-resume blocked by browser:', e);
-                    sys.isPlaying = false;
-                });
-                sys.audio.removeEventListener('loadedmetadata', restorePlayback);
+            // Multiple attempts to restore audio
+            const attemptRestore = (attemptNum = 1) => {
+                console.log(`🎵 Restoration attempt #${attemptNum}`);
+                
+                sys.audio.src = path;
+                sys.currentTrack = savedTrack;
+                sys.isPlaying = true;
+                
+                const tryPlay = () => {
+                    sys.audio.currentTime = Math.max(0, savedTime - 1); // Start slightly before saved position
+                    sys.audio.play().then(() => {
+                        console.log(`🎵 SUCCESS: Restored after ${attemptNum} attempts`);
+                        sys.isPlaying = true;
+                    }).catch(e => {
+                        console.log(`🎵 Attempt ${attemptNum} failed:`, e);
+                        sys.isPlaying = false;
+                        
+                        // Retry up to 3 times with increasing delays
+                        if (attemptNum < 3) {
+                            setTimeout(() => attemptRestore(attemptNum + 1), attemptNum * 500);
+                        } else {
+                            console.log('🎵 All restoration attempts failed - user interaction required');
+                        }
+                    });
+                };
+                
+                if (sys.audio.readyState >= 2) {
+                    // Audio is already loaded
+                    tryPlay();
+                } else {
+                    // Wait for audio to load
+                    sys.audio.addEventListener('canplay', tryPlay, { once: true });
+                    sys.audio.load();
+                }
             };
             
-            sys.audio.addEventListener('loadedmetadata', restorePlayback);
-            sys.audio.load(); // Force load the audio
+            // Start first attempt immediately
+            attemptRestore();
+            
+            // Also try after a short delay in case the first attempt is too early
+            setTimeout(() => {
+                if (!sys.isPlaying) {
+                    console.log('🎵 Delayed restoration attempt...');
+                    attemptRestore();
+                }
+            }, 100);
         }
     }
     
@@ -443,13 +471,26 @@
         
         const sys = window.meraAudioSystem;
         if (playBtn && pauseBtn && status && sys) {
+            // Check if we should be restoring music
+            const shouldRestore = localStorage.getItem('mera-was-playing') === 'true' && 
+                                 !sys.isPlaying && sys.audio.src;
+            
             if (sys.isPlaying) {
                 playBtn.style.display = 'none';
                 pauseBtn.style.display = 'inline-block';
                 status.textContent = `Playing: ${getCurrentTrackName()}`;
+            } else if (shouldRestore) {
+                // Show that music can be resumed
+                playBtn.style.display = 'inline-block';
+                pauseBtn.style.display = 'none';
+                playBtn.textContent = '▶️ Resume Music';
+                playBtn.style.backgroundColor = 'rgba(255,255,255,0.3)'; // Highlight
+                status.textContent = `Click to resume: ${getCurrentTrackName()}`;
             } else {
                 playBtn.style.display = 'inline-block';
                 pauseBtn.style.display = 'none';
+                playBtn.textContent = '🔀 Play Random';
+                playBtn.style.backgroundColor = 'rgba(255,255,255,0.2)'; // Normal
                 if (sys.audio.src) {
                     status.textContent = `Ready: ${getCurrentTrackName()}`;
                 } else {
@@ -623,11 +664,26 @@
         if (playBtn) {
             playBtn.addEventListener('click', async () => {
                 try {
-                    await window.meraAudioSystem.playRandom();
+                    const sys = window.meraAudioSystem;
+                    const shouldRestore = localStorage.getItem('mera-was-playing') === 'true' && 
+                                         !sys.isPlaying && sys.audio.src;
+                    
+                    if (shouldRestore) {
+                        // Resume previous music
+                        console.log('🎵 Resuming music from user interaction...');
+                        const savedTime = parseFloat(localStorage.getItem('mera-audio-time') || '0');
+                        sys.audio.currentTime = Math.max(0, savedTime - 1);
+                        await sys.audio.play();
+                        sys.isPlaying = true;
+                        console.log('🎵 Successfully resumed music');
+                    } else {
+                        // Play new random track
+                        await sys.playRandom();
+                        console.log('🎵 Successfully started new music');
+                    }
                     updateUI();
-                    console.log('🎵 Successfully started music');
                 } catch (error) {
-                    console.error('🎵 Failed to start music:', error);
+                    console.error('🎵 Failed to start/resume music:', error);
                 }
             });
         }
