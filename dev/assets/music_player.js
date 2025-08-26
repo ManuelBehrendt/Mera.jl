@@ -140,16 +140,32 @@
         }
         
         // Handle web URLs (GitHub Pages, etc.)
-        if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath === '/Mera.jl/') {
-            // Root level
+        if (currentPath === '/' || currentPath.endsWith('/index.html') || currentPath === '/Mera.jl/' || currentPath === '/Mera.jl/dev/' || currentPath.endsWith('/dev/')) {
+            // Root level (GitHub Pages dev branch or local)
             return `assets/music/${filename}`;
+        } else if (currentPath.includes('/Mera.jl/dev/')) {
+            // GitHub Pages dev branch - calculate relative path back to dev root
+            const pathAfterDev = currentPath.split('/dev/')[1];
+            if (pathAfterDev) {
+                const pathSegments = pathAfterDev.split('/').filter(segment => segment);
+                // Don't count the filename, only directories
+                const levelsDeep = pathSegments.length > 0 && !pathSegments[pathSegments.length - 1].includes('.') ? 
+                                 pathSegments.length : pathSegments.length - 1;
+                const backPath = '../'.repeat(Math.max(0, levelsDeep));
+                const result = `${backPath}assets/music/${filename}`;
+                console.log(`🎵 GitHub Pages path calculation: afterDev=${pathAfterDev}, levels=${levelsDeep}, path=${result}`);
+                return result;
+            } else {
+                return `assets/music/${filename}`;
+            }
         } else if (currentPath.includes('/Mera.jl/')) {
-            // GitHub Pages - calculate relative path back to root
+            // Other GitHub Pages paths
             const pathSegments = currentPath.split('/').filter(segment => segment && segment !== 'Mera.jl');
             const backPath = '../'.repeat(Math.max(0, pathSegments.length - 1));
             return `${backPath}assets/music/${filename}`;
         } else {
             // Default fallback
+            console.log(`🎵 Fallback path used for: ${currentPath}`);
             return `/assets/music/${filename}`;
         }
     }
@@ -475,25 +491,32 @@
         
         // Monitor for page changes and recreate if needed
         let currentUrl = window.location.href;
-        setInterval(async () => {
-            if (window.location.href !== currentUrl) {
+        let currentHash = window.location.hash;
+        
+        // Handle both URL changes and hash changes (for SPA navigation)
+        const checkForNavigation = async () => {
+            const newUrl = window.location.href;
+            const newHash = window.location.hash;
+            
+            if (newUrl !== currentUrl || newHash !== currentHash) {
                 const oldUrl = currentUrl;
-                currentUrl = window.location.href;
-                console.log(`🎵 Page change detected: ${oldUrl} → ${currentUrl}`);
-                console.log(`🎵 Audio state before page change - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
+                currentUrl = newUrl;
+                currentHash = newHash;
+                console.log(`🎵 Navigation detected: ${oldUrl} → ${currentUrl}`);
+                console.log(`🎵 Audio state before navigation - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
                 
-                // Force save state immediately on page change
+                // Force save state immediately on navigation
                 saveAudioState();
                 
                 setTimeout(async () => {
-                    console.log(`🎵 Audio state after timeout - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
+                    console.log(`🎵 Audio state after navigation timeout - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
                     
                     if (!document.getElementById('mera-top-bar')) {
-                        console.log('🎵 Recreating music player after page change...');
+                        console.log('🎵 Recreating music player after navigation...');
                         createTopBar();
                     }
                     
-                    // Always try to restore audio state after page change
+                    // Always try to restore audio state after navigation
                     try {
                         const restored = await restoreAudioState();
                         console.log(`🎵 Restoration result: ${restored}`);
@@ -501,36 +524,64 @@
                             updateUI();
                         }
                     } catch (e) {
-                        console.error('Error restoring audio after page change:', e);
+                        console.error('Error restoring audio after navigation:', e);
                         updateUI();
                     }
                     
-                    // Ensure event listeners are still attached after page change
+                    // Ensure event listeners are still attached after navigation
                     if (window.meraGlobalAudio && !window.meraGlobalAudio._listenersAttached) {
-                        console.log('🎵 Reattaching event listeners after page change...');
+                        console.log('🎵 Reattaching event listeners after navigation...');
                         setupEventListeners();
                         window.meraGlobalAudio._listenersAttached = true;
                     }
                 }, 100);
             }
-        }, 500);
+        };
+        
+        // Monitor URL changes with polling
+        setInterval(checkForNavigation, 500);
+        
+        // Also listen for browser navigation events
+        window.addEventListener('popstate', checkForNavigation);
+        window.addEventListener('hashchange', checkForNavigation);
         
         // Also monitor for DOM changes that might indicate page content updates
         if ('MutationObserver' in window) {
-            const observer = new MutationObserver(() => {
-                // Check if top bar still exists
-                if (!document.getElementById('mera-top-bar')) {
+            const observer = new MutationObserver((mutations) => {
+                let shouldRecreate = false;
+                
+                mutations.forEach(mutation => {
+                    // Check if top bar was removed
+                    if (!document.getElementById('mera-top-bar')) {
+                        shouldRecreate = true;
+                    }
+                    
+                    // Check if significant DOM changes occurred (new content loaded)
+                    if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                        mutation.addedNodes.forEach(node => {
+                            if (node.nodeType === Node.ELEMENT_NODE && 
+                                (node.classList?.contains('docs-main') || 
+                                 node.tagName === 'MAIN' ||
+                                 node.classList?.contains('content'))) {
+                                shouldRecreate = true;
+                            }
+                        });
+                    }
+                });
+                
+                if (shouldRecreate) {
                     console.log('🎵 Top bar missing due to DOM changes, recreating...');
-                    createTopBar();
+                    setTimeout(() => {
+                        if (!document.getElementById('mera-top-bar')) {
+                            createTopBar();
+                        }
+                    }, 50);
                 }
             });
             
-            // Observe the main content area for changes
-            const mainContent = document.querySelector('main, .docs-main, #docs-main, .content');
-            if (mainContent) {
-                observer.observe(mainContent, { childList: true, subtree: true });
-                console.log('🎵 DOM observer attached to main content');
-            }
+            // Observe the document body for changes
+            observer.observe(document.body, { childList: true, subtree: true });
+            console.log('🎵 DOM observer attached to document body');
         }
         
         // Also save state every 2 seconds during playback
