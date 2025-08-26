@@ -1,4 +1,4 @@
-![MERA.jl API Reference](assets/representative_mera_worker.png)
+![MERA.jl API Reference](assets/representative_mera_worker_60.png)
 
 *MERA.jl's comprehensive API for high-performance astrophysical data analysis and computational workflows*
 

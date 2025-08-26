@@ -1,6 +1,6 @@
 # Notifications System
 
-![Team Collaboration with MERA.jl Notifications](../assets/representative_team.png)
+![Team Collaboration with MERA.jl Notifications](../assets/representative_team_60.png)
 
 *MERA.jl's notification system enables seamless team collaboration and progress sharing across distributed astrophysics research workflows*
 

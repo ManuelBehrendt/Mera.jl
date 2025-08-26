@@ -27,7 +27,7 @@ MERA is a Julia package for analyzing RAMSES astrophysical simulation data. Buil
 • Compressed Archive Format: MERA files dramatically reduce storage needs and provide significantly faster reading compared to original RAMSES files, especially beneficial for large simulations  
 • Progress Tracking: Built-in progress bars for long-running operations on large datasets
 
-<img src="assets/representative_picture.png" alt="MERA.jl RAMSES Analysis Workflow" width="600">
+<img src="assets/representative_picture_60.png" alt="MERA.jl RAMSES Analysis Workflow" width="600">
 
 *Computational astrophysicists analyzing RAMSES AMR simulation data with MERA.jl's unified Julia workflow*
 
