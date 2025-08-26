@@ -120,3 +120,6 @@ IMPLEMENTATION_COMPLETE.md
 
 # Visualization prototypes (ignore local visualization helpers)
 src/functions/visualization/
+
+# Music files - exclude WAV files from docs/music folder (MP3 versions are used)
+docs/src/assets/music/*.wav
