@@ -15,6 +15,8 @@
     if (!window.meraGlobalAudio) {
         window.meraGlobalAudio = new Audio();
         window.meraGlobalAudio.volume = 0.15;
+        window.meraGlobalAudio.loop = false; // We handle our own looping
+        window.meraGlobalAudio.preload = 'auto';
         
         // Save state continuously
         window.meraGlobalAudio.addEventListener('timeupdate', saveAudioState);
@@ -513,54 +515,31 @@
                 saveAudioState();
                 
                 setTimeout(async () => {
-                    console.log(`🎵 Audio state after navigation timeout - playing: ${window.meraIsPlaying}, src: ${window.meraGlobalAudio?.src}`);
+                    console.log(`🎵 Post-navigation check - playing: ${window.meraIsPlaying}, paused: ${window.meraGlobalAudio?.paused}, src: ${window.meraGlobalAudio?.src ? 'yes' : 'no'}`);
                     
+                    // Recreate UI if needed
                     if (!document.getElementById('mera-top-bar')) {
-                        console.log('🎵 Recreating music player after navigation...');
+                        console.log('🎵 Recreating music player UI...');
                         createTopBar();
                     }
                     
-                    // Always try to restore audio state after navigation
-                    try {
-                        const restored = await restoreAudioState();
-                        console.log(`🎵 Restoration result: ${restored}`);
-                        if (!restored && wasPlayingBeforeNav && audioSrcBeforeNav) {
-                            // Force continuation if audio was playing before navigation
-                            console.log('🎵 Restoration failed, forcing audio continuation...');
-                            window.meraGlobalAudio.src = audioSrcBeforeNav;
-                            window.meraIsPlaying = true;
+                    // Simple approach: if audio was playing before, just ensure it continues
+                    if (wasPlayingBeforeNav && window.meraGlobalAudio.src) {
+                        console.log('🎵 Ensuring audio continuation after navigation...');
+                        window.meraIsPlaying = true;
+                        if (window.meraGlobalAudio.paused) {
                             try {
                                 await window.meraGlobalAudio.play();
-                                console.log('🎵 Successfully forced audio continuation');
+                                console.log('🎵 Audio continued successfully');
                             } catch (e) {
-                                console.log('🎵 Could not force play:', e);
+                                console.log('🎵 Auto-play blocked:', e);
                                 window.meraIsPlaying = false;
                             }
                         }
-                        updateUI();
-                    } catch (e) {
-                        console.error('Error restoring audio after navigation:', e);
-                        // Last resort: if we know audio was playing, try to continue it
-                        if (wasPlayingBeforeNav && audioSrcBeforeNav) {
-                            console.log('🎵 Exception during restore, attempting fallback continuation...');
-                            window.meraGlobalAudio.src = audioSrcBeforeNav;
-                            window.meraIsPlaying = true;
-                            try {
-                                window.meraGlobalAudio.play();
-                            } catch (playError) {
-                                window.meraIsPlaying = false;
-                            }
-                        }
-                        updateUI();
                     }
                     
-                    // Ensure event listeners are still attached after navigation
-                    if (window.meraGlobalAudio && !window.meraGlobalAudio._listenersAttached) {
-                        console.log('🎵 Reattaching event listeners after navigation...');
-                        setupEventListeners();
-                        window.meraGlobalAudio._listenersAttached = true;
-                    }
-                }, 100);
+                    updateUI();
+                }, 50);
             }
         };
         
@@ -616,6 +595,25 @@
                 saveAudioState();
             }
         }, 2000);
+        
+        // Aggressive music continuation monitor
+        setInterval(() => {
+            // If we think music should be playing but it's paused, restart it
+            if (window.meraIsPlaying && window.meraGlobalAudio.paused && window.meraGlobalAudio.src) {
+                console.log('🎵 Detected unexpected pause, restarting audio...');
+                window.meraGlobalAudio.play().catch(e => {
+                    console.log('🎵 Could not restart audio:', e);
+                    window.meraIsPlaying = false;
+                    updateUI();
+                });
+            }
+            
+            // Ensure UI stays in sync
+            if (window.meraIsPlaying !== (!window.meraGlobalAudio.paused && window.meraGlobalAudio.src)) {
+                window.meraIsPlaying = !window.meraGlobalAudio.paused && window.meraGlobalAudio.src;
+                updateUI();
+            }
+        }, 1000);
     }
     
     // Run initialization as soon as possible
