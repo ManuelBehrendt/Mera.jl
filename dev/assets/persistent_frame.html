@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MERA.jl Documentation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body, html {
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow: hidden;
+        }
+        
+        /* Persistent top bar */
+        #persistent-top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        /* Documentation iframe */
+        #docs-iframe {
+            position: fixed;
+            top: 45px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            border: none;
+            background: white;
+        }
+        
+        /* Music player controls */
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .music-button {
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            border: none;
+            outline: none;
+            transition: background-color 0.2s;
+        }
+        
+        .music-button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .music-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .music-status {
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+        }
+        
+        .volume-control {
+            width: 80px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+            border-radius: 2px;
+            -webkit-appearance: none;
+        }
+        
+        .volume-display {
+            color: rgba(255,255,255,0.9);
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Persistent Top Bar -->
+    <div id="persistent-top-bar">
+        <div class="music-controls">
+            <span style="color: white; font-weight: 600; font-size: 14px;">🎵 MERA Study Music</span>
+            <button id="play-btn" class="music-button">🔀 Play Random</button>
+            <button id="pause-btn" class="music-button" style="display: none;">⏸️ Pause</button>
+        </div>
+        <div class="music-info">
+            <span id="music-status" class="music-status">Ready to play</span>
+            <input type="range" id="volume-slider" class="volume-control" min="0" max="100" value="15">
+            <span id="volume-display" class="volume-display">15%</span>
+        </div>
+    </div>
+    
+    <!-- Documentation Content Iframe -->
+    <iframe id="docs-iframe" src="../index.html" name="docs-content"></iframe>
+    
+    <script>
+        // Persistent music player that never reloads
+        class PersistentMusicPlayer {
+            constructor() {
+                this.audio = new Audio();
+                this.audio.volume = 0.15;
+                this.isPlaying = false;
+                this.currentTrack = '';
+                
+                this.tracks = [
+                    'alpha_centauri.mp3', 'andromeda_galaxy.mp3', 'betelgeuse_supergiant.mp3',
+                    'cassiopeia_constellation.mp3', 'crab_nebula.mp3', 'eagle_nebula.mp3',
+                    'horsehead_nebula.mp3', 'orion_nebula.mp3', 'proxima_centauri.mp3',
+                    'sagittarius_a_star.mp3', 'vega.mp3'
+                ];
+                
+                this.setupEventListeners();
+                this.setupUI();
+            }
+            
+            setupEventListeners() {
+                // Audio events
+                this.audio.addEventListener('ended', () => {
+                    if (this.isPlaying) {
+                        this.playRandomTrack();
+                    }
+                });
+                
+                this.audio.addEventListener('play', () => {
+                    this.isPlaying = true;
+                    this.updateUI();
+                });
+                
+                this.audio.addEventListener('pause', () => {
+                    this.isPlaying = false;
+                    this.updateUI();
+                });
+            }
+            
+            setupUI() {
+                const playBtn = document.getElementById('play-btn');
+                const pauseBtn = document.getElementById('pause-btn');
+                const volumeSlider = document.getElementById('volume-slider');
+                
+                playBtn.addEventListener('click', () => this.playRandomTrack());
+                pauseBtn.addEventListener('click', () => this.pause());
+                
+                volumeSlider.addEventListener('input', (e) => {
+                    this.setVolume(e.target.value / 100);
+                });
+            }
+            
+            async playRandomTrack() {
+                const randomTrack = this.tracks[Math.floor(Math.random() * this.tracks.length)];
+                const path = `assets/music/${randomTrack}`;
+                
+                console.log(`🎵 Playing: ${path}`);
+                this.currentTrack = randomTrack;
+                this.audio.src = path;
+                
+                try {
+                    await this.audio.play();
+                    this.isPlaying = true;
+                    this.updateUI();
+                } catch (error) {
+                    console.error('🎵 Play error:', error);
+                    this.isPlaying = false;
+                    this.updateUI();
+                }
+            }
+            
+            pause() {
+                this.audio.pause();
+                this.isPlaying = false;
+                this.updateUI();
+            }
+            
+            setVolume(volume) {
+                this.audio.volume = volume;
+                document.getElementById('volume-display').textContent = `${Math.round(volume * 100)}%`;
+            }
+            
+            updateUI() {
+                const playBtn = document.getElementById('play-btn');
+                const pauseBtn = document.getElementById('pause-btn');
+                const status = document.getElementById('music-status');
+                
+                if (this.isPlaying) {
+                    playBtn.style.display = 'none';
+                    pauseBtn.style.display = 'inline-block';
+                    status.textContent = `Playing: ${this.getTrackDisplayName()}`;
+                } else {
+                    playBtn.style.display = 'inline-block';
+                    pauseBtn.style.display = 'none';
+                    if (this.audio.src) {
+                        status.textContent = `Ready: ${this.getTrackDisplayName()}`;
+                    } else {
+                        status.textContent = 'Ready to play';
+                    }
+                }
+            }
+            
+            getTrackDisplayName() {
+                if (!this.currentTrack) return 'Unknown Track';
+                return this.currentTrack.replace(/\.mp3$/, '').replace(/_/g, ' ')
+                    .split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            }
+        }
+        
+        // Initialize persistent music player
+        const musicPlayer = new PersistentMusicPlayer();
+        
+        // Handle iframe navigation - intercept links in the documentation
+        document.getElementById('docs-iframe').addEventListener('load', function() {
+            try {
+                const iframeDoc = this.contentDocument;
+                if (iframeDoc) {
+                    // Intercept all navigation links
+                    const links = iframeDoc.querySelectorAll('a[href]');
+                    links.forEach(link => {
+                        if (link.href && !link.href.startsWith('http') && !link.href.includes('#')) {
+                            link.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                this.src = link.href;
+                            });
+                        }
+                    });
+                }
+            } catch (e) {
+                // Cross-origin restrictions, ignore
+                console.log('Could not access iframe content for link interception');
+            }
+        });
+        
+        console.log('🎵 Persistent music player initialized');
+    </script>
+</body>
+</html>
