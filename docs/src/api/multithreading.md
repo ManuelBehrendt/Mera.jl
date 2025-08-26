@@ -1,5 +1,9 @@
 # Multi-Threading API Reference
 
+![MERA.jl Multi-Threading Performance](../assets/representative_multithreading.png)
+
+*High-performance parallel computing with MERA.jl: leveraging multi-core processors for accelerated astrophysical data analysis*
+
 Comprehensive reference for Mera's parallel processing functions and threading control.
 
 ## Quick Threading Reference

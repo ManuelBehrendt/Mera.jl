@@ -1,6 +1,10 @@
 # Multi-Threading & Garbage Collection in Mera  
 *Complete guide for high-performance RAMSES simulation analysis with Julia 1.10+*
 
+![MERA.jl Multi-Threading Performance](../assets/representative_multithreading.png)
+
+*High-performance parallel computing with MERA.jl: leveraging multi-core processors for accelerated astrophysical data analysis*
+
 **Main Takeaways**  
 - Julia's **composable threading** and **parallel GC** for multi-GB AMR loads, projections, and VTK exports 
 - Concurrent threading at multiple levels can saturate I/O and memory—use Mera's `max_threads` keyword to control internal concurrency  

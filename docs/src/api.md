@@ -1,3 +1,7 @@
+![MERA.jl API Reference](assets/representative_mera_worker.png)
+
+*MERA.jl's comprehensive API for high-performance astrophysical data analysis and computational workflows*
+
 ## Types
 #### Abstract type hierarchies
 

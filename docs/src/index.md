@@ -6,6 +6,10 @@
 
 **MERA** is a Julia package for high-performance analysis of large-scale astrophysical simulation data from RAMSES hydrodynamic code. Built entirely in Julia, it provides a unified API for AMR grids, N-body particles, and gravity data with native performance and extensive scientific functionality.
 
+![MERA.jl Computational Astrophysics Workflow](assets/representative_mera.png)
+
+*Computational astrophysicist analyzing AMR simulation data with MERA.jl's powerful visualization and analysis capabilities*
+
 ## Why MERA for Computational Research?
 
 **Julia Performance Advantage**: Compiled language speed for numerical computations while maintaining interactive development  

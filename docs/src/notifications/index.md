@@ -1,5 +1,9 @@
 # Notifications System
 
+![Team Collaboration with MERA.jl Notifications](../assets/representative_team.png)
+
+*MERA.jl's notification system enables seamless team collaboration and progress sharing across distributed astrophysics research workflows*
+
 **Stay connected to your research computations anywhere, anytime.**
 
 The MERA notifications system transforms how you monitor long-running simulations, coordinate with research teams, and track computational workflows. Whether you're analyzing galaxy formation over hours or running parameter sweeps overnight, stay informed with intelligent notifications that understand your research needs.

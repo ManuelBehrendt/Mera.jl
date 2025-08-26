@@ -1,5 +1,9 @@
 # Getting Started with Julia
 
+![Julia Programming for Scientific Computing](../assets/representative_julia.png)
+
+*Julia programming language for high-performance scientific computing and astrophysical data analysis*
+
 **Choose your learning path based on your background**
 
 > **Julia at a Glance:**
