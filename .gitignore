@@ -102,6 +102,17 @@ nextreleases.rtf
 # IDE configuration
 .vscode/
 
+# Coverage analysis files
+COVERAGE_SETUP_SUMMARY.md
+TEST_WORKFLOWS.md
+calculate_exact_coverage_fixed.jl
+coverage_summary.sh
+generate_coverage.jl
+generate_coverage_safe.jl
+lcov.info
+manual_coverage_analysis.jl
+upload_coverage_complete.jl
+
 # Local testing files - metaprogramming development
 test/test_metaprog*.jl
 benchmark_metaprogramming.jl
