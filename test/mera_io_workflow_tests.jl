@@ -17,9 +17,36 @@ using Test
 using Mera
 using Statistics
 
-# Test data paths
-const SPIRAL_UGRID_PATH = "/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid"
-const SPIRAL_UGRID_OUTPUT = SPIRAL_UGRID_PATH  # Mera will append output_00001 automatically
+# Test data paths - Check multiple possible locations
+const POTENTIAL_DATA_PATHS = [
+    "/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid",
+    "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10",
+    joinpath(@__DIR__, "test_data"),
+    "/Users/mabe/Documents/codes/github/Mera.jl/test/test_data",
+    joinpath(@__DIR__, "..", "test_backup_20250808_143045", "data")
+]
+
+# Find available data path
+function find_available_test_data()
+    for base_path in POTENTIAL_DATA_PATHS
+        # Check for various output patterns
+        for output_pattern in ["output_00001", "output_00002", "output_00300"]
+            full_path = joinpath(base_path, output_pattern)
+            if isdir(full_path) && length(readdir(full_path)) > 3  # Must have actual files
+                println("✅ Found test data at: $full_path")
+                return base_path, output_pattern
+            end
+        end
+        # Also check if base_path itself contains simulation files
+        if isdir(base_path) && any(f -> startswith(f, "info_"), readdir(base_path))
+            println("✅ Found direct simulation data at: $base_path")  
+            return dirname(base_path), basename(base_path)
+        end
+    end
+    return nothing, nothing
+end
+
+const SPIRAL_UGRID_PATH, AVAILABLE_OUTPUT = find_available_test_data()
 const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 
 @testset "Mera File I/O Workflow Tests" begin
@@ -28,15 +55,17 @@ const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true
         if SKIP_EXTERNAL_DATA
             @test_skip "Mera I/O workflow tests skipped - external simulation data disabled (MERA_SKIP_EXTERNAL_DATA=true)"
             return
-        elseif !isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
-            @test_skip "Spiral uniform grid data not found at $SPIRAL_UGRID_OUTPUT - skipping Mera I/O tests"
+        elseif SPIRAL_UGRID_PATH === nothing || AVAILABLE_OUTPUT === nothing
+            @test_skip "No suitable simulation data found - skipping Mera I/O tests"
             return
         end
-        @test isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
+        full_data_path = joinpath(SPIRAL_UGRID_PATH, AVAILABLE_OUTPUT)
+        @test isdir(full_data_path)
+        println("✅ Using test data: $full_data_path")
     end
     
     # Skip remaining tests if data not available or external data disabled
-    if SKIP_EXTERNAL_DATA || !isdir(joinpath(SPIRAL_UGRID_OUTPUT, "output_00001"))
+    if SKIP_EXTERNAL_DATA || SPIRAL_UGRID_PATH === nothing
         return
     end
     

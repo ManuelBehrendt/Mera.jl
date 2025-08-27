@@ -264,7 +264,8 @@ println("=======================================================================
             
             @testset "3.3 Memory leak detection" begin
                 # Test for potential memory leaks in repeated operations
-                start_memory = GC.gc()
+                GC.gc()
+                start_memory = Sys.maxrss()
                 
                 for i in 1:10
                     @test_nowarn begin
@@ -287,7 +288,8 @@ println("=======================================================================
                 end
                 
                 GC.gc()
-                end_memory = GC.gc()
+                GC.gc()
+                end_memory = Sys.maxrss()
                 
                 # Memory should not grow significantly
                 memory_growth = end_memory - start_memory

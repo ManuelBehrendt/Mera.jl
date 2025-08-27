@@ -1,0 +1,10 @@
+[deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+Glob = "c27321d9-0574-5035-807b-f59d2c89b15c"
+Mera = "02f895e8-fdb1-4346-8fe6-c721699f5126"
+
+[compat]
+CairoMakie = "0.10, 0.11, 0.12"
+Glob = "1.3"
+Mera = "1.4, 1.5"
+julia = "1.10"
