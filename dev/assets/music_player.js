@@ -660,10 +660,34 @@
                             });
                         }
                         
+                        // GoatCounter tracking helper for popup events
+                        trackPopupEvent(action, trackName = '') {
+                            // Check GoatCounter in popup window or parent window
+                            const gc = window.goatcounter || (window.opener && window.opener.goatcounter);
+                            const hostname = window.location.hostname || (window.opener && window.opener.location.hostname);
+                            
+                            // Only track if GoatCounter is available and on production
+                            if (gc && gc.count && hostname === 'manuelbehrendt.github.io') {
+                                const path = `music-popup-${action}`;
+                                const title = trackName ? `Music Popup: ${action} - ${trackName}` : `Music Popup: ${action}`;
+                                
+                                gc.count({
+                                    path: path,
+                                    title: title,
+                                    event: true
+                                });
+                                
+                                console.log(`📊 Tracked popup event: ${action}${trackName ? ` - ${trackName}` : ''}`);
+                            }
+                        }
+                        
                         initialize(state, musicLibrary) {
                             console.log('🎵 Initializing popup with state:', state);
                             this.musicLibrary = musicLibrary;
                             this.volume = state.volume || 0.15;
+                            
+                            // Track popup opening
+                            this.trackPopupEvent('opened');
                             
                             // Update volume UI
                             document.getElementById('popup-volume').value = Math.round(this.volume * 100);
@@ -787,6 +811,9 @@
                                     console.log(\`🎵 Successfully started playing: \${track.name}\`);
                                     this.updateStatus(\`🎵 Playing: \${track.name}\`);
                                     this.updateTrackHighlight(track.name);
+                                    
+                                    // Track specific track play
+                                    this.trackPopupEvent('track-played', track.name);
                                 }).catch(error => {
                                     console.error(\`🎵 Failed to play track: \${track.name}\`, error);
                                     this.updateStatus(\`❌ Failed to play: \${track.name}\`);
@@ -816,6 +843,10 @@
                                 const randomIndex = Math.floor(Math.random() * this.musicLibrary.length);
                                 console.log(\`🎵 Selected random index: \${randomIndex}\`);
                                 this.updateStatus('🔀 Selecting random track...');
+                                
+                                // Track random play action
+                                this.trackPopupEvent('random-played');
+                                
                                 this.playTrack(randomIndex);
                             } else {
                                 console.error('🎵 Music library is empty!');
@@ -831,8 +862,10 @@
                             
                             if (this.isPlaying) {
                                 this.audio.pause();
+                                this.trackPopupEvent('paused');
                             } else {
                                 this.audio.play();
+                                this.trackPopupEvent('resumed');
                             }
                         }
                         
@@ -872,6 +905,9 @@
                         }
                         
                         returnToMain() {
+                            // Track popup closing
+                            this.trackPopupEvent('closed');
+                            
                             const transferState = {
                                 track: this.currentTrack,
                                 isPlaying: this.isPlaying,
