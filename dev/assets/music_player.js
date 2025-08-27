@@ -5,6 +5,8 @@
 (function() {
     'use strict';
     
+    console.log('🎵 MUSIC PLAYER SCRIPT STARTING - Loading enhanced music player...');
+    
     // Track script execution count to detect reloads
     if (typeof window.meraScriptCounter === 'undefined') {
         window.meraScriptCounter = 0;
@@ -662,22 +664,27 @@
                         
                         // GoatCounter tracking helper for popup events
                         trackPopupEvent(action, trackName = '') {
-                            // Check GoatCounter in popup window or parent window
-                            const gc = window.goatcounter || (window.opener && window.opener.goatcounter);
-                            const hostname = window.location.hostname || (window.opener && window.opener.location.hostname);
-                            
-                            // Only track if GoatCounter is available and on production
-                            if (gc && gc.count && hostname === 'manuelbehrendt.github.io') {
-                                const path = `music-popup-${action}`;
-                                const title = trackName ? `Music Popup: ${action} - ${trackName}` : `Music Popup: ${action}`;
+                            try {
+                                // Check GoatCounter in popup window or parent window
+                                const gc = window.goatcounter || (window.opener && window.opener.goatcounter);
+                                const hostname = window.location.hostname || (window.opener && window.opener.location.hostname);
                                 
-                                gc.count({
-                                    path: path,
-                                    title: title,
-                                    event: true
-                                });
-                                
-                                console.log(`📊 Tracked popup event: ${action}${trackName ? ` - ${trackName}` : ''}`);
+                                // Only track if GoatCounter is available and on production
+                                if (gc && gc.count && hostname === 'manuelbehrendt.github.io') {
+                                    const path = `music-popup-${action}`;
+                                    const title = trackName ? `Music Popup: ${action} - ${trackName}` : `Music Popup: ${action}`;
+                                    
+                                    gc.count({
+                                        path: path,
+                                        title: title,
+                                        event: true
+                                    });
+                                    
+                                    console.log(`📊 Tracked popup event: ${action}${trackName ? ` - ${trackName}` : ''}`);
+                                }
+                            } catch (error) {
+                                // Silently handle any tracking errors - don't break the music player
+                                console.debug('🎵 Analytics tracking error (non-critical):', error);
                             }
                         }
                         
@@ -686,8 +693,8 @@
                             this.musicLibrary = musicLibrary;
                             this.volume = state.volume || 0.15;
                             
-                            // Track popup opening
-                            this.trackPopupEvent('opened');
+                            // Track popup opening (non-blocking)
+                            setTimeout(() => this.trackPopupEvent('opened'), 100);
                             
                             // Update volume UI
                             document.getElementById('popup-volume').value = Math.round(this.volume * 100);
