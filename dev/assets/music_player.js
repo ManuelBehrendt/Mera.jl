@@ -7,6 +7,29 @@
     
     console.log('🎵 MUSIC PLAYER SCRIPT STARTING - Loading enhanced music player...');
     
+    // Immediate visibility test - create a simple test element
+    const testElement = document.createElement('div');
+    testElement.id = 'mera-music-test';
+    testElement.style.cssText = `
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: red;
+        color: white;
+        padding: 5px;
+        z-index: 999999;
+        font-size: 12px;
+    `;
+    testElement.textContent = '🎵 MUSIC SCRIPT LOADED';
+    document.body.appendChild(testElement);
+    
+    // Remove test element after 3 seconds
+    setTimeout(() => {
+        if (testElement.parentNode) {
+            testElement.parentNode.removeChild(testElement);
+        }
+    }, 3000);
+    
     // Track script execution count to detect reloads
     if (typeof window.meraScriptCounter === 'undefined') {
         window.meraScriptCounter = 0;
@@ -984,9 +1007,13 @@
     
     // Create the enhanced persistent top bar
     function createTopBar() {
-        if (document.getElementById('mera-top-bar')) {
-            return;
-        }
+        try {
+            console.log('🎵 createTopBar() called');
+            if (document.getElementById('mera-top-bar')) {
+                console.log('🎵 Top bar already exists, skipping creation');
+                return;
+            }
+            console.log('🎵 Creating new top bar...');
         
         const topBar = document.createElement('div');
         topBar.id = 'mera-top-bar';
@@ -1066,7 +1093,23 @@
         setupEventListeners();
         updateUI();
         
-        console.log('🎵 Enhanced persistent music player top bar created');
+        console.log('🎵 Enhanced persistent music player top bar created successfully');
+        } catch (error) {
+            console.error('🎵 Failed to create top bar:', error);
+            // Try creating a minimal fallback bar
+            try {
+                console.log('🎵 Attempting minimal fallback top bar...');
+                const fallbackBar = document.createElement('div');
+                fallbackBar.id = 'mera-top-bar';
+                fallbackBar.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; height: 40px; background: #666; color: white; display: flex; align-items: center; padding: 0 20px; z-index: 999999;';
+                fallbackBar.innerHTML = '<span>🎵 MERA Music (Minimal)</span>';
+                document.body.insertBefore(fallbackBar, document.body.firstChild);
+                document.body.style.paddingTop = '45px';
+                console.log('🎵 Minimal fallback top bar created');
+            } catch (fallbackError) {
+                console.error('🎵 Even minimal fallback failed:', fallbackError);
+            }
+        }
     }
     
     // Enhanced event listeners with popup support
@@ -1229,11 +1272,36 @@
     // Make path calculation globally available
     window.meraGetMusicPath = getMusicPath;
     
-    // Initialize
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initialize);
-    } else {
+    // Initialize - try multiple approaches
+    console.log('🎵 Setting up initialization...');
+    console.log('🎵 Document ready state:', document.readyState);
+    
+    function initializeNow() {
+        console.log('🎵 initializeNow() called');
         initialize();
     }
+    
+    if (document.readyState === 'loading') {
+        console.log('🎵 Document still loading, waiting for DOMContentLoaded');
+        document.addEventListener('DOMContentLoaded', initializeNow);
+    } else {
+        console.log('🎵 Document ready, initializing immediately');
+        initializeNow();
+    }
+    
+    // Fallback initialization after a delay
+    setTimeout(() => {
+        console.log('🎵 Fallback check - looking for top bar');
+        if (!document.getElementById('mera-top-bar')) {
+            console.log('🎵 No top bar found, running fallback initialization');
+            try {
+                initializeNow();
+            } catch (e) {
+                console.error('🎵 Fallback initialization failed:', e);
+            }
+        } else {
+            console.log('🎵 Top bar already exists');
+        }
+    }, 2000);
     
 })();
