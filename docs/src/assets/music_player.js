@@ -693,8 +693,14 @@
                             this.musicLibrary = musicLibrary;
                             this.volume = state.volume || 0.15;
                             
-                            // Track popup opening (non-blocking)
-                            setTimeout(() => this.trackPopupEvent('opened'), 100);
+                            // Track popup opening (non-blocking, only if window is stable)
+                            setTimeout(() => {
+                                try {
+                                    this.trackPopupEvent('opened');
+                                } catch (e) {
+                                    // Silently handle tracking errors
+                                }
+                            }, 1000);
                             
                             // Update volume UI
                             document.getElementById('popup-volume').value = Math.round(this.volume * 100);
@@ -1135,73 +1141,89 @@
     
     // Enhanced initialization with popup support
     async function initialize() {
-        createTopBar();
-        
-        // Try to restore previous audio state
-        const sys = window.meraEnhancedAudioSystem;
-        const savedState = localStorage.getItem('mera-was-playing');
-        const savedTrack = localStorage.getItem('mera-current-track');
-        const savedTime = parseFloat(localStorage.getItem('mera-audio-time') || '0');
-        
-        if (savedState === 'true' && savedTrack) {
-            console.log(`🎵 Enhanced player - attempting to restore: ${savedTrack} at ${savedTime}s`);
-            const path = getMusicPath(savedTrack);
-            sys.audio.src = path;
-            sys.currentTrack = savedTrack;
-            sys.audio.currentTime = Math.max(0, savedTime - 1);
+        try {
+            console.log('🎵 Starting main music player initialization...');
+            createTopBar();
+            console.log('🎵 Top bar created successfully');
             
-            // Don't auto-play, just prepare for resume
-            sys.isPlaying = false;
-        }
-        
-        updateUI();
-        
-        // Monitor for navigation and recreate if needed
-        let currentUrl = window.location.href;
-        
-        const checkForNavigation = async () => {
-            const newUrl = window.location.href;
-            if (newUrl !== currentUrl) {
-                currentUrl = newUrl;
-                console.log(`🎵 Enhanced player navigation: ${newUrl}`);
+            // Try to restore previous audio state
+            const sys = window.meraEnhancedAudioSystem;
+            const savedState = localStorage.getItem('mera-was-playing');
+            const savedTrack = localStorage.getItem('mera-current-track');
+            const savedTime = parseFloat(localStorage.getItem('mera-audio-time') || '0');
+            
+            if (savedState === 'true' && savedTrack) {
+                console.log(`🎵 Enhanced player - attempting to restore: ${savedTrack} at ${savedTime}s`);
+                const path = getMusicPath(savedTrack);
+                sys.audio.src = path;
+                sys.currentTrack = savedTrack;
+                sys.audio.currentTime = Math.max(0, savedTime - 1);
                 
-                setTimeout(() => {
-                    if (!document.getElementById('mera-top-bar')) {
-                        console.log('🎵 Recreating enhanced player UI...');
-                        createTopBar();
-                    }
-                    updateUI();
-                }, 50);
+                // Don't auto-play, just prepare for resume
+                sys.isPlaying = false;
             }
-        };
-        
-        setInterval(checkForNavigation, 500);
-        window.addEventListener('popstate', checkForNavigation);
-        window.addEventListener('hashchange', checkForNavigation);
-        
-        // DOM observer for recreation
-        if ('MutationObserver' in window) {
-            const observer = new MutationObserver(() => {
-                if (!document.getElementById('mera-top-bar')) {
+            
+            updateUI();
+            
+            // Monitor for navigation and recreate if needed
+            let currentUrl = window.location.href;
+            
+            const checkForNavigation = async () => {
+                const newUrl = window.location.href;
+                if (newUrl !== currentUrl) {
+                    currentUrl = newUrl;
+                    console.log(`🎵 Enhanced player navigation: ${newUrl}`);
+                    
                     setTimeout(() => {
                         if (!document.getElementById('mera-top-bar')) {
+                            console.log('🎵 Recreating enhanced player UI...');
                             createTopBar();
                         }
+                        updateUI();
                     }, 50);
                 }
-            });
+            };
             
-            observer.observe(document.body, { childList: true, subtree: true });
-        }
-        
-        // Periodic state saving
-        setInterval(() => {
-            if (sys.isPlaying && sys.activePlayer === 'topbar' && !sys.audio.paused) {
-                localStorage.setItem('mera-was-playing', 'true');
-                localStorage.setItem('mera-current-track', sys.currentTrack);
-                localStorage.setItem('mera-audio-time', sys.audio.currentTime.toString());
+            setInterval(checkForNavigation, 500);
+            window.addEventListener('popstate', checkForNavigation);
+            window.addEventListener('hashchange', checkForNavigation);
+            
+            // DOM observer for recreation
+            if ('MutationObserver' in window) {
+                const observer = new MutationObserver(() => {
+                    if (!document.getElementById('mera-top-bar')) {
+                        setTimeout(() => {
+                            if (!document.getElementById('mera-top-bar')) {
+                                createTopBar();
+                            }
+                        }, 50);
+                    }
+                });
+                
+                observer.observe(document.body, { childList: true, subtree: true });
             }
-        }, 2000);
+            
+            // Periodic state saving
+            setInterval(() => {
+                if (sys.isPlaying && sys.activePlayer === 'topbar' && !sys.audio.paused) {
+                    localStorage.setItem('mera-was-playing', 'true');
+                    localStorage.setItem('mera-current-track', sys.currentTrack);
+                    localStorage.setItem('mera-audio-time', sys.audio.currentTime.toString());
+                }
+            }, 2000);
+        
+        console.log('🎵 Main music player initialization completed successfully');
+        } catch (error) {
+            console.error('🎵 Music player initialization failed:', error);
+            // Try to create just the basic top bar without advanced features
+            try {
+                if (!document.getElementById('mera-top-bar')) {
+                    createTopBar();
+                }
+            } catch (fallbackError) {
+                console.error('🎵 Even fallback music player creation failed:', fallbackError);
+            }
+        }
     }
     
     // Make path calculation globally available
