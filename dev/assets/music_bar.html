@@ -3,50 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MERA.jl Documentation</title>
+    <title>MERA Music Bar</title>
     <style>
-        * {
+        body {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body, html {
-            height: 100%;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            overflow: hidden;
-        }
-        
-        /* Persistent top bar */
-        #persistent-top-bar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
             height: 45px;
             background: linear-gradient(135deg, rgba(102, 126, 234, 0.95) 0%, rgba(118, 75, 162, 0.95) 100%);
-            z-index: 999999;
             display: flex;
             align-items: center;
             justify-content: space-between;
             padding: 0 20px;
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            box-sizing: border-box;
         }
         
-        /* Documentation iframe */
-        #docs-iframe {
-            position: fixed;
-            top: 45px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            width: 100%;
-            border: none;
-            background: white;
-        }
-        
-        /* Music player controls */
         .music-controls {
             display: flex;
             align-items: center;
@@ -90,6 +63,15 @@
             -webkit-appearance: none;
         }
         
+        .volume-control::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+        }
+        
         .volume-display {
             color: rgba(255,255,255,0.9);
             font-size: 12px;
@@ -97,26 +79,20 @@
     </style>
 </head>
 <body>
-    <!-- Persistent Top Bar -->
-    <div id="persistent-top-bar">
-        <div class="music-controls">
-            <span style="color: white; font-weight: 600; font-size: 14px;">🎵 MERA Study Music</span>
-            <button id="play-btn" class="music-button">🔀 Play Random</button>
-            <button id="pause-btn" class="music-button" style="display: none;">⏸️ Pause</button>
-        </div>
-        <div class="music-info">
-            <span id="music-status" class="music-status">Ready to play</span>
-            <input type="range" id="volume-slider" class="volume-control" min="0" max="100" value="15">
-            <span id="volume-display" class="volume-display">15%</span>
-        </div>
+    <div class="music-controls">
+        <span style="color: white; font-weight: 600; font-size: 14px;">🎵 MERA Study Music</span>
+        <button id="play-btn" class="music-button">🔀 Play Random</button>
+        <button id="pause-btn" class="music-button" style="display: none;">⏸️ Pause</button>
+    </div>
+    <div class="music-info">
+        <span id="music-status" class="music-status">Ready to play</span>
+        <input type="range" id="volume-slider" class="volume-control" min="0" max="100" value="15">
+        <span id="volume-display" class="volume-display">15%</span>
     </div>
     
-    <!-- Documentation Content Iframe -->
-    <iframe id="docs-iframe" src="https://manuelbehrendt.github.io/Mera.jl/dev/" name="docs-content"></iframe>
-    
     <script>
-        // Persistent music player that never reloads
-        class PersistentMusicPlayer {
+        // Truly persistent music player (this frame never reloads)
+        class FrameBasedMusicPlayer {
             constructor() {
                 this.audio = new Audio();
                 this.audio.volume = 0.15;
@@ -135,7 +111,6 @@
             }
             
             setupEventListeners() {
-                // Audio events
                 this.audio.addEventListener('ended', () => {
                     if (this.isPlaying) {
                         this.playRandomTrack();
@@ -168,18 +143,19 @@
             
             async playRandomTrack() {
                 const randomTrack = this.tracks[Math.floor(Math.random() * this.tracks.length)];
-                const path = `assets/music/${randomTrack}`;
+                const path = `music/${randomTrack}`;
                 
                 console.log(`🎵 Playing: ${path}`);
                 this.currentTrack = randomTrack;
                 this.audio.src = path;
                 
                 try {
+                    // Only play if user has interacted (no autoplay)
                     await this.audio.play();
                     this.isPlaying = true;
                     this.updateUI();
                 } catch (error) {
-                    console.error('🎵 Play error:', error);
+                    console.log('🎵 Autoplay blocked (this is expected)');
                     this.isPlaying = false;
                     this.updateUI();
                 }
@@ -223,51 +199,10 @@
             }
         }
         
-        // Initialize persistent music player
-        const musicPlayer = new PersistentMusicPlayer();
+        // Initialize the frame-based persistent music player
+        const musicPlayer = new FrameBasedMusicPlayer();
         
-        // Handle iframe navigation - intercept links to stay within iframe
-        const docsIframe = document.getElementById('docs-iframe');
-        
-        docsIframe.addEventListener('load', function() {
-            try {
-                const iframeDoc = this.contentDocument;
-                if (iframeDoc) {
-                    console.log('🎵 Intercepting navigation links in iframe');
-                    
-                    // Intercept all internal navigation links
-                    const links = iframeDoc.querySelectorAll('a[href]');
-                    links.forEach(link => {
-                        const href = link.getAttribute('href');
-                        
-                        // Only intercept internal documentation links
-                        if (href && 
-                            !href.startsWith('http') && 
-                            !href.startsWith('mailto:') &&
-                            !href.startsWith('#') &&
-                            !href.includes('github.com')) {
-                            
-                            link.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                console.log(`🎵 Navigating iframe to: ${href}`);
-                                
-                                // Handle relative paths properly
-                                if (href.startsWith('../') || href.startsWith('./')) {
-                                    this.src = new URL(href, this.src).href;
-                                } else {
-                                    this.src = `https://manuelbehrendt.github.io/Mera.jl/dev/${href}`;
-                                }
-                            });
-                        }
-                    });
-                }
-            } catch (e) {
-                // Cross-origin restrictions - this is expected for GitHub Pages
-                console.log('🎵 Cannot access iframe content (CORS) - navigation will reload entire page');
-            }
-        });
-        
-        console.log('🎵 Persistent music player initialized');
+        console.log('🎵 Frame-based persistent music player initialized');
     </script>
 </body>
 </html>
