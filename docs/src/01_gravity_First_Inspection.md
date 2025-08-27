@@ -369,7 +369,7 @@ supertype( GravDataType )
 DataSetType
 ```
 
-![TypeHierarchy](./assets/TypeHierarchy.png)
+![TypeHierarchy](assets/TypeHierarchy.png)
 
 ## Data Organization and Structure
 

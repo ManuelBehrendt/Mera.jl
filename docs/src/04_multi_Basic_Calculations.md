@@ -26,7 +26,7 @@ MERA organizes simulation data through a sophisticated type system that enables 
 - `PartDataType` - Particle data with discrete mass elements and positions
 - `ClumpDataType` - Clump catalog data
 - `HydroPartType` - Combined hydro-particle data for mixed-physics analysis
-![TypeHierarchy](./assets/TypeHierarchy.png)
+![TypeHierarchy](assets/TypeHierarchy.png)
 **Unified Interface Benefits:**
 - **Consistent function signatures** - Same functions work across all data types
 - **Automatic unit handling** - Built-in scaling between code and physical units
