@@ -83,11 +83,13 @@ function safe_memory_test(test_function; max_memory_mb::Int=1000)
     try
         result = test_function()
         return result
-    catch OutOfMemoryError
-        standardized_skip("Test requires more memory than available", category="memory")
-        return nothing
     catch e
-        rethrow(e)
+        if isa(e, OutOfMemoryError)
+            standardized_skip("Test requires more memory than available", category="memory")
+            return nothing
+        else
+            rethrow(e)
+        end
     end
 end
 

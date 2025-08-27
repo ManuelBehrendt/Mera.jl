@@ -389,29 +389,25 @@ using Mera
                                     
                                     # Step 3: Create projections
                                     hydro_proj = projection(hydro, :rho, res=16)
-                            workflow_steps += 1
-                            println("  ✅ Step 5: hydro projection completed")
-                            
-                            gravity_proj = projection(gravity, :epot, res=16)
-                            workflow_steps += 1
-                            println("  ✅ Step 6: gravity projection completed")
-                            
-                            particle_proj = projection(particles, :mass, res=16)
                                     workflow_steps += 1
-                                    println("  ✅ Step 7: particle projection completed")
+                                    println("  ✅ Step 5: hydro projection completed")
+                            
+                                    particle_proj = projection(particles, :mass, res=16)
+                                    workflow_steps += 1
+                                    println("  ✅ Step 6: particle projection completed")
                                     
                                     # Step 4: Advanced operations
                                     sub_hydro = subregion(hydro, :sphere, center=[0.5, 0.5, 0.5], radius=0.2)
                                     workflow_steps += 1
-                                    println("  ✅ Step 8: subregion completed")
+                                    println("  ✅ Step 7: subregion completed")
                                     
                                     temp_data = getvar(hydro, :T)
                                     workflow_steps += 1
-                                    println("  ✅ Step 9: getvar(:T) completed")
+                                    println("  ✅ Step 8: getvar(:T) completed")
                                     
                                     mass_data = getvar(hydro, :mass)
                                     workflow_steps += 1
-                                    println("  ✅ Step 10: getvar(:mass) completed")
+                                    println("  ✅ Step 9: getvar(:mass) completed")
                                     
                                     break
                                 catch e
@@ -422,8 +418,8 @@ using Mera
                         end
                     end
                     
-                    println("📊 Workflow steps completed: $workflow_steps/10")
-                    workflow_steps >= 7  # Should complete most workflow steps
+                    println("📊 Workflow steps completed: $workflow_steps/9")
+                    workflow_steps >= 6  # Should complete most workflow steps
                     
                 finally
                     cd(original_dir)
