@@ -69,16 +69,18 @@
             activePlayer: 'topbar', // 'topbar' or 'popup'
             popupWindow: null,
             tracks: [
-                'alpha_centauri.mp3', 'andromeda_galaxy.mp3', 'betelgeuse_supergiant.mp3',
-                'black_hole.mp3', 'cassiopeia_constellation.mp3', 'crab_nebula.mp3', 
-                'eagle_nebula.mp3', 'europa_moon.mp3', 'horsehead_nebula.mp3', 
-                'milky_way_galaxy.mp3', 'orion_nebula.mp3', 'proxima_centauri.mp3',
-                'ring_nebula.mp3', 'sagittarius_a_star.mp3', 'titan_moon.mp3', 
-                'vega.mp3', 'whirlpool_galaxy.mp3'
+                'alpha_centauri.mp3', 'andromeda_galaxy.mp3', 'arcturus_red_giant.mp3',
+                'betelgeuse_supergiant.mp3', 'black_hole.mp3', 'cassiopeia_constellation.mp3', 
+                'crab_nebula.mp3', 'eagle_nebula.mp3', 'europa_moon.mp3', 'horsehead_nebula.mp3', 
+                'kepler_442b_exoplanet.mp3', 'milky_way_galaxy.mp3', 'orion_nebula.mp3', 
+                'polaris_north_star.mp3', 'proxima_centauri.mp3', 'ring_nebula.mp3', 
+                'rigel_blue_supergiant.mp3', 'sagittarius_a_star.mp3', 'sirius_binary_star.mp3',
+                'titan_moon.mp3', 'vega.mp3', 'whirlpool_galaxy.mp3'
             ],
             musicLibrary: [
                 { file: 'alpha_centauri.mp3', name: 'Alpha Centauri' },
                 { file: 'andromeda_galaxy.mp3', name: 'Andromeda Galaxy' },
+                { file: 'arcturus_red_giant.mp3', name: 'Arcturus Red Giant' },
                 { file: 'betelgeuse_supergiant.mp3', name: 'Betelgeuse Supergiant' },
                 { file: 'black_hole.mp3', name: 'Black Hole' },
                 { file: 'cassiopeia_constellation.mp3', name: 'Cassiopeia Constellation' },
@@ -86,11 +88,15 @@
                 { file: 'eagle_nebula.mp3', name: 'Eagle Nebula' },
                 { file: 'europa_moon.mp3', name: 'Europa Moon' },
                 { file: 'horsehead_nebula.mp3', name: 'Horsehead Nebula' },
+                { file: 'kepler_442b_exoplanet.mp3', name: 'Kepler-442b Exoplanet' },
                 { file: 'milky_way_galaxy.mp3', name: 'Milky Way Galaxy' },
                 { file: 'orion_nebula.mp3', name: 'Orion Nebula' },
+                { file: 'polaris_north_star.mp3', name: 'Polaris North Star' },
                 { file: 'proxima_centauri.mp3', name: 'Proxima Centauri' },
                 { file: 'ring_nebula.mp3', name: 'Ring Nebula' },
+                { file: 'rigel_blue_supergiant.mp3', name: 'Rigel Blue Supergiant' },
                 { file: 'sagittarius_a_star.mp3', name: 'Sagittarius A Star' },
+                { file: 'sirius_binary_star.mp3', name: 'Sirius Binary Star' },
                 { file: 'titan_moon.mp3', name: 'Titan Moon' },
                 { file: 'vega.mp3', name: 'Vega' },
                 { file: 'whirlpool_galaxy.mp3', name: 'Whirlpool Galaxy' }
