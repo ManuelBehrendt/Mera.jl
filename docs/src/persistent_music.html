@@ -4,18 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MERA.jl Documentation with Persistent Music</title>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #music-frame { width: 100%; height: 45px; border: none; }
+        #docs-frame { width: 100%; height: calc(100vh - 45px); border: none; }
+    </style>
 </head>
-<frameset rows="45,*" border="0" framespacing="0">
-    <!-- Persistent Music Player Bar (never reloads) -->
-    <frame name="music-bar" src="assets/music_bar.html" scrolling="no" noresize>
+<body>
+    <!-- Persistent Music Player Frame (never reloads) -->
+    <iframe id="music-frame" src="assets/music_bar.html" scrolling="no"></iframe>
     
-    <!-- Documentation Content (can reload independently) -->
-    <frame name="docs-content" src="index.html" scrolling="auto">
-</frameset>
-
-<noframes>
-    <body style="margin: 0; padding: 0;">
-        <p>Your browser does not support frames. Please use a modern browser or visit the <a href="index.html">regular documentation</a>.</p>
-    </body>
-</noframes>
+    <!-- Documentation Content Frame (can reload independently) -->
+    <iframe id="docs-frame" src="index.html" scrolling="auto"></iframe>
+    
+    <script>
+        // Listen for navigation requests from the documentation frame
+        window.addEventListener('message', function(event) {
+            // Only accept messages from the same origin for security
+            if (event.origin !== window.location.origin) return;
+            
+            if (event.data.type === 'navigate') {
+                const docsFrame = document.getElementById('docs-frame');
+                docsFrame.src = event.data.url;
+                console.log('🎵 Navigating docs frame to:', event.data.url);
+            }
+        });
+        
+        console.log('🎵 Persistent music container initialized');
+    </script>
+</body>
 </html>
