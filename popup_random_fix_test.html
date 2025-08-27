@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MERA Music Player - Random Button Fix Test</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            margin: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: calc(100vh - 80px);
+        }
+        
+        .test-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            line-height: 1.6;
+        }
+        
+        .console-output {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+        
+        .test-steps {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .test-steps li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .test-steps li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>🎵 MERA Music Player</h1>
+            <p>Random Button Fix Test</p>
+        </div>
+        
+        <div class="test-info">
+            <h3>🔧 Fixes Applied:</h3>
+            <ul>
+                <li><strong>Enhanced Path Calculation:</strong> Improved music file path resolution in popup</li>
+                <li><strong>Better Error Handling:</strong> Added fallback path attempts when primary path fails</li>
+                <li><strong>Debug Logging:</strong> Enhanced console logging to track random button clicks</li>
+                <li><strong>Robust Playback:</strong> Multiple path attempts to ensure music plays consistently</li>
+            </ul>
+        </div>
+        
+        <div class="test-info">
+            <h3>🧪 Testing Steps:</h3>
+            <ol class="test-steps">
+                <li>1. Click the "🪟 Popup" button in the top music bar to open the popup window</li>
+                <li>2. In the popup window, click the "🔀 Random" button multiple times</li>
+                <li>3. Verify that music starts playing consistently each time</li>
+                <li>4. Check the browser console for debug messages starting with 🎵</li>
+                <li>5. Test with different tracks from the track library list</li>
+            </ol>
+        </div>
+        
+        <div class="console-output" id="console-log">
+            <div style="color: #4CAF50;">✅ Enhanced music player loaded</div>
+            <div style="color: #2196F3;">🎵 Console output will appear here when you interact with the popup...</div>
+        </div>
+        
+        <div class="test-info">
+            <h3>📋 Expected Console Messages:</h3>
+            <ul>
+                <li><code>🎵 Popup playRandomTrack called, library size: 11</code></li>
+                <li><code>🎵 Selected random index: [0-10]</code></li>
+                <li><code>🎵 Playing track: [Track Name] ([filename.mp3])</code></li>
+                <li><code>🎵 Loading in popup: [path] (start time: 0)</code></li>
+                <li><code>🎵 Successfully started playing: [Track Name]</code></li>
+            </ul>
+        </div>
+    </div>
+    
+    <script src="docs/src/assets/music_player.js"></script>
+    
+    <script>
+        // Capture console logs and display them in the page
+        const originalLog = console.log;
+        const originalError = console.error;
+        const logContainer = document.getElementById('console-log');
+        
+        function addLogEntry(message, type = 'log') {
+            const entry = document.createElement('div');
+            entry.style.color = type === 'error' ? '#f44336' : 
+                               type === 'log' && message.includes('🎵') ? '#4CAF50' : '#ffffff';
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logContainer.appendChild(entry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addLogEntry(args.join(' '), 'log');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addLogEntry(args.join(' '), 'error');
+        };
+        
+        // Show initial status
+        setTimeout(() => {
+            console.log('🎵 Test page loaded - Ready to test popup random button functionality');
+        }, 1000);
+    </script>
+</body>
+</html>

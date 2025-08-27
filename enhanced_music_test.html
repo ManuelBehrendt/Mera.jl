@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enhanced MERA Music Player Test</title>
+    <style>
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .top-bar .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .top-bar-music {
+            min-width: 200px;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            float: left;
+            width: 250px;
+            background: #fafafa;
+            padding: 20px;
+            min-height: 500px;
+        }
+        .logo {
+            width: 100px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: 290px;
+            padding: 20px;
+        }
+        
+        /* Test Section */
+        .test-section {
+            background: #e8f4f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .test-steps {
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        
+        .feature-highlight {
+            background: linear-gradient(135deg, #ffeaa7, #fab1a0);
+            color: #2d3436;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .code-example {
+            background: #2d3436;
+            color: #ddd;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        
+        ol li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-ready { background: #00e676; }
+        .status-testing { background: #ff9800; }
+        .status-error { background: #f44336; }
+        
+        .clear {
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Bar with Music Player -->
+        <div class="top-bar">
+            <div class="logo">🌌 MERA.jl Documentation</div>
+            <div id="music-player-location" class="top-bar-music">
+                <!-- Enhanced music player will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="logo">MERA.jl</div>
+            <nav>
+                <p style="font-size: 12px; color: #666;">Navigation would go here...</p>
+            </nav>
+        </div>
+        
+        <div class="main-content">
+            <h1>🎵 Enhanced Music Player Test</h1>
+            
+            <div class="feature-highlight">
+                ✨ NEW FEATURE: Seamless Popup Transfer ✨
+                <br>
+                <small>Music continues playing when transferred between top bar and popup window!</small>
+            </div>
+            
+            <div class="test-section">
+                <h2>🧪 Testing Instructions</h2>
+                
+                <div class="test-steps">
+                    <h3>Phase 1: Basic Functionality</h3>
+                    <ol>
+                        <li><span class="status-indicator status-ready"></span>Verify music player appears in top bar</li>
+                        <li><span class="status-indicator status-testing"></span>Click "🎵 Study Music" to expand controls</li>
+                        <li><span class="status-indicator status-testing"></span>Click "🔀" to play a random track</li>
+                        <li><span class="status-indicator status-testing"></span>Verify music starts playing and status updates</li>
+                        <li><span class="status-indicator status-testing"></span>Test play/pause button (⏸️/▶️)</li>
+                        <li><span class="status-indicator status-testing"></span>Test volume control</li>
+                    </ol>
+                </div>
+                
+                <div class="test-steps">
+                    <h3>Phase 2: Popup Transfer Feature</h3>
+                    <ol>
+                        <li><span class="status-indicator status-testing"></span><strong>Start playing music</strong> in the top bar player</li>
+                        <li><span class="status-indicator status-testing"></span><strong>Click the popup button</strong> (🔲) in the expanded controls</li>
+                        <li><span class="status-indicator status-testing"></span><strong>Verify popup window opens</strong> with beautiful UI</li>
+                        <li><span class="status-indicator status-testing"></span><strong>Confirm music continues</strong> in popup at same position</li>
+                        <li><span class="status-indicator status-testing"></span><strong>Verify top bar shows</strong> "🔲 Playing in popup window"</li>
+                        <li><span class="status-indicator status-testing"></span>Test popup controls (play/pause, volume, track selection)</li>
+                        <li><span class="status-indicator status-testing"></span><strong>Click "↩️ Return"</strong> in popup</li>
+                        <li><span class="status-indicator status-testing"></span><strong>Verify music transfers back</strong> to top bar seamlessly</li>
+                    </ol>
+                </div>
+                
+                <div class="test-steps">
+                    <h3>Phase 3: Advanced Features</h3>
+                    <ol>
+                        <li><span class="status-indicator status-testing"></span>Test track selection from popup library</li>
+                        <li><span class="status-indicator status-testing"></span>Verify volume changes sync between players</li>
+                        <li><span class="status-indicator status-testing"></span>Test popup close behavior (top bar resumes control)</li>
+                        <li><span class="status-indicator status-testing"></span>Verify settings persistence (reload page)</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <div class="test-section">
+                <h2>🎯 Expected Behavior</h2>
+                
+                <h3>Popup Transfer Process:</h3>
+                <div class="code-example">
+1. User clicks popup button (🔲) while music is playing
+2. Top bar player pauses and shows "Playing in popup window"
+3. Popup opens with same track continuing from exact position
+4. Popup has full controls + track library
+5. User can return to top bar seamlessly with "↩️ Return"
+6. Music continues without interruption
+                </div>
+                
+                <h3>Key Features:</h3>
+                <ul>
+                    <li><strong>Seamless Transfer:</strong> Music position preserved when switching</li>
+                    <li><strong>State Sync:</strong> Volume and track info synchronized</li>
+                    <li><strong>Beautiful Popup:</strong> Gradient design with track library</li>
+                    <li><strong>Non-Intrusive:</strong> Top bar shows popup status clearly</li>
+                    <li><strong>Persistent Settings:</strong> Volume and preferences saved</li>
+                </ul>
+                
+                <h3>Technical Implementation:</h3>
+                <ul>
+                    <li>Global state management across windows</li>
+                    <li>PostMessage API for window communication</li>
+                    <li>Precise audio position tracking</li>
+                    <li>Popup window lifecycle management</li>
+                    <li>LocalStorage for settings persistence</li>
+                </ul>
+            </div>
+            
+            <div class="test-section">
+                <h2>🔧 Integration Notes</h2>
+                <p>To integrate this enhanced player into your documentation:</p>
+                
+                <div class="code-example">
+// 1. Include the enhanced player script
+&lt;script src="enhanced_music_player.js"&gt;&lt;/script&gt;
+
+// 2. Add player location div to your top bar
+&lt;div id="music-player-location"&gt;&lt;/div&gt;
+
+// 3. The player will auto-initialize on page load
+// No additional setup required!
+                </div>
+                
+                <p><strong>File Structure:</strong></p>
+                <div class="code-example">
+docs/
+├── src/
+│   └── assets/
+│       ├── enhanced_music_player.js  ← New enhanced player
+│       └── music/
+│           ├── alpha_centauri.mp3
+│           ├── andromeda_galaxy.mp3
+│           └── ... (other tracks)
+                </div>
+            </div>
+        </div>
+        
+        <div class="clear"></div>
+    </div>
+
+    <!-- Load the enhanced music player -->
+    <script src="enhanced_music_player.js"></script>
+    
+    <script>
+        // Test monitoring
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎵 Enhanced Music Player Test Page Loaded');
+            
+            // Monitor player initialization
+            setTimeout(function() {
+                const player = document.querySelector('.mera-music-player');
+                if (player) {
+                    console.log('✅ Enhanced music player loaded successfully');
+                } else {
+                    console.log('❌ Enhanced music player failed to load');
+                }
+            }, 1000);
+            
+            // Add keyboard shortcut for popup (Space + P)
+            let spacePressed = false;
+            document.addEventListener('keydown', function(e) {
+                if (e.code === 'Space') {
+                    spacePressed = true;
+                } else if (e.code === 'KeyP' && spacePressed) {
+                    if (window.meraPlayer && window.meraPlayer.globalState.currentTrack) {
+                        window.meraPlayer.openPopup();
+                    }
+                    spacePressed = false;
+                }
+            });
+            
+            document.addEventListener('keyup', function(e) {
+                if (e.code === 'Space') {
+                    spacePressed = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
