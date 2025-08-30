@@ -453,7 +453,7 @@
         
         // Create popup window
         const popup = window.open('', 'MeraMusicPlayer', 
-            'width=400,height=600,scrollbars=no,resizable=yes,status=no,toolbar=no,menubar=no');
+            'width=450,height=650,scrollbars=no,resizable=yes,status=no,toolbar=no,menubar=no,left=100,top=100');
         
         if (!popup) {
             alert('Please allow popups for this site to use the music player');
@@ -636,7 +636,12 @@
                             this.musicLibrary = [];
                             
                             this.audio.volume = this.volume;
-                            this.audio.loop = true;
+                            this.audio.loop = false;
+                            
+                            // Add event listener for track end to play next random track
+                            this.audio.addEventListener('ended', () => {
+                                this.playRandomTrack();
+                            });
                             
                             // Setup audio event listeners
                             this.audio.addEventListener('play', () => {
