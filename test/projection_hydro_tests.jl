@@ -6,9 +6,25 @@ memory management, and thread safety.
 
 using Test
 using Mera
+# =============================================================================
+# Local Storage Integration (Added 2025-09-08)
+# =============================================================================
+
+const LOCAL_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
+const LOCAL_DATA_AVAILABLE = isdir(LOCAL_DATA_ROOT)
+
+function check_local_data_availability()
+    if !LOCAL_DATA_AVAILABLE
+        @test_skip "Local simulation data not available at $LOCAL_DATA_ROOT"
+        return false
+    end
+    return true
+end
+
+
 
 # Test data paths
-const SPIRAL_UGRID_PATH = "/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid"
+const SPIRAL_UGRID_PATH = "/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_ugrid" # UPDATED
 const SPIRAL_UGRID_OUTPUT = SPIRAL_UGRID_PATH  # Mera will append output_00001 automatically
 const SKIP_EXTERNAL_DATA = get(ENV, "MERA_SKIP_EXTERNAL_DATA", "false") == "true"
 

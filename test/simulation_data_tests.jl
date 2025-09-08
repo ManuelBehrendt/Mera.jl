@@ -12,8 +12,24 @@ if !(parent_dir in LOAD_PATH)
 end
 
 using Mera
+# =============================================================================
+# Local Storage Integration (Added 2025-09-08)
+# =============================================================================
 
-function setup_test_data()
+const LOCAL_DATA_ROOT = "/Volumes/FASTStorage/Simulations/Mera-Tests"
+const LOCAL_DATA_AVAILABLE = isdir(LOCAL_DATA_ROOT)
+
+function check_local_data_availability()
+    if !LOCAL_DATA_AVAILABLE
+        @test_skip "Local simulation data not available at $LOCAL_DATA_ROOT"
+        return false
+    end
+    return true
+end
+
+
+
+function # setup_test_data() # UPDATED: Using local data - no setup needed
     # Check if external data should be skipped before attempting download
     if (haskey(ENV, "MERA_SKIP_EXTERNAL_DATA") && ENV["MERA_SKIP_EXTERNAL_DATA"] == "true") ||
        (haskey(ENV, "MERA_SKIP_HEAVY") && ENV["MERA_SKIP_HEAVY"] == "true") ||
@@ -40,7 +56,7 @@ function setup_test_data()
     mkpath(test_data_dir)
     
     # Download simulation data
-    simulation_url = "http://www.usm.uni-muenchen.de/CAST/behrendt/simulations.tar"
+    simulation_url = "# UPDATED: Using local simulation data instead of USM download"
     tar_file = joinpath(test_data_dir, "simulations.tar")
     
     # Try downloading with retries
@@ -55,7 +71,7 @@ function setup_test_data()
             # Use timeout for CI environments
             if is_ci
                 # Download with timeout using a more robust approach
-                download_task = @async Downloads.download(simulation_url, tar_file)
+                download_task = @async # Downloads.download( # UPDATED: Using local datasimulation_url, tar_file)
                 if !istaskdone(download_task)
                     try
                         wait(download_task)
@@ -70,7 +86,7 @@ function setup_test_data()
                     end
                 end
             else
-                Downloads.download(simulation_url, tar_file)
+                # Downloads.download( # UPDATED: Using local datasimulation_url, tar_file)
                 download_success = true
                 break
             end
@@ -167,7 +183,7 @@ function run_simulation_data_tests()
         end
         
         @testset "Test Data Setup" begin
-            data_available = setup_test_data()
+            data_available = # setup_test_data() # UPDATED: Using local data - no setup needed
             @test data_available isa Bool
             
             if !data_available

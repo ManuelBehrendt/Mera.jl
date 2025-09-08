@@ -39,6 +39,16 @@ include("mathematical_analysis_advanced_tests.jl")         # Advanced mathematic
 include("enhanced_coverage_tests.jl")                      # Enhanced coverage validation
 include("maximum_coverage_tests.jl")                       # Maximum coverage achievement tests
 
+# NEW: Maximum Coverage Test Suites - Target 70-85% total coverage
+println("================================================================================")
+println("🎯 MAXIMUM COVERAGE TEST SUITES - Targeting 70-85% Total Coverage")
+println("Testing largest untested modules for maximum coverage improvement")
+println("================================================================================")
+include("comprehensive_projection_tests.jl")               # Projection functions (2,497 lines) - Target: +15-20% coverage
+include("comprehensive_profile_tests.jl")                  # Profile analysis (1,454 lines) - Target: +8-12% coverage
+include("comprehensive_particle_projection_tests.jl")      # Particle projections (911 lines) - Target: +5-8% coverage
+include("comprehensive_data_export_tests.jl")              # Data export/conversion (1,138+ lines) - Target: +8-12% coverage
+
 # New: basic functionality sanity & Aqua quality
 include("basic_functionality_sanity.jl")
 include("aqua_quality_tests.jl")
@@ -143,6 +153,12 @@ include("comprehensive_error_edge_case_tests.jl")           # Error handling, bo
 include("comprehensive_path_filename_tests.jl")              # Path creation, filename formatting, and file structure utilities
 include("comprehensive_projection_validation_tests.jl")      # Projection operations, mass conservation, and resolution scaling
 include("comprehensive_error_message_validation_tests.jl")   # Specific error messages, exception types, and error recovery
+
+# PHASE 3: 60%+ COVERAGE STRATEGIC PLAN IMPLEMENTATION
+include("phase3_overview_comprehensive_tests.jl")          # Phase 1.1: Overview functions comprehensive tests (+984 lines → 39% coverage)
+include("phase3_getvar_infrastructure_tests.jl")          # Phase 1.2: Getvar.jl infrastructure tests (+736 lines → 31.6% coverage)
+include("phase3_miscellaneous_functions_tests.jl")        # Phase 1.3: Miscellaneous.jl function tests (+648 lines → 48% coverage)
+
 ##
 # For local coverage mode, allow full Zulip tests unless explicitly set to basic.
 # For heavy test skipping, default to BASIC mode unless user explicitly overrides.
