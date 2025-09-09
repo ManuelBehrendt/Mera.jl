@@ -222,7 +222,7 @@ using Mera
                 @test typeof(constructed) == typeof(gas)
                 
                 # Test with filtered data (subset)
-                n_cells = size(gas.data, 1)
+                n_cells = length(gas)
                 if n_cells > 100
                     subset_indices = 1:100
                     filtered_data = gas.data[subset_indices]
@@ -230,7 +230,7 @@ using Mera
                     
                     filtered_construct = Mera.construct_datatype(filtered_data, gas)
                     @test typeof(filtered_construct) == typeof(gas)
-                    @test size(filtered_construct.data, 1) <= size(gas.data, 1)
+                    @test length(filtered_construct) <= length(gas)
                 end
                 
                 # Test with gravity data if available

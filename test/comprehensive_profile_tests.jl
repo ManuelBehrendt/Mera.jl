@@ -69,7 +69,7 @@ end
                 @testset "$var radial profile" begin
                     try
                         # Basic radial profile
-                        if isdefined(Main, :profile_radial)
+                        if :profile_radial in names(Mera)
                             profile = profile_radial(hydro, var, verbose=false)
                             @test hasfield(typeof(profile), :bins)
                             @test hasfield(typeof(profile), :values) || hasfield(typeof(profile), :mean)
@@ -170,7 +170,7 @@ end
             for nbins in bin_numbers
                 @testset "$nbins bins" begin
                     try
-                        if isdefined(Main, :profile_radial)
+                        if :profile_radial in names(Mera)
                             profile = profile_radial(hydro, :rho,
                                                    nbins=nbins,
                                                    verbose=false)
@@ -247,7 +247,7 @@ end
             for stat in statistics
                 @testset "$stat statistic" begin
                     try
-                        if isdefined(Main, :profile_radial)
+                        if :profile_radial in names(Mera)
                             profile = profile_radial(hydro, :rho,
                                                    statistic=stat,
                                                    verbose=false)
