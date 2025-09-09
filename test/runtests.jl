@@ -39,45 +39,45 @@ include("mathematical_analysis_advanced_tests.jl")         # Advanced mathematic
 include("enhanced_coverage_tests.jl")                      # Enhanced coverage validation
 include("maximum_coverage_tests.jl")                       # Maximum coverage achievement tests
 
-# NEW: Maximum Coverage Test Suites - Target 70-85% total coverage
+# Core Comprehensive Test Suites
 println("================================================================================")
-println("🎯 MAXIMUM COVERAGE TEST SUITES - Targeting 70-85% Total Coverage")
-println("Testing largest untested modules for maximum coverage improvement")
+println("🎯 COMPREHENSIVE TEST SUITES - Core Functionality Validation")
+println("Testing major functionality modules for thorough validation")
 println("================================================================================")
-include("comprehensive_projection_tests.jl")               # Projection functions (2,497 lines) - Target: +15-20% coverage
-include("comprehensive_profile_tests.jl")                  # Profile analysis (1,454 lines) - Target: +8-12% coverage
-include("comprehensive_particle_projection_tests.jl")      # Particle projections (911 lines) - Target: +5-8% coverage
-include("comprehensive_data_export_tests.jl")              # Data export/conversion (1,138+ lines) - Target: +8-12% coverage
+include("comprehensive_projection_tests.jl")               # Hydro projection functionality
+include("comprehensive_profile_tests.jl")                  # Profile analysis functionality  
+include("comprehensive_particle_projection_tests.jl")      # Particle projection functionality
+include("comprehensive_data_export_tests.jl")              # Data export/conversion functionality
 
 # New: basic functionality sanity & Aqua quality
 include("basic_functionality_sanity.jl")
 include("aqua_quality_tests.jl")
 
-# Phase 1 Integration Tests - Major coverage boost using real simulation data
-include("phase1_data_integration_tests_fixed.jl")           # Core Phase 1: Perfect 70/70 tests (14.63% coverage)
-include("phase1b_improved_integration_tests.jl")            # Phase 1B: Perfect 49/49 tests (6-8% coverage)
-include("phase1c_minimal_hydro_tests.jl")                   # Phase 1C: Perfect 51/51 tests (6-8% coverage)
-include("phase1d_data_utilities_tests.jl")                  # Phase 1D: Data utilities & advanced functions (8-12% coverage)
-include("phase1e_streamlined_tests.jl")              # Phase 1E: Streamlined particle/optimization (5-8% coverage)
-include("phase1f_untested_functions_tests.jl")              # Phase 1F: Untested functions (5-10% coverage)
-include("phase1g_advanced_integration_tests.jl")            # Phase 1G: Advanced integration patterns (8-12% coverage)
-include("phase1h_specialized_coverage_tests.jl")            # Phase 1H: Specialized functions & type systems (6-10% coverage)
-include("phase1i_enhanced_particle_projection_tests.jl")    # Phase 1I: Enhanced particle & projection coverage (15-25% coverage)
-include("phase1j_enhanced_type_system_tests_fixed.jl")           # Phase 1J: Enhanced type system coverage (15-20% coverage)
-include("phase1k_enhanced_gravity_clumps_tests.jl")        # Phase 1K: Enhanced gravity & clumps coverage (10-15% coverage)
+# Phase 1 Integration Tests - Comprehensive integration testing
+include("phase1_data_integration_tests_fixed.jl")           # Core data integration tests
+include("phase1b_improved_integration_tests.jl")            # Improved integration patterns
+include("phase1c_minimal_hydro_tests.jl")                   # Minimal hydro functionality tests
+include("phase1d_data_utilities_tests.jl")                  # Data utilities & advanced functions
+include("phase1e_streamlined_tests.jl")              # Phase 1E: Streamlined particle/optimization
+include("phase1f_untested_functions_tests.jl")              # Phase 1F: Untested functions
+include("phase1g_advanced_integration_tests.jl")            # Phase 1G: Advanced integration patterns
+include("phase1h_specialized_coverage_tests.jl")            # Phase 1H: Specialized functions & type systems
+include("phase1i_enhanced_particle_projection_tests.jl")    # Phase 1I: Enhanced particle & projection coverage
+include("phase1j_enhanced_type_system_tests_fixed.jl")           # Phase 1J: Enhanced type system coverage
+include("phase1k_enhanced_gravity_clumps_tests.jl")        # Phase 1K: Enhanced gravity & clumps coverage
 
 # Phase 2 Advanced Coverage Tests - Building on Phase 1 foundation for advanced scenarios
-include("phase2a_performance_memory_tests.jl")              # Phase 2A: Performance & memory optimization (10-15% coverage)
-include("phase2b_multicomponent_integration_tests.jl")      # Phase 2B: Complex multi-component integration (12-18% coverage)
-include("phase2c_advanced_projection_tests.jl")             # Phase 2C: Advanced projection & visualization (15-20% coverage)
-include("phase2d_error_robustness_tests.jl")                # Phase 2D: Error recovery & robustness (8-12% coverage)
-include("phase2e_amr_grid_algorithm_tests.jl")              # Phase 2E: AMR grid & algorithm coverage (10-15% coverage)
-include("phase2f_advanced_io_tests.jl")                     # Phase 2F: Advanced I/O & file system coverage (8-12% coverage)
-include("phase2g_mathematical_algorithms_tests.jl")         # Phase 2G: Mathematical & computational algorithms (10-15% coverage)
-include("phase2h_profile_analysis_tests.jl")                # Phase 2H: Profile analysis & physical quantities (12-18% coverage)
-include("phase2i_specialized_physics_tests.jl")             # Phase 2I: Specialized physics algorithms & simulations (15-20% coverage)
-include("phase2j_visualization_systems_tests.jl")           # Phase 2J: Visualization systems & advanced plotting (12-16% coverage)
-include("phase2k_boundary_domain_tests.jl")                 # Phase 2K: Boundary conditions & domain decomposition (15-20% coverage)
+include("phase2a_performance_memory_tests.jl")              # Phase 2A: Performance & memory optimization
+include("phase2b_multicomponent_integration_tests.jl")      # Phase 2B: Complex multi-component integration
+include("phase2c_advanced_projection_tests.jl")             # Phase 2C: Advanced projection & visualization
+include("phase2d_error_robustness_tests.jl")                # Phase 2D: Error recovery & robustness
+include("phase2e_amr_grid_algorithm_tests.jl")              # Phase 2E: AMR grid & algorithm coverage
+include("phase2f_advanced_io_tests.jl")                     # Phase 2F: Advanced I/O & file system coverage
+include("phase2g_mathematical_algorithms_tests.jl")         # Phase 2G: Mathematical & computational algorithms
+include("phase2h_profile_analysis_tests.jl")                # Phase 2H: Profile analysis & physical quantities
+include("phase2i_specialized_physics_tests.jl")             # Phase 2I: Specialized physics algorithms & simulations
+include("phase2j_visualization_systems_tests.jl")           # Phase 2J: Visualization systems & advanced plotting
+include("phase2k_boundary_domain_tests.jl")                 # Phase 2K: Boundary conditions & domain decomposition
 
 # Data-free workflow tests (Phase 2L)
 include("data_free_workflow_tests.jl")
@@ -104,10 +104,10 @@ include("enhanced_getvar_tests.jl")                       # Enhanced getvar() fu
 include("comprehensive_data_io_tests.jl")                 # Comprehensive data I/O coverage (savedata/loaddata/VTK)
 include("working_data_io_tests.jl")                        # Working data I/O tests based on proven old test suite
 include("comprehensive_old_tests_integration.jl")          # Comprehensive integration of all valuable old tests
-include("major_zero_coverage_targets.jl")               # Focused tests for largest 0% coverage files
-include("advanced_selection_and_utility_tests.jl")      # Advanced selection, mass calc, utilities (boost mid-coverage)
-include("specialized_physics_and_regions_tests.jl")     # Shell regions, clumps, RT, specialized physics (target 0% files)
-include("comprehensive_clump_tests.jl")                  # Comprehensive clump tests (target getvar_clumps.jl 0% coverage)
+include("major_zero_coverage_targets.jl")               # Focused tests for untested functionality
+include("advanced_selection_and_utility_tests.jl")      # Advanced selection, mass calc, utilities
+include("specialized_physics_and_regions_tests.jl")     # Shell regions, clumps, RT, specialized physics
+include("comprehensive_clump_tests.jl")                  # Comprehensive clump tests
 include("core_functionality_tests.jl")
 include("computational_tests.jl")
 include("projection_edge_case_tests.jl")        # Added: projection API edge & threading invariants
@@ -126,21 +126,21 @@ include("quick_phase1f_test.jl")              # Quick Phase 1F validation
 include("quick_phase1h_test.jl")              # Quick Phase 1H validation
 
 # Enhanced comprehensive test suites (latest integration from old_tests_analysis)
-include("enhanced_projection_comprehensive_tests.jl")    # Enhanced projection features and profile functions (target 0% coverage)
-include("error_robustness_comprehensive_tests.jl")       # Error handling and robustness testing (boost checks.jl coverage)
-include("vtk_export_zero_coverage_tests.jl")             # VTK export functions (target export_*_to_vtk.jl 0% coverage - 410 lines)
-include("optimization_memory_zero_coverage_tests.jl")    # Optimization and memory pool functions (target optimization/*.jl 0% coverage - 447 lines)
+include("enhanced_projection_comprehensive_tests.jl")    # Enhanced projection features and profile functions
+include("error_robustness_comprehensive_tests.jl")       # Error handling and robustness testing
+include("vtk_export_zero_coverage_tests.jl")             # VTK export functions 
+include("optimization_memory_zero_coverage_tests.jl")    # Optimization and memory pool functions 
 
 # Advanced comprehensive test suites (continued integration)
-include("advanced_inspection_overview_tests.jl")         # Inspection, overview, and utility functions (boost coverage)
-include("io_adaptive_comprehensive_tests.jl")            # IO and adaptive optimization functions (target io/*.jl 0% coverage - 439 lines)
-include("data_conversion_type_system_tests.jl")          # Data conversion and type system functions (target 0% coverage - 551 lines)
-include("visualization_triangular_heatmap_tests.jl")     # Visualization and triangular heatmap functions (target 0% coverage - 352 lines)
-include("deprecated_functions_compatibility_tests.jl")   # Deprecated functions compatibility (target 0% coverage - 1235 lines)
+include("advanced_inspection_overview_tests.jl")         # Inspection, overview, and utility functions
+include("io_adaptive_comprehensive_tests.jl")            # IO and adaptive optimization functions 
+include("data_conversion_type_system_tests.jl")          # Data conversion and type system functions 
+include("visualization_triangular_heatmap_tests.jl")     # Visualization and triangular heatmap functions 
+include("deprecated_functions_compatibility_tests.jl")   # Deprecated functions compatibility 
 
 # Maximum coverage comprehensive test suites (final integration for largest coverage gains)
-include("comprehensive_shell_regions_tests.jl")          # All shell region functions (target 0% coverage - 245 lines)
-include("enhanced_getvar_subregion_tests.jl")            # Enhanced getvar and subregion functions (massive getvar.jl boost + subregion_clumps.jl 67 lines)
+include("comprehensive_shell_regions_tests.jl")          # All shell region functions 
+include("enhanced_getvar_subregion_tests.jl")            # Enhanced getvar and subregion functions 
 include("amr_filtering_comprehensive_tests.jl")          # AMR, filtering, mass calculations (boost prepranges.jl, basic_calc.jl, filter_data.jl)
 include("comprehensive_physics_values_tests.jl")            # Physics and values tests from old patterns
 include("comprehensive_variable_selection_tests.jl")       # Variable selection and manipulation tests  
@@ -154,10 +154,10 @@ include("comprehensive_path_filename_tests.jl")              # Path creation, fi
 include("comprehensive_projection_validation_tests.jl")      # Projection operations, mass conservation, and resolution scaling
 include("comprehensive_error_message_validation_tests.jl")   # Specific error messages, exception types, and error recovery
 
-# PHASE 3: 60%+ COVERAGE STRATEGIC PLAN IMPLEMENTATION
-include("phase3_overview_comprehensive_tests.jl")          # Phase 1.1: Overview functions comprehensive tests (+984 lines → 39% coverage)
-include("phase3_getvar_infrastructure_tests.jl")          # Phase 1.2: Getvar.jl infrastructure tests (+736 lines → 31.6% coverage)
-include("phase3_miscellaneous_functions_tests.jl")        # Phase 1.3: Miscellaneous.jl function tests (+648 lines → 48% coverage)
+# PHASE 3: Advanced Infrastructure Testing
+include("phase3_overview_comprehensive_tests.jl")          # Overview functions comprehensive tests
+include("phase3_getvar_infrastructure_tests.jl")          # Getvar.jl infrastructure tests
+include("phase3_miscellaneous_functions_tests.jl")        # Miscellaneous.jl function tests
 
 ##
 # For local coverage mode, allow full Zulip tests unless explicitly set to basic.
@@ -233,15 +233,15 @@ include("vtk_export_comprehensive_tests_simplified.jl")  # Simplified VTK export
     
     # 1c. Phase 1 Integration Tests (Major Coverage Boost)
     @testset "Phase 1: Data Integration" begin
-        # These tests target the core 0% coverage functions using real simulation data
-        # Expected coverage improvement: ~40-50% increase in total project coverage
+        # These tests target the core functionality using real simulation data
+        # Comprehensive integration testing with real simulation data
         println("🚀 Running Phase 1 integration tests with real simulation data...")
     end
 
     # 1d. Phase 2 Advanced Coverage Tests (Building on Phase 1)
     @testset "Phase 2: Advanced Scenarios" begin
         # These tests build on Phase 1 foundation for advanced coverage scenarios
-        # Expected coverage improvement: Additional 15-25% increase beyond Phase 1
+        # Advanced testing scenarios building on Phase 1 foundation
         println("🔬 Running Phase 2 advanced tests: performance, integration, projections, robustness, AMR...")
     end
 

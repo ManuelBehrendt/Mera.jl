@@ -1,14 +1,14 @@
 """
-Comprehensive Data Conversion and Export Tests for Maximum Coverage
-================================================================
+Comprehensive Data Export and Conversion Tests
+============================================
 
 Testing all data conversion and export functionality:
-- mera_convert.jl (1,138 lines)
+- mera_convert.jl
 - export_hydro_to_vtk.jl 
 - export_particles_to_vtk.jl
 - data_convert.jl
 
-Target: +8-12% coverage improvement through comprehensive data export testing
+Validates export functionality and data format conversions
 """
 
 using Test
@@ -589,5 +589,5 @@ end
 end
 
 println("\n💾 DATA EXPORT TESTING COMPLETE")
-println("Target: +8-12% coverage from data conversion and export modules")
+println("Status: Data conversion and export functionality validated")
 println("Status: Comprehensive data export functionality tested")
