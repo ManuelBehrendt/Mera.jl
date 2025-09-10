@@ -113,6 +113,14 @@ lcov.info
 manual_coverage_analysis.jl
 upload_coverage_complete.jl
 
+# Coverage analysis files - should not be in repository
+calculate_coverage.jl
+coverage_analysis.jl
+final_coverage_summary.jl
+simple_coverage_check.jl
+coverage.lcov
+codecov
+
 # Local testing files - metaprogramming development
 test/test_metaprog*.jl
 benchmark_metaprogramming.jl
