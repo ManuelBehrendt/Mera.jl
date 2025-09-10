@@ -28,9 +28,57 @@ println("Julia Version: $(VERSION)")
 println("Available threads: $(Threads.nthreads())")
 
 # Include comprehensive unit tests (existing)
+
+# 🎯 TARGETED UNIT TESTS FOR MAXIMUM COVERAGE
+println("🎯 Running targeted unit tests to increase coverage...")
+include("targeted_unit_tests.jl")
+include("region_function_tests.jl")  
+include("optimization_utility_tests.jl")
 include("comprehensive_unit_tests.jl")
 include("comprehensive_unit_tests_simple.jl")
 include("physics_and_performance_tests.jl")
+
+# HIGH COVERAGE SIMULATION DATA TESTS (v1.4.4 Integration)
+include("high_coverage_simulation_tests.jl")                # High coverage tests with real simulation data from v1.4.4
+include("high_coverage_local_simulation_tests.jl")          # High coverage tests using local simulation data (fixed v1.4.4 integration)
+
+# V1.4.4 TESTS INTEGRATION - High Coverage Original Tests  
+println("================================================================================")
+println("🎯 V1.4.4 HIGH COVERAGE TESTS - Original Tests from v1.4.4")
+println("Testing with original high-coverage patterns from Mera.jl v1.4.4")
+println("================================================================================")
+
+if !SKIP_EXTERNAL_DATA
+    # Original v1.4.4 high coverage tests
+    println("🔬 Including v1.4.4 getvar tests...")
+    include("getvar/03_hydro_getvar.jl")                     # Original v1.4.4 hydro getvar tests
+    include("getvar/03_particles_getvar.jl")                 # Original v1.4.4 particle getvar tests
+    
+    println("🔬 Including v1.4.4 values tests...")
+    include("values_hydro.jl")                               # Original v1.4.4 hydro values tests  
+    include("values_particles.jl")                           # Original v1.4.4 particle values tests
+    
+    println("🔬 Including v1.4.4 inspection tests...")
+    include("inspection/01_hydro_inspection.jl")             # Original v1.4.4 hydro inspection tests
+    include("inspection/01_gravity_inspection.jl")           # Original v1.4.4 gravity inspection tests  
+    include("inspection/01_particle_inspection.jl")          # Original v1.4.4 particle inspection tests
+    
+    println("🔬 Including v1.4.4 variable selection tests...")
+    include("varselection/02_hydro_selections.jl")           # Original v1.4.4 hydro variable selection tests
+    include("varselection/02_particles_selections.jl")       # Original v1.4.4 particle variable selection tests
+    include("varselection/02_gravity_selections.jl")         # Original v1.4.4 gravity variable selection tests
+    
+    println("🔬 Including v1.4.4 general and error tests...")
+    include("general.jl")                                    # Original v1.4.4 general tests
+    include("errors/04_error_checks.jl")                     # Original v1.4.4 error checking tests
+    
+    println("📓 Including notebook-extracted coverage tests...")
+    include("notebook_extracted_coverage_tests_cleaned.jl")  # Comprehensive tests from documentation notebooks
+    
+    println("✅ V1.4.4 high coverage tests integration complete!")
+else
+    println("⏭️  Skipping v1.4.4 tests (MERA_SKIP_EXTERNAL_DATA=true)")
+end
 
 # Enhanced comprehensive test suites (recently added)
 include("computational_tests_new.jl")                       # Enhanced computational coverage tests
@@ -311,7 +359,19 @@ include("vtk_export_comprehensive_tests_simplified.jl")  # Simplified VTK export
         end
     end
 
-    # 9. Simulation Data Tests (with downloaded test data)
+    # 9. HIGH COVERAGE SIMULATION DATA TESTS (v1.4.4 Integration)
+    @testset "High Coverage Simulation Data Tests (v1.4.4)" begin
+        if SKIP_HEAVY
+            @test_skip "High coverage simulation data tests skipped via MERA_SKIP_HEAVY"
+        else
+            # These tests integrate the original high-coverage tests from v1.4.4 that achieved 60%+ coverage
+            # They download real simulation data and run comprehensive tests on it
+            println("🎯 Running high coverage simulation data tests from v1.4.4 integration...")
+            # Tests run automatically via include("high_coverage_simulation_tests.jl")
+        end
+    end
+    
+    # 9a. Simulation Data Tests (with downloaded test data)
     @testset "Simulation Data Loading" begin
         if SKIP_HEAVY
             @test_skip "Simulation data tests skipped via MERA_SKIP_HEAVY"
