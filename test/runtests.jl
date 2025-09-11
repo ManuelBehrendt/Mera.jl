@@ -34,6 +34,7 @@ println("🎯 Running targeted unit tests to increase coverage...")
 include("targeted_unit_tests.jl")
 include("region_function_tests.jl")  
 include("optimization_utility_tests.jl")
+include("io_functions_test.jl")        # Comprehensive I/O Functions Test Suite (64 tests)
 include("comprehensive_unit_tests.jl")
 include("comprehensive_unit_tests_simple.jl")
 include("physics_and_performance_tests.jl")
@@ -41,6 +42,7 @@ include("physics_and_performance_tests.jl")
 # HIGH COVERAGE SIMULATION DATA TESTS (v1.4.4 Integration)
 include("high_coverage_simulation_tests.jl")                # High coverage tests with real simulation data from v1.4.4
 include("high_coverage_local_simulation_tests.jl")          # High coverage tests using local simulation data (fixed v1.4.4 integration)
+include("v1_4_4_integration_tests.jl")                     # V1.4.4 integration tests with IndexedTables compatibility
 
 # V1.4.4 TESTS INTEGRATION - High Coverage Original Tests  
 println("================================================================================")
