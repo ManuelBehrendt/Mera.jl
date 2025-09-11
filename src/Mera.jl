@@ -11,6 +11,8 @@ module Mera
 #
 # https://github.com/ManuelBehrendt/Mera.jl
 #
+# Enhanced test coverage - September 2025
+#
 # Credits:
 # The RAMSES-files reader are strongly influenced
 # by Romain Teyssier's amr2map.f90 and part2mapf.90
