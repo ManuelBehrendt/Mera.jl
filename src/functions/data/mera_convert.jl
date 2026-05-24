@@ -179,46 +179,17 @@ end
 # ================================================================================
 
 """
-    JLD2.rconvert(::Type{CodecLz4.LZ4FrameCompressor}, reconstructed_data)
+    _lz4_typemap()
 
-Custom conversion method for handling old LZ4FrameCompressor objects.
-This function is automatically called by JLD2 when it encounters type mismatches.
+Create a JLD2 typemap entry for handling old LZ4FrameCompressor objects.
 
-# Problem Being Solved
-Old files have LZ4FrameCompressor with header::TranscodingStreams.Memory field
-New code expects LZ4FrameCompressor with header::Vector{UInt8} field
-JLD2 can't automatically convert between these internal field types
-
-# Solution Strategy
-Rather than trying to perfectly reconstruct the old object (which is complex
-and error-prone), we create a new, default LZ4FrameCompressor object.
-This works because:
-1. The actual compressed data is separate from the compressor object
-2. The compressor object is just metadata about compression settings
-3. A default compressor can successfully decompress the data
-
-# Type Piracy Note
-This extends JLD2's rconvert function, which is technically "type piracy"
-but is the officially supported method for handling custom type conversions in JLD2
+Old files have LZ4FrameCompressor with header::TranscodingStreams.Memory field,
+new code expects header::Vector{UInt8}. We map the old type directly to the
+current type — JLD2 constructs a fresh default compressor, which works because
+the compressor is just metadata (the actual compressed data is separate).
 """
-function JLD2.rconvert(::Type{CodecLz4.LZ4FrameCompressor}, reconstructed_data)
-    try
-        # Check if the reconstructed data has the problematic field structure
-        if hasfield(typeof(reconstructed_data), :header)
-            # Create a fresh, compatible compressor object
-            # This will use the current package version's structure
-            return CodecLz4.LZ4FrameCompressor()
-        else
-            # If structure is unexpected, still create a default compressor
-            # This handles edge cases and ensures we always return a valid object
-            return CodecLz4.LZ4FrameCompressor()
-        end
-    catch e
-        # Fallback for any unexpected errors during reconstruction
-        # Log the issue but continue with a working default object
-        @warn "Could not convert LZ4FrameCompressor, using default: $e"
-        return CodecLz4.LZ4FrameCompressor()
-    end
+function _lz4_typemap()
+    return "CodecLz4.LZ4FrameCompressor" => CodecLz4.LZ4FrameCompressor
 end
 
 # ================================================================================
@@ -372,8 +343,9 @@ This is the core conversion function called by each thread.
 - Force garbage collection and nullify data references
 - Brief pause after GC to allow memory recovery
 """
-function convert_single_file_safe(old_path::String, new_path::String, file_index::Int, 
-                                 total_files::Int, safety_margin::Float64)
+function convert_single_file_safe(old_path::String, new_path::String, file_index::Int,
+                                 total_files::Int, safety_margin::Float64;
+                                 compress=nothing)
     try
         # ============================================================================
         # PRE-CONVERSION SAFETY CHECK
@@ -393,9 +365,7 @@ function convert_single_file_safe(old_path::String, new_path::String, file_index
         # ============================================================================
         
         typemap = Dict(
-            # Map the old type name to our upgrade handler
-            # This triggers our custom rconvert function when the old type is encountered
-            "CodecLz4.LZ4FrameCompressor" => JLD2.Upgrade(CodecLz4.LZ4FrameCompressor)
+            _lz4_typemap()
         )
         
         # ============================================================================
@@ -418,11 +388,19 @@ function convert_single_file_safe(old_path::String, new_path::String, file_index
         
         # ============================================================================
         # FILE SAVING OPERATION
-        # Write the converted data using current package versions
-        # This creates a clean file compatible with modern Mera.jl
+        # Write the converted data using current package versions.
+        # Compression resolves via check_compression(compress, true):
+        #   compress=nothing (default) → LZ4FrameCompressor() — matches savedata
+        #   compress=false             → no compression
+        #   compress=<Codec>           → use that codec
         # ============================================================================
-        
-        JLD2.save(new_path, data)
+
+        ctype = check_compression(compress, true)
+        if ctype === :nothing
+            JLD2.save(new_path, data)
+        else
+            JLD2.save(new_path, data; compress=ctype)
+        end
         
         # ============================================================================
         # MEMORY CLEANUP
@@ -543,7 +521,8 @@ end
                                min_threads::Int=DEFAULT_MIN_THREADS,
                                max_threads::Int=DEFAULT_MAX_THREADS,
                                skip_existing::Bool=true,
-                               show_confirmation::Bool=true) -> Dict
+                               show_confirmation::Bool=true,
+                               compress=nothing) -> Dict
 
 Main function for safe multithreaded batch conversion with active safety margin monitoring.
 
@@ -569,9 +548,13 @@ This function coordinates the entire conversion process including:
 - `min_threads`: Minimum thread count even under resource constraints (default: 1)
 - `max_threads`: Maximum thread count regardless of system capacity (default: 64)
 
-## Behavior Control Parameters  
+## Behavior Control Parameters
 - `skip_existing`: Skip files that already exist in output directory (default: true)
 - `show_confirmation`: Display user confirmation prompt before starting (default: true)
+- `compress`: Compression codec for the output files, matching `savedata`'s API
+  (default: `nothing` → `LZ4FrameCompressor()`). Pass `false` to write
+  uncompressed files, or a specific codec instance (`LZ4FrameCompressor()`,
+  `ZlibCompressor()`, `Bzip2Compressor()`) for finer control.
 
 # Safety Margin System
 
@@ -626,14 +609,15 @@ requested_threads=16, safety_margin=0.7,
 skip_existing=false)
 
 """
-function batch_convert_mera(input_dir::String, output_dir::String, 
+function batch_convert_mera(input_dir::String, output_dir::String,
                                    start_output::Int, end_output::Int;
                                    requested_threads::Int=Threads.nthreads(),
                                    safety_margin::Float64=DEFAULT_SAFETY_MARGIN,
                                    min_threads::Int=DEFAULT_MIN_THREADS,
                                    max_threads::Int=DEFAULT_MAX_THREADS,
                                    skip_existing::Bool=true,
-                                   show_confirmation::Bool=true)
+                                   show_confirmation::Bool=true,
+                                   compress=nothing)
     
     # ============================================================================
     # INITIALIZATION AND HEADER DISPLAY
@@ -834,7 +818,8 @@ function batch_convert_mera(input_dir::String, output_dir::String,
         # Perform the actual conversion with safety monitoring
         # ========================================================================
         
-        if convert_single_file_safe(old_path, new_path, i, length(target_files), safety_margin)
+        if convert_single_file_safe(old_path, new_path, i, length(target_files),
+                                    safety_margin; compress=compress)
             Threads.atomic_add!(success_count, 1)  # Thread-safe increment
         else
             Threads.atomic_add!(failed_count, 1)   # Thread-safe increment
