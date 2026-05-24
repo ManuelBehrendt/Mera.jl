@@ -245,25 +245,50 @@ function getparticles( dataobject::InfoType;
     
     if max_threads > 1
         # ===== PARALLEL DATA READING =====
-        if read_cpu  # Include CPU number for each particle in output
-            if dataobject.descriptor.pversion == 0  # Old particle format
-                pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata_parallel(  
-                    dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu, max_threads)
-            elseif dataobject.descriptor.pversion > 0  # New particle format with family/tag
-                pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata_parallel(  
-                    dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu, max_threads)
+        try
+            if read_cpu  # Include CPU number for each particle in output
+                if dataobject.descriptor.pversion == 0  # Old particle format
+                    pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata_parallel(  
+                        dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                elseif dataobject.descriptor.pversion > 0  # New particle format with family/tag
+                    pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata_parallel(  
+                        dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                end
+            else  # Don't include CPU information in output
+                if dataobject.descriptor.pversion == 0
+                    pos_1D, vars_1D, identity_1D, levels_1D = getparticledata_parallel(  
+                        dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                elseif dataobject.descriptor.pversion > 0
+                    pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata_parallel(  
+                        dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
+                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                end
             end
-        else  # Don't include CPU information in output
-            if dataobject.descriptor.pversion == 0
-                pos_1D, vars_1D, identity_1D, levels_1D = getparticledata_parallel(  
-                    dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu, max_threads)
-            elseif dataobject.descriptor.pversion > 0
-                pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata_parallel(  
-                    dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu, max_threads)
+        catch e
+            if e isa UndefRefError
+                if verbose
+                    @warn "[Mera]: Detected UndefRefError during parallel particle read. Retrying with max_threads=1 (serial fallback before table construction)." exception=e
+                end
+                return getparticles( dataobject;
+                        lmax=lmax,
+                        vars=vars,
+                        stars=stars,
+                        xrange=xrange,
+                        yrange=yrange,
+                        zrange=zrange,
+                        center=center,
+                        range_unit=range_unit,
+                        presorted=presorted,
+                        print_filenames=print_filenames,
+                        verbose=verbose,
+                        show_progress=show_progress,
+                        max_threads=1,
+                        myargs=myargs )
+            else
+                rethrow()
             end
         end
     else
@@ -317,143 +342,140 @@ function getparticles( dataobject::InfoType;
         end
     end
 
-    # ===== DATA TABLE CREATION =====
-    # Create the final data table with appropriate column structure
-    # The table structure depends on multiple factors:
-    # - Whether CPU info is included (read_cpu)
-    # - Whether data is AMR or uniform grid (isamr)
-    # - Particle format version (pversion 0 vs >0)
-    # - Whether to enable sorting (presorted)
-    
-    # Extract underlying arrays from ElasticArrays using .data for performance
-    if read_cpu # Include CPU column in the table
-        if isamr # AMR data (includes level column)
-            if dataobject.descriptor.pversion == 0 # Old particle format
-                if presorted  # Enable table sorting by primary keys
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else  # No sorting
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
+    # ===== DATA TABLE CREATION WITH FALLBACK =====
+    # Wrap construction in a try/catch to detect sporadic UndefRefError (likely parallel race / uninitialized ref)
+    local data
+    try
+        # Extract underlying arrays from ElasticArrays using .data for performance
+        if read_cpu # Include CPU column in the table
+            if isamr # AMR data (includes level column)
+                if dataobject.descriptor.pversion == 0 # Old particle format
+                    if presorted
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                            names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                            names=collect(names_constr), presorted=false )
+                    end
+                elseif dataobject.descriptor.pversion > 0
+                    # Remove family & tag from var list (they are explicit columns)
+                    filter!(x->x≠6,nvarp_i_list); filter!(x->x≠5,nvarp_i_list)
+                    if presorted
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                            names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
+                            names=collect(names_constr), presorted=false )
+                    end
                 end
-
-            elseif dataobject.descriptor.pversion > 0 # New particle format
-                # Remove family and tag from variable list (they're handled as separate columns)
-                filter!(x->x≠6,nvarp_i_list)  # Remove tag index
-                filter!(x->x≠5,nvarp_i_list)  # Remove family index
-                if presorted
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
+            else # Uniform grid
+                if dataobject.descriptor.pversion == 0
+                    if presorted
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), presorted=false )
+                    end
+                elseif dataobject.descriptor.pversion > 0
+                    filter!(x->x≠6,nvarp_i_list); filter!(x->x≠5,nvarp_i_list)
+                    if presorted
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
+                            [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), presorted=false )
+                    end
                 end
             end
-
-        else # Uniform grid data (no level column)
-            if dataobject.descriptor.pversion == 0
-                if presorted
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
+        else # read_cpu == false
+            if isamr
+                if dataobject.descriptor.pversion == 0
+                    if presorted
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), presorted=false )
+                    end
+                elseif dataobject.descriptor.pversion > 0
+                    filter!(x->x≠6,nvarp_i_list); filter!(x->x≠5,nvarp_i_list)
+                    if presorted
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( levels_1D[:], pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), presorted=false )
+                    end
                 end
-            elseif dataobject.descriptor.pversion > 0
-                filter!(x->x≠6,nvarp_i_list)
-                filter!(x->x≠5,nvarp_i_list)
-                if presorted
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:], cpus_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
+            else # uniform grid
+                if dataobject.descriptor.pversion == 0
+                    if presorted
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), presorted=false )
+                    end
+                elseif dataobject.descriptor.pversion > 0
+                    filter!(x->x≠6,nvarp_i_list); filter!(x->x≠5,nvarp_i_list)
+                    if presorted
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), pkey=collect(Nkeys), presorted=false )
+                    else
+                        @inbounds data = table( pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data,
+                            identity_1D[:], family_1D[:], tag_1D[:], [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]..., names=collect(names_constr), presorted=false )
+                    end
                 end
             end
         end
-    else # Don't include CPU column
-        if isamr # AMR data
-            if dataobject.descriptor.pversion == 0
-                if presorted
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table( levels_1D[:],
-                    pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
-                    [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                    names=collect(names_constr), presorted = false )
-                end
-            elseif dataobject.descriptor.pversion > 0
-                filter!(x->x≠6,nvarp_i_list)
-                filter!(x->x≠5,nvarp_i_list)
-                if presorted
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table( levels_1D[:],
-                        pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
-                end
+    catch e
+        if e isa UndefRefError && max_threads > 1
+            if verbose
+                @warn "[Mera]: Detected UndefRefError during parallel particle table construction. Retrying with max_threads=1 (serial fallback)." exception=e
             end
-        else # Uniform grid data
-            if dataobject.descriptor.pversion == 0
-                if presorted
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
-                end
-            elseif dataobject.descriptor.pversion > 0
-                filter!(x->x≠6,nvarp_i_list)
-                filter!(x->x≠5,nvarp_i_list)
-                if presorted
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), pkey=collect(Nkeys), presorted = false )
-                else
-                    @inbounds data = table(pos_1D[1,:].data, pos_1D[2,:].data, pos_1D[3,:].data, identity_1D[:], family_1D[:], tag_1D[:],
-                        [vars_1D[ nvarp_corr[i],: ].data for i in nvarp_i_list]...,
-                        names=collect(names_constr), presorted = false )
-                end
-            end
+            return getparticles( dataobject;
+                    lmax=lmax,
+                    vars=vars,
+                    stars=stars,
+                    xrange=xrange,
+                    yrange=yrange,
+                    zrange=zrange,
+                    center=center,
+                    range_unit=range_unit,
+                    presorted=presorted,
+                    print_filenames=print_filenames,
+                    verbose=verbose,
+                    show_progress=show_progress,
+                    max_threads=1,
+                    myargs=myargs )
+        else
+            rethrow()
         end
     end
 
     # ===== MEMORY USAGE REPORT =====
-    printtablememory(data, verbose)  # Print memory usage of the created table
+    printtablememory(data, verbose)
 
     # ===== RESULT PACKAGING =====
-    # Create the final return object with all relevant information
-    partdata = PartDataType()                         # Initialize return structure
-    partdata.data = data                              # The actual particle data table
-    partdata.info = dataobject                        # Original simulation information
-    partdata.lmin = dataobject.levelmin               # Minimum refinement level in simulation
-    partdata.lmax = lmax                              # Maximum refinement level used
-    partdata.boxlen = dataobject.boxlen               # Physical size of simulation box
-    partdata.ranges = ranges                          # Spatial ranges used for particle selection
-    partdata.selected_partvars = names_constr         # List of variables included in output
-    partdata.used_descriptors = used_descriptors      # Variable descriptors used
-    partdata.scale = dataobject.scale                 # Unit conversion factors
+    partdata = PartDataType()
+    partdata.data = data
+    partdata.info = dataobject
+    partdata.lmin = dataobject.levelmin
+    partdata.lmax = lmax
+    partdata.boxlen = dataobject.boxlen
+    partdata.ranges = ranges
+    partdata.selected_partvars = names_constr
+    partdata.used_descriptors = used_descriptors
+    partdata.scale = dataobject.scale
     return partdata
 end
 
