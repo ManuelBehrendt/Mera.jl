@@ -16,7 +16,6 @@ validation_runs/
 test_backup_20250808_143045/
 # Do not ignore the main entrypoint; only ignore backups
 src/Mera.jl.bak*
-paper/
 
 # Benchmark scripts, only publish zip files
 src/benchmarks/RAMSES_reading/downloads/run_test_plots.jl
@@ -104,22 +103,26 @@ nextreleases.rtf
 
 # Coverage analysis files
 COVERAGE_SETUP_SUMMARY.md
+COVERAGE_UPDATE.md
 TEST_WORKFLOWS.md
+calc_coverage*.jl
 calculate_exact_coverage_fixed.jl
+calculate_coverage.jl
+coverage_analysis.jl
 coverage_summary.sh
+coverage*.lcov
+final_coverage_summary.jl
 generate_coverage.jl
 generate_coverage_safe.jl
 lcov.info
 manual_coverage_analysis.jl
-upload_coverage_complete.jl
-
-# Coverage analysis files - should not be in repository
-calculate_coverage.jl
-coverage_analysis.jl
-final_coverage_summary.jl
 simple_coverage_check.jl
-coverage.lcov
+upload_coverage_complete.jl
 codecov
+
+# Test artifacts
+test_backup_*/
+test_output.log
 
 # Local testing files - metaprogramming development
 test/test_metaprog*.jl
