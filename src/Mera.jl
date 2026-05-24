@@ -5,13 +5,13 @@ module Mera
 # Read/Save and process large AMR/particle data sets
 # of hydrodynamic simulations with Julia!
 #
-# Manuel Behrendt, since 2017
+# Manuel Behrendt, 
+# 2025-now: Racah Institute of Physics, Hebrew University, Jerusalem
+# 2017-2025:
 # Max-Planck-Institute for extraterrestrial Physics, Garching
 # Ludwig-Maximillians-University, Munich
 #
 # https://github.com/ManuelBehrendt/Mera.jl
-#
-# Enhanced test coverage - September 2025
 #
 # Credits:
 # The RAMSES-files reader are strongly influenced
@@ -19,10 +19,19 @@ module Mera
 # ==================================================================
 
 
-# external libraries
+# Julia standard libraries
+using Printf
+using Dates
+using Statistics
+using Pkg
+using Base.Threads
+using Base: Semaphore, acquire, release
+using LinearAlgebra
+using SparseArrays
+
+# External libraries
 using BenchmarkTools
 using FortranFiles
-#using JuliaDB
 using IndexedTables
 using DataStructures
 using ElasticArrays
@@ -33,45 +42,15 @@ using OnlineStats
 using Images
 using ImageTransformations
 using ImageTransformations.Interpolations
-#using ImageFiltering
-
-using JLD2, CodecZlib, CodecBzip2, CodecLz4
-using TranscodingStreams
-using TimerOutputs
-using WAV
-
-# Julia libraries
-using Printf
-using Dates
-using Statistics
-using Pkg
-using Base.Threads
-using Base: Semaphore, acquire, release 
-using LinearAlgebra
-using SparseArrays 
-
-# external libraries
-using FortranFiles
-#using JuliaDB
-using IndexedTables
 using CSV
 using FileIO
-using DataStructures
 using Distributions
-using ElasticArrays
-using StructArrays
 using JSON3
 using HTTP
 using JSON
-using ProgressMeter
-using StatsBase
-using OnlineStats
-using ImageTransformations
-using ImageTransformations.Interpolations
-#using ImageFiltering
 using MacroTools
-
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
+using TranscodingStreams
 using TimerOutputs
 using WAV
 using WriteVTK
@@ -264,18 +243,18 @@ include("read_data/RAMSES/hilbert3d.jl")
 # Data reader
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
-include("read_data/RAMSES/gethydro_deprecated.jl")
-include("read_data/RAMSES/reader_hydro_deprecated.jl")
+#include("read_data/RAMSES/gethydro_deprecated.jl")      # moved to dev/
+#include("read_data/RAMSES/reader_hydro_deprecated.jl")   # moved to dev/
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
-include("read_data/RAMSES/getgravity_deprecated.jl")
-include("read_data/RAMSES/reader_gravity_deprecated.jl")
+#include("read_data/RAMSES/getgravity_deprecated.jl")     # moved to dev/
+#include("read_data/RAMSES/reader_gravity_deprecated.jl")  # moved to dev/
 
 include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")
-include("read_data/RAMSES/getparticles_deprecated.jl")
-include("read_data/RAMSES/reader_particles_deprecated.jl")
+#include("read_data/RAMSES/getparticles_deprecated.jl")    # moved to dev/
+#include("read_data/RAMSES/reader_particles_deprecated.jl") # moved to dev/
 
 include("read_data/RAMSES/getclumps.jl")
 # ============================================
