@@ -907,9 +907,18 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                                 end
                             end
                             
-                            # Project this level directly to variable's final grid
-                            if var == :sd
-                                # Surface density: use unity weights to avoid double-weighting
+                            # Project this level directly to variable's final grid.
+                            # :sd and :mass are EXTENSIVE quantities and must
+                            # accumulate Σ(mass · overlap_fraction) without an
+                            # additional mass weighting -- otherwise the per-pixel
+                            # accumulator becomes Σ(mass² · overlap_fraction),
+                            # which then breaks mass conservation for the :mass
+                            # mode=:sum path (imaps[:mass] = final_grids[:mass]
+                            # with no normalisation).  See the projection mass-
+                            # conservation tests in test/06_projections.jl.
+                            if var == :sd || var == :mass
+                                # Extensive quantity: use unity weights to avoid
+                                # double-weighting (was a bug for :mass only).
                                 unity_weights = ones(Float64, length(weights_level))
                                 map_amr_cells_to_grid!(var_grid, var_weights,
                                                      x_level, y_level, values_level, unity_weights,
@@ -1031,11 +1040,17 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     # Process each variable for this level
                     for var in keys(data_dict)
                         values_level = data_dict[var][mask_level]
-                        
-                        # Use appropriate mapping based on variable type
-                        if var == :sd
-                            # Surface density: accumulate mass directly without mass weighting
-                            # Use unity weights to avoid double-weighting mass
+
+                        # :sd and :mass are EXTENSIVE quantities and must
+                        # accumulate Σ(mass · overlap_fraction) without an
+                        # additional mass weighting -- otherwise per pixel we
+                        # would store Σ(mass² · overlap_fraction), which
+                        # silently breaks conservation for the :mass mode=:sum
+                        # path (imaps[:mass] = final_grids[:mass], no
+                        # normalisation).  Keep :sd and :mass in lockstep here
+                        # and in the threaded path above.
+                        if var == :sd || var == :mass
+                            # Extensive quantity: unity weights only.
                             unity_weights = ones(Float64, length(weights_level))
                             map_amr_cells_to_grid!(final_grids[var], final_weights[var],
                                                  x_level, y_level, values_level, unity_weights,
@@ -2405,6 +2420,12 @@ The system provides multiple specialized mapping algorithms:
 ### 4. Variable Processing Pipeline
 - **Multi-Variable Support**: Processes multiple physical quantities simultaneously
 - **Weighting Schemes**: Mass-weighted averages for intensive quantities, direct summation for extensive
+- **Extensive Quantities**: `:sd` (surface density) and `:mass` (total mass) use unity
+  weights and direct accumulation (`Σ mass · overlap_fraction`) for exact mass
+  conservation. Other variables use mass-weighted averaging. Both call sites
+  in the AMR per-level loop must keep `:sd` and `:mass` in lockstep to preserve
+  this contract — see the in-line comment at the `if var == :sd || var == :mass`
+  branches in the threaded and sequential paths.
 - **Special Handling**: Surface density, velocity dispersion, mass conservation
 - **Unit Management**: Automatic unit scaling and conversion
 
