@@ -114,8 +114,13 @@ julia> fieldnames(particles)
 ##### Required:
 - **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
 ##### Predefined/Optional Keywords:
-- **`lmax`:** not defined
-- **`stars`:** not defined
+- **`lmax`:** maximum AMR level to load (default: `info.levelmax`)
+- **`stars`:** include star particles (default: `true`). Set `stars=false` to
+  drop star particles from the returned table. On the new RAMSES particle
+  format (pversion > 0) this drops rows with `family == 2`; on the legacy
+  format (no `:family` column) it drops rows with `birth > 0` (RAMSES
+  convention for stellar formation time). Requires the `:family` (new) or
+  `:birth` (legacy) column to be in the loaded variable subset.
 - **`var(s)`:** the selected particle variables in arbitrary order: :all (default), :cpu, :mass, :vx, :vy, :vz, :birth :metals, ...
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
@@ -459,6 +464,30 @@ function getparticles( dataobject::InfoType;
                     myargs=myargs )
         else
             rethrow()
+        end
+    end
+
+    # ===== APPLY stars=false FILTER (if requested) =====
+    # The `stars` kwarg was historically plumbed through the reader stack
+    # but never actually applied -- it was a no-op flag.  This block makes
+    # it functional:
+    #   - New format (pversion > 0): drop rows with family == 2 (RAMSES
+    #     star family code).
+    #   - Legacy format (pversion == 0, no :family column): drop rows with
+    #     birth > 0 (legacy convention: DM has birth == 0, stars have
+    #     non-zero formation time).
+    # If neither column is present in the loaded variable subset (e.g. the
+    # user called gethydro with vars=[:vx]) the filter is skipped --
+    # without family/birth there is no way to identify stars at this
+    # stage.  Memory cost: stars are read and then discarded; acceptable
+    # for the simple-correctness fix.  A future optimisation could push
+    # the filter into readpart_chunk for true read-time skipping.
+    if !stars && length(data) > 0
+        col_names = propertynames(data.columns)
+        if :family in col_names
+            data = filter(p -> p.family != 2, data)
+        elseif :birth in col_names
+            data = filter(p -> p.birth <= 0.0, data)
         end
     end
 
