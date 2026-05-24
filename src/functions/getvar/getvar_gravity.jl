@@ -149,7 +149,7 @@ function get_data(dataobject::GravDataType,
         elseif i == :gravitational_redshift
             selected_unit = getunit(dataobject, :gravitational_redshift, vars, units)
             epot = select(masked_data, :epot)
-            c_speed = 2.99792458e10  # cm/s - speed of light
+            c_speed = dataobject.info.constants.c  # cm/s - speed of light
             vars_dict[:gravitational_redshift] = @. epot / (c_speed^2) * selected_unit
 
 
