@@ -1,3 +1,22 @@
+"""
+    getinfo([output::Real]; path::String="", namelist::String="", verbose::Bool=true)
+
+Return simulation overview metadata (an `InfoType`) for a RAMSES output. It inspects
+info, descriptor and header files (hydro / gravity / particles / RT / clumps), parses
+the namelist when available, gathers compile + build information, and collects basic
+cosmological units & scaling factors.
+
+Call patterns:
+    info = getinfo(42)                      # current directory, output 42
+    info = getinfo(output=42, path="/sim")   # explicit keywords
+    info = getinfo("/sim"; output=42)        # path first
+
+Set `verbose=false` to suppress the textual summary. The returned object exposes
+fields like `descriptor`, `grid_info`, `part_info`, `scale`, and helper accessors
+(`namelist(info)`, `makefile(info)`, `timerfile(info)`, etc.).
+"""
+function getinfo end
+
 function getinfo(output::Real; path::String="", namelist::String="", verbose::Bool=true)
     return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
 end
@@ -10,51 +29,6 @@ function getinfo(path::String; output::Real=1, namelist::String="", verbose::Boo
     return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
 end
 
-"""
-#### Get the simulation overview from RAMSES info, descriptor and output header files
-```julia
-getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=true)
-return InfoType
-```
-
-#### Keyword Arguments
-- **`output`:** timestep number (default=1)
-- **`path`:** the path to the output folder relative to the current folder or absolute path
-- **`namelist`:** give the path to a namelist file (by default the namelist.txt-file in the output-folder is read)
-- **`verbose:`:** informations are printed on the screen by default
-
-#### Examples
-```julia
-# read simulation information from output `1` in current folder
-julia> info = getinfo()
-
-# read simulation information from output `420` in given folder (relative path to the current working folder)
-julia> info = getinfo(output=420, path="../MySimFolder/")
-
-# or simply use
-julia> info = getinfo(420, "../MySimFolder/")
-
-
-
-# get an overview of the returned field-names
-julia> propertynames(info)
-
-# a more detailed overview
-julia> viewfields(info)
-...
-julia> viewallfields(info)
-...
-julia> namelist(info)
-...
-julia> makefile(info)
-...
-julia> timerfile(info)
-...
-julia> patchfile(info)
-...
-```
-
-"""
 function getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=true)
 
 

@@ -123,6 +123,19 @@ function extract_column_data(vars_1D, pos_1D, cpus_1D, nvarh_corr, nvarh_i_list,
 end
 
 
+"""
+    gethydro(info::InfoType, var::Symbol; kwargs...)
+    gethydro(info::InfoType, vars::Vector{Symbol}; kwargs...)
+    gethydro(info::InfoType; vars=[:all], kwargs...)
+
+Load leaf-cell hydro variables from a RAMSES output described by an `InfoType`.
+Supports spatial sub-selection (`xrange/yrange/zrange`, `center`, `range_unit`),
+level restriction (`lmax`), variable filtering (`vars` or single `var`), basic data
+sanitation (`smallr`, `smallc`, negative value checks), progress + verbosity
+control, and explicit thread limiting (`max_threads`).  Returns a `HydroDataType`
+containing an IndexedTable plus metadata (selected variables, scales, ranges).
+See extended docstring below for full argument reference and examples.
+"""
 function gethydro(dataobject::InfoType, var::Symbol;
                     lmax::Real=dataobject.levelmax,
                     xrange::Array{<:Any,1}=[missing, missing],

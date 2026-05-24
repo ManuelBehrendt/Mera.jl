@@ -71,6 +71,23 @@ function checkprogress(show_progress::Bool)
     return show_progress
 end
 
+"""
+    showprogress(mode::Union{Bool,Nothing})
+    showprogress()
+
+Set or display the global progress-bar mode.
+
+When called with a `Bool`, enables (`true`) or disables (`false`) progress bars
+for all subsequent Mera operations. Pass `nothing` to revert to each function's
+default behaviour.  When called without arguments, prints the current setting.
+
+# Examples
+```julia
+showprogress(false)   # suppress all progress bars
+showprogress()        # prints "showprogress_mode: false"
+showprogress(nothing) # restore per-function defaults
+```
+"""
 function showprogress(mode::Union{Bool,Nothing})
         global showprogress_mode = mode
         @eval(Mera, showprogress_mode)

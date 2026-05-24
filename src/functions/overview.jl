@@ -969,17 +969,16 @@ end
 
 
 """
-#### Get physical time in selected units
-returns Float
+    gettime(output::Real; path::String="./", unit::Symbol=:standard)
+    gettime(dataobject::DataSetType; unit::Symbol=:standard)
+    gettime(dataobject::InfoType, unit::Symbol=:standard)
+
+Get the physical simulation time in selected units. Returns a `Float64`.
 
 ```julia
-```julia
-gettime(output::Real; path::String="./", unit::Symbol=:standard)
-gettime(dataobject::DataSetType; unit::Symbol=:standard)
-gettime(dataobject::InfoType, unit::Symbol=:standard)
-
-return time
-```
+gettime(1, path="/path/to/sim", unit=:Myr)
+gettime(gas, unit=:Gyr)
+gettime(info, :Myr)
 ```
 
 #### Arguments Function 1
@@ -1007,7 +1006,6 @@ return time
 - **`unit`:** return the variable in given unit
 
 """
-# Keyword-first definitions (primary)
 function gettime(output::Real; path::String="./", unit::Symbol=:standard)
     info = getinfo(output, path, verbose=false)
     return info.time * getunit(info, unit)

@@ -272,6 +272,23 @@ end
 
 
 
+"""
+    namelist(object::InfoType)
+    namelist(object::Dict{Any,Any})
+
+Pretty-print the RAMSES namelist content stored in `object`.
+
+For an `InfoType`, the namelist is read from the simulation's `namelist.txt`
+and stored in `object.namelist_content`.  Each namelist block header and its
+parameters are printed to stdout.
+
+# Examples
+```julia
+info = getinfo(1, "path/to/sim")
+namelist(info)               # show all namelist blocks
+namelist(info.namelist_content)  # equivalent, passing the Dict directly
+```
+"""
 function namelist(object::InfoType)
     println()
     printstyled("[Mera]: Namelist file content\n", bold=true, color=:normal)
