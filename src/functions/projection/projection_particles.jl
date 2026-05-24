@@ -100,7 +100,7 @@ return PartMapsType
 ...
 """
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
-                            #parttypes::Array{Symbol,1}=[:stars],
+                            parttypes::Array{Symbol,1}=[:all],
                             units::Array{Symbol,1}=[:standard],
                             lmax::Real=dataobject.lmax,
                             res::Union{Real, Missing}=missing,
@@ -122,7 +122,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, vars, units=units,
-                                #parttypes=parttypes,
+                                parttypes=parttypes,
                                 lmax=lmax,
                                 res=res,
                                 pxsize=pxsize,
@@ -190,7 +190,7 @@ end
 
 
 function projection(   dataobject::PartDataType, var::Symbol;
-                            #parttypes::Array{Symbol,1}=[:stars],
+                            parttypes::Array{Symbol,1}=[:all],
                             unit::Symbol=:standard,
                             lmax::Real=dataobject.lmax,
                             res::Union{Real, Missing}=missing,
@@ -212,7 +212,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, [var], units=[unit],
-                                #parttypes=parttypes,
+                                parttypes=parttypes,
                                 lmax=lmax,
                                 res=res,
                                 pxsize=pxsize,
@@ -236,7 +236,7 @@ end
 
 
 function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
-                            #parttypes::Array{Symbol,1}=[:stars],
+                            parttypes::Array{Symbol,1}=[:all],
                             lmax::Real=dataobject.lmax,
                             res::Union{Real, Missing}=missing,
                             pxsize::Array{<:Any,1}=[missing, missing],
@@ -257,7 +257,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, [var], units=[unit],
-                                #parttypes=parttypes,
+                                parttypes=parttypes,
                                 lmax=lmax,
                                 res=res,
                                 pxsize=pxsize,
@@ -280,7 +280,7 @@ end
 
 
 function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol;
-                            #parttypes::Array{Symbol,1}=[:stars],
+                            parttypes::Array{Symbol,1}=[:all],
                             lmax::Real=dataobject.lmax,
                             res::Union{Real, Missing}=missing,
                             pxsize::Array{<:Any,1}=[missing, missing],
@@ -301,7 +301,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             myargs::ArgumentsType=ArgumentsType() )
 
     return   create_projection(   dataobject, vars, units=fill(unit, length(vars)),
-                                #parttypes=parttypes,
+                                parttypes=parttypes,
                                 lmax=lmax,
                                 res=res,
                                 pxsize=pxsize,
@@ -324,7 +324,7 @@ end
 
 
 function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
-                            #parttypes::Array{Symbol,1}=[:stars],
+                            parttypes::Array{Symbol,1}=[:all],
                             units::Array{Symbol,1}=[:standard],
                             lmax::Real=dataobject.lmax,
                             res::Union{Real, Missing}=missing,
@@ -570,232 +570,200 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         p = length(selected_vars)+2 # do not show updates
     end
     #if show_progress p = Progress(length(selected_vars)) end
+    # Enable strict failure mode if requested via environment variable.
+    strict_projection = lowercase(get(ENV, "MERA_PROJECTION_STRICT", "false")) in ["1","true","yes"]
+    failed_projection_vars = Symbol[]
     @showprogress p for i_var in selected_vars #dependencies_part_list @showprogress 1 ""
-        #println(i_var)
-
         if !in(i_var, rσanglecheck)  # exclude velocity dispersion symbols and radius/angle maps
-
-            if weighting == :mass
-
-                if in(i_var, sd_names)
-
-                    if length(mask) == 1
-                        global h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                        weights( select(filtered_data, :mass) ) ,
-                                        closed=closed,
-                                        (newrange1, newrange2) )
-                    else
-                        global h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                        weights( select(filtered_data, :mass) .* select(filtered_data, :mask)) ,
-                                        closed=closed,
-                                        (newrange1, newrange2) )
-                    end
-
-                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                    if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2 .* selected_unit
-                    else
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2
-                    end
-                    maps_unit[Symbol( string(i_var)  )] = unit_name
-                    maps_mode[Symbol( string(i_var)  )] = :mass_weighted
-
-                elseif in(i_var, density_names)
-                    if length(mask) == 1
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass)  ) ,
+            try
+                if weighting == :mass
+                    if in(i_var, sd_names)
+                        if length(mask) == 1
+                            global h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                            weights( select(filtered_data, :mass) ) ,
                                             closed=closed,
                                             (newrange1, newrange2) )
+                        else
+                            global h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                            weights( select(filtered_data, :mass) .* select(filtered_data, :mask)) ,
+                                            closed=closed,
+                                            (newrange1, newrange2) )
+                        end
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        if selected_unit != 1.
+                            maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2 .* selected_unit
+                        else
+                            maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2
+                        end
+                        maps_unit[Symbol( string(i_var)  )] = unit_name
+                        maps_mode[Symbol( string(i_var)  )] = :mass_weighted
+                    elseif in(i_var, density_names)
+                        if length(mask) == 1
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass)  ) ,
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        else
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ) ,
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        end
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        if selected_unit != 1.
+                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
+                        else
+                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
+                        end
+                        maps_unit[Symbol( string(i_var)  )] = unit_name
+                        maps_mode[Symbol( string(i_var)  )] = :mass_weighted
                     else
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ) ,
-                                            closed=closed,
-                                            (newrange1, newrange2) )
+                        if length(mask) == 1
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                            h_mass = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        else
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) .* select(filtered_data, :mask) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                            h_mass = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        end
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        if selected_unit != 1.
+                            maps[Symbol(i_var)] = h.weights ./ h_mass.weights .* selected_unit
+                        else
+                            maps[Symbol(i_var)] = h.weights ./ h_mass.weights
+                        end
+                        maps_unit[Symbol( string(i_var) )] = unit_name
+                        maps_mode[Symbol( string(i_var) )] = :mass_weighted
                     end
-
-                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                    if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
+                elseif weighting == :volume
+                    if in(i_var, sd_names)
+                        if length(mask) == 1
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        else
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        end
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        if selected_unit != 1.
+                            maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2 .* selected_unit
+                        else
+                            maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2
+                        end
+                        maps_unit[Symbol( string(i_var)  )] = unit_name
+                        maps_mode[Symbol( string(i_var)  )] = :volume_weighted
+                    elseif in(i_var, density_names)
+                        if length(mask) == 1
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        else
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :mass) .* select(filtered_data, :mask)  ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        end
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        if selected_unit != 1.
+                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
+                        else
+                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
+                        end
+                        maps_unit[Symbol( string(i_var)  )] = unit_name
+                        maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     else
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
+                        if length(mask) == 1
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        else
+                            h = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  .* select(filtered_data, :mask)  ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                        end
+                        selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
+                        if selected_unit != 1.
+                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
+                        else
+                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
+                        end
+                        maps_unit[Symbol( string(i_var)  )] = unit_name
+                        maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     end
-                    maps_unit[Symbol( string(i_var)  )] = unit_name
-                    maps_mode[Symbol( string(i_var)  )] = :mass_weighted
-
-                else
-
-                    if length(mask) == 1
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-
-
-
-                        h_mass = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-                    else
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mass) .* select(filtered_data, :mask) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-
-
-
-                        h_mass = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-
-                    end
-
-                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                    if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ h_mass.weights .* selected_unit
-                    else
-                        maps[Symbol(i_var)] = h.weights ./ h_mass.weights
-                    end
-                    maps_unit[Symbol( string(i_var) )] = unit_name
-                    maps_mode[Symbol( string(i_var) )] = :mass_weighted
-                end
-
-
-
-            elseif weighting == :volume
-
-
-                if in(i_var, sd_names)
-                    if length(mask) == 1
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-                    else
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) .* select(filtered_data, :mask) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-                    end
-
-                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                    if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2 .* selected_unit
-                    else
-                        maps[Symbol(i_var)] = h.weights ./ (dataobject.info.boxlen / res )^2
-                    end
-                    maps_unit[Symbol( string(i_var)  )] = unit_name
-                    maps_mode[Symbol( string(i_var)  )] = :volume_weighted
-
-                elseif in(i_var, density_names)
-
-                    if length(mask) == 1
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-
-                    else
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( select(filtered_data, :mass) .* select(filtered_data, :mask)  ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-                    end
-
-                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                    if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
-                    else
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
-                    end
-                    maps_unit[Symbol( string(i_var)  )] = unit_name
-                    maps_mode[Symbol( string(i_var)  )] = :volume_weighted
-
-                else
-
+                elseif mode == :sum
                     if length(mask) == 1
                         h = fit(Histogram, (select(filtered_data, var_a) ,
                                             select(filtered_data, var_b) ),
                                             weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  ),
-                                            #weights( select(filtered_data, Symbol(i_var)) ),
                                             closed=closed,
                                             (newrange1, newrange2) )
                     else
                         h = fit(Histogram, (select(filtered_data, var_a) ,
                                             select(filtered_data, var_b) ),
-                                            weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  .* select(filtered_data, :mask)  ),
-                                            #weights( select(filtered_data, Symbol(i_var)) ),
+                                            weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mask)  ),
                                             closed=closed,
                                             (newrange1, newrange2) )
                     end
-
-
                     selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
                     if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
+                        maps[Symbol(i_var)] = h.weights .* selected_unit
                     else
-                        maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
+                        maps[Symbol(i_var)] = h.weights
                     end
-
-
                     maps_unit[Symbol( string(i_var)  )] = unit_name
-                    maps_mode[Symbol( string(i_var)  )] = :volume_weighted
+                    maps_mode[Symbol( string(i_var)  )] = :sum
                 end
-
-
-
-
-            elseif mode == :sum
-                if length(mask) == 1
-                    h = fit(Histogram, (select(filtered_data, var_a) ,
-                                        select(filtered_data, var_b) ),
-                                        weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  ),
-                                        #weights( select(filtered_data, Symbol(i_var)) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+            catch e
+                push!(failed_projection_vars, i_var)
+                if strict_projection
+                    rethrow(e)
                 else
-                    h = fit(Histogram, (select(filtered_data, var_a) ,
-                                        select(filtered_data, var_b) ),
-                                        weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mask)  ),
-                                        #weights( select(filtered_data, Symbol(i_var)) ),
-                                        closed=closed,
-                                        (newrange1, newrange2) )
+                    println("[Mera][projection_particles] Warning: Failed to project variable '$(i_var)'. Inserting NaN map. Error type: $(typeof(e))")
+                    # create placeholder NaN map
+                    if !haskey(maps, Symbol(i_var))
+                        maps[Symbol(i_var)] = fill(NaN, length1, length2)
+                    end
+                    maps_unit[Symbol( string(i_var)  )] = :unknown
+                    maps_mode[Symbol( string(i_var)  )] = :failed
                 end
-
-                selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-
-                if selected_unit != 1.
-                    maps[Symbol(i_var)] = h.weights .* selected_unit
-                else
-                    maps[Symbol(i_var)] = h.weights
-                end
-                maps_unit[Symbol( string(i_var)  )] = unit_name
-                maps_mode[Symbol( string(i_var)  )] = :sum
             end
-
         end
-
-        #if show_progress next!(p, showvalues = [(:Nvars, i_var)]) end # ProgressMeter
-    end #for
+    end # for selected_vars
+    if !isempty(failed_projection_vars) && !strict_projection && verbose
+        println("[Mera][projection_particles] Summary: $(length(failed_projection_vars)) variable(s) failed during projection: $(failed_projection_vars)")
+    end
 
 
 
@@ -806,9 +774,13 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
         if in(ivar, σcheck)
             #for iσ in σcheck
-                selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
-
+                try
+                    selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                     selected_v = σ_to_v[ivar]
+                    # Ensure dependencies exist
+                    if !(haskey(maps, selected_v[1]) && haskey(maps, selected_v[2]))
+                        throw(ErrorException("Missing velocity component maps for dispersion calculation."))
+                    end
                     iv  = maps[selected_v[1]]
                     iv_unit = maps_unit[Symbol( string(selected_v[1])  )]
                     iv2 = maps[selected_v[2]]
@@ -823,7 +795,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         elseif iv_unit == :km_s
                             maps[Symbol(ivar)] = sqrt.( diff_iv )  ./ dataobject.info.scale.km_s
                         end
-                    elseif iv_unit != iv2_unit
+                    else
                         if iv_unit == :km_s && unit_name == :standard
                             iv = iv ./ dataobject.info.scale.km_s
                         elseif iv_unit == :standard && unit_name == :km_s
@@ -834,16 +806,22 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         elseif iv2_unit == :standard && unit_name == :km_s
                             iv2 = iv2 .* dataobject.info.scale.km_s.^2
                         end
-
-                        # overwrite NaN due to radius = 0
-                        #iv2 = iv2[isnan.(iv2)] .= 0
-                        #iv  = iv[isnan.(iv)] .= 0
                         diff_iv = iv2 .- iv .^2
                         diff_iv[ diff_iv .< 0. ] .= 0.
                         maps[Symbol(ivar)] = sqrt.( diff_iv )
                     end
-
                     maps_unit[Symbol( string(ivar)  )] = unit_name
+                catch e
+                    push!(failed_projection_vars, ivar)
+                    if strict_projection
+                        rethrow(e)
+                    else
+                        println("[Mera][projection_particles] Warning: Failed to compute velocity dispersion '$(ivar)'. Inserting NaN map. Error type: $(typeof(e))")
+                        maps[Symbol(ivar)] = fill(NaN, length1, length2)
+                        maps_unit[Symbol( string(ivar)  )] = :unknown
+                        maps_mode[Symbol( string(ivar)  )] = :failed
+                    end
+                end
                 #end
             #end
         end
