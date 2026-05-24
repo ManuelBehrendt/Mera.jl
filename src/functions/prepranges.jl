@@ -148,6 +148,8 @@ function prepranges(    dataobject::InfoType,
     center = prepboxcenter(dataobject, range_unit, center)
 
     selected_unit = 1.
+    # Initialize shift variables with safe defaults to avoid UndefVarError downstream
+    cx_shift = 0.0; cy_shift = 0.0; cz_shift = 0.0; radius_shift = radius; height_shift = height
     if range_unit == :standard
         xmin = -radius + center[1]
         xmax =  radius + center[1]
@@ -180,8 +182,8 @@ function prepranges(    dataobject::InfoType,
         cx_shift = center[1] * selected_unit /dataobject.boxlen
         cy_shift = center[2] * selected_unit /dataobject.boxlen
         cz_shift = center[3] * selected_unit /dataobject.boxlen
-        radius_shift = radius * selected_unit /dataobject.boxlen
-        if height != 0. height_shift = height * selected_unit /dataobject.boxlen end
+    radius_shift = radius * selected_unit /dataobject.boxlen
+    if height != 0. height_shift = height * selected_unit /dataobject.boxlen end
         center  =  center / (dataobject.boxlen * selected_unit )
     end
 
@@ -259,6 +261,9 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
     center = prepboxcenter(dataobject, range_unit, center)
 
     selected_unit = 1.
+    # Initialize shift variables with safe defaults to avoid UndefVarError downstream
+    cx_shift = 0.0; cy_shift = 0.0; cz_shift = 0.0
+    radius_in_shift = radius_in; radius_out_shift = radius_out; height_shift = height
     if range_unit == :standard
         xmin = -radius_out + center[1]
         xmax =  radius_out + center[1]
@@ -364,6 +369,9 @@ function prep_spherical_shellranges(    dataobject::InfoType,
     center = prepboxcenter(dataobject, range_unit, center)
 
     selected_unit = 1.
+    # Initialize shift variables with safe defaults to avoid UndefVarError downstream
+    cx_shift = 0.0; cy_shift = 0.0; cz_shift = 0.0
+    radius_in_shift = radius_in; radius_out_shift = radius_out
     if range_unit == :standard
         xmin = -radius_out + center[1]
         xmax =  radius_out + center[1]
