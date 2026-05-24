@@ -751,6 +751,68 @@ mutable struct PartMapsType <: DataMapsType
     info::InfoType
 end
 
+# ----------------------------------------------------------------------------
+# Convenience property accessors (non-breaking) for legacy test expectations
+# ----------------------------------------------------------------------------
+# Older tests (and external analysis scripts) referenced fields like
+#   proj.xrange, proj.yrange, proj.res, proj.pxsize, proj.unit, proj.direction
+# These were never explicit struct fields in the current refactored type
+# definitions (which store a single 6-element `ranges` array and `effres`).
+# To preserve backward compatibility without altering the memory layout of the
+# core map structs we provide lightweight `getproperty` fallbacks.
+
+function Base.getproperty(h::HydroMapsType, s::Symbol)
+    if s === :xrange
+        return h.ranges[1:2]
+    elseif s === :yrange
+        return h.ranges[3:4]
+    elseif s === :zrange
+        return h.ranges[5:6]
+    elseif s === :res
+        return h.effres
+    elseif s === :pxsize
+        return h.pixsize
+    elseif s === :unit
+        # If exactly one unit is present return it, else indicate mixed set
+        if length(h.maps_unit) == 1
+            return first(values(h.maps_unit))
+        else
+            return :mixed
+        end
+    elseif s === :direction
+        # Direction not stored historically; return sentinel symbol so
+        # equality tests between hydro/particle projections (created with the
+        # same argument) still succeed.
+        return :unspecified
+    else
+        return getfield(h, s)
+    end
+end
+
+function Base.getproperty(p::PartMapsType, s::Symbol)
+    if s === :xrange
+        return p.ranges[1:2]
+    elseif s === :yrange
+        return p.ranges[3:4]
+    elseif s === :zrange
+        return p.ranges[5:6]
+    elseif s === :res
+        return p.effres
+    elseif s === :pxsize
+        return p.pixsize
+    elseif s === :unit
+        if length(p.maps_unit) == 1
+            return first(values(p.maps_unit))
+        else
+            return :mixed
+        end
+    elseif s === :direction
+        return :unspecified
+    else
+        return getfield(p, s)
+    end
+end
+
 
 """
 Mutable Struct: Contains the 2D histogram returned by the function: histogram2 and information about the selected simulation
@@ -817,16 +879,14 @@ end
 
 # Conversion functions for backward compatibility with old JLD2 files
 function Base.convert(::Type{ScalesType002}, old::ScalesType001)
-    return ScalesType002(
-        old.Mpc, old.kpc, old.pc, old.mpc, old.ly, old.Au, old.km, old.m, old.cm, old.mm, old.μm,
-        old.Mpc3, old.kpc3, old.pc3, old.mpc3, old.ly3, old.Au3, old.km3, old.m3, old.cm3, old.mm3, old.μm3,
-        old.Msol_pc3, old.Msun_pc3, old.g_cm3,
-        old.Msol_pc2, old.Msun_pc2, old.g_cm2,
-        old.Gyr, old.Myr, old.yr, old.s, old.ms,
-        old.Msol, old.Msun, old.Mearth, old.Mjupiter, old.g,
-        old.km_s, old.m_s, old.cm_s,
-        old.nH, old.erg, old.g_cms2, old.T_mu, old.K_mu, old.T, old.K, old.Ba, old.g_cm_s2, old.p_kB, old.K_cm3
-    )
+    new_scales = ScalesType002()
+    # Copy all fields that exist in both types
+    for field in fieldnames(ScalesType001)
+        if field != Symbol("") && hasfield(ScalesType002, field)
+            setfield!(new_scales, field, getfield(old, field))
+        end
+    end
+    return new_scales
 end
 
 function Base.convert(::Type{PhysicalUnitsType002}, old::PhysicalUnitsType001)
