@@ -908,17 +908,27 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                             end
                             
                             # Project this level directly to variable's final grid.
-                            # :sd and :mass are EXTENSIVE quantities and must
-                            # accumulate Σ(mass · overlap_fraction) without an
-                            # additional mass weighting -- otherwise the per-pixel
-                            # accumulator becomes Σ(mass² · overlap_fraction),
-                            # which then breaks mass conservation for the :mass
-                            # mode=:sum path (imaps[:mass] = final_grids[:mass]
-                            # with no normalisation).  See the projection mass-
-                            # conservation tests in test/06_projections.jl.
-                            if var == :sd || var == :mass
-                                # Extensive quantity: use unity weights to avoid
-                                # double-weighting (was a bug for :mass only).
+                            #
+                            # Branching rule (see test/06_projections.jl "Projection
+                            # Mass Conservation" testset for the contract):
+                            #
+                            #  * :sd and :mass are EXTENSIVE and ALWAYS use unity
+                            #    weights -- their imaps assignment is unconditional
+                            #    (no mode dependence), so the per-pixel accumulator
+                            #    must be Σ(mass · fraction), not Σ(mass² · fraction).
+                            #
+                            #  * :ekin, :etherm (extensive per-cell totals) use
+                            #    unity weights only when mode == :sum.  In
+                            #    mode=:standard they keep mass weighting so the
+                            #    output is a meaningful mass-weighted average
+                            #    per pixel.
+                            #
+                            #  * All other variables use mass weighting (intensive
+                            #    quantities -> mass-weighted average).
+                            extensive_sum_var = (mode == :sum) &&
+                                                (var == :ekin || var == :etherm ||
+                                                 var == :volume)
+                            if var == :sd || var == :mass || extensive_sum_var
                                 unity_weights = ones(Float64, length(weights_level))
                                 map_amr_cells_to_grid!(var_grid, var_weights,
                                                      x_level, y_level, values_level, unity_weights,
@@ -1041,16 +1051,21 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
                     for var in keys(data_dict)
                         values_level = data_dict[var][mask_level]
 
-                        # :sd and :mass are EXTENSIVE quantities and must
-                        # accumulate Σ(mass · overlap_fraction) without an
-                        # additional mass weighting -- otherwise per pixel we
-                        # would store Σ(mass² · overlap_fraction), which
-                        # silently breaks conservation for the :mass mode=:sum
-                        # path (imaps[:mass] = final_grids[:mass], no
-                        # normalisation).  Keep :sd and :mass in lockstep here
-                        # and in the threaded path above.
-                        if var == :sd || var == :mass
-                            # Extensive quantity: unity weights only.
+                        # Branching rule -- MUST match the threaded path above:
+                        #
+                        #  * :sd and :mass are EXTENSIVE and always use unity
+                        #    weights (imaps assignment is mode-independent).
+                        #  * :ekin, :etherm in mode=:sum also use unity weights
+                        #    for mass conservation; in mode=:standard they keep
+                        #    mass weighting to yield mass-weighted averages.
+                        #  * All other variables use mass weighting.
+                        #
+                        # See test/06_projections.jl "Projection Mass
+                        # Conservation" testset for the conservation contract.
+                        extensive_sum_var = (mode == :sum) &&
+                                            (var == :ekin || var == :etherm ||
+                                             var == :volume)
+                        if var == :sd || var == :mass || extensive_sum_var
                             unity_weights = ones(Float64, length(weights_level))
                             map_amr_cells_to_grid!(final_grids[var], final_weights[var],
                                                  x_level, y_level, values_level, unity_weights,
@@ -1477,7 +1492,7 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             weightval = weightval_full[final_mask]
             if isamr
                 leveldata = select(dataobject.data, :level)[final_mask]
-            else 
+            else
                 leveldata = fill(simlmax, length(xval))
             end
             use_mask = true
@@ -2420,12 +2435,17 @@ The system provides multiple specialized mapping algorithms:
 ### 4. Variable Processing Pipeline
 - **Multi-Variable Support**: Processes multiple physical quantities simultaneously
 - **Weighting Schemes**: Mass-weighted averages for intensive quantities, direct summation for extensive
-- **Extensive Quantities**: `:sd` (surface density) and `:mass` (total mass) use unity
-  weights and direct accumulation (`Σ mass · overlap_fraction`) for exact mass
-  conservation. Other variables use mass-weighted averaging. Both call sites
-  in the AMR per-level loop must keep `:sd` and `:mass` in lockstep to preserve
-  this contract — see the in-line comment at the `if var == :sd || var == :mass`
-  branches in the threaded and sequential paths.
+- **Extensive Quantities**: `:sd` (surface density) and `:mass` (total mass)
+  ALWAYS use unity weights and direct accumulation (`Σ value · overlap_fraction`)
+  for exact mass conservation -- their `imaps` assignment is mode-independent.
+  `:ekin`, `:etherm`, and `:volume` (per-cell extensive totals) use unity
+  weights only when `mode == :sum`, giving exact energy/volume conservation
+  `Σ pixel = Σ_cells var`; in `mode == :standard` they keep mass weighting
+  so the output is a mass-weighted average per pixel.  All other variables
+  use mass-weighted averaging in both modes.  Both per-AMR-level call sites
+  (threaded and sequential) must keep this branching rule in lockstep --
+  see the in-line comment blocks at the
+  `if var == :sd || var == :mass || extensive_sum_var` branches.
 - **Special Handling**: Surface density, velocity dispersion, mass conservation
 - **Unit Management**: Automatic unit scaling and conversion
 
