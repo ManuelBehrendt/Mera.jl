@@ -27,7 +27,7 @@
     gas = gethydro(info)
     projection(gas, :rho)
     ```
-    **[→ Get Started](00_multi_FirstSteps.html)**
+    **[→ Get Started](00_multi_FirstSteps.md)**
 
 !!! tip "For Scientists"
     **RAMSES expert, new to Julia?**
@@ -35,7 +35,7 @@
     - Physics variables built-in  
     - Multi-threaded performance
     
-    **[→ Scientific Workflows](01_hydro_First_Inspection.html)**
+    **[→ Scientific Workflows](01_hydro_First_Inspection.md)**
 
 !!! info "For Programmers" 
     **Python/MATLAB user learning Julia?**
@@ -43,10 +43,10 @@
     - Performance comparisons
     - Ecosystem integration
     
-    **[→ Migration Guide](quickreference/02_migrators.html)**
+    **[→ Migration Guide](quickreference/02_migrators.md)**
 
 !!! tip "Quick Navigation"
-    **Want to:** Make a density plot → [Projections](06_hydro_Projection.html) • Calculate stellar masses → [Basic Calculations](04_multi_Basic_Calculations.html) • Load specific regions → [Selections](02_hydro_Load_Selections.html) • Optimize performance → [Multi-Threading](multi-threading/multi-threading_intro.html)
+    **Want to:** Make a density plot → [Projections](06_hydro_Projection.md) • Calculate stellar masses → [Basic Calculations](04_multi_Basic_Calculations.md) • Load specific regions → [Selections](02_hydro_Load_Selections.md) • Optimize performance → [Multi-Threading](multi-threading/multi-threading_intro.md)
 
 !!! note "How to Cite MERA"
     If you use MERA in your research, please cite it using the DOI badge above. This supports continued development and helps other researchers discover the tool. Please also star the [GitHub repository](https://github.com/ManuelBehrendt/Mera.jl)!
@@ -113,31 +113,31 @@ projection(particles, :age) # → Stellar age distribution
 ### 🟢 **Beginner Track** (Start here!)
 | Section | Purpose | Time |
 |---------|---------|------|
-| **[First Steps](00_multi_FirstSteps.html)** | Installation, core concepts, first analysis | 20 min |
-| **[Data Inspection](01_hydro_First_Inspection.html)** | Understand RAMSES data structure | 15 min |
-| **[Basic Calculations](04_multi_Basic_Calculations.html)** | Units, statistics, physics variables | 25 min |
+| **[First Steps](00_multi_FirstSteps.md)** | Installation, core concepts, first analysis | 20 min |
+| **[Data Inspection](01_hydro_First_Inspection.md)** | Understand RAMSES data structure | 15 min |
+| **[Basic Calculations](04_multi_Basic_Calculations.md)** | Units, statistics, physics variables | 25 min |
 
 ### 🟡 **Intermediate Track**
 | Section | Purpose | Time |
 |---------|---------|------|
-| **[Load by Selection](02_hydro_Load_Selections.html)** | Efficient memory management | 20 min |
-| **[Get Subregions](03_hydro_Get_Subregions.html)** | Spatial selections, coordinate systems | 25 min |
-| **[Projections](06_hydro_Projection.html)** | 2D visualizations, publication plots | 30 min |
-| **[MERA Files](07_multi_Mera_Files.html)** | Data compression and sharing | 15 min |
+| **[Load by Selection](02_hydro_Load_Selections.md)** | Efficient memory management | 20 min |
+| **[Get Subregions](03_hydro_Get_Subregions.md)** | Spatial selections, coordinate systems | 25 min |
+| **[Projections](06_hydro_Projection.md)** | 2D visualizations, publication plots | 30 min |
+| **[MERA Files](07_multi_Mera_Files.md)** | Data compression and sharing | 15 min |
 
 ### 🔴 **Advanced Features**
 | Section | Purpose | Best For |
 |---------|---------|----------|
-| **[Multi-Threading](multi-threading/multi-threading_intro.html)** | HPC optimization, parallel processing | Performance users |
-| **[Volume Rendering](paraview/paraview_intro.html)** | 3D visualization with ParaView | Advanced visualization |
-| **[Benchmarks](benchmarks/IO/IOperformance.html)** | Performance analysis and testing | System optimization |
-| **[Advanced Testing](advanced_features/testing_guide.html)** | MERA's testing framework | Developers, contributors |
+| **[Multi-Threading](multi-threading/multi-threading_intro.md)** | HPC optimization, parallel processing | Performance users |
+| **[Volume Rendering](paraview/paraview_intro.md)** | 3D visualization with ParaView | Advanced visualization |
+| **[Benchmarks](benchmarks/IO/IOperformance.md)** | Performance analysis and testing | System optimization |
+| **[Advanced Testing](advanced_features/testing_guide.md)** | MERA's testing framework | Developers, contributors |
 
 ### 📚 **Reference Materials**
-- **[Complete API](api.html)** - All functions and types
-- **[Julia Migration](quickreference/02_migrators.html)** - From Python/MATLAB/IDL  
-- **[Examples](examples.html)** - Real-world workflows
-- **[Troubleshooting](Miscellaneous.html)** - Common issues and solutions
+- **[Complete API](api.md)** - All functions and types
+- **[Julia Migration](quickreference/02_migrators.md)** - From Python/MATLAB/IDL
+- **[Examples](examples.md)** - Real-world workflows
+- **[Troubleshooting](Miscellaneous.md)** - Common issues and solutions
 
 
 ## Community & Support
@@ -156,7 +156,7 @@ projection(particles, :age) # → Stellar age distribution
 
 - **Status**: Production-ready with active development and comprehensive testing
 - **RAMSES Compatibility**: Versions stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta)
-- **Testing**: Multi-platform CI/CD with extensive coverage ([see our testing approach](advanced_features/testing_guide.html))
+- **Testing**: Multi-platform CI/CD with extensive coverage ([see our testing approach](advanced_features/testing_guide.md))
 - **Dependencies**: Full list in [Project.toml](https://github.com/ManuelBehrendt/Mera.jl/raw/master/Project.toml)
 
 ## Citation & License

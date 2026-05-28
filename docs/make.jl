@@ -26,16 +26,19 @@ makedocs(modules = [Mera],
                       
                       "Core Workflows" => Any[
                           "Data Inspection"     => Any[ "Hydro"       =>  "01_hydro_First_Inspection.md",
+                                                        "Gravity"     =>  "01_gravity_First_Inspection.md",
                                                         "Particles"   =>  "01_particles_First_Inspection.md",
                                                         "Clumps"      =>  "01_clumps_First_Inspection.md",
                                                         "API Reference" => "api/data_inspection.md"],
 
                           "Load by Selection"   => Any[ "Hydro"       =>  "02_hydro_Load_Selections.md",
+                                                        "Gravity"     =>  "02_gravity_Load_Selections.md",
                                                         "Particles"   =>  "02_particles_Load_Selections.md",
                                                         "Clumps"      =>  "02_clumps_Load_Selections.md",
                                                         "API Reference" => "api/data_loading.md"],
 
                           "Get Subregions"     => Any[ "Hydro"       => "03_hydro_Get_Subregions.md",
+                                                       "Gravity"     => "03_gravity_Get_Subregions.md",
                                                        "Particles"   => "03_particles_Get_Subregions.md",
                                                        "Clumps"      => "03_clumps_Get_Subregions.md",
                                                        "API Reference" => "api/subregions.md"]],
