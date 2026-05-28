@@ -3,14 +3,21 @@ version = "0.1.0"
 
 [deps]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+CodecLz4 = "5ba52731-8f18-5e0d-9241-30f10d1ec561"
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+IndexedTables = "6deec6e2-d858-57c5-ab9b-e6ca5bd20e43"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
 Mera = "02f895e8-fdb1-4346-8fe6-c721699f5126"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
+Coverage = "1"
 JSON = "0.21"
 julia = "1.10"

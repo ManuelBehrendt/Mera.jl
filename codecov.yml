@@ -1,0 +1,25 @@
+codecov:
+  require_ci_to_pass: false
+
+coverage:
+  status:
+    project:
+      default:
+        # Fail if coverage drops more than 2% from baseline
+        threshold: 2%
+    patch:
+      default:
+        # New code should have at least 50% coverage
+        target: 50%
+
+ignore:
+  - "src/dev/**"
+  - "src/benchmarks/**"
+  - "src/functions/optimization/**"
+  - "src/functions/visualization/**"
+  - "src/functions/projection/profile_hydro_minimal.jl"
+  - "src/functions/projection/projection_hydro_deprecated.jl"
+  - "src/sounds/**"
+  - "test/**"
+  - "docs/**"
+  - "calc_coverage.jl"

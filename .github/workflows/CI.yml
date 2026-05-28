@@ -1,0 +1,58 @@
+name: CI
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+# CI runners do not have access to the RAMSES simulation data on the
+# maintainer's external drive, so the full test suite cannot run here.
+# We run a "smoke" subset (Aqua quality checks + unit-system tests) that
+# verifies the package builds, loads, and that data-independent invariants
+# hold. Full coverage is collected locally and uploaded to Codecov by
+# scripts/run_local_coverage.sh.
+
+jobs:
+  smoke:
+    name: Smoke (Julia ${{ matrix.version }} - ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        version:
+          - '1.10'
+          - '1'  # latest stable
+        os:
+          - ubuntu-latest
+          - macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.version }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+
+      - name: Smoke tests (no simulation data)
+        env:
+          MERA_SMOKE_ONLY: "1"
+        run: julia --project -e 'using Pkg; Pkg.test("Mera")'
+
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1'
+      - run: |
+          julia --project=docs -e '
+            using Pkg
+            Pkg.develop(PackageSpec(path=pwd()))
+            Pkg.instantiate()
+          '
+      - run: julia --project=docs docs/make.jl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
