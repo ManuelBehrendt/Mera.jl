@@ -3,6 +3,7 @@ version = "0.1.0"
 
 [deps]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ArrayInterface = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 CodecLz4 = "5ba52731-8f18-5e0d-9241-30f10d1ec561"
 Coverage = "a2441757-f6aa-5fb2-8edb-039e3f45d037"
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -18,6 +19,11 @@ Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
+# ArrayInterface 3.x (a stale transitive dep the test-env resolver can otherwise
+# select) fails to precompile on Julia >= 1.12 ("too many parameters for type
+# AbstractTriangular"). Pin >= 7 so the resolver uses the modern, 1.12-compatible
+# series; this cascades TiledIteration to >= 0.5 as well.
+ArrayInterface = "7"
 Coverage = "1"
 JSON = "0.21"
 julia = "1.10"

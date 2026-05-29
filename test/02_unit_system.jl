@@ -3,11 +3,13 @@
 # Tests for physical constants, unit conversions, and scale factor formulas.
 # Validates that scale factors are computed correctly from RAMSES base units.
 
+# NOTE: a bare `return` at file scope is a no-op when this file is `include`d
+# (see runtests.jl), so the data-dependent testset below must be wrapped in an
+# explicit `if/else` rather than guarded by an early `return`.
 if !DATA_AVAILABLE
     @warn "Skipping Unit System tests - simulation data not available"
     @test_skip "Simulation data not available"
-    return
-end
+else
 
 @testset "Unit System" begin
 
@@ -320,4 +322,5 @@ end
         @test isapprox(scale.deg, 180.0 / π, rtol=1e-15)
     end
 
-end
+end  # @testset "Unit System"
+end  # if !DATA_AVAILABLE / else
