@@ -159,6 +159,70 @@ locally and uploaded to Codecov — CI does not measure it.
 The token can be stored in `~/.config/mera/codecov.env` (mode 600) instead of
 being exported manually.
 
+## Notebook / tutorial tests (real-world workflows)
+
+The Jupyter tutorial notebooks in the documentation
+([`Mera-Docs/version_1`](https://github.com/ManuelBehrendt/Mera.jl)) double as an
+**end-to-end, real-world workflow test tier**. Where the unit suite exercises
+functions in isolation, the notebooks run the *full analysis pipelines a user
+would actually follow* — load info → read hydro/particles/gravity/clumps →
+select regions → derive variables → project → mask/filter → save/load Mera
+files → export VTK — against the real RAMSES datasets. Two distinct kinds of
+value:
+
+- **Executable regression tests.** Every notebook is run headless with
+  `jupyter nbconvert --execute` and scanned for error cells. A failing cell
+  is a real, user-facing breakage. This catches integration-level bugs the
+  unit suite can miss — e.g. the Julia 1.12 `dataoverview` crash
+  (`Core.TypeName.mt` removed) was surfaced by the notebooks while the unit
+  suite had it marked `@test_broken`.
+- **Visual verification for authors/reviewers.** The executed notebooks
+  preserve their outputs — tables, projection plots, VTK previews — so a
+  maintainer can *see* that results look physically correct, not merely that
+  no exception was thrown. This is the human-in-the-loop check that pure
+  assertions cannot provide.
+
+### Running them
+
+The notebooks use a dedicated Julia 1.12 kernel bound to the docs environment,
+which `dev`s Mera from this repo (so they test the working tree, not a
+released version). Create the kernels once via `IJulia.installkernel` from the
+notebooks project:
+
+```julia
+using IJulia
+NB = "/path/to/Mera-Docs/version_1"
+# plain execution kernel (4 threads)
+installkernel("Mera-Docs 1.12 (4t)", "--project=$NB",
+              env=Dict("JULIA_NUM_THREADS" => "4"))
+# coverage kernel — tracks only this repo's source
+installkernel("Mera-Docs 1.12 cov", "--project=$NB",
+              "--code-coverage=@/path/to/Mera.jl",
+              env=Dict("JULIA_NUM_THREADS" => "4"))
+```
+
+Executed copies are written to `version_1/executed/` (gitignored); the
+originals are left untouched.
+
+### Wired into coverage
+
+`scripts/run_coverage_with_notebooks.sh` produces a **combined** coverage
+report from both the unit suite *and* the notebooks:
+
+1. Wipes stale `*.cov`.
+2. Runs `Pkg.test("Mera"; coverage=true)` → `*.cov` next to `src/`.
+3. Executes every tutorial notebook with the coverage kernel
+   (`--code-coverage=@<repo>`), which appends more `*.cov` to the *same*
+   `src/` files — so notebook execution counts toward library coverage.
+4. Aggregates everything via `scripts/process_coverage.jl` and (with
+   `UPLOAD=1`) uploads to Codecov under the `local-full-notebooks` flag.
+
+Because both phases write `*.cov` next to the source, the tutorials raise
+coverage of paths the unit suite under-exercises (display/`viewfields`,
+`dataoverview`, projection and VTK variants). The coverage kernel's
+`@<repo>` path restriction keeps `*.cov` confined to `Mera.jl/src` — none
+leak into the notebooks repo (which also gitignores `*.cov` as a safety net).
+
 ## What the tests validate
 
 The suite is designed for *meaningful* coverage, not line-hit padding:
@@ -194,6 +258,10 @@ corresponding test to fail — confirming the assertions bite.
    readers, sink-particle paths) and interactive display methods.
 4. **Reproducibility** — point `MERA_TEST_DATA` at any RAMSES output and
    edit the `DATASETS` dictionary in `test_config.jl`.
+5. **Real-world workflows** — the tutorial notebooks are executed end-to-end
+   and their rendered outputs (tables, projection plots, VTK previews) can be
+   inspected directly, demonstrating that complete user pipelines work and
+   produce physically sensible results (see *Notebook / tutorial tests*).
 
 ## Testing philosophy
 

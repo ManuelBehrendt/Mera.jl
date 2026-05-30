@@ -150,6 +150,10 @@ is set and `CODECOV_TOKEN` is available — uploads the result to Codecov.
 The token can be stored in `~/.config/mera/codecov.env` (mode 600) instead
 of being exported manually.
 
+The documentation's Jupyter tutorial notebooks also double as end-to-end
+workflow tests, with their execution folded into the coverage report; see the
+Testing Framework page for details.
+
 GitHub Actions runs only the smoke subset (`MERA_SMOKE_ONLY=1`) because
 the RAMSES test datasets are too large to ship to CI runners. Coverage is
 therefore produced and uploaded from the maintainer's laptop, not CI. The CI

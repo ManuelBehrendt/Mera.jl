@@ -15,10 +15,19 @@ julia --project -e 'using Pkg; Pkg.test("Mera")'
 
 # Full run + coverage + Codecov upload (maintainer):
 UPLOAD=1 ../scripts/run_local_coverage.sh
+
+# Full run + coverage INCLUDING the tutorial notebooks (maintainer):
+UPLOAD=1 ../scripts/run_coverage_with_notebooks.sh
 ```
 
 Data-dependent tests are guarded, so `Pkg.test("Mera")` always succeeds even
 without simulation data.
+
+The documentation's Jupyter tutorial notebooks double as an end-to-end,
+real-world workflow test tier — executed headless, scanned for error cells,
+and (via `run_coverage_with_notebooks.sh`) folded into the combined coverage
+report. Their rendered outputs also give authors a visual correctness check.
+See the Testing Framework page (below) for the kernel setup and details.
 
 ## Full documentation
 
