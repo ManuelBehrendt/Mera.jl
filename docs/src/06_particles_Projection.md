@@ -77,8 +77,7 @@ particles = getparticles(info);
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:07.552
-
+[Mera]: 2026-05-30T18:00:15.608
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -93,7 +92,8 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -102,38 +102,36 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05
-particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables:
+7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file:
+("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get particle data: 2025-08-14T15:02:11.138
-
+[Mera]: Get particle data: 2026-05-30T18:00:21.305
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :38.428720474243164 MB
+Memory used for data table :
+38.428720474243164 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -184,31 +182,24 @@ further possibilities: :rho, :density, :ρ
 :mass, :cellsize, :freefall_time
 :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber
 :t, :Temp, :Temperature with p/rho
-
 ==================[particles]:==================
         all the non derived  vars:
 :cpu, :level, :id, :family, :tag
 :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
-
               -derived particle vars-
 :age
-
 ==============[gas or particles]:===============
 :v, :ekin
 squared => :vx2, :vy2, :vz2
 velocity dispersion => σx, σy, σz, σ
-
 related to a given center:
 ---------------------------
 :vr_cylinder, vr_sphere (radial components)
 :vϕ_cylinder, :vθ
 squared => :vr_cylinder2, :vϕ_cylinder2
 velocity dispersion => σr_cylinder, σϕ_cylinder
-
 2d maps (not projected) => :r_cylinder, :ϕ
-
 ------------------------------------------------
-
 ```
 
 ## Projection of a Single Quantity in Different Directions (z,y,x)
@@ -237,19 +228,15 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:22.177
-
+[Mera]: 2026-05-30T18:00:31.978
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 Use the short notation for the box center `:bc` or `:boxcenter` for all dimensions (x,y,z):
@@ -262,19 +249,15 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:22.707
-
+[Mera]: 2026-05-30T18:00:34.151
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 ```julia
@@ -285,19 +268,15 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:22.840
-
+[Mera]: 2026-05-30T18:00:35.842
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 Use the box center notation for individual dimensions, here x,z:
@@ -310,19 +289,15 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:23.289
-
+[Mera]: 2026-05-30T18:00:37.962
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 ### Get Multiple Quantities
@@ -341,19 +316,15 @@ proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:23.432
-
+[Mera]: 2026-05-30T18:00:39.666
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 Pass an array containing several quantities to process and their corresponding units:
@@ -370,19 +341,15 @@ proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:23.458
-
+[Mera]: 2026-05-30T18:00:41.292
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 The function can be called without any keywords by preserving the following order: dataobject, variables, units
@@ -399,19 +366,15 @@ proj1_z = projection(particles, [:sd, :vx], [:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:24.016
-
+[Mera]: 2026-05-30T18:00:43.433
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 If all selected variables should be of the same unit use the following arguments: dataobject, array of quantities, unit (no array needed)
@@ -427,19 +390,15 @@ projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:24.078
-
+[Mera]: 2026-05-30T18:00:45.089
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 ## Function Output
@@ -617,10 +576,6 @@ tight_layout()
 
 ![](06_particles_Projection_files/06_particles_Projection_41_1.png)
 
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
-
 Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
 
 ```julia
@@ -651,10 +606,6 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 ```
 
 ![](06_particles_Projection_files/06_particles_Projection_44_1.png)
-
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
 
 Plot the axes of the map relative to the map-center (given by keyword: data_center):
 
@@ -687,10 +638,6 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 
 ![](06_particles_Projection_files/06_particles_Projection_47_1.png)
 
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
-
 ## Projections of Derived Kinematic Data
 
 #### Use quantities in cartesian coordinates:
@@ -709,19 +656,15 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:31.788
-
+[Mera]: 2026-05-30T18:00:59.935
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 For the velocity dispersion additional maps are created that lead to the mass-weighted quantity:
@@ -776,8 +719,8 @@ usedmemory(proj_z);
 ```
 
 ```
-Memory used: 4.919 MB
-
+Memory used: 4.918
+ MB
 ```
 
 ```julia
@@ -816,10 +759,6 @@ colorbar();
 
 ![](06_particles_Projection_files/06_particles_Projection_56_1.png)
 
-```
-Figure(PyObject <Figure size 1000x550 with 12 Axes>)
-```
-
 #### Use quantities in cylindrical coordinates:
 #### Face-on disc (z-direction)
 For the cylindrical or spherical components of a quantity, the center of the coordinate system is used (keywords: data_center = center default) and can be given with the keyword "data_center" and its units with "data_center_unit". Additionally, the quantities that are based on cartesian coordinates can be given.
@@ -835,19 +774,15 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylin
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:34.805
-
+[Mera]: 2026-05-30T18:01:03.255
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 1024^2
 Pixel size: 46.875 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 ```julia
@@ -953,10 +888,6 @@ colorbar();
 
 ![](06_particles_Projection_files/06_particles_Projection_61_1.png)
 
-```
-Figure(PyObject <Figure size 1000x850 with 18 Axes>)
-```
-
 ## Project on a Coarser Grid
 
 ### lmax
@@ -973,19 +904,15 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:38.034
-
+[Mera]: 2026-05-30T18:01:06.579
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 64^2
 Pixel size: 750.0 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 The projection onto the maximum loaded grid is always provided:
@@ -1095,10 +1022,6 @@ colorbar();
 
 ![](06_particles_Projection_files/06_particles_Projection_67_1.png)
 
-```
-Figure(PyObject <Figure size 1000x850 with 18 Axes>)
-```
-
 ### res
 Choose the effective resolution (related to the full box) of the projected grid:
 
@@ -1113,19 +1036,15 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:39.426
-
+[Mera]: 2026-05-30T18:01:09.388
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 100^2
 Pixel size: 480.0 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 ### pxsize
@@ -1142,19 +1061,15 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:40.202
-
+[Mera]: 2026-05-30T18:01:11.850
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Effective resolution: 481^2
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
-
 ```
 
 ## Projection of the Birth/Age-Time
@@ -1186,10 +1101,6 @@ tight_layout()
 ```
 
 ![](06_particles_Projection_files/06_particles_Projection_75_1.png)
-
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
 
 Project the average age of the particles to the grid. The age is taken relative to the loaded snapshot time by default.
 
@@ -1229,10 +1140,6 @@ tight_layout()
 
 ![](06_particles_Projection_files/06_particles_Projection_80_1.png)
 
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
-
 Project the average age of the particles relative to a given reference time:
 
 ```julia
@@ -1270,10 +1177,6 @@ tight_layout()
 
 ![](06_particles_Projection_files/06_particles_Projection_85_1.png)
 
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
-
 ## Projection of Masked Data
 
 Mask particles with ages higher than 400 Myr by creating a Bool-array where the smaller ages correspond to false entries:
@@ -1290,32 +1193,24 @@ proj_x = projection(particles, :age, :Myr, mask=mask,
 ```
 
 ```
-[Mera]: 2025-08-14T15:02:42.255
-
+[Mera]: 2026-05-30T18:01:25.218
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
-
 Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
-
 :mask provided by function
-
-[Mera]: 2025-08-14T15:02:43.103
-
+[Mera]: 2026-05-30T18:01:28.216
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
-
 Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
-
 :mask provided by function
-
 ```
 
 ```julia
@@ -1335,10 +1230,6 @@ tight_layout()
 ```
 
 ![](06_particles_Projection_files/06_particles_Projection_90_1.png)
-
-```
-Figure(PyObject <Figure size 1000x350 with 4 Axes>)
-```
 
 ## Summary
 

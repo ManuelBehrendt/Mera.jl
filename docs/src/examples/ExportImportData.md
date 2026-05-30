@@ -12,8 +12,8 @@ import Pkg; Pkg.activate("../."); Pkg.build("Mera")
 ```
 
 ```
-  Activating project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
-
+  Activating
+project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
 ```
 
 ```julia
@@ -27,31 +27,19 @@ particles = getparticles(info, :mass);
 ```
 
 ```
-[Mera]: Get hydro data: 2025-08-13T17:26:11.894
-
+[Mera]: Get hydro data: 2026-05-30T18:11:20.236
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1,) = (:rho,)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
-   GC threads: 2
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:24 (12.05 ms/it)
-
-```
-
-```
-
+   GC threads: 4
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:39 (19.05 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 4879946 cells, 1 variables
@@ -61,29 +49,26 @@ Creating Table from 4879946 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
-  0.216841 seconds (363.37 k allocations: 503.172 MiB)
-✓ Table created in 1.0 seconds
-Memory used for data table :186.1557970046997 MB
+  0.799460 seconds (3.82 M allocations: 674.875 MiB, 1.06% gc time, 85.35% compilation time)
+✓ Table created in 1.071 seconds
+Memory used for data table :
+186.1557970046997 MB
 -------------------------------------------------------
-
-[Mera]: Get particle data: 2025-08-13T17:26:37.987
-
+[Mera]: Get particle data: 2026-05-30T18:12:04.048
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Processing 2048 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.089390e+05 particles
-Memory used for data table :19.415205001831055 MB
+Memory used for data table :
+19.415205001831055 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -94,7 +79,6 @@ println("Particles: ", length(particles.data))
 ```
 Cells: 4879946
 Particles: 508939
-
 ```
 
 Define a function to preview the first lines of the created ASCII files:
@@ -177,7 +161,6 @@ viewheader("simulation_hydro.csv", 5)
 -23.25000000001507,-23.25000000001507,-21.750000000014097,0.7500000000004861,6.768382184513761e-28
 -23.25000000001507,-23.25000000001507,-21.00000000001361,0.7500000000004861,6.768382184513761e-28
 -23.25000000001507,-23.25000000001507,-20.250000000013124,0.7500000000004861,6.768382184513761e-28
-
 ```
 
 Use a different syntax; save into file with header and tab-separated values:
@@ -198,7 +181,6 @@ x/kpc	y/kpc	z/kpc	cellsize/kpc	rho/g_cm3
 -23.25000000001507	-23.25000000001507	-22.500000000014584	0.7500000000004861	6.768382184513761e-28
 -23.25000000001507	-23.25000000001507	-21.750000000014097	0.7500000000004861	6.768382184513761e-28
 -23.25000000001507	-23.25000000001507	-21.00000000001361	0.7500000000004861	6.768382184513761e-28
-
 ```
 
 Write the particles data into an ASCII file with header:
@@ -219,7 +201,6 @@ x/kpc	y/kpc	z/kpc	mass/Msol
 -23.25000000001507	-23.25000000001507	-22.500000000014584	4217.583427040147
 -23.25000000001507	-23.25000000001507	-21.750000000014097	4217.583427040147
 -23.25000000001507	-23.25000000001507	-21.00000000001361	4217.583427040147
-
 ```
 
 ## ASCII: Save IndexedTables Database into a CSV-File with FileIO
@@ -280,7 +261,6 @@ viewheader("database_partilces.csv", 5)
 6,0.1090659052277639,22.3782196217294,21.58442789512976,116193,1.1360607549574087e-5
 6,0.2382109772356709,28.753723953405462,24.81911909925676,194252,1.1360607549574087e-5
 6,0.271365638325332,22.751224267806695,31.568145104287826,130805,1.1360607549574087e-5
-
 ```
 
 Export selected variables from the datatable:
@@ -305,7 +285,6 @@ viewheader("database_partilces.csv", 5)
 0.1090659052277639,22.3782196217294,1.1360607549574087e-5
 0.2382109772356709,28.753723953405462,1.1360607549574087e-5
 0.271365638325332,22.751224267806695,1.1360607549574087e-5
-
 ```
 
 ## Binary: Save Multiple Data into a JLD File

@@ -63,8 +63,8 @@ import Pkg; Pkg.activate("../.")
 ```
 
 ```
-  Activating project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
-
+  Activating
+project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
 ```
 
 ```julia
@@ -76,10 +76,10 @@ particles = loaddata(600, path, :particles); # load full box
 ```
 
 ```
-[Mera]: 2025-08-13T16:57:29.196
-
+[Mera]: 2026-05-30T19:37:42.920
 Use datatype: hydro
-Code: RAMSES
+Code:
+RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
 ctime: 2024-09-10T11:23:16.230
@@ -93,7 +93,8 @@ amr:           true
 level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7
+  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -108,26 +109,23 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
+namelist-file: (
+"&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: 2025-08-13T16:57:34.059
-
+[Mera]: 2026-05-30T19:37:49.721
 Open Mera-file output_00600.jld2:
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Memory used for data table :95.81425380706787 MB
+Memory used for data table :
+95.81425380706787 MB
 -------------------------------------------------------
-
 ```
 
 ## Export Scalars
@@ -148,22 +146,19 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T16:57:35.947
-
-Available Threads: 1
-Created directory: output_part01
+[Mera]: 2026-05-30T19:37:52.044
+Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
 Extracting scalar data...
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu (Size: 73.55 MB)
+  wrote 0600_galaxy.vtu
+ (Size: 73.55 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: mass, age
-
 ```
 
 ```julia
@@ -198,10 +193,8 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T16:57:39.682
-
-Available Threads: 1
-Created directory: output_part03
+[Mera]: 2026-05-30T19:37:54.914
+Available Threads: 4
 Total particles in dataset: 1353087
 Limiting export to 1000 particles (from 1353087)
 Extracting particle positions...
@@ -209,12 +202,10 @@ Extracting scalar data...
 Writing particle VTU file...
   wrote 0600_galaxy.vtu (Size: 0.05 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1000
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: age
-
 ```
 
 ```julia
@@ -250,25 +241,22 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T16:57:40.008
-
-Available Threads: 1
-Created directory: output_part04
+[Mera]: 2026-05-30T19:37:55.140
+Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
 Extracting scalar data...
 Extracting vector data...
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu (Size: 94.2 MB)
+  wrote 0600_galaxy.vtu
+ (Size: 94.2 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: age
 Available vector: velocity
-
 ```
 
 ```julia
@@ -306,25 +294,22 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T16:57:41.653
-
-Available Threads: 1
-Created directory: output_part05
+[Mera]: 2026-05-30T19:37:56.681
+Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
 Extracting scalar data...
 Extracting vector data...
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu (Size: 104.52 MB)
+  wrote 0600_galaxy.vtu
+ (Size: 104.52 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: id, age
 Available vector: velocity
-
 ```
 
 ```julia
@@ -338,11 +323,11 @@ readdir("output_part05")
 
 **Load Data-File**
 
-![](../images/01_particles.jpg)
+![](images/01_particles.jpg)
 
 **Select age information**
 
-![](../images/02_particles.jpg)
+![](images/02_particles.jpg)
 
 ```julia
 # => save state
@@ -352,7 +337,7 @@ readdir("output_part05")
 
 **Select Glyphs, arrow orientation, number of sample points**
 
-![](../images/01_particles2.jpg)
+![](images/01_particles2.jpg)
 
 ```julia
 # => save state

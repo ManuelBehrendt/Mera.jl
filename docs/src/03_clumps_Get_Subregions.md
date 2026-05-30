@@ -35,7 +35,7 @@ Clumps in MERA represent identified overdense regions in simulations, containing
 - `:shell` - Hollow versions of geometric shapes with inner/outer boundaries
 
 **Coordinate Systems:**
-- **Standard notation** `[0:1]` - Normalized box coordinates (default)
+- **Standard notation** [0:1] - Normalized box coordinates (default)
 - **Physical units** - Real length units (kpc, Mpc, pc, etc.)
 - **Center references** - `:boxcenter`, or custom coordinates
 - **Relative positioning** - Offsets from specified reference points
@@ -74,26 +74,11 @@ clumps = getclumps(info);
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), wrong source (4), incompatible header (10), dep missing source (2))
-
-```
-
-```
-📦 Safe performance utilities loaded
-
-*__   __ _______ ______   _______
-|  |_|  |       |    _ | |   _   |
-|       |    ___|   | || |  |_|  |
-|       |   |___|   |_||_|       |
-|       |    ___|    __  |       |
-| ||_|| |   |___|   |  | |   _   |
-|_|   |_|_______|___|  |_|__| |__|
-
-[Mera]: 2025-08-12T14:51:03.768
-
+[Mera]: 2026-05-30T17:33:09.950
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime:
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -105,7 +90,8 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -129,19 +115,16 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get clump data: 2025-08-12T14:51:07.458
-
+[Mera]: Get clump data: 2026-05-30T17:33:11.709
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
+Memory used for data table :
+61.58203125 KB
 -------------------------------------------------------
-
 ```
 
 ## Cuboid Region Selection
@@ -150,7 +133,7 @@ Cuboid (rectangular box) selections are the most fundamental geometric filtering
 
 ### Key Features:
 - **Independent axis control** - Separate range specification for x, y, z dimensions
-- **Flexible coordinate systems** - Standard `[0:1]` or physical units (kpc, Mpc, etc.)
+- **Flexible coordinate systems** - Standard [0:1] or physical units (kpc, Mpc, etc.)
 - **Custom center references** - `:boxcenter`, or user-defined coordinates
 - **Inverse selection capability** - Extract data outside the specified region
 
@@ -209,13 +192,9 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_11_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cuboid Region: Cutout the data assigned to the object `clumps`
 
-Note: The selected regions can be given relative to a user given center or to the box corner `[0., 0., 0.]` by default. The user can choose between standard notation `[0:1]` (default) or physical length-units, defined in e.g. info.scale :
+Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation [0:1] (default) or physical length-units, defined in e.g. info.scale :
 
 ```julia
 clumps_subregion = subregion( clumps, :cuboid,
@@ -227,18 +206,15 @@ clumps_subregion = subregion( clumps, :cuboid,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:11.412
-
+[Mera]: 2026-05-30T17:33:14.979
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Memory used for data table :29.33203125 KB
+Memory used for data table :29.33203125
+ KB
 -------------------------------------------------------
-
 ```
 
 The function `subregion` creates a new object with the same type as the object created by the function `getclumps` :
@@ -289,10 +265,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_19_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cuboid Region: Get the extent of the subregion data ranges
 
 ```julia
@@ -326,10 +298,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_22_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cuboid Region: Get the data outside of the selected region (inverse selection):
 
 ```julia
@@ -343,18 +311,14 @@ clumps_subregion = subregion( clumps, :cuboid,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:12.118
-
+[Mera]: 2026-05-30T17:33:15.566
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Memory used for data table :33.45703125 KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -392,10 +356,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ## Cylindrical Region Selection
 
 Cylindrical selections provide powerful tools for analyzing axially symmetric structures, rotating systems, or jet-like features in simulations. This geometric filter is particularly useful for studying disk galaxies, stellar jets, or any phenomena with preferred directional orientations.
@@ -416,18 +376,15 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2025-08-12T14:51:12.270
-
+[Mera]: Get clump data: 2026-05-30T17:33:15.698
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
-
 ```
 
 ### Cylindrical Region: The red lines show the region that we want to cut-out as a sub-region from the full data:
@@ -463,10 +420,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_31_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cylindrical Region: Cutout the data assigned to the object `clumps`
 Select the ranges of the cylinder in the unit "kpc", relative to the given center [13., 24., 24.]. The height refers to both z-directions from the plane.
 
@@ -479,20 +432,16 @@ clumps_subregion = subregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:13.049
-
+[Mera]: 2026-05-30T17:33:16.104
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :5.05078125 KB
 -------------------------------------------------------
-
 ```
 
 Extract the the clump positions of the subregion and the extent of the full box:
@@ -532,10 +481,6 @@ ylabel("z [kpc]");
 ```
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_36_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
 
 ### Cylindrical Region: Scatter-Plot of the selected data range with respect to the center of the sub-region:
 
@@ -577,10 +522,6 @@ ylabel("kpc");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_39_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cylindrical Region: Get the data outside of the selected region (inverse selection):
 
 ```julia
@@ -593,20 +534,16 @@ clumps_subregion = subregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:13.412
-
+[Mera]: 2026-05-30T17:33:16.483
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :57.73828125 KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -645,10 +582,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_43_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ## Spherical Region Selection
 
 Spherical selections excel at analyzing centrally concentrated structures, bound systems, or radially distributed phenomena. This isotropic geometric filter is ideal for studying galaxy halos, star-forming regions, or any system with spherical symmetry around a central point.
@@ -669,18 +602,15 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2025-08-12T14:51:13.559
-
+[Mera]: Get clump data: 2026-05-30T17:33:16.620
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
-
 ```
 
 ### The red lines show the region that we want to cut-out as a sub-region from the full data:
@@ -718,10 +648,6 @@ ylabel("z [kpc]")
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_48_1.png)
 
 ```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
-```
 PyObject Text(871.9411764705884, 0.5, 'z [kpc]')
 ```
 
@@ -736,19 +662,16 @@ clumps_subregion = subregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:14.162
-
+[Mera]: 2026-05-30T17:33:16.851
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :28.48828125 KB
+Memory used for data table :28.48828125
+ KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -787,10 +710,6 @@ ylabel("z [kpc]");
 ```
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_52_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
 
 ### Spherical Region: Scatter-Plot of the selected data range with respect to the center of the sub-region:
 
@@ -834,10 +753,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_55_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Spherical Region: Get the data outside of the selected region (inverse selection):
 
 ```julia
@@ -849,19 +764,16 @@ clumps_subregion = subregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:14.417
-
+[Mera]: 2026-05-30T17:33:17.091
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :34.30078125 KB
+Memory used for data table :34.30078125
+ KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -900,10 +812,6 @@ ylabel("z [kpc]")
 ```
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_59_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
 
 ```
 PyObject Text(871.9411764705884, 0.5, 'z [kpc]')
@@ -955,18 +863,16 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2025-08-12T14:51:14.552
-
+[Mera]: Get clump data: 2026-05-30T17:33:17.224
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
+Memory used for data table :
+61.58203125 KB
 -------------------------------------------------------
-
 ```
 
 ### The red lines show the shell that we want to cut-out as a sub-region from the full data:
@@ -1005,10 +911,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_66_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cylindrical Shell:
 Pass the height of the cylinder and the inner/outer radius of the shell in the unit "kpc", relative to the box center [24., 24., 24.]:
 
@@ -1021,22 +923,18 @@ clumps_subregion = shellregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:15.261
-
+[Mera]: 2026-05-30T17:33:17.558
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :18.36328125 KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1078,10 +976,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_70_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Cylindrical Shell: Get the data outside of the selected shell-region (inverse selection):
 
 ```julia
@@ -1094,22 +988,18 @@ clumps_subregion = shellregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:15.412
-
+[Mera]: 2026-05-30T17:33:17.698
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :44.42578125 KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1151,10 +1041,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_74_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ## Spherical Shell
 
 Extract the the clump positions and the extent of the full box:
@@ -1166,18 +1052,15 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2025-08-12T14:51:15.552
-
+[Mera]: Get clump data: 2026-05-30T17:33:17.829
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
 Memory used for data table :61.58203125 KB
 -------------------------------------------------------
-
 ```
 
 ### The red lines show the shell that we want to cut-out as a sub-region from the full data:
@@ -1216,10 +1099,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_79_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Spherical Shell:
 Select the inner and outer radius of the spherical shell in unit "kpc", relative to the box center [24., 24., 24.]:
 
@@ -1231,21 +1110,18 @@ clumps_subregion = shellregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:16.112
-
+[Mera]: 2026-05-30T17:33:18.054
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :18.36328125 KB
+Memory used for data table :18.36328125
+ KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1287,10 +1163,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_83_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ### Spherical Shell: Get the data outside of the selected shell-region (inverse selection):
 
 ```julia
@@ -1302,21 +1174,17 @@ clumps_subregion = shellregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-12T14:51:16.294
-
+[Mera]: 2026-05-30T17:33:18.193
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Memory used for data table :44.42578125 KB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1358,10 +1226,6 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_87_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 3 Axes>)
-```
-
 ## Summary
 ### Key Techniques Mastered
 
@@ -1380,7 +1244,7 @@ Through this comprehensive tutorial, you have gained expertise in advanced spati
 - **Center references** - Flexible coordinate system positioning
 
 **Coordinate System Flexibility:**
-- **Standard notation** `[0:1]` - Normalized simulation coordinates
+- **Standard notation** [0:1] - Normalized simulation coordinates
 - **Physical units** - Real astronomical distances with automatic conversion
 - **Custom centers** - User-defined reference points for analysis
 - **Box-centered shortcuts** - Convenient `:boxcenter` positioning

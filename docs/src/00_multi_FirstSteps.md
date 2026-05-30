@@ -140,8 +140,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # out
 ```
 
 ```
-[Mera]: 2025-08-14T14:03:38.495
-
+[Mera]: 2026-05-30T17:00:17.244
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -156,7 +155,8 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -165,20 +165,21 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05
-particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables:
+7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file:
+("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
 ```
 
 ## Hands-On Tutorial
@@ -246,10 +247,10 @@ println("First 5 constants: $(constant_fields[1:5])")
 
 ```
 === InfoType Object Exploration ===
-output	= 300
+output	=
+300
 path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
-
 simcode	= RAMSES
 mtime	= 2023-04-09T05:34:09
 ctime	= 2025-06-21T18:31:24.020
@@ -275,14 +276,14 @@ hydro	= true
 nvarh	= 7
 nvarp	= 7
 nvarrt	= 0
-variable_list	= [:rho, :vx, :vy, :vz, :p, :var6, :var7]
+variable_list	=
+[:rho, :vx, :vy, :vz, :p, :var6, :var7]
 gravity_variable_list	= [:epot, :ax, :ay, :az]
 particles_variable_list	= [:vx, :vy, :vz, :mass, :family, :tag, :birth]
 rt_variable_list	= Symbol[]
 clumps_variable_list	= Symbol[]
 sinks_variable_list	= Symbol[]
 descriptor ==> subfields: (:hversion, :hydro, :htypes, :usehydro, :hydrofile, :pversion, :particles, :ptypes, :useparticles, :particlesfile, :gravity, :usegravity, :gravityfile, :rtversion, :rt, :rtPhotonGroups, :usert, :rtfile, :clumps, :useclumps, :clumpsfile, :sinks, :usesinks, :sinksfile)
-
 amr	= true
 gravity	= true
 particles	= true
@@ -291,28 +292,20 @@ clumps	= false
 sinks	= false
 namelist	= true
 namelist_content ==> dictionary: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
-
 headerfile	= true
 makefile	= true
 files_content ==> subfields: (:makefile, :timerfile, :patchfile)
-
 timerfile	= true
 compilationfile	= false
 patchfile	= true
 Narraysize	= 0
-
-scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
-
+scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_grav
+ity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
-
 part_info ==> subfields: (:eta_sn, :age_sn, :f_w, :Npart, :Ndm, :Nstars, :Nsinks, :Ncloud, :Ndebris, :Nother, :Nundefined, :other_tracer1, :debris_tracer, :cloud_tracer, :star_tracer, :other_tracer2, :gas_tracer)
-
 compilation ==> subfields: (:compile_date, :patch_dir, :remote_repo, :local_branch, :last_commit)
-
 constants ==> subfields: (:Au, :Mpc, :kpc, :pc, :mpc, :ly, :Msol, :Msun, :Mearth, :Mjupiter, :Rsol, :Rsun, :me, :mp, :mn, :mH, :amu, :NA, :c, :G, :kB, :k_B, :h, :hbar, :sigma_SB, :sigma_T, :alpha_fs, :R_gas, :eV, :keV, :MeV, :GeV, :Lsol, :Lsun, :m_u, :day, :hr, :min, :Gyr, :Myr, :yr)
-
 === Scaling Factors Available ===
-
 [Mera]: Fields to scale from user/code units to selected units
 =======================================================================
 Mpc	= 0.0010000000000006482
@@ -413,21 +406,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 0.0
-a_mag	= 0.0
-v_esc	= 0.0
-ax	= 0.0
-ay	= 0.0
-az	= 0.0
-epot	= 0.0
-a_magnitude	= 0.0
-escape_speed	= 0.0
-gravitational_redshift	= 0.0
-gravitational_energy_density	= 0.0
-gravitational_binding_energy	= 0.0
-total_binding_energy	= 0.0
+delta_rho	= 2.833714089e-314
+a_mag	= 1.265e-321
+v_esc	= 3.79e-321
+ax	= 2.4057275176e-314
+ay	= 2.3629663256e-314
+az	= 2.4057275176e-314
+epot	= 2.3629663256e-314
+a_magnitude	= 2.3929436757e-314
+escape_speed	= 2.3919166516e-314
+gravitational_redshift	= 2.3873227976e-314
+gravitational_energy_density	= 2.7952832913e-314
+gravitational_binding_energy	= 2.3650208087e-314
+total_binding_energy	= 2.14021675e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 0.0
+gravitational_work	= 2.14021675e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -435,8 +428,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 0.0
-poisson_source	= 0.0
+Fg	= 2.3629625787e-314
+poisson_source	= 2.4057275176e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -448,9 +441,7 @@ r_sphere	= 3.085677581282e21
 dimensionless	= 1.0
 rad	= 1.0
 deg	= 57.29577951308232
-
 === Physical Constants Available ===
-
 [Mera]: Constants given in cgs units
 =========================================
 Au	= 0.01495978707
@@ -494,13 +485,11 @@ min	= 60.0
 Gyr	= 3.15576e16
 Myr	= 3.15576e13
 yr	= 3.15576e7
-
 === Programmatic Field Access ===
 Number of scaling factors: 133
 Number of physical constants: 41
 First 5 scaling factors: (:Mpc, :kpc, :pc, :mpc, :ly)
 First 5 constants: (:Au, :Mpc, :kpc, :pc, :mpc)
-
 ```
 
 ## Units, Scaling, and Physical Constants
@@ -613,11 +602,9 @@ println("  viewfields(info.scale)      # Hierarchical view")
 ```
 Available scaling factors (total: 133):
 First 10 examples: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm)
-
 To see all scaling factors, use:
   propertynames(info.scale)   # Get field names
   viewfields(info.scale)      # Hierarchical view
-
 ```
 
 ### Complete Unit Conversion Reference
@@ -793,7 +780,6 @@ println("Velocity scaling factor: $(info.scale.km_s) km/s per code unit")
 ```
 Velocity: 65.57528732282063 km/s
 Velocity scaling factor: 65.57528732282063 km/s per code unit
-
 ```
 
 ```julia
@@ -818,7 +804,6 @@ Length scale: 1.0000000000006481 kpc
 Mass scale: 9.99723479002109e8 M☉
 Time scale: 14.910986463557084 Myr
 Simulation time: 445.8861174695 Myr
-
 ```
 
 ### Creating Independent Scale and Constants Objects
@@ -871,23 +856,19 @@ println("✓ Enables memory optimization in large workflows")
 === Independent Objects Created ===
 Type of scales object: ScalesType002
 Type of constants object: PhysicalUnitsType002
-
 === Comparison: Different Access Methods ===
 Using info.scale.kpc:     1.0000000000006481
 Using scales.kpc:         1.0000000000006481
 Using info.constants.G:   6.6743e-8
 Using consts.G:           6.6743e-8
-
 === Memory-Efficient Workflow Example ===
 1. Extract needed scaling factors and constants
 2. Clear large InfoType object
 3. Continue calculations with lightweight objects
-
 ✓ Scales object is independent of InfoType
 ✓ Constants object is independent of InfoType
 ✓ Useful for passing to custom functions
 ✓ Enables memory optimization in large workflows
-
 ```
 
 ```julia
@@ -907,16 +888,13 @@ println("Use viewfields(info) to explore the complete structure.")
 
 ```
 Object type: InfoType
-
 This InfoType object contains:
 - Simulation metadata and parameters
 - Scaling factors for unit conversion
 - Physical constants
 - File organization information
 - AMR grid structure details
-
 Use viewfields(info) to explore the complete structure.
-
 ```
 
 ### Physical Constants Access
@@ -1012,9 +990,7 @@ println("✓ Persistence: Maintain constants after clearing InfoType")
 ```
 === Method 1: Direct shortcut ===
 === Method 2: Independent object ===
-
 === Available Constants Structure ===
-
 [Mera]: Constants given in cgs units
 =========================================
 Au	= 0.01495978707
@@ -1058,32 +1034,27 @@ min	= 60.0
 Gyr	= 3.15576e16
 Myr	= 3.15576e13
 yr	= 3.15576e7
-
 === Comparison of Access Methods ===
 info.constants.G:    6.6743e-8
 constants.G:         6.6743e-8
 consts.G:            6.6743e-8
 All identical:       true
-
 === Key Physical Constants for Astrophysics ===
 - Gravitational constant: 6.6743e-8 cm³ g⁻¹ s⁻²
 - Boltzmann constant: 1.380649e-16 erg K⁻¹
 - Speed of light: 2.99792458e10 cm s⁻¹
 - Solar mass: 1.9891e33 g
 - Proton mass: 1.67262192369e-24 g
-
 === Example: Jeans length calculation components ===
 ✓ Gravitational constant G = 6.6743e-8
 ✓ Boltzmann constant k_B = 1.380649e-16
 ✓ Proton mass (for μ * m_H calculation) = 1.67262192369e-24
 ✓ Temperature and density from scaling factors
-
 === Benefits of createconstants() ===
 ✓ Memory optimization: Independent of InfoType object
 ✓ Function arguments: Easy to pass to custom functions
 ✓ Multi-simulation: Compare constants between simulations
 ✓ Persistence: Maintain constants after clearing InfoType
-
 ```
 
 ### Additional Analysis Tools
@@ -1115,14 +1086,11 @@ end
 ```
 
 ```
-
 [Mera]: Makefile content
 =================================
 !content deleted on purpose
-
 Compilation information available: false
 Some compilation/build information files may not be available
-
 ```
 
 ```julia
@@ -1155,30 +1123,24 @@ println("      to see detailed method signatures.")
 
 ```
 === Available exploration methods ===
-
 1. viewfields methods:
    - viewfields(info)     # View InfoType object structure
    - viewfields(scale)    # View scaling factors
    - viewfields(constants) # View physical constants
-
 2. Object creation utilities:
    - createscales(info)   # Create independent scaling factors object
    - createconstants() # Create independent constants object
-
 3. Additional utility functions:
    - namelist(info)       # Display RAMSES namelist parameters
    - makefile(info)       # View compilation information
    - timerfile(info)      # Performance timing data
    - patchfile(info)      # AMR patch information
    - viewallfields(info)  # Complete field hierarchy
-
 4. Data management:
    - checkoutputs(path)   # Check simulation output availability
    - storageoverview(info) # Analyze storage requirements
-
 Note: Use 'methods(function_name)' in interactive sessions
       to see detailed method signatures.
-
 ```
 
 #### Complete Field Overview
@@ -1212,15 +1174,12 @@ println("- viewfields(info.constants) # Physical constants only")
 ```
 === Complete InfoType Structure Overview ===
 This will show ALL available fields and sub-fields:
-
 Note: viewallfields(info) produces extensive output.
 Use it when you need to discover all available data fields.
-
 For selective exploration, use:
 - viewfields(info)        # Main structure
 - viewfields(info.scale)  # Scaling factors only
 - viewfields(info.constants) # Physical constants only
-
 ```
 
 ## Data Management and Storage
@@ -1266,7 +1225,6 @@ AMR-Files:      1.1 GB 	<1.75 MB>/file
 Hydro-Files:    2.87 GB 	<4.58 MB>/file
 Gravity-Files:  1.68 GB 	<2.69 MB>/file
 Particle-Files: 38.56 MB 	<61.6 KB>/file
-
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 Storage overview provides information about:
@@ -1274,13 +1232,11 @@ Storage overview provides information about:
 - Number of CPU files per component
 - Total disk space usage
 - Memory requirements for loading
-
 Use this information to:
 ✓ Plan data transfers and storage allocation
 ✓ Optimize memory usage during analysis
 ✓ Select appropriate data subsets
 ✓ Monitor storage costs in cloud environments
-
 ```
 
 ### Output Inventory and Management
@@ -1313,8 +1269,7 @@ co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/");
 ```
 
 ```
-Outputs - existing: 62 betw. 1:610 - missing: 0
-
+Outputs - existing: 1 betw. 300:300 - missing: 1
 ```
 
 #### Analyzing Output Inventory
@@ -1339,11 +1294,8 @@ end
 ```
 
 ```
-Available outputs: 62 snapshots
-Output numbers: [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250, 260, 270, 280, 290, 300, 310, 320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600, 610]
-Output range: 1 to 610
-Warning: Gaps detected in output sequence
-
+Available outputs: 1 snapshots
+Output numbers: [300]
 ```
 
 ```julia
@@ -1373,14 +1325,12 @@ println("📊 Completeness: $(round(completeness, digits=1))%")
 
 ```
 === Complete Output Analysis ===
-Missing outputs: 0 snapshots
-✓ No missing outputs detected
-
-Data completeness: 100.0%
-
+Missing outputs: 1 snapshots
+Missing output numbers: [301]
+⚠️  These outputs may be incomplete, corrupted, or not yet computed
+Data completeness: 50.0%
 === Output Inventory Summary ===
-✓ Available outputs: 62
-⚠️  Missing outputs: 0
-📊 Completeness: 100.0%
-
+✓ Available outputs: 1
+⚠️  Missing outputs: 1
+📊 Completeness: 50.0%
 ```

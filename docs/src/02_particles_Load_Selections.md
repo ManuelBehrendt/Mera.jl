@@ -105,8 +105,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
 ```
-[Mera]: 2025-08-14T14:25:51.113
-
+[Mera]: 2026-05-30T17:10:40.858
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -121,7 +120,8 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -130,7 +130,8 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05
-particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables:
+7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
@@ -143,7 +144,6 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
 ```
 
 ## Variable Selection Techniques
@@ -198,24 +198,21 @@ particles = getparticles(info);
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:51.527
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:44.886
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :38.428720474243164 MB
+Memory used for data table :
+38.428720474243164 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -250,24 +247,21 @@ particles_a = getparticles(info, vars=[:mass, :birth]);
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:57.214
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:48.919
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(4, 7) = (:mass, :birth)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :25.965506553649902 MB
+Memory used for data table :
+25.965506553649902 MB
 -------------------------------------------------------
-
 ```
 
 **Alternative:** Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:
@@ -277,24 +271,20 @@ particles_a = getparticles(info, vars=[:var4, :var7]);
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:57.384
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:49.233
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(4, 7) = (:mass, :birth)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :25.965506553649902 MB
 -------------------------------------------------------
-
 ```
 
 **Keyword-free syntax:** When following the specific order (InfoType object, then variables), keyword arguments are optional:
@@ -304,24 +294,21 @@ particles_a = getparticles(info, [:mass, :birth]);
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:57.586
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:49.416
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(4, 7) = (:mass, :birth)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :25.965506553649902 MB
+Memory used for data table :
+25.965506553649902 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -367,24 +354,21 @@ particles_c = getparticles(info, :vx );
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:57.750
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:49.749
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1,) = (:vx,)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :21.81110191345215 MB
+Memory used for data table :
+21.81110191345215 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -453,24 +437,21 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:57.910
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:50.412
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.444850e+05 particles
-Memory used for data table :38.42660331726074 MB
+Memory used for data table :
+38.42660331726074 MB
 -------------------------------------------------------
-
 ```
 
 **Range Verification:** The loaded particle data ranges are stored in the `ranges` field using RAMSES standard notation (domain: [0:1]³):
@@ -502,26 +483,22 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:58.878
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:51.812
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.444850e+05 particles
-Memory used for data table :38.42660331726074 MB
+Memory used for data table :
+38.42660331726074 MB
 -------------------------------------------------------
-
 ```
 
 ### Physical Unit Coordinate System
@@ -545,24 +522,20 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:59.879
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:52.907
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 3.091600e+04 particles
 Memory used for data table :2.183063507080078 MB
 -------------------------------------------------------
-
 ```
 
 **Available Physical Units:** The `range_unit` keyword accepts various length units defined in the simulation's `scale` field:
@@ -572,7 +545,6 @@ viewfields(info.scale)  # or e.g.: gas.info.scale
 ```
 
 ```
-
 [Mera]: Fields to scale from user/code units to selected units
 =======================================================================
 Mpc	= 0.0010000000000006482
@@ -673,21 +645,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 3.85e-322
-a_mag	= 3.85e-322
-v_esc	= 2.205313559e-314
-ax	= 2.205313575e-314
-ay	= 3.9e-322
-az	= 3.95e-322
-epot	= 2.2053135907e-314
-a_magnitude	= 2.2053136223e-314
-escape_speed	= 4.0e-322
-gravitational_redshift	= 4.0e-322
-gravitational_energy_density	= 2.205313638e-314
-gravitational_binding_energy	= 2.205313654e-314
-total_binding_energy	= 4.05e-322
+delta_rho	= 1.95902651422507e-310
+a_mag	= 2.803071564612605e-309
+v_esc	= 1.95902651422507e-310
+ax	= 2.803071564612605e-309
+ay	= 1.95902651422507e-310
+az	= 2.803071564612605e-309
+epot	= 1.95902651422507e-310
+a_magnitude	= 2.803071564612605e-309
+escape_speed	= 1.95902651422507e-310
+gravitational_redshift	= 2.803071564612605e-309
+gravitational_energy_density	= 1.95902651422507e-310
+gravitational_binding_energy	= 2.803071564612605e-309
+total_binding_energy	= 1.95902651422507e-310
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.2053136697e-314
+gravitational_work	= 1.95902651422507e-310
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -695,8 +667,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.205313733e-314
-poisson_source	= 2.205313749e-314
+Fg	= 1.95902651422507e-310
+poisson_source	= 2.803071564612605e-309
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -708,7 +680,6 @@ r_sphere	= 3.085677581282e21
 dimensionless	= 1.0
 rad	= 1.0
 deg	= 57.29577951308232
-
 ```
 
 **Center-Relative with Physical Units:** Combine center-relative positioning with physical unit specifications for precise particle population analysis:
@@ -723,26 +694,22 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:25:59.976
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:53.106
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 center: [1.0416667, 1.0416667, 1.0416667] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-
 domain:
 xmin::xmax: 0.7083333 :: 1.0  	==> 34.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.7083333 :: 1.0  	==> 34.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 1.0 :: 1.0  	==> 48.0 [kpc] :: 48.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 0.000000e+00 particles
-Memory used for data table :1.10546875 KB
+Memory used for data table :
+1.10546875 KB
 -------------------------------------------------------
-
 ```
 
 ### Box Center Coordinate Shortcuts
@@ -772,26 +739,22 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:26:00.023
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:53.421
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :38.428720474243164 MB
+Memory used for data table :
+38.428720474243164 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -804,26 +767,22 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:26:00.990
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:54.629
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :38.428720474243164 MB
+Memory used for data table :
+38.428720474243164 MB
 -------------------------------------------------------
-
 ```
 
 **Selective Dimension Centering:** Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 50 kpc:
@@ -838,26 +797,21 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-14T14:26:01.950
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:10:55.919
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 center: [0.5, 1.0416667, 0.5] ==> [24.0 [kpc] :: 50.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.7083333 :: 1.0  	==> 34.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Processing 640 CPU files using 8 threads
+Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 2.078000e+03 particles
 Memory used for data table :151.4609375 KB
 -------------------------------------------------------
-
 ```
 
 ## Summary

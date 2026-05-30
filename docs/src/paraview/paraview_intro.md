@@ -13,25 +13,20 @@ using Mera
 ```
 
 ```
-
+search:
+export_vtk export exponent
 ```
 
 ```
-  Export hydro data to VTK format for visualization in tools like
-  ParaView.
-  --------------------------
+  Export hydro data to VTK format for visualization in tools like ParaView.
+  -------------------------------------------------------------------------
 
     •  export data that is present in your database and can be processed
        by getvar() (done internally)
-
     •  select scalar(s) and their unit(s)
-
     •  select a vector and its unit (like velocity)
-
     •  export data in log10
-
     •  creates binary files with optional compression
-
     •  supports multi-threading
 
   -> generating per-level VTU files for scalar and optionally vector data and
@@ -65,9 +60,7 @@ using Mera
   ⋅⋅⋅⋅⋅⋅⋅⋅⋅
 
     •  dataobject::HydroDataType: The AMR data structure from MERA.jl
-       containing variables like level, position, and physical
-       quantities.
-
+       containing variables like level, position, and physical quantities.
     •  outprefix::String: The base path and prefix for output files
        (e.g., "output/data" will create files like "output/data_L0.vtu").
 
@@ -77,49 +70,34 @@ using Mera
     •  scalars: List of scalar variables to export (default is :rho);
        from the database or a predefined quantity (see field: info,
        function getvar(), dataobject.data)
-
     •  scalars_unit: Sets the unit for the list of scalars (default is
        hydrogen number density in cm^-3).
-
     •  scalars_log10: Apply log10 to the scalars (default false).
-
     •  vector: List of vector component variables to export (default is
        missing); exports vector data as separate VTU files
-
     •  vector_unit: Sets the unit for the vector components (default is
        km/s).
-
     •  vector_name: The name of the vector field in the VTK file
        (default: "velocity").
-
     •  vector_log10: Apply log10 to the vector components (default:
        false).
-
     •  positions_unit: Sets the unit of the cell positions (default: code
        units); usefull in paraview to select regions
-
     •  lmin: Minimum AMR level to process (default: simulations lmin);
        smaller levels are excluded in export
-
     •  lmax: Maximum AMR level to process (default: simulations lmax);
        existing higher levels are interpolated down if
        interpolatehigherlevels is true, otherwise excluded from export
-
     •  chunk_size::Int = 50000: Size of data chunks for processing
        (currently unused but reserved for future optimizations).
-
     •  chunk_size::Int = 50000: Size of data chunks for processing
        (currently unused but reserved for future optimizations).
-
     •  compress: If true (default), enable compression.
-
     •  interpolate_higher_levels: If true, interpolate data from higher
        levels down to given lmax .
-
     •  max_cells: Maximum number of cells to export per level (caps
        output if exceeded, prioritizing denser regions), (default:
        100000000)
-
     •  verbose: If true (default), print detailed progress and diagnostic
        messages.
 
@@ -127,19 +105,14 @@ using Mera
 
   Export particle data to VTK format for visualization in tools like
   ParaView.
-  --------------------------
+  ----------------------------
 
     •  export data that is present in your database and can be processed
        by getvar() (done internally)
-
     •  select scalar(s) and their unit(s)
-
     •  select a vector and its unit (like velocity)
-
     •  export data in log10
-
     •  creates binary files with optional compression
-
     •  supports multi-threading
 
   -> generates VTU files; each particle is represented as a vertex point with
@@ -169,7 +142,6 @@ using Mera
   ⋅⋅⋅⋅⋅⋅⋅⋅⋅
 
     •  **dataobject::PartDataType:*** needs to be of type "PartDataType"
-
     •  outprefix: The base path and prefix for output file (e.g.,
        "foldername/particles" will create "foldername/particles.vtu").
 
@@ -179,35 +151,24 @@ using Mera
     •  scalars: List of scalar variables to export (default is particle
        mass); from the database or a predefined quantity (see field:
        info, function getvar(), dataobject.data)
-
     •  scalars_unit: Sets the unit for the list of scalars (default is
        Msun).
-
     •  scalars_log10: Apply log10 to the scalars (default false).
-
     •  vector: List of vector component variables to export (default is
        missing).
-
     •  vector_unit: Sets the unit for the vector components (default is
        km/s).
-
     •  vector_name: The name of the vector field in the VTK file
        (default: "velocity").
-
     •  vector_log10: Apply log10 to the vector components (default:
        false).
-
     •  positions_unit: Sets the unit of the particle positions (default:
        code units); usefull in paraview to select regions
-
     •  chunk_size::Int = 50000: Size of data chunks for processing
        (reserved for future optimizations).
-
     •  compress: If false (default), disable compression.
-
     •  max_particles: Maximum number of particles to export (caps output
        if exceeded), (default: 100000000)
-
     •  verbose: If true (default), print detailed progress and diagnostic
        messages.
 ```

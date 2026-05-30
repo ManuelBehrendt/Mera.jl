@@ -15,7 +15,7 @@ Upon completing this tutorial, you will be able to:
 
 **Key Functions**: `subregion()`, `shellregion()`, `projection()`, `getparticles()`
 **Data Types**: Particle data from RAMSES simulations
-**Coordinate Systems**: Physical units (kpc), box-relative coordinates `[0:1]`
+**Coordinate Systems**: Physical units (kpc), box-relative coordinates [0:1]
 **Visualization**: Surface density projections with PyPlot integration
 
 ## Quick Reference
@@ -72,7 +72,7 @@ shellregion(particles, :sphere, radius=[5., 10.],
 
 | Unit Type | Specification | Range | Description |
 |-----------|---------------|-------|-------------|
-| Box coordinates | Default | `[0:1]` | Normalized to simulation box |
+| Box coordinates | Default | [0:1] | Normalized to simulation box |
 | Physical units | `range_unit=:kpc` | Real distances | Kiloparsecs (customizable) |
 | Box center | `[:boxcenter]` | Box center | Automatic center calculation |
 
@@ -90,8 +90,7 @@ particles = getparticles(info, :mass);
 ```
 
 ```
-[Mera]: 2025-08-14T14:32:41.639
-
+[Mera]: 2026-05-30T17:32:06.242
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
@@ -106,7 +105,8 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -130,25 +130,21 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get particle data: 2025-08-14T14:32:45.248
-
-Using threaded processing with 8 threads
+[Mera]: Get particle data: 2026-05-30T17:32:11.943
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Processing 2048 CPU files using 8 threads
+Processing 2048 CPU files using 4 threads
 Mode: Threaded processing
-Combining results from 8 thread(s)...
+Combining results from 4 thread(s)...
 Found 5.089390e+05 particles
-Memory used for data table :19.415205001831055 MB
+Memory used for data table :
+19.415205001831055 MB
 -------------------------------------------------------
-
 ```
 
 ## Cuboid Selection
@@ -165,7 +161,7 @@ proj_y = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], directi
 proj_x = projection(particles, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, lmax=8, verbose=false);
 ```
 
-**Projection Properties**: The generated projection objects contain essential metadata including the `extent` field (processed domain boundaries) and `cextent` field (extent relative to the specified center, defaulting to `[0,0,0]`). These properties are crucial for consistent visualization scaling and coordinate alignment across different projections.
+**Projection Properties**: The generated projection objects contain essential metadata including the `extent` field (processed domain boundaries) and `cextent` field (extent relative to the specified center, defaulting to [0,0,0]). These properties are crucial for consistent visualization scaling and coordinate alignment across different projections.
 
 ```julia
 propertynames(proj_z)
@@ -207,15 +203,11 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_10_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Cuboid Region Extraction
 
 Apply spatial filtering to extract the defined cuboid region from the particle data. The `subregion()` function creates a new data object containing only particles within the specified boundaries.
 
-**Coordinate Reference Systems**: Spatial selections can be specified relative to a user-defined center or the simulation box corner `[0,0,0]` (default). Users can choose between normalized box coordinates `[0:1]` (default) or physical length units. The `range_unit` parameter enables direct specification in physical units like kiloparsecs, as defined in the simulation's scale information (`info.scale`).
+**Coordinate Reference Systems**: Spatial selections can be specified relative to a user-defined center or the simulation box corner [0,0,0] (default). Users can choose between normalized box coordinates [0:1] (default) or physical length units. The `range_unit` parameter enables direct specification in physical units like kiloparsecs, as defined in the simulation's scale information (`info.scale`).
 
 ```julia
 part_subregion = subregion( particles, :cuboid,
@@ -227,18 +219,14 @@ part_subregion = subregion( particles, :cuboid,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:03.582
-
+[Mera]: 2026-05-30T17:32:19.234
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Memory used for data table :10.259893417358398 MB
 -------------------------------------------------------
-
 ```
 
 ### Data Type Verification
@@ -288,10 +276,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_18_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Cuboid Selection
 
 Demonstrate inverse spatial selection using the `inverse=true` parameter. This technique extracts all particles outside the defined region, enabling complementary analysis and background studies.
@@ -307,18 +291,14 @@ part_subregion = subregion( particles, :cuboid,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:04.343
-
+[Mera]: 2026-05-30T17:32:19.736
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Memory used for data table :9.156034469604492 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -354,10 +334,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_22_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Cylindrical Selection
 
@@ -406,10 +382,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_26_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Cylindrical Region Extraction
 
 Execute cylindrical spatial filtering with specified radius and height parameters. The height parameter defines the extent in both directions perpendicular to the cylindrical axis, creating a symmetric volume around the central plane.
@@ -424,20 +396,16 @@ part_subregion = subregion(particles, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:05.731
-
+[Mera]: 2026-05-30T17:32:20.423
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :578.865234375 KB
 -------------------------------------------------------
-
 ```
 
 ### Cylindrical Sub-Region Projections
@@ -479,10 +447,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_31_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Alternative Center Projections
 
 Demonstrate projection generation using a custom center position instead of the default box center. This approach provides enhanced visualization control and can highlight specific features within the selected region.
@@ -522,10 +486,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_35_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Cylindrical Selection
 
 Apply inverse spatial filtering to extract all particles outside the defined cylindrical region. This technique is valuable for studying background environments and contextual particle distributions.
@@ -541,20 +501,17 @@ part_subregion = subregion(particles, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:07.993
-
+[Mera]: 2026-05-30T17:32:21.361
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :18.850629806518555 MB
+Memory used for data table :18.850629806518555
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -591,10 +548,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_39_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Spherical Selection
 
@@ -641,10 +594,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_43_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Spherical Region Extraction
 
 Apply spherical spatial filtering with the specified radius parameter. The sphere is centered at the designated coordinates, creating an isotropic selection volume ideal for studying central objects and radial structures.
@@ -657,19 +606,16 @@ part_subregion = subregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:09.243
-
+[Mera]: 2026-05-30T17:32:22.010
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :8.807867050170898 MB
+Memory used for data table :8.807867050170898
+ MB
 -------------------------------------------------------
-
 ```
 
 ### Spherical Sub-Region Projections
@@ -711,10 +657,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_48_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Spherical Selection
 
 Demonstrate inverse spherical selection to extract all particles outside the defined sphere. This approach is particularly useful for analyzing outer regions, background distributions, and environmental effects.
@@ -728,19 +670,15 @@ part_subregion = subregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:09.911
-
+[Mera]: 2026-05-30T17:32:22.274
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
 Memory used for data table :10.608060836791992 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -777,10 +715,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_52_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Combined and Nested Selections
 
@@ -830,10 +764,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_58_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Shell Selections
 
@@ -887,10 +817,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_63_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Cylindrical Shell Extraction
 
 Execute cylindrical shell selection using inner and outer radius parameters. The `radius=[inner, outer]` specification creates an annular volume ideal for studying disk structures, ring systems, and radial gradients in particle distributions.
@@ -904,22 +830,18 @@ part_subregion = shellregion( particles, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:11.397
-
+[Mera]: 2026-05-30T17:32:23.212
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :7.282751083374023 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -960,10 +882,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_67_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Cylindrical Shell Selection
 
 Apply inverse shell selection to extract particles outside the annular region. This technique provides access to both the central core and outer regions beyond the shell boundaries.
@@ -978,22 +896,18 @@ part_subregion = shellregion( particles, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:11.740
-
+[Mera]: 2026-05-30T17:32:23.473
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :12.133176803588867 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1033,10 +947,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_71_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 <a id="ShellRegionSphere"></a>
 
@@ -1088,10 +998,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_76_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Spherical Shell Extraction
 
 Execute spherical shell selection using the `radius=[inner, outer]` parameter array. This creates an isotropic annular volume perfect for studying radial profiles, shell structures, and layered particle distributions around central objects.
@@ -1104,21 +1010,18 @@ part_subregion = shellregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:12.858
-
+[Mera]: 2026-05-30T17:32:24.035
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :7.59193229675293 MB
+Memory used for data table :7.59193229675293
+ MB
 -------------------------------------------------------
-
 ```
 
 ### Spherical Shell Projections
@@ -1163,10 +1066,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_81_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Spherical Shell Selection
 
 Apply inverse spherical shell selection to extract particles outside the annular region. This provides access to both the central core and outer regions beyond the shell boundaries, enabling complementary analysis.
@@ -1180,21 +1079,18 @@ part_subregion = shellregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:13.488
-
+[Mera]: 2026-05-30T17:32:24.378
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :11.823995590209961 MB
+Memory used for data table :11.823995590209961
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1234,10 +1130,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_85_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Summary
 

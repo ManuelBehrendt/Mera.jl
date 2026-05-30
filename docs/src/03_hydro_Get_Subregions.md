@@ -103,11 +103,11 @@ gas  = gethydro(info,:rho,lmax=12, smallr=1e-11);
 ```
 
 ```
-[Mera]: 2025-08-14T14:33:29.776
-
+[Mera]: 2026-05-30T17:13:33.475
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime:
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -119,7 +119,8 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -143,46 +144,33 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get hydro data: 2025-08-14T14:33:32.207
-
+[Mera]: Get hydro data: 2026-05-30T17:13:35.597
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1,) = (:rho,)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 2048
-   Compute threads: 8
+   Compute threads: 4
    GC threads: 4
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:01:07 (33.10 ms/it)
-
-```
-
-```
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:40 (19.69 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 1 variables
-Creating Table from 18966620 cells with max 8 threads...
-  Threading: 5 threads for 5 columns
-  Max threads requested: 8
-  Available threads: 8
-  Using parallel processing with 5 threads
+Creating Table from 18966620 cells with max 4 threads...
+  Threading: 4 threads for 5 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
-  1.484907 seconds (4.26 M allocations: 2.080 GiB, 2.72% gc time, 48.57% compilation time)
-✓ Table created in 1.68 seconds
-Memory used for data table :723.5197649002075 MB
+  1.358242 seconds (4.74 M allocations: 2.065 GiB, 0.39% gc time, 50.91% compilation time)
+✓ Table created in 1.628 seconds
+Memory used for data table :
+723.5197649002075 MB
 -------------------------------------------------------
-
 ```
 
 ## Cuboid Selection
@@ -200,10 +188,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verb
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:33
 ```
 
 ### Cuboid Selection Visualization
@@ -239,11 +224,7 @@ cb = colorbar(im, label=labeltext)
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png)
 
 ```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
-```
-PyObject <matplotlib.colorbar.Colorbar object at 0x343eca870>
+PyObject <matplotlib.colorbar.Colorbar object at 0x168207340>
 ```
 
 ### Cuboid Region Extraction
@@ -265,18 +246,15 @@ gas_subregion = subregion( gas, :cuboid,
 ```
 
 ```
-[Mera]: 2025-08-14T14:35:47.210
-
+[Mera]: 2026-05-30T17:16:11.429
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Memory used for data table :285.23614978790283 MB
+Memory used for data table :285.23614978790283
+ MB
 -------------------------------------------------------
-
 ```
 
 ### Data Type Verification
@@ -326,10 +304,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_15_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Cuboid Selection
 
 Inverse selection allows analysis of all data *outside* the specified region. This technique is useful for studying the environment surrounding a structure or for excluding specific features from analysis.
@@ -345,18 +319,15 @@ gas_subregion = subregion( gas, :cuboid,
 ```
 
 ```
-[Mera]: 2025-08-14T14:35:50.705
-
+[Mera]: 2026-05-30T17:16:17.041
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Memory used for data table :438.28424549102783 MB
+Memory used for data table :438.28424549102783
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -366,10 +337,7 @@ proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
 ```
 
 ```julia
@@ -400,10 +368,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_19_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ## Cylindrical Selection
 
 Cylindrical selections are ideal for analyzing axisymmetric structures, outflows, or disk-like features. The cylinder is defined by radius, height, and orientation, with the default axis along the z-direction.
@@ -419,10 +383,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verb
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:33
 ```
 
 ### Cylindrical Selection Visualization
@@ -458,10 +419,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_24_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Cylindrical Region Extraction
 
 Define cylindrical selection parameters:
@@ -481,20 +438,17 @@ gas_subregion = subregion(  gas, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:37:42.248
-
+[Mera]: 2026-05-30T17:19:42.277
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :44.2560396194458 MB
+Memory used for data table :44.2560396194458
+ MB
 -------------------------------------------------------
-
 ```
 
 ### Cylindrical Sub-Region Projections
@@ -536,10 +490,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_31_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Alternative Projection Centers
 
 The projection center can be adjusted to focus on the selected region. Here we demonstrate projections centered on the cylindrical selection rather than the box center.
@@ -578,10 +528,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_34_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ```julia
 # Inverse cylindrical selection
@@ -623,34 +569,21 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ```
-[Mera]: 2025-08-14T14:37:44.742
-
+[Mera]: 2026-05-30T17:19:45.822
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :679.2643556594849 MB
+Memory used for data table :679.2643556594849
+ MB
 -------------------------------------------------------
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
 ```
 
-```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-
-```
-
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_3.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_20.png)
 
 ## Spherical Selection
 
@@ -667,10 +600,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
 ```
 
 ### Spherical Selection Visualization
@@ -706,10 +636,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_40_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Spherical Region Extraction
 
 Define spherical selection with radius in physical units relative to the specified center coordinates.
@@ -724,19 +650,16 @@ gas_subregion = subregion(  gas, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:39:34.538
-
+[Mera]: 2026-05-30T17:23:12.910
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :276.65876483917236 MB
+Memory used for data table :276.65876483917236
+ MB
 -------------------------------------------------------
-
 ```
 
 ### Spherical Sub-Region Projections
@@ -751,6 +674,10 @@ Maintain box center coordinates for consistent spatial reference across differen
 proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
+```
+
+```
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 ```julia
@@ -782,10 +709,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_47_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Spherical Selection
 
 Demonstrate inverse selection to analyze all data outside the specified spherical region.
@@ -799,19 +722,16 @@ gas_subregion = subregion(  gas, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:39:38.243
-
+[Mera]: 2026-05-30T17:23:21.745
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :446.8616304397583 MB
+Memory used for data table :446.8616304397583
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -821,10 +741,7 @@ proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], dir
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:29
 ```
 
 ```julia
@@ -855,10 +772,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Combined and Nested Selections
 
@@ -914,10 +827,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_58_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ## Shell Selections
 
 Shell regions provide hollow geometric selections with specified inner and outer boundaries. The `shellregion()` function supports both cylindrical and spherical shells for analyzing thin layers or annular structures.
@@ -934,10 +843,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
 ```
 
 ### Cylindrical Shell Visualization
@@ -976,10 +882,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Cylindrical Shell Extraction
 
 The `shellregion()` function creates hollow cylindrical selections by specifying inner and outer radii as an array. This is ideal for analyzing annular structures or radial gradients.
@@ -993,28 +895,29 @@ gas_subregion = shellregion( gas, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:41:26.201
-
+[Mera]: 2026-05-30T17:26:46.646
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :199.29430103302002 MB
+Memory used for data table :199.29430103302002
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
 proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
+```
+
+```
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 ```
 
 ```julia
@@ -1051,10 +954,6 @@ cb = colorbar(im, orientation="horizontal", label=labeltext, pad=0.2);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_67_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Cylindrical Shell Selection
 
 Apply inverse selection to analyze all data outside the cylindrical shell region.
@@ -1069,22 +968,19 @@ gas_subregion = shellregion(gas, :cylinder,
 ```
 
 ```
-[Mera]: 2025-08-14T14:41:28.682
-
+[Mera]: 2026-05-30T17:26:52.438
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :524.2260942459106 MB
+Memory used for data table :524.2260942459106
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1094,10 +990,7 @@ proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], dir
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:30
 ```
 
 ```julia
@@ -1132,10 +1025,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_71_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Spherical Shell
 
 Spherical shells are optimal for analyzing radial structures, shock fronts, or layered phenomena in approximately spherical systems.
@@ -1147,10 +1036,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
 ```
 
 ### Spherical Shell Visualization
@@ -1189,10 +1075,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_75_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Spherical Shell Extraction
 
 Create a spherical shell by specifying inner and outer radii. The shell contains all material between the two spherical surfaces.
@@ -1205,21 +1087,18 @@ gas_subregion = shellregion(gas, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:43:14.103
-
+[Mera]: 2026-05-30T17:30:14.250
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :201.98633289337158 MB
+Memory used for data table :201.98633289337158
+ MB
 -------------------------------------------------------
-
 ```
 
 ### Spherical Shell Projections
@@ -1230,6 +1109,10 @@ Generate projections of the spherical shell region using box center coordinates 
 proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
+```
+
+```
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 ```
 
 ```julia
@@ -1264,10 +1147,6 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_80_1.png)
 
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
-
 ### Inverse Spherical Shell Selection
 
 Apply inverse selection to analyze all data outside the spherical shell region.
@@ -1281,21 +1160,18 @@ gas_subregion = shellregion(gas, :sphere,
 ```
 
 ```
-[Mera]: 2025-08-14T14:43:17.365
-
+[Mera]: 2026-05-30T17:30:22.377
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :521.5340623855591 MB
+Memory used for data table :521.5340623855591
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -1305,10 +1181,7 @@ proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], dir
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:29
 ```
 
 ```julia
@@ -1342,10 +1215,6 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_84_1.png)
-
-```
-Figure(PyObject <Figure size 1550x350 with 6 Axes>)
-```
 
 ## Summary
 

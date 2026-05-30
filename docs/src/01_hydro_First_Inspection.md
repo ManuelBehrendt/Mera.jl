@@ -137,11 +137,11 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
 ```
-[Mera]: 2025-08-14T14:11:39.130
-
+[Mera]: 2026-05-30T17:00:27.163
 Code: RAMSES
 output [300] summary:
-mtime: 2023-04-09T05:34:09
+mtime:
+2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
 simulation time: 445.89 [Myr]
@@ -153,7 +153,8 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -162,20 +163,21 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05
-particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables:
+7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file:
+("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-
 ```
 
 ### Understanding Hydro Properties
@@ -243,11 +245,11 @@ viewfields(info.descriptor)
 ```
 
 ```
-
 [Mera]: Descriptor overview
 =================================
 hversion	= 1
-hydro	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
+hydro
+	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
 htypes	= ["d", "d", "d", "d", "d", "d", "d"]
 usehydro	= false
 hydrofile	= true
@@ -260,7 +262,8 @@ gravity	= [:epot, :ax, :ay, :az]
 usegravity	= false
 gravityfile	= false
 rtversion	= 0
-rt	= Dict{Any, Any}()
+rt
+	= Dict{Any, Any}()
 rtPhotonGroups	= Dict{Any, Any}()
 usert	= false
 rtfile	= false
@@ -270,7 +273,6 @@ clumpsfile	= false
 sinks	= Symbol[]
 usesinks	= false
 sinksfile	= false
-
 ```
 
 For a simple list of all available descriptor fields:
@@ -316,45 +318,33 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2025-08-14T14:06:57.893
-
+[Mera]: Get hydro data: 2026-05-30T17:00:30.842
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
-   Compute threads: 8
+   Compute threads: 4
    GC threads: 4
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (40.85 ms/it)
-
-```
-
-```
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:20 (32.80 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
-Creating Table from 28320979 cells with max 8 threads...
-  Threading: 8 threads for 11 columns
-  Max threads requested: 8
-  Available threads: 8
-  Using parallel processing with 8 threads
+Creating Table from 28320979 cells with max 4 threads...
+  Threading: 4 threads for 11 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 29.318513 seconds (623.38 M allocations: 26.965 GiB, 5.35% gc time, 3.77% compilation time)
-✓ Table created in 29.506 seconds
-Memory used for data table :2.321086215786636 GB
+ 37.987317 seconds (962.41 M allocations: 55.577 GiB, 7.94% gc time, 2.91% compilation time)
+✓ Table created in 38.306 seconds
+Memory used for data table :
+2.321086215786636 GB
 -------------------------------------------------------
-
 ```
 
 ### Memory Usage Analysis
@@ -367,7 +357,6 @@ usedmemory(gas);
 
 ```
 Memory used: 2.321 GB
-
 ```
 
 ## Understanding Data Types
@@ -412,7 +401,7 @@ supertype( HydroPartType )
 ContainMassDataSetType
 ```
 
-![TypeHierarchy](assets/TypeHierarchy.png)
+![TypeHierarchy](./assets/TypeHierarchy.png)
 
 ## Data Organization and Structure
 
@@ -423,21 +412,18 @@ viewfields(gas)
 ```
 
 ```
-
 data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
-
 lmin	= 6
 lmax	= 10
 boxlen	= 48.0
-ranges	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+ranges	=
+[0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
 selected_hydrovars	= [1, 2, 3, 4, 5, 6, 7]
 smallr	= 0.0
 smallc	= 0.0
-
-scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
-
+scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV
+, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 ```
 
 ### Convenient Data Access
@@ -465,45 +451,33 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2025-08-14T14:07:58.059
-
+[Mera]: Get hydro data: 2026-05-30T17:01:34.176
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
-   Compute threads: 8
+   Compute threads: 4
    GC threads: 4
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (41.14 ms/it)
-
-```
-
-```
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:22 (35.36 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
-Creating Table from 28320979 cells with max 8 threads...
-  Threading: 8 threads for 11 columns
-  Max threads requested: 8
-  Available threads: 8
-  Using parallel processing with 8 threads
+Creating Table from 28320979 cells with max 4 threads...
+  Threading: 4 threads for 11 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 27.856846 seconds (618.29 M allocations: 26.622 GiB, 5.49% gc time)
-✓ Table created in 28.061 seconds
-Memory used for data table :2.321086215786636 GB
+ 37.327449 seconds (958.14 M allocations: 55.370 GiB, 8.59% gc time)
+✓ Table created in 37.635 seconds
+Memory used for data table :
+2.321086215786636 GB
 -------------------------------------------------------
-
 ```
 
 ### Quick Field Reference
@@ -544,7 +518,6 @@ overview_amr = amroverview(gas)
 
 ```
 Counting...
-
 ```
 
 ```
@@ -572,12 +545,7 @@ data_overview = dataoverview(gas)
 
 ```
 Calculating...
-
-```
-
-```
- 100%|███████████████████████████████████████████████████| Time: 0:02:22
-
+ 100%|███████████████████████████████████████████████████| Time: 0:03:02
 ```
 
 ```

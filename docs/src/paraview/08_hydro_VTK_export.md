@@ -74,10 +74,10 @@ gas = loaddata(600, path, :hydro); # load full box
 ```
 
 ```
-[Mera]: 2025-08-13T14:23:02.077
-
+[Mera]: 2026-05-30T13:21:41.394
 Use datatype: hydro
-Code: RAMSES
+Code:
+RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
 ctime: 2024-09-10T11:23:16.230
@@ -91,7 +91,8 @@ amr:           true
 level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7
+  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -106,26 +107,23 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
+namelist-file: (
+"&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: 2025-08-13T14:23:07.251
-
+[Mera]: 2026-05-30T13:21:44.862
 Open Mera-file output_00600.jld2:
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-Memory used for data table :8.637885391712189 GB
+Memory used for data table :
+8.637885391712189 GB
 -------------------------------------------------------
-
 ```
 
 ## Export Scalars
@@ -148,26 +146,30 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T14:23:29.030
-
-Available Threads: 8
+[Mera]: 2026-05-30T13:22:07.800
+Available Threads: 4
+Created directory: output01
 Processing levels: [6, 7, 8, 9]
 Will interpolate levels [10, 11, 12, 13] down to 9
 Level 6
-  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu
+ (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
-  wrote 0600_galaxy_L7.vtu (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu
+ (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
 Level 8
-  wrote 0600_galaxy_L8.vtu (Size: 0.33 GB)
+  wrote 0600_galaxy_L8.vtu
+ (Size: 0.33 GB)
   ✓ Level 8 completed, memory cleaned
 Level 9
   Including higher levels for interpolation
   Interpolating down to level 9
   Unique coarse cells at level 9: 13663000 (out of max 134217728) [safe_size: 97141255]
   → 13663000 coarse cells after interpolation
-  wrote 0600_galaxy_L9.vtu (Size: 0.64 GB)
+  wrote 0600_galaxy_L9.vtu
+ (Size: 0.64 GB)
   ✓ Level 9 completed, memory cleaned
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
@@ -180,12 +182,10 @@ Created scalar multiblock: 0600_galaxy_scalar.vtm
     - Added reference to 0600_galaxy_L8.vtu in block 'Level_8' of scalar VTM
     - Added reference to 0600_galaxy_L9.vtu in block 'Level_9' of scalar VTM
   Updated scalar VTM file with references to scalar VTU files at: 0600_galaxy_scalar.vtm
-
 === Export Summary ===
 VTU files (scalars): 4
 Scalar VTM: 0600_galaxy_scalar.vtm
 Available scalars: rho, T, AMR_Level
-
 ```
 
 ```julia
@@ -193,8 +193,7 @@ readdir("output01")
 ```
 
 ```
-6-element Vector{String}:
- ".ipynb_checkpoints"
+5-element Vector{String}:
  "0600_galaxy_L6.vtu"
  "0600_galaxy_L7.vtu"
  "0600_galaxy_L8.vtu"
@@ -226,22 +225,25 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T14:59:07.696
-
-Available Threads: 8
+[Mera]: 2026-05-30T13:42:22.562
+Available Threads: 4
+Created directory: output03
 Processing levels: [6, 7, 8, 9, 10]
 Will interpolate levels [11, 12, 13] down to 10
 Level 6
-  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu
+ (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
   wrote 0600_galaxy_L7.vtu (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
 Level 8
-  wrote 0600_galaxy_L8.vtu (Size: 0.33 GB)
+  wrote 0600_galaxy_L8.vtu
+ (Size: 0.33 GB)
   ✓ Level 8 completed, memory cleaned
 Level 9
-  wrote 0600_galaxy_L9.vtu (Size: 0.54 GB)
+  wrote 0600_galaxy_L9.vtu
+ (Size: 0.54 GB)
   ✓ Level 9 completed, memory cleaned
 Level 10
   Including higher levels for interpolation
@@ -249,7 +251,8 @@ Level 10
   Unique coarse cells at level 10: 6968288 (out of max 1073741824) [safe_size: 84349291]
   Capping output cells to 100000 (from 6968288)
   → 100000 coarse cells after interpolation
-  wrote 0600_galaxy_L10.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_L10.vtu
+ (Size: 0.0 GB)
   ✓ Level 10 completed, memory cleaned
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
@@ -264,12 +267,10 @@ Created scalar multiblock: 0600_galaxy_scalar.vtm
     - Added reference to 0600_galaxy_L9.vtu in block 'Level_9' of scalar VTM
     - Added reference to 0600_galaxy_L10.vtu in block 'Level_10' of scalar VTM
   Updated scalar VTM file with references to scalar VTU files at: 0600_galaxy_scalar.vtm
-
 === Export Summary ===
 VTU files (scalars): 5
 Scalar VTM: 0600_galaxy_scalar.vtm
 Available scalars: rho, T, AMR_Level
-
 ```
 
 ```julia
@@ -313,30 +314,38 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T15:07:24.411
-
-Available Threads: 8
+[Mera]: 2026-05-30T14:02:15.625
+Available Threads: 4
+Created directory: output04
 Processing levels: [6, 7, 8, 9]
 Will interpolate levels [10, 11, 12, 13] down to 9
 Level 6
-  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
-  wrote 0600_galaxy_vec_L6.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu
+ (Size: 0.0 GB)
+  wrote 0600_galaxy_vec_L6.vtu
+ (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
-  wrote 0600_galaxy_L7.vtu (Size: 0.01 GB)
-  wrote 0600_galaxy_vec_L7.vtu (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu
+ (Size: 0.01 GB)
+  wrote 0600_galaxy_vec_L7.vtu
+ (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
 Level 8
-  wrote 0600_galaxy_L8.vtu (Size: 0.28 GB)
-  wrote 0600_galaxy_vec_L8.vtu (Size: 0.41 GB)
+  wrote 0600_galaxy_L8.vtu
+ (Size: 0.28 GB)
+  wrote 0600_galaxy_vec_L8.vtu
+ (Size: 0.41 GB)
   ✓ Level 8 completed, memory cleaned
 Level 9
   Including higher levels for interpolation
   Interpolating down to level 9
   Unique coarse cells at level 9: 13663000 (out of max 134217728) [safe_size: 97141255]
   → 13663000 coarse cells after interpolation
-  wrote 0600_galaxy_L9.vtu (Size: 0.55 GB)
-  wrote 0600_galaxy_vec_L9.vtu (Size: 0.77 GB)
+  wrote 0600_galaxy_L9.vtu
+ (Size: 0.55 GB)
+  wrote 0600_galaxy_vec_L9.vtu
+ (Size: 0.77 GB)
   ✓ Level 9 completed, memory cleaned
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
@@ -360,7 +369,6 @@ Created vector multiblock: 0600_galaxy_vector.vtm
     - Added reference to 0600_galaxy_vec_L8.vtu in block 'vec_Level_8' of vector VTM
     - Added reference to 0600_galaxy_vec_L9.vtu in block 'vec_Level_9' of vector VTM
   Updated vector VTM file with references to vector VTU files at: 0600_galaxy_vector.vtm
-
 === Export Summary ===
 VTU files (scalars): 4
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -368,7 +376,6 @@ VTU files (vector): 4
 Vector VTM: 0600_galaxy_vector.vtm
 Available scalars: rho, AMR_Level
 Available vector, named: velocity
-
 ```
 
 ```julia
@@ -427,26 +434,32 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T15:17:39.307
-
-Available Threads: 8
+[Mera]: 2026-05-30T14:31:40.068
+Available Threads: 4
+Created directory: output05
 Processing levels: [6, 7, 8]
 Will interpolate levels [9, 10, 11, 12, 13] down to 8
 Level 6
-  wrote 0600_galaxy_L6.vtu (Size: 0.0 GB)
-  wrote 0600_galaxy_vec_L6.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_L6.vtu
+ (Size: 0.0 GB)
+  wrote 0600_galaxy_vec_L6.vtu
+ (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
-  wrote 0600_galaxy_L7.vtu (Size: 0.01 GB)
-  wrote 0600_galaxy_vec_L7.vtu (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu
+ (Size: 0.01 GB)
+  wrote 0600_galaxy_vec_L7.vtu
+ (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
 Level 8
   Including higher levels for interpolation
   Interpolating down to level 8
   Unique coarse cells at level 8: 9517504 (out of max 16777216) [safe_size: 104950884]
   → 9517504 coarse cells after interpolation
-  wrote 0600_galaxy_L8.vtu (Size: 0.39 GB)
-  wrote 0600_galaxy_vec_L8.vtu (Size: 0.55 GB)
+  wrote 0600_galaxy_L8.vtu
+ (Size: 0.39 GB)
+  wrote 0600_galaxy_vec_L8.vtu
+ (Size: 0.55 GB)
   ✓ Level 8 completed, memory cleaned
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
   Added block 'Level_7' to scalar VTM for 0600_galaxy_L7.vtu
@@ -466,7 +479,6 @@ Created vector multiblock: 0600_galaxy_vector.vtm
     - Added reference to 0600_galaxy_vec_L7.vtu in block 'vec_Level_7' of vector VTM
     - Added reference to 0600_galaxy_vec_L8.vtu in block 'vec_Level_8' of vector VTM
   Updated vector VTM file with references to vector VTU files at: 0600_galaxy_vector.vtm
-
 === Export Summary ===
 VTU files (scalars): 3
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -474,7 +486,6 @@ VTU files (vector): 3
 Vector VTM: 0600_galaxy_vector.vtm
 Available scalars: rho, AMR_Level
 Available vector, named: velocity
-
 ```
 
 ```julia
@@ -495,23 +506,23 @@ readdir("output05")
 
 **Open Scalar vtm File**
 
-![](../images/01_hydro.jpg)
+![](images/01_hydro.jpg)
 
 **Select rho array, volume rendering and apply**
 
-![](../images/02_hydro.jpg)
+![](images/02_hydro.jpg)
 
 **Choose a suitable colormap**
 
-![](../images/03_hydro.jpg)
+![](images/03_hydro.jpg)
 
 **Select value range, opazity and visualize data histogram**
 
-![](../images/04_hydro.jpg)
+![](images/04_hydro.jpg)
 
 **Change orientation, value range**
 
-![](../images/05_hydro.jpg)
+![](images/05_hydro.jpg)
 
 ```julia
 # => save state
@@ -525,20 +536,17 @@ gassub = subregion(gas, :cylinder, radius=1., height=1., range_unit=:kpc, center
 ```
 
 ```
-[Mera]: 2025-08-13T15:24:09.883
-
+[Mera]: 2026-05-30T14:56:57.883
 center: [0.4791667, 0.4791667, 0.5] ==> [23.0 [kpc] :: 23.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4583333 :: 0.5  	==> 22.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.4583333 :: 0.5  	==> 22.0 [kpc] :: 24.0 [kpc]
 zmin::zmax: 0.4791667 :: 0.5208333  	==> 23.0 [kpc] :: 25.0 [kpc]
-
 Radius: 1.0 [kpc]
 Height: 1.0 [kpc]
-Memory used for data table :148.63642406463623 MB
+Memory used for data table :148.63642406463623
+ MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -560,25 +568,32 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2025-08-13T15:24:12.661
-
-Available Threads: 8
+[Mera]: 2026-05-30T14:59:06.290
+Available Threads: 4
+Created directory: output06
 Processing levels: [10, 11, 12, 13]
 Level 10
   wrote 0600_galaxy_L10.vtu (Size: 0.0 GB)
-  wrote 0600_galaxy_vec_L10.vtu (Size: 0.0 GB)
+  wrote 0600_galaxy_vec_L10.vtu
+ (Size: 0.0 GB)
   ✓ Level 10 completed, memory cleaned
 Level 11
-  wrote 0600_galaxy_L11.vtu (Size: 0.01 GB)
-  wrote 0600_galaxy_vec_L11.vtu (Size: 0.02 GB)
+  wrote 0600_galaxy_L11.vtu
+ (Size: 0.01 GB)
+  wrote 0600_galaxy_vec_L11.vtu
+ (Size: 0.02 GB)
   ✓ Level 11 completed, memory cleaned
 Level 12
-  wrote 0600_galaxy_L12.vtu (Size: 0.02 GB)
-  wrote 0600_galaxy_vec_L12.vtu (Size: 0.03 GB)
+  wrote 0600_galaxy_L12.vtu
+ (Size: 0.02 GB)
+  wrote 0600_galaxy_vec_L12.vtu
+ (Size: 0.03 GB)
   ✓ Level 12 completed, memory cleaned
 Level 13
-  wrote 0600_galaxy_L13.vtu (Size: 0.03 GB)
-  wrote 0600_galaxy_vec_L13.vtu (Size: 0.04 GB)
+  wrote 0600_galaxy_L13.vtu
+ (Size: 0.03 GB)
+  wrote 0600_galaxy_vec_L13.vtu
+ (Size: 0.04 GB)
   ✓ Level 13 completed, memory cleaned
   Added block 'Level_10' to scalar VTM for 0600_galaxy_L10.vtu
   Added block 'Level_11' to scalar VTM for 0600_galaxy_L11.vtu
@@ -602,7 +617,6 @@ Created vector multiblock: 0600_galaxy_vector.vtm
     - Added reference to 0600_galaxy_vec_L12.vtu in block 'vec_Level_12' of vector VTM
     - Added reference to 0600_galaxy_vec_L13.vtu in block 'vec_Level_13' of vector VTM
   Updated vector VTM file with references to vector VTU files at: 0600_galaxy_vector.vtm
-
 === Export Summary ===
 VTU files (scalars): 4
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -610,7 +624,6 @@ VTU files (vector): 4
 Vector VTM: 0600_galaxy_vector.vtm
 Available scalars: rho, AMR_Level
 Available vector, named: velocity
-
 ```
 
 ```julia
@@ -633,27 +646,27 @@ readdir("output06")
 
 **Load Scalar**
 
-![](../images/01_hydro2.jpg)
+![](images/01_hydro2.jpg)
 
 **Select rho data, volume rendering, color map, choose value range**
 
-![](../images/02_hydro2.jpg)
+![](images/02_hydro2.jpg)
 
 **Load Vector data**
 
-![](../images/03_hydro2.jpg)
+![](images/03_hydro2.jpg)
 
 **Select velocity data, magnitude volume rendering**
 
-![](../images/04_hydro2.jpg)
+![](images/04_hydro2.jpg)
 
 **Edge-on view, apply 3D Glyphs on vector data, choose array and number of sample points**
 
-![](../images/05_hydro2.jpg)
+![](images/05_hydro2.jpg)
 
 **Apply streamline tracer, point cloud and its size, number of points**
 
-![](../images/06_hydro2.jpg)
+![](images/06_hydro2.jpg)
 
 ```julia
 # => save state

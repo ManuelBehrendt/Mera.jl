@@ -23,10 +23,10 @@ viewfields(myargs)
 ```
 
 ```
-
 [Mera]: Fields to use as arguments in functions
 =======================================================================
-pxsize	= missing
+pxsize
+	= missing
 res	= missing
 lmax	= missing
 xrange	= missing
@@ -46,7 +46,6 @@ data_center_unit	= missing
 verbose	= missing
 show_progress	= missing
 verbose_threads	= missing
-
 ```
 
 ```julia
@@ -66,33 +65,21 @@ gas = gethydro(info, myargs=myargs);
 ```
 
 ```
-[Mera]: Get hydro data: 2025-08-13T17:17:42.601
-
+[Mera]: Get hydro data: 2026-05-30T18:12:56.693
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
-center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
+center: [0.5, 0.5, 0.5]
+==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
-   GC threads: 2
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:15 (24.29 ms/it)
-
-```
-
-```
-
+   GC threads: 4
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (30.27 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 6914359 cells, 7 variables
@@ -102,11 +89,11 @@ Creating Table from 6914359 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-  1.243602 seconds (5.26 M allocations: 1.678 GiB, 0.54% gc time, 61.77% compilation time)
-✓ Table created in 1.48 seconds
-Memory used for data table :580.2772397994995 MB
+  8.814315 seconds (250.23 M allocations: 14.041 GiB, 8.11% gc time, 9.65% compilation time)
+✓ Table created in 9.08 seconds
+Memory used for data table :
+580.2772397994995 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -114,26 +101,22 @@ part = getparticles(info, myargs=myargs);
 ```
 
 ```
-[Mera]: Get particle data: 2025-08-13T17:18:03.678
-
+[Mera]: Get particle data: 2026-05-30T18:13:29.117
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.368130e+05 particles
-Memory used for data table :37.885175704956055 MB
+Memory used for data table :
+37.885175704956055 MB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -141,28 +124,22 @@ p = projection(gas, :sd, :Msun_pc2, myargs=myargs);
 ```
 
 ```
-[Mera]: 2025-08-13T17:18:07.320
-
+[Mera]: 2026-05-30T18:13:34.012
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 481^2
 Map size: 201 x 201
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
-
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-
 ```
 
 ```julia
@@ -176,8 +153,7 @@ gas = gethydro(info, myargs=myargs);
 ```
 
 ```
-  0.579849 seconds (363.13 k allocations: 1.340 GiB, 0.68% gc time)
-
+  8.419440 seconds (245.97 M allocations: 13.829 GiB, 9.73% gc time)
 ```
 
 ```julia
@@ -200,7 +176,6 @@ verbose()
 
 ```
 verbose_mode: nothing
-
 ```
 
 ```julia
@@ -218,15 +193,9 @@ gas = gethydro(info);
 ```
 
 ```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:11 (18.61 ms/it)
-
-```
-
-```
-
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (30.26 ms/it)
 ✓ File processing complete! Combining results...
-  3.218240 seconds (701.21 k allocations: 5.747 GiB, 0.60% gc time)
-
+ 36.386626 seconds (958.14 M allocations: 55.370 GiB, 8.08% gc time)
 ```
 
 ```julia
@@ -245,31 +214,19 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2025-08-13T17:18:42.592
-
+[Mera]: Get hydro data: 2026-05-30T18:14:52.340
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
-   GC threads: 2
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (23.08 ms/it)
-
-```
-
-```
-
+   GC threads: 4
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 (30.60 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -279,11 +236,10 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-  4.059545 seconds (701.60 k allocations: 5.238 GiB, 0.71% gc time)
-✓ Table created in 4.297 seconds
+ 36.786014 seconds (958.14 M allocations: 55.453 GiB, 8.13% gc time)
+✓ Table created in 37.046 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -295,7 +251,6 @@ showprogress()
 
 ```
 showprogress_mode: nothing
-
 ```
 
 ```julia
@@ -314,7 +269,6 @@ showprogress()
 
 ```
 showprogress_mode: false
-
 ```
 
 ```julia
@@ -322,22 +276,18 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2025-08-13T17:19:02.966
-
+[Mera]: Get hydro data: 2026-05-30T18:15:50.498
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
-   GC threads: 2
-
+   GC threads: 4
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
@@ -346,11 +296,10 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-  4.087378 seconds (701.60 k allocations: 5.611 GiB, 0.23% gc time)
-✓ Table created in 4.327 seconds
+ 37.045688 seconds (958.14 M allocations: 55.341 GiB, 8.73% gc time)
+✓ Table created in 37.332 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
-
 ```
 
 ```julia
@@ -371,7 +320,6 @@ showprogress()
 
 ```
 showprogress_mode: true
-
 ```
 
 ```julia
@@ -386,7 +334,6 @@ showprogress()
 
 ```
 showprogress_mode: nothing
-
 ```
 
 ## Notification Bell
@@ -396,16 +343,18 @@ showprogress_mode: nothing
 ```
 
 ```
-
+search:
+bell ceil all Real real fill kill help
 ```
 
 ```
-  Get a notification sound, e.g., when your calculations are finished.
-  ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+  No documentation found for public binding Mera.bell.
 
-  This may not apply when working remotely on a server:
+  Mera.bell is a Function.
 
-  julia> bell()
+  # 1 method for generic function "bell" from Mera:
+   [1] bell()
+       @ ~/Documents/codes/github/Mera.jl/src/functions/notifications.jl:11
 ```
 
 ## Notification E-Mail
@@ -415,23 +364,100 @@ showprogress_mode: nothing
 ```
 
 ```
-
+search: notifyme notify time ctime @time mtime
 ```
 
 ```
-  Get an email notification, e.g., when your calculations are finished.
-  –––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+  Get an email and/or Zulip notification, e.g., when your calculations are
+  finished.
+  ––––––––––––––––––––––––––––
 
-  Mandatory:
+  Email notification:
 
-    •  the email client "mail" needs to be installed
-
-    •  put a file with the name "email.txt" in your home folder that
+    •  Requires the email client "mail" to be installed
+    •  Put a file with the name "email.txt" in your home folder that
        contains your email address in the first line
+
+  Zulip notification (optional):
+
+    •  Put a file with the name "zulip.txt" in your home folder with
+       three lines:
+
+       •  Line 1: Your Zulip bot email (e.g.,
+       mybot@zulip.yourdomain.com)
+       •  Line 2: Your Zulip API key
+       •  Line 3: Your Zulip server URL (e.g.,
+       https://zulip.yourdomain.com)
+
+  Output Capture (optional):
+
+    •  capture_output: Can be a Cmd, Function, or String to capture
+       terminal/function output
+    •  The captured output will be appended to your message
+
+  File Attachments (optional):
+
+    •  image_path: Single image file to attach
+    •  attachments: Vector of file paths to attach (multiple files)
+    •  attachment_folder: Path to folder - all image files (.png, .jpg,
+       .jpeg, .gif, .svg) will be attached
+    •  maxattachments: Maximum number of files to attach when using
+       attachmentfolder (default: 10)
+    •  maxfilesize: Maximum file size in bytes for non-image attachments
+       (default: 25000000 ≈ 25 MB). Files larger than this are skipped
+       with an explanatory warning (Zulip itself may enforce stricter
+       limits – typical defaults are 25–50 MB). For images a stricter 1
+       MB optimization target is applied automatically to keep uploads
+       fast and reliable; large images are resized down to <=1024px on
+       the longest side.
+
+  Time Tracking (optional):
+
+    •  start_time: Start time for execution tracking (use time() or now())
+    •  include_timing: Boolean to include automatic timing information
+       (default: false)
+    •  timing_details: Include detailed performance metrics (memory,
+       allocations)
+
+  Exception Handling (optional):
+
+    •  exception_context: Exception object to include stack trace and
+       error details
+    •  includestacktrace: Boolean to include full stack trace (default:
+       true when exceptioncontext provided)
 
   julia> notifyme()
 
-  or:
-
   julia> notifyme("Calculation 1 finished!")
+
+  julia> notifyme(msg="Calculation finished!", zulip_channel="alerts", zulip_topic="Run Status")
+
+  julia> notifyme(msg="Plot ready!", zulip_channel="plots", zulip_topic="Results", image_path="result.png")
+
+  julia> notifyme(msg="Multiple results!", attachments=["plot1.png", "plot2.png", "data.csv"])
+
+  julia> notifyme(msg="All plots from analysis!", attachment_folder="./plots/")
+
+  julia> notifyme(msg="Limited plots!", attachment_folder="./plots/", max_attachments=5)
+
+  julia> notifyme(msg="Large dataset results!", attachments=["data.csv"], max_file_size=50_000_000)  # 50MB limit
+
+  # Example: enforce a tighter 5 MB limit to avoid heavy uploads when on slow networks
+  julia> notifyme(msg="Quick summary only", attachments=["summary.log"], max_file_size=5_000_000)
+
+  # Time tracking examples
+  julia> start = time(); heavy_computation(); notifyme("Computation done!", start_time=start)
+
+  julia> notifyme("Analysis finished!", include_timing=true, timing_details=true)
+
+  # Exception handling examples
+  julia> try
+             risky_computation()
+         catch e
+             notifyme("Computation failed!", exception_context=e)
+         end
+
+  julia> notifyme(msg="Directory listing:", capture_output=`ls`)
+
+  julia> notifyme(msg="Function output:", capture_output=() -> sum(rand(100)))
 ```

@@ -90,11 +90,11 @@ clumps    = getclumps(info);
 ```
 
 ```
-[Mera]: 2025-08-14T14:49:55.275
-
+[Mera]: 2026-05-30T17:36:03.159
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime:
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -106,7 +106,8 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -130,80 +131,58 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get hydro data: 2025-08-14T14:49:57.658
-
+[Mera]: Get hydro data: 2026-05-30T17:36:05.320
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 2048
-   Compute threads: 1
-   GC threads: 1
-
-```
-
-```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:02:47 (81.74 ms/it)
-
-```
-
-```
-
+   Compute threads: 4
+   GC threads: 4
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:19 ( 9.49 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 849332 cells, 7 variables
-Creating Table from 849332 cells with max 1 threads...
-  Threading: 1 threads for 11 columns
-  Max threads requested: 1
-  Available threads: 1
-  Using sequential processing (optimal for small datasets)
+Creating Table from 849332 cells with max 4 threads...
+  Threading: 4 threads for 11 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-  0.741037 seconds (4.93 M allocations: 465.695 MiB, 4.69% gc time, 89.64% compilation time)
-✓ Table created in 1.086 seconds
-Memory used for data table :71.27991771697998 MB
+  1.803161 seconds (32.35 M allocations: 1.866 GiB, 8.78% gc time, 46.99% compilation time)
+✓ Table created in 2.068 seconds
+Memory used for data table :
+71.27991771697998 MB
 -------------------------------------------------------
-
-[Mera]: Get particle data: 2025-08-14T14:52:49.720
-
+[Mera]: Get particle data: 2026-05-30T17:36:30.341
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
-```
-
-```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:12
-
-```
-
-```
+Processing 2048 CPU files using 4 threads
+Mode: Threaded processing
+Combining results from 4 thread(s)...
 Found 5.089390e+05 particles
-Memory used for data table :34.94713020324707 MB
+Memory used for data table :
+34.94713020324707 MB
 -------------------------------------------------------
-
-[Mera]: Get clump data: 2025-08-14T14:53:03.207
-
+[Mera]: Get clump data: 2026-05-30T17:36:31.761
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
+Memory used for data table :
+61.58203125 KB
 -------------------------------------------------------
-
 ```
 
 ## Data Selection from Tables
@@ -613,7 +592,6 @@ println( typeof(gas_new) )
 ```
 HydroDataType
 HydroDataType
-
 ```
 
 ```julia
@@ -841,28 +819,22 @@ proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.
 ```
 
 ```
-[Mera]: 2025-08-14T14:53:11.798
-
+[Mera]: 2026-05-30T17:36:46.012
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.3333333 :: 0.6666667  	==> 16.0 [kpc] :: 32.0 [kpc]
 ymin::ymax: 0.3333333 :: 0.6666667  	==> 16.0 [kpc] :: 32.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:mach, :sd)
 Weighting      = :mass
-
 Effective resolution: 256^2
 Map size: 86 x 86
 Pixel size: 187.5 [pc]
 Simulation min.: 187.5 [pc]
-
-Available threads: 1
-Requested max_threads: 1
+Available threads: 4
+Requested max_threads: 4
 Variables: 2 (mach, sd)
-Processing mode: Sequential (single thread)
-
+Processing mode: Variable-based parallel (2 threads)
 ```
 
 ```julia
@@ -872,10 +844,6 @@ colorbar();
 ```
 
 ![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_60_1.png)
-
-```
-Figure(PyObject <Figure size 640x480 with 2 Axes>)
-```
 
 Remove the column :mach from the table:
 
@@ -1003,7 +971,6 @@ println( typeof(mask_v1) )
 ```
 849332
 Vector{Bool}
-
 ```
 
 #### Version 2: Short Syntax
@@ -1020,7 +987,6 @@ println( typeof(mask_v2) )
 ```
 849332
 Vector{Bool}
-
 ```
 
 ##### Example 2
@@ -1035,7 +1001,6 @@ println( typeof(mask_v2b) )
 ```
 849332
 BitVector
-
 ```
 
 #### Version 3: Longer Syntax
@@ -1051,7 +1016,6 @@ println( typeof(mask_v3) )
 ```
 849332
 BitVector
-
 ```
 
 #### Combine Multiple Masks
@@ -1074,7 +1038,6 @@ println( typeof(mask_tot) )
 ```
 849332
 BitVector
-
 ```
 
 ### Some Functions With Masking Functionality
@@ -1125,10 +1088,9 @@ println()
 ```
 
 ```
-
-Gas Mtot masked: 1.3369189531333082e10 Msol
+Gas Mtot masked:
+1.3369189531333082e10 Msol
 Gas Mtot:        3.0968754148332745e10 Msol
-
 ```
 
 ```julia
@@ -1142,10 +1104,9 @@ println()
 ```
 
 ```
-
-Particles Mtot masked: 1.4537556611888438e7 Msol
+Particles Mtot masked:
+1.4537556611888438e7 Msol
 Particles Mtot:        5.804426008528429e9 Msol
-
 ```
 
 ```julia
@@ -1159,10 +1120,9 @@ println()
 ```
 
 ```
-
-Clumps Mtot masked:    2.926390055686605e7 Msol
+Clumps Mtot masked:
+2.926390055686605e7 Msol
 Clumps Mtot:           1.3743280681841675e10 Msol
-
 ```
 
 ### Mask Creation Method Analysis
@@ -1219,10 +1179,9 @@ println()
 ```
 
 ```
-
-Gas COM masked: (23.632781376611643, 24.01793518773094, 24.078280687627124) kpc
+Gas COM masked:
+(23.632781376611643, 24.01793518773094, 24.078280687627124) kpc
 Gas COM:        (23.472214016322592, 23.939318698656532, 24.084836371167793) kpc
-
 ```
 
 ```julia
@@ -1236,10 +1195,9 @@ println()
 ```
 
 ```
-
-Particles COM masked: (22.766374936557934, 24.817294529838456, 24.02006559565021) kpc
+Particles COM masked:
+(22.766374936557934, 24.817294529838456, 24.02006559565021) kpc
 Particles COM:        (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
-
 ```
 
 ```julia
@@ -1252,9 +1210,10 @@ println( "Joint COM (Gas + Particles):        ", center_of_mass([gas,particles],
 ```
 
 ```
-Joint COM (Gas + Particles) masked: (23.63201475313947, 24.018642485836217, 24.078229177093796) kpc
-Joint COM (Gas + Particles):        (23.380528865091303, 23.97638498224044, 24.071951357132512) kpc
-
+Joint COM (Gas + Particles) masked: (
+23.63201475313947, 24.018642485836217, 24.078229177093796) kpc
+Joint COM (Gas + Particles):        (
+23.380528865091303, 23.97638498224044, 24.071951357132512) kpc
 ```
 
 ```julia
@@ -1268,10 +1227,8 @@ println()
 ```
 
 ```
-
 Clumps COM masked:(22.97967662229681, 23.224479869848984, 24.110568064737457) kpc
 Clumps COM:       (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
-
 ```
 
 ### Bulk-Velocity
@@ -1287,10 +1244,9 @@ println()
 ```
 
 ```
-
-Gas bulk velocity masked: (-0.04633670340113768, -6.609934798406887, -1.000280146674773) km/s
+Gas bulk velocity masked:
+(-0.04633670340113768, -6.609934798406887, -1.000280146674773) km/s
 Gas bulk velocity:        (-1.1999253584798222, -10.678485153330127, -0.44038538452508885) km/s
-
 ```
 
 ```julia
@@ -1304,10 +1260,9 @@ println()
 ```
 
 ```
-
-Particles bulk velocity masked: (-27.70225411383651, -7.532075727552787, -1.3273993940211153) km/s
+Particles bulk velocity masked:
+(-27.70225411383651, -7.532075727552787, -1.3273993940211153) km/s
 Particles bulk velocity:        (-11.623422700314567, -18.440572802490294, -0.32919277314175355) km/s
-
 ```
 
 ### Weighted Statistics
@@ -1330,10 +1285,10 @@ println()
 ```
 
 ```
-Gas        <vx>_cells masked      : -0.046336703401136776 km/s (mass weighted)
+Gas        <vx>_cells masked      : -0.046336703401136776
+ km/s (mass weighted)
 Particles  <vx>_particles masked  : -27.70225411383651 km/s (mass weighted)
 Clumps <peak_x>_clumps masked     : 22.907689025275953 kpc  (mass weighted)
-
 ```
 
 ```julia
@@ -1348,10 +1303,10 @@ println()
 ```
 
 ```
-Gas        <vx>_allcells     : -1.1999253584798235 km/s (mass weighted)
+Gas        <vx>_allcells     : -1.1999253584798235
+ km/s (mass weighted)
 Particles  <vx>_allparticles : -11.623422700314565 km/s (mass weighted)
 Clumps <peak_x>_allclumps    : 23.135765457064576 kpc  (mass weighted)
-
 ```
 
 ## Tutorial Summary
