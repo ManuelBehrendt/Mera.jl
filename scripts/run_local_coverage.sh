@@ -60,8 +60,12 @@ if [[ "${UPLOAD:-0}" == "1" ]]; then
     fi
 
     echo ">>> Uploading coverage.lcov to Codecov"
+    # --disable-search: upload only the explicit --file; otherwise the CLI's
+    # filename heuristic also picks up source files named *coverage*.jl and
+    # logs them as spurious "coverage files to report".
     codecovcli upload-process \
         --file coverage.lcov \
+        --disable-search \
         --flag local-full \
         --token "$CODECOV_TOKEN" \
         --slug ManuelBehrendt/Mera.jl \
