@@ -58,6 +58,33 @@ succeeds — CI and contributors without data still get a valid reduced run.
 
 Full local run: roughly 5 minutes on an Apple-silicon laptop.
 
+## GitHub Actions workflows
+
+Four workflows live in `.github/workflows/`. Only the first runs tests; the
+others handle docs, dependency maintenance, and releases.
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| `CI.yml` | push / PR to `master` | Runs the **smoke** subset (`MERA_SMOKE_ONLY=1`) on a matrix of Julia `1.10`, `1.11`, and `1.12`, across Ubuntu and macOS, plus a documentation build job. This is the only workflow that runs tests — the full data-backed suite cannot run here because the RAMSES datasets are too large to ship to CI runners. |
+| `documentation.yml` | push / PR / tags | Builds the Documenter site (`docs/make.jl`) and deploys it to the `gh-pages` branch served at <https://manuelbehrendt.github.io/Mera.jl>. |
+| `CompatHelper.yml` | daily cron | Opens PRs to bump `[compat]` bounds in `Project.toml` when dependencies publish new versions. |
+| `TagBot.yml` | Julia registry comment | Creates the GitHub release and git tag automatically once a new version is registered in the Julia General registry. |
+
+### Julia version coverage
+
+The `CI.yml` matrix pins `1.10` (the LTS, and the package's declared minimum
+in `Project.toml`), `1.11`, and `1.12` (the current stable). `setup-julia`
+resolves each minor-version string to its newest patch release at run time,
+so the suite always runs against the latest `1.10.x`, `1.11.x`, and `1.12.x`.
+
+Pre-releases (e.g. `1.13`, which at time of writing is only a release
+candidate) are intentionally **not** included — they are moving targets and
+upstream rc bugs would produce spurious failures. When `1.13.0` ships as
+stable, add a `'1.13'` row (and optionally drop an older series). To get
+early warning of breakage on an upcoming release, add a non-blocking `'pre'`
+(or `'nightly'`) matrix entry; `fail-fast: false` is already set so such a row
+can fail without failing the whole build.
+
 ## Test suite structure
 
 `test/runtests.jl` executes the files below in tiered order. Tier 1 is

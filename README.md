@@ -152,7 +152,14 @@ of being exported manually.
 
 GitHub Actions runs only the smoke subset (`MERA_SMOKE_ONLY=1`) because
 the RAMSES test datasets are too large to ship to CI runners. Coverage is
-therefore produced and uploaded from the maintainer's laptop, not CI.
+therefore produced and uploaded from the maintainer's laptop, not CI. The CI
+matrix covers Julia `1.10`, `1.11`, and `1.12` on Ubuntu and macOS.
+
+Four GitHub Actions workflows are in use: `CI.yml` (smoke tests + docs build),
+`documentation.yml` (deploys the docs site), `CompatHelper.yml` (dependency
+`[compat]` bump PRs), and `TagBot.yml` (release tagging from the Julia
+registry). See the [Testing Framework](https://manuelbehrendt.github.io/Mera.jl/stable/advanced_features/testing_guide/)
+page for details.
 
 For the full reference — the tiered test-file listing, test datasets, the
 coverage workflow, and notes for reviewers — see the **Testing Framework**
