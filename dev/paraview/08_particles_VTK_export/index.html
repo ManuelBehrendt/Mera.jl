@@ -19,15 +19,15 @@ export_vtk(particles, &quot;particles_complete&quot;,
 # Position coordinate control
 export_vtk(particles, &quot;particles_kpc&quot;,
            fields=[:age], fields_unit=[:Myr],
-           positions_unit=:kpc)</code></pre><h3 id="Key-Parameters"><a class="docs-heading-anchor" href="#Key-Parameters">Key Parameters</a><a id="Key-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Parameters" title="Permalink"></a></h3><ul><li><strong><code>fields</code></strong> - Array of particle property symbols: <code>[:age, :mass, :metallicity]</code></li><li><strong><code>fields_unit</code></strong> - Corresponding units: <code>[:Myr, :Msol, :standard]</code></li><li><strong><code>vector</code></strong> - Vector components: <code>[:vx, :vy, :vz]</code></li><li><strong><code>vector_unit</code></strong> - Vector units: <code>:km_s, :m_s, :pc_Myr</code></li><li><strong><code>vector_name</code></strong> - ParaView vector name: <code>&quot;velocity&quot;, &quot;magnetic_field&quot;</code></li><li><strong><code>positions_unit</code></strong> - Coordinate system units: <code>:kpc, :pc, :au</code></li></ul><h3 id="File-Output-Types"><a class="docs-heading-anchor" href="#File-Output-Types">File Output Types</a><a id="File-Output-Types-1"></a><a class="docs-heading-anchor-permalink" href="#File-Output-Types" title="Permalink"></a></h3><ul><li><strong><code>.vtu</code></strong> - VTK unstructured grid format (point cloud)</li><li><strong>Point data</strong> - Each particle becomes a point with associated properties</li><li><strong>Default export</strong> - Always includes 3D positions; mass included if no fields specified</li></ul><h3 id="Common-Particle-Properties"><a class="docs-heading-anchor" href="#Common-Particle-Properties">Common Particle Properties</a><a id="Common-Particle-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Particle-Properties" title="Permalink"></a></h3><ul><li><strong><code>:age</code></strong> - Stellar age (use with <code>:Myr</code> or <code>:Gyr</code>)</li><li><strong><code>:mass</code></strong> - Particle mass (use with <code>:Msol</code>)</li><li><strong><code>:birth</code></strong> - Formation time (use with <code>:Myr</code>)</li><li><strong><code>:metallicity</code></strong> - Metal abundance</li><li><strong><code>:vx, :vy, :vz</code></strong> - Velocity components (use with <code>:km_s</code>)</li></ul><h3 id="ParaView-Workflow"><a class="docs-heading-anchor" href="#ParaView-Workflow">ParaView Workflow</a><a id="ParaView-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#ParaView-Workflow" title="Permalink"></a></h3><ol><li><strong>Load Data</strong>: Open <code>.vtu</code> files as point clouds</li><li><strong>Point Visualization</strong>: Use 3D Glyphs (spheres/arrows) to visualize particles</li><li><strong>Vector Visualization</strong>: Use 3D Glyphs or Streamlines for velocity fields</li><li><strong>Color Mapping</strong>: Color by age, mass, velocity magnitude, or metallicity</li><li><strong>Filtering</strong>: Apply Threshold filters to select particle subsets by properties</li></ol><h2 id="Simulation-Overview-and-Load-Particle-Data"><a class="docs-heading-anchor" href="#Simulation-Overview-and-Load-Particle-Data">Simulation Overview &amp; Load Particle Data</a><a id="Simulation-Overview-and-Load-Particle-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-and-Load-Particle-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">import Pkg; Pkg.activate(&quot;../.&quot;)</code></pre><pre><code class="nohighlight hljs">  Activating project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
-</code></pre><pre><code class="language-julia hljs">using Mera
+           positions_unit=:kpc)</code></pre><h3 id="Key-Parameters"><a class="docs-heading-anchor" href="#Key-Parameters">Key Parameters</a><a id="Key-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Parameters" title="Permalink"></a></h3><ul><li><strong><code>fields</code></strong> - Array of particle property symbols: <code>[:age, :mass, :metallicity]</code></li><li><strong><code>fields_unit</code></strong> - Corresponding units: <code>[:Myr, :Msol, :standard]</code></li><li><strong><code>vector</code></strong> - Vector components: <code>[:vx, :vy, :vz]</code></li><li><strong><code>vector_unit</code></strong> - Vector units: <code>:km_s, :m_s, :pc_Myr</code></li><li><strong><code>vector_name</code></strong> - ParaView vector name: <code>&quot;velocity&quot;, &quot;magnetic_field&quot;</code></li><li><strong><code>positions_unit</code></strong> - Coordinate system units: <code>:kpc, :pc, :au</code></li></ul><h3 id="File-Output-Types"><a class="docs-heading-anchor" href="#File-Output-Types">File Output Types</a><a id="File-Output-Types-1"></a><a class="docs-heading-anchor-permalink" href="#File-Output-Types" title="Permalink"></a></h3><ul><li><strong><code>.vtu</code></strong> - VTK unstructured grid format (point cloud)</li><li><strong>Point data</strong> - Each particle becomes a point with associated properties</li><li><strong>Default export</strong> - Always includes 3D positions; mass included if no fields specified</li></ul><h3 id="Common-Particle-Properties"><a class="docs-heading-anchor" href="#Common-Particle-Properties">Common Particle Properties</a><a id="Common-Particle-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Particle-Properties" title="Permalink"></a></h3><ul><li><strong><code>:age</code></strong> - Stellar age (use with <code>:Myr</code> or <code>:Gyr</code>)</li><li><strong><code>:mass</code></strong> - Particle mass (use with <code>:Msol</code>)</li><li><strong><code>:birth</code></strong> - Formation time (use with <code>:Myr</code>)</li><li><strong><code>:metallicity</code></strong> - Metal abundance</li><li><strong><code>:vx, :vy, :vz</code></strong> - Velocity components (use with <code>:km_s</code>)</li></ul><h3 id="ParaView-Workflow"><a class="docs-heading-anchor" href="#ParaView-Workflow">ParaView Workflow</a><a id="ParaView-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#ParaView-Workflow" title="Permalink"></a></h3><ol><li><strong>Load Data</strong>: Open <code>.vtu</code> files as point clouds</li><li><strong>Point Visualization</strong>: Use 3D Glyphs (spheres/arrows) to visualize particles</li><li><strong>Vector Visualization</strong>: Use 3D Glyphs or Streamlines for velocity fields</li><li><strong>Color Mapping</strong>: Color by age, mass, velocity magnitude, or metallicity</li><li><strong>Filtering</strong>: Apply Threshold filters to select particle subsets by properties</li></ol><h2 id="Simulation-Overview-and-Load-Particle-Data"><a class="docs-heading-anchor" href="#Simulation-Overview-and-Load-Particle-Data">Simulation Overview &amp; Load Particle Data</a><a id="Simulation-Overview-and-Load-Particle-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-and-Load-Particle-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">import Pkg; Pkg.activate(&quot;../.&quot;)</code></pre><pre><code class="nohighlight hljs">  Activating
+project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`</code></pre><pre><code class="language-julia hljs">using Mera
 # use compressed Mera file
 path = &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/AV5CDhr/&quot;;
 info = infodata(600, path)
-particles = loaddata(600, path, :particles); # load full box</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-13T16:57:29.196
-
+particles = loaddata(600, path, :particles); # load full box</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T19:37:42.920
 Use datatype: hydro
-Code: RAMSES
+Code:
+RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
 ctime: 2024-09-10T11:23:16.230
@@ -41,7 +41,8 @@ amr:           true
 level(s): 6 - 13 --&gt; cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7
+  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -56,26 +57,23 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: (&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
+namelist-file: (
+&quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: 2025-08-13T16:57:34.059
-
+[Mera]: 2026-05-30T19:37:49.721
 Open Mera-file output_00600.jld2:
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
-Memory used for data table :95.81425380706787 MB
--------------------------------------------------------
-</code></pre><h2 id="Export-Scalars"><a class="docs-heading-anchor" href="#Export-Scalars">Export Scalars</a><a id="Export-Scalars-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars" title="Permalink"></a></h2><h3 id="Standard-Export"><a class="docs-heading-anchor" href="#Standard-Export">Standard Export</a><a id="Standard-Export-1"></a><a class="docs-heading-anchor-permalink" href="#Standard-Export" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box with all particles (here only stellar particles)
+Memory used for data table :
+95.81425380706787 MB
+-------------------------------------------------------</code></pre><h2 id="Export-Scalars"><a class="docs-heading-anchor" href="#Export-Scalars">Export Scalars</a><a id="Export-Scalars-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars" title="Permalink"></a></h2><h3 id="Standard-Export"><a class="docs-heading-anchor" href="#Standard-Export">Standard Export</a><a id="Standard-Export-1"></a><a class="docs-heading-anchor-permalink" href="#Standard-Export" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box with all particles (here only stellar particles)
 
 export_vtk(
     particles,                      # loaded data
@@ -84,22 +82,19 @@ export_vtk(
     scalars_unit=[:Msun, :Myr],
     scalars_log10=true,             # apply log10 on the scalars
     positions_unit=:kpc,            # particle positions in kpc (useful in Paraview for region selection)
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-13T16:57:35.947
-
-Available Threads: 1
-Created directory: output_part01
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T19:37:52.044
+Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
 Extracting scalar data...
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu (Size: 73.55 MB)
+  wrote 0600_galaxy.vtu
+ (Size: 73.55 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
-Available scalars: mass, age
-</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part01&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
+Available scalars: mass, age</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part01&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
  &quot;0600_galaxy.vtu&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open the vtu file to load all level data</code></pre><h3 id="Export-Maximum-Number-of-Particles"><a class="docs-heading-anchor" href="#Export-Maximum-Number-of-Particles">Export Maximum Number of Particles</a><a id="Export-Maximum-Number-of-Particles-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Maximum-Number-of-Particles" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box (here only stellar particles)
 # -&gt; limit the number of particles
 
@@ -112,10 +107,8 @@ export_vtk(
     positions_unit=:kpc,            # particle positions in kpc (useful in Paraview for region selection)
 
     max_particles=1_000             # (caps output if exceeded)
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-13T16:57:39.682
-
-Available Threads: 1
-Created directory: output_part03
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T19:37:54.914
+Available Threads: 4
 Total particles in dataset: 1353087
 Limiting export to 1000 particles (from 1353087)
 Extracting particle positions...
@@ -123,12 +116,10 @@ Extracting scalar data...
 Writing particle VTU file...
   wrote 0600_galaxy.vtu (Size: 0.05 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1000
 Particle VTU file: 0600_galaxy.vtu
-Available scalars: age
-</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part03&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
+Available scalars: age</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part03&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
  &quot;0600_galaxy.vtu&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open the vtu file to load all level data</code></pre><h2 id="Export-Scalars-and-Vector"><a class="docs-heading-anchor" href="#Export-Scalars-and-Vector">Export Scalars and Vector</a><a id="Export-Scalars-and-Vector-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars-and-Vector" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Export full box with particles (here only stellar particles)
 
 export_vtk(
@@ -142,25 +133,22 @@ export_vtk(
     vector=[:vx, :vy, :vz],         # velocity components and its units
     vector_unit=:km_s,
     vector_name=&quot;velocity&quot;          # vector name recognized by Paraview
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-13T16:57:40.008
-
-Available Threads: 1
-Created directory: output_part04
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T19:37:55.140
+Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
 Extracting scalar data...
 Extracting vector data...
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu (Size: 94.2 MB)
+  wrote 0600_galaxy.vtu
+ (Size: 94.2 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: age
-Available vector: velocity
-</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part04&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
+Available vector: velocity</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part04&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
  &quot;0600_galaxy.vtu&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open
 # - the vtu file to load all particle scalar and vector data</code></pre><h2 id="Visualisation-in-Paraview"><a class="docs-heading-anchor" href="#Visualisation-in-Paraview">Visualisation in Paraview</a><a id="Visualisation-in-Paraview-1"></a><a class="docs-heading-anchor-permalink" href="#Visualisation-in-Paraview" title="Permalink"></a></h2><h3 id="Visualize-Particles-in-3D"><a class="docs-heading-anchor" href="#Visualize-Particles-in-3D">Visualize Particles in 3D</a><a id="Visualize-Particles-in-3D-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-Particles-in-3D" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box with scalars and vector data
 
@@ -174,23 +162,20 @@ export_vtk(
     vector=[:vx, :vy, :vz],         # velocity components and its units
     vector_unit=:km_s,
     vector_name=&quot;velocity&quot;          # vector name recognized by Paraview
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-13T16:57:41.653
-
-Available Threads: 1
-Created directory: output_part05
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T19:37:56.681
+Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
 Extracting scalar data...
 Extracting vector data...
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu (Size: 104.52 MB)
+  wrote 0600_galaxy.vtu
+ (Size: 104.52 MB)
 Memory cleaned
-
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: id, age
-Available vector: velocity
-</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part05&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
- &quot;0600_galaxy.vtu&quot;</code></pre><p><strong>Load Data-File</strong></p><p><img src="../../images/01_particles.jpg" alt/></p><p><strong>Select age information</strong></p><p><img src="../../images/02_particles.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre><h3 id="Visualize-Particles-and-Vectors"><a class="docs-heading-anchor" href="#Visualize-Particles-and-Vectors">Visualize Particles &amp; Vectors</a><a id="Visualize-Particles-and-Vectors-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-Particles-and-Vectors" title="Permalink"></a></h3><p><strong>Select Glyphs, arrow orientation, number of sample points</strong></p><p><img src="../../images/01_particles2.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../08_hydro_VTK_export/">« Hydro</a><a class="docs-footer-nextpage" href="../../api/volume_rendering/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 30 May 2026 18:29">Saturday 30 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+Available vector: velocity</code></pre><pre><code class="language-julia hljs">readdir(&quot;output_part05&quot;)</code></pre><pre><code class="nohighlight hljs">1-element Vector{String}:
+ &quot;0600_galaxy.vtu&quot;</code></pre><p><strong>Load Data-File</strong></p><p><img src="../images/01_particles.jpg" alt/></p><p><strong>Select age information</strong></p><p><img src="../images/02_particles.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre><h3 id="Visualize-Particles-and-Vectors"><a class="docs-heading-anchor" href="#Visualize-Particles-and-Vectors">Visualize Particles &amp; Vectors</a><a id="Visualize-Particles-and-Vectors-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-Particles-and-Vectors" title="Permalink"></a></h3><p><strong>Select Glyphs, arrow orientation, number of sample points</strong></p><p><img src="../images/01_particles2.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../08_hydro_VTK_export/">« Hydro</a><a class="docs-footer-nextpage" href="../../api/volume_rendering/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 30 May 2026 20:12">Saturday 30 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

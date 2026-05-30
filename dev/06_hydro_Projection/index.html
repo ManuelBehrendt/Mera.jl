@@ -27,11 +27,11 @@ info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_s
 
 # Load hydrodynamical data with specified constraints
 # smallr: sets minimum density value in loaded data, lmax: maximum level to load
-gas = gethydro(info, smallr=1e-11, lmax=12);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:56:54.147
-
+gas = gethydro(info, smallr=1e-11, lmax=12);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:37:19.029
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime:
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -43,7 +43,8 @@ amr:           true
 level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -67,38 +68,33 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get hydro data: 2025-08-14T14:56:56.389
-
+[Mera]: Get hydro data: 2026-05-30T17:37:21.198
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 2048
-   Compute threads: 8
+   Compute threads: 4
    GC threads: 4
-</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:01:08 (33.26 ms/it)
-</code></pre><pre><code class="nohighlight hljs">
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:36 (17.99 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 7 variables
-Creating Table from 18966620 cells with max 8 threads...
-  Threading: 8 threads for 11 columns
-  Max threads requested: 8
-  Available threads: 8
-  Using parallel processing with 8 threads
+Creating Table from 18966620 cells with max 4 threads...
+  Threading: 4 threads for 11 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 17.532129 seconds (500.23 M allocations: 19.436 GiB, 5.14% gc time, 5.19% compilation time)
-✓ Table created in 17.719 seconds
-Memory used for data table :1.5544367535039783 GB
--------------------------------------------------------
-</code></pre><pre><code class="language-julia hljs"># Inspect the loaded hydro data structure
+ 24.048364 seconds (727.01 M allocations: 38.740 GiB, 7.59% gc time, 3.77% compilation time)
+✓ Table created in 24.309 seconds
+Memory used for data table :
+1.5544367535039783 GB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs"># Inspect the loaded hydro data structure
 # This shows the available fields and data organization
 gas.data</code></pre><pre><code class="nohighlight hljs">Table with 18966620 rows, 11 columns:
 Columns:
@@ -127,31 +123,24 @@ further possibilities: :rho, :density, :ρ
 :mass, :cellsize, :freefall_time
 :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber
 :t, :Temp, :Temperature with p/rho
-
 ==================[particles]:==================
         all the non derived  vars:
 :cpu, :level, :id, :family, :tag
 :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
-
               -derived particle vars-
 :age
-
 ==============[gas or particles]:===============
 :v, :ekin
 squared =&gt; :vx2, :vy2, :vz2
 velocity dispersion =&gt; σx, σy, σz, σ
-
 related to a given center:
 ---------------------------
 :vr_cylinder, vr_sphere (radial components)
 :vϕ_cylinder, :vθ
 squared =&gt; :vr_cylinder2, :vϕ_cylinder2
 velocity dispersion =&gt; σr_cylinder, σϕ_cylinder
-
 2d maps (not projected) =&gt; :r_cylinder, :ϕ
-
-------------------------------------------------
-</code></pre><h3 id="Single-Quantity-Projections"><a class="docs-heading-anchor" href="#Single-Quantity-Projections">Single Quantity Projections</a><a id="Single-Quantity-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Single-Quantity-Projections" title="Permalink"></a></h3><h4 id="Directional-Projections-(z,-y,-x)"><a class="docs-heading-anchor" href="#Directional-Projections-(z,-y,-x)">Directional Projections (z, y, x)</a><a id="Directional-Projections-(z,-y,-x)-1"></a><a class="docs-heading-anchor-permalink" href="#Directional-Projections-(z,-y,-x)" title="Permalink"></a></h4><p>Surface density projections integrate mass along a chosen axis, creating 2D maps that reveal structure and distribution patterns.</p><p><strong>Key Parameters:</strong></p><ul><li><strong>Variable Selection</strong>: <code>:sd</code> (surface density) symbol for projection quantity</li><li><strong>Unit Specification</strong>: <code>:Msol_pc2</code> for solar masses per square parsec</li><li><strong>Range Control</strong>: <code>zrange</code> defines integration depth along projection axis</li><li><strong>Threading</strong>: <code>verbose_threads=true</code> shows parallel processing information</li></ul><p><strong>Technical Notes:</strong></p><ul><li>Default projection direction is z-axis (viewing from above)</li><li>Grid resolution matches maximum loaded refinement level</li><li>Mass-weighted integration by default for surface density</li></ul><pre><code class="language-julia hljs"># Z-direction projection (view from above)
+------------------------------------------------</code></pre><h3 id="Single-Quantity-Projections"><a class="docs-heading-anchor" href="#Single-Quantity-Projections">Single Quantity Projections</a><a id="Single-Quantity-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Single-Quantity-Projections" title="Permalink"></a></h3><h4 id="Directional-Projections-(z,-y,-x)"><a class="docs-heading-anchor" href="#Directional-Projections-(z,-y,-x)">Directional Projections (z, y, x)</a><a id="Directional-Projections-(z,-y,-x)-1"></a><a class="docs-heading-anchor-permalink" href="#Directional-Projections-(z,-y,-x)" title="Permalink"></a></h4><p>Surface density projections integrate mass along a chosen axis, creating 2D maps that reveal structure and distribution patterns.</p><p><strong>Key Parameters:</strong></p><ul><li><strong>Variable Selection</strong>: <code>:sd</code> (surface density) symbol for projection quantity</li><li><strong>Unit Specification</strong>: <code>:Msol_pc2</code> for solar masses per square parsec</li><li><strong>Range Control</strong>: <code>zrange</code> defines integration depth along projection axis</li><li><strong>Threading</strong>: <code>verbose_threads=true</code> shows parallel processing information</li></ul><p><strong>Technical Notes:</strong></p><ul><li>Default projection direction is z-axis (viewing from above)</li><li>Grid resolution matches maximum loaded refinement level</li><li>Mass-weighted integration by default for surface density</li></ul><pre><code class="language-julia hljs"># Z-direction projection (view from above)
 # Integrates mass along z-axis: Σ(x,y) = ∫ ρ(x,y,z) dz
 proj_z = projection(gas, :sd, unit=:Msol_pc2, zrange=[0.45,0.55], verbose_threads=true)
 
@@ -161,30 +150,23 @@ proj_z = projection(gas, :sd, :Msol_pc2, zrange=[0.45,0.55], verbose=false)
 # X-direction projection (side view)
 # Integrates mass along x-axis: Σ(y,z) = ∫ ρ(x,y,z) dx
 # Shows structure when viewed from the side
-proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbose=false);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:28.184
-
+proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbose=false);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:38:28.185
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ℹ️  Sequential: Insufficient variables (1 &lt; 2)
-</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-</code></pre><h4 id="Spatial-Range-Selection"><a class="docs-heading-anchor" href="#Spatial-Range-Selection">Spatial Range Selection</a><a id="Spatial-Range-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection" title="Permalink"></a></h4><p>Control the spatial region for projection analysis by specifying coordinate ranges relative to a chosen center point. This enables focused analysis of specific structures or regions of interest.</p><pre><code class="language-julia hljs"># Define center point: box center in physical units
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:08</code></pre><h4 id="Spatial-Range-Selection"><a class="docs-heading-anchor" href="#Spatial-Range-Selection">Spatial Range Selection</a><a id="Spatial-Range-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Range-Selection" title="Permalink"></a></h4><p>Control the spatial region for projection analysis by specifying coordinate ranges relative to a chosen center point. This enables focused analysis of specific structures or regions of interest.</p><pre><code class="language-julia hljs"># Define center point: box center in physical units
 cv = (gas.boxlen / 2.) * gas.scale.kpc  # Convert to kpc
 
 # Project specific spatial region around center
@@ -193,103 +175,83 @@ proj_z = projection(gas, :sd, :Msol_pc2,
                     yrange=[-10.,10.],     # ±10 kpc in y-direction
                     zrange=[-2.,2.],       # ±2 kpc integration depth
                     center=[cv,cv,cv],     # Center at box center
-                    range_unit=:kpc);       # Specify range units</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:43.535
-
+                    range_unit=:kpc);       # Specify range units</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:38:58.788
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><p><strong>Convenience Notation for Box Center:</strong></p><p>Use shorthand notation <code>:bc</code> or <code>:boxcenter</code> to automatically reference the simulation box center without manual calculation:</p><pre><code class="language-julia hljs"># Use :boxcenter shorthand for automatic box center calculation
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02</code></pre><p><strong>Convenience Notation for Box Center:</strong></p><p>Use shorthand notation <code>:bc</code> or <code>:boxcenter</code> to automatically reference the simulation box center without manual calculation:</p><pre><code class="language-julia hljs"># Use :boxcenter shorthand for automatic box center calculation
 proj_z = projection(gas, :sd, :Msol_pc2,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:boxcenter],   # Automatic box center
-                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:46.040
-
+                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:39:03.394
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><pre><code class="language-julia hljs"># Alternative abbreviated notation
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02</code></pre><pre><code class="language-julia hljs"># Alternative abbreviated notation
 proj_z = projection(gas, :sd, :Msol_pc2,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:bc],          # :bc shorthand for box center
-                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:47.854
-
+                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:39:07.828
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><p><strong>Dimension-Specific Center Control:</strong></p><p>Apply box center notation to individual spatial dimensions while specifying custom values for others:</p><pre><code class="language-julia hljs"># Mixed center specification: box center for x,z; custom value for y
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02</code></pre><p><strong>Dimension-Specific Center Control:</strong></p><p>Apply box center notation to individual spatial dimensions while specifying custom values for others:</p><pre><code class="language-julia hljs"># Mixed center specification: box center for x,z; custom value for y
 proj_z = projection(gas, :sd, :Msol_pc2,
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:bc, 24., :bc],  # [x_center, y_center, z_center]
-                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:50.274
-
+                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:39:12.287
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><h3 id="Multi-Quantity-Projections"><a class="docs-heading-anchor" href="#Multi-Quantity-Projections">Multi-Quantity Projections</a><a id="Multi-Quantity-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-Quantity-Projections" title="Permalink"></a></h3><h4 id="Single-Quantity-Arrays"><a class="docs-heading-anchor" href="#Single-Quantity-Arrays">Single Quantity Arrays</a><a id="Single-Quantity-Arrays-1"></a><a class="docs-heading-anchor-permalink" href="#Single-Quantity-Arrays" title="Permalink"></a></h4><p>Efficiently compute multiple projections in a single function call by passing arrays of quantities and units. This approach optimizes performance and ensures consistent spatial sampling across all requested variables.</p><p><strong>Syntax Requirements:</strong></p><ul><li><strong>Variables</strong>: Array format <code>[:var1, :var2, ...]</code> for multiple quantities</li><li><strong>Units</strong>: Plural keyword <code>units=</code> (not <code>unit=</code>) for array specification</li><li><strong>Consistency</strong>: Each variable requires corresponding unit specification</li></ul><pre><code class="language-julia hljs"># Single quantity in array format (demonstrates array syntax)
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02</code></pre><h3 id="Multi-Quantity-Projections"><a class="docs-heading-anchor" href="#Multi-Quantity-Projections">Multi-Quantity Projections</a><a id="Multi-Quantity-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Multi-Quantity-Projections" title="Permalink"></a></h3><h4 id="Single-Quantity-Arrays"><a class="docs-heading-anchor" href="#Single-Quantity-Arrays">Single Quantity Arrays</a><a id="Single-Quantity-Arrays-1"></a><a class="docs-heading-anchor-permalink" href="#Single-Quantity-Arrays" title="Permalink"></a></h4><p>Efficiently compute multiple projections in a single function call by passing arrays of quantities and units. This approach optimizes performance and ensures consistent spatial sampling across all requested variables.</p><p><strong>Syntax Requirements:</strong></p><ul><li><strong>Variables</strong>: Array format <code>[:var1, :var2, ...]</code> for multiple quantities</li><li><strong>Units</strong>: Plural keyword <code>units=</code> (not <code>unit=</code>) for array specification</li><li><strong>Consistency</strong>: Each variable requires corresponding unit specification</li></ul><pre><code class="language-julia hljs"># Single quantity in array format (demonstrates array syntax)
 proj1_x = projection(gas, [:sd],                # Single variable in array
                      units=[:Msol_pc2],         # Corresponding unit array
                      direction=:x,              # X-direction projection
@@ -297,28 +259,23 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
                      yrange=[-10.,10.],
                      zrange=[-2.,2.],
                      center=[24.,24.,24.],      # Custom center coordinates
-                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:52.746
-
+                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:39:16.755
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 342
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><h4 id="Multiple-Quantities-with-Different-Units"><a class="docs-heading-anchor" href="#Multiple-Quantities-with-Different-Units">Multiple Quantities with Different Units</a><a id="Multiple-Quantities-with-Different-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-Quantities-with-Different-Units" title="Permalink"></a></h4><p>Combine different physical quantities in a single projection call, each with appropriate units:</p><pre><code class="language-julia hljs"># Multiple quantities with different units
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02</code></pre><h4 id="Multiple-Quantities-with-Different-Units"><a class="docs-heading-anchor" href="#Multiple-Quantities-with-Different-Units">Multiple Quantities with Different Units</a><a id="Multiple-Quantities-with-Different-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Multiple-Quantities-with-Different-Units" title="Permalink"></a></h4><p>Combine different physical quantities in a single projection call, each with appropriate units:</p><pre><code class="language-julia hljs"># Multiple quantities with different units
 proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
                      units=[:Msol_pc2, :km_s],  # Different units for each
                      direction=:x,              # X-direction view
@@ -326,84 +283,66 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
                      yrange=[-10.,10.],
                      zrange=[-2.,2.],
                      center=[24.,24.,24.],
-                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:54.338
-
+                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:39:20.248
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd, :vx)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 342
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 2 (sd, vx)
-Processing mode: Variable-based parallel (2 threads)
-</code></pre><h4 id="Positional-Argument-Syntax"><a class="docs-heading-anchor" href="#Positional-Argument-Syntax">Positional Argument Syntax</a><a id="Positional-Argument-Syntax-1"></a><a class="docs-heading-anchor-permalink" href="#Positional-Argument-Syntax" title="Permalink"></a></h4><p>Streamline function calls by using positional arguments in the correct order: <code>dataobject</code>, <code>variables</code>, <code>units</code>:</p><pre><code class="language-julia hljs"># Positional arguments: data, variables, units (keywords follow)
+Processing mode: Variable-based parallel (2 threads)</code></pre><h4 id="Positional-Argument-Syntax"><a class="docs-heading-anchor" href="#Positional-Argument-Syntax">Positional Argument Syntax</a><a id="Positional-Argument-Syntax-1"></a><a class="docs-heading-anchor-permalink" href="#Positional-Argument-Syntax" title="Permalink"></a></h4><p>Streamline function calls by using positional arguments in the correct order: <code>dataobject</code>, <code>variables</code>, <code>units</code>:</p><pre><code class="language-julia hljs"># Positional arguments: data, variables, units (keywords follow)
 proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional args
                      direction=:x,                          # Optional keywords
                      xrange=[-10.,10.],
                      yrange=[-10.,10.],
                      zrange=[-2.,2.],
                      center=[24.,24.,24.],
-                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:56.206
-
+                     range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:40:15.476
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:sd, :vx)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 342
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 2 (sd, vx)
-Processing mode: Variable-based parallel (2 threads)
-</code></pre><h4 id="Uniform-Units-for-Multiple-Quantities"><a class="docs-heading-anchor" href="#Uniform-Units-for-Multiple-Quantities">Uniform Units for Multiple Quantities</a><a id="Uniform-Units-for-Multiple-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Uniform-Units-for-Multiple-Quantities" title="Permalink"></a></h4><p>When all quantities share the same unit, use single unit specification rather than array format:</p><pre><code class="language-julia hljs"># All velocity components with uniform units
+Processing mode: Variable-based parallel (2 threads)</code></pre><h4 id="Uniform-Units-for-Multiple-Quantities"><a class="docs-heading-anchor" href="#Uniform-Units-for-Multiple-Quantities">Uniform Units for Multiple Quantities</a><a id="Uniform-Units-for-Multiple-Quantities-1"></a><a class="docs-heading-anchor-permalink" href="#Uniform-Units-for-Multiple-Quantities" title="Permalink"></a></h4><p>When all quantities share the same unit, use single unit specification rather than array format:</p><pre><code class="language-julia hljs"># All velocity components with uniform units
 projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
                        :km_s,                    # Single unit for all
                        xrange=[-10.,10.],
                        yrange=[-10.,10.],
                        zrange=[-2.,2.],
                        center=[24.,24.,24.],
-                       range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:58:57.869
-
+                       range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:41:00.188
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:vx, :vy, :vz, :sd)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 4 (sd, vx, vy, vz)
-Processing mode: Variable-based parallel (4 threads)
-</code></pre><h2 id="Projection-Output-Structure"><a class="docs-heading-anchor" href="#Projection-Output-Structure">Projection Output Structure</a><a id="Projection-Output-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-Output-Structure" title="Permalink"></a></h2><h3 id="Data-Organization-and-Access"><a class="docs-heading-anchor" href="#Data-Organization-and-Access">Data Organization and Access</a><a id="Data-Organization-and-Access-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Organization-and-Access" title="Permalink"></a></h3><p>Projection results are stored in a structured object containing 2D maps, metadata, and spatial information. Understanding this organization enables efficient data access and further analysis.</p><h4 id="Object-Properties"><a class="docs-heading-anchor" href="#Object-Properties">Object Properties</a><a id="Object-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Object-Properties" title="Permalink"></a></h4><p>Examine the structure of projection output objects:</p><pre><code class="language-julia hljs"># List all available fields in the projection object
+Processing mode: Variable-based parallel (4 threads)</code></pre><h2 id="Projection-Output-Structure"><a class="docs-heading-anchor" href="#Projection-Output-Structure">Projection Output Structure</a><a id="Projection-Output-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-Output-Structure" title="Permalink"></a></h2><h3 id="Data-Organization-and-Access"><a class="docs-heading-anchor" href="#Data-Organization-and-Access">Data Organization and Access</a><a id="Data-Organization-and-Access-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Organization-and-Access" title="Permalink"></a></h3><p>Projection results are stored in a structured object containing 2D maps, metadata, and spatial information. Understanding this organization enables efficient data access and further analysis.</p><h4 id="Object-Properties"><a class="docs-heading-anchor" href="#Object-Properties">Object Properties</a><a id="Object-Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Object-Properties" title="Permalink"></a></h4><p>Examine the structure of projection output objects:</p><pre><code class="language-julia hljs"># List all available fields in the projection object
 propertynames(proj1_z)</code></pre><pre><code class="nohighlight hljs">(:maps, :maps_unit, :maps_lmax, :maps_weight, :maps_mode, :lmax_projected, :lmin, :lmax, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :smallr, :smallc, :scale, :info)</code></pre><h4 id="Projection-Maps-Dictionary"><a class="docs-heading-anchor" href="#Projection-Maps-Dictionary">Projection Maps Dictionary</a><a id="Projection-Maps-Dictionary-1"></a><a class="docs-heading-anchor-permalink" href="#Projection-Maps-Dictionary" title="Permalink"></a></h4><p>The main results are stored in a dictionary structure where each key corresponds to a projected quantity:</p><pre><code class="language-julia hljs"># Access the maps dictionary containing all projected quantities
 proj1_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 2 entries:
   :sd =&gt; [2.41447 2.41447 … 3.05972 3.05972; 2.41447 2.41447 … 3.05972 3.05972;…
@@ -463,9 +402,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
                     center=[:boxcenter],
                     range_unit=:kpc,
                     verbose=false,
-                    direction=:x);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
-</code></pre><h4 id="matplotlib-Configuration"><a class="docs-heading-anchor" href="#matplotlib-Configuration">matplotlib Configuration</a><a id="matplotlib-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#matplotlib-Configuration" title="Permalink"></a></h4><p>Configure plotting libraries and color schemes for professional scientific visualization:</p><pre><code class="language-julia hljs">using PyPlot
+                    direction=:x);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:07</code></pre><h4 id="matplotlib-Configuration"><a class="docs-heading-anchor" href="#matplotlib-Configuration">matplotlib Configuration</a><a id="matplotlib-Configuration-1"></a><a class="docs-heading-anchor-permalink" href="#matplotlib-Configuration" title="Permalink"></a></h4><p>Configure plotting libraries and color schemes for professional scientific visualization:</p><pre><code class="language-julia hljs">using PyPlot
 using ColorSchemes
 
 # Configure scientific color schemes
@@ -501,7 +438,7 @@ ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im,
              label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;,
              orientation=&quot;horizontal&quot;,
-             pad=0.2)</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_47_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x350 with 4 Axes&gt;)</code></pre><pre><code class="nohighlight hljs">PyObject &lt;matplotlib.colorbar.Colorbar object at 0x34858da30&gt;</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, :Msol_pc2,
+             pad=0.2)</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_47_1.png" alt/></p><pre><code class="nohighlight hljs">PyObject &lt;matplotlib.colorbar.Colorbar object at 0x30df27850&gt;</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, :Msol_pc2,
                     xrange=[-5,0],
                     yrange=[-5,0],
                     zrange=[-2.,2.], center=[:bc], range_unit=:kpc,
@@ -522,35 +459,29 @@ subplot(1,2,2)
 im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin=&quot;lower&quot;, aspect=proj_x.ratio, extent=proj_x.cextent) #, vmin=0, vmax=3)
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;)</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_49_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x350 with 4 Axes&gt;)</code></pre><pre><code class="nohighlight hljs">PyObject &lt;matplotlib.colorbar.Colorbar object at 0x3485e54c0&gt;</code></pre><p>Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):</p><h2 id="Advanced-Kinematic-Analysis"><a class="docs-heading-anchor" href="#Advanced-Kinematic-Analysis">Advanced Kinematic Analysis</a><a id="Advanced-Kinematic-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Kinematic-Analysis" title="Permalink"></a></h2><h3 id="Derived-Velocity-and-Dispersion-Fields"><a class="docs-heading-anchor" href="#Derived-Velocity-and-Dispersion-Fields">Derived Velocity and Dispersion Fields</a><a id="Derived-Velocity-and-Dispersion-Fields-1"></a><a class="docs-heading-anchor-permalink" href="#Derived-Velocity-and-Dispersion-Fields" title="Permalink"></a></h3><p>MERA.jl computes sophisticated kinematic quantities from fundamental velocity data, enabling detailed analysis of gas dynamics and turbulence properties.</p><h4 id="Cartesian-Coordinate-Velocities"><a class="docs-heading-anchor" href="#Cartesian-Coordinate-Velocities">Cartesian Coordinate Velocities</a><a id="Cartesian-Coordinate-Velocities-1"></a><a class="docs-heading-anchor-permalink" href="#Cartesian-Coordinate-Velocities" title="Permalink"></a></h4><p>Derive kinematic properties from fundamental velocity fields:</p><p><strong>Available Quantities:</strong></p><ul><li><strong><code>:v</code></strong>: Total velocity magnitude |<strong>v</strong>| = √(vₓ² + vᵧ² + vᵤ²)</li><li><strong><code>:σ</code></strong>: Total velocity dispersion (3D random motion)</li><li><strong><code>:σx, :σy, :σz</code></strong>: Directional velocity dispersions along coordinate axes</li></ul><p><strong>Technical Implementation:</strong></p><ul><li>Mass-weighted projections by default</li><li>Velocity dispersion: σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²) following standard statistical definition</li><li>Unicode symbols supported: use <code>\sigma + tab</code> for <strong>σ</strong> in Julia</li></ul><pre><code class="language-julia hljs"># Project comprehensive kinematic quantities
+cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;)</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_49_1.png" alt/></p><pre><code class="nohighlight hljs">PyObject &lt;matplotlib.colorbar.Colorbar object at 0x30e1973a0&gt;</code></pre><p>Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):</p><h2 id="Advanced-Kinematic-Analysis"><a class="docs-heading-anchor" href="#Advanced-Kinematic-Analysis">Advanced Kinematic Analysis</a><a id="Advanced-Kinematic-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Kinematic-Analysis" title="Permalink"></a></h2><h3 id="Derived-Velocity-and-Dispersion-Fields"><a class="docs-heading-anchor" href="#Derived-Velocity-and-Dispersion-Fields">Derived Velocity and Dispersion Fields</a><a id="Derived-Velocity-and-Dispersion-Fields-1"></a><a class="docs-heading-anchor-permalink" href="#Derived-Velocity-and-Dispersion-Fields" title="Permalink"></a></h3><p>MERA.jl computes sophisticated kinematic quantities from fundamental velocity data, enabling detailed analysis of gas dynamics and turbulence properties.</p><h4 id="Cartesian-Coordinate-Velocities"><a class="docs-heading-anchor" href="#Cartesian-Coordinate-Velocities">Cartesian Coordinate Velocities</a><a id="Cartesian-Coordinate-Velocities-1"></a><a class="docs-heading-anchor-permalink" href="#Cartesian-Coordinate-Velocities" title="Permalink"></a></h4><p>Derive kinematic properties from fundamental velocity fields:</p><p><strong>Available Quantities:</strong></p><ul><li><strong><code>:v</code></strong>: Total velocity magnitude |<strong>v</strong>| = √(vₓ² + vᵧ² + vᵤ²)</li><li><strong><code>:σ</code></strong>: Total velocity dispersion (3D random motion)</li><li><strong><code>:σx, :σy, :σz</code></strong>: Directional velocity dispersions along coordinate axes</li></ul><p><strong>Technical Implementation:</strong></p><ul><li>Mass-weighted projections by default</li><li>Velocity dispersion: σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²) following standard statistical definition</li><li>Unicode symbols supported: use <code>\sigma + tab</code> for <strong>σ</strong> in Julia</li></ul><pre><code class="language-julia hljs"># Project comprehensive kinematic quantities
 proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and dispersions
                     :km_s,                          # Uniform velocity units
                     xrange=[-10.,10.],
                     yrange=[-10.,10.],
                     zrange=[-2.,2.],
                     center=[24.,24.,24.],
-                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:59:21.635
-
+                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:43:34.129
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:v, :σ, :σx, :σy, :σz, :vx, :vx2, :vy, :vy2, :vz, :vz2, :v2, :sd)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 9 (sd, v, v2, vx, vx2, vy, vy2, vz, vz2)
-Processing mode: Variable-based parallel (8 threads)
-</code></pre><h4 id="Velocity-Dispersion-Implementation"><a class="docs-heading-anchor" href="#Velocity-Dispersion-Implementation">Velocity Dispersion Implementation</a><a id="Velocity-Dispersion-Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Velocity-Dispersion-Implementation" title="Permalink"></a></h4><p>Additional intermediate maps are automatically created for velocity dispersion calculations:</p><p><strong>Mathematical Formula:</strong> σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²)</p><p>This requires computation of both first and second moments of the velocity distribution, stored as separate map components.</p><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 13 entries:
+Processing mode: Variable-based parallel (4 threads)</code></pre><h4 id="Velocity-Dispersion-Implementation"><a class="docs-heading-anchor" href="#Velocity-Dispersion-Implementation">Velocity Dispersion Implementation</a><a id="Velocity-Dispersion-Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Velocity-Dispersion-Implementation" title="Permalink"></a></h4><p>Additional intermediate maps are automatically created for velocity dispersion calculations:</p><p><strong>Mathematical Formula:</strong> σₓ = √(⟨vₓ²⟩ - ⟨vₓ⟩²)</p><p>This requires computation of both first and second moments of the velocity distribution, stored as separate map components.</p><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 13 entries:
   :sd  =&gt; [0.000524564 0.000524564 … 0.000462735 0.000462735; 0.000524564 0.000…
   :v   =&gt; [87.2263 87.2263 … 74.2532 74.2532; 87.2263 87.2263 … 74.2532 74.2532…
   :v2  =&gt; [1.96323 1.96323 … 1.55066 1.55066; 1.96323 1.96323 … 1.55066 1.55066…
@@ -576,8 +507,8 @@ Processing mode: Variable-based parallel (8 threads)
   :σ   =&gt; :km_s
   :σx  =&gt; :km_s
   :σy  =&gt; :km_s
-  :σz  =&gt; :km_s</code></pre><pre><code class="language-julia hljs">usedmemory(proj_z);</code></pre><pre><code class="nohighlight hljs">Memory used: 311.9 MB
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 5.5))
+  :σz  =&gt; :km_s</code></pre><pre><code class="language-julia hljs">usedmemory(proj_z);</code></pre><pre><code class="nohighlight hljs">Memory used: 311.886
+ MB</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 5.5))
 
 subplot(2, 3, 1)
 title(&quot;v [km/s]&quot;)
@@ -602,7 +533,7 @@ colorbar()
 subplot(2, 3, 6)
 title(&quot;σz [km/s]&quot;)
 imshow( permutedims(proj_z.maps[:σz]) , cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
-colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_59_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x550 with 10 Axes&gt;)</code></pre><h4 id="Cylindrical-Coordinate-System"><a class="docs-heading-anchor" href="#Cylindrical-Coordinate-System">Cylindrical Coordinate System</a><a id="Cylindrical-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Coordinate-System" title="Permalink"></a></h4><h5 id="Face-on-Disk-Analysis-(z-direction)"><a class="docs-heading-anchor" href="#Face-on-Disk-Analysis-(z-direction)">Face-on Disk Analysis (z-direction)</a><a id="Face-on-Disk-Analysis-(z-direction)-1"></a><a class="docs-heading-anchor-permalink" href="#Face-on-Disk-Analysis-(z-direction)" title="Permalink"></a></h5><p>For galactic disk studies, cylindrical coordinates provide natural physical interpretation. The coordinate transformation uses a specified center point for radius and azimuthal angle calculations.</p><pre><code class="language-julia hljs"># Comprehensive cylindrical coordinate analysis
+colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_59_1.png" alt/></p><h4 id="Cylindrical-Coordinate-System"><a class="docs-heading-anchor" href="#Cylindrical-Coordinate-System">Cylindrical Coordinate System</a><a id="Cylindrical-Coordinate-System-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Coordinate-System" title="Permalink"></a></h4><h5 id="Face-on-Disk-Analysis-(z-direction)"><a class="docs-heading-anchor" href="#Face-on-Disk-Analysis-(z-direction)">Face-on Disk Analysis (z-direction)</a><a id="Face-on-Disk-Analysis-(z-direction)-1"></a><a class="docs-heading-anchor-permalink" href="#Face-on-Disk-Analysis-(z-direction)" title="Permalink"></a></h5><p>For galactic disk studies, cylindrical coordinates provide natural physical interpretation. The coordinate transformation uses a specified center point for radius and azimuthal angle calculations.</p><pre><code class="language-julia hljs"># Comprehensive cylindrical coordinate analysis
 proj_z = projection(gas,
     # Cartesian quantities
     [:v, :σ, :σx, :σy,
@@ -615,28 +546,22 @@ proj_z = projection(gas,
     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
     center=[:boxcenter], range_unit=:kpc,
     # Coordinate transformation center
-    data_center=[24.,24.,24.], data_center_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:59:29.082
-
+    data_center=[24.,24.,24.], data_center_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:48:34.912
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder, :vx, :vx2, :vy, :vy2, :v2, :vr_cylinder2, :vϕ_cylinder2, :sd)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 1708 x 1708
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 11 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vϕ_cylinder, vϕ_cylinder2)
-Processing mode: Variable-based parallel (8 threads)
-</code></pre><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
+Processing mode: Variable-based parallel (4 threads)</code></pre><pre><code class="language-julia hljs">proj_z.maps</code></pre><pre><code class="nohighlight hljs">DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
   :r_cylinder   =&gt; [14.1256 14.1173 … 14.1366 14.1449; 14.1173 14.109 … 14.1283…
   :sd           =&gt; [0.000524564 0.000524564 … 0.000462735 0.000462735; 0.000524…
   :v            =&gt; [87.2263 87.2263 … 74.2532 74.2532; 87.2263 87.2263 … 74.253…
@@ -717,7 +642,7 @@ colorbar()
 subplot(3, 3, 9)
 title(&quot;σy [km/s]&quot;)
 imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
-colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_64_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x850 with 18 Axes&gt;)</code></pre><h3 id="Performance-Tips-for-Kinematic-Analysis"><a class="docs-heading-anchor" href="#Performance-Tips-for-Kinematic-Analysis">Performance Tips for Kinematic Analysis</a><a id="Performance-Tips-for-Kinematic-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Tips-for-Kinematic-Analysis" title="Permalink"></a></h3><h4 id="Memory-Optimization"><a class="docs-heading-anchor" href="#Memory-Optimization">Memory Optimization</a><a id="Memory-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Memory-Optimization" title="Permalink"></a></h4><p>Kinematic projections can be memory-intensive due to multiple intermediate calculations:</p><pre><code class="language-julia hljs"># Memory-efficient approach: Process quantities separately
+colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_64_1.png" alt/></p><h3 id="Performance-Tips-for-Kinematic-Analysis"><a class="docs-heading-anchor" href="#Performance-Tips-for-Kinematic-Analysis">Performance Tips for Kinematic Analysis</a><a id="Performance-Tips-for-Kinematic-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Tips-for-Kinematic-Analysis" title="Permalink"></a></h3><h4 id="Memory-Optimization"><a class="docs-heading-anchor" href="#Memory-Optimization">Memory Optimization</a><a id="Memory-Optimization-1"></a><a class="docs-heading-anchor-permalink" href="#Memory-Optimization" title="Permalink"></a></h4><p>Kinematic projections can be memory-intensive due to multiple intermediate calculations:</p><pre><code class="language-julia hljs"># Memory-efficient approach: Process quantities separately
 proj_velocity = projection(gas, [:vx, :vy, :vz], :km_s, lmax=6)
 proj_dispersion = projection(gas, [:σx, :σy, :σz], :km_s, lmax=6)
 
@@ -737,28 +662,22 @@ proj_z = projection(gas,
     :km_s,
     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
     center=[:boxcenter], range_unit=:kpc,
-    lmax=6);  # 2^6 = 64 grid cells per dimension</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:59:43.605
-
+    lmax=6);  # 2^6 = 64 grid cells per dimension</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:54:46.169
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder, :vx, :vx2, :vy, :vy2, :vz, :vz2, :v2, :vr_cylinder2, :vϕ_cylinder2, :sd)
 Weighting      = :mass
-
 Effective resolution: 64^2
 Map size: 28 x 28
 Pixel size: 750.0 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
-Processing mode: Variable-based parallel (8 threads)
-</code></pre><pre><code class="language-julia hljs"># this corresponds to an effective resolution of:
+Processing mode: Variable-based parallel (4 threads)</code></pre><pre><code class="language-julia hljs"># this corresponds to an effective resolution of:
 proj_z.effres</code></pre><pre><code class="nohighlight hljs">64</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
 
 subplot(3, 3, 1)
@@ -804,34 +723,28 @@ colorbar()
 subplot(3, 3, 9)
 title(&quot;σy [km/s]&quot;)
 imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
-colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_70_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x850 with 18 Axes&gt;)</code></pre><h4 id="Direct-Resolution-Specification-(res)"><a class="docs-heading-anchor" href="#Direct-Resolution-Specification-(res)">Direct Resolution Specification (<code>res</code>)</a><a id="Direct-Resolution-Specification-(res)-1"></a><a class="docs-heading-anchor-permalink" href="#Direct-Resolution-Specification-(res)" title="Permalink"></a></h4><p>Specify absolute grid resolution independent of AMR levels:</p><pre><code class="language-julia hljs"># Direct resolution specification: 100x100 grid
+colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_70_1.png" alt/></p><h4 id="Direct-Resolution-Specification-(res)"><a class="docs-heading-anchor" href="#Direct-Resolution-Specification-(res)">Direct Resolution Specification (<code>res</code>)</a><a id="Direct-Resolution-Specification-(res)-1"></a><a class="docs-heading-anchor-permalink" href="#Direct-Resolution-Specification-(res)" title="Permalink"></a></h4><p>Specify absolute grid resolution independent of AMR levels:</p><pre><code class="language-julia hljs"># Direct resolution specification: 100x100 grid
 proj_z = projection(gas,
     [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
     :km_s,
     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
     center=[:boxcenter], range_unit=:kpc,
-    res=100);  # 100x100 pixel output grid</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:59:52.220
-
+    res=100);  # 100x100 pixel output grid</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:55:27.493
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder, :vx, :vx2, :vy, :vy2, :vz, :vz2, :v2, :vr_cylinder2, :vϕ_cylinder2, :sd)
 Weighting      = :mass
-
 Effective resolution: 100^2
 Map size: 42 x 42
 Pixel size: 480.0 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
-Processing mode: Variable-based parallel (8 threads)
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
+Processing mode: Variable-based parallel (4 threads)</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
 
 subplot(3, 3, 1)
 title(&quot;v [km/s]&quot;)
@@ -876,35 +789,30 @@ colorbar()
 subplot(3, 3, 9)
 title(&quot;σy [km/s]&quot;)
 imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
-colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_73_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x850 with 18 Axes&gt;)</code></pre><h4 id="Physical-Pixel-Size-Control-(pxsize)"><a class="docs-heading-anchor" href="#Physical-Pixel-Size-Control-(pxsize)">Physical Pixel Size Control (<code>pxsize</code>)</a><a id="Physical-Pixel-Size-Control-(pxsize)-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Pixel-Size-Control-(pxsize)" title="Permalink"></a></h4><p>Specify resolution through physical pixel dimensions for direct scale control:</p><pre><code class="language-julia hljs"># Physical pixel size specification
+colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_73_1.png" alt/></p><h4 id="Physical-Pixel-Size-Control-(pxsize)"><a class="docs-heading-anchor" href="#Physical-Pixel-Size-Control-(pxsize)">Physical Pixel Size Control (<code>pxsize</code>)</a><a id="Physical-Pixel-Size-Control-(pxsize)-1"></a><a class="docs-heading-anchor-permalink" href="#Physical-Pixel-Size-Control-(pxsize)" title="Permalink"></a></h4><p>Specify resolution through physical pixel dimensions for direct scale control:</p><pre><code class="language-julia hljs"># Physical pixel size specification
 proj_z = projection(gas,
     [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
     :km_s,
     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
     center=[:boxcenter], range_unit=:kpc,
     pxsize=[1000., :pc],      # 1000 pc per pixel (1 kpc/pixel)
-    verbose_threads=true);     # Show threading information</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:00:00.507
-
+    verbose_threads=true);     # Show threading information</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:56:17.048
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Selected var(s)=(:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder, :vx, :vx2, :vy, :vy2, :vz, :vz2, :v2, :vr_cylinder2, :vϕ_cylinder2, :sd)
 Weighting      = :mass
-
 Effective resolution: 49^2
 Map size: 21 x 21
 Pixel size: 979.592 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
-Processing mode: Variable-based parallel (8 threads)
-🚀 Variable-based parallel processing with 8 threads
+Processing mode: Variable-based parallel (4 threads)
+🚀 Variable-based parallel processing with 4 threads
    ├─ Variables: 13 across AMR levels 6 to 12
    ├─ Total cells: 18590638
    ├─ Cells per variable: 1430049
@@ -912,16 +820,15 @@ Processing mode: Variable-based parallel (8 threads)
 🚀 Using variable-based parallel processing
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
-   🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4, vr_cylinder2→T5, vx→T6, vx2→T7, vy→T8
-✅ Variable-based parallel processing completed in 1.907s
+   🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
+✅ Variable-based parallel processing completed in 44.381s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 126761366 cells/second
+      ├─ Processing rate: 5445515 cells/second
       ├─ Parallel efficiency: 100.0% (target: 85-95%)
-      ├─ Threads utilized: 8 / 8 available
-      └─ Memory benefit: Direct allocation (no intermediate combining buffers)
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
+      ├─ Threads utilized: 4 / 4 available
+      └─ Memory benefit: Direct allocation (no intermediate combining buffers)</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 8.5))
 
 subplot(3, 3, 1)
 title(&quot;v [km/s]&quot;)
@@ -966,7 +873,7 @@ colorbar()
 subplot(3, 3, 9)
 title(&quot;σy [km/s]&quot;)
 imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
-colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_76_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x850 with 18 Axes&gt;)</code></pre><h2 id="Thermal-Properties-Analysis"><a class="docs-heading-anchor" href="#Thermal-Properties-Analysis">Thermal Properties Analysis</a><a id="Thermal-Properties-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Thermal-Properties-Analysis" title="Permalink"></a></h2><h3 id="Sound-Speed-Projections"><a class="docs-heading-anchor" href="#Sound-Speed-Projections">Sound Speed Projections</a><a id="Sound-Speed-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Sound-Speed-Projections" title="Permalink"></a></h3><p>Sound speed calculations utilize the adiabatic index γ from hydro files:</p><p><strong>Physical Formula:</strong> cs = √(γ P/ρ) = √(γ kT/μmH)</p><p><strong>Implementation:</strong></p><ul><li>Adiabatic index loaded automatically from simulation data</li><li>Temperature and pressure derived from internal energy</li><li>Sound speed represents local gas thermal pressure support</li></ul><pre><code class="language-julia hljs"># Sound speed projections in multiple directions
+colorbar();</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_76_1.png" alt/></p><h2 id="Thermal-Properties-Analysis"><a class="docs-heading-anchor" href="#Thermal-Properties-Analysis">Thermal Properties Analysis</a><a id="Thermal-Properties-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Thermal-Properties-Analysis" title="Permalink"></a></h2><h3 id="Sound-Speed-Projections"><a class="docs-heading-anchor" href="#Sound-Speed-Projections">Sound Speed Projections</a><a id="Sound-Speed-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Sound-Speed-Projections" title="Permalink"></a></h3><p>Sound speed calculations utilize the adiabatic index γ from hydro files:</p><p><strong>Physical Formula:</strong> cs = √(γ P/ρ) = √(γ kT/μmH)</p><p><strong>Implementation:</strong></p><ul><li>Adiabatic index loaded automatically from simulation data</li><li>Temperature and pressure derived from internal energy</li><li>Sound speed represents local gas thermal pressure support</li></ul><pre><code class="language-julia hljs"># Sound speed projections in multiple directions
 proj_z = projection(gas, :cs, :km_s,           # Z-direction sound speed
                     zrange=[0.45,0.55],        # Thin central slice
                     xrange=[0.4, 0.6],
@@ -976,45 +883,36 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
                     zrange=[0.45,0.55],        # Same spatial selection
                     xrange=[0.4, 0.6],
                     yrange=[0.4, 0.6],
-                    direction=:x);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:00:07.588
-
+                    direction=:x);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:57:09.732
 domain:
 xmin::xmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
-
 Selected var(s)=(:cs, :sd)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 820 x 820
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-[Mera]: 2025-08-14T15:00:09.266
-
+[Mera]: 2026-05-30T17:57:36.259
 domain:
 xmin::xmax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==&gt; 19.2 [kpc] :: 28.8 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
-
 Selected var(s)=(:cs, :sd)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 820 x 410
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 2 (cs, sd)
-Processing mode: Variable-based parallel (2 threads)
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+Processing mode: Variable-based parallel (2 threads)</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
 
 subplot(1, 2, 1)
 im = imshow( log10.(permutedims(proj_z.maps[:cs])   ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_z.cextent)
@@ -1026,7 +924,7 @@ subplot(1, 2, 2)
 im = imshow( log10.(permutedims(proj_x.maps[:cs]) ), cmap=cmap2, origin=&quot;lower&quot;, extent=proj_x.cextent)
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=L&quot;\mathrm{log10(c_s) \ [km \ s^{-1}]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_80_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x350 with 4 Axes&gt;)</code></pre><h4 id="Custom-Adiabatic-Index"><a class="docs-heading-anchor" href="#Custom-Adiabatic-Index">Custom Adiabatic Index</a><a id="Custom-Adiabatic-Index-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Adiabatic-Index" title="Permalink"></a></h4><p>Modify the adiabatic index for alternative equation of state calculations:</p><pre><code class="language-julia hljs">gas.info.gamma = 5/3  # Monatomic ideal gas
+cb = colorbar(im, label=L&quot;\mathrm{log10(c_s) \ [km \ s^{-1}]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_80_1.png" alt/></p><h4 id="Custom-Adiabatic-Index"><a class="docs-heading-anchor" href="#Custom-Adiabatic-Index">Custom Adiabatic Index</a><a id="Custom-Adiabatic-Index-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Adiabatic-Index" title="Permalink"></a></h4><p>Modify the adiabatic index for alternative equation of state calculations:</p><pre><code class="language-julia hljs">gas.info.gamma = 5/3  # Monatomic ideal gas
 gas.info.gamma = 7/5  # Diatomic gas</code></pre><h4 id="Practical-Examples-for-Scientific-Analysis"><a class="docs-heading-anchor" href="#Practical-Examples-for-Scientific-Analysis">Practical Examples for Scientific Analysis</a><a id="Practical-Examples-for-Scientific-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Examples-for-Scientific-Analysis" title="Permalink"></a></h4><h5 id="Star-Formation-Rate-Surface-Density"><a class="docs-heading-anchor" href="#Star-Formation-Rate-Surface-Density">Star Formation Rate Surface Density</a><a id="Star-Formation-Rate-Surface-Density-1"></a><a class="docs-heading-anchor-permalink" href="#Star-Formation-Rate-Surface-Density" title="Permalink"></a></h5><pre><code class="language-julia hljs"># Identify dense, cold gas (star-forming regions)
 sf_mask = (getvar(gas, :rho, :nH) .&gt; 100) .&amp;
           (getvar(gas, :Temperature, :K) .&lt; 1000)
@@ -1056,51 +954,40 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 proj_x = projection(gas, :sd, :Msol_pc2,
                     zrange=[0.45,0.55],
                     mask=mask_tot,        # Same mask for consistency
-                    direction=:x);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:00:11.921
-
+                    direction=:x);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:57:49.012
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
 :mask provided by function
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
-</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:00:15.916
-
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
+[Mera]: 2026-05-30T17:57:57.163
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==&gt; 21.6 [kpc] :: 26.4 [kpc]
-
 Selected var(s)=(:sd,)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 4096 x 410
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
 :mask provided by function
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:06</code></pre><pre><code class="language-julia hljs">figure(figsize=(10, 3.5))
 subplot(1,2,1)
 im = imshow( log10.( permutedims(proj_z.maps[:sd])), cmap=cmap, aspect=proj_z.ratio, origin=&quot;lower&quot;, extent=proj_z.cextent, vmin=-1, vmax=1)
 xlabel(&quot;x [kpc]&quot;)
@@ -1112,77 +999,61 @@ im = imshow( log10.( permutedims(proj_x.maps[:sd])), cmap=cmap, origin=&quot;low
 xlabel(&quot;x [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;,orientation=&quot;horizontal&quot;, pad=0.2);
-tight_layout()</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_88_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x350 with 4 Axes&gt;)</code></pre><h2 id="Weighting-and-Integration-Schemes"><a class="docs-heading-anchor" href="#Weighting-and-Integration-Schemes">Weighting and Integration Schemes</a><a id="Weighting-and-Integration-Schemes-1"></a><a class="docs-heading-anchor-permalink" href="#Weighting-and-Integration-Schemes" title="Permalink"></a></h2><h3 id="Alternative-Weighting-Methods"><a class="docs-heading-anchor" href="#Alternative-Weighting-Methods">Alternative Weighting Methods</a><a id="Alternative-Weighting-Methods-1"></a><a class="docs-heading-anchor-permalink" href="#Alternative-Weighting-Methods" title="Permalink"></a></h3><p>Customize projection weighting to emphasize different physical aspects:</p><pre><code class="language-julia hljs"># Volume-weighted projection (alternative to mass-weighted default)
+tight_layout()</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_88_1.png" alt/></p><h2 id="Weighting-and-Integration-Schemes"><a class="docs-heading-anchor" href="#Weighting-and-Integration-Schemes">Weighting and Integration Schemes</a><a id="Weighting-and-Integration-Schemes-1"></a><a class="docs-heading-anchor-permalink" href="#Weighting-and-Integration-Schemes" title="Permalink"></a></h2><h3 id="Alternative-Weighting-Methods"><a class="docs-heading-anchor" href="#Alternative-Weighting-Methods">Alternative Weighting Methods</a><a id="Alternative-Weighting-Methods-1"></a><a class="docs-heading-anchor-permalink" href="#Alternative-Weighting-Methods" title="Permalink"></a></h3><p>Customize projection weighting to emphasize different physical aspects:</p><pre><code class="language-julia hljs"># Volume-weighted projection (alternative to mass-weighted default)
 proj_z = projection(gas, :cs, :km_s,
-                    weighting=[:volume]);  # Volume weighting instead of mass</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:00:21.776
-
+                    weighting=[:volume]);  # Volume weighting instead of mass</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:58:06.663
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
 Selected var(s)=(:cs,)
 Weighting      = :volume
-
 Effective resolution: 4096^2
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-</code></pre><h4 id="Custom-Weighting-with-Units"><a class="docs-heading-anchor" href="#Custom-Weighting-with-Units">Custom Weighting with Units</a><a id="Custom-Weighting-with-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Weighting-with-Units" title="Permalink"></a></h4><p>Use any predefined quantity as weighting with specified units:</p><pre><code class="language-julia hljs"># Volume-weighted with explicit units
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:33</code></pre><h4 id="Custom-Weighting-with-Units"><a class="docs-heading-anchor" href="#Custom-Weighting-with-Units">Custom Weighting with Units</a><a id="Custom-Weighting-with-Units-1"></a><a class="docs-heading-anchor-permalink" href="#Custom-Weighting-with-Units" title="Permalink"></a></h4><p>Use any predefined quantity as weighting with specified units:</p><pre><code class="language-julia hljs"># Volume-weighted with explicit units
 proj_z = projection(gas, :cs, :km_s,
-                    weighting=[:volume, :cm3]);  # Volume in cm³ units</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:00:53.729
-
+                    weighting=[:volume, :cm3]);  # Volume in cm³ units</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:59:01.881
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
 Selected var(s)=(:cs,)
 Weighting      = :volume
-
 Effective resolution: 4096^2
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-</code></pre><h2 id="Specialized-Applications"><a class="docs-heading-anchor" href="#Specialized-Applications">Specialized Applications</a><a id="Specialized-Applications-1"></a><a class="docs-heading-anchor-permalink" href="#Specialized-Applications" title="Permalink"></a></h2><h3 id="Ultra-Thin-Slice-Analysis"><a class="docs-heading-anchor" href="#Ultra-Thin-Slice-Analysis">Ultra-Thin Slice Analysis</a><a id="Ultra-Thin-Slice-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Ultra-Thin-Slice-Analysis" title="Permalink"></a></h3><p>Create quasi-2D cuts through 3D data using extremely narrow projection ranges:</p><pre><code class="language-julia hljs"># Ultra-thin slice: effectively 2D cut through 3D data
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:33</code></pre><h2 id="Specialized-Applications"><a class="docs-heading-anchor" href="#Specialized-Applications">Specialized Applications</a><a id="Specialized-Applications-1"></a><a class="docs-heading-anchor-permalink" href="#Specialized-Applications" title="Permalink"></a></h2><h3 id="Ultra-Thin-Slice-Analysis"><a class="docs-heading-anchor" href="#Ultra-Thin-Slice-Analysis">Ultra-Thin Slice Analysis</a><a id="Ultra-Thin-Slice-Analysis-1"></a><a class="docs-heading-anchor-permalink" href="#Ultra-Thin-Slice-Analysis" title="Permalink"></a></h3><p>Create quasi-2D cuts through 3D data using extremely narrow projection ranges:</p><pre><code class="language-julia hljs"># Ultra-thin slice: effectively 2D cut through 3D data
 proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
                     yrange=[0.0001,0.0001],   # Extremely narrow range (0.1 pc)
                     center=[:bc],
                     range_unit=:kpc,
-                    direction=:y)  ;           # Y-direction slice</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T15:01:26.335
-
+                    direction=:y)  ;           # Y-direction slice</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:59:57.255
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.5000021 :: 0.5000021  	==&gt; 24.0 [kpc] :: 24.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
 Selected var(s)=(:sd, :v)
 Weighting      = :mass
-
 Effective resolution: 4096^2
 Map size: 4096 x 4096
 Pixel size: 11.719 [pc]
 Simulation min.: 11.719 [pc]
-
-Available threads: 8
-Requested max_threads: 8
+Available threads: 4
+Requested max_threads: 4
 Variables: 2 (sd, v)
-Processing mode: Variable-based parallel (2 threads)
-</code></pre><pre><code class="language-julia hljs"># Visualize ultra-thin slice velocity field
+Processing mode: Variable-based parallel (2 threads)</code></pre><pre><code class="language-julia hljs"># Visualize ultra-thin slice velocity field
 figure(figsize=(10, 3.5))
 im = imshow(log10.(permutedims(proj_y.maps[:v])),
            cmap=cmap2,
@@ -1192,4 +1063,4 @@ xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 cb = colorbar(im, label=L&quot;\mathrm{log10(v) \ [km \ s^{-1}]}&quot;);
 
-# Note: Ultra-thin slices provide all cells that intersect the 2D plane</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_95_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1000x350 with 2 Axes&gt;)</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This tutorial covered the comprehensive projection capabilities of MERA.jl for hydrodynamical data analysis. You&#39;ve learned how to:</p><h3 id="Core-Functionality"><a class="docs-heading-anchor" href="#Core-Functionality">Core Functionality</a><a id="Core-Functionality-1"></a><a class="docs-heading-anchor-permalink" href="#Core-Functionality" title="Permalink"></a></h3><ul><li><strong>Create basic projections</strong> with <code>projection(data, :variable, :unit)</code></li><li><strong>Control projection directions</strong> (x, y, z) for different viewing angles</li><li><strong>Select spatial regions</strong> using <code>xrange</code>, <code>yrange</code>, <code>zrange</code> parameters</li><li><strong>Access projection results</strong> through the structured output object</li></ul><h3 id="Advanced-Techniques"><a class="docs-heading-anchor" href="#Advanced-Techniques">Advanced Techniques</a><a id="Advanced-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Techniques" title="Permalink"></a></h3><ul><li><strong>Multi-quantity projections</strong> for efficient batch processing</li><li><strong>Cylindrical coordinate analysis</strong> for galactic disk studies</li><li><strong>Resolution control</strong> via <code>lmax</code>, <code>res</code>, and <code>pxsize</code> parameters</li><li><strong>Masking and filtering</strong> for targeted physical analysis</li><li><strong>Custom weighting schemes</strong> beyond default mass-weighting</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/masking_filtering/">« API Reference</a><a class="docs-footer-nextpage" href="../06_particles_Projection/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 30 May 2026 18:29">Saturday 30 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+# Note: Ultra-thin slices provide all cells that intersect the 2D plane</code></pre><p><img src="../06_hydro_Projection_files/06_hydro_Projection_95_1.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This tutorial covered the comprehensive projection capabilities of MERA.jl for hydrodynamical data analysis. You&#39;ve learned how to:</p><h3 id="Core-Functionality"><a class="docs-heading-anchor" href="#Core-Functionality">Core Functionality</a><a id="Core-Functionality-1"></a><a class="docs-heading-anchor-permalink" href="#Core-Functionality" title="Permalink"></a></h3><ul><li><strong>Create basic projections</strong> with <code>projection(data, :variable, :unit)</code></li><li><strong>Control projection directions</strong> (x, y, z) for different viewing angles</li><li><strong>Select spatial regions</strong> using <code>xrange</code>, <code>yrange</code>, <code>zrange</code> parameters</li><li><strong>Access projection results</strong> through the structured output object</li></ul><h3 id="Advanced-Techniques"><a class="docs-heading-anchor" href="#Advanced-Techniques">Advanced Techniques</a><a id="Advanced-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Techniques" title="Permalink"></a></h3><ul><li><strong>Multi-quantity projections</strong> for efficient batch processing</li><li><strong>Cylindrical coordinate analysis</strong> for galactic disk studies</li><li><strong>Resolution control</strong> via <code>lmax</code>, <code>res</code>, and <code>pxsize</code> parameters</li><li><strong>Masking and filtering</strong> for targeted physical analysis</li><li><strong>Custom weighting schemes</strong> beyond default mass-weighting</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/masking_filtering/">« API Reference</a><a class="docs-footer-nextpage" href="../06_particles_Projection/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 30 May 2026 20:12">Saturday 30 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

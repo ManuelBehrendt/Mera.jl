@@ -36,11 +36,11 @@ using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
 info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14&quot;)
-gas  = gethydro(info,:rho,lmax=12, smallr=1e-11);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:33:29.776
-
+gas  = gethydro(info,:rho,lmax=12, smallr=1e-11);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:13:33.475
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime:
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -52,7 +52,8 @@ amr:           true
 level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:
+7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -76,43 +77,35 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-
-[Mera]: Get hydro data: 2025-08-14T14:33:32.207
-
+[Mera]: Get hydro data: 2026-05-30T17:13:35.597
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1,) = (:rho,)
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-
 📊 Processing Configuration:
    Total CPU files available: 2048
    Files to be processed: 2048
-   Compute threads: 8
+   Compute threads: 4
    GC threads: 4
-</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:01:07 (33.10 ms/it)
-</code></pre><pre><code class="nohighlight hljs">
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:40 (19.69 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 1 variables
-Creating Table from 18966620 cells with max 8 threads...
-  Threading: 5 threads for 5 columns
-  Max threads requested: 8
-  Available threads: 8
-  Using parallel processing with 5 threads
+Creating Table from 18966620 cells with max 4 threads...
+  Threading: 4 threads for 5 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
-  1.484907 seconds (4.26 M allocations: 2.080 GiB, 2.72% gc time, 48.57% compilation time)
-✓ Table created in 1.68 seconds
-Memory used for data table :723.5197649002075 MB
--------------------------------------------------------
-</code></pre><h2 id="Cuboid-Selection"><a class="docs-heading-anchor" href="#Cuboid-Selection">Cuboid Selection</a><a id="Cuboid-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Selection" title="Permalink"></a></h2><p>Cuboid (rectangular) selections allow precise spatial filtering using coordinate ranges in physical units. This method is ideal for analyzing specific regions of interest or isolating structures aligned with simulation axes.</p><h3 id="Full-Domain-Projections"><a class="docs-heading-anchor" href="#Full-Domain-Projections">Full Domain Projections</a><a id="Full-Domain-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Projections" title="Permalink"></a></h3><p>We begin by creating projections of the complete simulation domain to visualize the overall structure and identify regions of interest for sub-selection. The generated objects include domain extent information that can be used to define plot ranges.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+  1.358242 seconds (4.74 M allocations: 2.065 GiB, 0.39% gc time, 50.91% compilation time)
+✓ Table created in 1.628 seconds
+Memory used for data table :
+723.5197649002075 MB
+-------------------------------------------------------</code></pre><h2 id="Cuboid-Selection"><a class="docs-heading-anchor" href="#Cuboid-Selection">Cuboid Selection</a><a id="Cuboid-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Selection" title="Permalink"></a></h2><p>Cuboid (rectangular) selections allow precise spatial filtering using coordinate ranges in physical units. This method is ideal for analyzing specific regions of interest or isolating structures aligned with simulation axes.</p><h3 id="Full-Domain-Projections"><a class="docs-heading-anchor" href="#Full-Domain-Projections">Full Domain Projections</a><a id="Full-Domain-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Projections" title="Permalink"></a></h3><p>We begin by creating projections of the complete simulation domain to visualize the overall structure and identify regions of interest for sub-selection. The generated objects include domain extent information that can be used to define plot ranges.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-</code></pre><h3 id="Cuboid-Selection-Visualization"><a class="docs-heading-anchor" href="#Cuboid-Selection-Visualization">Cuboid Selection Visualization</a><a id="Cuboid-Selection-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Selection-Visualization" title="Permalink"></a></h3><p>The generated projection objects include domain extent information (e.g., <code>proj_z.extent</code>, <code>proj_z.cextent</code>) that define the coordinate ranges for plotting. The red lines indicate the cuboid region that will be extracted as a sub-region from the full data.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:33</code></pre><h3 id="Cuboid-Selection-Visualization"><a class="docs-heading-anchor" href="#Cuboid-Selection-Visualization">Cuboid Selection Visualization</a><a id="Cuboid-Selection-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Selection-Visualization" title="Permalink"></a></h3><p>The generated projection objects include domain extent information (e.g., <code>proj_z.extent</code>, <code>proj_z.cextent</code>) that define the coordinate ranges for plotting. The red lines indicate the cuboid region that will be extracted as a sub-region from the full data.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 
 subplot(1,3,1)
@@ -134,23 +127,20 @@ im = imshow( log10.( permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.r
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext)</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><pre><code class="nohighlight hljs">PyObject &lt;matplotlib.colorbar.Colorbar object at 0x343eca870&gt;</code></pre><h3 id="Cuboid-Region-Extraction"><a class="docs-heading-anchor" href="#Cuboid-Region-Extraction">Cuboid Region Extraction</a><a id="Cuboid-Region-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region-Extraction" title="Permalink"></a></h3><p>Select coordinate ranges in physical units (kpc) relative to the box center [24., 24., 24.]. The <code>subregion()</code> function supports flexible coordinate systems and unit specifications for precise spatial selection.</p><p><strong>Parameters</strong>:</p><ul><li><code>xrange</code>, <code>yrange</code>, <code>zrange</code>: Coordinate limits in specified units</li><li><code>center</code>: Reference point for coordinate system (<code>:boxcenter</code> or explicit coordinates)</li><li><code>range_unit</code>: Physical units for coordinate specification (<code>:kpc</code>, <code>:pc</code>, etc.)</li></ul><pre><code class="language-julia hljs">gas_subregion = subregion( gas, :cuboid,
+cb = colorbar(im, label=labeltext)</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png" alt/></p><pre><code class="nohighlight hljs">PyObject &lt;matplotlib.colorbar.Colorbar object at 0x168207340&gt;</code></pre><h3 id="Cuboid-Region-Extraction"><a class="docs-heading-anchor" href="#Cuboid-Region-Extraction">Cuboid Region Extraction</a><a id="Cuboid-Region-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region-Extraction" title="Permalink"></a></h3><p>Select coordinate ranges in physical units (kpc) relative to the box center [24., 24., 24.]. The <code>subregion()</code> function supports flexible coordinate systems and unit specifications for precise spatial selection.</p><p><strong>Parameters</strong>:</p><ul><li><code>xrange</code>, <code>yrange</code>, <code>zrange</code>: Coordinate limits in specified units</li><li><code>center</code>: Reference point for coordinate system (<code>:boxcenter</code> or explicit coordinates)</li><li><code>range_unit</code>: Physical units for coordinate specification (<code>:kpc</code>, <code>:pc</code>, etc.)</li></ul><pre><code class="language-julia hljs">gas_subregion = subregion( gas, :cuboid,
                             xrange=[-4., 0.],
                             yrange=[-15., 15.],
                             zrange=[-2., 2.],
                             center=[:boxcenter],
-                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:35:47.210
-
+                            range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:16:11.429
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
-Memory used for data table :285.23614978790283 MB
--------------------------------------------------------
-</code></pre><h3 id="Data-Type-Verification"><a class="docs-heading-anchor" href="#Data-Type-Verification">Data Type Verification</a><a id="Data-Type-Verification-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Type-Verification" title="Permalink"></a></h3><p>The <code>subregion()</code> function creates a new object with the same type as the original <code>gethydro()</code> output, preserving all data structure and metadata while containing only the spatially selected cells.</p><pre><code class="language-julia hljs">typeof(gas_subregion)</code></pre><pre><code class="nohighlight hljs">HydroDataType</code></pre><h3 id="Cuboid-Sub-Region-Projections"><a class="docs-heading-anchor" href="#Cuboid-Sub-Region-Projections">Cuboid Sub-Region Projections</a><a id="Cuboid-Sub-Region-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Sub-Region-Projections" title="Permalink"></a></h3><p>Create projections of the extracted cuboid sub-region. The coordinate center remains at the box center for consistent spatial reference across different selections.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :285.23614978790283
+ MB
+-------------------------------------------------------</code></pre><h3 id="Data-Type-Verification"><a class="docs-heading-anchor" href="#Data-Type-Verification">Data Type Verification</a><a id="Data-Type-Verification-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Type-Verification" title="Permalink"></a></h3><p>The <code>subregion()</code> function creates a new object with the same type as the original <code>gethydro()</code> output, preserving all data structure and metadata while containing only the spatially selected cells.</p><pre><code class="language-julia hljs">typeof(gas_subregion)</code></pre><pre><code class="nohighlight hljs">HydroDataType</code></pre><h3 id="Cuboid-Sub-Region-Projections"><a class="docs-heading-anchor" href="#Cuboid-Sub-Region-Projections">Cuboid Sub-Region Projections</a><a id="Cuboid-Sub-Region-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Sub-Region-Projections" title="Permalink"></a></h3><p>Create projections of the extracted cuboid sub-region. The coordinate center remains at the box center for consistent spatial reference across different selections.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
@@ -171,29 +161,23 @@ subplot(1,3,3)
 im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_15_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Inverse-Cuboid-Selection"><a class="docs-heading-anchor" href="#Inverse-Cuboid-Selection">Inverse Cuboid Selection</a><a id="Inverse-Cuboid-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Cuboid-Selection" title="Permalink"></a></h3><p>Inverse selection allows analysis of all data <em>outside</em> the specified region. This technique is useful for studying the environment surrounding a structure or for excluding specific features from analysis.</p><pre><code class="language-julia hljs">gas_subregion = subregion( gas, :cuboid,
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_15_1.png" alt/></p><h3 id="Inverse-Cuboid-Selection"><a class="docs-heading-anchor" href="#Inverse-Cuboid-Selection">Inverse Cuboid Selection</a><a id="Inverse-Cuboid-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Cuboid-Selection" title="Permalink"></a></h3><p>Inverse selection allows analysis of all data <em>outside</em> the specified region. This technique is useful for studying the environment surrounding a structure or for excluding specific features from analysis.</p><pre><code class="language-julia hljs">gas_subregion = subregion( gas, :cuboid,
                             xrange=[-4., 0.],
                             yrange=[-15., 15.],
                             zrange=[-2., 2.],
                             center=[:boxcenter],
                             range_unit=:kpc,
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:35:50.705
-
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:16:17.041
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
-Memory used for data table :438.28424549102783 MB
--------------------------------------------------------
-</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :438.28424549102783
+ MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:32</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 
 subplot(1,3,1)
@@ -215,12 +199,9 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ra
 plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_19_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h2 id="Cylindrical-Selection"><a class="docs-heading-anchor" href="#Cylindrical-Selection">Cylindrical Selection</a><a id="Cylindrical-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Selection" title="Permalink"></a></h2><p>Cylindrical selections are ideal for analyzing axisymmetric structures, outflows, or disk-like features. The cylinder is defined by radius, height, and orientation, with the default axis along the z-direction.</p><h3 id="Full-Domain-Reference"><a class="docs-heading-anchor" href="#Full-Domain-Reference">Full Domain Reference</a><a id="Full-Domain-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Reference" title="Permalink"></a></h3><p>Create projections of the complete domain to establish spatial context for cylindrical selection.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_19_1.png" alt/></p><h2 id="Cylindrical-Selection"><a class="docs-heading-anchor" href="#Cylindrical-Selection">Cylindrical Selection</a><a id="Cylindrical-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Selection" title="Permalink"></a></h2><p>Cylindrical selections are ideal for analyzing axisymmetric structures, outflows, or disk-like features. The cylinder is defined by radius, height, and orientation, with the default axis along the z-direction.</p><h3 id="Full-Domain-Reference"><a class="docs-heading-anchor" href="#Full-Domain-Reference">Full Domain Reference</a><a id="Full-Domain-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Reference" title="Permalink"></a></h3><p>Create projections of the complete domain to establish spatial context for cylindrical selection.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
-</code></pre><h3 id="Cylindrical-Selection-Visualization"><a class="docs-heading-anchor" href="#Cylindrical-Selection-Visualization">Cylindrical Selection Visualization</a><a id="Cylindrical-Selection-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Selection-Visualization" title="Permalink"></a></h3><p>The red lines show the cylindrical region boundaries projected onto different viewing planes. The circular cross-section appears in the z-projection, while rectangular boundaries appear in the side projections.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:33</code></pre><h3 id="Cylindrical-Selection-Visualization"><a class="docs-heading-anchor" href="#Cylindrical-Selection-Visualization">Cylindrical Selection Visualization</a><a id="Cylindrical-Selection-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Selection-Visualization" title="Permalink"></a></h3><p>The red lines show the cylindrical region boundaries projected onto different viewing planes. The circular cross-section appears in the z-projection, while rectangular boundaries appear in the side projections.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -243,24 +224,21 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;low
 plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_24_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Cylindrical-Region-Extraction"><a class="docs-heading-anchor" href="#Cylindrical-Region-Extraction">Cylindrical Region Extraction</a><a id="Cylindrical-Region-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region-Extraction" title="Permalink"></a></h3><p>Define cylindrical selection parameters:</p><ul><li><strong>Radius</strong>: Circular cross-section extent in specified units</li><li><strong>Height</strong>: Cylinder length along the axis direction (total height, extending in both directions from center)</li><li><strong>Center</strong>: Reference point with flexible coordinate specification (<code>:bc</code> for box center)</li><li><strong>Direction</strong>: Cylinder axis orientation (<code>:z</code> by default)</li></ul><p>Extract cylindrical region with specified radius and height in physical units. The height parameter refers to the total extent in both directions from the central plane.</p><pre><code class="language-julia hljs">gas_subregion = subregion(  gas, :cylinder,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_24_1.png" alt/></p><h3 id="Cylindrical-Region-Extraction"><a class="docs-heading-anchor" href="#Cylindrical-Region-Extraction">Cylindrical Region Extraction</a><a id="Cylindrical-Region-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region-Extraction" title="Permalink"></a></h3><p>Define cylindrical selection parameters:</p><ul><li><strong>Radius</strong>: Circular cross-section extent in specified units</li><li><strong>Height</strong>: Cylinder length along the axis direction (total height, extending in both directions from center)</li><li><strong>Center</strong>: Reference point with flexible coordinate specification (<code>:bc</code> for box center)</li><li><strong>Direction</strong>: Cylinder axis orientation (<code>:z</code> by default)</li></ul><p>Extract cylindrical region with specified radius and height in physical units. The height parameter refers to the total extent in both directions from the central plane.</p><pre><code class="language-julia hljs">gas_subregion = subregion(  gas, :cylinder,
                             radius=3.,
                             height=2.,
                             range_unit=:kpc,
-                            center=[13., :bc, :bc]); # direction=:z, by default</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:37:42.248
-
+                            center=[13., :bc, :bc]); # direction=:z, by default</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:19:42.277
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==&gt; 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==&gt; 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :44.2560396194458 MB
--------------------------------------------------------
-</code></pre><h3 id="Cylindrical-Sub-Region-Projections"><a class="docs-heading-anchor" href="#Cylindrical-Sub-Region-Projections">Cylindrical Sub-Region Projections</a><a id="Cylindrical-Sub-Region-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Sub-Region-Projections" title="Permalink"></a></h3><p>Project the extracted cylindrical region using box center coordinates for consistent spatial reference.</p><p>The coordinate center is maintained at the box center for consistent spatial reference across all projections.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :44.2560396194458
+ MB
+-------------------------------------------------------</code></pre><h3 id="Cylindrical-Sub-Region-Projections"><a class="docs-heading-anchor" href="#Cylindrical-Sub-Region-Projections">Cylindrical Sub-Region Projections</a><a id="Cylindrical-Sub-Region-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Sub-Region-Projections" title="Permalink"></a></h3><p>Project the extracted cylindrical region using box center coordinates for consistent spatial reference.</p><p>The coordinate center is maintained at the box center for consistent spatial reference across all projections.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext = L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
@@ -283,7 +261,7 @@ subplot(1,3,3)
 im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x.cextent, vmin=0, vmax=3)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_31_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Alternative-Projection-Centers"><a class="docs-heading-anchor" href="#Alternative-Projection-Centers">Alternative Projection Centers</a><a id="Alternative-Projection-Centers-1"></a><a class="docs-heading-anchor-permalink" href="#Alternative-Projection-Centers" title="Permalink"></a></h3><p>The projection center can be adjusted to focus on the selected region. Here we demonstrate projections centered on the cylindrical selection rather than the box center.</p><pre><code class="language-julia hljs"># Alternative: Create projections centered on the cylindrical region
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_31_1.png" alt/></p><h3 id="Alternative-Projection-Centers"><a class="docs-heading-anchor" href="#Alternative-Projection-Centers">Alternative Projection Centers</a><a id="Alternative-Projection-Centers-1"></a><a class="docs-heading-anchor-permalink" href="#Alternative-Projection-Centers" title="Permalink"></a></h3><p>The projection center can be adjusted to focus on the selected region. Here we demonstrate projections centered on the cylindrical selection rather than the box center.</p><pre><code class="language-julia hljs"># Alternative: Create projections centered on the cylindrical region
 proj_z_centered = projection(gas_subregion, :sd, unit=:Msol_pc2, direction=:z, center=[13., 24.,24.], range_unit=:kpc, verbose=false);
 proj_y_centered = projection(gas_subregion, :sd, unit=:Msol_pc2, direction=:y, center=[13., 24.,24.], range_unit=:kpc, verbose=false);
 proj_x_centered = projection(gas_subregion, :sd, unit=:Msol_pc2, direction=:x, center=[13., 24.,24.], range_unit=:kpc, verbose=false);</code></pre><pre><code class="language-julia hljs"># Display projections with adjusted center ranges
@@ -308,7 +286,7 @@ subplot(1,3,3)
 im = imshow( log10.(permutedims(proj_x_centered.maps[:sd]) ), cmap=cmap, origin=&quot;lower&quot;, extent=proj_x_centered.cextent, vmin=0, vmax=3)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_34_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><pre><code class="language-julia hljs"># Inverse cylindrical selection
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_34_1.png" alt/></p><pre><code class="language-julia hljs"># Inverse cylindrical selection
 gas_subregion = subregion(  gas, :cylinder,
                             radius=3.,
                             height=2.,
@@ -343,28 +321,20 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ra
 plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:37:44.742
-
+cb = colorbar(im, label=labeltext);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:19:45.822
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==&gt; 10.0 [kpc] :: 16.0 [kpc]
 ymin::ymax: 0.4375 :: 0.5625  	==&gt; 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :679.2643556594849 MB
+Memory used for data table :679.2643556594849
+ MB
 -------------------------------------------------------
-</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_3.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h2 id="Spherical-Selection"><a class="docs-heading-anchor" href="#Spherical-Selection">Spherical Selection</a><a id="Spherical-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Selection" title="Permalink"></a></h2><p>Spherical selections are optimal for analyzing approximately spherical structures such as halos, bubbles, or radially symmetric features. The selection is defined by radius and center position.</p><h3 id="Full-Domain-Reference-2"><a class="docs-heading-anchor" href="#Full-Domain-Reference-2">Full Domain Reference</a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Reference-2" title="Permalink"></a></h3><p>Create projections of the complete domain for spherical selection context.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:32</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_20.png" alt/></p><h2 id="Spherical-Selection"><a class="docs-heading-anchor" href="#Spherical-Selection">Spherical Selection</a><a id="Spherical-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Selection" title="Permalink"></a></h2><p>Spherical selections are optimal for analyzing approximately spherical structures such as halos, bubbles, or radially symmetric features. The selection is defined by radius and center position.</p><h3 id="Full-Domain-Reference-2"><a class="docs-heading-anchor" href="#Full-Domain-Reference-2">Full Domain Reference</a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Reference-2" title="Permalink"></a></h3><p>Create projections of the complete domain for spherical selection context.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-</code></pre><h3 id="Spherical-Selection-Visualization"><a class="docs-heading-anchor" href="#Spherical-Selection-Visualization">Spherical Selection Visualization</a><a id="Spherical-Selection-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Selection-Visualization" title="Permalink"></a></h3><p>The red circles show the spherical region boundaries in all three projection planes. Spherical selections appear as circles in all orthogonal projections.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:32</code></pre><h3 id="Spherical-Selection-Visualization"><a class="docs-heading-anchor" href="#Spherical-Selection-Visualization">Spherical Selection Visualization</a><a id="Spherical-Selection-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Selection-Visualization" title="Permalink"></a></h3><p>The red circles show the spherical region boundaries in all three projection planes. Spherical selections appear as circles in all orthogonal projections.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -387,24 +357,21 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ra
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_40_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Spherical-Region-Extraction"><a class="docs-heading-anchor" href="#Spherical-Region-Extraction">Spherical Region Extraction</a><a id="Spherical-Region-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region-Extraction" title="Permalink"></a></h3><p>Define spherical selection with radius in physical units relative to the specified center coordinates.</p><p>Select the sphere radius in physical units (kpc) relative to the given center coordinates.</p><pre><code class="language-julia hljs">gas_subregion = subregion(  gas, :sphere,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_40_1.png" alt/></p><h3 id="Spherical-Region-Extraction"><a class="docs-heading-anchor" href="#Spherical-Region-Extraction">Spherical Region Extraction</a><a id="Spherical-Region-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region-Extraction" title="Permalink"></a></h3><p>Define spherical selection with radius in physical units relative to the specified center coordinates.</p><p>Select the sphere radius in physical units (kpc) relative to the given center coordinates.</p><pre><code class="language-julia hljs">gas_subregion = subregion(  gas, :sphere,
                             radius=10.,
                             range_unit=:kpc,
-                            center=[13.,:bc,:bc]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:39:34.538
-
+                            center=[13.,:bc,:bc]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:23:12.910
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==&gt; 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :276.65876483917236 MB
--------------------------------------------------------
-</code></pre><h3 id="Spherical-Sub-Region-Projections"><a class="docs-heading-anchor" href="#Spherical-Sub-Region-Projections">Spherical Sub-Region Projections</a><a id="Spherical-Sub-Region-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Sub-Region-Projections" title="Permalink"></a></h3><p>Generate projections of the extracted spherical region for analysis and visualization.</p><h3 id="Coordinate-Center-Reference"><a class="docs-heading-anchor" href="#Coordinate-Center-Reference">Coordinate Center Reference</a><a id="Coordinate-Center-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Coordinate-Center-Reference" title="Permalink"></a></h3><p>Maintain box center coordinates for consistent spatial reference across different selection types.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :276.65876483917236
+ MB
+-------------------------------------------------------</code></pre><h3 id="Spherical-Sub-Region-Projections"><a class="docs-heading-anchor" href="#Spherical-Sub-Region-Projections">Spherical Sub-Region Projections</a><a id="Spherical-Sub-Region-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Sub-Region-Projections" title="Permalink"></a></h3><p>Generate projections of the extracted spherical region for analysis and visualization.</p><h3 id="Coordinate-Center-Reference"><a class="docs-heading-anchor" href="#Coordinate-Center-Reference">Coordinate Center Reference</a><a id="Coordinate-Center-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Coordinate-Center-Reference" title="Permalink"></a></h3><p>Maintain box center coordinates for consistent spatial reference across different selection types.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:02</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -427,28 +394,22 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ra
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_47_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Inverse-Spherical-Selection"><a class="docs-heading-anchor" href="#Inverse-Spherical-Selection">Inverse Spherical Selection</a><a id="Inverse-Spherical-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Spherical-Selection" title="Permalink"></a></h3><p>Demonstrate inverse selection to analyze all data outside the specified spherical region.</p><pre><code class="language-julia hljs">gas_subregion = subregion(  gas, :sphere,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_47_1.png" alt/></p><h3 id="Inverse-Spherical-Selection"><a class="docs-heading-anchor" href="#Inverse-Spherical-Selection">Inverse Spherical Selection</a><a id="Inverse-Spherical-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Spherical-Selection" title="Permalink"></a></h3><p>Demonstrate inverse selection to analyze all data outside the specified spherical region.</p><pre><code class="language-julia hljs">gas_subregion = subregion(  gas, :sphere,
                             radius=10.,
                             range_unit=:kpc,
                             center=[13.,:bc,:bc],
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:39:38.243
-
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:23:21.745
 center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==&gt; 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-
 Radius: 10.0 [kpc]
-Memory used for data table :446.8616304397583 MB
--------------------------------------------------------
-</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :446.8616304397583
+ MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:29</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -471,7 +432,7 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, aspect=proj_x.ra
 plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h2 id="Combined-and-Nested-Selections"><a class="docs-heading-anchor" href="#Combined-and-Nested-Selections">Combined and Nested Selections</a><a id="Combined-and-Nested-Selections-1"></a><a class="docs-heading-anchor-permalink" href="#Combined-and-Nested-Selections" title="Permalink"></a></h2><p>The sub-region functions can be chained together in any combination to create complex geometric selections. This allows for sophisticated spatial filtering using overlapping, nested, or intersecting geometric shapes.</p><h3 id="Complex-Geometric-Combinations"><a class="docs-heading-anchor" href="#Complex-Geometric-Combinations">Complex Geometric Combinations</a><a id="Complex-Geometric-Combinations-1"></a><a class="docs-heading-anchor-permalink" href="#Complex-Geometric-Combinations" title="Permalink"></a></h3><p>Sub-region functions support unlimited chaining for creating sophisticated spatial selections. The following example demonstrates a complex shape created by combining cuboid and multiple spherical exclusions.</p><p>This example creates a complex shape by starting with a cuboid selection and then applying multiple spherical exclusions to carve out specific regions.</p><p>Sequential application of geometric selections:</p><pre><code class="language-julia hljs">comb_region = subregion(gas, :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.png" alt/></p><h2 id="Combined-and-Nested-Selections"><a class="docs-heading-anchor" href="#Combined-and-Nested-Selections">Combined and Nested Selections</a><a id="Combined-and-Nested-Selections-1"></a><a class="docs-heading-anchor-permalink" href="#Combined-and-Nested-Selections" title="Permalink"></a></h2><p>The sub-region functions can be chained together in any combination to create complex geometric selections. This allows for sophisticated spatial filtering using overlapping, nested, or intersecting geometric shapes.</p><h3 id="Complex-Geometric-Combinations"><a class="docs-heading-anchor" href="#Complex-Geometric-Combinations">Complex Geometric Combinations</a><a id="Complex-Geometric-Combinations-1"></a><a class="docs-heading-anchor-permalink" href="#Complex-Geometric-Combinations" title="Permalink"></a></h3><p>Sub-region functions support unlimited chaining for creating sophisticated spatial selections. The following example demonstrates a complex shape created by combining cuboid and multiple spherical exclusions.</p><p>This example creates a complex shape by starting with a cuboid selection and then applying multiple spherical exclusions to carve out specific regions.</p><p>Sequential application of geometric selections:</p><pre><code class="language-julia hljs">comb_region = subregion(gas, :cuboid, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc, verbose=false)
 comb_region2 = subregion(comb_region, :sphere, radius=12., center=[40.,24.,24.], range_unit=:kpc, inverse=true, verbose=false)
 comb_region3 = subregion(comb_region2, :sphere, radius=12., center=[8.,24.,24.], range_unit=:kpc, inverse=true, verbose=false);
 comb_region4 = subregion(comb_region3, :sphere, radius=12., center=[24.,5.,24.], range_unit=:kpc, inverse=true, verbose=false);
@@ -499,13 +460,10 @@ im = imshow( log10.(permutedims(proj_x.maps[:sd]) ), cmap=cmap, origin=&quot;low
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_58_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h2 id="Shell-Selections"><a class="docs-heading-anchor" href="#Shell-Selections">Shell Selections</a><a id="Shell-Selections-1"></a><a class="docs-heading-anchor-permalink" href="#Shell-Selections" title="Permalink"></a></h2><p>Shell regions provide hollow geometric selections with specified inner and outer boundaries. The <code>shellregion()</code> function supports both cylindrical and spherical shells for analyzing thin layers or annular structures.</p><h3 id="Cylindrical-Shell"><a class="docs-heading-anchor" href="#Cylindrical-Shell">Cylindrical Shell</a><a id="Cylindrical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell" title="Permalink"></a></h3><p>Cylindrical shells are useful for analyzing annular structures, outflow boundaries, or radial gradients in approximately cylindrical systems.</p><pre><code class="language-julia hljs"># Create projections of the full box for shell visualization
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_58_1.png" alt/></p><h2 id="Shell-Selections"><a class="docs-heading-anchor" href="#Shell-Selections">Shell Selections</a><a id="Shell-Selections-1"></a><a class="docs-heading-anchor-permalink" href="#Shell-Selections" title="Permalink"></a></h2><p>Shell regions provide hollow geometric selections with specified inner and outer boundaries. The <code>shellregion()</code> function supports both cylindrical and spherical shells for analyzing thin layers or annular structures.</p><h3 id="Cylindrical-Shell"><a class="docs-heading-anchor" href="#Cylindrical-Shell">Cylindrical Shell</a><a id="Cylindrical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell" title="Permalink"></a></h3><p>Cylindrical shells are useful for analyzing annular structures, outflow boundaries, or radial gradients in approximately cylindrical systems.</p><pre><code class="language-julia hljs"># Create projections of the full box for shell visualization
 proj_z = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-</code></pre><h3 id="Cylindrical-Shell-Visualization"><a class="docs-heading-anchor" href="#Cylindrical-Shell-Visualization">Cylindrical Shell Visualization</a><a id="Cylindrical-Shell-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell-Visualization" title="Permalink"></a></h3><p>The red lines show the inner (dashed) and outer (solid) boundaries of the cylindrical shell. The shell contains all material between these two cylindrical surfaces.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:32</code></pre><h3 id="Cylindrical-Shell-Visualization"><a class="docs-heading-anchor" href="#Cylindrical-Shell-Visualization">Cylindrical Shell Visualization</a><a id="Cylindrical-Shell-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell-Visualization" title="Permalink"></a></h3><p>The red lines show the inner (dashed) and outer (solid) boundaries of the cylindrical shell. The shell contains all material between these two cylindrical surfaces.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -531,28 +489,25 @@ plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Cylindrical-Shell-Extraction"><a class="docs-heading-anchor" href="#Cylindrical-Shell-Extraction">Cylindrical Shell Extraction</a><a id="Cylindrical-Shell-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell-Extraction" title="Permalink"></a></h3><p>The <code>shellregion()</code> function creates hollow cylindrical selections by specifying inner and outer radii as an array. This is ideal for analyzing annular structures or radial gradients.</p><pre><code class="language-julia hljs">gas_subregion = shellregion( gas, :cylinder,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_1.png" alt/></p><h3 id="Cylindrical-Shell-Extraction"><a class="docs-heading-anchor" href="#Cylindrical-Shell-Extraction">Cylindrical Shell Extraction</a><a id="Cylindrical-Shell-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell-Extraction" title="Permalink"></a></h3><p>The <code>shellregion()</code> function creates hollow cylindrical selections by specifying inner and outer radii as an array. This is ideal for analyzing annular structures or radial gradients.</p><pre><code class="language-julia hljs">gas_subregion = shellregion( gas, :cylinder,
                             radius=[5., 10.],
                             height=2.,
                             range_unit=:kpc,
-                            center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:41:26.201
-
+                            center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:26:46.646
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :199.29430103302002 MB
--------------------------------------------------------
-</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :199.29430103302002
+ MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:01</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -580,32 +535,26 @@ plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_67_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Inverse-Cylindrical-Shell-Selection"><a class="docs-heading-anchor" href="#Inverse-Cylindrical-Shell-Selection">Inverse Cylindrical Shell Selection</a><a id="Inverse-Cylindrical-Shell-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Cylindrical-Shell-Selection" title="Permalink"></a></h3><p>Apply inverse selection to analyze all data outside the cylindrical shell region.</p><pre><code class="language-julia hljs">gas_subregion = shellregion(gas, :cylinder,
+cb = colorbar(im, orientation=&quot;horizontal&quot;, label=labeltext, pad=0.2);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_67_1.png" alt/></p><h3 id="Inverse-Cylindrical-Shell-Selection"><a class="docs-heading-anchor" href="#Inverse-Cylindrical-Shell-Selection">Inverse Cylindrical Shell Selection</a><a id="Inverse-Cylindrical-Shell-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Cylindrical-Shell-Selection" title="Permalink"></a></h3><p>Apply inverse selection to analyze all data outside the cylindrical shell region.</p><pre><code class="language-julia hljs">gas_subregion = shellregion(gas, :cylinder,
                             radius=[5., 10.],
                             height=2.,
                             range_unit=:kpc,
                             center=[:boxcenter],
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:41:28.682
-
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:26:52.438
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :524.2260942459106 MB
--------------------------------------------------------
-</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :524.2260942459106
+ MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:30</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -631,12 +580,9 @@ plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
 plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_71_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Spherical-Shell"><a class="docs-heading-anchor" href="#Spherical-Shell">Spherical Shell</a><a id="Spherical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell" title="Permalink"></a></h3><p>Spherical shells are optimal for analyzing radial structures, shock fronts, or layered phenomena in approximately spherical systems.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_71_1.png" alt/></p><h3 id="Spherical-Shell"><a class="docs-heading-anchor" href="#Spherical-Shell">Spherical Shell</a><a id="Spherical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell" title="Permalink"></a></h3><p>Spherical shells are optimal for analyzing radial structures, shock fronts, or layered phenomena in approximately spherical systems.</p><pre><code class="language-julia hljs">proj_z = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
-</code></pre><h3 id="Spherical-Shell-Visualization"><a class="docs-heading-anchor" href="#Spherical-Shell-Visualization">Spherical Shell Visualization</a><a id="Spherical-Shell-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell-Visualization" title="Permalink"></a></h3><p>The red circles show the inner (dashed) and outer (solid) boundaries of the spherical shell in all three projection planes.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:32</code></pre><h3 id="Spherical-Shell-Visualization"><a class="docs-heading-anchor" href="#Spherical-Shell-Visualization">Spherical Shell Visualization</a><a id="Spherical-Shell-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell-Visualization" title="Permalink"></a></h3><p>The red circles show the inner (dashed) and outer (solid) boundaries of the spherical shell in all three projection planes.</p><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -662,26 +608,23 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_75_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Spherical-Shell-Extraction"><a class="docs-heading-anchor" href="#Spherical-Shell-Extraction">Spherical Shell Extraction</a><a id="Spherical-Shell-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell-Extraction" title="Permalink"></a></h3><p>Create a spherical shell by specifying inner and outer radii. The shell contains all material between the two spherical surfaces.</p><pre><code class="language-julia hljs">gas_subregion = shellregion(gas, :sphere,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_75_1.png" alt/></p><h3 id="Spherical-Shell-Extraction"><a class="docs-heading-anchor" href="#Spherical-Shell-Extraction">Spherical Shell Extraction</a><a id="Spherical-Shell-Extraction-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell-Extraction" title="Permalink"></a></h3><p>Create a spherical shell by specifying inner and outer radii. The shell contains all material between the two spherical surfaces.</p><pre><code class="language-julia hljs">gas_subregion = shellregion(gas, :sphere,
                             radius=[5., 10.],
                             range_unit=:kpc,
-                            center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:43:14.103
-
+                            center=[24.,24.,24.]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:30:14.250
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :201.98633289337158 MB
--------------------------------------------------------
-</code></pre><h3 id="Spherical-Shell-Projections"><a class="docs-heading-anchor" href="#Spherical-Shell-Projections">Spherical Shell Projections</a><a id="Spherical-Shell-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell-Projections" title="Permalink"></a></h3><p>Generate projections of the spherical shell region using box center coordinates for spatial reference.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :201.98633289337158
+ MB
+-------------------------------------------------------</code></pre><h3 id="Spherical-Shell-Projections"><a class="docs-heading-anchor" href="#Spherical-Shell-Projections">Spherical Shell Projections</a><a id="Spherical-Shell-Projections-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell-Projections" title="Permalink"></a></h3><p>Generate projections of the spherical shell region using box center coordinates for spatial reference.</p><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:01</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -707,30 +650,24 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_80_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h3 id="Inverse-Spherical-Shell-Selection"><a class="docs-heading-anchor" href="#Inverse-Spherical-Shell-Selection">Inverse Spherical Shell Selection</a><a id="Inverse-Spherical-Shell-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Spherical-Shell-Selection" title="Permalink"></a></h3><p>Apply inverse selection to analyze all data outside the spherical shell region.</p><pre><code class="language-julia hljs">gas_subregion = shellregion(gas, :sphere,
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_80_1.png" alt/></p><h3 id="Inverse-Spherical-Shell-Selection"><a class="docs-heading-anchor" href="#Inverse-Spherical-Shell-Selection">Inverse Spherical Shell Selection</a><a id="Inverse-Spherical-Shell-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Spherical-Shell-Selection" title="Permalink"></a></h3><p>Apply inverse selection to analyze all data outside the spherical shell region.</p><pre><code class="language-julia hljs">gas_subregion = shellregion(gas, :sphere,
                             radius=[5., 10.],
                             range_unit=:kpc,
                             center=[:boxcenter],
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2025-08-14T14:43:17.365
-
+                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T17:30:22.377
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :521.5340623855591 MB
--------------------------------------------------------
-</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
+Memory used for data table :521.5340623855591
+ MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
-proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:14
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
-</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
+proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);</code></pre><pre><code class="nohighlight hljs">Progress: 100%|█████████████████████████████████████████| Time: 0:00:29</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
 labeltext=L&quot;\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}&quot;
 theta = LinRange(-pi, pi, 100)
 
@@ -756,4 +693,4 @@ plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
 plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
 xlabel(&quot;y [kpc]&quot;)
 ylabel(&quot;z [kpc]&quot;)
-cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_84_1.png" alt/></p><pre><code class="nohighlight hljs">Figure(PyObject &lt;Figure size 1550x350 with 6 Axes&gt;)</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook provided comprehensive coverage of spatial selection techniques for hydrodynamic simulation data analysis using Mera.jl&#39;s powerful geometric filtering capabilities.</p><h3 id="Key-Concepts-Covered"><a class="docs-heading-anchor" href="#Key-Concepts-Covered">Key Concepts Covered</a><a id="Key-Concepts-Covered-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Concepts-Covered" title="Permalink"></a></h3><p><strong>Basic Geometric Selections</strong>:</p><ul><li><strong>Cuboid regions</strong>: Rectangular coordinate-based selections with precise range control</li><li><strong>Cylindrical regions</strong>: Axisymmetric selections ideal for disk and outflow analysis</li><li><strong>Spherical regions</strong>: Radially symmetric selections for halo and bubble structures</li><li><strong>Shell regions</strong>: Hollow geometries for analyzing boundaries and gradients</li></ul><p><strong>Advanced Techniques</strong>:</p><ul><li><strong>Inverse selections</strong>: Analyzing data outside specified regions using <code>inverse=true</code></li><li><strong>Combined selections</strong>: Chaining multiple geometric filters for complex shapes</li><li><strong>Flexible coordinate systems</strong>: Physical units and multiple center definitions</li><li><strong>Projection control</strong>: Customizable visualization centers and reference frames</li></ul><h3 id="Technical-Skills-Developed"><a class="docs-heading-anchor" href="#Technical-Skills-Developed">Technical Skills Developed</a><a id="Technical-Skills-Developed-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-Skills-Developed" title="Permalink"></a></h3><ol><li><strong>Spatial filtering mastery</strong>: Apply <code>subregion()</code> with multiple geometry types and parameters</li><li><strong>Shell analysis techniques</strong>: Use <code>shellregion()</code> for hollow structures and boundary studies</li><li><strong>Coordinate system control</strong>: Manage physical units, centers, and reference frames</li><li><strong>Complex selection strategies</strong>: Combine multiple geometric filters for sophisticated analysis</li><li><strong>Data visualization optimization</strong>: Create projections with appropriate centers and ranges</li></ol><h3 id="Practical-Applications"><a class="docs-heading-anchor" href="#Practical-Applications">Practical Applications</a><a id="Practical-Applications-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Applications" title="Permalink"></a></h3><p>These spatial selection techniques enable targeted analysis of specific structures and phenomena in hydrodynamic simulations:</p><ul><li>Isolating galactic components (bulge, disk, halo)</li><li>Analyzing outflow boundaries and shock fronts</li><li>Studying radial gradients and layered structures</li><li>Investigating environmental effects around objects</li><li>Creating masks for statistical analysis and measurements</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/data_loading/">« API Reference</a><a class="docs-footer-nextpage" href="../03_gravity_Get_Subregions/">Gravity »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 30 May 2026 18:29">Saturday 30 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+cb = colorbar(im, label=labeltext);</code></pre><p><img src="../03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_84_1.png" alt/></p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><p>This notebook provided comprehensive coverage of spatial selection techniques for hydrodynamic simulation data analysis using Mera.jl&#39;s powerful geometric filtering capabilities.</p><h3 id="Key-Concepts-Covered"><a class="docs-heading-anchor" href="#Key-Concepts-Covered">Key Concepts Covered</a><a id="Key-Concepts-Covered-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Concepts-Covered" title="Permalink"></a></h3><p><strong>Basic Geometric Selections</strong>:</p><ul><li><strong>Cuboid regions</strong>: Rectangular coordinate-based selections with precise range control</li><li><strong>Cylindrical regions</strong>: Axisymmetric selections ideal for disk and outflow analysis</li><li><strong>Spherical regions</strong>: Radially symmetric selections for halo and bubble structures</li><li><strong>Shell regions</strong>: Hollow geometries for analyzing boundaries and gradients</li></ul><p><strong>Advanced Techniques</strong>:</p><ul><li><strong>Inverse selections</strong>: Analyzing data outside specified regions using <code>inverse=true</code></li><li><strong>Combined selections</strong>: Chaining multiple geometric filters for complex shapes</li><li><strong>Flexible coordinate systems</strong>: Physical units and multiple center definitions</li><li><strong>Projection control</strong>: Customizable visualization centers and reference frames</li></ul><h3 id="Technical-Skills-Developed"><a class="docs-heading-anchor" href="#Technical-Skills-Developed">Technical Skills Developed</a><a id="Technical-Skills-Developed-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-Skills-Developed" title="Permalink"></a></h3><ol><li><strong>Spatial filtering mastery</strong>: Apply <code>subregion()</code> with multiple geometry types and parameters</li><li><strong>Shell analysis techniques</strong>: Use <code>shellregion()</code> for hollow structures and boundary studies</li><li><strong>Coordinate system control</strong>: Manage physical units, centers, and reference frames</li><li><strong>Complex selection strategies</strong>: Combine multiple geometric filters for sophisticated analysis</li><li><strong>Data visualization optimization</strong>: Create projections with appropriate centers and ranges</li></ol><h3 id="Practical-Applications"><a class="docs-heading-anchor" href="#Practical-Applications">Practical Applications</a><a id="Practical-Applications-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Applications" title="Permalink"></a></h3><p>These spatial selection techniques enable targeted analysis of specific structures and phenomena in hydrodynamic simulations:</p><ul><li>Isolating galactic components (bulge, disk, halo)</li><li>Analyzing outflow boundaries and shock fronts</li><li>Studying radial gradients and layered structures</li><li>Investigating environmental effects around objects</li><li>Creating masks for statistical analysis and measurements</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/data_loading/">« API Reference</a><a class="docs-footer-nextpage" href="../03_gravity_Get_Subregions/">Gravity »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 30 May 2026 20:12">Saturday 30 May 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
