@@ -577,7 +577,7 @@ function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
                     cells[Int(ilevel-lmin+1),cell_iterator] = cells_msum
                     cell_iterator= cell_iterator + 1
                     if length(select(filtered_level, density_var)) != 0
-                        rho_minmax = reduce((min, max), filtered_level, select=density_var)
+                        rho_minmax = reduce((min = min, max = max), filtered_level, select=density_var)
                         rhomin= rho_minmax.min
                         rhomax= rho_minmax.max
                     else
@@ -591,7 +591,7 @@ function dataoverview(dataobject::HydroDataType; verbose::Bool=true)
 
                 else
                     if length(select(filtered_level, ifn)) != 0
-                        value_minmax = reduce((min, max), filtered_level, select=ifn)
+                        value_minmax = reduce((min = min, max = max), filtered_level, select=ifn)
                         valuemin = value_minmax.min
                         valuemax = value_minmax.max
                     else
@@ -680,7 +680,7 @@ function dataoverview(dataobject::GravDataType; verbose::Bool=true)
                     cells[Int(ilevel-lmin+1),cell_iterator] = cells_msum
                     cell_iterator= cell_iterator + 1
                     if length(select(filtered_level, epot_var)) != 0
-                        epot_minmax = reduce((min, max), filtered_level, select=epot_var)
+                        epot_minmax = reduce((min = min, max = max), filtered_level, select=epot_var)
                         epotmin= epot_minmax.min
                         epotmax= epot_minmax.max
                     else
@@ -693,7 +693,7 @@ function dataoverview(dataobject::GravDataType; verbose::Bool=true)
                     cell_iterator= cell_iterator + 1
                 else
                     if length(select(filtered_level, ifn)) != 0
-                        value_minmax = reduce((min, max), filtered_level, select=ifn)
+                        value_minmax = reduce((min = min, max = max), filtered_level, select=ifn)
                         valuemin = value_minmax.min
                         valuemax = value_minmax.max
                     else
@@ -795,7 +795,7 @@ function dataoverview(dataobject::PartDataType; verbose::Bool=true)
         for ifn in fn
             if !in(ifn, skip_vars)
                 if length(select(filtered_level, ifn)) != 0
-                    value_minmax = reduce((min, max), filtered_level, select=ifn)
+                    value_minmax = reduce((min = min, max = max), filtered_level, select=ifn)
                     valuemin = value_minmax.min
                     valuemax = value_minmax.max
                 else
