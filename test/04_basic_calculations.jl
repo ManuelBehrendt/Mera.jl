@@ -371,16 +371,13 @@ end
         end
 
         @testset "dataoverview()" begin
-            # dataoverview() calls IndexedTables.nicename internally, which
-            # accesses Core.TypeName.mt — a field removed in Julia 1.12.
-            # Until IndexedTables.jl publishes a 1.12-compatible release,
-            # mark this as broken on those versions.
-            if VERSION >= v"1.12"
-                @test_broken (dataoverview(hydro, verbose=false); true)
-            else
-                result = dataoverview(hydro, verbose=false)
-                @test result !== nothing
-            end
+            # dataoverview() previously called IndexedTables.nicename, which
+            # accessed Core.TypeName.mt — a field removed in Julia 1.12.
+            # Fixed in src/functions/overview.jl via named reducers
+            # reduce((min = min, max = max), ...) that bypass nicename, so this
+            # now works on all supported Julia versions.
+            result = dataoverview(hydro, verbose=false)
+            @test result !== nothing
         end
 
         @testset "amroverview()" begin

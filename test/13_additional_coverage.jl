@@ -38,12 +38,11 @@
 #
 # Julia 1.12 / IndexedTables compatibility
 # ----------------------------------------
-# dataoverview() on hydro/gravity/particles uses IndexedTables.nicename
-# which accesses `Core.TypeName.mt` -- removed in Julia 1.12.  We mark
-# those specific test cases as `@test_broken` on 1.12+ via the
-# `_IT_BROKEN = VERSION >= v"1.12"` guard.  When IndexedTables ships a
-# fix, narrow the guard and the @test_broken assertions will turn
-# into pass.
+# dataoverview() on hydro/gravity/particles formerly used IndexedTables.nicename
+# which accesses `Core.TypeName.mt` -- removed in Julia 1.12.  Fixed in
+# src/functions/overview.jl by passing named reducers
+# reduce((min = min, max = max), ...) that bypass nicename, so dataoverview now
+# works on all supported Julia versions and these cases run as real assertions.
 #
 # Required simulation datasets
 # ----------------------------
@@ -404,37 +403,31 @@ end
 # ============================================================================
 # 12. Overview / file-content / memory functions
 # ============================================================================
-# dataoverview() on hydro / gravity / particles hits the IndexedTables
-# nicename path that's broken on Julia 1.12+.  Other overview functions
-# (amroverview, storageoverview, namelist, ...) are unaffected.
+# dataoverview() on hydro / gravity / particles previously hit an IndexedTables
+# nicename path (typeof(f).name.mt.name) that was broken on Julia 1.12+, where
+# Core.TypeName.mt was removed.  Fixed in src/functions/overview.jl by using
+# named reducers reduce((min = min, max = max), ...) which bypass nicename.
+# These now run as real assertions on every supported Julia version and guard
+# against regression.
 @testset "Overview & file-content functions" begin
-    _IT_BROKEN = VERSION >= v"1.12"
 
     @testset "dataoverview(hydro)" begin
-        if _IT_BROKEN
-            @test_broken (dataoverview(hydro, verbose=false); true)
-        else
-            tbl = redirect_stdout(devnull) do
-                dataoverview(hydro, verbose=false)
-            end
-            @test tbl !== nothing
-            cols = propertynames(tbl.columns)
-            @test :level in cols && :mass in cols
+        tbl = redirect_stdout(devnull) do
+            dataoverview(hydro, verbose=false)
         end
+        @test tbl !== nothing
+        cols = propertynames(tbl.columns)
+        @test :level in cols && :mass in cols
     end
 
     @testset "dataoverview(gravity)" begin
         gravity = getgravity(info, verbose=false, show_progress=false)
         if length(gravity.data) > 0
-            if _IT_BROKEN
-                @test_broken (dataoverview(gravity, verbose=false); true)
-            else
-                tbl = redirect_stdout(devnull) do
-                    dataoverview(gravity, verbose=false)
-                end
-                @test tbl !== nothing
-                @test :level in propertynames(tbl.columns)
+            tbl = redirect_stdout(devnull) do
+                dataoverview(gravity, verbose=false)
             end
+            @test tbl !== nothing
+            @test :level in propertynames(tbl.columns)
         else
             @test_skip "gravity data empty"
         end
@@ -443,15 +436,11 @@ end
     @testset "dataoverview(particles)" begin
         info_ug = getinfo(1, "$SIMULATION_PATH/spiral_ugrid", verbose=false)
         particles = getparticles(info_ug, verbose=false, show_progress=false)
-        if _IT_BROKEN
-            @test_broken (dataoverview(particles, verbose=false); true)
-        else
-            tbl = redirect_stdout(devnull) do
-                dataoverview(particles, verbose=false)
-            end
-            @test tbl !== nothing
-            @test :level in propertynames(tbl.columns)
+        tbl = redirect_stdout(devnull) do
+            dataoverview(particles, verbose=false)
         end
+        @test tbl !== nothing
+        @test :level in propertynames(tbl.columns)
     end
 
     @testset "dataoverview(clumps)" begin
