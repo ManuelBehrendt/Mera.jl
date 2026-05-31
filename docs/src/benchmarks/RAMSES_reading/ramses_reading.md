@@ -125,13 +125,18 @@ Your project directory should look like this:
 
 ```
 ramses_reading/
-├── Project.toml         # Dependency specifications
-├── Manifest.toml        # Exact package versions (auto-generated)
-├── run_test.sh          # Automated thread count testing (calls run_test.jl)
-├── run_test.jl          # Core timing measurements
-├── run_test_plots.jl    # Visualization of the measurements (outputs PNG)
-└── RAMSES_reading_stats.zip  # Downloaded test suite
+├── RAMSES_reading_stats.zip  # Downloaded test suite (unzip in place)
+│   ├── run_test.sh           # Automated thread count testing (calls run_test.jl)
+│   ├── run_test.jl           # Core timing measurements
+│   ├── run_test_plots.jl     # Visualization of the measurements (outputs PNG)
+│   └── Project.toml          # Dependency specifications (deps + compat)
+└── Manifest.toml             # Exact package versions — generated locally by
+                              #   `julia --project=. -e 'using Pkg; Pkg.instantiate()'`
 ```
+
+The bundle ships a `Project.toml` (dependencies and compatible version ranges).
+Running `Pkg.instantiate()` in that environment generates a `Manifest.toml` that
+pins exact versions on your machine for fully reproducible runs.
 
 
 ## Prepare the files and How the Benchmark Framework Works
