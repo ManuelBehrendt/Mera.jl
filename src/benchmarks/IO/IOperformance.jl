@@ -117,9 +117,10 @@ end
 #  Throughput Test
 # ══════════════════════════════════════════════════════════════════════════════
 """
-    throughput_test(files; runs=1, N=20, levels=[1,2,4,8,16,24,32,48,64])
+    throughput_test(files; runs=1, N=5, levels=[1,2,4,8,16,24,32,48,64])
 
-Reads N files and measures MB/s per thread count. Returns (samples, stats, elapsed).
+Reads N files and measures the mean per-file (single-stream) read rate in MB/s
+per thread count — not summed aggregate bandwidth. Returns (samples, stats, elapsed).
 """
 function throughput_test(files; runs=1, N=5,
                          levels=[1,2,4,8,16,24,32,48,64])

@@ -82,7 +82,7 @@ function analyze_amr_structure(gas_data)
     total_cells = length(gas_data.data)
     data_size_gb = sizeof(gas_data.data) / 1024^3
     println("Total cells: $(total_cells)")
-    println("Data size: $(round(data_size_gb, digits=2)) GB")
+    println("Data size: $(round(data_size_gb, digits=2)) GiB")
     
     # Refinement level analysis
     levels = select(gas_data.data, :level)
@@ -311,7 +311,7 @@ warm-up runs, outlier detection, and memory profiling for reliable performance d
 Dictionary with comprehensive performance metrics:
 - `mean_time`, `std_time`, `min_time`, `max_time`: Timing statistics (seconds)
 - `coefficient_variation`: Measurement precision indicator (target: <5%)
-- `mean_memory`: Average peak memory usage (GB)
+- `mean_memory`: Average peak memory usage (GiB)
 - `mean_gc_time`: Average garbage collection overhead (seconds)
 - `success_rate`: Fraction of successful runs (1.0 = 100% success)
 - `n_runs`: Number of statistical repetitions performed
@@ -368,7 +368,7 @@ function benchmark_single_variable_projection(gas_data, n_threads::Int, n_runs::
                 rel_std = (current_std / current_mean) * 100
                 println("$(round(elapsed, digits=2))s | Mean: $(round(current_mean, digits=2))s ± $(round(current_std, digits=2))s ($(round(rel_std, digits=1))%)")
             else
-                println("$(round(elapsed, digits=2))s | Memory: $(round(mem_used, digits=3))GB")
+                println("$(round(elapsed, digits=2))s | Memory: $(round(mem_used, digits=3))GiB")
             end
         catch e
             println("ERROR: $e")
@@ -396,13 +396,13 @@ function benchmark_single_variable_projection(gas_data, n_threads::Int, n_runs::
     final_std = length(valid_times) > 1 ? std(valid_times) : 0.0
     final_cv = final_std / final_mean * 100  # Coefficient of variation
     min_time, max_time = extrema(valid_times)
-    median_time = length(valid_times) > 0 ? sort(valid_times)[div(length(valid_times)+1, 2)] : NaN
+    median_time = length(valid_times) > 0 ? median(valid_times) : NaN
     
     println("    📊 Final Statistics:")
     println("      Success rate: $(length(valid_times))/$n_runs ($(round(length(valid_times)/n_runs*100, digits=1))%)")
     println("      Time: $(round(final_mean, digits=2))s ± $(round(final_std, digits=2))s (CV: $(round(final_cv, digits=1))%)")
     println("      Range: $(round(min_time, digits=2))s - $(round(max_time, digits=2))s | Median: $(round(median_time, digits=2))s")
-    println("      Memory: $(round(mean(valid_memory), digits=3))GB ± $(round(std(valid_memory), digits=3))GB")
+    println("      Memory: $(round(mean(valid_memory), digits=3))GiB ± $(round(std(valid_memory), digits=3))GiB")
     
     return Dict(
         "n_threads" => n_threads, "mean_time" => final_mean,
@@ -515,7 +515,7 @@ function benchmark_multi_variable_projection(gas_data, n_threads::Int, n_runs::I
                 rel_std = (current_std / current_mean) * 100
                 println("$(round(elapsed, digits=2))s | Mean: $(round(current_mean, digits=2))s ± $(round(current_std, digits=2))s ($(round(rel_std, digits=1))%)")
             else
-                println("$(round(elapsed, digits=2))s | Memory: $(round(mem_used, digits=3))GB")
+                println("$(round(elapsed, digits=2))s | Memory: $(round(mem_used, digits=3))GiB")
             end
         catch e
             println("ERROR: $e")
@@ -543,13 +543,13 @@ function benchmark_multi_variable_projection(gas_data, n_threads::Int, n_runs::I
     final_std = length(valid_times) > 1 ? std(valid_times) : 0.0
     final_cv = final_std / final_mean * 100  # Coefficient of variation
     min_time, max_time = extrema(valid_times)
-    median_time = length(valid_times) > 0 ? sort(valid_times)[div(length(valid_times)+1, 2)] : NaN
+    median_time = length(valid_times) > 0 ? median(valid_times) : NaN
     
     println("    📊 Final Statistics:")
     println("      Success rate: $(length(valid_times))/$n_runs ($(round(length(valid_times)/n_runs*100, digits=1))%)")
     println("      Time: $(round(final_mean, digits=2))s ± $(round(final_std, digits=2))s (CV: $(round(final_cv, digits=1))%)")
     println("      Range: $(round(min_time, digits=2))s - $(round(max_time, digits=2))s | Median: $(round(median_time, digits=2))s")
-    println("      Memory: $(round(mean(valid_memory), digits=3))GB ± $(round(std(valid_memory), digits=3))GB")
+    println("      Memory: $(round(mean(valid_memory), digits=3))GiB ± $(round(std(valid_memory), digits=3))GiB")
     
     return Dict(
         "n_threads" => n_threads, "mean_time" => final_mean,
@@ -630,7 +630,7 @@ function generate_summary_text(results::Dict)
     println(io, "="^50)
     println(io, "Date: $(Dates.now())")
     println(io, "Julia: $(VERSION)")
-    println(io, "System: $(gethostname()) - $(Sys.CPU_THREADS) cores, $(round(Sys.total_memory() / 1024^3, digits=2))GB RAM")
+    println(io, "System: $(gethostname()) - $(Sys.CPU_THREADS) cores, $(round(Sys.total_memory() / 1024^3, digits=2))GiB RAM")
     println(io, "Julia Threads: $(Threads.nthreads())")
     println(io)
     
@@ -745,7 +745,7 @@ function benchmark_projection_hydro(gas_data, thread_counts::Vector{Int}, n_runs
     
     println("BENCHMARK CONFIGURATION:")
     println("="^40)
-    println("  Data: $(amr_info["total_cells"]) cells ($(round(amr_info["data_size_gb"], digits=2)) GB)")
+    println("  Data: $(amr_info["total_cells"]) cells ($(round(amr_info["data_size_gb"], digits=2)) GiB)")
     println("  AMR levels: $(amr_info["level_range"][1]) to $(amr_info["level_range"][2]) ($(amr_info["level_count"]) levels)")
     println("  Complexity: $(round(amr_info["complexity_factor"], digits=2))x")
     println("  Thread counts: $thread_counts")

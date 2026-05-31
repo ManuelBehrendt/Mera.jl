@@ -53,9 +53,9 @@ Your benchmark results show GC time as a percentage of total execution time. Thi
 
 ## Common Performance Barriers
 
-- **Storage speed limits** - a single disk drive can only serve one request efficiently at a time
+- **Storage speed limits** - a spinning disk (HDD) effectively serves one request at a time; SSD/NVMe handle many concurrent requests, so this barrier is far weaker on flash storage
 
-- **File system overhead** - opening thousands of small RAMSES files creates extra work for metadata operations
+- **File system overhead** - opening the many RAMSES files (one per CPU domain per component — often hundreds to thousands of files; particle files in particular are only KB-scale, while hydro/AMR/gravity files are several MB each) creates extra metadata work, especially on networked/parallel filesystems
 
 - **Memory pressure** - too many threads can trigger heavy garbage collection, stealing CPU cycles from actual work
 

@@ -68,7 +68,7 @@ The progression from single-thread to multi-thread performance reveals distinct 
 
 Multi-modal throughput distributions provide powerful diagnostic insights. When benchmarks produce histograms with multiple distinct peaks, each peak represents a different operational state where specific bottlenecks dominate system behavior.
 
-The typical three-peak pattern reveals:
+When such a multi-peak pattern is present, the peaks can be interpreted as follows (illustrative — the exact shape depends on hardware and is not guaranteed; inspect your own histogram):
 
 - **Peak 1 (highest throughput)** - optimal sequential performance without thread interference effects
 - **Peak 2 (moderate throughput)** - effective parallel operation at the identified concurrency sweet spot

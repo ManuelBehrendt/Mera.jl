@@ -35,10 +35,13 @@ function run_merafile_benchmark(path::String, output::Int, num_repeats::Int=10)
         end
         end_time = time()
         
-        hydro_time = next_time1 - start_time
-        gravity_time = next_time2 - next_time1
-        particles_time = end_time - next_time2
-        total_time = end_time - start_time
+        # A component that failed to load (returned nothing) records NaN rather
+        # than a bogus near-zero time, so missing components don't pollute the
+        # statistics (mirrors the NaN handling in ramses_reading_stats.jl).
+        hydro_time     = hydro     === nothing ? NaN : next_time1 - start_time
+        gravity_time   = gravity   === nothing ? NaN : next_time2 - next_time1
+        particles_time = particles === nothing ? NaN : end_time - next_time2
+        total_time     = end_time - start_time
         
         # Per-iteration screen output
         println("\nIteration $i:")
