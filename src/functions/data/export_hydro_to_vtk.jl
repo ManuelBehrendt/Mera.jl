@@ -47,7 +47,6 @@ export_vtk(
 - **`positions_unit`:** Sets the unit of the cell positions (default: code units); usefull in paraview to select regions 
 - **`lmin`:** Minimum AMR level to process (default: simulations lmin); smaller levels are excluded in export
 - **`lmax`:** Maximum AMR level to process (default: simulations lmax); existing higher levels are interpolated down if interpolate_higher_levels is true, otherwise excluded from export
-- `chunk_size::Int = 50000`: Size of data chunks for processing (currently unused but reserved for future optimizations).
 - **`chunk_size::Int = 50000`:** Size of data chunks for processing (currently unused but reserved for future optimizations).
 - **`compress`:** If `true` (default), enable compression.
 - **`interpolate_higher_levels`:** If `true`, interpolate data from higher levels down to given `lmax` .

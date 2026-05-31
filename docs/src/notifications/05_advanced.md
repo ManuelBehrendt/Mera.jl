@@ -229,7 +229,7 @@ function run_complete_analysis(dataset_name)
         
         # Send final results with attachments
         notifyme("📊 Analysis Results: $dataset_name",
-                attachments=[report_path] + plot_files,
+                attachments=vcat([report_path], plot_files),
                 start_time=overall_start,
                 include_timing=true,
                 capture_output=() -> begin

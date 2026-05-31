@@ -11,7 +11,7 @@ export_vtk(particles, "output_prefix")
 
 # Export specific particle properties
 export_vtk(particles, "particles_age",
-           fields=[:age], fields_unit=[:Myr])
+           scalars=[:age], scalars_unit=[:Myr])
 
 # Export velocity as vector field
 export_vtk(particles, "particles_velocity",
@@ -20,18 +20,18 @@ export_vtk(particles, "particles_velocity",
 
 # Combined scalar and vector export
 export_vtk(particles, "particles_complete",
-           fields=[:age, :mass], fields_unit=[:Myr, :Msol],
+           scalars=[:age, :mass], scalars_unit=[:Myr, :Msol],
            vector=[:vx, :vy, :vz], vector_unit=:km_s, vector_name="velocity")
 
 # Position coordinate control
 export_vtk(particles, "particles_kpc",
-           fields=[:age], fields_unit=[:Myr],
+           scalars=[:age], scalars_unit=[:Myr],
            positions_unit=:kpc)
 ```
 
 ### Key Parameters
-- **`fields`** - Array of particle property symbols: `[:age, :mass, :metallicity]`
-- **`fields_unit`** - Corresponding units: `[:Myr, :Msol, :standard]`
+- **`scalars`** - Array of particle property symbols: `[:age, :mass, :metallicity]`
+- **`scalars_unit`** - Corresponding units: `[:Myr, :Msol, :standard]`
 - **`vector`** - Vector components: `[:vx, :vy, :vz]`
 - **`vector_unit`** - Vector units: `:km_s, :m_s, :pc_Myr`
 - **`vector_name`** - ParaView vector name: `"velocity", "magnetic_field"`

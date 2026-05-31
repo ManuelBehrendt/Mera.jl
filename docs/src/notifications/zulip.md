@@ -558,7 +558,7 @@ function paper_preparation_workflow()
         
         # Final assembly
         update_progress!(paper_tracker, 5, "Assembling final figure package")
-        all_figures = [fig1, fig2, fig3] + supp_figs
+        all_figures = vcat([fig1, fig2, fig3], supp_figs)
         
         complete_progress!(paper_tracker, "📄 All paper figures completed!")
         

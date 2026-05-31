@@ -129,7 +129,7 @@ function analyze_galaxy_survey(survey_name, redshift_range)
                 • Scientific report: $(basename(report_path))
                 • Visualization plots: $(length(plot_files))
                 """,
-                attachments=[report_path] + plot_files,
+                attachments=vcat([report_path], plot_files),
                 start_time=pipeline_start,
                 include_timing=true,
                 zulip_channel="astrophysics",
@@ -294,7 +294,7 @@ function train_cosmology_model(model_config, training_data)
                 • Training report: $(basename(training_report))
                 • Plots: $(length(training_plots)) files
                 """,
-                attachments=[training_report, "best_model.jld2"] + training_plots,
+                attachments=vcat([training_report, "best_model.jld2"], training_plots),
                 start_time=training_start,
                 include_timing=true,
                 zulip_channel="ml-training",
@@ -474,7 +474,7 @@ function run_simulation_campaign(parameter_grid, cluster_config)
                 • Summary plots: $(length(result_summary))
                 • Result database: campaign_results.h5
                 """,
-                attachments=[campaign_report] + result_summary,
+                attachments=vcat([campaign_report], result_summary),
                 start_time=campaign_start,
                 include_timing=true,
                 zulip_channel="hpc-jobs",

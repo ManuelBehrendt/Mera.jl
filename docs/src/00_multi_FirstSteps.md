@@ -749,7 +749,7 @@ viewfields(info.scale)     # Hierarchical view
 The `nH` scaling factor converts code density to hydrogen number density using:
 
 ```
-nH = ρ_code × scale.nH = ρ_code × (scale.g_cm3 × X_H) / (μ × mH)
+nH = ρ_code × scale.nH = ρ_code × (scale.g_cm3 × X_H) / mH
 ```
 
 Where:
@@ -909,7 +909,7 @@ info.constants.G      # Gravitational constant [cm³ g⁻¹ s⁻²]
 info.constants.c      # Speed of light [cm s⁻¹]
 info.constants.kB     # Boltzmann constant [erg K⁻¹]
 info.constants.h      # Planck constant [erg s]
-info.constants.sigma  # Stefan-Boltzmann constant [erg cm⁻² s⁻¹ K⁻⁴]
+info.constants.sigma_SB  # Stefan-Boltzmann constant [erg cm⁻² s⁻¹ K⁻⁴]
 ```
 
 **Masses**

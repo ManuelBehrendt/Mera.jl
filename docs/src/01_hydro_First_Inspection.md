@@ -73,7 +73,6 @@ transform(data_overview, :mass => :mass => value->value * info.scale.Msol)
 # Access scaling factors
 scale = gas.scale                                      # Shortcut to scaling factors
 constants = gas.info.constants                        # Physical constants
-create
 
 ```
 
