@@ -6,9 +6,9 @@
 
 Concrete, reproducible figures (see the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md), [Server IO](../benchmarks/IO/IOperformance.md), and [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md) benchmarks for full detail and hardware):
 
-- **Storage (universal):** a compressed MERA `.jld2` is **~78% smaller / ~4.5×** than the original RAMSES output (5.68 GB → 1.27 GB, `mw_L10` output 300).
-- **Read speed (storage-dependent):** the MERA single-file read is several times faster than many-file RAMSES reading on **servers / networked or slow storage** (many files → latency-bound); on a **fast local SSD** the two are comparable at equal resources (M2 Pro reference, 1 thread vs 1 thread: MERA 117 s vs RAMSES 108 s for hydro+particles+gravity; 8-thread RAMSES is faster still at 85 s).
-- **Memory:** MERA-file reading peaks modestly lower than single-threaded RAMSES (6.05 vs 7.64 GB in the reference run); see the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md) page for how these reference numbers were measured.
+- **Read speed:** reading a MERA `.jld2` deserializes an already-parsed table, while RAMSES reading re-parses hundreds–thousands of Fortran files and rebuilds the AMR tree every time. Fair like-for-like (same components, M2 Pro, local SSD, `mw_L10` output 300): **MERA ~2.4 s vs RAMSES ~86 s single-thread (~30–40×), and ~71 s with 8 threads (~30×)**. Larger still on networked/server filesystems.
+- **Storage:** a complete MERA `.jld2` is **~62% smaller / ~2.6×** than the RAMSES output (2.16 GB vs 5.69 GB, same components).
+- **Memory:** MERA-file reading peaks **~35% lower** than single-threaded RAMSES (8.0 vs 13.0 GB). See the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md) benchmark for the reproducible script and methodology.
 - **Load only what you need:** spatial (`xrange/yrange/zrange`) and `lmax` filtering reduce both read time and peak memory — prefer it for targeted analysis of large datasets.
 
 ## Learning Objectives

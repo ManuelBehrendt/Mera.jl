@@ -339,6 +339,13 @@ ctime: 2024-06-06T17:13:46.723
 
 ## Expected Performance Ranges
 
+!!! warning "Illustrative, not measured"
+    The speedup/efficiency ranges below are **rough illustrative expectations**
+    by storage class to build intuition — they are **not measured results** from
+    this suite, and real numbers vary widely with hardware, filesystem, file
+    count, and dataset (e.g. a fast local NVMe SSD may show only ~1.2–1.3× from
+    1→8 threads on a small output). Always run the benchmark on your own system.
+
 ### Typical Results by Hardware Configuration
 
 **Traditional HDD Storage:**
