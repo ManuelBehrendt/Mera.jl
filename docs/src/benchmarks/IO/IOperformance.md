@@ -84,6 +84,18 @@ This distribution analysis directly maps to thread count optimization, helping i
 
 ### Basic Usage Example
 
+Download the IO benchmark scripts (and example data bundle) from the repository:
+
+```bash
+# core timing script + plotting routine
+curl -L -O https://github.com/ManuelBehrendt/Mera.jl/raw/master/src/benchmarks/IO/downloads/run_test.jl
+curl -L -O https://github.com/ManuelBehrendt/Mera.jl/raw/master/src/benchmarks/IO/downloads/io_performance_plots.jl
+# optional: bundled example results
+curl -L -O https://github.com/ManuelBehrendt/Mera.jl/raw/master/src/benchmarks/IO/downloads/Server_io_stats.zip
+```
+
+Then run the timing script with your desired thread count (servers benefit from many threads):
+
 ```
 cmd-line % julia +1.11 -t 32 run_test.jl
 ```
@@ -92,9 +104,9 @@ cmd-line % julia +1.11 -t 32 run_test.jl
 # Load the benchmark framework
 using Mera, CairoMakie, Colors # need to be installed by user
 
-# Download the plotting routine at:
-# https://github.com/ManuelBehrendt/Mera.jl/blob/master/src/benchmarks/IOperformance_viz.jl
-include("IOperformance_viz.jl")
+# Download the plotting routine (io_performance_plots.jl) at:
+# https://github.com/ManuelBehrendt/Mera.jl/blob/master/src/benchmarks/IO/downloads/io_performance_plots.jl
+include("io_performance_plots.jl")
 
 
 # Run comprehensive I/O diagnostics on your data directory (function included in Mera)

@@ -2,6 +2,15 @@
 
 **Optimization and profiling tools for Julia**
 
+## Mera I/O performance at a glance (measured)
+
+Concrete, reproducible figures (see the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md), [Server IO](../benchmarks/IO/IOperformance.md), and [Parallel RAMSES reading](../benchmarks/RAMSES_reading/ramses_reading.md) benchmarks for full detail and hardware):
+
+- **Storage (universal):** a compressed MERA `.jld2` is **~78% smaller / ~4.5×** than the original RAMSES output (5.68 GB → 1.27 GB, `mw_L10` output 300).
+- **Read speed (storage-dependent):** the MERA single-file read is several times faster than many-file RAMSES reading on **servers / networked or slow storage** (many files → latency-bound); on a **fast local SSD** the two are comparable at equal resources (M2 Pro reference, 1 thread vs 1 thread: MERA 117 s vs RAMSES 108 s for hydro+particles+gravity; 8-thread RAMSES is faster still at 85 s).
+- **Memory:** MERA-file reading peaks modestly lower than single-threaded RAMSES (6.05 vs 7.64 GB in the reference run); see the [Mera-Files Reading](../benchmarks/JLD2_reading/Mera_files_reading.md) page for how these reference numbers were measured.
+- **Load only what you need:** spatial (`xrange/yrange/zrange`) and `lmax` filtering reduce both read time and peak memory — prefer it for targeted analysis of large datasets.
+
 ## Learning Objectives
 By the end of this guide, you should be able to:
 - [ ] Apply the top 5 performance optimization techniques
