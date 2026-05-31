@@ -28,7 +28,7 @@ When MERA spawns multiple threads to read files in parallel, each thread execute
 
 ### Sustained Throughput (MB/s) Test
 
-Beyond counting operations, you need to understand how much data flows when multiple threads stream file contents simultaneously. High aggregate data rates indicate threads can work together without overwhelming your storage bandwidth. Sharp drops in throughput as you add threads reveal when your storage interface (disk connection or network filesystem) becomes the limiting factor rather than thread management overhead.
+Beyond counting operations, this measures the read rate of individual files. **Note on the metric:** the reported value is the **mean per-file (single-stream) read rate** — each file's size divided by the time to read it, averaged over files — *not* the summed aggregate bandwidth of all threads reading at once. It therefore characterizes typical per-read throughput and how it degrades under concurrency (as threads contend for the storage interface), rather than total bytes/second across the device. A drop in this per-file rate as threads are added indicates the storage interface (disk connection or network filesystem) is becoming the bottleneck rather than thread-management overhead.
 
 ### Latency Variability Measurement
 

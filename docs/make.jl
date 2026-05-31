@@ -86,7 +86,8 @@ makedocs(modules = [Mera],
 
                           "Benchmarks"          => Any["Server IO"                      => "benchmarks/IO/IOperformance.md",
                                                        "Parallel RAMSES-Files Reading"      => "benchmarks/RAMSES_reading/ramses_reading.md",
-                                                       "Mera-Files Reading"                 => "benchmarks/JLD2_reading/Mera_files_reading.md"]],
+                                                       "Mera-Files Reading"                 => "benchmarks/JLD2_reading/Mera_files_reading.md",
+                                                       "Projections"                        => "benchmarks/Projection/multi_projections.md"]],
 
                       "Julia Quick Reference" => Any["Getting Started"           => "quickreference/01_getting_started.md",
                                                      "From Other Languages"      => "quickreference/02_migrators.md", 
