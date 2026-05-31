@@ -91,18 +91,6 @@ This will run the script with Julia 1.10 (or your chosen version), using a singl
 
 
 
-## Running the Test & Example Output
-
-Run the script as described above. The output will look similar to:
-
-![Example Output](Mera_files_output.png)
-
-### Performance Overview
-
-The following chart shows detailed performance comparisons across different simulation components:
-
-![Performance Overview](mera_performance_overview_20250714_184540.png)
-
 ---
 
 ## Measured results

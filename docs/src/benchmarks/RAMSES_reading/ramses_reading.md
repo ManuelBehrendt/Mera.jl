@@ -214,6 +214,13 @@ julia --project=. run_test_plots.jl
 | **GC Overhead Percentage** | Should remain under 10-15% | Higher values indicate thread count reduction needed |
 | **Component Breakdown** | One component much slower than others | Investigate file sizes, compression, or format issues |
 
+Example measured output of these four charts for **reading original RAMSES
+files** (note the total read times are in the hundreds of seconds and scale
+with thread count — this is the RAMSES reader, *not* reading a compressed MERA
+file, which is far faster; see [Mera-Files Reading](../JLD2_reading/Mera_files_reading.md)):
+
+![RAMSES reader thread scaling: total read time, speed-up, parallel efficiency, and per-component times vs thread count](ramses_reader_thread_scaling.png)
+
 ### Practical Optimization Guidelines
 
 - **Start conservative**: Test 1, 2, 4, 8 threads first; only jump to 32+ on high-end NVMe storage systems
