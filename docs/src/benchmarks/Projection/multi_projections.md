@@ -8,28 +8,34 @@ analysis runs realistically.
 ## What is measured
 
 For a loaded `HydroDataType` (or particle/gravity object), the benchmark times
-repeated `projection(data, :sd, res=R)` calls at several grid resolutions `R`
-and thread counts, after a warm-up call (so first-call JIT compilation is
-excluded), and records process peak memory via `Sys.maxrss()`.
+repeated `projection(data, :sd, res=R)` calls at grid resolution `R` and a
+given thread count, after a warm-up call (so first-call JIT compilation is
+excluded). The full suite (`projection_benchmarks.jl`) reports a Julia
+**live-heap delta** (`Base.gc_live_bytes()` before/after) as its memory metric;
+the process **peak RSS** figures in the reference table below were measured
+separately with `Sys.maxrss()` (an ad-hoc harness on the reference machine).
 
 ## Reference results
 
 Reference machine: Apple M2 Pro, 12 cores, 32 GB RAM, macOS 26.2, Julia 1.12.3.
 Dataset `mw_L10` output 300 hydro (loaded from a MERA file); surface-density
-projection `projection(gas, :sd, res=1024)`; median of 3 warm calls.
+projection `projection(gas, :sd, res=1024)`; median of 3 warm calls; peak RSS
+via `Sys.maxrss()`.
 
 | Threads | Resolution | Projection time | Peak RSS |
 |---------|-----------|-----------------|----------|
 | 1       | 1024²     | ~1.55 s         | 6.9 GB   |
 | 4       | 1024²     | ~1.49 s         | 6.0 GB   |
 
-**Thread scaling is essentially flat here (~1.0×).** This is expected:
-projection of a dataset of this size is **memory-bandwidth bound**, not
-compute bound — adding threads does not help once the shared memory bus is
-saturated, and can even regress slightly. Thread scaling improves for larger
-datasets / higher resolutions where per-thread compute dominates over memory
-traffic; for small-to-moderate projections a single thread is typically
-sufficient.
+Two thread points only — enough to show that scaling is roughly flat at this
+resolution, but not a full scaling curve; see the caveat below.
+
+**Thread scaling is essentially flat here (~1.0×)** at this dataset/resolution.
+This is *consistent with* memory-bandwidth-bound behaviour (adding threads does
+not help once the shared memory bus is saturated), though two thread points
+cannot prove the mechanism — a full resolution × thread-count sweep would be
+needed to confirm it and to find where threading begins to pay off. For
+small-to-moderate projections a single thread is typically sufficient.
 
 !!! note "Reproducing / full suite"
     The numbers above are a minimal reference. The full projection benchmark

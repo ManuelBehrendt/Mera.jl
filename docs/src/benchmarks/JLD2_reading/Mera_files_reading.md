@@ -136,5 +136,5 @@ MERA-file reading peaked at **8.0 GB vs 13.0 GB** for single-threaded RAMSES (~3
 !!! note "Reproducing these numbers"
     Produced by `read_benchmark.jl` + `run_read_benchmark.sh` (in this guide's `downloads/` folder). The script does `REPEATS` full reads and reports the **first** read (cold + first-call JIT compilation) and the **median warm** read separately, measures process peak RSS via `Sys.maxrss()`, and runs each scenario in a fresh process. A **complete** MERA file (hydro + particles + gravity) is required for a fair comparison — generate one with `savedata` if you only have a partial file. Runs are warm-cache by default; pass `COLD=1` for cold-cache reads.
 
-> **Summary for choosing the MERA format:** always a large win for **storage**; a large **read-speed** win on servers / networked or slow storage with many files; roughly neutral for read speed on fast local SSDs. Reproduce the table above on your own target storage with the script in this guide.
+> **Summary for choosing the MERA format:** a large win for **storage** (~62% / 2.6× here) and for **read speed** — ~30–40× faster than RAMSES even on a fast local NVMe SSD, growing further on servers/networked or slow storage with many files — plus ~35% lower peak memory. Reproduce the table above on your own target storage with the script in this guide.
 
