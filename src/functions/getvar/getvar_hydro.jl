@@ -158,6 +158,17 @@ function get_data(  dataobject::HydroDataType,
             selected_unit = getunit(dataobject, i, vars, units)
             vars_dict[i] =   select( masked_data, :p) ./ select( masked_data, :rho) .* selected_unit
 
+        elseif i == :overdensity || i == :delta
+            # Gas overdensity δ = ρ/ρ̄_b − 1 relative to the mean (proper) baryon
+            # density at the snapshot redshift (cosmological runs only).
+            # Dimensionless; δ ≥ −1, ≈ 0 in the mean field, ≫ 1 in collapsed gas.
+            if !iscosmological(dataobject.info)
+                error("getvar :$i (gas overdensity) is only defined for cosmological runs.")
+            end
+            selected_unit = getunit(dataobject, i, vars, units)
+            rho_mean = mean_baryon_density(dataobject.info)
+            vars_dict[i] = (select(masked_data, :rho) .* dataobject.info.scale.g_cm3 ./ rho_mean .- 1.0) .* selected_unit
+
         elseif i == :entropy_specific
             selected_unit = getunit(dataobject, :entropy_specific, vars, units)
             # Entropy S = k_B * ln(P / rho^gamma) / (m_u * (gamma - 1))

@@ -224,8 +224,35 @@ function get_data(dataobject::PartDataType,
 
 
         elseif i == :age
-            selected_unit = getunit(dataobject, :age, vars, units)
-            vars_dict[:age] = ( ref_time .- getvar(filtered_dataobject, :birth, mask=use_mask_in_recursion) ) .* selected_unit
+            selected_unit, unit_symbol = getunit(dataobject, :age, vars, units, uname=true)
+            birth_vals = getvar(filtered_dataobject, :birth, mask=use_mask_in_recursion)
+            if iscosmological(dataobject.info)
+                # Cosmological run: :birth is super-conformal time. Convert to a
+                # physical age via the Friedmann table (ref_time is ignored — the
+                # snapshot conformal time info.time is used). :standard ⇒ seconds.
+                vars_dict[:age] = stellar_age(dataobject.info, birth_vals, unit=unit_symbol)
+            else
+                vars_dict[:age] = ( ref_time .- birth_vals ) .* selected_unit
+            end
+
+        elseif i == :zform || i == :formation_redshift
+            # Redshift at which each star formed (cosmological runs only).
+            # Non-stars (birth = 0) → NaN; filter with birth .< 0.
+            if !iscosmological(dataobject.info)
+                error("getvar :$i is only defined for cosmological runs.")
+            end
+            birth_vals = getvar(filtered_dataobject, :birth, mask=use_mask_in_recursion)
+            vars_dict[i] = formation_redshift(dataobject.info, birth_vals)
+
+        elseif i == :formation_time
+            # Cosmic time (age of the universe) at which each star formed
+            # (cosmological runs only). Non-stars → NaN. :standard ⇒ seconds.
+            if !iscosmological(dataobject.info)
+                error("getvar :formation_time is only defined for cosmological runs.")
+            end
+            _, unit_symbol = getunit(dataobject, :formation_time, vars, units, uname=true)
+            birth_vals = getvar(filtered_dataobject, :birth, mask=use_mask_in_recursion)
+            vars_dict[:formation_time] = formation_time(dataobject.info, birth_vals, unit=unit_symbol)
 
         # Specific angular momentum calculations (h = r × v)
         elseif i == :hx # specific angular momentum x-component

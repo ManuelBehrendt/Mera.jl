@@ -291,9 +291,17 @@ data with proper coordinate transformations, geometric mapping, and optimized pa
 
 ## Architecture Overview
 
-The projection system uses **variable-based parallelization** where each thread processes one 
-variable across all AMR levels. This approach eliminates the costly combining phase that 
+The projection system uses **variable-based parallelization** where each thread processes one
+variable across all AMR levels. This approach eliminates the costly combining phase that
 traditional chunked parallelization requires, resulting in significant performance improvements.
+
+!!! note "Cosmological runs"
+    For a cosmological simulation, lengths, extents and (surface) densities here
+    are in the **proper (physical) frame** at the snapshot's scale factor `aexp`
+    (RAMSES `unit_l`/`unit_d` are proper). Convert to comoving with the
+    `proper_to_comoving_*` helpers (× or ÷ powers of `aexp`). The cosmology-aware
+    derived gas field `:overdensity` (= ρ/ρ̄_b − 1) can be projected like any
+    other hydro variable.
 
 ### Key Design Principles:
 - **Thread Safety**: No shared mutable state between threads
