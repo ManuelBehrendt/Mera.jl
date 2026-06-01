@@ -754,16 +754,12 @@ nH = ρ_code × scale.nH = ρ_code × (scale.g_cm3 × X_H) / mH
 
 Where:
 - **`ρ_code`** - Density in code units
-- **`X_H`** - Hydrogen mass fraction (typically ~0.76 for primordial composition)
-- **`μ`** - Mean molecular weight stored in `info.mu` (accounts for ionization state)
-- **`mH`** - Hydrogen mass (≈ proton mass, available as `info.constants.mp`)
+- **`X_H`** - Hydrogen mass fraction (`X_frac = 0.76` in RAMSES; primordial composition)
+- **`mH`** - Hydrogen-atom mass, `info.constants.mH` (RAMSES convention, `1.66e-24` g; ≈ the proton mass `info.constants.mp` = `1.6726e-24` g)
 
-**Important Notes:**
-- The mean molecular weight `μ` is simulation-specific and stored in `info.mu`
-- For fully ionized primordial gas: μ ≈ 0.62
-- For neutral primordial gas: μ ≈ 1.22
-- For gas with metals: μ depends on metallicity and ionization state
-- The exact calculation may vary depending on your RAMSES setup and chemistry model
+`n_H` is the number density of hydrogen **nuclei** (summed over all ionization states); it depends only on `X_H`, **not** on the ionization state.
+
+**Note on μ (mean molecular weight):** MERA/RAMSES uses the simplified convention `μ = 1/X_H ≈ 1.32`, so the same result can be written `nH = ρ_code × scale.g_cm3 / (μ × mH)` (the `X_H` factor is absorbed into `1/μ`). Be careful: this `μ` is the RAMSES value that enters the **temperature** scale (`scale.T = scale.T_mu × μ`) — it is *not* the textbook ionization-dependent mean molecular weight (≈ 0.62 for fully ionized, ≈ 1.22 for neutral H+He gas). Do **not** substitute that ionization-dependent value into the `nH` formula; only `X_H` (equivalently `μ = 1/X_H`) is correct here.
 
 **Note**: This documentation covers the most commonly used scaling factors and constants. Mera.jl actually provides **133 scaling factors** and **41 physical constants** in total. The actual available factors may vary depending on your Mera.jl version and simulation setup. Use `propertynames(info.scale)` and `propertynames(info.constants)` to see all available items for your specific installation.
 
