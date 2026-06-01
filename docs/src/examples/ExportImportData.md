@@ -27,7 +27,7 @@ particles = getparticles(info, :mass);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-05-30T18:11:20.236
+[Mera]: Get hydro data: 2026-06-01T18:49:59.113
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1,) = (:rho,)
 domain:
@@ -39,7 +39,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:39 (19.05 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (13.08 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 4879946 cells, 1 variables
@@ -49,12 +49,12 @@ Creating Table from 4879946 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
-  0.799460 seconds (3.82 M allocations: 674.875 MiB, 1.06% gc time, 85.35% compilation time)
-✓ Table created in 1.071 seconds
+  0.877825 seconds (3.82 M allocations: 675.824 MiB, 1.03% gc time, 80.21% compilation time)
+✓ Table created in 1.15 seconds
 Memory used for data table :
 186.1557970046997 MB
 -------------------------------------------------------
-[Mera]: Get particle data: 2026-05-30T18:12:04.048
+[Mera]: Get particle data: 2026-06-01T18:50:31.004
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,)

@@ -122,17 +122,17 @@ info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14
 ```
 
 ```
-[Mera]: 2026-05-30T17:06:57.833
+[Mera]: 2026-06-01T14:04:27.069
 Code: RAMSES
 output [400] summary:
-mtime:
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -201,7 +201,7 @@ clumps = getclumps(info);
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:07:00.193
+[Mera]: Get clump data: 2026-06-01T14:04:29.567
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

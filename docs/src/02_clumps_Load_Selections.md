@@ -98,17 +98,17 @@ info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14
 ```
 
 ```
-[Mera]: 2026-05-30T17:13:20.104
+[Mera]: 2026-06-01T14:11:00.407
 Code: RAMSES
 output [400] summary:
-mtime:
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -175,7 +175,7 @@ clumps = getclumps(info);
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:22.448
+[Mera]: Get clump data: 2026-06-01T14:11:02.797
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -223,7 +223,7 @@ clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:23.853
+[Mera]: Get clump data: 2026-06-01T14:11:04.191
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -242,7 +242,7 @@ clumps = getclumps(info, [ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :pea
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:24.021
+[Mera]: Get clump data: 2026-06-01T14:11:04.355
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -294,7 +294,7 @@ clumps = getclumps(info, vars=[  :index, :lev, :parent, :ncell, :peak_x, :peak_y
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:24.212
+[Mera]: Get clump data: 2026-06-01T14:11:04.545
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -364,7 +364,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:24.607
+[Mera]: Get clump data: 2026-06-01T14:11:04.939
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
@@ -405,7 +405,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:25.226
+[Mera]: Get clump data: 2026-06-01T14:11:05.561
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
@@ -438,7 +438,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:25.292
+[Mera]: Get clump data: 2026-06-01T14:11:05.623
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
@@ -557,21 +557,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 5.0e-324
-a_mag	= 2.7240545665e-314
-v_esc	= 5.0e-324
-ax	= 2.7240545824e-314
-ay	= 5.0e-324
-az	= 2.724054598e-314
-epot	= 5.0e-324
-a_magnitude	= 2.724054614e-314
-escape_speed	= 5.0e-324
-gravitational_redshift	= 2.7240546456e-314
-gravitational_energy_density	= 5.0e-324
-gravitational_binding_energy	= 2.7240546614e-314
-total_binding_energy	= 5.0e-324
+delta_rho	= 2.3716488456e-314
+a_mag	= 2.44300613e-314
+v_esc	= 2.3716488456e-314
+ax	= 2.44300613e-314
+ay	= 2.3716488456e-314
+az	= 2.44300613e-314
+epot	= 2.3716488456e-314
+a_magnitude	= 2.44300613e-314
+escape_speed	= 2.3716488456e-314
+gravitational_redshift	= 2.44300613e-314
+gravitational_energy_density	= 2.3716488456e-314
+gravitational_binding_energy	= 2.44300613e-314
+total_binding_energy	= 2.3716488456e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 5.0e-324
+gravitational_work	= 2.3716488456e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -579,8 +579,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 5.0e-324
-poisson_source	= 2.7240547563e-314
+Fg	= 2.3716488456e-314
+poisson_source	= 2.44300613e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -606,7 +606,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:25.381
+[Mera]: Get clump data: 2026-06-01T14:11:05.712
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -645,7 +645,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:25.456
+[Mera]: Get clump data: 2026-06-01T14:11:05.786
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -668,7 +668,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:25.608
+[Mera]: Get clump data: 2026-06-01T14:11:05.926
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -692,7 +692,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:13:25.685
+[Mera]: Get clump data: 2026-06-01T14:11:05.997
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]

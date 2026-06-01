@@ -73,7 +73,7 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 ```
 
 ```
-[Mera]: 2026-05-30T17:37:19.029
+[Mera]: 2026-06-01T14:31:40.727
 Code: RAMSES
 output [400] summary:
 mtime:
@@ -84,6 +84,7 @@ simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -114,7 +115,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-05-30T17:37:21.198
+[Mera]: Get hydro data: 2026-06-01T14:31:42.886
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
@@ -126,7 +127,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:36 (17.99 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:35 (17.16 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 7 variables
@@ -136,8 +137,8 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 24.048364 seconds (727.01 M allocations: 38.740 GiB, 7.59% gc time, 3.77% compilation time)
-✓ Table created in 24.309 seconds
+ 24.801880 seconds (727.01 M allocations: 38.740 GiB, 8.93% gc time, 3.40% compilation time)
+✓ Table created in 25.065 seconds
 Memory used for data table :
 1.5544367535039783 GB
 -------------------------------------------------------
@@ -245,7 +246,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 
 ```
-[Mera]: 2026-05-30T17:38:28.185
+[Mera]: 2026-06-01T14:32:48.943
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -261,7 +262,7 @@ Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ℹ️  Sequential: Insufficient variables (1 < 2)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:08
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
 ```
 
 #### Spatial Range Selection
@@ -282,7 +283,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-05-30T17:38:58.788
+[Mera]: 2026-06-01T14:33:04.163
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -298,7 +299,6 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 **Convenience Notation for Box Center:**
@@ -314,7 +314,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-05-30T17:39:03.394
+[Mera]: 2026-06-01T14:33:06.419
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -330,7 +330,6 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 ```julia
@@ -342,7 +341,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-05-30T17:39:07.828
+[Mera]: 2026-06-01T14:33:08.460
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -358,7 +357,6 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 **Dimension-Specific Center Control:**
@@ -374,7 +372,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-05-30T17:39:12.287
+[Mera]: 2026-06-01T14:33:10.596
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -390,7 +388,6 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 ### Multi-Quantity Projections
@@ -417,7 +414,7 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
 ```
 
 ```
-[Mera]: 2026-05-30T17:39:16.755
+[Mera]: 2026-06-01T14:33:12.628
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -433,7 +430,6 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 #### Multiple Quantities with Different Units
@@ -453,7 +449,7 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
 ```
 
 ```
-[Mera]: 2026-05-30T17:39:20.248
+[Mera]: 2026-06-01T14:33:13.820
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -487,7 +483,7 @@ proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional
 ```
 
 ```
-[Mera]: 2026-05-30T17:40:15.476
+[Mera]: 2026-06-01T14:33:15.436
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -521,7 +517,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
 ```
 
 ```
-[Mera]: 2026-05-30T17:41:00.188
+[Mera]: 2026-06-01T14:33:16.924
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -704,7 +700,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
 ```
 
 #### matplotlib Configuration
@@ -762,7 +758,7 @@ cb = colorbar(im,
 ![](06_hydro_Projection_files/06_hydro_Projection_47_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x30df27850>
+PyObject <matplotlib.colorbar.Colorbar object at 0x17d90e830>
 ```
 
 ```julia
@@ -797,7 +793,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x30e1973a0>
+PyObject <matplotlib.colorbar.Colorbar object at 0x17da9a620>
 ```
 
 Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
@@ -834,7 +830,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 
 ```
-[Mera]: 2026-05-30T17:43:34.129
+[Mera]: 2026-06-01T14:33:38.233
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -966,7 +962,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-05-30T17:48:34.912
+[Mera]: 2026-06-01T14:33:44.573
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1147,7 +1143,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-05-30T17:54:46.169
+[Mera]: 2026-06-01T14:33:56.347
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1240,7 +1236,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-05-30T17:55:27.493
+[Mera]: 2026-06-01T14:34:04.371
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1325,7 +1321,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-05-30T17:56:17.048
+[Mera]: 2026-06-01T14:34:12.010
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1350,11 +1346,11 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-✅ Variable-based parallel processing completed in 44.381s
+✅ Variable-based parallel processing completed in 2.243s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 5445515 cells/second
+      ├─ Processing rate: 107731116 cells/second
       ├─ Parallel efficiency: 100.0% (target: 85-95%)
       ├─ Threads utilized: 4 / 4 available
       └─ Memory benefit: Direct allocation (no intermediate combining buffers)
@@ -1439,7 +1435,7 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
 ```
 
 ```
-[Mera]: 2026-05-30T17:57:09.732
+[Mera]: 2026-06-01T14:34:18.692
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1454,7 +1450,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-[Mera]: 2026-05-30T17:57:36.259
+[Mera]: 2026-06-01T14:34:20.006
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1563,7 +1559,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-05-30T17:57:49.012
+[Mera]: 2026-06-01T14:34:22.153
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1579,8 +1575,8 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:07
-[Mera]: 2026-05-30T17:57:57.163
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
+[Mera]: 2026-06-01T14:34:25.841
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1596,7 +1592,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:06
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 ```julia
@@ -1630,7 +1626,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-05-30T17:58:06.663
+[Mera]: 2026-06-01T14:34:31.168
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1645,7 +1641,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:33
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
 ```
 
 #### Custom Weighting with Units
@@ -1659,7 +1655,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-05-30T17:59:01.881
+[Mera]: 2026-06-01T14:35:09.022
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1674,7 +1670,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:33
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
 ```
 
 ## Specialized Applications
@@ -1693,7 +1689,7 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 
 ```
-[Mera]: 2026-05-30T17:59:57.255
+[Mera]: 2026-06-01T14:35:47.484
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

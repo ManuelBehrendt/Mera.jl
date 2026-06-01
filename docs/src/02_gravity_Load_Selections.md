@@ -101,7 +101,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
 ```
-[Mera]: 2026-05-30T17:11:02.818
+[Mera]: 2026-06-01T14:11:12.804
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -111,6 +111,7 @@ simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
@@ -177,7 +178,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:11:05.393
+[Mera]: Get gravity data: 2026-06-01T14:11:15.390
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -189,7 +190,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.56 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (23.31 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -199,8 +200,8 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  4.413076 seconds (4.71 M allocations: 4.080 GiB, 0.55% gc time, 22.10% compilation time)
-✓ Table created in 4.693 seconds
+  4.092604 seconds (4.71 M allocations: 4.080 GiB, 0.86% gc time, 22.17% compilation time)
+✓ Table created in 4.378 seconds
 Memory used for data table :
 1.6880627572536469 GB
 -------------------------------------------------------
@@ -249,7 +250,7 @@ grav_a = getgravity(info, vars=[:epot, :ax]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:11:28.217
+[Mera]: Get gravity data: 2026-06-01T14:11:37.823
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2) = (:epot, :ax)
 domain:
@@ -261,7 +262,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.71 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (23.28 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -271,8 +272,8 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 6 columns...
-  2.012162 seconds (1.84 M allocations: 3.143 GiB, 0.45% gc time, 12.96% compilation time)
-✓ Table created in 2.285 seconds
+  2.206372 seconds (1.84 M allocations: 3.094 GiB, 0.17% gc time, 10.86% compilation time)
+✓ Table created in 2.46 seconds
 Memory used for data table :
 1.2660471182316542 GB
 -------------------------------------------------------
@@ -285,7 +286,7 @@ grav_a = getgravity(info, vars=[:var1, :var2]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:11:47.372
+[Mera]: Get gravity data: 2026-06-01T14:11:55.635
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2) = (:epot, :ax)
 domain:
@@ -297,7 +298,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.39 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.84 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -307,8 +308,8 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 6 columns...
-  1.638918 seconds (702.74 k allocations: 3.079 GiB, 0.35% gc time)
-✓ Table created in 1.887 seconds
+  1.598377 seconds (702.62 k allocations: 3.042 GiB, 0.33% gc time)
+✓ Table created in 1.854 seconds
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
@@ -320,7 +321,7 @@ grav_a = getgravity(info, [:epot, :ax]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:12:05.818
+[Mera]: Get gravity data: 2026-06-01T14:12:12.354
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2) = (:epot, :ax)
 domain:
@@ -332,7 +333,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.69 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (22.93 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 2 variables
@@ -342,10 +343,9 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 6 columns...
-  1.928385 seconds (702.74 k allocations: 3.072 GiB, 0.28% gc time)
-✓ Table created in 2.166 seconds
-Memory used for data table :
-1.2660471182316542 GB
+  1.428824 seconds (702.74 k allocations: 3.038 GiB, 0.40% gc time)
+✓ Table created in 1.68 seconds
+Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
 ```
 
@@ -392,7 +392,7 @@ grav_c = getgravity(info, :ax );
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:12:25.019
+[Mera]: Get gravity data: 2026-06-01T14:12:29.277
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(2,) = (:ax,)
 domain:
@@ -404,7 +404,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.48 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (23.33 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 1 variables
@@ -414,8 +414,8 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 5 columns...
-  1.738560 seconds (1.74 M allocations: 2.648 GiB, 0.78% gc time, 11.74% compilation time)
-✓ Table created in 1.983 seconds
+  1.651461 seconds (1.74 M allocations: 2.697 GiB, 0.65% gc time, 12.08% compilation time)
+✓ Table created in 1.883 seconds
 Memory used for data table :1.0550392987206578 GB
 -------------------------------------------------------
 ```
@@ -486,7 +486,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:12:43.919
+[Mera]: Get gravity data: 2026-06-01T14:12:46.548
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -498,7 +498,7 @@ zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:07 (12.34 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:06 ( 9.70 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 4 variables
@@ -508,8 +508,8 @@ Creating Table from 1233232 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.047260 seconds (48.36 k allocations: 182.959 MiB)
-✓ Table created in 0.294 seconds
+  0.046008 seconds (48.47 k allocations: 180.809 MiB)
+✓ Table created in 0.296 seconds
 Memory used for data table :
 75.27139282226562 MB
 -------------------------------------------------------
@@ -544,7 +544,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:12:52.470
+[Mera]: Get gravity data: 2026-06-01T14:12:53.400
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -557,7 +557,7 @@ zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:02 ( 4.40 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 3.03 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1233232 cells, 4 variables
@@ -567,8 +567,8 @@ Creating Table from 1233232 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.048031 seconds (48.36 k allocations: 180.803 MiB)
-✓ Table created in 0.304 seconds
+  0.046147 seconds (48.47 k allocations: 183.184 MiB)
+✓ Table created in 0.303 seconds
 Memory used for data table :
 75.27139282226562 MB
 -------------------------------------------------------
@@ -595,7 +595,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:12:55.673
+[Mera]: Get gravity data: 2026-06-01T14:12:55.725
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -607,7 +607,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:02 ( 4.54 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.94 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 229992 cells, 4 variables
@@ -617,8 +617,8 @@ Creating Table from 229992 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.007403 seconds (22.24 k allocations: 34.366 MiB)
-✓ Table created in 0.236 seconds
+  0.006976 seconds (22.13 k allocations: 34.359 MiB)
+✓ Table created in 0.242 seconds
 Memory used for data table :14.038482666015625 MB
 -------------------------------------------------------
 ```
@@ -730,37 +730,37 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 0.0
-a_mag	= 0.0
-v_esc	= 0.0
-ax	= 0.0
-ay	= 0.0
-az	= 0.0
-epot	= 0.0
-a_magnitude	= 0.0
-escape_speed	= 0.0
-gravitational_redshift	= 0.0
-gravitational_energy_density	= 0.0
-gravitational_binding_energy	= 0.0
-total_binding_energy	= 0.0
+delta_rho	= 2.3516628546e-314
+a_mag	= 2.4230201393e-314
+v_esc	= 2.3516628546e-314
+ax	= 2.4230201393e-314
+ay	= 2.3516628546e-314
+az	= 2.4230201393e-314
+epot	= 2.3516628546e-314
+a_magnitude	= 2.4230201393e-314
+escape_speed	= 2.3516628546e-314
+gravitational_redshift	= 2.4230201393e-314
+gravitational_energy_density	= 2.3516628546e-314
+gravitational_binding_energy	= 2.4230201393e-314
+total_binding_energy	= 2.3516628546e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 0.0
+gravitational_work	= 2.3516628546e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
-freefall_time_gravity	= 4.70554946422349e14
+freefall_time_gravity
+	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 0.0
-poisson_source	= 0.0
+Fg	= 2.3516628546e-314
+poisson_source	= 2.4230201393e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
 aθ_sphere	= 1.3935734353956443e-8
 aϕ_sphere	= 1.3935734353956443e-8
-r_cylinder
-	= 3.085677581282e21
+r_cylinder	= 3.085677581282e21
 r_sphere	= 3.085677581282e21
 ϕ	= 1.0
 dimensionless	= 1.0
@@ -780,7 +780,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:12:58.969
+[Mera]: Get gravity data: 2026-06-01T14:12:58.001
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -793,7 +793,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:02 ( 4.55 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.98 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -803,8 +803,8 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.022467 seconds (60.28 k allocations: 137.457 MiB)
-✓ Table created in 0.262 seconds
+  0.023707 seconds (60.17 k allocations: 133.247 MiB)
+✓ Table created in 0.257 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
@@ -836,7 +836,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:13:02.255
+[Mera]: Get gravity data: 2026-06-01T14:13:00.273
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -849,7 +849,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:02 ( 4.55 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.97 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -859,8 +859,8 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.022945 seconds (60.28 k allocations: 117.519 MiB)
-✓ Table created in 0.26 seconds
+  0.023308 seconds (60.28 k allocations: 117.519 MiB)
+✓ Table created in 0.27 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
@@ -875,7 +875,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:13:05.589
+[Mera]: Get gravity data: 2026-06-01T14:13:02.594
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -888,7 +888,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:02 ( 4.57 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 2.97 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -898,8 +898,8 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.021278 seconds (60.17 k allocations: 149.513 MiB)
-✓ Table created in 0.253 seconds
+  0.022900 seconds (60.17 k allocations: 149.575 MiB)
+✓ Table created in 0.279 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```
@@ -916,7 +916,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:13:08.871
+[Mera]: Get gravity data: 2026-06-01T14:13:04.879
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -929,7 +929,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:02 ( 4.25 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 3.00 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 650848 cells, 4 variables
@@ -939,8 +939,8 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  0.021416 seconds (60.17 k allocations: 135.825 MiB)
-✓ Table created in 0.258 seconds
+  0.020614 seconds (60.17 k allocations: 138.481 MiB)
+✓ Table created in 0.257 seconds
 Memory used for data table :39.725494384765625 MB
 -------------------------------------------------------
 ```

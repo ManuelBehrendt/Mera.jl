@@ -90,16 +90,18 @@ particles = getparticles(info, :mass);
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:06.242
+[Mera]: 2026-06-01T14:27:37.223
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime:
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -130,7 +132,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-05-30T17:32:11.943
+[Mera]: Get particle data: 2026-06-01T14:27:40.891
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,)
@@ -219,7 +221,7 @@ part_subregion = subregion( particles, :cuboid,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:19.234
+[Mera]: 2026-06-01T14:27:48.207
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -291,7 +293,7 @@ part_subregion = subregion( particles, :cuboid,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:19.736
+[Mera]: 2026-06-01T14:27:48.712
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -396,7 +398,7 @@ part_subregion = subregion(particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:20.423
+[Mera]: 2026-06-01T14:27:49.392
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -501,7 +503,7 @@ part_subregion = subregion(particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:21.361
+[Mera]: 2026-06-01T14:27:50.319
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -509,8 +511,7 @@ ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :18.850629806518555
- MB
+Memory used for data table :18.850629806518555 MB
 -------------------------------------------------------
 ```
 
@@ -606,7 +607,7 @@ part_subregion = subregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:22.010
+[Mera]: 2026-06-01T14:27:50.990
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -670,7 +671,7 @@ part_subregion = subregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:22.274
+[Mera]: 2026-06-01T14:27:51.259
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -830,7 +831,7 @@ part_subregion = shellregion( particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:23.212
+[Mera]: 2026-06-01T14:27:52.194
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -896,7 +897,7 @@ part_subregion = shellregion( particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:23.473
+[Mera]: 2026-06-01T14:27:52.431
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1010,7 +1011,7 @@ part_subregion = shellregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:24.035
+[Mera]: 2026-06-01T14:27:53.005
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1079,7 +1080,7 @@ part_subregion = shellregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:32:24.378
+[Mera]: 2026-06-01T14:27:53.338
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]

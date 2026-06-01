@@ -140,7 +140,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # out
 ```
 
 ```
-[Mera]: 2026-05-30T17:00:17.244
+[Mera]: 2026-06-01T14:04:14.119
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -150,6 +150,7 @@ simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
@@ -406,21 +407,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.833714089e-314
-a_mag	= 1.265e-321
-v_esc	= 3.79e-321
-ax	= 2.4057275176e-314
-ay	= 2.3629663256e-314
-az	= 2.4057275176e-314
-epot	= 2.3629663256e-314
-a_magnitude	= 2.3929436757e-314
-escape_speed	= 2.3919166516e-314
-gravitational_redshift	= 2.3873227976e-314
-gravitational_energy_density	= 2.7952832913e-314
-gravitational_binding_energy	= 2.3650208087e-314
-total_binding_energy	= 2.14021675e-314
+delta_rho	= 2.761719159e-314
+a_mag	= 2.761719183e-314
+v_esc	= 2.7617192065e-314
+ax	= 2.76171923e-314
+ay	= 2.761719254e-314
+az	= 2.7617193014e-314
+epot	= 2.761719325e-314
+a_magnitude	= 2.761719349e-314
+escape_speed	= 2.7617193725e-314
+gravitational_redshift	= 2.761719396e-314
+gravitational_energy_density	= 2.76171942e-314
+gravitational_binding_energy	= 2.7617194437e-314
+total_binding_energy	= 2.7617194674e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.14021675e-314
+gravitational_work	= 2.761719515e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -428,8 +429,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.3629625787e-314
-poisson_source	= 2.4057275176e-314
+Fg	= 2.7617197045e-314
+poisson_source	= 2.761719728e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8

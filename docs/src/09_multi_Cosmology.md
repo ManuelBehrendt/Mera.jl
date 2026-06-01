@@ -49,10 +49,11 @@ info = getinfo(80, "/Volumes/FASTStorage/Simulations/Mera-Tests/yt_cosmo");
 ```
 
 ```
-[Mera]: 2026-06-01T11:59:42.678
+[Mera]: 2026-06-01T14:47:01.263
 Code: RAMSES
 output [80] summary:
-mtime: 2012-08-13T16:51:06
+mtime:
+2012-08-13T16:51:06
 ctime: 2026-06-01T07:42:48.561
 =======================================================
 simulation time: 11.925 [Gyr] (age of universe)
@@ -167,13 +168,17 @@ ages  = getvar(particles, :age, :Gyr)
 ```
 
 ```
-[Mera]: Get particle data: 2026-06-01T11:59:47.410
+[Mera]: Get particle data: 2026-06-01T14:47:05.466
+Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
+Processing 16 CPU files using 4 threads
+Mode: Threaded processing
+Combining results from 4 thread(s)...
 Found 1.090895e+06 particles
 Memory used for data table :
 74.9068775177002 MB
@@ -234,7 +239,7 @@ delta = getvar(gas, :overdensity)
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T11:59:56.109
+[Mera]: Get hydro data: 2026-06-01T14:47:13.141
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
 domain:
@@ -244,22 +249,21 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 📊 Processing Configuration:
    Total CPU files available: 16
    Files to be processed: 16
-   Compute threads: 1
-   GC threads: 1
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (98.55 ms/it)
+   Compute threads: 4
+   GC threads: 4
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (73.73 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1749455 cells, 6 variables
-Creating Table from 1749455 cells with max 1 threads...
-  Threading: 1 threads for 10 columns
-  Max threads requested: 1
-  Available threads: 1
-  Using sequential processing (optimal for small datasets)
+Creating Table from 1749455 cells with max 4 threads...
+  Threading: 4 threads for 10 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
   Creating IndexedTable with 10 columns...
-  0.781847 seconds (3.26 M allocations: 477.675 MiB, 1.49% gc time, 81.96% compilation time: 1% of which was recompilation)
-✓ Table created in 1.38 seconds
-Memory used for data table :
-133.47387886047363 MB
+  0.722757 seconds (3.28 M allocations: 478.640 MiB, 0.91% gc time, 93.55% compilation time: 1% of which was recompilation)
+✓ Table created in 1.012 seconds
+Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------
 ```
 

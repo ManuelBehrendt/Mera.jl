@@ -130,7 +130,7 @@ clumps    = getclumps(info);
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:25.012
+[Mera]: 2026-06-01T14:28:00.404
 Code: RAMSES
 output [400] summary:
 mtime:
@@ -141,6 +141,7 @@ simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -171,7 +172,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-05-30T17:33:27.158
+[Mera]: Get hydro data: 2026-06-01T14:28:02.551
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz)
 domain:
@@ -183,7 +184,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 ( 8.23 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 ( 8.65 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 849332 cells, 4 variables
@@ -193,12 +194,12 @@ Creating Table from 849332 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 8 columns...
-  0.824373 seconds (3.92 M allocations: 321.054 MiB, 0.96% gc time, 100.21% compilation time)
-✓ Table created in 1.09 seconds
+  0.836888 seconds (3.91 M allocations: 320.878 MiB, 0.92% gc time, 100.08% compilation time)
+✓ Table created in 1.105 seconds
 Memory used for data table :
 51.839996337890625 MB
 -------------------------------------------------------
-[Mera]: Get particle data: 2026-05-30T17:33:48.701
+[Mera]: Get particle data: 2026-06-01T14:28:25.052
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4) = (:vx, :vy, :vz, :mass)
@@ -213,7 +214,7 @@ Found 5.089390e+05 particles
 Memory used for data table :
 31.064148902893066 MB
 -------------------------------------------------------
-[Mera]: Get clump data: 2026-05-30T17:33:50.560
+[Mera]: Get clump data: 2026-06-01T14:28:26.874
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -342,21 +343,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.1814599867e-314
-a_mag	= 2.1814599867e-314
-v_esc	= 2.1814599867e-314
-ax	= 2.1814599867e-314
-ay	= 2.1814599867e-314
-az	= 2.1814599867e-314
-epot	= 2.1814599867e-314
-a_magnitude	= 2.1814599867e-314
-escape_speed	= 2.1814599867e-314
-gravitational_redshift	= 2.1814599867e-314
-gravitational_energy_density	= 2.1814599867e-314
-gravitational_binding_energy	= 2.1814599867e-314
-total_binding_energy	= 2.1814599867e-314
+delta_rho	= 2.354771247e-314
+a_mag	= 2.4261285316e-314
+v_esc	= 2.354771247e-314
+ax	= 2.4261285316e-314
+ay	= 2.354771247e-314
+az	= 2.4261285316e-314
+epot	= 2.354771247e-314
+a_magnitude	= 2.4261285316e-314
+escape_speed	= 2.354771247e-314
+gravitational_redshift	= 2.4261285316e-314
+gravitational_energy_density	= 2.354771247e-314
+gravitational_binding_energy	= 2.4261285316e-314
+total_binding_energy	= 2.354771247e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.1814599867e-314
+gravitational_work	= 2.354771247e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -364,8 +365,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.1814599867e-314
-poisson_source	= 2.1814599867e-314
+Fg	= 2.354771247e-314
+poisson_source	= 2.4261285316e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -429,8 +430,7 @@ println( "Clumps Mtot:    ", msum(clumps, :Msol)    , " Msol" )
 ```
 Gas Mtot:       2.6703951073850353e10 Msol
 Particles Mtot: 5.804426008528429e9 Msol
-Clumps Mtot:    1.3743280681841675e10
- Msol
+Clumps Mtot:    1.3743280681841675e10 Msol
 ```
 
 The following methods are defined on the function `msum`:
@@ -679,9 +679,9 @@ gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
 ```
 
 ```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 ( 0.58  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:13 ( 0.41  s/it)
 ✓ File processing complete! Combining results...
-  3.959356 seconds (399.99 k allocations: 5.466 GiB, 4.07% gc time)
+  4.199472 seconds (399.98 k allocations: 5.435 GiB, 5.44% gc time)
 ```
 
 Use `getvar` to extract variables or derive predefined quantities from the database, dependent on the data type.
@@ -704,6 +704,7 @@ Predefined vars that can be calculated for each cell/particle:
 :virial_parameter_local
 :T, :Temp, :Temperature with p/rho
 :etherm (thermal energy per cell)
+:overdensity, :delta (gas overdensity ρ/ρ̄_b−1; cosmological runs only)
 :entropy_specific (specific entropy)
 :entropy_index (dimensionless adiabatic constant)
 :entropy_density (entropy per unit volume)
@@ -716,7 +717,8 @@ Predefined vars that can be calculated for each cell/particle:
 :cpu, :level, :id, :family, :tag
 :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
               -derived particle vars-
-:age
+:age (cosmology-aware: physical age from conformal birth time)
+:zform, :formation_redshift, :formation_time (stars; cosmological runs only)
 ===========================[gravity]:===========================
        -all the non derived gravity vars-
 :cpu, :level, cx, cy, cz, :epot, :ax, :ay, :az
@@ -936,6 +938,7 @@ Predefined vars that can be calculated for each cell/particle:
 :virial_parameter_local
 :T, :Temp, :Temperature with p/rho
 :etherm (thermal energy per cell)
+:overdensity, :delta (gas overdensity ρ/ρ̄_b−1; cosmological runs only)
 :entropy_specific (specific entropy)
 :entropy_index (dimensionless adiabatic constant)
 :entropy_density (entropy per unit volume)
@@ -948,7 +951,8 @@ Predefined vars that can be calculated for each cell/particle:
 :cpu, :level, :id, :family, :tag
 :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
               -derived particle vars-
-:age
+:age (cosmology-aware: physical age from conformal birth time)
+:zform, :formation_redshift, :formation_time (stars; cosmological runs only)
 ===========================[gravity]:===========================
        -all the non derived gravity vars-
 :cpu, :level, cx, cy, cz, :epot, :ax, :ay, :az
@@ -1224,9 +1228,9 @@ clumps    = getclumps(info, verbose=false);
 ```
 
 ```
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:21 (10.37 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 ( 8.63 ms/it)
 ✓ File processing complete! Combining results...
-  0.044007 seconds (52.32 k allocations: 128.697 MiB)
+  0.041985 seconds (52.32 k allocations: 125.634 MiB)
 ```
 
 Pass any kind of Array{<:Real,1} (Float, Integer,...) to the `wstat` function to get several unweighted statistical quantities at once:

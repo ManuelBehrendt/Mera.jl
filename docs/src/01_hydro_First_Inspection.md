@@ -136,17 +136,17 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
 ```
-[Mera]: 2026-05-30T17:00:27.163
+[Mera]: 2026-06-01T14:05:20.493
 Code: RAMSES
 output [300] summary:
-mtime:
-2023-04-09T05:34:09
+mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
 simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
@@ -169,8 +169,7 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file:
-("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -317,7 +316,7 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-05-30T17:00:30.842
+[Mera]: Get hydro data: 2026-06-01T14:05:24.175
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
@@ -329,7 +328,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:20 (32.80 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.66 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -339,8 +338,8 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 37.987317 seconds (962.41 M allocations: 55.577 GiB, 7.94% gc time, 2.91% compilation time)
-✓ Table created in 38.306 seconds
+ 37.986176 seconds (962.40 M allocations: 55.577 GiB, 7.22% gc time, 2.40% compilation time)
+✓ Table created in 38.266 seconds
 Memory used for data table :
 2.321086215786636 GB
 -------------------------------------------------------
@@ -450,7 +449,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-05-30T17:01:34.176
+[Mera]: Get hydro data: 2026-06-01T14:06:24.574
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
@@ -462,7 +461,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:22 (35.36 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.38 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 7 variables
@@ -472,10 +471,9 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 37.327449 seconds (958.14 M allocations: 55.370 GiB, 8.59% gc time)
-✓ Table created in 37.635 seconds
-Memory used for data table :
-2.321086215786636 GB
+ 36.943728 seconds (958.14 M allocations: 55.369 GiB, 7.84% gc time)
+✓ Table created in 37.202 seconds
+Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
 
@@ -544,7 +542,7 @@ data_overview = dataoverview(gas)
 
 ```
 Calculating...
- 100%|███████████████████████████████████████████████████| Time: 0:03:02
+ 100%|███████████████████████████████████████████████████| Time: 0:03:03
 ```
 
 ```

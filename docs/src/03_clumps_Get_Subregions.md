@@ -74,7 +74,7 @@ clumps = getclumps(info);
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:09.950
+[Mera]: 2026-06-01T14:16:47.216
 Code: RAMSES
 output [400] summary:
 mtime:
@@ -85,6 +85,7 @@ simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -115,7 +116,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get clump data: 2026-05-30T17:33:11.709
+[Mera]: Get clump data: 2026-06-01T14:16:48.990
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -206,7 +207,7 @@ clumps_subregion = subregion( clumps, :cuboid,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:14.979
+[Mera]: 2026-06-01T14:16:52.331
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -311,13 +312,14 @@ clumps_subregion = subregion( clumps, :cuboid,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:15.566
+[Mera]: 2026-06-01T14:16:52.942
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-Memory used for data table :33.45703125 KB
+Memory used for data table :33.45703125
+ KB
 -------------------------------------------------------
 ```
 
@@ -376,14 +378,15 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:33:15.698
+[Mera]: Get clump data: 2026-06-01T14:16:53.075
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
+Memory used for data table :
+61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -432,7 +435,7 @@ clumps_subregion = subregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:16.104
+[Mera]: 2026-06-01T14:16:53.457
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -534,7 +537,7 @@ clumps_subregion = subregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:16.483
+[Mera]: 2026-06-01T14:16:53.844
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -602,7 +605,7 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:33:16.620
+[Mera]: Get clump data: 2026-06-01T14:16:53.979
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -662,7 +665,7 @@ clumps_subregion = subregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:16.851
+[Mera]: 2026-06-01T14:16:54.214
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -764,7 +767,7 @@ clumps_subregion = subregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:17.091
+[Mera]: 2026-06-01T14:16:54.453
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -863,7 +866,7 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:33:17.224
+[Mera]: Get clump data: 2026-06-01T14:16:54.584
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -923,7 +926,7 @@ clumps_subregion = shellregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:17.558
+[Mera]: 2026-06-01T14:16:54.911
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -988,7 +991,7 @@ clumps_subregion = shellregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:17.698
+[Mera]: 2026-06-01T14:16:55.053
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1052,7 +1055,7 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-05-30T17:33:17.829
+[Mera]: Get clump data: 2026-06-01T14:16:55.184
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1110,7 +1113,7 @@ clumps_subregion = shellregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:18.054
+[Mera]: 2026-06-01T14:16:55.406
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1174,7 +1177,7 @@ clumps_subregion = shellregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:33:18.193
+[Mera]: 2026-06-01T14:16:55.544
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1183,7 +1186,8 @@ zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :44.42578125 KB
+Memory used for data table :44.42578125
+ KB
 -------------------------------------------------------
 ```
 

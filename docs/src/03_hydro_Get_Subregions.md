@@ -103,17 +103,18 @@ gas  = gethydro(info,:rho,lmax=12, smallr=1e-11);
 ```
 
 ```
-[Mera]: 2026-05-30T17:13:33.475
+[Mera]: 2026-06-01T14:17:37.749
 Code: RAMSES
 output [400] summary:
-mtime:
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
-simulation time: 594.98 [Myr]
+simulation time: 594.98
+ [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
@@ -144,7 +145,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-05-30T17:13:35.597
+[Mera]: Get hydro data: 2026-06-01T14:17:39.858
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1,) = (:rho,)
 domain:
@@ -156,7 +157,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:40 (19.69 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:35 (17.17 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 1 variables
@@ -166,8 +167,8 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
-  1.358242 seconds (4.74 M allocations: 2.065 GiB, 0.39% gc time, 50.91% compilation time)
-✓ Table created in 1.628 seconds
+  1.390792 seconds (4.74 M allocations: 2.065 GiB, 0.39% gc time, 50.11% compilation time)
+✓ Table created in 1.674 seconds
 Memory used for data table :
 723.5197649002075 MB
 -------------------------------------------------------
@@ -188,7 +189,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verb
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:33
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
 ### Cuboid Selection Visualization
@@ -224,7 +225,7 @@ cb = colorbar(im, label=labeltext)
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x168207340>
+PyObject <matplotlib.colorbar.Colorbar object at 0x16638bac0>
 ```
 
 ### Cuboid Region Extraction
@@ -246,7 +247,7 @@ gas_subregion = subregion( gas, :cuboid,
 ```
 
 ```
-[Mera]: 2026-05-30T17:16:11.429
+[Mera]: 2026-06-01T14:19:19.416
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -319,7 +320,7 @@ gas_subregion = subregion( gas, :cuboid,
 ```
 
 ```
-[Mera]: 2026-05-30T17:16:17.041
+[Mera]: 2026-06-01T14:19:21.994
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -337,7 +338,7 @@ proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
 ```
 
 ```julia
@@ -383,7 +384,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verb
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:33
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
 ### Cylindrical Selection Visualization
@@ -438,7 +439,7 @@ gas_subregion = subregion(  gas, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:19:42.277
+[Mera]: 2026-06-01T14:21:07.992
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -569,7 +570,7 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ```
-[Mera]: 2026-05-30T17:19:45.822
+[Mera]: 2026-06-01T14:21:09.987
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -580,10 +581,10 @@ Height: 2.0 [kpc]
 Memory used for data table :679.2643556594849
  MB
 -------------------------------------------------------
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_20.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_15.png)
 
 ## Spherical Selection
 
@@ -600,7 +601,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
 ### Spherical Selection Visualization
@@ -650,7 +651,7 @@ gas_subregion = subregion(  gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:23:12.910
+[Mera]: 2026-06-01T14:22:57.732
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -674,10 +675,6 @@ Maintain box center coordinates for consistent spatial reference across differen
 proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
-```
-
-```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
 ```
 
 ```julia
@@ -722,7 +719,7 @@ gas_subregion = subregion(  gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:23:21.745
+[Mera]: 2026-06-01T14:23:00.937
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -741,7 +738,7 @@ proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], dir
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:29
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
 ```
 
 ```julia
@@ -843,7 +840,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
 ### Cylindrical Shell Visualization
@@ -895,7 +892,7 @@ gas_subregion = shellregion( gas, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:26:46.646
+[Mera]: 2026-06-01T14:24:47.069
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -914,10 +911,6 @@ Memory used for data table :199.29430103302002
 proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
-```
-
-```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 ```
 
 ```julia
@@ -968,7 +961,7 @@ gas_subregion = shellregion(gas, :cylinder,
 ```
 
 ```
-[Mera]: 2026-05-30T17:26:52.438
+[Mera]: 2026-06-01T14:24:49.139
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -990,7 +983,7 @@ proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], dir
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:30
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
 ```
 
 ```julia
@@ -1036,7 +1029,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:32
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
 ### Spherical Shell Visualization
@@ -1087,7 +1080,7 @@ gas_subregion = shellregion(gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:30:14.250
+[Mera]: 2026-06-01T14:26:33.270
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1109,10 +1102,6 @@ Generate projections of the spherical shell region using box center coordinates 
 proj_z = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:z, verbose=false);
 proj_y = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:y, verbose=false);
 proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x, verbose=false);
-```
-
-```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:01
 ```
 
 ```julia
@@ -1160,7 +1149,7 @@ gas_subregion = shellregion(gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-05-30T17:30:22.377
+[Mera]: 2026-06-01T14:26:36.145
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1181,7 +1170,7 @@ proj_x = projection(gas_subregion, :sd, unit=:Msol_pc2, center=[:boxcenter], dir
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:29
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
 ```
 
 ```julia

@@ -114,7 +114,7 @@ info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
 ```
 
 ```
-[Mera]: 2026-05-30T17:06:18.109
+[Mera]: 2026-06-01T14:04:42.105
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -124,6 +124,7 @@ simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
@@ -224,7 +225,8 @@ hversion	= 1
 hydro
 	= [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
 htypes	= ["d", "d", "d", "d", "d", "d", "d"]
-usehydro	= false
+usehydro	=
+false
 hydrofile	= true
 pversion	= 1
 particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time]
@@ -291,7 +293,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-05-30T17:06:21.636
+[Mera]: Get gravity data: 2026-06-01T14:04:45.861
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az)
 domain:
@@ -303,7 +305,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 (25.47 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:14 (23.26 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 28320979 cells, 4 variables
@@ -313,8 +315,8 @@ Creating Table from 28320979 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-  4.381040 seconds (4.70 M allocations: 4.080 GiB, 0.81% gc time, 22.50% compilation time)
-✓ Table created in 4.664 seconds
+  3.940050 seconds (4.70 M allocations: 4.085 GiB, 0.71% gc time, 23.13% compilation time)
+✓ Table created in 4.21 seconds
 Memory used for data table :
 1.6880627572536469 GB
 -------------------------------------------------------
