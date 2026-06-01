@@ -54,6 +54,15 @@ end
         # critical density at z=1: ρ_crit0 * E², E² = Ωm a⁻³ + ΩΛ = 0.3·8+0.7 = 3.1
         @test c.rho_crit_cgs > 0.0
         @test c.rho_crit_cgs ≈ 9.2e-30 * 3.1 rtol=0.05
+
+        # gettime on a cosmological run returns the age of the universe (NOT the
+        # conformal info.time), converted to the requested unit.
+        @test gettime(info, :Gyr) ≈ c.age_Gyr
+        @test gettime(info, :Myr) ≈ c.age_Gyr * 1.0e3
+        @test gettime(info, :yr)  ≈ c.age_Gyr * 1.0e9
+        @test gettime(info, :s)   > 0.0                       # :standard ⇒ seconds
+        @test gettime(info, :s)   ≈ gettime(info; unit=:standard)
+        @test_throws ErrorException gettime(info, :kpc)       # non-time unit rejected
     end
 
     @testset "monotonicity: earlier snapshot ⇒ higher z, younger" begin
@@ -119,6 +128,11 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
         @test 11.0 < c.age_Gyr < 13.0          # ≈ 11.9 Gyr at z≈0.14
         @test 1.0 < c.lookback_Gyr < 2.5       # ≈ 1.8 Gyr
         @test 0.8e-29 < c.rho_crit_cgs < 1.3e-29
+
+        # gettime must report the age of the universe (~11.9 Gyr), not the
+        # negative conformal info.time (the pre-fix result was ≈ -1.57 Gyr).
+        @test gettime(info, :Gyr) ≈ c.age_Gyr
+        @test 11.0 < gettime(info, :Gyr) < 13.0
     end
 else
     @info "31_cosmology_tests: real cosmological dataset not present — data block skipped (synthetic core still ran)."

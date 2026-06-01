@@ -731,14 +731,36 @@ function printsimoverview(info::InfoType, verbose::Bool)
         println("ctime: ", info.ctime)
         printstyled("=======================================================\n", bold=true, color=:normal)
 
-        time_val, time_unit  = humanize(info.time, info.scale, 2, "time")
-        println("simulation time: ",   time_val, " [$time_unit]")
+        # In cosmological runs info.time is conformal time (negative); the
+        # meaningful clock is the age of the universe at this snapshot.
+        is_cosmological = iscosmological(info)
+        cosmo_state = is_cosmological ? cosmology(info) : nothing
+        if is_cosmological
+            println("simulation time: ", round(cosmo_state.age_Gyr, digits=3), " [Gyr] (age of universe)")
+        else
+            time_val, time_unit  = humanize(info.time, info.scale, 2, "time")
+            println("simulation time: ",   time_val, " [$time_unit]")
+        end
 
         boxlen_val, boxlen_unit  = humanize(info.boxlen, info.scale, 2, "length")
         println("boxlen: ",   boxlen_val, " [$boxlen_unit]")
 
         println("ncpu: ",     info.ncpu)
         println("ndim: ",     info.ndim)
+
+        # Cosmology section — like the other optional sections, prefixed with a
+        # separator line only when it applies (i.e. for a cosmological run).
+        if is_cosmological
+            println("-------------------------------------------------------")
+            println("cosmological:  true")
+            @printf("redshift z:    %.4f   (aexp = %.4f)\n", cosmo_state.redshift, cosmo_state.aexp)
+            @printf("H0: %.2f km/s/Mpc   Ωm: %.3f   ΩΛ: %.3f   Ωk: %.3f   Ωb: %.3f\n",
+                    cosmo_state.H0, cosmo_state.omega_m, cosmo_state.omega_l, cosmo_state.omega_k, cosmo_state.omega_b)
+            @printf("age: %.3f Gyr   lookback: %.3f Gyr   Hubble time: %.3f Gyr\n",
+                    cosmo_state.age_Gyr, cosmo_state.lookback_Gyr, cosmo_state.hubble_time_Gyr)
+        else
+            println("cosmological:  false")
+        end
 
         println("-------------------------------------------------------")
         min_cellsize, min_unit  = humanize(info.boxlen / 2^info.levelmin, info.scale, 2, "length")

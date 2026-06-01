@@ -975,6 +975,12 @@ end
 
 Get the physical simulation time in selected units. Returns a `Float64`.
 
+For a **cosmological** run (see [`iscosmological`](@ref)) `info.time` is conformal
+time, so `gettime` instead returns the **age of the universe** at the snapshot's
+scale factor (from [`cosmology`](@ref)), converted to `unit`. Supported units for
+cosmological runs: `:Gyr`, `:Myr`, `:yr`, `:s` (`:standard` ⇒ seconds). For a
+non-cosmological run the behaviour is unchanged (`info.time` scaled to `unit`).
+
 ```julia
 gettime(1, path="/path/to/sim", unit=:Myr)
 gettime(gas, unit=:Gyr)
@@ -1006,17 +1012,37 @@ gettime(info, :Myr)
 - **`unit`:** return the variable in given unit
 
 """
+# Physical simulation time, cosmology-aware.
+# Non-cosmological run: info.time is proper code time → scale as before.
+# Cosmological run:      info.time is conformal time (and negative); the only
+#                        meaningful clock is the age of the universe at aexp, so
+#                        we return that age converted to `unit`. `:standard` maps
+#                        to seconds (CGS) since code-unit time is not meaningful
+#                        for a cosmological snapshot.
+function _gettime(info::InfoType, unit::Symbol)
+    if iscosmological(info)
+        age_gyr = cosmology(info).age_Gyr
+        unit === :Gyr && return age_gyr
+        unit === :Myr && return age_gyr * 1.0e3
+        unit === :yr  && return age_gyr * 1.0e9
+        (unit === :s || unit === :standard) && return age_gyr * 1.0e9 * info.constants.yr
+        error("gettime: unit :$unit not supported for cosmological runs (use :Gyr, :Myr, :yr, :s).")
+    else
+        return info.time * getunit(info, unit)
+    end
+end
+
 function gettime(output::Real; path::String="./", unit::Symbol=:standard)
     info = getinfo(output, path, verbose=false)
-    return info.time * getunit(info, unit)
+    return _gettime(info, unit)
 end
 
 function gettime(dataobject::DataSetType; unit::Symbol=:standard)
-    return dataobject.info.time * getunit(dataobject.info, unit)
+    return _gettime(dataobject.info, unit)
 end
 
 function gettime(dataobject::InfoType; unit::Symbol=:standard)
-    return dataobject.time * getunit(dataobject, unit)
+    return _gettime(dataobject, unit)
 end
 
 # Positional convenience wrappers
