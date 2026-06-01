@@ -920,8 +920,13 @@ end
 
 **Strategy:** Parallelize the outer loop, disable internal threading.
 
+In the examples below, `SIMPATH` is your RAMSES simulation directory — set it
+once to your own path:
+
 ```julia
 using Mera, Base.Threads
+
+SIMPATH = "/path/to/simulation"   # ← set to your RAMSES output directory
 
 # Process multiple snapshots in parallel
 snapshots = 100:25:400
@@ -1106,43 +1111,6 @@ function adaptive_analysis(data_items)
 end
 ```
 
-<!--### 7.3 Hierarchical Parallelism
-
-**Use case:** Multi-level parallel decomposition.
-
- ```julia
-using Mera, Base.Threads
-
-function hierarchical_analysis(simulation_paths)
-    # Level 1: Parallel across simulations
-    simulation_tasks = []
-    
-    for sim_path in simulation_paths
-        sim_task = @spawn begin
-            snapshots = find_snapshots(sim_path)
-            
-            # Level 2: Parallel across snapshots within simulation
-            snapshot_results = Vector{Any}(undef, length(snapshots))
-            @threads for (i, snap) in enumerate(snapshots)
-                info = getinfo(snap, sim_path)
-                gas = gethydro(info; lmax=9, max_threads=1)  # Serial at level 3
-                
-                # Level 3: Parallel across variables (controlled)
-                vars = [:rho, :T, :p]
-                projections = projection(gas, vars; max_threads=2)
-                
-                snapshot_results[i] = (snapshot=snap, projections=projections)
-            end
-            
-            (simulation=sim_path, results=snapshot_results)
-        end
-        push!(simulation_tasks, sim_task)
-    end
-    
-    return fetch.(simulation_tasks)
-end
-``` 
--->
 
 ## 8 Thread-Safe Programming
 
@@ -1433,10 +1401,10 @@ gas = gethydro(info; lmax=11)  # Full parallelization for loading
 variables = [:rho, :T, :vz, :p]
 projections = projection(gas, variables; direction=:z, lmax=9)
 
-# Access individual projections
-# If you pass a single variable, projection(gas, :rho; ...) returns the map directly.
-# For multiple variables, access by key if projections is keyed by variable, e.g.:
-# rho_map = projections[:rho]
+# Access individual projection maps via the `.maps` field of the returned object:
+#   proj = projection(gas, [:rho, :T]; ...)
+#   rho_map = proj.maps[:rho]
+#   T_map   = proj.maps[:T]
 
 # Alternative: Use @spawn for more control
 tasks = [Threads.@spawn projection(gas, var; direction=:z, lmax=9, max_threads=2) 
