@@ -296,22 +296,41 @@ function readrtfile1!(dataobject::InfoType)
 
         if length(lines) != 0 # check for empty file
 
-            # read descriptor variables
-            descriptor_list[Symbol("nRTvar")]  = parse(Int, rsplit(lines[1],"=")[2] )
-            descriptor_list[Symbol("nIons")]   = parse(Int, rsplit(lines[2],"=")[2] )
-            descriptor_list[Symbol("nGroups")] = parse(Int, rsplit(lines[3],"=")[2] )
-            descriptor_list[Symbol("iIons")]   = parse(Int, rsplit(lines[4],"=")[2] )
+            # Read the RT descriptor robustly. The historical parser used fixed
+            # line indices and `rsplit(line,"=")[2]`, which threw a BoundsError on
+            # ramses-2025.05 RT outputs that reorder/change these lines (issue #61).
+            # We instead build a `label => value` map from every `key = value`
+            # line (works regardless of ordering/blank lines), fall back to the
+            # historical line index, and skip anything unparseable instead of
+            # crashing.
+            kv = Dict{String,String}()
+            for ln in lines
+                p = split(ln, "=", limit=2)
+                length(p) == 2 && (kv[strip(p[1])] = strip(p[2]))
+            end
+            function _rtset(name::String, idx::Int, ::Type{T}) where {T}
+                s = get(kv, name, nothing)
+                if s === nothing && 1 <= idx <= length(lines)
+                    parts = rsplit(lines[idx], "=")
+                    length(parts) >= 2 && (s = strip(parts[2]))
+                end
+                s === nothing && return
+                v = tryparse(T, s)
+                v !== nothing && (descriptor_list[Symbol(name)] = v)
+            end
 
-            descriptor_list[Symbol("X_fraction")] = parse(Float64, rsplit(lines[6],"=")[2] )
-            descriptor_list[Symbol("Y_fraction")] = parse(Float64, rsplit(lines[7],"=")[2] )
-
-            descriptor_list[Symbol("unit_np")] = parse(Float64, rsplit(lines[9],"=")[2] )
-            descriptor_list[Symbol("unit_pf")] = parse(Float64, rsplit(lines[10],"=")[2] )
-            descriptor_list[Symbol("rt_c_frac")] = parse(Float64, rsplit(lines[11],"=")[2] )
-
-            descriptor_list[Symbol("n_star")] = parse(Float64, rsplit(lines[13],"=")[2] )
-            descriptor_list[Symbol("T2_star")] = parse(Float64, rsplit(lines[14],"=")[2] )
-            descriptor_list[Symbol("g_star")] = parse(Float64, rsplit(lines[15],"=")[2] )
+            _rtset("nRTvar",     1,  Int)
+            _rtset("nIons",      2,  Int)
+            _rtset("nGroups",    3,  Int)
+            _rtset("iIons",      4,  Int)
+            _rtset("X_fraction", 6,  Float64)
+            _rtset("Y_fraction", 7,  Float64)
+            _rtset("unit_np",    9,  Float64)
+            _rtset("unit_pf",    10, Float64)
+            _rtset("rt_c_frac",  11, Float64)
+            _rtset("n_star",     13, Float64)
+            _rtset("T2_star",    14, Float64)
+            _rtset("g_star",     15, Float64)
 
             #todo read photon groups
             #rtPhotonGroups
