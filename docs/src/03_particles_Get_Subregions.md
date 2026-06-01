@@ -82,6 +82,7 @@ Initialize the required packages and load particle data from a RAMSES simulation
 
 ```julia
 using Mera, PyPlot
+rc("figure", dpi=300); rc("savefig", dpi=300)
 using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
@@ -90,11 +91,10 @@ particles = getparticles(info, :mass);
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:37.223
+[Mera]: 2026-06-01T20:25:57.133
 Code: RAMSES
 output [400] summary:
-mtime:
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -132,7 +132,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get particle data: 2026-06-01T14:27:40.891
+[Mera]: Get particle data: 2026-06-01T20:26:03.156
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(4,) = (:mass,)
@@ -221,7 +221,7 @@ part_subregion = subregion( particles, :cuboid,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:48.207
+[Mera]: 2026-06-01T20:26:10.981
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -293,7 +293,7 @@ part_subregion = subregion( particles, :cuboid,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:48.712
+[Mera]: 2026-06-01T20:26:11.675
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -398,7 +398,7 @@ part_subregion = subregion(particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:49.392
+[Mera]: 2026-06-01T20:26:12.699
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -503,7 +503,7 @@ part_subregion = subregion(particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:50.319
+[Mera]: 2026-06-01T20:26:13.995
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -607,7 +607,7 @@ part_subregion = subregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:50.990
+[Mera]: 2026-06-01T20:26:14.935
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -671,7 +671,7 @@ part_subregion = subregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:51.259
+[Mera]: 2026-06-01T20:26:15.391
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -831,7 +831,7 @@ part_subregion = shellregion( particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:52.194
+[Mera]: 2026-06-01T20:26:16.801
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -897,7 +897,7 @@ part_subregion = shellregion( particles, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:52.431
+[Mera]: 2026-06-01T20:26:17.196
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1011,7 +1011,7 @@ part_subregion = shellregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:53.005
+[Mera]: 2026-06-01T20:26:18.154
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1080,7 +1080,7 @@ part_subregion = shellregion( particles, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:27:53.338
+[Mera]: 2026-06-01T20:26:18.649
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]

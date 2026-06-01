@@ -90,7 +90,7 @@ clumps    = getclumps(info);
 ```
 
 ```
-[Mera]: 2026-06-01T14:30:27.924
+[Mera]: 2026-06-01T20:26:26.408
 Code: RAMSES
 output [400] summary:
 mtime:
@@ -132,7 +132,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-06-01T14:30:30.112
+[Mera]: Get hydro data: 2026-06-01T20:26:28.613
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
@@ -144,7 +144,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:16 ( 7.95 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 ( 8.79 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 849332 cells, 7 variables
@@ -154,12 +154,12 @@ Creating Table from 849332 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-  1.809640 seconds (32.35 M allocations: 1.866 GiB, 8.97% gc time, 46.35% compilation time)
-✓ Table created in 2.073 seconds
+  1.947429 seconds (32.35 M allocations: 1.861 GiB, 8.44% gc time, 46.06% compilation time)
+✓ Table created in 2.218 seconds
 Memory used for data table :
 71.27991771697998 MB
 -------------------------------------------------------
-[Mera]: Get particle data: 2026-06-01T14:30:51.994
+[Mera]: Get particle data: 2026-06-01T20:26:52.545
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
@@ -174,7 +174,7 @@ Found 5.089390e+05 particles
 Memory used for data table :
 34.94713020324707 MB
 -------------------------------------------------------
-[Mera]: Get clump data: 2026-06-01T14:30:53.404
+[Mera]: Get clump data: 2026-06-01T20:26:54.009
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -820,7 +820,7 @@ proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.
 ```
 
 ```
-[Mera]: 2026-06-01T14:31:07.694
+[Mera]: 2026-06-01T20:27:08.477
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.3333333 :: 0.6666667  	==> 16.0 [kpc] :: 32.0 [kpc]
@@ -840,6 +840,7 @@ Processing mode: Variable-based parallel (2 threads)
 
 ```julia
 using PyPlot
+rc("figure", dpi=300); rc("savefig", dpi=300)
 imshow( ( permutedims(proj_z.maps[:mach]) ), origin="lower", extent=proj_z.cextent)
 colorbar();
 ```

@@ -95,6 +95,7 @@ First, we configure the environment and load hydrodynamic data for spatial selec
 
 ```julia
 using Mera, PyPlot
+rc("figure", dpi=300); rc("savefig", dpi=300)
 using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
@@ -103,14 +104,13 @@ gas  = gethydro(info,:rho,lmax=12, smallr=1e-11);
 ```
 
 ```
-[Mera]: 2026-06-01T14:17:37.749
+[Mera]: 2026-06-01T20:14:27.935
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
-simulation time: 594.98
- [Myr]
+simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
@@ -128,7 +128,8 @@ hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pre
 gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
-particles:     true
+particles:
+true
 - Npart:    5.091500e+05
 - Nstars:   5.066030e+05
 - Ndm:      2.547000e+03
@@ -145,7 +146,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-06-01T14:17:39.858
+[Mera]: Get hydro data: 2026-06-01T20:14:31.112
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1,) = (:rho,)
 domain:
@@ -157,7 +158,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:35 (17.17 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:49 (24.41 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 1 variables
@@ -167,8 +168,8 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 5 columns...
-  1.390792 seconds (4.74 M allocations: 2.065 GiB, 0.39% gc time, 50.11% compilation time)
-✓ Table created in 1.674 seconds
+  7.170898 seconds (4.74 M allocations: 2.095 GiB, 2.12% gc time, 30.60% compilation time)
+✓ Table created in 8.161 seconds
 Memory used for data table :
 723.5197649002075 MB
 -------------------------------------------------------
@@ -189,7 +190,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, center=[:boxcenter], direction=:x, verb
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:21
 ```
 
 ### Cuboid Selection Visualization
@@ -225,7 +226,7 @@ cb = colorbar(im, label=labeltext)
 ![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x16638bac0>
+PyObject <matplotlib.colorbar.Colorbar object at 0x1678b3ac0>
 ```
 
 ### Cuboid Region Extraction
@@ -247,7 +248,7 @@ gas_subregion = subregion( gas, :cuboid,
 ```
 
 ```
-[Mera]: 2026-06-01T14:19:19.416
+[Mera]: 2026-06-01T20:16:54.659
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -320,7 +321,7 @@ gas_subregion = subregion( gas, :cuboid,
 ```
 
 ```
-[Mera]: 2026-06-01T14:19:21.994
+[Mera]: 2026-06-01T20:17:02.350
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -338,7 +339,7 @@ proj_x = projection(gas_subregion, :sd, :Msol_pc2, center=[:boxcenter], directio
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:15
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
 ```
 
 ```julia
@@ -439,7 +440,7 @@ gas_subregion = subregion(  gas, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:21:07.992
+[Mera]: 2026-06-01T20:19:11.754
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -570,7 +571,7 @@ cb = colorbar(im, label=labeltext);
 ```
 
 ```
-[Mera]: 2026-06-01T14:21:09.987
+[Mera]: 2026-06-01T20:19:14.593
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -579,12 +580,13 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
 Memory used for data table :679.2643556594849
+Progress:  29%|███████████▊                             |  ETA: 0:00:36
  MB
 -------------------------------------------------------
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:18
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_15.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_16.png)
 
 ## Spherical Selection
 
@@ -601,7 +603,7 @@ proj_x = projection(gas, :sd, unit=:Msol_pc2, center=[:boxcenter], direction=:x,
 ```
 
 ```
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
 ```
 
 ### Spherical Selection Visualization
@@ -651,7 +653,7 @@ gas_subregion = subregion(  gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:22:57.732
+[Mera]: 2026-06-01T20:21:16.046
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -719,7 +721,7 @@ gas_subregion = subregion(  gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:23:00.937
+[Mera]: 2026-06-01T20:21:19.388
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -892,7 +894,7 @@ gas_subregion = shellregion( gas, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:24:47.069
+[Mera]: 2026-06-01T20:23:07.049
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -961,7 +963,7 @@ gas_subregion = shellregion(gas, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:24:49.139
+[Mera]: 2026-06-01T20:23:09.392
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1080,7 +1082,7 @@ gas_subregion = shellregion(gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:26:33.270
+[Mera]: 2026-06-01T20:24:53.729
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1149,7 +1151,7 @@ gas_subregion = shellregion(gas, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:26:36.145
+[Mera]: 2026-06-01T20:24:56.574
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]

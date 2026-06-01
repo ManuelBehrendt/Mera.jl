@@ -69,16 +69,16 @@ subregion(clumps, :cuboid, xrange=[x1,x2], inverse=true)
 
 ```julia
 using Mera, PyPlot
+rc("figure", dpi=300); rc("savefig", dpi=300)
 info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14")
 clumps = getclumps(info);
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:47.216
+[Mera]: 2026-06-01T20:13:56.577
 Code: RAMSES
 output [400] summary:
-mtime:
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -116,7 +116,7 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get clump data: 2026-06-01T14:16:48.990
+[Mera]: Get clump data: 2026-06-01T20:14:00.516
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -207,7 +207,7 @@ clumps_subregion = subregion( clumps, :cuboid,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:52.331
+[Mera]: 2026-06-01T20:14:05.661
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
@@ -312,14 +312,13 @@ clumps_subregion = subregion( clumps, :cuboid,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:52.942
+[Mera]: 2026-06-01T20:14:06.556
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.4166667 :: 0.5  	==> 20.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.1875 :: 0.8125  	==> 9.0 [kpc] :: 39.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-Memory used for data table :33.45703125
- KB
+Memory used for data table :33.45703125 KB
 -------------------------------------------------------
 ```
 
@@ -378,7 +377,7 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-06-01T14:16:53.075
+[Mera]: Get clump data: 2026-06-01T20:14:06.819
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -435,7 +434,7 @@ clumps_subregion = subregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:53.457
+[Mera]: 2026-06-01T20:14:07.602
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -537,7 +536,7 @@ clumps_subregion = subregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:53.844
+[Mera]: 2026-06-01T20:14:08.928
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2083333 :: 0.3333333  	==> 10.0 [kpc] :: 16.0 [kpc]
@@ -545,7 +544,8 @@ ymin::ymax: 0.4375 :: 0.5625  	==> 21.0 [kpc] :: 27.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 Radius: 3.0 [kpc]
 Height: 2.0 [kpc]
-Memory used for data table :57.73828125 KB
+Memory used for data table :57.73828125
+ KB
 -------------------------------------------------------
 ```
 
@@ -605,14 +605,15 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-06-01T14:16:53.979
+[Mera]: Get clump data: 2026-06-01T20:14:09.488
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
+Memory used for data table :
+61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -651,7 +652,7 @@ ylabel("z [kpc]")
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_48_1.png)
 
 ```
-PyObject Text(871.9411764705884, 0.5, 'z [kpc]')
+PyObject Text(2615.8235294117653, 0.5, 'z [kpc]')
 ```
 
 ### Spherical Region: Cutout the data assigned to the object `clumps`
@@ -665,7 +666,7 @@ clumps_subregion = subregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:54.214
+[Mera]: 2026-06-01T20:14:09.937
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
@@ -767,15 +768,14 @@ clumps_subregion = subregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:54.453
+[Mera]: 2026-06-01T20:14:10.469
 center: [0.2708333, 0.5, 0.5] ==> [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0625 :: 0.4791667  	==> 3.0 [kpc] :: 23.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 Radius: 10.0 [kpc]
-Memory used for data table :34.30078125
- KB
+Memory used for data table :34.30078125 KB
 -------------------------------------------------------
 ```
 
@@ -817,7 +817,7 @@ ylabel("z [kpc]")
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_59_1.png)
 
 ```
-PyObject Text(871.9411764705884, 0.5, 'z [kpc]')
+PyObject Text(2615.8235294117653, 0.5, 'z [kpc]')
 ```
 
 ## Advanced Selection Techniques
@@ -866,15 +866,14 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-06-01T14:16:54.584
+[Mera]: Get clump data: 2026-06-01T20:14:10.732
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-61.58203125 KB
+Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -926,7 +925,7 @@ clumps_subregion = shellregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:54.911
+[Mera]: 2026-06-01T20:14:11.250
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -991,7 +990,7 @@ clumps_subregion = shellregion( clumps, :cylinder,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:55.053
+[Mera]: 2026-06-01T20:14:11.544
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1055,14 +1054,15 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);
 ```
 
 ```
-[Mera]: Get clump data: 2026-06-01T14:16:55.184
+[Mera]: Get clump data: 2026-06-01T20:14:11.878
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Read 12 colums:
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
+Memory used for data table :
+61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -1113,7 +1113,7 @@ clumps_subregion = shellregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:55.406
+[Mera]: 2026-06-01T20:14:12.986
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1122,8 +1122,7 @@ zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :18.36328125
- KB
+Memory used for data table :18.36328125 KB
 -------------------------------------------------------
 ```
 
@@ -1177,7 +1176,7 @@ clumps_subregion = shellregion( clumps, :sphere,
 ```
 
 ```
-[Mera]: 2026-06-01T14:16:55.544
+[Mera]: 2026-06-01T20:14:13.344
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1186,8 +1185,7 @@ zmin::zmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 Inner radius: 5.0 [kpc]
 Outer radius: 10.0 [kpc]
 Radius diff: 5.0 [kpc]
-Memory used for data table :44.42578125
- KB
+Memory used for data table :44.42578125 KB
 -------------------------------------------------------
 ```
 

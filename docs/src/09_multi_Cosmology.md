@@ -49,11 +49,10 @@ info = getinfo(80, "/Volumes/FASTStorage/Simulations/Mera-Tests/yt_cosmo");
 ```
 
 ```
-[Mera]: 2026-06-01T14:47:01.263
+[Mera]: 2026-06-01T19:55:47.873
 Code: RAMSES
 output [80] summary:
-mtime:
-2012-08-13T16:51:06
+mtime: 2012-08-13T16:51:06
 ctime: 2026-06-01T07:42:48.561
 =======================================================
 simulation time: 11.925 [Gyr] (age of universe)
@@ -168,7 +167,7 @@ ages  = getvar(particles, :age, :Gyr)
 ```
 
 ```
-[Mera]: Get particle data: 2026-06-01T14:47:05.466
+[Mera]: Get particle data: 2026-06-01T19:55:52.461
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
@@ -191,6 +190,7 @@ Memory used for data table :
 
 ```julia
 using PyPlot
+rc("figure", dpi=300); rc("savefig", dpi=300)
 figure(figsize=(6,4))
 hist(ages[stars], bins=40, color="steelblue")
 xlabel("stellar age  [Gyr]"); ylabel("number of star particles")
@@ -239,7 +239,7 @@ delta = getvar(gas, :overdensity)
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T14:47:13.141
+[Mera]: Get hydro data: 2026-06-01T19:56:00.568
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
 domain:
@@ -251,7 +251,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
    Files to be processed: 16
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (73.73 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (75.31 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 1749455 cells, 6 variables
@@ -261,8 +261,8 @@ Creating Table from 1749455 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 10 columns...
-  0.722757 seconds (3.28 M allocations: 478.640 MiB, 0.91% gc time, 93.55% compilation time: 1% of which was recompilation)
-✓ Table created in 1.012 seconds
+  0.846090 seconds (3.28 M allocations: 478.784 MiB, 0.80% gc time, 88.93% compilation time: 1% of which was recompilation)
+✓ Table created in 1.142 seconds
 Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------
 ```
