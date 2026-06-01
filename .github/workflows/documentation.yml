@@ -7,14 +7,18 @@ on:
     tags: '*'
   pull_request:
 
+# Opt JS-based actions into Node.js 24 ahead of GitHub's forced switch (2026-06-16).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build:
     permissions:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: julia-actions/setup-julia@v1
+      - uses: actions/checkout@v5
+      - uses: julia-actions/setup-julia@v2
         with:
           version: '1.11'
       - name: Install dependencies
