@@ -64,6 +64,7 @@ if isempty(_focus)
         end
         include("02_unit_system.jl")
         include("22_types_tests.jl")  # data-free type system unit tests
+        include("30_doc_codeblocks.jl")  # data-free: doc ```julia blocks must parse (runs on 1.10/1.11/1.12)
     end
 
     # ========================================================================
