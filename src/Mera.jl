@@ -111,6 +111,15 @@ export
     getextent,
     wstat,
 
+# cosmology
+    iscosmological,
+    redshift,
+    cosmology,
+    comoving_to_proper_length,
+    proper_to_comoving_length,
+    comoving_to_proper_density,
+    proper_to_comoving_density,
+
 #
     projection,
     benchmark_projection_hydro,
@@ -221,6 +230,7 @@ include("functions/io/auto_io_optimization.jl")
 
 include("functions/overview.jl")
 include("functions/basic_calc.jl")
+include("functions/cosmology.jl")
 
 # Get variables/quantities
 include("functions/getvar/getvar.jl")

@@ -86,6 +86,18 @@ const DATASETS = Dict(
         has_particles = true,
         has_clumps = false
     ),
+    # Cosmological zoom (yt project public sample, Turk et al. 2011) — the only
+    # cosmological run in the suite; used to exercise the cosmology accessors.
+    # z ≈ 0.143 (aexp ≈ 0.875), H0 = 70.3, Ωm = 0.276, ΩΛ = 0.724, flat (Ωk = 0).
+    :yt_cosmo => (
+        path = joinpath(SIMULATION_PATH, "yt_cosmo"),
+        output = 80,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = true,
+        has_clumps = false,
+        is_cosmological = true
+    ),
 )
 
 # Test tolerances
