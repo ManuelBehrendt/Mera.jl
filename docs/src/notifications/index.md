@@ -1,5 +1,7 @@
 # Notifications
 
+![Team collaboration with MERA.jl notifications](../assets/representative_team_60.png)
+
 Mera can tell you when long-running work finishes — with a local sound, an
 email, and/or a message to a Zulip team-chat channel (optionally with captured
 output, timing, and file attachments). Three functions are exported:
