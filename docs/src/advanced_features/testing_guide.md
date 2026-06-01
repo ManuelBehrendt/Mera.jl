@@ -96,6 +96,7 @@ available and `MERA_SMOKE_ONLY` is not set.
 | Quality & Fundamentals | `01_aqua_quality.jl` | Aqua.jl quality checks (ambiguities, unbound args, stale deps, piracy) | No |
 | Quality & Fundamentals | `02_unit_system.jl` | Physical constants, unit scales, CODATA validation | No |
 | Quality & Fundamentals | `22_types_tests.jl` | Type constructors, `getproperty` aliases, JLD2 conversion methods | No |
+| Quality & Fundamentals | `30_doc_codeblocks.jl` | Syntax-lints every `julia` code block in `docs/src` (runs on the 1.10/1.11/1.12 CI matrix) | No |
 | Core Functionality | `03_data_readers.jl` | `getinfo`/`gethydro`/`getparticles`/`getgravity`; legacy + new particle formats | Yes |
 | Core Functionality | `04_basic_calculations.jl` | `msum`, `center_of_mass`/`com`, `bulk_velocity` variants | Yes |
 | Core Functionality | `05_derived_variables.jl` | Temperature, sound speed, Mach, Jeans length/mass, free-fall time | Yes |
