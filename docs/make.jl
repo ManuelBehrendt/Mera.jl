@@ -52,7 +52,9 @@ makedocs(modules = [Mera],
 
                           "Projection"          => Any[ "Hydro"       =>  "06_hydro_Projection.md",
                                                         "Particles"   =>  "06_particles_Projection.md",
-                                                        "API Reference" => "api/projections.md"]],
+                                                        "API Reference" => "api/projections.md"],
+
+                          "Cosmological Runs"   => "09_multi_Cosmology.md"],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files"   =>  "07_multi_Mera_Files.md",
