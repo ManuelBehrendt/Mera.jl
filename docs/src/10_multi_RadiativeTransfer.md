@@ -25,16 +25,7 @@ info = getinfo(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/rt_stromgren");
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (6), wrong dep version loaded (4), wrong source (2), mismatched flags (6))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-*__   __ _______ ______   _______
-|  |_|  |       |    _ | |   _   |
-|       |    ___|   | || |  |_|  |
-|       |   |___|   |_||_|       |
-|       |    ___|    __  |       |
-| ||_|| |   |___|   |  | |   _   |
-|_|   |_|_______|___|  |_|__| |__|
-[Mera]: 2026-06-02T09:43:35.264
+[Mera]: 2026-06-02T10:19:05.671
 Code: RAMSES
 output [3] summary:
 mtime: 2026-06-01T21:54:33.519
@@ -59,13 +50,14 @@ particles:     false
 -------------------------------------------------------
 rt:            true
 rt-variables: 12
-nIons: ?
+nIons: 3
 nGroups: 3
-iIons: ?
+iIons: 6
 -------------------------------------------------------
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_G
+ROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
@@ -87,7 +79,7 @@ rt = getrt(info);
 ```
 
 ```
-[Mera]: Get RT data: 2026-06-02T09:43:37.913
+[Mera]: Get RT data: 2026-06-02T10:19:08.591
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) = (:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3)
 domain:
@@ -99,7 +91,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 15.0 [kpc]
    Files to be processed: 1
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.59  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.48  s/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 262144 cells, 12 variables
@@ -201,7 +193,7 @@ shell = shellregion(rt, :sphere, radius=[3.,6.], center=[:bc], range_unit=:kpc)
 ```
 
 ```
-[Mera]: 2026-06-02T09:43:46.207
+[Mera]: 2026-06-02T10:19:16.855
 center: [0.5, 0.5, 0.5] ==> [7.5 [kpc] :: 7.5 [kpc] :: 7.5 [kpc]]
 domain:
 xmin::xmax: 0.1666672 :: 0.8333345  	==> 2.5 [kpc] :: 12.5 [kpc]
@@ -211,7 +203,7 @@ Radius: 5.0 [kpc]
 Memory used for data table :5.523414611816406
  MB
 -------------------------------------------------------
-[Mera]: 2026-06-02T09:43:46.994
+[Mera]: 2026-06-02T10:19:17.650
 center: [0.5, 0.5, 0.5] ==> [7.5 [kpc] :: 7.5 [kpc] :: 7.5 [kpc]]
 domain:
 xmin::xmax: 0.1000005 :: 0.9000012  	==> 1.5 [kpc] :: 13.5 [kpc]
@@ -235,8 +227,6 @@ Memory used for data table :8.088722229003906
 **volume-weighting**. Project the total photon density along z; a thin `zrange`
 gives a slice.
 
-**Weighting & modes.** For RT variables the projection defaults to **volume-weighting** (`mode=:standard`, the line-of-sight mean). Use `mode=:sum` for the **column integral** $\int N_p\,dz$ (projected photon density). For mock **emission** images one instead integrates the *emissivity* $I=\int j\,dz$ (e.g. recombination $j\propto n_e n_{\rm HII}$); that is a derived quantity built from the gas density and ionization state — a combined RT+hydro projection (planned), not a weighting of the raw photon density.
-
 ```julia
 proj = projection(rt, :Np_total, verbose=false, show_progress=false)
 figure(figsize=(5,4))
@@ -246,6 +236,29 @@ xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout();
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_17_1.png)
+
+## Mock emission map (RT ionization + gas density)
+
+A recombination-line image (e.g. H$\alpha$) is the line-of-sight integral of the
+emissivity $j \propto n_e n_{\rm HII} \approx n_{\rm HII}^2$. This is a **hydro-derived**
+quantity: the ionization fraction lives in the hydro data, and Mera auto-locates
+it from the RT descriptor (`iIons`). `getvar(gas, :em_recomb)` gives $n_{\rm HII}^2$;
+projecting it with `mode=:sum` yields the synthetic emission map of the HII region.
+
+```julia
+gas = gethydro(info, verbose=false, show_progress=false)
+em_map = projection(gas, :em_recomb, mode=:sum, verbose=false, show_progress=false)
+figure(figsize=(5,4))
+imshow(log10.(permutedims(em_map.maps[:em_recomb]) .+ 1e-40), origin="lower", cmap="hot")
+colorbar(label=L"$\log_{10}\int n_{HII}^2\,dz$"); title("Mock recombination emission (Stromgren sphere)")
+xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout();
+```
+
+```
+  0.805149 seconds (11.67 M allocations: 732.688 MiB, 5.14% gc time, 62.08% compilation time: 5% of which was recompilation)
+```
+
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_19_2.png)
 
 ## Summary
 
@@ -258,4 +271,4 @@ xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout();
 | `getvar(rt, :x/:r_sphere/:cellsize)` | geometry (shared with hydro) |
 | `subregion` / `shellregion` | spatial selection / slices |
 
-All shown above run on the `RtDataType` returned by `getrt`.
+All shown above run on the `RtDataType` from `getrt`; the emission map uses the hydro object.
