@@ -25,7 +25,16 @@ info = getinfo(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/rt_stromgren");
 ```
 
 ```
-[Mera]: 2026-06-02T10:19:05.671
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (6), wrong dep version loaded (4), wrong source (2), mismatched flags (6))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+[Mera]: 2026-06-02T11:16:04.337
 Code: RAMSES
 output [3] summary:
 mtime: 2026-06-01T21:54:33.519
@@ -56,8 +65,8 @@ iIons: 6
 -------------------------------------------------------
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_G
-ROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: (
+"&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
@@ -79,7 +88,7 @@ rt = getrt(info);
 ```
 
 ```
-[Mera]: Get RT data: 2026-06-02T10:19:08.591
+[Mera]: Get RT data: 2026-06-02T11:16:09.115
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) = (:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3)
 domain:
@@ -91,7 +100,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 15.0 [kpc]
    Files to be processed: 1
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.48  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 1.00  s/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 262144 cells, 12 variables
@@ -193,7 +202,7 @@ shell = shellregion(rt, :sphere, radius=[3.,6.], center=[:bc], range_unit=:kpc)
 ```
 
 ```
-[Mera]: 2026-06-02T10:19:16.855
+[Mera]: 2026-06-02T11:16:23.151
 center: [0.5, 0.5, 0.5] ==> [7.5 [kpc] :: 7.5 [kpc] :: 7.5 [kpc]]
 domain:
 xmin::xmax: 0.1666672 :: 0.8333345  	==> 2.5 [kpc] :: 12.5 [kpc]
@@ -203,7 +212,7 @@ Radius: 5.0 [kpc]
 Memory used for data table :5.523414611816406
  MB
 -------------------------------------------------------
-[Mera]: 2026-06-02T10:19:17.650
+[Mera]: 2026-06-02T11:16:24.527
 center: [0.5, 0.5, 0.5] ==> [7.5 [kpc] :: 7.5 [kpc] :: 7.5 [kpc]]
 domain:
 xmin::xmax: 0.1000005 :: 0.9000012  	==> 1.5 [kpc] :: 13.5 [kpc]
@@ -255,10 +264,40 @@ xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout();
 ```
 
 ```
-  0.805149 seconds (11.67 M allocations: 732.688 MiB, 5.14% gc time, 62.08% compilation time: 5% of which was recompilation)
+  1.105034 seconds (11.67 M allocations: 732.660 MiB, 4.80% gc time, 62.52% compilation time: 5% of which was recompilation)
 ```
 
 ![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_19_2.png)
+
+## Ionization map
+
+The ionization state lives in the hydro data; `:xHII` is auto-located via the RT
+descriptor (`iIons`). Projecting it shows the ionized region (the Strömgren sphere).
+
+```julia
+xhii_map = projection(gas, :xHII, verbose=false, show_progress=false)
+figure(figsize=(5,4))
+imshow(permutedims(xhii_map.maps[:xHII]), origin="lower", cmap="viridis")
+colorbar(label=L"$x_{HII}$ (mass-weighted)"); title("Ionization fraction (z-projection)")
+xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout();
+```
+
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_21_1.png)
+
+## Photon spectrum (per group)
+
+Total photon content per group — the spectral distribution of the radiation field.
+
+```julia
+ngroups = info.nvarrt ÷ 4
+totals = [sum(getvar(rt, Symbol("Np", g))) for g in 1:ngroups]
+figure(figsize=(5,3.5))
+bar(1:ngroups, totals, color="purple")
+xlabel("photon group"); ylabel("total Np (code units)"); xticks(1:ngroups)
+title("Photon content per group"); tight_layout();
+```
+
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_23_1.png)
 
 ## Summary
 
