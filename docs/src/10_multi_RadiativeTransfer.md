@@ -25,7 +25,16 @@ info = getinfo(3, "/Volumes/FASTStorage/Simulations/Mera-Tests/rt_stromgren");
 ```
 
 ```
-[Mera]: 2026-06-02T09:28:43.668
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (6), wrong dep version loaded (4), wrong source (2), mismatched flags (6))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+[Mera]: 2026-06-02T09:43:35.264
 Code: RAMSES
 output [3] summary:
 mtime: 2026-06-01T21:54:33.519
@@ -51,13 +60,12 @@ particles:     false
 rt:            true
 rt-variables: 12
 nIons: ?
-nGroups: ?
+nGroups: 3
 iIons: ?
 -------------------------------------------------------
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "
-&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&AMR_PARAMS", "&OUTPUT_PARAMS", "&BOUNDARY_PARAMS", "&RT_PARAMS", "&RT_GROUPS\t\t\t! Blackbody at T=1d5 Kelvin", "&UNITS_PARAMS", "&RUN_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
@@ -79,7 +87,7 @@ rt = getrt(info);
 ```
 
 ```
-[Mera]: Get RT data: 2026-06-02T09:28:46.451
+[Mera]: Get RT data: 2026-06-02T09:43:37.913
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12) = (:Np1, :Fx1, :Fy1, :Fz1, :Np2, :Fx2, :Fy2, :Fz2, :Np3, :Fx3, :Fy3, :Fz3)
 domain:
@@ -91,7 +99,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 15.0 [kpc]
    Files to be processed: 1
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.49  s/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.59  s/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 262144 cells, 12 variables
@@ -193,7 +201,7 @@ shell = shellregion(rt, :sphere, radius=[3.,6.], center=[:bc], range_unit=:kpc)
 ```
 
 ```
-[Mera]: 2026-06-02T09:28:54.750
+[Mera]: 2026-06-02T09:43:46.207
 center: [0.5, 0.5, 0.5] ==> [7.5 [kpc] :: 7.5 [kpc] :: 7.5 [kpc]]
 domain:
 xmin::xmax: 0.1666672 :: 0.8333345  	==> 2.5 [kpc] :: 12.5 [kpc]
@@ -203,7 +211,7 @@ Radius: 5.0 [kpc]
 Memory used for data table :5.523414611816406
  MB
 -------------------------------------------------------
-[Mera]: 2026-06-02T09:28:55.539
+[Mera]: 2026-06-02T09:43:46.994
 center: [0.5, 0.5, 0.5] ==> [7.5 [kpc] :: 7.5 [kpc] :: 7.5 [kpc]]
 domain:
 xmin::xmax: 0.1000005 :: 0.9000012  	==> 1.5 [kpc] :: 13.5 [kpc]
@@ -221,6 +229,22 @@ Memory used for data table :8.088722229003906
 (all_cells = 262144, in_sphere = 45235, in_shell = 66250)
 ```
 
+## Projection (2D maps)
+
+`projection` works on RT data too. RT has no mass, so it defaults to
+**volume-weighting**. Project the total photon density along z; a thin `zrange`
+gives a slice.
+
+```julia
+proj = projection(rt, :Np_total, verbose=false, show_progress=false)
+figure(figsize=(5,4))
+imshow(log10.(permutedims(proj.maps[:Np_total]) .+ 1e-50), origin="lower", cmap="inferno")
+colorbar(label=L"$\log_{10}\,N_p^{\rm total}$"); title("RT projection: total photon density (z)")
+xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout();
+```
+
+![](10_multi_RadiativeTransfer_files/10_multi_RadiativeTransfer_17_1.png)
+
 ## Summary
 
 | call | result |
@@ -232,4 +256,4 @@ Memory used for data table :8.088722229003906
 | `getvar(rt, :x/:r_sphere/:cellsize)` | geometry (shared with hydro) |
 | `subregion` / `shellregion` | spatial selection / slices |
 
-2D `projection` of RT quantities is in progress.
+All shown above run on the `RtDataType` returned by `getrt`.
