@@ -47,7 +47,7 @@ if !@isdefined(ArgumentsType)
 end
 
 
-function projection(   dataobject::HydroDataType, var::Symbol;
+function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol;
                         unit::Symbol=:standard,
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
@@ -96,7 +96,7 @@ function projection(   dataobject::HydroDataType, var::Symbol;
 end
 
 
-function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
+function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
                         pxsize::Array{<:Any,1}=[missing, missing],
@@ -144,7 +144,7 @@ function projection(   dataobject::HydroDataType, var::Symbol, unit::Symbol;
 end
 
 
-function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, units::Array{Symbol,1};
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
                         pxsize::Array{<:Any,1}=[missing, missing],
@@ -193,7 +193,7 @@ end
 
 
 
-function projection(   dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1}, unit::Symbol;
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
                         pxsize::Array{<:Any,1}=[missing, missing],
@@ -561,7 +561,7 @@ Returns `HydroMapsType` containing:
 - **`.center`**: Physical center coordinates of projection
 
 """
-function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
+function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],
                         lmax::Real=dataobject.lmax,
                         res::Union{Real, Missing}=missing,
@@ -604,6 +604,12 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
     if !(myargs.show_progress === missing) show_progress = myargs.show_progress end
     if !(myargs.verbose_threads === missing) verbose_threads = myargs.verbose_threads end
+
+    # RT data carry no mass density, so default mass-weighting to volume-weighting
+    # (avoids the :rho/:sd path in check_need_rho). Users can still override.
+    if isa(dataobject, RtDataType) && length(weighting) >= 1 && weighting[1] == :mass
+        weighting = [:volume, length(weighting) >= 2 ? weighting[2] : missing]
+    end
 
     # Validate and normalize input parameters
     verbose = Mera.checkverbose(verbose)
@@ -1250,7 +1256,9 @@ function projection(   dataobject::HydroDataType, vars::Array{Symbol,1};
 
 
     maps_lmax = SortedDict( )
-    return HydroMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.smallr, dataobject.smallc, dataobject.scale, dataobject.info)
+    _smallr = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallr
+    _smallc = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallc
+    return HydroMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info)
 
     #return maps, maps_unit, extent_center, ranges
 end

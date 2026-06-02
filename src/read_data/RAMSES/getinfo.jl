@@ -874,9 +874,10 @@ function printsimoverview(info::InfoType, verbose::Bool)
         if info.rt
             println("rt-variables: ", info.nvarrt)
             if info.descriptor.rtfile
-                # robust access: RT descriptor keys may be absent for some RAMSES versions
+                # robust access: RT descriptor keys may be absent for some RAMSES
+                # versions; nGroups falls back to nvarrt/4 (Np + 3 flux per group).
                 println("nIons: ",   get(info.descriptor.rt, :nIons,   "?") )
-                println("nGroups: ", get(info.descriptor.rt, :nGroups, "?") )
+                println("nGroups: ", get(info.descriptor.rt, :nGroups, info.nvarrt ÷ 4) )
                 println("iIons: ",   get(info.descriptor.rt, :iIons,   "?") )
             end
             if !info.clumps
