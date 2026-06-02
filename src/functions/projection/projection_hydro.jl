@@ -560,6 +560,41 @@ Returns `HydroMapsType` containing:
 - **`.ranges`**: Normalized coordinate ranges used
 - **`.center`**: Physical center coordinates of projection
 
+### Radiative transfer (RT) projections
+
+The same `projection` function accepts an `RtDataType` object (`rt = getrt(info)`)
+and shares the AMR engine above. Two RT-specific behaviours apply:
+
+- **Default weighting is `:volume`** (not `:mass`): RT fields carry no cell mass, so
+  a mass weight is meaningless. Passing `weighting=[:mass]` is silently promoted to
+  `[:volume]`. Override explicitly with e.g. `weighting=[:Np1]` to flux-weight by the
+  photon density, or `weighting=[:none]` for a plain geometric average.
+- **`mode=:sum`** turns a projection into a **line-of-sight column integral**
+  (∫ q dz) — the natural choice for photon columns and emission maps; `mode=:standard`
+  gives the (volume-)weighted average along the line of sight.
+
+Typical RT maps:
+```julia
+rt  = getrt(info)
+gas = gethydro(info)
+
+# Photon-density column of group 1 (line-of-sight integral)
+np_col = projection(rt, :Np1, mode=:sum, center=[:bc], range_unit=:kpc)
+
+# Reduced-flux map (beam vs. isotropic), volume-weighted average
+fmap = projection(rt, :reducedflux1, center=[:bc])
+
+# Mock recombination-line emission map (∝ ∫ n_HII² dz) — a HYDRO quantity
+em = projection(gas, :em_recomb, mode=:sum, center=[:bc], range_unit=:kpc)
+
+# Ionization map xHII (hydro passive scalar located via the RT descriptor)
+xmap = projection(gas, :xHII, center=[:bc])
+```
+
+RT photon fields and the hydro ionization state live on **separate** objects; project
+each on its own object (analogous to gravity vs. hydro). Use `getvar(rt, …)` /
+`getvar(gas, …)` for the per-cell quantities documented under `getvar`.
+
 """
 function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1};
                         units::Array{Symbol,1}=[:standard],

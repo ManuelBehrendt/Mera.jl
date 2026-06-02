@@ -201,6 +201,36 @@ function get_data(  dataobject::HydroDataType,
             xhii = select(masked_data, xion_var)
             vars_dict[:em_recomb] = @. (nH * xhii)^2 * selected_unit
 
+        # RT-derived number densities [cm^-3]. n_H = rho * scale.nH (= X/m_H * unit_d);
+        # the ionization fractions are located via the RT descriptor (iIons), RAMSES
+        # order HII, HeII, HeIII. n_HII = n_H·xHII, n_HI = n_H·(1-xHII). The free-electron
+        # density n_e sums H and (if tracked) He contributions:
+        # n_e = n_HII + n_HeII + 2·n_HeIII, with n_He = n_H · Y/(4X) from the descriptor.
+        elseif i == :n_HII || i == :n_HI || i == :n_e
+            rtd = dataobject.info.descriptor.rt
+            if !haskey(rtd, :iIons)
+                error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
+            end
+            selected_unit = getunit(dataobject, i, vars, units)
+            vlist = dataobject.info.variable_list
+            nH    = select(masked_data, :rho) .* dataobject.info.scale.nH   # n_H [cm^-3]
+            xHII  = select(masked_data, vlist[rtd[:iIons]])
+            if i == :n_HII
+                vars_dict[i] = @. nH * xHII * selected_unit
+            elseif i == :n_HI
+                vars_dict[i] = @. nH * (1.0 - xHII) * selected_unit
+            else  # :n_e — free electrons from H, plus He if it is tracked (nIons >= 3)
+                ne = nH .* xHII
+                nions = get(rtd, :nIons, 1)
+                if nions >= 3 && get(rtd, :X_fraction, 0.0) > 0 && haskey(rtd, :Y_fraction)
+                    nHe    = nH .* (rtd[:Y_fraction] / (4.0 * rtd[:X_fraction]))
+                    xHeII  = select(masked_data, vlist[rtd[:iIons] + 1])
+                    xHeIII = select(masked_data, vlist[rtd[:iIons] + 2])
+                    ne = @. ne + nHe * (xHeII + 2.0 * xHeIII)
+                end
+                vars_dict[i] = ne .* selected_unit
+            end
+
         elseif i == :entropy_specific
             selected_unit = getunit(dataobject, :entropy_specific, vars, units)
             # Entropy S = k_B * ln(P / rho^gamma) / (m_u * (gamma - 1))

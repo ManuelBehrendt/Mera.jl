@@ -158,6 +158,39 @@ quantities = getvar(gas, [:mass, :v], [:Msol, :km_s]) # unit calculation provide
 # Example 3: get several variables in the same units by providing a single argument
 quantities = getvar(gas, [:vx, :vy, :vz], :km_s)
 ...
+```
+
+#### Radiative transfer (RT) quantities
+For an RT run (`rt = getrt(info)`) the stored variables are, per photon group `g`,
+the photon number density `:Np<g>` and the flux components `:Fx<g>`, `:Fy<g>`, `:Fz<g>`
+(code units). Derived RT quantities on the RT object:
+- **`:Fmag<g>`**         flux magnitude |F_g| = √(Fx²+Fy²+Fz²)            [code units]
+- **`:Np_total`**        photon number density summed over all groups     [code units]
+- **`:reducedflux<g>`**  reduced flux f = |F_g| / (c·Np_g), dimensionless in [0,1] (1 = free-streaming beam, 0 = isotropic)
+- **`:Np<g>_cgs`**       physical photon number density = Np_g · unit_np   [photons cm⁻³]
+- **`:Fmag<g>_cgs`**     physical flux magnitude = |F_g| · unit_pf         [photons cm⁻² s⁻¹]
+- **`:photon_energy_density<g>`**  radiation energy density of group g = Np_g · unit_np · egy_g  [erg cm⁻³] (egy_g = mean photon energy from `info.descriptor.rt[:group_egy]`)
+- **`:rad_energy_density`**        total radiation energy density summed over all groups  [erg cm⁻³]
+
+The per-group photon properties parsed from `info_rt` (mean energy, energy bounds,
+photoionization cross-sections, species→group map) are available in
+`info.descriptor.rtPhotonGroups` (`[g][:egy_eV]`, `[:csn_cm2]`, `[:cse_cm2]`,
+plus `[:L0_eV]`, `[:L1_eV]`, `[:spec2group]`).
+
+The ionization fractions are passive **hydro** scalars (located via the RT descriptor
+`info.descriptor.rt[:iIons]`); request them on the hydro object (`gas = gethydro(info)`):
+- **`:xHII`, `:xHeII`, `:xHeIII`**  ionization fractions (dimensionless)
+- **`:n_HII`, `:n_HI`, `:n_e`**     HII / HI / free-electron number density  [cm⁻³]
+- **`:em_recomb`**                  recombination-emissivity proxy ∝ nₑ·n_HII ≈ n_HII²  [cm⁻⁶] (project with `mode=:sum` for a mock emission map)
+
+```julia
+rt   = getrt(info)
+gas  = gethydro(info)
+f    = getvar(rt, :reducedflux1)                 # reduced flux of group 1
+nphot = getvar(rt, :Np1_cgs)                     # physical photon density [cm^-3]
+xHII = getvar(gas, :xHII)                        # ionization fraction (hydro scalar)
+ne   = getvar(gas, :n_e)                         # free-electron density [cm^-3]
+```
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),

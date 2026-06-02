@@ -98,6 +98,18 @@ const DATASETS = Dict(
         has_clumps = false,
         is_cosmological = true
     ),
+    # RAMSES-RT Strömgren-sphere test (ramses-2025.05). Hydro + RT photon groups;
+    # the ionization fractions are passive hydro scalars located via the RT
+    # descriptor (info_rt → iIons). Used to exercise getrt/RT getvar/projection.
+    :rt_stromgren => (
+        path = joinpath(SIMULATION_PATH, "rt_stromgren"),
+        output = 4,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = false,
+        has_clumps = false,
+        has_rt = true
+    ),
 )
 
 # Test tolerances

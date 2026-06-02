@@ -66,6 +66,7 @@ if isempty(_focus)
         include("22_types_tests.jl")  # data-free type system unit tests
         include("30_doc_codeblocks.jl")  # data-free: doc ```julia blocks must parse (runs on 1.10/1.11/1.12)
         include("31_cosmology_tests.jl")  # data-free core + optional real-cosmo block; runs on 1.10/1.11/1.12
+        include("32_rt_tests.jl")  # data-free RT API surface + optional rt_stromgren block; runs on 1.10/1.11/1.12
     end
 
     # ========================================================================

@@ -150,6 +150,68 @@ function get_data(dataobject::RtDataType,
             end
             vars_dict[:Np_total] = total .* selected_unit
 
+        # Reduced photon flux per group: f_g = |F_g| / (c·Np_g). In RAMSES code units
+        # unit_pf/unit_np equals the (reduced) light speed, so the dimensionless reduced
+        # flux is simply |F_g|/Np_g, bounded to [0,1] (1 = free-streaming beam,
+        # 0 = isotropic field). Cells with Np_g == 0 return 0.
+        elseif (m = match(r"^reducedflux(\d+)$", string(i))) !== nothing
+            g = m.captures[1]
+            selected_unit = getunit(dataobject, i, vars, units)
+            np = select(masked_data, Symbol("Np" * g))
+            fx = select(masked_data, Symbol("Fx" * g))
+            fy = select(masked_data, Symbol("Fy" * g))
+            fz = select(masked_data, Symbol("Fz" * g))
+            vars_dict[i] = @. ifelse(np > 0, sqrt(fx^2 + fy^2 + fz^2) / np, 0.0) * selected_unit
+
+        # Physical photon number density per group [photons cm^-3] = Np_g · unit_np
+        # (unit_np from the RT descriptor, info_rt).
+        elseif (m = match(r"^Np(\d+)_cgs$", string(i))) !== nothing
+            g = m.captures[1]
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :unit_np) || error("getvar :$i needs descriptor :unit_np (RT info_rt).")
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] = select(masked_data, Symbol("Np" * g)) .* rtd[:unit_np] .* selected_unit
+
+        # Physical photon flux magnitude per group [photons cm^-2 s^-1] = |F_g| · unit_pf
+        # (unit_pf from the RT descriptor, info_rt).
+        elseif (m = match(r"^Fmag(\d+)_cgs$", string(i))) !== nothing
+            g = m.captures[1]
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :unit_pf) || error("getvar :$i needs descriptor :unit_pf (RT info_rt).")
+            selected_unit = getunit(dataobject, i, vars, units)
+            fx = select(masked_data, Symbol("Fx" * g))
+            fy = select(masked_data, Symbol("Fy" * g))
+            fz = select(masked_data, Symbol("Fz" * g))
+            vars_dict[i] = @. sqrt(fx^2 + fy^2 + fz^2) * rtd[:unit_pf] * selected_unit
+
+        # Radiation (photon) energy density per group [erg cm^-3]
+        #   u_g = Np_g · unit_np · (egy_g · eV) ,
+        # with egy_g the mean photon energy of group g [eV] from the RT
+        # descriptor (:group_egy) and Np_g·unit_np the physical photon density.
+        elseif (m = match(r"^photon_energy_density(\d+)$", string(i))) !== nothing
+            g = parse(Int, m.captures[1])
+            rtd = dataobject.info.descriptor.rt
+            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
+                error("getvar :$i needs descriptor :unit_np and :group_egy (RT info_rt).")
+            g <= length(rtd[:group_egy]) ||
+                error("getvar :$i: simulation has only $(length(rtd[:group_egy])) photon group(s).")
+            selected_unit = getunit(dataobject, i, vars, units)
+            egy_erg = rtd[:group_egy][g] * dataobject.info.constants.eV   # [erg] per photon
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* rtd[:unit_np] .* egy_erg .* selected_unit
+
+        # Total radiation energy density summed over all photon groups [erg cm^-3]
+        elseif i == :rad_energy_density
+            rtd = dataobject.info.descriptor.rt
+            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
+                error("getvar :rad_energy_density needs descriptor :unit_np and :group_egy (RT info_rt).")
+            selected_unit = getunit(dataobject, :rad_energy_density, vars, units)
+            eV = dataobject.info.constants.eV
+            total = select(masked_data, :Np1) .* 0.0
+            for g in 1:length(rtd[:group_egy])
+                total = total .+ select(masked_data, Symbol("Np$g")) .* (rtd[:group_egy][g] * eV)
+            end
+            vars_dict[:rad_energy_density] = total .* rtd[:unit_np] .* selected_unit
+
         # Radial distances (for gravity analysis) - code units by default
         elseif i == :r_cylinder
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)

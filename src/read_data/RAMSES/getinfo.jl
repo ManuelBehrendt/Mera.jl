@@ -336,8 +336,41 @@ function readrtfile1!(dataobject::InfoType)
             _rtset("T2_star",    14, Float64)
             _rtset("g_star",     15, Float64)
 
-            #todo read photon groups
-            #rtPhotonGroups
+            # Photon group properties section (per group g: mean photon energy
+            # egy [eV], photoionization cross-sections csn/cse [cm^2] per ion;
+            # plus the per-group energy bounds groupL0/groupL1 [eV] and the
+            # species→group map). Parsed key-by-key so it survives reordering.
+            # The mean photon energies are also exposed flat as :group_egy [eV]
+            # for getvar (radiation energy density = Np · unit_np · egy).
+            _rtnums(line) = Float64[v for v in
+                                    (tryparse(Float64, t) for t in split(split(line, "=", limit=2)[end]))
+                                    if v !== nothing]
+            group_egy = Float64[]
+            cur = 0
+            for ln in lines
+                s = strip(ln)
+                if startswith(s, "groupL0")
+                    rtPhotonGroups[:L0_eV] = _rtnums(ln)
+                elseif startswith(s, "groupL1")
+                    rtPhotonGroups[:L1_eV] = _rtnums(ln)
+                elseif startswith(s, "spec2group")
+                    rtPhotonGroups[:spec2group] = Int.(round.(_rtnums(ln)))
+                elseif (mg = match(r"---Group\s+(\d+)", s)) !== nothing
+                    cur = parse(Int, mg.captures[1])
+                    haskey(rtPhotonGroups, cur) || (rtPhotonGroups[cur] = Dict{Symbol,Any}())
+                elseif cur > 0 && startswith(s, "egy")
+                    v = _rtnums(ln)
+                    if !isempty(v)
+                        rtPhotonGroups[cur][:egy_eV] = v[1]
+                        push!(group_egy, v[1])
+                    end
+                elseif cur > 0 && startswith(s, "csn")
+                    rtPhotonGroups[cur][:csn_cm2] = _rtnums(ln)
+                elseif cur > 0 && startswith(s, "cse")
+                    rtPhotonGroups[cur][:cse_cm2] = _rtnums(ln)
+                end
+            end
+            isempty(group_egy) || (descriptor_list[:group_egy] = group_egy)
 
         else # if file is empty
             descriptor_file = false
@@ -883,6 +916,9 @@ function printsimoverview(info::InfoType, verbose::Bool)
                 println("nIons: ",   get(info.descriptor.rt, :nIons,   "?") )
                 println("nGroups: ", get(info.descriptor.rt, :nGroups, info.nvarrt ÷ 4) )
                 println("iIons: ",   get(info.descriptor.rt, :iIons,   "?") )
+                if haskey(info.descriptor.rt, :group_egy)
+                    println("photon group energies [eV]: ", info.descriptor.rt[:group_egy])
+                end
             end
             if !info.clumps
                 println("-------------------------------------------------------")
