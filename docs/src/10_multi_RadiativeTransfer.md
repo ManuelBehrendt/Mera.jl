@@ -235,6 +235,8 @@ Memory used for data table :8.088722229003906
 **volume-weighting**. Project the total photon density along z; a thin `zrange`
 gives a slice.
 
+**Weighting & modes.** For RT variables the projection defaults to **volume-weighting** (`mode=:standard`, the line-of-sight mean). Use `mode=:sum` for the **column integral** $\int N_p\,dz$ (projected photon density). For mock **emission** images one instead integrates the *emissivity* $I=\int j\,dz$ (e.g. recombination $j\propto n_e n_{\rm HII}$); that is a derived quantity built from the gas density and ionization state — a combined RT+hydro projection (planned), not a weighting of the raw photon density.
+
 ```julia
 proj = projection(rt, :Np_total, verbose=false, show_progress=false)
 figure(figsize=(5,4))
