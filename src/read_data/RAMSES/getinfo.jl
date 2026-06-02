@@ -279,19 +279,23 @@ function readrtfile1!(dataobject::InfoType)
     descriptor_list= Dict()
     version = 0
 
-    if  isfile(dataobject.fnames.rt_descriptor)
+    # The RT *parameters* (nRTvar, nIons, nGroups, iIons, group properties) live in
+    # info_rt_NNNNN.txt (rt_descriptor_v0). rt_file_descriptor.txt (rt_descriptor)
+    # only lists the photon-flux variable names — it has no parameter keys. Parse
+    # the parameter file, preferring info_rt.
+    param_file = ""
+    if isfile(dataobject.fnames.rt_descriptor_v0)
+        descriptor_file = true
+        param_file = dataobject.fnames.rt_descriptor_v0
+        version = isfile(dataobject.fnames.rt_descriptor) ? 1 : 0
+    elseif isfile(dataobject.fnames.rt_descriptor)
+        descriptor_file = true
+        param_file = dataobject.fnames.rt_descriptor
         version = 1
-        descriptor_file = true
-    elseif isfile(dataobject.fnames.rt_descriptor_v0)
-        descriptor_file = true
     end
 
     if descriptor_file
-        if version == 0
-            f = open(dataobject.fnames.rt_descriptor_v0)
-        elseif version == 1
-            f = open(dataobject.fnames.rt_descriptor)
-        end
+        f = open(param_file)
         lines = readlines(f)
 
         if length(lines) != 0 # check for empty file
