@@ -169,6 +169,21 @@ function get_data(  dataobject::HydroDataType,
             rho_mean = mean_baryon_density(dataobject.info)
             vars_dict[i] = (select(masked_data, :rho) .* dataobject.info.scale.g_cm3 ./ rho_mean .- 1.0) .* selected_unit
 
+        # Hydrogen recombination emissivity proxy: ∝ n_e·n_HII ≈ n_HII²  [cm^-6].
+        # n_HII = n_H · xHII, with the ionization fraction taken from the hydro
+        # variable identified by the RT descriptor (iIons). Project with mode=:sum
+        # for a mock recombination-line (e.g. Hα) emission map of an HII region.
+        elseif i == :em_recomb
+            rtd = dataobject.info.descriptor.rt
+            if !haskey(rtd, :iIons)
+                error("getvar :em_recomb needs the RT ionization fraction (descriptor :iIons); load an RT run.")
+            end
+            xion_var = dataobject.info.variable_list[rtd[:iIons]]   # e.g. :var6 = xHII
+            selected_unit = getunit(dataobject, :em_recomb, vars, units)
+            nH = select(masked_data, :rho) .* dataobject.info.scale.nH    # n_H [cm^-3]
+            xhii = select(masked_data, xion_var)
+            vars_dict[:em_recomb] = @. (nH * xhii)^2 * selected_unit
+
         elseif i == :entropy_specific
             selected_unit = getunit(dataobject, :entropy_specific, vars, units)
             # Entropy S = k_B * ln(P / rho^gamma) / (m_u * (gamma - 1))
