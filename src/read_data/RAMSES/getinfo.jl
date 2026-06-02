@@ -874,10 +874,10 @@ function printsimoverview(info::InfoType, verbose::Bool)
         if info.rt
             println("rt-variables: ", info.nvarrt)
             if info.descriptor.rtfile
-                #println("nRTvar: ", info.descriptor.rt[:nRTvar] )
-                println("nIons: ", info.descriptor.rt[:nIons] )
-                println("nGroups: ", info.descriptor.rt[:nGroups] )
-                println("iIons: ", info.descriptor.rt[:iIons] )
+                # robust access: RT descriptor keys may be absent for some RAMSES versions
+                println("nIons: ",   get(info.descriptor.rt, :nIons,   "?") )
+                println("nGroups: ", get(info.descriptor.rt, :nGroups, "?") )
+                println("iIons: ",   get(info.descriptor.rt, :iIons,   "?") )
             end
             if !info.clumps
                 println("-------------------------------------------------------")

@@ -54,7 +54,9 @@ makedocs(modules = [Mera],
                                                         "Particles"   =>  "06_particles_Projection.md",
                                                         "API Reference" => "api/projections.md"],
 
-                          "Cosmological Runs"   => "09_multi_Cosmology.md"],
+                          "Cosmological Runs"   => "09_multi_Cosmology.md",
+
+                          "Radiative Transfer"  => "10_multi_RadiativeTransfer.md"],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files"   =>  "07_multi_Mera_Files.md",
