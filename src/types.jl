@@ -635,6 +635,23 @@ mutable struct GravDataType <: DataSetType
     GravDataType() = new()
 end
 
+# exported
+# RAMSES radiative-transfer (RT) leaf-cell data — same AMR cell structure as hydro,
+# with nvarrt variables (per photon group g: Np = photon number density, plus the
+# flux components Fx/Fy/Fz). Mirrors GravDataType.
+mutable struct RtDataType <: DataSetType
+    data::IndexedTables.AbstractIndexedTable
+    info::InfoType
+    lmin::Int
+    lmax::Int
+    boxlen::Float64
+    ranges::Array{Float64,1}
+    selected_rtvars::Array{Int,1}
+    used_descriptors::Dict{Any,Any}
+    scale::ScalesType002
+    RtDataType() = new()
+end
+
 """
 Mutable Struct: Contains particle data and information about the selected simulation
 > PartDataType <: HydroPartType

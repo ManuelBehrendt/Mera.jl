@@ -360,7 +360,16 @@ function readrtfile1!(dataobject::InfoType)
 
     dataobject.rt                   = rt_files
     dataobject.nvarrt               = nvarrt
-    dataobject.rt_variable_list     = Symbol[]
+    # RT variables: per photon group g -> Np_g (photon number density) + flux Fx_g/Fy_g/Fz_g
+    rtvars = Symbol[]
+    if nvarrt > 0 && nvarrt % 4 == 0
+        for g in 1:(nvarrt ÷ 4)
+            append!(rtvars, [Symbol("Np$g"), Symbol("Fx$g"), Symbol("Fy$g"), Symbol("Fz$g")])
+        end
+    else
+        rtvars = [Symbol("rtvar$i") for i in 1:nvarrt]
+    end
+    dataobject.rt_variable_list     = rtvars
 
     # descriptor
     dataobject.descriptor.rtversion     = version

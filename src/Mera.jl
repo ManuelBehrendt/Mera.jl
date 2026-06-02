@@ -69,6 +69,7 @@ export
     createpath,
     gethydro,
     getgravity,
+    getrt,
     getparticles,
     getclumps,
 
@@ -203,6 +204,7 @@ export
     HydroPartType,
     HydroDataType,
     GravDataType,
+    RtDataType,
     PartDataType,
     ClumpDataType,
 
@@ -241,6 +243,7 @@ include("functions/cosmology.jl")
 include("functions/getvar/getvar.jl")
 include("functions/getvar/getvar_hydro.jl")
 include("functions/getvar/getvar_gravity.jl")
+include("functions/getvar/getvar_rt.jl")
 include("functions/getvar/getvar_particles.jl")
 include("functions/getvar/getvar_clumps.jl")
 # ============================================
@@ -263,6 +266,9 @@ include("read_data/RAMSES/reader_hydro.jl")
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
+
+include("read_data/RAMSES/getrt.jl")
+include("read_data/RAMSES/reader_rt.jl")
 #include("read_data/RAMSES/getgravity_deprecated.jl")     # moved to dev/
 #include("read_data/RAMSES/reader_gravity_deprecated.jl")  # moved to dev/
 

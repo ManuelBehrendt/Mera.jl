@@ -426,6 +426,68 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         end
 
         return nvarg_list, nvarg_i_list, nvarg_corr, read_cpu, used_descriptors
+
+    elseif datatype == :rt
+        # RT variables come from dataobject.rt_variable_list (e.g. :Np1,:Fx1,:Fy1,:Fz1,...)
+        rtnames = dataobject.rt_variable_list
+        nvarrt  = length(rtnames)
+        nvar_list = Int[]
+        read_cpu  = false
+        buf = copy(vars)
+        used_descriptors = Dict()
+
+        if in(:all, buf)
+            nvar_list = collect(1:nvarrt)
+            if in(:cpu, buf) || in(:varn1, buf); read_cpu = true; end
+        else
+            if in(:cpu, buf) || in(:varn1, buf)
+                read_cpu = true
+                filter!(e->e≠:cpu, buf); filter!(e->e≠:varn1, buf)
+            end
+            for (idx, nm) in enumerate(rtnames)
+                if in(nm, buf) || in(Symbol("var$idx"), buf)
+                    append!(nvar_list, idx)
+                    filter!(e->e≠nm, buf); filter!(e->e≠Symbol("var$idx"), buf)
+                end
+            end
+        end
+
+        if length(nvar_list) == 0
+            error("[Mera]: Simulation vars array is empty!")
+        end
+        nvar_list = unique(nvar_list)
+        if maximum(nvar_list) > nvarrt
+            error("[Mera]: Simulation maximum RT variable=$nvarrt < your maximum variable=$(maximum(nvar_list))")
+        end
+
+        nvar_corr   = zeros(Int, nvarrt)
+        nvar_i_list = Int[]
+        for i in 1:nvarrt
+            if in(i, nvar_list)
+                nvar_corr[i] = findall(x -> x == i, nvar_list)[1]
+                append!(nvar_i_list, i)
+            end
+        end
+
+        nvar_list_strings = Symbol[]
+        if read_cpu; append!(nvar_list_strings, [:cpu]); end
+        for i in nvar_list; append!(nvar_list_strings, [rtnames[i]]); end
+
+        if verbose
+            if lmax != dataobject.levelmin
+                println("Key vars=(:level, :cx, :cy, :cz)")
+            else
+                println("Key vars=(:cx, :cy, :cz)")
+            end
+            if read_cpu
+                println("Using var(s)=$(tuple(-1, nvar_list...)) = $(tuple(nvar_list_strings...)) ")
+            else
+                println("Using var(s)=$(tuple(nvar_list...)) = $(tuple(nvar_list_strings...)) ")
+            end
+            println()
+        end
+
+        return nvar_list, nvar_i_list, nvar_corr, read_cpu, used_descriptors
     end
 
 
