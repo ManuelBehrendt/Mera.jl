@@ -169,6 +169,23 @@ function get_data(  dataobject::HydroDataType,
             rho_mean = mean_baryon_density(dataobject.info)
             vars_dict[i] = (select(masked_data, :rho) .* dataobject.info.scale.g_cm3 ./ rho_mean .- 1.0) .* selected_unit
 
+        # RT ionization fractions (semantic names) — passive hydro scalars whose
+        # position is given by the RT descriptor (iIons), in RAMSES order
+        # HII, HeII, HeIII. So :xHII = variable iIons, :xHeII = iIons+1, etc.
+        elseif i == :xHII || i == :xHeII || i == :xHeIII
+            rtd = dataobject.info.descriptor.rt
+            if !haskey(rtd, :iIons)
+                error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
+            end
+            offset = i == :xHII ? 0 : (i == :xHeII ? 1 : 2)
+            nions = get(rtd, :nIons, 0)
+            if offset + 1 > nions
+                error("getvar :$i: simulation tracks only $nions ion fraction(s).")
+            end
+            ion_var = dataobject.info.variable_list[rtd[:iIons] + offset]
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] = select(masked_data, ion_var) .* selected_unit
+
         # Hydrogen recombination emissivity proxy: ∝ n_e·n_HII ≈ n_HII²  [cm^-6].
         # n_HII = n_H · xHII, with the ionization fraction taken from the hydro
         # variable identified by the RT descriptor (iIons). Project with mode=:sum
