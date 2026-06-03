@@ -1,15 +1,19 @@
-# 33_offaxis_kinematics_tests.jl  --  Off-axis camera kinematics (Phase A1)
-# ===========================================================================
+# 33_offaxis_kinematics_tests.jl  --  Off-axis projection primitives (Phase A1 + A2)
+# ===================================================================================
 #
 # What is tested
 # --------------
-# The pure, data-free camera helpers that turn a user-supplied line of sight
-# (vector, spherical angles, or a preset symbol) into a right-handed
-# orthonormal camera basis used by the off-axis projection path:
+# The pure, data-free building blocks of the off-axis projection path:
 #
+# A1 -- camera kinematics (turn a line of sight into a camera basis):
 #   Mera.build_camera_basis(los[, up])  -> (right, up, w)   orthonormal, right-handed
 #   Mera.resolve_los(; los, theta, phi, direction, angle_unit, up, L) -> (los_vec, up_hint)
 #   Mera.is_offaxis(; los, theta, phi, direction)           -> Bool routing
+#
+# A2 -- deposit kernel (bin rotated cell centres onto the camera-plane grid):
+#   Mera.deposit_rotated_cells_to_grid!(grid, weight_grid, x_cam, y_cam, values,
+#                                       weights, grid_extent, grid_resolution; binning)
+#   Mera.block_sum_reduce(fine, s)   -- supersampling reduction (sum-conserving)
 #
 # These touch NO simulation data, so this file runs in every CI tier
 # (registered under "Quality & Fundamentals" in runtests.jl, like 30/31/32).
@@ -124,5 +128,100 @@ isortho(r, u, w) = isapprox(dot(r, u), 0; atol=1e-12) &&
         @test Mera.is_offaxis(theta=0.3)
         @test Mera.is_offaxis(phi=0.3)
         @test Mera.is_offaxis(direction=[1.0, 0, 0])
+    end
+end
+
+@testset "Off-axis CIC/NGP deposit (A2)" begin
+    # 4x4 grid over [0,4]^2  =>  pixel size 1, pixel ix centred at (ix-0.5)
+    ext = (0.0, 4.0, 0.0, 4.0)
+    res = (4, 4)
+    newgrids() = (zeros(Float64, 4, 4), zeros(Float64, 4, 4))
+
+    @testset "CIC -- exact placement" begin
+        # point at the centre of pixel (1,1) -> full weight there
+        g, wg = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(g, wg, [0.5], [0.5], [7.0], [1.0], ext, res)
+        @test g[1, 1] ≈ 7.0
+        @test wg[1, 1] ≈ 1.0
+        @test sum(g) ≈ 7.0          # nothing leaked elsewhere
+        @test sum(wg) ≈ 1.0
+
+        # point at the shared corner of pixels (1,1)(2,1)(1,2)(2,2) -> quarters
+        g, wg = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(g, wg, [1.0], [1.0], [8.0], [1.0], ext, res)
+        @test g[1, 1] ≈ 2.0
+        @test g[2, 1] ≈ 2.0
+        @test g[1, 2] ≈ 2.0
+        @test g[2, 2] ≈ 2.0
+        @test sum(g) ≈ 8.0
+    end
+
+    @testset "NGP -- single pixel" begin
+        g, wg = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(g, wg, [1.6], [2.9], [5.0], [2.0], ext, res; binning=:ngp)
+        @test g[2, 3] ≈ 10.0        # value*weight, pixel index = floor(coord)+1
+        @test wg[2, 3] ≈ 2.0
+        @test count(!iszero, g) == 1
+        @test sum(g) ≈ 10.0
+    end
+
+    @testset "conservation (partition of unity)" begin
+        # deterministic pseudo-points spanning the grid (incl. exact edges)
+        xs = Float64[0.5, 1.0, 2.3, 3.7, 0.0, 4.0, 2.5, 3.99]
+        ys = Float64[0.5, 3.2, 2.3, 0.1, 4.0, 0.0, 2.5, 1.01]
+        vals = Float64[1, 2, 3, 4, 5, 6, 7, 8]
+        wts  = Float64[1, 1, 2, 0.5, 3, 1, 1, 2]
+        for binning in (:cic, :ngp)
+            g, wg = newgrids()
+            Mera.deposit_rotated_cells_to_grid!(g, wg, xs, ys, vals, wts, ext, res; binning=binning)
+            @test sum(g)  ≈ sum(vals .* wts)   # Σ value·weight conserved (edge folds onto border)
+            @test sum(wg) ≈ sum(wts)           # Σ weight conserved
+            @test all(wg .>= -1e-15)
+        end
+    end
+
+    @testset "intensive recovery (uniform field -> grid/weight = value)" begin
+        # constant value everywhere => normalized map returns that value wherever weight>0
+        xs = Float64[0.3, 1.7, 2.2, 3.5, 2.5]
+        ys = Float64[0.6, 2.1, 3.9, 0.4, 2.5]
+        vals = fill(42.0, length(xs))
+        wts  = Float64[1, 2, 3, 4, 5]
+        g, wg = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(g, wg, xs, ys, vals, wts, ext, res)
+        nz = wg .> 0
+        @test all(isapprox.(g[nz] ./ wg[nz], 42.0; atol=1e-12))
+    end
+
+    @testset "CIC vs NGP differ off-centre; agree at pixel centre" begin
+        gc, wgc = newgrids(); gn, wgn = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(gc, wgc, [1.3], [2.8], [1.0], [1.0], ext, res; binning=:cic)
+        Mera.deposit_rotated_cells_to_grid!(gn, wgn, [1.3], [2.8], [1.0], [1.0], ext, res; binning=:ngp)
+        @test gc != gn                      # off-centre: CIC spreads, NGP concentrates
+        @test count(!iszero, gc) > count(!iszero, gn)
+        # at an exact pixel centre both put the full weight in one pixel
+        gc, wgc = newgrids(); gn, wgn = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(gc, wgc, [2.5], [2.5], [1.0], [1.0], ext, res; binning=:cic)
+        Mera.deposit_rotated_cells_to_grid!(gn, wgn, [2.5], [2.5], [1.0], [1.0], ext, res; binning=:ngp)
+        @test gc ≈ gn
+    end
+
+    @testset "errors & determinism" begin
+        g, wg = newgrids()
+        @test_throws ArgumentError Mera.deposit_rotated_cells_to_grid!(
+            g, wg, [1.0], [1.0], [1.0], [1.0], ext, res; binning=:bogus)
+        g1, w1 = newgrids(); g2, w2 = newgrids()
+        Mera.deposit_rotated_cells_to_grid!(g1, w1, [1.3,2.7], [0.4,3.1], [2.0,5.0], [1.0,2.0], ext, res)
+        Mera.deposit_rotated_cells_to_grid!(g2, w2, [1.3,2.7], [0.4,3.1], [2.0,5.0], [1.0,2.0], ext, res)
+        @test g1 == g2 && w1 == w2
+    end
+
+    @testset "block_sum_reduce -- sum-conserving downsample" begin
+        fine = reshape(collect(1.0:16.0), 4, 4)   # 4x4
+        out = Mera.block_sum_reduce(fine, 2)       # -> 2x2, each = sum of a 2x2 block
+        @test size(out) == (2, 2)
+        @test sum(out) ≈ sum(fine)                 # total conserved
+        @test out[1, 1] ≈ fine[1,1] + fine[2,1] + fine[1,2] + fine[2,2]
+        @test Mera.block_sum_reduce(fine, 1) == fine
+        @test_throws ArgumentError Mera.block_sum_reduce(fine, 3)   # 4 not divisible by 3
     end
 end

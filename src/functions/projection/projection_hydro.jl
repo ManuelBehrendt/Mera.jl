@@ -1898,8 +1898,93 @@ function map_amr_cells_to_grid!(grid::AbstractMatrix{Float64}, weight_grid::Abst
 end
 
 
+# =====================================================================================
+#  Off-axis CIC / NGP deposit  (Phase A2 — used by the off-axis projection path)
+# -------------------------------------------------------------------------------------
+#  Deposit already-rotated *physical* camera-plane cell centres (x_cam, y_cam) onto the
+#  pixel grid. Mirrors the (grid, weight_grid) accumulator contract of
+#  `map_amr_cells_to_grid!`:  `grid` collects Σ value·weight·f and `weight_grid` collects
+#  Σ weight·f, where each cell's deposit fractions f sum to 1 (partition of unity) ⇒ the
+#  total value·weight is conserved to machine precision.  Cells whose stencil leaves the
+#  grid fold the outside fraction onto the edge pixel (the axis binner clamps likewise),
+#  so global conservation holds regardless of placement.
+#
+#  binning = :cic  bilinear 4-pixel stencil (smooth, default)
+#          = :ngp  nearest pixel (sharp, 1-pixel)
+#
+#  Pixel ix (1-based) is centred at x_min + (ix-0.5)*pixel_size.  No level/cell-size is
+#  needed here: the deposit acts on cell centres; coverage of cells larger than a pixel
+#  is handled by the caller via adaptive supersampling + `block_sum_reduce` (A3).
+# =====================================================================================
+function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
+                                        weight_grid::AbstractMatrix{Float64},
+                                        x_cam::AbstractVector, y_cam::AbstractVector,
+                                        values::AbstractVector{Float64},
+                                        weights::AbstractVector{Float64},
+                                        grid_extent::NTuple{4,Float64},
+                                        grid_resolution::NTuple{2,Int};
+                                        binning::Symbol=:cic)
+    nx::Int, ny::Int = grid_resolution
+    x_min::Float64, x_max::Float64, y_min::Float64, y_max::Float64 = grid_extent
+    inv_px::Float64 = nx / (x_max - x_min)
+    inv_py::Float64 = ny / (y_max - y_min)
+    n = length(x_cam)
+
+    if binning == :ngp
+        @inbounds for i in 1:n
+            ix = clamp(floor(Int, (x_cam[i] - x_min) * inv_px) + 1, 1, nx)
+            iy = clamp(floor(Int, (y_cam[i] - y_min) * inv_py) + 1, 1, ny)
+            w::Float64 = weights[i]
+            grid[ix, iy]        += values[i] * w
+            weight_grid[ix, iy] += w
+        end
+        return nothing
+    elseif binning != :cic
+        throw(ArgumentError("binning must be :cic or :ngp, got :$binning"))
+    end
+
+    # CIC (bilinear): fractional pixel-CENTRE index (pixel-centre ix sits at integer fx=ix-1)
+    @inbounds for i in 1:n
+        fx::Float64 = (x_cam[i] - x_min) * inv_px - 0.5
+        fy::Float64 = (y_cam[i] - y_min) * inv_py - 0.5
+        ix0::Int = floor(Int, fx); iy0::Int = floor(Int, fy)
+        wx::Float64 = fx - ix0; wy::Float64 = fy - iy0     # ∈ [0,1)
+        # 0-based stencil pixels (ix0, ix0+1) → 1-based (+1), clamped onto the grid
+        ixl::Int = clamp(ix0 + 1, 1, nx); ixr::Int = clamp(ix0 + 2, 1, nx)
+        iyl::Int = clamp(iy0 + 1, 1, ny); iyr::Int = clamp(iy0 + 2, 1, ny)
+        w = weights[i]; vw::Float64 = values[i] * w
+        wll::Float64 = (1.0-wx)*(1.0-wy); wrl::Float64 = wx*(1.0-wy)
+        wlr::Float64 = (1.0-wx)*wy;       wrr::Float64 = wx*wy
+        grid[ixl,iyl] += vw*wll; weight_grid[ixl,iyl] += w*wll
+        grid[ixr,iyl] += vw*wrl; weight_grid[ixr,iyl] += w*wrl
+        grid[ixl,iyr] += vw*wlr; weight_grid[ixl,iyr] += w*wlr
+        grid[ixr,iyr] += vw*wrr; weight_grid[ixr,iyr] += w*wrr
+    end
+    return nothing
+end
+
+# Reduce a supersampled accumulator grid (size n*s in each axis) back to the user
+# resolution by SUMMING each s×s block.  Summation (not averaging) preserves the
+# Σ value·weight / Σ weight totals that `deposit_rotated_cells_to_grid!` accumulates,
+# so mass conservation survives the supersampling round-trip; intensive finalisation
+# (grid ./ weight_grid) then divides the two summed grids as usual.
+function block_sum_reduce(fine::AbstractMatrix{Float64}, s::Int)
+    s == 1 && return copy(fine)
+    s >= 1 || throw(ArgumentError("block factor s must be ≥ 1"))
+    nfx, nfy = size(fine)
+    (nfx % s == 0 && nfy % s == 0) ||
+        throw(ArgumentError("fine grid dims $(size(fine)) must be divisible by s=$s"))
+    nx = nfx ÷ s; ny = nfy ÷ s
+    out = zeros(Float64, nx, ny)
+    @inbounds for j in 1:nfy, i in 1:nfx
+        out[(i-1)÷s + 1, (j-1)÷s + 1] += fine[i, j]
+    end
+    return out
+end
+
+
 """
-    map_amr_cells_to_grid_surface_density!(grid, weight_grid, x_coords, y_coords, values, weights, 
+    map_amr_cells_to_grid_surface_density!(grid, weight_grid, x_coords, y_coords, values, weights,
                                           level, grid_extent, grid_resolution, boxlen)
 
 Specialized mapping function for surface density calculations with RAMSES-consistent precision.
