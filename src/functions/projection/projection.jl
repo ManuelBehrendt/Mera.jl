@@ -88,3 +88,150 @@ end
 #     Ndiff = Nvars-cw
 #     return Ndiff != 0
 # end
+
+
+# =====================================================================================
+#  Off-axis camera kinematics  (Phase A1 — shared by off-axis projection and all-sky)
+# -------------------------------------------------------------------------------------
+#  Pure, data-free helpers: they turn a user-supplied line of sight (vector, angles, or
+#  a preset symbol) into a right-handed orthonormal camera basis (right, up, los).
+#  No simulation data is touched here — the disk presets :faceon/:edgeon receive the
+#  pre-computed angular-momentum vector `L` from the caller (the projection wiring fetches
+#  it via getvar(obj,[:lx,:ly,:lz])).  Kept deterministic (no randomness) so projection
+#  results are reproducible.
+# =====================================================================================
+
+const _WORLD_AXES = ([1.0,0.0,0.0], [0.0,1.0,0.0], [0.0,0.0,1.0])
+
+# Deterministic auto-up: the world axis least parallel to `w` (ties broken by axis order
+# x<y<z), Gram-Schmidt-orthogonalised against `w`.  Reproducible, never parallel to `w`.
+function _auto_up(w::AbstractVector{<:Real})
+    best = _WORLD_AXES[1]; bestdot = 2.0
+    for ax in _WORLD_AXES
+        d = abs(dot(ax, w))
+        if d < bestdot - 1e-12     # strict, so ties keep the earlier (x<y<z) axis
+            bestdot = d; best = ax
+        end
+    end
+    u = best .- dot(best, w) .* w
+    return u ./ norm(u)
+end
+
+"""
+    build_camera_basis(los, up=nothing) -> (right, up, w)
+
+Construct a right-handed orthonormal camera basis from a line-of-sight vector `los`
+(the viewing direction) and an optional `up` hint.
+
+Returns three unit 3-vectors `(right, up, w)` where `w = los/‖los‖` is the viewing
+direction, and `right`, `up` span the image plane (image x = `right`, image y = `up`).
+The basis is right-handed with `right × up = w`.
+
+If `up` is `nothing` — or (anti)parallel to `los` — a *deterministic* auto-up is chosen
+(the world axis least parallel to `los`), so the result is fully reproducible.
+
+Convention check: `los=[0,0,1]`, `up=[0,1,0]` ⇒ `right=[1,0,0]`, `up=[0,1,0]`, matching
+the axis-aligned `direction=:z` mapping (image x→sim x, image y→sim y).
+"""
+function build_camera_basis(los::AbstractVector{<:Real}, up=nothing)
+    nlos = norm(los)
+    nlos > 0 || throw(ArgumentError("line-of-sight vector must be non-zero"))
+    w = los ./ nlos
+
+    if up === nothing
+        u_hint = _auto_up(w)
+    else
+        length(up) == 3 || throw(ArgumentError("up vector must have length 3"))
+        u_hint = collect(float.(up))
+        nu = norm(u_hint)
+        nu > 0 || throw(ArgumentError("up vector must be non-zero"))
+        u_hint ./= nu
+        # fall back to auto-up if the hint is (anti)parallel to the line of sight
+        if abs(dot(u_hint, w)) > 1 - 1e-8
+            u_hint = _auto_up(w)
+        end
+    end
+
+    right = cross(u_hint, w)
+    right ./= norm(right)
+    up_o = cross(w, right)            # already unit length (orthonormal)
+    return right, up_o, w
+end
+
+# Unit line-of-sight vector from spherical angles (physics convention):
+#   los = [sinθcosφ, sinθsinφ, cosθ];  θ=0 → +z, (θ=90°,φ=0) → +x, (θ=90°,φ=90°) → +y.
+function _los_from_angles(theta::Real, phi::Real, angle_unit::Symbol)
+    if angle_unit == :deg
+        theta = theta * (π/180); phi = phi * (π/180)
+    elseif angle_unit != :rad
+        throw(ArgumentError("angle_unit must be :rad or :deg, got :$angle_unit"))
+    end
+    st = sin(theta)
+    return [st*cos(phi), st*sin(phi), cos(theta)]
+end
+
+"""
+    resolve_los(; los=nothing, theta=nothing, phi=nothing, direction=:z,
+                  angle_unit=:rad, up=nothing, L=nothing) -> (los_vec, up_hint)
+
+Resolve the user-facing line-of-sight specification into a `(los_vec, up_hint)` pair
+(both either a 3-vector or `up_hint === nothing` for auto-up). Precedence:
+
+1. explicit `los` 3-vector (or `direction` given as a 3-vector),
+2. spherical angles `(theta, phi)` — interpreted in `angle_unit` (`:rad` default or `:deg`),
+3. preset `direction` symbol:
+   - `:x`/`:y`/`:z` — axis-aligned fast path,
+   - `:faceon`  — look along the disk angular momentum `L` (requires `L`),
+   - `:edgeon`  — look perpendicular to `L`, with `up = L̂` (requires `L`).
+
+The disk presets need the pre-computed angular-momentum vector `L`; the projection
+wiring supplies it via `getvar(obj,[:lx,:ly,:lz])`. Pure — touches no simulation data.
+"""
+function resolve_los(; los=nothing, theta=nothing, phi=nothing, direction=:z,
+                       angle_unit::Symbol=:rad, up=nothing, L=nothing)
+    # (1) explicit vector — either via `los` or a vector passed as `direction`
+    v = los !== nothing ? los : (direction isa AbstractVector ? direction : nothing)
+    if v !== nothing
+        length(v) == 3 || throw(ArgumentError("line-of-sight vector must have length 3"))
+        return collect(float.(v)), up
+    end
+
+    # (2) spherical angles
+    if theta !== nothing || phi !== nothing
+        th = theta === nothing ? 0.0 : float(theta)
+        ph = phi   === nothing ? 0.0 : float(phi)
+        return _los_from_angles(th, ph, angle_unit), up
+    end
+
+    # (3) preset symbols
+    if direction == :x
+        return [1.0,0.0,0.0], up
+    elseif direction == :y
+        return [0.0,1.0,0.0], up
+    elseif direction == :z
+        return [0.0,0.0,1.0], up
+    elseif direction == :faceon
+        L === nothing && throw(ArgumentError(":faceon needs the angular-momentum vector L"))
+        nL = norm(L); nL > 0 || throw(ArgumentError("angular-momentum vector L is zero"))
+        return collect(float.(L)) ./ nL, up
+    elseif direction == :edgeon
+        L === nothing && throw(ArgumentError(":edgeon needs the angular-momentum vector L"))
+        nL = norm(L); nL > 0 || throw(ArgumentError("angular-momentum vector L is zero"))
+        Lhat = collect(float.(L)) ./ nL
+        a = _auto_up(Lhat)                       # in-disk direction ⟂ L (deterministic)
+        losv = a .- dot(a, Lhat) .* Lhat
+        losv ./= norm(losv)
+        return losv, (up === nothing ? Lhat : up)   # up = spin axis ⇒ disk appears edge-on
+    else
+        throw(ArgumentError("unknown direction preset :$direction " *
+            "(use :x/:y/:z/:faceon/:edgeon, a 3-vector, or theta/phi)"))
+    end
+end
+
+# True when the requested view is not an axis-aligned preset (i.e. needs the off-axis path).
+function is_offaxis(; los=nothing, theta=nothing, phi=nothing, direction=:z)
+    los !== nothing && return true
+    (theta !== nothing || phi !== nothing) && return true
+    direction isa AbstractVector && return true
+    return !(direction in (:x, :y, :z))
+end

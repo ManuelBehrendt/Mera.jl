@@ -64,6 +64,8 @@
 #       Uniform-grid replicate + particle conservation tests.
 #
 # If DATA_AVAILABLE is false the whole file is skipped via @test_skip.
+# (Data-free off-axis camera-kinematics unit tests live in 33_offaxis_kinematics_tests.jl,
+#  which runs in every CI tier; this file holds the data-dependent off-axis tests of step A5.)
 
 if !DATA_AVAILABLE
     @warn "Skipping Projections tests - simulation data not available"

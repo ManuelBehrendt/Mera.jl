@@ -57,6 +57,7 @@ const DATA_FILES = String[
         include("22_types_tests.jl")
         include("30_doc_codeblocks.jl")    # data-free: doc code-block lint
         include("31_cosmology_tests.jl")   # data-free core + optional real-cosmo block
+        include("33_offaxis_kinematics_tests.jl")  # data-free off-axis camera kinematics (A1)
     end
 
     if !DATA_AVAILABLE
