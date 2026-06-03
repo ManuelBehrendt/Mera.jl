@@ -332,6 +332,34 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             @test haskey(rt2.info.descriptor.rt, :group_egy)
             @test getvar(rt2, :Gamma_HI) ≈ getvar(rt, :Gamma_HI)
         end
+
+        @testset "convertdata RAMSES→JLD2 (:rt)" begin
+            tmp = mktempdir()
+            stats = redirect_stdout(devnull) do
+                convertdata(info.output, [:rt], path=ds.path, fpath=tmp,
+                            verbose=false, show_progress=false)
+            end
+            @test stats isa Dict
+            rt3 = loaddata(info.output, path=tmp, datatype=:rt, verbose=false)
+            @test rt3 isa Mera.RtDataType
+            @test length(rt3.data) == length(rt.data)
+            @test getvar(rt3, :Np_total) ≈ getvar(rt, :Np_total)
+        end
+
+        @testset "RT geometry, hydro-fallback & projection guards" begin
+            # geometry getvar on the RT object (shared machinery with hydro)
+            for v in (:cellsize, :volume, :r_cylinder, :ϕ)
+                @test length(getvar(rt, v)) == length(rt.data)
+            end
+            # centred cell indices differ from raw — exercises the :cz branch (A2 fix)
+            @test getvar(rt, :cz, center=[:bc]) != getvar(rt, :cz)
+            @test getvar(rt, :x,  center=[:bc]) != getvar(rt, :x)
+            # generic hydro variable via the hydro_data fallback, aligned to RT cells
+            @test getvar(rt, :T_rt, hydro_data=gas) ≈ getvar(gas, :T_rt)
+            # :sd / :mass on RT must give a clear "no mass" error
+            @test_throws ErrorException projection(rt, :sd,   verbose=false, show_progress=false)
+            @test_throws ErrorException projection(rt, :mass, verbose=false, show_progress=false)
+        end
     end
 
 else

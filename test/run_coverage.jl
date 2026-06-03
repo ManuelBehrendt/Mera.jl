@@ -47,6 +47,7 @@ const DATA_FILES = String[
     "27_data_conversion_tests.jl",
     "28_coverage_boost_tests.jl",
     "29_parallel_execution_tests.jl",
+    "32_rt_tests.jl",
 ]
 
 @testset "Mera.jl (local full)" begin
@@ -54,6 +55,8 @@ const DATA_FILES = String[
         include("01_aqua_quality.jl")
         include("02_unit_system.jl")
         include("22_types_tests.jl")
+        include("30_doc_codeblocks.jl")    # data-free: doc code-block lint
+        include("31_cosmology_tests.jl")   # data-free core + optional real-cosmo block
     end
 
     if !DATA_AVAILABLE
