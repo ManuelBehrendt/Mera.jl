@@ -1853,6 +1853,36 @@ end
             @test isapprox(sum(pe.maps[:mass]), mtot; rtol=1e-6)
         end
 
+        @testset "camera metadata stored on off-axis maps (A4)" begin
+            po = projection(hydro, :sd, los=[1.0,1,1], verbose=false, show_progress=false)
+            pz = projection(hydro, :sd, direction=:z,   verbose=false, show_progress=false)
+            @test po.direction == :offaxis                   # off-axis flagged
+            @test pz.direction == :unspecified               # axis path unchanged
+            @test length(po.los) == 3
+            @test isapprox(po.los, [1,1,1]./sqrt(3); atol=1e-12)   # normalized viewing dir
+            @test length(po.up) == 3 && length(po.cam_right) == 3 && length(po.center) == 3
+            # right, up, los orthonormal (manual dot products, no extra imports)
+            @test isapprox(sum(po.los .* po.up), 0; atol=1e-10)
+            @test isapprox(sum(po.los .* po.cam_right), 0; atol=1e-10)
+            @test isapprox(sum(po.up .* po.cam_right), 0; atol=1e-10)
+            @test isempty(pz.los)                            # axis maps carry no camera basis
+        end
+
+        @testset "faceon/edgeon camera orientation follows gas angular momentum" begin
+            # net angular momentum direction of the gas (independent ground truth)
+            L  = [sum(getvar(hydro,:lx)), sum(getvar(hydro,:ly)), sum(getvar(hydro,:lz))]
+            Lh = L ./ sqrt(sum(L.^2))
+            fo = projection(hydro, :sd, direction=:faceon, verbose=false, show_progress=false)
+            eo = projection(hydro, :sd, direction=:edgeon, verbose=false, show_progress=false)
+            # face-on: line of sight points along L (disk plane perpendicular to view)
+            @test abs(sum(fo.los .* Lh)) > 0.999
+            # edge-on: line of sight perpendicular to L, with the camera up along L
+            @test abs(sum(eo.los .* Lh)) < 1e-6
+            @test abs(sum(eo.up  .* Lh)) > 0.999
+            # face-on and edge-on are mutually perpendicular views of the same disk
+            @test abs(sum(fo.los .* eo.los)) < 1e-6
+        end
+
         @testset "CIC vs NGP both conserve; CIC spreads more" begin
             pc = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:cic, verbose=false, show_progress=false)
             pn = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:ngp, verbose=false, show_progress=false)

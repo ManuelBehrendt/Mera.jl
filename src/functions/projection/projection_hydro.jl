@@ -428,8 +428,28 @@ return AMRMapsType
   - Can be physical coordinates or special values like [:bc], [:com]
 - **`range_unit::Symbol`**: Units for ranges/center (:kpc, :Mpc, :pc, :standard, etc.)
   - Ensures consistent spatial scaling across different simulations
-- **`direction::Symbol`**: Projection direction (:x, :y, :z)
+- **`direction::Symbol`**: Axis-aligned projection direction (:x, :y, :z)
   - Determines which spatial dimension is integrated over
+  - Also accepts the disk presets `:faceon` / `:edgeon` (off-axis, see below)
+
+#### Off-axis projection (arbitrary line of sight):
+Give any of the following to project along an arbitrary line of sight instead of an axis.
+When none are given, the axis-aligned path above runs unchanged.
+- **`los::Vector`**: line-of-sight (viewing) direction, e.g. `los=[1,1,1]` (need not be normalized)
+- **`theta`, `phi`**: spherical angles for the line of sight; `los=[sinθcosφ, sinθsinφ, cosθ]`
+  (so `theta=0`→+z, `(theta=90,phi=0)`→+x). Interpreted in `angle_unit`.
+- **`angle_unit::Symbol`**: `:rad` (default) or `:deg`
+- **`up::Vector`**: optional camera up-vector (default: deterministic auto-up; ignored if parallel to los)
+- **`direction=:faceon`**: look along the gas net angular momentum L (disk seen face-on)
+- **`direction=:edgeon`**: look perpendicular to L with up=L̂ (disk seen edge-on)
+- **`binning::Symbol`**: how rotated cells are deposited onto the camera plane —
+  - `:cic` (default) — fast preview, bilinear deposit of cell centres (smooth)
+  - `:ngp` — fast preview, nearest-pixel deposit (sharp)
+  - `:overlap` — accurate & parallel: per-cell footprint supersampling that spreads each
+    cell over the pixels its rotated cube shadow covers (use for publication-quality maps)
+
+  All three are mass-conserving. Off-axis currently supports the standard hydro/RT fields and
+  `:sd`/`:mass`; map-only variables (`:r_cylinder`, `:ϕ`, velocity dispersions) require an axis direction.
 
 #### Data Processing Options:
 - **`weighting::Array`**: Variable for weighting `[quantity, unit]` (default: `[:mass]`)
@@ -640,6 +660,30 @@ xmap = projection(gas, :xHII, center=[:bc])
 RT photon fields and the hydro ionization state live on **separate** objects; project
 each on its own object (analogous to gravity vs. hydro). Use `getvar(rt, …)` /
 `getvar(gas, …)` for the per-cell quantities documented under `getvar`.
+
+Off-axis projections:
+```julia
+gas = gethydro(info)
+
+# Look along an arbitrary line of sight (fast CIC preview)
+m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], center=[:bc], range_unit=:kpc)
+
+# Same view, accurate footprint-correct deposit (parallel; for final figures)
+m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], binning=:overlap, center=[:bc])
+
+# Spherical angles instead of a vector (degrees)
+m = projection(gas, :sd, theta=60, phi=30, angle_unit=:deg, center=[:bc])
+
+# Disk seen face-on / edge-on (line of sight from the gas angular momentum)
+fo = projection(gas, :sd, direction=:faceon, center=[:bc], range_unit=:kpc)
+eo = projection(gas, :sd, direction=:edgeon, center=[:bc], range_unit=:kpc)
+```
+
+The off-axis camera basis is stored on the returned map (`m.los`, `m.up`, `m.cam_right`,
+`m.center`; `m.direction == :offaxis`). The cell→pixel deposit uses the standard
+nearest-grid-point / cloud-in-cell assignment scheme (Hockney & Eastwood 1988,
+*Computer Simulation Using Particles*); `:overlap` extends CIC with per-cell footprint
+supersampling. All deposits conserve the projected total to machine precision.
 
 """
 function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array{Symbol,1};
@@ -1534,10 +1578,12 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
     _smallr = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallr
     _smallc = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallc
-    # extent is already pivot-centred, so the centred extent equals extent
+    # extent is already pivot-centred, so the centred extent equals extent.
+    # Camera metadata: los = viewing direction (cam_w), up, cam_right, center = box-centre pivot.
     return AMRMapsType(imaps, maps_unit, SortedDict(), maps_weight, maps_mode,
                        lmax_projected, lmin, simlmax, ranges, extent, copy(extent), ratio,
-                       res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info)
+                       res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info,
+                       collect(cam_w), collect(cam_up), collect(cam_right), collect(float.(pivot)))
 end
 
 

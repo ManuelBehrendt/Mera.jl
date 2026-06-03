@@ -159,6 +159,20 @@ using DataStructures: SortedDict
         # Real (non-alias) fields still resolve normally.
         @test h.lmin == 4 && h.lmax == 10
         @test p.lmin == 4 && p.lmax == 10
+
+        # Off-axis camera metadata: 19-/17-arg constructors default it empty, so the
+        # backward-compatible :direction sentinel stays :unspecified for axis maps.
+        @test isempty(h.los) && isempty(h.up) && isempty(h.cam_right) && isempty(h.center)
+        @test isempty(p.los)
+        # full constructor with a camera basis flips :direction to :offaxis
+        h3 = Mera.AMRMapsType(
+            SortedDict{Any,Any}(), SortedDict{Any,Any}([:sd => :Msol_pc2]),
+            SortedDict{Any,Any}(), SortedDict{Any,Any}(), SortedDict{Any,Any}(),
+            10, 4, 10, [0.0,1,0,1,0,1], Float64[], Float64[], 1.0, 16, 0.1, 1.0, 1.0, 1.0,
+            Mera.ScalesType002(), Mera.InfoType(),
+            [0.0,0,1], [0.0,1,0], [1.0,0,0], [0.5,0.5,0.5])
+        @test h3.direction == :offaxis
+        @test h3.los == [0.0,0,1]
     end
 
     # --------------------------------------------------------------------

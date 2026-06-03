@@ -746,7 +746,22 @@ mutable struct AMRMapsType <: DataMapsType
     smallc::Float64
     scale::ScalesType002  # Updated to current type
     info::InfoType
+    # off-axis camera metadata (empty for axis-aligned projections; see getproperty :direction)
+    los::Vector{Float64}
+    up::Vector{Float64}
+    cam_right::Vector{Float64}
+    center::Vector{Float64}
 end
+
+# Backward-compatible constructor: the historical 19-argument form (no off-axis
+# metadata). Axis-aligned projections and older code/tests keep working unchanged;
+# the off-axis path uses the full 23-argument constructor with the camera basis.
+AMRMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin,
+            lmax, ranges, extent, cextent, ratio, effres, pixsize, boxlen, smallr,
+            smallc, scale, info) =
+    AMRMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin,
+                lmax, ranges, extent, cextent, ratio, effres, pixsize, boxlen, smallr,
+                smallc, scale, info, Float64[], Float64[], Float64[], Float64[])
 
 """
     const HydroMapsType = AMRMapsType
@@ -779,7 +794,19 @@ mutable struct PartMapsType <: DataMapsType
     boxlen::Float64
     scale::ScalesType002  # Updated to current type
     info::InfoType
+    # off-axis camera metadata (empty for axis-aligned projections)
+    los::Vector{Float64}
+    up::Vector{Float64}
+    cam_right::Vector{Float64}
+    center::Vector{Float64}
 end
+
+# Backward-compatible constructor: the historical 17-argument form (no off-axis metadata).
+PartMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, lmax, ref_time,
+             ranges, extent, cextent, ratio, effres, pixsize, boxlen, scale, info) =
+    PartMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, lmax, ref_time,
+                 ranges, extent, cextent, ratio, effres, pixsize, boxlen, scale, info,
+                 Float64[], Float64[], Float64[], Float64[])
 
 # ----------------------------------------------------------------------------
 # Convenience property accessors (non-breaking) for legacy test expectations
@@ -810,10 +837,9 @@ function Base.getproperty(h::AMRMapsType, s::Symbol)
             return :mixed
         end
     elseif s === :direction
-        # Direction not stored historically; return sentinel symbol so
-        # equality tests between hydro/particle projections (created with the
-        # same argument) still succeed.
-        return :unspecified
+        # Off-axis projections store a line-of-sight vector; axis-aligned ones leave
+        # it empty (historical behaviour → :unspecified sentinel for equality tests).
+        return isempty(getfield(h, :los)) ? :unspecified : :offaxis
     else
         return getfield(h, s)
     end
@@ -837,7 +863,7 @@ function Base.getproperty(p::PartMapsType, s::Symbol)
             return :mixed
         end
     elseif s === :direction
-        return :unspecified
+        return isempty(getfield(p, :los)) ? :unspecified : :offaxis
     else
         return getfield(p, s)
     end
