@@ -209,7 +209,8 @@ export
     ClumpDataType,
 
     DataMapsType,
-    HydroMapsType,
+    AMRMapsType,
+    HydroMapsType,   # deprecated alias of AMRMapsType (kept for backward compatibility)
     PartMapsType,
 
     Histogram2DMapType,

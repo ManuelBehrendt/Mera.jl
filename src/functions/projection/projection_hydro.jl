@@ -356,7 +356,7 @@ projection(dataobject::HydroDataType, vars::Array{Symbol,1};
            verbose_threads::Bool=false,
            myargs::ArgumentsType=ArgumentsType())
 
-return HydroMapsType
+return AMRMapsType
 ```
 
 ### Arguments
@@ -552,7 +552,7 @@ fine_detail = projection(gas, :density, :g_cm3,
 
 ### Return Value
 
-Returns `HydroMapsType` containing:
+Returns `AMRMapsType` (alias: `HydroMapsType`) containing:
 - **`.maps`**: Dictionary of projected variable maps (2D arrays)
 - **`.extent`**: Physical extent of projection [xmin, xmax, ymin, ymax]
 - **`.pixsize`**: Physical size of each pixel
@@ -1302,7 +1302,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     maps_lmax = SortedDict( )
     _smallr = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallr
     _smallc = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallc
-    return HydroMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info)
+    return AMRMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info)
 
     #return maps, maps_unit, extent_center, ranges
 end

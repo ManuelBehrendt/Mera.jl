@@ -79,8 +79,12 @@ using DataStructures: SortedDict
         @test Mera.PartDataType  <: Mera.HydroPartType
         @test Mera.HydroPartType <: Mera.ContainMassDataSetType
         @test Mera.ContainMassDataSetType <: Mera.DataSetType
+        @test Mera.AMRMapsType   <: Mera.DataMapsType
         @test Mera.HydroMapsType <: Mera.DataMapsType
         @test Mera.PartMapsType  <: Mera.DataMapsType
+        # HydroMapsType is now a deprecated alias of AMRMapsType (shared AMR map type
+        # for hydro / gravity / RT projections); must stay identical for back-compat.
+        @test Mera.HydroMapsType === Mera.AMRMapsType
     end
 
     # --------------------------------------------------------------------

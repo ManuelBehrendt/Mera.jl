@@ -714,16 +714,19 @@ end
 
 """
 Abstract Supertype of all the different dataset type maps
-HydroMapsType <: DataMapsType
+AMRMapsType <: DataMapsType
 PartMapsType <: DataMapsType
 """
 abstract type DataMapsType end # exported
 
 
 """
-Mutable Struct: Contains the maps/units returned by the hydro-projection information about the selected simulation
+Mutable Struct: Contains the maps/units returned by an AMR cell-based projection
+(hydro, gravity-with-hydro, and radiative-transfer all return this type; the
+provenance is preserved in the `.info` field). `smallr`/`smallc` are hydro-only and
+set to 0 for RT.
 """
-mutable struct HydroMapsType <: DataMapsType
+mutable struct AMRMapsType <: DataMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_unit::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
     maps_lmax::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
@@ -744,6 +747,16 @@ mutable struct HydroMapsType <: DataMapsType
     scale::ScalesType002  # Updated to current type
     info::InfoType
 end
+
+"""
+    const HydroMapsType = AMRMapsType
+
+**Deprecated alias** for [`AMRMapsType`](@ref) (renamed because gravity and RT
+projections return the same AMR-map type, not only hydro). Kept for backward
+compatibility: existing code using `HydroMapsType` (construction, `isa`, dispatch)
+keeps working unchanged. Prefer `AMRMapsType` in new code.
+"""
+const HydroMapsType = AMRMapsType
 
 """
 Mutable Struct: Contains the maps/units returned by the particles-projection information about the selected simulation
@@ -778,7 +791,7 @@ end
 # To preserve backward compatibility without altering the memory layout of the
 # core map structs we provide lightweight `getproperty` fallbacks.
 
-function Base.getproperty(h::HydroMapsType, s::Symbol)
+function Base.getproperty(h::AMRMapsType, s::Symbol)
     if s === :xrange
         return h.ranges[1:2]
     elseif s === :yrange
