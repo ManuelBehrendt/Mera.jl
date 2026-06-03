@@ -126,6 +126,11 @@ function infodata(output::Int;
             find_dt_flag = false
         end
 
+        if "rt" in fkeys && find_dt_flag
+            dtype = "rt"
+            find_dt_flag = false
+        end
+
         if find_dt_flag
             error("No datatype found...")
         end

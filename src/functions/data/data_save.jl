@@ -82,7 +82,7 @@ return
 
 #### Arguments
 ##### Required:
-- **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType"
+- **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType", "RtDataType"
 - **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file or overwriting existing file); fmode=:append further datatype. (overwriting of existing datatypes is not possible)
 ##### Predefined/Optional Keywords:
 - **`path`:** path to save the file; default is local path.
@@ -314,6 +314,10 @@ function check_datasource(dataobject::DataSetType)
         datatype = :clumps
         use_descriptor = dataobject.info.descriptor.useclumps
         descriptor_names = dataobject.info.descriptor.clumps
+    elseif typeof(dataobject) == RtDataType
+        datatype = :rt
+        use_descriptor = dataobject.info.descriptor.usert
+        descriptor_names = dataobject.info.descriptor.rt
     end
 
     return datatype, use_descriptor, descriptor_names

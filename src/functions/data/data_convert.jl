@@ -268,11 +268,11 @@ function convertdata(output::Int;
     if length(datatypes) == 1 &&  datatypes[1] === missing || 
        length(datatypes) == 0 || 
        length(datatypes) == 1 &&  datatypes[1] == :all
-       datatypes = [:hydro, :gravity, :particles, :clumps]
+       datatypes = [:hydro, :gravity, :particles, :clumps, :rt]
     else
         # Validate that at least one known datatype is specified
-        if !(:hydro in datatypes) && !(:gravity in datatypes) && 
-           !(:particles in datatypes) && !(:clumps in datatypes)
+        if !(:hydro in datatypes) && !(:gravity in datatypes) &&
+           !(:particles in datatypes) && !(:clumps in datatypes) && !(:rt in datatypes)
             error("unknown datatype(s) given...")
         end
     end
@@ -524,6 +524,52 @@ function convertdata(output::Int;
 
         # Memory cleanup
         clumps = 0.
+        GC.gc()
+    end
+
+    # ============================================================================
+    # SECTION 9b: RADIATIVE-TRANSFER DATA PROCESSING (WITH THREADING)
+    # ============================================================================
+
+    if info.rt && :rt in datatypes
+        if verbose
+            println("- rt (threaded: max_threads=$max_threads)")
+        end
+
+        # Load RT data (photon density + flux per group) with threading support
+        @timeit lt "rt" rt = getrt(info,
+                                   lmax=lmax,
+                                   xrange=xrange,
+                                   yrange=yrange,
+                                   zrange=zrange,
+                                   center=center,
+                                   range_unit=range_unit,
+                                   verbose=false,
+                                   show_progress=show_progress,
+                                   max_threads=max_threads)
+
+        # Track memory and storage usage
+        memtot += Base.summarysize(rt)
+        storage_tot += si[:rt]
+
+        # Add AMR overhead if not already counted
+        if first_amrflag
+            storage_tot += si[:amr]
+            first_amrflag = false
+        end
+
+        # Write RT data to file
+        first_flag, fmode = JLD2flag(first_flag)
+        @timeit wt "rt" savedata(rt,
+                                 path=fpath,
+                                 fname=fname,
+                                 fmode=fmode,
+                                 compress=compress,
+                                 comments=comments,
+                                 verbose=false)
+
+        # Memory cleanup
+        rt = 0.
         GC.gc()
     end
 

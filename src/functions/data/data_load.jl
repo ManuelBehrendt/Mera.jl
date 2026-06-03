@@ -94,7 +94,7 @@ return dataobject
 #### Arguments
 ##### Required:
 - **`output`:** output number
-- **`datatype`:** :hydro, :particles, :gravity or :clumps
+- **`datatype`:** :hydro, :particles, :gravity, :clumps or :rt
 ##### Predefined/Optional Keywords:
 - **`path`:** path to the file; default is local path.
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.

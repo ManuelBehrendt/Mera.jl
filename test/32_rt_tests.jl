@@ -319,6 +319,19 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             @test_throws ErrorException getvar(rt, :photoionizations)
             @test_throws ErrorException getvar(rt, :ionization_balance)
         end
+
+        @testset "JLD2 save/load round-trip (RtDataType)" begin
+            tmp = mktempdir()
+            savedata(rt, path=tmp, fmode=:write, verbose=false)
+            rt2 = loaddata(info.output, path=tmp, datatype=:rt, verbose=false)
+            @test rt2 isa Mera.RtDataType
+            @test length(rt2.data) == length(rt.data)
+            @test rt2.info.nvarrt == rt.info.nvarrt
+            @test getvar(rt2, :Np_total) ≈ getvar(rt, :Np_total)
+            # descriptor (group_egy, csn, rt_c_frac) must survive the round-trip
+            @test haskey(rt2.info.descriptor.rt, :group_egy)
+            @test getvar(rt2, :Gamma_HI) ≈ getvar(rt, :Gamma_HI)
+        end
     end
 
 else
