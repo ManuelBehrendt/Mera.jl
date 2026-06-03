@@ -36,6 +36,12 @@ if !@isdefined(ArgumentsType)
         plane_ranges::Union{Array{<:Any,1}, Missing}  = missing
         thickness::Union{Real, Missing}         = missing
         position::Union{Real, Missing}          = missing
+        los::Union{Array{<:Real,1}, Missing}    = missing
+        up::Union{Array{<:Real,1}, Missing}     = missing
+        theta::Union{Real, Missing}             = missing
+        phi::Union{Real, Missing}               = missing
+        angle_unit::Union{Symbol, Missing}      = missing
+        binning::Union{Symbol, Missing}         = missing
         center::Union{Array{<:Any,1}, Missing}  = missing
         range_unit::Union{Symbol, Missing}      = missing
         data_center::Union{Array{<:Any,1}, Missing} = missing
@@ -54,6 +60,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
+                        los::Union{Array{<:Real,1}, Nothing}=nothing,
+                        up::Union{Array{<:Real,1}, Nothing}=nothing,
+                        theta::Union{Real, Nothing}=nothing,
+                        phi::Union{Real, Nothing}=nothing,
+                        angle_unit::Symbol=:rad,
+                        binning::Symbol=:cic,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -77,6 +89,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             pxsize=pxsize,
                             mask=mask,
                             direction=direction,
+                            los=los,
+                            up=up,
+                            theta=theta,
+                            phi=phi,
+                            angle_unit=angle_unit,
+                            binning=binning,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -102,6 +120,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
+                        los::Union{Array{<:Real,1}, Nothing}=nothing,
+                        up::Union{Array{<:Real,1}, Nothing}=nothing,
+                        theta::Union{Real, Nothing}=nothing,
+                        phi::Union{Real, Nothing}=nothing,
+                        angle_unit::Symbol=:rad,
+                        binning::Symbol=:cic,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -125,6 +149,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             pxsize=pxsize,
                             mask=mask,
                             direction=direction,
+                            los=los,
+                            up=up,
+                            theta=theta,
+                            phi=phi,
+                            angle_unit=angle_unit,
+                            binning=binning,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -150,6 +180,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
+                        los::Union{Array{<:Real,1}, Nothing}=nothing,
+                        up::Union{Array{<:Real,1}, Nothing}=nothing,
+                        theta::Union{Real, Nothing}=nothing,
+                        phi::Union{Real, Nothing}=nothing,
+                        angle_unit::Symbol=:rad,
+                        binning::Symbol=:cic,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -199,6 +235,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
+                        los::Union{Array{<:Real,1}, Nothing}=nothing,
+                        up::Union{Array{<:Real,1}, Nothing}=nothing,
+                        theta::Union{Real, Nothing}=nothing,
+                        phi::Union{Real, Nothing}=nothing,
+                        angle_unit::Symbol=:rad,
+                        binning::Symbol=:cic,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -607,6 +649,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         pxsize::Array{<:Any,1}=[missing, missing],
                         mask::Union{Vector{Bool}, MaskType}=[false],
                         direction::Symbol=:z,
+                        los::Union{Array{<:Real,1}, Nothing}=nothing,
+                        up::Union{Array{<:Real,1}, Nothing}=nothing,
+                        theta::Union{Real, Nothing}=nothing,
+                        phi::Union{Real, Nothing}=nothing,
+                        angle_unit::Symbol=:rad,
+                        binning::Symbol=:cic,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
@@ -633,6 +681,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     if !(myargs.res           === missing)           res = myargs.res end
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.direction     === missing)     direction = myargs.direction end
+    if !(myargs.los           === missing)           los = myargs.los end
+    if !(myargs.up            === missing)            up = myargs.up end
+    if !(myargs.theta         === missing)         theta = myargs.theta end
+    if !(myargs.phi           === missing)           phi = myargs.phi end
+    if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
+    if !(myargs.binning       === missing)       binning = myargs.binning end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
     if !(myargs.zrange        === missing)        zrange = myargs.zrange end
@@ -729,6 +783,18 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     ranges = Mera.prepranges(dataobject.info,range_unit, verbose, xrange, yrange, zrange, center, dataranges=dataobject.ranges)
 
     data_centerm = Mera.prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
+
+    # ------------------------------------------------------------------
+    # Off-axis projection branch (arbitrary line of sight). The axis-aligned
+    # path below is left completely unchanged and runs whenever no off-axis
+    # specifier is given (los/up/theta/phi or direction=:faceon/:edgeon).
+    # ------------------------------------------------------------------
+    if is_offaxis(los=los, theta=theta, phi=phi, direction=direction)
+        return projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
+                                  weighting, weight_scale, mode, ranges, center, range_unit,
+                                  mask, los, up, theta, phi, angle_unit, binning, direction,
+                                  boxlen, lmin, simlmax, isamr, scale, verbose)
+    end
 
     if verbose
         println("Selected var(s)=$(tuple(selected_vars...)) ")
@@ -1305,6 +1371,159 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     return AMRMapsType(imaps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin, simlmax, ranges, extent, extent_center, ratio, res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info)
 
     #return maps, maps_unit, extent_center, ranges
+end
+
+
+# =====================================================================================
+#  Off-axis projection engine (Phase A3)
+# -------------------------------------------------------------------------------------
+#  Self-contained off-axis path so the axis-aligned engine above stays untouched.
+#  Reuses the same per-variable value/weight semantics (getvar), the same mode
+#  finalisation (:sd→/area, :mass→sum, others→weighted average or :sum) and the same
+#  unit scaling as the axis path, but bins along an arbitrary line of sight:
+#    1. spatial pivot = centre of the requested box  (camera FOV is symmetric about it),
+#    2. centred physical cell coords via getvar(:x/:y/:z, center=pivot),
+#    3. rotate by the A1 camera basis (right, up, w),
+#    4. deposit (x_cam, y_cam) onto the camera plane with the A2 CIC/NGP kernel,
+#    5. optional LOS-depth slab along w (when zrange is narrowed) and a camera-plane
+#       window (when xrange/yrange are narrowed); otherwise the rotated bounding box.
+#  Conservative: the deposit preserves Σ value·weight to machine precision.
+# =====================================================================================
+function projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
+                            weighting, weight_scale, mode, ranges, center, range_unit,
+                            mask, los, up, theta, phi, angle_unit, binning, direction,
+                            boxlen, lmin, simlmax, isamr, scale, verbose)
+
+    rcheck     = [:r_cylinder, :r_sphere]
+    anglecheck = [:ϕ]
+    σcheck     = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    for v in selected_vars
+        if v in rcheck || v in anglecheck || v in σcheck
+            error("projection: off-axis views (los/theta/phi/:faceon/:edgeon) do not yet " *
+                  "support the map-only variable :$v (radius/angle/velocity-dispersion maps). " *
+                  "Use an axis-aligned direction=:x/:y/:z for these.")
+        end
+    end
+    if !(binning in (:cic, :ngp))
+        throw(ArgumentError("binning must be :cic or :ngp, got :$binning"))
+    end
+
+    # --- camera orientation (A1) ---------------------------------------------------
+    Lvec = nothing
+    if direction === :faceon || direction === :edgeon
+        Lvec = [ sum(getvar(dataobject, :lx, center=center, center_unit=range_unit)),
+                 sum(getvar(dataobject, :ly, center=center, center_unit=range_unit)),
+                 sum(getvar(dataobject, :lz, center=center, center_unit=range_unit)) ]
+    end
+    losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
+                            angle_unit=angle_unit, up=up, L=Lvec)
+    cam_right, cam_up, cam_w = build_camera_basis(losv, uph)
+
+    # --- centred physical cell coordinates (code units), pivot = box centre --------
+    pivot = [ (ranges[1]+ranges[2])/2, (ranges[3]+ranges[4])/2, (ranges[5]+ranges[6])/2 ]
+    px = getvar(dataobject, :x, center=pivot, center_unit=:standard)
+    py = getvar(dataobject, :y, center=pivot, center_unit=:standard)
+    pz = getvar(dataobject, :z, center=pivot, center_unit=:standard)
+    x_cam = px .* cam_right[1] .+ py .* cam_right[2] .+ pz .* cam_right[3]
+    y_cam = px .* cam_up[1]    .+ py .* cam_up[2]    .+ pz .* cam_up[3]
+    z_cam = px .* cam_w[1]     .+ py .* cam_w[2]     .+ pz .* cam_w[3]
+
+    # --- selection mask: user mask ∧ optional LOS-depth slab -----------------------
+    ncells = length(x_cam)
+    skipmask = check_mask(dataobject, mask, verbose)
+    sel = skipmask ? trues(ncells) : collect(Bool.(mask))
+    full_z = (ranges[5] == 0.0 && ranges[6] == 1.0)
+    if !full_z
+        halfdepth = (ranges[6] - ranges[5]) * boxlen / 2          # along w, about pivot
+        sel = sel .& (abs.(z_cam) .<= halfdepth)
+    end
+
+    # --- in-plane extent: rotated AABB (full box) or camera-plane window -----------
+    pixsize = boxlen / res                                        # code units (matches axis path)
+    full_xy = (ranges[1] == 0.0 && ranges[2] == 1.0 && ranges[3] == 0.0 && ranges[4] == 1.0)
+    if full_xy
+        pad = pixsize                                             # one pixel margin
+        x0 = minimum(@view x_cam[sel]) - pad; x1 = maximum(@view x_cam[sel]) + pad
+        y0 = minimum(@view y_cam[sel]) - pad; y1 = maximum(@view y_cam[sel]) + pad
+    else
+        hx = (ranges[2]-ranges[1]) * boxlen / 2
+        hy = (ranges[4]-ranges[3]) * boxlen / 2
+        x0, x1, y0, y1 = -hx, hx, -hy, hy
+        sel = sel .& (x_cam .>= x0) .& (x_cam .<= x1) .& (y_cam .>= y0) .& (y_cam .<= y1)
+    end
+    nx = max(1, round(Int, (x1 - x0) / pixsize))
+    ny = max(1, round(Int, (y1 - y0) / pixsize))
+    x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize                # snap extent to pixel grid
+    grid_extent = (x0, x1, y0, y1)
+    grid_resolution = (nx, ny)
+    extent = [x0, x1, y0, y1]
+
+    if verbose
+        println("Selected var(s)=$(tuple(selected_vars...)) ")
+        println("Weighting      = :", weighting[1])
+        println("Off-axis LOS   = ", round.(cam_w, digits=4), "  (binning=:", binning, ")")
+        println("Effective resolution: $(res)^2  →  map size: $nx x $ny")
+        println()
+    end
+
+    # masked binning coordinates and weights (shared by all variables)
+    xc = Float64.(x_cam[sel]); yc = Float64.(y_cam[sel])
+    wfull = getvar(dataobject, weighting[1]) .* weight_scale
+    wsel  = Float64.(wfull[sel])
+
+    pixel_area = pixsize^2
+    imaps     = SortedDict()
+    maps_unit = SortedDict()
+    maps_weight = SortedDict()
+    maps_mode = SortedDict()
+
+    for ivar in selected_vars
+        if ivar === :sd || ivar === :mass
+            vals = getvar(dataobject, :mass, center=center, center_unit=range_unit)
+        else
+            vals = getvar(dataobject, ivar, center=center, center_unit=range_unit)
+        end
+        vsel = Float64.(vals[sel])
+
+        extensive_sum = (mode == :sum) && (ivar === :ekin || ivar === :etherm || ivar === :volume)
+        wts = (ivar === :sd || ivar === :mass || extensive_sum) ? ones(Float64, length(vsel)) : wsel
+
+        grid    = zeros(Float64, nx, ny)
+        wgrid   = zeros(Float64, nx, ny)
+        deposit_rotated_cells_to_grid!(grid, wgrid, xc, yc, vsel, wts,
+                                       grid_extent, grid_resolution; binning=binning)
+
+        if ivar === :sd
+            m = grid ./ pixel_area
+            w_meta, mode_meta = :nothing, :nothing
+        elseif ivar === :mass
+            m = grid
+            w_meta, mode_meta = :nothing, :sum
+        else
+            if mode == :sum
+                m = grid
+            else
+                m = zeros(Float64, nx, ny)
+                nz = wgrid .> 0
+                m[nz] = grid[nz] ./ wgrid[nz]
+            end
+            w_meta, mode_meta = weighting, mode
+        end
+
+        selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
+        imaps[ivar]       = m .* selected_unit
+        maps_unit[ivar]   = unit_name
+        maps_weight[ivar] = w_meta
+        maps_mode[ivar]   = mode_meta
+    end
+
+    ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+    _smallr = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallr
+    _smallc = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallc
+    # extent is already pivot-centred, so the centred extent equals extent
+    return AMRMapsType(imaps, maps_unit, SortedDict(), maps_weight, maps_mode,
+                       lmax_projected, lmin, simlmax, ranges, extent, copy(extent), ratio,
+                       res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info)
 end
 
 

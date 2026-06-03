@@ -895,6 +895,14 @@ Base.@kwdef mutable struct ArgumentsType
     thickness::Union{Real, Missing}         = missing
     position::Union{Real, Missing}          = missing
 
+    # off-axis projection (line of sight / camera orientation)
+    los::Union{Array{<:Real,1}, Missing}    = missing
+    up::Union{Array{<:Real,1}, Missing}     = missing
+    theta::Union{Real, Missing}             = missing
+    phi::Union{Real, Missing}               = missing
+    angle_unit::Union{Symbol, Missing}      = missing
+    binning::Union{Symbol, Missing}         = missing
+
     center::Union{Array{<:Any,1}, Missing}  = missing
 
     range_unit::Union{Symbol, Missing}      = missing

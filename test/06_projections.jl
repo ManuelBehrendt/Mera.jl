@@ -1809,4 +1809,74 @@ end
         end
     end
 
+    # ========================================================================
+    # Off-axis projection (Phase A3) -- arbitrary line of sight on real AMR.
+    # Data-free kinematics/deposit unit tests live in 33_offaxis_kinematics_tests.jl;
+    # here we check the full engine on real data: conservation, equivalence, presets.
+    # ========================================================================
+    @testset "Off-axis Projection (arbitrary LOS)" begin
+        mtot = sum(getvar(hydro, :mass, :Msol))   # independent ground-truth total
+
+        @testset "los=[0,0,1] reproduces direction=:z total" begin
+            pz  = projection(hydro, :mass, :Msol, direction=:z,    verbose=false, show_progress=false)
+            po  = projection(hydro, :mass, :Msol, los=[0.0,0,1],   verbose=false, show_progress=false)
+            @test po isa Mera.AMRMapsType
+            @test haskey(po.maps, :mass)
+            @test isapprox(sum(pz.maps[:mass]), mtot;            rtol=1e-6)   # axis path total
+            @test isapprox(sum(po.maps[:mass]), mtot;            rtol=1e-6)   # off-axis total
+            @test isapprox(sum(po.maps[:mass]), sum(pz.maps[:mass]); rtol=1e-6)
+        end
+
+        @testset "mass conserved for arbitrary LOS (mode=:sum extensive)" begin
+            for los in ([1.0,0,0],[0.0,1,0],[1.0,1,1],[2.0,-1,0.5],[-1.0,2,3])
+                pm = projection(hydro, :mass, :Msol, los=los, verbose=false, show_progress=false)
+                @test isapprox(sum(pm.maps[:mass]), mtot; rtol=1e-6)
+            end
+            # :volume is also conserved (extensive) and ekin/etherm with mode=:sum
+            pv = projection(hydro, :volume, los=[1.0,1,1], mode=:sum, verbose=false, show_progress=false)
+            @test isapprox(sum(pv.maps[:volume]), sum(getvar(hydro,:volume)); rtol=1e-6)
+        end
+
+        @testset "theta/phi degrees match equivalent LOS vector" begin
+            pth = projection(hydro, :mass, :Msol, theta=90, phi=0, angle_unit=:deg, verbose=false, show_progress=false)
+            px  = projection(hydro, :mass, :Msol, los=[1.0,0,0], verbose=false, show_progress=false)
+            @test isapprox(sum(pth.maps[:mass]), sum(px.maps[:mass]); rtol=1e-6)
+            # radians is the default
+            pthr = projection(hydro, :mass, :Msol, theta=pi/2, phi=0, verbose=false, show_progress=false)
+            @test isapprox(sum(pthr.maps[:mass]), sum(px.maps[:mass]); rtol=1e-6)
+        end
+
+        @testset ":faceon / :edgeon presets run and conserve mass" begin
+            pf = projection(hydro, :mass, :Msol, direction=:faceon, verbose=false, show_progress=false)
+            pe = projection(hydro, :mass, :Msol, direction=:edgeon, verbose=false, show_progress=false)
+            @test isapprox(sum(pf.maps[:mass]), mtot; rtol=1e-6)
+            @test isapprox(sum(pe.maps[:mass]), mtot; rtol=1e-6)
+        end
+
+        @testset "CIC vs NGP both conserve; CIC spreads more" begin
+            pc = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:cic, verbose=false, show_progress=false)
+            pn = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:ngp, verbose=false, show_progress=false)
+            @test isapprox(sum(pc.maps[:mass]), mtot; rtol=1e-6)
+            @test isapprox(sum(pn.maps[:mass]), mtot; rtol=1e-6)
+            @test count(>(0), pc.maps[:mass]) >= count(>(0), pn.maps[:mass])  # CIC ≥ NGP coverage
+        end
+
+        @testset "intensive var (:rho) is finite, positive, weighted-average" begin
+            pr = projection(hydro, :rho, :nH, los=[1.0,1,1], verbose=false, show_progress=false)
+            @test all(isfinite.(pr.maps[:rho]))
+            @test maximum(pr.maps[:rho]) > 0
+            @test minimum(pr.maps[:rho]) >= 0
+        end
+
+        @testset "determinism" begin
+            a = projection(hydro, :mass, :Msol, los=[1.0,2,3], verbose=false, show_progress=false)
+            b = projection(hydro, :mass, :Msol, los=[1.0,2,3], verbose=false, show_progress=false)
+            @test a.maps[:mass] == b.maps[:mass]
+        end
+
+        @testset "map-only vars rejected for off-axis (clear error)" begin
+            @test_throws ErrorException projection(hydro, :r_cylinder, los=[1.0,1,1], verbose=false, show_progress=false)
+        end
+    end
+
 end
