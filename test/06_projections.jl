@@ -1444,6 +1444,51 @@ end
             @test any(proj.maps[:mass] .> 0)
         end
 
+        @testset "Off-axis Particle Projection (arbitrary LOS)" begin
+            mtot = sum(getvar(particles, :mass, :Msol))
+            area(p) = (p.pixsize * particles.scale.pc)^2     # pixel area in pc^2
+
+            @testset "sd mass conserved; los=z reproduces direction=:z" begin
+                pz = projection(particles, :sd, :Msol_pc2, direction=:z,  verbose=false, show_progress=false)
+                po = projection(particles, :sd, :Msol_pc2, los=[0.0,0,1], verbose=false, show_progress=false)
+                @test po isa Mera.PartMapsType
+                @test po.direction == :offaxis
+                @test pz.direction == :unspecified
+                @test isapprox(sum(po.maps[:sd])*area(po), mtot; rtol=1e-3)
+                @test isapprox(sum(pz.maps[:sd])*area(pz), mtot; rtol=1e-3)
+            end
+
+            @testset "mass conserved across arbitrary LOS" begin
+                for los in ([1.0,0,0],[1.0,1,1],[2.0,-1,0.5])
+                    pl = projection(particles, :sd, :Msol_pc2, los=los, verbose=false, show_progress=false)
+                    @test isapprox(sum(pl.maps[:sd])*area(pl), mtot; rtol=1e-3)
+                end
+            end
+
+            @testset "camera metadata + orthonormal basis" begin
+                po = projection(particles, :sd, los=[1.0,1,1], verbose=false, show_progress=false)
+                @test length(po.los)==3 && isapprox(po.los, [1,1,1]./sqrt(3); atol=1e-12)
+                @test isapprox(sum(po.los .* po.up), 0; atol=1e-10)
+                @test isapprox(sum(po.los .* po.cam_right), 0; atol=1e-10)
+            end
+
+            @testset "faceon/edgeon orientation follows particle angular momentum" begin
+                L  = [sum(getvar(particles,:lx)), sum(getvar(particles,:ly)), sum(getvar(particles,:lz))]
+                Lh = L ./ sqrt(sum(L.^2))
+                fo = projection(particles, :sd, direction=:faceon, verbose=false, show_progress=false)
+                eo = projection(particles, :sd, direction=:edgeon, verbose=false, show_progress=false)
+                @test abs(sum(fo.los .* Lh)) > 0.999
+                @test abs(sum(eo.los .* Lh)) < 1e-6
+                @test abs(sum(eo.up  .* Lh)) > 0.999
+            end
+
+            @testset "binning options + map-only var error" begin
+                @test projection(particles, :sd, los=[1.,1,1], binning=:ngp,     verbose=false, show_progress=false) isa Mera.PartMapsType
+                @test projection(particles, :sd, los=[1.,1,1], binning=:overlap, verbose=false, show_progress=false) isa Mera.PartMapsType  # ->:cic
+                @test_throws ErrorException projection(particles, :r_cylinder, los=[1.,1,1], verbose=false, show_progress=false)
+            end
+        end
+
         @testset "Particle Direction Options" begin
             proj_z = projection(particles, :mass, direction=:z, res=32,
                                 verbose=false, show_progress=false)
