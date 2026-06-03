@@ -1,3 +1,12 @@
+# Validate a per-group photon index against the number of photon groups (nvarrt÷4),
+# so getvar(rt, :Fmag9) on a 2-group run gives a clear domain error instead of a
+# low-level IndexedTables KeyError on a non-existent Np9/Fx9 column.
+function check_rt_group(dataobject, g::Int, var)
+    ng = dataobject.info.nvarrt ÷ 4
+    (1 <= g <= ng) || error("getvar :$var: photon group $g out of range; simulation has $ng photon group(s).")
+    return nothing
+end
+
 function get_data(dataobject::RtDataType,
                 vars::Array{Symbol,1},
                 units::Array{Symbol,1},
@@ -81,7 +90,7 @@ function get_data(dataobject::RtDataType,
                 else # if uniform grid
                     vars_dict[i] =  select(masked_data, bpos) .- 2^lmax .* center[2]
                 end
-            elseif i == :cx
+            elseif i == :cz
                 if isamr
                     vars_dict[i] =  select(masked_data, cpos) .- 2 .^select(masked_data, :level) .* center[3]
                 else # if uniform grid
@@ -134,6 +143,7 @@ function get_data(dataobject::RtDataType,
         # RT photon flux magnitude per group: |F|_g = sqrt(Fx_g^2 + Fy_g^2 + Fz_g^2)
         elseif (m = match(r"^Fmag(\d+)$", string(i))) !== nothing
             g = m.captures[1]
+            check_rt_group(dataobject, parse(Int, g), i)
             selected_unit = getunit(dataobject, i, vars, units)
             fx = select(masked_data, Symbol("Fx" * g))
             fy = select(masked_data, Symbol("Fy" * g))
@@ -156,33 +166,33 @@ function get_data(dataobject::RtDataType,
         # 0 = isotropic field). Cells with Np_g == 0 return 0.
         elseif (m = match(r"^reducedflux(\d+)$", string(i))) !== nothing
             g = m.captures[1]
-            selected_unit = getunit(dataobject, i, vars, units)
+            check_rt_group(dataobject, parse(Int, g), i)
             np = select(masked_data, Symbol("Np" * g))
             fx = select(masked_data, Symbol("Fx" * g))
             fy = select(masked_data, Symbol("Fy" * g))
             fz = select(masked_data, Symbol("Fz" * g))
-            vars_dict[i] = @. ifelse(np > 0, sqrt(fx^2 + fy^2 + fz^2) / np, 0.0) * selected_unit
+            vars_dict[i] = @. ifelse(np > 0, sqrt(fx^2 + fy^2 + fz^2) / np, 0.0)   # dimensionless [0,1]
 
         # Physical photon number density per group [photons cm^-3] = Np_g · unit_np
         # (unit_np from the RT descriptor, info_rt).
         elseif (m = match(r"^Np(\d+)_cgs$", string(i))) !== nothing
             g = m.captures[1]
+            check_rt_group(dataobject, parse(Int, g), i)
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :unit_np) || error("getvar :$i needs descriptor :unit_np (RT info_rt).")
-            selected_unit = getunit(dataobject, i, vars, units)
-            vars_dict[i] = select(masked_data, Symbol("Np" * g)) .* rtd[:unit_np] .* selected_unit
+            vars_dict[i] = select(masked_data, Symbol("Np" * g)) .* rtd[:unit_np]   # [photons cm^-3], fixed cgs
 
         # Physical photon flux magnitude per group [photons cm^-2 s^-1] = |F_g| · unit_pf
         # (unit_pf from the RT descriptor, info_rt).
         elseif (m = match(r"^Fmag(\d+)_cgs$", string(i))) !== nothing
             g = m.captures[1]
+            check_rt_group(dataobject, parse(Int, g), i)
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :unit_pf) || error("getvar :$i needs descriptor :unit_pf (RT info_rt).")
-            selected_unit = getunit(dataobject, i, vars, units)
             fx = select(masked_data, Symbol("Fx" * g))
             fy = select(masked_data, Symbol("Fy" * g))
             fz = select(masked_data, Symbol("Fz" * g))
-            vars_dict[i] = @. sqrt(fx^2 + fy^2 + fz^2) * rtd[:unit_pf] * selected_unit
+            vars_dict[i] = @. sqrt(fx^2 + fy^2 + fz^2) * rtd[:unit_pf]   # [photons cm^-2 s^-1], fixed cgs
 
         # Radiation (photon) energy density per group [erg cm^-3]
         #   u_g = Np_g · unit_np · (egy_g · eV) ,
@@ -195,22 +205,20 @@ function get_data(dataobject::RtDataType,
                 error("getvar :$i needs descriptor :unit_np and :group_egy (RT info_rt).")
             g <= length(rtd[:group_egy]) ||
                 error("getvar :$i: simulation has only $(length(rtd[:group_egy])) photon group(s).")
-            selected_unit = getunit(dataobject, i, vars, units)
             egy_erg = rtd[:group_egy][g] * dataobject.info.constants.eV   # [erg] per photon
-            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* rtd[:unit_np] .* egy_erg .* selected_unit
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* rtd[:unit_np] .* egy_erg   # [erg cm^-3], fixed cgs
 
         # Total radiation energy density summed over all photon groups [erg cm^-3]
         elseif i == :rad_energy_density
             rtd = dataobject.info.descriptor.rt
             (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
                 error("getvar :rad_energy_density needs descriptor :unit_np and :group_egy (RT info_rt).")
-            selected_unit = getunit(dataobject, :rad_energy_density, vars, units)
             eV = dataobject.info.constants.eV
             total = select(masked_data, :Np1) .* 0.0
             for g in 1:length(rtd[:group_egy])
                 total = total .+ select(masked_data, Symbol("Np$g")) .* (rtd[:group_egy][g] * eV)
             end
-            vars_dict[:rad_energy_density] = total .* rtd[:unit_np] .* selected_unit
+            vars_dict[:rad_energy_density] = total .* rtd[:unit_np]   # [erg cm^-3], fixed cgs
 
         # Radial distances (for gravity analysis) - code units by default
         elseif i == :r_cylinder
@@ -243,20 +251,23 @@ function get_data(dataobject::RtDataType,
                     
                     # Try to get the variable from hydro data with proper parameters
                     if length(mask) > 1
-                        # If mask is applied, we need to get the full data first, then apply mask
-                        hydro_result = getvar(hydro_data, i, unit=var_unit, 
+                        # If mask is applied, we need to get the full data first, then apply mask.
+                        # The hydro object must be loaded over the SAME cell set as the RT object.
+                        hydro_result = getvar(hydro_data, i, unit=var_unit,
                                             center=center, direction=direction, ref_time=ref_time)
+                        length(hydro_result) == length(mask) || error(
+                            "RT getvar hydro-fallback for :$i: hydro_data has $(length(hydro_result)) cells but the RT mask has $(length(mask)); load hydro_data over the identical cell set (same lmax/ranges).")
                         vars_dict[i] = hydro_result[mask]
                     else
                         # No mask, get data directly
-                        vars_dict[i] = getvar(hydro_data, i, unit=var_unit, 
+                        vars_dict[i] = getvar(hydro_data, i, unit=var_unit,
                                             center=center, direction=direction, ref_time=ref_time)
                     end
                 catch e
-                    error("Variable :$i not found in gravity data and could not be retrieved from hydro data. Error: $e")
+                    error("Variable :$i not found in RT data and could not be retrieved from hydro data. Error: $e")
                 end
             else
-                error("Variable :$i not found in gravity data. Consider providing hydro_data keyword argument to access hydro variables")
+                error("Variable :$i not found in RT data. Consider providing the hydro_data keyword argument to access hydro variables.")
             end
         end
 

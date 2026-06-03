@@ -266,9 +266,12 @@ function get_data(dataobject::GravDataType,
                     
                     # Try to get the variable from hydro data with proper parameters
                     if length(mask) > 1
-                        # If mask is applied, we need to get the full data first, then apply mask
-                        hydro_result = getvar(hydro_data, i, unit=var_unit, 
+                        # If mask is applied, we need to get the full data first, then apply mask.
+                        # The hydro object must be loaded over the SAME cell set as the gravity object.
+                        hydro_result = getvar(hydro_data, i, unit=var_unit,
                                             center=center, direction=direction, ref_time=ref_time)
+                        length(hydro_result) == length(mask) || error(
+                            "gravity getvar hydro-fallback for :$i: hydro_data has $(length(hydro_result)) cells but the mask has $(length(mask)); load hydro_data over the identical cell set (same lmax/ranges).")
                         vars_dict[i] = hydro_result[mask]
                     else
                         # No mask, get data directly

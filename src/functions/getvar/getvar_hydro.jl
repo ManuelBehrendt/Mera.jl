@@ -1,3 +1,41 @@
+# RT-aware mean molecular weight μ from the tracked ionization state, including
+# metallicity when a per-cell metal mass fraction is available:
+#   μ = 1 / [ X_H(1+xHII) + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z ]
+# with X_H = X(1-Z)/(X+Y), X_He = Y(1-Z)/(X+Y) so that X_H+X_He+Z = 1 per cell.
+#  • X, Y are the primordial H/He mass fractions from the RT descriptor (info_rt).
+#  • Z is the local metal mass fraction (the :metallicity hydro scalar); 0 if absent.
+#  • A_Z ≈ 16 is a representative mean atomic mass of metals (O-dominated).
+#  • He is assumed neutral when its ionization is not tracked (nIons < 3).
+#  • Metal FREE ELECTRONS are neglected: RAMSES-RT does not track metal ionization,
+#    and the metal electron term is a sub-percent correction to μ.
+const _RT_A_METAL = 16.0
+function _rt_mu(dataobject, data, rtd)
+    vlist = dataobject.info.variable_list
+    X = get(rtd, :X_fraction, 0.76)
+    Y = get(rtd, :Y_fraction, 1.0 - X)
+    xHII = select(data, vlist[rtd[:iIons]])
+    # local metal mass fraction (passive scalar) if the run tracks it
+    Z = in(:metallicity, propertynames(data.columns)) ? select(data, :metallicity) : zero(xHII)
+    XH  = @. X * (1.0 - Z) / (X + Y)
+    XHe = @. Y * (1.0 - Z) / (X + Y)
+    if get(rtd, :nIons, 1) >= 3
+        xHeII  = select(data, vlist[rtd[:iIons] + 1])
+        xHeIII = select(data, vlist[rtd[:iIons] + 2])
+        return @. 1.0 / (XH*(1.0 + xHII) + (XHe/4)*(1.0 + xHeII + 2.0*xHeIII) + Z/_RT_A_METAL)
+    else
+        return @. 1.0 / (XH*(1.0 + xHII) + (XHe/4) + Z/_RT_A_METAL)
+    end
+end
+
+# Hydrogen number density [cm^-3] for RT-derived quantities, using the run's actual
+# hydrogen mass fraction X from the RT descriptor. Mera's scale.nH bakes in X=0.76;
+# this rescales by X/0.76 so the densities are correct for runs with a different X
+# (e.g. the pure-hydrogen X=1 Strömgren test). Backward-compatible (factor 1 at X=0.76).
+function _rt_nH(dataobject, data, rtd)
+    X = get(rtd, :X_fraction, 0.76)
+    return select(data, :rho) .* dataobject.info.scale.nH .* (X / 0.76)
+end
+
 function get_data(  dataobject::HydroDataType,
                     vars::Array{Symbol,1},
                     units::Array{Symbol,1},
@@ -197,7 +235,7 @@ function get_data(  dataobject::HydroDataType,
             end
             xion_var = dataobject.info.variable_list[rtd[:iIons]]   # e.g. :var6 = xHII
             selected_unit = getunit(dataobject, :em_recomb, vars, units)
-            nH = select(masked_data, :rho) .* dataobject.info.scale.nH    # n_H [cm^-3]
+            nH = _rt_nH(dataobject, masked_data, rtd)                     # n_H [cm^-3]
             xhii = select(masked_data, xion_var)
             vars_dict[:em_recomb] = @. (nH * xhii)^2 * selected_unit
 
@@ -213,7 +251,7 @@ function get_data(  dataobject::HydroDataType,
             end
             selected_unit = getunit(dataobject, i, vars, units)
             vlist = dataobject.info.variable_list
-            nH    = select(masked_data, :rho) .* dataobject.info.scale.nH   # n_H [cm^-3]
+            nH    = _rt_nH(dataobject, masked_data, rtd)                    # n_H [cm^-3], X from descriptor
             xHII  = select(masked_data, vlist[rtd[:iIons]])
             if i == :n_HII
                 vars_dict[i] = @. nH * xHII * selected_unit
@@ -221,14 +259,58 @@ function get_data(  dataobject::HydroDataType,
                 vars_dict[i] = @. nH * (1.0 - xHII) * selected_unit
             else  # :n_e — free electrons from H, plus He if it is tracked (nIons >= 3)
                 ne = nH .* xHII
-                nions = get(rtd, :nIons, 1)
-                if nions >= 3 && get(rtd, :X_fraction, 0.0) > 0 && haskey(rtd, :Y_fraction)
-                    nHe    = nH .* (rtd[:Y_fraction] / (4.0 * rtd[:X_fraction]))
+                # Same X/Y fallback convention as _rt_mu (default X=0.76, Y=1-X) so the
+                # two paths agree when the descriptor omits the fractions.
+                Xf = get(rtd, :X_fraction, 0.76)
+                Yf = get(rtd, :Y_fraction, 1.0 - Xf)
+                if get(rtd, :nIons, 1) >= 3 && Xf > 0
+                    nHe    = nH .* (Yf / (4.0 * Xf))
                     xHeII  = select(masked_data, vlist[rtd[:iIons] + 1])
                     xHeIII = select(masked_data, vlist[rtd[:iIons] + 2])
                     ne = @. ne + nHe * (xHeII + 2.0 * xHeIII)
                 end
                 vars_dict[i] = ne .* selected_unit
+            end
+
+        # RT neutral-hydrogen fraction xHI = 1 - xHII (located via the descriptor).
+        elseif i == :xHI
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :iIons) || error("getvar :xHI needs the RT ionization fraction (descriptor :iIons); load an RT run.")
+            selected_unit = getunit(dataobject, :xHI, vars, units)
+            xHII = select(masked_data, dataobject.info.variable_list[rtd[:iIons]])
+            vars_dict[:xHI] = (1.0 .- xHII) .* selected_unit
+
+        # Mean molecular weight μ.
+        #  • RT run (descriptor :iIons present): ionization- and metallicity-dependent
+        #    μ from the tracked fractions — varies ≈1/X (≈1.32, neutral) → ≈0.5
+        #    (ionized pure-H) → ≈0.6 (ionized H+He).
+        #  • Non-RT run: the ionization state is not tracked, so μ is the CONSTANT
+        #    value Mera's temperature scaling assumes (μ = scale.K / scale.T_mu,
+        #    = 1/X_frac for neutral primordial gas) — returned per cell for consistency
+        #    with getvar(:T, :K).
+        elseif i == :mu
+            selected_unit = getunit(dataobject, :mu, vars, units)
+            rtd = dataobject.info.descriptor.rt
+            if haskey(rtd, :iIons)
+                vars_dict[:mu] = _rt_mu(dataobject, masked_data, rtd) .* selected_unit
+            else
+                mu_const = dataobject.info.scale.K / dataobject.info.scale.T_mu
+                vars_dict[:mu] = fill(mu_const, length(masked_data)) .* selected_unit
+            end
+
+        # Gas temperature [K] using the proper μ:
+        #   T = (P/ρ)·(mH/kB)(unit_l/unit_t)²·μ = (T/μ)·μ
+        #  • RT run: uses the LOCAL μ from the ionization state (correct in ionized gas).
+        #  • Non-RT run: uses the constant assumed μ, so it equals getvar(:T, :K).
+        # Returns Kelvin directly (via the μ-independent scale.T_mu × μ).
+        elseif i == :T_rt
+            rtd = dataobject.info.descriptor.rt
+            T_over_mu = select(masked_data, :p) ./ select(masked_data, :rho) .* dataobject.info.scale.T_mu
+            if haskey(rtd, :iIons)
+                vars_dict[:T_rt] = T_over_mu .* _rt_mu(dataobject, masked_data, rtd)   # [K]
+            else
+                mu_const = dataobject.info.scale.K / dataobject.info.scale.T_mu
+                vars_dict[:T_rt] = T_over_mu .* mu_const                                # [K]
             end
 
         elseif i == :entropy_specific

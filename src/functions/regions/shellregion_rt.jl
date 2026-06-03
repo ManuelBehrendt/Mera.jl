@@ -4,14 +4,14 @@
 """
     shellregioncylinder(dataobject::RtDataType; kwargs...)
 
-Select a cylindrical shell (annular region) from gravity data using AMR-aware filtering.
+Select a cylindrical shell (annular region) from RT data using AMR-aware filtering.
 
-This function extracts all gravity cells that lie within or intersect a specified cylindrical
+This function extracts all RT cells that lie within or intersect a specified cylindrical
 shell region defined by inner and outer radii. The cylinder is oriented along one of the
 coordinate axes and supports both cell-based and point-based selection modes.
 
 # Arguments
-- `dataobject::RtDataType`: Input gravity data object from `getgravity()`
+- `dataobject::RtDataType`: Input RT data object from `getrt()`
 
 # Keywords
 - `radius::Array{<:Real,1}=[0.,0.]`: Inner and outer radii [r_inner, r_outer]
@@ -28,17 +28,17 @@ coordinate axes and supports both cell-based and point-based selection modes.
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the shell
 
 # Returns
-- `RtDataType`: New gravity data object containing filtered cells
+- `RtDataType`: New RT data object containing filtered cells
 
 # Examples
 ```julia
 # Select shell between 5-10 kpc radius, 4 kpc height
-shell = shellregioncylinder(gravity,
+shell = shellregioncylinder(rt,
     radius=[5., 10.], height=4., center=[:boxcenter],
     range_unit=:kpc, direction=:z)
 
 # Thin annular disk
-disk_shell = shellregioncylinder(gravity,
+disk_shell = shellregioncylinder(rt,
     radius=[8., 12.], height=1., center=[24., 24., 24.],
     range_unit=:kpc, direction=:z)
 ```
@@ -108,17 +108,17 @@ function shellregioncylinder(dataobject::RtDataType;
 
     printtablememory(sub_data, verbose)
 
-    gravitydata = RtDataType()
-    gravitydata.data = sub_data
-    gravitydata.info = dataobject.info
-    gravitydata.lmin = dataobject.lmin
-    gravitydata.lmax = dataobject.lmax
-    gravitydata.boxlen = dataobject.boxlen
-    gravitydata.ranges = ranges
-    gravitydata.selected_rtvars = dataobject.selected_rtvars
-    gravitydata.used_descriptors = dataobject.used_descriptors
-    gravitydata.scale = dataobject.scale
-    return gravitydata
+    rtdata = RtDataType()
+    rtdata.data = sub_data
+    rtdata.info = dataobject.info
+    rtdata.lmin = dataobject.lmin
+    rtdata.lmax = dataobject.lmax
+    rtdata.boxlen = dataobject.boxlen
+    rtdata.ranges = ranges
+    rtdata.selected_rtvars = dataobject.selected_rtvars
+    rtdata.used_descriptors = dataobject.used_descriptors
+    rtdata.scale = dataobject.scale
+    return rtdata
 
 end
 
@@ -129,14 +129,14 @@ end
 """
     shellregionsphere(dataobject::RtDataType; kwargs...)
 
-Select a spherical shell (annular region) from gravity data using AMR-aware filtering.
+Select a spherical shell (annular region) from RT data using AMR-aware filtering.
 
-This function extracts all gravity cells that lie within or intersect a specified spherical
+This function extracts all RT cells that lie within or intersect a specified spherical
 shell region defined by inner and outer radii. It supports both cell-based and point-based
 selection modes for precise boundary handling in AMR simulations.
 
 # Arguments
-- `dataobject::RtDataType`: Input gravity data object from `getgravity()`
+- `dataobject::RtDataType`: Input RT data object from `getrt()`
 
 # Keywords
 - `radius::Array{<:Real,1}=[0.,0.]`: Inner and outer radii [r_inner, r_outer]
@@ -151,21 +151,21 @@ selection modes for precise boundary handling in AMR simulations.
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the shell
 
 # Returns
-- `RtDataType`: New gravity data object containing filtered cells
+- `RtDataType`: New RT data object containing filtered cells
 
 # Examples
 ```julia
 # Select shell between 5-15 kpc radius
-shell = shellregionsphere(gravity,
+shell = shellregionsphere(rt,
     radius=[5., 15.], center=[:boxcenter], range_unit=:kpc)
 
 # Thin spherical shell at specific location
-thin_shell = shellregionsphere(gravity,
+thin_shell = shellregionsphere(rt,
     radius=[9.5, 10.5], center=[0.3, 0.4, 0.5], 
     range_unit=:kpc)
 
 # Everything outside the shell (inverse selection)
-inverse_shell = shellregionsphere(gravity,
+inverse_shell = shellregionsphere(rt,
     radius=[8., 12.], center=[24., 24., 24.],
     range_unit=:kpc, inverse=true)
 ```
@@ -229,17 +229,17 @@ function shellregionsphere(dataobject::RtDataType;
     printtablememory(sub_data, verbose)
 
 
-    gravitydata = RtDataType()
-    gravitydata.data = sub_data
-    gravitydata.info = dataobject.info
-    gravitydata.lmin = dataobject.lmin
-    gravitydata.lmax = dataobject.lmax
-    gravitydata.boxlen = dataobject.boxlen
-    gravitydata.ranges = ranges
-    gravitydata.selected_rtvars = dataobject.selected_rtvars
-    gravitydata.used_descriptors = dataobject.used_descriptors
-    gravitydata.scale = dataobject.scale
-    return gravitydata
+    rtdata = RtDataType()
+    rtdata.data = sub_data
+    rtdata.info = dataobject.info
+    rtdata.lmin = dataobject.lmin
+    rtdata.lmax = dataobject.lmax
+    rtdata.boxlen = dataobject.boxlen
+    rtdata.ranges = ranges
+    rtdata.selected_rtvars = dataobject.selected_rtvars
+    rtdata.used_descriptors = dataobject.used_descriptors
+    rtdata.scale = dataobject.scale
+    return rtdata
 
 
 

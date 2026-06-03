@@ -392,7 +392,7 @@ return HydroMapsType
 #### Data Processing Options:
 - **`weighting::Array`**: Variable for weighting `[quantity, unit]` (default: `[:mass]`)
   - Controls how cell values are averaged: mass-weighted, volume-weighted, etc.
-  - Use `[:none]` for simple geometric averaging
+  - e.g. `[:volume]` for a volume-weighted average, or `[:mass]` (default)
 - **`mode::Symbol`**: Processing mode (:standard or :sum)
   - :standard → weighted averages (typical for intensive quantities)
   - :sum → accumulative totals (for extensive quantities like mass)
@@ -568,18 +568,22 @@ and shares the AMR engine above. Two RT-specific behaviours apply:
 - **Default weighting is `:volume`** (not `:mass`): RT fields carry no cell mass, so
   a mass weight is meaningless. Passing `weighting=[:mass]` is silently promoted to
   `[:volume]`. Override explicitly with e.g. `weighting=[:Np1]` to flux-weight by the
-  photon density, or `weighting=[:none]` for a plain geometric average.
-- **`mode=:sum`** turns a projection into a **line-of-sight column integral**
-  (∫ q dz) — the natural choice for photon columns and emission maps; `mode=:standard`
-  gives the (volume-)weighted average along the line of sight.
+  photon density.
+- **`mode=:standard`** (default) gives the **volume-weighted average** of the field
+  along the line of sight (per pixel). **`mode=:sum`** gives the volume-weighted
+  **sum** per pixel — i.e. Σ q·V_cell over the column, so for `:Np1` (a number
+  density) it is proportional to the **total photon count** projected onto each
+  pixel (the whole map sums to the box photon number), not the column density
+  ∫q dz. For a mass-style **column density** use a `HydroDataType` with `:sd`
+  (which divides by the pixel area); RT fields have no `:sd` analogue.
 
 Typical RT maps:
 ```julia
 rt  = getrt(info)
 gas = gethydro(info)
 
-# Photon-density column of group 1 (line-of-sight integral)
-np_col = projection(rt, :Np1, mode=:sum, center=[:bc], range_unit=:kpc)
+# Photon-count map of group 1 (volume-weighted sum per pixel)
+np_sum = projection(rt, :Np1, mode=:sum, center=[:bc], range_unit=:kpc)
 
 # Reduced-flux map (beam vs. isotropic), volume-weighted average
 fmap = projection(rt, :reducedflux1, center=[:bc])
@@ -642,8 +646,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
 
     # RT data carry no mass density, so default mass-weighting to volume-weighting
     # (avoids the :rho/:sd path in check_need_rho). Users can still override.
-    if isa(dataobject, RtDataType) && length(weighting) >= 1 && weighting[1] == :mass
-        weighting = [:volume, length(weighting) >= 2 ? weighting[2] : missing]
+    if isa(dataobject, RtDataType)
+        if any(v -> v === :sd || v === :mass, vars)
+            error("projection: :sd/:mass are mass quantities, but RT data (RtDataType) carries no mass. Load a HydroDataType (gethydro) for surface/mass density, or project an RT field (e.g. :Np1, :rad_energy_density).")
+        end
+        if length(weighting) >= 1 && weighting[1] == :mass
+            weighting = [:volume, length(weighting) >= 2 ? weighting[2] : missing]
+        end
     end
 
     # Validate and normalize input parameters

@@ -3,14 +3,14 @@
 """
     subregioncuboid(dataobject::RtDataType; kwargs...)
 
-Select a cuboid (rectangular box) subregion from gravity data using AMR-aware filtering.
+Select a cuboid (rectangular box) subregion from RT data using AMR-aware filtering.
 
-This function extracts all gravity cells that lie within or intersect a specified rectangular
+This function extracts all RT cells that lie within or intersect a specified rectangular
 region. It supports both cell-based and point-based selection modes for precise control
 over boundary handling in adaptive mesh refinement (AMR) simulations.
 
 # Arguments
-- `dataobject::RtDataType`: Input gravity data object from `getgravity()`
+- `dataobject::RtDataType`: Input RT data object from `getrt()`
 
 # Keywords
 - `xrange::Array{<:Any,1}=[missing, missing]`: X-coordinate range [min, max]
@@ -27,17 +27,17 @@ over boundary handling in adaptive mesh refinement (AMR) simulations.
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the region
 
 # Returns
-- `RtDataType`: New gravity data object containing filtered cells
+- `RtDataType`: New RT data object containing filtered cells
 
 # Examples
 ```julia
 # Select central 20x20x4 kpc box
-subregion = subregioncuboid(gravity, 
+subregion = subregioncuboid(rt, 
     xrange=[-10., 10.], yrange=[-10., 10.], zrange=[-2., 2.],
     center=[:boxcenter], range_unit=:kpc)
 
 # Inverse selection (everything outside the box)
-subregion = subregioncuboid(gravity,
+subregion = subregioncuboid(rt,
     xrange=[0.3, 0.7], yrange=[0.3, 0.7], zrange=[0.4, 0.6],
     inverse=true)
 ```
@@ -211,17 +211,17 @@ function subregioncuboid(dataobject::RtDataType;
 
         printtablememory(sub_data, verbose)
 
-        gravitydata = RtDataType()
-        gravitydata.data = sub_data
-        gravitydata.info = dataobject.info
-        gravitydata.lmin = dataobject.lmin
-        gravitydata.lmax = dataobject.lmax
-        gravitydata.boxlen = dataobject.boxlen
-        gravitydata.ranges = ranges
-        gravitydata.selected_rtvars = dataobject.selected_rtvars
-        gravitydata.used_descriptors = dataobject.used_descriptors
-        gravitydata.scale = dataobject.scale
-        return gravitydata
+        rtdata = RtDataType()
+        rtdata.data = sub_data
+        rtdata.info = dataobject.info
+        rtdata.lmin = dataobject.lmin
+        rtdata.lmax = dataobject.lmax
+        rtdata.boxlen = dataobject.boxlen
+        rtdata.ranges = ranges
+        rtdata.selected_rtvars = dataobject.selected_rtvars
+        rtdata.used_descriptors = dataobject.used_descriptors
+        rtdata.scale = dataobject.scale
+        return rtdata
 
     else
         return dataobject
@@ -237,7 +237,7 @@ end
 # -----------------------------------------------------------------------------
 
 """
-    get_filtered_ranges(gravitydata::RtDataType)
+    get_filtered_ranges(rtdata::RtDataType)
 
 Extract spatial ranges from a RtDataType for use with projection functions.
 
@@ -245,20 +245,20 @@ Returns the ranges in the format expected by projection functions:
 (xrange, yrange, zrange) as arrays of [min, max] values.
 
 # Arguments
-- `gravitydata::RtDataType`: Data object containing filtered spatial ranges
+- `rtdata::RtDataType`: Data object containing filtered spatial ranges
 
 # Returns
 - `Tuple{Array,Array,Array}`: (xrange, yrange, zrange) for projection functions
 
 # Example
 ```julia
-gravity_subregion = subregioncuboid(gravity, xrange=[0.4, 0.6], yrange=[0.4, 0.6])
-xr, yr, zr = get_filtered_ranges(gravity_subregion)
-projection(gravity_subregion, vars; xrange=xr, yrange=yr, zrange=zr, ...)
+rt_subregion = subregioncuboid(rt, xrange=[0.4, 0.6], yrange=[0.4, 0.6])
+xr, yr, zr = get_filtered_ranges(rt_subregion)
+projection(rt_subregion, vars; xrange=xr, yrange=yr, zrange=zr, ...)
 ```
 """
-function get_filtered_ranges(gravitydata::RtDataType)
-    r = gravitydata.ranges
+function get_filtered_ranges(rtdata::RtDataType)
+    r = rtdata.ranges
     return ([r[1], r[2]], [r[3], r[4]], [r[5], r[6]])
 end
 
@@ -269,14 +269,14 @@ end
 """
     subregioncylinder(dataobject::RtDataType; kwargs...)
 
-Select a cylindrical subregion from gravity data using AMR-aware filtering.
+Select a cylindrical subregion from RT data using AMR-aware filtering.
 
-This function extracts all gravity cells that lie within or intersect a specified cylindrical
+This function extracts all RT cells that lie within or intersect a specified cylindrical
 region. The cylinder is defined by a radius, height, center position, and orientation axis.
 It supports both cell-based and point-based selection modes for precise boundary handling.
 
 # Arguments
-- `dataobject::RtDataType`: Input gravity data object from `getgravity()`
+- `dataobject::RtDataType`: Input RT data object from `getrt()`
 
 # Keywords
 - `radius::Real=0.`: Cylinder radius in units specified by `range_unit`
@@ -293,17 +293,17 @@ It supports both cell-based and point-based selection modes for precise boundary
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the cylinder
 
 # Returns
-- `RtDataType`: New gravity data object containing filtered cells
+- `RtDataType`: New RT data object containing filtered cells
 
 # Examples
 ```julia
 # Select 5 kpc radius, 4 kpc height cylinder along z-axis
-subregion = subregioncylinder(gravity,
+subregion = subregioncylinder(rt,
     radius=5., height=4., center=[:boxcenter],
     range_unit=:kpc, direction=:z)
 
 # Disk selection (very thin cylinder)
-disk = subregioncylinder(gravity,
+disk = subregioncylinder(rt,
     radius=10., height=0.5, center=[24., 24., 24.],
     range_unit=:kpc, direction=:z)
 ```
@@ -363,17 +363,17 @@ function subregioncylinder(dataobject::RtDataType;
     
     printtablememory(sub_data, verbose)
 
-    gravitydata = RtDataType()
-    gravitydata.data = sub_data
-    gravitydata.info = dataobject.info
-    gravitydata.lmin = dataobject.lmin
-    gravitydata.lmax = dataobject.lmax
-    gravitydata.boxlen = dataobject.boxlen
-    gravitydata.ranges = ranges
-    gravitydata.selected_rtvars = dataobject.selected_rtvars
-    gravitydata.used_descriptors = dataobject.used_descriptors
-    gravitydata.scale = dataobject.scale
-    return gravitydata
+    rtdata = RtDataType()
+    rtdata.data = sub_data
+    rtdata.info = dataobject.info
+    rtdata.lmin = dataobject.lmin
+    rtdata.lmax = dataobject.lmax
+    rtdata.boxlen = dataobject.boxlen
+    rtdata.ranges = ranges
+    rtdata.selected_rtvars = dataobject.selected_rtvars
+    rtdata.used_descriptors = dataobject.used_descriptors
+    rtdata.scale = dataobject.scale
+    return rtdata
 
 end
 
@@ -384,14 +384,14 @@ end
 """
     subregionsphere(dataobject::RtDataType; kwargs...)
 
-Select a spherical subregion from gravity data using AMR-aware filtering.
+Select a spherical subregion from RT data using AMR-aware filtering.
 
-This function extracts all gravity cells that lie within or intersect a specified spherical
+This function extracts all RT cells that lie within or intersect a specified spherical
 region. The sphere is defined by a radius and center position. It supports both cell-based
 and point-based selection modes for precise boundary handling in AMR simulations.
 
 # Arguments
-- `dataobject::RtDataType`: Input gravity data object from `getgravity()`
+- `dataobject::RtDataType`: Input RT data object from `getrt()`
 
 # Keywords
 - `radius::Real=0.`: Sphere radius in units specified by `range_unit`
@@ -406,20 +406,20 @@ and point-based selection modes for precise boundary handling in AMR simulations
 - **Point-based (`cell=false`)**: Includes only cells whose centers lie within the sphere
 
 # Returns
-- `RtDataType`: New gravity data object containing filtered cells
+- `RtDataType`: New RT data object containing filtered cells
 
 # Examples
 ```julia
 # Select 10 kpc radius sphere centered at box center
-subregion = subregionsphere(gravity,
+subregion = subregionsphere(rt,
     radius=10., center=[:boxcenter], range_unit=:kpc)
 
 # Small sphere at specific coordinates
-subregion = subregionsphere(gravity,
+subregion = subregionsphere(rt,
     radius=2., center=[0.3, 0.4, 0.5], range_unit=:standard)
 
 # Everything outside a 5 kpc sphere (inverse selection)
-subregion = subregionsphere(gravity,
+subregion = subregionsphere(rt,
     radius=5., center=[24., 24., 24.], range_unit=:kpc, inverse=true)
 ```
 
@@ -474,17 +474,17 @@ function subregionsphere(dataobject::RtDataType;
 
     printtablememory(sub_data, verbose)
 
-    gravitydata = RtDataType()
-    gravitydata.data = sub_data
-    gravitydata.info = dataobject.info
-    gravitydata.lmin = dataobject.lmin
-    gravitydata.lmax = dataobject.lmax
-    gravitydata.boxlen = dataobject.boxlen
-    gravitydata.ranges = ranges
-    gravitydata.selected_rtvars = dataobject.selected_rtvars
-    gravitydata.used_descriptors = dataobject.used_descriptors
-    gravitydata.scale = dataobject.scale
-    return gravitydata
+    rtdata = RtDataType()
+    rtdata.data = sub_data
+    rtdata.info = dataobject.info
+    rtdata.lmin = dataobject.lmin
+    rtdata.lmax = dataobject.lmax
+    rtdata.boxlen = dataobject.boxlen
+    rtdata.ranges = ranges
+    rtdata.selected_rtvars = dataobject.selected_rtvars
+    rtdata.used_descriptors = dataobject.used_descriptors
+    rtdata.scale = dataobject.scale
+    return rtdata
 
 
 

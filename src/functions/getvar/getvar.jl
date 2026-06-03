@@ -180,8 +180,11 @@ plus `[:L0_eV]`, `[:L1_eV]`, `[:spec2group]`).
 The ionization fractions are passive **hydro** scalars (located via the RT descriptor
 `info.descriptor.rt[:iIons]`); request them on the hydro object (`gas = gethydro(info)`):
 - **`:xHII`, `:xHeII`, `:xHeIII`**  ionization fractions (dimensionless)
+- **`:xHI`**                        neutral-hydrogen fraction = 1 − xHII (dimensionless)
 - **`:n_HII`, `:n_HI`, `:n_e`**     HII / HI / free-electron number density  [cm⁻³]
 - **`:em_recomb`**                  recombination-emissivity proxy ∝ nₑ·n_HII ≈ n_HII²  [cm⁻⁶] (project with `mode=:sum` for a mock emission map)
+- **`:mu`**                         RT-aware mean molecular weight from the ionization state **and metallicity**: μ = 1/[X_H(1+xHII) + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z], with X_H/X_He scaled by the local metal mass fraction Z (the `:metallicity` scalar, 0 if absent) and A_Z≈16. Metal free electrons are neglected (RT does not track metal ionization).
+- **`:T_rt`**                       gas temperature [K] using the **local** μ (= (P/ρ)·scale.T_mu·μ). Plain `:T` (unit=:K) uses a *constant* μ and over-estimates T in ionized gas by a factor ≈(1+xHII)/X (≈2–3× for X≈0.5–0.76), so prefer `:T_rt` for RT runs.
 
 ```julia
 rt   = getrt(info)
@@ -190,7 +193,24 @@ f    = getvar(rt, :reducedflux1)                 # reduced flux of group 1
 nphot = getvar(rt, :Np1_cgs)                     # physical photon density [cm^-3]
 xHII = getvar(gas, :xHII)                        # ionization fraction (hydro scalar)
 ne   = getvar(gas, :n_e)                         # free-electron density [cm^-3]
+T    = getvar(gas, :T_rt)                        # RT-aware temperature [K] (local μ)
 ```
+
+`:mu` and `:T_rt` also work on **non-RT** hydro runs: without tracked ionization
+fractions they fall back to the constant μ Mera's temperature scaling assumes
+(μ = scale.K/scale.T_mu), so there `:T_rt` equals `getvar(:T, :K)`. The other RT
+quantities (`:xHII`, `:xHI`, `:n_*`, `:em_recomb`) require an RT run and error otherwise.
+
+**RAMSES-RT field reference** (physical quantity → Mera accessor):
+
+| quantity (per photon group i / ion) | Mera |
+|---|---|
+| photon number density | `getvar(rt, :Np`i`)` (× `unit_np` → `:Np`i`_cgs`) |
+| photon flux components | `getvar(rt, :Fx`i`/:Fy`i`/:Fz`i`)` (magnitude `:Fmag`i``) |
+| reduced flux (M1 closure) | `:reducedflux`i`` |
+| HII ionization fraction | `getvar(gas, :xHII)` |
+| HeII / HeIII fractions | `:xHeII` / `:xHeIII` |
+| HII / HI / electron density | `:n_HII` / `:n_HI` / `:n_e` |
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
