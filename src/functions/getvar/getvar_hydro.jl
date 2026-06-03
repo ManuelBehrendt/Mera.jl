@@ -313,6 +313,20 @@ function get_data(  dataobject::HydroDataType,
                 vars_dict[:T_rt] = T_over_mu .* mu_const                                # [K]
             end
 
+        # Case-B HII recombination rate per volume [cm^-3 s^-1] = α_B(T)·n_e·n_HII,
+        # with α_B(T) = 2.59e-13·(T/10⁴ K)^-0.7 cm³/s (case B). Uses the RT-aware
+        # temperature T_rt. Pairs with the RT photoionization rate to test the
+        # ionization balance (getvar(rt, :ionization_balance, hydro_data=gas)).
+        elseif i == :recomb_rate
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :iIons) || error("getvar :recomb_rate needs the RT ionization fractions (descriptor :iIons); load an RT run.")
+            selected_unit = getunit(dataobject, :recomb_rate, vars, units)
+            T    = getvar(filtered_dataobject, :T_rt,  mask=use_mask_in_recursion)
+            ne   = getvar(filtered_dataobject, :n_e,   mask=use_mask_in_recursion)
+            nHII = getvar(filtered_dataobject, :n_HII, mask=use_mask_in_recursion)
+            alphaB = @. 2.59e-13 * (max(T, 1.0) / 1.0e4)^(-0.7)
+            vars_dict[:recomb_rate] = @. alphaB * ne * nHII * selected_unit
+
         elseif i == :entropy_specific
             selected_unit = getunit(dataobject, :entropy_specific, vars, units)
             # Entropy S = k_B * ln(P / rho^gamma) / (m_u * (gamma - 1))

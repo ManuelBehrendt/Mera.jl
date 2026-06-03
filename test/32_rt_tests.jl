@@ -281,6 +281,44 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             @test shell isa Mera.RtDataType
             @test 0 < length(shell.data) <= length(rt.data)
         end
+
+        @testset "RT photoionization/heating rates & gas coupling" begin
+            rtd = info.descriptor.rt
+            @test haskey(rtd, :rt_c_frac)                       # reduced light speed parsed
+            ng   = info.nvarrt ÷ 4
+            cred = rtd[:rt_c_frac] * info.constants.c
+            pg   = info.descriptor.rtPhotonGroups
+
+            # Γ_HI: ≥0, equals Σ over groups, matches c_red·(Np·unit_np)·σ_csn for group 1
+            Γ = getvar(rt, :Gamma_HI)
+            @test all(Γ .>= 0.0)
+            @test Γ ≈ sum(getvar(rt, Symbol("Gamma_HI", g)) for g in 1:ng)
+            @test getvar(rt, :Gamma_HI1) ≈ getvar(rt, :Np1) .* (rtd[:unit_np] * cred * pg[1][:csn_cm2][1])
+
+            # photoheating: ≥0 and equals the per-group sum
+            @test all(getvar(rt, :photoheating_HI) .>= 0.0)
+            @test getvar(rt, :photoheating_HI) ≈ sum(getvar(rt, Symbol("photoheating_HI", g)) for g in 1:ng)
+
+            # recombination rate (hydro): independent recompute α_B(T)·n_e·n_HII
+            T = getvar(gas, :T_rt); ne = getvar(gas, :n_e); nHII = getvar(gas, :n_HII)
+            aB = @. 2.59e-13 * (max(T, 1.0) / 1.0e4)^(-0.7)
+            @test getvar(gas, :recomb_rate) ≈ aB .* ne .* nHII
+
+            # combined (need hydro_data): photoionizations = Γ·n_HI; balance = photoion − recomb
+            pion = getvar(rt, :photoionizations, hydro_data=gas)
+            @test pion ≈ getvar(rt, :Gamma_HI) .* getvar(gas, :n_HI)
+            @test getvar(rt, :ionization_balance, hydro_data=gas) ≈ pion .- getvar(gas, :recomb_rate)
+
+            # ionized core is near photoionization equilibrium (order unity) — validates c_red
+            core = getvar(gas, :xHII) .> 0.9
+            @test count(core) > 0
+            ratio = (pion ./ getvar(gas, :recomb_rate))[core]
+            @test any(x -> 0.2 < x < 5.0, ratio)
+
+            # guard: combined quantities require hydro_data
+            @test_throws ErrorException getvar(rt, :photoionizations)
+            @test_throws ErrorException getvar(rt, :ionization_balance)
+        end
     end
 
 else
@@ -302,6 +340,7 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
         @test_throws ErrorException getvar(gas, :em_recomb)
         @test_throws ErrorException getvar(gas, :n_e)
         @test_throws ErrorException getvar(gas, :xHI)
+        @test_throws ErrorException getvar(gas, :recomb_rate)
 
         # :mu / :T_rt DO work without RT — they fall back to the constant μ that
         # Mera's temperature scaling assumes, and stay consistent with :T(:K).

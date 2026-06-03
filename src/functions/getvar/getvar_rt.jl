@@ -7,6 +7,27 @@ function check_rt_group(dataobject, g::Int, var)
     return nothing
 end
 
+# Reduced speed of light [cm/s] used by RAMSES-RT for the photon–matter interaction
+# rates (rt_c_frac · c). In the reduced-light-speed approximation the stored photon
+# density already reflects c_red, so c_red·N·σ is the physical rate. Falls back to the
+# full c if the descriptor lacks rt_c_frac.
+function _rt_cred(dataobject)
+    fc = get(dataobject.info.descriptor.rt, :rt_c_frac, 1.0)
+    return fc * dataobject.info.constants.c
+end
+
+# Fetch a hydro variable aligned to the RT cells (same load); index by the RT mask if one
+# is applied. Errors if the hydro object does not cover the same cell set.
+function _aligned_hydro(hydro_data, var, mask)
+    h = getvar(hydro_data, var)
+    if length(mask) > 1
+        length(h) == length(mask) || error(
+            "getvar (RT+hydro): hydro_data has $(length(h)) cells but the RT mask has $(length(mask)); load hydro_data over the identical cell set (same lmax/ranges).")
+        return h[mask]
+    end
+    return h
+end
+
 function get_data(dataobject::RtDataType,
                 vars::Array{Symbol,1},
                 units::Array{Symbol,1},
@@ -219,6 +240,68 @@ function get_data(dataobject::RtDataType,
                 total = total .+ select(masked_data, Symbol("Np$g")) .* (rtd[:group_egy][g] * eV)
             end
             vars_dict[:rad_energy_density] = total .* rtd[:unit_np]   # [erg cm^-3], fixed cgs
+
+        # ── Radiation–matter rates ───────────────────────────────────────────────
+        # Photoionization rate of HI for group g [s^-1] = c_red · (Np_g·unit_np) · σ_csn,g(HI)
+        # (reduced-light-speed rate; σ_csn from rtPhotonGroups[g][:csn_cm2][1] = HI).
+        elseif (m = match(r"^Gamma_HI(\d+)$", string(i))) !== nothing
+            g = parse(Int, m.captures[1]); check_rt_group(dataobject, g, i)
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :unit_np) || error("getvar :$i needs descriptor :unit_np (RT info_rt).")
+            csn = dataobject.info.descriptor.rtPhotonGroups[g][:csn_cm2][1]
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* (rtd[:unit_np] * _rt_cred(dataobject) * csn)
+
+        # Total HI photoionization rate summed over groups [s^-1]
+        elseif i == :Gamma_HI
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :unit_np) || error("getvar :Gamma_HI needs descriptor :unit_np (RT info_rt).")
+            pg = dataobject.info.descriptor.rtPhotonGroups
+            cred_np = _rt_cred(dataobject) * rtd[:unit_np]
+            total = select(masked_data, :Np1) .* 0.0
+            for g in 1:(dataobject.info.nvarrt ÷ 4)
+                total = total .+ select(masked_data, Symbol("Np$g")) .* (cred_np * pg[g][:csn_cm2][1])
+            end
+            vars_dict[:Gamma_HI] = total
+
+        # Photoheating rate of HI for group g [erg s^-1] per HI atom
+        #   = c_red · (Np_g·unit_np) · σ_cse,g(HI) · (egy_g − 13.6 eV)
+        elseif (m = match(r"^photoheating_HI(\d+)$", string(i))) !== nothing
+            g = parse(Int, m.captures[1]); check_rt_group(dataobject, g, i)
+            rtd = dataobject.info.descriptor.rt
+            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
+                error("getvar :$i needs descriptor :unit_np and :group_egy (RT info_rt).")
+            cse = dataobject.info.descriptor.rtPhotonGroups[g][:cse_cm2][1]
+            exc = max(rtd[:group_egy][g] - 13.6, 0.0) * dataobject.info.constants.eV   # excess [erg]
+            vars_dict[i] = select(masked_data, Symbol("Np$g")) .* (rtd[:unit_np] * _rt_cred(dataobject) * cse * exc)
+
+        # Total HI photoheating rate per HI atom [erg s^-1]
+        elseif i == :photoheating_HI
+            rtd = dataobject.info.descriptor.rt
+            (haskey(rtd, :unit_np) && haskey(rtd, :group_egy)) ||
+                error("getvar :photoheating_HI needs descriptor :unit_np and :group_egy (RT info_rt).")
+            pg = dataobject.info.descriptor.rtPhotonGroups
+            cred_np = _rt_cred(dataobject) * rtd[:unit_np]; eV = dataobject.info.constants.eV
+            total = select(masked_data, :Np1) .* 0.0
+            for g in 1:(dataobject.info.nvarrt ÷ 4)
+                exc = max(rtd[:group_egy][g] - 13.6, 0.0) * eV
+                total = total .+ select(masked_data, Symbol("Np$g")) .* (cred_np * pg[g][:cse_cm2][1] * exc)
+            end
+            vars_dict[:photoheating_HI] = total
+
+        # ── Combined radiation+gas (require hydro_data) ──────────────────────────
+        # Photoionizations per volume [cm^-3 s^-1] = Γ_HI · n_HI, and the ionization
+        # balance residual = photoionizations − recombinations (≈0 in equilibrium).
+        elseif i == :photoionizations || i == :ionization_balance
+            has_hydro || error("getvar :$i needs hydro_data=gethydro(info): RT photoionizations couple to the gas state (n_HI, recombinations).")
+            Γ   = getvar(filtered_dataobject, :Gamma_HI, mask=use_mask_in_recursion)
+            nHI = _aligned_hydro(hydro_data, :n_HI, mask)
+            length(Γ) == length(nHI) || error("getvar :$i: rt ($(length(Γ)) cells) and hydro_data ($(length(nHI))) cover different cell sets; load both with the same lmax/ranges.")
+            photoion = Γ .* nHI
+            if i == :photoionizations
+                vars_dict[:photoionizations] = photoion
+            else
+                vars_dict[:ionization_balance] = photoion .- _aligned_hydro(hydro_data, :recomb_rate, mask)
+            end
 
         # Radial distances (for gravity analysis) - code units by default
         elseif i == :r_cylinder

@@ -319,7 +319,11 @@ function readrtfile1!(dataobject::InfoType)
                     length(parts) >= 2 && (s = strip(parts[2]))
                 end
                 s === nothing && return
-                v = tryparse(T, s)
+                # some keys (e.g. rt_c_frac) list several whitespace-separated values;
+                # take the first so tryparse on the whole string does not fail.
+                toks = split(strip(s))
+                isempty(toks) && return
+                v = tryparse(T, String(toks[1]))
                 v !== nothing && (descriptor_list[Symbol(name)] = v)
             end
 

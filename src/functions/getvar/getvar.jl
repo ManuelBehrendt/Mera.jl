@@ -211,6 +211,26 @@ quantities (`:xHII`, `:xHI`, `:n_*`, `:em_recomb`) require an RT run and error o
 | HII ionization fraction | `getvar(gas, :xHII)` |
 | HeII / HeIII fractions | `:xHeII` / `:xHeIII` |
 | HII / HI / electron density | `:n_HII` / `:n_HI` / `:n_e` |
+
+**Radiation–matter rates** (RT object; use the reduced light speed `rt_c_frac·c`):
+- **`:Gamma_HI<g>`**, **`:Gamma_HI`**  HI photoionization rate per group / total  [s⁻¹]
+- **`:photoheating_HI<g>`**, **`:photoheating_HI`**  HI photoheating rate per HI atom  [erg s⁻¹]
+
+**Recombination** (hydro object): **`:recomb_rate`** = α_B(T)·nₑ·n_HII  [cm⁻³ s⁻¹] (case-B, RT-aware T).
+
+**Combined radiation+gas** — request on the RT object with the matching `hydro_data` (both
+loaded over the same cells); Mera asserts the cell sets align:
+- **`:photoionizations`** = Γ_HI·n_HI  [cm⁻³ s⁻¹]
+- **`:ionization_balance`** = photoionizations − recombinations (≈0 in local equilibrium)
+
+```julia
+rt  = getrt(info);  gas = gethydro(info)            # same lmax/ranges → aligned cells
+Γ   = getvar(rt, :Gamma_HI)                          # photoionization rate [1/s]
+bal = getvar(rt, :ionization_balance, hydro_data=gas)  # Γ·n_HI − α_B·nₑ·n_HII  [cm^-3 s^-1]
+```
+Most RT quantities are single-object (photon fields on `rt`, ionization state on `gas`); only
+the coupling terms above need both. For other hydro variables you may also pass
+`hydro_data=gas` to `getvar(rt, …)` to fetch them aligned to the RT cells.
 """
 function getvar(   dataobject::DataSetType, var::Symbol;
                     filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
@@ -437,6 +457,76 @@ function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
+    units = [unit for i in 1:length(vars)]
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+
+# ========== RT: getvar with optional hydro_data for radiation–gas coupling ==========
+# RtDataType-specific wrappers that forward an optional `hydro_data` (gethydro) object,
+# enabling combined radiation+gas quantities (:photoionizations, :ionization_balance) and
+# a fallback to any hydro variable. hydro_data must cover the same cells as the RT object
+# (same lmax/ranges). Without hydro_data these behave like the generic getvar.
+function getvar(   dataobject::RtDataType, var::Symbol;
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, unit::Symbol=:standard,
+                    mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, var::Symbol, unit::Symbol;
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, unit::Symbol;
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    units = [unit for i in 1:length(vars)]
+    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, vars::Array{Symbol,1};
+                    hydro_data::Union{HydroDataType, Nothing}=nothing,
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, unit::Symbol=:standard,
+                    mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
     units = [unit for i in 1:length(vars)]
     return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
