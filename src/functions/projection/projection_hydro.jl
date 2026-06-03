@@ -793,7 +793,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         return projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                                   weighting, weight_scale, mode, ranges, center, range_unit,
                                   mask, los, up, theta, phi, angle_unit, binning, direction,
-                                  boxlen, lmin, simlmax, isamr, scale, verbose)
+                                  boxlen, lmin, simlmax, isamr, scale, verbose, max_threads)
     end
 
     if verbose
@@ -1392,7 +1392,8 @@ end
 function projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                             weighting, weight_scale, mode, ranges, center, range_unit,
                             mask, los, up, theta, phi, angle_unit, binning, direction,
-                            boxlen, lmin, simlmax, isamr, scale, verbose)
+                            boxlen, lmin, simlmax, isamr, scale, verbose,
+                            max_threads=Threads.nthreads())
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
@@ -1404,8 +1405,8 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
                   "Use an axis-aligned direction=:x/:y/:z for these.")
         end
     end
-    if !(binning in (:cic, :ngp))
-        throw(ArgumentError("binning must be :cic or :ngp, got :$binning"))
+    if !(binning in (:cic, :ngp, :overlap))
+        throw(ArgumentError("binning must be :cic, :ngp (fast preview) or :overlap (accurate), got :$binning"))
     end
 
     # --- camera orientation (A1) ---------------------------------------------------
@@ -1471,6 +1472,13 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     wfull = getvar(dataobject, weighting[1]) .* weight_scale
     wsel  = Float64.(wfull[sel])
 
+    # per-cell physical size (code units) — only needed for the accurate :overlap deposit
+    csize = Float64[]
+    if binning === :overlap
+        lvl = isamr ? getvar(dataobject, :level) : fill(simlmax, ncells)
+        csize = Float64.((boxlen ./ (2.0 .^ lvl))[sel])
+    end
+
     pixel_area = pixsize^2
     imaps     = SortedDict()
     maps_unit = SortedDict()
@@ -1490,8 +1498,14 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
         grid    = zeros(Float64, nx, ny)
         wgrid   = zeros(Float64, nx, ny)
-        deposit_rotated_cells_to_grid!(grid, wgrid, xc, yc, vsel, wts,
-                                       grid_extent, grid_resolution; binning=binning)
+        if binning === :overlap
+            deposit_rotated_cells_overlap!(grid, wgrid, xc, yc, csize, vsel, wts,
+                                           cam_right, cam_up, grid_extent, grid_resolution;
+                                           max_threads=max_threads)
+        else
+            deposit_rotated_cells_to_grid!(grid, wgrid, xc, yc, vsel, wts,
+                                           grid_extent, grid_resolution; binning=binning)
+        end
 
         if ivar === :sd
             m = grid ./ pixel_area
@@ -2199,6 +2213,97 @@ function block_sum_reduce(fine::AbstractMatrix{Float64}, s::Int)
         out[(i-1)÷s + 1, (j-1)÷s + 1] += fine[i, j]
     end
     return out
+end
+
+
+# =====================================================================================
+#  Off-axis accurate deposit  (binning=:overlap — cell-footprint supersampling)
+# -------------------------------------------------------------------------------------
+#  The accurate counterpart to the fast CIC/NGP centre deposit. Each AMR cell is an
+#  axis-aligned cube of side `cellsize[i]`; we split it into n³ regularly-spaced
+#  sub-points (n = ⌈cellsize/pixel⌉, capped at `nmax`), rotate each by the camera basis
+#  (cam_right, cam_up) and CIC-deposit it carrying weight/n³.  As n grows this converges
+#  to the exact projected cube-shadow footprint, so a coarse cell correctly covers the
+#  many pixels it spans — while a finest-level cell (n=1) reduces to the plain CIC deposit.
+#  Conservative: the per-cell shares sum to 1, so Σ value·weight is preserved exactly.
+#
+#  Parallel: cells are split into contiguous chunks, each accumulated into a thread-local
+#  grid (no shared writes), then summed.  Cost ≈ Σ nᵢ³, bounded by `nmax`; raise `nmax`
+#  for more accuracy on very coarse cells, lower it for speed.
+# =====================================================================================
+function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matrix{Float64},
+        x_cam::AbstractVector, y_cam::AbstractVector, cellsize::AbstractVector,
+        values::AbstractVector{Float64}, weights::AbstractVector{Float64},
+        cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
+        grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
+        nmax::Int=6, max_threads::Int=Threads.nthreads())
+
+    nx, ny = grid_resolution
+    x_min, x_max, y_min, y_max = grid_extent
+    inv_px = nx / (x_max - x_min)
+    inv_py = ny / (y_max - y_min)
+    pixsize = (x_max - x_min) / nx
+    rx, ry, rz = float(cam_right[1]), float(cam_right[2]), float(cam_right[3])
+    ux, uy, uz = float(cam_up[1]),    float(cam_up[2]),    float(cam_up[3])
+    n = length(x_cam)
+    n == 0 && return nothing
+
+    nthreads = clamp(max_threads, 1, Threads.nthreads())
+    nthreads = min(nthreads, n)
+    gbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    wbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+
+    # contiguous cell chunks, one per thread (no shared writes)
+    bounds = [floor(Int, (t-1)*n/nthreads) + 1 for t in 1:nthreads+1]
+    bounds[end] = n + 1
+
+    @sync for t in 1:nthreads
+        Threads.@spawn begin
+            g = gbufs[t]; wg = wbufs[t]
+            @inbounds for i in bounds[t]:(bounds[t+1]-1)
+                s = cellsize[i]
+                ns = clamp(ceil(Int, s * inv_px), 1, nmax)   # sub-points per cube axis
+                share = 1.0 / (ns^3)
+                w_i  = weights[i] * share
+                vw_i = values[i] * weights[i] * share
+                xc = x_cam[i]; yc = y_cam[i]
+                inv_ns = 1.0 / ns
+                for ka in 0:ns-1
+                    oa = (-0.5 + (ka + 0.5)*inv_ns) * s
+                    for kb in 0:ns-1
+                        ob = (-0.5 + (kb + 0.5)*inv_ns) * s
+                        # partial camera offsets from the (a,b) cube axes
+                        dxab = oa*rx + ob*ry
+                        dyab = oa*ux + ob*uy
+                        for kc in 0:ns-1
+                            oc = (-0.5 + (kc + 0.5)*inv_ns) * s
+                            xs = xc + dxab + oc*rz
+                            ys = yc + dyab + oc*uz
+                            # CIC deposit of this sub-point
+                            fx = (xs - x_min)*inv_px - 0.5
+                            fy = (ys - y_min)*inv_py - 0.5
+                            ix0 = floor(Int, fx); iy0 = floor(Int, fy)
+                            wx = fx - ix0; wy = fy - iy0
+                            ixl = clamp(ix0+1, 1, nx); ixr = clamp(ix0+2, 1, nx)
+                            iyl = clamp(iy0+1, 1, ny); iyr = clamp(iy0+2, 1, ny)
+                            wll = (1.0-wx)*(1.0-wy); wrl = wx*(1.0-wy)
+                            wlr = (1.0-wx)*wy;       wrr = wx*wy
+                            g[ixl,iyl] += vw_i*wll; wg[ixl,iyl] += w_i*wll
+                            g[ixr,iyl] += vw_i*wrl; wg[ixr,iyl] += w_i*wrl
+                            g[ixl,iyr] += vw_i*wlr; wg[ixl,iyr] += w_i*wlr
+                            g[ixr,iyr] += vw_i*wrr; wg[ixr,iyr] += w_i*wrr
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    @inbounds for t in 1:nthreads
+        grid .+= gbufs[t]
+        weight_grid .+= wbufs[t]
+    end
+    return nothing
 end
 
 

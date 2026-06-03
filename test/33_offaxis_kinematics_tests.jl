@@ -225,3 +225,55 @@ end
         @test_throws ArgumentError Mera.block_sum_reduce(fine, 3)   # 4 not divisible by 3
     end
 end
+
+@testset "Off-axis overlap deposit (accurate, A2+)" begin
+    # 8x8 grid over [0,8]^2 => pixel size 1; los=z camera basis (right=x, up=y)
+    ext = (0.0, 8.0, 0.0, 8.0)
+    res = (8, 8)
+    R = [1.0, 0, 0]; U = [0.0, 1, 0]
+    newgrids() = (zeros(Float64, 8, 8), zeros(Float64, 8, 8))
+
+    @testset "fine cell (size=pixel) reduces to CIC" begin
+        g, wg = newgrids(); gc, wgc = newgrids()
+        # cell size == pixel size => ns=1 => one CIC sub-point
+        Mera.deposit_rotated_cells_overlap!(g, wg, [4.5], [4.5], [1.0], [3.0], [1.0],
+                                            R, U, ext, res)
+        Mera.deposit_rotated_cells_to_grid!(gc, wgc, [4.5], [4.5], [3.0], [1.0], ext, res)
+        @test g ≈ gc                                  # identical to fast CIC for fine cells
+        @test g[5, 5] ≈ 3.0
+        @test sum(g) ≈ 3.0
+    end
+
+    @testset "coarse cell spreads over its footprint, conserves total" begin
+        g, wg = newgrids(); gc, wgc = newgrids()
+        # cell size 4 (=> ns=4) centred at (4,4): footprint covers x,y in [2,6]
+        Mera.deposit_rotated_cells_overlap!(g, wg, [4.0], [4.0], [4.0], [8.0], [1.0],
+                                            R, U, ext, res)
+        Mera.deposit_rotated_cells_to_grid!(gc, wgc, [4.0], [4.0], [8.0], [1.0], ext, res)
+        @test sum(g) ≈ 8.0                            # conserved
+        @test count(!iszero, g) > count(!iszero, gc)  # overlap spreads, CIC concentrates
+        # footprint stays within the cube shadow (x,y ∈ [2,6] -> pixels 3..6)
+        @test all(g[1:2, :] .== 0) && all(g[7:8, :] .== 0)
+        @test all(g[:, 1:2] .== 0) && all(g[:, 7:8] .== 0)
+    end
+
+    @testset "conservation for mixed cell sizes (& weight grid)" begin
+        xs = Float64[1.5, 4.0, 6.5, 3.0]
+        ys = Float64[1.5, 4.0, 2.5, 6.0]
+        cs = Float64[1.0, 4.0, 2.0, 3.0]      # mixed levels
+        vals = Float64[2, 5, 1, 4]; wts = Float64[1, 2, 1, 0.5]
+        g, wg = newgrids()
+        Mera.deposit_rotated_cells_overlap!(g, wg, xs, ys, cs, vals, wts, R, U, ext, res)
+        @test sum(g)  ≈ sum(vals .* wts)
+        @test sum(wg) ≈ sum(wts)
+    end
+
+    @testset "nmax caps sub-sampling cost" begin
+        # huge cell but nmax=1 => single sub-point (cheap), still conserves
+        g, wg = newgrids()
+        Mera.deposit_rotated_cells_overlap!(g, wg, [4.5], [4.5], [8.0], [10.0], [1.0],
+                                            R, U, ext, res; nmax=1)
+        @test sum(g) ≈ 10.0
+        @test count(!iszero, g) == 1            # nmax=1 collapses to a single point (at a pixel centre)
+    end
+end

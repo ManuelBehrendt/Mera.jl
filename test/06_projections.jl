@@ -1861,6 +1861,18 @@ end
             @test count(>(0), pc.maps[:mass]) >= count(>(0), pn.maps[:mass])  # CIC ≥ NGP coverage
         end
 
+        @testset "accurate :overlap binning conserves and spreads footprints" begin
+            po = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:overlap, verbose=false, show_progress=false)
+            pc = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:cic,     verbose=false, show_progress=false)
+            @test isapprox(sum(po.maps[:mass]), mtot; rtol=1e-6)                 # conservative
+            @test isapprox(sum(po.maps[:mass]), sum(pc.maps[:mass]); rtol=1e-6)  # same total as preview
+            @test count(>(0), po.maps[:mass]) >= count(>(0), pc.maps[:mass])     # footprint ≥ centre deposit
+            # overlap also conserves for an intensive var path and the :sum extensive path
+            pv = projection(hydro, :volume, los=[1.0,1,1], mode=:sum, binning=:overlap, verbose=false, show_progress=false)
+            @test isapprox(sum(pv.maps[:volume]), sum(getvar(hydro,:volume)); rtol=1e-6)
+            @test_throws ArgumentError projection(hydro, :mass, los=[1.0,1,1], binning=:bogus, verbose=false, show_progress=false)
+        end
+
         @testset "intensive var (:rho) is finite, positive, weighted-average" begin
             pr = projection(hydro, :rho, :nH, los=[1.0,1,1], verbose=false, show_progress=false)
             @test all(isfinite.(pr.maps[:rho]))
