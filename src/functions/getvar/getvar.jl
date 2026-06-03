@@ -184,7 +184,7 @@ The ionization fractions are passive **hydro** scalars (located via the RT descr
 - **`:n_HII`, `:n_HI`, `:n_e`**     HII / HI / free-electron number density  [cm⁻³]
 - **`:em_recomb`**                  recombination-emissivity proxy ∝ nₑ·n_HII ≈ n_HII²  [cm⁻⁶] (project with `mode=:sum` for a mock emission map)
 - **`:mu`**                         RT-aware mean molecular weight from the ionization state **and metallicity**: μ = 1/[X_H(1+xHII) + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z], with X_H/X_He scaled by the local metal mass fraction Z (the `:metallicity` scalar, 0 if absent) and A_Z≈16. Metal free electrons are neglected (RT does not track metal ionization).
-- **`:T_rt`**                       gas temperature [K] using the **local** μ (= (P/ρ)·scale.T_mu·μ). Plain `:T` (unit=:K) uses a *constant* μ and over-estimates T in ionized gas by a factor ≈(1+xHII)/X (≈2–3× for X≈0.5–0.76), so prefer `:T_rt` for RT runs.
+- **`:T_rt`**                       gas temperature [K] using the **local** μ (= (P/ρ)·scale.T_mu·μ). Plain `:T` (unit=:K) bakes in a *constant* μ (= scale.K/scale.T_mu ≈ 1/0.76 ≈ 1.32, the fixed primordial default — independent of the run's X), so it over-estimates the ionized-gas temperature by μ_const/μ_local (e.g. ≈1.32/0.5 ≈ 2.6× for fully-ionized pure hydrogen). Prefer `:T_rt` for RT runs.
 
 ```julia
 rt   = getrt(info)
