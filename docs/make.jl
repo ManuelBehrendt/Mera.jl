@@ -52,6 +52,8 @@ makedocs(modules = [Mera],
 
                           "Projection"          => Any[ "Hydro"       =>  "06_hydro_Projection.md",
                                                         "Particles"   =>  "06_particles_Projection.md",
+                                                        "Off-axis"    =>  "06_offaxis_Projection.md",
+                                                        "Conservation Proof" => "offaxis_conservation_proof.md",
                                                         "API Reference" => "api/projections.md"],
 
                           "Cosmological Runs"   => "09_multi_Cosmology.md",
