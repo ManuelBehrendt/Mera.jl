@@ -31,6 +31,7 @@ const DATA_FILES = String[
     "04_basic_calculations.jl",
     "05_derived_variables.jl",
     "06_projections.jl",
+    "34_offaxis_invariance_tests.jl",
     "07_regions.jl",
     "08_physics_and_contracts.jl",
     "09_determinism.jl",

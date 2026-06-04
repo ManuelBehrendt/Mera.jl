@@ -1840,7 +1840,8 @@ end
         # Gravity data is accessed via the combined hydro+gravity projection interface.
         # This test verifies we can load gravity data and access its variables.
         info = hydro.info
-        gravity = getgravity(info, verbose=false, show_progress=false)
+        # match hydro's AMR selection so the combined hydro+gravity getvar aligns cell-for-cell
+        gravity = getgravity(info, lmax=hydro.lmax, verbose=false, show_progress=false)
 
         @testset "Structure" begin
             @test gravity isa Mera.GravDataType
@@ -1851,6 +1852,21 @@ end
         @testset "Gravity Variable Access" begin
             epot = getvar(gravity, :epot)
             @test all(isfinite.(epot))
+        end
+
+        @testset "Off-axis gravity projection (combined hydro+gravity)" begin
+            pz = projection(hydro, gravity, :epot, direction=:z,  verbose=false, show_progress=false)
+            po = projection(hydro, gravity, :epot, los=[1.0,1,1], verbose=false, show_progress=false)
+            @test po isa Mera.AMRMapsType
+            @test po.direction == :offaxis            # off-axis flagged
+            @test pz.direction == :unspecified         # axis path unchanged
+            @test haskey(po.maps, :epot)
+            @test all(isfinite.(po.maps[:epot]))
+            # combined gravity (:epot) + hydro (:rho) variables in one off-axis call, face-on
+            pf = projection(hydro, gravity, [:epot, :rho], direction=:faceon, verbose=false, show_progress=false)
+            @test haskey(pf.maps, :epot) && haskey(pf.maps, :rho)
+            @test all(isfinite.(pf.maps[:epot]))
+            @test all(pf.maps[:rho] .>= 0)
         end
     end
 

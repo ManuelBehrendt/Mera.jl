@@ -837,7 +837,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
         return projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                                   weighting, weight_scale, mode, ranges, center, range_unit,
                                   mask, los, up, theta, phi, angle_unit, binning, direction,
-                                  boxlen, lmin, simlmax, isamr, scale, verbose, max_threads)
+                                  boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
+                                  gravity_data)
     end
 
     if verbose
@@ -1437,7 +1438,8 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
                             weighting, weight_scale, mode, ranges, center, range_unit,
                             mask, los, up, theta, phi, angle_unit, binning, direction,
                             boxlen, lmin, simlmax, isamr, scale, verbose,
-                            max_threads=Threads.nthreads())
+                            max_threads=Threads.nthreads(),
+                            gravity_data::Union{GravDataType,Nothing}=nothing)
 
     rcheck     = [:r_cylinder, :r_sphere]
     anglecheck = [:ϕ]
@@ -1511,9 +1513,14 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         println()
     end
 
-    # masked binning coordinates and weights (shared by all variables)
+    # masked binning coordinates and weights (shared by all variables).
+    # When gravity_data is given, gravity/hydro fields are fetched via the combined
+    # getvar(gravity, hydro, …) just like the axis path (prep_data).
     xc = Float64.(x_cam[sel]); yc = Float64.(y_cam[sel])
-    wfull = getvar(dataobject, weighting[1]) .* weight_scale
+    wfull = gravity_data !== nothing ?
+        getvar(gravity_data, dataobject, weighting[1], center=center, center_unit=range_unit) :
+        getvar(dataobject, weighting[1])
+    wfull = wfull .* weight_scale
     wsel  = Float64.(wfull[sel])
 
     # per-cell physical size (code units) — only needed for the accurate :overlap deposit
@@ -1531,7 +1538,9 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
 
     for ivar in selected_vars
         if ivar === :sd || ivar === :mass
-            vals = getvar(dataobject, :mass, center=center, center_unit=range_unit)
+            vals = getvar(dataobject, :mass, center=center, center_unit=range_unit)   # mass is hydro-only
+        elseif gravity_data !== nothing
+            vals = getvar(gravity_data, dataobject, ivar, center=center, center_unit=range_unit)
         else
             vals = getvar(dataobject, ivar, center=center, center_unit=range_unit)
         end

@@ -93,6 +93,7 @@ if isempty(_focus)
     # ------------------------------------------------------------------------
     @testset "Analysis Functions" begin
         include("06_projections.jl")
+        include("34_offaxis_invariance_tests.jl")  # off-axis conservation proof (angle × pixel size)
         include("07_regions.jl")
     end
 
