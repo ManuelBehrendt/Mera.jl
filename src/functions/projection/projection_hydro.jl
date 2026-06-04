@@ -1488,10 +1488,15 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     # --- in-plane extent: rotated AABB (full box) or camera-plane window -----------
     pixsize = boxlen / res                                        # code units (matches axis path)
     full_xy = (ranges[1] == 0.0 && ranges[2] == 1.0 && ranges[3] == 0.0 && ranges[4] == 1.0)
-    if full_xy
+    if full_xy && any(sel)
         pad = pixsize                                             # one pixel margin
         x0 = minimum(@view x_cam[sel]) - pad; x1 = maximum(@view x_cam[sel]) + pad
         y0 = minimum(@view y_cam[sel]) - pad; y1 = maximum(@view y_cam[sel]) + pad
+    elseif full_xy
+        # nothing selected (e.g. mask excludes all / empty subregion): emit an empty
+        # map spanning the box instead of crashing on min/max of an empty view.
+        half = boxlen / 2
+        x0, x1, y0, y1 = -half, half, -half, half
     else
         hx = (ranges[2]-ranges[1]) * boxlen / 2
         hy = (ranges[4]-ranges[3]) * boxlen / 2

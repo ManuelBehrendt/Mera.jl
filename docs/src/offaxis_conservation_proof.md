@@ -48,6 +48,20 @@ ground-truth `sum(getvar(obj, q))`.
 The errors are at the floating-point round-off level — i.e. the projected total is, for all
 practical purposes, **independent of the viewing angle and of the chosen map resolution**.
 
+The same test suite also covers off-axis **RT** photon fields (the volume-weighted photon sum
+is conserved across angles and pixel sizes) and the **gravity** interface.
+
+## Correct placement, not just a correct total
+
+Conservation alone would be satisfied by a buggy projection that put the right *amount* of
+mass in the *wrong* pixels. So the suite additionally proves that mass is placed at the
+correct **location**: the mass-weighted centroid of the projected map equals the analytically
+rotated 3-D mass centroid `Σ(m·r)/Σm` (rotated by the camera basis) to **better than 1 % of a
+pixel**, for every viewing angle. For intensive quantities, the mass-weighted spatial mean of
+the map (e.g. ⟨vₓ⟩) reproduces the global mass-weighted mean of the cells to ~10⁻¹⁵ and is
+identical for all angles. Together these show the off-axis transform is geometrically correct,
+not merely flux-conserving.
+
 ## Reproduce it yourself
 
 ```julia

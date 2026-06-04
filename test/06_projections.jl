@@ -1487,6 +1487,13 @@ end
                 @test projection(particles, :sd, los=[1.,1,1], binning=:overlap, verbose=false, show_progress=false) isa Mera.PartMapsType  # ->:cic
                 @test_throws ErrorException projection(particles, :r_cylinder, los=[1.,1,1], verbose=false, show_progress=false)
             end
+
+            @testset "empty selection returns a zero map without crashing" begin
+                allfalse = fill(false, length(particles.data))
+                e = projection(particles, :sd, los=[1.,1,1], mask=allfalse, verbose=false, show_progress=false)
+                @test e isa Mera.PartMapsType
+                @test sum(e.maps[:sd]) == 0.0
+            end
         end
 
         @testset "Particle Direction Options" begin
@@ -1942,6 +1949,64 @@ end
             @test abs(sum(eo.up  .* Lh)) > 0.999
             # face-on and edge-on are mutually perpendicular views of the same disk
             @test abs(sum(fo.los .* eo.los)) < 1e-6
+        end
+
+        @testset "geometry: projected mass centroid == rotated 3D centroid" begin
+            # Proves mass is placed at the correct *location* (not merely conserved):
+            # the mass-weighted centroid of the map must equal the analytically rotated
+            # 3D mass centroid, for every viewing angle.
+            piv = [0.5, 0.5, 0.5]
+            px = getvar(hydro, :x, center=piv, center_unit=:standard)
+            py = getvar(hydro, :y, center=piv, center_unit=:standard)
+            pz = getvar(hydro, :z, center=piv, center_unit=:standard)
+            mc = getvar(hydro, :mass)
+            C3 = [sum(mc.*px), sum(mc.*py), sum(mc.*pz)] ./ sum(mc)   # 3D centroid (code units, about pivot)
+            for los in ([0.0,0,1],[1.0,0,0],[1.0,1,1],[2.0,-1,0.5])
+                r, u, w = Mera.build_camera_basis(los)
+                predx = sum(C3 .* r); predy = sum(C3 .* u)            # rotated centroid in camera plane
+                pm = projection(hydro, :mass, :Msol, los=los, res=200, binning=:overlap,
+                                verbose=false, show_progress=false)
+                M = pm.maps[:mass]; nx, ny = size(M); ps = pm.pixsize
+                xc = [pm.extent[1] + (i-0.5)*ps for i in 1:nx]
+                yc = [pm.extent[3] + (j-0.5)*ps for j in 1:ny]
+                cmx = sum(vec(sum(M, dims=2)) .* xc) / sum(M)
+                cmy = sum(vec(sum(M, dims=1)) .* yc) / sum(M)
+                @test isapprox(cmx, predx; atol=0.01*ps)             # < 1% of a pixel
+                @test isapprox(cmy, predy; atol=0.01*ps)
+            end
+        end
+
+        @testset "intensive var: global mass-weighted mean recovered & angle-invariant" begin
+            # The mass-weighted spatial mean of an intensive map equals the global
+            # mass-weighted mean of the cells -- the same number for any viewing angle.
+            gmean = sum(getvar(hydro, :vx, :km_s) .* getvar(hydro, :mass)) / sum(getvar(hydro, :mass))
+            for los in ([0.0,0,1],[1.0,1,1],[2.0,-1,0.5])
+                p = projection(hydro, [:vx, :sd], [:km_s, :Msol_pc2], los=los, res=200,
+                               binning=:overlap, verbose=false, show_progress=false)
+                wmean = sum(p.maps[:vx] .* p.maps[:sd]) / sum(p.maps[:sd])
+                @test isapprox(wmean, gmean; rtol=1e-9)
+            end
+        end
+
+        @testset "zrange depth-slab and xrange window reduce the projected mass" begin
+            full = projection(hydro, :mass, :Msol, los=[1.0,1,1], verbose=false, show_progress=false)
+            # a narrow line-of-sight depth slab captures strictly less mass than the full box
+            slab = projection(hydro, :mass, :Msol, los=[1.0,1,1], zrange=[0.4,0.6], center=[:bc],
+                              verbose=false, show_progress=false)
+            @test 0 < sum(slab.maps[:mass]) < sum(full.maps[:mass])
+            # a camera-plane window (xrange/yrange) also selects a strict subset
+            win = projection(hydro, :mass, :Msol, los=[1.0,1,1], xrange=[-5,5], yrange=[-5,5],
+                             center=[:bc], range_unit=:kpc, verbose=false, show_progress=false)
+            @test 0 < sum(win.maps[:mass]) <= sum(full.maps[:mass]) + 1e-3
+        end
+
+        @testset "empty selection returns a zero map without crashing" begin
+            allfalse = fill(false, length(hydro.data))
+            e = projection(hydro, :mass, :Msol, los=[1.0,1,1], mask=allfalse,
+                           verbose=false, show_progress=false)
+            @test e isa Mera.AMRMapsType
+            @test sum(e.maps[:mass]) == 0.0
+            @test all(e.maps[:mass] .== 0.0)
         end
 
         @testset "CIC vs NGP both conserve; CIC spreads more" begin

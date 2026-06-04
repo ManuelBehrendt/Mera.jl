@@ -1040,10 +1040,14 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
 
     pixsize = boxlen / res
     full_xy = (ranges[1] == 0.0 && ranges[2] == 1.0 && ranges[3] == 0.0 && ranges[4] == 1.0)
-    if full_xy
+    if full_xy && any(sel)
         pad = pixsize
         x0 = minimum(@view x_cam[sel]) - pad; x1 = maximum(@view x_cam[sel]) + pad
         y0 = minimum(@view y_cam[sel]) - pad; y1 = maximum(@view y_cam[sel]) + pad
+    elseif full_xy
+        # nothing selected: emit an empty map spanning the box instead of crashing
+        half = boxlen / 2
+        x0, x1, y0, y1 = -half, half, -half, half
     else
         hx = (ranges[2]-ranges[1]) * boxlen / 2
         hy = (ranges[4]-ranges[3]) * boxlen / 2
