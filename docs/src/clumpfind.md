@@ -43,6 +43,65 @@ too small and dense regions fragment, too large and separate clumps merge. `thre
 material is considered (e.g. a number-density floor for the cold/dense gas). `min_members` drops
 noise-sized detections; `mask` restricts the search to a pre-selected subset.
 
+### Gravitational boundedness
+
+`boundedness=true` adds per-clump energetics (cgs) and keeps, optionally, only self-bound structures:
+
+```julia
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
+                boundedness=true, bound_only=true)
+cat[1].alpha_vir       # virial parameter 2·E_kin/|E_grav|
+cat[1].bound           # E_kin + E_therm < |E_grav|
+```
+
+Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
+`alpha_vir`, and `bound`. `e_grav` is `:approx` (⅗·GM²/R, fast) by default, or `:direct` (exact
+pairwise sum up to `direct_max` members).
+
+### Deblending overlapping clumps
+
+A single threshold merges touching structures into one friends-of-friends group. `deblend=true`
+splits each group at its density peaks — peaks must be separated by `peak_min_distance` (in
+`pos_unit`), and members are assigned to the nearest peak:
+
+```julia
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4,
+                deblend=true, peak_min_distance=0.3)
+```
+
+## Multi-field — gas + stars + dark matter together
+
+Pass a vector of **components** to find over-densities across several mass species in one pass. Each
+component pre-selects its points (with its own `field`/`threshold` and an optional `mask`); the
+catalog reports a per-component mass/count breakdown per clump:
+
+```julia
+cat = clumpfind([
+    (obj=gas,   field=:rho,  threshold=1e2, threshold_unit=:nH, name=:gas),
+    (obj=parts, field=:mass, threshold=0.0, name=:stars, mask = o -> getvar(o,:birth) .> 0),
+    (obj=parts, field=:mass, threshold=0.0, name=:dm,    mask = o -> getvar(o,:birth) .<= 0),
+]; linking_length=0.5)
+
+cat[1].mass                  # total mass of the largest structure
+cat[1].components.gas.mass   # …split by component
+cat[1].components.dm.n       # dark-matter particle count
+```
+
+## Mass function & report integration
+
+```julia
+m, N   = clump_massfunction(cat; nbins=20, scale=:log)   # differential dN per mass bin
+m, Ngt = clump_massfunction(cat; cumulative=true)        # cumulative N(≥M)
+```
+
+A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
+kept in the card's `data.catalog`):
+
+```julia
+report(output; path, cards=[ ClumpCard(:hydro, :rho; threshold=1e2, threshold_unit=:nH,
+                                       linking_length=0.2) ])
+```
+
 ## 2D — a projection map (connected components)
 
 Run it on any [`projection`](@ref) result to segment a map above a threshold:
@@ -83,4 +142,6 @@ and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment i
 
 ```@docs
 clumpfind
+clump_massfunction
+ClumpCard
 ```
