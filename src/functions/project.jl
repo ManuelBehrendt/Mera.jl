@@ -35,10 +35,30 @@ function project(data::HydroPartType, var::Symbol, unit::Symbol=:standard;
     return projection(data, var, unit; res=r, verbose=verbose, kwargs...)
 end
 
+# Resolve the minimal set of physical hydro variables needed to project `var`, accounting
+# for the mass weighting (`:mass`→`:rho`) and, for `:faceon`/`:edgeon`, the angular momentum
+# used to orient the disk (→ velocities). Returns `nothing` ("read everything") whenever the
+# need is uncertain — e.g. the var resolves to something not stored in this output. `direction`
+# is untyped because off-axis callers may pass a 3-vector.
+function _project_autovars(info::InfoType, var::Symbol; direction=:z, weight=:mass, kwargs...)
+    seeds = Symbol[var]
+    weight isa Symbol && push!(seeds, weight)
+    (direction === :faceon || direction === :edgeon) && push!(seeds, :l)
+    req = getvar_requirements(:hydro, seeds)
+    (isempty(req) || !all(in(info.variable_list), req)) && return nothing
+    return req
+end
+
 function project(info::InfoType, var::Symbol, unit::Symbol=:standard;
                  vars=nothing, lmax::Integer=info.levelmax, verbose::Bool=true, res=nothing, kwargs...)
-    data = vars === nothing ? gethydro(info; lmax=lmax, verbose=verbose, show_progress=false) :
-           gethydro(info, vars isa Symbol ? [vars] : collect(vars); lmax=lmax, verbose=verbose, show_progress=false)
+    readvars = vars === nothing ? _project_autovars(info, var; kwargs...) :
+               (vars isa Symbol ? [vars] : collect(vars))
+    if verbose && vars === nothing
+        readvars === nothing ? (@info "project: reading all hydro variables (could not auto-narrow for :$var)") :
+                               (@info "project: auto-reading only $(readvars) for :$var (pass vars= to override)")
+    end
+    data = readvars === nothing ? gethydro(info; lmax=lmax, verbose=verbose, show_progress=false) :
+           gethydro(info, readvars; lmax=lmax, verbose=verbose, show_progress=false)
     return project(data, var, unit; res=res, verbose=verbose, kwargs...)
 end
 

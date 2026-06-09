@@ -105,6 +105,11 @@ export
     average_velocity,
     average_mweighted,
     getvar,
+    getvar_requirements,
+    add_field,
+    delete_field,
+    list_fields,
+    field_info,
     getmass,
     getpositions,
     getvelocities,
@@ -262,6 +267,7 @@ include("functions/basic_calc.jl")
 include("functions/cosmology.jl")
 
 # Get variables/quantities
+include("functions/getvar/fields.jl")   # derived-field dependency registry (used by getvar.jl)
 include("functions/getvar/getvar.jl")
 include("functions/getvar/getvar_hydro.jl")
 include("functions/getvar/getvar_gravity.jl")

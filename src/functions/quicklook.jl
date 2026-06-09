@@ -79,7 +79,12 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
 
     luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
                     (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
-    gas = gethydro(info, lmax=luse, verbose=false, show_progress=false)
+    # read only the physical variables the dashboard needs (Σ density, ρ–T phase, ρ(r)),
+    # falling back to a full read if the requirement can't be resolved against this output.
+    qlvars = getvar_requirements(:hydro, [:sd, :T, :rho])
+    gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
+          gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=false) :
+          gethydro(info, lmax=luse, verbose=false, show_progress=false)
     n = length(gas.data)
 
     sd = projection(gas, :sd, :Msol_pc2; center=[:bc], res=res, verbose=false, show_progress=false)
