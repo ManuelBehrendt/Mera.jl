@@ -164,8 +164,14 @@ export
     PhaseCard,
     ProfileCard,
     ScalarCard,
+    SFRCard,
     QuickReport,
     ReportResultCard,
+    sfr,
+    estimate,
+    calibrate!,
+    downsample,
+    CostModel,
     getparticlemask,
     rotation_sequence,
     savecube,
@@ -353,8 +359,10 @@ include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
+include("functions/sfr.jl")
 include("functions/report/report.jl")
 include("functions/report/report_render.jl")
+include("functions/report/report_cost.jl")
 # ============================================
 
 

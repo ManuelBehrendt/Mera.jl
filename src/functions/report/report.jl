@@ -81,12 +81,26 @@ ScalarCard(kind::Symbol, var::Symbol; reduce::Symbol=:sum, unit::Symbol=:standar
     ScalarCard(_norm_dt(kind), var, reduce, unit, fraction, relative_to, mask,
                label == "" ? "$(var)_$(reduce)$(fraction ? "_frac" : "")" : label)
 
+struct SFRCard <: ReportCard
+    kind::Symbol; tbinsize::Float64; trange::Vector{Any}; unit::Symbol; mode::Symbol
+    mask::Union{Function,Nothing}; label::String
+end
+"""    SFRCard(kind=:particles; tbinsize=10.0, trange=[0.0,missing], unit=:Msol_yr, mode=:none, mask=nothing, label="")
+
+A star-formation-history card ([`sfr`](@ref)). `mode=:probability` gives the normalised SFH
+(a fraction); `mask=obj->BitVector` subselects particles."""
+SFRCard(kind::Symbol=:particles; tbinsize::Real=10.0, trange=[0.0, missing], unit::Symbol=:Msol_yr,
+        mode::Symbol=:none, mask::Union{Function,Nothing}=nothing, label::String="") =
+    SFRCard(_norm_dt(kind), Float64(tbinsize), collect(Any, trange), unit, mode, mask,
+            label == "" ? "sfr$(mode === :probability ? "_frac" : "")" : label)
+
 # ---- traits the engine/renderers dispatch on -------------------------------------------
 card_datatype(c::ReportCard) = c.kind
 card_result_kind(::ProjectionCard) = :map
 card_result_kind(::PhaseCard)      = :phase
 card_result_kind(::ProfileCard)    = :profile
 card_result_kind(::ScalarCard)     = :scalar
+card_result_kind(::SFRCard)        = :sfr
 card_label(c::ReportCard) = c.label
 
 # logical getvar symbols a card needs (fed to getvar_requirements to get the raw read set)
@@ -95,8 +109,10 @@ card_vars(c::PhaseCard)      = c.weight isa Symbol ? [c.xvar, c.yvar, c.weight] 
 card_vars(c::ProfileCard)    = vcat([c.xvar], c.yvar === nothing ? Symbol[] : [c.yvar],
                                     c.weight isa Symbol ? [c.weight] : Symbol[])
 card_vars(c::ScalarCard)     = c.relative_to === nothing ? [c.var] : [c.var, c.relative_to]
+card_vars(::SFRCard)         = [:mass, :birth]
 card_has_mask(c::ReportCard) = false
 card_has_mask(c::ScalarCard) = c.mask !== nothing
+card_has_mask(c::SFRCard)    = c.mask !== nothing
 
 # =====================================================================================
 #  Result objects
@@ -169,6 +185,14 @@ function card_compute(c::ScalarCard, data)
                       fraction=c.fraction))
 end
 
+function card_compute(c::SFRCard, data)
+    m = c.mask === nothing ? [false] : c.mask(data)
+    t, s = sfr(data; tbinsize=c.tbinsize, trange=c.trange, mask=m, mode=c.mode)
+    ReportResultCard(c.label, :sfr, c.kind, :sfr, (t=collect(t), sfr=collect(s)),
+                     (unit=c.mode === :probability ? :fraction : c.unit, tbinsize=c.tbinsize,
+                      mode=c.mode, ntimebins=length(t), srange=_finite_extrema(s)))
+end
+
 _withcost(rc::ReportResultCard, dt::Float64) =
     ReportResultCard(rc.label, rc.kind, rc.datatype, rc.func, rc.data, merge(rc.meta, (cost_s=dt,)))
 
@@ -223,7 +247,8 @@ report(1; path=sim, output=:ascii, cards=[
 ])
 ```
 """
-function report(plan::ReportPlan; output::Symbol=:ascii, verbose::Bool=true)
+function report(plan::ReportPlan; output::Symbol=:ascii, budget_s=nothing, verbose::Bool=true)
+    budget_s === nothing || (plan = downsample(plan, Float64(budget_s)))   # fit a wall-time target
     t0 = time()
     info = getinfo(plan.output, plan.path, verbose=false)
     luse, sampled = plan.lmax < 0 ? _quicklook_level(info, plan.budget) :
@@ -238,6 +263,7 @@ function report(plan::ReportPlan; output::Symbol=:ascii, verbose::Bool=true)
     end
 
     results = ReportResultCard[]; readtimes = Tuple{Symbol,Float64}[]
+    ncells = Dict{Symbol,Int}()
     for dt in order
         cards = groups[dt]
         if !_datatype_available(info, dt)
@@ -250,6 +276,7 @@ function report(plan::ReportPlan; output::Symbol=:ascii, verbose::Bool=true)
         tr = time()
         data = _read_for(info, dt, cards, luse)
         push!(readtimes, (dt, time() - tr))
+        ncells[dt] = length(data.data)
         for c in cards
             tc = time()
             local rc
@@ -268,30 +295,26 @@ function report(plan::ReportPlan; output::Symbol=:ascii, verbose::Bool=true)
                   timestamp=string(Dates.now()),
                   cards=[(c.label, card_result_kind(c), card_datatype(c)) for c in plan.cards],
                   budget=plan.budget, sampled=sampled)
-    cost = (total_s=time() - t0, reads=readtimes,
+    cost = (total_s=time() - t0, reads=readtimes, ncells=ncells,
             per_card=[(r.label, get(r.meta, :cost_s, 0.0)) for r in results])
     rep = QuickReport(results, summary, provenance, cost, info)
 
+    _calibrate_from_run!(readtimes, ncells, results, info)   # learn cost coefficients from this run
     output === :none || render(rep, output; verbose=verbose)
     return rep
 end
 
 report(sim_output::Int; path::String=".", cards=:default, output::Symbol=:ascii,
-       lmax::Int=-1, budget::Int=2_000_000, verbose::Bool=true) =
+       lmax::Int=-1, budget::Int=2_000_000, budget_s=nothing, verbose::Bool=true) =
     report(ReportPlan(sim_output; path=path, cards=cards, lmax=lmax, budget=budget);
-           output=output, verbose=verbose)
+           output=output, budget_s=budget_s, verbose=verbose)
 
 # read one datatype once with the minimal var set (hydro: needs-based; particles: full in P1)
 function _read_for(info, dt::Symbol, cards, luse::Int)
     if dt === :hydro
-        if !any(card_has_mask, cards)
-            logical = unique(reduce(vcat, (card_vars(c) for c in cards); init=Symbol[]))
-            raw = getvar_requirements(:hydro, logical)
-            if !isempty(raw) && all(in(info.variable_list), raw)
-                return gethydro(info, raw; lmax=luse, verbose=false, show_progress=false)
-            end
-        end
-        return gethydro(info; lmax=luse, verbose=false, show_progress=false)
+        raw = _hydro_readset(info, cards)
+        return raw === nothing ? gethydro(info; lmax=luse, verbose=false, show_progress=false) :
+                                 gethydro(info, raw; lmax=luse, verbose=false, show_progress=false)
     elseif dt === :particles
         return getparticles(info; verbose=false, show_progress=false)
     end
@@ -307,51 +330,17 @@ function _report_summary(info, luse, sampled, ncards)
      ncards=ncards)
 end
 
-# =====================================================================================
-#  Static cost preview (Phase 1: predicted reads + cell counts; calibrated timing is Phase 2)
-# =====================================================================================
-# predicted leaf cells at a level (generalises the quicklook budget heuristic)
+# predicted leaf cells at a level (generalises the quicklook budget heuristic; used by the cost model)
 function _predicted_cells(info, lmax::Int)
     base = info.grid_info.ngrid_current
     lmax <= info.levelmin && return base
     return base * 2^(info.ndim * (lmax - info.levelmin))
 end
 
-"""    preview(plan::ReportPlan) -> ReportPlan
-
-Zero-I/O dry run: print the read level, per-datatype minimal variable set, and each card's
-datatype/kind, without reading any data. (Calibrated time estimates arrive in a later phase.)
-Returns the plan unchanged so it can be piped into [`report`](@ref)."""
-function preview(plan::ReportPlan; io::IO=stdout)
-    info = getinfo(plan.output, plan.path, verbose=false)
-    luse, sampled = plan.lmax < 0 ? _quicklook_level(info, plan.budget) :
-                    (clamp(plan.lmax, info.levelmin, info.levelmax), plan.lmax < info.levelmax)
-    cells = _predicted_cells(info, luse)
-    println(io, "┌─ Mera report PLAN ── output $(info.output) ($(info.simcode)) ── $(length(plan.cards)) cards ───")
-    println(io, "│ level: $(luse) of $(info.levelmax) read" *
-                (sampled ? "  ⚠ APPROXIMATE (coarse, budget $(plan.budget) cells)" : "  (full resolution)"))
-    println(io, "│ predicted hydro cells: ~$(_human(cells))")
-    # per-datatype minimal reads
-    order = unique(card_datatype.(plan.cards))
-    for dt in order
-        cards = filter(c -> card_datatype(c) == dt, plan.cards)
-        if dt === :hydro && !any(card_has_mask, cards)
-            logical = unique(reduce(vcat, (card_vars(c) for c in cards); init=Symbol[]))
-            raw = getvar_requirements(:hydro, logical)
-            avail = _datatype_available(info, dt)
-            println(io, "│ reads $(dt)$(avail ? "" : " (ABSENT → skipped)"): $(raw)")
-        else
-            avail = _datatype_available(info, dt)
-            println(io, "│ reads $(dt)$(avail ? " (full)" : " (ABSENT → skipped)")")
-        end
-    end
-    println(io, "├─ card                         kind        datatype")
-    for c in plan.cards
-        println(io, "│  " * rpad(card_label(c), 28) * rpad(string(card_result_kind(c)), 12) * string(card_datatype(c)))
-    end
-    println(io, "└─ run with: report(plan; output=:ascii|:jld2|:file) ───────────")
-    return plan
+# minimal hydro read-set a group of cards needs (or `nothing` ⇒ full read); shared by engine & cost
+function _hydro_readset(info, cards)
+    any(card_has_mask, cards) && return nothing
+    logical = unique(reduce(vcat, (card_vars(c) for c in cards); init=Symbol[]))
+    raw = getvar_requirements(:hydro, logical)
+    (!isempty(raw) && all(in(info.variable_list), raw)) ? raw : nothing
 end
-
-_human(n) = n >= 1e9 ? "$(round(n/1e9,sigdigits=3))e9" : n >= 1e6 ? "$(round(n/1e6,sigdigits=3))e6" :
-            n >= 1e3 ? "$(round(n/1e3,sigdigits=3))e3" : string(n)

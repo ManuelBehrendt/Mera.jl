@@ -82,5 +82,39 @@
             @test rep2.summary.output == rep.summary.output
             rm(tmp, force=true)
         end
+
+        @testset "Phase 2: sfr, cost estimate, calibration, budget" begin
+            info = getinfo(dc.output, dc.path, verbose=false)
+            p = getparticles(info, verbose=false, show_progress=false)
+            t, s = sfr(p; tbinsize=50.0)                         # DM-only sim ⇒ empty SFH, no error
+            @test length(t) == length(s) && all(>=(0.0), s)
+
+            plan = ReportPlan(dc.output; path=dc.path, cards=[
+                ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=64),
+                SFRCard(; tbinsize=50.0),
+            ])
+            # zero-I/O estimate
+            e = estimate(plan)
+            @test e.total_s > 0 && length(e.per_card) == 2
+            @test e.read_s >= 0 && e.compute_s >= 0
+            @test preview(plan; io=IOBuffer()) === plan
+
+            # running self-calibrates the cost model and produces an :sfr card
+            rep = report(plan; output=:none, verbose=false)
+            @test Mera.COST[].calibrated
+            @test any(c.kind == :sfr for c in rep.cards)
+
+            # downsample shrinks a heavy plan's estimated time (level and/or resolution)
+            big = ReportPlan(dc.output; path=dc.path, cards=[ProjectionCard(:hydro, :sd; res=512)])
+            small = downsample(big, 1e-6)
+            @test estimate(small).total_s <= estimate(big).total_s
+            @test small.cards[1].res <= big.cards[1].res
+
+            # budget_s path runs end-to-end
+            @test report(plan; output=:none, budget_s=0.001, verbose=false) isa QuickReport
+
+            # active calibration helper runs
+            @test calibrate!(dc.output; path=dc.path, verbose=false) isa Mera.CostModel
+        end
     end
 end

@@ -69,6 +69,7 @@ function _card_line(c::ReportResultCard)
         c.kind === :map     ? "[map $(m.var)]  $(m.res)×$(m.res)  range $(_rng(m.vrange)) $(m.unit)" :
         c.kind === :phase   ? "[phase $(m.xvar)–$(m.yvar)]  $(m.nbins[1])×$(m.nbins[2]) bins  ($(m.xunit),$(m.yunit))" :
         c.kind === :profile ? "[profile $(m.yvar) vs $(m.xvar)]  $(m.nbins) bins  y∈[$(_rng(m.yrange))] $(m.unit)" :
+        c.kind === :sfr     ? "[SFR]  $(m.ntimebins) bins ($(m.tbinsize) Myr)  peak $(_nf(m.srange[2])) $(m.unit)" :
         "?"
     t = get(m, :cost_s, nothing)
     return head * body * (t === nothing ? "" : "   ($(round(t,digits=2)) s)")
