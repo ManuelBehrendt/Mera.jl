@@ -647,24 +647,27 @@ end
 
 function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}, center_unit::Symbol)
 
-    # check for :bc, :boxcenter
+    # check for :bc, :boxcenter. Build a fresh result — never mutate the caller's `center`
+    # array in place (it may be reused across several getvar calls, e.g. by off-axis projection).
     Ncenter = length(center)
-    if Ncenter  == 1
+    if Ncenter == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = 0.5
-            center = [bc, bc, bc]
+            return [0.5, 0.5, 0.5]
         end
-    else
-        for i = 1:Ncenter
-            if center[i] == :bc || center[i] == :boxcenter
-                bc = 0.5
-                center[i] = bc
-            elseif center_unit != :standard
-                center[i] = center[i] / dataobject.boxlen .* getunit(dataobject, center_unit)
-            end
+        return copy(center)
+    end
+    out = similar(center, Float64)
+    for i = 1:Ncenter
+        if center[i] == :bc || center[i] == :boxcenter
+            out[i] = 0.5
+        elseif center_unit != :standard
+            # physical → fractional: divide by the unit factor (physical-per-code) AND the box length.
+            out[i] = center[i] / getunit(dataobject, center_unit) / dataobject.boxlen
+        else
+            out[i] = center[i]
         end
     end
-    return center
+    return out
 end
 
 
