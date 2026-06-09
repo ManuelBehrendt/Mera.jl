@@ -97,6 +97,7 @@ if isempty(_focus)
         include("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
         include("36_offaxis_features_tests.jl")    # LOS features: integrated_spectrum, moment2, emission_map, profile/phase, slice
         include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
+        include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
         include("07_regions.jl")
     end
 

@@ -154,6 +154,18 @@ export
     profiletimeseries,
     quicklook,
     QuickLookResult,
+    report,
+    preview,
+    render,
+    loadreport,
+    ReportPlan,
+    ReportCard,
+    ProjectionCard,
+    PhaseCard,
+    ProfileCard,
+    ScalarCard,
+    QuickReport,
+    ReportResultCard,
     getparticlemask,
     rotation_sequence,
     savecube,
@@ -341,6 +353,8 @@ include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
+include("functions/report/report.jl")
+include("functions/report/report_render.jl")
 # ============================================
 
 
