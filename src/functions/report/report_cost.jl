@@ -32,6 +32,7 @@ _cost_params(c::PhaseCard)      = (nbins=c.nbins[1] * c.nbins[2],)
 _cost_params(c::ProfileCard)    = (nbins=c.nbins,)
 _cost_params(c::ScalarCard)     = NamedTuple()
 _cost_params(c::SFRCard)        = (nbins=50,)
+_cost_params(c::ReportCard)     = NamedTuple()   # CombinedCard / fallback
 
 # raw (uncorrected) compute seconds for one card given the cells it scans
 function _raw_compute(kind::Symbol, p, N::Real)

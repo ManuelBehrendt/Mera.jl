@@ -141,5 +141,35 @@
                 @test any(endswith(".png"), readdir(d))
             end
         end
+
+        @testset "Phase 4: gravity/RT/clumps + guards + cross-datatype" begin
+            # spiral_ugrid: hydro + gravity + particles (no rt/clumps)
+            rep = report(ReportPlan(dc.output; path=dc.path, cards=[
+                ScalarCard(:gravity, :epot; reduce=:extrema, label="epot"),                 # gravity via getvar
+                ProfileCard(:gravity, :r_sphere, :a_magnitude; weight=:volume, nbins=10,
+                            center=[:bc], range_unit=:kpc, xunit=:kpc, label="agrav"),
+                ProjectionCard(:gravity, :a_magnitude; res=16, label="gmap"),               # proj unsupported → skip
+                ScalarCard(:hydro, :xHII; reduce=:sum, label="xHII"),                        # var absent → skip
+                ProjectionCard(:rt, :sd; res=16, label="rtmap"),                             # rt absent → skip
+                baryon_fraction(),                                                           # hydro+particles
+            ]); output=:none, verbose=false)
+            b = Dict(c.label => c for c in rep.cards)
+            @test b["epot"].func == :scalar && b["epot"].data isa Tuple
+            @test b["agrav"].func == :profile
+            @test b["gmap"].func == :skipped                                                 # projection guard
+            @test b["xHII"].func == :skipped                                                 # variable guard
+            @test b["rtmap"].func == :skipped                                                # datatype absent
+            @test b["baryon_fraction"].func == :combined && 0 <= b["baryon_fraction"].data <= 1
+
+            # spiral_clumps: has clumps → clump cards + cross-datatype clump_mass_fraction
+            cc = DATASETS[:spiral_clumps]
+            rc = report(ReportPlan(cc.output; path=cc.path, cards=[
+                ScalarCard(:clumps, :mass; reduce=:sum, unit=:Msol, label="cmass"),
+                clump_mass_fraction(),
+            ]); output=:none, verbose=false)
+            bc = Dict(c.label => c for c in rc.cards)
+            @test bc["cmass"].func == :scalar && bc["cmass"].data > 0
+            @test bc["clump_mass_fraction"].func == :combined && bc["clump_mass_fraction"].data > 0
+        end
     end
 end

@@ -94,13 +94,49 @@ SFRCard(kind::Symbol=:particles; tbinsize::Real=10.0, trange=[0.0, missing], uni
     SFRCard(_norm_dt(kind), Float64(tbinsize), collect(Any, trange), unit, mode, mask,
             label == "" ? "sfr$(mode === :probability ? "_frac" : "")" : label)
 
+struct CombinedCard <: ReportCard
+    datatypes::Vector{Symbol}; compute::Function; unit::Symbol; label::String
+end
+"""    CombinedCard(datatypes, compute; unit=:fraction, label="combined")
+    CombinedCard(datatypes; unit=:fraction, label="combined") do datas … end
+
+A cross-datatype scalar card. `compute(datas)` receives a `Dict{Symbol,Any}` of the read data
+objects for `datatypes` and returns a number. Computed only if all `datatypes` are present.
+See the built-ins [`baryon_fraction`](@ref) and [`clump_mass_fraction`](@ref)."""
+CombinedCard(compute::Function, datatypes; unit::Symbol=:fraction, label::String="combined") =
+    CombinedCard(_norm_dt.(collect(Symbol, datatypes)), compute, unit, label)
+CombinedCard(datatypes::AbstractVector, compute::Function; kwargs...) =
+    CombinedCard(compute, datatypes; kwargs...)
+
+"""    baryon_fraction(; label="baryon_fraction")
+
+Cross-datatype card: (gas + stars) / (gas + stars + dark matter), reading hydro + particles."""
+baryon_fraction(; label::String="baryon_fraction") =
+    CombinedCard([:hydro, :particles], unit=:fraction, label=label) do d
+        gas   = sum(getvar(d[:hydro], :mass, :Msol))
+        b     = getvar(d[:particles], :birth)
+        m     = getvar(d[:particles], :mass, :Msol)
+        stars = sum(m[b .> 0.0]); dm = sum(m[b .<= 0.0])
+        (gas + stars) / (gas + stars + dm)
+    end
+
+"""    clump_mass_fraction(; label="clump_mass_fraction")
+
+Cross-datatype card: total clump mass / total gas mass, reading clumps + hydro."""
+clump_mass_fraction(; label::String="clump_mass_fraction") =
+    CombinedCard([:clumps, :hydro], unit=:fraction, label=label) do d
+        sum(getvar(d[:clumps], :mass, :Msol)) / sum(getvar(d[:hydro], :mass, :Msol))
+    end
+
 # ---- traits the engine/renderers dispatch on -------------------------------------------
 card_datatype(c::ReportCard) = c.kind
+card_datatype(::CombinedCard) = :combined
 card_result_kind(::ProjectionCard) = :map
 card_result_kind(::PhaseCard)      = :phase
 card_result_kind(::ProfileCard)    = :profile
 card_result_kind(::ScalarCard)     = :scalar
 card_result_kind(::SFRCard)        = :sfr
+card_result_kind(::CombinedCard)   = :scalar
 card_label(c::ReportCard) = c.label
 
 # logical getvar symbols a card needs (fed to getvar_requirements to get the raw read set)
@@ -110,6 +146,11 @@ card_vars(c::ProfileCard)    = vcat([c.xvar], c.yvar === nothing ? Symbol[] : [c
                                     c.weight isa Symbol ? [c.weight] : Symbol[])
 card_vars(c::ScalarCard)     = c.relative_to === nothing ? [c.var] : [c.var, c.relative_to]
 card_vars(::SFRCard)         = [:mass, :birth]
+
+# which cards are computable for a given datatype. projection() is standalone only for
+# hydro/particles (gravity/RT projection needs hydro pairing; clumps has no projection method).
+_card_supported(c::ReportCard) = true
+_card_supported(c::ProjectionCard) = c.kind in (:hydro, :particles)
 card_has_mask(c::ReportCard) = false
 card_has_mask(c::ScalarCard) = c.mask !== nothing
 card_has_mask(c::SFRCard)    = c.mask !== nothing
@@ -254,40 +295,64 @@ function report(plan::ReportPlan; output::Symbol=:ascii, budget_s=nothing, verbo
     luse, sampled = plan.lmax < 0 ? _quicklook_level(info, plan.budget) :
                     (clamp(plan.lmax, info.levelmin, info.levelmax), plan.lmax < info.levelmax)
 
-    # group cards by datatype, preserving order
-    order = Symbol[]; groups = Dict{Symbol,Vector{ReportCard}}()
-    for c in plan.cards
-        dt = card_datatype(c)
-        haskey(groups, dt) || (groups[dt] = ReportCard[]; push!(order, dt))
-        push!(groups[dt], c)
+    singles  = [c for c in plan.cards if !(c isa CombinedCard)]
+    combined = [c for c in plan.cards if c isa CombinedCard]
+
+    # datatypes to read: those used by single cards + those any combined card needs
+    needed = Symbol[]
+    for c in singles;  dt = card_datatype(c); dt in needed || push!(needed, dt); end
+    for c in combined, dt in c.datatypes;     dt in needed || push!(needed, dt); end
+
+    # read each available datatype ONCE (hydro needs-based via its single cards), keep the objects
+    datas = Dict{Symbol,Any}(); readtimes = Tuple{Symbol,Float64}[]; ncells = Dict{Symbol,Int}()
+    for dt in needed
+        _datatype_available(info, dt) || continue
+        grp = [c for c in singles if card_datatype(c) == dt]
+        tr = time()
+        datas[dt] = _read_for(info, dt, grp, luse)
+        push!(readtimes, (dt, time() - tr)); ncells[dt] = length(datas[dt].data)
     end
 
-    results = ReportResultCard[]; readtimes = Tuple{Symbol,Float64}[]
-    ncells = Dict{Symbol,Int}()
-    for dt in order
-        cards = groups[dt]
-        if !_datatype_available(info, dt)
-            for c in cards
-                push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
-                                                nothing, (note="$dt not present in this output", cost_s=0.0)))
+    # compute every card in plan order
+    results = ReportResultCard[]
+    for c in plan.cards
+        if c isa CombinedCard
+            if !all(dt -> haskey(datas, dt), c.datatypes)
+                push!(results, ReportResultCard(c.label, :scalar, :combined, :skipped, nothing,
+                    (note="needs $(c.datatypes) — not all present", cost_s=0.0)))
+                continue
             end
-            continue
-        end
-        tr = time()
-        data = _read_for(info, dt, cards, luse)
-        push!(readtimes, (dt, time() - tr))
-        ncells[dt] = length(data.data)
-        for c in cards
             tc = time()
-            local rc
-            try
-                rc = _withcost(card_compute(c, data), time() - tc)
+            rc = try
+                ReportResultCard(c.label, :scalar, :combined, :combined, c.compute(datas),
+                                 (unit=c.unit, cost_s=time() - tc))
             catch err
-                rc = ReportResultCard(card_label(c), card_result_kind(c), dt, :error, nothing,
-                                      (note="failed: $(sprint(showerror, err))", cost_s=time() - tc))
+                ReportResultCard(c.label, :scalar, :combined, :error, nothing,
+                                 (note="failed: $(sprint(showerror, err))", cost_s=time() - tc))
             end
-            push!(results, rc)
+            push!(results, rc); continue
         end
+        dt = card_datatype(c)
+        if !_datatype_available(info, dt)
+            push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
+                nothing, (note="$dt not present in this output", cost_s=0.0))); continue
+        end
+        if !_card_supported(c)
+            push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
+                nothing, (note="projection cards support hydro/particles only", cost_s=0.0))); continue
+        end
+        if !_card_var_available(info, c)
+            push!(results, ReportResultCard(card_label(c), card_result_kind(c), dt, :skipped,
+                nothing, (note="required variables not stored in this output", cost_s=0.0))); continue
+        end
+        tc = time()
+        rc = try
+            _withcost(card_compute(c, datas[dt]), time() - tc)
+        catch err
+            ReportResultCard(card_label(c), card_result_kind(c), dt, :error, nothing,
+                             (note="failed: $(sprint(showerror, err))", cost_s=time() - tc))
+        end
+        push!(results, rc)
     end
 
     summary = _report_summary(info, luse, sampled, length(results))
@@ -317,8 +382,31 @@ function _read_for(info, dt::Symbol, cards, luse::Int)
                                  gethydro(info, raw; lmax=luse, verbose=false, show_progress=false)
     elseif dt === :particles
         return getparticles(info; verbose=false, show_progress=false)
+    elseif dt === :gravity
+        return getgravity(info; lmax=luse, verbose=false, show_progress=false)
+    elseif dt === :rt
+        return getrt(info; lmax=luse, verbose=false, show_progress=false)
+    elseif dt === :clumps
+        return getclumps(info; verbose=false)
     end
-    error("report: datatype :$dt not supported in Phase 1 (hydro, particles)")
+    error("report: unsupported datatype :$dt")
+end
+
+# variable list stored for a datatype (used to skip cards whose vars aren't in this output)
+_datatype_varlist(info, dt::Symbol) =
+    dt === :hydro    ? info.variable_list :
+    dt === :gravity  ? info.gravity_variable_list :
+    dt === :rt       ? info.rt_variable_list :
+    dt === :clumps   ? info.clumps_variable_list :
+    dt === :particles ? info.particles_variable_list : Symbol[]
+
+# is a card computable on this output? (hydro/gravity/rt: its required raw vars must be stored;
+# e.g. an RT-ionization card on :xHII is skipped on a non-RT run). particles/clumps: assume yes.
+function _card_var_available(info, c::ReportCard)
+    dt = card_datatype(c)
+    dt in (:hydro, :gravity, :rt) || return true
+    req = getvar_requirements(_regkind(dt), card_vars(c))
+    isempty(setdiff(req, _datatype_varlist(info, dt)))
 end
 
 function _report_summary(info, luse, sampled, ncards)
