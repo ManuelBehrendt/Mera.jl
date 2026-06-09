@@ -441,6 +441,39 @@ function isgravityfile1!(dataobject::InfoType)
 end
 
 # todo: introduce new RAMSES version
+# Map a RAMSES particle Family-header "Particle fields" line (e.g.
+# "pos vel mass iord level family tag tform metal") to the descriptor-style variable list, so a
+# new-format output WITHOUT a part_file_descriptor.txt can still be read with the correct layout
+# (including metals → the right nvarp), rather than being misparsed as the legacy 5-var layout.
+function _particle_header_varlist(tokens)
+    vl = Symbol[]
+    for t in tokens
+        tl = lowercase(String(t))
+        if tl == "pos"
+            append!(vl, [:position_x, :position_y, :position_z])
+        elseif tl == "vel"
+            append!(vl, [:velocity_x, :velocity_y, :velocity_z])
+        elseif tl == "mass"
+            push!(vl, :mass)
+        elseif tl in ("iord", "id", "identity")
+            push!(vl, :identity)
+        elseif tl in ("level", "levelp")
+            push!(vl, :levelp)
+        elseif tl == "family"
+            push!(vl, :family)
+        elseif tl == "tag"
+            push!(vl, :tag)
+        elseif tl in ("tform", "birth", "birth_time")
+            push!(vl, :birth_time)
+        elseif tl in ("metal", "metals", "metallicity")
+            push!(vl, :metallicity)
+        else
+            push!(vl, Symbol(t))           # unknown extra field — keep its name
+        end
+    end
+    return vl
+end
+
 function readparticlesfile1!(dataobject::InfoType)
     Npart = 0
     Ndm = 0
@@ -461,6 +494,7 @@ function readparticlesfile1!(dataobject::InfoType)
     part_files = false
     part_header = false
     version=0
+    header_pfields = SubString{String}[]      # "Particle fields" tokens from the Family header (if listed)
     if  isfile(dataobject.fnames.particles * "out00001")
         part_files = true
         if isfile(dataobject.fnames.header)
@@ -500,6 +534,19 @@ function readparticlesfile1!(dataobject::InfoType)
                 Ndebris = parse(Int, rsplit(readline(f))[2]  )
                 Nother  = parse(Int, rsplit(readline(f))[2]  )
                 Nundefined = parse(Int, rsplit(readline(f))[2]  )
+
+                # capture the "Particle fields" line (if present) so the layout can be reconstructed
+                # when part_file_descriptor.txt is absent
+                while !eof(f)
+                    fl = strip(readline(f))
+                    isempty(fl) && continue
+                    if occursin("ield", fl)            # the " Particle fields" label line
+                        eof(f) || (header_pfields = split(strip(readline(f))))
+                    else
+                        header_pfields = split(fl)     # some builds list the fields directly
+                    end
+                    break
+                end
             end
             close(f)
 
@@ -508,6 +555,7 @@ function readparticlesfile1!(dataobject::InfoType)
             #end
         end
     end
+    header_version = version          # Family-header signature (1 = new format, 0 = legacy, -1 = unknown)
 
 
 
@@ -567,6 +615,16 @@ function readparticlesfile1!(dataobject::InfoType)
         # descriptor variables not read
         end
         close(f)
+    else
+        # No particle descriptor file: reconstruct the layout from the Family-header so a NEW-format
+        # output that simply lacks part_file_descriptor.txt is NOT misread as the legacy 5-var layout
+        # (:vx,:vy,:vz,:mass,:birth) — reading a longer record against a 5-var layout crashes
+        # (FortranFilesError: read beyond record end). If the header listed its "Particle fields", use
+        # them (gives the exact nvarp incl. metals); otherwise fall back to the new-format signature.
+        version = header_version == 1 ? 1 : 0
+        if version == 1 && !isempty(header_pfields)
+            variable_descriptor_list = _particle_header_varlist(header_pfields)
+        end
     end
 
 

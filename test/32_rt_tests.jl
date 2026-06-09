@@ -220,9 +220,11 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
                 po = projection(rt, :Np1, mode=:sum, los=[1.0,1,1], res=res, verbose=false, show_progress=false)
                 @test isapprox(sum(po.maps[:Np1]), ref; rtol=1e-9)
             end
-            # accurate :overlap binning conserves too
+            # accurate :overlap and exact :exact binnings conserve too
             poo = projection(rt, :Np1, mode=:sum, los=[1.0,1,1], binning=:overlap, verbose=false, show_progress=false)
             @test isapprox(sum(poo.maps[:Np1]), ref; rtol=1e-9)
+            pex = projection(rt, :Np1, mode=:sum, los=[1.0,1,1], binning=:exact, verbose=false, show_progress=false)
+            @test isapprox(sum(pex.maps[:Np1]), ref; rtol=1e-9)
         end
 
         @testset "He-ionization & metallicity μ/n_e (synthetic)" begin
