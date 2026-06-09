@@ -171,6 +171,7 @@ export
     QuickReport,
     ReportResultCard,
     sfr,
+    sfr_snapshot,
     estimate,
     calibrate!,
     downsample,

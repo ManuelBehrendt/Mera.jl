@@ -86,8 +86,19 @@
         @testset "Phase 2: sfr, cost estimate, calibration, budget" begin
             info = getinfo(dc.output, dc.path, verbose=false)
             p = getparticles(info, verbose=false, show_progress=false)
-            t, s = sfr(p; tbinsize=50.0)                         # DM-only sim ⇒ empty SFH, no error
+            t, s = sfr(p; tbinsize=50.0)
             @test length(t) == length(s) && all(>=(0.0), s)
+
+            # snapshot SFR (instantaneous windows + lifetime mean), initial-mass aware
+            snap = sfr_snapshot(p)
+            @test length(snap.sfr) == length(snap.windows) && all(>=(0.0), snap.sfr)
+            @test snap.sfr_mean >= 0.0 && snap.n_stars >= 0
+            @test snap.mass_field == Mera._sfr_mass_field(p, :auto)
+            ag = getvar(p, :age, :Myr); mm = getvar(p, :mass, :Msol); st = getvar(p, :birth) .!= 0.0
+            w1 = snap.windows[1]
+            @test isapprox(snap.sfr[1],
+                sum(mm[st .& (ag .>= 0.0) .& (ag .<= w1)]) / (w1 * 1e6); rtol=1e-9)  # SFR=M_*(age≤Δt)/Δt
+            @test sfr_snapshot(p; mass=:mass).sfr == snap.sfr                        # explicit field override
 
             plan = ReportPlan(dc.output; path=dc.path, cards=[
                 ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=64),

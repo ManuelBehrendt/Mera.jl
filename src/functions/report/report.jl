@@ -83,15 +83,15 @@ ScalarCard(kind::Symbol, var::Symbol; reduce::Symbol=:sum, unit::Symbol=:standar
 
 struct SFRCard <: ReportCard
     kind::Symbol; tbinsize::Float64; trange::Vector{Any}; unit::Symbol; mode::Symbol
-    mask::Union{Function,Nothing}; label::String
+    mass::Symbol; mask::Union{Function,Nothing}; label::String
 end
-"""    SFRCard(kind=:particles; tbinsize=10.0, trange=[0.0,missing], unit=:Msol_yr, mode=:none, mask=nothing, label="")
+"""    SFRCard(kind=:particles; tbinsize=10.0, trange=[0.0,missing], unit=:Msol_yr, mode=:none, mass=:auto, mask=nothing, label="")
 
 A star-formation-history card ([`sfr`](@ref)). `mode=:probability` gives the normalised SFH
-(a fraction); `mask=obj->BitVector` subselects particles."""
+(a fraction); `mass=:auto` prefers a stored initial-mass field; `mask=obj->BitVector` subselects."""
 SFRCard(kind::Symbol=:particles; tbinsize::Real=10.0, trange=[0.0, missing], unit::Symbol=:Msol_yr,
-        mode::Symbol=:none, mask::Union{Function,Nothing}=nothing, label::String="") =
-    SFRCard(_norm_dt(kind), Float64(tbinsize), collect(Any, trange), unit, mode, mask,
+        mode::Symbol=:none, mass::Symbol=:auto, mask::Union{Function,Nothing}=nothing, label::String="") =
+    SFRCard(_norm_dt(kind), Float64(tbinsize), collect(Any, trange), unit, mode, mass, mask,
             label == "" ? "sfr$(mode === :probability ? "_frac" : "")" : label)
 
 struct CombinedCard <: ReportCard
@@ -233,7 +233,7 @@ end
 
 function card_compute(c::SFRCard, data)
     m = c.mask === nothing ? [false] : c.mask(data)
-    t, s = sfr(data; tbinsize=c.tbinsize, trange=c.trange, mask=m, mode=c.mode)
+    t, s = sfr(data; tbinsize=c.tbinsize, trange=c.trange, mass=c.mass, mask=m, mode=c.mode)
     ReportResultCard(c.label, :sfr, c.kind, :sfr, (t=collect(t), sfr=collect(s)),
                      (unit=c.mode === :probability ? :fraction : c.unit, tbinsize=c.tbinsize,
                       mode=c.mode, ntimebins=length(t), srange=_finite_extrema(s)))

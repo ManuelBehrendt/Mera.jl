@@ -60,8 +60,11 @@ ScalarCard(:hydro, :mass; fraction=true, mask = o -> getvar(o,:T,:K).<1e4) # fra
 ### Star formation
 
 `SFRCard` (and the standalone [`sfr`](@ref)) build the star-formation history from the star particles
-(`birth > 0`): `mode=:none` gives M⊙/yr, `mode=:probability` the normalised SFH. Outputs without
-stars yield an empty history rather than an error.
+(`birth ≠ 0`): `mode=:none` gives M⊙/yr, `mode=:probability` the normalised SFH. For a single-number
+**current SFR** from one snapshot use [`sfr_snapshot`](@ref) — the stellar mass formed within a recent
+window divided by that window (e.g. 5/10/100 Myr), plus the lifetime mean. Both prefer a stored
+**initial-mass** field when present (`mass=:auto`), since the current particle mass underestimates the
+formed mass after stellar mass loss. Outputs without stars yield zeros, not an error.
 
 ### Cross-datatype cards
 
