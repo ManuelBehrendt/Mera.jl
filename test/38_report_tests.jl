@@ -116,5 +116,30 @@
             # active calibration helper runs
             @test calibrate!(dc.output; path=dc.path, verbose=false) isa Mera.CostModel
         end
+
+        @testset "Phase 3: plotting backend (graceful without Makie)" begin
+            rep = report(ReportPlan(dc.output; path=dc.path, cards=[
+                ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=32),
+                ScalarCard(:hydro, :mass; reduce=:sum, unit=:Msol),
+            ]); output=:none, verbose=false)
+
+            # :file :bundle works with no plotting backend
+            b = render(rep, :file; mode=:bundle, prefix=tempname(), verbose=false)
+            @test isfile(b.jld2) && isfile(b.summary)
+            rm(b.jld2, force=true); rm(b.summary, force=true)
+
+            if Base.find_package("CairoMakie") === nothing
+                # without a Makie backend, :plot and :file :dir error with a clear message
+                @test_throws Exception render(rep, :plot)
+                @test_throws Exception render(rep, :file; mode=:dir, prefix=tempname(), verbose=false)
+            else
+                @eval using CairoMakie
+                fig = render(rep, :plot; ncols=2)
+                @test occursin("Figure", string(typeof(fig)))
+                d = render(rep, :file; mode=:dir, prefix=tempname(), verbose=false)
+                @test isdir(d) && isfile(joinpath(d, "report.jld2"))
+                @test any(endswith(".png"), readdir(d))
+            end
+        end
     end
 end

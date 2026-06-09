@@ -39,9 +39,11 @@ WriteVTK = "64499a7a-5c06-52f2-abe2-ccb03c286192"
 
 [weakdeps]
 FITSIO = "525bcba6-941b-5504-bd06-fd0dc1a4d2eb"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 
 [extensions]
 MeraFITSIOExt = "FITSIO"
+MeraMakieExt = "Makie"
 
 [compat]
 Aqua = "0.8"
@@ -55,6 +57,7 @@ Downloads = "1"
 ElasticArrays = "1.2"
 FITSIO = "0.16, 0.17"
 FileIO = "1"
+Makie = "0.21, 0.22, 0.23, 0.24"
 FortranFiles = "0.6"
 HTTP = "1"
 ImageTransformations = "0.9, 0.10"

@@ -20,16 +20,35 @@ function render(r::QuickReport, ::Val{:jld2}; filename::String="quickreport.jld2
     return filename
 end
 
-function render(r::QuickReport, ::Val{:file}; prefix::String="quickreport", verbose::Bool=true)
-    jld = "$(prefix).jld2"; txt = "$(prefix)_summary.txt"
-    JLD2.jldsave(jld; merareport_version=1, report=r)
-    open(txt, "w") do io; _render_ascii(r, io); end
-    verbose && println("report bundle → $jld  +  $txt")
-    return (jld2=jld, summary=txt)
+function render(r::QuickReport, ::Val{:file}; prefix::String="quickreport", mode::Symbol=:bundle,
+                verbose::Bool=true)
+    if mode === :bundle
+        jld = "$(prefix).jld2"; txt = "$(prefix)_summary.txt"
+        JLD2.jldsave(jld; merareport_version=1, report=r)
+        open(txt, "w") do io; _render_ascii(r, io); end
+        verbose && println("report bundle → $jld  +  $txt")
+        return (jld2=jld, summary=txt)
+    elseif mode === :dir
+        mkpath(prefix)
+        jld = joinpath(prefix, "report.jld2"); txt = joinpath(prefix, "summary.txt")
+        JLD2.jldsave(jld; merareport_version=1, report=r)
+        open(txt, "w") do io; _render_ascii(r, io); end
+        pngs = _save_card_pngs(r, prefix)         # per-card PNGs (needs a Makie backend)
+        verbose && println("report dir → $prefix/ (report.jld2 + summary.txt + $(length(pngs)) PNGs)")
+        return prefix
+    else
+        throw(ArgumentError("render(:file) mode must be :bundle or :dir (got :$mode)"))
+    end
 end
 
-render(r::QuickReport, ::Val{:plot}; kwargs...) =
-    error("render(report, :plot) needs Makie — load it first: `using CairoMakie` (or GLMakie).")
+# :plot and per-card PNGs are provided by the Makie package extension (MeraMakieExt). The bare
+# fallbacks below give a friendly message until a Makie backend is loaded; `using CairoMakie`
+# (or GLMakie) activates the real methods.
+render(r::QuickReport, ::Val{:plot}; kwargs...) = _plot_report(r; kwargs...)
+_plot_report(r; kwargs...) =
+    error("render(report, :plot) needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")
+_save_card_pngs(r, dir; kwargs...) =
+    error("render(report, :file; mode=:dir) (per-card PNGs) needs a Makie backend — `using CairoMakie`.")
 
 render(r::QuickReport, ::Val{B}; kwargs...) where {B} =
     throw(ArgumentError("unknown report backend :$(B) (use :ascii, :jld2, :file, or :plot)"))
