@@ -1,4 +1,3 @@
-__precompile__(true)
 module Mera
 
 # ==================================================================
@@ -23,6 +22,8 @@ module Mera
 using Printf
 using Dates
 using Statistics
+using Random
+using PrecompileTools
 using Pkg
 using Base.Threads
 using Base: Semaphore, acquire, release
@@ -44,10 +45,8 @@ using ImageTransformations
 using ImageTransformations.Interpolations
 using CSV
 using FileIO
-using Distributions
 using JSON3
 using HTTP
-using JSON
 using MacroTools
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
 using TranscodingStreams
@@ -128,12 +127,35 @@ export
 
 #
     projection,
+    project,
+    mock_observe,
+    position_velocity,
+    velocity_cube,
+    velocity_moments,
+    los_cube,
+    los_component,
+    los_moments,
+    getspectrum,
+    integrated_spectrum,
+    column_integral,
+    offaxis_slice,
+    moment2,
+    emission_map,
+    profile,
+    phase,
+    profile3d,
+    rotationcurve,
+    velocitydispersion,
+    profiletimeseries,
+    quicklook,
+    QuickLookResult,
+    getparticlemask,
+    rotation_sequence,
+    savecube,
+    loadcube,
+    savefits,
     benchmark_projection_hydro,
     show_threading_info,
-    #slice,
-    #profile,
-    #profile_radial,
-    #remap,
     subregion,
     shellregion,
 
@@ -212,6 +234,7 @@ export
     AMRMapsType,
     HydroMapsType,   # deprecated alias of AMRMapsType (kept for backward compatibility)
     PartMapsType,
+    LosCubeType,
 
     Histogram2DMapType,
 
@@ -221,10 +244,8 @@ export
 
 # benchmarks
     run_benchmark,
-    #visualize_benchmark, visualize_benchmark_simple
     run_reading_benchmark,
-    run_merafile_benchmark,
-    benchmark_projection_hydro
+    run_merafile_benchmark
 
 include("types.jl")
 
@@ -262,21 +283,15 @@ include("read_data/RAMSES/hilbert3d.jl")
 # Data reader
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
-#include("read_data/RAMSES/gethydro_deprecated.jl")      # moved to dev/
-#include("read_data/RAMSES/reader_hydro_deprecated.jl")   # moved to dev/
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
 
 include("read_data/RAMSES/getrt.jl")
 include("read_data/RAMSES/reader_rt.jl")
-#include("read_data/RAMSES/getgravity_deprecated.jl")     # moved to dev/
-#include("read_data/RAMSES/reader_gravity_deprecated.jl")  # moved to dev/
 
 include("read_data/RAMSES/getparticles.jl")
 include("read_data/RAMSES/reader_particles.jl")
-#include("read_data/RAMSES/getparticles_deprecated.jl")    # moved to dev/
-#include("read_data/RAMSES/reader_particles_deprecated.jl") # moved to dev/
 
 include("read_data/RAMSES/getclumps.jl")
 # ============================================
@@ -292,16 +307,12 @@ include("functions/data/data_convert.jl")
 include("functions/data/mera_convert.jl")
 # ============================================
 
-# Safe performance utilities (moved to dev/)
-# include("functions/optimization/safe_performance.jl")
-# ============================================
-
 
 # projection, slice
 include("functions/projection/projection.jl")
-#include("functions/slice.jl")
 include("functions/projection/projection_hydro.jl")
 include("functions/projection/projection_particles.jl")
+include("functions/project.jl")
 
 # ============================================
 
@@ -322,10 +333,8 @@ include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
-# ============================================
-
-# Profile functions
-#include("functions/profile_hydro.jl")
+include("functions/profile.jl")
+include("functions/quicklook.jl")
 # ============================================
 
 
@@ -342,33 +351,67 @@ include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
 include("benchmarks/Projections/projection_benchmarks.jl")
 
-# Functions under development
-pkgdir = joinpath(@__DIR__, "dev/dev.jl")
-if isfile(pkgdir)
-    include(pkgdir)
+# Functions under development (private, git-ignored; absent in the public package)
+devfile = joinpath(@__DIR__, "dev/dev.jl")
+if isfile(devfile)
+    include(devfile)
 end
 # ============================================
 
+# Precompile the hot numerical kernels (off-axis deposit, binning, weighted reductions, camera basis)
+# on small SYNTHETIC arrays — these take plain vectors, so no simulation files are needed at build time.
+# This caches the native code for the math users hit first in projection / profile / phase. Guarded so a
+# workload hiccup can never break precompilation. (The full read→project workload needs a bundled mini
+# output, which we don't ship yet.)
+@setup_workload begin
+    @compile_workload begin
+        try
+            r, u, w = build_camera_basis([0.3, 0.2, 1.0])
+            resolve_los(direction=:z); resolve_los(los=[1.0, 1.0, 1.0])
+            x = collect(range(0.1, 1.0, length=200)); wt = ones(200); y = x .^ 2
+            _bin_edges(x, nothing, :linear, 16)
+            _bin_edges(x, (0.1, 1.0), :log, 16)
+            _bin_edges(x, nothing, :equal, 16)
+            _wquantile(y, wt, 0.5)
+            _profile1d(x, wt, y, 16, (0.0, 1.0), :linear, [0.16, 0.5, 0.84])
+            _phase2d(x, y, wt, y, 16, 16, nothing, nothing, :linear, :linear)
+            nx = ny = 32; xc = collect(range(-1.5, 1.5, length=60)); yc = reverse(xc)
+            cs = fill(0.1, 60); vv = ones(60); ww = ones(60); ext = (-2.0, 2.0, -2.0, 2.0)
+            deposit_rotated_cells_overlap!(zeros(nx,ny), zeros(nx,ny), xc, yc, cs, vv, ww, r, u, ext, (nx,ny); nmax=8, max_threads=1)
+            deposit_rotated_cells_exact!(  zeros(nx,ny), zeros(nx,ny), xc, yc, cs, vv, ww, r, u, w, ext, (nx,ny); max_threads=1)
+        catch
+        end
+    end
+end
 
-println()
-println( "*__   __ _______ ______   _______ ")
-println( "|  |_|  |       |    _ | |   _   |")
-println( "|       |    ___|   | || |  |_|  |")
-println( "|       |   |___|   |_||_|       |")
-println( "|       |    ___|    __  |       |")
-println( "| ||_|| |   |___|   |  | |   _   |")
-println( "|_|   |_|_______|___|  |_|__| |__|")
-println()
 
 """
     __init__()
 
-Automatically initialize Mera.jl functions
+Announce Mera on load. In an interactive session (REPL / Jupyter) print the ASCII banner with the
+version; otherwise emit a single greppable `@info "Mera vX.Y.Z"` line (stderr, silenceable, doesn't
+pollute stdout) so scripts / tests / CI get a clean one-line marker instead of the art. The version
+comes from `pkgversion`, so it always tracks `Project.toml`. (Top-level `println`s would only run
+during precompilation, so this lives in `__init__` instead.)
 """
 function __init__()
-    # Basic module initialization
-    # Future: Add any necessary initialization code here
-    nothing
+    v = pkgversion(@__MODULE__)
+    vstr = v === nothing ? "" : " v$v"
+    if isinteractive()
+        println()
+        println( "*__   __ _______ ______   _______ ")
+        println( "|  |_|  |       |    _ | |   _   |")
+        println( "|       |    ___|   | || |  |_|  |")
+        println( "|       |   |___|   |_||_|       |")
+        println( "|       |    ___|    __  |       |")
+        println( "| ||_|| |   |___|   |  | |   _   |")
+        println( "|_|   |_|_______|___|  |_|__| |__|")
+        println( "Mera$vstr")
+        println()
+    else
+        @info "Mera$vstr"
+    end
+    return nothing
 end
 
 end # module

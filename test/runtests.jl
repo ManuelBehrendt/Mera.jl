@@ -93,7 +93,9 @@ if isempty(_focus)
     # ------------------------------------------------------------------------
     @testset "Analysis Functions" begin
         include("06_projections.jl")
-        include("34_offaxis_invariance_tests.jl")  # off-axis conservation proof (angle × pixel size)
+        include("34_offaxis_invariance_tests.jl")  # off-axis conservation regression (angle × pixel size)
+        include("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
+        include("36_offaxis_features_tests.jl")    # LOS features: integrated_spectrum, moment2, emission_map, profile/phase, slice
         include("07_regions.jl")
     end
 
