@@ -49,6 +49,8 @@ makedocs(modules = [Mera],
 
                           "Derived Fields & add_field" => "derived_fields.md",
 
+                          "First-Look Reports"  => "report.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 
