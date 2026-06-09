@@ -140,7 +140,12 @@ card_result_kind(::CombinedCard)   = :scalar
 card_label(c::ReportCard) = c.label
 
 # logical getvar symbols a card needs (fed to getvar_requirements to get the raw read set)
-card_vars(c::ProjectionCard) = c.weight isa Symbol ? [c.var, c.weight] : [c.var]
+function card_vars(c::ProjectionCard)
+    v = c.weight isa Symbol ? Symbol[c.var, c.weight] : Symbol[c.var]
+    # face-on / edge-on orient the disk by angular momentum → also need the velocities
+    (c.direction === :faceon || c.direction === :edgeon) && push!(v, :l)
+    return v
+end
 card_vars(c::PhaseCard)      = c.weight isa Symbol ? [c.xvar, c.yvar, c.weight] : [c.xvar, c.yvar]
 card_vars(c::ProfileCard)    = vcat([c.xvar], c.yvar === nothing ? Symbol[] : [c.yvar],
                                     c.weight isa Symbol ? [c.weight] : Symbol[])

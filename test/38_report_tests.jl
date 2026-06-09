@@ -161,6 +161,14 @@
             @test b["rtmap"].func == :skipped                                                # datatype absent
             @test b["baryon_fraction"].func == :combined && 0 <= b["baryon_fraction"].data <= 1
 
+            # off-axis card auto-includes the velocities needed to orient the disk, then renders
+            @test Set(getvar_requirements(:hydro, Mera.card_vars(
+                ProjectionCard(:hydro, :sd; direction=:edgeon)))) == Set([:rho, :vx, :vy, :vz])
+            eo = report(ReportPlan(dc.output; path=dc.path, cards=[
+                ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=24, direction=:edgeon, label="edge")
+            ]); output=:none, verbose=false)
+            @test eo.cards[1].func == :projection
+
             # spiral_clumps: has clumps → clump cards + cross-datatype clump_mass_fraction
             cc = DATASETS[:spiral_clumps]
             rc = report(ReportPlan(cc.output; path=cc.path, cards=[

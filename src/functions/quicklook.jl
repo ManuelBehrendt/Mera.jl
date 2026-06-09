@@ -57,6 +57,10 @@ radial density profile and summary numbers, and prints a compact dashboard.
 * `res` — pixel size of the quick map.
 
 Returns a [`QuickLookResult`](@ref); the figure data is in `.maps`, `.phase`, `.profile`.
+
+See also [`report`](@ref) — the composable form of this first look: `report(output)` runs the same
+default trio, and you can add/replace cards (projections, phases, profiles, SFR, scalars, …) and
+render to ascii / plot / JLD2 / file.
 """
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    read::Bool=true, res::Int=256, lmax=nothing, verbose::Bool=true)

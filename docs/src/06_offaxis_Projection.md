@@ -11,6 +11,9 @@ just the coordinate axes `:x` / `:y` / `:z`. The same `projection` function is u
 simply specify the viewing direction. The axis-aligned path is unchanged when no off-axis
 option is given.
 
+Off-axis maps can also be dropped straight into a composable [First-Look Report](report.md)
+(e.g. `ProjectionCard(:hydro, :sd; direction=:edgeon)`) alongside phases, profiles and scalars.
+
 An off-axis projection is an **orthographic** (parallel) projection: the observer is
 effectively at infinity, so all lines of sight are parallel. Each cell is carried along the
 line of sight onto the image plane and accumulated there. The viewing direction is free — it

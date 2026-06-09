@@ -105,6 +105,9 @@ delete_field(:vmag2)         # remove it (delete_field(name; datatypes=:all) by 
     Put your `add_field` calls in a startup script or at the top of your analysis to make them
     available every run.
 
+Registered fields also work as quantities in [First-Look Reports](report.md) cards — the report reads
+only the dependencies your field declares.
+
 ## API
 
 ```@docs

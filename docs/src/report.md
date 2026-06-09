@@ -77,6 +77,25 @@ CombinedCard([:hydro, :particles]; label="gas_to_star") do d
 end
 ```
 
+### Off-axis maps & custom fields
+
+Projection cards take the same view controls as [`projection`](@ref) — `direction=:faceon`/`:edgeon`
+tilt the map to the disk (the report automatically reads the velocities needed to orient it):
+
+```julia
+ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=512, direction=:edgeon)   # edge-on Σ map
+```
+
+See [Off-axis Projection](06_offaxis_Projection.md) for the full set of view options. Any field you
+register with [`add_field`](@ref) (see [Derived Fields & add_field](derived_fields.md)) is usable as a
+card quantity, and the report reads only its dependencies:
+
+```julia
+add_field(:vmag, (o,d) -> sqrt.(d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2);
+          depends_on=[:vx,:vy,:vz], unit=:km_s)
+ProfileCard(:hydro, :r_cylinder, :vmag; weight=:mass, nbins=40)            # uses the custom field
+```
+
 ## Datatypes & graceful skipping
 
 Scalar and profile cards work on **hydro, particles, gravity, and clumps**; projection cards work on
@@ -153,3 +172,10 @@ CombinedCard
 baryon_fraction
 clump_mass_fraction
 ```
+
+## See also
+
+* [Derived Fields & add_field](derived_fields.md) — register custom quantities usable as cards.
+* [Off-axis Projection](06_offaxis_Projection.md) — `:faceon`/`:edgeon` and arbitrary lines of sight.
+* [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md) — the profile/phase tools behind the cards.
+* [`quicklook`](@ref) — the fast header-and-sample first look; `report(output)` is its composable form.
