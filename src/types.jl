@@ -871,6 +871,41 @@ end
 
 
 """
+Mutable Struct: an off-axis line-of-sight cube returned by `los_cube` / `velocity_cube`.
+
+`cube[i,j,k]` is the deposited `weight` (default mass) at sky pixel `(i,j)` in bin `k` of the
+binned line-of-sight `quantity` (e.g. `:vlos`, `:T`, `:rho`, or a vector `(:bx,:by,:bz)`).
+`x`/`y`/`bins` are bin EDGES. Convenience aliases: `.velocity` → `bins`, `.v_unit` → `bin_unit`,
+`.direction` → `:offaxis`. Store with `savecube` / load with `loadcube`.
+"""
+mutable struct LosCubeType
+    cube::Array{Float64,3}
+    x::Vector{Float64}
+    y::Vector{Float64}
+    bins::Vector{Float64}
+    quantity::Any            # Symbol or 3-tuple/vector of Symbols (vector LOS component)
+    bin_unit::Symbol
+    weight::Symbol
+    los::Vector{Float64}
+    up::Vector{Float64}
+    cam_right::Vector{Float64}
+    center::Vector{Float64}
+    pixsize::Float64
+    boxlen::Float64
+    range_unit::Symbol
+    scale::ScalesType002
+    info::InfoType
+end
+
+function Base.getproperty(c::LosCubeType, s::Symbol)
+    s === :velocity  && return getfield(c, :bins)        # alias for the velocity-cube case
+    s === :v_unit    && return getfield(c, :bin_unit)
+    s === :direction && return :offaxis
+    return getfield(c, s)
+end
+
+
+"""
 Mutable Struct: Contains the 2D histogram returned by the function: histogram2 and information about the selected simulation
 """
 mutable struct Histogram2DMapType
@@ -928,6 +963,11 @@ Base.@kwdef mutable struct ArgumentsType
     phi::Union{Real, Missing}               = missing
     angle_unit::Union{Symbol, Missing}      = missing
     binning::Union{Symbol, Missing}         = missing
+    nmax::Union{Int, Missing}               = missing
+    inclination::Union{Real, Missing}    = missing
+    azimuth::Union{Real, Missing}        = missing
+    position_angle::Union{Real, Missing} = missing
+    axis::Union{Symbol, Array{<:Real,1}, Missing} = missing
 
     center::Union{Array{<:Any,1}, Missing}  = missing
 

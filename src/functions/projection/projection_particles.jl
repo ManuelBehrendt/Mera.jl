@@ -36,7 +36,7 @@
   (line of sight from the particle angular momentum). The off-axis camera basis is
   stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
   Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
-  (`:overlap` falls back to `:cic`). See the hydro `projection` docstring for details.
+  (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
 - select between mass (default) and volume weighting
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
@@ -87,7 +87,11 @@ return PartMapsType
 - **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`direction`:** select between: :x, :y, :z
+- **`direction`:** axis-aligned `:x`, `:y`, `:z`, or the disk presets `:faceon`/`:edgeon`
+- **off-axis view (any line of sight):** `inclination`/`azimuth` (+ `axis=:z`/`:angmom`/vector),
+  `los=[lx,ly,lz]`, or `theta`/`phi`; `position_angle` rolls the image; `angle_unit=:deg` (default)
+  or `:rad`. See the hydro `projection` docstring for the full description; for point particles
+  `binning=:overlap` falls back to `:cic`.
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 - **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
 - **`show_progress`:** print progress bar on screen
@@ -117,7 +121,11 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             up::Union{Array{<:Real,1}, Nothing}=nothing,
                             theta::Union{Real, Nothing}=nothing,
                             phi::Union{Real, Nothing}=nothing,
-                            angle_unit::Symbol=:rad,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -144,6 +152,10 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 up=up,
                                 theta=theta,
                                 phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
                                 #plane_orientation=plane_orientation,
@@ -174,7 +186,11 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             up::Union{Array{<:Real,1}, Nothing}=nothing,
                             theta::Union{Real, Nothing}=nothing,
                             phi::Union{Real, Nothing}=nothing,
-                            angle_unit::Symbol=:rad,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -201,6 +217,10 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 up=up,
                                 theta=theta,
                                 phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
                                 #plane_orientation=plane_orientation,
@@ -231,7 +251,11 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             up::Union{Array{<:Real,1}, Nothing}=nothing,
                             theta::Union{Real, Nothing}=nothing,
                             phi::Union{Real, Nothing}=nothing,
-                            angle_unit::Symbol=:rad,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -258,6 +282,10 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 up=up,
                                 theta=theta,
                                 phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
                                 #plane_orientation=plane_orientation,
@@ -288,7 +316,11 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             up::Union{Array{<:Real,1}, Nothing}=nothing,
                             theta::Union{Real, Nothing}=nothing,
                             phi::Union{Real, Nothing}=nothing,
-                            angle_unit::Symbol=:rad,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -315,6 +347,10 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 up=up,
                                 theta=theta,
                                 phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
                                 #plane_orientation=plane_orientation,
@@ -344,7 +380,11 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             up::Union{Array{<:Real,1}, Nothing}=nothing,
                             theta::Union{Real, Nothing}=nothing,
                             phi::Union{Real, Nothing}=nothing,
-                            angle_unit::Symbol=:rad,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -371,6 +411,10 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 up=up,
                                 theta=theta,
                                 phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
                                 #plane_orientation=plane_orientation,
@@ -401,7 +445,11 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             up::Union{Array{<:Real,1}, Nothing}=nothing,
                             theta::Union{Real, Nothing}=nothing,
                             phi::Union{Real, Nothing}=nothing,
-                            angle_unit::Symbol=:rad,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
@@ -430,6 +478,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     if !(myargs.phi           === missing)           phi = myargs.phi end
     if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
     if !(myargs.binning       === missing)       binning = myargs.binning end
+    if !(myargs.inclination    === missing)    inclination = myargs.inclination end
+    if !(myargs.azimuth        === missing)        azimuth = myargs.azimuth end
+    if !(myargs.position_angle === missing) position_angle = myargs.position_angle end
+    if !(myargs.axis           === missing)           axis = myargs.axis end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
     if !(myargs.zrange        === missing)        zrange = myargs.zrange end
@@ -517,10 +569,10 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     # Off-axis branch (arbitrary line of sight). The axis-aligned histogram path below
     # is left unchanged; it runs whenever no off-axis specifier is given.
-    if is_offaxis(los=los, theta=theta, phi=phi, direction=direction)
+    if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
-                                            los, up, theta, phi, angle_unit, binning, direction,
+                                            los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                             boxlen, dataobject.lmin, lmax, scale, ref_time, verbose)
     end
 
@@ -987,7 +1039,7 @@ end
 # =====================================================================================
 function projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                        ranges, data_centerm, range_unit, mask,
-                                       los, up, theta, phi, angle_unit, binning, direction,
+                                       los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
                                        boxlen, lmin, lmax, scale, ref_time, verbose)
 
     sd_names      = [:sd, :Σ, :surfacedensity]
@@ -1001,21 +1053,24 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
                   "variable :$v (radius/angle/velocity-dispersion). Use an axis direction=:x/:y/:z.")
         end
     end
-    bin = binning === :overlap ? :cic : binning   # points have no footprint
+    bin = (binning === :overlap || binning === :exact) ? :cic : binning   # points have no footprint
     if !(bin in (:cic, :ngp))
-        throw(ArgumentError("binning must be :cic, :ngp or :overlap, got :$binning"))
+        throw(ArgumentError("binning must be :cic, :ngp, :overlap or :exact, got :$binning"))
     end
 
     # --- camera orientation (A1) ---
     Lvec = nothing
-    if direction === :faceon || direction === :edgeon
+    if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
         Lvec = [ sum(getvar(dataobject, :lx, center=data_centerm, ref_time=ref_time)),
                  sum(getvar(dataobject, :ly, center=data_centerm, ref_time=ref_time)),
                  sum(getvar(dataobject, :lz, center=data_centerm, ref_time=ref_time)) ]
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
-                            angle_unit=angle_unit, up=up, L=Lvec)
-    cam_right, cam_up, cam_w = build_camera_basis(losv, uph)
+                            inclination=inclination, azimuth=azimuth,
+                            axis=axis, angle_unit=angle_unit, up=up, L=Lvec)
+    # position_angle = image roll about the line of sight (sky position angle / camera roll)
+    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
+    cam_right, cam_up, cam_w = build_camera_basis(losv, uph; roll=roll)
 
     # --- centred physical positions (code units), pivot = box centre ---
     pivot = [ (ranges[1]+ranges[2])/2, (ranges[3]+ranges[4])/2, (ranges[5]+ranges[6])/2 ]
@@ -1064,6 +1119,15 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     massv = Float64.(getvar(dataobject, :mass)[sel])
     ones_w = ones(Float64, length(xc))
 
+    # line-of-sight velocity v·ŵ (code units) for off-axis kinematics :vlos / :σlos
+    vlossel = Float64[]
+    if (:vlos in selected_vars) || (:σlos in selected_vars)
+        vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
+        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+    end
+    req_unit(iv) = (k = findfirst(==(iv), selected_vars);
+                    (k !== nothing && length(units) >= k) ? units[k] : :standard)
+
     if verbose
         println("Off-axis LOS = ", round.(cam_w, digits=4), "  (binning=:", bin,
                 ", weighting=:", weighting, ")")
@@ -1082,6 +1146,23 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
     end
 
     for ivar in selected_vars
+        # ---- off-axis line-of-sight kinematics (mass-weighted), stars/particles ----
+        if ivar === :vlos || ivar === :σlos
+            usym   = req_unit(ivar)
+            vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+            g1, w1 = deposit(vlossel, massv)
+            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
+            if ivar === :vlos
+                m = meanv .* vscale
+            else
+                g2, _ = deposit(vlossel .^ 2, massv)
+                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w1[nz]
+                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+            end
+            maps[ivar] = m; maps_unit[ivar] = usym; maps_mode[ivar] = :mass_weighted
+            continue
+        end
+
         if ivar in sd_names
             g, _ = deposit(ones_w, massv)            # Σ mass per pixel
             m = g ./ pixel_area

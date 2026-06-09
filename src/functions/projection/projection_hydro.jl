@@ -42,6 +42,10 @@ if !@isdefined(ArgumentsType)
         phi::Union{Real, Missing}               = missing
         angle_unit::Union{Symbol, Missing}      = missing
         binning::Union{Symbol, Missing}         = missing
+        inclination::Union{Real, Missing}    = missing
+        azimuth::Union{Real, Missing}        = missing
+        position_angle::Union{Real, Missing} = missing
+        axis::Union{Symbol, Array{<:Real,1}, Missing} = missing
         center::Union{Array{<:Any,1}, Missing}  = missing
         range_unit::Union{Symbol, Missing}      = missing
         data_center::Union{Array{<:Any,1}, Missing} = missing
@@ -64,8 +68,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         up::Union{Array{<:Real,1}, Nothing}=nothing,
                         theta::Union{Real, Nothing}=nothing,
                         phi::Union{Real, Nothing}=nothing,
-                        angle_unit::Symbol=:rad,
-                        binning::Symbol=:cic,
+                        inclination::Union{Real, Nothing}=nothing,
+                        azimuth::Union{Real, Nothing}=nothing,
+                        position_angle::Union{Real, Nothing}=nothing,
+                        axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                        angle_unit::Symbol=:deg,
+                        binning::Symbol=:overlap,
+                        nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -93,8 +102,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             up=up,
                             theta=theta,
                             phi=phi,
+                            inclination=inclination,
+                            azimuth=azimuth,
+                            position_angle=position_angle,
+                            axis=axis,
                             angle_unit=angle_unit,
-                            binning=binning,
+                            binning=binning, nmax=nmax,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -124,8 +137,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         up::Union{Array{<:Real,1}, Nothing}=nothing,
                         theta::Union{Real, Nothing}=nothing,
                         phi::Union{Real, Nothing}=nothing,
-                        angle_unit::Symbol=:rad,
-                        binning::Symbol=:cic,
+                        inclination::Union{Real, Nothing}=nothing,
+                        azimuth::Union{Real, Nothing}=nothing,
+                        position_angle::Union{Real, Nothing}=nothing,
+                        axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                        angle_unit::Symbol=:deg,
+                        binning::Symbol=:overlap,
+                        nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -153,8 +171,12 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             up=up,
                             theta=theta,
                             phi=phi,
+                            inclination=inclination,
+                            azimuth=azimuth,
+                            position_angle=position_angle,
+                            axis=axis,
                             angle_unit=angle_unit,
-                            binning=binning,
+                            binning=binning, nmax=nmax,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -184,8 +206,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         up::Union{Array{<:Real,1}, Nothing}=nothing,
                         theta::Union{Real, Nothing}=nothing,
                         phi::Union{Real, Nothing}=nothing,
-                        angle_unit::Symbol=:rad,
-                        binning::Symbol=:cic,
+                        inclination::Union{Real, Nothing}=nothing,
+                        azimuth::Union{Real, Nothing}=nothing,
+                        position_angle::Union{Real, Nothing}=nothing,
+                        axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                        angle_unit::Symbol=:deg,
+                        binning::Symbol=:overlap,
+                        nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -208,6 +235,16 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 pxsize=pxsize,
                                                 mask=mask,
                                                 direction=direction,
+                                                los=los,
+                                                up=up,
+                                                theta=theta,
+                                                phi=phi,
+                                                inclination=inclination,
+                                                azimuth=azimuth,
+                                                position_angle=position_angle,
+                                                axis=axis,
+                                                angle_unit=angle_unit,
+                                                binning=binning, nmax=nmax,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -239,8 +276,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         up::Union{Array{<:Real,1}, Nothing}=nothing,
                         theta::Union{Real, Nothing}=nothing,
                         phi::Union{Real, Nothing}=nothing,
-                        angle_unit::Symbol=:rad,
-                        binning::Symbol=:cic,
+                        inclination::Union{Real, Nothing}=nothing,
+                        azimuth::Union{Real, Nothing}=nothing,
+                        position_angle::Union{Real, Nothing}=nothing,
+                        axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                        angle_unit::Symbol=:deg,
+                        binning::Symbol=:overlap,
+                        nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -263,6 +305,16 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 pxsize=pxsize,
                                                 mask=mask,
                                                 direction=direction,
+                                                los=los,
+                                                up=up,
+                                                theta=theta,
+                                                phi=phi,
+                                                inclination=inclination,
+                                                azimuth=azimuth,
+                                                position_angle=position_angle,
+                                                axis=axis,
+                                                angle_unit=angle_unit,
+                                                binning=binning, nmax=nmax,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -434,21 +486,34 @@ return AMRMapsType
 
 #### Off-axis projection (arbitrary line of sight):
 Give any of the following to project along an arbitrary line of sight instead of an axis.
-When none are given, the axis-aligned path above runs unchanged.
-- **`los::Vector`**: line-of-sight (viewing) direction, e.g. `los=[1,1,1]` (need not be normalized)
-- **`theta`, `phi`**: spherical angles for the line of sight; `los=[sinθcosφ, sinθsinφ, cosθ]`
-  (so `theta=0`→+z, `(theta=90,phi=0)`→+x). Interpreted in `angle_unit`.
-- **`angle_unit::Symbol`**: `:rad` (default) or `:deg`
-- **`up::Vector`**: optional camera up-vector (default: deterministic auto-up; ignored if parallel to los)
-- **`direction=:faceon`**: look along the gas net angular momentum L (disk seen face-on)
-- **`direction=:edgeon`**: look perpendicular to L with up=L̂ (disk seen edge-on)
+When none are given, the axis-aligned path above runs unchanged. **Angles are in degrees by
+default** (`angle_unit=:rad` to switch).
+- **`inclination`, `azimuth`** (user-oriented; `azimuth` alias `position_angle`): tilt the view
+  away from a reference `axis` by `inclination` (0°⇒down the axis, 90°⇒⟂ to it) and rotate
+  around it by `azimuth`.
+- **`axis`**: reference axis for inclination/azimuth. Default `:z` (box vertical — assumes
+  nothing about the contents, good for clouds/filaments/cosmic web). `:angmom` measures from the
+  object's own angular momentum `L` (then 0°=face-on, 90°=edge-on); or give `:x`/`:y`/a 3-vector.
+  NOTE: `:angmom` (and `:faceon`/`:edgeon`) are only a meaningful "disk normal" for a **rotating
+  disk**, and `L` is computed about `center` — so center on the object (its centre of mass) for
+  `L` to be the true spin; off-centre it is contaminated by bulk motion.
+- **`direction=:faceon`/`:edgeon`**: shortcuts for `inclination=0`/`90` with `axis=:angmom`.
+- **`los::Vector`**: explicit line-of-sight (viewing) direction, e.g. `los=[1,1,1]` (need not be normalized)
+- **`theta`, `phi`**: spherical angles about the box axes; `los=[sinθcosφ, sinθsinφ, cosθ]`.
+- **`up::Vector`**: optional camera up-vector (default: auto; the reference axis kept upright)
+- **`angle_unit::Symbol`**: `:deg` (default) or `:rad`
 - **`binning::Symbol`**: how rotated cells are deposited onto the camera plane —
-  - `:cic` (default) — fast preview, bilinear deposit of cell centres (smooth)
+  - `:overlap` (default) — per-cell footprint supersampling (`ns = ceil(cellsize/pixel)` sub-points
+    per cube axis, capped at `nmax`); AMR-aligned (no moiré, no holes), converges to `:exact`, and
+    is usually *faster* than `:exact`. Cells coarser than the `nmax` cap stay mildly blocky.
+  - `:exact` — analytic box-spline footprint: integrates the line-of-sight column (chord length
+    through the cube) over each pixel exactly; no supersampling cap, the reference for fidelity.
+  - `:cic` — fast preview, bilinear deposit of cell centres; speckles/moiré on coarse AMR cells
   - `:ngp` — fast preview, nearest-pixel deposit (sharp)
-  - `:overlap` — accurate & parallel: per-cell footprint supersampling that spreads each
-    cell over the pixels its rotated cube shadow covers (use for publication-quality maps)
+- **`nmax::Int`**: `:overlap` supersampling cap (default `64`) — max sub-points per cube axis.
+  Raise for fewer artifacts on very coarse cells (slower, ∝ `nmax³`), lower for speed.
 
-  All three are mass-conserving. Off-axis currently supports the standard hydro/RT fields and
+  All are mass-conserving. Off-axis currently supports the standard hydro/RT fields and
   `:sd`/`:mass`; map-only variables (`:r_cylinder`, `:ϕ`, velocity dispersions) require an axis direction.
 
 #### Data Processing Options:
@@ -697,8 +762,13 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         up::Union{Array{<:Real,1}, Nothing}=nothing,
                         theta::Union{Real, Nothing}=nothing,
                         phi::Union{Real, Nothing}=nothing,
-                        angle_unit::Symbol=:rad,
-                        binning::Symbol=:cic,
+                        inclination::Union{Real, Nothing}=nothing,
+                        azimuth::Union{Real, Nothing}=nothing,
+                        position_angle::Union{Real, Nothing}=nothing,
+                        axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                        angle_unit::Symbol=:deg,
+                        binning::Symbol=:overlap,
+                        nmax::Int=64,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
                         xrange::Array{<:Any,1}=[missing, missing],
@@ -731,6 +801,11 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     if !(myargs.phi           === missing)           phi = myargs.phi end
     if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
     if !(myargs.binning       === missing)       binning = myargs.binning end
+    if !(myargs.nmax          === missing)       nmax = myargs.nmax end
+    if !(myargs.inclination    === missing)    inclination = myargs.inclination end
+    if !(myargs.azimuth        === missing)        azimuth = myargs.azimuth end
+    if !(myargs.position_angle === missing) position_angle = myargs.position_angle end
+    if !(myargs.axis           === missing)           axis = myargs.axis end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
     if !(myargs.zrange        === missing)        zrange = myargs.zrange end
@@ -833,10 +908,10 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     # path below is left completely unchanged and runs whenever no off-axis
     # specifier is given (los/up/theta/phi or direction=:faceon/:edgeon).
     # ------------------------------------------------------------------
-    if is_offaxis(los=los, theta=theta, phi=phi, direction=direction)
+    if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
         return projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                                   weighting, weight_scale, mode, ranges, center, range_unit,
-                                  mask, los, up, theta, phi, angle_unit, binning, direction,
+                                  mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                                   boxlen, lmin, simlmax, isamr, scale, verbose, max_threads,
                                   gravity_data)
     end
@@ -1430,13 +1505,15 @@ end
 #    2. centred physical cell coords via getvar(:x/:y/:z, center=pivot),
 #    3. rotate by the A1 camera basis (right, up, w),
 #    4. deposit (x_cam, y_cam) onto the camera plane with the A2 CIC/NGP kernel,
-#    5. optional LOS-depth slab along w (when zrange is narrowed) and a camera-plane
-#       window (when xrange/yrange are narrowed); otherwise the rotated bounding box.
-#  Conservative: the deposit preserves Σ value·weight to machine precision.
+#    5. xrange/yrange/zrange select a WORLD-space sub-box (relative to center, like the axis path
+#       and a subregion) — cells are clipped on their world coords (NOT the rotated camera coords,
+#       which would drop in-box corner cells and lose mass), then the camera frame auto-fits the
+#       rotated footprint of the kept cells so every one lands on the grid.
+#  Conservative: the deposit preserves Σ value·weight to machine precision (subregions included).
 # =====================================================================================
 function projection_offaxis(dataobject, selected_vars, units, lmax_projected, res,
                             weighting, weight_scale, mode, ranges, center, range_unit,
-                            mask, los, up, theta, phi, angle_unit, binning, direction,
+                            mask, los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, nmax, direction,
                             boxlen, lmin, simlmax, isamr, scale, verbose,
                             max_threads=Threads.nthreads(),
                             gravity_data::Union{GravDataType,Nothing}=nothing)
@@ -1451,20 +1528,23 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
                   "Use an axis-aligned direction=:x/:y/:z for these.")
         end
     end
-    if !(binning in (:cic, :ngp, :overlap))
-        throw(ArgumentError("binning must be :cic, :ngp (fast preview) or :overlap (accurate), got :$binning"))
+    if !(binning in (:cic, :ngp, :overlap, :exact))
+        throw(ArgumentError("binning must be :cic, :ngp (fast preview), :overlap (accurate) or :exact (analytic), got :$binning"))
     end
 
     # --- camera orientation (A1) ---------------------------------------------------
     Lvec = nothing
-    if direction === :faceon || direction === :edgeon
+    if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
         Lvec = [ sum(getvar(dataobject, :lx, center=center, center_unit=range_unit)),
                  sum(getvar(dataobject, :ly, center=center, center_unit=range_unit)),
                  sum(getvar(dataobject, :lz, center=center, center_unit=range_unit)) ]
     end
     losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
-                            angle_unit=angle_unit, up=up, L=Lvec)
-    cam_right, cam_up, cam_w = build_camera_basis(losv, uph)
+                            inclination=inclination, azimuth=azimuth,
+                            axis=axis, angle_unit=angle_unit, up=up, L=Lvec)
+    # position_angle = image roll about the line of sight (sky position angle / camera roll)
+    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
+    cam_right, cam_up, cam_w = build_camera_basis(losv, uph; roll=roll)
 
     # --- centred physical cell coordinates (code units), pivot = box centre --------
     pivot = [ (ranges[1]+ranges[2])/2, (ranges[3]+ranges[4])/2, (ranges[5]+ranges[6])/2 ]
@@ -1475,33 +1555,43 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     y_cam = px .* cam_up[1]    .+ py .* cam_up[2]    .+ pz .* cam_up[3]
     z_cam = px .* cam_w[1]     .+ py .* cam_w[2]     .+ pz .* cam_w[3]
 
-    # --- selection mask: user mask ∧ optional LOS-depth slab -----------------------
+    # --- selection mask: user mask ∧ the requested spatial sub-box (WORLD axes) ----
+    # xrange/yrange/zrange select a world-space sub-box exactly like the axis-aligned path (and a
+    # `subregion`'s ranges flow in identically). We clip on the WORLD coordinates (px,py,pz about
+    # the box-centre pivot), NOT on the rotated camera coords — clipping a rotated camera coord
+    # against an axis-aligned half-extent drops in-box corner cells and silently loses mass
+    # (≈0.4–0.9% for a subregion). The camera frame below then auto-fits the rotated footprint of
+    # the *kept* cells, so every selected cell lands on the grid and the total is conserved.
     ncells = length(x_cam)
     skipmask = check_mask(dataobject, mask, verbose)
     sel = skipmask ? trues(ncells) : collect(Bool.(mask))
-    full_z = (ranges[5] == 0.0 && ranges[6] == 1.0)
-    if !full_z
-        halfdepth = (ranges[6] - ranges[5]) * boxlen / 2          # along w, about pivot
-        sel = sel .& (abs.(z_cam) .<= halfdepth)
-    end
+    full_x = ranges[1] == 0.0 && ranges[2] == 1.0
+    full_y = ranges[3] == 0.0 && ranges[4] == 1.0
+    full_z = ranges[5] == 0.0 && ranges[6] == 1.0
+    full_x || (sel = sel .& (abs.(px) .<= (ranges[2]-ranges[1])*boxlen/2))
+    full_y || (sel = sel .& (abs.(py) .<= (ranges[4]-ranges[3])*boxlen/2))
+    full_z || (sel = sel .& (abs.(pz) .<= (ranges[6]-ranges[5])*boxlen/2))
 
-    # --- in-plane extent: rotated AABB (full box) or camera-plane window -----------
+    # per-cell physical size (code units) — for the footprint deposits AND the AMR-aware extent
+    # padding. Computed for ALL binnings so the map extent (and size) is binning-INDEPENDENT: the
+    # frame reflects where the data's projected cell footprints lie, not how they are deposited.
+    cellsize_all = Float64.(boxlen ./ (2.0 .^ (isamr ? getvar(dataobject, :level) : fill(simlmax, ncells))))
+
+    # --- camera-plane extent: auto-fit the rotated footprint of the SELECTED cells -------------
+    # margin = 1 pixel + half the COARSEST selected cell's projected shadow, per camera axis, so a
+    # footprint deposit (:overlap/:exact) of a border cell is not folded/clipped onto the edge.
+    # AMR-aware: smax is the largest *selected* cell; finer cells fit inside automatically.
     pixsize = boxlen / res                                        # code units (matches axis path)
-    full_xy = (ranges[1] == 0.0 && ranges[2] == 1.0 && ranges[3] == 0.0 && ranges[4] == 1.0)
-    if full_xy && any(sel)
-        pad = pixsize                                             # one pixel margin
-        x0 = minimum(@view x_cam[sel]) - pad; x1 = maximum(@view x_cam[sel]) + pad
-        y0 = minimum(@view y_cam[sel]) - pad; y1 = maximum(@view y_cam[sel]) + pad
-    elseif full_xy
-        # nothing selected (e.g. mask excludes all / empty subregion): emit an empty
-        # map spanning the box instead of crashing on min/max of an empty view.
+    if any(sel)
+        smax = maximum(@view cellsize_all[sel])
+        padx = pixsize + 0.5 * smax * (abs(cam_right[1]) + abs(cam_right[2]) + abs(cam_right[3]))
+        pady = pixsize + 0.5 * smax * (abs(cam_up[1])    + abs(cam_up[2])    + abs(cam_up[3]))
+        x0 = minimum(@view x_cam[sel]) - padx; x1 = maximum(@view x_cam[sel]) + padx
+        y0 = minimum(@view y_cam[sel]) - pady; y1 = maximum(@view y_cam[sel]) + pady
+    else
+        # nothing selected (mask excludes all / empty subregion): emit an empty box-spanning map.
         half = boxlen / 2
         x0, x1, y0, y1 = -half, half, -half, half
-    else
-        hx = (ranges[2]-ranges[1]) * boxlen / 2
-        hy = (ranges[4]-ranges[3]) * boxlen / 2
-        x0, x1, y0, y1 = -hx, hx, -hy, hy
-        sel = sel .& (x_cam .>= x0) .& (x_cam .<= x1) .& (y_cam .>= y0) .& (y_cam .<= y1)
     end
     nx = max(1, round(Int, (x1 - x0) / pixsize))
     ny = max(1, round(Int, (y1 - y0) / pixsize))
@@ -1528,12 +1618,22 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     wfull = wfull .* weight_scale
     wsel  = Float64.(wfull[sel])
 
-    # per-cell physical size (code units) — only needed for the accurate :overlap deposit
-    csize = Float64[]
-    if binning === :overlap
-        lvl = isamr ? getvar(dataobject, :level) : fill(simlmax, ncells)
-        csize = Float64.((boxlen ./ (2.0 .^ lvl))[sel])
+    # per-cell physical size (code units) for the footprint deposits — slice the sizes computed
+    # above by the final selection (the world-space sub-box may have narrowed `sel`).
+    footprint = (binning === :overlap || binning === :exact)
+    csize = footprint ? Float64.(cellsize_all[sel]) : Float64[]
+
+    # line-of-sight velocity v·ŵ (code units) — for the off-axis kinematics :vlos / :σlos.
+    # ŵ is the viewing direction (cam_w); v is the cell/particle velocity. This is the genuine
+    # observable component along the chosen line of sight, available at any angle.
+    vlossel = Float64[]
+    if (:vlos in selected_vars) || (:σlos in selected_vars)
+        vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
+        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
     end
+    # requested unit symbol for a variable (aligned with selected_vars; default :standard)
+    req_unit(iv) = (k = findfirst(==(iv), selected_vars);
+                    (k !== nothing && length(units) >= k) ? units[k] : :standard)
 
     pixel_area = pixsize^2
     imaps     = SortedDict()
@@ -1541,7 +1641,37 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     maps_weight = SortedDict()
     maps_mode = SortedDict()
 
+    # mass-weighted deposit helper (used by the LOS-kinematics branch below)
+    depo!(g, w, v) =
+        binning === :overlap ?
+            deposit_rotated_cells_overlap!(g, w, xc, yc, csize, v, wsel, cam_right, cam_up,
+                                           grid_extent, grid_resolution; nmax=nmax, max_threads=max_threads) :
+        binning === :exact ?
+            deposit_rotated_cells_exact!(g, w, xc, yc, csize, v, wsel, cam_right, cam_up, cam_w,
+                                         grid_extent, grid_resolution; max_threads=max_threads) :
+            deposit_rotated_cells_to_grid!(g, w, xc, yc, v, wsel, grid_extent, grid_resolution; binning=binning)
+
     for ivar in selected_vars
+        # ---- off-axis line-of-sight kinematics: mean velocity and dispersion ----
+        if ivar === :vlos || ivar === :σlos
+            usym   = req_unit(ivar)
+            vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+            g1 = zeros(Float64, nx, ny); w1 = zeros(Float64, nx, ny)
+            depo!(g1, w1, vlossel)                                   # Σ vlos·m , Σ m
+            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
+            if ivar === :vlos
+                m = meanv .* vscale                                  # mass-weighted mean v_los
+            else                                                     # :σlos = √(⟨v²⟩ − ⟨v⟩²)
+                g2 = zeros(Float64, nx, ny); w2 = zeros(Float64, nx, ny)
+                depo!(g2, w2, vlossel .^ 2)
+                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w1[nz]
+                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+            end
+            imaps[ivar] = m; maps_unit[ivar] = usym
+            maps_weight[ivar] = weighting; maps_mode[ivar] = :standard
+            continue
+        end
+
         if ivar === :sd || ivar === :mass
             vals = getvar(dataobject, :mass, center=center, center_unit=range_unit)   # mass is hydro-only
         elseif gravity_data !== nothing
@@ -1559,7 +1689,11 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
         if binning === :overlap
             deposit_rotated_cells_overlap!(grid, wgrid, xc, yc, csize, vsel, wts,
                                            cam_right, cam_up, grid_extent, grid_resolution;
-                                           max_threads=max_threads)
+                                           nmax=nmax, max_threads=max_threads)
+        elseif binning === :exact
+            deposit_rotated_cells_exact!(grid, wgrid, xc, yc, csize, vsel, wts,
+                                         cam_right, cam_up, cam_w, grid_extent, grid_resolution;
+                                         max_threads=max_threads)
         else
             deposit_rotated_cells_to_grid!(grid, wgrid, xc, yc, vsel, wts,
                                            grid_extent, grid_resolution; binning=binning)
@@ -1593,11 +1727,15 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     _smallr = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallr
     _smallc = isa(dataobject, RtDataType) ? 0.0 : dataobject.smallc
     # extent is already pivot-centred, so the centred extent equals extent.
-    # Camera metadata: los = viewing direction (cam_w), up, cam_right, center = box-centre pivot.
+    # Camera metadata: los = viewing direction (cam_w), up, cam_right. `center` stores the user's
+    # resolved centre (fractional, all 3 components) for faithful provenance — not the FOV pivot,
+    # whose LOS component defaults to the box centre when no zrange is given. The image itself is
+    # built about `pivot`, so this changes only the recorded metadata, not the map.
+    center_frac = collect(float.(center_in_standardnotation(dataobject.info, collect(Any, center), range_unit)))
     return AMRMapsType(imaps, maps_unit, SortedDict(), maps_weight, maps_mode,
                        lmax_projected, lmin, simlmax, ranges, extent, copy(extent), ratio,
                        res, pixsize, boxlen, _smallr, _smallc, dataobject.scale, dataobject.info,
-                       collect(cam_w), collect(cam_up), collect(cam_right), collect(float.(pivot)))
+                       collect(cam_w), collect(cam_up), collect(cam_right), center_frac)
 end
 
 
@@ -2151,36 +2289,42 @@ function map_amr_cells_to_grid!(grid::AbstractMatrix{Float64}, weight_grid::Abst
                 # Pre-compute weight contribution for this cell with explicit types
                 weight_val::Float64 = weights[i]
                 value_weight::Float64 = values[i] * weight_val
-                
-                # Distribute cell value among overlapping pixels
+
+                # First pass: the cell↔grid overlap area that actually lies INSIDE the grid. Using
+                # this (rather than the full cell_area) as the deposit denominator conserves the
+                # cell's full weight even when its footprint is clipped by a subregion / box edge —
+                # the clipped overhang is folded onto the in-grid pixels instead of being dropped
+                # (which lost ~0.5–1.2% of a subregion's mass). Interior cells are UNCHANGED: their
+                # in-grid overlap equals cell_area, so the fractions are identical to before.
+                total_overlap::Float64 = 0.0
                 for ix::Int in ix_start:ix_end
-                    # Pre-compute pixel x boundaries with explicit types
-                    pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
-                    pix_x_max::Float64 = pix_x_min + pixel_size_x
-                    
-                    # Calculate x overlap once per ix with explicit type
-                    overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
-                    
-                    if overlap_x > 0.0  # Early exit if no x overlap
-                        for iy::Int in iy_start:iy_end
-                            # Pre-compute pixel y boundaries with explicit types
-                            pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
-                            pix_y_max::Float64 = pix_y_min + pixel_size_y
-                            
-                            # Calculate y overlap with explicit type
-                            overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
-                            
-                            if overlap_y > 0.0  # Early exit if no y overlap
-                                # Calculate overlap area and fraction with explicit types
-                                overlap_area::Float64 = overlap_x * overlap_y
-                                overlap_fraction::Float64 = overlap_area / cell_area
-                                
-                                # Apply contributions with explicit types
-                                contribution::Float64 = value_weight * overlap_fraction
-                                weight_contribution::Float64 = weight_val * overlap_fraction
-                                
-                                grid[ix, iy] += contribution
-                                weight_grid[ix, iy] += weight_contribution
+                    pix_x_min0::Float64 = x_min + (ix-1) * pixel_size_x
+                    ox0::Float64 = max(0.0, min(cell_x_max, pix_x_min0 + pixel_size_x) - max(cell_x_min, pix_x_min0))
+                    ox0 > 0.0 || continue
+                    for iy::Int in iy_start:iy_end
+                        pix_y_min0::Float64 = y_min + (iy-1) * pixel_size_y
+                        oy0::Float64 = max(0.0, min(cell_y_max, pix_y_min0 + pixel_size_y) - max(cell_y_min, pix_y_min0))
+                        total_overlap += ox0 * oy0
+                    end
+                end
+
+                if total_overlap > 0.0
+                    inv_total::Float64 = 1.0 / total_overlap
+                    # Distribute cell value among overlapping pixels
+                    for ix::Int in ix_start:ix_end
+                        pix_x_min::Float64 = x_min + (ix-1) * pixel_size_x
+                        pix_x_max::Float64 = pix_x_min + pixel_size_x
+                        overlap_x::Float64 = max(0.0, min(cell_x_max, pix_x_max) - max(cell_x_min, pix_x_min))
+                        if overlap_x > 0.0  # Early exit if no x overlap
+                            for iy::Int in iy_start:iy_end
+                                pix_y_min::Float64 = y_min + (iy-1) * pixel_size_y
+                                pix_y_max::Float64 = pix_y_min + pixel_size_y
+                                overlap_y::Float64 = max(0.0, min(cell_y_max, pix_y_max) - max(cell_y_min, pix_y_min))
+                                if overlap_y > 0.0  # Early exit if no y overlap
+                                    overlap_fraction::Float64 = (overlap_x * overlap_y) * inv_total
+                                    grid[ix, iy]        += value_weight * overlap_fraction
+                                    weight_grid[ix, iy] += weight_val   * overlap_fraction
+                                end
                             end
                         end
                     end
@@ -2202,7 +2346,7 @@ end
 #  grid fold the outside fraction onto the edge pixel (the axis binner clamps likewise),
 #  so global conservation holds regardless of placement.
 #
-#  binning = :cic  bilinear 4-pixel stencil (smooth, default)
+#  binning = :cic  bilinear 4-pixel stencil (fast preview; :exact is the public default)
 #          = :ngp  nearest pixel (sharp, 1-pixel)
 #
 #  Pixel ix (1-based) is centred at x_min + (ix-0.5)*pixel_size.  No level/cell-size is
@@ -2296,8 +2440,9 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
         values::AbstractVector{Float64}, weights::AbstractVector{Float64},
         cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
         grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
-        nmax::Int=6, max_threads::Int=Threads.nthreads())
+        nmax::Int=64, max_threads::Int=Threads.nthreads())
 
+    nmax = max(nmax, 1)              # guard nmax<1: clamp(k,1,0)→0 would give ns=0 → all-zero map
     nx, ny = grid_resolution
     x_min, x_max, y_min, y_max = grid_extent
     inv_px = nx / (x_max - x_min)
@@ -2364,6 +2509,410 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
         weight_grid .+= wbufs[t]
     end
     return nothing
+end
+
+
+# =====================================================================================
+#  Off-axis EXACT deposit  (binning=:exact — analytic box-spline / chord-integral footprint)
+# -------------------------------------------------------------------------------------
+#  The orthographic line-of-sight column of a uniform AMR cube is the X-ray transform of
+#  the cube: contribution(cell → pixel) = value · ∫∫_pixel L(x,y) dx dy, where L(x,y) is
+#  the chord length of the sightline (direction ŵ = cam_w) through the axis-aligned cube
+#  of side `cellsize`.  This footprint is exactly a box spline (convolution of three 1-D
+#  boxes along the projected cell edges) — a continuous, piecewise-linear height field over
+#  the hexagonal cube shadow, integrating to the cell volume s³ (⇒ conservation).
+#
+#  We integrate L over each pixel EXACTLY: L = min_k tmax_k − max_k tmin_k (slab method),
+#  with tmin_k / tmax_k affine in the plane coords on each region where the entering face
+#  (argmax tmin) and exiting face (argmin tmax) are fixed.  The pixel∩footprint polygon is
+#  split along the kink lines (tmin_i = tmin_j, tmax_i = tmax_j) into convex pieces on which
+#  L is affine; on each piece ∫∫ L = area · L(centroid) is exact.  A final per-cell
+#  renormalisation makes the deposited shares a partition of unity (Σ f = 1) to machine
+#  precision, so totals are conserved exactly regardless of round-off.
+#
+#  Degenerates correctly: ŵ ∥ a box axis ⇒ two axes become "walls" (|X_k| ≤ h) and the
+#  footprint is the axis-aligned square with L ≡ s ⇒ reproduces the exact area-overlap
+#  binner `map_amr_cells_to_grid!`.  Sub-pixel cells reduce to a CIC 4-pixel stencil.
+#  Cost is O(covered pixels) per cell (no nmax cap).  Parallel via thread-local grids.
+# =====================================================================================
+
+# Sutherland–Hodgman clip of a convex polygon (sx,sy length n) by the half-plane
+# A·x + B·y + C ≥ 0, writing the result into (dx,dy); returns the new vertex count.
+@inline function _oa_clip!(dx::Vector{Float64}, dy::Vector{Float64},
+                           sx::Vector{Float64}, sy::Vector{Float64}, n::Int,
+                           A::Float64, B::Float64, C::Float64)
+    m = 0
+    @inbounds for i in 1:n
+        j  = i == n ? 1 : i + 1
+        xi = sx[i]; yi = sy[i]; xj = sx[j]; yj = sy[j]
+        di = A*xi + B*yi + C
+        dj = A*xj + B*yj + C
+        if di >= 0.0
+            m += 1; dx[m] = xi; dy[m] = yi
+        end
+        if (di >= 0.0) != (dj >= 0.0)
+            t = di / (di - dj)
+            m += 1; dx[m] = xi + t*(xj - xi); dy[m] = yi + t*(yj - yi)
+        end
+    end
+    return m
+end
+
+# chord L(x,y) through the cube from precomputed affine tmin/tmax coefficients
+@inline function _oa_chord(x::Float64, y::Float64, active::NTuple{3,Bool},
+                           qa::NTuple{3,Float64}, ra::NTuple{3,Float64},
+                           pmina::NTuple{3,Float64}, pmaxa::NTuple{3,Float64})
+    te = -Inf; tx = Inf
+    @inbounds for k in 1:3
+        if active[k]
+            tmn = qa[k]*x + ra[k]*y + pmina[k]
+            tmx = qa[k]*x + ra[k]*y + pmaxa[k]
+            te = ifelse(tmn > te, tmn, te)
+            tx = ifelse(tmx < tx, tmx, tx)
+        end
+    end
+    d = tx - te
+    return d > 0.0 ? d : 0.0
+end
+
+# area & centroid-weighted affine integral of L over a convex polygon (cx,cy length m).
+@inline function _oa_affine_integral(cx::Vector{Float64}, cy::Vector{Float64}, m::Int,
+                                     active::NTuple{3,Bool}, qa, ra, pmina, pmaxa)
+    m < 3 && return 0.0
+    area2 = 0.0; gx = 0.0; gy = 0.0
+    @inbounds for i in 1:m
+        j = i == m ? 1 : i + 1
+        cr = cx[i]*cy[j] - cx[j]*cy[i]
+        area2 += cr; gx += (cx[i]+cx[j])*cr; gy += (cy[i]+cy[j])*cr
+    end
+    abs(area2) < 1e-300 && return 0.0
+    ccx = gx/(3.0*area2); ccy = gy/(3.0*area2)
+    return abs(area2)*0.5 * _oa_chord(ccx, ccy, active, qa, ra, pmina, pmaxa)
+end
+
+# exact ∫∫_pixel L over one pixel rectangle [px0,px1]×[py0,py1].  The footprint is cut by
+# all kink lines of the box spline (tmin_i = tmin_j and tmax_i = tmax_j for active axis
+# pairs — at most 6 lines for a cube) into convex cells; on each the entering/exiting face
+# is fixed, so L is affine and ∫∫ = area·L(centroid) is exact.  Uses a pre-allocated pool
+# (PX/PY/PN) and two ping-pong slot lists (LA/LB).  Deterministic, terminates in ≤6 splits.
+function _oa_pixel_integral!(px0::Float64, px1::Float64, py0::Float64, py1::Float64,
+                             active::NTuple{3,Bool},
+                             qa::NTuple{3,Float64}, ra::NTuple{3,Float64},
+                             pmina::NTuple{3,Float64}, pmaxa::NTuple{3,Float64},
+                             wallA::NTuple{4,Float64}, wallB::NTuple{4,Float64},
+                             wallC::NTuple{4,Float64}, nwall::Int,
+                             PX::Vector{Vector{Float64}}, PY::Vector{Vector{Float64}},
+                             PN::Vector{Int}, LA::Vector{Int}, LB::Vector{Int})
+    cap = length(PN)
+    nslot = 0
+    @inbounds begin
+        nslot += 1; s = nslot
+        px = PX[s]; py = PY[s]
+        px[1]=px0; py[1]=py0; px[2]=px1; py[2]=py0; px[3]=px1; py[3]=py1; px[4]=px0; py[4]=py1
+        PN[s] = 4
+        cur = s
+        for w in 1:nwall    # clip by wall half-planes of inactive (cardinal) axes
+            nslot += 1; d = nslot
+            m = _oa_clip!(PX[d], PY[d], PX[cur], PY[cur], PN[cur], wallA[w], wallB[w], wallC[w])
+            PN[d] = m; cur = d
+            m < 3 && return 0.0
+        end
+        lenA = 0
+        if PN[cur] >= 3; lenA += 1; LA[1] = cur; end
+        lenA == 0 && return 0.0
+
+        # the kink lines: tmin_i = tmin_j (enter) and tmax_i = tmax_j (exit), active pairs.
+        # Split the current cell list by each line in turn (keep both sides) → ping-pong.
+        useA = true
+        for i in 1:3, j in (i+1):3
+            (active[i] && active[j]) || continue
+            Aq = qa[i]-qa[j]; Br = ra[i]-ra[j]
+            for which in 1:2
+                Cc = which == 1 ? (pmina[i]-pmina[j]) : (pmaxa[i]-pmaxa[j])
+                src = useA ? LA : LB; dst = useA ? LB : LA
+                ld = 0
+                for ipoly in 1:lenA
+                    p = src[ipoly]
+                    (nslot + 2 > cap) && (return _oa_fallback(s, cur, active, qa, ra, pmina, pmaxa, PX, PY, PN))
+                    nslot += 1; dpos = nslot
+                    mp = _oa_clip!(PX[dpos], PY[dpos], PX[p], PY[p], PN[p], Aq, Br, Cc); PN[dpos] = mp
+                    nslot += 1; dneg = nslot
+                    mn = _oa_clip!(PX[dneg], PY[dneg], PX[p], PY[p], PN[p], -Aq, -Br, -Cc); PN[dneg] = mn
+                    if mp >= 3; ld += 1; dst[ld] = dpos; end
+                    if mn >= 3; ld += 1; dst[ld] = dneg; end
+                end
+                lenA = ld; useA = !useA
+                lenA == 0 && return 0.0
+            end
+        end
+
+        list = useA ? LA : LB
+        total = 0.0
+        for ii in 1:lenA
+            p = list[ii]; n = PN[p]
+            n < 3 && continue
+            xs = PX[p]; ys = PY[p]
+            # entering/exiting face is fixed within the cell → evaluate at the centroid
+            # (a robust interior point; a vertex can sit exactly on a kink line → tie)
+            ar2 = 0.0; cgx = 0.0; cgy = 0.0
+            for i in 1:n
+                j = i == n ? 1 : i + 1
+                cr = xs[i]*ys[j] - xs[j]*ys[i]
+                ar2 += cr; cgx += (xs[i]+xs[j])*cr; cgy += (ys[i]+ys[j])*cr
+            end
+            (abs(ar2) < 1e-300) && continue
+            x0 = cgx/(3.0*ar2); y0 = cgy/(3.0*ar2)
+            ebest = 0; tmn_best = -Inf; xbest = 0; tmx_best = Inf
+            for k in 1:3
+                if active[k]
+                    tmn = qa[k]*x0 + ra[k]*y0 + pmina[k]
+                    tmx = qa[k]*x0 + ra[k]*y0 + pmaxa[k]
+                    if tmn > tmn_best; tmn_best = tmn; ebest = k; end
+                    if tmx < tmx_best; tmx_best = tmx; xbest = k; end
+                end
+            end
+            # clip by L = tmax_x − tmin_e ≥ 0 (footprint hull) then integrate affine L
+            (nslot + 1 > cap) && continue
+            nslot += 1; d = nslot
+            Ah = qa[xbest]-qa[ebest]; Bh = ra[xbest]-ra[ebest]; Ch = pmaxa[xbest]-pmina[ebest]
+            m = _oa_clip!(PX[d], PY[d], xs, ys, n, Ah, Bh, Ch)
+            total += _oa_affine_integral(PX[d], PY[d], m, active, qa, ra, pmina, pmaxa)
+        end
+        return total
+    end
+end
+
+# rare pool-exhaustion fallback: integrate the (wall-clipped) polygon directly by a fine
+# tensor sub-sample of the chord (still positive & bounded; only hit in pathological cases).
+function _oa_fallback(s::Int, cur::Int, active, qa, ra, pmina, pmaxa,
+                      PX::Vector{Vector{Float64}}, PY::Vector{Vector{Float64}}, PN::Vector{Int})
+    n = PN[cur]; n < 3 && return 0.0
+    xs = PX[cur]; ys = PY[cur]
+    xmn = Inf; xmx = -Inf; ymn = Inf; ymx = -Inf
+    @inbounds for i in 1:n
+        xmn = min(xmn, xs[i]); xmx = max(xmx, xs[i]); ymn = min(ymn, ys[i]); ymx = max(ymx, ys[i])
+    end
+    M = 24; acc = 0.0; dxs = (xmx-xmn)/M; dys = (ymx-ymn)/M
+    @inbounds for mi in 1:M, mj in 1:M
+        acc += _oa_chord(xmn+(mi-0.5)*dxs, ymn+(mj-0.5)*dys, active, qa, ra, pmina, pmaxa)
+    end
+    return acc/(M*M)*(xmx-xmn)*(ymx-ymn)
+end
+
+function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix{Float64},
+        x_cam::AbstractVector, y_cam::AbstractVector, cellsize::AbstractVector,
+        values::AbstractVector{Float64}, weights::AbstractVector{Float64},
+        cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real},
+        cam_w::AbstractVector{<:Real},
+        grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int};
+        max_threads::Int=Threads.nthreads())
+
+    nx, ny = grid_resolution
+    x_min, x_max, y_min, y_max = grid_extent
+    inv_px = nx / (x_max - x_min)
+    inv_py = ny / (y_max - y_min)
+    pxx = (x_max - x_min) / nx
+    pxy = (y_max - y_min) / ny
+    a = (Float64(cam_right[1]), Float64(cam_right[2]), Float64(cam_right[3]))  # right·êk
+    b = (Float64(cam_up[1]),    Float64(cam_up[2]),    Float64(cam_up[3]))     # up·êk
+    c = (Float64(cam_w[1]),     Float64(cam_w[2]),     Float64(cam_w[3]))      # ŵ·êk
+    n = length(x_cam)
+    n == 0 && return nothing
+
+    nthreads = clamp(max_threads, 1, Threads.nthreads())
+    nthreads = min(nthreads, n)
+    gbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    wbufs = [zeros(Float64, nx, ny) for _ in 1:nthreads]
+    bounds = [floor(Int, (t-1)*n/nthreads) + 1 for t in 1:nthreads+1]
+    bounds[end] = n + 1
+
+    cwabs = (abs(c[1]), abs(c[2]), abs(c[3]))
+    cthr = 1e-9   # |ŵ·êk| below this ⇒ axis k is a "wall" (cardinal line of sight)
+
+    @sync for t in 1:nthreads
+        Threads.@spawn begin
+            g = gbufs[t]; wg = wbufs[t]
+            # per-thread polygon work-pool + wall scratch (allocated once, reused per pixel)
+            cap = 512
+            PX = [Vector{Float64}(undef, 32) for _ in 1:cap]
+            PY = [Vector{Float64}(undef, 32) for _ in 1:cap]
+            PN = Vector{Int}(undef, cap)
+            LA = Vector{Int}(undef, cap); LB = Vector{Int}(undef, cap)
+            wAs = zeros(Float64, 4); wBs = zeros(Float64, 4); wCs = zeros(Float64, 4)
+            @inbounds for i in bounds[t]:(bounds[t+1]-1)
+                s = cellsize[i]; h = 0.5 * s
+                xc = x_cam[i]; yc = y_cam[i]
+                w_i = weights[i]; vw_i = values[i] * weights[i]
+
+                # footprint half-extents (Σ |projected half-edges|)
+                radx = h * (abs(a[1]) + abs(a[2]) + abs(a[3]))
+                rady = h * (abs(b[1]) + abs(b[2]) + abs(b[3]))
+
+                # sub-pixel cell → CIC 4-pixel stencil (cheap, conserves)
+                if radx <= 0.5*pxx && rady <= 0.5*pxy
+                    fx = (xc - x_min)*inv_px - 0.5
+                    fy = (yc - y_min)*inv_py - 0.5
+                    ix0 = floor(Int, fx); iy0 = floor(Int, fy)
+                    wxf = fx - ix0; wyf = fy - iy0
+                    ixl = clamp(ix0+1, 1, nx); ixr = clamp(ix0+2, 1, nx)
+                    iyl = clamp(iy0+1, 1, ny); iyr = clamp(iy0+2, 1, ny)
+                    wll=(1.0-wxf)*(1.0-wyf); wrl=wxf*(1.0-wyf); wlr=(1.0-wxf)*wyf; wrr=wxf*wyf
+                    g[ixl,iyl]+=vw_i*wll; wg[ixl,iyl]+=w_i*wll
+                    g[ixr,iyl]+=vw_i*wrl; wg[ixr,iyl]+=w_i*wrl
+                    g[ixl,iyr]+=vw_i*wlr; wg[ixl,iyr]+=w_i*wlr
+                    g[ixr,iyr]+=vw_i*wrr; wg[ixr,iyr]+=w_i*wrr
+                    continue
+                end
+
+                # precompute affine tmin/tmax coefficients and wall half-planes for this cell
+                active = (cwabs[1] >= cthr, cwabs[2] >= cthr, cwabs[3] >= cthr)
+                k1 = _oa_axis_coef(a[1], b[1], c[1], h, xc, yc, active[1])
+                k2 = _oa_axis_coef(a[2], b[2], c[2], h, xc, yc, active[2])
+                k3 = _oa_axis_coef(a[3], b[3], c[3], h, xc, yc, active[3])
+                qa    = (k1[1], k2[1], k3[1]); ra    = (k1[2], k2[2], k3[2])
+                pmina = (k1[3], k2[3], k3[3]); pmaxa = (k1[4], k2[4], k3[4])
+                nwall = 0
+                for k in 1:3
+                    if !active[k]   # wall: |a_k(x-xc)+b_k(y-yc)| ≤ h → two half-planes
+                        nwall += 1; wAs[nwall] = -a[k]; wBs[nwall] = -b[k]; wCs[nwall] = h + a[k]*xc + b[k]*yc
+                        nwall += 1; wAs[nwall] =  a[k]; wBs[nwall] =  b[k]; wCs[nwall] = h - a[k]*xc - b[k]*yc
+                    end
+                end
+                wallA = (wAs[1],wAs[2],wAs[3],wAs[4]); wallB = (wBs[1],wBs[2],wBs[3],wBs[4]); wallC = (wCs[1],wCs[2],wCs[3],wCs[4])
+
+                # pixel bounding box (clamped to grid → off-grid fraction renormalised away)
+                ix0 = clamp(floor(Int, (xc - radx - x_min)*inv_px) + 1, 1, nx)
+                ix1 = clamp(floor(Int, (xc + radx - x_min)*inv_px) + 1, 1, nx)
+                iy0 = clamp(floor(Int, (yc - rady - y_min)*inv_py) + 1, 1, ny)
+                iy1 = clamp(floor(Int, (yc + rady - y_min)*inv_py) + 1, 1, ny)
+
+                # footprint fully inside the grid ⇒ Σ∫∫L = s³ exactly ⇒ single pass with
+                # invT = 1/s³ (skip renorm).  Otherwise two-pass renorm over in-grid pixels.
+                inside = (xc - radx >= x_min) && (xc + radx <= x_max) &&
+                         (yc - rady >= y_min) && (yc + rady <= y_max)
+                if inside
+                    invT = 1.0 / (s*s*s)
+                else
+                    T = 0.0
+                    for ix in ix0:ix1
+                        pxl = x_min + (ix-1)*pxx; pxr = pxl + pxx
+                        for iy in iy0:iy1
+                            pyl = y_min + (iy-1)*pxy; pyr = pyl + pxy
+                            T += _oa_pixel_integral!(pxl, pxr, pyl, pyr, active, qa, ra, pmina, pmaxa,
+                                                     wallA, wallB, wallC, nwall, PX, PY, PN, LA, LB)
+                        end
+                    end
+                    T <= 0.0 && continue
+                    invT = 1.0 / T
+                end
+                # deposit normalised shares (Σ f = 1 ⇒ exact conservation)
+                for ix in ix0:ix1
+                    pxl = x_min + (ix-1)*pxx; pxr = pxl + pxx
+                    for iy in iy0:iy1
+                        pyl = y_min + (iy-1)*pxy; pyr = pyl + pxy
+                        vol = _oa_pixel_integral!(pxl, pxr, pyl, pyr, active, qa, ra, pmina, pmaxa,
+                                                  wallA, wallB, wallC, nwall, PX, PY, PN, LA, LB)
+                        if vol > 0.0
+                            f = vol * invT
+                            g[ix,iy]  += vw_i * f
+                            wg[ix,iy] += w_i  * f
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    @inbounds for t in 1:nthreads
+        grid .+= gbufs[t]
+        weight_grid .+= wbufs[t]
+    end
+    return nothing
+end
+
+# =====================================================================================
+#  Off-axis radiative-transfer accumulation (emission + absorption)
+# -------------------------------------------------------------------------------------
+#  Front-to-back formal solution of dI/dτ = S − I, per pixel:
+#       I += S·(1 − e^{−Δτ})·e^{−τ_sofar} ,  τ += Δτ ,  Δτ = κ·ℓ ,
+#  where ℓ = (∫∫_pixel L)/pixel_area is the exact box-spline chord (same footprint as :exact).
+#  `order` lists cell indices sorted NEAREST→farthest from the observer (front to back), so the
+#  per-pixel τ accumulator attenuates each cell by the dust/gas IN FRONT of it. Order-dependent
+#  ⇒ single-threaded by construction.  κ is in 1/(code length); S in the caller's source units.
+# =====================================================================================
+function deposit_rotated_cells_emission!(Imap::Matrix{Float64}, taumap::Matrix{Float64},
+        x_cam::AbstractVector, y_cam::AbstractVector, cellsize::AbstractVector,
+        kappa::AbstractVector{Float64}, source::AbstractVector{Float64},
+        order::AbstractVector{<:Integer},
+        cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real}, cam_w::AbstractVector{<:Real},
+        grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int})
+
+    nx, ny = grid_resolution
+    x_min, x_max, y_min, y_max = grid_extent
+    inv_px = nx/(x_max-x_min); inv_py = ny/(y_max-y_min)
+    pxx = (x_max-x_min)/nx; pxy = (y_max-y_min)/ny; parea = pxx*pxy
+    a = (Float64(cam_right[1]), Float64(cam_right[2]), Float64(cam_right[3]))
+    b = (Float64(cam_up[1]),    Float64(cam_up[2]),    Float64(cam_up[3]))
+    c = (Float64(cam_w[1]),     Float64(cam_w[2]),     Float64(cam_w[3]))
+    cwabs = (abs(c[1]), abs(c[2]), abs(c[3])); cthr = 1e-9
+    cap = 512
+    PX = [Vector{Float64}(undef, 32) for _ in 1:cap]
+    PY = [Vector{Float64}(undef, 32) for _ in 1:cap]
+    PN = Vector{Int}(undef, cap); LA = Vector{Int}(undef, cap); LB = Vector{Int}(undef, cap)
+    wAs = zeros(Float64, 4); wBs = zeros(Float64, 4); wCs = zeros(Float64, 4)
+
+    @inbounds for i in order
+        s = cellsize[i]; h = 0.5*s; xc = x_cam[i]; yc = y_cam[i]
+        κ = kappa[i]; S = source[i]
+        radx = h*(abs(a[1])+abs(a[2])+abs(a[3])); rady = h*(abs(b[1])+abs(b[2])+abs(b[3]))
+        # sub-pixel cell → one pixel; mean chord over the pixel = cube volume / pixel area
+        if radx <= 0.5*pxx && rady <= 0.5*pxy
+            ix = clamp(floor(Int,(xc-x_min)*inv_px)+1, 1, nx); iy = clamp(floor(Int,(yc-y_min)*inv_py)+1, 1, ny)
+            Δτ = κ * (s*s*s/parea)
+            Imap[ix,iy] += S*(1.0-exp(-Δτ))*exp(-taumap[ix,iy]); taumap[ix,iy] += Δτ
+            continue
+        end
+        active = (cwabs[1] >= cthr, cwabs[2] >= cthr, cwabs[3] >= cthr)
+        k1 = _oa_axis_coef(a[1], b[1], c[1], h, xc, yc, active[1])
+        k2 = _oa_axis_coef(a[2], b[2], c[2], h, xc, yc, active[2])
+        k3 = _oa_axis_coef(a[3], b[3], c[3], h, xc, yc, active[3])
+        qa=(k1[1],k2[1],k3[1]); ra=(k1[2],k2[2],k3[2]); pmina=(k1[3],k2[3],k3[3]); pmaxa=(k1[4],k2[4],k3[4])
+        nwall = 0
+        for k in 1:3
+            if !active[k]
+                nwall += 1; wAs[nwall]=-a[k]; wBs[nwall]=-b[k]; wCs[nwall]=h+a[k]*xc+b[k]*yc
+                nwall += 1; wAs[nwall]= a[k]; wBs[nwall]= b[k]; wCs[nwall]=h-a[k]*xc-b[k]*yc
+            end
+        end
+        wallA=(wAs[1],wAs[2],wAs[3],wAs[4]); wallB=(wBs[1],wBs[2],wBs[3],wBs[4]); wallC=(wCs[1],wCs[2],wCs[3],wCs[4])
+        ix0=clamp(floor(Int,(xc-radx-x_min)*inv_px)+1,1,nx); ix1=clamp(floor(Int,(xc+radx-x_min)*inv_px)+1,1,nx)
+        iy0=clamp(floor(Int,(yc-rady-y_min)*inv_py)+1,1,ny); iy1=clamp(floor(Int,(yc+rady-y_min)*inv_py)+1,1,ny)
+        for ix in ix0:ix1
+            pxl = x_min + (ix-1)*pxx; pxr = pxl + pxx
+            for iy in iy0:iy1
+                pyl = y_min + (iy-1)*pxy; pyr = pyl + pxy
+                vol = _oa_pixel_integral!(pxl,pxr,pyl,pyr, active,qa,ra,pmina,pmaxa, wallA,wallB,wallC,nwall, PX,PY,PN,LA,LB)
+                if vol > 0.0
+                    Δτ = κ * (vol/parea)
+                    Imap[ix,iy] += S*(1.0-exp(-Δτ))*exp(-taumap[ix,iy]); taumap[ix,iy] += Δτ
+                end
+            end
+        end
+    end
+    return nothing
+end
+
+# affine coefficients (q,r,pmin,pmax) of tmin_k(x,y)=q·x+r·y+pmin and tmax_k=q·x+r·y+pmax
+# for cube axis k with projected components a=right·êk, b=up·êk, c=ŵ·êk.  Inactive (wall)
+# axes return zeros (handled separately via wall half-planes).
+@inline function _oa_axis_coef(ak::Float64, bk::Float64, ck::Float64, h::Float64,
+                               xc::Float64, yc::Float64, act::Bool)
+    act || return (0.0, 0.0, 0.0, 0.0)
+    q = -ak/ck; r = -bk/ck
+    base = (ak*xc + bk*yc)/ck
+    slow  = (ck > 0 ? -h : h)/ck
+    shigh = (ck > 0 ?  h : -h)/ck
+    return (q, r, base + slow, base + shigh)
 end
 
 

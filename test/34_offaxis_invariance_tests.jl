@@ -1,24 +1,28 @@
-# 34_offaxis_invariance_tests.jl  --  Off-axis projection conservation PROOF
-# ============================================================================
+# 34_offaxis_invariance_tests.jl  --  Off-axis projection: conservation regression
+# =================================================================================
 #
-# What is proven
-# --------------
-# An off-axis projection only changes the *viewing geometry*; it must NOT change
-# the conserved (extensive) totals of the data. This file proves, on real RAMSES
-# data, that the projected total of an extensive quantity equals the geometry-
-# independent ground truth `sum(getvar(obj, q))` to ~machine precision, and stays
-# equal:
+# What this checks (and what it does NOT)
+# ---------------------------------------
+# An off-axis projection only changes the *viewing geometry*; it must NOT change the
+# conserved (extensive) totals of the data. This file checks, on real RAMSES data, that the
+# projected total of an extensive quantity equals the geometry-independent ground truth
+# `sum(getvar(obj, q))` to ~machine precision, and stays equal:
 #
 #   * for ANY line-of-sight angle           (rotation invariance), and
 #   * for ANY final-map pixel size / res    (resolution invariance), and
 #   * for both the fast (:cic) and accurate (:overlap) deposit, and
 #   * for hydro mass & volume AND particle surface density.
 #
-# This is the quantitative backing for the docs page `offaxis_projection.md`
-# ("Conservation proof"). The conserved totals come straight from the
-# partition-of-unity property of the CIC/NGP/overlap deposit (Hockney &
-# Eastwood 1988): every cell distributes its full weight across pixels, so the
-# sum over the map is invariant under rotation and rebinning.
+# The conserved totals come straight from the partition-of-unity property of the CIC/NGP/overlap
+# deposit (Hockney & Eastwood 1988, "Computer Simulation Using Particles"): every cell
+# distributes its full weight across pixels, so the sum over the map is invariant under rotation
+# and rebinning.
+#
+# IMPORTANT — this is a NECESSARY, not a SUFFICIENT, check. Because conservation is a
+# partition-of-unity identity, ALL THREE binnings (:cic, :ngp, :overlap) pass it to ~1e-16 — so
+# this file deliberately tells you nothing about which method is more *accurate*. The spatial
+# fidelity (where the mass lands, and how :overlap differs from :cic/:ngp) is measured separately
+# in `35_offaxis_accuracy_tests.jl`. Read the two files together.
 #
 # Required datasets: :spiral_clumps (hydro), :spiral_ugrid (particles).
 
@@ -28,14 +32,16 @@ if !DATA_AVAILABLE
     return
 end
 
-@testset verbose=true "Off-axis Conservation Proof" begin
+@testset verbose=true "Off-axis Conservation (regression)" begin
 
     # line-of-sight directions spanning the sphere (axis, diagonals, skew, presets)
     LOS = [[0.0,0,1], [1.0,0,0], [0.0,1,0], [1.0,1,1], [1.0,-2,0.5],
            [-2.0,1,3], [0.3,0.4,0.866]]
     # final-map pixel counts -- deliberately incl. non-power-of-two values
     RESES = [50, 100, 137, 200, 256]
-    RTOL = 1e-9   # deposit conserves to machine precision; getvar unit math adds noise
+    # The deposit conserves the total to floating-point round-off; the small residual is
+    # dominated by getvar unit-conversion arithmetic, hence 1e-12 (not strictly eps).
+    RTOL = 1e-12
 
     relerr(a, b) = abs(a - b) / abs(b)
 
@@ -49,7 +55,7 @@ end
 
         worst = 0.0
         errtable = Tuple{Int,Int,Symbol,Float64}[]
-        for (li, los) in enumerate(LOS), res in RESES, binning in (:cic, :overlap)
+        for (li, los) in enumerate(LOS), res in RESES, binning in (:cic, :overlap, :exact)
             pm = projection(gas, :mass, :Msol, los=los, res=res, binning=binning,
                             verbose=false, show_progress=false)
             e = relerr(sum(pm.maps[:mass]), Mtot)
@@ -59,8 +65,20 @@ end
         end
         # the conserved total is genuinely independent of res (not res-dependent leakage)
         @info "Hydro mass conservation: worst relative error over " *
-              "$(length(LOS)) angles × $(length(RESES)) pixel sizes × {cic,overlap}" worst Mtot
+              "$(length(LOS)) angles × $(length(RESES)) pixel sizes × {cic,overlap,exact}" worst Mtot
         @test worst < RTOL
+
+        # ...and equally when the pixel size is given in PHYSICAL units via `pxsize`
+        # (pxsize=[size, unit] is the observer-friendly alternative to res). Conservation must
+        # hold for any physical pixel size and any angle, for cic and overlap alike.
+        worst_px = 0.0
+        for los in LOS, px in (0.3, 0.75, 1.5), binning in (:cic, :overlap, :exact)
+            pm = projection(gas, :mass, :Msol, los=los, pxsize=[px, :kpc], binning=binning,
+                            verbose=false, show_progress=false)
+            worst_px = max(worst_px, relerr(sum(pm.maps[:mass]), Mtot))
+        end
+        @info "Hydro mass conservation via pxsize (physical units): worst rel. error" worst_px
+        @test worst_px < RTOL
     end
 
     # ----------------------------------------------------------------------
@@ -99,7 +117,7 @@ end
         Mtot = sum(getvar(part, :mass, :Msol))
         pc2  = part.scale.pc^2
         worst = 0.0
-        for los in LOS, res in RESES, binning in (:cic, :overlap)
+        for los in LOS, res in RESES, binning in (:cic, :overlap, :exact)
             ps = projection(part, :sd, :Msol_pc2, los=los, res=res, binning=binning,
                             verbose=false, show_progress=false)
             mass_from_map = sum(ps.maps[:sd]) * (ps.pixsize * part.scale.pc)^2
