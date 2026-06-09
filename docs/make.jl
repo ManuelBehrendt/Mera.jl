@@ -51,6 +51,8 @@ makedocs(modules = [Mera],
 
                           "First-Look Reports"  => "report.md",
 
+                          "Clump Finding"       => "clumpfind.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 
