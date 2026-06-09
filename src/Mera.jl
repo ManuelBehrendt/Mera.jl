@@ -172,6 +172,8 @@ export
     ReportResultCard,
     sfr,
     sfr_snapshot,
+    clumpfind,
+    ClumpCatalog,
     estimate,
     calibrate!,
     downsample,
@@ -367,6 +369,7 @@ include("functions/sfr.jl")
 include("functions/report/report.jl")
 include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
+include("functions/clumpfind.jl")
 # ============================================
 
 
