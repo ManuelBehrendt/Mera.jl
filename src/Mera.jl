@@ -174,6 +174,8 @@ export
     sfr_snapshot,
     clumpfind,
     ClumpCatalog,
+    clump_massfunction,
+    ClumpCard,
     estimate,
     calibrate!,
     downsample,

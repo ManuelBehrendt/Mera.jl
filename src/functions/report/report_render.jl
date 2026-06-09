@@ -89,6 +89,7 @@ function _card_line(c::ReportResultCard)
         c.kind === :phase   ? "[phase $(m.xvar)–$(m.yvar)]  $(m.nbins[1])×$(m.nbins[2]) bins  ($(m.xunit),$(m.yunit))" :
         c.kind === :profile ? "[profile $(m.yvar) vs $(m.xvar)]  $(m.nbins) bins  y∈[$(_rng(m.yrange))] $(m.unit)" :
         c.kind === :sfr     ? "[SFR]  $(m.ntimebins) bins ($(m.tbinsize) Myr)  peak $(_nf(m.srange[2])) $(m.unit)" :
+        c.kind === :clumps  ? "[clumps $(m.field)]  $(m.nclumps) found  total $(_nf(c.data.total_mass)) $(m.unit)  max $(_nf(m.max_mass))" :
         "?"
     t = get(m, :cost_s, nothing)
     return head * body * (t === nothing ? "" : "   ($(round(t,digits=2)) s)")

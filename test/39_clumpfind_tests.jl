@@ -76,5 +76,82 @@
             end
             @test_throws ArgumentError clumpfind(sd, :not_a_field; threshold=1.0)
         end
+
+        @testset "mass function + ClumpCard" begin
+            thr = maximum(getvar(gas, :rho, :nH)) / 50
+            cat = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=3.0)
+            mc, N = clump_massfunction(cat; nbins=6)
+            @test sum(N) == cat.nclumps && length(mc) == 6
+            ms, Ngt = clump_massfunction(cat; cumulative=true)
+            @test Ngt[1] == cat.nclumps && issorted(ms)
+            # ClumpCard inside a report
+            rep = report(ReportPlan(dc.output; path=dc.path, cards=[
+                ClumpCard(:hydro, :rho; threshold=thr, threshold_unit=:nH, linking_length=3.0, label="cl")
+            ]); output=:none, verbose=false)
+            @test rep.cards[1].func == :clumps
+            @test rep.cards[1].data.nclumps == cat.nclumps
+            @test rep.cards[1].data.catalog isa ClumpCatalog
+        end
+
+        @testset "gravitational boundedness" begin
+            thr = maximum(getvar(gas, :rho, :nH)) / 30
+            cat = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0,
+                            boundedness=true)
+            @test cat.meta.boundedness
+            for c in cat
+                @test haskey(c, :e_kin) && haskey(c, :e_grav) && haskey(c, :bound)
+                @test c.e_kin >= 0 && c.e_therm >= 0 && c.e_grav >= 0
+                @test c.bound == ((c.e_kin + c.e_therm) < c.e_grav)
+                c.e_grav > 0 && @test isapprox(c.alpha_vir, 2c.e_kin / c.e_grav; rtol=1e-9)
+            end
+            # direct vs approx both produce positive binding energy
+            cd = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0,
+                           boundedness=true, egrav=:direct)
+            @test all(c.e_grav >= 0 for c in cd)
+            # bound_only is a subset selected by the bound flag
+            ball = cat; bonly = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH,
+                           linking_length=4.0, boundedness=true, bound_only=true)
+            @test bonly.nclumps == count(c -> c.bound, ball.clumps)
+        end
+
+        @testset "multi-field (gas + stars + dm)" begin
+            parts = getparticles(info, verbose=false, show_progress=false)
+            thr = maximum(getvar(gas, :rho, :nH)) / 50
+            cat = clumpfind([
+                (obj=gas,   field=:rho,  threshold=thr, threshold_unit=:nH, name=:gas),
+                (obj=parts, field=:mass, threshold=0.0, name=:stars, mask=o->getvar(o,:birth) .> 0),
+                (obj=parts, field=:mass, threshold=0.0, name=:dm,    mask=o->getvar(o,:birth) .<= 0),
+            ]; linking_length=3.0)
+            @test cat.meta.dim == Symbol("3D-multi") && cat.meta.components == (:gas, :stars, :dm)
+            c = cat[1]
+            @test haskey(c.components, :gas) && haskey(c.components, :dm)
+            @test isapprox(c.mass, c.components.gas.mass + c.components.stars.mass + c.components.dm.mass; rtol=1e-6)
+            @test c.n_members == c.components.gas.n + c.components.stars.n + c.components.dm.n
+        end
+
+        @testset "overlap deblending" begin
+            # synthetic two-peak blob joined by a saddle → splits in two
+            xs = Float64[]; ys = Float64[]; zs = Float64[]; fs = Float64[]
+            for (cx, pk) in [(0.0, 10.0), (5.0, 9.0)], d in -0.3:0.15:0.3
+                push!(xs, cx + d); push!(ys, 0.0); push!(zs, 0.0); push!(fs, pk - abs(d) * 3)
+            end
+            for x in 0.6:0.4:4.4
+                push!(xs, x); push!(ys, 0.0); push!(zs, 0.0); push!(fs, 1.0 + abs(x - 2.5))
+            end
+            mem = collect(1:length(xs))
+            @test length(Mera._peaks3d(mem, xs, ys, zs, fs, 2.0)) == 2
+            @test length(Mera._deblend3d(mem, xs, ys, zs, fs, 2.0)) == 2
+            # on data: deblend never reduces clump count and conserves total mass
+            thr = maximum(getvar(gas, :rho, :nH)) / 50
+            c0 = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0)
+            c1 = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0, deblend=true)
+            @test c1.nclumps >= c0.nclumps && c1.meta.deblend
+            @test isapprox(sum(c.mass for c in c0), sum(c.mass for c in c1); rtol=1e-6)
+            # 2D map deblend
+            sd = projection(gas, :sd, :Msol_pc2; res=128, center=[:bc], verbose=false, show_progress=false)
+            pk = maximum(sd.maps[:sd])
+            m1 = clumpfind(sd, :sd; threshold=pk/20, deblend=true)
+            @test m1.meta.deblend && m1.nclumps >= clumpfind(sd, :sd; threshold=pk/20).nclumps
+        end
     end
 end
