@@ -1,0 +1,83 @@
+module MeraMakieExt
+
+# Makie rendering for the composable report system. Loaded automatically when a Makie backend
+# is present (`using CairoMakie` / `GLMakie` / `WGLMakie`) — declared as a weak dependency on
+# `Makie` + an extension in Project.toml. Provides:
+#
+#   render(report, :plot; ncols=2)      → a Makie Figure with one panel per drawable card
+#   render(report, :file; mode=:dir)    → uses _save_card_pngs to write one PNG per card
+#
+# Recipes per result-card kind use only the plain-data payload contract (see report.jl):
+#   :map     data=(z, extent, pixsize)          → heatmap
+#   :phase   data=(H, xedges, yedges)           → heatmap
+#   :profile data=(x, y, count)                 → line
+#   :sfr     data=(t, sfr)                       → stairs
+#   :scalar  (not drawn — shown as text in the ascii dashboard)
+
+using Mera
+using Makie
+
+# choose a finite, possibly-log color/axis treatment without hard-failing on NaNs/≤0
+_poscolor(z) = (v = filter(x -> isfinite(x) && x > 0, vec(z)); isempty(v) ? (nothing) : (minimum(v), maximum(v)))
+
+# draw one card into a grid position (creates its own Axis); returns the Axis or nothing
+function _draw_card!(pos, c::Mera.ReportResultCard)
+    m = c.meta
+    if c.kind === :map
+        z = c.data.z; ex = c.data.extent
+        ax = Makie.Axis(pos; title=c.label, xlabel="x", ylabel="y", aspect=Makie.DataAspect())
+        xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
+        pr = _poscolor(z)
+        hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z) :
+             Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, z))
+        Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(m.unit)]")
+        return ax
+    elseif c.kind === :phase
+        ax = Makie.Axis(pos; title=c.label, xlabel=string(m.xvar), ylabel=string(m.yvar))
+        H = c.data.H
+        hm = Makie.heatmap!(ax, c.data.xedges[1:end-1], c.data.yedges[1:end-1],
+                            map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H))
+        Makie.Colorbar(pos[1, 2], hm; label="log10 count")
+        return ax
+    elseif c.kind === :profile
+        ax = Makie.Axis(pos; title=c.label, xlabel="$(m.xvar) [$(m.xunit)]",
+                        ylabel="$(m.yvar) [$(m.unit)]")
+        Makie.lines!(ax, c.data.x, c.data.y)
+        return ax
+    elseif c.kind === :sfr
+        ax = Makie.Axis(pos; title=c.label, xlabel="t [Myr]", ylabel="SFR [$(m.unit)]")
+        isempty(c.data.t) || Makie.stairs!(ax, c.data.t, c.data.sfr; step=:center)
+        return ax
+    end
+    return nothing
+end
+
+_drawable(r::Mera.QuickReport) =
+    [c for c in r.cards if !(c.func in (:skipped, :error)) && c.kind !== :scalar]
+
+# render(report, :plot; ncols=2, size=…) → Figure
+function Mera._plot_report(r::Mera.QuickReport; ncols::Int=2, size=(560 * min(ncols, 2), 460), kwargs...)
+    cards = _drawable(r)
+    isempty(cards) && error("render(report, :plot): no drawable cards (only scalars / skipped / errored).")
+    nrows = cld(length(cards), ncols)
+    fig = Makie.Figure(; size=(size[1], 460 * nrows))
+    for (i, c) in enumerate(cards)
+        row = cld(i, ncols); col = mod1(i, ncols)
+        _draw_card!(fig[row, col], c)
+    end
+    return fig
+end
+
+# per-card PNGs for render(report, :file; mode=:dir)
+function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs...)
+    files = String[]
+    for c in _drawable(r)
+        fig = Makie.Figure(; size=(560, 460))
+        _draw_card!(fig[1, 1], c)
+        f = joinpath(dir, "$(c.label).png")
+        Makie.save(f, fig); push!(files, f)
+    end
+    return files
+end
+
+end # module

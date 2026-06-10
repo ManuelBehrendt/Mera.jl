@@ -405,10 +405,6 @@ function getgravitydata(dataobject::InfoType,
 
         # Store this thread's results
         chunk_results[chunk_idx] = (vars_1D_local, pos_1D_local, cpus_1D_local)
-
-        # Force garbage collection after each chunk to manage memory
-        GC.gc()
-        yield()
     end # End multithreaded loop over chunks
 
     # ═══════════════════════════════════════════════════════════════════════════════

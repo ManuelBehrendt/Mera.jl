@@ -1,0 +1,79 @@
+// Mera.jl type families — source for docs/src/assets/TypeHierarchy.png
+// Render: dot -Tpng -Gdpi=170 docs/type_hierarchy.dot -o docs/src/assets/TypeHierarchy.png
+//
+// Top card  : DataSetType hierarchy (data sources). Abstract = italic/dashed; concrete
+//             = filled card + loader. Blue = contains mass, green = massless field.
+// Bottom card: DataMapsType (projection results). AMR maps are shared by hydro/gravity/RT;
+//             particle projections return PartMapsType.
+digraph TypeHierarchy {
+    rankdir=TB;
+    bgcolor="transparent";
+    pad=0.25;
+    nodesep=0.5;
+    ranksep=0.6;
+    fontname="Helvetica";
+    edge [color="#475569", arrowsize=0.85, penwidth=1.5];
+    node [fontname="Helvetica", shape=box, style="rounded,filled", penwidth=1.6, margin="0.22,0.12"];
+
+    // ───────────────── data sources ─────────────────
+    subgraph cluster_data {
+        style="rounded,filled";
+        fillcolor="#fbfcfe";
+        color="#e2e8f0";
+        penwidth=2.2;
+        margin=22;
+        labelloc="b";
+        label=<<FONT POINT-SIZE="12.5" COLOR="#64748b"><BR/>blue = contains mass (ρ or particle mass)&#160;&#160;·&#160;&#160;green = no mass (field only)&#160;&#160;·&#160;&#160;italic = abstract supertype</FONT>>;
+
+        // abstract supertypes
+        node [fillcolor="#f1f5f9", color="#94a3b8", style="rounded,filled,dashed", fontcolor="#0f172a"];
+        DataSetType   [label=<<I>DataSetType</I>>,            fontsize=17];
+        ContainMass   [label=<<I>ContainMassDataSetType</I>>, fontsize=15];
+        HydroPartType [label=<<I>HydroPartType</I>>,          fontsize=15];
+
+        // concrete, mass-bearing (blue)
+        node [style="rounded,filled", fillcolor="#e0f2fe", color="#0284c7", fontcolor="#0c2a3e", fontsize=15];
+        Hydro [label=<<B>HydroDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">gethydro</FONT>>];
+        Part  [label=<<B>PartDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">getparticles</FONT>>];
+        Clump [label=<<B>ClumpDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#0369a1">getclumps</FONT>>];
+
+        // concrete, massless (green)
+        node [style="rounded,filled", fillcolor="#dcfce7", color="#16a34a", fontcolor="#14352a"];
+        Grav [label=<<B>GravDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#15803d">getgravity</FONT>>];
+        Rt   [label=<<B>RtDataType</B><BR/><FONT POINT-SIZE="11" FACE="Courier" COLOR="#15803d">getrt</FONT>>];
+
+        DataSetType   -> ContainMass;
+        ContainMass   -> HydroPartType;
+        HydroPartType -> Hydro;
+        HydroPartType -> Part;
+        ContainMass   -> Clump;
+        DataSetType   -> Grav;
+        DataSetType   -> Rt;
+        { rank=same; Hydro; Part; Clump; Grav; Rt; }
+    }
+
+    // ───────────────── projection results ─────────────────
+    subgraph cluster_maps {
+        style="rounded,filled";
+        fillcolor="#fbfaff";
+        color="#e9e3fb";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#4c1d95"><B>Projection results — from projection()</B></FONT>>;
+
+        node [fillcolor="#f5f3ff", color="#a78bfa", style="rounded,filled,dashed", fontcolor="#2e1065", fontsize=14];
+        MapsAbs [label=<<I>DataMapsType</I>>];
+
+        node [style="rounded,filled", fillcolor="#ede9fe", color="#7c3aed", fontcolor="#2e1065"];
+        AMR   [label=<<B>AMRMapsType</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">hydro · gravity · RT</FONT>>];
+        PartM [label=<<B>PartMapsType</B><BR/><FONT POINT-SIZE="10.5" COLOR="#6d28d9">particles</FONT>>];
+
+        MapsAbs -> AMR;
+        MapsAbs -> PartM;
+        { rank=same; AMR; PartM; }
+    }
+
+    // anchor the results card below the data card (invisible)
+    Clump -> MapsAbs [style=invis, minlen=2];
+}

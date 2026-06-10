@@ -203,9 +203,12 @@ title("Stellar ages (cosmological run)"); tight_layout();
 
 `:zform` (alias `:formation_redshift`) gives the redshift at which each star
 formed, `:formation_time` the corresponding age of the universe. They satisfy
-`formation_time + age = age of the universe at the snapshot`. Non-stars are
-reported as `0` through `getvar` (the standalone `formation_redshift` returns
-`NaN` for them).
+`formation_time + age = age of the universe at the snapshot`.
+
+**Non-star particles (`birth ≥ 0`) return `NaN`** for both `:zform` and
+`:formation_time` (the underlying `formation_redshift` / `formation_time` are
+undefined for the `birth = 0` sentinel) — so select stars with `birth .< 0` or
+filter `!isnan`, **not** `== 0`. (Only `:age` returns `0` for non-stars.)
 
 ```julia
 zform = getvar(particles, :zform)

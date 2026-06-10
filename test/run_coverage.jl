@@ -31,6 +31,8 @@ const DATA_FILES = String[
     "04_basic_calculations.jl",
     "05_derived_variables.jl",
     "06_projections.jl",
+    "34_offaxis_invariance_tests.jl",
+    "35_offaxis_accuracy_tests.jl",
     "07_regions.jl",
     "08_physics_and_contracts.jl",
     "09_determinism.jl",
@@ -57,6 +59,7 @@ const DATA_FILES = String[
         include("22_types_tests.jl")
         include("30_doc_codeblocks.jl")    # data-free: doc code-block lint
         include("31_cosmology_tests.jl")   # data-free core + optional real-cosmo block
+        include("33_offaxis_kinematics_tests.jl")  # data-free off-axis camera kinematics (A1)
     end
 
     if !DATA_AVAILABLE

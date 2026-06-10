@@ -203,6 +203,30 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             @test maximum(pavg.maps[:Np1]) <= maximum(getvar(rt, :Np1)) + 1e-12  # average bounded by max cell value
         end
 
+        @testset "RT off-axis projection (conservation across angles)" begin
+            # the volume-weighted photon sum (mode=:sum) is an extensive total and must be
+            # invariant under the viewing angle, exactly like hydro mass
+            pz = projection(rt, :Np1, mode=:sum, direction=:z, verbose=false, show_progress=false)
+            ref = sum(pz.maps[:Np1])
+            @test ref > 0
+            for los in ([1.0,0,0], [1.0,1,1], [2.0,-1,0.5])
+                po = projection(rt, :Np1, mode=:sum, los=los, verbose=false, show_progress=false)
+                @test po isa Mera.AMRMapsType
+                @test po.direction == :offaxis
+                @test isapprox(sum(po.maps[:Np1]), ref; rtol=1e-9)   # photon count conserved
+            end
+            # off-axis also works across pixel sizes
+            for res in (64, 137)
+                po = projection(rt, :Np1, mode=:sum, los=[1.0,1,1], res=res, verbose=false, show_progress=false)
+                @test isapprox(sum(po.maps[:Np1]), ref; rtol=1e-9)
+            end
+            # accurate :overlap and exact :exact binnings conserve too
+            poo = projection(rt, :Np1, mode=:sum, los=[1.0,1,1], binning=:overlap, verbose=false, show_progress=false)
+            @test isapprox(sum(poo.maps[:Np1]), ref; rtol=1e-9)
+            pex = projection(rt, :Np1, mode=:sum, los=[1.0,1,1], binning=:exact, verbose=false, show_progress=false)
+            @test isapprox(sum(pex.maps[:Np1]), ref; rtol=1e-9)
+        end
+
         @testset "He-ionization & metallicity μ/n_e (synthetic)" begin
             # rt_stromgren is pure-H (Y=0, no metals), so the He-electron term, the
             # nIons>=3 μ formula and the metallicity rescaling never fire on real data.

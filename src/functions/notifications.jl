@@ -557,7 +557,7 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
                         ]
                         try
                             resp = HTTP.request("POST", upload_url, img_headers, body_bytes; connect_timeout=Int(zulip_timeout), readtimeout=Int(zulip_timeout))
-                            file_info = JSON.parse(String(resp.body))
+                            file_info = JSON3.read(String(resp.body))
                             if was_optimized && optimized_path != file_path
                                 try
                                     rm(dirname(optimized_path), recursive=true)

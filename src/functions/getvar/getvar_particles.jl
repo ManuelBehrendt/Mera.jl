@@ -414,3 +414,86 @@ function get_data(dataobject::PartDataType,
     end
 
 end
+
+
+# RAMSES particle family codes (new format, pversion > 0); see pm_commons.f90 / yt / pynbody.
+const _RAMSES_PARTICLE_FAMILY = Dict{Symbol,Int}(
+    :dm => 1, :dark_matter => 1, :darkmatter => 1,
+    :star => 2, :stars => 2,
+    :cloud => 3, :clouds => 3, :sink => 3, :sinks => 3,
+    :debris => 4, :other => 5)
+
+"""
+    getparticlemask(dataobject::PartDataType, select; verbose=true) -> Vector{Bool}
+
+Boolean mask selecting a subset of particles, for use as the `mask=` argument of [`profile`](@ref),
+[`phase`](@ref), [`rotationcurve`](@ref) (and `projection`, `getvar`, …). `select` may be
+
+* a **named type** — `:all`, `:dm` (`:dark_matter`), `:stars` (`:star`), `:clouds` (`:sink`),
+  `:debris`, `:other`, `:tracer` (family ≤ 0), `:gas` (gas tracer, family 0);
+* a **family code** `Int`, or a vector of codes (matched against the RAMSES `:family` column);
+* a **`NamedTuple`** combining `family` and/or `tag`, e.g. `(family=2,)`, `(tag=3,)`, `(family=2, tag=1)`.
+
+On the **new** RAMSES particle format the `:family`/`:tag` columns are used (DM=1, star=2, cloud=3,
+debris=4, other=5, tracers ≤ 0). On the **legacy** format (no `:family` column) only `:stars`
+(`birth ≠ 0`) and `:dm` (`birth == 0`) are available via the `:birth` field; other selections raise
+an error. The required column must be among the loaded particle variables.
+
+```julia
+parts = getparticles(getinfo(1, "spiral_ugrid"))
+profile(parts, :r_cylinder; weight=:mass, mask=getparticlemask(parts, :stars),
+        center=[:bc], range_unit=:kpc, xunit=:kpc)
+rotationcurve(parts; mask=getparticlemask(parts, :dm), center=[:bc], range_unit=:kpc)
+```
+"""
+function getparticlemask(dataobject::PartDataType, select; verbose::Bool=true)
+    cols = colnames(dataobject.data)
+    n    = length(dataobject.data)
+    havefam = in(:family, cols)
+    if select === :all
+        result = trues(n)
+    elseif select isa Integer
+        havefam || throw(ArgumentError("selecting by family code needs the :family column"))
+        result = getvar(dataobject, :family) .== Int(select)
+    elseif select isa AbstractVector{<:Integer}
+        havefam || throw(ArgumentError("selecting by family code needs the :family column"))
+        s = Set(Int.(select)); result = [f in s for f in getvar(dataobject, :family)]
+    elseif select isa NamedTuple
+        result = trues(n)
+        if haskey(select, :family)
+            havefam || throw(ArgumentError("(family=…) needs the :family column"))
+            result = result .& (getvar(dataobject, :family) .== select.family)
+        end
+        if haskey(select, :tag)
+            in(:tag, cols) || throw(ArgumentError("(tag=…) needs the :tag column"))
+            result = result .& (getvar(dataobject, :tag) .== select.tag)
+        end
+    elseif select isa Symbol
+        if havefam
+            fam = getvar(dataobject, :family)
+            if select in (:tracer, :tracers)
+                result = fam .<= 0
+            elseif select === :gas
+                result = fam .== 0
+            elseif haskey(_RAMSES_PARTICLE_FAMILY, select)
+                result = fam .== _RAMSES_PARTICLE_FAMILY[select]
+            else
+                throw(ArgumentError("unknown particle type :$select (try :dm, :stars, :clouds, :debris, :other, :tracer, :gas, :all)"))
+            end
+        else
+            in(:birth, cols) || throw(ArgumentError("legacy particle data needs the :birth column to select by type"))
+            b = getvar(dataobject, :birth)
+            if select in (:stars, :star)
+                result = b .!= 0
+            elseif select in (:dm, :dark_matter, :darkmatter)
+                result = b .== 0
+            else
+                throw(ArgumentError(":$select is unavailable on the legacy particle format (only :stars / :dm via :birth)"))
+            end
+        end
+    else
+        throw(ArgumentError("select must be a Symbol, Integer, Vector{Int} or NamedTuple (got $(typeof(select)))"))
+    end
+    verbose && println("getparticlemask: selected ", count(result), " / ", n, " particles  (", select, ")")
+    return Vector{Bool}(result)
+end

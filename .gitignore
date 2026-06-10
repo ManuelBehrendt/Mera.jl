@@ -134,3 +134,12 @@ src/functions/visualization/
 
 # Music files - exclude WAV files from docs/music folder (MP3 versions are used)
 docs/src/assets/music/*.wav
+
+# Local-only: source WAVs for the docs study-music album (large; never upload)
+docs/src/assets/album_wavs/
+
+# Internal dev roadmaps/plans/progress notes — kept local, never published
+docs/dev/
+
+# Internal comparison/benchmark harness — kept local, never published (src/benchmarks/ stays tracked)
+/benchmarks/

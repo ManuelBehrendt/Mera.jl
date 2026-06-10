@@ -199,15 +199,8 @@ function getgravity(dataobject::InfoType;
         table_start = time()
     end
 
-    # Memory management
-    GC.gc()
-    sleep(0.1)
-    GC.gc()
-
     # Create IndexedTable with controlled threading
-    @time begin
-        data = create_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose, max_threads)
-    end
+    data = create_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvarg_corr, nvarg_i_list, read_cpu, isamr, verbose, max_threads)
 
     if verbose
         table_time = time() - table_start

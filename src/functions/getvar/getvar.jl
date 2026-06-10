@@ -248,7 +248,7 @@ function getvar(   dataobject::DataSetType, var::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time )
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
 
 function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
@@ -266,7 +266,7 @@ function getvar(   dataobject::DataSetType, var::Symbol, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time )
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time )
 end
 
 function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{Symbol,1};
@@ -284,7 +284,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, units::Array{
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time )
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
 
 
@@ -304,7 +304,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1}, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time )
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
 
 
@@ -328,7 +328,7 @@ function getvar(   dataobject::DataSetType, vars::Array{Symbol,1};
     end
 
     #vars = unique(vars)
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time )
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time )
 end
 
 
@@ -379,7 +379,7 @@ function getvar(   dataobject::GravDataType, var::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, var::Symbol, unit::Symbol;
@@ -398,7 +398,7 @@ function getvar(   dataobject::GravDataType, var::Symbol, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
@@ -417,7 +417,7 @@ function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, units::Array
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, unit::Symbol;
@@ -437,7 +437,7 @@ function getvar(   dataobject::GravDataType, vars::Array{Symbol,1}, unit::Symbol
     end
 
     units = [unit for i in 1:length(vars)]
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
@@ -458,7 +458,7 @@ function getvar(   dataobject::GravDataType, vars::Array{Symbol,1};
     end
 
     units = [unit for i in 1:length(vars)]
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 
@@ -477,7 +477,7 @@ function getvar(   dataobject::RtDataType, var::Symbol;
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::RtDataType, var::Symbol, unit::Symbol;
@@ -489,7 +489,7 @@ function getvar(   dataobject::RtDataType, var::Symbol, unit::Symbol;
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
@@ -501,7 +501,7 @@ function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, units::Array{S
     if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
         dataobject = construct_datatype(filtered_db, dataobject)
     end
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, unit::Symbol;
@@ -514,7 +514,7 @@ function getvar(   dataobject::RtDataType, vars::Array{Symbol,1}, unit::Symbol;
         dataobject = construct_datatype(filtered_db, dataobject)
     end
     units = [unit for i in 1:length(vars)]
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::RtDataType, vars::Array{Symbol,1};
@@ -528,7 +528,7 @@ function getvar(   dataobject::RtDataType, vars::Array{Symbol,1};
         dataobject = construct_datatype(filtered_db, dataobject)
     end
     units = [unit for i in 1:length(vars)]
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 
@@ -565,7 +565,7 @@ function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Sym
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
@@ -583,7 +583,7 @@ function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, var::Sym
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
@@ -601,7 +601,7 @@ function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Ar
         dataobject = construct_datatype(filtered_db, dataobject);
     end
 
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
@@ -620,7 +620,7 @@ function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Ar
     end
 
     units = [unit for i in 1:length(vars)]
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
@@ -640,31 +640,34 @@ function getvar(   dataobject::GravDataType, hydro_data::HydroDataType, vars::Ar
     end
 
     units = [unit for i in 1:length(vars)]
-    return get_data(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
 
 
 function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}, center_unit::Symbol)
 
-    # check for :bc, :boxcenter
+    # check for :bc, :boxcenter. Build a fresh result — never mutate the caller's `center`
+    # array in place (it may be reused across several getvar calls, e.g. by off-axis projection).
     Ncenter = length(center)
-    if Ncenter  == 1
+    if Ncenter == 1
         if in(:bc, center) || in(:boxcenter, center)
-            bc = 0.5
-            center = [bc, bc, bc]
+            return [0.5, 0.5, 0.5]
         end
-    else
-        for i = 1:Ncenter
-            if center[i] == :bc || center[i] == :boxcenter
-                bc = 0.5
-                center[i] = bc
-            elseif center_unit != :standard
-                center[i] = center[i] / dataobject.boxlen .* getunit(dataobject, center_unit)
-            end
+        return copy(center)
+    end
+    out = similar(center, Float64)
+    for i = 1:Ncenter
+        if center[i] == :bc || center[i] == :boxcenter
+            out[i] = 0.5
+        elseif center_unit != :standard
+            # physical → fractional: divide by the unit factor (physical-per-code) AND the box length.
+            out[i] = center[i] / getunit(dataobject, center_unit) / dataobject.boxlen
+        else
+            out[i] = center[i]
         end
     end
-    return center
+    return out
 end
 
 

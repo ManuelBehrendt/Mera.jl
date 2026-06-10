@@ -47,16 +47,35 @@ makedocs(modules = [Mera],
                           "Basic Calculations"  => Any[ "Tutorial"    => "04_multi_Basic_Calculations.md",
                                                         "API Reference" => "api/calculations.md"],
 
+                          "Derived Fields & add_field" => "derived_fields.md",
+
+                          "First-Look Reports"  => "report.md",
+
+                          "Clump Finding"       => "clumpfind.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 
-                          "Projection"          => Any[ "Hydro"       =>  "06_hydro_Projection.md",
-                                                        "Particles"   =>  "06_particles_Projection.md",
-                                                        "API Reference" => "api/projections.md"],
+                          "Profiles & Phase Diagrams" => Any[
+                                                        "Tutorial"    => "15_multi_Profiles_Phase.md",
+                                                        "API Reference" => "profiles_phase.md"],
 
                           "Cosmological Runs"   => "09_multi_Cosmology.md",
 
                           "Radiative Transfer"  => "10_multi_RadiativeTransfer.md"],
+
+                      "Projection" => Any[
+                          "Axis-aligned (x/y/z)" => Any[ "Hydro"       =>  "06_hydro_Projection.md",
+                                                         "Particles"   =>  "06_particles_Projection.md",
+                                                         "API Reference" => "api/projections.md"],
+                          "Off-axis"             => Any[ "Guide"              => "06_offaxis_Projection.md",
+                                                         "Conservation Proof" => "offaxis_conservation_proof.md",
+                                                         "API Reference"      => "api/offaxis.md",
+                                                         "Notebooks"          => Any[
+                                                             "Projection basics"       => "11_multi_OffAxisProjection.md",
+                                                             "LOS cubes & kinematics"  => "12_multi_LosCubes.md",
+                                                             "Validation & accuracy"   => "13_multi_OffAxis_Validation.md",
+                                                             "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]]],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files"   =>  "07_multi_Mera_Files.md",
