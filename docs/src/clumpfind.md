@@ -105,7 +105,9 @@ Both are mass-conserving (every member/pixel lands in exactly one clump).
 
 `substructure=true` builds a two-level tree: each top-level clump is split into density basins
 (watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as nested
-`subclumps`. Top clumps gain the boundedness fields too.
+`subclumps`. Top clumps gain the boundedness fields too. `tidal=true` additionally strips each
+subclump's members beyond its Jacobi radius `r_t = D·(m_sub/3·M_host(<D))^{1/3}` relative to the host
+(parent) clump (King 1962; Binney & Tremaine 2008).
 
 ```julia
 cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4, substructure=true)
@@ -130,6 +132,11 @@ cat[1].mass                  # total mass of the largest structure
 cat[1].components.gas.mass   # …split by component
 cat[1].components.dm.n       # dark-matter particle count
 ```
+
+Pass `boundedness=true` to get the combined-cloud energetics (`e_kin`, `e_therm`, `e_mag`, `e_grav`,
+`alpha_vir`, `bound`) summed over **all** species — the self-gravity test uses gas + stars + DM
+together while the `components` breakdown stays the per-species mass budget (`egrav`, `softening`,
+`iterative_unbinding`, `bound_only` work as in the single-object form).
 
 ## Mass function & report integration
 

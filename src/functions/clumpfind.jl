@@ -394,6 +394,18 @@ struct Points
     bargs                                                         # cgs energy bundle (NamedTuple) or `nothing`
 end
 
+# does this object carry cell-centred magnetic field components?
+_has_bfield(obj) = obj isa HydroDataType &&
+    (cn = propertynames(getfield(obj, :data).columns); :bx in cn && :by in cn && :bz in cn)
+
+# per-cell magnetic energy (erg) = (B²/8π)·V, with B in Gauss and V in cm³; zeros when no B field
+function _emag_cgs(obj)
+    _has_bfield(obj) || return zeros(length(getfield(obj, :data)))
+    bx = getvar(obj, :bx, :Gauss); by = getvar(obj, :by, :Gauss); bz = getvar(obj, :bz, :Gauss)
+    V = getvar(obj, :volume, :cm3)
+    return @. (bx^2 + by^2 + bz^2) / (8π) * V
+end
+
 function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
                       threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
                       mask=[false], need_energy::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
@@ -410,9 +422,10 @@ function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
         mg = getvar(obj, :mass, :g)[idx]
         vv = getvar(obj, [:vx, :vy, :vz], :cm_s)
         et = obj isa HydroDataType ? getvar(obj, :etherm, :erg)[idx] : zeros(length(idx))
+        em = _emag_cgs(obj)[idx]                                                     # magnetic energy (erg), 0 if no B
         poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
         eps2 = (Float64(softening) * poscm)^2                                        # ε² in cm²
-        bargs = (mg=mg, vx=vv[:vx][idx], vy=vv[:vy][idx], vz=vv[:vz][idx], et=et, poscm=poscm,
+        bargs = (mg=mg, vx=vv[:vx][idx], vy=vv[:vy][idx], vz=vv[:vz][idx], et=et, em=em, poscm=poscm,
                  Gc=obj.info.constants.G, egrav=egrav, direct_max=direct_max, eps2=eps2)
     end
     return Points(xs, ys, zs, ms, fs, idx, bargs)
@@ -526,7 +539,7 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
                    boundedness::Bool=false, bound_only::Bool=false, egrav::Symbol=:approx,
                    direct_max::Int=2000, softening::Real=0.0, iterative_unbinding::Bool=false,
                    deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2 * finder.linking_length,
-                   substructure::Bool=false, sub_min_members::Int=min_members)
+                   substructure::Bool=false, sub_min_members::Int=min_members, tidal::Bool=false)
     need_b = boundedness || substructure || iterative_unbinding
     P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
                      pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
@@ -556,6 +569,7 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
             # split the clump into density basins, keep only the self-bound ones as nested subclumps
             kids = NamedTuple[]
             for sm in _watershed3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
+                tidal && (sm = _tidal_truncate(sm, mem, bargs, xs, ys, zs))   # strip tidally-unbound shell
                 length(sm) >= sub_min_members || continue
                 sc = _clump_stats(sm, xs, ys, zs, ms, fs, true, bargs)
                 sc.bound && push!(kids, sc)
@@ -595,7 +609,7 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, link
                    egrav::Symbol=:approx, direct_max::Int=2000, softening::Real=0.0,
                    iterative_unbinding::Bool=false, deblend::Union{Bool,Symbol}=false,
                    peak_min_distance::Real=2linking_length, substructure::Bool=false,
-                   sub_min_members::Int=min_members,
+                   sub_min_members::Int=min_members, tidal::Bool=false,
                    backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
     finder = ThresholdFoF(field; threshold=threshold, linking_length=linking_length,
                           threshold_unit=threshold_unit, backend=backend)
@@ -603,7 +617,7 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, link
                      mask=mask, boundedness=boundedness, bound_only=bound_only, egrav=egrav,
                      direct_max=direct_max, softening=softening, iterative_unbinding=iterative_unbinding,
                      deblend=deblend, peak_min_distance=peak_min_distance, substructure=substructure,
-                     sub_min_members=sub_min_members)
+                     sub_min_members=sub_min_members, tidal=tidal)
 end
 
 # per-clump statistics (mass, COM, peak, radius) + optional boundedness; shared by top-level clumps
@@ -618,7 +632,7 @@ function _clump_stats(mem, xs, ys, zs, ms, fs, boundedness::Bool, bargs)
     c = (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
          peak=fs[pk], peak_pos=(xs[pk], ys[pk], zs[pk]), radius=r)
     boundedness || return c
-    return merge(c, _boundedness(mem, bargs.mg, bargs.vx, bargs.vy, bargs.vz, bargs.et,
+    return merge(c, _boundedness(mem, bargs.mg, bargs.vx, bargs.vy, bargs.vz, bargs.et, bargs.em,
                                  xs, ys, zs, comx, comy, comz, r, bargs.poscm, bargs.Gc,
                                  bargs.egrav, bargs.direct_max, bargs.eps2))
 end
@@ -725,9 +739,9 @@ function _potentials!(phi::Vector{Float64}, xc, yc, zc, mgm, Gc::Float64, eps2::
     return phi
 end
 
-# per-clump energetics (cgs) → kinetic (COM-frame) + thermal + gravitational binding, virial
-# parameter α = 2·E_kin/|E_grav|, and bound flag E_kin + E_therm < |E_grav|.
-function _boundedness(mem, mg, vx, vy, vz, et, xs, ys, zs, comx, comy, comz, radius, poscm, Gc,
+# per-clump energetics (cgs) → kinetic (COM-frame) + thermal + magnetic + gravitational binding,
+# virial parameter α = 2·E_kin/|E_grav|, and bound flag E_kin + E_therm + E_mag < |E_grav|.
+function _boundedness(mem, mg, vx, vy, vz, et, em, xs, ys, zs, comx, comy, comz, radius, poscm, Gc,
                       egrav::Symbol, direct_max::Int, eps2::Float64=0.0)
     mgm = collect(@view mg[mem]); M = sum(mgm)
     vbx = sum(mgm .* @view(vx[mem])) / M
@@ -736,6 +750,7 @@ function _boundedness(mem, mg, vx, vy, vz, et, xs, ys, zs, comx, comy, comz, rad
     ekin = 0.5 * sum(mgm[i] * ((vx[mem[i]] - vbx)^2 + (vy[mem[i]] - vby)^2 + (vz[mem[i]] - vbz)^2)
                      for i in eachindex(mem))
     etherm = sum(@view et[mem])
+    emag = sum(@view em[mem])                               # magnetic support (0 unless MHD run)
     Rcm = radius * poscm
     if length(mem) < 2 || Rcm <= 0
         egr = 0.0
@@ -747,8 +762,8 @@ function _boundedness(mem, mg, vx, vy, vz, et, xs, ys, zs, comx, comy, comz, rad
         egr = 0.6 * Gc * M^2 / Rcm                          # (3/5) G M² / R, uniform sphere
     end
     alpha = egr > 0 ? 2ekin / egr : Inf
-    bound = egr > 0 && (ekin + etherm) < egr
-    return (e_kin=ekin, e_therm=etherm, e_grav=egr, alpha_vir=alpha, bound=bound)
+    bound = egr > 0 && (ekin + etherm + emag) < egr
+    return (e_kin=ekin, e_therm=etherm, e_mag=emag, e_grav=egr, alpha_vir=alpha, bound=bound)
 end
 
 # ---- SUBFIND-style iterative unbinding (Springel+2001) ---------------------------------
@@ -775,7 +790,7 @@ function _unbind(mem, bargs, xs, ys, zs; max_iter::Int=10, min_keep::Int=1)
         @inbounds for a in eachindex(keep)
             i = keep[a]
             ke = 0.5 * mgm[a] * ((bargs.vx[i]-vbx)^2 + (bargs.vy[i]-vby)^2 + (bargs.vz[i]-vbz)^2)
-            (ke + bargs.et[i] - mgm[a] * phi[a]) < 0 && push!(newkeep, i)   # bound ⇔ KE+u < |PE|
+            (ke + bargs.et[i] + bargs.em[i] - mgm[a]*phi[a]) < 0 && push!(newkeep, i)   # bound ⇔ KE+u+E_mag < |PE|
         end
         (isempty(newkeep) || length(newkeep) == length(keep)) && return newkeep
         keep = newkeep
@@ -783,12 +798,37 @@ function _unbind(mem, bargs, xs, ys, zs; max_iter::Int=10, min_keep::Int=1)
     return keep
 end
 
+# ---- tidal / Jacobi truncation of a subclump against its host clump --------------------
+# Jacobi radius r_t = D·(m_sub / 3 M_host(<D))^{1/3} (King 1962; Binney & Tremaine 2008 §8.3),
+# where D is the subclump–host COM separation and M_host(<D) the host mass enclosed within D.
+# Members of `sub` farther than r_t from the subclump COM are tidally stripped.
+function _tidal_truncate(sub, host, bargs, xs, ys, zs)
+    mg = bargs.mg; poscm = bargs.poscm
+    msub = sum(@view mg[sub]); hM = sum(@view mg[host])
+    hcx = sum(mg[j]*xs[j] for j in host)/hM; hcy = sum(mg[j]*ys[j] for j in host)/hM
+    hcz = sum(mg[j]*zs[j] for j in host)/hM
+    scx = sum(mg[j]*xs[j] for j in sub)/msub; scy = sum(mg[j]*ys[j] for j in sub)/msub
+    scz = sum(mg[j]*zs[j] for j in sub)/msub
+    D = sqrt((scx-hcx)^2 + (scy-hcy)^2 + (scz-hcz)^2) * poscm           # COM separation (cm)
+    D <= 0 && return sub
+    D2 = (D/poscm)^2                                                     # in pos_unit² for the host sum
+    Menc = 0.0
+    @inbounds for j in host
+        ((xs[j]-hcx)^2 + (ys[j]-hcy)^2 + (zs[j]-hcz)^2) <= D2 && (Menc += mg[j])
+    end
+    Menc <= 0 && return sub
+    rt = D * (msub / (3 * Menc))^(1/3)                                   # Jacobi radius (cm)
+    rt2 = (rt / poscm)^2                                                 # back to pos_unit²
+    return [j for j in sub if ((xs[j]-scx)^2 + (ys[j]-scy)^2 + (zs[j]-scz)^2) <= rt2]
+end
+
 # =====================================================================================
 #  Multi-field: friends-of-friends across several components (gas + stars + DM …)
 # =====================================================================================
 """
     clumpfind(components::AbstractVector; linking_length, pos_unit=:kpc, mass_unit=:Msol,
-              min_members=1) -> ClumpCatalog
+              min_members=1, boundedness=false, bound_only=false, egrav=:approx,
+              direct_max=2000, softening=0.0, iterative_unbinding=false) -> ClumpCatalog
 
 **Multi-field** structure finder: pre-select points from several `components` and link them with a
 single friends-of-friends pass, so over-densities in gas + stars + dark matter are found *together*.
@@ -797,19 +837,31 @@ with `field ≥ threshold` (and optional `mask(obj)`) join the common cloud tagg
 the catalog reports total `mass`, `com`, `radius`, member count, and a `components` breakdown
 `(name=(mass=…, n=…), …)` per source.
 
+`boundedness=true` adds the combined-cloud energetics (`e_kin`, `e_therm`, `e_mag`, `e_grav`,
+`alpha_vir`, `bound`) computed over **all** species together (each contributing its own mass and
+velocity; gas also its thermal/magnetic support), so the bound test uses the full self-gravity of
+gas + stars + DM while the `components` breakdown remains the per-species mass budget. `egrav`,
+`direct_max`, `softening`, `iterative_unbinding` and `bound_only` behave as in the single-object form.
+
 ```julia
 cat = clumpfind([
     (obj=gas,   field=:rho,  threshold=1e2, threshold_unit=:nH, name=:gas),
     (obj=parts, field=:mass, threshold=0.0, name=:stars, mask = o->getvar(o,:birth).>0),
     (obj=parts, field=:mass, threshold=0.0, name=:dm,    mask = o->getvar(o,:birth).<=0),
-]; linking_length=0.5)
+]; linking_length=0.5, boundedness=true)
 cat[1].components.gas.mass        # gas mass in the most massive structure
+cat[1].bound                      # self-bound across all three species?
 ```
 """
 function clumpfind(components::AbstractVector; linking_length::Real, pos_unit::Symbol=:kpc,
-                   mass_unit::Symbol=:Msol, min_members::Int=1)
+                   mass_unit::Symbol=:Msol, min_members::Int=1, boundedness::Bool=false,
+                   bound_only::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
+                   softening::Real=0.0, iterative_unbinding::Bool=false)
+    need_b = boundedness || iterative_unbinding
     ax = Float64[]; ay = Float64[]; az = Float64[]; am = Float64[]; comp = Symbol[]
     names = Symbol[]
+    mg = Float64[]; bvx = Float64[]; bvy = Float64[]; bvz = Float64[]; bet = Float64[]; bem = Float64[]
+    poscm = 1.0; Gc = 0.0
     for cm in components
         nm = cm.name; nm in names || push!(names, nm)
         f = getvar(cm.obj, cm.field, get(cm, :threshold_unit, :standard))
@@ -819,16 +871,29 @@ function clumpfind(components::AbstractVector; linking_length::Real, pos_unit::S
         ix = findall(sel)
         append!(ax, pos[:x][ix]); append!(ay, pos[:y][ix]); append!(az, pos[:z][ix])
         append!(am, m[ix]); append!(comp, fill(nm, length(ix)))
+        if need_b   # gather the cgs energy arrays for this component (same order as ax/…)
+            o = cm.obj
+            append!(mg, getvar(o, :mass, :g)[ix])
+            vv = getvar(o, [:vx, :vy, :vz], :cm_s)
+            append!(bvx, vv[:vx][ix]); append!(bvy, vv[:vy][ix]); append!(bvz, vv[:vz][ix])
+            append!(bet, o isa HydroDataType ? getvar(o, :etherm, :erg)[ix] : zeros(length(ix)))
+            append!(bem, _emag_cgs(o)[ix])
+            poscm = Float64(getfield(o.scale, :cm) / getfield(o.scale, pos_unit)); Gc = o.info.constants.G
+        end
     end
     meta = (dim=Symbol("3D-multi"), components=Tuple(names), threshold=:per_component,
             threshold_unit=:per_component, linking_length=linking_length, pos_unit=pos_unit,
-            mass_unit=mass_unit, n_selected=length(ax))
+            mass_unit=mass_unit, n_selected=length(ax), boundedness=boundedness,
+            unbinding=iterative_unbinding)
     isempty(ax) && return ClumpCatalog(0, NamedTuple[], meta)
+    bargs = need_b ? (mg=mg, vx=bvx, vy=bvy, vz=bvz, et=bet, em=bem, poscm=poscm, Gc=Gc,
+                      egrav=egrav, direct_max=direct_max, eps2=(Float64(softening)*poscm)^2) : nothing
     labels, k = _fof3d(ax, ay, az, Float64(linking_length))
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
     out = NamedTuple[]
     for mem in members
+        iterative_unbinding && (mem = _unbind(mem, bargs, ax, ay, az))
         length(mem) >= min_members || continue
         mc = @view am[mem]; Mtot = sum(mc)
         comx = sum(mc .* @view(ax[mem])) / Mtot
@@ -838,8 +903,14 @@ function clumpfind(components::AbstractVector; linking_length::Real, pos_unit::S
         breakdown = NamedTuple{Tuple(names)}(Tuple(
             (mass=sum(am[j] for j in mem if comp[j] === nm; init=0.0),
              n=count(j -> comp[j] === nm, mem)) for nm in names))
-        push!(out, (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
-                    radius=r, components=breakdown))
+        c = (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
+             radius=r, components=breakdown)
+        if boundedness
+            c = merge(c, _boundedness(mem, mg, bvx, bvy, bvz, bet, bem, ax, ay, az,
+                                      comx, comy, comz, r, poscm, Gc, egrav, direct_max, bargs.eps2))
+            bound_only && !c.bound && continue
+        end
+        push!(out, c)
     end
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
@@ -978,7 +1049,7 @@ function clumptable(cat::ClumpCatalog)
     nd == 3 && push!(cols, :com_z => [c.com[3] for c in cs])
     push!(cols, :radius => [c.radius for c in cs])
     haskey(cs[1], :peak) && push!(cols, :peak => [c.peak for c in cs])
-    for k in (:e_kin, :e_therm, :e_grav, :alpha_vir, :bound)
+    for k in (:e_kin, :e_therm, :e_mag, :e_grav, :alpha_vir, :bound)
         haskey(cs[1], k) && push!(cols, k => [getproperty(c, k) for c in cs])
     end
     haskey(cs[1], :n_subclumps) && push!(cols, :n_subclumps => [c.n_subclumps for c in cs])

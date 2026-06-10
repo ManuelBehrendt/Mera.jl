@@ -142,8 +142,8 @@ _partition(labels) = Set(Set(findall(==(l), labels)) for l in unique(labels))
 end
 
 # minimal bargs bundle for the gravity/unbinding kernels (cgs already; poscm=1, G=1) ----
-_bargs(x, y, z, vx, vy, vz, mg; G=1.0, eps2=0.0, egrav=:direct, et=zeros(length(mg))) =
-    (mg=mg, vx=vx, vy=vy, vz=vz, et=et, poscm=1.0, Gc=G, egrav=egrav, direct_max=10^9, eps2=eps2)
+_bargs(x, y, z, vx, vy, vz, mg; G=1.0, eps2=0.0, egrav=:direct, et=zeros(length(mg)), em=zeros(length(mg))) =
+    (mg=mg, vx=vx, vy=vy, vz=vz, et=et, em=em, poscm=1.0, Gc=G, egrav=egrav, direct_max=10^9, eps2=eps2)
 
 @testset verbose=true "clumpfind physics (v2 Phase 2, data-free)" begin
 
@@ -188,7 +188,7 @@ _bargs(x, y, z, vx, vy, vz, mg; G=1.0, eps2=0.0, egrav=:direct, et=zeros(length(
         # call _boundedness directly: COM-frame KE, e_grav, bound flag
         for (vrel, expect_bound) in ((0.0, true), (1e6, false))
             vx = [0.0, vrel]   # one mass moving → finite COM-frame KE
-            b = Mera._boundedness([1, 2], mg, vx, zeros(2), zeros(2), zeros(2),
+            b = Mera._boundedness([1, 2], mg, vx, zeros(2), zeros(2), zeros(2), zeros(2),
                                   xs, ys, zs, sum(mg.*xs)/sum(mg), 0.0, 0.0,
                                   maximum(abs.(xs .- sum(mg.*xs)/sum(mg))), 1.0, G, :direct, 10^9, 0.0)
             @test isapprox(b.e_grav, G*m1*m2/d; rtol=1e-12)       # exact pair energy
@@ -238,5 +238,50 @@ _bargs(x, y, z, vx, vy, vz, mg; G=1.0, eps2=0.0, egrav=:direct, et=zeros(length(
         Pp = Mera.Points(xs, ys, zs, ones(length(xs)), fs, mem, nothing)
         @test last(Mera._label(DensityWatershed(:rho; threshold=0.0, linking_length=0.6, persistence=6.0), Pp)) == 1
         @test last(Mera._label(DensityWatershed(:rho; threshold=0.0, linking_length=0.6, persistence=2.0), Pp)) == 2
+    end
+end
+
+@testset verbose=true "clumpfind physics (v2 Phase 2.5, data-free)" begin
+
+    @testset "magnetic support enters the bound budget" begin
+        # two-body: gravity fixed; magnetic energy added per member can unbind the pair.
+        # |E_grav| = G m₁m₂/d; with KE=0, bound ⇔ E_mag < |E_grav|.
+        G = 1.0; m1 = 1.0; m2 = 1.0; d = 1.0; xs = [0.0, d]; ys = zeros(2); zs = zeros(2); mg = [m1, m2]
+        eg = G*m1*m2/d
+        com = sum(mg.*xs)/sum(mg); R = maximum(abs.(xs .- com))
+        bnd(em) = Mera._boundedness([1, 2], mg, zeros(2), zeros(2), zeros(2), zeros(2), em,
+                                    xs, ys, zs, com, 0.0, 0.0, R, 1.0, G, :direct, 10^9, 0.0)
+        @test bnd(zeros(2)).e_mag == 0.0                       # no field → no support
+        @test bnd(zeros(2)).bound == true                     # at rest, no support → bound
+        weak = bnd([0.1*eg/2, 0.1*eg/2]); strong = bnd([eg, eg])
+        @test isapprox(weak.e_mag, 0.1*eg; rtol=1e-12)         # E_mag sums over members
+        @test weak.bound == true                               # weak field still bound
+        @test strong.bound == false                            # strong field unbinds (E_mag > |E_grav|)
+    end
+
+    @testset "tidal / Jacobi truncation against a host" begin
+        # host: many equal-mass points filling a sphere of radius RH around the origin.
+        # subclump: a tight core at distance D plus a far member beyond the Jacobi radius.
+        rng = MersenneTwister(5)
+        nh = 2000; hx = Float64[]; hy = Float64[]; hz = Float64[]
+        while length(hx) < nh
+            p = 2 .* rand(rng, 3) .- 1
+            sum(abs2, p) <= 1 && (push!(hx, p[1]); push!(hy, p[2]); push!(hz, p[3]))
+        end
+        D = 5.0                                                  # subclump sits at x=D, outside the host
+        # subclump: a dominant tight core at (D,0,0) (so its COM stays at ~D) + one far outlier
+        ncore = 60; cx = D .+ 0.02 .* randn(rng, ncore)
+        cy = 0.02 .* randn(rng, ncore); cz = 0.02 .* randn(rng, ncore)
+        sx = vcat(cx, D + 3.0); sy = vcat(cy, 0.0); sz = vcat(cz, 0.0)   # last member is the far outlier
+        xs = vcat(hx, sx); ys = vcat(hy, sy); zs = vcat(hz, sz)
+        mg = ones(length(xs))
+        host = collect(1:nh); sub = collect(nh+1:nh+ncore+1); far = nh + ncore + 1
+        kept = Mera._tidal_truncate(sub, host, (mg=mg, poscm=1.0), xs, ys, zs)
+        # the far outlier (well beyond the Jacobi radius) is stripped; the core survives
+        @test far ∉ kept
+        @test length(kept) >= ncore - 3 && length(kept) < length(sub)
+        # analytic Jacobi radius: M_host(<D)=nh (all within D=5), m_sub=ncore+1 ⇒ core (≲0.1) ≪ r_t ≪ 3
+        rt = D * ((ncore+1) / (3*nh))^(1/3)
+        @test 0.2 < rt < 3.0
     end
 end
