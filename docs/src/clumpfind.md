@@ -60,13 +60,30 @@ pairwise sum up to `direct_max` members).
 
 ### Deblending overlapping clumps
 
-A single threshold merges touching structures into one friends-of-friends group. `deblend=true`
-splits each group at its density peaks — peaks must be separated by `peak_min_distance` (in
-`pos_unit`), and members are assigned to the nearest peak:
+A single threshold merges touching structures into one friends-of-friends group. `deblend` splits
+each group at its density peaks (peaks separated by `peak_min_distance` in `pos_unit`):
 
 ```julia
 cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4,
-                deblend=true, peak_min_distance=0.3)
+                deblend=:peak, peak_min_distance=0.3)        # nearest-peak (also `deblend=true`)
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4,
+                deblend=:watershed)                          # density-descending basins (respects saddles)
+```
+
+`:peak` assigns each member to the nearest peak; `:watershed` floods the density field from each peak
+downhill (DENMAX/SUBFIND-style for points, Meyer flooding for 2-D maps), which follows saddles better.
+Both are mass-conserving (every member/pixel lands in exactly one clump).
+
+### Bound-substructure trees
+
+`substructure=true` builds a two-level tree: each top-level clump is split into density basins
+(watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as nested
+`subclumps`. Top clumps gain the boundedness fields too.
+
+```julia
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4, substructure=true)
+cat[1].n_subclumps          # number of self-bound subclumps inside the most massive clump
+cat[1].subclumps[1].mass    # the largest bound subclump's mass
 ```
 
 ## Multi-field — gas + stars + dark matter together
