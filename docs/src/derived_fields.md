@@ -108,6 +108,36 @@ delete_field(:vmag2)         # remove it (delete_field(name; datatypes=:all) by 
 Registered fields also work as quantities in [First-Look Reports](report.md) cards — the report reads
 only the dependencies your field declares.
 
+## Custom units
+
+A field's `unit` can be an existing `info.scale` field, `:standard`, a plain **number** (a literal
+code→display factor), or a **custom unit** you register with [`add_unit`](@ref). Registered units work
+everywhere a unit is accepted — including `getvar(obj, var, unit)` for built-in quantities:
+
+```julia
+add_unit(:Msun_per_century, 1e-2)               # 1 code-unit value × 1e-2
+add_field(:mdot, (o,d) -> d[:rho]; depends_on=[:rho], unit=:Msun_per_century)
+getvar(gas, :mass, :Msun_per_century)           # also applies to built-in fields
+list_units();  delete_unit(:Msun_per_century)
+```
+
+## Inspecting dependencies
+
+```julia
+field_dependencies(:hydro, :ekin)   # (; direct=[:mass,:v], raw=[:rho,:vx,:vy,:vz])
+field_tree(:hydro, :mach)           # prints the dependency tree down to raw leaves
+```
+```
+mach
+├─ v
+│  ├─ vx  (raw)
+│  ├─ vy  (raw)
+│  └─ vz  (raw)
+└─ cs
+   ├─ p  (raw)
+   └─ rho  (raw)
+```
+
 ## API
 
 ```@docs
@@ -115,5 +145,10 @@ add_field
 delete_field
 list_fields
 field_info
+field_dependencies
+field_tree
+add_unit
+delete_unit
+list_units
 getvar_requirements
 ```

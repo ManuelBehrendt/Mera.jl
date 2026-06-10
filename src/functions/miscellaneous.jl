@@ -654,11 +654,8 @@ function getunit(dataobject, quantity::Symbol, vars::Array{Symbol,1}, units::Arr
             return 1., unit
         end
     else
-        if uname == false
-            return getfield(dataobject.info.scale, unit)
-        else
-            return getfield(dataobject.info.scale, unit), unit
-        end
+        factor = haskey(USER_UNITS, unit) ? USER_UNITS[unit] : getfield(dataobject.info.scale, unit)
+        return uname == false ? factor : (factor, unit)
     end
 
 end
@@ -671,11 +668,8 @@ function getunit(dataobject::InfoType, unit::Symbol; uname::Bool=false)
             return 1., unit
         end
     else
-        if uname == false
-            return getfield(dataobject.scale, unit)
-        else
-            return getfield(dataobject.scale, unit), unit
-        end
+        factor = haskey(USER_UNITS, unit) ? USER_UNITS[unit] : getfield(dataobject.scale, unit)
+        return uname == false ? factor : (factor, unit)
     end
 end
 
