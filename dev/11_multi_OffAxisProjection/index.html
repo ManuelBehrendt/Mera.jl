@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Projection basics · Mera.jl</title><meta name="title" content="Projection basics · Mera.jl"/><meta property="og:title" content="Projection basics · Mera.jl"/><meta property="twitter:title" content="Projection basics · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/11_multi_OffAxisProjection/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/11_multi_OffAxisProjection/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/11_multi_OffAxisProjection/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">Getting Started</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-3-1" type="checkbox"/><label class="tocitem" for="menuitem-3-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li><li><a class="tocitem" href="../api/data_inspection/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-2" type="checkbox"/><label class="tocitem" for="menuitem-3-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li><li><a class="tocitem" href="../api/data_loading/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-3-3" type="checkbox"/><label class="tocitem" for="menuitem-3-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li><li><a class="tocitem" href="../api/subregions/">API Reference</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Basic Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Tutorial</a></li><li><a class="tocitem" href="../api/calculations/">API Reference</a></li></ul></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../report/">First-Look Reports</a></li><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><input class="collapse-toggle" id="menuitem-4-5" type="checkbox"/><label class="tocitem" for="menuitem-4-5"><span class="docs-label">Mask/Filter/Meta</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Tutorial</a></li><li><a class="tocitem" href="../api/masking_filtering/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-6" type="checkbox"/><label class="tocitem" for="menuitem-4-6"><span class="docs-label">Profiles &amp; Phase Diagrams</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Tutorial</a></li><li><a class="tocitem" href="../profiles_phase/">API Reference</a></li></ul></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox" checked/><label class="tocitem" for="menuitem-5"><span class="docs-label">Projection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li><li><a class="tocitem" href="../api/projections/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox" checked/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Off-axis</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_offaxis_Projection/">Guide</a></li><li><a class="tocitem" href="../offaxis_conservation_proof/">Conservation Proof</a></li><li><a class="tocitem" href="../api/offaxis/">API Reference</a></li><li><input class="collapse-toggle" id="menuitem-5-2-4" type="checkbox" checked/><label class="tocitem" for="menuitem-5-2-4"><span class="docs-label">Notebooks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li class="is-active"><a class="tocitem" href>Projection basics</a><ul class="internal"><li><a class="tocitem" href="#Load-a-galaxy"><span>Load a galaxy</span></a></li><li><a class="tocitem" href="#0.-The-camera-basis"><span>0. The camera basis</span></a></li><li><a class="tocitem" href="#1.-The-everyday-way:-inclination-and-azimuth"><span>1. The everyday way: <code>inclination</code> &amp; <code>azimuth</code></span></a></li><li><a class="tocitem" href="#2.-Other-ways-to-choose-the-view"><span>2. Other ways to choose the view</span></a></li><li><a class="tocitem" href="#3.-Binning:-how-rotated-cells-land-on-pixels"><span>3. Binning: how rotated cells land on pixels</span></a></li><li><a class="tocitem" href="#4.-Gravity"><span>4. Gravity</span></a></li><li><a class="tocitem" href="#5.-Several-quantities-at-once"><span>5. Several quantities at once</span></a></li><li><a class="tocitem" href="#Play-around"><span>Play around</span></a></li></ul></li><li><a class="tocitem" href="../12_multi_LosCubes/">LOS cubes &amp; kinematics</a></li><li><a class="tocitem" href="../13_multi_OffAxis_Validation/">Validation &amp; accuracy</a></li><li><a class="tocitem" href="../14_multi_OffAxis_Features/">Advanced LOS features</a></li></ul></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-6-1" type="checkbox"/><label class="tocitem" for="menuitem-6-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li><li><a class="tocitem" href="../api/mera_files/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../api/volume_rendering/">API Reference</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">Multi-Threading</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Tutorial</a></li><li><a class="tocitem" href="../api/multithreading/">API Reference</a></li></ul></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-7-3" type="checkbox"/><label class="tocitem" for="menuitem-7-3"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li><li><a class="tocitem" href="../api/notifications/">API Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-4" type="checkbox"/><label class="tocitem" for="menuitem-7-4"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Julia Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">Examples &amp; Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../Miscellaneous/">Miscellaneous</a></li><li><a class="tocitem" href="../api/">Complete API Reference</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Projection</a></li><li><a class="is-disabled">Off-axis</a></li><li><a class="is-disabled">Notebooks</a></li><li class="is-active"><a href>Projection basics</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Projection basics</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Off-axis-projection-with-Mera"><a class="docs-heading-anchor" href="#Off-axis-projection-with-Mera">Off-axis projection with Mera</a><a id="Off-axis-projection-with-Mera-1"></a><a class="docs-heading-anchor-permalink" href="#Off-axis-projection-with-Mera" title="Permalink"></a></h1><p>Project hydro / RT / gravity / particle data along <strong>any line of sight</strong>, not just the box axes. An off-axis projection is <strong>orthographic</strong>: the observer is at infinity, so all sightlines are parallel; each cell is carried along the line of sight onto the image plane.</p><p>This notebook follows the <a href="https://manuelbehrendt.github.io/Mera.jl/">Off-axis Projection documentation</a>. Pixel size is set physically with <code>pxsize=[size, :unit]</code> (preferred over <code>res</code>). Run the cells top to bottom and change the numbers to play around.</p><pre><code class="language-julia hljs"># --- environment ---------------------------------------------------------
+# These tutorials use the development version of Mera in this repository.
+# Point Pkg at your Mera.jl checkout (adjust the path), or delete these two
+# lines if Mera is already in your default environment.
+using Pkg
+Pkg.activate(expanduser(&quot;~/Documents/codes/github/Mera.jl&quot;))
+
+using Mera, CairoMakie
+CairoMakie.activate!()
+println(&quot;threads = &quot;, Threads.nthreads())</code></pre><pre><code class="nohighlight hljs">  Activating 
+
+project at `~/Documents/codes/github/Mera.jl`
+
+
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: wrong dep version loaded (12), mismatched flags (6))
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+
+
+*__   __ _______ ______   _______ 
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+
+
+
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Precompiling CairoMakie [13f3f980-e62b-5c42-98c6-ff1f3baf88f0] (cache misses: wrong dep version loaded (18))
+
+
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+
+[ Info: Precompiling PolynomialsMakieExt [6a4b1961-d857-5aa3-b7f6-fc7c46de29bb] (cache misses: wrong dep version loaded (18))
+
+
+
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+
+threads = 4</code></pre><h2 id="Load-a-galaxy"><a class="docs-heading-anchor" href="#Load-a-galaxy">Load a galaxy</a><a id="Load-a-galaxy-1"></a><a class="docs-heading-anchor-permalink" href="#Load-a-galaxy" title="Permalink"></a></h2><p>Set the path/output of a simulation you have. The examples below use the Mera test galaxies; <strong>change <code>BASE</code> to your own data directory</strong>.</p><pre><code class="language-julia hljs">BASE = &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;   # &lt;-- change me
+info = getinfo(100, joinpath(BASE, &quot;spiral_clumps&quot;), verbose=false)
+gas  = gethydro(info, verbose=false, show_progress=false)</code></pre><pre><code class="nohighlight hljs">  0.749615 seconds (3.91 M allocations: 303.434 MiB, 1.29% gc time, 102.12% compilation time)
+
+
+
+
+
+HydroDataType(Table with 590311 rows, 10 columns:
+Columns:
+#   colname  type
+────────────────────
+1   level    Int64
+2   cx       Int64
+3   cy       Int64
+4   cz       Int64
+5   rho      Float64
+6   vx       Float64
+7   vy       Float64
+8   vz       Float64
+9   p        Float64
+10  var6     Float64, InfoType(100, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps&quot;, FileNamesType(&quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/info_00100.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/amr_00100.&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/hydro_00100.&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/hydro_file_descriptor.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/grav_00100.&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/part_00100.&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/part_file_descriptor.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/rt_00100.&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/rt_file_descriptor.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/info_rt_00100.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/clump_00100.&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/timer_00100.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/header_00100.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/namelist.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/compilation.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/makefile.txt&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/spiral_clumps/output_00100/patches.txt&quot;), &quot;RAMSES&quot;, Dates.DateTime(&quot;2023-05-12T22:47:36.638&quot;), Dates.DateTime(&quot;2025-06-21T18:31:55.533&quot;), 4, 3, 3, 7, 100.0, 9.9335244067439, 1.0, 1.0, 1.0, 0.0, 0.0, 0.045, 3.085677581282e21, 6.77025430198932e-23, 1.9890999999999996e42, 6.559266058737735e6, 4.70430312423675e14, 1.6667, true, 6, 8, 0, [:rho, :vx, :vy, :vz, :p, :var6], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(1, [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :metallicity], [&quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;], false, true, 1, [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity], [&quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;d&quot;, &quot;i&quot;, &quot;i&quot;, &quot;b&quot;, &quot;b&quot;, &quot;d&quot;, &quot;d&quot;], false, true, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, true, Dict{Any, Any}(&quot;&amp;COOLING_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;cooling&quot; =&gt; &quot;.true. &quot;, &quot;metal&quot; =&gt; &quot;.true. &quot;, &quot;z_ave&quot; =&gt; &quot;1.&quot;), &quot;&amp;SF_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;m_star &quot; =&gt; &quot; 1. ! in units mass_sph&quot;, &quot;n_star &quot; =&gt; &quot; 1 &quot;, &quot;T2_star&quot; =&gt; &quot; 1e4 &quot;, &quot;eps_star &quot; =&gt; &quot; 0.02 !2%&quot;), &quot;&amp;AMR_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;levelmax&quot; =&gt; &quot;7&quot;, &quot;npartmax&quot; =&gt; &quot; 500000&quot;, &quot;ngridmax&quot; =&gt; &quot; 100000 &quot;, &quot;boxlen&quot; =&gt; &quot;100. !kpc\t&quot;, &quot;levelmin&quot; =&gt; &quot;3 &quot;, &quot;nexpand&quot; =&gt; &quot;1                      &quot;), &quot;&amp;BOUNDARY_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;jbound_min&quot; =&gt; &quot; 0, 0,-1,+1,-1,-1&quot;, &quot;kbound_max&quot; =&gt; &quot; 0, 0, 0, 0,-1,+1&quot;, &quot;no_inflow&quot; =&gt; &quot;.true.&quot;, &quot;bound_type&quot; =&gt; &quot; 2, 2, 2, 2, 2, 2    !2&quot;, &quot;nboundary &quot; =&gt; &quot; 6&quot;, &quot;ibound_max&quot; =&gt; &quot;-1,+1,+1,+1,+1,+1&quot;, &quot;ibound_min&quot; =&gt; &quot;-1,+1,-1,-1,-1,-1&quot;, &quot;jbound_max&quot; =&gt; &quot; 0, 0,-1,+1,+1,+1&quot;, &quot;kbound_min&quot; =&gt; &quot; 0, 0, 0, 0,-1,+1&quot;), &quot;&amp;OUTPUT_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;tend&quot; =&gt; &quot;10                 !Final time of the simulation&quot;, &quot;delta_tout&quot; =&gt; &quot;0.1          !Time increment between outputs&quot;), &quot;&amp;POISSON_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;gravity_type&quot; =&gt; &quot;-3       &quot;), &quot;&amp;UNITS_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;units_density &quot; =&gt; &quot; 0.677025430198932E-22 ! 1e9 Msol/kpc^3&quot;, &quot;units_time    &quot; =&gt; &quot; 0.470430312423675E+15 ! G&quot;, &quot;units_length  &quot; =&gt; &quot; 0.308567758128200E+22 ! kpc&quot;), &quot;&amp;RUN_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;pic&quot; =&gt; &quot;.true.&quot;, &quot;nsubcycle&quot; =&gt; &quot;20*2 &quot;, &quot;clumpfind&quot; =&gt; &quot;true&quot;, &quot;ncontrol&quot; =&gt; &quot;1                      !frequency of screen output&quot;, &quot;poisson&quot; =&gt; &quot;.true.&quot;, &quot;verbose&quot; =&gt; &quot;.false.&quot;, &quot;nremap&quot; =&gt; &quot;5 !10&quot;, &quot;nrestart&quot; =&gt; &quot;99&quot;, &quot;hydro&quot; =&gt; &quot;.true.&quot;), &quot;&amp;CLUMPFIND_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;ivar_clump&quot; =&gt; &quot;1&quot;, &quot;density_threshold&quot; =&gt; &quot;0.01&quot;), &quot;&amp;FEEDBACK_PARAMS&quot; =&gt; Dict{Any, Any}(&quot;t_sne&quot; =&gt; &quot;10. !10. !Myr&quot;, &quot;eta_sn &quot; =&gt; &quot;0.2&quot;, &quot;!delayed_cooling&quot; =&gt; &quot;.true.&quot;, &quot;!t_diss &quot; =&gt; &quot; 1.\t!Myr&quot;, &quot;f_ek&quot; =&gt; &quot;0.&quot;)…), true, true, Mera.FilesContentType([&quot;#############################################################################&quot;, &quot;# If you have problems with this makefile, contact Romain.Teyssier@gmail.com&quot;, &quot;#############################################################################&quot;, &quot;# Compilation time parameters&quot;, &quot;NVECTOR = 64 #32&quot;, &quot;NDIM = 3&quot;, &quot;NPRE = 8&quot;, &quot;NVAR = 6&quot;, &quot;NENER = 0&quot;, &quot;SOLVER = hydro&quot;  …  &quot;\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@&quot;, &quot;%.o:%.F&quot;, &quot;\t\$(F90) \$(FFLAGS) -c \$^ -o \$@ \$(LIBS_OBJ)&quot;, &quot;%.o:%.f90&quot;, &quot;\t\$(F90) \$(FFLAGS) -c \$^ -o \$@ \$(LIBS_OBJ)&quot;, &quot;FORCE:&quot;, &quot;#############################################################################&quot;, &quot;clean:&quot;, &quot;\trm -f *.o *.\$(MOD) *.i&quot;, &quot;#############################################################################&quot;], [&quot; --------------------------------------------------------------------&quot;, &quot;&quot;, &quot;     minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER&quot;, &quot;       0.388         0.392         0.397         0.004         0.009     0.7     4   1    refine                  &quot;, &quot;       0.507         2.917         5.424         1.783         0.611     5.5     1   3    particles               &quot;, &quot;       1.347         1.701         2.269         0.344         0.202     3.2     4   1    feedback                &quot;, &quot;      16.465        17.380        18.250         0.646         0.037    32.7     3   1    poisson                 &quot;, &quot;       3.399         4.081         4.713         0.478         0.117     7.7     3   1    rho                     &quot;, &quot;       0.529         0.541         0.550         0.008         0.014     1.0     1   3    courant                 &quot;, &quot;       0.079         0.091         0.098         0.007         0.081     0.2     3   2    hydro - set unew        &quot;, &quot;      15.304        18.454        22.169         2.656         0.144    34.8     3   4    hydro - godunov         &quot;, &quot;       1.796         5.559         8.199         2.596         0.467    10.5     4   3    hydro - rev ghostzones  &quot;, &quot;       0.109         0.132         0.142         0.013         0.100     0.2     3   2    hydro - set uold        &quot;, &quot;       0.057         0.088         0.122         0.023         0.262     0.2     1   4    hydro upload fine       &quot;, &quot;       1.073         1.312         1.474         0.161         0.122     2.5     3   4    cooling                 &quot;, &quot;       0.112         0.122         0.135         0.009         0.078     0.2     4   3    hydro - ghostzones      &quot;, &quot;       0.298         0.301         0.306         0.003         0.011     0.6     4   1    flag                    &quot;, &quot;      53.074     100.0    TOTAL&quot;], [&quot;/data2/mabe/MeraTest/Ramses/patch_2019_10version/add_list.f90&quot;, &quot;!################################################################&quot;, &quot;!################################################################&quot;, &quot;!################################################################&quot;, &quot;!################################################################&quot;, &quot;subroutine add_list(ind_part,list2,ok,np)&quot;, &quot;  use amr_commons&quot;, &quot;  use pm_commons&quot;, &quot;  implicit none&quot;, &quot;  integer::np&quot;  …  &quot;     end do&quot;, &quot;&quot;, &quot;  end do&quot;, &quot;  ! End loop over grid cells&quot;, &quot;end subroutine tsc_cell&quot;, &quot;#endif&quot;, &quot;!###########################################################&quot;, &quot;!###########################################################&quot;, &quot;!###########################################################&quot;, &quot;!###########################################################&quot;]), true, true, true, 0, ScalesType002(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9999999999980551, 0.9999999999980551, 6.77025430198932e-23, 999.9999999987034, 999.9999999987034, 0.20890821919226463, 0.014907037050462488, 14.907037050462488, 1.4907037050462488e7, 4.70430312423675e14, 4.70430312423675e17, 9.999999999999998e8, 9.999999999999998e8, 3.330598439436053e14, 1.0479261167570186e12, 1.9890999999999996e42, 65.59266058737735, 65592.66058737735, 6.559266058737735e6, 30.996344997059538, 8.557898117221824e55, 2.9128322630389308e-9, 517291.4494607442, 517291.4494607442, 680646.644027295, 680646.644027295, 2.9128322630389304e-9, 2.9128322630389304e-9, 2.109755819936081e7, 2.109755819936081e7, 3.1162135509683387e29, 1.2537844818309073e65, 6.198460374231122e71, 6.198460374231122e64, 2.109755819936081e7, 2.1097558199360812e8, 1.380649e-16, 4.0258946849746426e70, 4.0258946849746426e70, 4.0258946849746425e71, 0.00019132101231911184, 191.32101231911184, 191.32101231911184, 1.9132101231911187e-8, 5.341419875695069e67, 5.341419875695069e64, 5.341419875695069e61, 1.819163836006061e41, 4.752256624885217e7, 4.752256624885217e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.996344997059538, 0.09145663043618026, 6.1918464565599674e-24, 6.1918464565599674e-24, 0.6191846456559967, 619.1846456559967, 619184.6456559967, 1.2584832481461724e23, 1.2584832481461724e23, 1.3943119491905496e-8, 1.3943119491905495e-10, 1.3943119491905496e-13, 3.0984365782372897e-9, 4.302397122930886e13, 4.302397122930886e6, 4302.397122930886, 2.9128322630389304e-9, 8.557898117221824e55, 9.439846472322433e-31, 4.5186572882681335e-30, 3.085677581282e21, 1.9890999999999996e42, 4.70430312423675e14, 1.0, 6.8587767484e-314, 6.858776867e-314, 6.858776938e-314, 6.858776962e-314, 6.8587769855e-314, 6.858777033e-314, 6.8587770567e-314, 6.8587770804e-314, 6.858777104e-314, 6.858777128e-314, 6.858777199e-314, 6.8587772227e-314, 6.8587772464e-314, 4.302397122930886e13, 6.858777294e-314, 3.085677581282e21, 1.9890999999999996e42, 1.9890999999999996e42, 4.70430312423675e14, 8.557898117221824e55, 8.557898117221824e55, 1.0, 6.8587775784e-314, 6.858777602e-314, 1.3943119491905496e-8, 1.3943119491905496e-8, 1.3943119491905496e-8, 1.3943119491905496e-8, 1.3943119491905496e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(100000, 272, 3, 3, 3, 7, 6, 25604, [0.0, 1.152424e6, 3.83576e6, 9.850944e6, 1.6777216e7], Bool[0, 0, 0, 0]), PartInfoType(0.0, 0.6708241192497574, 0.0, 0, 39970, 413895, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(&quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 3, 7, 100.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6], Dict{Any, Any}(), 0.0, 0.0, ScalesType002(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9999999999980551, 0.9999999999980551, 6.77025430198932e-23, 999.9999999987034, 999.9999999987034, 0.20890821919226463, 0.014907037050462488, 14.907037050462488, 1.4907037050462488e7, 4.70430312423675e14, 4.70430312423675e17, 9.999999999999998e8, 9.999999999999998e8, 3.330598439436053e14, 1.0479261167570186e12, 1.9890999999999996e42, 65.59266058737735, 65592.66058737735, 6.559266058737735e6, 30.996344997059538, 8.557898117221824e55, 2.9128322630389308e-9, 517291.4494607442, 517291.4494607442, 680646.644027295, 680646.644027295, 2.9128322630389304e-9, 2.9128322630389304e-9, 2.109755819936081e7, 2.109755819936081e7, 3.1162135509683387e29, 1.2537844818309073e65, 6.198460374231122e71, 6.198460374231122e64, 2.109755819936081e7, 2.1097558199360812e8, 1.380649e-16, 4.0258946849746426e70, 4.0258946849746426e70, 4.0258946849746425e71, 0.00019132101231911184, 191.32101231911184, 191.32101231911184, 1.9132101231911187e-8, 5.341419875695069e67, 5.341419875695069e64, 5.341419875695069e61, 1.819163836006061e41, 4.752256624885217e7, 4.752256624885217e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.996344997059538, 0.09145663043618026, 6.1918464565599674e-24, 6.1918464565599674e-24, 0.6191846456559967, 619.1846456559967, 619184.6456559967, 1.2584832481461724e23, 1.2584832481461724e23, 1.3943119491905496e-8, 1.3943119491905495e-10, 1.3943119491905496e-13, 3.0984365782372897e-9, 4.302397122930886e13, 4.302397122930886e6, 4302.397122930886, 2.9128322630389304e-9, 8.557898117221824e55, 9.439846472322433e-31, 4.5186572882681335e-30, 3.085677581282e21, 1.9890999999999996e42, 4.70430312423675e14, 1.0, 6.8587767484e-314, 6.858776867e-314, 6.858776938e-314, 6.858776962e-314, 6.8587769855e-314, 6.858777033e-314, 6.8587770567e-314, 6.8587770804e-314, 6.858777104e-314, 6.858777128e-314, 6.858777199e-314, 6.8587772227e-314, 6.8587772464e-314, 4.302397122930886e13, 6.858777294e-314, 3.085677581282e21, 1.9890999999999996e42, 1.9890999999999996e42, 4.70430312423675e14, 8.557898117221824e55, 8.557898117221824e55, 1.0, 6.8587775784e-314, 6.858777602e-314, 1.3943119491905496e-8, 1.3943119491905496e-8, 1.3943119491905496e-8, 1.3943119491905496e-8, 1.3943119491905496e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))</code></pre><p>A small helper to show a 2D map with physical axes and a colourbar (we will reuse it):</p><pre><code class="language-julia hljs">function showmap(M, ext_kpc; title=&quot;&quot;, clabel=&quot;log₁₀ Σ [M⊙/pc²]&quot;, logscale=true, cmap=:inferno, crange=nothing)
+    A = logscale ? log10.(replace(M, 0.0=&gt;NaN)) : Float64.(M)
+    fig = Figure(size=(560,470))
+    ax  = Axis(fig[1,1], aspect=DataAspect(), title=title, xlabel=&quot;x&#39; [kpc]&quot;, ylabel=&quot;y&#39; [kpc]&quot;)
+    hm  = crange===nothing ?
+        heatmap!(ax, range(ext_kpc[1],ext_kpc[2],length=size(A,1)), range(ext_kpc[3],ext_kpc[4],length=size(A,2)), A, colormap=cmap, nan_color=:black) :
+        heatmap!(ax, range(ext_kpc[1],ext_kpc[2],length=size(A,1)), range(ext_kpc[3],ext_kpc[4],length=size(A,2)), A, colormap=cmap, nan_color=:black, colorrange=crange)
+    Colorbar(fig[1,2], hm, label=clabel)
+    fig
+end</code></pre><pre><code class="nohighlight hljs">showmap (generic function with 1 method)</code></pre><h2 id="0.-The-camera-basis"><a class="docs-heading-anchor" href="#0.-The-camera-basis">0. The camera basis</a><a id="0.-The-camera-basis-1"></a><a class="docs-heading-anchor-permalink" href="#0.-The-camera-basis" title="Permalink"></a></h2><p>Every off-axis view is just an orthonormal <strong>camera basis</strong> built from the line of sight: <code>w</code> (the viewing direction), and <code>right</code>/<code>up</code> spanning the image plane (image x = <code>right</code>, y = <code>up</code>), right-handed with <code>right × up = w</code>. Each cell is carried along <code>w</code> onto that plane. Everything below only changes how this basis is pointed — the basis travels on the returned map (<code>.los</code>, <code>.cam_right</code>, <code>.up</code>, <code>.center</code>, <code>.direction</code>).</p><pre><code class="language-julia hljs">cam = projection(gas, :sd, :Msol_pc2; los=[0,0,1], center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+println(&quot;line of sight   w     = &quot;, round.(cam.los, digits=3))
+println(&quot;camera right (image x)= &quot;, round.(cam.cam_right, digits=3))
+println(&quot;camera up    (image y)= &quot;, round.(cam.up, digits=3))
+println(&quot;projection centre     = &quot;, round.(cam.center, digits=3), &quot;   direction = &quot;, cam.direction)
+showmap(cam.maps[:sd], cam.extent .* gas.scale.kpc; title=&quot;los=[0,0,1]  (image x→right, y→up)&quot;)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:22.435
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = 
+
+[0.0, 0.0, 1.0]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 344 x 344
+
+
+
+line of sight   w     = 
+
+[0.0, 0.0, 1.0]
+camera right (image x)= [0.0, -1.0, 0.0]
+camera up    (image y)= [1.0, 0.0, -0.0]
+projection centre     = [0.5, 0.5, 0.5]   direction = offaxis</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_7_6.png" alt="png"/></p><h2 id="1.-The-everyday-way:-inclination-and-azimuth"><a class="docs-heading-anchor" href="#1.-The-everyday-way:-inclination-and-azimuth">1. The everyday way: <code>inclination</code> &amp; <code>azimuth</code></a><a id="1.-The-everyday-way:-inclination-and-azimuth-1"></a><a class="docs-heading-anchor-permalink" href="#1.-The-everyday-way:-inclination-and-azimuth" title="Permalink"></a></h2><p>Tilt the view away from a reference <code>axis</code> by <strong><code>inclination</code></strong> (0° = looking straight down the axis, 90° = perpendicular) and rotate around it by <strong><code>azimuth</code></strong>. Angles are in <strong>degrees</strong>.</p><p><code>axis</code> defaults to the box <code>:z</code> (assumes nothing — good for clouds/filaments). For a disk use <code>axis=:angmom</code> (the object&#39;s own angular momentum <strong>L</strong>): then 0° = face-on, 90° = edge-on.</p><pre><code class="language-julia hljs">m = projection(gas, :sd, :Msol_pc2; inclination=60, azimuth=30, axis=:angmom,
+               center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+showmap(m.maps[:sd], m.extent .* gas.scale.kpc; title=&quot;inclination 60°, azimuth 30°&quot;)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:37.431
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.7427, -0.4216, -0.5202]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 473 x 533</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_9_3.png" alt="png"/></p><h3 id="Face-on-edge-on-sequence"><a class="docs-heading-anchor" href="#Face-on-edge-on-sequence">Face-on → edge-on sequence</a><a id="Face-on-edge-on-sequence-1"></a><a class="docs-heading-anchor-permalink" href="#Face-on-edge-on-sequence" title="Permalink"></a></h3><p>Only the camera changes; the data do not.</p><pre><code class="language-julia hljs">fig = Figure(size=(1500,420))
+for (k,i) in enumerate((0,30,60,90))
+    p = projection(gas, :sd, :Msol_pc2; inclination=i, axis=:angmom, binning=:overlap,
+                   center=[:bc], range_unit=:kpc, pxsize=[0.3, :kpc])
+    A = log10.(replace(p.maps[:sd], 0.0=&gt;NaN)); e = p.extent .* gas.scale.kpc
+    ax = Axis(fig[1,k], aspect=DataAspect(), title=&quot;i = $(i)°&quot;)
+    heatmap!(ax, range(e[1],e[2],length=size(A,1)), range(e[3],e[4],length=size(A,2)), A, colormap=:inferno, nan_color=:black)
+    hidedecorations!(ax)
+end
+fig</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:38.543
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [-0.0144, 0.0222, -0.9997]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 347 x 351
+
+
+
+[Mera]: 2026-06-06T10:06:39.315
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+Weighting      = :mass
+Off-axis LOS   = [0.4875, 0.0193, -0.8729]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 351 x 469
+
+
+
+[Mera]: 2026-06-06T10:06:39.706
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.8588, 0.0114, -0.5123]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 351 x 474
+
+
+
+[Mera]: 2026-06-06T10:06:40.241
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.9999, 0.0003, -0.0143]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 351 x 353</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_11_9.png" alt="png"/></p><h2 id="2.-Other-ways-to-choose-the-view"><a class="docs-heading-anchor" href="#2.-Other-ways-to-choose-the-view">2. Other ways to choose the view</a><a id="2.-Other-ways-to-choose-the-view-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Other-ways-to-choose-the-view" title="Permalink"></a></h2><p>Give <strong>exactly one</strong> line-of-sight specifier (two raise an error, so a wrong figure can&#39;t slip through). All are equivalent ways to point the camera:</p><table><tr><th style="text-align: right">option</th><th style="text-align: right">meaning</th></tr><tr><td style="text-align: right"><code>inclination</code>, <code>azimuth</code>, <code>axis</code></td><td style="text-align: right">tilt from a reference axis (recommended)</td></tr><tr><td style="text-align: right"><code>direction=:faceon</code> / <code>:edgeon</code></td><td style="text-align: right">disk along / ⟂ to <strong>L</strong> (shortcut for <code>axis=:angmom</code>)</td></tr><tr><td style="text-align: right"><code>los=[lx,ly,lz]</code></td><td style="text-align: right">explicit line-of-sight vector</td></tr><tr><td style="text-align: right"><code>theta</code>, <code>phi</code></td><td style="text-align: right">spherical angles about the box axes</td></tr></table><p>Modifiers: <code>position_angle</code> rolls the image about the line of sight; <code>up=[..]</code> sets the camera up.</p><p>!!! note <code>:faceon</code>/<code>:edgeon</code>/<code>axis=:angmom</code> use <strong>L</strong>, computed about <code>center</code> — center on the object so L is the true spin.</p><pre><code class="language-julia hljs">fo = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+showmap(fo.maps[:sd], fo.extent .* gas.scale.kpc; title=&quot;direction=:faceon&quot;)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:42.029
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [-0.0144, 0.0222, -0.9997]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 351 x 347</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_13_3.png" alt="png"/></p><pre><code class="language-julia hljs"># explicit vector + an image roll (position angle)
+pr = projection(gas, :sd, :Msol_pc2, los=[1,1,1], position_angle=30, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+showmap(pr.maps[:sd], pr.extent .* gas.scale.kpc; title=&quot;los=[1,1,1], position_angle=30°&quot;)</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:42.897
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.5774, 0.5774, 0.5774]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 552 x 482</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_14_3.png" alt="png"/></p><h2 id="3.-Binning:-how-rotated-cells-land-on-pixels"><a class="docs-heading-anchor" href="#3.-Binning:-how-rotated-cells-land-on-pixels">3. Binning: how rotated cells land on pixels</a><a id="3.-Binning:-how-rotated-cells-land-on-pixels-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Binning:-how-rotated-cells-land-on-pixels" title="Permalink"></a></h2><p>Four deposit schemes (keyword <code>binning</code>): <strong><code>:overlap</code></strong> (the <strong>default</strong> — per-cell footprint supersampling, <code>ns = ceil(cellsize/pixel)</code> sub-points per cube axis capped at <code>nmax=64</code>; AMR-aligned, no moiré or holes, and usually <em>faster</em> than <code>:exact</code>), <strong><code>:exact</code></strong> (the analytic box-spline footprint — the line-of-sight column integrated per pixel, the fidelity reference), and two fast previews <strong><code>:cic</code></strong> (bilinear) / <strong><code>:ngp</code></strong> (nearest-pixel) that can <strong>speckle/moiré on coarse AMR cells</strong>. <strong>All four conserve the projected total.</strong> The quantitative accuracy study (holes, convergence) lives in notebook <strong>13 — validation</strong>; here we contrast a fast preview (<code>:cic</code>) with the artifact-free default (<code>:overlap</code>) and the analytic reference (<code>:exact</code>) on the same view. Raise <code>nmax</code> for fewer artifacts on very coarse cells (slower, ∝ <code>nmax³</code>).</p><pre><code class="language-julia hljs">fig = Figure(size=(1500,440))
+for (k,b) in enumerate((:cic, :overlap, :exact))
+    p = projection(gas, :sd, :Msol_pc2; los=[1,1,1], binning=b, center=[:bc], range_unit=:kpc, pxsize=[0.3, :kpc])
+    A = log10.(replace(p.maps[:sd], 0.0=&gt;NaN))
+    ax = Axis(fig[1,k], aspect=DataAspect(), title=&quot;binning = :$(b)&quot;); hidedecorations!(ax)
+    heatmap!(ax, A, colormap=:inferno, nan_color=:black)
+end
+fig</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:43.509
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.5774, 0.5774, 0.5774]  (binning=:cic)
+Effective resolution: 334^2  →  map size: 482 x 552
+
+[Mera]: 2026-06-06T10:06:43.717
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+Weighting      = :mass
+Off-axis LOS   = [0.5774, 0.5774, 0.5774]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 482 x 552
+
+
+
+[Mera]: 2026-06-06T10:06:44.172
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd,) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.5774, 0.5774, 0.5774]  (binning=:exact)
+Effective resolution: 334^2  →  map size: 482 x 552</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_16_5.png" alt="png"/></p><h2 id="4.-Gravity"><a class="docs-heading-anchor" href="#4.-Gravity">4. Gravity</a><a id="4.-Gravity-1"></a><a class="docs-heading-anchor-permalink" href="#4.-Gravity" title="Permalink"></a></h2><p>The same view keywords drive the combined hydro+gravity interface — here the gravitational potential of the same galaxy, face-on.</p><pre><code class="language-julia hljs">grav = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)
+pe = projection(gas, grav, :epot; direction=:faceon, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+showmap(pe.maps[:epot], pe.extent .* gas.scale.kpc; title=&quot;gravitational potential, face-on&quot;, clabel=&quot;Φ&quot;, logscale=false, cmap=:viridis)</code></pre><pre><code class="nohighlight hljs">  0.449511 seconds (1.62 M allocations: 165.754 MiB, 102.37% compilation time)
+[Mera]: 2026-06-06T10:06:50.512
+
+
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:epot, :sd) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [-0.0144, 0.0222, -0.9997]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 351 x 347</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_18_3.png" alt="png"/></p><h2 id="5.-Several-quantities-at-once"><a class="docs-heading-anchor" href="#5.-Several-quantities-at-once">5. Several quantities at once</a><a id="5.-Several-quantities-at-once-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Several-quantities-at-once" title="Permalink"></a></h2><p>One call returns a dictionary of 2D maps — here surface density, mass-weighted vₓ and temperature.</p><pre><code class="language-julia hljs">m = projection(gas, [:sd,:vx,:T], [:Msol_pc2,:km_s,:K]; inclination=35, axis=:angmom, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+e = m.extent .* gas.scale.kpc; fig = Figure(size=(1450,440))
+for (k,(v,cm,lab,lg)) in enumerate(((:sd,:inferno,&quot;log₁₀ Σ&quot;,true),(:vx,:balance,&quot;vₓ [km/s]&quot;,false),(:T,:viridis,&quot;log₁₀ T&quot;,true)))
+    A = lg ? log10.(replace(m.maps[v],0.0=&gt;NaN)) : m.maps[v]
+    ax = Axis(fig[1,2k-1], aspect=DataAspect(), title=String(v))
+    hm = heatmap!(ax, range(e[1],e[2],length=size(A,1)), range(e[3],e[4],length=size(A,2)), A, colormap=cm, nan_color=:black)
+    Colorbar(fig[1,2k], hm, label=lab); hidedecorations!(ax)
+end
+fig</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:06:52.080
+
+center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+domain:
+xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
+
+Selected var(s)=(:sd, :vx, :T) 
+
+
+Weighting      = :mass
+Off-axis LOS   = [0.5618, 0.0183, -0.8271]  (binning=:overlap)
+Effective resolution: 334^2  →  map size: 351 x 479</code></pre><p><img src="../11_multi_OffAxisProjection_files/11_multi_OffAxisProjection_20_2.png" alt="png"/></p><h2 id="Play-around"><a class="docs-heading-anchor" href="#Play-around">Play around</a><a id="Play-around-1"></a><a class="docs-heading-anchor-permalink" href="#Play-around" title="Permalink"></a></h2><ul><li>change <code>inclination</code>, <code>azimuth</code>, or set <code>los=[...]</code>;</li><li>try <code>axis=:z</code> (box vertical) vs <code>axis=:angmom</code> (disk);</li><li>compare <code>binning=:cic</code> (fast preview) with the <code>:overlap</code> default at small <code>pxsize</code>, and raise <code>nmax</code> for very coarse cells;</li><li>the returned map stores the camera: <code>m.los</code>, <code>m.up</code>, <code>m.cam_right</code>, <code>m.center</code>, <code>m.direction</code>.</li></ul><p>Next: <strong>LOS cubes &amp; kinematics</strong> (<code>12_multi_LosCubes</code>) and <strong>validation</strong> (<code>13_multi_OffAxis_Validation</code>).</p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../api/offaxis/">« API Reference</a><a class="docs-footer-nextpage" href="../12_multi_LosCubes/">LOS cubes &amp; kinematics »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 10 June 2026 13:49">Wednesday 10 June 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
