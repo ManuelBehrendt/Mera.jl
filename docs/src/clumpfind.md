@@ -8,10 +8,17 @@ two ways:
 
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
-!!! note "v1 scope"
-    This first version finds structures by **density threshold + connectivity** and reports their
-    statistics. Gravitational boundedness, multi-field combination (gas + stars + DM together) and
-    overlap handling are planned follow-ups.
+The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value
+([`ThresholdFoF`](@ref) or [`DensityWatershed`](@ref)) selects the algorithm, while a shared
+neighbour index, statistics, boundedness and catalog pipeline serves them all. The keyword form
+`clumpfind(obj, field; …)` shown throughout this page is a convenience shim that builds a
+`ThresholdFoF` for you, so existing scripts are unchanged; pass a finder explicitly to pick the
+algorithm:
+
+```julia
+cat   = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2))
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4))
+```
 
 ## 3D — cells or particles (friends-of-friends)
 
@@ -166,6 +173,9 @@ yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to
 
 ```@docs
 clumpfind
+AbstractFinder
+ThresholdFoF
+DensityWatershed
 clump_massfunction
 clumptable
 ClumpCard

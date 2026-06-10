@@ -1,18 +1,30 @@
 # =====================================================================================
-#  clumpfind — density-threshold structure finder (v1)
+#  clumpfind — structure finder
 # -------------------------------------------------------------------------------------
 #  Find connected over-dense structures and return a per-clump catalog:
 #
 #   * 3D — friends-of-friends on the cells/particles above a field threshold (a value
 #     threshold pre-selects members; a linking length connects them). Works on hydro
-#     (cell centres) and particles.
+#     (cell centres) and particles, on a single object or several components at once
+#     (gas + stars + DM), with optional gravitational boundedness, peak/watershed
+#     deblending, and bound-substructure trees.
 #   * 2D — connected-component labelling of a projected map above a threshold.
 #
 #  Returns a `ClumpCatalog` (sorted most-massive-first) with, per clump: member count,
 #  mass, centre of mass, peak value & position, and extent.
 #
-#  (v1 = density threshold + connectivity + statistics. Gravitational boundedness, multi-field
-#  combination, and overlap handling are later stages — roadmap §G.)
+# -------------------------------------------------------------------------------------
+#  Internal architecture (v2 Phase 1 — pluggable framework, behaviour-preserving):
+#
+#    PROBE     `_make_points` centralizes getvar + threshold + mask → `Points`.
+#    NEIGHBOR  `AbstractNeighborIndex` (`CellLinkedList` default, `HashGrid`) with one
+#              pair-kernel `foreach_pair_within` / `foreach_neighbor`.
+#    FINDER    `AbstractFinder` value types (`ThresholdFoF`, `DensityWatershed`) dispatch
+#              `_label(finder, P) -> (labels, k)`.
+#    POST      `_clump_stats` → `_boundedness` → deblend / substructure → `ClumpCatalog`.
+#
+#  The legacy `clumpfind(obj, field; …)` call is a thin shim over `clumpfind(obj, finder)`,
+#  so existing scripts keep working unchanged.
 # =====================================================================================
 
 # ---- union-find -----------------------------------------------------------------------
@@ -38,25 +50,103 @@ function _uf_labels(parent::Vector{Int})
     return labels, k
 end
 
-# ---- 3D friends-of-friends: link points within `b`; spatial-hash + union-find ---------
-function _fof3d(x, y, z, b::Float64)
-    n = length(x); parent = collect(1:n); inv_b = 1.0 / b; b2 = b * b
+# =====================================================================================
+#  NEIGHBOR layer — one spatial index, one pair-kernel
+# -------------------------------------------------------------------------------------
+#  A finder never writes a neighbour loop: it calls `foreach_pair_within` (all unique pairs
+#  within the linking length) or `foreach_neighbor` (neighbours of one point). Two backends
+#  share the same 27-cell stencil over a cell of side `b`, so they enumerate exactly the same
+#  pairs — the choice is purely about allocation/cache behaviour:
+#
+#    * `HashGrid`        — Dict(cell ⇒ member Vector); the original v1 layout, kept as a baseline.
+#    * `CellLinkedList`  — head/next singly-linked list per occupied cell (the default): no
+#                          per-bucket Vector allocations, sequential `next` walk.
+#
+#  Both index an arbitrary `ids` subset of the coordinate arrays (the FoF pass uses `1:n`; a
+#  per-group watershed indexes just that group's members), so the same code serves both.
+# =====================================================================================
+abstract type AbstractNeighborIndex end
+
+@inline _cellkey(inv_b, x, y, z, i) =
+    (floor(Int, x[i] * inv_b), floor(Int, y[i] * inv_b), floor(Int, z[i] * inv_b))
+
+struct HashGrid <: AbstractNeighborIndex
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
+    b2::Float64; inv_b::Float64
+    buckets::Dict{NTuple{3,Int},Vector{Int}}
+end
+struct CellLinkedList <: AbstractNeighborIndex
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
+    b2::Float64; inv_b::Float64
+    head::Dict{NTuple{3,Int},Int}
+    next::Vector{Int}
+end
+
+const DEFAULT_BACKEND = CellLinkedList
+
+function build_index(::Type{HashGrid}, x, y, z, b::Float64, ids)
+    inv_b = 1.0 / b
     buckets = Dict{NTuple{3,Int},Vector{Int}}()
-    @inbounds for i in 1:n
-        key = (floor(Int, x[i] * inv_b), floor(Int, y[i] * inv_b), floor(Int, z[i] * inv_b))
-        push!(get!(buckets, key, Int[]), i)
+    @inbounds for i in ids
+        push!(get!(buckets, _cellkey(inv_b, x, y, z, i), Int[]), i)
     end
-    @inbounds for i in 1:n
-        cx = floor(Int, x[i] * inv_b); cy = floor(Int, y[i] * inv_b); cz = floor(Int, z[i] * inv_b)
-        for dx in -1:1, dy in -1:1, dz in -1:1
-            nb = get(buckets, (cx + dx, cy + dy, cz + dz), nothing); nb === nothing && continue
-            for j in nb
-                j <= i && continue
-                d2 = (x[i] - x[j])^2 + (y[i] - y[j])^2 + (z[i] - z[j])^2
-                d2 <= b2 && _uf_union!(parent, i, j)
-            end
+    return HashGrid(x, y, z, b * b, inv_b, buckets)
+end
+function build_index(::Type{CellLinkedList}, x, y, z, b::Float64, ids)
+    inv_b = 1.0 / b
+    next = zeros(Int, length(x))
+    head = Dict{NTuple{3,Int},Int}()
+    @inbounds for i in ids
+        key = _cellkey(inv_b, x, y, z, i)
+        next[i] = get(head, key, 0)
+        head[key] = i
+    end
+    return CellLinkedList(x, y, z, b * b, inv_b, head, next)
+end
+
+# call f!(j, d2) for every indexed neighbour j of point i within the linking length (j != i)
+@inline function foreach_neighbor(ix::HashGrid, i::Int, f!::F) where {F}
+    x, y, z = ix.x, ix.y, ix.z
+    cx, cy, cz = _cellkey(ix.inv_b, x, y, z, i)
+    @inbounds for dx in -1:1, dy in -1:1, dz in -1:1
+        nb = get(ix.buckets, (cx + dx, cy + dy, cz + dz), nothing); nb === nothing && continue
+        for j in nb
+            j == i && continue
+            d2 = (x[i] - x[j])^2 + (y[i] - y[j])^2 + (z[i] - z[j])^2
+            d2 <= ix.b2 && f!(j, d2)
         end
     end
+    return nothing
+end
+@inline function foreach_neighbor(ix::CellLinkedList, i::Int, f!::F) where {F}
+    x, y, z = ix.x, ix.y, ix.z
+    cx, cy, cz = _cellkey(ix.inv_b, x, y, z, i)
+    @inbounds for dx in -1:1, dy in -1:1, dz in -1:1
+        j = get(ix.head, (cx + dx, cy + dy, cz + dz), 0)
+        while j != 0
+            if j != i
+                d2 = (x[i] - x[j])^2 + (y[i] - y[j])^2 + (z[i] - z[j])^2
+                d2 <= ix.b2 && f!(j, d2)
+            end
+            j = ix.next[j]
+        end
+    end
+    return nothing
+end
+
+# call f!(i, j, d2) once per unique pair (i < j) within the linking length over `ids`
+function foreach_pair_within(ix::AbstractNeighborIndex, ids, f!::F) where {F}
+    @inbounds for i in ids
+        foreach_neighbor(ix, i, (j, d2) -> (j > i && f!(i, j, d2)))
+    end
+    return nothing
+end
+
+# ---- 3D friends-of-friends: link points within `b` (pluggable neighbour index + union-find) -
+function _fof3d(x, y, z, b::Float64; backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    n = length(x); parent = collect(1:n)
+    ix = build_index(backend, x, y, z, b, 1:n)
+    foreach_pair_within(ix, 1:n, (i, j, _d2) -> _uf_union!(parent, i, j))
     return _uf_labels(parent)
 end
 
@@ -156,26 +246,20 @@ end
 # Process members densest-first; each joins the basin of its highest-field already-assigned
 # neighbour within `rad`; a member with no assigned neighbour starts a new basin (a density peak).
 # Respects the density landscape (saddles) better than nearest-peak. Returns sub-member lists.
-function _watershed3d(mem, xs, ys, zs, fs, rad::Float64)
-    inv_b = 1.0 / rad; r2 = rad * rad
-    buckets = Dict{NTuple{3,Int},Vector{Int}}()
-    @inbounds for i in mem
-        push!(get!(buckets, (floor(Int, xs[i]*inv_b), floor(Int, ys[i]*inv_b), floor(Int, zs[i]*inv_b)), Int[]), i)
-    end
+function _watershed3d(mem, xs, ys, zs, fs, rad::Float64;
+                      backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    ix = build_index(backend, xs, ys, zs, rad, mem)
     order = sort(mem, by=i -> -fs[i])
     basin = Dict{Int,Int}(); npeak = 0
+    bref = Ref(0); fref = Ref(-Inf)            # Ref-wrap so the neighbour closure doesn't box
     @inbounds for i in order
-        cx = floor(Int, xs[i]*inv_b); cy = floor(Int, ys[i]*inv_b); cz = floor(Int, zs[i]*inv_b)
-        best = 0; bestf = -Inf
-        for dx in -1:1, dy in -1:1, dz in -1:1
-            nb = get(buckets, (cx+dx, cy+dy, cz+dz), nothing); nb === nothing && continue
-            for j in nb
-                (j == i || !haskey(basin, j)) && continue
-                if (xs[i]-xs[j])^2 + (ys[i]-ys[j])^2 + (zs[i]-zs[j])^2 <= r2 && fs[j] > bestf
-                    bestf = fs[j]; best = j
-                end
+        bref[] = 0; fref[] = -Inf
+        foreach_neighbor(ix, i, (j, _d2) -> begin
+            if haskey(basin, j) && fs[j] > fref[]
+                fref[] = fs[j]; bref[] = j
             end
-        end
+        end)
+        best = bref[]
         basin[i] = best == 0 ? (npeak += 1) : basin[best]
     end
     subs = [Int[] for _ in 1:npeak]
@@ -264,71 +348,153 @@ function Base.show(io::IO, c::ClumpCatalog)
 end
 
 # =====================================================================================
-#  3D: friends-of-friends on hydro cells / particles above a field threshold
+#  PROBE layer — selection → `Points`
+# -------------------------------------------------------------------------------------
+#  `_make_points` is the single place that turns an object into the arrays every finder
+#  consumes: field threshold + optional mask select the members; positions/mass are pulled
+#  in the requested units; the cgs energy bundle (`bargs`) is built once when boundedness is
+#  needed. Producing it here (rather than inside each finder) means a new finder inherits
+#  multi-field selection and boundedness for free.
+# =====================================================================================
+struct Points
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}   # positions, `pos_unit`
+    m::Vector{Float64}; f::Vector{Float64}                        # mass (`mass_unit`), field (`threshold_unit`)
+    idx::Vector{Int}                                              # original row indices selected in `obj`
+    bargs                                                         # cgs energy bundle (NamedTuple) or `nothing`
+end
+
+function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
+                      threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
+                      mask=[false], need_energy::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000)
+    f = getvar(obj, field, threshold_unit)
+    pos = getvar(obj, [:x, :y, :z], pos_unit)
+    m = getvar(obj, :mass, mass_unit)
+    keep = f .>= threshold
+    length(mask) > 1 && (keep = keep .& collect(Bool, mask))
+    idx = findall(keep)
+    xs = pos[:x][idx]; ys = pos[:y][idx]; zs = pos[:z][idx]; ms = m[idx]; fs = f[idx]
+    bargs = nothing
+    if need_energy   # cgs arrays for energy / virial analysis
+        mg = getvar(obj, :mass, :g)[idx]
+        vv = getvar(obj, [:vx, :vy, :vz], :cm_s)
+        et = obj isa HydroDataType ? getvar(obj, :etherm, :erg)[idx] : zeros(length(idx))
+        poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
+        bargs = (mg=mg, vx=vv[:vx][idx], vy=vv[:vy][idx], vz=vv[:vz][idx], et=et, poscm=poscm,
+                 Gc=obj.info.constants.G, egrav=egrav, direct_max=direct_max)
+    end
+    return Points(xs, ys, zs, ms, fs, idx, bargs)
+end
+
+# =====================================================================================
+#  FINDER layer — `AbstractFinder` value types dispatch `_label(finder, P) -> (labels, k)`
+# -------------------------------------------------------------------------------------
+#  A finder is a typed, serializable parameter bundle (not a `method::Symbol`). Each carries
+#  `field`, `threshold`, `linking_length`, `threshold_unit` and a neighbour `backend`, and
+#  implements one short `_label` method; all of the downstream physics/stats/catalog machinery
+#  is shared. New finders (dendrogram, HDBSCAN, phase-space, …) plug in by adding a `_label`.
+# =====================================================================================
+"""    AbstractFinder
+
+Supertype of the 3D structure-finding algorithms passed to [`clumpfind`](@ref): [`ThresholdFoF`](@ref)
+and [`DensityWatershed`](@ref). A finder is a typed parameter bundle (field, threshold,
+linking length, neighbour backend) that implements `_label(finder, points)`; extend it by adding a
+new subtype and `_label` method."""
+abstract type AbstractFinder end
+
+"""    ThresholdFoF(field=:rho; threshold, linking_length, threshold_unit=:standard, backend=CellLinkedList)
+
+Friends-of-friends finder: members with `field ≥ threshold` are linked into a clump when within
+`linking_length` of one another. The classic, fast connectivity finder (Davis et al. 1985)."""
+struct ThresholdFoF <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    backend::Type{<:AbstractNeighborIndex}
+end
+ThresholdFoF(field::Symbol=:rho; threshold::Real, linking_length::Real,
+             threshold_unit::Symbol=:standard, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    ThresholdFoF(field, Float64(threshold), Float64(linking_length), threshold_unit, backend)
+
+"""    DensityWatershed(field=:rho; threshold, linking_length, threshold_unit=:standard, peak_min_distance=2·linking_length, backend=CellLinkedList)
+
+Watershed finder: friends-of-friends for connectivity, then each connected group is split into
+density-descending basins (peaks separated by `peak_min_distance`), so touching cores are resolved
+along their saddles (DENMAX/SUBFIND-style)."""
+struct DensityWatershed <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    peak_min_distance::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+DensityWatershed(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_unit::Symbol=:standard,
+                 peak_min_distance::Real=2 * linking_length, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    DensityWatershed(field, Float64(threshold), Float64(linking_length), threshold_unit,
+                     Float64(peak_min_distance), backend)
+
+_label(f::ThresholdFoF, P::Points) = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
+function _label(f::DensityWatershed, P::Points)
+    labels, k = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
+    k == 0 && return labels, k
+    groups = [Int[] for _ in 1:k]
+    @inbounds for i in eachindex(labels); push!(groups[labels[i]], i); end
+    newlabels = zeros(Int, length(labels)); nk = 0
+    for mem in groups
+        for sub in _watershed3d(mem, P.x, P.y, P.z, P.f, f.peak_min_distance; backend=f.backend)
+            nk += 1
+            for i in sub; @inbounds newlabels[i] = nk; end
+        end
+    end
+    return newlabels, nk
+end
+
+# =====================================================================================
+#  3D: structure finding on hydro cells / particles above a field threshold
 # =====================================================================================
 """
-    clumpfind(obj::HydroPartType, field=:rho; threshold, linking_length,
-              threshold_unit=:standard, pos_unit=:kpc, mass_unit=:Msol,
-              min_members=1, mask=[false]) -> ClumpCatalog
+    clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit=:kpc, mass_unit=:Msol,
+              min_members=1, mask=[false], boundedness=false, bound_only=false,
+              egrav=:approx, direct_max=2000, deblend=false, peak_min_distance=…,
+              substructure=false, sub_min_members=min_members) -> ClumpCatalog
 
-**3D friends-of-friends** structure finder. Cells/particles with `field ≥ threshold` are linked
-into clumps when they lie within `linking_length` (in `pos_unit`) of each other. Per clump it
-returns member count, `mass`, centre of mass `com`, `peak` field value and `peak_pos`, and
-`radius` (max member distance from the COM) — all positions in `pos_unit`, mass in `mass_unit`.
+**3D structure finder** driven by a [`ThresholdFoF`](@ref) or [`DensityWatershed`](@ref) `finder`
+value (the finder carries the field/threshold/linking-length and selects the algorithm). Per clump
+it returns member count, `mass`, centre of mass `com`, `peak` field value and `peak_pos`, and
+`radius` (max member distance from the COM) — positions in `pos_unit`, mass in `mass_unit`.
 
 * `boundedness=true` adds per-clump energetics (cgs): `e_kin` (COM-frame kinetic), `e_therm`
   (thermal, gas), `e_grav` (binding energy — `egrav=:approx` ⇒ `3/5·GM²/R`, or `:direct` ⇒ exact
   pairwise sum up to `direct_max` members), `alpha_vir = 2·e_kin/|e_grav|`, and a `bound` flag
   (`e_kin + e_therm < |e_grav|`). `bound_only=true` keeps only self-bound clumps.
 * `deblend=true`/`:peak` splits merged clumps at their density peaks (members assigned to the nearest
-  peak); `deblend=:watershed` instead assigns by density-descending basins (respects saddles). Peaks
-  are separated by `peak_min_distance` (in `pos_unit`).
+  peak); `deblend=:watershed` instead assigns by density-descending basins. Peaks are separated by
+  `peak_min_distance` (in `pos_unit`). (Equivalent to using a [`DensityWatershed`](@ref) finder.)
 * `substructure=true` builds a bound-substructure tree: each top-level clump is split into density
   basins (watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as
   nested `subclumps` (with `n_subclumps`). Implies the boundedness analysis.
 
 ```julia
 gas = gethydro(getinfo(output, path))
-cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2)   # 0.2 kpc
-bound = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
-                  boundedness=true, bound_only=true, deblend=true)
-cat[1]            # most massive clump
+cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2))
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4))
 ```
 """
-function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
-                   linking_length::Real, threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc,
+function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=:kpc,
                    mass_unit::Symbol=:Msol, min_members::Int=1, mask=[false],
                    boundedness::Bool=false, bound_only::Bool=false, egrav::Symbol=:approx,
-                   direct_max::Int=2000, deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2linking_length,
+                   direct_max::Int=2000, deblend::Union{Bool,Symbol}=false,
+                   peak_min_distance::Real=2 * finder.linking_length,
                    substructure::Bool=false, sub_min_members::Int=min_members)
-    f = getvar(obj, field, threshold_unit)
-    pos = getvar(obj, [:x, :y, :z], pos_unit)
-    x = pos[:x]; y = pos[:y]; z = pos[:z]
-    m = getvar(obj, :mass, mass_unit)
-    keep = f .>= threshold
-    length(mask) > 1 && (keep = keep .& collect(Bool, mask))
-    idx = findall(keep)
-    meta = (dim=Symbol("3D"), field=field, threshold=threshold, threshold_unit=threshold_unit,
-            linking_length=linking_length, pos_unit=pos_unit, mass_unit=mass_unit,
-            n_selected=length(idx), boundedness=boundedness, deblend=deblend, substructure=substructure)
-    isempty(idx) && return ClumpCatalog(0, NamedTuple[], meta)
-    xs = x[idx]; ys = y[idx]; zs = z[idx]; ms = m[idx]; fs = f[idx]
-    # cgs arrays for energy / virial analysis (needed for boundedness AND for bound substructure)
     need_b = boundedness || substructure
-    bargs = nothing
-    if need_b
-        mg = getvar(obj, :mass, :g)[idx]
-        vv = getvar(obj, [:vx, :vy, :vz], :cm_s)
-        vx = vv[:vx][idx]; vy = vv[:vy][idx]; vz = vv[:vz][idx]
-        et = obj isa HydroDataType ? getvar(obj, :etherm, :erg)[idx] : zeros(length(idx))
-        poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
-        bargs = (mg=mg, vx=vx, vy=vy, vz=vz, et=et, poscm=poscm, Gc=obj.info.constants.G,
-                 egrav=egrav, direct_max=direct_max)
-    end
-    labels, k = _fof3d(xs, ys, zs, Float64(linking_length))
+    P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
+                     pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
+                     egrav=egrav, direct_max=direct_max)
+    meta = (dim=Symbol("3D"), field=finder.field, threshold=finder.threshold,
+            threshold_unit=finder.threshold_unit, linking_length=finder.linking_length,
+            pos_unit=pos_unit, mass_unit=mass_unit, n_selected=length(P.idx),
+            boundedness=boundedness, deblend=deblend, substructure=substructure,
+            finder=nameof(typeof(finder)))
+    isempty(P.idx) && return ClumpCatalog(0, NamedTuple[], meta)
+    xs, ys, zs, ms, fs, bargs = P.x, P.y, P.z, P.m, P.f, P.bargs
+    labels, k = _label(finder, P)
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
-    if deblend !== false   # split each FoF clump at its density peaks (overlap handling)
+    if deblend !== false   # split each clump at its density peaks (overlap handling)
         split3d = deblend === :watershed ? _watershed3d : _deblend3d   # :peak (default) or :watershed
         members = reduce(vcat, (split3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
                                 for mem in members); init=Vector{Int}[])
@@ -355,6 +521,38 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
     return ClumpCatalog(length(out), out, meta)
+end
+
+"""
+    clumpfind(obj::HydroPartType, field=:rho; threshold, linking_length,
+              threshold_unit=:standard, pos_unit=:kpc, mass_unit=:Msol,
+              min_members=1, mask=[false], boundedness=false, bound_only=false,
+              egrav=:approx, direct_max=2000, deblend=false, peak_min_distance=2·linking_length,
+              substructure=false, sub_min_members=min_members) -> ClumpCatalog
+
+Convenience form of the [`AbstractFinder`](@ref) method: builds a [`ThresholdFoF`](@ref) from
+`field`/`threshold`/`linking_length` and forwards every other keyword. Existing scripts keep
+working unchanged; see the finder method above for the full keyword reference.
+
+```julia
+gas = gethydro(getinfo(output, path))
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2)   # 0.2 kpc
+bound = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
+                  boundedness=true, bound_only=true, deblend=true)
+```
+"""
+function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, linking_length::Real,
+                   threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
+                   min_members::Int=1, mask=[false], boundedness::Bool=false, bound_only::Bool=false,
+                   egrav::Symbol=:approx, direct_max::Int=2000, deblend::Union{Bool,Symbol}=false,
+                   peak_min_distance::Real=2linking_length, substructure::Bool=false,
+                   sub_min_members::Int=min_members, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    finder = ThresholdFoF(field; threshold=threshold, linking_length=linking_length,
+                          threshold_unit=threshold_unit, backend=backend)
+    return clumpfind(obj, finder; pos_unit=pos_unit, mass_unit=mass_unit, min_members=min_members,
+                     mask=mask, boundedness=boundedness, bound_only=bound_only, egrav=egrav,
+                     direct_max=direct_max, deblend=deblend, peak_min_distance=peak_min_distance,
+                     substructure=substructure, sub_min_members=sub_min_members)
 end
 
 # per-clump statistics (mass, COM, peak, radius) + optional boundedness; shared by top-level clumps
