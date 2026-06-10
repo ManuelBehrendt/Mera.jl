@@ -134,14 +134,22 @@ cat[1].com                          # densest clump's centre
 cat.meta                            # the search parameters used
 ```
 
-`ClumpCatalog` behaves like a vector (`length`, `cat[i]`, iteration). See also
-[`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps yourself,
-and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
+`ClumpCatalog` behaves like a vector (`length`, `cat[i]`, iteration). For analysis/export, get a
+columnar table (a `NamedTuple` of vectors — including boundedness and per-component columns when
+present), ready for `DataFrame` / `CSV.write`:
+
+```julia
+tbl = clumptable(cat)         # (; id, n_members, mass, com_x, com_y, com_z, radius, …)
+```
+
+See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
+yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
 
 ## API
 
 ```@docs
 clumpfind
 clump_massfunction
+clumptable
 ClumpCard
 ```

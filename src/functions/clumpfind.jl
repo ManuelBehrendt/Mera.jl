@@ -465,3 +465,36 @@ function card_compute(c::ClumpCard, data)
                      (field=c.field, threshold=c.threshold, unit=c.mass_unit, nclumps=cat.nclumps,
                       max_mass=isempty(cat.clumps) ? 0.0 : cat.clumps[1].mass))
 end
+
+# =====================================================================================
+#  Columnar export
+# =====================================================================================
+"""
+    clumptable(cat::ClumpCatalog) -> NamedTuple
+
+A columnar view of the catalog: a `NamedTuple` of equal-length vectors — `id`, `n_members`,
+`mass`, `com_x`, `com_y`(`, com_z`), `radius`, and (when present) `peak`, the boundedness columns
+(`e_kin`, `e_therm`, `e_grav`, `alpha_vir`, `bound`), and per-component masses/counts
+(`mass_gas`, `n_gas`, …). Drop straight into `DataFrame(clumptable(cat))` or `CSV.write`.
+"""
+function clumptable(cat::ClumpCatalog)
+    cs = cat.clumps
+    isempty(cs) && return (id=Int[], n_members=Int[], mass=Float64[])
+    nd = length(cs[1].com)
+    cols = Pair{Symbol,Any}[
+        :id => [c.id for c in cs], :n_members => [c.n_members for c in cs],
+        :mass => [c.mass for c in cs], :com_x => [c.com[1] for c in cs], :com_y => [c.com[2] for c in cs]]
+    nd == 3 && push!(cols, :com_z => [c.com[3] for c in cs])
+    push!(cols, :radius => [c.radius for c in cs])
+    haskey(cs[1], :peak) && push!(cols, :peak => [c.peak for c in cs])
+    for k in (:e_kin, :e_therm, :e_grav, :alpha_vir, :bound)
+        haskey(cs[1], k) && push!(cols, k => [getproperty(c, k) for c in cs])
+    end
+    if haskey(cs[1], :components)
+        for nm in keys(cs[1].components)
+            push!(cols, Symbol("mass_$nm") => [c.components[nm].mass for c in cs])
+            push!(cols, Symbol("n_$nm") => [c.components[nm].n for c in cs])
+        end
+    end
+    return NamedTuple{Tuple(first.(cols))}(Tuple(last.(cols)))
+end

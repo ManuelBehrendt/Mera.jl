@@ -175,6 +175,7 @@ export
     clumpfind,
     ClumpCatalog,
     clump_massfunction,
+    clumptable,
     ClumpCard,
     estimate,
     calibrate!,

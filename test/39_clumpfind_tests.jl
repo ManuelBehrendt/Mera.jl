@@ -91,6 +91,11 @@
             @test rep.cards[1].func == :clumps
             @test rep.cards[1].data.nclumps == cat.nclumps
             @test rep.cards[1].data.catalog isa ClumpCatalog
+            # columnar export
+            tbl = clumptable(cat)
+            @test length(tbl.id) == cat.nclumps && haskey(tbl, :mass) && haskey(tbl, :com_x)
+            @test tbl.mass == [c.mass for c in cat.clumps]
+            @test clumptable(clumpfind(gas, :rho; threshold=1e30, threshold_unit=:nH, linking_length=1.0)).id == Int[]
         end
 
         @testset "gravitational boundedness" begin
