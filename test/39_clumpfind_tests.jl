@@ -158,5 +158,48 @@
             m1 = clumpfind(sd, :sd; threshold=pk/20, deblend=true)
             @test m1.meta.deblend && m1.nclumps >= clumpfind(sd, :sd; threshold=pk/20).nclumps
         end
+
+        @testset "watershed deblending + bound-substructure trees" begin
+            # synthetic: density-descending watershed partitions a two-peak+saddle blob into 2 basins
+            xs = Float64[]; ys = Float64[]; zs = Float64[]; fs = Float64[]
+            for (cx, pk) in [(0.0, 10.0), (5.0, 9.0)], d in -0.3:0.15:0.3
+                push!(xs, cx + d); push!(ys, 0.0); push!(zs, 0.0); push!(fs, pk - abs(d) * 3)
+            end
+            for x in 0.6:0.4:4.4
+                push!(xs, x); push!(ys, 0.0); push!(zs, 0.0); push!(fs, 1.0 + abs(x - 2.5))
+            end
+            mem = collect(1:length(xs))
+            ws = Mera._watershed3d(mem, xs, ys, zs, fs, 0.6)
+            @test length(ws) == 2 && sum(length, ws) == length(mem)          # partition, no members lost
+            @test sort(vcat(ws...)) == sort(mem)
+
+            thr = maximum(getvar(gas, :rho, :nH)) / 50
+            # 3D watershed deblend: mass-conserving, never fewer clumps than no-deblend
+            c0 = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0)
+            cw = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0, deblend=:watershed)
+            @test cw.meta.deblend == :watershed && cw.nclumps >= c0.nclumps
+            @test isapprox(sum(c.mass for c in c0), sum(c.mass for c in cw); rtol=1e-6)
+            # 2D watershed deblend conserves the area-integral (Meyer flood + nearest-seed fallback)
+            sd = projection(gas, :sd, :Msol_pc2; res=128, center=[:bc], verbose=false, show_progress=false)
+            pk = maximum(sd.maps[:sd])
+            mw = clumpfind(sd, :sd; threshold=pk/20, deblend=:watershed)
+            @test mw.meta.deblend == :watershed
+            @test isapprox(sum(c.mass for c in clumpfind(sd, :sd; threshold=pk/20)),
+                           sum(c.mass for c in mw); rtol=1e-6)
+
+            # bound-substructure tree: top clumps gain bound fields + nested bound subclumps
+            ct = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=4.0, substructure=true)
+            @test ct.meta.substructure
+            for c in ct
+                @test haskey(c, :bound) && haskey(c, :n_subclumps) && haskey(c, :subclumps)
+                @test c.n_subclumps == length(c.subclumps)
+                for sc in c.subclumps
+                    @test sc.bound                                            # only self-bound kept
+                    @test sc.n_members <= c.n_members && sc.mass <= c.mass * (1 + 1e-9)
+                end
+            end
+            # n_subclumps surfaces in the columnar table
+            @test haskey(clumptable(ct), :n_subclumps)
+        end
     end
 end
