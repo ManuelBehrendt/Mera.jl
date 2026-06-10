@@ -285,3 +285,102 @@ end
         @test 0.2 < rt < 3.0
     end
 end
+
+# 1D peak landscape with linear bridges between consecutive peaks (for dendrogram oracles)
+function _peak_landscape(peaks)
+    xs = Float64[]; ys = Float64[]; zs = Float64[]; fs = Float64[]
+    for (cx, pk) in peaks, d in -0.3:0.15:0.3
+        push!(xs, cx + d); push!(ys, 0.0); push!(zs, 0.0); push!(fs, pk - abs(d)*3)
+    end
+    for k in 1:length(peaks)-1
+        x0 = peaks[k][1]; x1 = peaks[k+1][1]
+        for xv in (x0+0.6):0.4:(x1-0.6)
+            push!(xs, xv); push!(ys, 0.0); push!(zs, 0.0); push!(fs, 1.0 + 0.2*abs(xv - (x0+x1)/2))
+        end
+    end
+    return xs, ys, zs, fs
+end
+
+@testset verbose=true "clumpfind hierarchy + recovery + I/O (v2 Phase 3, data-free)" begin
+
+    @testset "ground-truth recovery metrics (ARI / completeness / purity)" begin
+        # perfect agreement (relabelled) → ari=1, completeness=purity=merit=1
+        t = repeat(1:5, inner=20); f = t .+ 10
+        r = clump_recovery(f, t)
+        @test r.ari ≈ 1.0 && r.completeness ≈ 1.0 && r.purity ≈ 1.0 && r.merit ≈ 1.0
+        @test r.n_found == 5 && r.n_true == 5
+        # random labels → ARI ≈ 0 (chance level)
+        rng = MersenneTwister(1)
+        @test abs(clump_recovery(rand(rng, 1:5, 500), rand(rng, 1:5, 500)).ari) < 0.05
+        # two true clumps merged into one found → completeness 1, purity 0.5
+        rm = clump_recovery(fill(1, 100), [fill(1, 50); fill(2, 50)])
+        @test rm.completeness ≈ 1.0 && rm.purity ≈ 0.5
+        # one true clump fragmented into two found → completeness 0.5, purity 1
+        rf = clump_recovery([fill(1, 50); fill(2, 50)], fill(1, 100))
+        @test rf.completeness ≈ 0.5 && rf.purity ≈ 1.0
+        # background (label 0) excluded from completeness/purity but kept in ARI
+        rb = clump_recovery([fill(0, 50); fill(7, 50)], [fill(0, 50); fill(1, 50)])
+        @test rb.n_true == 1 && rb.n_found == 1 && rb.completeness ≈ 1.0 && rb.ari ≈ 1.0
+        @test_throws ArgumentError clump_recovery([1, 2], [1, 2, 3])
+    end
+
+    @testset "dendrogram merge tree (Rosolowsky–Leroy)" begin
+        # single peak → one leaf, no branch, root subtree = N
+        xs, ys, zs, fs = _peak_landscape([(0.0, 10.0)]); m = collect(eachindex(xs))
+        _, nl, t = Mera._dendrogram3d(m, xs, ys, zs, fs, 0.6, 0.0)
+        @test nl == 1 && length(t.nodes) == 1 && length(t.roots) == 1
+        @test t.nodes[t.roots[1]].n_subtree == length(m)
+
+        # two peaks, small min_delta → branch with two leaf children (3 nodes)
+        xs, ys, zs, fs = _peak_landscape([(0.0, 10.0), (5.0, 8.0)]); m = collect(eachindex(xs))
+        _, nl, t = Mera._dendrogram3d(m, xs, ys, zs, fs, 0.6, 0.5)
+        @test nl == 2 && count(n -> n.is_leaf, t.nodes) == 2 && length(t.nodes) == 3
+        @test length(t.roots) == 1 && !t.nodes[t.roots[1]].is_leaf
+        @test t.nodes[t.roots[1]].n_subtree == length(m)              # members conserved
+        @test sum(n.n_self for n in t.nodes) == length(m)            # only leaves own members
+        @test Mera.children(t, t.nodes[t.roots[1]]) |> length == 2
+
+        # huge min_delta absorbs the shallower peak → a single leaf
+        _, nl2, t2 = Mera._dendrogram3d(m, xs, ys, zs, fs, 0.6, 50.0)
+        @test nl2 == 1 && length(t2.nodes) == 1
+
+        # three peaks → 3 leaves + 2 branches, single root, conserved
+        xs, ys, zs, fs = _peak_landscape([(0.0, 10.0), (5.0, 8.0), (10.0, 6.0)]); m = collect(eachindex(xs))
+        _, nl3, t3 = Mera._dendrogram3d(m, xs, ys, zs, fs, 0.6, 0.5)
+        @test nl3 == 3 && count(n -> n.is_leaf, t3.nodes) == 3 && length(t3.nodes) == 5
+        @test length(t3.roots) == 1 && t3.nodes[t3.roots[1]].n_subtree == length(m)
+        # deeper leaves have higher peaks than their merge level (base)
+        @test all(n.peak >= n.base for n in t3.nodes)
+        # Dendrogram finder _label returns the leaf partition
+        P = Mera.Points(xs, ys, zs, ones(length(xs)), fs, m, nothing)
+        lab, k = Mera._label(Dendrogram(:rho; threshold=0.0, linking_length=0.6, min_delta=0.5), P)
+        @test k == 3 && length(unique(lab)) == 3 && length(lab) == length(m)
+    end
+
+    @testset "save_clumps / load_clumps round-trip (JLD2)" begin
+        # build a small catalog by hand (incl. a tree) and round-trip it
+        nodes = [Mera.StructureNode(1, 3, Int[], true, 10.0, 2.0, 30, 30),
+                 Mera.StructureNode(2, 3, Int[], true, 8.0, 2.0, 20, 20),
+                 Mera.StructureNode(3, 0, [1, 2], false, 10.0, 1.0, 0, 50)]
+        tree = Mera.StructureTree(nodes, [3])
+        clumps = NamedTuple[(id=1, n_members=30, mass=3.0, com=(0.0, 0.0, 0.0), radius=1.0),
+                            (id=2, n_members=20, mass=2.0, com=(5.0, 0.0, 0.0), radius=1.0)]
+        meta = (dim=Symbol("3D"), field=:rho, threshold=1.0, threshold_unit=:nH, mass_unit=:Msol)
+        cat = Mera.ClumpCatalog(2, clumps, meta, tree)
+        fn = tempname() * ".jld2"
+        out = save_clumps(fn, cat)
+        @test isfile(out)
+        cat2 = load_clumps(out)
+        @test cat2 isa ClumpCatalog && cat2.nclumps == 2
+        @test [c.mass for c in cat2] == [c.mass for c in cat]
+        @test cat2.tree isa Mera.StructureTree && length(cat2.tree.nodes) == 3
+        @test cat2.tree.nodes[cat2.tree.roots[1]].n_subtree == 50
+        @test cat2.meta.field == :rho
+        rm(out; force=true)
+        # appends .jld2 automatically; catalog without a tree round-trips too
+        cat3 = Mera.ClumpCatalog(0, NamedTuple[], meta)         # tree === nothing
+        base = tempname(); out3 = save_clumps(base, cat3)
+        @test endswith(out3, ".jld2") && load_clumps(out3).tree === nothing
+        rm(out3; force=true)
+    end
+end

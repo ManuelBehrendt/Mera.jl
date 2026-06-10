@@ -298,6 +298,56 @@ function _watershed3d(mem, xs, ys, zs, fs, rad::Float64; persistence::Real=0.0,
     return subs
 end
 
+# ---- dendrogram (multi-scale merge tree, Rosolowsky & Leroy 2008) -----------------------
+# Leaves = density peaks pruned by `min_delta` (the persistence-watershed basins); branches = the
+# levels at which leaves merge. The hierarchy is the single-linkage tree of the basin adjacency
+# graph keyed by saddle height (the highest field value connecting two basins) — highest saddle
+# merges first. Returns (point→leaf label vector aligned with `mem`, n_leaves, StructureTree).
+function _dendrogram3d(mem, xs, ys, zs, fs, rad::Float64, min_delta::Real;
+                       backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    subs = _watershed3d(mem, xs, ys, zs, fs, rad; persistence=min_delta, backend=backend)   # leaf basins
+    nleaf = length(subs)
+    lab = Dict{Int,Int}()
+    @inbounds for (b, s) in enumerate(subs), i in s; lab[i] = b; end
+    # saddle height between each adjacent basin pair = max over boundary links of min(fᵢ,fⱼ)
+    ix = build_index(backend, xs, ys, zs, rad, mem)
+    saddle = Dict{Tuple{Int,Int},Float64}()
+    @inbounds for i in mem
+        a = lab[i]
+        foreach_neighbor(ix, i, (j, _d2) -> begin
+            b = lab[j]
+            if b != a
+                key = a < b ? (a, b) : (b, a)
+                s = min(fs[i], fs[j]); s > get(saddle, key, -Inf) && (saddle[key] = s)
+            end
+        end)
+    end
+    # node arrays: leaves 1..nleaf first, branches appended
+    npeak = [maximum(fs[i] for i in s) for s in subs]
+    nbase = fill(-Inf, nleaf); nparent = zeros(Int, nleaf)
+    nchild = [Int[] for _ in 1:nleaf]; isleaf = trues(nleaf)
+    nself = [length(s) for s in subs]; nsub = copy(nself)
+    uf = collect(1:nleaf); top = collect(1:nleaf)              # uf over leaves; top[root] = its current top node
+    ufind(a) = (@inbounds while uf[a] != a; uf[a] = uf[uf[a]]; a = uf[a]; end; a)
+    for ((a, b), sv) in sort(collect(saddle); by=kv -> -kv[2])  # highest saddle merges first
+        ra = ufind(a); rb = ufind(b); ra == rb && continue
+        ta = top[ra]; tb = top[rb]
+        push!(npeak, max(npeak[ta], npeak[tb])); push!(nbase, sv); push!(nparent, 0)
+        push!(nchild, [ta, tb]); push!(isleaf, false)
+        push!(nself, 0); push!(nsub, nsub[ta] + nsub[tb])
+        B = length(npeak)
+        nparent[ta] = B; nparent[tb] = B
+        nbase[ta] = max(nbase[ta], sv); nbase[tb] = max(nbase[tb], sv)
+        uf[ra] = rb; top[ufind(rb)] = B
+    end
+    fmin = isempty(mem) ? 0.0 : minimum(fs[i] for i in mem)
+    nodes = [StructureNode(n, nparent[n], nchild[n], isleaf[n], npeak[n],
+                           nbase[n] == -Inf ? fmin : nbase[n], nself[n], nsub[n]) for n in 1:length(npeak)]
+    rootids = [n for n in 1:length(npeak) if nparent[n] == 0]
+    labels = [lab[i] for i in mem]
+    return labels, nleaf, StructureTree(nodes, rootids)
+end
+
 # ---- watershed on a 2D region (Meyer-style priority flood from local maxima) ------------
 function _watershed2d(px, M, min_sep::Float64)
     nx, ny = size(M); inset = Set(px)
@@ -349,18 +399,57 @@ function _watershed2d(px, M, min_sep::Float64)
 end
 
 # =====================================================================================
+#  Structure hierarchy (dendrogram tree)
+# =====================================================================================
+"""    StructureNode
+
+One node of a [`StructureTree`](@ref): `id`, `parent` (0 at a root), `children` (ids), an `is_leaf`
+flag, the `peak` field value in its subtree, the `base` level at which it forms (the saddle where it
+merges into its parent, or the threshold at a root), and member counts `n_self` (points it owns
+directly — nonzero only for leaves) and `n_subtree` (points in the whole subtree)."""
+struct StructureNode
+    id::Int
+    parent::Int
+    children::Vector{Int}
+    is_leaf::Bool
+    peak::Float64
+    base::Float64
+    n_self::Int
+    n_subtree::Int
+end
+
+"""    StructureTree
+
+The multi-scale hierarchy produced by a [`Dendrogram`](@ref) finder (`clumpfind(obj, …; hierarchy=true)`):
+`nodes` (a vector of [`StructureNode`](@ref), indexable by node `id`) and `roots` (top-level node ids,
+one per disconnected region). Leaves are the finest structures (density peaks pruned by `min_delta`);
+branches are the levels at which they merge. Accessors: [`roots`](@ref), `leaves`, `children`, `parent`."""
+struct StructureTree
+    nodes::Vector{StructureNode}
+    roots::Vector{Int}
+end
+Base.length(t::StructureTree) = length(t.nodes)
+roots(t::StructureTree) = t.nodes[t.roots]
+leaves(t::StructureTree) = [n for n in t.nodes if n.is_leaf]
+children(t::StructureTree, n::StructureNode) = t.nodes[n.children]
+parent(t::StructureTree, n::StructureNode) = n.parent == 0 ? nothing : t.nodes[n.parent]
+
+# =====================================================================================
 #  Catalog
 # =====================================================================================
 """    ClumpCatalog
 
 Result of [`clumpfind`](@ref). `clumps` is a vector of per-clump `NamedTuple`s (sorted
-most-massive first); `meta` records the search parameters. Index/iterate it like a vector
+most-massive first); `meta` records the search parameters; `tree` is the [`StructureTree`](@ref)
+hierarchy (only when built via `hierarchy=true`, else `nothing`). Index/iterate it like a vector
 (`cat[1]`, `length(cat)`, `for c in cat`)."""
 struct ClumpCatalog
     nclumps::Int
     clumps::Vector{NamedTuple}
     meta::NamedTuple
+    tree::Union{Nothing,StructureTree}
 end
+ClumpCatalog(n, clumps, meta) = ClumpCatalog(n, clumps, meta, nothing)   # tree-less convenience (converts clumps)
 Base.length(c::ClumpCatalog) = c.nclumps
 Base.getindex(c::ClumpCatalog, i) = c.clumps[i]
 Base.iterate(c::ClumpCatalog, s=1) = s > c.nclumps ? nothing : (c.clumps[s], s + 1)
@@ -477,6 +566,21 @@ DensityWatershed(field::Symbol=:rho; threshold::Real, linking_length::Real, thre
     DensityWatershed(field, Float64(threshold), Float64(linking_length), threshold_unit,
                      Float64(peak_min_distance), Float64(persistence), backend)
 
+"""    Dendrogram(field=:rho; threshold, linking_length, threshold_unit=:standard, min_delta=0.0, backend=CellLinkedList)
+
+Multi-scale hierarchy finder (Rosolowsky & Leroy 2008): the finest density peaks (local maxima with
+prominence ≥ `min_delta`) are the catalog's leaf clumps, and `clumpfind(obj, …; hierarchy=true)`
+attaches the full merge [`StructureTree`](@ref) recording the level at which they join. `min_delta`
+(in `field` units) is the minimum peak-to-saddle contrast for a separate leaf."""
+struct Dendrogram <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    min_delta::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+Dendrogram(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_unit::Symbol=:standard,
+           min_delta::Real=0.0, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    Dendrogram(field, Float64(threshold), Float64(linking_length), threshold_unit,
+               Float64(min_delta), backend)
+
 _label(f::ThresholdFoF, P::Points) = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
 function _label(f::DensityWatershed, P::Points)
     labels, k = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
@@ -492,6 +596,12 @@ function _label(f::DensityWatershed, P::Points)
         end
     end
     return newlabels, nk
+end
+# Dendrogram: leaf basins are the flat clumps; `clumpfind` builds the tree separately when hierarchy=true
+function _label(f::Dendrogram, P::Points)
+    labels, nleaf, _ = _dendrogram3d(collect(eachindex(P.x)), P.x, P.y, P.z, P.f,
+                                     f.linking_length, f.min_delta; backend=f.backend)
+    return labels, nleaf
 end
 
 # =====================================================================================
@@ -539,7 +649,8 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
                    boundedness::Bool=false, bound_only::Bool=false, egrav::Symbol=:approx,
                    direct_max::Int=2000, softening::Real=0.0, iterative_unbinding::Bool=false,
                    deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2 * finder.linking_length,
-                   substructure::Bool=false, sub_min_members::Int=min_members, tidal::Bool=false)
+                   substructure::Bool=false, sub_min_members::Int=min_members, tidal::Bool=false,
+                   hierarchy::Bool=false)
     need_b = boundedness || substructure || iterative_unbinding
     P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
                      pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
@@ -548,9 +659,12 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
             threshold_unit=finder.threshold_unit, linking_length=finder.linking_length,
             pos_unit=pos_unit, mass_unit=mass_unit, n_selected=length(P.idx),
             boundedness=boundedness, deblend=deblend, substructure=substructure,
-            unbinding=iterative_unbinding, finder=nameof(typeof(finder)))
+            unbinding=iterative_unbinding, hierarchy=hierarchy, finder=nameof(typeof(finder)))
     isempty(P.idx) && return ClumpCatalog(0, NamedTuple[], meta)
     xs, ys, zs, ms, fs, bargs = P.x, P.y, P.z, P.m, P.f, P.bargs
+    tree = (hierarchy && finder isa Dendrogram) ?                 # arbitrary-depth merge tree
+        last(_dendrogram3d(collect(eachindex(xs)), xs, ys, zs, fs,
+                           finder.linking_length, finder.min_delta; backend=finder.backend)) : nothing
     labels, k = _label(finder, P)
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
@@ -582,7 +696,7 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     end
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
-    return ClumpCatalog(length(out), out, meta)
+    return ClumpCatalog(length(out), out, meta, tree)
 end
 
 """
@@ -966,6 +1080,84 @@ function clumpfind(mp::DataMapsType, field::Symbol; threshold::Real, connectivit
 end
 
 # =====================================================================================
+#  Ground-truth recovery metrics (validation harness)
+# =====================================================================================
+"""
+    clump_recovery(found_labels, true_labels; background=0) -> NamedTuple
+
+Compare a found clump segmentation against a known ground truth, label-for-label over the same
+points. Returns `(; ari, completeness, purity, merit, n_found, n_true, n_points)`:
+
+* `ari` — **Adjusted Rand Index** (Hubert & Arabie 1985): 1 = perfect agreement, 0 = chance-level,
+  can be slightly negative. The standard clustering-quality metric.
+* `completeness` — mass/count-weighted fraction of each *true* clump captured by its best-matching
+  found clump, averaged over true clumps (1 = every true clump is fully contained in one found clump).
+* `purity` — the same from the found side (1 = no found clump mixes two true clumps).
+* `merit` — mean bijective merit `Σ max_i n_ij²/(|found_i|·|true_j|)` (Srisawat+2013 "SUSSING"),
+  rewarding one-to-one matches.
+
+`background` (default `0`) is the label for unassigned points; those points are excluded from
+`completeness`/`purity`/`merit` (but kept in `ari`, which scores the full partition). Both label
+vectors must be the same length and indexed by the same points.
+
+```julia
+m = clump_recovery(found_labels, true_labels)
+m.ari            # ≈ 1 when the finder recovers the input clumps
+```
+"""
+function clump_recovery(found_labels::AbstractVector{<:Integer},
+                        true_labels::AbstractVector{<:Integer}; background::Integer=0)
+    length(found_labels) == length(true_labels) ||
+        throw(ArgumentError("found_labels and true_labels must have equal length"))
+    n = length(found_labels)
+    # contingency table n_ij over ALL points (background included), keyed by (found,true)
+    tab = Dict{Tuple{Int,Int},Int}(); arow = Dict{Int,Int}(); bcol = Dict{Int,Int}()
+    @inbounds for k in 1:n
+        fi = Int(found_labels[k]); tj = Int(true_labels[k])
+        tab[(fi, tj)] = get(tab, (fi, tj), 0) + 1
+        arow[fi] = get(arow, fi, 0) + 1; bcol[tj] = get(bcol, tj, 0) + 1
+    end
+    c2(x) = x * (x - 1) ÷ 2
+    sij = sum(c2(v) for v in values(tab); init=0)
+    sa = sum(c2(v) for v in values(arow); init=0)
+    sb = sum(c2(v) for v in values(bcol); init=0)
+    nc2 = c2(n)
+    expected = nc2 == 0 ? 0.0 : sa * sb / nc2
+    maxidx = (sa + sb) / 2
+    ari = (maxidx - expected) == 0 ? 1.0 : (sij - expected) / (maxidx - expected)
+    # foreground-only completeness / purity / merit (drop background on the relevant side)
+    foundsz = Dict{Int,Int}(); truesz = Dict{Int,Int}()
+    for ((fi, tj), v) in tab
+        fi != background && (foundsz[fi] = get(foundsz, fi, 0) + v)
+        tj != background && (truesz[tj] = get(truesz, tj, 0) + v)
+    end
+    best_for_true = Dict{Int,Int}(); best_for_found = Dict{Int,Int}()
+    for ((fi, tj), v) in tab
+        if tj != background && fi != background
+            v > get(best_for_true, tj, 0) && (best_for_true[tj] = v)
+            v > get(best_for_found, fi, 0) && (best_for_found[fi] = v)
+        end
+    end
+    completeness = isempty(truesz) ? 1.0 :
+        sum(get(best_for_true, tj, 0) / sz for (tj, sz) in truesz) / length(truesz)
+    purity = isempty(foundsz) ? 1.0 :
+        sum(get(best_for_found, fi, 0) / sz for (fi, sz) in foundsz) / length(foundsz)
+    # bijective merit Σ_j max_i n_ij²/(|found_i||true_j|), averaged over true clumps
+    meritsum = 0.0
+    for (tj, _) in truesz
+        best = 0.0
+        for ((fi, tjj), v) in tab
+            (tjj == tj && fi != background) || continue
+            m = v^2 / (foundsz[fi] * truesz[tj]); m > best && (best = m)
+        end
+        meritsum += best
+    end
+    merit = isempty(truesz) ? 1.0 : meritsum / length(truesz)
+    return (ari=ari, completeness=completeness, purity=purity, merit=merit,
+            n_found=length(foundsz), n_true=length(truesz), n_points=n)
+end
+
+# =====================================================================================
 #  Mass function of a catalog
 # =====================================================================================
 """
@@ -1061,3 +1253,30 @@ function clumptable(cat::ClumpCatalog)
     end
     return NamedTuple{Tuple(first.(cols))}(Tuple(last.(cols)))
 end
+
+# =====================================================================================
+#  Persistence to disk (full-fidelity JLD2)
+# =====================================================================================
+"""
+    save_clumps(filename, cat::ClumpCatalog) -> String
+
+Write a [`ClumpCatalog`](@ref) to `filename` as a JLD2 file (full fidelity — per-clump fields,
+boundedness, nested `subclumps`, the hierarchy `tree`, and `meta` are all preserved). A `.jld2`
+extension is appended if missing. Reload with [`load_clumps`](@ref). For a flat tabular export
+(CSV/DataFrame) use [`clumptable`](@ref) instead.
+
+```julia
+save_clumps("clumps_out100", cat)
+cat2 = load_clumps("clumps_out100.jld2")
+```
+"""
+function save_clumps(filename::AbstractString, cat::ClumpCatalog)
+    fn = endswith(filename, ".jld2") ? String(filename) : filename * ".jld2"
+    JLD2.jldsave(fn; meraclumps_version=1, catalog=cat)
+    return fn
+end
+
+"""    load_clumps(filename) -> ClumpCatalog
+
+Reload a [`ClumpCatalog`](@ref) written by [`save_clumps`](@ref)."""
+load_clumps(filename::AbstractString) = JLD2.load(filename, "catalog")
