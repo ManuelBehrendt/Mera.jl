@@ -203,7 +203,7 @@ See also [`delete_field`](@ref), [`list_fields`](@ref).
 """
 function add_field(name::Symbol, compute::Function;
                    depends_on::AbstractVector{Symbol}=Symbol[],
-                   datatypes=:hydro, unit::Symbol=:standard, description::String="")
+                   datatypes=:hydro, unit=:standard, description::String="")
     kinds = datatypes isa Symbol ? (datatypes,) : datatypes
     deps = collect(Symbol, depends_on)
     for kind in kinds
@@ -309,9 +309,86 @@ function get_data_userfields(dataobject, vars::Array{Symbol,1}, units::Array{Sym
         end
         raw = spec.compute(dataobject, depvals)
         useunit = u === :standard ? spec.unit : u
-        scale = useunit === :standard ? 1.0 : getfield(dataobject.info.scale, useunit)
-        results[v] = raw .* scale
+        results[v] = raw .* _unit_factor(dataobject.info, useunit)
     end
 
     return length(vars) == 1 ? results[vars[1]] : results
+end
+
+# =====================================================================================
+#  Custom units — let user fields (and getvar) use bespoke units
+# =====================================================================================
+# name => multiplicative factor applied to a code-unit value to get the unit value.
+const USER_UNITS = Dict{Symbol,Float64}()
+
+"""
+    add_unit(name::Symbol, factor::Real)
+
+Register a custom unit: a value in code units is multiplied by `factor` to convert to this unit.
+The name then works anywhere a unit symbol is accepted — in [`add_field`](@ref) (as the field's
+default `unit`), and in `getvar(obj, var, name)`.
+
+```julia
+add_unit(:Msun_per_yr, 1.0)                      # e.g. for an SFR-like custom field
+add_field(:mdot, (o,d)->d[:rho]; depends_on=[:rho], unit=:Msun_per_yr)
+```
+See also [`delete_unit`](@ref), [`list_units`](@ref).
+"""
+add_unit(name::Symbol, factor::Real) = (USER_UNITS[name] = Float64(factor); nothing)
+
+"""    delete_unit(name::Symbol)
+
+Remove a custom unit registered with [`add_unit`](@ref)."""
+delete_unit(name::Symbol) = (delete!(USER_UNITS, name); nothing)
+
+"""    list_units() -> Vector{Symbol}
+
+The custom unit names registered with [`add_unit`](@ref)."""
+list_units() = sort!(collect(keys(USER_UNITS)))
+
+# resolve a unit to a code→unit multiplicative factor: a number is taken literally; `:standard`
+# is 1; a custom unit wins over a built-in scale field; otherwise it's an `info.scale` field.
+function _unit_factor(info, unit)
+    unit isa Real && return Float64(unit)
+    unit === :standard && return 1.0
+    haskey(USER_UNITS, unit) && return USER_UNITS[unit]
+    return Float64(getfield(info.scale, unit))
+end
+
+# =====================================================================================
+#  Dependency introspection
+# =====================================================================================
+"""
+    field_dependencies(kind::Symbol, var::Symbol) -> (; direct, raw)
+
+Inspect a derived field's dependencies for data-type `kind`: `direct` are its immediate
+dependencies (raw or derived, as declared), `raw` is the transitive set of physical stored
+variables it ultimately needs (same as [`getvar_requirements`](@ref)). Works for built-in and
+[`add_field`](@ref)-registered quantities.
+"""
+function field_dependencies(kind::Symbol, var::Symbol)
+    direct = haskey(FIELD_DEPS, kind) ? get(FIELD_DEPS[kind], var, Symbol[]) : Symbol[]
+    return (direct=copy(direct), raw=getvar_requirements(kind, var))
+end
+
+"""
+    field_tree(kind::Symbol, var::Symbol; io=stdout)
+
+Pretty-print the dependency tree of a derived field down to its raw leaves (cycle-safe).
+"""
+function field_tree(kind::Symbol, var::Symbol; io::IO=stdout)
+    function walk(v, prefix, isroot, last, seen)
+        deps = haskey(FIELD_DEPS, kind) ? get(FIELD_DEPS[kind], v, nothing) : nothing
+        leaf = deps === nothing || isempty(deps)
+        tag  = leaf ? (v in _GEOMETRY_LEAVES ? "  (geometry)" : "  (raw)") : ""
+        println(io, isroot ? string(v, tag) : string(prefix, last ? "└─ " : "├─ ", v, tag))
+        (leaf || v in seen) && return
+        push!(seen, v)
+        child_prefix = isroot ? "" : prefix * (last ? "   " : "│  ")
+        for (i, d) in enumerate(deps)
+            walk(d, child_prefix, false, i == length(deps), seen)
+        end
+    end
+    walk(var, "", true, true, Set{Symbol}())
+    return nothing
 end
