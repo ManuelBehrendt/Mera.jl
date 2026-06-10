@@ -196,6 +196,41 @@ tbl = clumptable(cat)         # (; id, n_members, mass, com_x, com_y, com_z, rad
 See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
 yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
 
+## Multi-scale hierarchy (dendrogram)
+
+A [`Dendrogram`](@ref) finder returns the finest density peaks (local maxima with prominence ≥
+`min_delta`) as the catalog's leaf clumps; passing `hierarchy=true` additionally attaches the full
+merge [`StructureTree`](@ref) — the level at which leaves join into branches and ultimately roots
+(Rosolowsky & Leroy 2008):
+
+```julia
+cat  = clumpfind(gas, Dendrogram(:rho; threshold=1e2, threshold_unit=:nH,
+                                 linking_length=0.5, min_delta=0.3); hierarchy=true)
+tree = cat.tree
+length(Mera.leaves(tree))               # finest structures (= the catalog clumps)
+r = Mera.roots(tree)[1]                  # a top-level structure
+Mera.children(tree, r)                   # its immediate sub-structures
+r.n_subtree                              # members in the whole subtree
+```
+
+## Saving & validation
+
+Persist a catalog (full fidelity — boundedness, nested `subclumps`, the `tree`) and reload it:
+
+```julia
+save_clumps("clumps_out100", cat)        # → clumps_out100.jld2
+cat = load_clumps("clumps_out100.jld2")
+```
+
+[`clump_recovery`](@ref) scores a found segmentation against a known ground truth (per-point labels),
+returning the **Adjusted Rand Index**, completeness, purity and bijective merit — the basis of the
+validation harness:
+
+```julia
+m = clump_recovery(found_labels, true_labels)
+m.ari            # ≈ 1 when the finder recovers the input clumps
+```
+
 ## API
 
 ```@docs
@@ -203,7 +238,13 @@ clumpfind
 AbstractFinder
 ThresholdFoF
 DensityWatershed
+Dendrogram
+StructureTree
+StructureNode
 clump_massfunction
+clump_recovery
 clumptable
+save_clumps
+load_clumps
 ClumpCard
 ```
