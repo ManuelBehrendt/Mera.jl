@@ -62,8 +62,28 @@ cat[1].bound           # E_kin + E_therm < |E_grav|
 ```
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
-`alpha_vir`, and `bound`. `e_grav` is `:approx` (⅗·GM²/R, fast) by default, or `:direct` (exact
-pairwise sum up to `direct_max` members).
+`alpha_vir`, and `bound`. The potential is chosen with `egrav`: `:approx` (⅗·GM²/R, fast but biased)
+by default, `:direct` (exact pairwise sum up to `direct_max` members), or `:tree` (Barnes–Hut octree,
+`O(N log N)`, accurate at any N). `softening` (in `pos_unit`) softens the kernel as `1/√(r²+ε²)`.
+
+`iterative_unbinding=true` adds SUBFIND-style unbinding: members with positive total energy in the
+bulk-velocity frame are stripped iteratively, so each clump's reported mass/membership is its
+self-bound subset.
+
+```julia
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
+                boundedness=true, egrav=:tree, iterative_unbinding=true)
+```
+
+For watershed deblending, a [`DensityWatershed`](@ref) finder additionally accepts `persistence`
+(in `field` units): a basin whose prominence (peak − saddle) is below `persistence` is merged into the
+deeper basin it meets, suppressing over-segmentation of shallow saddles (Rosolowsky & Leroy 2008
+`min_delta`):
+
+```julia
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
+                                        linking_length=0.4, persistence=0.3))
+```
 
 ### Deblending overlapping clumps
 

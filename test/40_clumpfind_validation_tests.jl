@@ -140,3 +140,103 @@ _partition(labels) = Set(Set(findall(==(l), labels)) for l in unique(labels))
         @test kc == 3 && _partition(lc) == _partition(labels)
     end
 end
+
+# minimal bargs bundle for the gravity/unbinding kernels (cgs already; poscm=1, G=1) ----
+_bargs(x, y, z, vx, vy, vz, mg; G=1.0, eps2=0.0, egrav=:direct, et=zeros(length(mg))) =
+    (mg=mg, vx=vx, vy=vy, vz=vz, et=et, poscm=1.0, Gc=G, egrav=egrav, direct_max=10^9, eps2=eps2)
+
+@testset verbose=true "clumpfind physics (v2 Phase 2, data-free)" begin
+
+    @testset "Barnes–Hut tree potential vs exact direct sum" begin
+        rng = MersenneTwister(42)
+        for n in (50, 500, 3000)
+            x = randn(rng, n); y = randn(rng, n); z = randn(rng, n); m = rand(rng, n) .+ 0.5
+            d = Mera._egrav_direct(x, y, z, m, 1.0, 0.0)
+            t = Mera._egrav_tree(x, y, z, m, 1.0, 0.0)
+            @test isapprox(t, d; rtol=2e-3)                      # θ=0.5 multipole accuracy
+        end
+        # softening preserved across both estimators
+        x = randn(rng, 400); y = randn(rng, 400); z = randn(rng, 400); m = ones(400)
+        @test isapprox(Mera._egrav_tree(x, y, z, m, 1.0, 0.3),
+                       Mera._egrav_direct(x, y, z, m, 1.0, 0.3); rtol=2e-3)
+        # ε=0 direct sum is the bare Newtonian pair energy G·m₁m₂/d
+        @test Mera._egrav_direct([0.0, 3.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], 2.0, 0.0) ≈ 2.0/3
+        # a coincident pair (d=0) is skipped at ε=0 but softened at ε>0
+        @test Mera._egrav_direct([0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], 2.0, 0.0) == 0.0
+        @test Mera._egrav_direct([0.0, 0.0], [0.0, 0.0], [0.0, 0.0], [1.0, 1.0], 2.0, 4.0) ≈ 2.0/2  # 1/√ε²
+    end
+
+    @testset "analytic self-energy oracles (Plummer / Hernquist)" begin
+        rng = MersenneTwister(2026); G = 1.0; M = 1.0; a = 1.0; N = 40000
+        dir(u) = (ct = 2 .* rand(rng, N) .- 1; st = sqrt.(1 .- ct.^2); ph = 2π .* rand(rng, N);
+                  (u .* st .* cos.(ph), u .* st .* sin.(ph), u .* ct))
+        pm = fill(M/N, N)
+        # Plummer: |W| = 3π/32 · GM²/a  (the potential self-energy; total energy is half this)
+        rP = a ./ sqrt.(rand(rng, N).^(-2/3) .- 1)
+        xP, yP, zP = dir(rP)
+        @test isapprox(Mera._egrav_tree(xP, yP, zP, pm, G, 0.0), 3π/32 * G*M^2/a; rtol=0.03)
+        # Hernquist: |W| = GM²/(6a);  M(<r)=M r²/(r+a)² ⇒ r = a√X/(1−√X)
+        sX = sqrt.(rand(rng, N)); rH = a .* sX ./ (1 .- sX)
+        xH, yH, zH = dir(rH)
+        @test isapprox(Mera._egrav_tree(xH, yH, zH, pm, G, 0.0), G*M^2/(6a); rtol=0.04)
+    end
+
+    @testset "two-body boundedness oracle" begin
+        # N=2, zero discreteness: e_grav = G m₁m₂/d, bound ⇔ E_kin < |E_grav|
+        d = 2.0; m1 = 3.0; m2 = 5.0; G = 6.674e-8
+        xs = [0.0, d]; ys = [0.0, 0.0]; zs = [0.0, 0.0]; mg = [m1, m2]
+        # call _boundedness directly: COM-frame KE, e_grav, bound flag
+        for (vrel, expect_bound) in ((0.0, true), (1e6, false))
+            vx = [0.0, vrel]   # one mass moving → finite COM-frame KE
+            b = Mera._boundedness([1, 2], mg, vx, zeros(2), zeros(2), zeros(2),
+                                  xs, ys, zs, sum(mg.*xs)/sum(mg), 0.0, 0.0,
+                                  maximum(abs.(xs .- sum(mg.*xs)/sum(mg))), 1.0, G, :direct, 10^9, 0.0)
+            @test isapprox(b.e_grav, G*m1*m2/d; rtol=1e-12)       # exact pair energy
+            @test b.bound == expect_bound
+        end
+    end
+
+    @testset "SUBFIND iterative unbinding" begin
+        # bound pair (at rest, tight) + a fast distant interloper ⇒ interloper stripped
+        x = [0.0, 1.0, 8.0]; y = zeros(3); z = zeros(3)
+        b = _bargs(x, y, z, [0.0, 0.0, 100.0], zeros(3), zeros(3), [1.0, 1.0, 1e-3])
+        @test sort(Mera._unbind([1, 2, 3], b, x, y, z)) == [1, 2]
+        # everyone at rest and close ⇒ all bound
+        x2 = [0.0, 1.0, 2.0]
+        b2 = _bargs(x2, y, z, zeros(3), zeros(3), zeros(3), ones(3))
+        @test sort(Mera._unbind([1, 2, 3], b2, x2, y, z)) == [1, 2, 3]
+        # everything flying apart ⇒ nothing bound
+        b3 = _bargs(x, y, z, [200.0, -200.0, 300.0], zeros(3), zeros(3), ones(3))
+        @test isempty(Mera._unbind([1, 2, 3], b3, x, y, z))
+        # thermal support unbinds: large internal energy pushes a member over E>0
+        bt = _bargs(x2, y, z, zeros(3), zeros(3), zeros(3), ones(3); et=[0.0, 0.0, 1e3])
+        @test 3 ∉ Mera._unbind([1, 2, 3], bt, x2, y, z)
+    end
+
+    @testset "watershed persistence sweep (contrast control)" begin
+        # peak A=10@0, peak B=6@5, low saddle (~1) between ⇒ prominence(B) ≈ 5
+        xs = Float64[]; ys = Float64[]; zs = Float64[]; fs = Float64[]
+        for (cx, pk) in [(0.0, 10.0), (5.0, 6.0)], d in -0.3:0.15:0.3
+            push!(xs, cx + d); push!(ys, 0.0); push!(zs, 0.0); push!(fs, pk - abs(d)*3)
+        end
+        for xv in 0.6:0.4:4.4
+            push!(xs, xv); push!(ys, 0.0); push!(zs, 0.0); push!(fs, 1.0 + abs(xv - 2.5))
+        end
+        mem = collect(1:length(xs)); pset(v) = Set(Set(s) for s in v)
+        bare = Mera._watershed3d(mem, xs, ys, zs, fs, 0.6)
+        @test length(bare) == 2
+        # persistence below the prominence keeps both; above it merges to one
+        @test length(Mera._watershed3d(mem, xs, ys, zs, fs, 0.6; persistence=2.0)) == 2
+        @test length(Mera._watershed3d(mem, xs, ys, zs, fs, 0.6; persistence=6.0)) == 1
+        # persistence=0 reproduces the bare watershed exactly; all variants stay mass-complete
+        @test pset(Mera._watershed3d(mem, xs, ys, zs, fs, 0.6; persistence=0.0)) == pset(bare)
+        for p in (0.0, 2.0, 6.0, 20.0)
+            w = Mera._watershed3d(mem, xs, ys, zs, fs, 0.6; persistence=p)
+            @test sort(vcat(w...)) == sort(mem)                   # complete, disjoint partition
+        end
+        # exposed through the DensityWatershed finder
+        Pp = Mera.Points(xs, ys, zs, ones(length(xs)), fs, mem, nothing)
+        @test last(Mera._label(DensityWatershed(:rho; threshold=0.0, linking_length=0.6, persistence=6.0), Pp)) == 1
+        @test last(Mera._label(DensityWatershed(:rho; threshold=0.0, linking_length=0.6, persistence=2.0), Pp)) == 2
+    end
+end
