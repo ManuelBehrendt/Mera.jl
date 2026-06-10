@@ -233,14 +233,12 @@ m.ari            # ≈ 1 when the finder recovers the input clumps
 
 ## API
 
+The finder/hierarchy types ([`AbstractFinder`](@ref), [`ThresholdFoF`](@ref),
+[`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`StructureTree`](@ref), [`StructureNode`](@ref))
+are documented in the [API reference](api.md#Types).
+
 ```@docs
 clumpfind
-AbstractFinder
-ThresholdFoF
-DensityWatershed
-Dendrogram
-StructureTree
-StructureNode
 clump_massfunction
 clump_recovery
 clumptable
