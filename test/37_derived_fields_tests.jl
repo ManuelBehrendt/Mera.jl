@@ -25,6 +25,26 @@
         @test getvar_requirements(:hydro, :totally_unknown_xyz) == [:totally_unknown_xyz]
     end
 
+    @testset "custom units + introspection (data-free)" begin
+        add_unit(:halfx, 0.5)
+        @test :halfx in list_units()
+        @test Mera._unit_factor(nothing, :halfx) == 0.5
+        @test Mera._unit_factor(nothing, 3.0) == 3.0           # numeric factor literal
+        @test Mera._unit_factor(nothing, :standard) == 1.0
+        delete_unit(:halfx); @test !(:halfx in list_units())
+
+        fd = field_dependencies(:hydro, :ekin)
+        @test Set(fd.direct) == Set([:mass, :v]) && Set(fd.raw) == Set([:rho, :vx, :vy, :vz])
+        io = IOBuffer(); field_tree(:hydro, :mach; io=io); s = String(take!(io))
+        @test occursin("mach", s) && occursin("├─", s) && occursin("(raw)", s)   # rendered tree
+
+        add_unit(:per2, 0.5)
+        add_field(:halfrho_f, (o,d)->d[:rho]; depends_on=[:rho], unit=:per2)
+        @test field_info(:halfrho_f).unit == :per2
+        @test Set(field_dependencies(:hydro, :halfrho_f).raw) == Set([:rho])
+        delete_field(:halfrho_f); delete_unit(:per2)
+    end
+
     if !DATA_AVAILABLE
         @warn "Skipping data-backed derived-field tests - simulation data not available"
         @test_skip "Simulation data not available"
@@ -32,6 +52,17 @@
         dc   = DATASETS[:spiral_ugrid]
         info = getinfo(dc.output, dc.path, verbose=false)
         gas  = gethydro(info, verbose=false, show_progress=false)
+
+        @testset "custom units (data-backed)" begin
+            r0 = getvar(gas, :rho)
+            add_unit(:halfrho_u, 0.5)
+            @test getvar(gas, :rho, :halfrho_u) ≈ 0.5 .* r0          # custom unit in builtin getvar
+            add_field(:rho_cu, (o,d)->d[:rho]; depends_on=[:rho], unit=:halfrho_u)
+            @test getvar(gas, :rho_cu) ≈ 0.5 .* r0                    # custom unit on a user field
+            add_field(:rho_x3, (o,d)->d[:rho]; depends_on=[:rho], unit=3.0)
+            @test getvar(gas, :rho_x3) ≈ 3.0 .* r0                    # numeric unit factor
+            delete_field(:rho_cu); delete_field(:rho_x3); delete_unit(:halfrho_u)
+        end
 
         @testset "add_field flows through getvar / projection / profile" begin
             add_field(:vmag2, (o,d) -> d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2; depends_on=[:vx,:vy,:vz])
