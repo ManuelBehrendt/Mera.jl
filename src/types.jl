@@ -746,7 +746,22 @@ mutable struct AMRMapsType <: DataMapsType
     smallc::Float64
     scale::ScalesType002  # Updated to current type
     info::InfoType
+    # off-axis camera metadata (empty for axis-aligned projections; see getproperty :direction)
+    los::Vector{Float64}
+    up::Vector{Float64}
+    cam_right::Vector{Float64}
+    center::Vector{Float64}
 end
+
+# Backward-compatible constructor: the historical 19-argument form (no off-axis
+# metadata). Axis-aligned projections and older code/tests keep working unchanged;
+# the off-axis path uses the full 23-argument constructor with the camera basis.
+AMRMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin,
+            lmax, ranges, extent, cextent, ratio, effres, pixsize, boxlen, smallr,
+            smallc, scale, info) =
+    AMRMapsType(maps, maps_unit, maps_lmax, maps_weight, maps_mode, lmax_projected, lmin,
+                lmax, ranges, extent, cextent, ratio, effres, pixsize, boxlen, smallr,
+                smallc, scale, info, Float64[], Float64[], Float64[], Float64[])
 
 """
     const HydroMapsType = AMRMapsType
@@ -779,7 +794,19 @@ mutable struct PartMapsType <: DataMapsType
     boxlen::Float64
     scale::ScalesType002  # Updated to current type
     info::InfoType
+    # off-axis camera metadata (empty for axis-aligned projections)
+    los::Vector{Float64}
+    up::Vector{Float64}
+    cam_right::Vector{Float64}
+    center::Vector{Float64}
 end
+
+# Backward-compatible constructor: the historical 17-argument form (no off-axis metadata).
+PartMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, lmax, ref_time,
+             ranges, extent, cextent, ratio, effres, pixsize, boxlen, scale, info) =
+    PartMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax_projected, lmin, lmax, ref_time,
+                 ranges, extent, cextent, ratio, effres, pixsize, boxlen, scale, info,
+                 Float64[], Float64[], Float64[], Float64[])
 
 # ----------------------------------------------------------------------------
 # Convenience property accessors (non-breaking) for legacy test expectations
@@ -810,10 +837,9 @@ function Base.getproperty(h::AMRMapsType, s::Symbol)
             return :mixed
         end
     elseif s === :direction
-        # Direction not stored historically; return sentinel symbol so
-        # equality tests between hydro/particle projections (created with the
-        # same argument) still succeed.
-        return :unspecified
+        # Off-axis projections store a line-of-sight vector; axis-aligned ones leave
+        # it empty (historical behaviour → :unspecified sentinel for equality tests).
+        return isempty(getfield(h, :los)) ? :unspecified : :offaxis
     else
         return getfield(h, s)
     end
@@ -837,10 +863,45 @@ function Base.getproperty(p::PartMapsType, s::Symbol)
             return :mixed
         end
     elseif s === :direction
-        return :unspecified
+        return isempty(getfield(p, :los)) ? :unspecified : :offaxis
     else
         return getfield(p, s)
     end
+end
+
+
+"""
+Mutable Struct: an off-axis line-of-sight cube returned by `los_cube` / `velocity_cube`.
+
+`cube[i,j,k]` is the deposited `weight` (default mass) at sky pixel `(i,j)` in bin `k` of the
+binned line-of-sight `quantity` (e.g. `:vlos`, `:T`, `:rho`, or a vector `(:bx,:by,:bz)`).
+`x`/`y`/`bins` are bin EDGES. Convenience aliases: `.velocity` → `bins`, `.v_unit` → `bin_unit`,
+`.direction` → `:offaxis`. Store with `savecube` / load with `loadcube`.
+"""
+mutable struct LosCubeType
+    cube::Array{Float64,3}
+    x::Vector{Float64}
+    y::Vector{Float64}
+    bins::Vector{Float64}
+    quantity::Any            # Symbol or 3-tuple/vector of Symbols (vector LOS component)
+    bin_unit::Symbol
+    weight::Symbol
+    los::Vector{Float64}
+    up::Vector{Float64}
+    cam_right::Vector{Float64}
+    center::Vector{Float64}
+    pixsize::Float64
+    boxlen::Float64
+    range_unit::Symbol
+    scale::ScalesType002
+    info::InfoType
+end
+
+function Base.getproperty(c::LosCubeType, s::Symbol)
+    s === :velocity  && return getfield(c, :bins)        # alias for the velocity-cube case
+    s === :v_unit    && return getfield(c, :bin_unit)
+    s === :direction && return :offaxis
+    return getfield(c, s)
 end
 
 
@@ -894,6 +955,19 @@ Base.@kwdef mutable struct ArgumentsType
     plane_ranges::Union{Array{<:Any,1}, Missing}  = missing
     thickness::Union{Real, Missing}         = missing
     position::Union{Real, Missing}          = missing
+
+    # off-axis projection (line of sight / camera orientation)
+    los::Union{Array{<:Real,1}, Missing}    = missing
+    up::Union{Array{<:Real,1}, Missing}     = missing
+    theta::Union{Real, Missing}             = missing
+    phi::Union{Real, Missing}               = missing
+    angle_unit::Union{Symbol, Missing}      = missing
+    binning::Union{Symbol, Missing}         = missing
+    nmax::Union{Int, Missing}               = missing
+    inclination::Union{Real, Missing}    = missing
+    azimuth::Union{Real, Missing}        = missing
+    position_angle::Union{Real, Missing} = missing
+    axis::Union{Symbol, Array{<:Real,1}, Missing} = missing
 
     center::Union{Array{<:Any,1}, Missing}  = missing
 

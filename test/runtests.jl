@@ -67,6 +67,7 @@ if isempty(_focus)
         include("30_doc_codeblocks.jl")  # data-free: doc ```julia blocks must parse (runs on 1.10/1.11/1.12)
         include("31_cosmology_tests.jl")  # data-free core + optional real-cosmo block; runs on 1.10/1.11/1.12
         include("32_rt_tests.jl")  # data-free RT API surface + optional rt_stromgren block; runs on 1.10/1.11/1.12
+        include("33_offaxis_kinematics_tests.jl")  # data-free off-axis camera kinematics (Phase A1)
     end
 
     # ========================================================================
@@ -92,6 +93,12 @@ if isempty(_focus)
     # ------------------------------------------------------------------------
     @testset "Analysis Functions" begin
         include("06_projections.jl")
+        include("34_offaxis_invariance_tests.jl")  # off-axis conservation regression (angle × pixel size)
+        include("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
+        include("36_offaxis_features_tests.jl")    # LOS features: integrated_spectrum, moment2, emission_map, profile/phase, slice
+        include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
+        include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
+        include("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
         include("07_regions.jl")
     end
 

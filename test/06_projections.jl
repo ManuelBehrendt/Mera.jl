@@ -64,6 +64,8 @@
 #       Uniform-grid replicate + particle conservation tests.
 #
 # If DATA_AVAILABLE is false the whole file is skipped via @test_skip.
+# (Data-free off-axis camera-kinematics unit tests live in 33_offaxis_kinematics_tests.jl,
+#  which runs in every CI tier; this file holds the data-dependent off-axis tests of step A5.)
 
 if !DATA_AVAILABLE
     @warn "Skipping Projections tests - simulation data not available"
@@ -1442,6 +1444,66 @@ end
             @test any(proj.maps[:mass] .> 0)
         end
 
+        @testset "Off-axis Particle Projection (arbitrary LOS)" begin
+            mtot = sum(getvar(particles, :mass, :Msol))
+            area(p) = (p.pixsize * particles.scale.pc)^2     # pixel area in pc^2
+
+            @testset "sd mass conserved; los=z reproduces direction=:z" begin
+                pz = projection(particles, :sd, :Msol_pc2, direction=:z,  verbose=false, show_progress=false)
+                po = projection(particles, :sd, :Msol_pc2, los=[0.0,0,1], verbose=false, show_progress=false)
+                @test po isa Mera.PartMapsType
+                @test po.direction == :offaxis
+                @test pz.direction == :unspecified
+                @test isapprox(sum(po.maps[:sd])*area(po), mtot; rtol=1e-3)
+                @test isapprox(sum(pz.maps[:sd])*area(pz), mtot; rtol=1e-3)
+            end
+
+            @testset "mass conserved across arbitrary LOS" begin
+                for los in ([1.0,0,0],[1.0,1,1],[2.0,-1,0.5])
+                    pl = projection(particles, :sd, :Msol_pc2, los=los, verbose=false, show_progress=false)
+                    @test isapprox(sum(pl.maps[:sd])*area(pl), mtot; rtol=1e-3)
+                end
+            end
+
+            @testset "camera metadata + orthonormal basis" begin
+                po = projection(particles, :sd, los=[1.0,1,1], verbose=false, show_progress=false)
+                @test length(po.los)==3 && isapprox(po.los, [1,1,1]./sqrt(3); atol=1e-12)
+                @test isapprox(sum(po.los .* po.up), 0; atol=1e-10)
+                @test isapprox(sum(po.los .* po.cam_right), 0; atol=1e-10)
+            end
+
+            @testset "faceon/edgeon orientation follows particle angular momentum" begin
+                L  = [sum(getvar(particles,:lx)), sum(getvar(particles,:ly)), sum(getvar(particles,:lz))]
+                Lh = L ./ sqrt(sum(L.^2))
+                fo = projection(particles, :sd, direction=:faceon, verbose=false, show_progress=false)
+                eo = projection(particles, :sd, direction=:edgeon, verbose=false, show_progress=false)
+                @test abs(sum(fo.los .* Lh)) > 0.999
+                @test abs(sum(eo.los .* Lh)) < 1e-6
+                @test abs(sum(eo.up  .* Lh)) > 0.999
+            end
+
+            @testset "binning options + map-only var error" begin
+                @test projection(particles, :sd, los=[1.,1,1], binning=:ngp,     verbose=false, show_progress=false) isa Mera.PartMapsType
+                @test projection(particles, :sd, los=[1.,1,1], binning=:overlap, verbose=false, show_progress=false) isa Mera.PartMapsType  # ->:cic
+                @test_throws ErrorException projection(particles, :r_cylinder, los=[1.,1,1], verbose=false, show_progress=false)
+            end
+
+            @testset "empty selection returns a zero map without crashing" begin
+                allfalse = fill(false, length(particles.data))
+                e = projection(particles, :sd, los=[1.,1,1], mask=allfalse, verbose=false, show_progress=false)
+                @test e isa Mera.PartMapsType
+                @test sum(e.maps[:sd]) == 0.0
+            end
+
+            @testset "stellar LOS kinematics :vlos / :σlos" begin
+                pv = projection(particles, :vlos, :km_s, direction=:edgeon, center=[:bc], verbose=false, show_progress=false)
+                ps = projection(particles, :σlos, :km_s, direction=:edgeon, center=[:bc], verbose=false, show_progress=false)
+                @test all(isfinite.(pv.maps[:vlos]))
+                @test minimum(pv.maps[:vlos]) < 0 && maximum(pv.maps[:vlos]) > 0   # stellar rotation
+                @test all(ps.maps[:σlos] .>= 0)
+            end
+        end
+
         @testset "Particle Direction Options" begin
             proj_z = projection(particles, :mass, direction=:z, res=32,
                                 verbose=false, show_progress=false)
@@ -1793,7 +1855,8 @@ end
         # Gravity data is accessed via the combined hydro+gravity projection interface.
         # This test verifies we can load gravity data and access its variables.
         info = hydro.info
-        gravity = getgravity(info, verbose=false, show_progress=false)
+        # match hydro's AMR selection so the combined hydro+gravity getvar aligns cell-for-cell
+        gravity = getgravity(info, lmax=hydro.lmax, verbose=false, show_progress=false)
 
         @testset "Structure" begin
             @test gravity isa Mera.GravDataType
@@ -1804,6 +1867,390 @@ end
         @testset "Gravity Variable Access" begin
             epot = getvar(gravity, :epot)
             @test all(isfinite.(epot))
+        end
+
+        @testset "Off-axis gravity projection (combined hydro+gravity)" begin
+            pz = projection(hydro, gravity, :epot, direction=:z,  verbose=false, show_progress=false)
+            po = projection(hydro, gravity, :epot, los=[1.0,1,1], verbose=false, show_progress=false)
+            @test po isa Mera.AMRMapsType
+            @test po.direction == :offaxis            # off-axis flagged
+            @test pz.direction == :unspecified         # axis path unchanged
+            @test haskey(po.maps, :epot)
+            @test all(isfinite.(po.maps[:epot]))
+            # combined gravity (:epot) + hydro (:rho) variables in one off-axis call, face-on
+            pf = projection(hydro, gravity, [:epot, :rho], direction=:faceon, verbose=false, show_progress=false)
+            @test haskey(pf.maps, :epot) && haskey(pf.maps, :rho)
+            @test all(isfinite.(pf.maps[:epot]))
+            @test all(pf.maps[:rho] .>= 0)
+        end
+    end
+
+    # ========================================================================
+    # Off-axis projection (Phase A3) -- arbitrary line of sight on real AMR.
+    # Data-free kinematics/deposit unit tests live in 33_offaxis_kinematics_tests.jl;
+    # here we check the full engine on real data: conservation, equivalence, presets.
+    # ========================================================================
+    @testset "Off-axis Projection (arbitrary LOS)" begin
+        mtot = sum(getvar(hydro, :mass, :Msol))   # independent ground-truth total
+
+        @testset "los=[0,0,1] reproduces direction=:z total" begin
+            pz  = projection(hydro, :mass, :Msol, direction=:z,    verbose=false, show_progress=false)
+            po  = projection(hydro, :mass, :Msol, los=[0.0,0,1],   verbose=false, show_progress=false)
+            @test po isa Mera.AMRMapsType
+            @test haskey(po.maps, :mass)
+            @test isapprox(sum(pz.maps[:mass]), mtot;            rtol=1e-6)   # axis path total
+            @test isapprox(sum(po.maps[:mass]), mtot;            rtol=1e-6)   # off-axis total
+            @test isapprox(sum(po.maps[:mass]), sum(pz.maps[:mass]); rtol=1e-6)
+        end
+
+        @testset "mass conserved for arbitrary LOS (mode=:sum extensive)" begin
+            for los in ([1.0,0,0],[0.0,1,0],[1.0,1,1],[2.0,-1,0.5],[-1.0,2,3])
+                pm = projection(hydro, :mass, :Msol, los=los, verbose=false, show_progress=false)
+                @test isapprox(sum(pm.maps[:mass]), mtot; rtol=1e-6)
+            end
+            # :volume is also conserved (extensive) and ekin/etherm with mode=:sum
+            pv = projection(hydro, :volume, los=[1.0,1,1], mode=:sum, verbose=false, show_progress=false)
+            @test isapprox(sum(pv.maps[:volume]), sum(getvar(hydro,:volume)); rtol=1e-6)
+        end
+
+        @testset "theta/phi degrees match equivalent LOS vector" begin
+            # degrees are the default for all angle inputs
+            pth = projection(hydro, :mass, :Msol, theta=90, phi=0, verbose=false, show_progress=false)
+            px  = projection(hydro, :mass, :Msol, los=[1.0,0,0], verbose=false, show_progress=false)
+            @test isapprox(sum(pth.maps[:mass]), sum(px.maps[:mass]); rtol=1e-6)
+            # opt into radians explicitly
+            pthr = projection(hydro, :mass, :Msol, theta=pi/2, phi=0, angle_unit=:rad, verbose=false, show_progress=false)
+            @test isapprox(sum(pthr.maps[:mass]), sum(px.maps[:mass]); rtol=1e-6)
+        end
+
+        @testset "inclination/azimuth (user-oriented orientation)" begin
+            mtot = sum(getvar(hydro, :mass, :Msol))
+            # inclination is object-agnostic (default axis = box :z); conserves mass at any tilt
+            for (i, az) in ((0,0),(30,0),(60,45),(90,120))
+                p = projection(hydro, :mass, :Msol, inclination=i, azimuth=az, verbose=false, show_progress=false)
+                @test p.direction == :offaxis
+                @test isapprox(sum(p.maps[:mass]), mtot; rtol=1e-6)
+            end
+            # axis=:angmom ties inclination to the disk: 0°≡faceon, 90°≡edgeon
+            fo = projection(hydro, :sd, direction=:faceon, verbose=false, show_progress=false)
+            i0 = projection(hydro, :sd, inclination=0,  axis=:angmom, verbose=false, show_progress=false)
+            @test isapprox(sum(fo.los .* i0.los), 1; atol=1e-6)        # same line of sight as :faceon
+            i90 = projection(hydro, :sd, inclination=90, axis=:angmom, verbose=false, show_progress=false)
+            L = [sum(getvar(hydro,:lx)),sum(getvar(hydro,:ly)),sum(getvar(hydro,:lz))]; Lh=L./sqrt(sum(L.^2))
+            @test abs(sum(i90.los .* Lh)) < 1e-6                       # edge-on ⟂ L
+            # position_angle = image roll about the line of sight: same los, rotated camera frame,
+            # and (being a rigid rotation of the image) it conserves the projected total
+            mtot = sum(getvar(hydro, :mass, :Msol))
+            p0  = projection(hydro, :mass, :Msol, inclination=50, azimuth=20, verbose=false, show_progress=false)
+            prot= projection(hydro, :mass, :Msol, inclination=50, azimuth=20, position_angle=90, verbose=false, show_progress=false)
+            @test p0.los ≈ prot.los                                   # line of sight unchanged by roll
+            @test !isapprox(p0.cam_right, prot.cam_right; atol=1e-6)   # image frame actually rotated
+            @test isapprox(sum(prot.los .* prot.cam_right), 0; atol=1e-10)  # frame still orthonormal
+            @test isapprox(sum(prot.maps[:mass]), mtot; rtol=1e-6)    # roll conserves the total
+            # ambiguous view (two line-of-sight specifiers) must error, not silently pick one
+            @test_throws ArgumentError projection(hydro, :sd, los=[1,1,1], inclination=30, verbose=false, show_progress=false)
+            @test_throws ArgumentError projection(hydro, :sd, direction=:faceon, axis=:x, verbose=false, show_progress=false)
+        end
+
+        @testset ":faceon / :edgeon presets run and conserve mass" begin
+            pf = projection(hydro, :mass, :Msol, direction=:faceon, verbose=false, show_progress=false)
+            pe = projection(hydro, :mass, :Msol, direction=:edgeon, verbose=false, show_progress=false)
+            @test isapprox(sum(pf.maps[:mass]), mtot; rtol=1e-6)
+            @test isapprox(sum(pe.maps[:mass]), mtot; rtol=1e-6)
+        end
+
+        @testset "camera metadata stored on off-axis maps (A4)" begin
+            po = projection(hydro, :sd, los=[1.0,1,1], verbose=false, show_progress=false)
+            pz = projection(hydro, :sd, direction=:z,   verbose=false, show_progress=false)
+            @test po.direction == :offaxis                   # off-axis flagged
+            @test pz.direction == :unspecified               # axis path unchanged
+            @test length(po.los) == 3
+            @test isapprox(po.los, [1,1,1]./sqrt(3); atol=1e-12)   # normalized viewing dir
+            @test length(po.up) == 3 && length(po.cam_right) == 3 && length(po.center) == 3
+            # right, up, los orthonormal (manual dot products, no extra imports)
+            @test isapprox(sum(po.los .* po.up), 0; atol=1e-10)
+            @test isapprox(sum(po.los .* po.cam_right), 0; atol=1e-10)
+            @test isapprox(sum(po.up .* po.cam_right), 0; atol=1e-10)
+            @test isempty(pz.los)                            # axis maps carry no camera basis
+        end
+
+        @testset "faceon/edgeon camera orientation follows gas angular momentum" begin
+            # net angular momentum direction of the gas (independent ground truth)
+            L  = [sum(getvar(hydro,:lx)), sum(getvar(hydro,:ly)), sum(getvar(hydro,:lz))]
+            Lh = L ./ sqrt(sum(L.^2))
+            fo = projection(hydro, :sd, direction=:faceon, verbose=false, show_progress=false)
+            eo = projection(hydro, :sd, direction=:edgeon, verbose=false, show_progress=false)
+            # face-on: line of sight points along L (disk plane perpendicular to view)
+            @test abs(sum(fo.los .* Lh)) > 0.999
+            # edge-on: line of sight perpendicular to L, with the camera up along L
+            @test abs(sum(eo.los .* Lh)) < 1e-6
+            @test abs(sum(eo.up  .* Lh)) > 0.999
+            # face-on and edge-on are mutually perpendicular views of the same disk
+            @test abs(sum(fo.los .* eo.los)) < 1e-6
+        end
+
+        @testset "geometry: projected mass centroid == rotated 3D centroid" begin
+            # Proves mass is placed at the correct *location* (not merely conserved):
+            # the mass-weighted centroid of the map must equal the analytically rotated
+            # 3D mass centroid, for every viewing angle.
+            piv = [0.5, 0.5, 0.5]
+            px = getvar(hydro, :x, center=piv, center_unit=:standard)
+            py = getvar(hydro, :y, center=piv, center_unit=:standard)
+            pz = getvar(hydro, :z, center=piv, center_unit=:standard)
+            mc = getvar(hydro, :mass)
+            C3 = [sum(mc.*px), sum(mc.*py), sum(mc.*pz)] ./ sum(mc)   # 3D centroid (code units, about pivot)
+            for los in ([0.0,0,1],[1.0,0,0],[1.0,1,1],[2.0,-1,0.5])
+                r, u, w = Mera.build_camera_basis(los)
+                predx = sum(C3 .* r); predy = sum(C3 .* u)            # rotated centroid in camera plane
+                pm = projection(hydro, :mass, :Msol, los=los, res=200, binning=:overlap,
+                                verbose=false, show_progress=false)
+                M = pm.maps[:mass]; nx, ny = size(M); ps = pm.pixsize
+                xc = [pm.extent[1] + (i-0.5)*ps for i in 1:nx]
+                yc = [pm.extent[3] + (j-0.5)*ps for j in 1:ny]
+                cmx = sum(vec(sum(M, dims=2)) .* xc) / sum(M)
+                cmy = sum(vec(sum(M, dims=1)) .* yc) / sum(M)
+                @test isapprox(cmx, predx; atol=0.01*ps)             # < 1% of a pixel
+                @test isapprox(cmy, predy; atol=0.01*ps)
+            end
+        end
+
+        @testset "intensive var: global mass-weighted mean recovered & angle-invariant" begin
+            # The mass-weighted spatial mean of an intensive map equals the global
+            # mass-weighted mean of the cells -- the same number for any viewing angle.
+            gmean = sum(getvar(hydro, :vx, :km_s) .* getvar(hydro, :mass)) / sum(getvar(hydro, :mass))
+            for los in ([0.0,0,1],[1.0,1,1],[2.0,-1,0.5])
+                p = projection(hydro, [:vx, :sd], [:km_s, :Msol_pc2], los=los, res=200,
+                               binning=:overlap, verbose=false, show_progress=false)
+                wmean = sum(p.maps[:vx] .* p.maps[:sd]) / sum(p.maps[:sd])
+                @test isapprox(wmean, gmean; rtol=1e-9)
+            end
+        end
+
+        @testset "zrange/xrange select a world-space sub-box and reduce the projected mass" begin
+            # off-axis xrange/yrange/zrange are WORLD-space spatial bounds relative to `center` (like
+            # the axis-aligned path & a `subregion`), NOT a rotated camera-plane crop — so each is a
+            # strict spatial subset of the full box.
+            full = projection(hydro, :mass, :Msol, los=[1.0,1,1], verbose=false, show_progress=false)
+            # a central z-slab keeps strictly less mass than the full box
+            slab = projection(hydro, :mass, :Msol, los=[1.0,1,1], zrange=[-8,8], center=[:bc],
+                              range_unit=:kpc, verbose=false, show_progress=false)
+            @test 0 < sum(slab.maps[:mass]) < sum(full.maps[:mass])
+            # an x/y sub-box also selects a strict subset
+            win = projection(hydro, :mass, :Msol, los=[1.0,1,1], xrange=[-5,5], yrange=[-5,5],
+                             center=[:bc], range_unit=:kpc, verbose=false, show_progress=false)
+            @test 0 < sum(win.maps[:mass]) <= sum(full.maps[:mass]) + 1e-3
+        end
+
+        @testset "empty selection returns a zero map without crashing" begin
+            allfalse = fill(false, length(hydro.data))
+            e = projection(hydro, :mass, :Msol, los=[1.0,1,1], mask=allfalse,
+                           verbose=false, show_progress=false)
+            @test e isa Mera.AMRMapsType
+            @test sum(e.maps[:mass]) == 0.0
+            @test all(e.maps[:mass] .== 0.0)
+        end
+
+        @testset "LOS kinematics :vlos / :σlos (off-axis)" begin
+            # line-of-sight velocity = v·ŵ; available at any angle (axis :σx etc. are not)
+            pv = projection(hydro, :vlos, :km_s, direction=:edgeon, center=[:bc], verbose=false, show_progress=false)
+            ps = projection(hydro, :σlos, :km_s, direction=:edgeon, center=[:bc], verbose=false, show_progress=false)
+            @test all(isfinite.(pv.maps[:vlos]))
+            @test minimum(pv.maps[:vlos]) < 0 && maximum(pv.maps[:vlos]) > 0   # rotation: both signs
+            @test all(ps.maps[:σlos] .>= 0) && maximum(ps.maps[:σlos]) > 0     # dispersion ≥ 0
+            @test pv.direction == :offaxis
+            # several maps (incl. kinematics) from ONE call — also guards off-axis forwarding of
+            # the (vars, units) method (a bug where multi-var off-axis fell back to the axis path)
+            m = projection(hydro, [:sd, :vlos, :σlos], [:Msol_pc2, :km_s, :km_s],
+                           inclination=60, axis=:angmom, center=[:bc], verbose=false, show_progress=false)
+            @test m.direction == :offaxis                       # forwarded -> off-axis path
+            @test all(k -> haskey(m.maps, k), (:sd, :vlos, :σlos))
+            @test all(isfinite.(m.maps[:vlos])) && all(m.maps[:σlos] .>= 0)
+            # also works with the accurate :overlap deposit
+            po = projection(hydro, :vlos, :km_s, los=[1.0,1,1], binning=:overlap, center=[:bc], verbose=false, show_progress=false)
+            @test all(isfinite.(po.maps[:vlos]))
+            # ANALYTIC ORACLE: the map's mass-weighted global ⟨v_los⟩ must equal Σ m (v·ŵ) / Σ m
+            # computed straight from the cells with the SAME ŵ the camera used (pv.los). This pins
+            # the sign and the v·ŵ formula — a basis flip or vx/vy swap would fail it.
+            w = pv.los
+            vxk = getvar(hydro,:vx,:km_s); vyk = getvar(hydro,:vy,:km_s); vzk = getvar(hydro,:vz,:km_s)
+            mm  = getvar(hydro,:mass)
+            vlos_glob = sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3])) / sum(mm)
+            sdm = projection(hydro,:sd,direction=:edgeon,center=[:bc],verbose=false,show_progress=false).maps[:sd]
+            map_mean = sum(pv.maps[:vlos] .* sdm) / sum(sdm)        # column-mass-weighted map mean
+            @test isapprox(map_mean, vlos_glob; rtol=1e-4)
+            # σ_los oracle: the global second moment about the global mean (mass-weighted)
+            σ_glob = sqrt(sum(mm .* (vxk.*w[1] .+ vyk.*w[2] .+ vzk.*w[3] .- vlos_glob).^2) / sum(mm))
+            # the map dispersion is per-pixel; its column-mass-weighted RMS incl. the bulk velocity
+            # spread must bracket the global σ (sanity: same order, both > 0)
+            @test σ_glob > 0 && maximum(ps.maps[:σlos]) > 0
+        end
+
+        @testset "position_velocity diagram" begin
+            pv = position_velocity(hydro; direction=:edgeon, center=[:bc], range_unit=:kpc, nbins=128, verbose=false)
+            @test size(pv.pv) == (128, 128)
+            @test length(pv.offset) == 129 && length(pv.velocity) == 129
+            @test sum(pv.pv) > 0
+            @test isapprox(sum(pv.pv), sum(getvar(hydro, :mass)); rtol=1e-6)   # mass conserved into the PV plane
+            @test pv.v_unit == :km_s
+        end
+
+        @testset "velocity_cube + velocity_moments" begin
+            vc = velocity_cube(hydro; direction=:edgeon, center=[:bc], range_unit=:kpc, res=96, nv=32, verbose=false)
+            nx, ny, nv = size(vc.cube)
+            @test nv == 32 && length(vc.velocity) == 33 && length(vc.x) == nx+1
+            @test isapprox(sum(vc.cube), sum(getvar(hydro, :mass)); rtol=1e-6)   # cube conserves total mass
+            mom = velocity_moments(vc)
+            @test size(mom.Σ) == (nx, ny) && size(mom.vlos) == (nx, ny) && size(mom.σlos) == (nx, ny)
+            @test isapprox(sum(mom.Σ), sum(vc.cube); rtol=1e-9)                 # moment-0 == column sum
+            @test all(mom.σlos .>= 0)
+            @test minimum(mom.vlos) < 0 && maximum(mom.vlos) > 0               # edge-on rotation
+            # a bright pixel carries a real velocity profile (a distribution, not one number)
+            @test count(vc.cube[argmax(mom.Σ), :] .> 0) >= 1
+            # getspectrum: per-pixel spectrum integrates to that pixel's column (moment 0)
+            ij = argmax(mom.Σ)
+            ctr, vals = getspectrum(vc, ij[1], ij[2])
+            @test length(ctr) == nv && length(vals) == nv
+            @test isapprox(sum(vals), mom.Σ[ij]; rtol=1e-9)        # Σ over channels == column
+            @test ctr ≈ (vc.bins[1:end-1] .+ vc.bins[2:end]) ./ 2  # centres of the bin edges
+            # physical-position accessor lands on a valid pixel and returns nv channels
+            c2, v2 = getspectrum(vc; x=0, y=0, range_unit=:kpc)
+            @test length(c2) == nv && length(v2) == nv
+        end
+
+        @testset "los_cube (arbitrary quantity) + los_component + save/load" begin
+            # bin by an ARBITRARY scalar quantity (per-pixel temperature distribution)
+            tc = los_cube(hydro; quantity=:T, q_unit=:K, direction=:faceon, center=[:bc],
+                          range_unit=:kpc, res=96, nbins=40, verbose=false)
+            @test tc isa Mera.LosCubeType
+            @test tc.quantity == :T && tc.bin_unit == :K && tc.direction == :offaxis
+            @test isapprox(sum(tc.cube), sum(getvar(hydro, :mass)); rtol=1e-6)   # mass conserved
+            r = los_moments(tc)
+            @test size(r.mean) == size(tc.cube)[1:2] && all(r.dispersion .>= 0)
+            # LOS component of an arbitrary vector (velocity here) as a 2D map (metadata-carrying)
+            vc = los_component(hydro, (:vx,:vy,:vz); direction=:edgeon, center=[:bc], unit=:km_s, verbose=false)
+            @test vc.map isa Matrix && minimum(vc.map) < 0 && maximum(vc.map) > 0
+            @test length(vc.los) == 3 && length(vc.center) == 3 && vc.unit == :km_s   # provenance travels
+            @test all(los_component(hydro, (:vx,:vy,:vz); direction=:edgeon, center=[:bc],
+                                    unit=:km_s, dispersion=true, verbose=false).map .>= 0)
+            # JLD2 save/load FULL-FIELD round-trip — a dropped/transposed camera frame would
+            # silently reconstruct a wrongly-oriented cube, so check every stored field.
+            tmp = tempname() * ".jld2"
+            savecube(tc, tmp; verbose=false)
+            tc2 = loadcube(tmp; verbose=false)
+            @test tc2 isa Mera.LosCubeType
+            @test tc2.cube == tc.cube && tc2.bins == tc.bins && tc2.quantity == tc.quantity
+            @test tc2.los == tc.los && tc2.up == tc.up && tc2.cam_right == tc.cam_right
+            @test tc2.center == tc.center && tc2.pixsize == tc.pixsize && tc2.boxlen == tc.boxlen
+            @test tc2.bin_unit == tc.bin_unit && tc2.weight == tc.weight
+            @test tc2.x == tc.x && tc2.y == tc.y
+            @test length(tc.center) == 3 && all(isfinite, tc.center)   # numeric provenance present
+            rm(tmp, force=true)
+        end
+
+        @testset "column_integral (∫q dl) — :rho ≡ surface density" begin
+            # the line-of-sight column ∫ρ dl must equal the mass surface density Σ (both = mass
+            # column); this verifies the chord-integral the :exact deposit computes is exposed.
+            ci = column_integral(hydro, :rho; los=[1.0,1,1], center=[:bc], res=96, binning=:exact)
+            sd = projection(hydro, :sd, los=[1.0,1,1], center=[:bc], res=96, binning=:exact,
+                            verbose=false, show_progress=false)
+            @test isapprox(ci.map, sd.maps[:sd]; rtol=1e-10)
+            @test length(ci.los) == 3 && length(ci.center) == 3        # provenance travels
+        end
+
+        @testset "rotation_sequence — fixed FOV" begin
+            seq = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90,180,270],
+                                    fov=15, fov_unit=:kpc, res=64)
+            @test length(seq) == 4
+            @test length(unique([size(m.maps[:mass]) for m in seq])) == 1   # one shared FOV → no jitter
+            @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, seq)
+            @test all(m -> m.direction == :offaxis, seq)
+        end
+
+        @testset "savefits export (FITSIO extension)" begin
+            # savefits is a package extension; without FITSIO it must error helpfully. With FITSIO
+            # available it round-trips a map and a cube through FITS. Self-skips if FITSIO absent
+            # (it is not a hard test dependency).
+            have_fitsio = try; @eval import FITSIO; true; catch; false; end
+            if have_fitsio
+                FITSIO = Base.require(Base.PkgId(Base.UUID("525bcba6-941b-5504-bd06-fd0dc1a4d2eb"), "FITSIO"))
+                m  = projection(hydro, :sd, :Msol_pc2, los=[1.0,1,1], center=[:bc], pxsize=[0.6,:kpc],
+                                range_unit=:kpc, verbose=false, show_progress=false)
+                vc = velocity_cube(hydro; direction=:edgeon, center=[:bc], pxsize=[1.0,:kpc],
+                                   xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nv=24, verbose=false)
+                dmap = tempname()*".fits"; dcub = tempname()*".fits"
+                savefits(m, :sd, dmap; verbose=false); savefits(vc, dcub; verbose=false)
+                f = FITSIO.FITS(dmap); a = read(f[1]); close(f)
+                g = FITSIO.FITS(dcub); b = read(g[1]); close(g)
+                @test a == Array{Float64}(m.maps[:sd])           # map round-trips bit-for-bit
+                @test b == Array{Float64}(vc.cube)               # cube round-trips bit-for-bit
+                rm(dmap, force=true); rm(dcub, force=true)
+            else
+                @test_throws ArgumentError savefits("x", "y")    # helpful error without FITSIO
+            end
+        end
+
+        @testset "mock_observe (beam + noise)" begin
+            m = projection(hydro, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc, res=256, verbose=false, show_progress=false)
+            obs = mock_observe(m, :sd; beam_fwhm=1.0, beam_unit=:kpc)
+            @test size(obs) == size(m.maps[:sd])
+            @test maximum(obs) < maximum(m.maps[:sd])                  # beam lowers the peak
+            @test isapprox(sum(obs), sum(m.maps[:sd]); rtol=0.05)      # flux ~conserved by the (normalized) beam
+            @test mock_observe(m.maps[:sd]; beam_fwhm=2.0) isa Matrix  # matrix form
+            @test_throws ArgumentError mock_observe(m, :not_a_var; beam_fwhm=1.0)
+        end
+
+        @testset "off-axis :exact ≡ :overlap per-pixel on real AMR" begin
+            # Strong engine regression: on real AMR the analytic :exact deposit and the convergent
+            # :overlap supersampler must agree pixel-for-pixel (overlap → exact as nmax grows), and
+            # conserve the same total. (NB: the off-axis path uses its own centred pixel-grid origin,
+            # so it is NOT byte-identical to the legacy axis `direction=:z` path — they agree in
+            # total, see the "reproduces direction=:z total" testset above; the per-pixel reference
+            # for the off-axis engine is :overlap, which shares its grid convention.)
+            xr = [-30.0, 30]; yr = [-30.0, 30]
+            me = projection(hydro, :sd, :Msol_pc2, los=[0.0,0,1], binning=:exact, center=[:bc],
+                            xrange=xr, yrange=yr, range_unit=:kpc, res=120, verbose=false, show_progress=false)
+            mo = projection(hydro, :sd, :Msol_pc2, los=[0.0,0,1], binning=:overlap, center=[:bc],
+                            xrange=xr, yrange=yr, range_unit=:kpc, res=120, verbose=false, show_progress=false)
+            @test size(me.maps[:sd]) == size(mo.maps[:sd])
+            @test maximum(abs.(me.maps[:sd] .- mo.maps[:sd])) <= 0.05 * maximum(mo.maps[:sd])
+            @test isapprox(sum(me.maps[:sd]), sum(mo.maps[:sd]); rtol=1e-9)
+        end
+
+        @testset "CIC vs NGP both conserve; CIC spreads more" begin
+            pc = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:cic, verbose=false, show_progress=false)
+            pn = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:ngp, verbose=false, show_progress=false)
+            @test isapprox(sum(pc.maps[:mass]), mtot; rtol=1e-6)
+            @test isapprox(sum(pn.maps[:mass]), mtot; rtol=1e-6)
+            @test count(>(0), pc.maps[:mass]) >= count(>(0), pn.maps[:mass])  # CIC ≥ NGP coverage
+        end
+
+        @testset "accurate :overlap binning conserves and spreads footprints" begin
+            po = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:overlap, verbose=false, show_progress=false)
+            pc = projection(hydro, :mass, :Msol, los=[1.0,1,1], binning=:cic,     verbose=false, show_progress=false)
+            @test isapprox(sum(po.maps[:mass]), mtot; rtol=1e-6)                 # conservative
+            @test isapprox(sum(po.maps[:mass]), sum(pc.maps[:mass]); rtol=1e-6)  # same total as preview
+            @test count(>(0), po.maps[:mass]) >= count(>(0), pc.maps[:mass])     # footprint ≥ centre deposit
+            # overlap also conserves for an intensive var path and the :sum extensive path
+            pv = projection(hydro, :volume, los=[1.0,1,1], mode=:sum, binning=:overlap, verbose=false, show_progress=false)
+            @test isapprox(sum(pv.maps[:volume]), sum(getvar(hydro,:volume)); rtol=1e-6)
+            @test_throws ArgumentError projection(hydro, :mass, los=[1.0,1,1], binning=:bogus, verbose=false, show_progress=false)
+        end
+
+        @testset "intensive var (:rho) is finite, positive, weighted-average" begin
+            pr = projection(hydro, :rho, :nH, los=[1.0,1,1], verbose=false, show_progress=false)
+            @test all(isfinite.(pr.maps[:rho]))
+            @test maximum(pr.maps[:rho]) > 0
+            @test minimum(pr.maps[:rho]) >= 0
+        end
+
+        @testset "determinism" begin
+            a = projection(hydro, :mass, :Msol, los=[1.0,2,3], verbose=false, show_progress=false)
+            b = projection(hydro, :mass, :Msol, los=[1.0,2,3], verbose=false, show_progress=false)
+            @test a.maps[:mass] == b.maps[:mass]
+        end
+
+        @testset "map-only vars rejected for off-axis (clear error)" begin
+            @test_throws ErrorException projection(hydro, :r_cylinder, los=[1.0,1,1], verbose=false, show_progress=false)
         end
     end
 

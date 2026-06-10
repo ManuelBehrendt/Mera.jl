@@ -30,7 +30,13 @@
 - select variable(s) and their unit(s)
 - limit to a maximum range
 - give the spatial center (with units) of the data within the box (relevant e.g. for radius dependency)
-- relate the coordinates to a direction (x,y,z)
+- relate the coordinates to a direction (x,y,z) — or project along an arbitrary
+  **off-axis line of sight** via `los=[..]`, spherical angles `theta`/`phi`
+  (`angle_unit=:rad`/`:deg`), or the disk presets `direction=:faceon`/`:edgeon`
+  (line of sight from the particle angular momentum). The off-axis camera basis is
+  stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
+  Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
+  (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
 - select between mass (default) and volume weighting
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
@@ -81,7 +87,11 @@ return PartMapsType
 - **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`direction`:** select between: :x, :y, :z
+- **`direction`:** axis-aligned `:x`, `:y`, `:z`, or the disk presets `:faceon`/`:edgeon`
+- **off-axis view (any line of sight):** `inclination`/`azimuth` (+ `axis=:z`/`:angmom`/vector),
+  `los=[lx,ly,lz]`, or `theta`/`phi`; `position_angle` rolls the image; `angle_unit=:deg` (default)
+  or `:rad`. See the hydro `projection` docstring for the full description; for point particles
+  `binning=:overlap` falls back to `:cic`.
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 - **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
 - **`show_progress`:** print progress bar on screen
@@ -107,6 +117,16 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
+                            los::Union{Array{<:Real,1}, Nothing}=nothing,
+                            up::Union{Array{<:Real,1}, Nothing}=nothing,
+                            theta::Union{Real, Nothing}=nothing,
+                            phi::Union{Real, Nothing}=nothing,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
+                            binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -128,6 +148,16 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
+                                los=los,
+                                up=up,
+                                theta=theta,
+                                phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
+                                angle_unit=angle_unit,
+                                binning=binning,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -152,6 +182,16 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
+                            los::Union{Array{<:Real,1}, Nothing}=nothing,
+                            up::Union{Array{<:Real,1}, Nothing}=nothing,
+                            theta::Union{Real, Nothing}=nothing,
+                            phi::Union{Real, Nothing}=nothing,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
+                            binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -173,6 +213,16 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
+                                los=los,
+                                up=up,
+                                theta=theta,
+                                phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
+                                angle_unit=angle_unit,
+                                binning=binning,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -197,6 +247,16 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
+                            los::Union{Array{<:Real,1}, Nothing}=nothing,
+                            up::Union{Array{<:Real,1}, Nothing}=nothing,
+                            theta::Union{Real, Nothing}=nothing,
+                            phi::Union{Real, Nothing}=nothing,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
+                            binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -218,6 +278,16 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
+                                los=los,
+                                up=up,
+                                theta=theta,
+                                phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
+                                angle_unit=angle_unit,
+                                binning=binning,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -242,6 +312,16 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
+                            los::Union{Array{<:Real,1}, Nothing}=nothing,
+                            up::Union{Array{<:Real,1}, Nothing}=nothing,
+                            theta::Union{Real, Nothing}=nothing,
+                            phi::Union{Real, Nothing}=nothing,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
+                            binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -263,6 +343,16 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
+                                los=los,
+                                up=up,
+                                theta=theta,
+                                phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
+                                angle_unit=angle_unit,
+                                binning=binning,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -286,6 +376,16 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
+                            los::Union{Array{<:Real,1}, Nothing}=nothing,
+                            up::Union{Array{<:Real,1}, Nothing}=nothing,
+                            theta::Union{Real, Nothing}=nothing,
+                            phi::Union{Real, Nothing}=nothing,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
+                            binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -307,6 +407,16 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 pxsize=pxsize,
                                 mask=mask,
                                 direction=direction,
+                                los=los,
+                                up=up,
+                                theta=theta,
+                                phi=phi,
+                                inclination=inclination,
+                                azimuth=azimuth,
+                                position_angle=position_angle,
+                                axis=axis,
+                                angle_unit=angle_unit,
+                                binning=binning,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -331,6 +441,16 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             pxsize::Array{<:Any,1}=[missing, missing],
                             mask=[false],
                             direction::Symbol=:z,
+                            los::Union{Array{<:Real,1}, Nothing}=nothing,
+                            up::Union{Array{<:Real,1}, Nothing}=nothing,
+                            theta::Union{Real, Nothing}=nothing,
+                            phi::Union{Real, Nothing}=nothing,
+                            inclination::Union{Real, Nothing}=nothing,
+                            azimuth::Union{Real, Nothing}=nothing,
+                            position_angle::Union{Real, Nothing}=nothing,
+                            axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
+                            angle_unit::Symbol=:deg,
+                            binning::Symbol=:cic,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -352,6 +472,16 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     if !(myargs.res           === missing)           res = myargs.res end
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.direction     === missing)     direction = myargs.direction end
+    if !(myargs.los           === missing)           los = myargs.los end
+    if !(myargs.up            === missing)            up = myargs.up end
+    if !(myargs.theta         === missing)         theta = myargs.theta end
+    if !(myargs.phi           === missing)           phi = myargs.phi end
+    if !(myargs.angle_unit    === missing)    angle_unit = myargs.angle_unit end
+    if !(myargs.binning       === missing)       binning = myargs.binning end
+    if !(myargs.inclination    === missing)    inclination = myargs.inclination end
+    if !(myargs.azimuth        === missing)        azimuth = myargs.azimuth end
+    if !(myargs.position_angle === missing) position_angle = myargs.position_angle end
+    if !(myargs.axis           === missing)           axis = myargs.axis end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
     if !(myargs.yrange        === missing)        yrange = myargs.yrange end
     if !(myargs.zrange        === missing)        zrange = myargs.zrange end
@@ -437,6 +567,14 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     data_centerm = Mera.prepdatacenter(dataobject.info, center, range_unit, data_center, data_center_unit)
 
+    # Off-axis branch (arbitrary line of sight). The axis-aligned histogram path below
+    # is left unchanged; it runs whenever no off-axis specifier is given.
+    if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
+        return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
+                                            ranges, data_centerm, range_unit, mask,
+                                            los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
+                                            boxlen, dataobject.lmin, lmax, scale, ref_time, verbose)
+    end
 
     xmin, xmax, ymin, ymax, zmin, zmax = ranges
 
@@ -886,4 +1024,176 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     return PartMapsType(maps, maps_unit, maps_lmax, maps_mode, lmax, dataobject.lmin, lmax, ref_time, ranges, extent, extent_center, ratio, res, pixsize, boxlen, dataobject.scale, dataobject.info)
 
 
+end
+
+
+# =====================================================================================
+#  Off-axis particle projection engine (Phase A — particle path)
+# -------------------------------------------------------------------------------------
+#  Particles are points (no cell footprint), so the rotated positions are deposited with
+#  the fast CIC/NGP kernel; `binning=:overlap` (a cell-footprint mode) falls back to :cic.
+#  Mirrors the axis particle weighting semantics:
+#    weighting=:mass   → :sd/density = Σmass/(area|vol); other vars = mass-weighted average
+#    weighting=:volume → :sd = Σmass/area; density/other = Σ(...)/(pixel volume)
+#  Reuses the A1 camera basis + A2 deposit; conservative for the extensive (mass) maps.
+# =====================================================================================
+function projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
+                                       ranges, data_centerm, range_unit, mask,
+                                       los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
+                                       boxlen, lmin, lmax, scale, ref_time, verbose)
+
+    sd_names      = [:sd, :Σ, :surfacedensity]
+    density_names = [:density, :rho, :ρ]
+    rcheck = [:r_cylinder, :r_sphere]; anglecheck = [:ϕ]
+    σcheck = [:σx, :σy, :σz, :σ, :σr_cylinder, :σϕ_cylinder]
+    rσanglecheck = [rcheck..., σcheck..., anglecheck...]
+    for v in selected_vars
+        if v in rσanglecheck
+            error("projection: off-axis particle projection does not support the map-only " *
+                  "variable :$v (radius/angle/velocity-dispersion). Use an axis direction=:x/:y/:z.")
+        end
+    end
+    bin = (binning === :overlap || binning === :exact) ? :cic : binning   # points have no footprint
+    if !(bin in (:cic, :ngp))
+        throw(ArgumentError("binning must be :cic, :ngp, :overlap or :exact, got :$binning"))
+    end
+
+    # --- camera orientation (A1) ---
+    Lvec = nothing
+    if direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L
+        Lvec = [ sum(getvar(dataobject, :lx, center=data_centerm, ref_time=ref_time)),
+                 sum(getvar(dataobject, :ly, center=data_centerm, ref_time=ref_time)),
+                 sum(getvar(dataobject, :lz, center=data_centerm, ref_time=ref_time)) ]
+    end
+    losv, uph = resolve_los(los=los, theta=theta, phi=phi, direction=direction,
+                            inclination=inclination, azimuth=azimuth,
+                            axis=axis, angle_unit=angle_unit, up=up, L=Lvec)
+    # position_angle = image roll about the line of sight (sky position angle / camera roll)
+    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
+    cam_right, cam_up, cam_w = build_camera_basis(losv, uph; roll=roll)
+
+    # --- centred physical positions (code units), pivot = box centre ---
+    pivot = [ (ranges[1]+ranges[2])/2, (ranges[3]+ranges[4])/2, (ranges[5]+ranges[6])/2 ]
+    px = getvar(dataobject, :x, center=pivot)
+    py = getvar(dataobject, :y, center=pivot)
+    pz = getvar(dataobject, :z, center=pivot)
+    x_cam = px .* cam_right[1] .+ py .* cam_right[2] .+ pz .* cam_right[3]
+    y_cam = px .* cam_up[1]    .+ py .* cam_up[2]    .+ pz .* cam_up[3]
+    z_cam = px .* cam_w[1]     .+ py .* cam_w[2]     .+ pz .* cam_w[3]
+
+    npart = length(x_cam)
+    sel = trues(npart)
+    if length(mask) > 1
+        length(mask) == npart || error("[Mera]: mask length $(length(mask)) ≠ particle count $npart")
+        sel = collect(Bool.(mask))
+    end
+    full_z = (ranges[5] == 0.0 && ranges[6] == 1.0)
+    if !full_z
+        halfdepth = (ranges[6] - ranges[5]) * boxlen / 2
+        sel = sel .& (abs.(z_cam) .<= halfdepth)
+    end
+
+    pixsize = boxlen / res
+    full_xy = (ranges[1] == 0.0 && ranges[2] == 1.0 && ranges[3] == 0.0 && ranges[4] == 1.0)
+    if full_xy && any(sel)
+        pad = pixsize
+        x0 = minimum(@view x_cam[sel]) - pad; x1 = maximum(@view x_cam[sel]) + pad
+        y0 = minimum(@view y_cam[sel]) - pad; y1 = maximum(@view y_cam[sel]) + pad
+    elseif full_xy
+        # nothing selected: emit an empty map spanning the box instead of crashing
+        half = boxlen / 2
+        x0, x1, y0, y1 = -half, half, -half, half
+    else
+        hx = (ranges[2]-ranges[1]) * boxlen / 2
+        hy = (ranges[4]-ranges[3]) * boxlen / 2
+        x0, x1, y0, y1 = -hx, hx, -hy, hy
+        sel = sel .& (x_cam .>= x0) .& (x_cam .<= x1) .& (y_cam .>= y0) .& (y_cam .<= y1)
+    end
+    nx = max(1, round(Int, (x1 - x0) / pixsize))
+    ny = max(1, round(Int, (y1 - y0) / pixsize))
+    x1 = x0 + nx * pixsize; y1 = y0 + ny * pixsize
+    grid_extent = (x0, x1, y0, y1); grid_resolution = (nx, ny)
+    extent = [x0, x1, y0, y1]
+
+    xc = Float64.(x_cam[sel]); yc = Float64.(y_cam[sel])
+    massv = Float64.(getvar(dataobject, :mass)[sel])
+    ones_w = ones(Float64, length(xc))
+
+    # line-of-sight velocity v·ŵ (code units) for off-axis kinematics :vlos / :σlos
+    vlossel = Float64[]
+    if (:vlos in selected_vars) || (:σlos in selected_vars)
+        vx = getvar(dataobject, :vx); vy = getvar(dataobject, :vy); vz = getvar(dataobject, :vz)
+        vlossel = Float64.((vx .* cam_w[1] .+ vy .* cam_w[2] .+ vz .* cam_w[3])[sel])
+    end
+    req_unit(iv) = (k = findfirst(==(iv), selected_vars);
+                    (k !== nothing && length(units) >= k) ? units[k] : :standard)
+
+    if verbose
+        println("Off-axis LOS = ", round.(cam_w, digits=4), "  (binning=:", bin,
+                ", weighting=:", weighting, ")")
+        println("Effective resolution: $(res)^2  →  map size: $nx x $ny")
+        println()
+    end
+
+    pixel_area    = pixsize^2
+    pixel_vol_fac = (boxlen / res)^3 * res          # mirrors the axis density normalisation
+    maps = SortedDict(); maps_unit = SortedDict(); maps_mode = SortedDict()
+
+    deposit(vals, wts) = begin
+        g = zeros(Float64, nx, ny); w = zeros(Float64, nx, ny)
+        deposit_rotated_cells_to_grid!(g, w, xc, yc, vals, wts, grid_extent, grid_resolution; binning=bin)
+        return g, w
+    end
+
+    for ivar in selected_vars
+        # ---- off-axis line-of-sight kinematics (mass-weighted), stars/particles ----
+        if ivar === :vlos || ivar === :σlos
+            usym   = req_unit(ivar)
+            vscale = usym === :standard ? 1.0 : getunit(dataobject.info, usym)
+            g1, w1 = deposit(vlossel, massv)
+            nz = w1 .> 0; meanv = zeros(Float64, nx, ny); meanv[nz] = g1[nz] ./ w1[nz]
+            if ivar === :vlos
+                m = meanv .* vscale
+            else
+                g2, _ = deposit(vlossel .^ 2, massv)
+                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w1[nz]
+                m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
+            end
+            maps[ivar] = m; maps_unit[ivar] = usym; maps_mode[ivar] = :mass_weighted
+            continue
+        end
+
+        if ivar in sd_names
+            g, _ = deposit(ones_w, massv)            # Σ mass per pixel
+            m = g ./ pixel_area
+            mmode = weighting === :volume ? :volume_weighted : :mass_weighted
+        elseif ivar in density_names
+            g, _ = deposit(ones_w, massv)
+            m = g ./ pixel_vol_fac
+            mmode = weighting === :volume ? :volume_weighted : :mass_weighted
+        else
+            vals = Float64.(getvar(dataobject, ivar, center=data_centerm, ref_time=ref_time)[sel])
+            if weighting === :volume
+                g, _ = deposit(vals, ones_w)         # Σ value
+                m = g ./ pixel_vol_fac
+                mmode = :volume_weighted
+            else
+                g, w = deposit(vals, massv)          # Σ value·mass  /  Σ mass
+                m = zeros(Float64, nx, ny)
+                nz = w .> 0
+                m[nz] = g[nz] ./ w[nz]
+                mmode = :mass_weighted
+            end
+        end
+        selected_unit, unit_name = getunit(dataobject, ivar, selected_vars, units, uname=true)
+        maps[ivar]      = selected_unit != 1.0 ? m .* selected_unit : m
+        maps_unit[ivar] = unit_name
+        maps_mode[ivar] = mmode
+    end
+
+    ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+    return PartMapsType(maps, maps_unit, SortedDict(), maps_mode, lmax, lmin, lmax, ref_time,
+                        ranges, extent, copy(extent), ratio, res, pixsize, boxlen, scale,
+                        dataobject.info,
+                        collect(cam_w), collect(cam_up), collect(cam_right), collect(float.(pivot)))
 end

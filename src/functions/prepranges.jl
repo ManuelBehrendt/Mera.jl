@@ -498,17 +498,15 @@ end
 
 
 function prepboxcenter(dataobject::InfoType, selected_unit::Real, centerm::Any)
-
-    Nc = length(centerm)
-    center = zeros(Float64, Nc)
-
+    # Convert one `data_center` component (in its unit) to a FRACTIONAL box coordinate (0..1), to
+    # match the `center` produced by center_in_standardnotation in prepdatacenter. `selected_unit`
+    # is the physical-per-code factor (1 for :standard, where `centerm` is already in code units),
+    # so fractional = centerm / selected_unit / boxlen. (The old `centerm/boxlen * selected_unit`
+    # was only correct when selected_unit ≈ 1, i.e. :standard/:kpc on 1-code-length-=-1-kpc sims.)
     if centerm == :bc || centerm == :boxcenter
-        center = dataobject.boxlen * 0.5 * selected_unit
-    else
-        center = centerm ./ dataobject.boxlen .* selected_unit
+        return 0.5
     end
-
-    return center
+    return centerm / selected_unit / dataobject.boxlen
 end
 
 function prepdatacenter(dataobject::InfoType, center::Array{<:Any,1}, range_unit::Symbol, data_centerm::Array{<:Any,1}, data_center_unit::Symbol)

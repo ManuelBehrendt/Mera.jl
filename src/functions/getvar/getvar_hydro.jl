@@ -827,30 +827,18 @@ function get_data(  dataobject::HydroDataType,
             vars_dict[:etherm] = pressure .* volume .* selected_unit
 
         elseif i == :r_cylinder
+            # build from the fast type-stable getvar(:x/:y/:z) (code units) + @.sqrt — ~10× faster than
+            # the dynamic `p[apos]` NamedTuple closure, and reuses the same path as the velocity components.
             selected_unit = getunit(dataobject, :r_cylinder, vars, units)
-            if isamr
-                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( masked_data, (apos, bpos, :level)=>p->
-                                                selected_unit * sqrt( (p[apos] * boxlen / 2^p.level - boxlen * center[1] )^2 +
-                                                                   (p[bpos] * boxlen / 2^p.level - boxlen * center[2] )^2 ) ) )
-            else # if uniform grid
-
-                vars_dict[:r_cylinder] = convert(Array{Float64,1}, select( masked_data, (apos, bpos)=>p->
-                                                selected_unit * sqrt( (p[apos] * boxlen / 2^lmax - boxlen * center[1] )^2 +
-                                                                   (p[bpos] * boxlen / 2^lmax - boxlen * center[2] )^2 ) ) )
-            end
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vars_dict[:r_cylinder] = @. sqrt(x^2 + y^2) * selected_unit
         elseif i == :r_sphere
             selected_unit = getunit(dataobject, :r_sphere, vars, units)
-            if isamr
-                vars_dict[:r_sphere] = select( masked_data, (apos, bpos, cpos, :level)=>p->
-                                        selected_unit * sqrt( (p[apos] * boxlen / 2^p.level -  boxlen * center[1]  )^2 +
-                                                               (p[bpos] * boxlen / 2^p.level -  boxlen * center[2] )^2  +
-                                                               (p[cpos] * boxlen / 2^p.level -  boxlen * center[3] )^2 ) )
-            else # if uniform grid
-                vars_dict[:r_sphere] = select( masked_data, (apos, bpos, cpos)=>p->
-                                        selected_unit * sqrt( (p[apos] * boxlen / 2^lmax -  boxlen * center[1]  )^2 +
-                                                               (p[bpos] * boxlen / 2^lmax -  boxlen * center[2] )^2  +
-                                                               (p[cpos] * boxlen / 2^lmax -  boxlen * center[3] )^2 ) )
-            end
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
+            vars_dict[:r_sphere] = @. sqrt(x^2 + y^2 + z^2) * selected_unit
 
         end
 

@@ -125,7 +125,6 @@ function getrt(dataobject::InfoType;
 
     names_constr = preptablenames_rt(dataobject.rt_variable_list, nvar_list, read_cpu, isamr)
 
-    GC.gc()
     data = create_gravity_table(vars_1D, pos_1D, cpus_1D, names_constr, nvar_corr, nvar_i_list, read_cpu, isamr, verbose, max_threads)
     vars_1D = nothing; pos_1D = nothing; cpus_1D = nothing; GC.gc()
 
