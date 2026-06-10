@@ -152,6 +152,87 @@ function _deblend2d(px, M, min_sep::Float64)
     return subs
 end
 
+# ---- watershed deblending (density-descending basin assignment, DENMAX/SUBFIND-style) ---
+# Process members densest-first; each joins the basin of its highest-field already-assigned
+# neighbour within `rad`; a member with no assigned neighbour starts a new basin (a density peak).
+# Respects the density landscape (saddles) better than nearest-peak. Returns sub-member lists.
+function _watershed3d(mem, xs, ys, zs, fs, rad::Float64)
+    inv_b = 1.0 / rad; r2 = rad * rad
+    buckets = Dict{NTuple{3,Int},Vector{Int}}()
+    @inbounds for i in mem
+        push!(get!(buckets, (floor(Int, xs[i]*inv_b), floor(Int, ys[i]*inv_b), floor(Int, zs[i]*inv_b)), Int[]), i)
+    end
+    order = sort(mem, by=i -> -fs[i])
+    basin = Dict{Int,Int}(); npeak = 0
+    @inbounds for i in order
+        cx = floor(Int, xs[i]*inv_b); cy = floor(Int, ys[i]*inv_b); cz = floor(Int, zs[i]*inv_b)
+        best = 0; bestf = -Inf
+        for dx in -1:1, dy in -1:1, dz in -1:1
+            nb = get(buckets, (cx+dx, cy+dy, cz+dz), nothing); nb === nothing && continue
+            for j in nb
+                (j == i || !haskey(basin, j)) && continue
+                if (xs[i]-xs[j])^2 + (ys[i]-ys[j])^2 + (zs[i]-zs[j])^2 <= r2 && fs[j] > bestf
+                    bestf = fs[j]; best = j
+                end
+            end
+        end
+        basin[i] = best == 0 ? (npeak += 1) : basin[best]
+    end
+    subs = [Int[] for _ in 1:npeak]
+    @inbounds for i in mem; push!(subs[basin[i]], i); end
+    return subs
+end
+
+# ---- watershed on a 2D region (Meyer-style priority flood from local maxima) ------------
+function _watershed2d(px, M, min_sep::Float64)
+    nx, ny = size(M); inset = Set(px)
+    # seeds = local maxima within the region (8-neighbourhood)
+    seeds = Tuple{Int,Int}[]
+    @inbounds for (i, j) in px
+        v = M[i, j]; ispk = true
+        for di in -1:1, dj in -1:1
+            (di == 0 && dj == 0) && continue
+            p = (i+di, j+dj)
+            p in inset && M[p[1], p[2]] > v && (ispk = false; break)
+        end
+        ispk && push!(seeds, (i, j))
+    end
+    # merge seeds closer than min_sep (keep the stronger), as for the peak method
+    sort!(seeds, by=p -> -M[p[1], p[2]]); kept = Tuple{Int,Int}[]; ms2 = min_sep^2
+    for p in seeds
+        any(q -> (p[1]-q[1])^2 + (p[2]-q[2])^2 < ms2, kept) || push!(kept, p)
+    end
+    length(kept) <= 1 && return [px]
+    label = Dict{Tuple{Int,Int},Int}()
+    for (b, p) in enumerate(kept); label[p] = b; end
+    # flood: process pixels high→low; assign to the basin of the highest already-labelled neighbour
+    for (i, j) in sort(px, by=p -> -M[p[1], p[2]])
+        haskey(label, (i, j)) && continue
+        best = 0; bestf = -Inf
+        for di in -1:1, dj in -1:1
+            (di == 0 && dj == 0) && continue
+            q = (i+di, j+dj)
+            if haskey(label, q) && M[q[1], q[2]] > bestf
+                bestf = M[q[1], q[2]]; best = label[q]
+            end
+        end
+        best != 0 && (label[(i, j)] = best)
+    end
+    # any pixel still unlabelled (e.g. a merged-away local max with no higher neighbour) → nearest seed,
+    # so the basins remain a full partition of the region (mass-conserving)
+    for (i, j) in px
+        haskey(label, (i, j)) && continue
+        best = 1; bd = Inf
+        for (b, (qi, qj)) in enumerate(kept)
+            d = (i - qi)^2 + (j - qj)^2; d < bd && (bd = d; best = b)
+        end
+        label[(i, j)] = best
+    end
+    subs = [Tuple{Int,Int}[] for _ in 1:length(kept)]
+    for (p, b) in label; push!(subs[b], p); end
+    return [s for s in subs if !isempty(s)]
+end
+
 # =====================================================================================
 #  Catalog
 # =====================================================================================
@@ -199,8 +280,12 @@ returns member count, `mass`, centre of mass `com`, `peak` field value and `peak
   (thermal, gas), `e_grav` (binding energy — `egrav=:approx` ⇒ `3/5·GM²/R`, or `:direct` ⇒ exact
   pairwise sum up to `direct_max` members), `alpha_vir = 2·e_kin/|e_grav|`, and a `bound` flag
   (`e_kin + e_therm < |e_grav|`). `bound_only=true` keeps only self-bound clumps.
-* `deblend=true` splits merged clumps at their density peaks (peaks separated by `peak_min_distance`
-  in `pos_unit`; members assigned to the nearest peak).
+* `deblend=true`/`:peak` splits merged clumps at their density peaks (members assigned to the nearest
+  peak); `deblend=:watershed` instead assigns by density-descending basins (respects saddles). Peaks
+  are separated by `peak_min_distance` (in `pos_unit`).
+* `substructure=true` builds a bound-substructure tree: each top-level clump is split into density
+  basins (watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as
+  nested `subclumps` (with `n_subclumps`). Implies the boundedness analysis.
 
 ```julia
 gas = gethydro(getinfo(output, path))
@@ -214,7 +299,8 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
                    linking_length::Real, threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc,
                    mass_unit::Symbol=:Msol, min_members::Int=1, mask=[false],
                    boundedness::Bool=false, bound_only::Bool=false, egrav::Symbol=:approx,
-                   direct_max::Int=2000, deblend::Bool=false, peak_min_distance::Real=2linking_length)
+                   direct_max::Int=2000, deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2linking_length,
+                   substructure::Bool=false, sub_min_members::Int=min_members)
     f = getvar(obj, field, threshold_unit)
     pos = getvar(obj, [:x, :y, :z], pos_unit)
     x = pos[:x]; y = pos[:y]; z = pos[:z]
@@ -224,46 +310,68 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
     idx = findall(keep)
     meta = (dim=Symbol("3D"), field=field, threshold=threshold, threshold_unit=threshold_unit,
             linking_length=linking_length, pos_unit=pos_unit, mass_unit=mass_unit,
-            n_selected=length(idx), boundedness=boundedness, deblend=deblend)
+            n_selected=length(idx), boundedness=boundedness, deblend=deblend, substructure=substructure)
     isempty(idx) && return ClumpCatalog(0, NamedTuple[], meta)
     xs = x[idx]; ys = y[idx]; zs = z[idx]; ms = m[idx]; fs = f[idx]
-    # cgs arrays for the energy / virial analysis (only when requested)
-    if boundedness
+    # cgs arrays for energy / virial analysis (needed for boundedness AND for bound substructure)
+    need_b = boundedness || substructure
+    bargs = nothing
+    if need_b
         mg = getvar(obj, :mass, :g)[idx]
         vv = getvar(obj, [:vx, :vy, :vz], :cm_s)
         vx = vv[:vx][idx]; vy = vv[:vy][idx]; vz = vv[:vz][idx]
         et = obj isa HydroDataType ? getvar(obj, :etherm, :erg)[idx] : zeros(length(idx))
         poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
-        Gc = obj.info.constants.G
+        bargs = (mg=mg, vx=vx, vy=vy, vz=vz, et=et, poscm=poscm, Gc=obj.info.constants.G,
+                 egrav=egrav, direct_max=direct_max)
     end
     labels, k = _fof3d(xs, ys, zs, Float64(linking_length))
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
-    if deblend          # split each FoF clump at its density peaks (overlap handling)
-        members = reduce(vcat, (_deblend3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
+    if deblend !== false   # split each FoF clump at its density peaks (overlap handling)
+        split3d = deblend === :watershed ? _watershed3d : _deblend3d   # :peak (default) or :watershed
+        members = reduce(vcat, (split3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
                                 for mem in members); init=Vector{Int}[])
     end
     out = NamedTuple[]
     for mem in members
         length(mem) >= min_members || continue
-        mc = @view ms[mem]; Mtot = sum(mc)
-        comx = sum(mc .* @view(xs[mem])) / Mtot
-        comy = sum(mc .* @view(ys[mem])) / Mtot
-        comz = sum(mc .* @view(zs[mem])) / Mtot
-        pk = mem[argmax(@view fs[mem])]
-        r = maximum(sqrt.((xs[mem] .- comx).^2 .+ (ys[mem] .- comy).^2 .+ (zs[mem] .- comz).^2))
-        c = (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
-             peak=fs[pk], peak_pos=(xs[pk], ys[pk], zs[pk]), radius=r)
-        if boundedness
-            c = merge(c, _boundedness(mem, mg, vx, vy, vz, et, xs, ys, zs, comx, comy, comz,
-                                      r, poscm, Gc, egrav, direct_max))
-            bound_only && !c.bound && continue
+        c = _clump_stats(mem, xs, ys, zs, ms, fs, need_b, bargs)   # bound fields when boundedness or substructure
+        need_b && bound_only && !c.bound && continue
+        if substructure
+            # split the clump into density basins, keep only the self-bound ones as nested subclumps
+            kids = NamedTuple[]
+            for sm in _watershed3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
+                length(sm) >= sub_min_members || continue
+                sc = _clump_stats(sm, xs, ys, zs, ms, fs, true, bargs)
+                sc.bound && push!(kids, sc)
+            end
+            sort!(kids, by=k -> -k.mass)
+            kids = [merge(k, (id=i,)) for (i, k) in enumerate(kids)]
+            c = merge(c, (n_subclumps=length(kids), subclumps=kids))
         end
         push!(out, c)
     end
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
     return ClumpCatalog(length(out), out, meta)
+end
+
+# per-clump statistics (mass, COM, peak, radius) + optional boundedness; shared by top-level clumps
+# and their substructure subclumps. `bargs` bundles the cgs arrays (see clumpfind).
+function _clump_stats(mem, xs, ys, zs, ms, fs, boundedness::Bool, bargs)
+    mc = @view ms[mem]; Mtot = sum(mc)
+    comx = sum(mc .* @view(xs[mem])) / Mtot
+    comy = sum(mc .* @view(ys[mem])) / Mtot
+    comz = sum(mc .* @view(zs[mem])) / Mtot
+    pk = mem[argmax(@view fs[mem])]
+    r = maximum(sqrt.((xs[mem] .- comx).^2 .+ (ys[mem] .- comy).^2 .+ (zs[mem] .- comz).^2))
+    c = (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
+         peak=fs[pk], peak_pos=(xs[pk], ys[pk], zs[pk]), radius=r)
+    boundedness || return c
+    return merge(c, _boundedness(mem, bargs.mg, bargs.vx, bargs.vy, bargs.vz, bargs.et,
+                                 xs, ys, zs, comx, comy, comz, r, bargs.poscm, bargs.Gc,
+                                 bargs.egrav, bargs.direct_max))
 end
 
 # per-clump energetics (cgs) → kinetic (COM-frame) + thermal + gravitational binding, virial
@@ -370,7 +478,7 @@ are grouped by `connectivity` (4 or 8). Per region it returns pixel count `n_mem
 centroid), `peak` & `peak_pos`, and `radius` — positions in the map's extent units.
 """
 function clumpfind(mp::DataMapsType, field::Symbol; threshold::Real, connectivity::Int=8,
-                   min_pixels::Int=1, deblend::Bool=false, peak_min_distance::Real=3.0)
+                   min_pixels::Int=1, deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=3.0)
     haskey(mp.maps, field) || throw(ArgumentError("map has no field :$field (have $(collect(keys(mp.maps))))"))
     M = mp.maps[field]; nx, ny = size(M)
     ext = mp.extent
@@ -384,7 +492,10 @@ function clumpfind(mp::DataMapsType, field::Symbol; threshold::Real, connectivit
         r = _uf_find(parent, lin(i, j)); push!(get!(groups, r, Tuple{Int,Int}[]), (i, j))
     end
     regions = collect(values(groups))
-    deblend && (regions = reduce(vcat, (_deblend2d(px, M, Float64(peak_min_distance)) for px in regions); init=Vector{Tuple{Int,Int}}[]))
+    if deblend !== false
+        split2d = deblend === :watershed ? _watershed2d : _deblend2d   # :peak (default) or :watershed
+        regions = reduce(vcat, (split2d(px, M, Float64(peak_min_distance)) for px in regions); init=Vector{Tuple{Int,Int}}[])
+    end
     meta = (dim=Symbol("2D"), field=field, threshold=threshold, threshold_unit=:map,
             connectivity=connectivity, pixarea=pixarea, mass_unit=:value_x_area, deblend=deblend)
     out = NamedTuple[]
@@ -490,6 +601,7 @@ function clumptable(cat::ClumpCatalog)
     for k in (:e_kin, :e_therm, :e_grav, :alpha_vir, :bound)
         haskey(cs[1], k) && push!(cols, k => [getproperty(c, k) for c in cs])
     end
+    haskey(cs[1], :n_subclumps) && push!(cols, :n_subclumps => [c.n_subclumps for c in cs])
     if haskey(cs[1], :components)
         for nm in keys(cs[1].components)
             push!(cols, Symbol("mass_$nm") => [c.components[nm].mass for c in cs])
