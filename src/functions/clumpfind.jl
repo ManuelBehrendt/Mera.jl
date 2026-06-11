@@ -476,6 +476,66 @@ function _hdbscan3d(xs, ys, zs, rad::Float64, mcs::Int, ms::Int;
     return out, K
 end
 
+# ---- 6D phase-space friends-of-friends (Rockstar-style; Behroozi+2013) ------------------
+# Two points are linked when they lie within `b_pos` in space *and* within `b_vel` in velocity, so
+# populations that overlap on the sky but differ kinematically (streams, subhaloes, tidal debris)
+# separate — which spatial FoF cannot do. Reuses the spatial index for the `b_pos` neighbour test;
+# the velocity test is applied to each spatial pair. Returns (dense labels, n_groups).
+function _phasespacefof(xs, ys, zs, vx, vy, vz, b_pos::Float64, b_vel::Float64;
+                        backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    n = length(xs); n == 0 && return Int[], 0
+    parent = collect(1:n); bv2 = b_vel * b_vel
+    ix = build_index(backend, xs, ys, zs, b_pos, 1:n)
+    foreach_pair_within(ix, 1:n, (i, j, _d2) -> begin
+        dv2 = (vx[i]-vx[j])^2 + (vy[i]-vy[j])^2 + (vz[i]-vz[j])^2
+        dv2 <= bv2 && _uf_union!(parent, i, j)
+    end)
+    return _uf_labels(parent)
+end
+
+# ---- 0-dim persistence clustering (ToMATo; Chazal+2013) ---------------------------------
+# Superlevel-set filtration of the density field: process points densest-first, each flows to the
+# basin of its highest already-seen neighbour (steepest ascent); when two basins meet at a saddle the
+# *younger* (lower-peak) one dies with persistence = peak−saddle, and is merged into the elder only if
+# that persistence is below `τ`. Basins surviving the `τ` cut are the clusters — a principled,
+# parameter-light topological extraction. Returns (dense labels, n_clusters).
+function _persistence3d(xs, ys, zs, fs, rad::Float64, τ::Real;
+                        backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    n = length(xs); n == 0 && return Int[], 0
+    ix = build_index(backend, xs, ys, zs, rad, 1:n)
+    order = sortperm(fs; rev=true)                       # densest first
+    basin = zeros(Int, n); peakval = Float64[]; bparent = Int[]; npeak = 0
+    bfind(b) = (@inbounds while bparent[b] != b; bparent[b] = bparent[bparent[b]]; b = bparent[b]; end; b)
+    roots = Int[]; pers = Float64(τ)
+    bestref = Ref(0); fref = Ref(-Inf)
+    @inbounds for i in order
+        empty!(roots); bestref[] = 0; fref[] = -Inf
+        foreach_neighbor(ix, i, (j, _d2) -> begin
+            if basin[j] != 0
+                r = bfind(basin[j]); (r in roots) || push!(roots, r)
+                if fs[j] > fref[]; fref[] = fs[j]; bestref[] = j; end
+            end
+        end)
+        if isempty(roots)
+            npeak += 1; push!(peakval, fs[i]); push!(bparent, npeak); basin[i] = npeak   # new peak
+        else
+            target = bfind(basin[bestref[]]); basin[i] = target                          # steepest ascent
+            deepest = roots[argmax(@view peakval[roots])]                                 # elder basin
+            for r in roots
+                r == deepest && continue
+                peakval[r] - fs[i] < pers && (bparent[r] = deepest)   # younger dies if prominence < τ
+            end
+        end
+    end
+    relabel = Dict{Int,Int}(); k = 0; labels = zeros(Int, n)
+    @inbounds for i in 1:n
+        r = bfind(basin[i]); l = get(relabel, r, 0)
+        l == 0 && (l = (k += 1); relabel[r] = l)
+        labels[i] = l
+    end
+    return labels, k
+end
+
 # ---- watershed on a 2D region (Meyer-style priority flood from local maxima) ------------
 function _watershed2d(px, M, min_sep::Float64)
     nx, ny = size(M); inset = Set(px)
@@ -609,7 +669,10 @@ struct Points
     m::Vector{Float64}; f::Vector{Float64}                        # mass (`mass_unit`), field (`threshold_unit`)
     idx::Vector{Int}                                              # original row indices selected in `obj`
     bargs                                                         # cgs energy bundle (NamedTuple) or `nothing`
+    vx::Vector{Float64}; vy::Vector{Float64}; vz::Vector{Float64} # velocities (km/s) — empty unless needed
 end
+# 7-arg form (no velocity) keeps every existing call site working
+Points(x, y, z, m, f, idx, bargs) = Points(x, y, z, m, f, idx, bargs, Float64[], Float64[], Float64[])
 
 # does this object carry cell-centred magnetic field components?
 _has_bfield(obj) = obj isa HydroDataType &&
@@ -626,7 +689,7 @@ end
 function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
                       threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
                       mask=[false], need_energy::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
-                      softening::Real=0.0)
+                      softening::Real=0.0, need_velocity::Bool=false)
     f = getvar(obj, field, threshold_unit)
     pos = getvar(obj, [:x, :y, :z], pos_unit)
     m = getvar(obj, :mass, mass_unit)
@@ -645,7 +708,12 @@ function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
         bargs = (mg=mg, vx=vv[:vx][idx], vy=vv[:vy][idx], vz=vv[:vz][idx], et=et, em=em, poscm=poscm,
                  Gc=obj.info.constants.G, egrav=egrav, direct_max=direct_max, eps2=eps2)
     end
-    return Points(xs, ys, zs, ms, fs, idx, bargs)
+    vx = vy = vz = Float64[]
+    if need_velocity   # phase-space coordinates (km/s)
+        vv = getvar(obj, [:vx, :vy, :vz], :km_s)
+        vx = vv[:vx][idx]; vy = vv[:vy][idx]; vz = vv[:vz][idx]
+    end
+    return Points(xs, ys, zs, ms, fs, idx, bargs, vx, vy, vz)
 end
 
 # =====================================================================================
@@ -742,10 +810,44 @@ HDBSCANFinder(field::Symbol=:rho; threshold::Real, linking_length::Real, thresho
     HDBSCANFinder(field, Float64(threshold), Float64(linking_length), threshold_unit,
                   min_cluster_size, min_samples, backend)
 
+"""    PhaseSpaceFoF(field=:rho; threshold, linking_length_pos, linking_length_vel, threshold_unit=:standard, backend=CellLinkedList)
+
+6-D phase-space friends-of-friends (Rockstar-style; Behroozi+2013): points link only when within
+`linking_length_pos` in space **and** `linking_length_vel` (km/s) in velocity, so kinematically distinct
+populations that overlap spatially — streams, subhaloes, tidal debris — separate. Needs velocities (the
+finder loads them automatically)."""
+struct PhaseSpaceFoF <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    linking_length_vel::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+PhaseSpaceFoF(field::Symbol=:rho; threshold::Real, linking_length_pos::Real, linking_length_vel::Real,
+              threshold_unit::Symbol=:standard, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    PhaseSpaceFoF(field, Float64(threshold), Float64(linking_length_pos), threshold_unit,
+                  Float64(linking_length_vel), backend)
+
+"""    PersistenceFinder(field=:rho; threshold, linking_length, persistence, threshold_unit=:standard, backend=CellLinkedList)
+
+Topological persistence clustering (0-dim persistent homology / ToMATo; Chazal+2013): a superlevel-set
+filtration of the density field where a peak is kept as a separate cluster only if its prominence
+(peak − merge saddle) reaches `persistence`. Principled, parameter-light deblending that is robust in
+crowded fields."""
+struct PersistenceFinder <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    persistence::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+PersistenceFinder(field::Symbol=:rho; threshold::Real, linking_length::Real, persistence::Real,
+                  threshold_unit::Symbol=:standard, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    PersistenceFinder(field, Float64(threshold), Float64(linking_length), threshold_unit,
+                      Float64(persistence), backend)
+
 _label(f::ThresholdFoF, P::Points) = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
 _label(f::GraphSegFinder, P::Points) = _graphseg3d(P.x, P.y, P.z, P.f, f.linking_length, f.scale; backend=f.backend)
 _label(f::HDBSCANFinder, P::Points) =
     _hdbscan3d(P.x, P.y, P.z, f.linking_length, f.min_cluster_size, f.min_samples; backend=f.backend)
+_label(f::PhaseSpaceFoF, P::Points) =
+    _phasespacefof(P.x, P.y, P.z, P.vx, P.vy, P.vz, f.linking_length, f.linking_length_vel; backend=f.backend)
+_label(f::PersistenceFinder, P::Points) =
+    _persistence3d(P.x, P.y, P.z, P.f, f.linking_length, f.persistence; backend=f.backend)
 function _label(f::DensityWatershed, P::Points)
     labels, k = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
     k == 0 && return labels, k
@@ -878,7 +980,8 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     need_b = boundedness || substructure || iterative_unbinding
     P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
                      pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
-                     egrav=egrav, direct_max=direct_max, softening=softening)
+                     egrav=egrav, direct_max=direct_max, softening=softening,
+                     need_velocity=(finder isa PhaseSpaceFoF))
     meta = (dim=Symbol("3D"), field=finder.field, threshold=finder.threshold,
             threshold_unit=finder.threshold_unit, linking_length=finder.linking_length,
             pos_unit=pos_unit, mass_unit=mass_unit, n_selected=length(P.idx),
