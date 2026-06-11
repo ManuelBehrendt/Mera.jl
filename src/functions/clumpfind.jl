@@ -1,18 +1,30 @@
 # =====================================================================================
-#  clumpfind — density-threshold structure finder (v1)
+#  clumpfind — structure finder
 # -------------------------------------------------------------------------------------
 #  Find connected over-dense structures and return a per-clump catalog:
 #
 #   * 3D — friends-of-friends on the cells/particles above a field threshold (a value
 #     threshold pre-selects members; a linking length connects them). Works on hydro
-#     (cell centres) and particles.
+#     (cell centres) and particles, on a single object or several components at once
+#     (gas + stars + DM), with optional gravitational boundedness, peak/watershed
+#     deblending, and bound-substructure trees.
 #   * 2D — connected-component labelling of a projected map above a threshold.
 #
 #  Returns a `ClumpCatalog` (sorted most-massive-first) with, per clump: member count,
 #  mass, centre of mass, peak value & position, and extent.
 #
-#  (v1 = density threshold + connectivity + statistics. Gravitational boundedness, multi-field
-#  combination, and overlap handling are later stages — roadmap §G.)
+# -------------------------------------------------------------------------------------
+#  Internal architecture (v2 Phase 1 — pluggable framework, behaviour-preserving):
+#
+#    PROBE     `_make_points` centralizes getvar + threshold + mask → `Points`.
+#    NEIGHBOR  `AbstractNeighborIndex` (`CellLinkedList` default, `HashGrid`) with one
+#              pair-kernel `foreach_pair_within` / `foreach_neighbor`.
+#    FINDER    `AbstractFinder` value types (`ThresholdFoF`, `DensityWatershed`) dispatch
+#              `_label(finder, P) -> (labels, k)`.
+#    POST      `_clump_stats` → `_boundedness` → deblend / substructure → `ClumpCatalog`.
+#
+#  The legacy `clumpfind(obj, field; …)` call is a thin shim over `clumpfind(obj, finder)`,
+#  so existing scripts keep working unchanged.
 # =====================================================================================
 
 # ---- union-find -----------------------------------------------------------------------
@@ -38,25 +50,103 @@ function _uf_labels(parent::Vector{Int})
     return labels, k
 end
 
-# ---- 3D friends-of-friends: link points within `b`; spatial-hash + union-find ---------
-function _fof3d(x, y, z, b::Float64)
-    n = length(x); parent = collect(1:n); inv_b = 1.0 / b; b2 = b * b
+# =====================================================================================
+#  NEIGHBOR layer — one spatial index, one pair-kernel
+# -------------------------------------------------------------------------------------
+#  A finder never writes a neighbour loop: it calls `foreach_pair_within` (all unique pairs
+#  within the linking length) or `foreach_neighbor` (neighbours of one point). Two backends
+#  share the same 27-cell stencil over a cell of side `b`, so they enumerate exactly the same
+#  pairs — the choice is purely about allocation/cache behaviour:
+#
+#    * `HashGrid`        — Dict(cell ⇒ member Vector); the original v1 layout, kept as a baseline.
+#    * `CellLinkedList`  — head/next singly-linked list per occupied cell (the default): no
+#                          per-bucket Vector allocations, sequential `next` walk.
+#
+#  Both index an arbitrary `ids` subset of the coordinate arrays (the FoF pass uses `1:n`; a
+#  per-group watershed indexes just that group's members), so the same code serves both.
+# =====================================================================================
+abstract type AbstractNeighborIndex end
+
+@inline _cellkey(inv_b, x, y, z, i) =
+    (floor(Int, x[i] * inv_b), floor(Int, y[i] * inv_b), floor(Int, z[i] * inv_b))
+
+struct HashGrid <: AbstractNeighborIndex
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
+    b2::Float64; inv_b::Float64
+    buckets::Dict{NTuple{3,Int},Vector{Int}}
+end
+struct CellLinkedList <: AbstractNeighborIndex
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
+    b2::Float64; inv_b::Float64
+    head::Dict{NTuple{3,Int},Int}
+    next::Vector{Int}
+end
+
+const DEFAULT_BACKEND = CellLinkedList
+
+function build_index(::Type{HashGrid}, x, y, z, b::Float64, ids)
+    inv_b = 1.0 / b
     buckets = Dict{NTuple{3,Int},Vector{Int}}()
-    @inbounds for i in 1:n
-        key = (floor(Int, x[i] * inv_b), floor(Int, y[i] * inv_b), floor(Int, z[i] * inv_b))
-        push!(get!(buckets, key, Int[]), i)
+    @inbounds for i in ids
+        push!(get!(buckets, _cellkey(inv_b, x, y, z, i), Int[]), i)
     end
-    @inbounds for i in 1:n
-        cx = floor(Int, x[i] * inv_b); cy = floor(Int, y[i] * inv_b); cz = floor(Int, z[i] * inv_b)
-        for dx in -1:1, dy in -1:1, dz in -1:1
-            nb = get(buckets, (cx + dx, cy + dy, cz + dz), nothing); nb === nothing && continue
-            for j in nb
-                j <= i && continue
-                d2 = (x[i] - x[j])^2 + (y[i] - y[j])^2 + (z[i] - z[j])^2
-                d2 <= b2 && _uf_union!(parent, i, j)
-            end
+    return HashGrid(x, y, z, b * b, inv_b, buckets)
+end
+function build_index(::Type{CellLinkedList}, x, y, z, b::Float64, ids)
+    inv_b = 1.0 / b
+    next = zeros(Int, length(x))
+    head = Dict{NTuple{3,Int},Int}()
+    @inbounds for i in ids
+        key = _cellkey(inv_b, x, y, z, i)
+        next[i] = get(head, key, 0)
+        head[key] = i
+    end
+    return CellLinkedList(x, y, z, b * b, inv_b, head, next)
+end
+
+# call f!(j, d2) for every indexed neighbour j of point i within the linking length (j != i)
+@inline function foreach_neighbor(ix::HashGrid, i::Int, f!::F) where {F}
+    x, y, z = ix.x, ix.y, ix.z
+    cx, cy, cz = _cellkey(ix.inv_b, x, y, z, i)
+    @inbounds for dx in -1:1, dy in -1:1, dz in -1:1
+        nb = get(ix.buckets, (cx + dx, cy + dy, cz + dz), nothing); nb === nothing && continue
+        for j in nb
+            j == i && continue
+            d2 = (x[i] - x[j])^2 + (y[i] - y[j])^2 + (z[i] - z[j])^2
+            d2 <= ix.b2 && f!(j, d2)
         end
     end
+    return nothing
+end
+@inline function foreach_neighbor(ix::CellLinkedList, i::Int, f!::F) where {F}
+    x, y, z = ix.x, ix.y, ix.z
+    cx, cy, cz = _cellkey(ix.inv_b, x, y, z, i)
+    @inbounds for dx in -1:1, dy in -1:1, dz in -1:1
+        j = get(ix.head, (cx + dx, cy + dy, cz + dz), 0)
+        while j != 0
+            if j != i
+                d2 = (x[i] - x[j])^2 + (y[i] - y[j])^2 + (z[i] - z[j])^2
+                d2 <= ix.b2 && f!(j, d2)
+            end
+            j = ix.next[j]
+        end
+    end
+    return nothing
+end
+
+# call f!(i, j, d2) once per unique pair (i < j) within the linking length over `ids`
+function foreach_pair_within(ix::AbstractNeighborIndex, ids, f!::F) where {F}
+    @inbounds for i in ids
+        foreach_neighbor(ix, i, (j, d2) -> (j > i && f!(i, j, d2)))
+    end
+    return nothing
+end
+
+# ---- 3D friends-of-friends: link points within `b` (pluggable neighbour index + union-find) -
+function _fof3d(x, y, z, b::Float64; backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    n = length(x); parent = collect(1:n)
+    ix = build_index(backend, x, y, z, b, 1:n)
+    foreach_pair_within(ix, 1:n, (i, j, _d2) -> _uf_union!(parent, i, j))
     return _uf_labels(parent)
 end
 
@@ -156,31 +246,106 @@ end
 # Process members densest-first; each joins the basin of its highest-field already-assigned
 # neighbour within `rad`; a member with no assigned neighbour starts a new basin (a density peak).
 # Respects the density landscape (saddles) better than nearest-peak. Returns sub-member lists.
-function _watershed3d(mem, xs, ys, zs, fs, rad::Float64)
-    inv_b = 1.0 / rad; r2 = rad * rad
-    buckets = Dict{NTuple{3,Int},Vector{Int}}()
-    @inbounds for i in mem
-        push!(get!(buckets, (floor(Int, xs[i]*inv_b), floor(Int, ys[i]*inv_b), floor(Int, zs[i]*inv_b)), Int[]), i)
-    end
+#
+# `persistence` adds topological contrast control (Edelsbrunner+2002; Rosolowsky & Leroy 2008
+# `min_delta`): when a point bridges two basins at a saddle of value `fs[i]`, the shallower basin
+# is merged into the deeper one if its prominence (peak value − saddle value) is below
+# `persistence`. `persistence=0` performs no merging and reproduces the bare watershed exactly.
+function _watershed3d(mem, xs, ys, zs, fs, rad::Float64; persistence::Real=0.0,
+                      backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    ix = build_index(backend, xs, ys, zs, rad, mem)
     order = sort(mem, by=i -> -fs[i])
-    basin = Dict{Int,Int}(); npeak = 0
+    basin = Dict{Int,Int}()                    # point → basin id (pre-merge)
+    peakval = Float64[]                        # basin id → its peak field value
+    bparent = Int[]                            # union-find over basins (persistence merges)
+    npeak = 0
+    bfind(b) = (@inbounds while bparent[b] != b; bparent[b] = bparent[bparent[b]]; b = bparent[b]; end; b)
+    bref = Ref(0); fref = Ref(-Inf)            # highest-field assigned neighbour (Ref-wrapped → no boxing)
+    touched = Int[]                            # distinct neighbouring basin roots at this point
+    pers = Float64(persistence)
     @inbounds for i in order
-        cx = floor(Int, xs[i]*inv_b); cy = floor(Int, ys[i]*inv_b); cz = floor(Int, zs[i]*inv_b)
-        best = 0; bestf = -Inf
-        for dx in -1:1, dy in -1:1, dz in -1:1
-            nb = get(buckets, (cx+dx, cy+dy, cz+dz), nothing); nb === nothing && continue
-            for j in nb
-                (j == i || !haskey(basin, j)) && continue
-                if (xs[i]-xs[j])^2 + (ys[i]-ys[j])^2 + (zs[i]-zs[j])^2 <= r2 && fs[j] > bestf
-                    bestf = fs[j]; best = j
+        bref[] = 0; fref[] = -Inf; empty!(touched)
+        foreach_neighbor(ix, i, (j, _d2) -> begin
+            if haskey(basin, j)
+                r = bfind(basin[j]); (r in touched) || push!(touched, r)
+                if fs[j] > fref[]; fref[] = fs[j]; bref[] = j; end
+            end
+        end)
+        best = bref[]
+        if best == 0
+            npeak += 1; push!(peakval, fs[i]); push!(bparent, npeak); basin[i] = npeak
+        else
+            basin[i] = bfind(basin[best])             # assignment follows the bare watershed (highest neighbour)
+            if pers > 0 && length(touched) > 1
+                # basins meet here at saddle value fs[i]; absorb the shallow ones into the deepest
+                deepest = touched[1]
+                for b in touched; peakval[b] > peakval[deepest] && (deepest = b); end
+                for b in touched
+                    b == deepest && continue
+                    peakval[b] - fs[i] < pers && (bparent[b] = deepest)   # prominence below threshold → merge
                 end
             end
         end
-        basin[i] = best == 0 ? (npeak += 1) : basin[best]
     end
-    subs = [Int[] for _ in 1:npeak]
-    @inbounds for i in mem; push!(subs[basin[i]], i); end
+    # collapse to surviving basin roots and relabel to dense ids
+    relabel = Dict{Int,Int}(); nk = 0
+    subs = Vector{Int}[]
+    @inbounds for i in mem
+        r = bfind(basin[i]); id = get(relabel, r, 0)
+        id == 0 && (nk += 1; relabel[r] = nk; id = nk; push!(subs, Int[]))
+        push!(subs[id], i)
+    end
     return subs
+end
+
+# ---- dendrogram (multi-scale merge tree, Rosolowsky & Leroy 2008) -----------------------
+# Leaves = density peaks pruned by `min_delta` (the persistence-watershed basins); branches = the
+# levels at which leaves merge. The hierarchy is the single-linkage tree of the basin adjacency
+# graph keyed by saddle height (the highest field value connecting two basins) — highest saddle
+# merges first. Returns (point→leaf label vector aligned with `mem`, n_leaves, StructureTree).
+function _dendrogram3d(mem, xs, ys, zs, fs, rad::Float64, min_delta::Real;
+                       backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    subs = _watershed3d(mem, xs, ys, zs, fs, rad; persistence=min_delta, backend=backend)   # leaf basins
+    nleaf = length(subs)
+    lab = Dict{Int,Int}()
+    @inbounds for (b, s) in enumerate(subs), i in s; lab[i] = b; end
+    # saddle height between each adjacent basin pair = max over boundary links of min(fᵢ,fⱼ)
+    ix = build_index(backend, xs, ys, zs, rad, mem)
+    saddle = Dict{Tuple{Int,Int},Float64}()
+    @inbounds for i in mem
+        a = lab[i]
+        foreach_neighbor(ix, i, (j, _d2) -> begin
+            b = lab[j]
+            if b != a
+                key = a < b ? (a, b) : (b, a)
+                s = min(fs[i], fs[j]); s > get(saddle, key, -Inf) && (saddle[key] = s)
+            end
+        end)
+    end
+    # node arrays: leaves 1..nleaf first, branches appended
+    npeak = [maximum(fs[i] for i in s) for s in subs]
+    nbase = fill(-Inf, nleaf); nparent = zeros(Int, nleaf)
+    nchild = [Int[] for _ in 1:nleaf]; isleaf = trues(nleaf)
+    nself = [length(s) for s in subs]; nsub = copy(nself)
+    uf = collect(1:nleaf); top = collect(1:nleaf)              # uf over leaves; top[root] = its current top node
+    ufind(a) = (@inbounds while uf[a] != a; uf[a] = uf[uf[a]]; a = uf[a]; end; a)
+    for ((a, b), sv) in sort(collect(saddle); by=kv -> -kv[2])  # highest saddle merges first
+        ra = ufind(a); rb = ufind(b); ra == rb && continue
+        ta = top[ra]; tb = top[rb]
+        push!(npeak, max(npeak[ta], npeak[tb])); push!(nbase, sv); push!(nparent, 0)
+        push!(nchild, [ta, tb]); push!(isleaf, false)
+        push!(nself, 0); push!(nsub, nsub[ta] + nsub[tb])
+        B = length(npeak)
+        nparent[ta] = B; nparent[tb] = B
+        nbase[ta] = max(nbase[ta], sv); nbase[tb] = max(nbase[tb], sv)
+        uf[ra] = rb; top[ufind(rb)] = B
+    end
+    fmin = isempty(mem) ? 0.0 : minimum(fs[i] for i in mem)
+    nodes = [StructureNode(n, nparent[n], nchild[n], isleaf[n], npeak[n],
+                           nbase[n] == -Inf ? fmin : nbase[n], nself[n], nsub[n]) for n in 1:length(npeak)]
+    rootids = [n for n in 1:length(npeak) if nparent[n] == 0]
+    labels = [lab[i] for i in mem]
+    return labels, nleaf, StructureTree(nodes, rootids)
 end
 
 # ---- watershed on a 2D region (Meyer-style priority flood from local maxima) ------------
@@ -234,18 +399,57 @@ function _watershed2d(px, M, min_sep::Float64)
 end
 
 # =====================================================================================
+#  Structure hierarchy (dendrogram tree)
+# =====================================================================================
+"""    StructureNode
+
+One node of a [`StructureTree`](@ref): `id`, `parent` (0 at a root), `children` (ids), an `is_leaf`
+flag, the `peak` field value in its subtree, the `base` level at which it forms (the saddle where it
+merges into its parent, or the threshold at a root), and member counts `n_self` (points it owns
+directly — nonzero only for leaves) and `n_subtree` (points in the whole subtree)."""
+struct StructureNode
+    id::Int
+    parent::Int
+    children::Vector{Int}
+    is_leaf::Bool
+    peak::Float64
+    base::Float64
+    n_self::Int
+    n_subtree::Int
+end
+
+"""    StructureTree
+
+The multi-scale hierarchy produced by a [`Dendrogram`](@ref) finder (`clumpfind(obj, …; hierarchy=true)`):
+`nodes` (a vector of [`StructureNode`](@ref), indexable by node `id`) and `roots` (top-level node ids,
+one per disconnected region). Leaves are the finest structures (density peaks pruned by `min_delta`);
+branches are the levels at which they merge. Accessors: [`roots`](@ref), `leaves`, `children`, `parent`."""
+struct StructureTree
+    nodes::Vector{StructureNode}
+    roots::Vector{Int}
+end
+Base.length(t::StructureTree) = length(t.nodes)
+roots(t::StructureTree) = t.nodes[t.roots]
+leaves(t::StructureTree) = [n for n in t.nodes if n.is_leaf]
+children(t::StructureTree, n::StructureNode) = t.nodes[n.children]
+parent(t::StructureTree, n::StructureNode) = n.parent == 0 ? nothing : t.nodes[n.parent]
+
+# =====================================================================================
 #  Catalog
 # =====================================================================================
 """    ClumpCatalog
 
 Result of [`clumpfind`](@ref). `clumps` is a vector of per-clump `NamedTuple`s (sorted
-most-massive first); `meta` records the search parameters. Index/iterate it like a vector
+most-massive first); `meta` records the search parameters; `tree` is the [`StructureTree`](@ref)
+hierarchy (only when built via `hierarchy=true`, else `nothing`). Index/iterate it like a vector
 (`cat[1]`, `length(cat)`, `for c in cat`)."""
 struct ClumpCatalog
     nclumps::Int
     clumps::Vector{NamedTuple}
     meta::NamedTuple
+    tree::Union{Nothing,StructureTree}
 end
+ClumpCatalog(n, clumps, meta) = ClumpCatalog(n, clumps, meta, nothing)   # tree-less convenience (converts clumps)
 Base.length(c::ClumpCatalog) = c.nclumps
 Base.getindex(c::ClumpCatalog, i) = c.clumps[i]
 Base.iterate(c::ClumpCatalog, s=1) = s > c.nclumps ? nothing : (c.clumps[s], s + 1)
@@ -264,77 +468,214 @@ function Base.show(io::IO, c::ClumpCatalog)
 end
 
 # =====================================================================================
-#  3D: friends-of-friends on hydro cells / particles above a field threshold
+#  PROBE layer — selection → `Points`
+# -------------------------------------------------------------------------------------
+#  `_make_points` is the single place that turns an object into the arrays every finder
+#  consumes: field threshold + optional mask select the members; positions/mass are pulled
+#  in the requested units; the cgs energy bundle (`bargs`) is built once when boundedness is
+#  needed. Producing it here (rather than inside each finder) means a new finder inherits
+#  multi-field selection and boundedness for free.
+# =====================================================================================
+struct Points
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}   # positions, `pos_unit`
+    m::Vector{Float64}; f::Vector{Float64}                        # mass (`mass_unit`), field (`threshold_unit`)
+    idx::Vector{Int}                                              # original row indices selected in `obj`
+    bargs                                                         # cgs energy bundle (NamedTuple) or `nothing`
+end
+
+# does this object carry cell-centred magnetic field components?
+_has_bfield(obj) = obj isa HydroDataType &&
+    (cn = propertynames(getfield(obj, :data).columns); :bx in cn && :by in cn && :bz in cn)
+
+# per-cell magnetic energy (erg) = (B²/8π)·V, with B in Gauss and V in cm³; zeros when no B field
+function _emag_cgs(obj)
+    _has_bfield(obj) || return zeros(length(getfield(obj, :data)))
+    bx = getvar(obj, :bx, :Gauss); by = getvar(obj, :by, :Gauss); bz = getvar(obj, :bz, :Gauss)
+    V = getvar(obj, :volume, :cm3)
+    return @. (bx^2 + by^2 + bz^2) / (8π) * V
+end
+
+function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
+                      threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
+                      mask=[false], need_energy::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
+                      softening::Real=0.0)
+    f = getvar(obj, field, threshold_unit)
+    pos = getvar(obj, [:x, :y, :z], pos_unit)
+    m = getvar(obj, :mass, mass_unit)
+    keep = f .>= threshold
+    length(mask) > 1 && (keep = keep .& collect(Bool, mask))
+    idx = findall(keep)
+    xs = pos[:x][idx]; ys = pos[:y][idx]; zs = pos[:z][idx]; ms = m[idx]; fs = f[idx]
+    bargs = nothing
+    if need_energy   # cgs arrays for energy / virial analysis
+        mg = getvar(obj, :mass, :g)[idx]
+        vv = getvar(obj, [:vx, :vy, :vz], :cm_s)
+        et = obj isa HydroDataType ? getvar(obj, :etherm, :erg)[idx] : zeros(length(idx))
+        em = _emag_cgs(obj)[idx]                                                     # magnetic energy (erg), 0 if no B
+        poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
+        eps2 = (Float64(softening) * poscm)^2                                        # ε² in cm²
+        bargs = (mg=mg, vx=vv[:vx][idx], vy=vv[:vy][idx], vz=vv[:vz][idx], et=et, em=em, poscm=poscm,
+                 Gc=obj.info.constants.G, egrav=egrav, direct_max=direct_max, eps2=eps2)
+    end
+    return Points(xs, ys, zs, ms, fs, idx, bargs)
+end
+
+# =====================================================================================
+#  FINDER layer — `AbstractFinder` value types dispatch `_label(finder, P) -> (labels, k)`
+# -------------------------------------------------------------------------------------
+#  A finder is a typed, serializable parameter bundle (not a `method::Symbol`). Each carries
+#  `field`, `threshold`, `linking_length`, `threshold_unit` and a neighbour `backend`, and
+#  implements one short `_label` method; all of the downstream physics/stats/catalog machinery
+#  is shared. New finders (dendrogram, HDBSCAN, phase-space, …) plug in by adding a `_label`.
+# =====================================================================================
+"""    AbstractFinder
+
+Supertype of the 3D structure-finding algorithms passed to [`clumpfind`](@ref): [`ThresholdFoF`](@ref)
+and [`DensityWatershed`](@ref). A finder is a typed parameter bundle (field, threshold,
+linking length, neighbour backend) that implements `_label(finder, points)`; extend it by adding a
+new subtype and `_label` method."""
+abstract type AbstractFinder end
+
+"""    ThresholdFoF(field=:rho; threshold, linking_length, threshold_unit=:standard, backend=CellLinkedList)
+
+Friends-of-friends finder: members with `field ≥ threshold` are linked into a clump when within
+`linking_length` of one another. The classic, fast connectivity finder (Davis et al. 1985)."""
+struct ThresholdFoF <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    backend::Type{<:AbstractNeighborIndex}
+end
+ThresholdFoF(field::Symbol=:rho; threshold::Real, linking_length::Real,
+             threshold_unit::Symbol=:standard, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    ThresholdFoF(field, Float64(threshold), Float64(linking_length), threshold_unit, backend)
+
+"""    DensityWatershed(field=:rho; threshold, linking_length, threshold_unit=:standard, peak_min_distance=2·linking_length, persistence=0.0, backend=CellLinkedList)
+
+Watershed finder: friends-of-friends for connectivity, then each connected group is split into
+density-descending basins (peaks separated by `peak_min_distance`), so touching cores are resolved
+along their saddles (DENMAX/SUBFIND-style). `persistence` (in `field` units) prunes shallow basins:
+a basin whose prominence — peak value minus the saddle at which it joins a deeper basin — is below
+`persistence` is merged into that deeper basin (topological contrast control, Rosolowsky & Leroy 2008
+`min_delta`). `persistence=0` keeps every local maximum (bare watershed)."""
+struct DensityWatershed <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    peak_min_distance::Float64; persistence::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+DensityWatershed(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_unit::Symbol=:standard,
+                 peak_min_distance::Real=2 * linking_length, persistence::Real=0.0,
+                 backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    DensityWatershed(field, Float64(threshold), Float64(linking_length), threshold_unit,
+                     Float64(peak_min_distance), Float64(persistence), backend)
+
+"""    Dendrogram(field=:rho; threshold, linking_length, threshold_unit=:standard, min_delta=0.0, backend=CellLinkedList)
+
+Multi-scale hierarchy finder (Rosolowsky & Leroy 2008): the finest density peaks (local maxima with
+prominence ≥ `min_delta`) are the catalog's leaf clumps, and `clumpfind(obj, …; hierarchy=true)`
+attaches the full merge [`StructureTree`](@ref) recording the level at which they join. `min_delta`
+(in `field` units) is the minimum peak-to-saddle contrast for a separate leaf."""
+struct Dendrogram <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    min_delta::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+Dendrogram(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_unit::Symbol=:standard,
+           min_delta::Real=0.0, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    Dendrogram(field, Float64(threshold), Float64(linking_length), threshold_unit,
+               Float64(min_delta), backend)
+
+_label(f::ThresholdFoF, P::Points) = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
+function _label(f::DensityWatershed, P::Points)
+    labels, k = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
+    k == 0 && return labels, k
+    groups = [Int[] for _ in 1:k]
+    @inbounds for i in eachindex(labels); push!(groups[labels[i]], i); end
+    newlabels = zeros(Int, length(labels)); nk = 0
+    for mem in groups
+        for sub in _watershed3d(mem, P.x, P.y, P.z, P.f, f.peak_min_distance;
+                                persistence=f.persistence, backend=f.backend)
+            nk += 1
+            for i in sub; @inbounds newlabels[i] = nk; end
+        end
+    end
+    return newlabels, nk
+end
+# Dendrogram: leaf basins are the flat clumps; `clumpfind` builds the tree separately when hierarchy=true
+function _label(f::Dendrogram, P::Points)
+    labels, nleaf, _ = _dendrogram3d(collect(eachindex(P.x)), P.x, P.y, P.z, P.f,
+                                     f.linking_length, f.min_delta; backend=f.backend)
+    return labels, nleaf
+end
+
+# =====================================================================================
+#  3D: structure finding on hydro cells / particles above a field threshold
 # =====================================================================================
 """
-    clumpfind(obj::HydroPartType, field=:rho; threshold, linking_length,
-              threshold_unit=:standard, pos_unit=:kpc, mass_unit=:Msol,
-              min_members=1, mask=[false]) -> ClumpCatalog
+    clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit=:kpc, mass_unit=:Msol,
+              min_members=1, mask=[false], boundedness=false, bound_only=false,
+              egrav=:approx, direct_max=2000, softening=0.0, iterative_unbinding=false,
+              deblend=false, peak_min_distance=…, substructure=false,
+              sub_min_members=min_members) -> ClumpCatalog
 
-**3D friends-of-friends** structure finder. Cells/particles with `field ≥ threshold` are linked
-into clumps when they lie within `linking_length` (in `pos_unit`) of each other. Per clump it
-returns member count, `mass`, centre of mass `com`, `peak` field value and `peak_pos`, and
-`radius` (max member distance from the COM) — all positions in `pos_unit`, mass in `mass_unit`.
+**3D structure finder** driven by a [`ThresholdFoF`](@ref) or [`DensityWatershed`](@ref) `finder`
+value (the finder carries the field/threshold/linking-length and selects the algorithm). Per clump
+it returns member count, `mass`, centre of mass `com`, `peak` field value and `peak_pos`, and
+`radius` (max member distance from the COM) — positions in `pos_unit`, mass in `mass_unit`.
 
 * `boundedness=true` adds per-clump energetics (cgs): `e_kin` (COM-frame kinetic), `e_therm`
-  (thermal, gas), `e_grav` (binding energy — `egrav=:approx` ⇒ `3/5·GM²/R`, or `:direct` ⇒ exact
-  pairwise sum up to `direct_max` members), `alpha_vir = 2·e_kin/|e_grav|`, and a `bound` flag
-  (`e_kin + e_therm < |e_grav|`). `bound_only=true` keeps only self-bound clumps.
+  (thermal, gas), `e_grav` (binding energy), `alpha_vir = 2·e_kin/|e_grav|`, and a `bound` flag
+  (`e_kin + e_therm < |e_grav|`). `bound_only=true` keeps only self-bound clumps. The potential is
+  set by `egrav`: `:approx` ⇒ `3/5·GM²/R` (biased, fast); `:direct` ⇒ exact pairwise sum up to
+  `direct_max` members; `:tree` ⇒ Barnes–Hut octree, **O(N log N)**, accurate at any N (Barnes & Hut
+  1986). `softening` (in `pos_unit`) softens the kernel `1/√(r²+ε²)`.
+* `iterative_unbinding=true` runs SUBFIND-style unbinding (Springel+2001): members with positive
+  total energy in the bulk-velocity frame are stripped iteratively until convergence, so each clump's
+  reported membership/mass is its self-bound subset. Implies the boundedness analysis.
 * `deblend=true`/`:peak` splits merged clumps at their density peaks (members assigned to the nearest
-  peak); `deblend=:watershed` instead assigns by density-descending basins (respects saddles). Peaks
-  are separated by `peak_min_distance` (in `pos_unit`).
+  peak); `deblend=:watershed` instead assigns by density-descending basins. Peaks are separated by
+  `peak_min_distance` (in `pos_unit`). (Equivalent to using a [`DensityWatershed`](@ref) finder.)
 * `substructure=true` builds a bound-substructure tree: each top-level clump is split into density
   basins (watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as
   nested `subclumps` (with `n_subclumps`). Implies the boundedness analysis.
 
 ```julia
 gas = gethydro(getinfo(output, path))
-cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2)   # 0.2 kpc
-bound = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
-                  boundedness=true, bound_only=true, deblend=true)
-cat[1]            # most massive clump
+cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2))
+# contrast-controlled watershed + tree-gravity boundedness with iterative unbinding:
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
+                                        linking_length=0.4, persistence=0.3);
+                  boundedness=true, egrav=:tree, iterative_unbinding=true)
 ```
 """
-function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
-                   linking_length::Real, threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc,
+function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=:kpc,
                    mass_unit::Symbol=:Msol, min_members::Int=1, mask=[false],
                    boundedness::Bool=false, bound_only::Bool=false, egrav::Symbol=:approx,
-                   direct_max::Int=2000, deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2linking_length,
-                   substructure::Bool=false, sub_min_members::Int=min_members)
-    f = getvar(obj, field, threshold_unit)
-    pos = getvar(obj, [:x, :y, :z], pos_unit)
-    x = pos[:x]; y = pos[:y]; z = pos[:z]
-    m = getvar(obj, :mass, mass_unit)
-    keep = f .>= threshold
-    length(mask) > 1 && (keep = keep .& collect(Bool, mask))
-    idx = findall(keep)
-    meta = (dim=Symbol("3D"), field=field, threshold=threshold, threshold_unit=threshold_unit,
-            linking_length=linking_length, pos_unit=pos_unit, mass_unit=mass_unit,
-            n_selected=length(idx), boundedness=boundedness, deblend=deblend, substructure=substructure)
-    isempty(idx) && return ClumpCatalog(0, NamedTuple[], meta)
-    xs = x[idx]; ys = y[idx]; zs = z[idx]; ms = m[idx]; fs = f[idx]
-    # cgs arrays for energy / virial analysis (needed for boundedness AND for bound substructure)
-    need_b = boundedness || substructure
-    bargs = nothing
-    if need_b
-        mg = getvar(obj, :mass, :g)[idx]
-        vv = getvar(obj, [:vx, :vy, :vz], :cm_s)
-        vx = vv[:vx][idx]; vy = vv[:vy][idx]; vz = vv[:vz][idx]
-        et = obj isa HydroDataType ? getvar(obj, :etherm, :erg)[idx] : zeros(length(idx))
-        poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
-        bargs = (mg=mg, vx=vx, vy=vy, vz=vz, et=et, poscm=poscm, Gc=obj.info.constants.G,
-                 egrav=egrav, direct_max=direct_max)
-    end
-    labels, k = _fof3d(xs, ys, zs, Float64(linking_length))
+                   direct_max::Int=2000, softening::Real=0.0, iterative_unbinding::Bool=false,
+                   deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2 * finder.linking_length,
+                   substructure::Bool=false, sub_min_members::Int=min_members, tidal::Bool=false,
+                   hierarchy::Bool=false)
+    need_b = boundedness || substructure || iterative_unbinding
+    P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
+                     pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
+                     egrav=egrav, direct_max=direct_max, softening=softening)
+    meta = (dim=Symbol("3D"), field=finder.field, threshold=finder.threshold,
+            threshold_unit=finder.threshold_unit, linking_length=finder.linking_length,
+            pos_unit=pos_unit, mass_unit=mass_unit, n_selected=length(P.idx),
+            boundedness=boundedness, deblend=deblend, substructure=substructure,
+            unbinding=iterative_unbinding, hierarchy=hierarchy, finder=nameof(typeof(finder)))
+    isempty(P.idx) && return ClumpCatalog(0, NamedTuple[], meta)
+    xs, ys, zs, ms, fs, bargs = P.x, P.y, P.z, P.m, P.f, P.bargs
+    tree = (hierarchy && finder isa Dendrogram) ?                 # arbitrary-depth merge tree
+        last(_dendrogram3d(collect(eachindex(xs)), xs, ys, zs, fs,
+                           finder.linking_length, finder.min_delta; backend=finder.backend)) : nothing
+    labels, k = _label(finder, P)
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
-    if deblend !== false   # split each FoF clump at its density peaks (overlap handling)
+    if deblend !== false   # split each clump at its density peaks (overlap handling)
         split3d = deblend === :watershed ? _watershed3d : _deblend3d   # :peak (default) or :watershed
         members = reduce(vcat, (split3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
                                 for mem in members); init=Vector{Int}[])
     end
     out = NamedTuple[]
     for mem in members
+        iterative_unbinding && (mem = _unbind(mem, bargs, xs, ys, zs))   # keep only the bound subset
         length(mem) >= min_members || continue
         c = _clump_stats(mem, xs, ys, zs, ms, fs, need_b, bargs)   # bound fields when boundedness or substructure
         need_b && bound_only && !c.bound && continue
@@ -342,6 +683,7 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
             # split the clump into density basins, keep only the self-bound ones as nested subclumps
             kids = NamedTuple[]
             for sm in _watershed3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
+                tidal && (sm = _tidal_truncate(sm, mem, bargs, xs, ys, zs))   # strip tidally-unbound shell
                 length(sm) >= sub_min_members || continue
                 sc = _clump_stats(sm, xs, ys, zs, ms, fs, true, bargs)
                 sc.bound && push!(kids, sc)
@@ -354,7 +696,42 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real,
     end
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
-    return ClumpCatalog(length(out), out, meta)
+    return ClumpCatalog(length(out), out, meta, tree)
+end
+
+"""
+    clumpfind(obj::HydroPartType, field=:rho; threshold, linking_length,
+              threshold_unit=:standard, pos_unit=:kpc, mass_unit=:Msol,
+              min_members=1, mask=[false], boundedness=false, bound_only=false,
+              egrav=:approx, direct_max=2000, deblend=false, peak_min_distance=2·linking_length,
+              substructure=false, sub_min_members=min_members) -> ClumpCatalog
+
+Convenience form of the [`AbstractFinder`](@ref) method: builds a [`ThresholdFoF`](@ref) from
+`field`/`threshold`/`linking_length` and forwards every other keyword. Existing scripts keep
+working unchanged; see the finder method above for the full keyword reference.
+
+```julia
+gas = gethydro(getinfo(output, path))
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2)   # 0.2 kpc
+bound = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
+                  boundedness=true, bound_only=true, deblend=true)
+```
+"""
+function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, linking_length::Real,
+                   threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
+                   min_members::Int=1, mask=[false], boundedness::Bool=false, bound_only::Bool=false,
+                   egrav::Symbol=:approx, direct_max::Int=2000, softening::Real=0.0,
+                   iterative_unbinding::Bool=false, deblend::Union{Bool,Symbol}=false,
+                   peak_min_distance::Real=2linking_length, substructure::Bool=false,
+                   sub_min_members::Int=min_members, tidal::Bool=false,
+                   backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    finder = ThresholdFoF(field; threshold=threshold, linking_length=linking_length,
+                          threshold_unit=threshold_unit, backend=backend)
+    return clumpfind(obj, finder; pos_unit=pos_unit, mass_unit=mass_unit, min_members=min_members,
+                     mask=mask, boundedness=boundedness, bound_only=bound_only, egrav=egrav,
+                     direct_max=direct_max, softening=softening, iterative_unbinding=iterative_unbinding,
+                     deblend=deblend, peak_min_distance=peak_min_distance, substructure=substructure,
+                     sub_min_members=sub_min_members, tidal=tidal)
 end
 
 # per-clump statistics (mass, COM, peak, radius) + optional boundedness; shared by top-level clumps
@@ -369,38 +746,194 @@ function _clump_stats(mem, xs, ys, zs, ms, fs, boundedness::Bool, bargs)
     c = (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
          peak=fs[pk], peak_pos=(xs[pk], ys[pk], zs[pk]), radius=r)
     boundedness || return c
-    return merge(c, _boundedness(mem, bargs.mg, bargs.vx, bargs.vy, bargs.vz, bargs.et,
+    return merge(c, _boundedness(mem, bargs.mg, bargs.vx, bargs.vy, bargs.vz, bargs.et, bargs.em,
                                  xs, ys, zs, comx, comy, comz, r, bargs.poscm, bargs.Gc,
-                                 bargs.egrav, bargs.direct_max))
+                                 bargs.egrav, bargs.direct_max, bargs.eps2))
 end
 
-# per-clump energetics (cgs) → kinetic (COM-frame) + thermal + gravitational binding, virial
-# parameter α = 2·E_kin/|E_grav|, and bound flag E_kin + E_therm < |E_grav|.
-function _boundedness(mem, mg, vx, vy, vz, et, xs, ys, zs, comx, comy, comz, radius, poscm, Gc,
-                      egrav::Symbol, direct_max::Int)
-    mgm = @view mg[mem]; M = sum(mgm)
+# =====================================================================================
+#  Gravitational potential energy (cgs) — softened direct sum and Barnes–Hut tree
+# -------------------------------------------------------------------------------------
+#  Both return the (positive) self-binding energy  W = Σ_{i<j} G mᵢmⱼ / √(rᵢⱼ² + ε²).
+#  `eps2` (= ε², cm²) softens the kernel; `eps2 = 0` recovers the bare Newtonian sum (and
+#  skips coincident pairs). The tree (Barnes & Hut 1986) is O(N log N) — used for large clumps
+#  where the exact O(N²) sum is too slow — with opening angle θ ≤ 1/√3 so a node that contains
+#  the evaluation point is never accepted as a far multipole (no self-interaction).
+# =====================================================================================
+function _egrav_direct(xc, yc, zc, mgm, Gc::Float64, eps2::Float64)
+    n = length(xc); egr = 0.0
+    @inbounds for i in 1:n-1, j in i+1:n
+        d2 = (xc[i]-xc[j])^2 + (yc[i]-yc[j])^2 + (zc[i]-zc[j])^2 + eps2
+        d2 > 0 && (egr += Gc * mgm[i] * mgm[j] / sqrt(d2))
+    end
+    return egr
+end
+
+struct _BHNode
+    cx::Float64; cy::Float64; cz::Float64; h::Float64        # cube centre + half-size
+    comx::Float64; comy::Float64; comz::Float64; mass::Float64
+    kids::Vector{_BHNode}                                    # 8 octants (empty ⇒ leaf)
+    bucket::Vector{Int}                                      # particle indices (leaf only)
+end
+const _BH_HMIN = 1e-30
+
+function _bh_build(idx::Vector{Int}, x, y, z, m, cx, cy, cz, h)
+    M = 0.0; sx = 0.0; sy = 0.0; sz = 0.0
+    @inbounds for p in idx; M += m[p]; sx += m[p]*x[p]; sy += m[p]*y[p]; sz += m[p]*z[p]; end
+    comx = M > 0 ? sx/M : cx; comy = M > 0 ? sy/M : cy; comz = M > 0 ? sz/M : cz
+    (length(idx) <= 1 || h <= _BH_HMIN) &&
+        return _BHNode(cx, cy, cz, h, comx, comy, comz, M, _BHNode[], idx)
+    hh = h / 2; octs = [Int[] for _ in 1:8]
+    @inbounds for p in idx
+        o = (x[p] > cx ? 1 : 0) | (y[p] > cy ? 2 : 0) | (z[p] > cz ? 4 : 0)
+        push!(octs[o+1], p)
+    end
+    kids = _BHNode[]
+    for o in 0:7
+        isempty(octs[o+1]) && continue
+        push!(kids, _bh_build(octs[o+1], x, y, z, m,
+                              cx + ((o&1)==1 ? hh : -hh), cy + ((o&2)==2 ? hh : -hh),
+                              cz + ((o&4)==4 ? hh : -hh), hh))
+    end
+    return _BHNode(cx, cy, cz, h, comx, comy, comz, M, kids, Int[])
+end
+
+function _bh_phi(node::_BHNode, i, x, y, z, m, Gc, theta2, eps2)
+    if isempty(node.kids)                                    # leaf: exact over the bucket
+        phi = 0.0
+        @inbounds for p in node.bucket
+            p == i && continue
+            d2 = (x[i]-x[p])^2 + (y[i]-y[p])^2 + (z[i]-z[p])^2 + eps2
+            d2 > 0 && (phi += Gc * m[p] / sqrt(d2))
+        end
+        return phi
+    end
+    dx = node.comx - x[i]; dy = node.comy - y[i]; dz = node.comz - z[i]
+    d2 = dx*dx + dy*dy + dz*dz
+    s = 2 * node.h
+    if s*s < theta2 * d2                                     # node far enough ⇒ single multipole
+        return Gc * node.mass / sqrt(d2 + eps2)
+    end
+    phi = 0.0
+    for k in node.kids; phi += _bh_phi(k, i, x, y, z, m, Gc, theta2, eps2); end
+    return phi
+end
+
+function _egrav_tree(xc, yc, zc, mgm, Gc::Float64, eps2::Float64; theta::Float64=0.5)
+    n = length(xc); n < 2 && return 0.0
+    xlo, xhi = extrema(xc); ylo, yhi = extrema(yc); zlo, zhi = extrema(zc)
+    h = max(xhi-xlo, yhi-ylo, zhi-zlo) / 2 * 1.0000001 + _BH_HMIN
+    root = _bh_build(collect(1:n), xc, yc, zc, mgm, (xlo+xhi)/2, (ylo+yhi)/2, (zlo+zhi)/2, h)
+    theta2 = theta * theta; egr = 0.0
+    @inbounds for i in 1:n
+        egr += mgm[i] * _bh_phi(root, i, xc, yc, zc, mgm, Gc, theta2, eps2)
+    end
+    return 0.5 * egr
+end
+
+# per-particle potential magnitude Φᵢ = Σ_{j≠i} G mⱼ/√(rᵢⱼ²+ε²) (positive) — used by the unbinding
+# loop, so |PEᵢ| = mᵢ Φᵢ. Tree path past `treeN`, exact pairwise below it.
+function _potentials!(phi::Vector{Float64}, xc, yc, zc, mgm, Gc::Float64, eps2::Float64,
+                      method::Symbol; treeN::Int=64, theta::Float64=0.5)
+    n = length(xc); resize!(phi, n); fill!(phi, 0.0)
+    if method === :tree && n > treeN
+        xlo, xhi = extrema(xc); ylo, yhi = extrema(yc); zlo, zhi = extrema(zc)
+        h = max(xhi-xlo, yhi-ylo, zhi-zlo) / 2 * 1.0000001 + _BH_HMIN
+        root = _bh_build(collect(1:n), xc, yc, zc, mgm, (xlo+xhi)/2, (ylo+yhi)/2, (zlo+zhi)/2, h)
+        theta2 = theta * theta
+        @inbounds for i in 1:n; phi[i] = _bh_phi(root, i, xc, yc, zc, mgm, Gc, theta2, eps2); end
+    else
+        @inbounds for i in 1:n-1, j in i+1:n
+            d2 = (xc[i]-xc[j])^2 + (yc[i]-yc[j])^2 + (zc[i]-zc[j])^2 + eps2
+            if d2 > 0
+                w = Gc / sqrt(d2); phi[i] += mgm[j] * w; phi[j] += mgm[i] * w
+            end
+        end
+    end
+    return phi
+end
+
+# per-clump energetics (cgs) → kinetic (COM-frame) + thermal + magnetic + gravitational binding,
+# virial parameter α = 2·E_kin/|E_grav|, and bound flag E_kin + E_therm + E_mag < |E_grav|.
+function _boundedness(mem, mg, vx, vy, vz, et, em, xs, ys, zs, comx, comy, comz, radius, poscm, Gc,
+                      egrav::Symbol, direct_max::Int, eps2::Float64=0.0)
+    mgm = collect(@view mg[mem]); M = sum(mgm)
     vbx = sum(mgm .* @view(vx[mem])) / M
     vby = sum(mgm .* @view(vy[mem])) / M
     vbz = sum(mgm .* @view(vz[mem])) / M
     ekin = 0.5 * sum(mgm[i] * ((vx[mem[i]] - vbx)^2 + (vy[mem[i]] - vby)^2 + (vz[mem[i]] - vbz)^2)
                      for i in eachindex(mem))
     etherm = sum(@view et[mem])
+    emag = sum(@view em[mem])                               # magnetic support (0 unless MHD run)
     Rcm = radius * poscm
     if length(mem) < 2 || Rcm <= 0
         egr = 0.0
-    elseif egrav === :direct && length(mem) <= direct_max
-        egr = 0.0
+    elseif egrav === :tree || (egrav === :direct && length(mem) <= direct_max)
         xc = (xs[mem] .- comx) .* poscm; yc = (ys[mem] .- comy) .* poscm; zc = (zs[mem] .- comz) .* poscm
-        @inbounds for i in 1:length(mem)-1, j in i+1:length(mem)
-            d = sqrt((xc[i]-xc[j])^2 + (yc[i]-yc[j])^2 + (zc[i]-zc[j])^2)
-            d > 0 && (egr += Gc * mgm[i] * mgm[j] / d)
-        end
+        egr = (egrav === :tree && length(mem) > 64) ?      # tree only pays off past a small N
+            _egrav_tree(xc, yc, zc, mgm, Gc, eps2) : _egrav_direct(xc, yc, zc, mgm, Gc, eps2)
     else
-        egr = 0.6 * Gc * M^2 / Rcm                      # (3/5) G M² / R, uniform sphere
+        egr = 0.6 * Gc * M^2 / Rcm                          # (3/5) G M² / R, uniform sphere
     end
     alpha = egr > 0 ? 2ekin / egr : Inf
-    bound = egr > 0 && (ekin + etherm) < egr
-    return (e_kin=ekin, e_therm=etherm, e_grav=egr, alpha_vir=alpha, bound=bound)
+    bound = egr > 0 && (ekin + etherm + emag) < egr
+    return (e_kin=ekin, e_therm=etherm, e_mag=emag, e_grav=egr, alpha_vir=alpha, bound=bound)
+end
+
+# ---- SUBFIND-style iterative unbinding (Springel+2001) ---------------------------------
+# Strip gravitationally unbound members: in the bulk-velocity frame, drop every member whose total
+# energy Eᵢ = ½mᵢ|vᵢ−v̄|² + uᵢ − mᵢΦᵢ > 0, recompute the frame + potential, and repeat to convergence.
+# Returns the bound subset (indices into the selected arrays — same space as `mem`).
+function _unbind(mem, bargs, xs, ys, zs; max_iter::Int=10, min_keep::Int=1)
+    Gc = bargs.Gc; eps2 = bargs.eps2; egrav = bargs.egrav === :approx ? :direct : bargs.egrav
+    keep = collect(mem); phi = Float64[]
+    for _ in 1:max_iter
+        length(keep) <= max(min_keep, 1) && break
+        mg = @view bargs.mg[keep]; M = sum(mg)
+        vbx = sum(mg .* @view(bargs.vx[keep])) / M
+        vby = sum(mg .* @view(bargs.vy[keep])) / M
+        vbz = sum(mg .* @view(bargs.vz[keep])) / M
+        comx = sum(mg .* @view(xs[keep])) / M
+        comy = sum(mg .* @view(ys[keep])) / M
+        comz = sum(mg .* @view(zs[keep])) / M
+        mgm = collect(mg)
+        xc = (xs[keep] .- comx) .* bargs.poscm; yc = (ys[keep] .- comy) .* bargs.poscm
+        zc = (zs[keep] .- comz) .* bargs.poscm
+        _potentials!(phi, xc, yc, zc, mgm, Gc, eps2, egrav)
+        newkeep = Int[]
+        @inbounds for a in eachindex(keep)
+            i = keep[a]
+            ke = 0.5 * mgm[a] * ((bargs.vx[i]-vbx)^2 + (bargs.vy[i]-vby)^2 + (bargs.vz[i]-vbz)^2)
+            (ke + bargs.et[i] + bargs.em[i] - mgm[a]*phi[a]) < 0 && push!(newkeep, i)   # bound ⇔ KE+u+E_mag < |PE|
+        end
+        (isempty(newkeep) || length(newkeep) == length(keep)) && return newkeep
+        keep = newkeep
+    end
+    return keep
+end
+
+# ---- tidal / Jacobi truncation of a subclump against its host clump --------------------
+# Jacobi radius r_t = D·(m_sub / 3 M_host(<D))^{1/3} (King 1962; Binney & Tremaine 2008 §8.3),
+# where D is the subclump–host COM separation and M_host(<D) the host mass enclosed within D.
+# Members of `sub` farther than r_t from the subclump COM are tidally stripped.
+function _tidal_truncate(sub, host, bargs, xs, ys, zs)
+    mg = bargs.mg; poscm = bargs.poscm
+    msub = sum(@view mg[sub]); hM = sum(@view mg[host])
+    hcx = sum(mg[j]*xs[j] for j in host)/hM; hcy = sum(mg[j]*ys[j] for j in host)/hM
+    hcz = sum(mg[j]*zs[j] for j in host)/hM
+    scx = sum(mg[j]*xs[j] for j in sub)/msub; scy = sum(mg[j]*ys[j] for j in sub)/msub
+    scz = sum(mg[j]*zs[j] for j in sub)/msub
+    D = sqrt((scx-hcx)^2 + (scy-hcy)^2 + (scz-hcz)^2) * poscm           # COM separation (cm)
+    D <= 0 && return sub
+    D2 = (D/poscm)^2                                                     # in pos_unit² for the host sum
+    Menc = 0.0
+    @inbounds for j in host
+        ((xs[j]-hcx)^2 + (ys[j]-hcy)^2 + (zs[j]-hcz)^2) <= D2 && (Menc += mg[j])
+    end
+    Menc <= 0 && return sub
+    rt = D * (msub / (3 * Menc))^(1/3)                                   # Jacobi radius (cm)
+    rt2 = (rt / poscm)^2                                                 # back to pos_unit²
+    return [j for j in sub if ((xs[j]-scx)^2 + (ys[j]-scy)^2 + (zs[j]-scz)^2) <= rt2]
 end
 
 # =====================================================================================
@@ -408,7 +941,8 @@ end
 # =====================================================================================
 """
     clumpfind(components::AbstractVector; linking_length, pos_unit=:kpc, mass_unit=:Msol,
-              min_members=1) -> ClumpCatalog
+              min_members=1, boundedness=false, bound_only=false, egrav=:approx,
+              direct_max=2000, softening=0.0, iterative_unbinding=false) -> ClumpCatalog
 
 **Multi-field** structure finder: pre-select points from several `components` and link them with a
 single friends-of-friends pass, so over-densities in gas + stars + dark matter are found *together*.
@@ -417,19 +951,31 @@ with `field ≥ threshold` (and optional `mask(obj)`) join the common cloud tagg
 the catalog reports total `mass`, `com`, `radius`, member count, and a `components` breakdown
 `(name=(mass=…, n=…), …)` per source.
 
+`boundedness=true` adds the combined-cloud energetics (`e_kin`, `e_therm`, `e_mag`, `e_grav`,
+`alpha_vir`, `bound`) computed over **all** species together (each contributing its own mass and
+velocity; gas also its thermal/magnetic support), so the bound test uses the full self-gravity of
+gas + stars + DM while the `components` breakdown remains the per-species mass budget. `egrav`,
+`direct_max`, `softening`, `iterative_unbinding` and `bound_only` behave as in the single-object form.
+
 ```julia
 cat = clumpfind([
     (obj=gas,   field=:rho,  threshold=1e2, threshold_unit=:nH, name=:gas),
     (obj=parts, field=:mass, threshold=0.0, name=:stars, mask = o->getvar(o,:birth).>0),
     (obj=parts, field=:mass, threshold=0.0, name=:dm,    mask = o->getvar(o,:birth).<=0),
-]; linking_length=0.5)
+]; linking_length=0.5, boundedness=true)
 cat[1].components.gas.mass        # gas mass in the most massive structure
+cat[1].bound                      # self-bound across all three species?
 ```
 """
 function clumpfind(components::AbstractVector; linking_length::Real, pos_unit::Symbol=:kpc,
-                   mass_unit::Symbol=:Msol, min_members::Int=1)
+                   mass_unit::Symbol=:Msol, min_members::Int=1, boundedness::Bool=false,
+                   bound_only::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
+                   softening::Real=0.0, iterative_unbinding::Bool=false)
+    need_b = boundedness || iterative_unbinding
     ax = Float64[]; ay = Float64[]; az = Float64[]; am = Float64[]; comp = Symbol[]
     names = Symbol[]
+    mg = Float64[]; bvx = Float64[]; bvy = Float64[]; bvz = Float64[]; bet = Float64[]; bem = Float64[]
+    poscm = 1.0; Gc = 0.0
     for cm in components
         nm = cm.name; nm in names || push!(names, nm)
         f = getvar(cm.obj, cm.field, get(cm, :threshold_unit, :standard))
@@ -439,16 +985,29 @@ function clumpfind(components::AbstractVector; linking_length::Real, pos_unit::S
         ix = findall(sel)
         append!(ax, pos[:x][ix]); append!(ay, pos[:y][ix]); append!(az, pos[:z][ix])
         append!(am, m[ix]); append!(comp, fill(nm, length(ix)))
+        if need_b   # gather the cgs energy arrays for this component (same order as ax/…)
+            o = cm.obj
+            append!(mg, getvar(o, :mass, :g)[ix])
+            vv = getvar(o, [:vx, :vy, :vz], :cm_s)
+            append!(bvx, vv[:vx][ix]); append!(bvy, vv[:vy][ix]); append!(bvz, vv[:vz][ix])
+            append!(bet, o isa HydroDataType ? getvar(o, :etherm, :erg)[ix] : zeros(length(ix)))
+            append!(bem, _emag_cgs(o)[ix])
+            poscm = Float64(getfield(o.scale, :cm) / getfield(o.scale, pos_unit)); Gc = o.info.constants.G
+        end
     end
     meta = (dim=Symbol("3D-multi"), components=Tuple(names), threshold=:per_component,
             threshold_unit=:per_component, linking_length=linking_length, pos_unit=pos_unit,
-            mass_unit=mass_unit, n_selected=length(ax))
+            mass_unit=mass_unit, n_selected=length(ax), boundedness=boundedness,
+            unbinding=iterative_unbinding)
     isempty(ax) && return ClumpCatalog(0, NamedTuple[], meta)
+    bargs = need_b ? (mg=mg, vx=bvx, vy=bvy, vz=bvz, et=bet, em=bem, poscm=poscm, Gc=Gc,
+                      egrav=egrav, direct_max=direct_max, eps2=(Float64(softening)*poscm)^2) : nothing
     labels, k = _fof3d(ax, ay, az, Float64(linking_length))
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
     out = NamedTuple[]
     for mem in members
+        iterative_unbinding && (mem = _unbind(mem, bargs, ax, ay, az))
         length(mem) >= min_members || continue
         mc = @view am[mem]; Mtot = sum(mc)
         comx = sum(mc .* @view(ax[mem])) / Mtot
@@ -458,8 +1017,14 @@ function clumpfind(components::AbstractVector; linking_length::Real, pos_unit::S
         breakdown = NamedTuple{Tuple(names)}(Tuple(
             (mass=sum(am[j] for j in mem if comp[j] === nm; init=0.0),
              n=count(j -> comp[j] === nm, mem)) for nm in names))
-        push!(out, (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
-                    radius=r, components=breakdown))
+        c = (id=0, n_members=length(mem), mass=Mtot, com=(comx, comy, comz),
+             radius=r, components=breakdown)
+        if boundedness
+            c = merge(c, _boundedness(mem, mg, bvx, bvy, bvz, bet, bem, ax, ay, az,
+                                      comx, comy, comz, r, poscm, Gc, egrav, direct_max, bargs.eps2))
+            bound_only && !c.bound && continue
+        end
+        push!(out, c)
     end
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
@@ -512,6 +1077,84 @@ function clumpfind(mp::DataMapsType, field::Symbol; threshold::Real, connectivit
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
     return ClumpCatalog(length(out), out, meta)
+end
+
+# =====================================================================================
+#  Ground-truth recovery metrics (validation harness)
+# =====================================================================================
+"""
+    clump_recovery(found_labels, true_labels; background=0) -> NamedTuple
+
+Compare a found clump segmentation against a known ground truth, label-for-label over the same
+points. Returns `(; ari, completeness, purity, merit, n_found, n_true, n_points)`:
+
+* `ari` — **Adjusted Rand Index** (Hubert & Arabie 1985): 1 = perfect agreement, 0 = chance-level,
+  can be slightly negative. The standard clustering-quality metric.
+* `completeness` — mass/count-weighted fraction of each *true* clump captured by its best-matching
+  found clump, averaged over true clumps (1 = every true clump is fully contained in one found clump).
+* `purity` — the same from the found side (1 = no found clump mixes two true clumps).
+* `merit` — mean bijective merit `Σ max_i n_ij²/(|found_i|·|true_j|)` (Srisawat+2013 "SUSSING"),
+  rewarding one-to-one matches.
+
+`background` (default `0`) is the label for unassigned points; those points are excluded from
+`completeness`/`purity`/`merit` (but kept in `ari`, which scores the full partition). Both label
+vectors must be the same length and indexed by the same points.
+
+```julia
+m = clump_recovery(found_labels, true_labels)
+m.ari            # ≈ 1 when the finder recovers the input clumps
+```
+"""
+function clump_recovery(found_labels::AbstractVector{<:Integer},
+                        true_labels::AbstractVector{<:Integer}; background::Integer=0)
+    length(found_labels) == length(true_labels) ||
+        throw(ArgumentError("found_labels and true_labels must have equal length"))
+    n = length(found_labels)
+    # contingency table n_ij over ALL points (background included), keyed by (found,true)
+    tab = Dict{Tuple{Int,Int},Int}(); arow = Dict{Int,Int}(); bcol = Dict{Int,Int}()
+    @inbounds for k in 1:n
+        fi = Int(found_labels[k]); tj = Int(true_labels[k])
+        tab[(fi, tj)] = get(tab, (fi, tj), 0) + 1
+        arow[fi] = get(arow, fi, 0) + 1; bcol[tj] = get(bcol, tj, 0) + 1
+    end
+    c2(x) = x * (x - 1) ÷ 2
+    sij = sum(c2(v) for v in values(tab); init=0)
+    sa = sum(c2(v) for v in values(arow); init=0)
+    sb = sum(c2(v) for v in values(bcol); init=0)
+    nc2 = c2(n)
+    expected = nc2 == 0 ? 0.0 : sa * sb / nc2
+    maxidx = (sa + sb) / 2
+    ari = (maxidx - expected) == 0 ? 1.0 : (sij - expected) / (maxidx - expected)
+    # foreground-only completeness / purity / merit (drop background on the relevant side)
+    foundsz = Dict{Int,Int}(); truesz = Dict{Int,Int}()
+    for ((fi, tj), v) in tab
+        fi != background && (foundsz[fi] = get(foundsz, fi, 0) + v)
+        tj != background && (truesz[tj] = get(truesz, tj, 0) + v)
+    end
+    best_for_true = Dict{Int,Int}(); best_for_found = Dict{Int,Int}()
+    for ((fi, tj), v) in tab
+        if tj != background && fi != background
+            v > get(best_for_true, tj, 0) && (best_for_true[tj] = v)
+            v > get(best_for_found, fi, 0) && (best_for_found[fi] = v)
+        end
+    end
+    completeness = isempty(truesz) ? 1.0 :
+        sum(get(best_for_true, tj, 0) / sz for (tj, sz) in truesz) / length(truesz)
+    purity = isempty(foundsz) ? 1.0 :
+        sum(get(best_for_found, fi, 0) / sz for (fi, sz) in foundsz) / length(foundsz)
+    # bijective merit Σ_j max_i n_ij²/(|found_i||true_j|), averaged over true clumps
+    meritsum = 0.0
+    for (tj, _) in truesz
+        best = 0.0
+        for ((fi, tjj), v) in tab
+            (tjj == tj && fi != background) || continue
+            m = v^2 / (foundsz[fi] * truesz[tj]); m > best && (best = m)
+        end
+        meritsum += best
+    end
+    merit = isempty(truesz) ? 1.0 : meritsum / length(truesz)
+    return (ari=ari, completeness=completeness, purity=purity, merit=merit,
+            n_found=length(foundsz), n_true=length(truesz), n_points=n)
 end
 
 # =====================================================================================
@@ -598,7 +1241,7 @@ function clumptable(cat::ClumpCatalog)
     nd == 3 && push!(cols, :com_z => [c.com[3] for c in cs])
     push!(cols, :radius => [c.radius for c in cs])
     haskey(cs[1], :peak) && push!(cols, :peak => [c.peak for c in cs])
-    for k in (:e_kin, :e_therm, :e_grav, :alpha_vir, :bound)
+    for k in (:e_kin, :e_therm, :e_mag, :e_grav, :alpha_vir, :bound)
         haskey(cs[1], k) && push!(cols, k => [getproperty(c, k) for c in cs])
     end
     haskey(cs[1], :n_subclumps) && push!(cols, :n_subclumps => [c.n_subclumps for c in cs])
@@ -610,3 +1253,30 @@ function clumptable(cat::ClumpCatalog)
     end
     return NamedTuple{Tuple(first.(cols))}(Tuple(last.(cols)))
 end
+
+# =====================================================================================
+#  Persistence to disk (full-fidelity JLD2)
+# =====================================================================================
+"""
+    save_clumps(filename, cat::ClumpCatalog) -> String
+
+Write a [`ClumpCatalog`](@ref) to `filename` as a JLD2 file (full fidelity — per-clump fields,
+boundedness, nested `subclumps`, the hierarchy `tree`, and `meta` are all preserved). A `.jld2`
+extension is appended if missing. Reload with [`load_clumps`](@ref). For a flat tabular export
+(CSV/DataFrame) use [`clumptable`](@ref) instead.
+
+```julia
+save_clumps("clumps_out100", cat)
+cat2 = load_clumps("clumps_out100.jld2")
+```
+"""
+function save_clumps(filename::AbstractString, cat::ClumpCatalog)
+    fn = endswith(filename, ".jld2") ? String(filename) : filename * ".jld2"
+    JLD2.jldsave(fn; meraclumps_version=1, catalog=cat)
+    return fn
+end
+
+"""    load_clumps(filename) -> ClumpCatalog
+
+Reload a [`ClumpCatalog`](@ref) written by [`save_clumps`](@ref)."""
+load_clumps(filename::AbstractString) = JLD2.load(filename, "catalog")
