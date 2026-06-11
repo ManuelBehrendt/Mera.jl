@@ -36,6 +36,16 @@ Use `surface=:cylinder` for the flux through a cylindrical wall (e.g. the edge o
 fc = fluxbudget(gas; surface=:cylinder, radius=15.0, shell_width=1.0, range_unit=:kpc)
 ```
 
+## Choosing the shell width
+
+The estimator assumes the shell is **filled** by cells (`Σm ≈ ρ·4πR²·Δr`), so `shell_width` must be
+**at least the local cell size** — ideally a few cells. A shell *thinner than the AMR* is unphysical:
+it still grabs whole cells (larger than the band) but divides by the too-small `Δr`, **over-counting**
+the flux. `fluxbudget` records the shell's median `cell_size` and warns when `shell_width < cell_size`;
+the result's `show` flags it `UNDER-RESOLVED`. Pick `Δr ≳ ` the local cell size (use
+`getvar(fluxshell(...), :cellsize, :kpc)` to check) and confirm the rate is insensitive to a modest
+change in `Δr`.
+
 ## Phase decomposition
 
 Pass `phases` — a `NamedTuple` of shell→mask functions — for a per-phase breakdown in `.components`.

@@ -29,6 +29,7 @@ struct FluxBudgetType
     surface::Symbol
     radius::Float64
     shell_width::Float64
+    cell_size::Float64             # median shell cell size (range_unit) — Δr should be ≥ this
     center::Vector{Float64}
     range_unit::Symbol
     n_cells::Int
@@ -38,7 +39,9 @@ struct FluxBudgetType
     info
 end
 function Base.show(io::IO, f::FluxBudgetType)
-    println(io, "FluxBudgetType [$(f.surface) @ R=$(f.radius) $(f.range_unit), Δr=$(f.shell_width)]")
+    res = f.shell_width < f.cell_size ? "  ⚠ Δr < cell size $(round(f.cell_size,sigdigits=3)) — UNDER-RESOLVED" :
+          "  (cell size $(round(f.cell_size,sigdigits=3)))"
+    println(io, "FluxBudgetType [$(f.surface) @ R=$(f.radius) $(f.range_unit), Δr=$(f.shell_width)]$res")
     println(io, "  $(f.n_cells) shell cells, mass $(round(f.shell_mass_Msol, sigdigits=4)) Msol")
     for q in keys(f.rates)
         r = f.rates[q]
@@ -102,8 +105,14 @@ function fluxbudget(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, s
     shell = _flux_shell(obj, surface, R, dr, center, range_unit)
     info = obj.info; vn_sym = _FLUX_NORMAL[surface]
     ncell = length(shell.data)
+    # the shell estimator assumes Δr ≳ the local cell size (so the shell is filled); a shell thinner
+    # than a cell grabs whole cells and over-counts. Record the cell size and warn if under-resolved.
+    csz = ncell > 0 ? median(getvar(shell, :cellsize, range_unit)) : 0.0
+    verbose && dr < csz && @warn "fluxbudget: shell_width Δr=$dr < cell size $(round(csz,sigdigits=3)) " *
+        "$(range_unit) at R=$R — the shell is thinner than the AMR and the flux will be over-counted. " *
+        "Use shell_width ≥ the local cell size (ideally a few cells)."
     rates, comps, shell_mass = _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases)
-    fb = FluxBudgetType(surface, R, dr, Float64.(_centervec(center, info, range_unit)), range_unit,
+    fb = FluxBudgetType(surface, R, dr, csz, Float64.(_centervec(center, info, range_unit)), range_unit,
                         ncell, shell_mass, rates, comps, info)
     verbose && show(stdout, fb)
     return fb

@@ -94,6 +94,19 @@
             @test sign(fb2.rates.mass.net) == sign(fb.rates.mass.net) || abs(fb.rates.mass.net) < 1e-3
         end
 
+        @testset "resolution guard: Δr vs cell size recorded + warned" begin
+            fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            @test fb.cell_size > 0                                   # shell cell size recorded
+            @test fb.shell_width > fb.cell_size                      # 2 kpc is well-resolved (cells ~0.8–1.6 kpc)
+            # a shell thinner than a cell is under-resolved and over-counts → flagged + warned
+            fbu = (@test_logs (:warn,) fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=0.1,
+                                                  range_unit=:kpc, verbose=true))
+            @test fbu.shell_width < fbu.cell_size
+            @test abs(fbu.rates.mass.out) > abs(fb.rates.mass.out)   # the over-count is real
+            # no warning when well-resolved
+            @test_logs fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=true)
+        end
+
         @testset "fluxshell returns the measured shell (visualizable HydroDataType)" begin
             sh = fluxshell(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc)
             @test sh isa Mera.HydroDataType
