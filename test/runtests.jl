@@ -99,6 +99,7 @@ if isempty(_focus)
         include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
         include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
         include("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
+        include("40_clumpfind_validation_tests.jl") # structure-finder framework (v2 Phase 1): backend/oracle/invariance, data-free
         include("07_regions.jl")
     end
 

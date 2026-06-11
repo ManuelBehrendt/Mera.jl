@@ -8,10 +8,17 @@ two ways:
 
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
-!!! note "v1 scope"
-    This first version finds structures by **density threshold + connectivity** and reports their
-    statistics. Gravitational boundedness, multi-field combination (gas + stars + DM together) and
-    overlap handling are planned follow-ups.
+The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value
+([`ThresholdFoF`](@ref) or [`DensityWatershed`](@ref)) selects the algorithm, while a shared
+neighbour index, statistics, boundedness and catalog pipeline serves them all. The keyword form
+`clumpfind(obj, field; …)` shown throughout this page is a convenience shim that builds a
+`ThresholdFoF` for you, so existing scripts are unchanged; pass a finder explicitly to pick the
+algorithm:
+
+```julia
+cat   = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2))
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4))
+```
 
 ## 3D — cells or particles (friends-of-friends)
 
@@ -55,8 +62,28 @@ cat[1].bound           # E_kin + E_therm < |E_grav|
 ```
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
-`alpha_vir`, and `bound`. `e_grav` is `:approx` (⅗·GM²/R, fast) by default, or `:direct` (exact
-pairwise sum up to `direct_max` members).
+`alpha_vir`, and `bound`. The potential is chosen with `egrav`: `:approx` (⅗·GM²/R, fast but biased)
+by default, `:direct` (exact pairwise sum up to `direct_max` members), or `:tree` (Barnes–Hut octree,
+`O(N log N)`, accurate at any N). `softening` (in `pos_unit`) softens the kernel as `1/√(r²+ε²)`.
+
+`iterative_unbinding=true` adds SUBFIND-style unbinding: members with positive total energy in the
+bulk-velocity frame are stripped iteratively, so each clump's reported mass/membership is its
+self-bound subset.
+
+```julia
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
+                boundedness=true, egrav=:tree, iterative_unbinding=true)
+```
+
+For watershed deblending, a [`DensityWatershed`](@ref) finder additionally accepts `persistence`
+(in `field` units): a basin whose prominence (peak − saddle) is below `persistence` is merged into the
+deeper basin it meets, suppressing over-segmentation of shallow saddles (Rosolowsky & Leroy 2008
+`min_delta`):
+
+```julia
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
+                                        linking_length=0.4, persistence=0.3))
+```
 
 ### Deblending overlapping clumps
 
@@ -78,7 +105,9 @@ Both are mass-conserving (every member/pixel lands in exactly one clump).
 
 `substructure=true` builds a two-level tree: each top-level clump is split into density basins
 (watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as nested
-`subclumps`. Top clumps gain the boundedness fields too.
+`subclumps`. Top clumps gain the boundedness fields too. `tidal=true` additionally strips each
+subclump's members beyond its Jacobi radius `r_t = D·(m_sub/3·M_host(<D))^{1/3}` relative to the host
+(parent) clump (King 1962; Binney & Tremaine 2008).
 
 ```julia
 cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4, substructure=true)
@@ -103,6 +132,11 @@ cat[1].mass                  # total mass of the largest structure
 cat[1].components.gas.mass   # …split by component
 cat[1].components.dm.n       # dark-matter particle count
 ```
+
+Pass `boundedness=true` to get the combined-cloud energetics (`e_kin`, `e_therm`, `e_mag`, `e_grav`,
+`alpha_vir`, `bound`) summed over **all** species — the self-gravity test uses gas + stars + DM
+together while the `components` breakdown stays the per-species mass budget (`egrav`, `softening`,
+`iterative_unbinding`, `bound_only` work as in the single-object form).
 
 ## Mass function & report integration
 
@@ -162,11 +196,53 @@ tbl = clumptable(cat)         # (; id, n_members, mass, com_x, com_y, com_z, rad
 See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
 yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
 
+## Multi-scale hierarchy (dendrogram)
+
+A [`Dendrogram`](@ref) finder returns the finest density peaks (local maxima with prominence ≥
+`min_delta`) as the catalog's leaf clumps; passing `hierarchy=true` additionally attaches the full
+merge [`StructureTree`](@ref) — the level at which leaves join into branches and ultimately roots
+(Rosolowsky & Leroy 2008):
+
+```julia
+cat  = clumpfind(gas, Dendrogram(:rho; threshold=1e2, threshold_unit=:nH,
+                                 linking_length=0.5, min_delta=0.3); hierarchy=true)
+tree = cat.tree
+length(Mera.leaves(tree))               # finest structures (= the catalog clumps)
+r = Mera.roots(tree)[1]                  # a top-level structure
+Mera.children(tree, r)                   # its immediate sub-structures
+r.n_subtree                              # members in the whole subtree
+```
+
+## Saving & validation
+
+Persist a catalog (full fidelity — boundedness, nested `subclumps`, the `tree`) and reload it:
+
+```julia
+save_clumps("clumps_out100", cat)        # → clumps_out100.jld2
+cat = load_clumps("clumps_out100.jld2")
+```
+
+[`clump_recovery`](@ref) scores a found segmentation against a known ground truth (per-point labels),
+returning the **Adjusted Rand Index**, completeness, purity and bijective merit — the basis of the
+validation harness:
+
+```julia
+m = clump_recovery(found_labels, true_labels)
+m.ari            # ≈ 1 when the finder recovers the input clumps
+```
+
 ## API
+
+The finder/hierarchy types ([`AbstractFinder`](@ref), [`ThresholdFoF`](@ref),
+[`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`StructureTree`](@ref), [`StructureNode`](@ref))
+are documented in the [API reference](api.md#Types).
 
 ```@docs
 clumpfind
 clump_massfunction
+clump_recovery
 clumptable
+save_clumps
+load_clumps
 ClumpCard
 ```
