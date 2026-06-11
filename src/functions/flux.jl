@@ -98,15 +98,8 @@ fb.rates.mass.net        # net (in + out)
 function fluxbudget(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
                     quantities::AbstractVector{Symbol}=[:mass], center=[:bc], range_unit::Symbol=:kpc,
                     phases::Union{Nothing,NamedTuple}=nothing, verbose::Bool=true)
-    haskey(_FLUX_NORMAL, surface) || throw(ArgumentError("surface must be :sphere or :cylinder (got :$surface)"))
     R = Float64(radius); dr = Float64(shell_width)
-    rin = R - dr/2; rout = R + dr/2
-    rin < 0 && throw(ArgumentError("shell_width too large: inner radius R-Δr/2 = $rin < 0"))
-    shape = surface === :sphere ? :sphere : :cylinder
-    shell = surface === :sphere ?
-        shellregion(obj, :sphere; radius=[rin, rout], center=center, range_unit=range_unit, verbose=false) :
-        shellregion(obj, :cylinder; radius=[rin, rout], height=2rout, center=center,
-                    range_unit=range_unit, verbose=false)
+    shell = _flux_shell(obj, surface, R, dr, center, range_unit)
     info = obj.info; vn_sym = _FLUX_NORMAL[surface]
     ncell = length(shell.data)
     rates, comps, shell_mass = _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases)
@@ -115,6 +108,36 @@ function fluxbudget(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, s
     verbose && show(stdout, fb)
     return fb
 end
+
+# select the thin shell [R-Δr/2, R+Δr/2] (sphere) or cylindrical annulus (cylinder), AMR-aware
+function _flux_shell(obj, surface::Symbol, R::Float64, dr::Float64, center, range_unit::Symbol)
+    haskey(_FLUX_NORMAL, surface) || throw(ArgumentError("surface must be :sphere or :cylinder (got :$surface)"))
+    rin = R - dr/2; rout = R + dr/2
+    rin < 0 && throw(ArgumentError("shell_width too large: inner radius R-Δr/2 = $rin < 0"))
+    return surface === :sphere ?
+        shellregion(obj, :sphere; radius=[rin, rout], center=center, range_unit=range_unit, verbose=false) :
+        shellregion(obj, :cylinder; radius=[rin, rout], height=2rout, center=center,
+                    range_unit=range_unit, verbose=false)
+end
+
+"""
+    fluxshell(obj::HydroDataType; surface=:sphere, radius, shell_width, center=[:bc], range_unit=:kpc)
+        -> HydroDataType
+
+Return the **exact thin shell** that [`fluxbudget`](@ref) measures — the AMR cells in
+`[radius-shell_width/2, radius+shell_width/2]` (spherical, or a cylindrical annulus) — as a normal
+`HydroDataType`. Use it to *visualize what was measured*: project it, profile it, or map the
+surface-normal velocity to see where gas flows in vs out.
+
+```julia
+sh = fluxshell(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc)
+projection(sh, :sd, :Msol_pc2; center=[:bc])              # the shell as a ring/annulus
+projection(sh, :vr_sphere, :km_s; center=[:bc])           # inflow (<0) / outflow (>0) over the shell
+```
+"""
+fluxshell(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
+          center=[:bc], range_unit::Symbol=:kpc) =
+    _flux_shell(obj, surface, Float64(radius), Float64(shell_width), center, range_unit)
 
 # numeric centre (code units) for the record — [:bc] → box centre
 _centervec(center, info, range_unit) =
