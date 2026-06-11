@@ -384,3 +384,82 @@ end
         rm(out3; force=true)
     end
 end
+
+# three Gaussian blobs of differing density (sizes/spreads) at separated centres + labels
+function _density_blobs(rng, specs)
+    xs = Float64[]; ys = Float64[]; zs = Float64[]; lab = Int[]
+    for (k, (c, npts, s)) in enumerate(specs)
+        for _ in 1:npts
+            push!(xs, c[1] + s*randn(rng)); push!(ys, c[2] + s*randn(rng)); push!(zs, c[3] + s*randn(rng))
+        end
+        append!(lab, fill(k, npts))
+    end
+    return xs, ys, zs, lab
+end
+
+@testset verbose=true "clumpfind density-adaptive + composition + threading (v2 Phase 4, data-free)" begin
+
+    @testset "HDBSCAN recovers variable-density blobs (ARI)" begin
+        rng = MersenneTwister(7)
+        specs = [((0.0,0.0,0.0), 60, 0.25), ((6.0,0.0,0.0), 140, 0.18), ((0.0,6.0,0.0), 35, 0.30)]
+        xs, ys, zs, truth = _density_blobs(rng, specs)
+        lab, k = Mera._hdbscan3d(xs, ys, zs, 2.0, 10, 10)
+        r = clump_recovery(lab, truth; background=0)
+        @test k == 3                                           # three clusters, dense relabel correct
+        @test r.ari ≈ 1.0 atol=1e-9
+        @test r.completeness ≈ 1.0 && r.purity ≈ 1.0
+        @test count(==(0), lab) == 0                           # no spurious noise on clean blobs
+        # too-few-points / oversize min_cluster_size → no clusters (all noise), not an error
+        lab2, k2 = Mera._hdbscan3d(xs, ys, zs, 2.0, 10_000, 10_000)
+        @test k2 == 0 && all(==(0), lab2)
+        @test Mera._hdbscan3d(Float64[], Float64[], Float64[], 1.0, 5, 5) == (Int[], 0)
+    end
+
+    @testset "GraphSeg separates density plateaus (Felzenszwalb)" begin
+        # two constant-density runs (10 and 2) separated by a gap → exactly two segments
+        xs = Float64[]; fs = Float64[]; truth = Int[]
+        for x in 0.0:0.2:3.0; push!(xs, x); push!(fs, 10.0); push!(truth, 1); end
+        for x in 4.0:0.2:7.0; push!(xs, x); push!(fs, 2.0);  push!(truth, 2); end
+        ys = zeros(length(xs)); zs = zeros(length(xs))
+        lab, k = Mera._graphseg3d(xs, ys, zs, fs, 0.5, 1.0)
+        @test k == 2 && clump_recovery(lab, truth).ari ≈ 1.0
+        @test length(lab) == length(xs) && all(>=(1), lab)     # every point segmented (no noise concept)
+        # larger scale k merges everything once within linking range — coarser segmentation
+        xs2 = collect(0.0:0.2:7.0); ys2 = zeros(length(xs2)); zs2 = zeros(length(xs2))
+        fs2 = 10.0 .- 0.1 .* xs2                                # gentle gradient, all connected
+        @test last(Mera._graphseg3d(xs2, ys2, zs2, fs2, 0.5, 100.0)) == 1
+    end
+
+    @testset "finder composition (_split_group) is a partition" begin
+        # two blobs joined into one FoF group, split by an HDBSCAN deblend finder
+        rng = MersenneTwister(3)
+        specs = [((0.0,0.0,0.0), 80, 0.3), ((3.0,0.0,0.0), 80, 0.3)]
+        xs, ys, zs, _ = _density_blobs(rng, specs)
+        ms = ones(length(xs)); fs = ones(length(xs)); mem = collect(eachindex(xs))
+        hb = HDBSCANFinder(:rho; threshold=0.0, linking_length=1.5, min_cluster_size=15)
+        subs = Mera._split_group(hb, mem, xs, ys, zs, ms, fs, 0.5)
+        @test length(subs) == 2                                 # two clusters recovered
+        @test sum(length, subs) <= length(mem)                  # noise (if any) dropped, never duplicated
+        @test allunique(reduce(vcat, subs))                     # disjoint
+        # a finder that yields one cluster falls back to the whole group (never empty)
+        one = Mera._split_group(ThresholdFoF(:rho; threshold=0.0, linking_length=10.0),
+                                mem, xs, ys, zs, ms, fs, 0.5)
+        @test length(one) == 1 && sort(one[1]) == mem
+    end
+
+    @testset "threaded finalize == serial (determinism)" begin
+        rng = MersenneTwister(11)
+        members = [collect(1:50) .+ (g-1)*50 for g in 1:40]     # 40 clumps of 50
+        N = 40*50; xs = rand(rng, N); ys = rand(rng, N); zs = rand(rng, N)
+        ms = ones(N); fs = rand(rng, N)
+        f = mem -> Mera._finalize_clump(mem, xs, ys, zs, ms, fs, nothing, false, false, false,
+                                        false, 1, false, 0.1, 1)
+        ser = Mera._finalize_all(members, 1, f)
+        for nthr in (2, 4, 8)
+            par = Mera._finalize_all(members, nthr, f)
+            @test [c.mass for c in par] == [c.mass for c in ser]   # identical order + values
+            @test [c.com for c in par] == [c.com for c in ser]
+        end
+        @test length(ser) == 40
+    end
+end
