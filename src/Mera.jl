@@ -169,6 +169,7 @@ export
     fluxprofile,
     fluxshell,
     fluxmap,
+    fluxmapplot,
     FluxBudgetType,
     FluxMapType,
     report,
