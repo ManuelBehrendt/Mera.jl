@@ -80,4 +80,38 @@ function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs..
     return files
 end
 
+# ---- quicklookplot: the three-panel first-look dashboard --------------------------------
+# Σ surface-density map · ρ–T phase diagram · spherical radial density profile, from a QuickLookResult.
+function Mera._plot_quicklook(q::Mera.QuickLookResult; size=(1500, 460), colormap=:turbo)
+    fig = Makie.Figure(; size=size)
+    tag = q.sampled ? "  [APPROXIMATE: levels ≤ $(q.lmax_used)]" : ""
+    Makie.Label(fig[0, 1:3], "Mera quicklook — output $(q.summary.output)$(tag)";
+                fontsize=16, font=:bold)
+
+    # panel 1 — face-on surface density (log10)
+    sd = q.maps.maps[:sd]; ex = q.maps.extent
+    ax1 = Makie.Axis(fig[1, 1]; title="Σ (face-on)", xlabel="x [kpc]", ylabel="y [kpc]",
+                     aspect=Makie.DataAspect())
+    xs = range(ex[1], ex[2], length=Base.size(sd, 1)); ys = range(ex[3], ex[4], length=Base.size(sd, 2))
+    hm1 = Makie.heatmap!(ax1, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, sd); colormap)
+    Makie.Colorbar(fig[1, 1][1, 2], hm1; label="log₁₀ Σ [M⊙/pc²]")
+
+    # panel 2 — ρ–T phase (log10 mass-weighted count)
+    ph = q.phase
+    ax2 = Makie.Axis(fig[1, 2]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
+                     xscale=log10, yscale=log10)
+    xc = sqrt.(ph.xedges[1:end-1] .* ph.xedges[2:end])     # geometric bin centres (log-spaced)
+    yc = sqrt.(ph.yedges[1:end-1] .* ph.yedges[2:end])
+    hm2 = Makie.heatmap!(ax2, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, ph.H); colormap)
+    Makie.Colorbar(fig[1, 2][1, 2], hm2; label="log₁₀ mass")
+
+    # panel 3 — spherical radial density profile (the profile supplies ρ per shell directly)
+    pr = q.profile; ρ = pr.density
+    ax3 = Makie.Axis(fig[1, 3]; title="radial density", xlabel="r [kpc]", ylabel="ρ [M⊙/kpc³]",
+                     xscale=log10, yscale=log10)
+    keep = (pr.x .> 0) .& (ρ .> 0) .& isfinite.(ρ)
+    any(keep) && Makie.lines!(ax3, pr.x[keep], ρ[keep])
+    return fig
+end
+
 end # module

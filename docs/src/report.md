@@ -182,3 +182,11 @@ clump_mass_fraction
 * [Off-axis Projection](06_offaxis_Projection.md) — `:faceon`/`:edgeon` and arbitrary lines of sight.
 * [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md) — the profile/phase tools behind the cards.
 * [`quicklook`](@ref) — the fast header-and-sample first look; `report(output)` is its composable form.
+  With a Makie backend loaded (`using CairoMakie`), [`quicklookplot`](@ref) renders its result as a
+  three-panel figure (Σ map · ρ–T phase · radial density):
+
+  ```julia
+  using CairoMakie
+  fig = quicklookplot(quicklook(400; path="/sim"))
+  Makie.save("quicklook.png", fig)
+  ```
