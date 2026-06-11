@@ -81,8 +81,50 @@ struct CellLinkedList <: AbstractNeighborIndex
     head::Dict{NTuple{3,Int},Int}
     next::Vector{Int}
 end
+"""    MortonGrid <: AbstractNeighborIndex
+
+Neighbour-search backend (pass as `backend=MortonGrid` to any finder). Like `CellLinkedList`, but the
+indexed points are visited in Morton (Z-order) order so spatially-near points are also near in the
+traversal — neighbour lookups then touch cache-resident coordinates and the access pattern is
+near-sequential (the locality an out-of-core path also needs). Produces exactly the same neighbour
+pairs as the `CellLinkedList`/`HashGrid` backends; only the traversal order, and hence speed on large
+selections, differs."""
+struct MortonGrid <: AbstractNeighborIndex
+    x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
+    b2::Float64; inv_b::Float64
+    head::Dict{NTuple{3,Int},Int}
+    next::Vector{Int}
+    order::Vector{Int}                       # indexed point ids, Morton-sorted
+end
 
 const DEFAULT_BACKEND = CellLinkedList
+
+# 3-D Morton code: interleave the low 21 bits of each quantised coordinate into a 63-bit Int (magic-mask
+# bit-spreading). Spatially-close points get nearby codes, so sorting by code is a Z-order curve sort.
+@inline function _morton_split3(v::UInt64)
+    v &= 0x1fffff
+    v = (v | (v << 32)) & 0x1f00000000ffff
+    v = (v | (v << 16)) & 0x1f0000ff0000ff
+    v = (v | (v << 8))  & 0x100f00f00f00f00f
+    v = (v | (v << 4))  & 0x10c30c30c30c30c3
+    v = (v | (v << 2))  & 0x1249249249249249
+    return v
+end
+@inline _morton_code(qx, qy, qz) = _morton_split3(qx) | (_morton_split3(qy) << 1) | (_morton_split3(qz) << 2)
+
+# point ids sorted along the Z-order curve (coords quantised to a 2^21 grid over their bounding box)
+function _morton_order(x, y, z, ids)
+    isempty(ids) && return Int[]
+    xmn, xmx = extrema(@view x[ids]); ymn, ymx = extrema(@view y[ids]); zmn, zmx = extrema(@view z[ids])
+    M = 2.0^21 - 1
+    sx = xmx > xmn ? M/(xmx-xmn) : 0.0; sy = ymx > ymn ? M/(ymx-ymn) : 0.0; sz = zmx > zmn ? M/(zmx-zmn) : 0.0
+    codes = Vector{UInt64}(undef, length(ids))
+    @inbounds for (k, i) in enumerate(ids)
+        codes[k] = _morton_code(round(UInt64, (x[i]-xmn)*sx), round(UInt64, (y[i]-ymn)*sy),
+                                round(UInt64, (z[i]-zmn)*sz))
+    end
+    return collect(ids)[sortperm(codes)]
+end
 
 function build_index(::Type{HashGrid}, x, y, z, b::Float64, ids)
     inv_b = 1.0 / b
@@ -103,6 +145,18 @@ function build_index(::Type{CellLinkedList}, x, y, z, b::Float64, ids)
     end
     return CellLinkedList(x, y, z, b * b, inv_b, head, next)
 end
+function build_index(::Type{MortonGrid}, x, y, z, b::Float64, ids)
+    inv_b = 1.0 / b
+    order = _morton_order(x, y, z, ids)      # visit / chain points along the Z-order curve
+    next = zeros(Int, length(x))
+    head = Dict{NTuple{3,Int},Int}()
+    @inbounds for i in order
+        key = _cellkey(inv_b, x, y, z, i)
+        next[i] = get(head, key, 0)
+        head[key] = i
+    end
+    return MortonGrid(x, y, z, b * b, inv_b, head, next, order)
+end
 
 # call f!(j, d2) for every indexed neighbour j of point i within the linking length (j != i)
 @inline function foreach_neighbor(ix::HashGrid, i::Int, f!::F) where {F}
@@ -118,7 +172,7 @@ end
     end
     return nothing
 end
-@inline function foreach_neighbor(ix::CellLinkedList, i::Int, f!::F) where {F}
+@inline function foreach_neighbor(ix::Union{CellLinkedList,MortonGrid}, i::Int, f!::F) where {F}
     x, y, z = ix.x, ix.y, ix.z
     cx, cy, cz = _cellkey(ix.inv_b, x, y, z, i)
     @inbounds for dx in -1:1, dy in -1:1, dz in -1:1
@@ -137,6 +191,15 @@ end
 # call f!(i, j, d2) once per unique pair (i < j) within the linking length over `ids`
 function foreach_pair_within(ix::AbstractNeighborIndex, ids, f!::F) where {F}
     @inbounds for i in ids
+        foreach_neighbor(ix, i, (j, d2) -> (j > i && f!(i, j, d2)))
+    end
+    return nothing
+end
+# MortonGrid ignores the passed `ids` traversal order and visits its indexed points along the Z-order
+# curve instead (cache-friendly); the pair *set* is unchanged, so any order-independent caller (FoF,
+# graph-seg) gets identical results.
+function foreach_pair_within(ix::MortonGrid, ids, f!::F) where {F}
+    @inbounds for i in ix.order
         foreach_neighbor(ix, i, (j, d2) -> (j > i && f!(i, j, d2)))
     end
     return nothing
