@@ -160,6 +160,10 @@ export
     quicklook,
     quicklookplot,
     QuickLookResult,
+    covering_grid,
+    covering_grid_memory,
+    slice,
+    CoveringGridResult,
     report,
     preview,
     render,
@@ -391,6 +395,7 @@ include("functions/regions/shellregion_particles.jl")
 include("functions/regions/shellregion_clumps.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
+include("functions/covering_grid.jl")
 include("functions/sfr.jl")
 include("functions/report/report.jl")
 include("functions/report/report_render.jl")
