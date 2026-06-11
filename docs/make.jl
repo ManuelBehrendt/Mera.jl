@@ -53,6 +53,8 @@ makedocs(modules = [Mera],
 
                           "Clump Finding"       => "clumpfind.md",
 
+                          "Covering Grid / FRB" => "covering_grid.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 
