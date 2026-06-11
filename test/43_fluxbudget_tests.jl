@@ -7,20 +7,21 @@
 
 @testset verbose=true "fluxbudget" begin
 
-    @testset "reduction kernel: inflow/outflow split (data-free)" begin
+    @testset "reduction kernel: inflow/outflow split + counts (data-free)" begin
+        # _flux_reduce returns (Σin, Σout, Σin², Σout², n_in, n_out)
         vn = [-2.0, 3.0, -1.0, 4.0]; carried = ones(4)
-        sin_, sout_ = Mera._flux_reduce(vn, carried)
-        @test sin_ == -3.0                 # Σ over v<0 of carried·v = -2-1
-        @test sout_ == 7.0                 # Σ over v≥0 of carried·v = 3+4
-        # weighted carried
-        s_in, s_out = Mera._flux_reduce([-2.0, 5.0], [3.0, 2.0])
-        @test s_in == -6.0 && s_out == 10.0
-        # non-finite contributions are skipped
-        si, so = Mera._flux_reduce([-1.0, NaN, 2.0], [1.0, 1.0, 1.0])
-        @test si == -1.0 && so == 2.0
-        # all-inflow / all-outflow
-        @test Mera._flux_reduce([-1.0,-2.0], ones(2)) == (-3.0, 0.0)
-        @test Mera._flux_reduce([1.0,2.0], ones(2)) == (0.0, 3.0)
+        sin_, sout_, qin, qout, nin, nout = Mera._flux_reduce(vn, carried)
+        @test sin_ == -3.0 && sout_ == 7.0                 # Σ over v<0 = -2-1 ; v≥0 = 3+4
+        @test qin == 5.0 && qout == 25.0                   # Σ of squares: 4+1 ; 9+16
+        @test nin == 2 && nout == 2
+        @test Mera._flux_reduce([-2.0, 5.0], [3.0, 2.0])[1:2] == (-6.0, 10.0)   # weighted carried
+        @test Mera._flux_reduce([-1.0, NaN, 2.0], ones(3))[1:2] == (-1.0, 2.0)  # non-finite skipped
+        @test Mera._flux_reduce([-1.0,-2.0], ones(2))[1:2] == (-3.0, 0.0)       # all inflow
+        @test Mera._flux_reduce([1.0,2.0], ones(2))[1:2] == (0.0, 3.0)          # all outflow
+        # standard error of a sum √(n/(n-1)·(q−s²/n)): 0 for ≤1 term or equal terms; else >0
+        @test Mera._sum_se(5.0, 25.0, 1) == 0.0
+        @test Mera._sum_se(4.0, 8.0, 2) == 0.0          # x=[2,2] (q=8) → no spread → SE 0
+        @test Mera._sum_se(4.0, 10.0, 2) ≈ 2.0          # x=[1,3] → √(2·(10−8)) = 2
     end
 
     @testset "thin-shell estimator → analytic ∮ρv⊥dA (data-free)" begin
@@ -121,6 +122,31 @@
             # the shell is projectable (the whole point of returning it)
             mp = projection(sh, :sd, :Msol_pc2; res=32, center=[:bc], verbose=false, show_progress=false)
             @test haskey(mp.maps, :sd)
+        end
+
+        @testset "sampling uncertainty on the rates" begin
+            fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            r = fb.rates.mass
+            @test r.err_in >= 0 && r.err_out >= 0 && r.err_net >= 0
+            @test r.err_net ≈ sqrt(r.err_in^2 + r.err_out^2)     # in/out independent
+            @test r.n_in > 0 && r.n_out > 0 && r.n_in + r.n_out == fb.n_cells
+            # an under-resolved (few-cell-dominated) shell has a larger relative error than a thick one
+            fbu = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=0.25, range_unit=:kpc, verbose=false)
+            relerr(x) = x.err_net / max(abs(x.out), 1e-30)
+            @test relerr(fbu.rates.mass) > relerr(r)
+        end
+
+        @testset "fluxprofile assembles Ṁ(R) with errors" begin
+            fp = fluxprofile(gas; surface=:sphere, radii=6:4:22, shell_width=2.0, range_unit=:kpc, verbose=false)
+            n = length(6:4:22)
+            @test length(fp.radius) == n && length(fp.net) == n && length(fp.err_net) == n
+            @test fp.unit === :Msol_yr && fp.quantity === :mass
+            @test all(fp.net .≈ fp.in .+ fp.out)                 # net = in + out at every radius
+            @test all(fp.err_net .>= 0) && all(fp.n_cells .> 0)
+            # a single-radius profile matches a direct fluxbudget there
+            fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            fp1 = fluxprofile(gas; surface=:sphere, radii=[10.0], shell_width=2.0, range_unit=:kpc, verbose=false)
+            @test fp1.net[1] ≈ fb.rates.mass.net && fp1.err_net[1] ≈ fb.rates.mass.err_net
         end
 
         @testset "fluxmap: surface map closes to the budget" begin
