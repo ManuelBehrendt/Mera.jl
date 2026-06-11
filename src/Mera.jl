@@ -184,6 +184,8 @@ export
     Dendrogram,
     GraphSegFinder,
     HDBSCANFinder,
+    PhaseSpaceFoF,
+    PersistenceFinder,
     StructureTree,
     StructureNode,
     ClumpCatalog,
