@@ -248,6 +248,25 @@ cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linki
 The per-clump statistics/boundedness pass is threaded; `max_threads` (default `Threads.nthreads()`)
 caps it, and the result is identical to the serial output regardless of thread count.
 
+## Phase-space & topology
+
+* [`PhaseSpaceFoF`](@ref) — 6-D friends-of-friends (Rockstar-style; Behroozi+2013): points link only
+  when within `linking_length_pos` in space **and** `linking_length_vel` (km/s) in velocity, so
+  kinematically distinct populations that overlap spatially — streams, subhaloes, tidal debris —
+  separate. Velocities are loaded automatically.
+* [`PersistenceFinder`](@ref) — 0-dim persistent homology / ToMATo (Chazal+2013): a peak is kept as a
+  separate cluster only if its prominence (peak − merge saddle) reaches `persistence`. Principled,
+  parameter-light deblending, robust in crowded fields.
+
+```julia
+# kinematically separate two overlapping stellar streams
+cat = clumpfind(stars, PhaseSpaceFoF(:mass; threshold=0.0,
+                                     linking_length_pos=0.2, linking_length_vel=50.0))
+# topological extraction by prominence
+cat = clumpfind(gas, PersistenceFinder(:rho; threshold=1e2, threshold_unit=:nH,
+                                       linking_length=0.5, persistence=0.3))
+```
+
 ## Saving & validation
 
 Persist a catalog (full fidelity — boundedness, nested `subclumps`, the `tree`) and reload it:
@@ -270,7 +289,8 @@ m.ari            # ≈ 1 when the finder recovers the input clumps
 
 The finder/hierarchy types ([`AbstractFinder`](@ref), [`ThresholdFoF`](@ref),
 [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref), [`HDBSCANFinder`](@ref),
-[`StructureTree`](@ref), [`StructureNode`](@ref)) are documented in the [API reference](api.md#Types).
+[`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref), [`StructureTree`](@ref), [`StructureNode`](@ref))
+are documented in the [API reference](api.md#Types).
 
 ```@docs
 clumpfind

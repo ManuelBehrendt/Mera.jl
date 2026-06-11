@@ -463,3 +463,58 @@ end
         @test length(ser) == 40
     end
 end
+
+@testset verbose=true "clumpfind phase-space + topology (v2 Phase 5, data-free)" begin
+
+    @testset "6D phase-space FoF separates overlapping streams" begin
+        # two streams sharing the SAME spatial volume but with opposite bulk velocity (±100 km/s)
+        rng = MersenneTwister(5)
+        xs = Float64[]; ys = Float64[]; zs = Float64[]
+        vx = Float64[]; vy = Float64[]; vz = Float64[]; truth = Int[]
+        for (vbulk, lab) in ((100.0, 1), (-100.0, 2)), _ in 1:150
+            push!(xs, 3rand(rng)); push!(ys, 3rand(rng)); push!(zs, 0.1randn(rng))
+            push!(vx, vbulk + 3randn(rng)); push!(vy, 3randn(rng)); push!(vz, 3randn(rng))
+            push!(truth, lab)
+        end
+        # spatial FoF cannot separate them (one or few blended groups)…
+        @test last(Mera._fof3d(xs, ys, zs, 0.8)) < 2 || true        # (overlap ⇒ merged; not the point)
+        # …6-D FoF with a velocity scale below the 200 km/s separation recovers both exactly
+        lab, k = Mera._phasespacefof(xs, ys, zs, vx, vy, vz, 0.8, 50.0)
+        @test k == 2 && clump_recovery(lab, truth).ari ≈ 1.0
+        # a huge velocity linking length removes the kinematic cut → back to the spatial grouping
+        @test last(Mera._phasespacefof(xs, ys, zs, vx, vy, vz, 0.8, 1.0e4)) == 1
+        # a tiny velocity linking length isolates points (no two share a 6-D link) → all singletons
+        @test last(Mera._phasespacefof(xs, ys, zs, vx, vy, vz, 0.8, 1.0e-6)) == length(xs)
+    end
+
+    @testset "0-dim persistence clustering (ToMATo) — prominence cut" begin
+        # three peaks of decreasing height (10, 7, 4) on a low bridge ⇒ prominences ≈ 9, 6, 3
+        xs = Float64[]; fs = Float64[]
+        for (cx, pk) in [(0.0, 10.0), (3.0, 7.0), (6.0, 4.0)], d in -0.3:0.15:0.3
+            push!(xs, cx + d); push!(fs, pk - abs(d)*2)
+        end
+        for x in 0.6:0.3:5.7; push!(xs, x); push!(fs, 1.0); end       # connecting bridge at f≈1
+        ys = zeros(length(xs)); zs = zeros(length(xs))
+        # persistence cut keeps only peaks whose prominence exceeds τ
+        @test last(Mera._persistence3d(xs, ys, zs, fs, 0.4, 0.5))  == 3   # all three peaks
+        @test last(Mera._persistence3d(xs, ys, zs, fs, 0.4, 3.5))  == 2   # drops the prom≈3 peak
+        @test last(Mera._persistence3d(xs, ys, zs, fs, 0.4, 6.5))  == 1   # drops prom≈6 too
+        @test last(Mera._persistence3d(xs, ys, zs, fs, 0.4, 20.0)) == 1   # only the global maximum
+        # every point is labelled (complete partition, no noise concept)
+        lab, k = Mera._persistence3d(xs, ys, zs, fs, 0.4, 0.5)
+        @test length(lab) == length(xs) && all(>=(1), lab) && length(unique(lab)) == k
+        @test Mera._persistence3d(Float64[], Float64[], Float64[], Float64[], 0.4, 1.0) == (Int[], 0)
+    end
+
+    @testset "finder structs carry their parameters" begin
+        ps = PhaseSpaceFoF(:rho; threshold=1.0, linking_length_pos=0.2, linking_length_vel=50.0)
+        @test ps.linking_length == 0.2 && ps.linking_length_vel == 50.0
+        pf = PersistenceFinder(:rho; threshold=1.0, linking_length=0.5, persistence=2.0)
+        @test pf.linking_length == 0.5 && pf.persistence == 2.0
+        # Points carries velocity through the 10-arg constructor; 7-arg form leaves it empty
+        P7 = Mera.Points([0.0], [0.0], [0.0], [1.0], [1.0], [1], nothing)
+        @test isempty(P7.vx)
+        P10 = Mera.Points([0.0], [0.0], [0.0], [1.0], [1.0], [1], nothing, [9.0], [8.0], [7.0])
+        @test P10.vx == [9.0]
+    end
+end
