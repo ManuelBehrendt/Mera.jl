@@ -125,3 +125,30 @@ function _quicklook_print(s, n, t0)
     end
     println("└─ $(round(time()-t0, digits=2)) s ──────────────────────────────────")
 end
+
+# =====================================================================================
+#  Plotting — provided by the Makie package extension (MeraMakieExt)
+# -------------------------------------------------------------------------------------
+#  Kept out of the core deps: `quicklookplot` dispatches to `_plot_quicklook`, which the extension
+#  fills in once a Makie backend is loaded. The bare stub gives a friendly load hint.
+# =====================================================================================
+"""
+    quicklookplot(q::QuickLookResult; kwargs...) -> Makie.Figure
+
+Render a [`QuickLookResult`](@ref) as a three-panel figure — the face-on surface-density map, the
+ρ–T phase diagram, and the spherical radial density profile. Needs a Makie backend loaded
+(`using CairoMakie` or `GLMakie`); the figure is returned, so save it with `Makie.save("ql.png", fig)`.
+
+```julia
+using CairoMakie
+q = quicklook(300; path="…")
+fig = quicklookplot(q)
+```
+"""
+function quicklookplot(q::QuickLookResult; kwargs...)
+    q.maps === nothing && error("quicklookplot: this QuickLookResult has no figure data " *
+                                "(quicklook ran header-only). Call quicklook(output; path=…) to read a sample.")
+    return _plot_quicklook(q; kwargs...)
+end
+_plot_quicklook(q; kwargs...) =
+    error("quicklookplot needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")

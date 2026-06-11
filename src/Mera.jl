@@ -158,6 +158,7 @@ export
     velocitydispersion,
     profiletimeseries,
     quicklook,
+    quicklookplot,
     QuickLookResult,
     report,
     preview,

@@ -41,6 +41,29 @@
             @test occursin("Mera report", String(take!(io)))
         end
 
+        @testset "quicklook + quicklookplot (graceful without Makie)" begin
+            q = quicklook(dc.output; path=dc.path, verbose=false)
+            @test q isa QuickLookResult
+            @test q.maps !== nothing && q.phase !== nothing && q.profile !== nothing
+            @test haskey(q.maps.maps, :sd) && haskey(q.phase, :H) && haskey(q.profile, :density)
+
+            # a header-only result (no figure data) refuses to plot with a clear message
+            qhdr = Mera.QuickLookResult(q.info, q.levelmin, q.levelmax, nothing, 0, false,
+                                        nothing, nothing, nothing, q.summary)
+            @test_throws Exception quicklookplot(qhdr)
+
+            if Base.find_package("CairoMakie") === nothing
+                @test_throws Exception quicklookplot(q)          # no backend → friendly error
+            else
+                @eval using CairoMakie
+                fig = quicklookplot(q)                            # building runs the heatmap/line draws
+                @test occursin("Figure", string(typeof(fig)))
+                f = tempname() * ".png"; CairoMakie.save(f, fig)
+                @test isfile(f) && filesize(f) > 0
+                rm(f, force=true)
+            end
+        end
+
         @testset "custom multi-datatype plan + minimal/needs-based read" begin
             plan = ReportPlan(dc.output; path=dc.path, cards=[
                 ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=64),
