@@ -49,6 +49,15 @@
         @test sin_ ≈ -ρ*v0*Vshell rtol=1e-12
     end
 
+    @testset "axis resolver _flux_axis (data-free)" begin
+        @test Mera._flux_axis(nothing, [0.0,0.0,2.0], [:bc], :kpc) ≈ [0.0,0.0,1.0]   # normalized
+        @test Mera._flux_axis(nothing, [3.0,4.0,0.0], [:bc], :kpc) ≈ [0.6,0.8,0.0]
+        @test Mera._flux_axis(nothing, :x, [:bc], :kpc) == [1.0,0.0,0.0]
+        @test Mera._flux_axis(nothing, :z, [:bc], :kpc) == [0.0,0.0,1.0]
+        @test_throws ArgumentError Mera._flux_axis(nothing, [1.0,0.0], [:bc], :kpc)   # not length 3
+        @test_throws ArgumentError Mera._flux_axis(nothing, :bogus, [:bc], :kpc)
+    end
+
     if !DATA_AVAILABLE
         @warn "Skipping data-backed fluxbudget tests - simulation data not available"
         @test_skip "Simulation data not available"
@@ -147,6 +156,58 @@
             fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
             fp1 = fluxprofile(gas; surface=:sphere, radii=[10.0], shell_width=2.0, range_unit=:kpc, verbose=false)
             @test fp1.net[1] ≈ fb.rates.mass.net && fp1.err_net[1] ≈ fb.rates.mass.err_net
+        end
+
+        @testset "off-axis: tilted cylinder, plane, angular-momentum axis" begin
+            # tilted cylinder about +z (cell-centre selection) ≈ the axis-aligned cylinder on the
+            # dominant in/out magnitudes (the two selection conventions differ by ~10–15%)
+            fa = fluxbudget(gas; surface=:cylinder, radius=10.0, shell_width=3.0, range_unit=:kpc, verbose=false)
+            ft = fluxbudget(gas; surface=:cylinder, radius=10.0, shell_width=3.0, range_unit=:kpc,
+                            axis=[0.0,0.0,1.0], verbose=false)
+            @test isapprox(fa.rates.mass.out, ft.rates.mass.out; rtol=0.25)
+            @test isapprox(fa.rates.mass.in,  ft.rates.mass.in;  rtol=0.25)
+            # a plane normal to z above the midplane: a valid budget, net = in + out
+            fp = fluxbudget(gas; surface=:plane, radius=5.0, shell_width=2.0, range_unit=:kpc,
+                            axis=[0.0,0.0,1.0], verbose=false)
+            @test fp.surface === :plane && fp.n_cells > 0
+            @test fp.rates.mass.in <= 0 && fp.rates.mass.out >= 0
+            @test fp.rates.mass.net ≈ fp.rates.mass.in + fp.rates.mass.out
+            # angular-momentum-aligned cylinder runs and gives a sensible budget
+            fL = fluxbudget(gas; surface=:cylinder, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                            axis=:angmom, verbose=false)
+            @test fL.n_cells > 0 && fL.rates.mass.net ≈ fL.rates.mass.in + fL.rates.mass.out
+            @test_throws ArgumentError fluxbudget(gas; surface=:plane, radius=5.0, shell_width=2.0)  # no axis
+            @test_throws ArgumentError fluxbudget(gas; surface=:torus, radius=5.0, shell_width=2.0)
+        end
+
+        @testset "bootstrap confidence intervals" begin
+            fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                            bootstrap=400, verbose=false)
+            r = fb.rates.mass
+            @test r.ci_net[1] <= r.net <= r.ci_net[2]            # CI brackets the point estimate
+            @test r.ci_out[1] <= r.out <= r.ci_out[2]
+            @test r.ci_net[1] < r.ci_net[2]                      # a proper interval
+            # the 95% half-width is comparable to the analytic SE (~2σ)
+            @test (r.ci_net[2] - r.ci_net[1]) / 2 < 6 * r.err_net
+            # reproducible (seeded); no bootstrap → NaN CI
+            fb2 = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                             bootstrap=400, verbose=false)
+            @test fb.rates.mass.ci_net == fb2.rates.mass.ci_net
+            @test all(isnan, fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0,
+                                        range_unit=:kpc, verbose=false).rates.mass.ci_net)
+        end
+
+        @testset "fluxmapplot (graceful without Makie)" begin
+            fm = fluxmap(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            if Base.find_package("CairoMakie") === nothing
+                @test_throws Exception fluxmapplot(fm)
+            else
+                @eval using CairoMakie
+                @test occursin("Figure", string(typeof(fluxmapplot(fm))))
+                fmd = fluxmap(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                              quantity=:mdot, verbose=false)
+                @test occursin("Figure", string(typeof(fluxmapplot(fmd))))
+            end
         end
 
         @testset "fluxmap: surface map closes to the budget" begin

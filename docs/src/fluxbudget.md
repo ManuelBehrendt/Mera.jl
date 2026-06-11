@@ -61,6 +61,37 @@ fb.components.hot.mass.out       # hot-gas outflow rate
 # cold.out + hot.out == fb.rates.mass.out   (conservation across the partition)
 ```
 
+## Off-axis surfaces (tilted cylinder, plane)
+
+`fluxbudget` is a 3-D measurement, so the surface can be tilted. A **sphere** is orientation-free. A
+**cylinder** can be aligned to an arbitrary `axis` — a 3-vector, or `:angmom` (the gas net angular
+momentum `L = Σ m·h`, e.g. a galaxy's spin) — and a **`:plane`** surface (normal to `axis`, at
+along-axis position `radius`) measures the flux crossing a plane (disk in-/outflow):
+
+```julia
+# disk-edge flux in the angular-momentum frame
+fb = fluxbudget(gas; surface=:cylinder, radius=15.0, shell_width=2.0, range_unit=:kpc, axis=:angmom)
+# fountain/wind crossing a plane 5 kpc above the disk
+fb = fluxbudget(gas; surface=:plane, radius=5.0, shell_width=2.0, range_unit=:kpc, axis=[0.,0.,1.])
+```
+
+Off-axis selection is **cell-centre based** (vs the axis-aligned path's cell-volume intersection), so it
+differs by ~10–15 % for thin shells — prefer `shell_width` ≥ a couple of cells. A cylinder's vertical
+extent defaults to `2·rout`; override with `height`.
+
+## Bootstrap confidence intervals
+
+Beyond the analytic standard error, pass `bootstrap=N` to attach **percentile confidence intervals**
+(resampling the shell cells with replacement; reproducible via `bootstrap_seed`, level set by
+`ci_level`, default 0.95):
+
+```julia
+fb = fluxbudget(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc, bootstrap=1000)
+fb.rates.mass.net, fb.rates.mass.ci_net      # e.g. 0.03, (-1.94, 1.86) → consistent with balance
+```
+
+Each rate gains `ci_in`/`ci_out`/`ci_net` `(lo, hi)` (≈ NaN without bootstrap).
+
 ## Visualizing the shell
 
 [`fluxshell`](@ref) returns the **exact thin shell** that `fluxbudget` measured, as an ordinary
@@ -95,7 +126,16 @@ sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes t
 
 `quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
-arrays (heatmap them with any backend); it is *not* `projection` — different axes, no LOS superposition.
+arrays; it is *not* `projection` — different axes, no LOS superposition.
+
+With a Makie backend loaded, [`fluxmapplot`](@ref) renders it directly (diverging blue-in/red-out
+colormap for `:vr`):
+
+```julia
+using CairoMakie
+fig = fluxmapplot(fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc))
+Makie.save("flux_skymap.png", fig)
+```
 
 ## Statistics: uncertainty and the radial profile
 
@@ -148,6 +188,6 @@ suite, in the same spirit as Mera's projection/covering-grid conservation oracle
 ## API
 
 The functions [`fluxbudget`](@ref), [`fluxprofile`](@ref), [`fluxtimeseries`](@ref),
-[`fluxshell`](@ref), [`fluxmap`](@ref) and the result types [`FluxBudgetType`](@ref) /
-[`FluxMapType`](@ref) are documented in the [API reference](api.md). See also
+[`fluxshell`](@ref), [`fluxmap`](@ref), [`fluxmapplot`](@ref) and the result types
+[`FluxBudgetType`](@ref) / [`FluxMapType`](@ref) are documented in the [API reference](api.md). See also
 [`shellregion`](@ref) (the shell selection underneath) and [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md).
