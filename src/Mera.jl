@@ -164,6 +164,9 @@ export
     covering_grid_memory,
     slice,
     CoveringGridResult,
+    fluxbudget,
+    fluxtimeseries,
+    FluxBudgetType,
     report,
     preview,
     render,
@@ -396,6 +399,7 @@ include("functions/regions/shellregion_clumps.jl")
 include("functions/profile.jl")
 include("functions/quicklook.jl")
 include("functions/covering_grid.jl")
+include("functions/flux.jl")
 include("functions/sfr.jl")
 include("functions/report/report.jl")
 include("functions/report/report_render.jl")
