@@ -51,6 +51,23 @@ fb.components.hot.mass.out       # hot-gas outflow rate
 # cold.out + hot.out == fb.rates.mass.out   (conservation across the partition)
 ```
 
+## Visualizing the shell
+
+[`fluxshell`](@ref) returns the **exact thin shell** that `fluxbudget` measured, as an ordinary
+`HydroDataType` — so you can *see what was measured*. Project it (it appears as a ring/annulus), or
+map the surface-normal velocity to see *where* on the shell gas flows in (`< 0`) versus out (`> 0`):
+
+```julia
+sh = fluxshell(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc)
+
+projection(sh, :sd, :Msol_pc2; center=[:bc])          # the shell as a ring/annulus
+projection(sh, :vr_sphere, :km_s; center=[:bc])       # inflow (blue) / outflow (red) over the shell
+# combine with a Makie backend to render the maps, or feed sh to profile/phase
+```
+
+`fluxshell` and `fluxbudget` use the identical selection, so the visualization is guaranteed to show
+exactly the cells that entered the budget.
+
 ## Time evolution
 
 [`fluxtimeseries`](@ref) maps `fluxbudget` over a snapshot series and assembles the rate versus time —
@@ -72,6 +89,6 @@ suite, in the same spirit as Mera's projection/covering-grid conservation oracle
 
 ## API
 
-The functions [`fluxbudget`](@ref) and [`fluxtimeseries`](@ref) and the result type
+The functions [`fluxbudget`](@ref), [`fluxtimeseries`](@ref), [`fluxshell`](@ref) and the result type
 [`FluxBudgetType`](@ref) are documented in the [API reference](api.md). See also
 [`shellregion`](@ref) (the shell selection underneath) and [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md).

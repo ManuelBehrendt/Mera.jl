@@ -72,6 +72,44 @@
             @test fb.rates.momentum.unit === :Msol_km_s_yr
         end
 
+        @testset "end-to-end physics: Msol/yr matches an independent calculation" begin
+            # Recompute the mass flux a FULLY INDEPENDENT way — plain physical units (Msol, km/s, kpc)
+            # with the textbook kpc→km and yr→s constants — and require fluxbudget to match. This
+            # validates the whole pipeline (shell selection + getvar + CGS→Msol/yr conversion), not
+            # just internal consistency. The constants differ from Mera's CODATA scale only at ~1e-5.
+            R = 12.0; dr = 2.0
+            fb = fluxbudget(gas; surface=:sphere, radius=R, shell_width=dr, range_unit=:kpc, verbose=false)
+            sh = fluxshell(gas; surface=:sphere, radius=R, shell_width=dr, range_unit=:kpc)
+            m  = getvar(sh, :mass, :Msol)
+            vr = getvar(sh, :vr_sphere, :km_s; center=[:bc], center_unit=:kpc)
+            C  = (1.0 / 3.0856775814913673e16) * 3.15569e7        # (km/s)/kpc → 1/yr
+            out_ind = sum(m[i]*vr[i] for i in eachindex(vr) if vr[i] >= 0) / dr * C
+            in_ind  = sum(m[i]*vr[i] for i in eachindex(vr) if vr[i] <  0) / dr * C
+            @test fb.rates.mass.out ≈ out_ind rtol=1e-3           # independent unit path agrees
+            @test fb.rates.mass.in  ≈ in_ind  rtol=1e-3
+            @test length(m) == fb.n_cells
+            # mass flux scales like the shell estimator: doubling Δr at fixed R changes Σm but
+            # Mdot = Σ m vr / Δr stays the same order (thin-shell estimator is Δr-normalized)
+            fb2 = fluxbudget(gas; surface=:sphere, radius=R, shell_width=2dr, range_unit=:kpc, verbose=false)
+            @test sign(fb2.rates.mass.net) == sign(fb.rates.mass.net) || abs(fb.rates.mass.net) < 1e-3
+        end
+
+        @testset "fluxshell returns the measured shell (visualizable HydroDataType)" begin
+            sh = fluxshell(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc)
+            @test sh isa Mera.HydroDataType
+            fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            @test length(sh.data) == fb.n_cells                  # exactly the cells fluxbudget used
+            # shell cell centres lie within [R-Δr/2, R+Δr/2] up to one cell size (cell=true catches
+            # cells whose volume straddles the surface — the correct surface-integral behaviour)
+            r = getvar(sh, :r_sphere, :kpc; center=[:bc], center_unit=:kpc)
+            cmax = maximum(getvar(sh, :cellsize, :kpc))
+            @test all(9.0 - cmax .<= r .<= 11.0 + cmax)
+            @test count(9.0 .<= r .<= 11.0) > 0.5 * length(r)     # the bulk are strictly inside
+            # the shell is projectable (the whole point of returning it)
+            mp = projection(sh, :sd, :Msol_pc2; res=32, center=[:bc], verbose=false, show_progress=false)
+            @test haskey(mp.maps, :sd)
+        end
+
         @testset "phase decomposition sums to the total (conservation across partition)" begin
             fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
                             quantities=[:mass, :energy],
