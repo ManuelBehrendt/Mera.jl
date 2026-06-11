@@ -148,6 +148,93 @@ fluxshell(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width
           center=[:bc], range_unit::Symbol=:kpc) =
     _flux_shell(obj, surface, Float64(radius), Float64(shell_width), center, range_unit)
 
+# =====================================================================================
+#  fluxmap — the surface map: WHERE on the shell gas flows in vs out (no LOS superposition)
+# -------------------------------------------------------------------------------------
+#  Unlike `projection` (Cartesian, line-of-sight-integrated → front/back of the shell superpose),
+#  `fluxmap` bins the shell cells by their SURFACE coordinates — (φ, cosθ) for a sphere (an
+#  equal-solid-angle sky map), (φ, z) for a cylinder (the wall unrolled) — so every cell sits at its
+#  own place on the surface. Reuses the `_phase2d` weighted-binning engine; no new physics.
+# =====================================================================================
+"""    FluxMapType
+
+Result of [`fluxmap`](@ref). `map` is the 2-D surface map of `quantity` (`:vr` — mass-weighted mean
+normal velocity [km/s], inflow < 0 / outflow > 0; or `:mdot` — the per-bin mass-flux contribution
+[Msol/yr], whose sum is the net flux `total`). `xedges`/`yedges` are the surface-coordinate bin edges
+(`xlabel`/`ylabel` name them); `mass` is the Σ-mass map."""
+struct FluxMapType
+    surface::Symbol
+    quantity::Symbol
+    map::Matrix{Float64}
+    mass::Matrix{Float64}
+    xedges::Vector{Float64}; yedges::Vector{Float64}
+    xlabel::Symbol; ylabel::Symbol; unit::Symbol
+    radius::Float64; shell_width::Float64; total::Float64
+    info
+end
+function Base.show(io::IO, m::FluxMapType)
+    println(io, "FluxMapType [$(m.surface) @ R=$(m.radius), Δr=$(m.shell_width)]  quantity=$(m.quantity) [$(m.unit)]")
+    println(io, "  $(size(m.map)) grid  ($(m.xlabel) × $(m.ylabel))")
+    isfinite(m.total) && println(io, "  Σ map = $(round(m.total, sigdigits=4)) $(m.unit)  (== net flux)")
+end
+
+"""
+    fluxmap(obj::HydroDataType; surface=:sphere, radius, shell_width, quantity=:vr,
+            nbins=(72, 36), center=[:bc], range_unit=:kpc, verbose=true) -> FluxMapType
+
+A **surface map** of the flux through the shell — *where* gas flows in vs out — binned by surface
+coordinates: (φ, cosθ) for a `:sphere` (equal-solid-angle sky map), (φ, z) for a `:cylinder` (the wall
+unrolled). This is **not** [`projection`](@ref): projection integrates along a Cartesian axis and
+superposes the near and far side of the shell; `fluxmap` places each cell at its own surface location.
+
+`quantity=:vr` (default) maps the mass-weighted mean normal velocity (km/s; inflow < 0, outflow > 0) —
+the clearest "where is the inflow/outflow" picture. `quantity=:mdot` maps the per-bin mass-flux
+contribution (Msol/yr), whose sum equals the net mass flux. `nbins=(nφ, nθ_or_z)`.
+
+```julia
+fm = fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc, quantity=:vr)
+fm.map           # nφ × ncosθ map of mean v⊥ [km/s] — heatmap it (red out, blue in)
+fm.xedges, fm.yedges
+```
+"""
+function fluxmap(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
+                 quantity::Symbol=:vr, nbins=(72, 36), center=[:bc], range_unit::Symbol=:kpc,
+                 verbose::Bool=true)
+    quantity in (:vr, :mdot) || throw(ArgumentError("quantity must be :vr or :mdot (got :$quantity)"))
+    R = Float64(radius); dr = Float64(shell_width)
+    shell = _flux_shell(obj, surface, R, dr, center, range_unit); info = obj.info
+    nbx, nby = nbins[1], nbins[2]
+    xr = getvar(shell, :x, range_unit; center=center, center_unit=range_unit)
+    yr = getvar(shell, :y, range_unit; center=center, center_unit=range_unit)
+    zr = getvar(shell, :z, range_unit; center=center, center_unit=range_unit)
+    vn = getvar(shell, _FLUX_NORMAL[surface], :km_s; center=center, center_unit=range_unit)
+    m_g = getvar(shell, :mass, :g)
+    φ = atan.(yr, xr) .* (180/π)                                       # azimuth [-180,180] deg
+    if surface === :sphere
+        r = sqrt.(xr.^2 .+ yr.^2 .+ zr.^2)
+        ycoord = zr ./ max.(r, eps()); ylab = :cosθ; yrange = (-1.0, 1.0)
+    else
+        ycoord = zr; ylab = :z; yrange = (minimum(zr), maximum(zr))
+    end
+    xrange = (-180.0, 180.0)
+    if quantity === :vr                                                # mass-weighted mean v⊥
+        ph = _phase2d(φ, ycoord, m_g, vn, nbx, nby, xrange, yrange, :linear, :linear)
+        mp = ph.mean; total = NaN; unit = :km_s
+    else                                                               # per-bin Ṁ contribution
+        g_per_Msol = getunit(info, :g)/getunit(info, :Msol); s_per_yr = getunit(info, :s)/getunit(info, :yr)
+        dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)
+        vn_cms = getvar(shell, _FLUX_NORMAL[surface], :cm_s; center=center, center_unit=range_unit)
+        ph = _phase2d(φ, ycoord, m_g .* vn_cms, nothing, nbx, nby, xrange, yrange, :linear, :linear)
+        mp = ph.H .* (s_per_yr/g_per_Msol) ./ dr_cm; total = sum(mp); unit = :Msol_yr
+    end
+    massmap = _phase2d(φ, ycoord, m_g ./ (getunit(info,:g)/getunit(info,:Msol)), nothing,
+                       nbx, nby, xrange, yrange, :linear, :linear).H
+    fm = FluxMapType(surface, quantity, mp, massmap, ph.xedges, ph.yedges, :φ_deg, ylab, unit,
+                     R, dr, total, info)
+    verbose && show(stdout, fm)
+    return fm
+end
+
 # numeric centre (code units) for the record — [:bc] → box centre
 _centervec(center, info, range_unit) =
     (center == [:bc] || center == [:boxcenter]) ? [0.5, 0.5, 0.5] :

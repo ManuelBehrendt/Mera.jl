@@ -123,6 +123,27 @@
             @test haskey(mp.maps, :sd)
         end
 
+        @testset "fluxmap: surface map closes to the budget" begin
+            # :vr — mass-weighted mean normal velocity over the (φ, cosθ) sky map
+            fm = fluxmap(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                         quantity=:vr, nbins=(48, 24), verbose=false)
+            @test fm isa FluxMapType && fm.surface === :sphere && fm.quantity === :vr
+            @test size(fm.map) == (48, 24) && fm.xlabel === :φ_deg && fm.ylabel === :cosθ
+            @test fm.unit === :km_s && length(fm.xedges) == 49 && length(fm.yedges) == 25
+            @test any(isfinite, fm.map)                          # populated bins exist
+            # :mdot — per-bin mass-flux contribution; the map MUST sum to fluxbudget's net (closure)
+            fmd = fluxmap(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                          quantity=:mdot, verbose=false)
+            fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            @test fmd.unit === :Msol_yr
+            @test fmd.total ≈ fb.rates.mass.net rtol=1e-8        # surface map closes to the budget
+            @test sum(fmd.map) ≈ fmd.total rtol=1e-12
+            # cylinder unrolls to (φ, z)
+            fc = fluxmap(gas; surface=:cylinder, radius=10.0, shell_width=2.0, range_unit=:kpc, verbose=false)
+            @test fc.surface === :cylinder && fc.ylabel === :z
+            @test_throws ArgumentError fluxmap(gas; surface=:sphere, radius=10.0, shell_width=2.0, quantity=:bogus)
+        end
+
         @testset "phase decomposition sums to the total (conservation across partition)" begin
             fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
                             quantities=[:mass, :energy],
