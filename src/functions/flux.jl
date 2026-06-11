@@ -21,8 +21,9 @@ const _FLUX_NORMAL = Dict(:sphere => :vr_sphere, :cylinder => :vr_cylinder)
 """    FluxBudgetType
 
 Result of [`fluxbudget`](@ref). `rates` is a `NamedTuple` keyed by quantity (`:mass`, `:momentum`,
-`:energy`, `:metals`), each an `(in=, out=, net=, unit=)` NamedTuple (`in ≤ 0` inflow, `out ≥ 0`
-outflow, `net = in + out`). `components` is `nothing` or a per-phase `NamedTuple` of the same.
+`:energy`, `:metals`), each an `(in, out, net, err_in, err_out, err_net, n_in, n_out, unit)` NamedTuple
+(`in ≤ 0` inflow, `out ≥ 0` outflow, `net = in + out`; `err_*` is the sampling/shot-noise standard error
+of the cell-sum — large when a few cells dominate). `components` is `nothing` or a per-phase NamedTuple.
 `surface`/`radius`/`shell_width`/`center` record the definition; `n_cells` the shell cell count;
 `shell_mass_Msol` and `residual` the conservation check."""
 struct FluxBudgetType
@@ -46,31 +47,42 @@ function Base.show(io::IO, f::FluxBudgetType)
     for q in keys(f.rates)
         r = f.rates[q]
         println(io, "  $(rpad(string(q), 9)): in $(round(r.in, sigdigits=4))  out $(round(r.out, sigdigits=4))  " *
-                    "net $(round(r.net, sigdigits=4))  [$(r.unit)]")
+                    "net $(round(r.net, sigdigits=4)) ± $(round(r.err_net, sigdigits=2))  [$(r.unit)]")
     end
     f.components !== nothing && println(io, "  phases: $(collect(keys(f.components)))")
 end
 
 # ---- pure reduction kernel (data-free testable) -----------------------------------------
-# Σ over inflow cells (v⊥ < 0) and outflow cells (v⊥ ≥ 0) of carried·v⊥ — the un-normalized,
-# un-converted flux sums. Caller divides by Δr and converts to physical units.
+# Σ over inflow cells (v⊥ < 0) and outflow cells (v⊥ ≥ 0) of carried·v⊥ (the un-normalized flux sums),
+# plus the per-side count and Σ of squares — enough for the sum's sampling standard error.
 function _flux_reduce(vn::AbstractVector, carried::AbstractVector)
-    sin = 0.0; sout = 0.0
+    sin = 0.0; sout = 0.0; qin = 0.0; qout = 0.0; nin = 0; nout = 0
     @inbounds for i in eachindex(vn)
         f = carried[i] * vn[i]
-        (isfinite(f)) || continue
-        vn[i] < 0 ? (sin += f) : (sout += f)
+        isfinite(f) || continue
+        if vn[i] < 0
+            sin += f; qin += f*f; nin += 1
+        else
+            sout += f; qout += f*f; nout += 1
+        end
     end
-    return sin, sout                                   # sin ≤ 0 (inflow), sout ≥ 0 (outflow)
+    return sin, sout, qin, qout, nin, nout
 end
+
+# standard error of a sum of n terms with Σx=s, Σx²=q : √(n·sample_var) = √(n/(n-1)·(q − s²/n))
+_sum_se(s, q, n) = n > 1 ? sqrt(max(0.0, n/(n-1) * (q - s*s/n))) : 0.0
 
 _funit(info, u) = u === :standard ? 1.0 : getunit(info, u)   # code→unit factor (1 for :standard)
 
-# one quantity's (in, out, net) in physical units, from CGS carried-array + normal velocity
+# one quantity's (in, out, net, err_*, unit) in physical units, from CGS carried-array + normal velocity.
+# err_* is the SAMPLING (shot-noise) standard error of the cell-sum — large when a few cells dominate.
 function _flux_quantity(vn_cms, carried_cgs, dr_cm, conv, unit_label)
-    sin, sout = _flux_reduce(vn_cms, carried_cgs)
-    fin = sin / dr_cm * conv; fout = sout / dr_cm * conv
-    return (in=fin, out=fout, net=fin + fout, unit=unit_label)
+    sin, sout, qin, qout, nin, nout = _flux_reduce(vn_cms, carried_cgs)
+    k = conv / dr_cm
+    fin = sin*k; fout = sout*k
+    ein = _sum_se(sin, qin, nin)*abs(k); eout = _sum_se(sout, qout, nout)*abs(k)
+    return (in=fin, out=fout, net=fin + fout, err_in=ein, err_out=eout,
+            err_net=sqrt(ein^2 + eout^2), n_in=nin, n_out=nout, unit=unit_label)
 end
 
 """
@@ -313,4 +325,38 @@ function fluxtimeseries(loadfn, outputs, surface::Symbol=:sphere; radius::Real, 
     return (outputs=collect(outputs), t=ts, in=fin, out=fout, net=fnet,
             quantity=quantity, unit=unit, surface=surface, radius=Float64(radius),
             shell_width=Float64(shell_width), time_unit=time_unit)
+end
+
+# =====================================================================================
+#  fluxprofile — Ṁ(R) across many shells (radial flux profile)
+# =====================================================================================
+"""
+    fluxprofile(obj::HydroDataType; surface=:sphere, radii, shell_width, quantity=:mass,
+                center=[:bc], range_unit=:kpc, verbose=true) -> NamedTuple
+
+Radial **flux profile**: run [`fluxbudget`](@ref) for `quantity` at each radius in `radii` (a vector
+or range, in `range_unit`) and assemble the inflow / outflow / net rate — with its sampling
+uncertainty — versus radius. Shows *where* the flux is launched or converges and lets you pick a
+converged radius and shell width. `shell_width` is the (constant) Δr of every shell.
+
+Returns `(; radius, in, out, net, err_net, n_cells, unit, surface, shell_width, quantity)`.
+
+```julia
+fp = fluxprofile(gas; surface=:sphere, radii=5:5:50, shell_width=2.0, range_unit=:kpc)
+fp.radius, fp.net, fp.err_net      # net Ṁ(R) ± sampling error [Msol/yr]
+```
+"""
+function fluxprofile(obj::HydroDataType; surface::Symbol=:sphere, radii, shell_width::Real,
+                     quantity::Symbol=:mass, center=[:bc], range_unit::Symbol=:kpc, verbose::Bool=true)
+    Rs = collect(Float64, radii)
+    fin = Float64[]; fout = Float64[]; fnet = Float64[]; enet = Float64[]; nc = Int[]; unit = :_
+    for R in Rs
+        fb = fluxbudget(obj; surface=surface, radius=R, shell_width=shell_width, quantities=[quantity],
+                        center=center, range_unit=range_unit, verbose=false)
+        r = fb.rates[quantity]; unit = r.unit
+        push!(fin, r.in); push!(fout, r.out); push!(fnet, r.net); push!(enet, r.err_net); push!(nc, fb.n_cells)
+    end
+    verbose && println("fluxprofile [$surface, $quantity]: $(length(Rs)) shells over R=$(first(Rs))–$(last(Rs)) $range_unit, Δr=$shell_width")
+    return (radius=Rs, in=fin, out=fout, net=fnet, err_net=enet, n_cells=nc,
+            unit=unit, surface=surface, shell_width=Float64(shell_width), quantity=quantity)
 end

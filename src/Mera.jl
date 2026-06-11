@@ -166,6 +166,7 @@ export
     CoveringGridResult,
     fluxbudget,
     fluxtimeseries,
+    fluxprofile,
     fluxshell,
     fluxmap,
     FluxBudgetType,
