@@ -348,6 +348,134 @@ function _dendrogram3d(mem, xs, ys, zs, fs, rad::Float64, min_delta::Real;
     return labels, nleaf, StructureTree(nodes, rootids)
 end
 
+# ---- graph segmentation (Felzenszwalb & Huttenlocher 2004) ------------------------------
+# Segment the neighbour graph (edges = pairs within `rad`, weight = |fᵢ−fⱼ|) so that within-region
+# density variation stays below the between-region contrast. Edges are merged cheapest-first while
+# w(e) ≤ min(Int(Cᵤ)+k/|Cᵤ|, Int(Cᵥ)+k/|Cᵥ|), where Int(C) is the largest weight merged into C and
+# `k` is the scale (larger ⇒ coarser segments). Near-linear; reuses the union-find. Returns
+# (dense labels aligned with the inputs, n_segments).
+function _graphseg3d(xs, ys, zs, fs, rad::Float64, k::Float64;
+                     backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    n = length(xs); n == 0 && return Int[], 0
+    ix = build_index(backend, xs, ys, zs, rad, 1:n)
+    ei = Int[]; ej = Int[]; ew = Float64[]
+    foreach_pair_within(ix, 1:n, (i, j, _d2) -> (push!(ei, i); push!(ej, j); push!(ew, abs(fs[i]-fs[j]))))
+    parent = collect(1:n); sz = ones(Int, n); intd = zeros(Float64, n)   # size & max-internal-weight per root
+    @inbounds for e in sortperm(ew)                                       # cheapest edge first
+        a = _uf_find(parent, ei[e]); b = _uf_find(parent, ej[e]); a == b && continue
+        w = ew[e]
+        if w <= min(intd[a] + k/sz[a], intd[b] + k/sz[b])                 # merge predicate
+            sz[a] < sz[b] && ((a, b) = (b, a))
+            parent[b] = a; sz[a] += sz[b]; intd[a] = max(intd[a], intd[b], w)
+        end
+    end
+    return _uf_labels(parent)
+end
+
+# ---- HDBSCAN* (Campello+2013; McInnes+2017), self-contained -----------------------------
+# Density-adaptive clustering: core distances (the `ms`-th-nearest-neighbour distance) define a
+# mutual-reachability metric d_mreach(i,j)=max(core_i,core_j,d_ij); a minimum spanning tree of that
+# metric is condensed into a cluster hierarchy, and the most *stable* clusters (≥ `mcs` members) are
+# extracted (excess-of-mass). Points outside every selected cluster are noise (label 0). `rad` only
+# bounds the neighbour search (points with no within-`rad` neighbours are noise). Returns
+# (labels with 0=noise, n_clusters).
+function _hdbscan3d(xs, ys, zs, rad::Float64, mcs::Int, ms::Int;
+                    backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
+    n = length(xs); mcs = max(mcs, 2)
+    (n == 0 || n < mcs) && return zeros(Int, n), 0
+    ix = build_index(backend, xs, ys, zs, rad, 1:n)
+    # 1) core distance per point = distance to its ms-th nearest neighbour within rad (else rad)
+    core = fill(rad, n); ds = Float64[]
+    @inbounds for i in 1:n
+        empty!(ds); foreach_neighbor(ix, i, (j, d2) -> push!(ds, sqrt(d2)))
+        length(ds) >= ms && (core[i] = partialsort!(ds, ms))
+    end
+    # 2) mutual-reachability edges, then a minimum spanning forest (Kruskal); join the forest's
+    #    trees with λ=0 (distance Inf) edges so the hierarchy has a single root.
+    ei = Int[]; ej = Int[]; ew = Float64[]
+    foreach_pair_within(ix, 1:n, (i, j, d2) ->
+        (push!(ei, i); push!(ej, j); push!(ew, max(core[i], core[j], sqrt(d2)))))
+    par = collect(1:n); nodeid = collect(1:n); sz = ones(Int, n)
+    L = Int[]; R = Int[]; D = Float64[]; SZ = Int[]; nextid = n      # single-linkage dendrogram
+    function merge!(u, v, w)
+        ru = _uf_find(par, u); rv = _uf_find(par, v); ru == rv && return
+        nid = (nextid += 1); newsz = sz[ru] + sz[rv]
+        push!(L, nodeid[ru]); push!(R, nodeid[rv]); push!(D, w); push!(SZ, newsz)
+        par[ru] = rv; nodeid[rv] = nid; sz[rv] = newsz                # rv is the new root
+    end
+    for e in sortperm(ew); merge!(ei[e], ej[e], ew[e]); end
+    reps = unique(_uf_find(par, i) for i in 1:n)
+    for k in 2:length(reps); merge!(reps[1], reps[k], Inf); end
+    nextid == n && return zeros(Int, n), 0                            # nothing merged → all noise
+    root = nextid
+    node_size(g) = g <= n ? 1 : SZ[g-n]
+    function leaves_under!(acc, g)                                    # collect leaf points of a subtree
+        if g <= n; push!(acc, g)
+        else; leaves_under!(acc, L[g-n]); leaves_under!(acc, R[g-n]); end
+        return acc
+    end
+    # 3) condense the tree: clusters that drop < mcs points lose them as noise; a split into two
+    #    ≥ mcs parts spawns two child clusters. Track each cluster's birth λ and stability.
+    relabel = Dict{Int,Int}(); nextc = 0
+    cl_parent = Dict{Int,Int}(); cl_birth = Dict{Int,Float64}()
+    cl_children = Dict{Int,Vector{Int}}(); stab = Dict{Int,Float64}()
+    fall = zeros(Int, n)                                              # cluster each point drops out of
+    function newcluster!(node, parentc, birthλ)
+        c = (nextc += 1); relabel[node] = c
+        cl_parent[c] = parentc; cl_birth[c] = birthλ; cl_children[c] = Int[]; stab[c] = 0.0
+        parentc != 0 && push!(cl_children[parentc], c)
+        return c
+    end
+    newcluster!(root, 0, 0.0)
+    stack = [root]
+    while !isempty(stack)
+        g = pop!(stack); g <= n && continue
+        C = relabel[g]; λ = D[g-n] == 0.0 ? Inf : 1/D[g-n]
+        l = L[g-n]; r = R[g-n]; cl = node_size(l); cr = node_size(r)
+        if cl >= mcs && cr >= mcs                                     # genuine split → two new clusters
+            stab[C] += (cl + cr) * (λ - cl_birth[C])
+            newcluster!(l, C, λ); newcluster!(r, C, λ)
+            push!(stack, l); push!(stack, r)
+        else                                                          # ≥1 small child falls out as noise
+            for (child, csz) in ((l, cl), (r, cr))
+                if csz >= mcs
+                    relabel[child] = C; push!(stack, child)           # big child persists as the same cluster
+                else
+                    for p in leaves_under!(Int[], child); fall[p] = C; stab[C] += (λ - cl_birth[C]); end
+                end
+            end
+        end
+    end
+    # 4) excess-of-mass selection: keep cluster c if its own stability ≥ Σ stability of its subtree
+    prop = Dict{Int,Float64}(); is_sel = Dict{Int,Bool}()
+    for c in sort(collect(keys(stab)); rev=true)                      # children (higher id) before parents
+        ch = cl_children[c]
+        if isempty(ch); prop[c] = stab[c]; is_sel[c] = true
+        else
+            sub = sum(prop[x] for x in ch)
+            is_sel[c] = stab[c] >= sub; prop[c] = max(stab[c], sub)
+        end
+    end
+    final = Set{Int}()
+    for c in sort(collect(keys(stab)))                               # parents before children
+        a = cl_parent[c]; anc = false
+        while a != 0; (a in final) && (anc = true; break); a = cl_parent[a]; end
+        is_sel[c] && !anc && push!(final, c)
+    end
+    # 5) assign each point to the nearest selected ancestor of the cluster it dropped from (else noise)
+    out = zeros(Int, n); clab = Dict{Int,Int}(); K = 0
+    @inbounds for p in 1:n
+        a = fall[p]; sel = 0
+        while a != 0; (a in final) && (sel = a; break); a = cl_parent[a]; end
+        if sel != 0
+            lbl = get(clab, sel, 0)
+            lbl == 0 && (lbl = (K += 1); clab[sel] = lbl)   # dense relabel (avoid get! eager-eval)
+            out[p] = lbl
+        end
+    end
+    return out, K
+end
+
 # ---- watershed on a 2D region (Meyer-style priority flood from local maxima) ------------
 function _watershed2d(px, M, min_sep::Float64)
     nx, ny = size(M); inset = Set(px)
@@ -581,7 +709,43 @@ Dendrogram(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_
     Dendrogram(field, Float64(threshold), Float64(linking_length), threshold_unit,
                Float64(min_delta), backend)
 
+"""    GraphSegFinder(field=:rho; threshold, linking_length, threshold_unit=:standard, scale=1.0, backend=CellLinkedList)
+
+Graph-segmentation finder (Felzenszwalb & Huttenlocher 2004): segments the neighbour graph so that the
+density variation *within* a region stays below the contrast *between* regions. `scale` `k` sets the
+granularity (larger ⇒ fewer, larger segments). Near-linear; good as a fast multi-scale deblender, e.g.
+`deblend=GraphSegFinder(...)`."""
+struct GraphSegFinder <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    scale::Float64; backend::Type{<:AbstractNeighborIndex}
+end
+GraphSegFinder(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_unit::Symbol=:standard,
+               scale::Real=1.0, backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    GraphSegFinder(field, Float64(threshold), Float64(linking_length), threshold_unit,
+                   Float64(scale), backend)
+
+"""    HDBSCANFinder(field=:rho; threshold, linking_length, threshold_unit=:standard, min_cluster_size=5, min_samples=min_cluster_size, backend=CellLinkedList)
+
+Density-adaptive finder — a self-contained HDBSCAN\\* (Campello+2013; McInnes+2017): core distances
+from the `min_samples`-nearest neighbours define a mutual-reachability metric whose minimum spanning
+tree is condensed into a cluster hierarchy, and the most stable clusters (each with ≥ `min_cluster_size`
+members) are extracted. Finds clumps across a wide density range with almost no tuning; points not in
+any stable cluster are labelled noise (dropped). `linking_length` only bounds the neighbour search
+(set it generously)."""
+struct HDBSCANFinder <: AbstractFinder
+    field::Symbol; threshold::Float64; linking_length::Float64; threshold_unit::Symbol
+    min_cluster_size::Int; min_samples::Int; backend::Type{<:AbstractNeighborIndex}
+end
+HDBSCANFinder(field::Symbol=:rho; threshold::Real, linking_length::Real, threshold_unit::Symbol=:standard,
+              min_cluster_size::Int=5, min_samples::Int=min_cluster_size,
+              backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND) =
+    HDBSCANFinder(field, Float64(threshold), Float64(linking_length), threshold_unit,
+                  min_cluster_size, min_samples, backend)
+
 _label(f::ThresholdFoF, P::Points) = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
+_label(f::GraphSegFinder, P::Points) = _graphseg3d(P.x, P.y, P.z, P.f, f.linking_length, f.scale; backend=f.backend)
+_label(f::HDBSCANFinder, P::Points) =
+    _hdbscan3d(P.x, P.y, P.z, f.linking_length, f.min_cluster_size, f.min_samples; backend=f.backend)
 function _label(f::DensityWatershed, P::Points)
     labels, k = _fof3d(P.x, P.y, P.z, f.linking_length; backend=f.backend)
     k == 0 && return labels, k
@@ -602,6 +766,65 @@ function _label(f::Dendrogram, P::Points)
     labels, nleaf, _ = _dendrogram3d(collect(eachindex(P.x)), P.x, P.y, P.z, P.f,
                                      f.linking_length, f.min_delta; backend=f.backend)
     return labels, nleaf
+end
+
+# split one connected group `mem` into sub-clumps. With a `:peak`/`:watershed`/`true` symbol, use the
+# nearest-peak / density-basin kernels; with an `AbstractFinder`, run that finder on the group's points
+# (composition — e.g. FoF connectivity then per-group HDBSCAN). Finder labels of 0 are noise → dropped.
+function _split_group(deblend, mem, xs, ys, zs, ms, fs, pmd::Float64)
+    if deblend isa AbstractFinder
+        subP = Points(xs[mem], ys[mem], zs[mem], ms[mem], fs[mem], mem, nothing)
+        lbl, k = _label(deblend, subP)
+        k <= 0 && return [mem]
+        subs = [Int[] for _ in 1:k]
+        @inbounds for a in eachindex(lbl)
+            l = lbl[a]; l >= 1 && push!(subs[l], mem[a])      # map back to original indices, drop noise
+        end
+        kept = [s for s in subs if !isempty(s)]
+        return isempty(kept) ? [mem] : kept
+    end
+    split3d = deblend === :watershed ? _watershed3d : _deblend3d   # :peak (default) or :watershed
+    return split3d(mem, xs, ys, zs, fs, pmd)
+end
+
+# turn one member list into a finished clump NamedTuple (or `nothing` if it fails a filter). Pure given
+# the read-only arrays — so it parallelizes safely across clumps. `id` is assigned later (after sort).
+function _finalize_clump(mem, xs, ys, zs, ms, fs, bargs, need_b::Bool, bound_only::Bool,
+                         iterative_unbinding::Bool, substructure::Bool, sub_min_members::Int,
+                         tidal::Bool, pmd::Float64, min_members::Int)
+    iterative_unbinding && (mem = _unbind(mem, bargs, xs, ys, zs))      # keep only the bound subset
+    length(mem) >= min_members || return nothing
+    c = _clump_stats(mem, xs, ys, zs, ms, fs, need_b, bargs)
+    need_b && bound_only && !c.bound && return nothing
+    if substructure                                                     # nested self-bound basins
+        kids = NamedTuple[]
+        for sm in _watershed3d(mem, xs, ys, zs, fs, pmd)
+            tidal && (sm = _tidal_truncate(sm, mem, bargs, xs, ys, zs))
+            length(sm) >= sub_min_members || continue
+            sc = _clump_stats(sm, xs, ys, zs, ms, fs, true, bargs)
+            sc.bound && push!(kids, sc)
+        end
+        sort!(kids, by=k -> -k.mass)
+        kids = [merge(k, (id=i,)) for (i, k) in enumerate(kids)]
+        c = merge(c, (n_subclumps=length(kids), subclumps=kids))
+    end
+    return c
+end
+
+# map `_finalize_clump` over all clumps, optionally across `nthr` threads. Results are written by index
+# so the output order is identical to the serial order regardless of threading (determinism preserved).
+function _finalize_all(members, nthr::Int, f::F) where {F}
+    n = length(members)
+    res = Vector{Union{Nothing,NamedTuple}}(undef, n)
+    if nthr <= 1 || n < 16
+        @inbounds for i in 1:n; res[i] = f(members[i]); end
+    else
+        cs = cld(n, nthr)
+        @sync for c0 in 1:cs:n
+            Threads.@spawn for i in c0:min(c0+cs-1, n); res[i] = f(members[i]); end
+        end
+    end
+    return NamedTuple[r for r in res if r !== nothing]
 end
 
 # =====================================================================================
@@ -648,9 +871,10 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
                    mass_unit::Symbol=:Msol, min_members::Int=1, mask=[false],
                    boundedness::Bool=false, bound_only::Bool=false, egrav::Symbol=:approx,
                    direct_max::Int=2000, softening::Real=0.0, iterative_unbinding::Bool=false,
-                   deblend::Union{Bool,Symbol}=false, peak_min_distance::Real=2 * finder.linking_length,
+                   deblend::Union{Bool,Symbol,AbstractFinder}=false,
+                   peak_min_distance::Real=2 * finder.linking_length,
                    substructure::Bool=false, sub_min_members::Int=min_members, tidal::Bool=false,
-                   hierarchy::Bool=false)
+                   hierarchy::Bool=false, max_threads::Int=Threads.nthreads())
     need_b = boundedness || substructure || iterative_unbinding
     P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
                      pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
@@ -658,8 +882,10 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     meta = (dim=Symbol("3D"), field=finder.field, threshold=finder.threshold,
             threshold_unit=finder.threshold_unit, linking_length=finder.linking_length,
             pos_unit=pos_unit, mass_unit=mass_unit, n_selected=length(P.idx),
-            boundedness=boundedness, deblend=deblend, substructure=substructure,
-            unbinding=iterative_unbinding, hierarchy=hierarchy, finder=nameof(typeof(finder)))
+            boundedness=boundedness,
+            deblend=(deblend isa AbstractFinder ? nameof(typeof(deblend)) : deblend),
+            substructure=substructure, unbinding=iterative_unbinding, hierarchy=hierarchy,
+            finder=nameof(typeof(finder)))
     isempty(P.idx) && return ClumpCatalog(0, NamedTuple[], meta)
     xs, ys, zs, ms, fs, bargs = P.x, P.y, P.z, P.m, P.f, P.bargs
     tree = (hierarchy && finder isa Dendrogram) ?                 # arbitrary-depth merge tree
@@ -668,32 +894,14 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     labels, k = _label(finder, P)
     members = [Int[] for _ in 1:k]
     @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
-    if deblend !== false   # split each clump at its density peaks (overlap handling)
-        split3d = deblend === :watershed ? _watershed3d : _deblend3d   # :peak (default) or :watershed
-        members = reduce(vcat, (split3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
+    if deblend !== false   # split each clump (peak/watershed, or a composed finder per group)
+        members = reduce(vcat, (_split_group(deblend, mem, xs, ys, zs, ms, fs, Float64(peak_min_distance))
                                 for mem in members); init=Vector{Int}[])
     end
-    out = NamedTuple[]
-    for mem in members
-        iterative_unbinding && (mem = _unbind(mem, bargs, xs, ys, zs))   # keep only the bound subset
-        length(mem) >= min_members || continue
-        c = _clump_stats(mem, xs, ys, zs, ms, fs, need_b, bargs)   # bound fields when boundedness or substructure
-        need_b && bound_only && !c.bound && continue
-        if substructure
-            # split the clump into density basins, keep only the self-bound ones as nested subclumps
-            kids = NamedTuple[]
-            for sm in _watershed3d(mem, xs, ys, zs, fs, Float64(peak_min_distance))
-                tidal && (sm = _tidal_truncate(sm, mem, bargs, xs, ys, zs))   # strip tidally-unbound shell
-                length(sm) >= sub_min_members || continue
-                sc = _clump_stats(sm, xs, ys, zs, ms, fs, true, bargs)
-                sc.bound && push!(kids, sc)
-            end
-            sort!(kids, by=k -> -k.mass)
-            kids = [merge(k, (id=i,)) for (i, k) in enumerate(kids)]
-            c = merge(c, (n_subclumps=length(kids), subclumps=kids))
-        end
-        push!(out, c)
-    end
+    pmd = Float64(peak_min_distance); nthr = clamp(max_threads, 1, Threads.nthreads())
+    out = _finalize_all(members, nthr,
+        mem -> _finalize_clump(mem, xs, ys, zs, ms, fs, bargs, need_b, bound_only,
+                               iterative_unbinding, substructure, sub_min_members, tidal, pmd, min_members))
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
     return ClumpCatalog(length(out), out, meta, tree)
@@ -721,9 +929,10 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, link
                    threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
                    min_members::Int=1, mask=[false], boundedness::Bool=false, bound_only::Bool=false,
                    egrav::Symbol=:approx, direct_max::Int=2000, softening::Real=0.0,
-                   iterative_unbinding::Bool=false, deblend::Union{Bool,Symbol}=false,
+                   iterative_unbinding::Bool=false, deblend::Union{Bool,Symbol,AbstractFinder}=false,
                    peak_min_distance::Real=2linking_length, substructure::Bool=false,
                    sub_min_members::Int=min_members, tidal::Bool=false,
+                   max_threads::Int=Threads.nthreads(),
                    backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
     finder = ThresholdFoF(field; threshold=threshold, linking_length=linking_length,
                           threshold_unit=threshold_unit, backend=backend)
@@ -731,7 +940,7 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, link
                      mask=mask, boundedness=boundedness, bound_only=bound_only, egrav=egrav,
                      direct_max=direct_max, softening=softening, iterative_unbinding=iterative_unbinding,
                      deblend=deblend, peak_min_distance=peak_min_distance, substructure=substructure,
-                     sub_min_members=sub_min_members, tidal=tidal)
+                     sub_min_members=sub_min_members, tidal=tidal, max_threads=max_threads)
 end
 
 # per-clump statistics (mass, COM, peak, radius) + optional boundedness; shared by top-level clumps

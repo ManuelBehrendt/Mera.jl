@@ -182,6 +182,8 @@ export
     ThresholdFoF,
     DensityWatershed,
     Dendrogram,
+    GraphSegFinder,
+    HDBSCANFinder,
     StructureTree,
     StructureNode,
     ClumpCatalog,
