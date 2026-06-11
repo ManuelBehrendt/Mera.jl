@@ -31,10 +31,11 @@ _partition(labels) = Set(Set(findall(==(l), labels)) for l in unique(labels))
         for b in (0.03, 0.07, 0.15, 0.4)
             lh, kh = Mera._fof3d(x, y, z, b; backend=Mera.HashGrid)
             lc, kc = Mera._fof3d(x, y, z, b; backend=Mera.CellLinkedList)
+            lm, km = Mera._fof3d(x, y, z, b; backend=Mera.MortonGrid)
             ref = _ref_partition(x, y, z, b)
-            @test kh == kc                                   # same clump count
-            @test _partition(lh) == _partition(lc)           # identical partitions
-            @test _partition(lh) == ref                      # and both match brute force
+            @test kh == kc == km                             # same clump count, all three backends
+            @test _partition(lh) == _partition(lc) == _partition(lm)   # identical partitions
+            @test _partition(lh) == ref                      # and all match brute force
             @test kh == length(ref)
         end
     end
@@ -46,12 +47,19 @@ _partition(labels) = Set(Set(findall(==(l), labels)) for l in unique(labels))
         for i in 1:120, j in i+1:120
             (x[i]-x[j])^2 + (y[i]-y[j])^2 + (z[i]-z[j])^2 <= b*b && push!(truth, (i, j))
         end
-        for backend in (Mera.HashGrid, Mera.CellLinkedList)
+        for backend in (Mera.HashGrid, Mera.CellLinkedList, Mera.MortonGrid)
             ix = Mera.build_index(backend, x, y, z, b, 1:120)
             got = Set{Tuple{Int,Int}}()
             Mera.foreach_pair_within(ix, 1:120, (i, j, _d2) -> push!(got, (i, j)))
-            @test got == truth                               # no missed / duplicate pairs
+            @test got == truth                               # same pair set regardless of traversal order
         end
+        # the Morton order is a permutation of the indexed points (every point visited once)
+        ixm = Mera.build_index(Mera.MortonGrid, x, y, z, b, 1:120)
+        @test sort(ixm.order) == collect(1:120)
+        # Z-order codes are monotone along each axis when the others are fixed (locality sanity)
+        @test Mera._morton_code(UInt64(0), UInt64(0), UInt64(0)) <
+              Mera._morton_code(UInt64(1), UInt64(0), UInt64(0)) <
+              Mera._morton_code(UInt64(0), UInt64(2), UInt64(0))
     end
 
     @testset "FoF invariances (permutation / translation / rotation / reflection)" begin
