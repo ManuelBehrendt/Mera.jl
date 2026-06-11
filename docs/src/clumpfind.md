@@ -213,6 +213,41 @@ Mera.children(tree, r)                   # its immediate sub-structures
 r.n_subtree                              # members in the whole subtree
 ```
 
+## Density-adaptive finders
+
+Two further finders handle variable-density fields without a single hard threshold:
+
+* [`HDBSCANFinder`](@ref) — a self-contained HDBSCAN\\* (Campello+2013; McInnes+2017): core distances
+  define a mutual-reachability metric whose MST is condensed into a cluster hierarchy, and the most
+  *stable* clusters (≥ `min_cluster_size`) are extracted. Near parameter-free; points outside any
+  stable cluster are labelled noise (dropped).
+* [`GraphSegFinder`](@ref) — Felzenszwalb & Huttenlocher (2004) graph segmentation: keeps within-region
+  density variation below the between-region contrast, with a single `scale` knob. Near-linear; a fast
+  multi-scale deblender.
+
+```julia
+cat = clumpfind(gas, HDBSCANFinder(:rho; threshold=1e2, threshold_unit=:nH,
+                                   linking_length=2.0, min_cluster_size=20))
+cat = clumpfind(gas, GraphSegFinder(:rho; threshold=1e2, threshold_unit=:nH,
+                                    linking_length=1.0, scale=5.0))
+```
+
+### Finder composition
+
+`deblend` can be **any finder**: a cheap finder establishes connectivity, then the deblend finder
+splits each group — e.g. friends-of-friends connectivity refined per-group by HDBSCAN (something yt
+cannot do):
+
+```julia
+cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=1.0);
+                deblend=HDBSCANFinder(:rho; threshold=1e2, linking_length=0.5, min_cluster_size=30))
+```
+
+### Threading
+
+The per-clump statistics/boundedness pass is threaded; `max_threads` (default `Threads.nthreads()`)
+caps it, and the result is identical to the serial output regardless of thread count.
+
 ## Saving & validation
 
 Persist a catalog (full fidelity — boundedness, nested `subclumps`, the `tree`) and reload it:
@@ -234,8 +269,8 @@ m.ari            # ≈ 1 when the finder recovers the input clumps
 ## API
 
 The finder/hierarchy types ([`AbstractFinder`](@ref), [`ThresholdFoF`](@ref),
-[`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`StructureTree`](@ref), [`StructureNode`](@ref))
-are documented in the [API reference](api.md#Types).
+[`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref), [`HDBSCANFinder`](@ref),
+[`StructureTree`](@ref), [`StructureNode`](@ref)) are documented in the [API reference](api.md#Types).
 
 ```@docs
 clumpfind
