@@ -97,6 +97,35 @@ sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes t
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
 arrays (heatmap them with any backend); it is *not* `projection` — different axes, no LOS superposition.
 
+## Statistics: uncertainty and the radial profile
+
+Two ways to improve the statistics of a flux measurement, both built in:
+
+**More cells per shell** — a wider `shell_width` puts more cells in the sum (the standard
+statistics-vs-localization tradeoff). Note `fluxbudget` does the **cell-by-cell sum** `Σ mᵢ·v_r,i`, which
+captures the density–velocity correlation exactly — *not* `⟨ρ⟩·⟨v_r⟩` over the shell, which would lose
+that correlation and bias the answer.
+
+**Sampling uncertainty** — each rate carries `err_in`/`err_out`/`err_net`: the shot-noise standard error
+of the cell-sum. It is large when a few cells dominate the flux (an under-resolved or sparsely-sampled
+shell), so it tells you when a number is trustworthy:
+
+```julia
+fb = fluxbudget(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc)
+fb.rates.mass.net, fb.rates.mass.err_net      # e.g. 0.03 ± 0.96  → consistent with balance
+```
+
+**Radial flux profile** — [`fluxprofile`](@ref) runs the budget across many radii at once, so you see
+*where* the flux is launched or converges and can pick a converged radius/width:
+
+```julia
+fp = fluxprofile(gas; surface=:sphere, radii=5:5:50, shell_width=2.0, range_unit=:kpc)
+fp.radius, fp.net, fp.err_net      # net Ṁ(R) ± sampling error [Msol/yr]
+# e.g. net < 0 in the disk (inflow) → net > 0 in the halo (outflow); a huge err flags a bad shell
+```
+
+For the dominant snapshot-to-snapshot noise, time-average instead (see below).
+
 ## Time evolution
 
 [`fluxtimeseries`](@ref) maps `fluxbudget` over a snapshot series and assembles the rate versus time —
@@ -118,7 +147,7 @@ suite, in the same spirit as Mera's projection/covering-grid conservation oracle
 
 ## API
 
-The functions [`fluxbudget`](@ref), [`fluxtimeseries`](@ref), [`fluxshell`](@ref), [`fluxmap`](@ref) and
-the result types [`FluxBudgetType`](@ref) / [`FluxMapType`](@ref) are documented in the
-[API reference](api.md). See also
+The functions [`fluxbudget`](@ref), [`fluxprofile`](@ref), [`fluxtimeseries`](@ref),
+[`fluxshell`](@ref), [`fluxmap`](@ref) and the result types [`FluxBudgetType`](@ref) /
+[`FluxMapType`](@ref) are documented in the [API reference](api.md). See also
 [`shellregion`](@ref) (the shell selection underneath) and [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md).
