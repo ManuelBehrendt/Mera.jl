@@ -78,6 +78,25 @@ projection(sh, :vr_sphere, :km_s; center=[:bc])       # inflow (blue) / outflow 
 `fluxshell` and `fluxbudget` use the identical selection, so the visualization is guaranteed to show
 exactly the cells that entered the budget.
 
+### The surface map (`fluxmap`)
+
+`projection` of the shell flattens it onto a Cartesian plane and **superposes** the near and far side.
+For the true "where on the surface does gas flow in vs out" picture, [`fluxmap`](@ref) bins the shell
+by **surface coordinates** — (φ, cosθ) for a sphere (an equal-solid-angle sky map), (φ, z) for a
+cylinder (the wall unrolled) — so each cell sits at its own location, no superposition:
+
+```julia
+fm = fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc, quantity=:vr)
+fm.map        # nφ × ncosθ map of mean v⊥ [km/s] — heatmap it (red = outflow, blue = inflow)
+
+fmd = fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc, quantity=:mdot)
+sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes to the budget
+```
+
+`quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`
+maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
+arrays (heatmap them with any backend); it is *not* `projection` — different axes, no LOS superposition.
+
 ## Time evolution
 
 [`fluxtimeseries`](@ref) maps `fluxbudget` over a snapshot series and assembles the rate versus time —
@@ -99,6 +118,7 @@ suite, in the same spirit as Mera's projection/covering-grid conservation oracle
 
 ## API
 
-The functions [`fluxbudget`](@ref), [`fluxtimeseries`](@ref), [`fluxshell`](@ref) and the result type
-[`FluxBudgetType`](@ref) are documented in the [API reference](api.md). See also
+The functions [`fluxbudget`](@ref), [`fluxtimeseries`](@ref), [`fluxshell`](@ref), [`fluxmap`](@ref) and
+the result types [`FluxBudgetType`](@ref) / [`FluxMapType`](@ref) are documented in the
+[API reference](api.md). See also
 [`shellregion`](@ref) (the shell selection underneath) and [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md).
