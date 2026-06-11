@@ -248,6 +248,18 @@ cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linki
 The per-clump statistics/boundedness pass is threaded; `max_threads` (default `Threads.nthreads()`)
 caps it, and the result is identical to the serial output regardless of thread count.
 
+### Neighbour backend
+
+Every finder takes a `backend` for its spatial neighbour search: `CellLinkedList` (default),
+`HashGrid`, or [`MortonGrid`](@ref) — which visits points along a Z-order (Morton) curve so
+spatially-near points are near in memory, improving cache locality on large selections (the same
+ordering an out-of-core path needs). All three return identical results; only speed differs.
+
+```julia
+cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH,
+                                  linking_length=0.5, backend=MortonGrid))
+```
+
 ## Phase-space & topology
 
 * [`PhaseSpaceFoF`](@ref) — 6-D friends-of-friends (Rockstar-style; Behroozi+2013): points link only
