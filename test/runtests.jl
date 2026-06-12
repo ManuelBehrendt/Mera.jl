@@ -103,6 +103,7 @@ if isempty(_focus)
         include("40_clumpfind_validation_tests.jl") # structure-finder framework (v2 Phase 1): backend/oracle/invariance, data-free
         include("41_covering_grid_tests.jl")        # covering_grid / slice (fixed-resolution buffer): paint/conservation data-free + AMR-backed
         include("43_fluxbudget_tests.jl")           # fluxbudget / fluxtimeseries (surface flux in/out): kernel+analytic data-free + AMR-backed
+        include("44_bubble_tests.jl")               # bubble / bubbletimeseries (hot superbubble from a stellar origin): CC-seed kernel + AMR-backed
         include("07_regions.jl")
     end
 

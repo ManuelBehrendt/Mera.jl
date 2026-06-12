@@ -57,6 +57,8 @@ makedocs(modules = [Mera],
 
                           "Flux Budgets"        => "fluxbudget.md",
 
+                          "Hot Bubbles"         => "bubble.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 

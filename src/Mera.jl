@@ -172,6 +172,9 @@ export
     fluxmapplot,
     FluxBudgetType,
     FluxMapType,
+    bubble,
+    bubbletimeseries,
+    BubbleResult,
     report,
     preview,
     render,
@@ -410,6 +413,7 @@ include("functions/report/report.jl")
 include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
+include("functions/bubble.jl")   # uses clumpfind's _fof3d / AbstractNeighborIndex
 # ============================================
 
 
