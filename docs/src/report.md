@@ -190,3 +190,6 @@ clump_mass_fraction
   fig = quicklookplot(quicklook(400; path="/sim"))
   Makie.save("quicklook.png", fig)
   ```
+
+  ![The `quicklookplot` first-look dashboard: face-on surface density, the ρ–T phase diagram, and the
+  spherical radial density profile.](assets/features/quicklook_dashboard.png)

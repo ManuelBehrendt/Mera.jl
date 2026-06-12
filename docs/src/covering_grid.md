@@ -65,6 +65,10 @@ sl[:rho]                       # a 2-D array (single-cell-thick, non-integrated)
 `slice_pos` is in `slice_unit` (`:standard` ⇒ a fraction of the box). The slice equals the
 corresponding layer of the full covering grid, but only that layer is built.
 
+![A mid-plane `slice` of the gas number density resampled to a uniform level-8 grid: the spiral
+structure and dense core are reproduced, with coarse de-refined regions shown as the larger
+uniform blocks.](assets/features/covering_grid_slice.png)
+
 ## API
 
 The functions ([`covering_grid`](@ref), [`covering_grid_memory`](@ref), [`slice`](@ref)) and the
