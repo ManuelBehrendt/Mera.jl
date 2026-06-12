@@ -115,6 +115,18 @@ cat[1].n_subclumps          # number of self-bound subclumps inside the most mas
 cat[1].subclumps[1].mass    # the largest bound subclump's mass
 ```
 
+`tidal=:tensor` uses the **tidal-tensor / Hill radius** instead of the Jacobi form: it fits the local
+gravity acceleration field `a(x)` (from a `gravity` object, `getgravity`) around each subclump to the
+tidal tensor `T_ij = −∂²Φ/∂x_i∂x_j` and truncates at `r_t³ = G·m_sub / λ_max(T)` — exactly the Hill
+radius `R·(m_sub/2M)^{1/3}` for a point-mass host. `tidal_sample` (default 3) sets the fit radius in
+units of the subclump radius.
+
+```julia
+grav = getgravity(getinfo(output, path))
+cat  = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4,
+                 substructure=true, tidal=:tensor, gravity=grav)
+```
+
 ## Multi-field — gas + stars + dark matter together
 
 Pass a vector of **components** to find over-densities across several mass species in one pass. Each
