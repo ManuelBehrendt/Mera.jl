@@ -74,15 +74,33 @@ _sum_se(s, q, n) = n > 1 ? sqrt(max(0.0, n/(n-1) * (q - s*s/n))) : 0.0
 
 _funit(info, u) = u === :standard ? 1.0 : getunit(info, u)   # code→unit factor (1 for :standard)
 
-# one quantity's (in, out, net, err_*, unit) in physical units, from CGS carried-array + normal velocity.
-# err_* is the SAMPLING (shot-noise) standard error of the cell-sum — large when a few cells dominate.
-function _flux_quantity(vn_cms, carried_cgs, dr_cm, conv, unit_label)
+# one quantity's (in, out, net, err_*, ci_*, unit) in physical units, from CGS carried-array + normal
+# velocity. err_* is the SAMPLING (shot-noise) standard error of the cell-sum (large when a few cells
+# dominate); ci_* are percentile bootstrap confidence intervals (lo,hi) when nboot>0, else (NaN,NaN).
+function _flux_quantity(vn_cms, carried_cgs, dr_cm, conv, unit_label; nboot::Int=0, rng=nothing,
+                        ci_level::Float64=0.95)
     sin, sout, qin, qout, nin, nout = _flux_reduce(vn_cms, carried_cgs)
     k = conv / dr_cm
     fin = sin*k; fout = sout*k
     ein = _sum_se(sin, qin, nin)*abs(k); eout = _sum_se(sout, qout, nout)*abs(k)
-    return (in=fin, out=fout, net=fin + fout, err_in=ein, err_out=eout,
-            err_net=sqrt(ein^2 + eout^2), n_in=nin, n_out=nout, unit=unit_label)
+    ci_in = ci_out = ci_net = (NaN, NaN)
+    if nboot > 0
+        N = length(vn_cms); bin = Vector{Float64}(undef, nboot); bout = similar(bin); bnet = similar(bin)
+        @inbounds for b in 1:nboot
+            si = 0.0; so = 0.0
+            for _ in 1:N
+                j = rand(rng, 1:N); f = carried_cgs[j]*vn_cms[j]
+                isfinite(f) || continue
+                vn_cms[j] < 0 ? (si += f) : (so += f)
+            end
+            bin[b] = si*k; bout[b] = so*k; bnet[b] = (si + so)*k
+        end
+        α = (1 - ci_level)/2
+        _ci(v) = (sort!(v); (v[clamp(round(Int, α*nboot)+1, 1, nboot)], v[clamp(round(Int, (1-α)*nboot), 1, nboot)]))
+        ci_in = _ci(bin); ci_out = _ci(bout); ci_net = _ci(bnet)
+    end
+    return (in=fin, out=fout, net=fin + fout, err_in=ein, err_out=eout, err_net=sqrt(ein^2 + eout^2),
+            ci_in=ci_in, ci_out=ci_out, ci_net=ci_net, n_in=nin, n_out=nout, unit=unit_label)
 end
 
 """
@@ -112,18 +130,33 @@ fb.rates.mass.net        # net (in + out)
 """
 function fluxbudget(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
                     quantities::AbstractVector{Symbol}=[:mass], center=[:bc], range_unit::Symbol=:kpc,
-                    phases::Union{Nothing,NamedTuple}=nothing, verbose::Bool=true)
-    R = Float64(radius); dr = Float64(shell_width)
-    shell = _flux_shell(obj, surface, R, dr, center, range_unit)
-    info = obj.info; vn_sym = _FLUX_NORMAL[surface]
-    ncell = length(shell.data)
-    # the shell estimator assumes Δr ≳ the local cell size (so the shell is filled); a shell thinner
-    # than a cell grabs whole cells and over-counts. Record the cell size and warn if under-resolved.
-    csz = ncell > 0 ? median(getvar(shell, :cellsize, range_unit)) : 0.0
+                    phases::Union{Nothing,NamedTuple}=nothing, axis=nothing, height=nothing,
+                    bootstrap::Int=0, bootstrap_seed::Int=20240601, ci_level::Float64=0.95,
+                    verbose::Bool=true)
+    R = Float64(radius); dr = Float64(shell_width); info = obj.info
+    tilted = surface === :plane || (surface === :cylinder && axis !== nothing && axis !== :z)
+    surface in (:sphere, :cylinder, :plane) ||
+        throw(ArgumentError("surface must be :sphere, :cylinder or :plane (got :$surface)"))
+    surface === :plane && axis === nothing && throw(ArgumentError(":plane needs an `axis` (the plane normal)"))
+    rng = bootstrap > 0 ? MersenneTwister(bootstrap_seed) : nothing
+    if tilted                                                          # off-axis cylinder / plane
+        nhat = _flux_axis(obj, axis, center, range_unit)
+        # cylinder height defaults to 2·rout (matching the axis-aligned path); plane has no height
+        heff = surface === :plane ? nothing :
+               height === nothing ? 2*(R + dr/2) : Float64(height)
+        rates, comps, ncell, shell_mass, csz =
+            _flux_tilted(obj, surface, nhat, R, dr, heff, quantities, center, range_unit, phases;
+                         nboot=bootstrap, rng=rng, ci_level=ci_level)
+    else                                                              # axis-aligned sphere / cylinder
+        shell = _flux_shell(obj, surface, R, dr, center, range_unit)
+        ncell = length(shell.data)
+        csz = ncell > 0 ? median(getvar(shell, :cellsize, range_unit)) : 0.0
+        rates, comps, shell_mass = _flux_compute(shell, _FLUX_NORMAL[surface], dr, center, range_unit,
+                                                 quantities, phases; nboot=bootstrap, rng=rng, ci_level=ci_level)
+    end
     verbose && dr < csz && @warn "fluxbudget: shell_width Δr=$dr < cell size $(round(csz,sigdigits=3)) " *
         "$(range_unit) at R=$R — the shell is thinner than the AMR and the flux will be over-counted. " *
         "Use shell_width ≥ the local cell size (ideally a few cells)."
-    rates, comps, shell_mass = _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases)
     fb = FluxBudgetType(surface, R, dr, csz, Float64.(_centervec(center, info, range_unit)), range_unit,
                         ncell, shell_mass, rates, comps, info)
     verbose && show(stdout, fb)
@@ -247,13 +280,28 @@ function fluxmap(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shel
     return fm
 end
 
+"""    fluxmapplot(fm::FluxMapType; kwargs...) -> Makie.Figure
+
+Render a [`fluxmap`](@ref) surface map as a heatmap — a diverging colormap centred at zero for
+`:vr` (blue inflow / red outflow), sequential for `:mdot`. Needs a Makie backend (`using CairoMakie`).
+
+```julia
+using CairoMakie
+fm = fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc)
+fig = fluxmapplot(fm); Makie.save("flux_skymap.png", fig)
+```
+"""
+fluxmapplot(fm::FluxMapType; kwargs...) = _plot_fluxmap(fm; kwargs...)
+_plot_fluxmap(fm; kwargs...) =
+    error("fluxmapplot needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")
+
 # numeric centre (code units) for the record — [:bc] → box centre
 _centervec(center, info, range_unit) =
     (center == [:bc] || center == [:boxcenter]) ? [0.5, 0.5, 0.5] :
     [c === :bc ? 0.5 : Float64(c) for c in center]
 
 # compute the rate NamedTuple (+ per-phase components) over a selected shell
-function _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases)
+function _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases; nboot=0, rng=nothing, ci_level=0.95)
     info = shell.info
     dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)         # Δr in cm
     g_per_Msol = getunit(info, :g) / getunit(info, :Msol)
@@ -280,7 +328,7 @@ function _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases
     end
     _rates(idx) = NamedTuple{Tuple(quantities)}(Tuple(begin
         carried, conv, ulab = carried_and_conv(q)
-        _flux_quantity(view(vn, idx), view(carried, idx), dr_cm, conv, ulab)
+        _flux_quantity(vn[idx], carried[idx], dr_cm, conv, ulab; nboot=nboot, rng=rng, ci_level=ci_level)
     end for q in quantities))
     allidx = eachindex(vn)
     rates = _rates(allidx)
@@ -290,6 +338,73 @@ function _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases
             _rates(findall(collect(Bool, phases[p](shell)))) for p in keys(phases)))
     end
     return rates, comps, shell_mass
+end
+
+# =====================================================================================
+#  Off-axis / tilted surfaces — cylinder about an arbitrary axis (or the gas angular momentum),
+#  and a plane normal to that axis. Bypasses shellregion (which is axis-aligned): selects cells by
+#  dot-products with the axis unit vector n̂ and computes the surface-normal velocity directly.
+#  Cell-centre based (vs the axis-aligned path's cell-volume intersection) — standard for flux work.
+# =====================================================================================
+# resolve the axis unit vector: a 3-vector, :x/:y/:z, or :angmom/:L (net L = Σ m·h of the object)
+function _flux_axis(obj, axis, center, range_unit)
+    if axis === :angmom || axis === :L
+        L = [sum(getvar(obj, :lx; center=center, center_unit=range_unit)),
+             sum(getvar(obj, :ly; center=center, center_unit=range_unit)),
+             sum(getvar(obj, :lz; center=center, center_unit=range_unit))]
+        n = sqrt(sum(abs2, L)); n > 0 || throw(ArgumentError("angular-momentum vector L is zero")); return L ./ n
+    elseif axis isa AbstractVector
+        a = float.(collect(axis)); n = sqrt(sum(abs2, a))
+        (length(a) == 3 && n > 0) || throw(ArgumentError("axis must be a non-zero length-3 vector")); return a ./ n
+    elseif axis === :x; return [1.0, 0.0, 0.0]
+    elseif axis === :y; return [0.0, 1.0, 0.0]
+    elseif axis === :z; return [0.0, 0.0, 1.0]
+    else throw(ArgumentError("axis must be a 3-vector, :x/:y/:z or :angmom (got $axis)"))
+    end
+end
+
+# tilted cylinder wall (about n̂) or plane (normal n̂ at along-axis position R): returns the full
+# FluxBudgetType pieces (rates, comps, n_cells, shell_mass, cell_size).
+function _flux_tilted(obj, surface, nhat, R, dr, height, quantities, center, range_unit, phases;
+                      nboot=0, rng=nothing, ci_level=0.95)
+    info = obj.info
+    x = getvar(obj, :x, range_unit; center=center, center_unit=range_unit)
+    y = getvar(obj, :y, range_unit; center=center, center_unit=range_unit)
+    z = getvar(obj, :z, range_unit; center=center, center_unit=range_unit)
+    vx = getvar(obj, :vx, :cm_s); vy = getvar(obj, :vy, :cm_s); vz = getvar(obj, :vz, :cm_s)
+    zc = x .* nhat[1] .+ y .* nhat[2] .+ z .* nhat[3]                  # along-axis coordinate
+    if surface === :plane
+        mask = abs.(zc .- R) .<= dr/2
+        vn = vx .* nhat[1] .+ vy .* nhat[2] .+ vz .* nhat[3]          # normal = axis (cm/s)
+    else                                                              # tilted cylinder wall
+        px = x .- zc .* nhat[1]; py = y .- zc .* nhat[2]; pz = z .- zc .* nhat[3]   # perp vector
+        Rp = sqrt.(px.^2 .+ py.^2 .+ pz.^2)
+        mask = (Rp .>= R - dr/2) .& (Rp .<= R + dr/2)
+        height !== nothing && (mask = mask .& (abs.(zc) .<= height/2))
+        Rsafe = max.(Rp, eps())
+        vn = (vx .* px .+ vy .* py .+ vz .* pz) ./ Rsafe             # v · R̂_perp (cm/s)
+    end
+    idx = findall(mask)
+    dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)
+    g_per_Msol = getunit(info, :g)/getunit(info, :Msol); s_per_yr = getunit(info, :s)/getunit(info, :yr)
+    m_g = getvar(obj, :mass, :g)
+    haveZ = :metallicity in propertynames(getfield(obj, :data).columns)
+    Zarr = haveZ ? getvar(obj, :metallicity) : zeros(length(m_g))
+    Earr = (:energy in quantities) ? (getvar(obj, :ekin, :erg) .+ getvar(obj, :etherm, :erg)) : Float64[]
+    carried(q) = q === :mass ? (m_g, s_per_yr/g_per_Msol, :Msol_yr) :
+                 q === :metals ? (m_g .* Zarr, s_per_yr/g_per_Msol, :Msol_yr) :
+                 q === :momentum ? (m_g .* vn, s_per_yr/(g_per_Msol*1e5), :Msol_km_s_yr) :
+                 q === :energy ? (Earr, 1.0, :erg_s) :
+                 throw(ArgumentError("unknown flux quantity :$q"))
+    _rates(ix) = NamedTuple{Tuple(quantities)}(Tuple(begin
+        c, conv, ulab = carried(q)
+        _flux_quantity(vn[ix], c[ix], dr_cm, conv, ulab; nboot=nboot, rng=rng, ci_level=ci_level)
+    end for q in quantities))
+    rates = _rates(idx)
+    comps = phases === nothing ? nothing :
+        NamedTuple{keys(phases)}(Tuple(_rates(intersect(idx, findall(collect(Bool, phases[p](obj))))) for p in keys(phases)))
+    csz = isempty(idx) ? 0.0 : median(getvar(obj, :cellsize, range_unit)[idx])
+    return rates, comps, length(idx), sum(@view m_g[idx])/g_per_Msol, csz
 end
 
 # =====================================================================================
@@ -347,12 +462,13 @@ fp.radius, fp.net, fp.err_net      # net Ṁ(R) ± sampling error [Msol/yr]
 ```
 """
 function fluxprofile(obj::HydroDataType; surface::Symbol=:sphere, radii, shell_width::Real,
-                     quantity::Symbol=:mass, center=[:bc], range_unit::Symbol=:kpc, verbose::Bool=true)
+                     quantity::Symbol=:mass, center=[:bc], range_unit::Symbol=:kpc,
+                     axis=nothing, height=nothing, verbose::Bool=true)
     Rs = collect(Float64, radii)
     fin = Float64[]; fout = Float64[]; fnet = Float64[]; enet = Float64[]; nc = Int[]; unit = :_
     for R in Rs
         fb = fluxbudget(obj; surface=surface, radius=R, shell_width=shell_width, quantities=[quantity],
-                        center=center, range_unit=range_unit, verbose=false)
+                        center=center, range_unit=range_unit, axis=axis, height=height, verbose=false)
         r = fb.rates[quantity]; unit = r.unit
         push!(fin, r.in); push!(fout, r.out); push!(fnet, r.net); push!(enet, r.err_net); push!(nc, fb.n_cells)
     end
