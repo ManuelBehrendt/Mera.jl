@@ -114,4 +114,26 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=(1500, 460), colorma
     return fig
 end
 
+# ---- fluxmapplot: the inflow/outflow surface map -----------------------------------------
+function Mera._plot_fluxmap(fm::Mera.FluxMapType; size=(640, 460), colormap=nothing)
+    fig = Makie.Figure(; size=size)
+    xc = (fm.xedges[1:end-1] .+ fm.xedges[2:end]) ./ 2
+    yc = (fm.yedges[1:end-1] .+ fm.yedges[2:end]) ./ 2
+    ylab = fm.surface === :sphere ? "cos θ" : "z"
+    ax = Makie.Axis(fig[1, 1]; title="flux map [$(fm.surface), $(fm.quantity)]",
+                    xlabel="φ [deg]", ylabel=ylab)
+    if fm.quantity === :vr
+        a = sort!(filter(x -> isfinite(x) && x != 0, abs.(vec(fm.map))))   # robust symmetric range
+        m = isempty(a) ? 1.0 : a[clamp(round(Int, 0.98*length(a)), 1, length(a))]
+        cmap = colormap === nothing ? Makie.Reverse(:RdBu) : colormap     # low(inflow)=blue, high(outflow)=red
+        hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap, colorrange=(-m, m))
+        Makie.Colorbar(fig[1, 2], hm; label="mean v⊥ [km/s]  (blue in / red out)")
+    else
+        cmap = colormap === nothing ? :viridis : colormap
+        hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap)
+        Makie.Colorbar(fig[1, 2], hm; label="Ṁ per bin [$(fm.unit)]")
+    end
+    return fig
+end
+
 end # module
