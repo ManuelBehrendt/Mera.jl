@@ -769,7 +769,7 @@ function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
         poscm = Float64(getfield(obj.scale, :cm) / getfield(obj.scale, pos_unit))   # pos_unit → cm
         eps2 = (Float64(softening) * poscm)^2                                        # ε² in cm²
         bargs = (mg=mg, vx=vv[:vx][idx], vy=vv[:vy][idx], vz=vv[:vz][idx], et=et, em=em, poscm=poscm,
-                 Gc=obj.info.constants.G, egrav=egrav, direct_max=direct_max, eps2=eps2)
+                 Gc=obj.info.constants.G, egrav=egrav, direct_max=direct_max, eps2=eps2, grav=nothing)
     end
     vx = vy = vz = Float64[]
     if need_velocity   # phase-space coordinates (km/s)
@@ -956,7 +956,7 @@ end
 # the read-only arrays — so it parallelizes safely across clumps. `id` is assigned later (after sort).
 function _finalize_clump(mem, xs, ys, zs, ms, fs, bargs, need_b::Bool, bound_only::Bool,
                          iterative_unbinding::Bool, substructure::Bool, sub_min_members::Int,
-                         tidal::Bool, pmd::Float64, min_members::Int)
+                         tidal, pmd::Float64, min_members::Int, tidal_sample::Float64)
     iterative_unbinding && (mem = _unbind(mem, bargs, xs, ys, zs))      # keep only the bound subset
     length(mem) >= min_members || return nothing
     c = _clump_stats(mem, xs, ys, zs, ms, fs, need_b, bargs)
@@ -964,7 +964,7 @@ function _finalize_clump(mem, xs, ys, zs, ms, fs, bargs, need_b::Bool, bound_onl
     if substructure                                                     # nested self-bound basins
         kids = NamedTuple[]
         for sm in _watershed3d(mem, xs, ys, zs, fs, pmd)
-            tidal && (sm = _tidal_truncate(sm, mem, bargs, xs, ys, zs))
+            tidal !== false && (sm = _tidal_truncate(sm, mem, bargs, xs, ys, zs, tidal, tidal_sample))
             length(sm) >= sub_min_members || continue
             sc = _clump_stats(sm, xs, ys, zs, ms, fs, true, bargs)
             sc.bound && push!(kids, sc)
@@ -1038,9 +1038,12 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
                    direct_max::Int=2000, softening::Real=0.0, iterative_unbinding::Bool=false,
                    deblend::Union{Bool,Symbol,AbstractFinder}=false,
                    peak_min_distance::Real=2 * finder.linking_length,
-                   substructure::Bool=false, sub_min_members::Int=min_members, tidal::Bool=false,
+                   substructure::Bool=false, sub_min_members::Int=min_members,
+                   tidal::Union{Bool,Symbol}=false, gravity=nothing, tidal_sample::Real=3.0,
                    hierarchy::Bool=false, max_threads::Int=Threads.nthreads())
     need_b = boundedness || substructure || iterative_unbinding
+    tidal === :tensor && gravity === nothing &&
+        throw(ArgumentError("tidal=:tensor needs a `gravity` object (getgravity) for the tidal tensor"))
     P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
                      pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
                      egrav=egrav, direct_max=direct_max, softening=softening,
@@ -1054,6 +1057,12 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
             finder=nameof(typeof(finder)))
     isempty(P.idx) && return ClumpCatalog(0, NamedTuple[], meta)
     xs, ys, zs, ms, fs, bargs = P.x, P.y, P.z, P.m, P.f, P.bargs
+    if tidal === :tensor                                          # attach the gravity field for the tidal tensor
+        gp = getvar(gravity, [:x, :y, :z], pos_unit)
+        bargs = merge(bargs, (grav=(gx=gp[:x], gy=gp[:y], gz=gp[:z],
+                                    gax=getvar(gravity, :ax, :g_cms2), gay=getvar(gravity, :ay, :g_cms2),
+                                    gaz=getvar(gravity, :az, :g_cms2)),))
+    end
     tree = (hierarchy && finder isa Dendrogram) ?                 # arbitrary-depth merge tree
         last(_dendrogram3d(collect(eachindex(xs)), xs, ys, zs, fs,
                            finder.linking_length, finder.min_delta; backend=finder.backend)) : nothing
@@ -1064,10 +1073,10 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
         members = reduce(vcat, (_split_group(deblend, mem, xs, ys, zs, ms, fs, Float64(peak_min_distance))
                                 for mem in members); init=Vector{Int}[])
     end
-    pmd = Float64(peak_min_distance); nthr = clamp(max_threads, 1, Threads.nthreads())
+    pmd = Float64(peak_min_distance); nthr = clamp(max_threads, 1, Threads.nthreads()); tsamp = Float64(tidal_sample)
     out = _finalize_all(members, nthr,
         mem -> _finalize_clump(mem, xs, ys, zs, ms, fs, bargs, need_b, bound_only,
-                               iterative_unbinding, substructure, sub_min_members, tidal, pmd, min_members))
+                               iterative_unbinding, substructure, sub_min_members, tidal, pmd, min_members, tsamp))
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
     return ClumpCatalog(length(out), out, meta, tree)
@@ -1097,8 +1106,8 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, link
                    egrav::Symbol=:approx, direct_max::Int=2000, softening::Real=0.0,
                    iterative_unbinding::Bool=false, deblend::Union{Bool,Symbol,AbstractFinder}=false,
                    peak_min_distance::Real=2linking_length, substructure::Bool=false,
-                   sub_min_members::Int=min_members, tidal::Bool=false,
-                   max_threads::Int=Threads.nthreads(),
+                   sub_min_members::Int=min_members, tidal::Union{Bool,Symbol}=false, gravity=nothing,
+                   tidal_sample::Real=3.0, max_threads::Int=Threads.nthreads(),
                    backend::Type{<:AbstractNeighborIndex}=DEFAULT_BACKEND)
     finder = ThresholdFoF(field; threshold=threshold, linking_length=linking_length,
                           threshold_unit=threshold_unit, backend=backend)
@@ -1106,7 +1115,8 @@ function clumpfind(obj::HydroPartType, field::Symbol=:rho; threshold::Real, link
                      mask=mask, boundedness=boundedness, bound_only=bound_only, egrav=egrav,
                      direct_max=direct_max, softening=softening, iterative_unbinding=iterative_unbinding,
                      deblend=deblend, peak_min_distance=peak_min_distance, substructure=substructure,
-                     sub_min_members=sub_min_members, tidal=tidal, max_threads=max_threads)
+                     sub_min_members=sub_min_members, tidal=tidal, gravity=gravity,
+                     tidal_sample=tidal_sample, max_threads=max_threads)
 end
 
 # per-clump statistics (mass, COM, peak, radius) + optional boundedness; shared by top-level clumps
@@ -1291,24 +1301,65 @@ end
 # Jacobi radius r_t = D·(m_sub / 3 M_host(<D))^{1/3} (King 1962; Binney & Tremaine 2008 §8.3),
 # where D is the subclump–host COM separation and M_host(<D) the host mass enclosed within D.
 # Members of `sub` farther than r_t from the subclump COM are tidally stripped.
-function _tidal_truncate(sub, host, bargs, xs, ys, zs)
+# ---- tidal/Hill radius from the local gravity field (tidal-tensor form) -----------------
+# Fit the acceleration field a_i(x) ≈ a0_i + Σ_j (∂a_i/∂x_j)·Δx_j over nearby gravity samples
+# (Δx, a in cgs), take the symmetric tidal tensor T_ij = ½(∂a_i/∂x_j + ∂a_j/∂x_i) = −∂²Φ/∂x_i∂x_j,
+# and return the tidal radius r_t³ = G·m_sub / λ_max(T). For a point-mass host (λ_max = 2GM/R³) this
+# is exactly the Hill radius R·(m_sub/2M)^{1/3}. Returns Inf if there is no stretching tide, NaN if
+# too few samples for a 3-D linear fit.
+function _tidal_tensor_radius(dx, dy, dz, ax, ay, az, m_sub_g, Gc)
+    n = length(dx); n < 4 && return NaN
+    s = sqrt((sum(abs2, dx) + sum(abs2, dy) + sum(abs2, dz)) / (3n))  # RMS offset → scale to O(1)
+    s > 0 || return NaN                                              # (cm-scale offsets + a ones column
+    A = hcat(ones(n), dx ./ s, dy ./ s, dz ./ s)                     #  would otherwise be ill-conditioned)
+    G = Matrix{Float64}(undef, 3, 3)
+    for (i, a) in enumerate((ax, ay, az))
+        c = A \ collect(a); G[i, 1] = c[2]/s; G[i, 2] = c[3]/s; G[i, 3] = c[4]/s   # ∂a_i/∂x_j
+    end
+    T = 0.5 .* (G .+ transpose(G))                                    # symmetric tidal tensor
+    λ = maximum(eigvals(Symmetric(T)))
+    λ <= 0 && return Inf
+    return cbrt(Gc * m_sub_g / λ)
+end
+
+# truncate a subclump at its tidal radius. `mode=true` ⇒ Jacobi r_t = D·(m_sub/3M_host(<D))^{1/3}
+# (host mass enclosed within the COM separation); `mode=:tensor` ⇒ tidal-tensor / Hill radius from the
+# gravity acceleration field (`bargs.grav`), sampling it within `tidal_sample`× the subclump radius.
+function _tidal_truncate(sub, host, bargs, xs, ys, zs, mode, tidal_sample)
     mg = bargs.mg; poscm = bargs.poscm
-    msub = sum(@view mg[sub]); hM = sum(@view mg[host])
-    hcx = sum(mg[j]*xs[j] for j in host)/hM; hcy = sum(mg[j]*ys[j] for j in host)/hM
-    hcz = sum(mg[j]*zs[j] for j in host)/hM
+    msub = sum(@view mg[sub])
     scx = sum(mg[j]*xs[j] for j in sub)/msub; scy = sum(mg[j]*ys[j] for j in sub)/msub
     scz = sum(mg[j]*zs[j] for j in sub)/msub
+    rsub2(j) = (xs[j]-scx)^2 + (ys[j]-scy)^2 + (zs[j]-scz)^2
+    if mode === :tensor && bargs.grav !== nothing
+        g = bargs.grav
+        Rsub = sqrt(maximum(rsub2(j) for j in sub))                     # subclump radius (pos_unit)
+        sr2 = (tidal_sample * Rsub)^2
+        sel = findall(k -> (g.gx[k]-scx)^2 + (g.gy[k]-scy)^2 + (g.gz[k]-scz)^2 <= sr2, eachindex(g.gx))
+        if length(sel) >= 4
+            rt = _tidal_tensor_radius((g.gx[sel].-scx).*poscm, (g.gy[sel].-scy).*poscm, (g.gz[sel].-scz).*poscm,
+                                      g.gax[sel], g.gay[sel], g.gaz[sel], msub, bargs.Gc)
+            if isfinite(rt) && rt > 0
+                rt2 = (rt/poscm)^2
+                return [j for j in sub if rsub2(j) <= rt2]
+            end
+        end
+        return sub                                                      # too few samples / no tide → keep
+    end
+    # Jacobi form
+    hM = sum(@view mg[host])
+    hcx = sum(mg[j]*xs[j] for j in host)/hM; hcy = sum(mg[j]*ys[j] for j in host)/hM
+    hcz = sum(mg[j]*zs[j] for j in host)/hM
     D = sqrt((scx-hcx)^2 + (scy-hcy)^2 + (scz-hcz)^2) * poscm           # COM separation (cm)
     D <= 0 && return sub
-    D2 = (D/poscm)^2                                                     # in pos_unit² for the host sum
+    D2 = (D/poscm)^2
     Menc = 0.0
     @inbounds for j in host
         ((xs[j]-hcx)^2 + (ys[j]-hcy)^2 + (zs[j]-hcz)^2) <= D2 && (Menc += mg[j])
     end
     Menc <= 0 && return sub
-    rt = D * (msub / (3 * Menc))^(1/3)                                   # Jacobi radius (cm)
-    rt2 = (rt / poscm)^2                                                 # back to pos_unit²
-    return [j for j in sub if ((xs[j]-scx)^2 + (ys[j]-scy)^2 + (zs[j]-scz)^2) <= rt2]
+    rt2 = (D * (msub / (3 * Menc))^(1/3) / poscm)^2                     # Jacobi radius² (pos_unit²)
+    return [j for j in sub if rsub2(j) <= rt2]
 end
 
 # =====================================================================================

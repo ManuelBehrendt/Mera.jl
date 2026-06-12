@@ -189,9 +189,19 @@ projection(sh, :sd, :Msol_pc2; center=[:bc])              # the shell as a ring/
 projection(sh, :vr_sphere, :km_s; center=[:bc])           # inflow (<0) / outflow (>0) over the shell
 ```
 """
-fluxshell(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
-          center=[:bc], range_unit::Symbol=:kpc) =
-    _flux_shell(obj, surface, Float64(radius), Float64(shell_width), center, range_unit)
+function fluxshell(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
+                   center=[:bc], range_unit::Symbol=:kpc, axis=nothing, height=nothing)
+    R = Float64(radius); dr = Float64(shell_width)
+    tilted = surface === :plane || (surface === :cylinder && axis !== nothing && axis !== :z)
+    if tilted
+        surface === :plane && axis === nothing && throw(ArgumentError(":plane needs an `axis`"))
+        nhat = _flux_axis(obj, axis, center, range_unit)
+        heff = surface === :plane ? nothing : (height === nothing ? 2*(R+dr/2) : Float64(height))
+        mask, _ = _flux_tilted_geom(obj, surface, nhat, R, dr, heff, center, range_unit)
+        return _subhydro(obj, mask)
+    end
+    return _flux_shell(obj, surface, R, dr, center, range_unit)
+end
 
 # =====================================================================================
 #  fluxmap — the surface map: WHERE on the shell gas flows in vs out (no LOS superposition)
@@ -244,22 +254,37 @@ fm.xedges, fm.yedges
 """
 function fluxmap(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shell_width::Real,
                  quantity::Symbol=:vr, nbins=(72, 36), center=[:bc], range_unit::Symbol=:kpc,
-                 verbose::Bool=true)
+                 axis=nothing, height=nothing, verbose::Bool=true)
     quantity in (:vr, :mdot) || throw(ArgumentError("quantity must be :vr or :mdot (got :$quantity)"))
-    R = Float64(radius); dr = Float64(shell_width)
-    shell = _flux_shell(obj, surface, R, dr, center, range_unit); info = obj.info
-    nbx, nby = nbins[1], nbins[2]
-    xr = getvar(shell, :x, range_unit; center=center, center_unit=range_unit)
-    yr = getvar(shell, :y, range_unit; center=center, center_unit=range_unit)
-    zr = getvar(shell, :z, range_unit; center=center, center_unit=range_unit)
-    vn = getvar(shell, _FLUX_NORMAL[surface], :km_s; center=center, center_unit=range_unit)
-    m_g = getvar(shell, :mass, :g)
-    φ = atan.(yr, xr) .* (180/π)                                       # azimuth [-180,180] deg
-    if surface === :sphere
-        r = sqrt.(xr.^2 .+ yr.^2 .+ zr.^2)
-        ycoord = zr ./ max.(r, eps()); ylab = :cosθ; yrange = (-1.0, 1.0)
-    else
-        ycoord = zr; ylab = :z; yrange = (minimum(zr), maximum(zr))
+    surface in (:sphere, :cylinder) || throw(ArgumentError("fluxmap surface must be :sphere or :cylinder"))
+    R = Float64(radius); dr = Float64(shell_width); info = obj.info; nbx, nby = nbins[1], nbins[2]
+    tilted = surface === :cylinder && axis !== nothing && axis !== :z
+    if tilted                                                          # unrolled map about a tilted axis n̂
+        nhat = _flux_axis(obj, axis, center, range_unit)
+        e1, e2, _ = build_camera_basis(nhat)                          # orthonormal in-plane basis ⊥ n̂
+        heff = height === nothing ? 2*(R+dr/2) : Float64(height)
+        mask, vn_cms = _flux_tilted_geom(obj, surface, nhat, R, dr, heff, center, range_unit)
+        sel = findall(mask)
+        x = getvar(obj, :x, range_unit; center=center, center_unit=range_unit)[sel]
+        y = getvar(obj, :y, range_unit; center=center, center_unit=range_unit)[sel]
+        z = getvar(obj, :z, range_unit; center=center, center_unit=range_unit)[sel]
+        m_g = getvar(obj, :mass, :g)[sel]; vn = vn_cms[sel] ./ 1e5     # cm/s → km/s
+        zc = x .* nhat[1] .+ y .* nhat[2] .+ z .* nhat[3]
+        φ = atan.(x .* e2[1] .+ y .* e2[2] .+ z .* e2[3], x .* e1[1] .+ y .* e1[2] .+ z .* e1[3]) .* (180/π)
+        ycoord = zc; ylab = :z; yrange = (minimum(zc), maximum(zc))
+    else                                                              # axis-aligned shell
+        shell = _flux_shell(obj, surface, R, dr, center, range_unit)
+        xr = getvar(shell, :x, range_unit; center=center, center_unit=range_unit)
+        yr = getvar(shell, :y, range_unit; center=center, center_unit=range_unit)
+        zr = getvar(shell, :z, range_unit; center=center, center_unit=range_unit)
+        vn = getvar(shell, _FLUX_NORMAL[surface], :km_s; center=center, center_unit=range_unit)
+        m_g = getvar(shell, :mass, :g)
+        φ = atan.(yr, xr) .* (180/π)
+        if surface === :sphere
+            r = sqrt.(xr.^2 .+ yr.^2 .+ zr.^2); ycoord = zr ./ max.(r, eps()); ylab = :cosθ; yrange = (-1.0, 1.0)
+        else
+            ycoord = zr; ylab = :z; yrange = (minimum(zr), maximum(zr))
+        end
     end
     xrange = (-180.0, 180.0)
     if quantity === :vr                                                # mass-weighted mean v⊥
@@ -268,8 +293,7 @@ function fluxmap(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, shel
     else                                                               # per-bin Ṁ contribution
         g_per_Msol = getunit(info, :g)/getunit(info, :Msol); s_per_yr = getunit(info, :s)/getunit(info, :yr)
         dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)
-        vn_cms = getvar(shell, _FLUX_NORMAL[surface], :cm_s; center=center, center_unit=range_unit)
-        ph = _phase2d(φ, ycoord, m_g .* vn_cms, nothing, nbx, nby, xrange, yrange, :linear, :linear)
+        ph = _phase2d(φ, ycoord, m_g .* (vn .* 1e5), nothing, nbx, nby, xrange, yrange, :linear, :linear)  # vn km/s→cm/s
         mp = ph.H .* (s_per_yr/g_per_Msol) ./ dr_cm; total = sum(mp); unit = :Msol_yr
     end
     massmap = _phase2d(φ, ycoord, m_g ./ (getunit(info,:g)/getunit(info,:Msol)), nothing,
@@ -363,11 +387,8 @@ function _flux_axis(obj, axis, center, range_unit)
     end
 end
 
-# tilted cylinder wall (about n̂) or plane (normal n̂ at along-axis position R): returns the full
-# FluxBudgetType pieces (rates, comps, n_cells, shell_mass, cell_size).
-function _flux_tilted(obj, surface, nhat, R, dr, height, quantities, center, range_unit, phases;
-                      nboot=0, rng=nothing, ci_level=0.95)
-    info = obj.info
+# tilted geometry: returns (mask over the object's cells, surface-normal velocity in cm/s).
+function _flux_tilted_geom(obj, surface, nhat, R, dr, height, center, range_unit)
     x = getvar(obj, :x, range_unit; center=center, center_unit=range_unit)
     y = getvar(obj, :y, range_unit; center=center, center_unit=range_unit)
     z = getvar(obj, :z, range_unit; center=center, center_unit=range_unit)
@@ -377,13 +398,33 @@ function _flux_tilted(obj, surface, nhat, R, dr, height, quantities, center, ran
         mask = abs.(zc .- R) .<= dr/2
         vn = vx .* nhat[1] .+ vy .* nhat[2] .+ vz .* nhat[3]          # normal = axis (cm/s)
     else                                                              # tilted cylinder wall
-        px = x .- zc .* nhat[1]; py = y .- zc .* nhat[2]; pz = z .- zc .* nhat[3]   # perp vector
+        px = x .- zc .* nhat[1]; py = y .- zc .* nhat[2]; pz = z .- zc .* nhat[3]
         Rp = sqrt.(px.^2 .+ py.^2 .+ pz.^2)
         mask = (Rp .>= R - dr/2) .& (Rp .<= R + dr/2)
         height !== nothing && (mask = mask .& (abs.(zc) .<= height/2))
         Rsafe = max.(Rp, eps())
         vn = (vx .* px .+ vy .* py .+ vz .* pz) ./ Rsafe             # v · R̂_perp (cm/s)
     end
+    return mask, vn
+end
+
+# build a HydroDataType holding just the masked rows (for fluxshell on a tilted surface)
+function _subhydro(obj::HydroDataType, mask)
+    s = HydroDataType()
+    s.data = getfield(obj, :data)[mask]
+    s.info = obj.info; s.lmin = obj.lmin; s.lmax = obj.lmax; s.boxlen = obj.boxlen
+    s.ranges = obj.ranges; s.selected_hydrovars = obj.selected_hydrovars
+    s.used_descriptors = obj.used_descriptors; s.smallr = obj.smallr; s.smallc = obj.smallc
+    s.scale = obj.scale
+    return s
+end
+
+# tilted cylinder wall (about n̂) or plane (normal n̂ at along-axis position R): returns the full
+# FluxBudgetType pieces (rates, comps, n_cells, shell_mass, cell_size).
+function _flux_tilted(obj, surface, nhat, R, dr, height, quantities, center, range_unit, phases;
+                      nboot=0, rng=nothing, ci_level=0.95)
+    info = obj.info
+    mask, vn = _flux_tilted_geom(obj, surface, nhat, R, dr, height, center, range_unit)
     idx = findall(mask)
     dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)
     g_per_Msol = getunit(info, :g)/getunit(info, :Msol); s_per_yr = getunit(info, :s)/getunit(info, :yr)
