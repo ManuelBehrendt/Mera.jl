@@ -107,7 +107,10 @@ projection(sh, :vr_sphere, :km_s; center=[:bc])       # inflow (blue) / outflow 
 ```
 
 `fluxshell` and `fluxbudget` use the identical selection, so the visualization is guaranteed to show
-exactly the cells that entered the budget.
+exactly the cells that entered the budget. `fluxshell` and `fluxmap` accept the same `axis`/`:angmom`
+and `surface=:plane` options as `fluxbudget`, so off-axis surfaces can be visualized too (the tilted
+`fluxmap` unrolls the cylinder about `n̂` as a (φ′, z′) map, and its `:mdot` map still sums to the
+tilted budget).
 
 ### The surface map (`fluxmap`)
 
