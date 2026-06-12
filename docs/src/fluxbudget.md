@@ -131,6 +131,9 @@ sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes t
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
 arrays; it is *not* `projection` — different axes, no LOS superposition.
 
+![Inflow/outflow surface map of a spherical shell at R = 12 kpc (`fluxmap`, `quantity=:vr`): the
+mass-weighted mean radial velocity over the (φ, cos θ) sky — blue is inflow, red outflow.](assets/features/fluxmap_skymap.png)
+
 With a Makie backend loaded, [`fluxmapplot`](@ref) renders it directly (diverging blue-in/red-out
 colormap for `:vr`):
 
@@ -166,6 +169,10 @@ fp = fluxprofile(gas; surface=:sphere, radii=5:5:50, shell_width=2.0, range_unit
 fp.radius, fp.net, fp.err_net      # net Ṁ(R) ± sampling error [Msol/yr]
 # e.g. net < 0 in the disk (inflow) → net > 0 in the halo (outflow); a huge err flags a bad shell
 ```
+
+![Radial mass-flux profile (`fluxprofile`): inflow and outflow rates and the net (with its sampling
+error band) versus radius. Both are large in the churning inner galaxy and converge to a small net at
+large R; the wide band at small R flags the under-sampled inner shells.](assets/features/fluxprofile.png)
 
 For the dominant snapshot-to-snapshot noise, time-average instead (see below).
 

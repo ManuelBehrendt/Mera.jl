@@ -37,6 +37,9 @@ length(cat)        # number of clumps
 cat[1]             # most massive clump (a NamedTuple)
 ```
 
+![Clumps found by `clumpfind` (orange, marker size ∝ mass) overlaid on the gas surface density Σ — the
+detected clump centres-of-mass sit on the density peaks along the disk and arms.](assets/features/clump_catalog.png)
+
 The same call works on particles (e.g. cluster-finding on stars):
 
 ```julia
@@ -156,6 +159,9 @@ together while the `components` breakdown stays the per-species mass budget (`eg
 m, N   = clump_massfunction(cat; nbins=20, scale=:log)   # differential dN per mass bin
 m, Ngt = clump_massfunction(cat; cumulative=true)        # cumulative N(≥M)
 ```
+
+![Differential clump mass function (`clump_massfunction`): the number of clumps per logarithmic mass
+bin.](assets/features/clump_massfunction.png)
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):
