@@ -180,6 +180,23 @@
             @test_throws ArgumentError fluxbudget(gas; surface=:torus, radius=5.0, shell_width=2.0)
         end
 
+        @testset "off-axis fluxshell + fluxmap" begin
+            # fluxshell honours a tilted axis / plane and returns the measured cells
+            sh = fluxshell(gas; surface=:cylinder, radius=10.0, shell_width=2.0, range_unit=:kpc, axis=:angmom)
+            @test sh isa Mera.HydroDataType && length(sh.data) > 0
+            shp = fluxshell(gas; surface=:plane, radius=5.0, shell_width=2.0, range_unit=:kpc, axis=[0.,0.,1.])
+            fbp = fluxbudget(gas; surface=:plane, radius=5.0, shell_width=2.0, range_unit=:kpc,
+                             axis=[0.,0.,1.], verbose=false)
+            @test length(shp.data) == fbp.n_cells               # exactly the cells fluxbudget used
+            # tilted fluxmap (unrolled φ′–z′ about n̂); mdot map still closes to the tilted budget
+            fmd = fluxmap(gas; surface=:cylinder, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                          axis=:angmom, quantity=:mdot, verbose=false)
+            fbL = fluxbudget(gas; surface=:cylinder, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                             axis=:angmom, verbose=false)
+            @test fmd.ylabel === :z
+            @test fmd.total ≈ fbL.rates.mass.net rtol=1e-6
+        end
+
         @testset "bootstrap confidence intervals" begin
             fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
                             bootstrap=400, verbose=false)

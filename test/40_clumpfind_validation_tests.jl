@@ -284,7 +284,7 @@ end
         xs = vcat(hx, sx); ys = vcat(hy, sy); zs = vcat(hz, sz)
         mg = ones(length(xs))
         host = collect(1:nh); sub = collect(nh+1:nh+ncore+1); far = nh + ncore + 1
-        kept = Mera._tidal_truncate(sub, host, (mg=mg, poscm=1.0), xs, ys, zs)
+        kept = Mera._tidal_truncate(sub, host, (mg=mg, poscm=1.0, grav=nothing), xs, ys, zs, true, 3.0)
         # the far outlier (well beyond the Jacobi radius) is stripped; the core survives
         @test far ∉ kept
         @test length(kept) >= ncore - 3 && length(kept) < length(sub)
@@ -461,7 +461,7 @@ end
         N = 40*50; xs = rand(rng, N); ys = rand(rng, N); zs = rand(rng, N)
         ms = ones(N); fs = rand(rng, N)
         f = mem -> Mera._finalize_clump(mem, xs, ys, zs, ms, fs, nothing, false, false, false,
-                                        false, 1, false, 0.1, 1)
+                                        false, 1, false, 0.1, 1, 3.0)
         ser = Mera._finalize_all(members, 1, f)
         for nthr in (2, 4, 8)
             par = Mera._finalize_all(members, nthr, f)
@@ -525,4 +525,47 @@ end
         P10 = Mera.Points([0.0], [0.0], [0.0], [1.0], [1.0], [1], nothing, [9.0], [8.0], [7.0])
         @test P10.vx == [9.0]
     end
+end
+
+@testset verbose=true "clumpfind tidal-tensor radius (data-free)" begin
+    # point-mass host M: acceleration a_i = -G M x_i / r³ sampled around x0 = (R,0,0).
+    # The tidal-tensor radius must equal the analytic Hill radius r_t = R·(m_sub/2M)^{1/3}.
+    G = 6.674e-8; M = 1.989e43; m_sub = 1.989e40                  # 1e10 / 1e7 Msol (cgs)
+    rng = MersenneTwister(7)
+    function samples(R, n, h)
+        dx = Float64[]; dy = Float64[]; dz = Float64[]; ax = Float64[]; ay = Float64[]; az = Float64[]
+        for _ in 1:n
+            o = h .* randn(rng, 3); x = [R,0.0,0.0] .+ o; r = sqrt(sum(abs2, x)); a = -G*M .* x ./ r^3
+            push!(dx,o[1]); push!(dy,o[2]); push!(dz,o[3]); push!(ax,a[1]); push!(ay,a[2]); push!(az,a[3])
+        end
+        return dx, dy, dz, ax, ay, az
+    end
+    for R in (3.086e22, 6.0e22, 1.5e22)                          # ~10, 20, 5 kpc in cm
+        dx, dy, dz, ax, ay, az = samples(R, 60, R*0.01)
+        rt = Mera._tidal_tensor_radius(dx, dy, dz, ax, ay, az, m_sub, G)
+        hill = R * (m_sub/(2M))^(1/3)
+        @test isapprox(rt, hill; rtol=0.01)                      # matches analytic Hill radius
+    end
+    # fewer than 4 samples → NaN; a uniform (no-tide) field → Inf (no stretching)
+    @test isnan(Mera._tidal_tensor_radius([1.0,2,3], [0.0,0,0], [0.0,0,0], [0.0,0,0], [0.0,0,0], [0.0,0,0], 1.0, G))
+    n = 30; z = zeros(n); rr = randn(rng, n)
+    @test Mera._tidal_tensor_radius(rr, randn(rng,n), randn(rng,n), z, z, z, 1.0, G) == Inf  # ∇a = 0
+
+    # the _tidal_truncate :tensor branch strips members beyond the Hill radius (synthetic point-mass host)
+    R = 3.086e22; poscm = R/10.0                                  # 1 pos_unit = 1 kpc (cm/kpc)
+    # subclump: tight core at x0=10 (pos_unit) + a far member; gravity grid = analytic point-mass field
+    ng = 200; gx = Float64[]; gy = Float64[]; gz = Float64[]; gax = Float64[]; gay = Float64[]; gaz = Float64[]
+    for _ in 1:ng
+        o = 0.3 .* randn(rng, 3); xp = [10.0,0.0,0.0] .+ o       # pos_unit, around the subclump
+        xcm = xp .* poscm; r = sqrt(sum(abs2, xcm)); a = -G*M .* xcm ./ r^3
+        push!(gx,xp[1]); push!(gy,xp[2]); push!(gz,xp[3]); push!(gax,a[1]); push!(gay,a[2]); push!(gaz,a[3])
+    end
+    grav = (gx=gx, gy=gy, gz=gz, gax=gax, gay=gay, gaz=gaz)
+    hill_pu = (R*(m_sub/(2M))^(1/3)) / poscm                      # Hill radius in pos_unit
+    # member positions: core within hill, one member at 3× hill (should be stripped)
+    xs = [10.0, 10.0+0.2*hill_pu, 10.0-0.2*hill_pu, 10.0+3*hill_pu]
+    ys = zeros(4); zs = zeros(4); mg = [1e6*1.989e33, 1e6*1.989e33, 1e6*1.989e33, 1.0*1.989e33]  # core dominates
+    bargs = (mg=mg, poscm=poscm, Gc=G, grav=grav)
+    kept = Mera._tidal_truncate([1,2,3,4], [1,2,3,4], bargs, xs, ys, zs, :tensor, 5.0)
+    @test 4 ∉ kept && Set(kept) ⊇ Set([1,2,3])                   # far member stripped, core kept
 end
