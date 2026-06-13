@@ -69,6 +69,14 @@ add_field(:mach_custom, (o, d) -> sqrt.(d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2) ./ 
           depends_on = [:vx, :vy, :vz, :cs])
 ```
 
+A registered field is a first-class citizen: it flows through [`getvar`](@ref), [`projection`](@ref),
+[`profile`](@ref) and the rest, with its dependencies read and resolved automatically. For example,
+once `:mach_custom` is registered, `projection(gas, :mach_custom)` just works:
+
+![A user-defined field projected like any built-in. `add_field(:mach_custom, …)` registers the local
+Mach number ℳ = |v|/c_s on top of the built-in sound speed `:cs`; `projection(gas, :mach_custom)` then
+renders it — supersonic disk gas (red) over the subsonic halo (blue).](assets/features/derived_fields.png)
+
 ### Units
 
 Give a field a default `unit` (it must be a field of `info.scale`, or `:standard` for code
@@ -137,6 +145,14 @@ mach
    ├─ p  (raw)
    └─ rho  (raw)
 ```
+
+## See also
+
+Registered fields are used throughout Mera: [`getvar`](@ref) computes them, [`projection`](@ref) and
+[`profile`](@ref) read only the dependencies they need (via [`getvar_requirements`](@ref)), and the
+[Quick Look](quicklook.md) / [First-Look Reports](report.md) verbs benefit from the same needs-based
+reading. See also [Star-Formation Rate](sfr.md) and [Clump Finding](clumpfind.md) for fields used in
+analysis.
 
 ## API
 

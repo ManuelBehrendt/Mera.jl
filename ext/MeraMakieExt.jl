@@ -81,7 +81,7 @@ function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs..
 end
 
 # ---- quicklookplot: the three-panel first-look dashboard --------------------------------
-# Σ surface-density map · ρ–T phase diagram · spherical radial density profile, from a QuickLookResult.
+# Σ surface-density map · ρ–T phase diagram · global mass budget (+ current SFR), from a QuickLookResult.
 function Mera._plot_quicklook(q::Mera.QuickLookResult; size=(1500, 460), colormap=:turbo)
     fig = Makie.Figure(; size=size)
     tag = q.sampled ? "  [APPROXIMATE: levels ≤ $(q.lmax_used)]" : ""
@@ -105,12 +105,27 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=(1500, 460), colorma
     hm2 = Makie.heatmap!(ax2, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, ph.H); colormap)
     Makie.Colorbar(fig[1, 2][1, 2], hm2; label="log₁₀ mass")
 
-    # panel 3 — spherical radial density profile (the profile supplies ρ per shell directly)
-    pr = q.profile; ρ = pr.density
-    ax3 = Makie.Axis(fig[1, 3]; title="radial density", xlabel="r [kpc]", ylabel="ρ [M⊙/kpc³]",
-                     xscale=log10, yscale=log10)
-    keep = (pr.x .> 0) .& (ρ .> 0) .& isfinite.(ρ)
-    any(keep) && Makie.lines!(ax3, pr.x[keep], ρ[keep])
+    # panel 3 — global mass budget (gas / stars / DM), log bars, annotated with the current SFR
+    b = q.budget
+    comps = Tuple{String,Any}[("gas", b === nothing ? nothing : b.gas_mass_Msol)]
+    if b !== nothing && b.has_particles
+        push!(comps, ("stars", b.stellar_mass_Msol)); push!(comps, ("DM", b.dm_mass_Msol))
+    end
+    comps = [c for c in comps if c[2] !== nothing && c[2] > 0]
+    ax3 = Makie.Axis(fig[1, 3]; title="mass budget", ylabel="log₁₀ M [M⊙]",
+                     xticks=(1:length(comps), [c[1] for c in comps]))
+    vals = [Float64(c[2]) for c in comps]
+    Makie.barplot!(ax3, 1:length(comps), log10.(vals);
+                   color=[:steelblue, :orange, :gray][1:length(comps)])
+    for (i, v) in enumerate(vals)
+        Makie.text!(ax3, i, log10(v); text=string(round(v, sigdigits=3), " M⊙"),
+                    align=(:center, :bottom), fontsize=12)
+    end
+    if b !== nothing && b.has_particles && b.sfr100 !== nothing
+        Makie.text!(ax3, 0.5, 1.0;
+                    text="SFR: $(round(b.sfr10, sigdigits=3)) (10 Myr) · $(round(b.sfr100, sigdigits=3)) (100 Myr) M⊙/yr",
+                    space=:relative, align=(:left, :top), offset=(6, -6), fontsize=12)
+    end
     return fig
 end
 
