@@ -89,6 +89,21 @@
             @test 0.75 < qs.summary.npart / length(pf.data) < 1.25
         end
 
+        @testset "component & direction selection" begin
+            # one gas projection (compact) — only :z map, no :x/:y
+            q1 = quicklook(dc.output; path=dc.path, directions=[:z], verbose=false)
+            @test haskey(q1.maps, :z) && !haskey(q1.maps, :x) && !haskey(q1.maps, :y)
+            # only hydro: gas maps + phase, no particle maps
+            qh = quicklook(dc.output; path=dc.path, datatypes=[:hydro], verbose=false)
+            @test haskey(qh.maps, :z) && !haskey(qh.maps, :stars) && !haskey(qh.maps, :dm)
+            @test qh.phase !== nothing && qh.summary.gas_mass_Msol > 0
+            # only stars: skip the gas read entirely → stellar map only, no phase/gas
+            qs2 = quicklook(dc.output; path=dc.path, datatypes=[:stars], verbose=false)
+            @test haskey(qs2.maps, :stars) && !haskey(qs2.maps, :z)
+            @test qs2.phase === nothing && qs2.summary.gas_mass_Msol === nothing
+            @test qs2.budget.has_particles && qs2.summary.nstars > 0
+        end
+
         @testset "custom multi-datatype plan + minimal/needs-based read" begin
             plan = ReportPlan(dc.output; path=dc.path, cards=[
                 ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=64),
