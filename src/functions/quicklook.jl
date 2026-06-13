@@ -2,13 +2,14 @@
 #  quicklook — a first impression of a RAMSES output in seconds
 # -------------------------------------------------------------------------------------
 #  One call: header facts (zero read) → an optional budgeted/coarse partial read →
-#  a face-on surface-density map, a ρ–T phase diagram, a radial density profile and
+#  a face-on surface-density map, a ρ–T phase diagram, a global snapshot budget and
 #  summary numbers. For a fast first look you do NOT read all data: if the full output
 #  would exceed `budget` cells, only the coarse AMR levels are read (spatially complete,
-#  lower resolution) and everything is labelled APPROXIMATE.
+#  lower resolution) and everything is labelled APPROXIMATE. (For radial profiles and
+#  other composable cards use the report system — see `report`.)
 #
 #  Plotting lives outside Mera's core deps: `quicklook` returns the arrays (`.maps`,
-#  `.phase`, `.profile`) + a printed dashboard; render them with your plotting backend
+#  `.phase`, `.budget`) + a printed dashboard; render them with your plotting backend
 #  (a CairoMakie recipe ships separately).
 # =====================================================================================
 
@@ -19,8 +20,7 @@ Result of [`quicklook`](@ref). Fields: `info`, `levelmin`, `levelmax`, `lmax_use
 (level actually read, `nothing` for a header-only call), `ncells` (cells read),
 `sampled` (true ⇒ coarse/partial ⇒ estimates are approximate), `maps`/`phase`
 (the quick figures' data, or `nothing`), `budget` (a `NamedTuple` global snapshot
-budget — gas/stellar/DM mass and current SFR — or `nothing`), `profile` (the optional
-spherical radial density profile, `nothing` unless `profile=true`), and `summary`
+budget — gas/stellar/DM mass and current SFR — or `nothing`), and `summary`
 (a `NamedTuple` of facts + estimates).
 """
 struct QuickLookResult
@@ -33,7 +33,6 @@ struct QuickLookResult
     maps
     phase
     budget
-    profile
     summary::NamedTuple
 end
 
@@ -68,7 +67,7 @@ end
 
 """
     quicklook(output; path=".", budget=2_000_000, read=true, res=256, lmax=nothing,
-              profile=false, verbose=true) -> QuickLookResult
+              verbose=true) -> QuickLookResult
 
 **A first impression of a simulation output in seconds.** Reads the header for instant facts and —
 unless `read=false` — does a single **budgeted** hydro read (only the coarse AMR levels when the full
@@ -80,20 +79,19 @@ compact dashboard.
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
 * `read=false` — header-only (sub-second): box, levels, finest cell, ncpu, fields, time/redshift.
 * `res` — pixel size of the quick map.
-* `profile=true` — also compute the spherical radial density profile (`.profile`); off by default,
-  since the global budget is usually the more useful "what is this snapshot?" summary.
 
 When a particle file is present, the budget includes the stellar and dark-matter mass and the current
 star-formation rate (10/100 Myr windows + lifetime mean, see [`sfr_snapshot`](@ref)); these are exact
 even when the hydro read is coarse. Returns a [`QuickLookResult`](@ref); figure/summary data is in
-`.maps`, `.phase`, `.budget` (and `.profile` if requested).
+`.maps`, `.phase`, `.budget`.
 
-See also [`report`](@ref) — the composable form of this first look: `report(output)` runs a default
-card trio, and you can add/replace cards (projections, phases, profiles, SFR, scalars, …) and render
-to ascii / plot / JLD2 / file.
+For radial density profiles and any other composable cards, use [`report`](@ref) — the composable form
+of this first look: `report(output)` runs a default card trio (map, phase, **radial profile**), and you
+can add/replace cards (projections, phases, profiles, SFR, scalars, …) and render to ascii / plot /
+JLD2 / file.
 """
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
-                   read::Bool=true, res::Int=256, lmax=nothing, profile::Bool=false, verbose::Bool=true)
+                   read::Bool=true, res::Int=256, lmax=nothing, verbose::Bool=true)
     t0 = time()
     info = getinfo(output, path, verbose=false)
     sc = info.scale
@@ -108,7 +106,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     if !read
         verbose && _quicklook_print(facts, nothing, t0)
         return QuickLookResult(info, info.levelmin, info.levelmax, nothing, 0, false,
-                               nothing, nothing, nothing, nothing, facts)
+                               nothing, nothing, nothing, facts)
     end
 
     luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
@@ -126,8 +124,6 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                xunit=:nH, yunit=:K)
     gas_mass = sum(getvar(gas, :mass, :Msol))
     bud = _quicklook_budget(info, gas_mass; verbose=verbose)
-    pr = profile ? Mera.profile(gas, :r_sphere; weight=:mass, geometry=:spherical, nbins=40,
-                                center=[:bc], range_unit=:kpc, xunit=:kpc) : nothing
 
     nH = getvar(gas, :rho, :nH); T = getvar(gas, :T, :K)
     summary = merge(facts, (ncells=n, lmax_used=luse, sampled=sampled, gas_mass_Msol=gas_mass,
@@ -135,7 +131,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             sfr10=bud.sfr10, sfr100=bud.sfr100,
                             nH_range=extrema(nH), T_range_K=extrema(T), seconds=time()-t0))
     verbose && _quicklook_print(summary, n, t0)
-    return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, sd, ph, bud, pr, summary)
+    return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, sd, ph, bud, summary)
 end
 
 # pretty text dashboard

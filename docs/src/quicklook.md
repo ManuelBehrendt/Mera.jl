@@ -40,7 +40,10 @@ The call returns a [`QuickLookResult`](@ref):
   `stellar_mass_Msol`, `dm_mass_Msol`, `n_stars`, `n_dm`, and the current SFR (`sfr10`, `sfr100`,
   `sfr_mean`, see [`sfr_snapshot`](@ref)). Particle masses and SFR are **exact** even when the hydro
   read is coarse.
-* `q.profile` — the spherical radial density profile, `nothing` unless you pass `profile=true`.
+
+For a radial density profile (or any other composable card), use [`report`](@ref) instead — its
+default card trio includes the radial profile, and you can add/replace cards. `quicklook` deliberately
+stays a fixed, fast overview.
 
 ## Budgeted reading — fast on big outputs
 
@@ -55,7 +58,6 @@ The call returns a [`QuickLookResult`](@ref):
 ```julia
 quicklook(300; path="/sim/mw", read=false)        # instant header facts only
 quicklook(300; path="/sim/mw", budget=500_000)    # cap the read on a huge output
-quicklook(300; path="/sim/mw", profile=true)      # also compute the radial density profile
 ```
 
 ## Plotting
