@@ -33,10 +33,13 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(m.unit)]")
         return ax
     elseif c.kind === :phase
-        ax = Makie.Axis(pos; title=c.label, xlabel=string(m.xvar), ylabel=string(m.yvar))
-        H = c.data.H
-        hm = Makie.heatmap!(ax, c.data.xedges[1:end-1], c.data.yedges[1:end-1],
-                            map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H))
+        xe = c.data.xedges; ye = c.data.yedges; H = c.data.H
+        logx = all(>(0), xe); logy = all(>(0), ye)               # log axes for positive (log-spaced) bins
+        ax = Makie.Axis(pos; title=c.label, xlabel=string(m.xvar), ylabel=string(m.yvar),
+                        xscale = logx ? log10 : identity, yscale = logy ? log10 : identity)
+        xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
+        yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
+        hm = Makie.heatmap!(ax, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H))
         Makie.Colorbar(pos[1, 2], hm; label="log10 count")
         return ax
     elseif c.kind === :profile

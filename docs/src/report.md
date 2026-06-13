@@ -162,7 +162,19 @@ report(400; path="/sim", output=:ascii, cards=[
 
 `report` reads **each datatype once** (with only the variables the cards actually need, via
 [`getvar_requirements`](@ref)), computes every card, and returns a [`QuickReport`](@ref) — which you
-can re-render or analyse further.
+can re-render or analyse further. With a Makie backend loaded, `render(rep, :plot)` lays the cards out
+as a figure grid:
+
+```julia
+using CairoMakie
+rep = report(300; path="/sim", output=:none, cards=[ … ])
+fig = render(rep, :plot; ncols=2)
+CairoMakie.save("report.png", fig)
+```
+
+![A rendered composable report (isolated disk galaxy): the four cards above — a face-on gas
+surface-density map, the ρ–T phase diagram, a spherical radial density profile, and the
+star-formation history — laid out as a 2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.png)
 
 ### The cards
 
