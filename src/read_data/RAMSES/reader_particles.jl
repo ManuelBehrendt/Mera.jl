@@ -1,6 +1,19 @@
 # ===== SERIAL PARTICLE DATA READING FUNCTION =====
 # This function handles the core logic for reading particle data from RAMSES files
 # It performs domain decomposition to determine which CPU files need to be read
+# Read-time CPU-file subsample for very large particle runs. RAMSES load-balances its domain
+# decomposition to ~equal particles per CPU file, so keeping every `stride`-th CPU file reads
+# ~`frac` of the particles while skipping whole files (cutting both I/O and peak memory). Scale
+# extensive quantities (counts, mass, SFR) by 1/frac for an (approximate) total. `frac ≥ 1` ⇒ no-op.
+function _subsample_cpu_list(cpu_list::Array{Int32,1}, ncpu_read::Integer, frac::Real)
+    (frac >= 1.0 || ncpu_read <= 1) && return cpu_list, Int(ncpu_read)
+    stride = max(1, round(Int, 1.0 / clamp(float(frac), 1e-6, 1.0)))
+    keep = collect(1:stride:Int(ncpu_read))
+    new_list = zeros(Int32, length(cpu_list))
+    @inbounds for (i, k) in enumerate(keep); new_list[i] = cpu_list[k]; end
+    return new_list, length(keep)
+end
+
 function getparticledata( dataobject::InfoType,
                         Nvarp::Int,                    # Number of particle variables to read
                         nvarp_corr::Array{Int,1},      # Variable index correction array
@@ -10,7 +23,8 @@ function getparticledata( dataobject::InfoType,
                         print_filenames::Bool,         # Print each CPU file being processed
                         show_progress::Bool,           # Show progress bar
                         verbose::Bool,                 # Print detailed information
-                        read_cpu::Bool )               # Include CPU number in output
+                        read_cpu::Bool;                # Include CPU number in output
+                        cpu_subsample::Real=1.0 )      # Read only ~this fraction of CPU files (1.0 = all)
 
     # ===== EXTRACT SIMULATION PARAMETERS =====
     output = dataobject.output      # Simulation output number
@@ -133,6 +147,9 @@ function getparticledata( dataobject::InfoType,
         end
     end
 
+    # optional read-time subsample: keep only ~cpu_subsample of the CPU files (skips whole files)
+    cpu_list, ncpu_read = _subsample_cpu_list(cpu_list, ncpu_read, cpu_subsample)
+
     # ===== CALL ACTUAL PARTICLE READING FUNCTION =====
     # Delegate to readpart() function with appropriate return format
     # Return format depends on whether CPU info is needed and particle version
@@ -194,7 +211,8 @@ function getparticledata_parallel( dataobject::InfoType,
                         show_progress::Bool,           # Show progress bar
                         verbose::Bool,                 # Print detailed information
                         read_cpu::Bool,                # Include CPU number in output
-                        max_threads::Int )             # Maximum number of threads to use
+                        max_threads::Int;              # Maximum number of threads to use
+                        cpu_subsample::Real=1.0 )      # Read only ~this fraction of CPU files (1.0 = all)
 
     # ===== EXTRACT SIMULATION PARAMETERS =====
     # (Same parameter extraction as serial version)
@@ -301,6 +319,9 @@ function getparticledata_parallel( dataobject::InfoType,
         println("Processing $ncpu_read CPU files using $max_threads threads")
         println("Mode: Threaded processing")
     end
+
+    # optional read-time subsample: keep only ~cpu_subsample of the CPU files (skips whole files)
+    cpu_list, ncpu_read = _subsample_cpu_list(cpu_list, ncpu_read, cpu_subsample)
 
     # ===== DISTRIBUTE WORK AMONG THREADS =====
     # Split the list of CPU files into chunks for parallel processing

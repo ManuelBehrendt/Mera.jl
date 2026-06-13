@@ -49,15 +49,19 @@ end
 # global snapshot budget — gas mass (from hydro) plus, when a particle object `p` is given, the
 # stellar and dark-matter mass and the current star-formation rate (10/100 Myr windows + lifetime
 # mean). Particle masses/SFR are exact (all particles read); gas mass follows the hydro read.
-function _quicklook_budget(gas_mass_Msol, p)
+# `pscale` (= 1/subsample-fraction) scales the extensive particle quantities up to whole-snapshot
+# estimates when the particles were read as a subsample (pscale = 1 ⇒ exact, full read).
+function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0)
     base = (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=nothing, dm_mass_Msol=nothing,
             n_stars=0, n_dm=0, sfr10=nothing, sfr100=nothing, sfr_mean=nothing, has_particles=false)
     p === nothing && return base
     m = getvar(p, :mass, :Msol); star = getvar(p, :birth) .!= 0.0
     sm = sfr_snapshot(p; windows=[10.0, 100.0])
-    return (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=sum(m[star]),
-            dm_mass_Msol=sum(m[.!star]), n_stars=count(star), n_dm=count(.!star),
-            sfr10=sm.sfr[1], sfr100=sm.sfr[2], sfr_mean=sm.sfr_mean, has_particles=true)
+    return (gas_mass_Msol=gas_mass_Msol,
+            stellar_mass_Msol=sum(m[star])*pscale, dm_mass_Msol=sum(m[.!star])*pscale,
+            n_stars=round(Int, count(star)*pscale), n_dm=round(Int, count(.!star)*pscale),
+            sfr10=sm.sfr[1]*pscale, sfr100=sm.sfr[2]*pscale, sfr_mean=sm.sfr_mean*pscale,
+            has_particles=true)
 end
 
 """
@@ -75,6 +79,10 @@ and the current SFR), and prints a compact dashboard.
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
 * `read=false` — header-only (sub-second): box, levels, finest cell, ncpu, fields, time/redshift.
 * `res` — pixel size of the quick map.
+* `particle_subsample` — for **very large particle runs**, read only ~this fraction of the particle
+  CPU files (e.g. `0.1`); RAMSES balances ~equal particles per CPU, so this reads ~that fraction of
+  particles (skipping whole files → cuts I/O & memory). The particle census, masses and SFR are then
+  scaled up by 1/fraction and flagged approximate. (Gas is bounded separately by `budget`/`lmax`.)
 
 When a particle file is present, the budget includes the stellar and dark-matter mass and the current
 star-formation rate (10/100 Myr windows + lifetime mean, see [`sfr_snapshot`](@ref)); these are exact
@@ -87,7 +95,8 @@ can add/replace cards (projections, phases, profiles, SFR, scalars, …) and ren
 JLD2 / file.
 """
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
-                   read::Bool=true, res::Int=256, lmax=nothing, verbose::Bool=true)
+                   read::Bool=true, res::Int=256, lmax=nothing, particle_subsample::Real=1.0,
+                   verbose::Bool=true)
     t0 = time()
     info = getinfo(output, path, verbose=false)
     sc = info.scale
@@ -131,20 +140,28 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                xunit=:nH, yunit=:K)
     gas_mass = sum(getvar(gas, :mass, :Msol))
 
-    # particles (read once, when present): drives the budget AND face-on stellar / dark-matter Σ maps
+    # particles (read once, when present): drives the budget AND face-on stellar / dark-matter Σ maps.
+    # For very large particle runs, `particle_subsample < 1` reads only ~that fraction of CPU files
+    # (skipping whole files → cuts I/O & memory); extensive quantities are then scaled up by 1/fraction
+    # and flagged approximate (RAMSES balances ~equal particles per CPU, so the estimate is unbiased).
+    psub = clamp(float(particle_subsample), 1e-6, 1.0); pscale = 1.0 / psub
     parts = nothing
     if info.particles
         try
-            parts = getparticles(info, verbose=false, show_progress=false)
+            parts = getparticles(info; subsample=psub, verbose=false, show_progress=false)
         catch e
             verbose && @warn "quicklook: particle read failed; skipping particle maps & budget" exception=e
         end
     end
-    bud = _quicklook_budget(gas_mass, parts)
+    bud = _quicklook_budget(gas_mass, parts; pscale=pscale)
     if parts !== nothing
         bsel = getvar(parts, :birth) .!= 0.0                       # stars: birth ≠ 0 ; DM: birth == 0
-        ppj(mask) = projection(parts, :sd, :Msol_pc2; direction=:z, center=[:bc], res=res,
-                               mask=mask, verbose=false, show_progress=false)
+        function ppj(mask)                                          # face-on Σ; scale up if subsampled
+            pm = projection(parts, :sd, :Msol_pc2; direction=:z, center=[:bc], res=res,
+                            mask=mask, verbose=false, show_progress=false)
+            psub < 1.0 && (pm.maps[:sd] .*= pscale)
+            pm
+        end
         any(bsel)    && (maps = merge(maps, (stars = ppj(bsel),)))   # face-on stellar surface density
         any(.!bsel)  && (maps = merge(maps, (dm    = ppj(.!bsel),))) # face-on dark-matter surface density
     end
@@ -155,7 +172,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     ns = bud.has_particles ? bud.n_stars : facts.nstars
     nd = bud.has_particles ? bud.n_dm    : facts.ndm
     summary = merge(facts, (ncells=n, lmax_used=luse, sampled=sampled, gas_mass_Msol=gas_mass,
-                            npart=ns+nd+facts.nsinks, nstars=ns, ndm=nd,
+                            npart=ns+nd+facts.nsinks, nstars=ns, ndm=nd, particle_subsample=psub,
                             stellar_mass_Msol=bud.stellar_mass_Msol, dm_mass_Msol=bud.dm_mass_Msol,
                             sfr10=bud.sfr10, sfr100=bud.sfr100,
                             nH_range=extrema(nH), T_range_K=extrema(T), seconds=time()-t0))
@@ -173,7 +190,8 @@ function _quicklook_print(s, n, t0)
     # particle census (header facts — shown even in header-only mode)
     if get(s, :npart, 0) > 0
         extra = (s.nsinks > 0 ? " · sinks $(s.nsinks)" : "")
-        println("│ particles  : $(s.npart) total  —  stars $(s.nstars) · DM $(s.ndm)$(extra)")
+        sub = get(s, :particle_subsample, 1.0) < 1.0 ? "  ⚠ ×$(round(1/s.particle_subsample,digits=1)) subsample est." : ""
+        println("│ particles  : $(s.npart) total  —  stars $(s.nstars) · DM $(s.ndm)$(extra)$(sub)")
     end
     if n !== nothing
         tag = s.sampled ? "  ⚠ APPROXIMATE (coarse levels ≤ $(s.lmax_used) of $(s.levelmax))" : "  (full resolution)"
