@@ -45,19 +45,16 @@
             q = quicklook(dc.output; path=dc.path, verbose=false)
             @test q isa QuickLookResult
             @test q.maps !== nothing && q.phase !== nothing && q.budget !== nothing
-            @test q.profile === nothing                              # radial profile is opt-in now
             @test haskey(q.maps.maps, :sd) && haskey(q.phase, :H)
             # the global budget carries the gas mass and (spiral_ugrid has particles) stellar/DM mass + SFR
+            # (radial profiles live in the report system — see SFRCard / ProfileCard, not quicklook)
             @test q.budget.gas_mass_Msol > 0
             @test q.budget.has_particles && q.budget.stellar_mass_Msol > 0 && q.budget.n_stars > 0
             @test q.budget.sfr10 >= 0.0 && q.budget.sfr_mean >= 0.0
-            # opt-in radial profile still available
-            qp = quicklook(dc.output; path=dc.path, profile=true, verbose=false)
-            @test qp.profile !== nothing && haskey(qp.profile, :density)
 
             # a header-only result (no figure data) refuses to plot with a clear message
             qhdr = Mera.QuickLookResult(q.info, q.levelmin, q.levelmax, nothing, 0, false,
-                                        nothing, nothing, nothing, nothing, q.summary)
+                                        nothing, nothing, nothing, q.summary)
             @test_throws Exception quicklookplot(qhdr)
 
             if Base.find_package("CairoMakie") === nothing
