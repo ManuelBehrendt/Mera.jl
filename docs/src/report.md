@@ -183,7 +183,8 @@ clump_mass_fraction
 * [Profiles & Phase Diagrams](15_multi_Profiles_Phase.md) — the profile/phase tools behind the cards.
 * [`quicklook`](@ref) — the fast header-and-sample first look; `report(output)` is its composable form.
   With a Makie backend loaded (`using CairoMakie`), [`quicklookplot`](@ref) renders its result as a
-  three-panel figure (Σ map · ρ–T phase · radial density):
+  multi-panel dashboard (gas Σ along x/y/z · face-on stellar & dark-matter Σ when present · ρ–T phase ·
+  a text census):
 
   ```julia
   using CairoMakie
@@ -191,6 +192,7 @@ clump_mass_fraction
   Makie.save("quicklook.png", fig)
   ```
 
-  ![The `quicklookplot` first-look dashboard: face-on surface density, the ρ–T phase diagram, and the
-  global mass budget (gas / stars / dark matter) annotated with the current SFR. See
+  ![The `quicklookplot` first-look dashboard (a cosmological zoom): gas surface density along each axis,
+  face-on stellar and dark-matter surface density, the ρ–T phase diagram, and a text census of
+  cell/particle counts, masses and SFR (colorblind-safe colormaps). See
   [Quick Look](quicklook.md).](assets/features/quicklook_dashboard.png)

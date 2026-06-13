@@ -18,8 +18,9 @@
 
 Result of [`quicklook`](@ref). Fields: `info`, `levelmin`, `levelmax`, `lmax_used`
 (level actually read, `nothing` for a header-only call), `ncells` (cells read),
-`sampled` (true ⇒ coarse/partial ⇒ estimates are approximate), `maps`/`phase`
-(the quick figures' data, or `nothing`), `budget` (a `NamedTuple` global snapshot
+`sampled` (true ⇒ coarse/partial ⇒ estimates are approximate), `maps` (a `NamedTuple`
+of surface-density projections: gas `x, y, z` plus face-on `stars`/`dm` when particles are
+present, or `nothing`), `phase` (the ρ–T histogram, or `nothing`), `budget` (a `NamedTuple` global snapshot
 budget — gas/stellar/DM mass and current SFR — or `nothing`), and `summary`
 (a `NamedTuple` of facts + estimates).
 """
@@ -45,35 +46,30 @@ function _quicklook_level(info, budget::Int)
     return clamp(info.levelmin + 2, info.levelmin, info.levelmax), true   # coarse, complete, fast
 end
 
-# global snapshot budget — gas mass (from hydro) plus, when a particle file is present, the
+# global snapshot budget — gas mass (from hydro) plus, when a particle object `p` is given, the
 # stellar and dark-matter mass and the current star-formation rate (10/100 Myr windows + lifetime
 # mean). Particle masses/SFR are exact (all particles read); gas mass follows the hydro read.
-function _quicklook_budget(info, gas_mass_Msol; verbose::Bool=false)
+function _quicklook_budget(gas_mass_Msol, p)
     base = (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=nothing, dm_mass_Msol=nothing,
             n_stars=0, n_dm=0, sfr10=nothing, sfr100=nothing, sfr_mean=nothing, has_particles=false)
-    info.particles || return base
-    try
-        p = getparticles(info, verbose=false, show_progress=false)
-        m = getvar(p, :mass, :Msol); star = getvar(p, :birth) .!= 0.0
-        sm = sfr_snapshot(p; windows=[10.0, 100.0])
-        return (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=sum(m[star]),
-                dm_mass_Msol=sum(m[.!star]), n_stars=count(star), n_dm=count(.!star),
-                sfr10=sm.sfr[1], sfr100=sm.sfr[2], sfr_mean=sm.sfr_mean, has_particles=true)
-    catch e
-        verbose && @warn "quicklook: particle read failed; budget limited to gas mass" exception=e
-        return base
-    end
+    p === nothing && return base
+    m = getvar(p, :mass, :Msol); star = getvar(p, :birth) .!= 0.0
+    sm = sfr_snapshot(p; windows=[10.0, 100.0])
+    return (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=sum(m[star]),
+            dm_mass_Msol=sum(m[.!star]), n_stars=count(star), n_dm=count(.!star),
+            sfr10=sm.sfr[1], sfr100=sm.sfr[2], sfr_mean=sm.sfr_mean, has_particles=true)
 end
 
 """
     quicklook(output; path=".", budget=2_000_000, read=true, res=256, lmax=nothing,
               verbose=true) -> QuickLookResult
 
-**A first impression of a simulation output in seconds.** Reads the header for instant facts and —
-unless `read=false` — does a single **budgeted** hydro read (only the coarse AMR levels when the full
-output would exceed `budget` cells), then builds a face-on surface-density map, a ρ–T phase diagram, a
-**global snapshot budget** (gas / stellar / dark-matter mass and the current SFR), and prints a
-compact dashboard.
+**A first impression of a simulation output in seconds.** Reads the header for instant facts (box,
+levels, finest cell, time/redshift, and the cell & particle census) and — unless `read=false` — does a
+single **budgeted** hydro read (only the coarse AMR levels when the full output would exceed `budget`
+cells), then builds surface-density projections along **each axis** (`.maps.x/.y/.z` — face-on plus the
+two edge-on views), a ρ–T phase diagram, a **global snapshot budget** (gas / stellar / dark-matter mass
+and the current SFR), and prints a compact dashboard.
 
 * `budget` — cell-count cap; if the full output is predicted larger, only coarse levels are read and
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
@@ -98,10 +94,17 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     cosmo = iscosmological(info)
     z = cosmo ? (1.0/info.aexp - 1.0) : nothing
     finest_pc = info.boxlen / 2.0^info.levelmax * sc.pc
+    # particle census — header-only (no data read), available even when read=false. The total is the
+    # sum of the per-family counts (Nstars/Ndm/Nsinks): `part_info.Npart` is not reliably populated
+    # in all formats, but the family counts are. (There is no reliable header-only TOTAL cell count —
+    # `grid_info.ngrid_current` is not the leaf-cell total — so cells are reported from the read.)
+    pf = info.part_info; hp = info.particles
+    nstars = hp ? pf.Nstars : 0; ndm = hp ? pf.Ndm : 0; nsinks = hp ? pf.Nsinks : 0
     facts = (output=output, simcode=info.simcode, box_kpc=info.boxlen*sc.kpc,
              levelmin=info.levelmin, levelmax=info.levelmax, finest_cell_pc=finest_pc,
              ncpu=info.ncpu, ndim=info.ndim, nvarh=info.nvarh,
-             time_Myr=info.time*sc.Myr, redshift=z)
+             time_Myr=info.time*sc.Myr, redshift=z,
+             npart = nstars + ndm + nsinks, nstars = nstars, ndm = ndm, nsinks = nsinks)
 
     if !read
         verbose && _quicklook_print(facts, nothing, t0)
@@ -119,19 +122,45 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
           gethydro(info, lmax=luse, verbose=false, show_progress=false)
     n = length(gas.data)
 
-    sd = projection(gas, :sd, :Msol_pc2; center=[:bc], res=res, verbose=false, show_progress=false)
+    # gas surface density projected along each axis — z (face-on for a disk in the xy-plane) plus
+    # x and y (the two edge-on views), so a first look shows the vertical structure too.
+    pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
+                         verbose=false, show_progress=false)
+    maps = (x=pj(:x), y=pj(:y), z=pj(:z))
     ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
                xunit=:nH, yunit=:K)
     gas_mass = sum(getvar(gas, :mass, :Msol))
-    bud = _quicklook_budget(info, gas_mass; verbose=verbose)
+
+    # particles (read once, when present): drives the budget AND face-on stellar / dark-matter Σ maps
+    parts = nothing
+    if info.particles
+        try
+            parts = getparticles(info, verbose=false, show_progress=false)
+        catch e
+            verbose && @warn "quicklook: particle read failed; skipping particle maps & budget" exception=e
+        end
+    end
+    bud = _quicklook_budget(gas_mass, parts)
+    if parts !== nothing
+        bsel = getvar(parts, :birth) .!= 0.0                       # stars: birth ≠ 0 ; DM: birth == 0
+        ppj(mask) = projection(parts, :sd, :Msol_pc2; direction=:z, center=[:bc], res=res,
+                               mask=mask, verbose=false, show_progress=false)
+        any(bsel)    && (maps = merge(maps, (stars = ppj(bsel),)))   # face-on stellar surface density
+        any(.!bsel)  && (maps = merge(maps, (dm    = ppj(.!bsel),))) # face-on dark-matter surface density
+    end
 
     nH = getvar(gas, :rho, :nH); T = getvar(gas, :T, :K)
+    # particle counts: prefer the budget's exact read counts (the header part_info is not always
+    # populated); fall back to the header census (facts) when no particles were read.
+    ns = bud.has_particles ? bud.n_stars : facts.nstars
+    nd = bud.has_particles ? bud.n_dm    : facts.ndm
     summary = merge(facts, (ncells=n, lmax_used=luse, sampled=sampled, gas_mass_Msol=gas_mass,
+                            npart=ns+nd+facts.nsinks, nstars=ns, ndm=nd,
                             stellar_mass_Msol=bud.stellar_mass_Msol, dm_mass_Msol=bud.dm_mass_Msol,
                             sfr10=bud.sfr10, sfr100=bud.sfr100,
                             nH_range=extrema(nH), T_range_K=extrema(T), seconds=time()-t0))
     verbose && _quicklook_print(summary, n, t0)
-    return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, sd, ph, bud, summary)
+    return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, maps, ph, bud, summary)
 end
 
 # pretty text dashboard
@@ -141,6 +170,11 @@ function _quicklook_print(s, n, t0)
     println("│ box        : $(nf(s.box_kpc)) kpc      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_pc)) pc)")
     println("│ grid       : ndim $(s.ndim) · ncpu $(s.ncpu) · nvarh $(s.nvarh)")
     println("│ time       : $(nf(s.time_Myr)) Myr" * (s.redshift === nothing ? "  (non-cosmological)" : "   z = $(nf(s.redshift))"))
+    # particle census (header facts — shown even in header-only mode)
+    if get(s, :npart, 0) > 0
+        extra = (s.nsinks > 0 ? " · sinks $(s.nsinks)" : "")
+        println("│ particles  : $(s.npart) total  —  stars $(s.nstars) · DM $(s.ndm)$(extra)")
+    end
     if n !== nothing
         tag = s.sampled ? "  ⚠ APPROXIMATE (coarse levels ≤ $(s.lmax_used) of $(s.levelmax))" : "  (full resolution)"
         println("│ read       : $(n) cells$(tag)")
@@ -151,7 +185,7 @@ function _quicklook_print(s, n, t0)
         end
         println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³")
         println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K")
-        println("│ figures    : .maps[:sd]  ·  .phase (ρ–T)  ·  .budget (mass + SFR)")
+        println("│ figures    : .maps (Σ along x,y,z)  ·  .phase (ρ–T)  ·  .budget (mass + SFR)")
     else
         println("│ (header only — call quicklook(output) to read a sample)")
     end

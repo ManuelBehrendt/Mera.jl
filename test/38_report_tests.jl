@@ -45,7 +45,12 @@
             q = quicklook(dc.output; path=dc.path, verbose=false)
             @test q isa QuickLookResult
             @test q.maps !== nothing && q.phase !== nothing && q.budget !== nothing
-            @test haskey(q.maps.maps, :sd) && haskey(q.phase, :H)
+            # maps holds Σ projected along each axis (z face-on + x,y edge-on)
+            @test haskey(q.maps.z.maps, :sd) && haskey(q.maps.x.maps, :sd) && haskey(q.maps.y.maps, :sd)
+            @test haskey(q.phase, :H)
+            # header particle census (summed from per-family counts; available header-only too)
+            @test q.summary.npart > 0 && q.summary.nstars > 0 && q.summary.ndm >= 0
+            @test q.summary.npart == q.summary.nstars + q.summary.ndm + q.summary.nsinks
             # the global budget carries the gas mass and (spiral_ugrid has particles) stellar/DM mass + SFR
             # (radial profiles live in the report system — see SFRCard / ProfileCard, not quicklook)
             @test q.budget.gas_mass_Msol > 0

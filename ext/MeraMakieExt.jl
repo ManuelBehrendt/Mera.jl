@@ -80,52 +80,69 @@ function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs..
     return files
 end
 
-# ---- quicklookplot: the three-panel first-look dashboard --------------------------------
-# Σ surface-density map · ρ–T phase diagram · global mass budget (+ current SFR), from a QuickLookResult.
-function Mera._plot_quicklook(q::Mera.QuickLookResult; size=(1500, 460), colormap=:turbo)
+# ---- quicklookplot: the first-look dashboard --------------------------------------------
+# Gas Σ along z, x, y (face-on + two edge-on) + face-on stellar / dark-matter Σ when particles are
+# present · ρ–T phase diagram · a text census (cells, particles, masses, SFR, ranges). Panels fill a
+# 3-column grid in order, so the dashboard grows with the components actually in the output.
+# Colormap default is the colorblind-safe, perceptually-uniform :viridis.
+function Mera._plot_quicklook(q::Mera.QuickLookResult; size=(1500, 900), colormap=:viridis)
     fig = Makie.Figure(; size=size)
+    s = q.summary; b = q.budget
+    nf(x) = x === nothing ? "—" : string(round(x, sigdigits=4))
     tag = q.sampled ? "  [APPROXIMATE: levels ≤ $(q.lmax_used)]" : ""
-    Makie.Label(fig[0, 1:3], "Mera quicklook — output $(q.summary.output)$(tag)";
-                fontsize=16, font=:bold)
+    Makie.Label(fig[0, 1:3], "Mera quicklook — output $(s.output)$(tag)"; fontsize=17, font=:bold)
 
-    # panel 1 — face-on surface density (log10)
-    sd = q.maps.maps[:sd]; ex = q.maps.extent
-    ax1 = Makie.Axis(fig[1, 1]; title="Σ (face-on)", xlabel="x [kpc]", ylabel="y [kpc]",
-                     aspect=Makie.DataAspect())
-    xs = range(ex[1], ex[2], length=Base.size(sd, 1)); ys = range(ex[3], ex[4], length=Base.size(sd, 2))
-    hm1 = Makie.heatmap!(ax1, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, sd); colormap)
-    Makie.Colorbar(fig[1, 1][1, 2], hm1; label="log₁₀ Σ [M⊙/pc²]")
+    # Σ panels: gas (z=face-on, x & y=edge-on) then stellar & dark-matter face-on (when present)
+    specs = Any[(q.maps.z, "Gas Σ (face-on)",     "x [kpc]", "y [kpc]"),
+                (q.maps.x, "Gas Σ (edge-on, x)",  "y [kpc]", "z [kpc]"),
+                (q.maps.y, "Gas Σ (edge-on, y)",  "x [kpc]", "z [kpc]")]
+    haskey(q.maps, :stars) && push!(specs, (q.maps.stars, "Stars Σ (face-on)",       "x [kpc]", "y [kpc]"))
+    haskey(q.maps, :dm)    && push!(specs, (q.maps.dm,    "Dark matter Σ (face-on)", "x [kpc]", "y [kpc]"))
+    gpos(i) = (fld(i - 1, 3) + 1, mod(i - 1, 3) + 1)            # fill a 3-column grid in order
+    for (i, (proj, title, xl, yl)) in enumerate(specs)
+        r, c = gpos(i)
+        m = proj.maps[:sd]; ex = proj.extent
+        ax = Makie.Axis(fig[r, c]; title=title, xlabel=xl, ylabel=yl, aspect=Makie.DataAspect())
+        xs = range(ex[1], ex[2], length=Base.size(m, 1)); ys = range(ex[3], ex[4], length=Base.size(m, 2))
+        hm = Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, m); colormap)
+        Makie.Colorbar(fig[r, c][1, 2], hm; label="log₁₀ Σ [M⊙/pc²]")
+    end
 
-    # panel 2 — ρ–T phase (log10 mass-weighted count)
+    # ρ–T phase (log10 mass-weighted count) — next grid slot
+    rp, cp = gpos(length(specs) + 1)
     ph = q.phase
-    ax2 = Makie.Axis(fig[1, 2]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
+    ax2 = Makie.Axis(fig[rp, cp]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
                      xscale=log10, yscale=log10)
     xc = sqrt.(ph.xedges[1:end-1] .* ph.xedges[2:end])     # geometric bin centres (log-spaced)
     yc = sqrt.(ph.yedges[1:end-1] .* ph.yedges[2:end])
     hm2 = Makie.heatmap!(ax2, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, ph.H); colormap)
-    Makie.Colorbar(fig[1, 2][1, 2], hm2; label="log₁₀ mass")
+    Makie.Colorbar(fig[rp, cp][1, 2], hm2; label="log₁₀ mass")
 
-    # panel 3 — global mass budget (gas / stars / DM), log bars, annotated with the current SFR
-    b = q.budget
-    comps = Tuple{String,Any}[("gas", b === nothing ? nothing : b.gas_mass_Msol)]
+    # the numbers as a text census (not a bar plot) — next grid slot
+    rt, ct = gpos(length(specs) + 2)
+    L = String[]
+    push!(L, "CELLS")
+    push!(L, "  $(s.ncells) read" * (q.sampled ? "  (coarse ≤ lvl $(q.lmax_used))" : "  (full res)"))
+    if get(s, :npart, 0) > 0
+        push!(L, ""); push!(L, "PARTICLES")
+        push!(L, "  total  $(s.npart)")
+        push!(L, "  stars  $(s.nstars)    DM $(s.ndm)" * (s.nsinks > 0 ? "    sinks $(s.nsinks)" : ""))
+    end
+    push!(L, ""); push!(L, "MASS [M⊙]")
+    push!(L, "  gas    $(nf(s.gas_mass_Msol))" * (q.sampled ? "  (approx.)" : ""))
     if b !== nothing && b.has_particles
-        push!(comps, ("stars", b.stellar_mass_Msol)); push!(comps, ("DM", b.dm_mass_Msol))
+        push!(L, "  stars  $(nf(s.stellar_mass_Msol))    DM $(nf(s.dm_mass_Msol))")
+        push!(L, ""); push!(L, "SFR [M⊙/yr]")
+        push!(L, "  $(nf(s.sfr10)) (10 Myr) · $(nf(s.sfr100)) (100 Myr)")
     end
-    comps = [c for c in comps if c[2] !== nothing && c[2] > 0]
-    ax3 = Makie.Axis(fig[1, 3]; title="mass budget", ylabel="log₁₀ M [M⊙]",
-                     xticks=(1:length(comps), [c[1] for c in comps]))
-    vals = [Float64(c[2]) for c in comps]
-    Makie.barplot!(ax3, 1:length(comps), log10.(vals);
-                   color=[:steelblue, :orange, :gray][1:length(comps)])
-    for (i, v) in enumerate(vals)
-        Makie.text!(ax3, i, log10(v); text=string(round(v, sigdigits=3), " M⊙"),
-                    align=(:center, :bottom), fontsize=12)
-    end
-    if b !== nothing && b.has_particles && b.sfr100 !== nothing
-        Makie.text!(ax3, 0.5, 1.0;
-                    text="SFR: $(round(b.sfr10, sigdigits=3)) (10 Myr) · $(round(b.sfr100, sigdigits=3)) (100 Myr) M⊙/yr",
-                    space=:relative, align=(:left, :top), offset=(6, -6), fontsize=12)
-    end
+    push!(L, ""); push!(L, "RANGES")
+    push!(L, "  nH  $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³")
+    push!(L, "  T   $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K")
+    axt = Makie.Axis(fig[rt, ct]; title="census")
+    Makie.hidedecorations!(axt); Makie.hidespines!(axt)
+    Makie.text!(axt, 0.02, 0.98; text=join(L, "\n"), align=(:left, :top), space=:relative,
+                font="DejaVu Sans Mono", fontsize=15)
+    Makie.xlims!(axt, 0, 1); Makie.ylims!(axt, 0, 1)
     return fig
 end
 
