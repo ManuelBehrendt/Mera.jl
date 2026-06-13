@@ -140,13 +140,13 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:v
         get(s, :particle_subsample, 1.0) < 1.0 && push!(L, "  ⚠ ×$(round(1/s.particle_subsample, digits=1)) subsample")
     end
     push!(L, ""); push!(L, "MASS [M⊙]")
-    get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas   $(nf(s.gas_mass_Msol))" * (q.sampled ? " (approx)" : ""))
+    get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas   $(nf(s.gas_mass_Msol))")   # exact (mass-conserving)
     if get(s, :stellar_mass_Msol, nothing) !== nothing
         push!(L, "  stars $(nf(s.stellar_mass_Msol))"); push!(L, "  DM    $(nf(s.dm_mass_Msol))")
         push!(L, ""); push!(L, "SFR [M⊙/yr]"); push!(L, "  $(nf(s.sfr10)) (10Myr) · $(nf(s.sfr100)) (100Myr)")
     end
     if get(s, :nH_range, nothing) !== nothing
-        push!(L, ""); push!(L, "RANGES")
+        push!(L, ""); push!(L, "RANGES" * (q.sampled ? " (peaks smoothed)" : ""))
         push!(L, "  nH $(nf(s.nH_range[1]))…$(nf(s.nH_range[2]))"); push!(L, "  T  $(nf(s.T_range_K[1]))…$(nf(s.T_range_K[2])) K")
     end
     axt = Makie.Axis(fig[rt, ct]; title="census", titlesize=12)

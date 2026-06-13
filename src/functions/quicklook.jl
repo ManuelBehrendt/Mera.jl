@@ -209,11 +209,14 @@ function _quicklook_print(s, t0)
         println("│ particles  : $(s.npart) total  —  stars $(s.nstars) · DM $(s.ndm)$(extra)$(sub)")
     end
     if g(:gas_mass_Msol) !== nothing               # gas (read)
-        tag = s.sampled ? "  ⚠ APPROXIMATE (coarse levels ≤ $(s.lmax_used) of $(s.levelmax))" : "  (full resolution)"
+        tag = s.sampled ? "  ⚠ coarse levels ≤ $(s.lmax_used) of $(s.levelmax)" : "  (full resolution)"
         println("│ read       : $(s.ncells) cells$(tag)")
-        println("│ gas mass   : $(nf(s.gas_mass_Msol)) M⊙" * (s.sampled ? "  (approx.)" : ""))
-        g(:nH_range) !== nothing && println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³")
-        g(:T_range_K) !== nothing && println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K")
+        # gas mass is an EXTENSIVE total → exact even on a coarse read (de-refinement conserves mass);
+        # the nH/T extrema, by contrast, are peak quantities that a coarse read smooths → lower bounds.
+        println("│ gas mass   : $(nf(s.gas_mass_Msol)) M⊙" * (s.sampled ? "  (mass-conserving)" : ""))
+        rnote = s.sampled ? "  ⚠ peaks smoothed (lower bound)" : ""
+        g(:nH_range) !== nothing && println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³$(rnote)")
+        g(:T_range_K) !== nothing && println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K$(rnote)")
     end
     if g(:stellar_mass_Msol) !== nothing           # particle masses + SFR
         println("│ star mass  : $(nf(s.stellar_mass_Msol)) M⊙        DM mass : $(nf(s.dm_mass_Msol)) M⊙")
