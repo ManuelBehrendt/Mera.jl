@@ -11,30 +11,34 @@ q = quicklook(300; path="/sim/mw")
 ```
 
 ```text
-┌─ Mera quicklook ── output 300 (RAMSES) ───────────────
-│ box        : 48.0 kpc      levels 6–10  (finest 46.88 pc)
-│ grid       : ndim 3 · ncpu 640 · nvarh 7
-│ time       : 445.9 Myr  (non-cosmological)
-│ read       : 2.832e7 cells  (full resolution)
-│ gas mass   : 7.061e9 M⊙
-│ star mass  : 4.385e8 M⊙        DM mass : 0.0 M⊙
-│ current SFR: 1.377 (10 Myr) · 1.148 (100 Myr) M⊙/yr
-│ nH range   : 8.112e-8 … 103.2 cm⁻³
-│ T  range   : 10.2 … 2.303e8 K
-│ figures    : .maps[:sd]  ·  .phase (ρ–T)  ·  .budget (mass + SFR)
-└─ 1.6 s ──────────────────────────────────
+┌─ Mera quicklook ── output 80 (RAMSES) ───────────────
+│ box        : 62140.0 kpc     levels 6–16  (finest 948.1 pc)
+│ grid       : ndim 3 · ncpu 16 · nvarh 6
+│ time       : -1574.0 Myr   z = 0.1426
+│ particles  : 1090895 total  —  stars 31990 · DM 1058905
+│ read       : 1058982 cells  ⚠ APPROXIMATE (coarse levels ≤ 9 of 16)
+│ gas mass   : 2.21e15 M⊙  (approx.)
+│ star mass  : 1.22e11 M⊙        DM mass : 1.134e16 M⊙
+│ current SFR: 7.254 (10 Myr) · 4.381 (100 Myr) M⊙/yr
+│ nH range   : 4.221e-9 … 5.798e-4 cm⁻³
+│ T  range   : 45.13 … 3.933e7 K
+│ figures    : .maps (Σ x,y,z + stars,dm)  ·  .phase (ρ–T)  ·  .budget (mass + SFR)
+└─ 17.4 s ──────────────────────────────────
 ```
 
-![The quicklook dashboard: face-on gas surface density, the ρ–T phase diagram, and the global mass
-budget (gas / stars / dark matter) annotated with the current star-formation rate.](assets/features/quicklook_dashboard.png)
+![The quicklook dashboard (a cosmological zoom): gas surface density along z (face-on) and x, y
+(edge-on); face-on stellar and dark-matter surface density (shown only when particles are present);
+the ρ–T phase diagram; and a text census of cell/particle counts, masses and SFR. Colormaps are the
+colorblind-safe, perceptually-uniform viridis.](assets/features/quicklook_dashboard.png)
 
 ## What you get
 
 The call returns a [`QuickLookResult`](@ref):
 
 * `q.summary` — a `NamedTuple` of header facts and estimates (box, levels, finest cell, time/redshift,
-  masses, density/temperature ranges, read time).
-* `q.maps` — the face-on surface-density projection (`q.maps.maps[:sd]`).
+  the cell & particle census, masses, density/temperature ranges, read time).
+* `q.maps` — surface-density projections: gas along each axis (`q.maps.z`/`.x`/`.y`, each an
+  `AMRMapsType` with `.maps[:sd]`), plus face-on `q.maps.stars` / `q.maps.dm` when particles are present.
 * `q.phase` — the ρ–T phase histogram (`q.phase.H`, `q.phase.xedges`, `q.phase.yedges`).
 * `q.budget` — the **global snapshot budget**: `gas_mass_Msol`, and (when a particle file is present)
   `stellar_mass_Msol`, `dm_mass_Msol`, `n_stars`, `n_dm`, and the current SFR (`sfr10`, `sfr100`,
@@ -62,7 +66,9 @@ quicklook(300; path="/sim/mw", budget=500_000)    # cap the read on a huge outpu
 
 ## Plotting
 
-[`quicklookplot`](@ref) renders the three-panel dashboard (needs a Makie backend):
+[`quicklookplot`](@ref) renders the multi-panel dashboard — gas Σ along x/y/z, face-on stellar &
+dark-matter Σ (when present), the ρ–T phase diagram, and a text census — with colorblind-safe
+colormaps (needs a Makie backend):
 
 ```julia
 using CairoMakie
