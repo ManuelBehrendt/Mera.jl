@@ -100,6 +100,20 @@ quicklook(300; path="/sim/mw", read=false)        # instant header facts only
 quicklook(300; path="/sim/mw", budget=500_000)    # cap the gas read on a huge output
 ```
 
+!!! note "How accurate is a coarse/subsampled quicklook?"
+    The fast estimates are reliable for **extensive totals** but not for **peak** quantities:
+
+    * **Gas mass — exact** even on a coarse read: de-refinement is mass/volume-conserving, so the total
+      is unchanged (measured 0.00% error reading ⅓ of the cells).
+    * **Stellar / dark-matter mass, counts, SFR — within ~10%** under a particle subsample (an unbiased
+      estimate scaled by 1/fraction; noisier for rarer, clustered sub-populations).
+    * **nH / T ranges — lower bounds** on a coarse read: the densest, hottest gas lives in the finest
+      cells, which coarsening averages away (the maxima can read 50–90% low). For the true extremes,
+      read at full resolution.
+
+    The dashboard marks the coarse read (`⚠`), labels gas mass *mass-conserving*, and flags the ranges
+    as *peaks smoothed* — so each number says how far to trust it.
+
 #### Very large particle runs — `particle_subsample`
 
 For runs where even reading all particle positions is the cost, `particle_subsample` reads only ~that
