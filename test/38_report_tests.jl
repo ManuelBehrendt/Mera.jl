@@ -74,6 +74,21 @@
             end
         end
 
+        @testset "particle subsample (large-run mode)" begin
+            info = getinfo(dc.output, dc.path, verbose=false)
+            pf = getparticles(info, verbose=false, show_progress=false)                 # full read
+            ps = getparticles(info; subsample=0.5, verbose=false, show_progress=false)  # ~half the CPU files
+            @test 0 < length(ps.data) < length(pf.data)            # genuinely fewer particles read
+            @test getparticles(info; subsample=1.0, verbose=false, show_progress=false) |>
+                  p -> length(p.data) == length(pf.data)            # subsample=1.0 is a no-op (exact)
+            # quicklook scales the census up by 1/fraction and flags it approximate
+            qs = quicklook(dc.output; path=dc.path, particle_subsample=0.5, verbose=false)
+            @test qs.summary.particle_subsample == 0.5
+            @test qs.budget.has_particles && qs.summary.npart > 0
+            # the scaled total-particle estimate is within ~25% of the true count (CPU files ≈ equal N)
+            @test 0.75 < qs.summary.npart / length(pf.data) < 1.25
+        end
+
         @testset "custom multi-datatype plan + minimal/needs-based read" begin
             plan = ReportPlan(dc.output; path=dc.path, cards=[
                 ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=64),
