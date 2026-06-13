@@ -21,15 +21,43 @@ function _sfr_mass_field(p::PartDataType, mass::Symbol)
     return :mass
 end
 
+# Pure, data-free binning kernel: histogram formation times [Myr] weighted by mass [M⊙] into
+# fixed-width bins and divide by the bin width → SFR [M⊙/yr] (or a normalised SFH fraction).
+# `tform`/`massv` are already restricted to star particles. Testable without simulation data.
+function _sfr_history(tform::AbstractVector, massv::AbstractVector, t0::Real, t1::Real,
+                      tbinsize::Real, mode::Symbol, closed::Symbol)
+    t1 > t0 || return Float64[], Float64[]                      # nothing to bin (e.g. DM-only) → empty SFH
+    edges = Float64(t0):Float64(tbinsize):Float64(t1)
+    length(edges) < 2 && return Float64[], Float64[]
+    h = StatsBase.fit(StatsBase.Histogram, collect(Float64, tform),
+                      StatsBase.weights(collect(Float64, massv)), edges; closed=closed)
+    h = StatsBase.normalize(h; mode=mode)
+    t = collect(h.edges[1])[1:end-1]
+    step = Float64(edges[2] - edges[1])
+    return t, h.weights ./ 1e6 ./ step                   # [Myr], [M⊙/yr]  (mode=:probability ⇒ fraction)
+end
+
 """
     sfr(p::PartDataType; tbinsize=10.0, trange=[0.0, missing], mass=:auto, mask=[false],
         mode=:none, closed=:left) -> (t_Myr, sfr)
 
-Star-formation history from the star particles (`birth > 0`): `t_Myr` are the left bin edges
-[Myr] and `sfr` is the star-formation rate per bin [M⊙/yr] (mass formed ÷ bin width).
+Star-formation history from the star particles: `t_Myr` are the left bin edges [Myr] and `sfr`
+is the star-formation rate per bin [M⊙/yr] (mass formed ÷ bin width).
+
+Star particles are selected by the universal RAMSES sentinel **`birth ≠ 0`** (non-star particles
+have `birth == 0`); the sign/scale of the stored birth time varies between runs, so a `birth > 0`
+test is *not* reliable. The **formation-time axis is physical** and RAMSES-version aware:
+
+* **non-cosmological** runs — the proper birth time `getvar(:birth, :Myr)` (formation time in the
+  run's own time coordinate; it may be negative — the origin is arbitrary and does not affect the
+  SFH shape).
+* **cosmological** runs — `:birth` is a *super-conformal* time (≤ 0 at a = 1), **not** a physical
+  time, so `sfr` bins the physical `getvar(:formation_time, :Myr)` (cosmic time of formation, from
+  the Friedmann table) instead.
 
 * `tbinsize` — bin width in Myr.
-* `trange` — `[t0, t1]` in Myr; `t1=missing` ⇒ the latest formation time.
+* `trange` — `[t0, t1]` in Myr; each entry defaults to `missing` ⇒ the earliest / latest stellar
+  formation time, so the bins span exactly the star-formation history.
 * `mass` — mass field to integrate; `:auto` (default) prefers a stored **initial-mass** column
   (`:minit`, `:mass_init`, …) and falls back to current `:mass`. SFR should use the *initial*
   stellar mass; current mass underestimates it by post-formation mass loss.
@@ -40,27 +68,27 @@ Star-formation history from the star particles (`birth > 0`): `t_Myr` are the le
 t, s = sfr(parts; tbinsize=50.0)            # SFR [M⊙/yr] vs t [Myr]
 t, s = sfr(parts; mass=:minit)              # force a specific initial-mass field
 ```
+
+See also [`sfr_snapshot`](@ref) for the current SFR from a single snapshot.
 """
-function sfr(p::PartDataType; tbinsize::Real=10.0, trange=[0.0, missing], mass::Symbol=:auto,
+function sfr(p::PartDataType; tbinsize::Real=10.0, trange=[missing, missing], mass::Symbol=:auto,
              mask=[false], mode::Symbol=:none, closed::Symbol=:left)
-    birth = getvar(p, :birth, :Myr)                       # formation time [Myr]
-    massv = getvar(p, _sfr_mass_field(p, mass), :Msol)    # initial (preferred) or current mass [M⊙]
-    w = massv .* (birth .> 0.0)                           # stellar mass only, 0 for non-stars
+    massv  = getvar(p, _sfr_mass_field(p, mass), :Msol)   # initial (preferred) or current mass [M⊙]
+    isstar = getvar(p, :birth) .!= 0.0                    # universal RAMSES star sentinel (non-stars: birth == 0)
+    if iscosmological(p.info)
+        tform = getvar(p, :formation_time, :Myr)          # physical cosmic formation time [Myr] (non-stars → 0)
+    else
+        tform = getvar(p, :birth, :Myr)                   # proper formation time [Myr] (may be < 0: the run's
+    end                                                   # time origin is arbitrary; the SFH shape is unaffected)
     if length(mask) > 1
-        length(mask) == length(birth) ||
-            error("sfr: mask length $(length(mask)) ≠ number of particles $(length(birth))")
-        w = w .* mask
+        length(mask) == length(tform) ||
+            error("sfr: mask length $(length(mask)) ≠ number of particles $(length(tform))")
+        isstar = isstar .& mask
     end
-    t0 = Float64(trange[1])
-    t1 = trange[2] === missing ? (isempty(birth) ? t0 : maximum(birth)) : Float64(trange[2])
-    t1 > t0 || return Float64[], Float64[]                      # no formation times (e.g. DM-only) → empty SFH
-    edges = t0:Float64(tbinsize):t1
-    length(edges) < 2 && return Float64[], Float64[]
-    h = StatsBase.fit(StatsBase.Histogram, birth, StatsBase.weights(w), edges; closed=closed)
-    h = StatsBase.normalize(h; mode=mode)
-    t = collect(h.edges[1])[1:end-1]
-    step = Float64(edges[2] - edges[1])
-    return t, h.weights ./ 1e6 ./ step                   # [Myr], [M⊙/yr]  (mode=:probability ⇒ fraction)
+    tform_s = tform[isstar]; mass_s = massv[isstar]       # star particles only (non-star formation_time=0 excluded)
+    t0 = trange[1] === missing ? (isempty(tform_s) ? 0.0 : minimum(tform_s)) : Float64(trange[1])
+    t1 = trange[2] === missing ? (isempty(tform_s) ? 0.0 : maximum(tform_s)) : Float64(trange[2])
+    return _sfr_history(tform_s, mass_s, t0, t1, tbinsize, mode, closed)
 end
 
 """
