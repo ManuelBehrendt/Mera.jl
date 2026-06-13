@@ -192,4 +192,5 @@ clump_mass_fraction
   ```
 
   ![The `quicklookplot` first-look dashboard: face-on surface density, the ρ–T phase diagram, and the
-  spherical radial density profile.](assets/features/quicklook_dashboard.png)
+  global mass budget (gas / stars / dark matter) annotated with the current SFR. See
+  [Quick Look](quicklook.md).](assets/features/quicklook_dashboard.png)
