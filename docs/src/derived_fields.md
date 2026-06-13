@@ -150,7 +150,7 @@ mach
 
 Registered fields are used throughout Mera: [`getvar`](@ref) computes them, [`projection`](@ref) and
 [`profile`](@ref) read only the dependencies they need (via [`getvar_requirements`](@ref)), and the
-[Quick Look](quicklook.md) / [First-Look Reports](report.md) verbs benefit from the same needs-based
+[First Look](report.md) (`quicklook` / `report`) verbs benefit from the same needs-based
 reading. See also [Star-Formation Rate](sfr.md) and [Clump Finding](clumpfind.md) for fields used in
 analysis.
 

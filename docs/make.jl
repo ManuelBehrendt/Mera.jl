@@ -49,9 +49,7 @@ makedocs(modules = [Mera],
 
                           "Derived Fields & add_field" => "derived_fields.md",
 
-                          "Quick Look"          => "quicklook.md",
-
-                          "First-Look Reports"  => "report.md",
+                          "First Look"          => "report.md",
 
                           "Clump Finding"       => "clumpfind.md",
 
