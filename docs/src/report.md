@@ -39,10 +39,17 @@ q = quicklook(300; path="/sim/mw")
 └─ 17.4 s ──────────────────────────────────
 ```
 
-![The quicklook dashboard (a cosmological zoom): gas surface density along z (face-on) and x, y
-(edge-on); face-on stellar and dark-matter surface density (only when particles are present); the ρ–T
-phase diagram; and a text census of cell/particle counts, masses and SFR. Colormaps are the
-colorblind-safe, perceptually-uniform viridis.](assets/features/quicklook_dashboard.png)
+![The quicklook dashboard for a **cosmological zoom**: gas surface density along z (face-on) and x, y
+(edge-on); face-on stellar and dark-matter surface density; the ρ–T phase diagram; and a text census of
+cell/particle counts, masses and SFR. The grid grows with the components present (here gas + stars +
+dark matter). Colormaps are the colorblind-safe, perceptually-uniform viridis.](assets/features/quicklook_dashboard.png)
+
+The same call on an **isolated disk galaxy** (gas + stars, no dark matter) — face-on plus the two
+edge-on views show the disk and its thickness, and the dark-matter panel is simply omitted:
+
+![The quicklook dashboard for an isolated disk galaxy: gas Σ face-on and edge-on (×2), the face-on
+stellar disk, the ρ–T phase diagram, and the census. With no dark-matter particles, no DM panel is
+shown.](assets/features/quicklook_isolated.png)
 
 ### What you get
 
@@ -56,6 +63,25 @@ The call returns a [`QuickLookResult`](@ref):
 * `q.budget` — the **global snapshot budget**: `gas_mass_Msol`, and (with particles) `stellar_mass_Msol`,
   `dm_mass_Msol`, `n_stars`, `n_dm`, and the current SFR (`sfr10`, `sfr100`, `sfr_mean`,
   see [`sfr_snapshot`](@ref)).
+
+### Selecting components & projections
+
+By default the dashboard shows every component present, with the three gas projections. Two keywords
+trim it to exactly what you want (and skip the reads you don't need):
+
+* `datatypes` — any subset of `[:hydro, :stars, :dm]`. `[:hydro]` shows gas only; `[:stars]` or `[:dm]`
+  show that population's face-on Σ **and skip the gas read entirely** (faster). The census and panels
+  adapt to whatever was read.
+* `directions` — any subset of `[:z, :x, :y]` for the gas maps (`:z` = face-on, `:x`/`:y` = edge-on).
+  `directions=[:z]` gives a single face-on map — the most compact dashboard.
+
+```julia
+quicklook(300; path="/sim", directions=[:z])                 # one gas projection (compact)
+quicklook(300; path="/sim", datatypes=[:hydro])              # gas only — no particle maps
+quicklook(300; path="/sim", datatypes=[:stars])              # stellar map only (gas read skipped)
+quicklook(300; path="/sim", datatypes=[:dm])                 # dark-matter map only
+quicklook(300; path="/sim", datatypes=[:hydro, :stars], directions=[:z, :x])  # face-on + one edge-on
+```
 
 ### Budgeted reading — fast on big outputs
 

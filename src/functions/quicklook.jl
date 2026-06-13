@@ -79,6 +79,11 @@ and the current SFR), and prints a compact dashboard.
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
 * `read=false` — header-only (sub-second): box, levels, finest cell, ncpu, fields, time/redshift.
 * `res` — pixel size of the quick map.
+* `datatypes` — which components to show, any subset of `[:hydro, :stars, :dm]` (default all that are
+  present). `[:hydro]` reads gas only; `[:stars]` or `[:dm]` skip the gas read entirely (faster); the
+  panels and census adapt to what was read.
+* `directions` — which gas projection axes, any subset of `[:z, :x, :y]` (`:z` = face-on for a disk in
+  the xy-plane; `:x`, `:y` = the two edge-on views). Use `directions=[:z]` for a single, compact map.
 * `particle_subsample` — for **very large particle runs**, read only ~this fraction of the particle
   CPU files (e.g. `0.1`); RAMSES balances ~equal particles per CPU, so this reads ~that fraction of
   particles (skipping whole files → cuts I/O & memory). The particle census, masses and SFR are then
@@ -96,7 +101,8 @@ JLD2 / file.
 """
 function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    read::Bool=true, res::Int=256, lmax=nothing, particle_subsample::Real=1.0,
-                   verbose::Bool=true)
+                   datatypes::Vector{Symbol}=[:hydro, :stars, :dm],
+                   directions::Vector{Symbol}=[:z, :x, :y], verbose::Bool=true)
     t0 = time()
     info = getinfo(output, path, verbose=false)
     sc = info.scale
@@ -116,37 +122,46 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
              npart = nstars + ndm + nsinks, nstars = nstars, ndm = ndm, nsinks = nsinks)
 
     if !read
-        verbose && _quicklook_print(facts, nothing, t0)
+        verbose && _quicklook_print(facts, t0)
         return QuickLookResult(info, info.levelmin, info.levelmax, nothing, 0, false,
                                nothing, nothing, nothing, facts)
     end
 
-    luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
-                    (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
-    # read only the physical variables the dashboard needs (Σ density, ρ–T phase),
-    # falling back to a full read if the requirement can't be resolved against this output.
-    qlvars = getvar_requirements(:hydro, [:sd, :T, :rho])
-    gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
-          gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=false) :
-          gethydro(info, lmax=luse, verbose=false, show_progress=false)
-    n = length(gas.data)
+    # SELECTION: which components to show (`datatypes` ⊆ {:hydro,:stars,:dm}) and, for the gas,
+    # which projection axes (`directions` ⊆ {:z,:x,:y}; :z = face-on for a disk in the xy-plane).
+    # `datatypes=[:hydro]` reads gas only; `[:stars]` / `[:dm]` skip the gas read entirely (fast);
+    # `directions=[:z]` gives a single face-on gas map (a compact dashboard).
+    want = (hydro = :hydro in datatypes, stars = :stars in datatypes, dm = :dm in datatypes)
+    gasdirs = Symbol[d for d in (:z, :x, :y) if d in directions]   # keep z, x, y order
+    psub = clamp(float(particle_subsample), 1e-6, 1.0); pscale = 1.0 / psub
+    maps = NamedTuple(); ph = nothing
+    n = 0; luse = info.levelmax; sampled = false
+    gas_mass = nothing; nH_range = nothing; T_range = nothing
 
-    # gas surface density projected along each axis — z (face-on for a disk in the xy-plane) plus
-    # x and y (the two edge-on views), so a first look shows the vertical structure too.
-    pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
-                         verbose=false, show_progress=false)
-    maps = (x=pj(:x), y=pj(:y), z=pj(:z))
-    ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
-               xunit=:nH, yunit=:K)
-    gas_mass = sum(getvar(gas, :mass, :Msol))
+    # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
+    if want.hydro
+        luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
+                        (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
+        qlvars = getvar_requirements(:hydro, [:sd, :T, :rho])      # read only the needed vars (else full)
+        gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
+              gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=false) :
+              gethydro(info, lmax=luse, verbose=false, show_progress=false)
+        n = length(gas.data)
+        pj(dir) = projection(gas, :sd, :Msol_pc2; direction=dir, center=[:bc], res=res,
+                             verbose=false, show_progress=false)
+        for d in gasdirs; maps = merge(maps, NamedTuple{(d,)}((pj(d),))); end
+        ph = phase(gas, :rho, :T; weight=:mass, nbins=(80,80), xscale=:log, yscale=:log,
+                   xunit=:nH, yunit=:K)
+        gas_mass = sum(getvar(gas, :mass, :Msol))
+        nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, :T, :K))
+    end
 
-    # particles (read once, when present): drives the budget AND face-on stellar / dark-matter Σ maps.
+    # --- particles (read once, when wanted & present): budget + face-on stellar / dark-matter Σ maps.
     # For very large particle runs, `particle_subsample < 1` reads only ~that fraction of CPU files
     # (skipping whole files → cuts I/O & memory); extensive quantities are then scaled up by 1/fraction
     # and flagged approximate (RAMSES balances ~equal particles per CPU, so the estimate is unbiased).
-    psub = clamp(float(particle_subsample), 1e-6, 1.0); pscale = 1.0 / psub
     parts = nothing
-    if info.particles
+    if info.particles && (want.stars || want.dm)
         try
             parts = getparticles(info; subsample=psub, verbose=false, show_progress=false)
         catch e
@@ -162,49 +177,49 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
             psub < 1.0 && (pm.maps[:sd] .*= pscale)
             pm
         end
-        any(bsel)    && (maps = merge(maps, (stars = ppj(bsel),)))   # face-on stellar surface density
-        any(.!bsel)  && (maps = merge(maps, (dm    = ppj(.!bsel),))) # face-on dark-matter surface density
+        want.stars && any(bsel)   && (maps = merge(maps, (stars = ppj(bsel),)))    # stellar surface density
+        want.dm    && any(.!bsel) && (maps = merge(maps, (dm    = ppj(.!bsel),)))  # dark-matter surface density
     end
 
-    nH = getvar(gas, :rho, :nH); T = getvar(gas, :T, :K)
-    # particle counts: prefer the budget's exact read counts (the header part_info is not always
-    # populated); fall back to the header census (facts) when no particles were read.
-    ns = bud.has_particles ? bud.n_stars : facts.nstars
-    nd = bud.has_particles ? bud.n_dm    : facts.ndm
+    # particle counts: prefer the budget's exact read counts (header part_info is not always populated)
+    ns = bud.has_particles ? bud.n_stars : (want.stars ? facts.nstars : 0)
+    nd = bud.has_particles ? bud.n_dm    : (want.dm    ? facts.ndm    : 0)
+    mapsout = isempty(maps) ? nothing : maps
     summary = merge(facts, (ncells=n, lmax_used=luse, sampled=sampled, gas_mass_Msol=gas_mass,
                             npart=ns+nd+facts.nsinks, nstars=ns, ndm=nd, particle_subsample=psub,
                             stellar_mass_Msol=bud.stellar_mass_Msol, dm_mass_Msol=bud.dm_mass_Msol,
                             sfr10=bud.sfr10, sfr100=bud.sfr100,
-                            nH_range=extrema(nH), T_range_K=extrema(T), seconds=time()-t0))
-    verbose && _quicklook_print(summary, n, t0)
-    return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, maps, ph, bud, summary)
+                            nH_range=nH_range, T_range_K=T_range, seconds=time()-t0))
+    verbose && _quicklook_print(summary, t0)
+    return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, mapsout, ph, bud, summary)
 end
 
-# pretty text dashboard
-function _quicklook_print(s, n, t0)
+# pretty text dashboard — field-driven, so it adapts to which components were read
+function _quicklook_print(s, t0)
     nf(x) = x === nothing ? "—" : string(round(x, sigdigits=4))
+    g(k) = get(s, k, nothing)
     println("┌─ Mera quicklook ── output $(s.output) ($(s.simcode)) ───────────────")
     println("│ box        : $(nf(s.box_kpc)) kpc      levels $(s.levelmin)–$(s.levelmax)  (finest $(nf(s.finest_cell_pc)) pc)")
     println("│ grid       : ndim $(s.ndim) · ncpu $(s.ncpu) · nvarh $(s.nvarh)")
     println("│ time       : $(nf(s.time_Myr)) Myr" * (s.redshift === nothing ? "  (non-cosmological)" : "   z = $(nf(s.redshift))"))
-    # particle census (header facts — shown even in header-only mode)
-    if get(s, :npart, 0) > 0
-        extra = (s.nsinks > 0 ? " · sinks $(s.nsinks)" : "")
-        sub = get(s, :particle_subsample, 1.0) < 1.0 ? "  ⚠ ×$(round(1/s.particle_subsample,digits=1)) subsample est." : ""
+    if get(s, :npart, 0) > 0                       # particle census
+        extra = (get(s, :nsinks, 0) > 0 ? " · sinks $(s.nsinks)" : "")
+        sub = g(:particle_subsample) !== nothing && s.particle_subsample < 1.0 ?
+              "  ⚠ ×$(round(1/s.particle_subsample,digits=1)) subsample est." : ""
         println("│ particles  : $(s.npart) total  —  stars $(s.nstars) · DM $(s.ndm)$(extra)$(sub)")
     end
-    if n !== nothing
+    if g(:gas_mass_Msol) !== nothing               # gas (read)
         tag = s.sampled ? "  ⚠ APPROXIMATE (coarse levels ≤ $(s.lmax_used) of $(s.levelmax))" : "  (full resolution)"
-        println("│ read       : $(n) cells$(tag)")
+        println("│ read       : $(s.ncells) cells$(tag)")
         println("│ gas mass   : $(nf(s.gas_mass_Msol)) M⊙" * (s.sampled ? "  (approx.)" : ""))
-        if get(s, :stellar_mass_Msol, nothing) !== nothing
-            println("│ star mass  : $(nf(s.stellar_mass_Msol)) M⊙        DM mass : $(nf(s.dm_mass_Msol)) M⊙")
-            println("│ current SFR: $(nf(s.sfr10)) (10 Myr) · $(nf(s.sfr100)) (100 Myr) M⊙/yr")
-        end
-        println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³")
-        println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K")
-        println("│ figures    : .maps (Σ along x,y,z)  ·  .phase (ρ–T)  ·  .budget (mass + SFR)")
-    else
+        g(:nH_range) !== nothing && println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³")
+        g(:T_range_K) !== nothing && println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K")
+    end
+    if g(:stellar_mass_Msol) !== nothing           # particle masses + SFR
+        println("│ star mass  : $(nf(s.stellar_mass_Msol)) M⊙        DM mass : $(nf(s.dm_mass_Msol)) M⊙")
+        println("│ current SFR: $(nf(s.sfr10)) (10 Myr) · $(nf(s.sfr100)) (100 Myr) M⊙/yr")
+    end
+    if g(:gas_mass_Msol) === nothing && g(:stellar_mass_Msol) === nothing
         println("│ (header only — call quicklook(output) to read a sample)")
     end
     println("└─ $(round(time()-t0, digits=2)) s ──────────────────────────────────")
