@@ -753,6 +753,11 @@ function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
                       threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
                       mask=[false], need_energy::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
                       softening::Real=0.0, need_velocity::Bool=false)
+    # particles have no gas density: the default field=:rho is meaningless for them — fail with a clear
+    # hint rather than a cryptic getvar error deep in the read.
+    obj isa PartDataType && field === :rho &&
+        throw(ArgumentError("clumpfind on particles: field=:rho is a gas quantity; use field=:mass " *
+                            "(or another particle field) and a matching threshold."))
     f = getvar(obj, field, threshold_unit)
     pos = getvar(obj, [:x, :y, :z], pos_unit)
     m = getvar(obj, :mass, mass_unit)
@@ -789,10 +794,11 @@ end
 # =====================================================================================
 """    AbstractFinder
 
-Supertype of the 3D structure-finding algorithms passed to [`clumpfind`](@ref): [`ThresholdFoF`](@ref)
-and [`DensityWatershed`](@ref). A finder is a typed parameter bundle (field, threshold,
-linking length, neighbour backend) that implements `_label(finder, points)`; extend it by adding a
-new subtype and `_label` method."""
+Supertype of the seven 3D structure-finding algorithms passed to [`clumpfind`](@ref):
+[`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
+[`HDBSCANFinder`](@ref), [`PhaseSpaceFoF`](@ref) and [`PersistenceFinder`](@ref). A finder is a typed
+parameter bundle (field, threshold, linking length, neighbour backend) that implements
+`_label(finder, points)`; extend it by adding a new subtype and `_label` method."""
 abstract type AbstractFinder end
 
 """    ThresholdFoF(field=:rho; threshold, linking_length, threshold_unit=:standard, backend=CellLinkedList)
@@ -999,13 +1005,16 @@ end
     clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit=:kpc, mass_unit=:Msol,
               min_members=1, mask=[false], boundedness=false, bound_only=false,
               egrav=:approx, direct_max=2000, softening=0.0, iterative_unbinding=false,
-              deblend=false, peak_min_distance=…, substructure=false,
-              sub_min_members=min_members) -> ClumpCatalog
+              deblend=false, peak_min_distance=…, substructure=false, sub_min_members=min_members,
+              tidal=false, gravity=nothing, tidal_sample=3.0, hierarchy=false,
+              max_threads=Threads.nthreads()) -> ClumpCatalog
 
-**3D structure finder** driven by a [`ThresholdFoF`](@ref) or [`DensityWatershed`](@ref) `finder`
-value (the finder carries the field/threshold/linking-length and selects the algorithm). Per clump
-it returns member count, `mass`, centre of mass `com`, `peak` field value and `peak_pos`, and
-`radius` (max member distance from the COM) — positions in `pos_unit`, mass in `mass_unit`.
+**3D structure finder** driven by any [`AbstractFinder`](@ref) `finder` value (one of the seven:
+[`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
+[`HDBSCANFinder`](@ref), [`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref); it carries the
+field/threshold/linking-length and selects the algorithm). Per clump it returns member count, `mass`,
+centre of mass `com`, `peak` field value and `peak_pos`, and `radius` (max member distance from the
+COM) — positions in `pos_unit`, mass in `mass_unit`.
 
 * `boundedness=true` adds per-clump energetics (cgs): `e_kin` (COM-frame kinetic), `e_therm`
   (thermal, gas), `e_grav` (binding energy), `alpha_vir = 2·e_kin/|e_grav|`, and a `bound` flag
@@ -1022,6 +1031,12 @@ it returns member count, `mass`, centre of mass `com`, `peak` field value and `p
 * `substructure=true` builds a bound-substructure tree: each top-level clump is split into density
   basins (watershed) and the **gravitationally self-bound** ones (≥ `sub_min_members`) are attached as
   nested `subclumps` (with `n_subclumps`). Implies the boundedness analysis.
+* `tidal` (needs `substructure=true`) truncates each sub-clump at its tidal/Hill radius in the host:
+  `tidal=true` uses the analytic Jacobi radius, `tidal=:tensor` the least-squares tidal-tensor radius
+  from a `gravity` object (`getgravity`); `tidal_sample` scales the host sampling region.
+* `hierarchy=true` (for a [`Dendrogram`](@ref) finder) also returns the multi-scale merger tree in
+  `cat.tree` (a [`StructureTree`](@ref)).
+* `max_threads` caps the threads used for the per-clump analysis (deterministic regardless of count).
 
 ```julia
 gas = gethydro(getinfo(output, path))
@@ -1044,6 +1059,16 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     need_b = boundedness || substructure || iterative_unbinding
     tidal === :tensor && gravity === nothing &&
         throw(ArgumentError("tidal=:tensor needs a `gravity` object (getgravity) for the tidal tensor"))
+    # tidal truncation acts on substructure (sub-clumps); without it the request is a silent no-op and,
+    # since no boundedness budget is built, `bargs` is `nothing` → a downstream merge would throw.
+    tidal !== false && !substructure &&
+        throw(ArgumentError("tidal=$(repr(tidal)) truncates substructure — set substructure=true " *
+                            "(and pass `gravity` for tidal=:tensor)"))
+    # the deblender runs on position-only sub-Points (no velocities), so a velocity-requiring finder
+    # (PhaseSpaceFoF) cannot be used as `deblend=`; reject it rather than fail on empty velocity arrays.
+    deblend isa PhaseSpaceFoF &&
+        throw(ArgumentError("deblend=PhaseSpaceFoF is unsupported: deblending operates on positions " *
+                            "only. Use it as the primary finder (clumpfind(obj, PhaseSpaceFoF(...))) instead."))
     P = _make_points(obj, finder.field; threshold=finder.threshold, threshold_unit=finder.threshold_unit,
                      pos_unit=pos_unit, mass_unit=mass_unit, mask=mask, need_energy=need_b,
                      egrav=egrav, direct_max=direct_max, softening=softening,
@@ -1706,3 +1731,50 @@ end
 
 Reload a [`ClumpCatalog`](@ref) written by [`save_clumps`](@ref)."""
 load_clumps(filename::AbstractString) = JLD2.load(filename, "catalog")
+
+# =====================================================================================
+#  Plotting — provided by the Makie package extension (MeraMakieExt), same core-stub
+#  pattern as quicklookplot / fluxmapplot: the stub dispatches to a function the extension
+#  fills in once a Makie backend is loaded.
+# =====================================================================================
+"""
+    clumpplot(cat::ClumpCatalog; background=nothing, sizeby=:mass, colormap=:viridis,
+              max_markersize=28, kwargs...) -> Makie.Figure
+
+Plot a [`ClumpCatalog`](@ref): each clump's centre of mass as a marker, sized by `sizeby` (`:mass`,
+`:radius`, or `:n_members`) and coloured by log₁₀ mass. Pass `background` = a [`projection`](@ref)
+result (e.g. the gas surface density) to overlay the clumps on it. Needs a Makie backend loaded
+(`using CairoMakie`).
+
+```julia
+cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.5)
+using CairoMakie
+bg  = projection(gas, :sd, :Msol_pc2; center=[:bc])
+fig = clumpplot(cat; background=bg)
+```
+"""
+function clumpplot(cat::ClumpCatalog; kwargs...)
+    cat.nclumps == 0 && error("clumpplot: the catalog is empty (0 clumps) — nothing to plot.")
+    return _plot_clumps(cat; kwargs...)
+end
+_plot_clumps(cat; kwargs...) =
+    error("clumpplot needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")
+
+"""
+    massfunctionplot(cat::ClumpCatalog; cumulative=false, nbins=20, kwargs...) -> Makie.Figure
+
+Plot the clump mass function from a [`ClumpCatalog`](@ref) (via [`clump_massfunction`](@ref)):
+the differential dN per mass bin, or the cumulative N(≥M) when `cumulative=true`, on log axes.
+Needs a Makie backend loaded (`using CairoMakie`).
+
+```julia
+using CairoMakie
+fig = massfunctionplot(cat; cumulative=true)
+```
+"""
+function massfunctionplot(cat::ClumpCatalog; kwargs...)
+    cat.nclumps == 0 && error("massfunctionplot: the catalog is empty (0 clumps).")
+    return _plot_massfunction(cat; kwargs...)
+end
+_plot_massfunction(cat; kwargs...) =
+    error("massfunctionplot needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")

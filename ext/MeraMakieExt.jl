@@ -215,4 +215,43 @@ function Mera._plot_fluxmap(fm::Mera.FluxMapType; size=(640, 460), colormap=noth
     return fig
 end
 
+# ---- clumpplot: catalog overlay (COM markers sized by mass) ------------------------------
+function Mera._plot_clumps(cat::Mera.ClumpCatalog; background=nothing, sizeby::Symbol=:mass,
+                           colormap=:viridis, max_markersize::Real=28, size=(640, 560))
+    m = cat.meta; pu = get(m, :pos_unit, :kpc)
+    cx = [Float64(c.com[1]) for c in cat.clumps]                 # COM in the projection plane
+    cy = [Float64(c.com[2]) for c in cat.clumps]
+    mass = [Float64(c.mass) for c in cat.clumps]
+    szval = sizeby === :radius ? [Float64(c.radius) for c in cat.clumps] :
+            sizeby === :n_members ? [Float64(c.n_members) for c in cat.clumps] : mass
+    smax = maximum(szval); ms = 6 .+ (max_markersize - 6) .* sqrt.(szval ./ (smax > 0 ? smax : 1))
+    fig = Makie.Figure(; size=size, fontsize=13)
+    ax = Makie.Axis(fig[1, 1]; title="ClumpCatalog — $(cat.nclumps) clumps", xlabel="x [$(pu)]",
+                    ylabel="y [$(pu)]", aspect=Makie.DataAspect())
+    if background !== nothing && hasproperty(background, :maps)    # overlay on a projection (e.g. Σ)
+        bk = first(keys(background.maps)); bg = background.maps[bk]; ex = background.extent .* 1.0
+        xs = range(ex[1], ex[2], length=Base.size(bg, 1)); ys = range(ex[3], ex[4], length=Base.size(bg, 2))
+        Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, bg);
+                       colormap=:binary, colorrange=_poscolor(bg) === nothing ? (0, 1) :
+                       (log10(_poscolor(bg)[1]), log10(_poscolor(bg)[2])))
+    end
+    sc = Makie.scatter!(ax, cx, cy; markersize=ms, color=log10.(mass), colormap=colormap,
+                        strokewidth=0.5, strokecolor=:black)
+    Makie.Colorbar(fig[1, 2], sc; label="log₁₀ clump mass [$(get(m,:mass_unit,:Msol))]", width=10)
+    return fig
+end
+
+# ---- massfunctionplot: differential or cumulative clump mass function --------------------
+function Mera._plot_massfunction(cat::Mera.ClumpCatalog; cumulative::Bool=false, nbins::Int=20, size=(560, 460))
+    x, y = Mera.clump_massfunction(cat; nbins=nbins, scale=:log, cumulative=cumulative)
+    mu = get(cat.meta, :mass_unit, :Msol)
+    fig = Makie.Figure(; size=size, fontsize=13)
+    ax = Makie.Axis(fig[1, 1]; title="Clump mass function ($(cat.nclumps) clumps)",
+                    xlabel="clump mass [$(mu)]", ylabel=cumulative ? "N(≥M)" : "dN per bin",
+                    xscale=log10, yscale=log10)
+    keep = (x .> 0) .& (y .> 0)
+    any(keep) && Makie.scatterlines!(ax, x[keep], Float64.(y[keep]))
+    return fig
+end
+
 end # module
