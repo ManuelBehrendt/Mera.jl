@@ -8,9 +8,10 @@ two ways:
 
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
-The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value
-([`ThresholdFoF`](@ref) or [`DensityWatershed`](@ref)) selects the algorithm, while a shared
-neighbour index, statistics, boundedness and catalog pipeline serves them all. The keyword form
+The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value (one of seven —
+[`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
+[`HDBSCANFinder`](@ref), [`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref)) selects the algorithm,
+while a shared neighbour index, statistics, boundedness and catalog pipeline serves them all. The keyword form
 `clumpfind(obj, field; …)` shown throughout this page is a convenience shim that builds a
 `ThresholdFoF` for you, so existing scripts are unchanged; pass a finder explicitly to pick the
 algorithm:
@@ -57,8 +58,23 @@ length(cat)        # number of clumps
 cat[1]             # most massive clump (a NamedTuple)
 ```
 
-![Clumps found by `clumpfind` (orange, marker size ∝ mass) overlaid on the gas surface density Σ — the
-detected clump centres-of-mass sit on the density peaks along the disk and arms.](assets/features/clump_catalog.png)
+With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly — each clump's centre of
+mass as a marker sized by mass (and coloured by log mass), optionally over a projection background:
+
+```julia
+using CairoMakie
+bg  = projection(gas, :sd, :Msol_pc2; center=[:bc])
+fig = clumpplot(cat; background=bg)        # marker size ∝ mass, colour = log₁₀ mass
+```
+
+![Clumps found by `clumpfind` ([`clumpplot`](@ref): marker size ∝ mass, colour = log₁₀ mass) overlaid on
+the gas surface density Σ — the detected clump centres-of-mass sit on the density peaks along the disk
+and arms.](assets/features/clump_catalog.png)
+
+!!! warning "`Dendrogram` name clash with Makie"
+    `Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
+    `Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
+    other six finders have unique names.
 
 The same call works on particles (e.g. cluster-finding on stars):
 
@@ -178,10 +194,13 @@ together while the `components` breakdown stays the per-species mass budget (`eg
 ```julia
 m, N   = clump_massfunction(cat; nbins=20, scale=:log)   # differential dN per mass bin
 m, Ngt = clump_massfunction(cat; cumulative=true)        # cumulative N(≥M)
+
+using CairoMakie
+fig = massfunctionplot(cat; cumulative=true)             # plot it directly (log–log)
 ```
 
-![Differential clump mass function (`clump_massfunction`): the number of clumps per logarithmic mass
-bin.](assets/features/clump_massfunction.png)
+![Cumulative clump mass function ([`massfunctionplot`](@ref) / [`clump_massfunction`](@ref)): the number
+of clumps with mass ≥ M, on log–log axes.](assets/features/clump_massfunction.png)
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):

@@ -361,7 +361,7 @@ end
         @test all(n.peak >= n.base for n in t3.nodes)
         # Dendrogram finder _label returns the leaf partition
         P = Mera.Points(xs, ys, zs, ones(length(xs)), fs, m, nothing)
-        lab, k = Mera._label(Dendrogram(:rho; threshold=0.0, linking_length=0.6, min_delta=0.5), P)
+        lab, k = Mera._label(Mera.Dendrogram(:rho; threshold=0.0, linking_length=0.6, min_delta=0.5), P)  # Mera.-qualified: Makie also exports Dendrogram
         @test k == 3 && length(unique(lab)) == 3 && length(lab) == length(m)
     end
 
@@ -484,8 +484,10 @@ end
             push!(vx, vbulk + 3randn(rng)); push!(vy, 3randn(rng)); push!(vz, 3randn(rng))
             push!(truth, lab)
         end
-        # spatial FoF cannot separate them (one or few blended groups)…
-        @test last(Mera._fof3d(xs, ys, zs, 0.8)) < 2 || true        # (overlap ⇒ merged; not the point)
+        # spatial FoF cannot separate the two spatially-overlapping streams: it merges them, so it
+        # fails to recover the kinematic truth (poor ARI) — the contrast that motivates phase-space FoF.
+        slab = first(Mera._fof3d(xs, ys, zs, 0.8))
+        @test clump_recovery(slab, truth).ari < 0.5
         # …6-D FoF with a velocity scale below the 200 km/s separation recovers both exactly
         lab, k = Mera._phasespacefof(xs, ys, zs, vx, vy, vz, 0.8, 50.0)
         @test k == 2 && clump_recovery(lab, truth).ari ≈ 1.0
