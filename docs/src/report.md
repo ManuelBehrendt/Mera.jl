@@ -155,11 +155,13 @@ saved file. Before it runs you get a **cost/runtime estimate**, and an optional 
 within a wall-time target.
 
 ```julia
-report(400; path="/sim")          # default plan: Σ map + ρ–T phase + ρ(r) profile, printed as text
+report(400; path="/sim")          # default: Σ map + ρ–T phase + disk ρ(R) profile + SFR history (ascii)
 ```
 
-The no-argument default is the classic `quicklook` trio (map · phase · radial profile). To compose
-your own, list **cards**:
+The no-argument default is the `quicklook` figures (gas Σ map · ρ–T phase · cylindrical density
+profile) **plus a star-formation-history card** — matching the star formation quicklook headlines in
+its census; the SFR card skips gracefully on an output without star particles. To compose your own,
+list **cards**:
 
 ```julia
 report(400; path="/sim", output=:ascii, cards=[
@@ -284,8 +286,19 @@ hydro-only output.
     transfer fields (photon densities, fluxes, ionization fractions) in *separate* files read by
     [`getrt`](@ref), so they are **not** part of `nvarh` — `quicklook` and the hydro cards read the
     usual gas variables (`:rho`, `:vx…`, `:p`) and derive `:sd`, `:T`, the ρ–T phase and the budget
-    exactly as on a non-RT run. The RT fields themselves are not in the first-look dashboard; load them
-    explicitly with `getrt(info)` and add e.g. an RT projection card to a `report` to include them.
+    exactly as on a non-RT run. The RT fields themselves are not in the `quicklook` dashboard, but a
+    `report` can include them directly with an **RT projection card** — the engine reads the RT data via
+    [`getrt`](@ref), and an `RtDataType` projects its photon fields (mass-weighting auto-falls back to
+    volume, since RT carries no mass):
+
+    ```julia
+    report(output; path="/sim", cards=[ProjectionCard(:rt, :Np1; res=512)])   # photon density, group 1
+    ```
+
+    ![RAMSES-RT Strömgren-sphere test: the gas surface density (left) with the ionization front carved
+    near the source, and the group-1 ionizing-photon density Np₁ (right) radiating from the
+    corner source. The RT field is read with `getrt` and projected by an RT projection
+    card.](assets/features/rt_stromgren.png)
 
 ### Cost estimate & budget
 

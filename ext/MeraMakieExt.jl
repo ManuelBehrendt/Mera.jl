@@ -20,12 +20,24 @@ using Makie
 # choose a finite, possibly-log color/axis treatment without hard-failing on NaNs/≤0
 _poscolor(z) = (v = filter(x -> isfinite(x) && x > 0, vec(z)); isempty(v) ? (nothing) : (minimum(v), maximum(v)))
 
+# log10 heatmap that never throws on an all-NaN / all-non-positive field: maps positive values to
+# log10 and supplies an explicit finite colorrange when nothing is finite (Makie's automatic
+# colorrange errors on an all-NaN array — e.g. an empty selection or a degenerate coarse read).
+function _loghm!(ax, xs, ys, A; colormap)
+    L = map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, A)
+    fin = filter(isfinite, vec(L))
+    cr = isempty(fin) ? (0.0, 1.0) : (minimum(fin), max(maximum(fin), minimum(fin) + eps()))
+    Makie.heatmap!(ax, xs, ys, L; colormap, colorrange=cr)
+end
+
 # draw one card into a grid position (creates its own Axis); returns the Axis or nothing
 function _draw_card!(pos, c::Mera.ReportResultCard)
     m = c.meta
     if c.kind === :map
         z = c.data.z; ex = c.data.extent
-        ax = Makie.Axis(pos; title=c.label, xlabel="x", ylabel="y", aspect=Makie.DataAspect())
+        ru = get(m, :range_unit, :standard)                          # axis units from the card's range_unit
+        ulab = ru === :standard ? "" : " [$(ru)]"
+        ax = Makie.Axis(pos; title=c.label, xlabel="x$(ulab)", ylabel="y$(ulab)", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
@@ -39,7 +51,8 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
                         xscale = logx ? log10 : identity, yscale = logy ? log10 : identity)
         xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
         yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
-        hm = Makie.heatmap!(ax, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H))
+        hm = Makie.heatmap!(ax, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H);
+                            colormap=:viridis)   # explicit → colorblind-safe regardless of Makie theme
         Makie.Colorbar(pos[1, 2], hm; label="log10 count")
         return ax
     elseif c.kind === :profile
@@ -128,7 +141,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:v
         r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent
         ax = Makie.Axis(fig[r, c]; title=title, titlesize=12, xlabel=xl, ylabel=yl, aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
-        hm = Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, mp); colormap)
+        hm = _loghm!(ax, xs, ys, mp; colormap)
         Makie.Colorbar(fig[r, c][1, 2], hm; label="log₁₀ Σ", width=8, ticklabelsize=9)
     end
     if havephase
@@ -136,7 +149,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:v
         ax2 = Makie.Axis(fig[r, c]; title="ρ–T phase", titlesize=12, xlabel="n_H [cm⁻³]", ylabel="T [K]",
                          xscale=log10, yscale=log10)
         xc = sqrt.(ph.xedges[1:end-1] .* ph.xedges[2:end]); yc = sqrt.(ph.yedges[1:end-1] .* ph.yedges[2:end])
-        hm2 = Makie.heatmap!(ax2, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, ph.H); colormap)
+        hm2 = _loghm!(ax2, xc, yc, ph.H; colormap)
         Makie.Colorbar(fig[r, c][1, 2], hm2; label="log₁₀ mass", width=8, ticklabelsize=9)
     end
 
