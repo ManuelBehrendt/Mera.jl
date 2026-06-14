@@ -646,10 +646,24 @@ function los_cube(dataobject; quantity=:vlos, los=nothing, theta=nothing, phi=no
 
     qmin, qmax = qrange === nothing ? (isempty(qv) ? (0.0, 1.0) : extrema(qv)) : (float(qrange[1]), float(qrange[2]))
     dq = (qmax - qmin) / nbins
-    # guard a zero-spread quantity (single cell / constant field / qrange=[a,a]): route all samples
-    # to channel 1 instead of dividing by dq=0 (→ floor(NaN) InexactError).
-    chan = dq > 0 ? clamp.(floor.(Int, (qv .- qmin) ./ dq) .+ 1, 1, nbins) :
-                    ones(Int, length(qv))                            # NGP along the quantity axis
+    # bin index along the quantity axis. With an AUTO range (qrange===nothing) every sample lies in
+    # [qmin,qmax] by construction, so clamping only re-seats the single sample exactly at qmax. With
+    # an EXPLICIT qrange, samples outside [qmin,qmax] must be DROPPED (index 0 / >nbins, never selected
+    # by the k-loop below), NOT clamped onto the edge channels — clamping silently piles the wings of
+    # the distribution onto the first/last bin and corrupts the spectrum and any moment taken from it.
+    # A zero-spread quantity (single cell / constant field / qrange=[a,a]) routes all samples to
+    # channel 1 instead of dividing by dq=0 (→ floor(NaN) InexactError).
+    ndropped = 0
+    if dq > 0
+        chan = floor.(Int, (qv .- qmin) ./ dq) .+ 1
+        if qrange === nothing
+            chan = clamp.(chan, 1, nbins)
+        else
+            ndropped = count(c -> c < 1 || c > nbins, chan)
+        end
+    else
+        chan = ones(Int, length(qv))                            # NGP along the quantity axis
+    end
 
     cube = zeros(Float64, nx, ny, nbins)
     for k in 1:nbins
@@ -663,7 +677,12 @@ function los_cube(dataobject; quantity=:vlos, los=nothing, theta=nothing, phi=no
     end
     if verbose
         println("LOS cube  (quantity=", quantity, ", los=", round.(cam_w, digits=4), ")")
-        println("  $(nx)×$(ny) sky pixels × $(nbins) bins of $(quantity) ∈ [$(round(qmin,digits=3)),$(round(qmax,digits=3))] $q_unit"); println()
+        println("  $(nx)×$(ny) sky pixels × $(nbins) bins of $(quantity) ∈ [$(round(qmin,digits=3)),$(round(qmax,digits=3))] $q_unit")
+        if ndropped > 0
+            pct = round(100 * ndropped / length(chan), digits=1)
+            println("  note: $(ndropped) sample(s) ($(pct)%) outside qrange were dropped (not clamped onto the edge bins)")
+        end
+        println()
     end
     return LosCubeType(cube, collect(range(x0,x1,length=nx+1)), collect(range(y0,y1,length=ny+1)),
                        collect(range(qmin,qmax,length=nbins+1)), quantity, q_unit, weight,
@@ -747,6 +766,15 @@ end
 
 Moment-0/1/2 maps of a LOS cube `c`: the column `Σ` (summed weight, e.g. column mass), the
 weight-weighted **mean** of the binned quantity, and its **dispersion** — each a 2D array.
+
+!!! note "Discretization bias of the dispersion"
+    The moments are computed from the cube's **bin centres**, so the dispersion is biased high by
+    roughly the *Sheppard correction* σ²_true ≈ σ²_measured − Δ²/12, where Δ = bin width
+    (`step(c.bins)`). The bias is negligible once a feature spans several bins (Δ ≪ σ); it only
+    matters for under-resolved, near-delta distributions. To reduce it, build the cube with more
+    `nbins` or a tighter `qrange`. For an **unbinned** (bias-free) dispersion of a vector's LOS
+    component, use [`los_component`](@ref)`(...; dispersion=true)`, which accumulates the moments
+    from the continuous per-cell samples directly.
 """
 function los_moments(c::LosCubeType)
     cube = c.cube; nx, ny, nb = size(cube)

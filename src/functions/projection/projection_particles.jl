@@ -21,6 +21,29 @@
 #     return select( filter( p-> spt( parttypes, p.id), data, select=(:id, var)), var )
 # end
 
+# Convert `parttypes` (e.g. [:stars], [:dm]) into a boolean particle selection that is folded into the
+# tested `mask=` path of projection (histogram weights are multiplied by the :mask column, zeroing
+# excluded particles — works for both the axis-aligned and the off-axis routines). Family-aware:
+# RAMSES new format uses :family with 1=DM, 2=star; legacy outputs fall back to :birth (≠0 ⇒ star,
+# ==0 ⇒ DM). Returns `nothing` for [:all] or [:stars,:dm] (no filtering). Errors loudly on an
+# unsupported request rather than silently projecting all particles.
+function _parttype_select(dataobject::PartDataType, parttypes::Array{Symbol,1})
+    (isempty(parttypes) || in(:all, parttypes)) && return nothing
+    want_star = in(:stars, parttypes); want_dm = in(:dm, parttypes)
+    (want_star || want_dm) || throw(ArgumentError("projection parttypes=$(parttypes) unsupported; use [:all], [:stars], or [:dm]."))
+    (want_star && want_dm) && return nothing
+    cols = colnames(dataobject.data)
+    if in(:family, cols)
+        fam = select(dataobject.data, :family)
+        return want_star ? (fam .== 2) : (fam .== 1)
+    elseif in(:birth, cols)
+        b = select(dataobject.data, :birth)
+        return want_star ? (b .!= 0) : (b .== 0)
+    else
+        throw(ArgumentError("projection parttypes=$(parttypes) needs a :family or :birth column to separate stars from DM; this dataset has neither."))
+    end
+end
+
 
 
 """
@@ -549,6 +572,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
     # ========================================================
+    weighting in (:mass, :volume) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default) or :volume."))
     if weighting == :mass
         use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
         # only add :sd if there are also other variables than in ranglecheck
@@ -569,6 +593,21 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     # Off-axis branch (arbitrary line of sight). The axis-aligned histogram path below
     # is left unchanged; it runs whenever no off-axis specifier is given.
+
+    # parttypes (stars/dm) → boolean selection, combined with any user mask and routed through the
+    # tested :mask machinery (axis-aligned) or the `sel` clip (off-axis). Previously `parttypes` was
+    # accepted but never read, so projection(part, :sd, parttypes=[:stars]) silently returned the
+    # all-particle map. Done here (before the off-axis dispatch) so both paths honour it.
+    ptsel = _parttype_select(dataobject, parttypes)
+    if ptsel !== nothing
+        if length(mask) > 1
+            length(mask) == length(ptsel) || error("[Mera] ", now(), " : array-mask length: $(length(mask)) does not match with data-table length: $(length(ptsel))")
+            mask = collect(Bool, mask) .& ptsel
+        else
+            mask = ptsel
+        end
+    end
+
     if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
@@ -860,28 +899,12 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_unit[Symbol( string(i_var)  )] = unit_name
                         maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     end
-                elseif mode == :sum
-                    if length(mask) == 1
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-                    else
-                        h = fit(Histogram, (select(filtered_data, var_a) ,
-                                            select(filtered_data, var_b) ),
-                                            weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :mask)  ),
-                                            closed=closed,
-                                            (newrange1, newrange2) )
-                    end
-                    selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
-                    if selected_unit != 1.
-                        maps[Symbol(i_var)] = h.weights .* selected_unit
-                    else
-                        maps[Symbol(i_var)] = h.weights
-                    end
-                    maps_unit[Symbol( string(i_var)  )] = unit_name
-                    maps_mode[Symbol( string(i_var)  )] = :sum
+                else
+                    # particle projection only supports weighting=:mass or :volume. The former code
+                    # had an `elseif mode == :sum` branch here, but particle projection has no `mode`
+                    # kwarg, so `mode` was undefined: any other weighting threw UndefVarError(:mode),
+                    # which the surrounding try/catch swallowed into a silent NaN map. Fail clearly.
+                    throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default) or :volume."))
                 end
             catch e
                 push!(failed_projection_vars, i_var)
@@ -1087,27 +1110,28 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
         length(mask) == npart || error("[Mera]: mask length $(length(mask)) ≠ particle count $npart")
         sel = collect(Bool.(mask))
     end
-    full_z = (ranges[5] == 0.0 && ranges[6] == 1.0)
-    if !full_z
-        halfdepth = (ranges[6] - ranges[5]) * boxlen / 2
-        sel = sel .& (abs.(z_cam) .<= halfdepth)
-    end
+    # subregion clip on WORLD coords (px,py,pz about the sub-box-centre pivot), NOT the rotated camera
+    # coords: clipping a rotated coord (x_cam/y_cam/z_cam) against an axis-aligned half-extent drops
+    # in-box corner particles and silently loses mass (the same bug fixed on the hydro path). Skip an
+    # axis whose requested range already covers the loaded data (dataobject.ranges) — no extra crop.
+    dr = dataobject.ranges; tol = 1e-10
+    full_x = ranges[1] <= dr[1] + tol && ranges[2] >= dr[2] - tol
+    full_y = ranges[3] <= dr[3] + tol && ranges[4] >= dr[4] - tol
+    full_z = ranges[5] <= dr[5] + tol && ranges[6] >= dr[6] - tol
+    full_x || (sel = sel .& (abs.(px) .<= (ranges[2]-ranges[1]) * boxlen / 2))
+    full_y || (sel = sel .& (abs.(py) .<= (ranges[4]-ranges[3]) * boxlen / 2))
+    full_z || (sel = sel .& (abs.(pz) .<= (ranges[6]-ranges[5]) * boxlen / 2))
 
     pixsize = boxlen / res
-    full_xy = (ranges[1] == 0.0 && ranges[2] == 1.0 && ranges[3] == 0.0 && ranges[4] == 1.0)
-    if full_xy && any(sel)
+    # camera-plane extent always auto-fits the rotated footprint of the KEPT particles (+1 px pad),
+    # so every selected particle lands on the grid and the total is conserved (matches the hydro path).
+    if any(sel)
         pad = pixsize
         x0 = minimum(@view x_cam[sel]) - pad; x1 = maximum(@view x_cam[sel]) + pad
         y0 = minimum(@view y_cam[sel]) - pad; y1 = maximum(@view y_cam[sel]) + pad
-    elseif full_xy
-        # nothing selected: emit an empty map spanning the box instead of crashing
+    else
         half = boxlen / 2
         x0, x1, y0, y1 = -half, half, -half, half
-    else
-        hx = (ranges[2]-ranges[1]) * boxlen / 2
-        hy = (ranges[4]-ranges[3]) * boxlen / 2
-        x0, x1, y0, y1 = -hx, hx, -hy, hy
-        sel = sel .& (x_cam .>= x0) .& (x_cam .<= x1) .& (y_cam .>= y0) .& (y_cam .<= y1)
     end
     nx = max(1, round(Int, (x1 - x0) / pixsize))
     ny = max(1, round(Int, (y1 - y0) / pixsize))

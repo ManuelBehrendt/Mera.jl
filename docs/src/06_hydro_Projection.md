@@ -54,6 +54,37 @@ MERA.jl provides powerful projection capabilities for analyzing hydrodynamical s
 - **Weighting Schemes**: Mass-weighted, volume-weighted, or custom weighting
 - **Coordinate Systems**: Native Cartesian or derived cylindrical/spherical coordinates
 
+### Intensive vs. extensive quantities — what a projection *means*
+
+A line-of-sight projection reduces a 3-D field to a 2-D map, and **how** the cells along each
+sightline are combined depends on whether the quantity is *intensive* or *extensive*:
+
+| Quantity kind | Examples | How it is projected | Result per pixel |
+|---|---|---|---|
+| **Extensive** (adds up) | `:sd` (surface density), `:mass` | **summed** along the sightline, divided by the pixel area | a column / surface density — the total is conserved |
+| **Intensive** (a local value) | `:T`, `:vx`, `:rho`, `:cs`, `:p`, … | **weight-averaged** along the sightline (`weighting=:mass` by default, or `:volume`) | a representative value, *not* a sum |
+
+In other words: a mass-weighted projection of an intensive field answers *"what value would a
+mass-tracer see, averaged down this column?"*, while a surface-density projection answers
+*"how much is there per unit area?"*. Choosing the wrong combination is the most common projection
+mistake — e.g. mass-weighting a temperature map biases it toward dense gas, whereas volume-weighting
+(`weighting=:volume`) gives the volume-filling temperature.
+
+```julia
+projection(gas, :T)                      # mass-weighted T (default) — tracks dense gas
+projection(gas, :T,  weighting=:volume)  # volume-weighted T — volume-filling value
+projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area (column)
+```
+
+!!! note "`mode=:standard` vs `mode=:sum`"
+    The default `mode=:standard` produces the **physically normalized** map described above
+    (extensive ⇒ per-area column; intensive ⇒ weight-average). `mode=:sum` instead returns the
+    **raw per-pixel weighted sum** with no area/normalization division — useful when you want to
+    accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and
+    will apply your own normalization. For standard surface-density and weighted-average maps, keep
+    `mode=:standard`. (Particle projections support `weighting=:mass`/`:volume`; `mode` applies to
+    the hydro/gravity grid path.)
+
 ## Environment Setup and Data Loading
 
 ### Package Configuration
