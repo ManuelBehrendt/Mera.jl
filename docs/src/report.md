@@ -20,7 +20,7 @@ single *budgeted* read to build the dashboard and print a compact summary:
 
 ```julia
 using Mera
-q = quicklook(300; path="/sim/mw")
+q = quicklook(80; path="/sim/cosmo")   # the cosmological zoom shown below
 ```
 
 ```text
