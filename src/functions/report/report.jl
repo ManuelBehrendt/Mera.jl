@@ -200,8 +200,9 @@ function card_compute(c::ProjectionCard, data)
     p = projection(data, c.var, c.unit; res=c.res, direction=c.direction, center=c.center,
                    weighting=[c.weight, missing], range_unit=c.range_unit, verbose=false, show_progress=false)
     z = p.maps[c.var]
+    extent_kpc = collect(Float64, p.extent) .* data.scale.kpc   # projection extent is code length → kpc
     ReportResultCard(c.label, :map, c.kind, :projection,
-                     (z=Float64.(z), extent=copy(p.extent), pixsize=p.pixsize),
+                     (z=Float64.(z), extent=extent_kpc, pixsize=p.pixsize),
                      (var=c.var, unit=c.unit, weight=c.weight, res=c.res, direction=c.direction,
                       range_unit=c.range_unit, vrange=_finite_extrema(z)))
 end

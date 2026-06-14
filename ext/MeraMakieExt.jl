@@ -34,10 +34,8 @@ end
 function _draw_card!(pos, c::Mera.ReportResultCard)
     m = c.meta
     if c.kind === :map
-        z = c.data.z; ex = c.data.extent
-        ru = get(m, :range_unit, :standard)                          # axis units from the card's range_unit
-        ulab = ru === :standard ? "" : " [$(ru)]"
-        ax = Makie.Axis(pos; title=c.label, xlabel="x$(ulab)", ylabel="y$(ulab)", aspect=Makie.DataAspect())
+        z = c.data.z; ex = c.data.extent                             # extent stored in kpc (card_compute)
+        ax = Makie.Axis(pos; title=c.label, xlabel="x [kpc]", ylabel="y [kpc]", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
         pr = _poscolor(z); cmap = Mera._seq_cmap(m.var)
         hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
@@ -150,8 +148,9 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     Makie.Label(fig[0, 1:ncols], "Mera quicklook — output $(s.output)$(tag)"; fontsize=15, font=:bold)
     gpos(i) = (cld(i, ncols), mod1(i, ncols))                        # row-major fill of a tight grid
 
+    skpc = q.info.scale.kpc                                          # projection extent is in code length → kpc
     for (i, (proj, title, xl, yl, key)) in enumerate(specs)
-        r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent
+        r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent .* skpc
         ax = Makie.Axis(fig[r, c]; title=title, titlesize=12, xlabel=xl, ylabel=yl, aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
