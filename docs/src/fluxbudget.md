@@ -87,6 +87,17 @@ fb = fluxbudget(gas; surface=:cylinder, radius=15.0, shell_width=2.0, range_unit
 fb = fluxbudget(gas; surface=:plane, radius=5.0, shell_width=2.0, range_unit=:kpc, axis=[0.,0.,1.])
 ```
 
+The four surface choices, made concrete — each panel is the set of cells that `fluxbudget` integrates
+over for that geometry, shown edge-on over the same disk galaxy (use [`fluxshell`](@ref) to extract and
+visualize any of them):
+
+![fluxbudget surface geometries (edge-on). *Sphere:* a spherical shell at radius R (its edge-on
+projection fills a disk of radius R). *Cylinder:* the vertical wall at cylindrical radius R — the
+disk-edge surface. *Plane:* a slab normal to the axis at along-axis position R (here R = 10 kpc above
+the midplane) — for measuring a wind/fountain crossing a height. *Off-axis cylinder:* the same wall
+tilted to an arbitrary `axis` (here `[0.5,0,1]`; use `axis=:angmom` to align with the disk
+spin).](assets/features/flux_geometries.png)
+
 Off-axis selection is **cell-centre based** (vs the axis-aligned path's cell-volume intersection), so it
 differs by ~10–15 % for thin shells — prefer `shell_width` ≥ a couple of cells. A cylinder's vertical
 extent defaults to `2·rout`; override with `height`.
