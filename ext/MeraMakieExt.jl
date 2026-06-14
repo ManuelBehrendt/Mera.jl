@@ -20,6 +20,10 @@ using Makie
 # choose a finite, possibly-log color/axis treatment without hard-failing on NaNs/≤0
 _poscolor(z) = (v = filter(x -> isfinite(x) && x > 0, vec(z)); isempty(v) ? (nothing) : (minimum(v), maximum(v)))
 
+# meaningful, perceptually-uniform (colorblind-safe) sequential colormap per quantity:
+# temperature reads "hot" with :inferno; everything else uses :viridis (the density/count standard).
+_seq_cmap(var) = var in (:T, :Temperature, :temperature) ? :inferno : :viridis
+
 # draw one card into a grid position (creates its own Axis); returns the Axis or nothing
 function _draw_card!(pos, c::Mera.ReportResultCard)
     m = c.meta
@@ -27,9 +31,9 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         z = c.data.z; ex = c.data.extent
         ax = Makie.Axis(pos; title=c.label, xlabel="x", ylabel="y", aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=size(z, 1)); ys = range(ex[3], ex[4], length=size(z, 2))
-        pr = _poscolor(z)
-        hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z) :
-             Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, z))
+        pr = _poscolor(z); cmap = _seq_cmap(m.var)
+        hm = pr === nothing ? Makie.heatmap!(ax, xs, ys, z; colormap=cmap) :
+             Makie.heatmap!(ax, xs, ys, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, z); colormap=cmap)
         Makie.Colorbar(pos[1, 2], hm; label=pr === nothing ? string(m.var) : "log10 $(m.var) [$(m.unit)]")
         return ax
     elseif c.kind === :phase
@@ -179,7 +183,7 @@ function Mera._plot_fluxmap(fm::Mera.FluxMapType; size=(640, 460), colormap=noth
     if fm.quantity === :vr
         a = sort!(filter(x -> isfinite(x) && x != 0, abs.(vec(fm.map))))   # robust symmetric range
         m = isempty(a) ? 1.0 : a[clamp(round(Int, 0.98*length(a)), 1, length(a))]
-        cmap = colormap === nothing ? Makie.Reverse(:RdBu) : colormap     # low(inflow)=blue, high(outflow)=red
+        cmap = colormap === nothing ? :vik : colormap     # perceptually-uniform diverging: low(inflow)=blue, high(outflow)=red
         hm = Makie.heatmap!(ax, xc, yc, fm.map; colormap=cmap, colorrange=(-m, m))
         Makie.Colorbar(fig[1, 2], hm; label="mean v⊥ [km/s]  (blue in / red out)")
     else
