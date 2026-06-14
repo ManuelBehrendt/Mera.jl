@@ -110,15 +110,23 @@ function Mera._save_card_pngs(r::Mera.QuickReport, dir::AbstractString; kwargs..
     return files
 end
 
+# meaningful per-component colormaps for the quicklook panels — all perceptually-uniform and
+# colorblind-safe, oriented bright=more: gas density = viridis (the density standard), stars = magma
+# (warm/stellar), dark matter = cividis (the CVD-optimised cool map), ρ–T phase = viridis (the 2D-
+# histogram standard). A user-supplied `colormap` overrides all of them.
+const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
+                      :stars => :magma, :dm => :cividis, :phase => :viridis)
+
 # ---- quicklookplot: the first-look dashboard --------------------------------------------
 # Gas Σ along z, x, y (face-on + two edge-on) + face-on stellar / dark-matter Σ when particles are
 # present · ρ–T phase diagram · a text census (cells, particles, masses, SFR, ranges). Panels fill a
-# 3-column grid in order, so the dashboard grows with the components actually in the output.
-# Colormap default is the colorblind-safe, perceptually-uniform :viridis.
-function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:viridis)
+# 3-column grid in order, so the dashboard grows with the components actually in the output. Each panel
+# uses a meaningful perceptually-uniform colormap (see `_QL_CMAP`); pass `colormap=` to override.
+function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=nothing)
     q.maps === nothing && error("quicklookplot: no maps to plot (header-only call, or no datatypes " *
                                 "produced a map). Call quicklook(output) with at least one of " *
                                 "datatypes = [:hydro,:stars,:dm].")
+    cmapof(k) = colormap === nothing ? get(_QL_CMAP, k, :viridis) : colormap   # per-component, unless overridden
     s = q.summary
     nf(x) = x === nothing ? "—" : string(round(x, sigdigits=4))
     m = q.maps
@@ -129,7 +137,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:v
                :dm    => ("Dark matter Σ (face-on)","x [kpc]", "y [kpc]"))
     specs = Any[]
     for k in (:z, :x, :y, :stars, :dm)
-        haskey(m, k) && push!(specs, (m[k], lbl[k]...))
+        haskey(m, k) && push!(specs, (m[k], lbl[k]..., k))
     end
     havephase = q.phase !== nothing
     npanels = length(specs) + (havephase ? 1 : 0) + 1                # + census
@@ -140,11 +148,11 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:v
     Makie.Label(fig[0, 1:ncols], "Mera quicklook — output $(s.output)$(tag)"; fontsize=15, font=:bold)
     gpos(i) = (cld(i, ncols), mod1(i, ncols))                        # row-major fill of a tight grid
 
-    for (i, (proj, title, xl, yl)) in enumerate(specs)
+    for (i, (proj, title, xl, yl, key)) in enumerate(specs)
         r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent
         ax = Makie.Axis(fig[r, c]; title=title, titlesize=12, xlabel=xl, ylabel=yl, aspect=Makie.DataAspect())
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
-        hm = _loghm!(ax, xs, ys, mp; colormap)
+        hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
         Makie.Colorbar(fig[r, c][1, 2], hm; label="log₁₀ Σ", width=8, ticklabelsize=9)
     end
     if havephase
@@ -152,7 +160,7 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=:v
         ax2 = Makie.Axis(fig[r, c]; title="ρ–T phase", titlesize=12, xlabel="n_H [cm⁻³]", ylabel="T [K]",
                          xscale=log10, yscale=log10)
         xc = sqrt.(ph.xedges[1:end-1] .* ph.xedges[2:end]); yc = sqrt.(ph.yedges[1:end-1] .* ph.yedges[2:end])
-        hm2 = _loghm!(ax2, xc, yc, ph.H; colormap)
+        hm2 = _loghm!(ax2, xc, yc, ph.H; colormap=cmapof(:phase))
         Makie.Colorbar(fig[r, c][1, 2], hm2; label="log₁₀ mass", width=8, ticklabelsize=9)
     end
 
