@@ -56,16 +56,20 @@ PhaseCard(kind::Symbol, xvar::Symbol, yvar::Symbol; weight::Symbol=:mass, nbins=
 
 struct ProfileCard <: ReportCard
     kind::Symbol; xvar::Symbol; yvar::Union{Symbol,Nothing}; weight::Symbol; nbins::Int
-    geometry::Symbol; unit::Symbol; xunit::Symbol; range_unit::Symbol; center::Vector{Any}; label::String
+    geometry::Symbol; unit::Symbol; xunit::Symbol; range_unit::Symbol; center::Vector{Any}
+    yscale::Symbol; label::String
 end
-"""    ProfileCard(kind, xvar, yvar=nothing; weight=:mass, nbins=40, geometry=:none, unit=:standard, xunit=:standard, range_unit=:standard, center=[:bc], label="")
+"""    ProfileCard(kind, xvar, yvar=nothing; weight=:mass, nbins=40, geometry=:none, unit=:standard, xunit=:standard, range_unit=:standard, center=[:bc], yscale=:auto, label="")
 
-A [`profile`](@ref) (1-D radial/other profile) card for a [`ReportPlan`](@ref)."""
+A [`profile`](@ref) (1-D radial/other profile) card for a [`ReportPlan`](@ref). For a disk galaxy use
+`xvar=:r_cylinder, geometry=:cylindrical` (radius in the disk plane); `:r_sphere, geometry=:spherical`
+suits a halo/spheroid. `yscale` sets the y-axis when plotted: `:log`/`:log10` (log₁₀), `:identity`
+(linear), or `:auto` (log when the profile is positive and spans ≳ 1.5 decades, e.g. density)."""
 ProfileCard(kind::Symbol, xvar::Symbol, yvar::Union{Symbol,Nothing}=nothing; weight::Symbol=:mass,
             nbins::Int=40, geometry::Symbol=:none, unit::Symbol=:standard, xunit::Symbol=:standard,
-            range_unit::Symbol=:standard, center=[:bc], label::String="") =
+            range_unit::Symbol=:standard, center=[:bc], yscale::Symbol=:auto, label::String="") =
     ProfileCard(_norm_dt(kind), xvar, yvar, weight, nbins, geometry, unit, xunit, range_unit,
-                collect(Any, center), label == "" ? "$(yvar === nothing ? xvar : yvar)_profile" : label)
+                collect(Any, center), yscale, label == "" ? "$(yvar === nothing ? xvar : yvar)_profile" : label)
 
 struct ScalarCard <: ReportCard
     kind::Symbol; var::Symbol; reduce::Symbol; unit::Symbol; fraction::Bool
@@ -214,7 +218,7 @@ function card_compute(c::ProfileCard, data)
     ReportResultCard(c.label, :profile, c.kind, :profile,
                      (x=collect(res.x), y=collect(y), count=collect(res.count)),
                      (xvar=c.xvar, yvar=c.yvar, weight=c.weight, nbins=c.nbins, geometry=c.geometry,
-                      unit=c.unit, xunit=c.xunit, yrange=_finite_extrema(y)))
+                      unit=c.unit, xunit=c.xunit, yscale=c.yscale, yrange=_finite_extrema(y)))
 end
 
 function card_compute(c::ScalarCard, data)
@@ -267,8 +271,8 @@ _default_cards() = ReportCard[
     ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=256, direction=:z, center=[:bc]),
     PhaseCard(:hydro, :rho, :T; weight=:mass, nbins=(80, 80), xscale=:log, yscale=:log,
               xunit=:nH, yunit=:K),
-    ProfileCard(:hydro, :r_sphere, :rho; weight=:mass, geometry=:spherical, nbins=40,
-                center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH),
+    ProfileCard(:hydro, :r_cylinder, :rho; weight=:mass, geometry=:cylindrical, nbins=40,
+                center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH, yscale=:log),
 ]
 _resolve_cards(cards::Symbol) = cards === :default ? _default_cards() :
     throw(ArgumentError("unknown cards preset :$cards (use :default or a Vector of cards)"))
