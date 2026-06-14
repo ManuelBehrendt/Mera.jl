@@ -52,7 +52,7 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         xc = logx ? sqrt.(xe[1:end-1] .* xe[2:end]) : (xe[1:end-1] .+ xe[2:end]) ./ 2  # bin centres
         yc = logy ? sqrt.(ye[1:end-1] .* ye[2:end]) : (ye[1:end-1] .+ ye[2:end]) ./ 2
         hm = Makie.heatmap!(ax, xc, yc, map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, H);
-                            colormap=:viridis)   # explicit → colorblind-safe regardless of Makie theme
+                            colormap=:batlow)  # multi-hue, perceptually-uniform & colorblind-safe (theme-independent)
         Makie.Colorbar(pos[1, 2], hm; label="log10 count")
         return ax
     elseif c.kind === :profile
@@ -115,7 +115,9 @@ end
 # (warm/stellar), dark matter = cividis (the CVD-optimised cool map), ρ–T phase = viridis (the 2D-
 # histogram standard). A user-supplied `colormap` overrides all of them.
 const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
-                      :stars => :magma, :dm => :cividis, :phase => :viridis)
+                      :stars => :magma, :dm => :cividis, :phase => :batlow)
+# :batlow (Crameri) is a multi-hue perceptually-uniform, colorblind-safe map — the recommended
+# rainbow alternative — giving the ρ–T phase histogram more colour range than the single-hue viridis.
 
 # ---- quicklookplot: the first-look dashboard --------------------------------------------
 # Gas Σ along z, x, y (face-on + two edge-on) + face-on stellar / dark-matter Σ when particles are
