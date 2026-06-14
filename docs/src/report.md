@@ -165,8 +165,8 @@ your own, list **cards**:
 report(400; path="/sim", output=:ascii, cards=[
     ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=512),                 # surface-density map
     PhaseCard(:hydro, :rho, :T; weight=:mass, xunit=:nH, yunit=:K),       # ρ–T phase diagram
-    ProfileCard(:hydro, :r_sphere, :rho; weight=:mass, nbins=40,          # radial density profile
-                geometry=:spherical, center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH),
+    ProfileCard(:hydro, :r_cylinder, :rho; weight=:mass, nbins=40,        # disk radial density profile
+                geometry=:cylindrical, center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH, yscale=:log),
     ScalarCard(:hydro, :mass; reduce=:sum, unit=:Msol),                   # absolute gas mass
     ScalarCard(:hydro, :mass; fraction=true, label="cold_frac",           # cold-gas mass fraction
                mask = o -> getvar(o, :T, :K) .< 1e4),
@@ -187,8 +187,9 @@ CairoMakie.save("report.png", fig)
 ```
 
 ![A rendered composable report (isolated disk galaxy): the four cards above — a face-on gas
-surface-density map, the ρ–T phase diagram, a spherical radial density profile, and the
-star-formation history — laid out as a 2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.png)
+surface-density map, the ρ–T phase diagram, a cylindrical-radius density profile (log y-axis,
+showing the exponential disk and its outer break), and the star-formation history — laid out as a
+2×2 grid by `render(rep, :plot)`.](assets/features/report_cards.png)
 
 ### The cards
 
@@ -212,6 +213,20 @@ total of `relative_to` (or the same variable); `mask` restricts the rows:
 ```julia
 ScalarCard(:hydro, :mass; reduce=:sum, unit=:Msol)                        # absolute  [M⊙]
 ScalarCard(:hydro, :mass; fraction=true, mask = o -> getvar(o,:T,:K).<1e4) # fraction of total
+```
+
+#### Profiles: geometry & axis scale
+
+A `ProfileCard`'s `geometry` sets the radial coordinate. For a **disk galaxy** use
+`xvar=:r_cylinder, geometry=:cylindrical` — radius in the disk plane — which is the default in the
+quicklook trio; a **halo/spheroid** is better with `:r_sphere, geometry=:spherical`. `yscale` controls
+the plotted y-axis: `:log` (log₁₀), `:identity` (linear), or `:auto` (log when the profile is positive
+and spans ≳ 1.5 decades, e.g. density). So the default density profile is cylindrical with a log y-axis.
+
+```julia
+ProfileCard(:hydro, :r_cylinder, :rho; geometry=:cylindrical, weight=:mass, unit=:nH, yscale=:log)  # disk
+ProfileCard(:hydro, :r_sphere,   :rho; geometry=:spherical,   weight=:mass, unit=:nH)                # halo
+ProfileCard(:hydro, :r_cylinder, :vz;  geometry=:cylindrical, weight=:mass, yscale=:identity)        # signed → linear
 ```
 
 #### Star formation
@@ -263,6 +278,14 @@ Scalar and profile cards work on **hydro, particles, gravity, and clumps**; proj
 — never an error — when its datatype is absent from the output, or when it needs a variable that
 isn't stored (e.g. an RT `:xHII` card on a non-RT run). So a "kitchen-sink" plan runs unchanged on a
 hydro-only output.
+
+!!! note "Radiative-transfer (RT) outputs"
+    On an **RT** simulation the standard quantities are shown correctly: RAMSES stores the radiative-
+    transfer fields (photon densities, fluxes, ionization fractions) in *separate* files read by
+    [`getrt`](@ref), so they are **not** part of `nvarh` — `quicklook` and the hydro cards read the
+    usual gas variables (`:rho`, `:vx…`, `:p`) and derive `:sd`, `:T`, the ρ–T phase and the budget
+    exactly as on a non-RT run. The RT fields themselves are not in the first-look dashboard; load them
+    explicitly with `getrt(info)` and add e.g. an RT projection card to a `report` to include them.
 
 ### Cost estimate & budget
 

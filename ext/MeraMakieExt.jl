@@ -43,9 +43,20 @@ function _draw_card!(pos, c::Mera.ReportResultCard)
         Makie.Colorbar(pos[1, 2], hm; label="log10 count")
         return ax
     elseif c.kind === :profile
+        x = c.data.x; y = c.data.y
+        ys = get(m, :yscale, :auto)
+        pos_y = [v for v in y if isfinite(v) && v > 0]
+        wide = !isempty(pos_y) && length(pos_y) == count(isfinite, y) &&        # all-positive…
+               (maximum(pos_y) / minimum(pos_y) > 30)                            # …spanning ≳1.5 decades
+        uselog = ys in (:log, :log10) || (ys === :auto && wide)
         ax = Makie.Axis(pos; title=c.label, xlabel="$(m.xvar) [$(m.xunit)]",
-                        ylabel="$(m.yvar) [$(m.unit)]")
-        Makie.lines!(ax, c.data.x, c.data.y)
+                        ylabel="$(m.yvar) [$(m.unit)]", yscale = uselog ? log10 : identity)
+        if uselog                                                               # drop non-positive points for a log axis
+            keep = isfinite.(y) .& (y .> 0)
+            Makie.lines!(ax, x[keep], y[keep])
+        else
+            Makie.lines!(ax, x, y)
+        end
         return ax
     elseif c.kind === :sfr
         ax = Makie.Axis(pos; title=c.label, xlabel="t [Myr]", ylabel="SFR [$(m.unit)]")
