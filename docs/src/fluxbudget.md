@@ -110,6 +110,49 @@ fb.components.hot.mass.out       # hot-gas outflow rate
 # cold.out + hot.out == fb.rates.mass.out   (conservation across the partition)
 ```
 
+## Derived diagnostics: mass loading, phase velocities, weighting
+
+The raw rates combine into the diagnostics outflow studies actually quote:
+
+**Mass-loading factor** `η = Ṁ_out / SFR` — pair `fluxbudget` with [`sfr_snapshot`](@ref):
+
+```julia
+fb  = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc)
+sfr = sfr_snapshot(getparticles(info)).sfr[1]      # current SFR [M⊙/yr]
+η   = fb.rates.mass.out / sfr                       # mass loading of the outflow (inflow: use .in)
+```
+
+**Phase outflow velocities** — with `phases`, the **mass-flux-weighted normal velocity** of each phase
+is `momentum.out / mass.out` (`Msol·km/s/yr ÷ Msol/yr = km/s`), because momentum carries an extra `v⊥`:
+
+```julia
+fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                quantities=[:mass, :momentum],
+                phases=(cold=s->getvar(s,:T,:K).<1e4, hot=s->getvar(s,:T,:K).>=1e4))
+η_hot    = fb.components.hot.mass.out / sfr                          # per-phase loading
+v_hot    = fb.components.hot.momentum.out / fb.components.hot.mass.out   # flux-weighted v_out [km/s]
+```
+
+This cleanly separates the multiphase wind — a slow, heavy cold fountain from a fast, light hot wind:
+
+![Phase-split outflow from a `fluxbudget` with `phases=(cold,hot)`. *Left:* the cold gas carries most of
+the outflowing mass; *right:* but the hot phase leaves several times faster (flux-weighted
+`v_out = ṗ_out/Ṁ_out`) — the classic slow-fountain / fast-wind split.](assets/features/flux_phases.png)
+
+**Other weightings & statistics.** The budget is *mass-flux weighted* by construction (a flux is
+`Σ q·v⊥`), and `fluxmap(:vr)` gives the **mass-weighted mean** `v⊥` per sky bin. For a **volume-weighted**
+(or median, percentile, dispersion …) velocity, take the cells from [`fluxshell`](@ref) and reduce them
+yourself — these can differ a lot, so pick the one your science needs:
+
+```julia
+sh = fluxshell(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc)
+vr = getvar(sh, :vr_sphere, :km_s); m = getvar(sh, :mass, :Msol); V = getvar(sh, :volume, :kpc3)
+out = vr .> 0
+massw = sum(m[out].*vr[out]) / sum(m[out])          # mass-weighted mean outflow speed
+volw  = sum(V[out].*vr[out]) / sum(V[out])          # volume-weighted (filling-factor) speed
+using Statistics; med = median(vr[out]); p90 = quantile(vr[out], 0.9)
+```
+
 ## Off-axis surfaces (tilted cylinder, plane)
 
 `fluxbudget` is a 3-D measurement, so the surface can be tilted. A **sphere** is orientation-free. A
