@@ -30,6 +30,18 @@ Units per quantity: **mass** and **metals** in `Msol/yr`, **momentum** in `Msol�
 mass/metals/energy `in ≤ 0` and `out ≥ 0`; for **momentum** the carried quantity already contains `v⊥`
 (radial momentum), so both `in` and `out` are ≥ 0 — the ram-pressure flux from in- and out-moving gas.
 
+!!! note "`:metals` needs a `:metallicity` column"
+    The `:metals` flux multiplies cell mass by the gas metallicity, read from a column literally named
+    `:metallicity`. Mera does **not** auto-treat a passive scalar (e.g. `:var6`) as metallicity, so on a
+    run without that column `:metals` raises a clear error rather than silently returning zero — alias
+    your metal scalar to `:metallicity` before the call if needed. Likewise `:energy` needs the thermal
+    energy (pressure `:p`) and errors clearly on an isothermal/pressureless output.
+
+!!! warning "Cosmological runs: no Hubble flow"
+    `v⊥` is the **peculiar** gas velocity; the Hubble flow `H(a)·r` is not added. At large radius the
+    Hubble term can dominate and even flip the inflow/outflow sign, so the in/out split near turnaround
+    is unreliable on cosmological/zoom runs (a `@warn` fires). The non-cosmological case is unaffected.
+
 Use `surface=:cylinder` for the flux through a cylindrical wall (e.g. the edge of a disk):
 
 ```julia
