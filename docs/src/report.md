@@ -42,14 +42,16 @@ q = quicklook(80; path="/sim/cosmo")   # the cosmological zoom shown below
 ![The quicklook dashboard for a **cosmological zoom**: gas surface density along z (face-on) and x, y
 (edge-on); face-on stellar and dark-matter surface density; the ρ–T phase diagram; and a text census of
 cell/particle counts, masses and SFR. The grid grows with the components present (here gas + stars +
-dark matter). Colormaps are the colorblind-safe, perceptually-uniform viridis.](assets/features/quicklook_dashboard.png)
+dark matter). Each component uses a meaningful perceptually-uniform, colorblind-safe colormap — gas
+density `viridis`, stars `magma` (warm), dark matter `cividis` (the CVD-optimised cool map), ρ–T phase
+`viridis`.](assets/features/quicklook_dashboard.png)
 
 The same call on an **isolated disk galaxy** (gas + stars, no dark matter) — face-on plus the two
 edge-on views show the disk and its thickness, and the dark-matter panel is simply omitted:
 
-![The quicklook dashboard for an isolated disk galaxy: gas Σ face-on and edge-on (×2), the face-on
-stellar disk, the ρ–T phase diagram, and the census. With no dark-matter particles, no DM panel is
-shown.](assets/features/quicklook_isolated.png)
+![The quicklook dashboard for an isolated disk galaxy: gas Σ face-on and edge-on (×2) in `viridis`, the
+face-on stellar disk in `magma`, the ρ–T phase diagram, and the census. With no dark-matter particles,
+no DM panel is shown.](assets/features/quicklook_isolated.png)
 
 ### What you get
 
