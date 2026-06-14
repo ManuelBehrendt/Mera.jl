@@ -28,6 +28,26 @@ end
         @test I2 ≈ I                                                    # mask=all equals full
     end
 
+    @testset "LOS cube: explicit qrange drops out-of-range samples (no edge pile-up)" begin
+        # Regression: an explicit qrange used to CLAMP out-of-range samples onto the first/last
+        # channel, piling the wings of the distribution onto the edge bins and corrupting the
+        # spectrum. They must be DROPPED instead. A narrow qrange must therefore hold STRICTLY less
+        # total than the auto-range cube, and the edge channels must not balloon.
+        win = (direction=:edgeon, center=[:bc], xrange=[-15,15], yrange=[-15,15], range_unit=:kpc,
+               pxsize=[1.0,:kpc], nv=60, v_unit=:km_s)
+        full   = velocity_cube(gas; win..., verbose=false)                       # auto range
+        vmax   = maximum(abs.(extrema(full.bins)))
+        narrow = velocity_cube(gas; win..., vrange=[-vmax/3, vmax/3], verbose=false)
+        @test sum(narrow.cube) < sum(full.cube)                                   # wings genuinely dropped
+        # edge channels of the narrow cube must not collect the dropped wings:
+        Σnar  = dropdims(sum(narrow.cube, dims=(1,2)), dims=(1,2))                # per-channel total
+        @test Σnar[1]   <= maximum(Σnar)                                          # first bin not a spike
+        @test Σnar[end] <= maximum(Σnar)                                          # last  bin not a spike
+        # a generous qrange that brackets all data keeps everything (== auto range total)
+        wide = velocity_cube(gas; win..., vrange=[-vmax*2, vmax*2], verbose=false)
+        @test isapprox(sum(wide.cube), sum(full.cube); rtol=1e-9)
+    end
+
     @testset "cubes/los_component support hole-free :overlap binning" begin
         # the footprint deposit (:overlap) works in cubes too: conserves the total AND fills the
         # cell footprints (no centre-deposit holes), unlike the default :cic.
