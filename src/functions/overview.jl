@@ -968,6 +968,26 @@ end
 
 
 
+# Physical simulation time, cosmology-aware.
+# Non-cosmological run: info.time is proper code time → scale as before.
+# Cosmological run:      info.time is conformal time (and negative); the only
+#                        meaningful clock is the age of the universe at aexp, so
+#                        we return that age converted to `unit`. `:standard` maps
+#                        to seconds (CGS) since code-unit time is not meaningful
+#                        for a cosmological snapshot.
+function _gettime(info::InfoType, unit::Symbol)
+    if iscosmological(info)
+        age_gyr = cosmology(info).age_Gyr
+        unit === :Gyr && return age_gyr
+        unit === :Myr && return age_gyr * 1.0e3
+        unit === :yr  && return age_gyr * 1.0e9
+        (unit === :s || unit === :standard) && return age_gyr * 1.0e9 * info.constants.yr
+        error("gettime: unit :$unit not supported for cosmological runs (use :Gyr, :Myr, :yr, :s).")
+    else
+        return info.time * getunit(info, unit)
+    end
+end
+
 """
     gettime(output::Real; path::String="./", unit::Symbol=:standard)
     gettime(dataobject::DataSetType; unit::Symbol=:standard)
@@ -1012,26 +1032,6 @@ gettime(info, :Myr)
 - **`unit`:** return the variable in given unit
 
 """
-# Physical simulation time, cosmology-aware.
-# Non-cosmological run: info.time is proper code time → scale as before.
-# Cosmological run:      info.time is conformal time (and negative); the only
-#                        meaningful clock is the age of the universe at aexp, so
-#                        we return that age converted to `unit`. `:standard` maps
-#                        to seconds (CGS) since code-unit time is not meaningful
-#                        for a cosmological snapshot.
-function _gettime(info::InfoType, unit::Symbol)
-    if iscosmological(info)
-        age_gyr = cosmology(info).age_Gyr
-        unit === :Gyr && return age_gyr
-        unit === :Myr && return age_gyr * 1.0e3
-        unit === :yr  && return age_gyr * 1.0e9
-        (unit === :s || unit === :standard) && return age_gyr * 1.0e9 * info.constants.yr
-        error("gettime: unit :$unit not supported for cosmological runs (use :Gyr, :Myr, :yr, :s).")
-    else
-        return info.time * getunit(info, unit)
-    end
-end
-
 function gettime(output::Real; path::String="./", unit::Symbol=:standard)
     info = getinfo(output, path, verbose=false)
     return _gettime(info, unit)

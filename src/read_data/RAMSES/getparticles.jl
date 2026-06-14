@@ -195,6 +195,7 @@ function getparticles( dataobject::InfoType;
                     verbose::Bool=true,
                     show_progress::Bool=true,
                     max_threads::Int=Threads.nthreads(),
+                    subsample::Real=1.0,                     # read only ~this fraction of CPU files (1.0 = all); for very large runs
                     myargs::ArgumentsType=ArgumentsType() )
 
     # ===== ARGUMENT OVERRIDE SECTION =====
@@ -255,21 +256,21 @@ function getparticles( dataobject::InfoType;
                 if dataobject.descriptor.pversion == 0  # Old particle format
                     pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata_parallel(  
                         dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                        print_filenames, show_progress, verbose, read_cpu, max_threads; cpu_subsample=subsample)
                 elseif dataobject.descriptor.pversion > 0  # New particle format with family/tag
                     pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata_parallel(  
                         dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                        print_filenames, show_progress, verbose, read_cpu, max_threads; cpu_subsample=subsample)
                 end
             else  # Don't include CPU information in output
                 if dataobject.descriptor.pversion == 0
                     pos_1D, vars_1D, identity_1D, levels_1D = getparticledata_parallel(  
                         dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                        print_filenames, show_progress, verbose, read_cpu, max_threads; cpu_subsample=subsample)
                 elseif dataobject.descriptor.pversion > 0
                     pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata_parallel(  
                         dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                        print_filenames, show_progress, verbose, read_cpu, max_threads)
+                        print_filenames, show_progress, verbose, read_cpu, max_threads; cpu_subsample=subsample)
                 end
             end
         catch e
@@ -291,6 +292,7 @@ function getparticles( dataobject::InfoType;
                         verbose=verbose,
                         show_progress=show_progress,
                         max_threads=1,
+                        subsample=subsample,
                         myargs=myargs )
             else
                 rethrow()
@@ -302,21 +304,21 @@ function getparticles( dataobject::InfoType;
             if dataobject.descriptor.pversion == 0
                 pos_1D, vars_1D, cpus_1D, identity_1D, levels_1D = getparticledata(  
                     dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu)
+                    print_filenames, show_progress, verbose, read_cpu; cpu_subsample=subsample)
             elseif dataobject.descriptor.pversion > 0
                 pos_1D, vars_1D, cpus_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata(  
                     dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu)
+                    print_filenames, show_progress, verbose, read_cpu; cpu_subsample=subsample)
             end
         else  # Don't include CPU information
             if dataobject.descriptor.pversion == 0
                 pos_1D, vars_1D, identity_1D, levels_1D = getparticledata(  
                     dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu)
+                    print_filenames, show_progress, verbose, read_cpu; cpu_subsample=subsample)
             elseif dataobject.descriptor.pversion > 0
                 pos_1D, vars_1D, identity_1D, family_1D, tag_1D, levels_1D = getparticledata(  
                     dataobject, length(nvarp_list), nvarp_corr, stars, lmax, ranges,
-                    print_filenames, show_progress, verbose, read_cpu)
+                    print_filenames, show_progress, verbose, read_cpu; cpu_subsample=subsample)
             end
         end
     end

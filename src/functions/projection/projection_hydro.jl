@@ -1555,27 +1555,42 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
     y_cam = px .* cam_up[1]    .+ py .* cam_up[2]    .+ pz .* cam_up[3]
     z_cam = px .* cam_w[1]     .+ py .* cam_w[2]     .+ pz .* cam_w[3]
 
-    # --- selection mask: user mask ∧ the requested spatial sub-box (WORLD axes) ----
-    # xrange/yrange/zrange select a world-space sub-box exactly like the axis-aligned path (and a
-    # `subregion`'s ranges flow in identically). We clip on the WORLD coordinates (px,py,pz about
-    # the box-centre pivot), NOT on the rotated camera coords — clipping a rotated camera coord
-    # against an axis-aligned half-extent drops in-box corner cells and silently loses mass
-    # (≈0.4–0.9% for a subregion). The camera frame below then auto-fits the rotated footprint of
-    # the *kept* cells, so every selected cell lands on the grid and the total is conserved.
     ncells = length(x_cam)
     skipmask = check_mask(dataobject, mask, verbose)
     sel = skipmask ? trues(ncells) : collect(Bool.(mask))
-    full_x = ranges[1] == 0.0 && ranges[2] == 1.0
-    full_y = ranges[3] == 0.0 && ranges[4] == 1.0
-    full_z = ranges[5] == 0.0 && ranges[6] == 1.0
+
+    # per-cell physical size (code units) — for the footprint deposits, the AMR-aware extent padding,
+    # AND the half-cell margin on the world-box clip below. Computed for ALL binnings so the map
+    # extent (and size) is binning-INDEPENDENT: the frame reflects where the data's projected cell
+    # footprints lie, not how they are deposited.
+    cellsize_all = Float64.(boxlen ./ (2.0 .^ (isamr ? getvar(dataobject, :level) : fill(simlmax, ncells))))
+
+    # --- selection mask: user mask ∧ the requested spatial sub-box (WORLD axes) ----
+    # xrange/yrange/zrange select a world-space sub-box exactly like the axis-aligned path (and a
+    # `subregion`'s ranges flow in identically). We clip on the WORLD coordinates (px,py,pz about the
+    # sub-box-centre pivot), NOT on the rotated camera coords — clipping a rotated camera coord against
+    # an axis-aligned half-extent drops in-box corner cells. A cell is kept when its FOOTPRINT overlaps
+    # the sub-box (centre within half-extent + half its own size), matching how `gethydro`/`subregion`
+    # select a subregion by cell-volume overlap; clipping on the bare cell centre instead drops the
+    # half-cell border layer and silently loses mass (≈0.4–0.9% for an off-axis subregion). With the
+    # half-cell margin, and the camera frame below auto-fitting the rotated footprint of the kept
+    # cells, every selected cell lands on the grid and the total is conserved to round-off.
+    # An axis needs no clip when the requested range already COVERS the data that was loaded
+    # (`dataobject.ranges`) — i.e. there is no *additional* crop beyond what `gethydro`/`subregion`
+    # already selected, so every loaded cell is wanted. Re-clipping the loaded subregion here on bare
+    # cell CENTRES would drop its half-cell overlap border and silently lose mass (≈0.4-0.9% off-axis);
+    # skipping the clip deposits all loaded cells, so the off-axis total conserves to round-off, like
+    # the full box. This matches the full-box case (`ranges == [0,1]³ == dataobject.ranges`) and the
+    # axis-aligned path, which never re-clips a loaded subregion. A genuine tighter crop (the requested
+    # range lies strictly inside the loaded data) still clips on the world coordinates exactly as before.
+    dr = dataobject.ranges
+    tol = 1e-10
+    full_x = ranges[1] <= dr[1] + tol && ranges[2] >= dr[2] - tol
+    full_y = ranges[3] <= dr[3] + tol && ranges[4] >= dr[4] - tol
+    full_z = ranges[5] <= dr[5] + tol && ranges[6] >= dr[6] - tol
     full_x || (sel = sel .& (abs.(px) .<= (ranges[2]-ranges[1])*boxlen/2))
     full_y || (sel = sel .& (abs.(py) .<= (ranges[4]-ranges[3])*boxlen/2))
     full_z || (sel = sel .& (abs.(pz) .<= (ranges[6]-ranges[5])*boxlen/2))
-
-    # per-cell physical size (code units) — for the footprint deposits AND the AMR-aware extent
-    # padding. Computed for ALL binnings so the map extent (and size) is binning-INDEPENDENT: the
-    # frame reflects where the data's projected cell footprints lie, not how they are deposited.
-    cellsize_all = Float64.(boxlen ./ (2.0 .^ (isamr ? getvar(dataobject, :level) : fill(simlmax, ncells))))
 
     # --- camera-plane extent: auto-fit the rotated footprint of the SELECTED cells -------------
     # margin = 1 pixel + half the COARSEST selected cell's projected shadow, per camera axis, so a

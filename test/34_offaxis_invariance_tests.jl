@@ -82,6 +82,32 @@ end
     end
 
     # ----------------------------------------------------------------------
+    # SUBREGION (off-centre cuboid): an off-axis view of a loaded subregion must conserve the
+    # *subregion* total too. Regression for the half-cell border drop — re-clipping an already
+    # loaded subregion on bare cell CENTRES used to silently lose ~0.4-0.9% off-axis (NGP and the
+    # footprint binnings alike, since it is a pre-deposit selection cut). It must now conserve to
+    # round-off, like the full box.
+    # ----------------------------------------------------------------------
+    @testset "Hydro mass: off-centre SUBREGION conserves off-axis" begin
+        ds   = DATASETS[:spiral_clumps]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        gas  = gethydro(info, xrange=[0.15, 0.6], yrange=[0.25, 0.7], zrange=[0.35, 0.65],
+                        verbose=false, show_progress=false)
+        Msub = sum(getvar(gas, :mass, :Msol))                 # ground truth for the SUBREGION
+        @test Msub > 0
+        worst = 0.0
+        for los in LOS, binning in (:ngp, :cic, :overlap, :exact)
+            pm = projection(gas, :mass, :Msol, los=los, res=128, binning=binning,
+                            verbose=false, show_progress=false)
+            e = relerr(sum(pm.maps[:mass]), Msub)
+            worst = max(worst, e)
+            @test e < RTOL
+        end
+        @info "Off-axis SUBREGION mass conservation: worst rel. error over angles × binnings" worst Msub
+        @test worst < RTOL
+    end
+
+    # ----------------------------------------------------------------------
     # Hydro: volume (extensive, mode=:sum) — same invariance
     # ----------------------------------------------------------------------
     @testset "Hydro volume: invariant under angle × pixel size" begin
