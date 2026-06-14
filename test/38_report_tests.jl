@@ -25,6 +25,17 @@
         @test length(plan.cards) == 3 && all(c -> c isa ReportCard, plan.cards)
     end
 
+    @testset "colormap policy (_seq_cmap, data-free)" begin
+        # the colorblind-safe per-quantity sequential map: temperature reads "hot" (:inferno),
+        # everything else uses the perceptually-uniform density/count standard (:viridis).
+        @test Mera._seq_cmap(:T) == :inferno
+        @test Mera._seq_cmap(:Temperature) == :inferno
+        @test Mera._seq_cmap(:temperature) == :inferno
+        @test Mera._seq_cmap(:rho) == :viridis
+        @test Mera._seq_cmap(:sd) == :viridis
+        @test Mera._seq_cmap(:vx) == :viridis
+    end
+
     if !DATA_AVAILABLE
         @warn "Skipping data-backed report tests - simulation data not available"
         @test_skip "Simulation data not available"
@@ -102,6 +113,33 @@
             @test haskey(qs2.maps, :stars) && !haskey(qs2.maps, :z)
             @test qs2.phase === nothing && qs2.summary.gas_mass_Msol === nothing
             @test qs2.budget.has_particles && qs2.summary.nstars > 0
+        end
+
+        @testset "coarse/sampled APPROXIMATE path + hydro-less output" begin
+            # Force the budgeted coarse read on an AMR output (spiral_clumps) by capping lmax below
+            # levelmax — exercises the sampled=true branch that the default (full-fitting) tests skip.
+            ac = DATASETS[:spiral_clumps]
+            info = getinfo(ac.output, ac.path, verbose=false)
+            if info.levelmax > info.levelmin
+                qf = quicklook(ac.output; path=ac.path, datatypes=[:hydro], verbose=false)        # full
+                qc = quicklook(ac.output; path=ac.path, datatypes=[:hydro],
+                               lmax=info.levelmin, verbose=false)                                   # coarse
+                @test qc.sampled == true && qc.lmax_used < info.levelmax
+                @test qf.sampled == false
+                @test qc.ncells < qf.ncells                                       # coarse read = fewer cells
+                # gas mass is an EXTENSIVE total → conserved even on the coarse read (de-refinement)
+                @test isapprox(qc.summary.gas_mass_Msol, qf.summary.gas_mass_Msol; rtol=1e-3)
+                @test qc.summary.sampled == true                                  # drives the APPROXIMATE labels
+            else
+                @test_skip "spiral_clumps is not AMR (levelmax == levelmin) — cannot force coarse read"
+            end
+
+            # Hydro-less guard: the gas block is gated on `want.hydro && info.hydro`, so a request that
+            # excludes hydro must skip gethydro entirely and never error. (`datatypes=[:stars]` exercises
+            # the want.hydro=false branch; the info.hydro=false branch mirrors the proven info.particles
+            # guard — every dataset in the suite has hydro, so it can't be exercised with real data here.)
+            qg = quicklook(ac.output; path=ac.path, datatypes=[:dm], verbose=false)   # skip hydro — must not throw
+            @test qg isa QuickLookResult && qg.summary.gas_mass_Msol === nothing
         end
 
         @testset "custom multi-datatype plan + minimal/needs-based read" begin
