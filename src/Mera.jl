@@ -209,6 +209,8 @@ export
     clump_massfunction,
     clump_recovery,
     clumptable,
+    clumpplot,
+    massfunctionplot,
     save_clumps,
     load_clumps,
     ClumpCard,

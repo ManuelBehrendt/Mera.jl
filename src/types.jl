@@ -1,4 +1,15 @@
 
+# ============================================================================================
+# Type-organization convention:
+#   This file holds the shared CORE data-model types (units/scales, InfoType, the *DataType
+#   containers, map types, …) used across the whole package. Feature-local *value* types that are
+#   tightly coupled to one subsystem may live with that subsystem instead of here — e.g. the
+#   clumpfind finder/neighbour-index/catalog/tree types in functions/clumpfind.jl, the report card
+#   types in functions/report/report.jl, FluxBudgetType/FluxMapType in functions/flux.jl, and
+#   QuickLookResult in functions/quicklook.jl. (Co-locating a struct with its constructor and
+#   methods is intentional; api.md harvests all of them via a module-wide @autodocs regardless.)
+# ============================================================================================
+
 """
 Mutable Struct: Contains the created scale factors from code to physical units
 """
