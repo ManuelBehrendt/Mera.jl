@@ -118,6 +118,11 @@ projection(sh, :vr_sphere, :km_s; center=[:bc])       # inflow (blue) / outflow 
 # combine with a Makie backend to render the maps, or feed sh to profile/phase
 ```
 
+![`fluxshell` makes the measured surface explicit. *Left:* the full gas of a disk galaxy, edge-on.
+*Right:* the cells `fluxbudget` actually integrates over — the R = 10 kpc spherical shell (its edge-on
+projection is a disk of radius 10 kpc, brightest where the shell cuts the dense midplane). The budget is
+the flux of gas crossing exactly this surface.](assets/features/fluxshell.png)
+
 `fluxshell` and `fluxbudget` use the identical selection, so the visualization is guaranteed to show
 exactly the cells that entered the budget. `fluxshell` and `fluxmap` accept the same `axis`/`:angmom`
 and `surface=:plane` options as `fluxbudget`, so off-axis surfaces can be visualized too (the tilted
@@ -143,11 +148,14 @@ sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes t
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
 arrays; it is *not* `projection` — different axes, no LOS superposition.
 
-![Inflow/outflow surface map of a spherical shell at R = 12 kpc (`fluxmap`, `quantity=:vr`): the
-mass-weighted mean radial velocity over the (φ, cos θ) sky — blue is inflow, red outflow.](assets/features/fluxmap_skymap.png)
+![Inflow/outflow surface map of a spherical shell at R = 10 kpc around a disk galaxy (`fluxmap`,
+`quantity=:vr`): the mass-weighted mean radial velocity over the (φ, cos θ) sky — blue is inflow,
+red-brown is outflow. The patchy fountain (mixed in/out at every latitude) is the genuine angular
+structure that a sum-into-a-single-number budget hides.](assets/features/fluxmap_skymap.png)
 
-With a Makie backend loaded, [`fluxmapplot`](@ref) renders it directly (diverging blue-in/red-out
-colormap for `:vr`):
+With a Makie backend loaded, [`fluxmapplot`](@ref) renders it directly (perceptually-uniform diverging
+`:vik`, blue-in/red-out, symmetric range clipped at the `clip` percentile — default 0.95 — so a few
+extreme cells don't wash out the contrast):
 
 ```julia
 using CairoMakie
