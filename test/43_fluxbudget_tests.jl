@@ -49,6 +49,29 @@
         @test sin_ ≈ -ρ*v0*Vshell rtol=1e-12
     end
 
+    @testset "per-quantity conversion factors (magnitude oracle, data-free)" begin
+        # Lock the four carried/conv relationships against silent magnitude errors (e.g. a dropped
+        # cm/s→km/s factor) — the existing public test only checks signs/units. Build a uniform outflow
+        # shell with known per-cell mass, velocity, energy and metallicity, run each through
+        # _flux_quantity with the SAME conv expressions flux.jl uses, and assert physical magnitudes.
+        syr = 3.156e7; gMsol = 1.989e33                     # s/yr, g/Msol (ratio tests below are unit-free)
+        N = 400; v0_cms = 2.5e7; v0_kms = v0_cms/1e5        # 250 km/s outflow
+        dr_cm = 3.086e21                                    # 1 kpc shell width
+        m_g = fill(1.0e38/N, N); vn = fill(v0_cms, N); Z = 0.02; E = fill(7.0e50/N, N)  # erg per cell
+        conv_mass = syr/gMsol; conv_mom = syr/(gMsol*1e5); conv_met = syr/gMsol
+        mass = Mera._flux_quantity(vn, m_g,        dr_cm, conv_mass, :Msol_yr)
+        mom  = Mera._flux_quantity(vn, m_g .* vn,  dr_cm, conv_mom,  :Msol_km_s_yr)
+        met  = Mera._flux_quantity(vn, m_g .* Z,   dr_cm, conv_met,  :Msol_yr)
+        en   = Mera._flux_quantity(vn, E,          dr_cm, 1.0,       :erg_s)
+        # momentum/mass ratio = v⊥ in km/s (NOT cm/s) → catches a missing or extra 1e5 factor
+        @test isapprox(mom.out / mass.out, v0_kms; rtol=1e-12)
+        # metals/mass ratio = the metallicity (carried = m·Z, same conv as mass)
+        @test isapprox(met.out / mass.out, Z; rtol=1e-12)
+        # energy: conv = 1, so out = Σ(E·v⊥)/Δ exactly, and the unit is erg/s
+        @test isapprox(en.out, sum(E) * v0_cms / dr_cm; rtol=1e-12) && en.unit === :erg_s
+        @test mass.unit === :Msol_yr && mom.unit === :Msol_km_s_yr && met.unit === :Msol_yr
+    end
+
     @testset "axis resolver _flux_axis (data-free)" begin
         @test Mera._flux_axis(nothing, [0.0,0.0,2.0], [:bc], :kpc) ≈ [0.0,0.0,1.0]   # normalized
         @test Mera._flux_axis(nothing, [3.0,4.0,0.0], [:bc], :kpc) ≈ [0.6,0.8,0.0]
@@ -80,6 +103,26 @@
             # momentum: carried already ∝ v⊥ ⇒ both contributions ≥ 0 (ram-pressure flux)
             @test fb.rates.momentum.in >= 0 && fb.rates.momentum.out >= 0
             @test fb.rates.momentum.unit === :Msol_km_s_yr
+            # momentum/mass magnitude sanity through the REAL carried_and_conv path: the outflow
+            # ratio is a characteristic v⊥ and must land in a physical km/s range (a dropped 1e5
+            # factor would put it at ~1e5–1e8). Guards the public conversion, not just the kernel.
+            if fb.rates.mass.out > 0
+                @test 1.0 < fb.rates.momentum.out / fb.rates.mass.out < 1.0e4   # km/s, not cm/s
+            end
+        end
+
+        @testset "metals guard: fail loudly, not silently zero" begin
+            # spiral_clumps stores a passive scalar :var6 but NO :metallicity column, so :metals would
+            # silently return 0 — now it must throw a clear error instead.
+            @test !(:metallicity in gas.info.variable_list)
+            @test_throws ArgumentError fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0,
+                                                  range_unit=:kpc, quantities=[:metals], verbose=false)
+            # the same guard fires on the off-axis (tilted) path
+            @test_throws ArgumentError fluxbudget(gas; surface=:cylinder, radius=10.0, shell_width=2.0,
+                                                  range_unit=:kpc, axis=[1.0,1.0,1.0], quantities=[:metals], verbose=false)
+            # :mass/:momentum/:energy still work on this output (have rho/v/p)
+            @test fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                             quantities=[:mass, :energy], verbose=false) isa FluxBudgetType
         end
 
         @testset "end-to-end physics: Msol/yr matches an independent calculation" begin
