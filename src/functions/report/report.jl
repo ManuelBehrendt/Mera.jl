@@ -56,16 +56,20 @@ PhaseCard(kind::Symbol, xvar::Symbol, yvar::Symbol; weight::Symbol=:mass, nbins=
 
 struct ProfileCard <: ReportCard
     kind::Symbol; xvar::Symbol; yvar::Union{Symbol,Nothing}; weight::Symbol; nbins::Int
-    geometry::Symbol; unit::Symbol; xunit::Symbol; range_unit::Symbol; center::Vector{Any}; label::String
+    geometry::Symbol; unit::Symbol; xunit::Symbol; range_unit::Symbol; center::Vector{Any}
+    yscale::Symbol; label::String
 end
-"""    ProfileCard(kind, xvar, yvar=nothing; weight=:mass, nbins=40, geometry=:none, unit=:standard, xunit=:standard, range_unit=:standard, center=[:bc], label="")
+"""    ProfileCard(kind, xvar, yvar=nothing; weight=:mass, nbins=40, geometry=:none, unit=:standard, xunit=:standard, range_unit=:standard, center=[:bc], yscale=:auto, label="")
 
-A [`profile`](@ref) (1-D radial/other profile) card for a [`ReportPlan`](@ref)."""
+A [`profile`](@ref) (1-D radial/other profile) card for a [`ReportPlan`](@ref). For a disk galaxy use
+`xvar=:r_cylinder, geometry=:cylindrical` (radius in the disk plane); `:r_sphere, geometry=:spherical`
+suits a halo/spheroid. `yscale` sets the y-axis when plotted: `:log`/`:log10` (log₁₀), `:identity`
+(linear), or `:auto` (log when the profile is positive and spans ≳ 1.5 decades, e.g. density)."""
 ProfileCard(kind::Symbol, xvar::Symbol, yvar::Union{Symbol,Nothing}=nothing; weight::Symbol=:mass,
             nbins::Int=40, geometry::Symbol=:none, unit::Symbol=:standard, xunit::Symbol=:standard,
-            range_unit::Symbol=:standard, center=[:bc], label::String="") =
+            range_unit::Symbol=:standard, center=[:bc], yscale::Symbol=:auto, label::String="") =
     ProfileCard(_norm_dt(kind), xvar, yvar, weight, nbins, geometry, unit, xunit, range_unit,
-                collect(Any, center), label == "" ? "$(yvar === nothing ? xvar : yvar)_profile" : label)
+                collect(Any, center), yscale, label == "" ? "$(yvar === nothing ? xvar : yvar)_profile" : label)
 
 struct ScalarCard <: ReportCard
     kind::Symbol; var::Symbol; reduce::Symbol; unit::Symbol; fraction::Bool
@@ -141,7 +145,10 @@ card_label(c::ReportCard) = c.label
 
 # logical getvar symbols a card needs (fed to getvar_requirements to get the raw read set)
 function card_vars(c::ProjectionCard)
-    v = c.weight isa Symbol ? Symbol[c.var, c.weight] : Symbol[c.var]
+    # RT carries no mass: an RT projection auto-falls back to volume weighting (geometry, always
+    # present), so don't demand the mass weight for an :rt card — otherwise it is wrongly skipped.
+    needs_weight = c.weight isa Symbol && !(c.kind === :rt && c.weight === :mass)
+    v = needs_weight ? Symbol[c.var, c.weight] : Symbol[c.var]
     # face-on / edge-on orient the disk by angular momentum → also need the velocities
     (c.direction === :faceon || c.direction === :edgeon) && push!(v, :l)
     return v
@@ -152,10 +159,11 @@ card_vars(c::ProfileCard)    = vcat([c.xvar], c.yvar === nothing ? Symbol[] : [c
 card_vars(c::ScalarCard)     = c.relative_to === nothing ? [c.var] : [c.var, c.relative_to]
 card_vars(::SFRCard)         = [:mass, :birth]
 
-# which cards are computable for a given datatype. projection() is standalone only for
-# hydro/particles (gravity/RT projection needs hydro pairing; clumps has no projection method).
+# which cards are computable for a given datatype. projection() works standalone on hydro, particles
+# and RT (an RtDataType projects its photon fields, e.g. :Np1 — mass-weighting auto-falls back to
+# volume since RT carries no mass); gravity projection needs hydro pairing and clumps has no projection.
 _card_supported(c::ReportCard) = true
-_card_supported(c::ProjectionCard) = c.kind in (:hydro, :particles)
+_card_supported(c::ProjectionCard) = c.kind in (:hydro, :particles, :rt)
 card_has_mask(c::ReportCard) = false
 card_has_mask(c::ScalarCard) = c.mask !== nothing
 card_has_mask(c::SFRCard)    = c.mask !== nothing
@@ -192,10 +200,11 @@ function card_compute(c::ProjectionCard, data)
     p = projection(data, c.var, c.unit; res=c.res, direction=c.direction, center=c.center,
                    weighting=[c.weight, missing], range_unit=c.range_unit, verbose=false, show_progress=false)
     z = p.maps[c.var]
+    extent_kpc = collect(Float64, p.extent) .* data.scale.kpc   # projection extent is code length → kpc
     ReportResultCard(c.label, :map, c.kind, :projection,
-                     (z=Float64.(z), extent=copy(p.extent), pixsize=p.pixsize),
+                     (z=Float64.(z), extent=extent_kpc, pixsize=p.pixsize),
                      (var=c.var, unit=c.unit, weight=c.weight, res=c.res, direction=c.direction,
-                      vrange=_finite_extrema(z)))
+                      range_unit=c.range_unit, vrange=_finite_extrema(z)))
 end
 
 function card_compute(c::PhaseCard, data)
@@ -214,7 +223,7 @@ function card_compute(c::ProfileCard, data)
     ReportResultCard(c.label, :profile, c.kind, :profile,
                      (x=collect(res.x), y=collect(y), count=collect(res.count)),
                      (xvar=c.xvar, yvar=c.yvar, weight=c.weight, nbins=c.nbins, geometry=c.geometry,
-                      unit=c.unit, xunit=c.xunit, yrange=_finite_extrema(y)))
+                      unit=c.unit, xunit=c.xunit, yscale=c.yscale, yrange=_finite_extrema(y)))
 end
 
 function card_compute(c::ScalarCard, data)
@@ -262,13 +271,18 @@ function ReportPlan(output::Int; path::String=".", cards=ReportCard[], lmax::Int
     ReportPlan(output, path, _resolve_cards(cards), lmax, budget)
 end
 
-# default card set == the classic quicklook figures
+# default card set: the quicklook figures (gas Σ map, ρ–T phase, disk density profile) PLUS the
+# star-formation history — so report's default matches the star formation that quicklook headlines in
+# its census. The SFR card skips gracefully on an output without star particles. (Stellar/DM masses
+# live in the quicklook census; we don't add a particle-mass scalar here because a plain :particles
+# sum would conflate stars and dark matter on multi-family runs.)
 _default_cards() = ReportCard[
     ProjectionCard(:hydro, :sd; unit=:Msol_pc2, res=256, direction=:z, center=[:bc]),
     PhaseCard(:hydro, :rho, :T; weight=:mass, nbins=(80, 80), xscale=:log, yscale=:log,
               xunit=:nH, yunit=:K),
-    ProfileCard(:hydro, :r_sphere, :rho; weight=:mass, geometry=:spherical, nbins=40,
-                center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH),
+    ProfileCard(:hydro, :r_cylinder, :rho; weight=:mass, geometry=:cylindrical, nbins=40,
+                center=[:bc], range_unit=:kpc, xunit=:kpc, unit=:nH, yscale=:log),
+    SFRCard(:particles; tbinsize=50.0),
 ]
 _resolve_cards(cards::Symbol) = cards === :default ? _default_cards() :
     throw(ArgumentError("unknown cards preset :$cards (use :default or a Vector of cards)"))
@@ -277,8 +291,8 @@ _resolve_cards(cards::AbstractVector) = isempty(cards) ? _default_cards() : coll
 # =====================================================================================
 #  The engine: read each datatype once, compute every card, assemble the QuickReport
 # =====================================================================================
-"""    report(plan::ReportPlan; output=:ascii, verbose=true)
-    report(output::Int; path=".", cards=:default, output=:ascii, lmax=-1, budget=2_000_000, verbose=true)
+"""    report(plan::ReportPlan; output=:ascii, budget_s=nothing, verbose=true)
+    report(sim_output::Int; path=".", cards=:default, output=:ascii, lmax=-1, budget=2_000_000, budget_s=nothing, verbose=true)
 
 Run a composable first-look [`ReportPlan`] and return a [`QuickReport`]. Each datatype is read
 **once** with the minimal variable set unioned across its cards (via [`getvar_requirements`](@ref)).
@@ -419,7 +433,8 @@ function _report_summary(info, luse, sampled, ncards)
     (output=info.output, simcode=info.simcode, box_kpc=info.boxlen * sc.kpc,
      levelmin=info.levelmin, levelmax=info.levelmax, lmax_used=luse, sampled=sampled,
      finest_cell_pc=info.boxlen / 2.0^info.levelmax * sc.pc, ncpu=info.ncpu, ndim=info.ndim,
-     nvarh=info.nvarh, time_Myr=info.time * sc.Myr, redshift=cosmo ? (1.0 / info.aexp - 1.0) : nothing,
+     nvarh=info.nvarh, time_Myr=gettime(info, unit=:Myr),    # gettime: age-of-universe for cosmological
+     redshift=cosmo ? (1.0 / info.aexp - 1.0) : nothing,     # runs (info.time is conformal), else info.time
      ncards=ncards)
 end
 

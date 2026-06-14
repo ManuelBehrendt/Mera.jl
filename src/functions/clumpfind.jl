@@ -674,7 +674,7 @@ end
 The multi-scale hierarchy produced by a [`Dendrogram`](@ref) finder (`clumpfind(obj, …; hierarchy=true)`):
 `nodes` (a vector of [`StructureNode`](@ref), indexable by node `id`) and `roots` (top-level node ids,
 one per disconnected region). Leaves are the finest structures (density peaks pruned by `min_delta`);
-branches are the levels at which they merge. Accessors: [`roots`](@ref), `leaves`, `children`, `parent`."""
+branches are the levels at which they merge. Accessors: `roots`, `leaves`, `children`, `parent`."""
 struct StructureTree
     nodes::Vector{StructureNode}
     roots::Vector{Int}

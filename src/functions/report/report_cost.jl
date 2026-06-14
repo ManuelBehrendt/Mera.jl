@@ -140,7 +140,7 @@ _shrink(c::PhaseCard, ρ) = PhaseCard(c.kind, c.xvar, c.yvar; weight=c.weight,
     xscale=c.xscale, yscale=c.yscale, xunit=c.xunit, yunit=c.yunit, label=c.label)
 _shrink(c::ProfileCard, ρ) = ProfileCard(c.kind, c.xvar, c.yvar; weight=c.weight,
     nbins=max(8, round(Int, c.nbins / cbrt(ρ))), geometry=c.geometry, unit=c.unit, xunit=c.xunit,
-    range_unit=c.range_unit, center=c.center, label=c.label)
+    range_unit=c.range_unit, center=c.center, yscale=c.yscale, label=c.label)
 _shrink(c::ReportCard, ρ) = c
 
 """    downsample(plan::ReportPlan, target_s) -> ReportPlan

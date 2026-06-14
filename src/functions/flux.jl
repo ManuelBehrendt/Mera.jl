@@ -306,8 +306,10 @@ end
 
 """    fluxmapplot(fm::FluxMapType; kwargs...) -> Makie.Figure
 
-Render a [`fluxmap`](@ref) surface map as a heatmap — a diverging colormap centred at zero for
-`:vr` (blue inflow / red outflow), sequential for `:mdot`. Needs a Makie backend (`using CairoMakie`).
+Render a [`fluxmap`](@ref) surface map as a heatmap — a perceptually-uniform diverging colormap
+(`:vik`) centred at zero for `:vr` (blue inflow / red outflow), perceptually-uniform sequential
+(`:viridis`) for `:mdot`. Both are colorblind-safe. Pass `colormap=` to override. Needs a Makie
+backend (`using CairoMakie`).
 
 ```julia
 using CairoMakie

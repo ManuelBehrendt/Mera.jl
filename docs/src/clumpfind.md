@@ -20,6 +20,26 @@ cat   = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, lin
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4))
 ```
 
+## Choosing a finder
+
+Seven [`AbstractFinder`](@ref) algorithms plug into the same neighbour-index / statistics / boundedness
+/ catalog pipeline, so they share keywords and outputs and differ only in *how* cells are grouped.
+Start with [`ThresholdFoF`](@ref); reach for the others when its single threshold isn't enough.
+
+| Finder | Method | Reach for it when |
+|---|---|---|
+| [`ThresholdFoF`](@ref) | Friends-of-friends above a field threshold (Davis et al. 1985) | The default — fast, robust; isolated clumps over a clear background |
+| [`DensityWatershed`](@ref) | FoF connectivity, then watershed split at saddles (DENMAX/SUBFIND); `persistence` prunes shallow basins | Deblending **touching/overlapping** peaks inside one connected over-dense region |
+| [`Dendrogram`](@ref) | Multi-scale hierarchy (Rosolowsky & Leroy 2008); `min_delta` peak-to-saddle contrast | You want the **nested hierarchy** (leaves → branches → roots), not a flat catalog |
+| [`GraphSegFinder`](@ref) | Graph segmentation by internal-vs-boundary contrast (Felzenszwalb & Huttenlocher 2004) | Density varies smoothly and no single threshold separates structures |
+| [`HDBSCANFinder`](@ref) | Density-based hierarchical clustering, stable-cluster extraction | Clumps span a **wide density range** / variable background; you'd rather not pick a threshold |
+| [`PhaseSpaceFoF`](@ref) | 6-D position+velocity FoF (Rockstar-style; Behroozi et al. 2013) | **Kinematically** separating spatially-overlapping structures (streams, mergers, substructure) |
+| [`PersistenceFinder`](@ref) | Topological persistence / ToMATo (Chazal et al. 2013) | **Crowded** fields — rank peaks by prominence, robust to noise |
+
+All take the same shared keywords (`field`, `threshold`, `linking_length`, `backend`, gravitational
+boundedness, tidal truncation, …); see the **Density-adaptive finders** and **Phase-space & topology**
+sections below for the algorithm-specific parameters.
+
 ## 3D — cells or particles (friends-of-friends)
 
 Cells/particles with `field ≥ threshold` are linked into a clump when they lie within

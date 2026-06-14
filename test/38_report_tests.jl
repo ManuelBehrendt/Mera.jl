@@ -20,9 +20,20 @@
         @test sc.kind == :particles && Mera.card_result_kind(sc) == :scalar
         @test Mera.card_has_mask(ScalarCard(:hydro, :mass; mask=o->trues(1)))
         @test !Mera.card_has_mask(pc)
-        # default preset
+        # default preset: gas Σ map + ρ–T phase + disk density profile + SFR history
         plan = ReportPlan(1; cards=:default)
-        @test length(plan.cards) == 3 && all(c -> c isa ReportCard, plan.cards)
+        @test length(plan.cards) == 4 && all(c -> c isa ReportCard, plan.cards)
+    end
+
+    @testset "colormap policy (_seq_cmap, data-free)" begin
+        # the colorblind-safe per-quantity sequential map: temperature reads "hot" (:inferno),
+        # everything else uses the perceptually-uniform density/count standard (:viridis).
+        @test Mera._seq_cmap(:T) == :inferno
+        @test Mera._seq_cmap(:Temperature) == :inferno
+        @test Mera._seq_cmap(:temperature) == :inferno
+        @test Mera._seq_cmap(:rho) == :viridis
+        @test Mera._seq_cmap(:sd) == :viridis
+        @test Mera._seq_cmap(:vx) == :viridis
     end
 
     if !DATA_AVAILABLE
@@ -31,11 +42,13 @@
     else
         dc = DATASETS[:spiral_ugrid]
 
-        @testset "default plan == quicklook trio, runs end to end" begin
+        @testset "default plan (map+phase+profile+SFR), runs end to end" begin
+            # spiral_ugrid has particles, so the default SFR card computes (4 cards); on a particle-less
+            # output it would skip gracefully, leaving the 3 hydro cards.
             rep = report(dc.output; path=dc.path, output=:none, verbose=false)
             @test rep isa QuickReport
-            @test length(rep.cards) == 3
-            @test Set(c.kind for c in rep.cards) == Set([:map, :phase, :profile])
+            @test length(rep.cards) == 4
+            @test Set(c.kind for c in rep.cards) == Set([:map, :phase, :profile, :sfr])
             @test all(c -> haskey(c.meta, :cost_s), rep.cards)
             io = IOBuffer(); render(rep, :ascii; io=io)         # ascii renders without error
             @test occursin("Mera report", String(take!(io)))
@@ -44,8 +57,18 @@
         @testset "quicklook + quicklookplot (graceful without Makie)" begin
             q = quicklook(dc.output; path=dc.path, verbose=false)
             @test q isa QuickLookResult
-            @test q.maps !== nothing && q.phase !== nothing && q.profile !== nothing
-            @test haskey(q.maps.maps, :sd) && haskey(q.phase, :H) && haskey(q.profile, :density)
+            @test q.maps !== nothing && q.phase !== nothing && q.budget !== nothing
+            # maps holds Σ projected along each axis (z face-on + x,y edge-on)
+            @test haskey(q.maps.z.maps, :sd) && haskey(q.maps.x.maps, :sd) && haskey(q.maps.y.maps, :sd)
+            @test haskey(q.phase, :H)
+            # header particle census (summed from per-family counts; available header-only too)
+            @test q.summary.npart > 0 && q.summary.nstars > 0 && q.summary.ndm >= 0
+            @test q.summary.npart == q.summary.nstars + q.summary.ndm + q.summary.nsinks
+            # the global budget carries the gas mass and (spiral_ugrid has particles) stellar/DM mass + SFR
+            # (radial profiles live in the report system — see SFRCard / ProfileCard, not quicklook)
+            @test q.budget.gas_mass_Msol > 0
+            @test q.budget.has_particles && q.budget.stellar_mass_Msol > 0 && q.budget.n_stars > 0
+            @test q.budget.sfr10 >= 0.0 && q.budget.sfr_mean >= 0.0
 
             # a header-only result (no figure data) refuses to plot with a clear message
             qhdr = Mera.QuickLookResult(q.info, q.levelmin, q.levelmax, nothing, 0, false,
@@ -62,6 +85,63 @@
                 @test isfile(f) && filesize(f) > 0
                 rm(f, force=true)
             end
+        end
+
+        @testset "particle subsample (large-run mode)" begin
+            info = getinfo(dc.output, dc.path, verbose=false)
+            pf = getparticles(info, verbose=false, show_progress=false)                 # full read
+            ps = getparticles(info; subsample=0.5, verbose=false, show_progress=false)  # ~half the CPU files
+            @test 0 < length(ps.data) < length(pf.data)            # genuinely fewer particles read
+            @test getparticles(info; subsample=1.0, verbose=false, show_progress=false) |>
+                  p -> length(p.data) == length(pf.data)            # subsample=1.0 is a no-op (exact)
+            # quicklook scales the census up by 1/fraction and flags it approximate
+            qs = quicklook(dc.output; path=dc.path, particle_subsample=0.5, verbose=false)
+            @test qs.summary.particle_subsample == 0.5
+            @test qs.budget.has_particles && qs.summary.npart > 0
+            # the scaled total-particle estimate is within ~25% of the true count (CPU files ≈ equal N)
+            @test 0.75 < qs.summary.npart / length(pf.data) < 1.25
+        end
+
+        @testset "component & direction selection" begin
+            # one gas projection (compact) — only :z map, no :x/:y
+            q1 = quicklook(dc.output; path=dc.path, directions=[:z], verbose=false)
+            @test haskey(q1.maps, :z) && !haskey(q1.maps, :x) && !haskey(q1.maps, :y)
+            # only hydro: gas maps + phase, no particle maps
+            qh = quicklook(dc.output; path=dc.path, datatypes=[:hydro], verbose=false)
+            @test haskey(qh.maps, :z) && !haskey(qh.maps, :stars) && !haskey(qh.maps, :dm)
+            @test qh.phase !== nothing && qh.summary.gas_mass_Msol > 0
+            # only stars: skip the gas read entirely → stellar map only, no phase/gas
+            qs2 = quicklook(dc.output; path=dc.path, datatypes=[:stars], verbose=false)
+            @test haskey(qs2.maps, :stars) && !haskey(qs2.maps, :z)
+            @test qs2.phase === nothing && qs2.summary.gas_mass_Msol === nothing
+            @test qs2.budget.has_particles && qs2.summary.nstars > 0
+        end
+
+        @testset "coarse/sampled APPROXIMATE path + hydro-less output" begin
+            # Force the budgeted coarse read on an AMR output (spiral_clumps) by capping lmax below
+            # levelmax — exercises the sampled=true branch that the default (full-fitting) tests skip.
+            ac = DATASETS[:spiral_clumps]
+            info = getinfo(ac.output, ac.path, verbose=false)
+            if info.levelmax > info.levelmin
+                qf = quicklook(ac.output; path=ac.path, datatypes=[:hydro], verbose=false)        # full
+                qc = quicklook(ac.output; path=ac.path, datatypes=[:hydro],
+                               lmax=info.levelmin, verbose=false)                                   # coarse
+                @test qc.sampled == true && qc.lmax_used < info.levelmax
+                @test qf.sampled == false
+                @test qc.ncells < qf.ncells                                       # coarse read = fewer cells
+                # gas mass is an EXTENSIVE total → conserved even on the coarse read (de-refinement)
+                @test isapprox(qc.summary.gas_mass_Msol, qf.summary.gas_mass_Msol; rtol=1e-3)
+                @test qc.summary.sampled == true                                  # drives the APPROXIMATE labels
+            else
+                @test_skip "spiral_clumps is not AMR (levelmax == levelmin) — cannot force coarse read"
+            end
+
+            # Hydro-less guard: the gas block is gated on `want.hydro && info.hydro`, so a request that
+            # excludes hydro must skip gethydro entirely and never error. (`datatypes=[:stars]` exercises
+            # the want.hydro=false branch; the info.hydro=false branch mirrors the proven info.particles
+            # guard — every dataset in the suite has hydro, so it can't be exercised with real data here.)
+            qg = quicklook(ac.output; path=ac.path, datatypes=[:dm], verbose=false)   # skip hydro — must not throw
+            @test qg isa QuickLookResult && qg.summary.gas_mass_Msol === nothing
         end
 
         @testset "custom multi-datatype plan + minimal/needs-based read" begin
@@ -212,6 +292,28 @@
             bc = Dict(c.label => c for c in rc.cards)
             @test bc["cmass"].func == :scalar && bc["cmass"].data > 0
             @test bc["clump_mass_fraction"].func == :combined && bc["clump_mass_fraction"].data > 0
+        end
+
+        @testset "RT output: projection card + quicklook gas correctness (rt_stromgren)" begin
+            rt = DATASETS[:rt_stromgren]
+            if isdir(rt.path)
+                info = getinfo(rt.output, rt.path, verbose=false)
+                @test info.rt == true
+                # an RT projection card now computes (RtDataType projects its photon fields; mass-weight
+                # auto-falls back to volume). The engine reads :rt via getrt.
+                rr = report(ReportPlan(rt.output; path=rt.path, cards=[
+                    ProjectionCard(:rt, :Np1; res=32, label="Np1"),                    # photon density group 1
+                ]); output=:none, verbose=false)
+                np1 = first(c for c in rr.cards if c.label == "Np1")
+                @test np1.func == :projection && any(isfinite, np1.data.z) && maximum(np1.data.z) > 0
+                # quicklook reads gas correctly on an RT run (RT fields are in separate files, not nvarh):
+                # gas mass matches a direct hydro read.
+                q = quicklook(rt.output; path=rt.path, datatypes=[:hydro], verbose=false)
+                gas = gethydro(info, verbose=false, show_progress=false)
+                @test isapprox(q.summary.gas_mass_Msol, sum(getvar(gas, :mass, :Msol)); rtol=1e-6)
+            else
+                @test_skip "rt_stromgren not available — skipping RT report/quicklook test"
+            end
         end
     end
 end
