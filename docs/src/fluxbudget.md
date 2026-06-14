@@ -58,6 +58,43 @@ the result's `show` flags it `UNDER-RESOLVED`. Pick `Δr ≳ ` the local cell si
 `getvar(fluxshell(...), :cellsize, :kpc)` to check) and confirm the rate is insensitive to a modest
 change in `Δr`.
 
+## How the flux is computed (a total, not a mean)
+
+A rate is an **integrated total over the surface**, not an average of cell values. For every cell `i`
+in the thin shell, the carried quantity `qᵢ` is multiplied by its surface-normal velocity `v⊥,ᵢ`, and
+these are **summed** and divided by the shell width:
+
+```text
+flux  =  ( Σᵢ qᵢ · v⊥,ᵢ ) / Δr        # a sum over shell cells, then ÷ shell width
+in    =  Σ over cells with v⊥ < 0       out = Σ over cells with v⊥ ≥ 0       net = in + out
+```
+
+This is the discrete form of the surface integral `∮ q v⊥ dA`: summing the cell contributions over the
+shell *volume* and dividing by its thickness `Δr` recovers the *area* integral. So `Δr` is the
+**integration thickness, not a smoothing scale** — the result is (by construction) ≈ independent of `Δr`
+once `Δr ≳` a cell size; a wider shell just averages over more cells and so **lowers the sampling
+error**, at the cost of radial localization. The carried quantity per cell is
+
+| `quantity` | carried `qᵢ` | rate unit |
+|---|---|---|
+| `:mass`     | cell mass `mᵢ`              | M⊙/yr |
+| `:metals`   | `mᵢ · Zᵢ` (metallicity)    | M⊙/yr |
+| `:momentum` | `mᵢ · v⊥,ᵢ` (radial momentum) | M⊙·km/s/yr |
+| `:energy`   | `E_kin,ᵢ + E_therm,ᵢ`      | erg/s |
+
+There is **no** built-in mean/median/percentile reduction of the budget itself — it is a sum, because a
+flux *is* a total. The statistics live in three companions:
+
+* **uncertainty of the total** — every rate carries `err_in`/`err_out`/`err_net`, the **sampling
+  standard error of the cell-sum** (large when a few cells dominate); `bootstrap=N` adds percentile
+  **confidence intervals** `ci_*` (see below).
+* **angular breakdown** — [`fluxmap`](@ref) bins the shell by surface coordinate: `quantity=:vr` is the
+  **mass-weighted mean** `v⊥` per (φ, cosθ/z) bin (km/s), while `quantity=:mdot` is the **per-bin sum**
+  of the mass flux (M⊙/yr), whose total equals the budget's net.
+* **per-cell distribution** — [`fluxshell`](@ref) returns the shell cells themselves, so you can take
+  any statistic you like (`mean`/`median`/`std`/quantiles of `getvar(sh, :vr_sphere, :km_s)`, a phase
+  diagram, …).
+
 ## Phase decomposition
 
 Pass `phases` — a `NamedTuple` of shell→mask functions — for a per-phase breakdown in `.components`.
@@ -73,12 +110,64 @@ fb.components.hot.mass.out       # hot-gas outflow rate
 # cold.out + hot.out == fb.rates.mass.out   (conservation across the partition)
 ```
 
+## Derived diagnostics: mass loading, phase velocities, weighting
+
+The raw rates combine into the diagnostics outflow studies actually quote:
+
+**Mass-loading factor** `η = Ṁ_out / SFR` — pair `fluxbudget` with [`sfr_snapshot`](@ref):
+
+```julia
+fb  = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc)
+sfr = sfr_snapshot(getparticles(info)).sfr[1]      # current SFR [M⊙/yr]
+η   = fb.rates.mass.out / sfr                       # mass loading of the outflow (inflow: use .in)
+```
+
+**Phase outflow velocities** — with `phases`, the **mass-flux-weighted normal velocity** of each phase
+is `momentum.out / mass.out` (`Msol·km/s/yr ÷ Msol/yr = km/s`), because momentum carries an extra `v⊥`:
+
+```julia
+fb = fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
+                quantities=[:mass, :momentum],
+                phases=(cold=s->getvar(s,:T,:K).<1e4, hot=s->getvar(s,:T,:K).>=1e4))
+η_hot    = fb.components.hot.mass.out / sfr                          # per-phase loading
+v_hot    = fb.components.hot.momentum.out / fb.components.hot.mass.out   # flux-weighted v_out [km/s]
+```
+
+This cleanly separates the multiphase wind — a slow, heavy cold fountain from a fast, light hot wind:
+
+![Phase-split outflow from a `fluxbudget` with `phases=(cold,hot)`. *Left:* the cold gas carries most of
+the outflowing mass; *right:* but the hot phase leaves several times faster (flux-weighted
+`v_out = ṗ_out/Ṁ_out`) — the classic slow-fountain / fast-wind split.](assets/features/flux_phases.png)
+
+**Other weightings & statistics.** The budget is *mass-flux weighted* by construction (a flux is
+`Σ q·v⊥`), and `fluxmap(:vr)` gives the **mass-weighted mean** `v⊥` per sky bin. For a **volume-weighted**
+(or median, percentile, dispersion …) velocity, take the cells from [`fluxshell`](@ref) and reduce them
+yourself — these can differ a lot, so pick the one your science needs:
+
+```julia
+sh = fluxshell(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc)
+vr = getvar(sh, :vr_sphere, :km_s); m = getvar(sh, :mass, :Msol); V = getvar(sh, :volume, :kpc3)
+out = vr .> 0
+massw = sum(m[out].*vr[out]) / sum(m[out])          # mass-weighted mean outflow speed
+volw  = sum(V[out].*vr[out]) / sum(V[out])          # volume-weighted (filling-factor) speed
+using Statistics; med = median(vr[out]); p90 = quantile(vr[out], 0.9)
+```
+
 ## Off-axis surfaces (tilted cylinder, plane)
 
 `fluxbudget` is a 3-D measurement, so the surface can be tilted. A **sphere** is orientation-free. A
 **cylinder** can be aligned to an arbitrary `axis` — a 3-vector, or `:angmom` (the gas net angular
-momentum `L = Σ m·h`, e.g. a galaxy's spin) — and a **`:plane`** surface (normal to `axis`, at
-along-axis position `radius`) measures the flux crossing a plane (disk in-/outflow):
+momentum `L = Σ m·h`, e.g. a galaxy's spin) — and a **`:plane`** surface measures the flux crossing a
+plane normal to `axis` (disk in-/outflow):
+
+!!! note "What `radius`/`shell_width` mean per surface"
+    `radius` is the **location of the surface** and `shell_width` its thickness, but "location" depends
+    on the geometry: for `:sphere` it is the spherical radius `R` (shell `|r|∈[R±Δr/2]`); for `:cylinder`
+    the cylindrical radius (wall at `R_cyl∈[R±Δr/2]`); and for **`:plane` it is the signed along-axis
+    offset** — the plane sits at `axis·r = R` (slab `∈[R±Δr/2]`), so `radius=5, axis=[0,0,1]` is a plane
+    5 kpc *above* the midplane (use a negative `radius` for below, `radius=0` for the midplane). In each
+    case `v⊥` is the velocity component along the surface normal (radial for sphere/cylinder, along
+    `axis` for the plane).
 
 ```julia
 # disk-edge flux in the angular-momentum frame
@@ -86,6 +175,17 @@ fb = fluxbudget(gas; surface=:cylinder, radius=15.0, shell_width=2.0, range_unit
 # fountain/wind crossing a plane 5 kpc above the disk
 fb = fluxbudget(gas; surface=:plane, radius=5.0, shell_width=2.0, range_unit=:kpc, axis=[0.,0.,1.])
 ```
+
+The four surface choices, made concrete — each panel is the set of cells that `fluxbudget` integrates
+over for that geometry, shown edge-on over the same disk galaxy (use [`fluxshell`](@ref) to extract and
+visualize any of them):
+
+![fluxbudget surface geometries (edge-on). *Sphere:* a spherical shell at radius R (its edge-on
+projection fills a disk of radius R). *Cylinder:* the vertical wall at cylindrical radius R — the
+disk-edge surface. *Plane:* a slab normal to the axis at along-axis position R (here R = 10 kpc above
+the midplane) — for measuring a wind/fountain crossing a height. *Off-axis cylinder:* the same wall
+tilted to an arbitrary `axis` (here `[0.5,0,1]`; use `axis=:angmom` to align with the disk
+spin).](assets/features/flux_geometries.png)
 
 Off-axis selection is **cell-centre based** (vs the axis-aligned path's cell-volume intersection), so it
 differs by ~10–15 % for thin shells — prefer `shell_width` ≥ a couple of cells. A cylinder's vertical
@@ -118,6 +218,11 @@ projection(sh, :vr_sphere, :km_s; center=[:bc])       # inflow (blue) / outflow 
 # combine with a Makie backend to render the maps, or feed sh to profile/phase
 ```
 
+![`fluxshell` makes the measured surface explicit. *Left:* the full gas of a disk galaxy, edge-on.
+*Right:* the cells `fluxbudget` actually integrates over — the R = 10 kpc spherical shell (its edge-on
+projection is a disk of radius 10 kpc, brightest where the shell cuts the dense midplane). The budget is
+the flux of gas crossing exactly this surface.](assets/features/fluxshell.png)
+
 `fluxshell` and `fluxbudget` use the identical selection, so the visualization is guaranteed to show
 exactly the cells that entered the budget. `fluxshell` and `fluxmap` accept the same `axis`/`:angmom`
 and `surface=:plane` options as `fluxbudget`, so off-axis surfaces can be visualized too (the tilted
@@ -143,11 +248,14 @@ sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes t
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
 arrays; it is *not* `projection` — different axes, no LOS superposition.
 
-![Inflow/outflow surface map of a spherical shell at R = 12 kpc (`fluxmap`, `quantity=:vr`): the
-mass-weighted mean radial velocity over the (φ, cos θ) sky — blue is inflow, red outflow.](assets/features/fluxmap_skymap.png)
+![Inflow/outflow surface map of a spherical shell at R = 10 kpc around a disk galaxy (`fluxmap`,
+`quantity=:vr`): the mass-weighted mean radial velocity over the (φ, cos θ) sky — blue is inflow,
+red-brown is outflow. The patchy fountain (mixed in/out at every latitude) is the genuine angular
+structure that a sum-into-a-single-number budget hides.](assets/features/fluxmap_skymap.png)
 
-With a Makie backend loaded, [`fluxmapplot`](@ref) renders it directly (diverging blue-in/red-out
-colormap for `:vr`):
+With a Makie backend loaded, [`fluxmapplot`](@ref) renders it directly (perceptually-uniform diverging
+`:vik`, blue-in/red-out, symmetric range clipped at the `clip` percentile — default 0.95 — so a few
+extreme cells don't wash out the contrast):
 
 ```julia
 using CairoMakie
