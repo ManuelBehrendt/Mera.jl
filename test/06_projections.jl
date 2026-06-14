@@ -2254,4 +2254,78 @@ end
         end
     end
 
+    # ========================================================================
+    # Particle projection: parttypes selection + off-axis subregion clip
+    # ========================================================================
+    # Regression coverage for three silent-wrong-answer bugs fixed together:
+    #   (1) `parttypes` was accepted but never read -> projection(part, :sd,
+    #       parttypes=[:stars]) returned the byte-identical all-particle map.
+    #   (2) the off-axis particle clip cropped on ROTATED camera coords against
+    #       axis-aligned half-extents -> a tilted subregion silently lost mass.
+    #   (3) an unsupported `weighting` fell into a dead `mode==:sum` branch that
+    #       referenced an undefined `mode` and was swallowed into a NaN map.
+    @testset "Particle parttypes & off-axis subregion" begin
+        ds_p = DATASETS[:spiral_ugrid]
+        if !isdir(ds_p.path) || !ds_p.has_particles
+            @test_skip "spiral_ugrid particles not available"
+        else
+            part = getparticles(getinfo(ds_p.output, ds_p.path, verbose=false),
+                                 verbose=false, show_progress=false)
+            cols = propertynames(part.data.columns)
+            bl   = part.boxlen
+
+            @testset "parttypes splits stars vs DM (axis-aligned)" begin
+                m_all  = projection(part, :sd, verbose=false, show_progress=false)
+                m_star = projection(part, :sd, parttypes=[:stars], verbose=false, show_progress=false)
+                m_dm   = projection(part, :sd, parttypes=[:dm],    verbose=false, show_progress=false)
+                tall, tstar, tdm = sum(m_all.maps[:sd]), sum(m_star.maps[:sd]), sum(m_dm.maps[:sd])
+                # stars + DM partition the whole population (mass conserved)…
+                @test isapprox(tstar + tdm, tall; rtol=1e-6)
+                # …and each subset is a STRICT subset (the old bug returned the all map)
+                @test !isapprox(tstar, tall; rtol=1e-3)
+                @test !isapprox(tdm,   tall; rtol=1e-3)
+                @test tstar > 0 && tdm > 0
+                # cross-check the split totals against the raw particle masses. The :sd grid drops a
+                # few particles exactly on the box edge slightly differently per subset, so this
+                # agreement is at the histogram-discretization level (~1e-3), not bit-exact — that is
+                # still far tighter than the old bug, which gave tstar/tall == 1.
+                mass = getvar(part, :mass)
+                if :family in cols
+                    fam = part.data.columns.family
+                    @test isapprox(tstar / tall, sum(mass[fam .== 2]) / sum(mass); rtol=2e-3)
+                end
+                # [:stars,:dm] together == all (no filtering)
+                m_both = projection(part, :sd, parttypes=[:stars,:dm], verbose=false, show_progress=false)
+                @test isapprox(sum(m_both.maps[:sd]), tall; rtol=1e-10)
+            end
+
+            @testset "parttypes also honoured off-axis" begin
+                los = [0.0, 0.3, 0.95]
+                oa_all  = projection(part, :sd, los=los, verbose=false, show_progress=false)
+                oa_star = projection(part, :sd, los=los, parttypes=[:stars], verbose=false, show_progress=false)
+                oa_dm   = projection(part, :sd, los=los, parttypes=[:dm],    verbose=false, show_progress=false)
+                @test !isapprox(sum(oa_star.maps[:sd]), sum(oa_all.maps[:sd]); rtol=1e-3)
+                @test isapprox(sum(oa_star.maps[:sd]) + sum(oa_dm.maps[:sd]),
+                               sum(oa_all.maps[:sd]); rtol=1e-6)
+            end
+
+            @testset "off-axis subregion conserves mass (world-space clip)" begin
+                mass = getvar(part, :mass); x = getvar(part, :x); y = getvar(part, :y)
+                # tilted line of sight + a sub-box in x,y: every particle inside the WORLD box
+                # must land on the map (the old rotated-coord clip dropped corner particles).
+                incube = (x .>= 0.3bl) .& (x .<= 0.7bl) .& (y .>= 0.3bl) .& (y .<= 0.7bl)
+                m_enc  = sum(mass[incube])
+                oa = projection(part, :sd, los=[0.2, 0.0, 0.98],
+                                xrange=[0.3, 0.7], yrange=[0.3, 0.7],
+                                verbose=false, show_progress=false)
+                @test isapprox(sum(oa.maps[:sd]) * oa.pixsize^2, m_enc; rtol=1e-6)
+            end
+
+            @testset "unsupported weighting errors clearly (no silent NaN)" begin
+                @test_throws ArgumentError projection(part, :sd, weighting=:bogus,
+                                                      verbose=false, show_progress=false)
+            end
+        end
+    end
+
 end
