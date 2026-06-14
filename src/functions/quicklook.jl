@@ -37,6 +37,12 @@ struct QuickLookResult
     summary::NamedTuple
 end
 
+# meaningful, perceptually-uniform (colorblind-safe) sequential colormap per quantity: temperature
+# reads "hot" with :inferno; everything else uses :viridis (the density/count standard). Pure (returns
+# a Symbol, no plotting dependency) so the colormap policy is unit-testable without a Makie backend;
+# the Makie extension calls Mera._seq_cmap for the report map cards.
+_seq_cmap(var) = var in (:T, :Temperature, :temperature) ? :inferno : :viridis
+
 # choose the level to read so the predicted leaf-cell count stays within `budget`;
 # full resolution if it already fits, else the coarse levels (levelmin .. levelmin+2).
 function _quicklook_level(info, budget::Int)
@@ -44,6 +50,21 @@ function _quicklook_level(info, budget::Int)
     predicted_full = info.grid_info.ngrid_current * twotond     # rough upper bound on leaf cells
     predicted_full <= budget && return info.levelmax, false      # small output → read it all (exact)
     return clamp(info.levelmin + 2, info.levelmin, info.levelmax), true   # coarse, complete, fast
+end
+
+# star / dark-matter selection masks for a particle object. The NEW RAMSES particle format carries a
+# `family` column — the canonical type (1=DM, 2=star, 3=cloud/sink, 4=debris, 5=other) — so cloud,
+# debris, sinks and tracers are not misbucketed; use it when present. The LEGACY format (pversion=0)
+# has no family column, so fall back to the birth convention (birth≠0 ⇒ star, birth==0 ⇒ DM).
+function _star_dm_masks(p)
+    cols = propertynames(getfield(p, :data).columns)
+    if :family in cols
+        fam = getvar(p, :family)
+        return (fam .== 2, fam .== 1)
+    else
+        b = getvar(p, :birth)
+        return (b .!= 0.0, b .== 0.0)
+    end
 end
 
 # global snapshot budget — gas mass (from hydro) plus, when a particle object `p` is given, the
@@ -55,11 +76,11 @@ function _quicklook_budget(gas_mass_Msol, p; pscale::Real=1.0)
     base = (gas_mass_Msol=gas_mass_Msol, stellar_mass_Msol=nothing, dm_mass_Msol=nothing,
             n_stars=0, n_dm=0, sfr10=nothing, sfr100=nothing, sfr_mean=nothing, has_particles=false)
     p === nothing && return base
-    m = getvar(p, :mass, :Msol); star = getvar(p, :birth) .!= 0.0
+    m = getvar(p, :mass, :Msol); star, dm = _star_dm_masks(p)
     sm = sfr_snapshot(p; windows=[10.0, 100.0])
     return (gas_mass_Msol=gas_mass_Msol,
-            stellar_mass_Msol=sum(m[star])*pscale, dm_mass_Msol=sum(m[.!star])*pscale,
-            n_stars=round(Int, count(star)*pscale), n_dm=round(Int, count(.!star)*pscale),
+            stellar_mass_Msol=sum(m[star])*pscale, dm_mass_Msol=sum(m[dm])*pscale,
+            n_stars=round(Int, count(star)*pscale), n_dm=round(Int, count(dm)*pscale),
             sfr10=sm.sfr[1]*pscale, sfr100=sm.sfr[2]*pscale, sfr_mean=sm.sfr_mean*pscale,
             has_particles=true)
 end
@@ -115,10 +136,14 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     # `grid_info.ngrid_current` is not the leaf-cell total — so cells are reported from the read.)
     pf = info.part_info; hp = info.particles
     nstars = hp ? pf.Nstars : 0; ndm = hp ? pf.Ndm : 0; nsinks = hp ? pf.Nsinks : 0
+    # physical time: for a cosmological run info.time is CONFORMAL time (negative, not an age), so use
+    # gettime, which returns the age of the universe at this snapshot (Friedmann table); for a
+    # non-cosmological run gettime reduces to info.time scaled to Myr.
+    time_Myr = gettime(info, unit=:Myr)
     facts = (output=output, simcode=info.simcode, box_kpc=info.boxlen*sc.kpc,
              levelmin=info.levelmin, levelmax=info.levelmax, finest_cell_pc=finest_pc,
              ncpu=info.ncpu, ndim=info.ndim, nvarh=info.nvarh,
-             time_Myr=info.time*sc.Myr, redshift=z,
+             time_Myr=time_Myr, redshift=z,
              npart = nstars + ndm + nsinks, nstars = nstars, ndm = ndm, nsinks = nsinks)
 
     if !read
@@ -139,7 +164,9 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     gas_mass = nothing; nH_range = nothing; T_range = nothing
 
     # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
-    if want.hydro
+    # Guard on info.hydro too (mirrors the info.particles guard below): a gravity-/particle-/clumps-only
+    # output has no hydro files, so gethydro would throw — skip the gas block and still emit a dashboard.
+    if want.hydro && info.hydro
         luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
                         (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
         qlvars = getvar_requirements(:hydro, [:sd, :T, :rho])      # read only the needed vars (else full)
@@ -170,15 +197,15 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     end
     bud = _quicklook_budget(gas_mass, parts; pscale=pscale)
     if parts !== nothing
-        bsel = getvar(parts, :birth) .!= 0.0                       # stars: birth ≠ 0 ; DM: birth == 0
+        star_mask, dm_mask = _star_dm_masks(parts)                 # family-aware (legacy: birth≠0 / ==0)
         function ppj(mask)                                          # face-on Σ; scale up if subsampled
             pm = projection(parts, :sd, :Msol_pc2; direction=:z, center=[:bc], res=res,
                             mask=mask, verbose=false, show_progress=false)
             psub < 1.0 && (pm.maps[:sd] .*= pscale)
             pm
         end
-        want.stars && any(bsel)   && (maps = merge(maps, (stars = ppj(bsel),)))    # stellar surface density
-        want.dm    && any(.!bsel) && (maps = merge(maps, (dm    = ppj(.!bsel),)))  # dark-matter surface density
+        want.stars && any(star_mask) && (maps = merge(maps, (stars = ppj(star_mask),))) # stellar surface density
+        want.dm    && any(dm_mask)   && (maps = merge(maps, (dm    = ppj(dm_mask),)))    # dark-matter surface density
     end
 
     # particle counts: prefer the budget's exact read counts (header part_info is not always populated)

@@ -423,7 +423,8 @@ function _report_summary(info, luse, sampled, ncards)
     (output=info.output, simcode=info.simcode, box_kpc=info.boxlen * sc.kpc,
      levelmin=info.levelmin, levelmax=info.levelmax, lmax_used=luse, sampled=sampled,
      finest_cell_pc=info.boxlen / 2.0^info.levelmax * sc.pc, ncpu=info.ncpu, ndim=info.ndim,
-     nvarh=info.nvarh, time_Myr=info.time * sc.Myr, redshift=cosmo ? (1.0 / info.aexp - 1.0) : nothing,
+     nvarh=info.nvarh, time_Myr=gettime(info, unit=:Myr),    # gettime: age-of-universe for cosmological
+     redshift=cosmo ? (1.0 / info.aexp - 1.0) : nothing,     # runs (info.time is conformal), else info.time
      ncards=ncards)
 end
 
