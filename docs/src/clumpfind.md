@@ -68,8 +68,22 @@ fig = clumpplot(cat; background=bg)        # marker size ∝ mass, colour = log�
 ```
 
 ![Clumps found by `clumpfind` ([`clumpplot`](@ref): marker size ∝ mass, colour = log₁₀ mass) overlaid on
-the gas surface density Σ — the detected clump centres-of-mass sit on the density peaks along the disk
-and arms.](assets/features/clump_catalog.png)
+the gas surface density Σ. The markers sit on the over-dense peaks above the density threshold; fainter
+arm and inter-arm gas *below* the threshold is intentionally not flagged — clump finding is always
+threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
+
+!!! note "Not every visible peak is a clump — by design"
+    A clump is what the finder + threshold define. Two effects are worth knowing:
+
+    * **Threshold selection.** Peaks fainter than `threshold` are not selected at all, and a single
+      friends-of-friends threshold can *merge* a whole connected over-dense region (e.g. the dense disk)
+      into one clump while leaving fainter arms out. To separate touching peaks, use
+      [`DensityWatershed`](@ref) (split at saddles, with `persistence` to prune shallow basins) rather
+      than a higher [`ThresholdFoF`](@ref) threshold.
+    * **Boundedness.** Detected over-densities are not necessarily self-gravitating. Add
+      `boundedness=true` to get each clump's virial ratio `alpha_vir = 2·e_kin/|e_grav|` and a `bound`
+      flag, and `bound_only=true` to keep only self-bound clumps. (On a coarse box, many "clumps" are
+      turbulence-supported, `alpha_vir ≫ 1`, and would be dropped by `bound_only`.)
 
 !!! warning "`Dendrogram` name clash with Makie"
     `Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
