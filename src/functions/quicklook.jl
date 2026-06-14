@@ -87,6 +87,7 @@ end
 
 """
     quicklook(output; path=".", budget=2_000_000, read=true, res=256, lmax=nothing,
+              particle_subsample=1.0, datatypes=[:hydro,:stars,:dm], directions=[:z,:x,:y],
               verbose=true) -> QuickLookResult
 
 **A first impression of a simulation output in seconds.** Reads the header for instant facts (box,

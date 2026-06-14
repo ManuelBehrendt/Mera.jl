@@ -20,9 +20,9 @@
         @test sc.kind == :particles && Mera.card_result_kind(sc) == :scalar
         @test Mera.card_has_mask(ScalarCard(:hydro, :mass; mask=o->trues(1)))
         @test !Mera.card_has_mask(pc)
-        # default preset
+        # default preset: gas Σ map + ρ–T phase + disk density profile + SFR history
         plan = ReportPlan(1; cards=:default)
-        @test length(plan.cards) == 3 && all(c -> c isa ReportCard, plan.cards)
+        @test length(plan.cards) == 4 && all(c -> c isa ReportCard, plan.cards)
     end
 
     @testset "colormap policy (_seq_cmap, data-free)" begin
@@ -42,11 +42,13 @@
     else
         dc = DATASETS[:spiral_ugrid]
 
-        @testset "default plan == quicklook trio, runs end to end" begin
+        @testset "default plan (map+phase+profile+SFR), runs end to end" begin
+            # spiral_ugrid has particles, so the default SFR card computes (4 cards); on a particle-less
+            # output it would skip gracefully, leaving the 3 hydro cards.
             rep = report(dc.output; path=dc.path, output=:none, verbose=false)
             @test rep isa QuickReport
-            @test length(rep.cards) == 3
-            @test Set(c.kind for c in rep.cards) == Set([:map, :phase, :profile])
+            @test length(rep.cards) == 4
+            @test Set(c.kind for c in rep.cards) == Set([:map, :phase, :profile, :sfr])
             @test all(c -> haskey(c.meta, :cost_s), rep.cards)
             io = IOBuffer(); render(rep, :ascii; io=io)         # ascii renders without error
             @test occursin("Mera report", String(take!(io)))
@@ -290,6 +292,28 @@
             bc = Dict(c.label => c for c in rc.cards)
             @test bc["cmass"].func == :scalar && bc["cmass"].data > 0
             @test bc["clump_mass_fraction"].func == :combined && bc["clump_mass_fraction"].data > 0
+        end
+
+        @testset "RT output: projection card + quicklook gas correctness (rt_stromgren)" begin
+            rt = DATASETS[:rt_stromgren]
+            if isdir(rt.path)
+                info = getinfo(rt.output, rt.path, verbose=false)
+                @test info.rt == true
+                # an RT projection card now computes (RtDataType projects its photon fields; mass-weight
+                # auto-falls back to volume). The engine reads :rt via getrt.
+                rr = report(ReportPlan(rt.output; path=rt.path, cards=[
+                    ProjectionCard(:rt, :Np1; res=32, label="Np1"),                    # photon density group 1
+                ]); output=:none, verbose=false)
+                np1 = first(c for c in rr.cards if c.label == "Np1")
+                @test np1.func == :projection && any(isfinite, np1.data.z) && maximum(np1.data.z) > 0
+                # quicklook reads gas correctly on an RT run (RT fields are in separate files, not nvarh):
+                # gas mass matches a direct hydro read.
+                q = quicklook(rt.output; path=rt.path, datatypes=[:hydro], verbose=false)
+                gas = gethydro(info, verbose=false, show_progress=false)
+                @test isapprox(q.summary.gas_mass_Msol, sum(getvar(gas, :mass, :Msol)); rtol=1e-6)
+            else
+                @test_skip "rt_stromgren not available — skipping RT report/quicklook test"
+            end
         end
     end
 end
