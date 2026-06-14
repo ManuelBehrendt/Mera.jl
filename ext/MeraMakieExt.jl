@@ -83,15 +83,18 @@ _drawable(r::Mera.QuickReport) =
     [c for c in r.cards if !(c.func in (:skipped, :error)) && c.kind !== :scalar]
 
 # render(report, :plot; ncols=2, size=…) → Figure
-function Mera._plot_report(r::Mera.QuickReport; ncols::Int=2, size=(560 * min(ncols, 2), 460), kwargs...)
+function Mera._plot_report(r::Mera.QuickReport; ncols::Int=2, size=nothing, kwargs...)
     cards = _drawable(r)
     isempty(cards) && error("render(report, :plot): no drawable cards (only scalars / skipped / errored).")
     nrows = cld(length(cards), ncols)
-    fig = Makie.Figure(; size=(size[1], 460 * nrows))
+    cw, ch = 380, 330                                            # compact per-cell width/height
+    sz = size === nothing ? (ncols * cw, nrows * ch) : size      # adapt to the card count
+    fig = Makie.Figure(; size=sz, figure_padding=8)
     for (i, c) in enumerate(cards)
         row = cld(i, ncols); col = mod1(i, ncols)
         _draw_card!(fig[row, col], c)
     end
+    Makie.rowgap!(fig.layout, 6); Makie.colgap!(fig.layout, 6)   # pack cells tightly
     return fig
 end
 

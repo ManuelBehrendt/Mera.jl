@@ -265,10 +265,12 @@ end
 """
     quicklookplot(q::QuickLookResult; kwargs...) -> Makie.Figure
 
-Render a [`QuickLookResult`](@ref) as a three-panel figure — the face-on surface-density map, the
-ρ–T phase diagram, and the global mass budget (gas / stars / dark matter) annotated with the current
-SFR. Needs a Makie backend loaded (`using CairoMakie` or `GLMakie`); the figure is returned, so save
-it with `Makie.save("ql.png", fig)`.
+Render a [`QuickLookResult`](@ref) as a multi-panel dashboard that adapts to what was read: gas
+surface density along each requested axis (`:z` face-on, `:x`/`:y` edge-on), face-on stellar and
+dark-matter surface density when particles are present, the ρ–T phase diagram, and a text census
+(cells, particles, masses, SFR, ranges). Panels fill a tight 3-column grid; colormaps are the
+colorblind-safe viridis/inferno. Needs a Makie backend loaded (`using CairoMakie` or `GLMakie`); the
+figure is returned, so save it with `Makie.save("ql.png", fig)`.
 
 ```julia
 using CairoMakie
