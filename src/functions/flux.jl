@@ -134,6 +134,10 @@ function fluxbudget(obj::HydroDataType; surface::Symbol=:sphere, radius::Real, s
                     bootstrap::Int=0, bootstrap_seed::Int=20240601, ci_level::Float64=0.95,
                     verbose::Bool=true)
     R = Float64(radius); dr = Float64(shell_width); info = obj.info
+    # the surface-normal velocity is the raw (peculiar) gas velocity; on a cosmological run it omits the
+    # Hubble flow H(a)·r, which at large radius can dominate v⊥ and even flip the inflow/outflow sign.
+    verbose && iscosmological(info) && @warn "fluxbudget: cosmological run — v⊥ is the peculiar " *
+        "velocity only; the Hubble flow H(a)·r is NOT included, so in/out near turnaround may be wrong."
     tilted = surface === :plane || (surface === :cylinder && axis !== nothing && axis !== :z)
     surface in (:sphere, :cylinder, :plane) ||
         throw(ArgumentError("surface must be :sphere, :cylinder or :plane (got :$surface)"))
@@ -326,9 +330,25 @@ _centervec(center, info, range_unit) =
     (center == [:bc] || center == [:boxcenter]) ? [0.5, 0.5, 0.5] :
     [c === :bc ? 0.5 : Float64(c) for c in center]
 
+# validate that the requested quantities are computable on this output — fail loudly rather than
+# silently returning zero (metals) or throwing a cryptic IndexedTables error deep in getvar (energy).
+function _flux_validate_quantities(cols, quantities)
+    if :metals in quantities && !(:metallicity in cols)
+        throw(ArgumentError("flux :metals needs a :metallicity column, which this output does not have " *
+            "(Mera does not auto-rename passive scalars, so a metal scalar stored as e.g. :var6 is NOT " *
+            "treated as metallicity). Alias your metal field to :metallicity before calling, or drop " *
+            ":metals from `quantities`. (Returning zero silently would be a wrong answer.)"))
+    end
+    if :energy in quantities && !(:p in cols)
+        throw(ArgumentError("flux :energy needs the thermal energy from pressure (:p), absent on this " *
+            "isothermal/pressureless output. Drop :energy from `quantities`, or use a run with pressure."))
+    end
+end
+
 # compute the rate NamedTuple (+ per-phase components) over a selected shell
 function _flux_compute(shell, vn_sym, dr, center, range_unit, quantities, phases; nboot=0, rng=nothing, ci_level=0.95)
     info = shell.info
+    _flux_validate_quantities(propertynames(getfield(shell, :data).columns), quantities)
     dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)         # Δr in cm
     g_per_Msol = getunit(info, :g) / getunit(info, :Msol)
     s_per_yr = getunit(info, :s) / getunit(info, :yr)
@@ -430,6 +450,7 @@ function _flux_tilted(obj, surface, nhat, R, dr, height, quantities, center, ran
     idx = findall(mask)
     dr_cm = (dr / _funit(info, range_unit)) * getunit(info, :cm)
     g_per_Msol = getunit(info, :g)/getunit(info, :Msol); s_per_yr = getunit(info, :s)/getunit(info, :yr)
+    _flux_validate_quantities(propertynames(getfield(obj, :data).columns), quantities)
     m_g = getvar(obj, :mass, :g)
     haveZ = :metallicity in propertynames(getfield(obj, :data).columns)
     Zarr = haveZ ? getvar(obj, :metallicity) : zeros(length(m_g))
