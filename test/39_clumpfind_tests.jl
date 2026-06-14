@@ -201,5 +201,67 @@
             # n_subclumps surfaces in the columnar table
             @test haskey(clumptable(ct), :n_subclumps)
         end
+
+        @testset "all 7 finders via the public clumpfind(obj, finder) API" begin
+            thr = maximum(getvar(gas, :rho, :nH)) / 10
+            ll = 0.5
+            finders = (
+                ThresholdFoF(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll),
+                DensityWatershed(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll, persistence=0.0),
+                Mera.Dendrogram(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll, min_delta=0.0),
+                GraphSegFinder(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll, scale=1.0),
+                HDBSCANFinder(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll, min_cluster_size=5),
+                PhaseSpaceFoF(:rho; threshold=thr, threshold_unit=:nH, linking_length_pos=ll, linking_length_vel=100.0),
+                PersistenceFinder(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll, persistence=0.0),
+            )
+            for fdr in finders
+                cat = clumpfind(gas, fdr)                                     # public finder-object API
+                @test cat isa ClumpCatalog
+                @test cat.meta.finder == nameof(typeof(fdr))                  # the finder actually dispatched
+                @test cat.meta.dim == Symbol("3D")
+                @test all(cl.mass > 0 && cl.n_members >= 1 for cl in cat)
+            end
+            # Dendrogram hierarchy=true returns the merger tree
+            dcat = clumpfind(gas, Mera.Dendrogram(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll); hierarchy=true)
+            @test dcat.tree isa StructureTree
+
+            # boundedness options through the public API (previously only private kernels tested)
+            ftf = ThresholdFoF(:rho; threshold=thr, threshold_unit=:nH, linking_length=ll)
+            @test clumpfind(gas, ftf; boundedness=true, egrav=:tree).nclumps >= 0          # Barnes-Hut path
+            @test clumpfind(gas, ftf; boundedness=true, softening=0.05).nclumps >= 0       # softened kernel
+            cu = clumpfind(gas, ftf; iterative_unbinding=true)                              # SUBFIND unbinding
+            @test cu isa ClumpCatalog && all(haskey(c, :bound) for c in cu)
+        end
+
+        @testset "validation guards fail loudly (not silently)" begin
+            thr = maximum(getvar(gas, :rho, :nH)) / 10
+            f = ThresholdFoF(:rho; threshold=thr, threshold_unit=:nH, linking_length=0.5)
+            # tidal without substructure → clear error (was an opaque merge(nothing,...) MethodError)
+            @test_throws ArgumentError clumpfind(gas, f; tidal=true)
+            @test_throws ArgumentError clumpfind(gas, f; tidal=:tensor)        # also needs gravity + substructure
+            # PhaseSpaceFoF as a deblender → rejected (deblending is position-only)
+            @test_throws ArgumentError clumpfind(gas, f; substructure=false,
+                deblend=PhaseSpaceFoF(:rho; threshold=thr, threshold_unit=:nH, linking_length_pos=0.5, linking_length_vel=100.0))
+            # field=:rho on particles → targeted hint, not a cryptic getvar error
+            p = getparticles(info, verbose=false, show_progress=false)
+            @test_throws ArgumentError clumpfind(p, :rho; threshold=1.0, linking_length=0.5)
+        end
+
+        @testset "clumpplot / massfunctionplot recipes (graceful without Makie)" begin
+            thr = maximum(getvar(gas, :rho, :nH)) / 1000
+            cat = clumpfind(gas, :rho; threshold=thr, threshold_unit=:nH, linking_length=2.0, min_members=3)
+            @test cat.nclumps > 0
+            if Base.find_package("CairoMakie") === nothing
+                @test_throws Exception clumpplot(cat)                          # friendly "load a backend" error
+                @test_throws Exception massfunctionplot(cat)
+            else
+                @eval using CairoMakie
+                f1 = clumpplot(cat); @test occursin("Figure", string(typeof(f1)))
+                f2 = massfunctionplot(cat; cumulative=true); @test occursin("Figure", string(typeof(f2)))
+            end
+            # empty catalog refuses to plot with a clear message
+            empty = clumpfind(gas, :rho; threshold=1e30, threshold_unit=:nH, linking_length=0.5)
+            @test_throws Exception clumpplot(empty)
+        end
     end
 end
