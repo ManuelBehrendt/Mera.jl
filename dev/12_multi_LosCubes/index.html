@@ -3,19 +3,11 @@
 Pkg.activate(expanduser(&quot;~/Documents/codes/github/Mera.jl&quot;))   # adjust to your Mera.jl
 using Mera, CairoMakie
 CairoMakie.activate!()
-println(&quot;threads = &quot;, Threads.nthreads())</code></pre><pre><code class="nohighlight hljs">  Activating 
-
+println(&quot;threads = &quot;, Threads.nthreads())</code></pre><pre><code class="nohighlight hljs">  Activating
 threads = 4
-
 project at `~/Documents/codes/github/Mera.jl`</code></pre><pre><code class="language-julia hljs">BASE = &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;   # &lt;-- change me
 info = getinfo(100, joinpath(BASE, &quot;spiral_clumps&quot;), verbose=false)
-gas  = gethydro(info, verbose=false, show_progress=false)</code></pre><pre><code class="nohighlight hljs">  0.794820 seconds (3.91 M allocations: 303.291 MiB, 1.40% gc time, 98.84% compilation time)
-
-
-
-
-
-HydroDataType(Table with 590311 rows, 10 columns:
+gas  = gethydro(info, verbose=false, show_progress=false)</code></pre><pre><code class="nohighlight hljs">  0.794820 seconds (3.91 M allocations: 303.291 MiB, 1.40% gc time, 98.84% compilation time)</code></pre><pre><code class="nohighlight hljs">HydroDataType(Table with 590311 rows, 10 columns:
 Columns:
 #   colname  type
 ────────────────────
@@ -34,44 +26,33 @@ fig = Figure(size=(560,470))
 ax = Axis(fig[1,1], aspect=DataAspect(), title=&quot;v_los (edge-on)&quot;, xlabel=&quot;x&#39; [kpc]&quot;, ylabel=&quot;y&#39; [kpc]&quot;)
 hm = heatmap!(ax, range(e[1],e[2],length=size(pv.maps[:vlos],1)), range(e[3],e[4],length=size(pv.maps[:vlos],2)), pv.maps[:vlos], colormap=:balance, colorrange=(-vmax,vmax))
 Colorbar(fig[1,2], hm, label=&quot;v_los [km/s]&quot;); fig</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:07:13.593
-
-
-
 center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
-
-Selected var(s)=(:vlos, :sd) 
-
-
+Selected var(s)=(:vlos, :sd)
 Weighting      = :mass
-Off-axis LOS   = 
-
+Off-axis LOS   =
 [0.9999, 0.0003, -0.0143]  (binning=:overlap)
-Effective resolution: 334^2  →  map size: 351 x 353</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_4_4.png" alt="png"/></p><pre><code class="language-julia hljs">ps = projection(gas, :σlos, :km_s, direction=:edgeon, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
+Effective resolution: 334^2  →  map size: 351 x 353</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_5_5.png" alt/></p><pre><code class="language-julia hljs">ps = projection(gas, :σlos, :km_s, direction=:edgeon, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc])
 e = ps.extent .* gas.scale.kpc; A = replace(ps.maps[:σlos], 0.0=&gt;NaN)
 fig = Figure(size=(560,470)); ax = Axis(fig[1,1], aspect=DataAspect(), title=&quot;σ_los (edge-on)&quot;)
 hm = heatmap!(ax, range(e[1],e[2],length=size(A,1)), range(e[3],e[4],length=size(A,2)), A, colormap=:viridis, nan_color=:black)
 Colorbar(fig[1,2], hm, label=&quot;σ_los [km/s]&quot;); fig</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:07:29.084
-
 center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
-
-Selected var(s)=(:σlos, :sd) 
+Selected var(s)=(:σlos, :sd)
 Weighting      = :mass
 Off-axis LOS   = [0.9999, 0.0003, -0.0143]  (binning=:overlap)
-Effective resolution: 334^2  →  map size: 351 x 353</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_5_1.png" alt="png"/></p><h2 id="2.-Position–velocity-(PV)-diagram"><a class="docs-heading-anchor" href="#2.-Position–velocity-(PV)-diagram">2. Position–velocity (PV) diagram</a><a id="2.-Position–velocity-(PV)-diagram-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Position–velocity-(PV)-diagram" title="Permalink"></a></h2><p><code>position_velocity</code> bins into (in-plane offset, v_los) — the classic rotation-curve diagnostic.</p><pre><code class="language-julia hljs">pvd = position_velocity(gas; direction=:edgeon, center=[:bc], range_unit=:kpc, offset_unit=:kpc, nbins=200, verbose=false)
+Effective resolution: 334^2  →  map size: 351 x 353</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_6_2.png" alt/></p><h2 id="2.-Position–velocity-(PV)-diagram"><a class="docs-heading-anchor" href="#2.-Position–velocity-(PV)-diagram">2. Position–velocity (PV) diagram</a><a id="2.-Position–velocity-(PV)-diagram-1"></a><a class="docs-heading-anchor-permalink" href="#2.-Position–velocity-(PV)-diagram" title="Permalink"></a></h2><p><code>position_velocity</code> bins into (in-plane offset, v_los) — the classic rotation-curve diagnostic.</p><pre><code class="language-julia hljs">pvd = position_velocity(gas; direction=:edgeon, center=[:bc], range_unit=:kpc, offset_unit=:kpc, nbins=200, verbose=false)
 oc = (pvd.offset[1:end-1].+pvd.offset[2:end])./2; vc = (pvd.velocity[1:end-1].+pvd.velocity[2:end])./2
 P = log10.(replace(pvd.pv, 0.0=&gt;NaN))
 fig = Figure(size=(620,470)); ax = Axis(fig[1,1], title=&quot;position–velocity&quot;, xlabel=&quot;offset [kpc]&quot;, ylabel=&quot;v_los [km/s]&quot;)
-hm = heatmap!(ax, oc, vc, P, colormap=:magma, nan_color=:black); Colorbar(fig[1,2], hm, label=&quot;log₁₀ mass&quot;); fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_7_0.png" alt="png"/></p><h2 id="3.-Velocity-channel-cube-—-the-per-pixel-spectrum"><a class="docs-heading-anchor" href="#3.-Velocity-channel-cube-—-the-per-pixel-spectrum">3. Velocity-channel cube — the per-pixel spectrum</a><a id="3.-Velocity-channel-cube-—-the-per-pixel-spectrum-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Velocity-channel-cube-—-the-per-pixel-spectrum" title="Permalink"></a></h2><p><code>velocity_cube</code> returns a <code>LosCubeType</code>: <code>cube[i,j,:]</code> is the line-of-sight velocity profile of pixel <code>(i,j)</code> (a mock HI/CO/Hα data-cube). Different channels light up different parts of an edge-on disk — rotation resolved in velocity.</p><pre><code class="language-julia hljs">vcu = velocity_cube(gas; direction=:edgeon, center=[:bc], binning=:overlap, xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, pxsize=[0.3, :kpc], nv=120, verbose=false)
+hm = heatmap!(ax, oc, vc, P, colormap=:magma, nan_color=:black); Colorbar(fig[1,2], hm, label=&quot;log₁₀ mass&quot;); fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_8_1.png" alt/></p><h2 id="3.-Velocity-channel-cube-—-the-per-pixel-spectrum"><a class="docs-heading-anchor" href="#3.-Velocity-channel-cube-—-the-per-pixel-spectrum">3. Velocity-channel cube — the per-pixel spectrum</a><a id="3.-Velocity-channel-cube-—-the-per-pixel-spectrum-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Velocity-channel-cube-—-the-per-pixel-spectrum" title="Permalink"></a></h2><p><code>velocity_cube</code> returns a <code>LosCubeType</code> — a <strong>position–position–velocity (PPV)</strong> cube. <code>cube[i,j,k]</code> is the deposited weight (mass by default) in sky pixel <code>(i,j)</code> and line-of-sight bin <code>k</code>, so <code>cube[i,j,:]</code> is the velocity profile of pixel <code>(i,j)</code> (a mock HI/CO/Hα data-cube). The axes <code>x</code>, <code>y</code> and <code>bins</code> are <strong>edges</strong> (length = the corresponding cube dimension + 1; <code>x</code>/<code>y</code> in code length units), and the velocity edges are in <code>v_unit</code>. Different channels light up different parts of an edge-on disk — rotation resolved in velocity.</p><pre><code class="language-julia hljs">vcu = velocity_cube(gas; direction=:edgeon, center=[:bc], binning=:overlap, xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, pxsize=[0.3, :kpc], nv=120, verbose=false)
 vcent = (vcu.velocity[1:end-1].+vcu.velocity[2:end])./2; nx,ny,nv = size(vcu.cube)
 sel = round.(Int, range(0.15,0.85,length=4).*nv)
 fig = Figure(size=(1400,380))
@@ -80,34 +61,32 @@ for (k,ch) in enumerate(sel)
     ax = Axis(fig[1,k], aspect=DataAspect(), title=&quot;v ≈ $(round(Int,vcent[ch])) km/s&quot;); hidedecorations!(ax)
     heatmap!(ax, A, colormap=:inferno, nan_color=:black)
 end
-fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_9_0.png" alt="png"/></p><p>Its <strong>moments</strong> reproduce the Σ, v<em>los and σ</em>los maps:</p><pre><code class="language-julia hljs">Σ, vlos, σlos = velocity_moments(vcu)
+fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_10_1.png" alt/></p><p>Its <strong>moments</strong> reproduce the Σ, v<em>los and σ</em>los maps (computed from the bin <strong>centres</strong>):</p><blockquote><p><strong>Discretization (Sheppard) caveat.</strong> Because the moments use bin centres, the dispersion is biased high by ≈ Δ²/12 (Δ = channel width) — negligible once a line spans several channels, but use more <code>nv</code> / a tighter <code>vrange</code> for under-resolved lines. For an unbinned, bias-free per-pixel dispersion use <code>los_component(gas, (:vx,:vy,:vz); dispersion=true)</code>.</p></blockquote><pre><code class="language-julia hljs">Σ, vlos, σlos = velocity_moments(vcu)
 println(&quot;cube sums to &quot;, round(sum(vcu.cube), sigdigits=5), &quot;  (M⊙ code) ; columns ≥ 0: &quot;, all(Σ .&gt;= 0))
 e = (vcu.x[1], vcu.x[end], vcu.y[1], vcu.y[end]) .* gas.scale.kpc
 fig = Figure(size=(560,470)); ax = Axis(fig[1,1], aspect=DataAspect(), title=&quot;moment-1 (v_los) from the cube&quot;)
 vmax = maximum(abs.(extrema(vlos)))
 hm = heatmap!(ax, range(e[1],e[2],length=nx), range(e[3],e[4],length=ny), vlos, colormap=:balance, colorrange=(-vmax,vmax))
 Colorbar(fig[1,2], hm, label=&quot;v_los [km/s]&quot;); fig</code></pre><pre><code class="nohighlight hljs">cube sums to 17.719
-
-  (M⊙ code) ; columns ≥ 0: true</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_11_2.png" alt="png"/></p><h2 id="4.-The-per-pixel-spectrum-—-getspectrum"><a class="docs-heading-anchor" href="#4.-The-per-pixel-spectrum-—-getspectrum">4. The per-pixel spectrum — <code>getspectrum</code></a><a id="4.-The-per-pixel-spectrum-—-getspectrum-1"></a><a class="docs-heading-anchor-permalink" href="#4.-The-per-pixel-spectrum-—-getspectrum" title="Permalink"></a></h2><p>A cube <em>is</em> a spectrum per pixel. <code>getspectrum</code> pulls one out — by sky position (offset from the centre, in <code>range_unit</code>) or by pixel index — ready to plot as a line. Summing a spectrum over its channels gives that pixel&#39;s column (its moment-0 value). This is the synthetic emission-line profile along each sightline.</p><pre><code class="language-julia hljs">ij = argmax(Σ)                                  # the brightest pixel
+  (M⊙ code) ; columns ≥ 0: true</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_12_3.png" alt/></p><h2 id="4.-The-per-pixel-spectrum-—-getspectrum"><a class="docs-heading-anchor" href="#4.-The-per-pixel-spectrum-—-getspectrum">4. The per-pixel spectrum — <code>getspectrum</code></a><a id="4.-The-per-pixel-spectrum-—-getspectrum-1"></a><a class="docs-heading-anchor-permalink" href="#4.-The-per-pixel-spectrum-—-getspectrum" title="Permalink"></a></h2><p>A cube <em>is</em> a spectrum per pixel. <code>getspectrum</code> pulls one out — by sky position (offset from the centre, in <code>range_unit</code>) or by pixel index — ready to plot as a line. Summing a spectrum over its channels gives that pixel&#39;s column (its moment-0 value). This is the synthetic emission-line profile along each sightline.</p><pre><code class="language-julia hljs">ij = argmax(Σ)                                  # the brightest pixel
 fig = Figure(size=(760,470)); ax = Axis(fig[1,1], xlabel=&quot;v_los [km/s]&quot;, ylabel=&quot;mass per channel&quot;,
                                         title=&quot;line-of-sight velocity profiles (per pixel)&quot;)
 for (off,lab,col) in ((( 0.0, 0.0),&quot;centre&quot;,:black), (( 5.0,0.0),&quot;x = +5 kpc&quot;,:dodgerblue), ((0.0, 7.0),&quot;y = +7 kpc&quot;,:crimson))
     v, I = getspectrum(vcu; x=off[1], y=off[2], range_unit=:kpc)
     lines!(ax, v, I, label=lab, color=col, linewidth=2)
 end
-axislegend(ax, position=:rt); fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_13_0.png" alt="png"/></p><h2 id="5.-The-same-cube-for-ANY-quantity-—-los_cube"><a class="docs-heading-anchor" href="#5.-The-same-cube-for-ANY-quantity-—-los_cube">5. The same cube for ANY quantity — <code>los_cube</code></a><a id="5.-The-same-cube-for-ANY-quantity-—-los_cube-1"></a><a class="docs-heading-anchor-permalink" href="#5.-The-same-cube-for-ANY-quantity-—-los_cube" title="Permalink"></a></h2><p><code>velocity_cube</code> is <code>los_cube(...; quantity=:vlos)</code>. Bin by any scalar field (a per-pixel PDF), or a vector&#39;s LOS component. Here: the <strong>temperature distribution</strong> along each sightline.</p><pre><code class="language-julia hljs">tc = los_cube(gas; quantity=:T, q_unit=:K, direction=:faceon, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc], nbins=60, verbose=false)
+axislegend(ax, position=:rt); fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_14_1.png" alt/></p><h2 id="5.-The-same-cube-for-ANY-quantity-—-los_cube"><a class="docs-heading-anchor" href="#5.-The-same-cube-for-ANY-quantity-—-los_cube">5. The same cube for ANY quantity — <code>los_cube</code></a><a id="5.-The-same-cube-for-ANY-quantity-—-los_cube-1"></a><a class="docs-heading-anchor-permalink" href="#5.-The-same-cube-for-ANY-quantity-—-los_cube" title="Permalink"></a></h2><p><code>velocity_cube</code> is <code>los_cube(...; quantity=:vlos)</code>. Bin by any scalar field (a per-pixel PDF), or a vector&#39;s LOS component. Here: the <strong>temperature distribution</strong> along each sightline.</p><pre><code class="language-julia hljs">tc = los_cube(gas; quantity=:T, q_unit=:K, direction=:faceon, center=[:bc], binning=:overlap, range_unit=:kpc, pxsize=[0.3, :kpc], nbins=60, verbose=false)
 Σ, meanT, dispT = los_moments(tc)
 e = (tc.x[1], tc.x[end], tc.y[1], tc.y[end]) .* gas.scale.kpc; nx,ny,_ = size(tc.cube)
 fig = Figure(size=(560,470)); ax = Axis(fig[1,1], aspect=DataAspect(), title=&quot;mass-weighted mean T (face-on)&quot;)
 A = log10.(replace(meanT, 0.0=&gt;NaN))
 hm = heatmap!(ax, range(e[1],e[2],length=nx), range(e[3],e[4],length=ny), A, colormap=:inferno, nan_color=:black)
-Colorbar(fig[1,2], hm, label=&quot;log₁₀ T [K]&quot;); fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_15_0.png" alt="png"/></p><p><strong>LOS component of an arbitrary vector</strong> as a 2D map — <code>los_component</code>. e.g. velocity, or the gravitational acceleration <code>(:ax,:ay,:az)</code>:</p><pre><code class="language-julia hljs">vmap = los_component(gas, (:vx,:vy,:vz); direction=:edgeon, center=[:bc], binning=:overlap, range_unit=:kpc, unit=:km_s, pxsize=[0.3, :kpc], verbose=false)
+Colorbar(fig[1,2], hm, label=&quot;log₁₀ T [K]&quot;); fig</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_16_1.png" alt/></p><p><strong>LOS component of an arbitrary vector</strong> as a 2D map — <code>los_component</code>. e.g. velocity, or the gravitational acceleration <code>(:ax,:ay,:az)</code>:</p><pre><code class="language-julia hljs">vmap = los_component(gas, (:vx,:vy,:vz); direction=:edgeon, center=[:bc], binning=:overlap, range_unit=:kpc, unit=:km_s, pxsize=[0.3, :kpc], verbose=false)
 println(&quot;v_los map range = [&quot;, round(minimum(vmap.map),digits=1), &quot;, &quot;, round(maximum(vmap.map),digits=1), &quot;] km/s&quot;)
 fig = Figure(size=(560,470)); ax = Axis(fig[1,1], aspect=DataAspect(), title=&quot;los_component((:vx,:vy,:vz)).map&quot;)
 vmax = maximum(abs.(extrema(vmap.map)))
 hm = heatmap!(ax, vmap.map, colormap=:balance, colorrange=(-vmax,vmax)); Colorbar(fig[1,2], hm, label=&quot;v_los [km/s]&quot;); hidedecorations!(ax); fig</code></pre><pre><code class="nohighlight hljs">v_los map range = [-2351.6
-
-, 630.9] km/s</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_17_2.png" alt="png"/></p><h2 id="6.-Mock-observation-—-beam-noise"><a class="docs-heading-anchor" href="#6.-Mock-observation-—-beam-noise">6. Mock observation — beam + noise</a><a id="6.-Mock-observation-—-beam-noise-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Mock-observation-—-beam-noise" title="Permalink"></a></h2><p><code>mock_observe</code> convolves a map with a Gaussian beam (PSF) and adds noise.</p><pre><code class="language-julia hljs">m = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc, pxsize=[0.3, :kpc])
+, 630.9] km/s</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_18_3.png" alt/></p><h2 id="6.-Mock-observation-—-beam-noise"><a class="docs-heading-anchor" href="#6.-Mock-observation-—-beam-noise">6. Mock observation — beam + noise</a><a id="6.-Mock-observation-—-beam-noise-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Mock-observation-—-beam-noise" title="Permalink"></a></h2><p><code>mock_observe</code> convolves a map with a Gaussian beam (PSF) and adds noise.</p><pre><code class="language-julia hljs">m = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc, pxsize=[0.3, :kpc])
 raw = m.maps[:sd]
 obs = mock_observe(m, :sd; beam_fwhm=0.8, beam_unit=:kpc, noise=maximum(raw)*3e-3)
 e = m.extent .* gas.scale.kpc; fig = Figure(size=(1100,470))
@@ -117,27 +96,19 @@ for (k,(A,t)) in enumerate(((raw,&quot;raw projection&quot;),(obs,&quot;beam 0.8
     heatmap!(ax, range(e[1],e[2],length=size(A,1)), range(e[3],e[4],length=size(A,2)), log10.(B), colormap=:inferno, nan_color=:black)
 end
 fig</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-06T10:07:36.963
-
 center: [0.5, 0.5, 0.5] ==&gt; [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 100.0 [kpc]
-
-Selected var(s)=(:sd,) 
-
-
+Selected var(s)=(:sd,)
 Weighting      = :mass
 Off-axis LOS   = [-0.0144, 0.0222, -0.9997]  (binning=:overlap)
-Effective resolution: 334^2  →  map size: 351 x 347</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_19_2.png" alt="png"/></p><h2 id="7.-Save-and-reload-a-cube-(JLD2)"><a class="docs-heading-anchor" href="#7.-Save-and-reload-a-cube-(JLD2)">7. Save &amp; reload a cube (JLD2)</a><a id="7.-Save-and-reload-a-cube-(JLD2)-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Save-and-reload-a-cube-(JLD2)" title="Permalink"></a></h2><p>Cubes are a <code>LosCubeType</code> and can be stored and reloaded with all metadata.</p><pre><code class="language-julia hljs">tmp = tempname()*&quot;.jld2&quot;
+Effective resolution: 334^2  →  map size: 351 x 347</code></pre><p><img src="../12_multi_LosCubes_files/12_multi_LosCubes_20_3.png" alt/></p><h2 id="7.-Save-and-reload-a-cube-(JLD2)"><a class="docs-heading-anchor" href="#7.-Save-and-reload-a-cube-(JLD2)">7. Save &amp; reload a cube (JLD2)</a><a id="7.-Save-and-reload-a-cube-(JLD2)-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Save-and-reload-a-cube-(JLD2)" title="Permalink"></a></h2><p>Cubes are a <code>LosCubeType</code> and can be stored and reloaded with all metadata.</p><pre><code class="language-julia hljs">tmp = tempname()*&quot;.jld2&quot;
 savecube(tc, tmp)
 tc2 = loadcube(tmp)
 println(&quot;round-trip identical: &quot;, tc2.cube == tc.cube &amp;&amp; tc2.bins == tc.bins &amp;&amp; tc2.quantity == tc.quantity)
 rm(tmp, force=true)</code></pre><pre><code class="nohighlight hljs">Saved LOS cube (351, 346, 60) → /tmp/claude-502/jl_xAtypA3Uxq.jld2
-
-
-Loaded LOS cube (351, 346, 60) ← 
-
+Loaded LOS cube (351, 346, 60) ←
 /tmp/claude-502/jl_xAtypA3Uxq.jld2
-round-trip identical: true</code></pre><h2 id="Play-around"><a class="docs-heading-anchor" href="#Play-around">Play around</a><a id="Play-around-1"></a><a class="docs-heading-anchor-permalink" href="#Play-around" title="Permalink"></a></h2><ul><li><code>quantity=:rho</code>, <code>:cs</code>, <code>:machnumber</code>, … for other per-sightline PDFs;</li><li><code>quantity=(:ax,:ay,:az)</code> with <code>gravity</code> (combined interface) for LOS acceleration;</li><li>change <code>nv</code>/<code>nbins</code>, <code>vrange</code>/<code>qrange</code>, the beam size and noise;</li><li>build moment maps with <code>los_moments(cube)</code> / <code>velocity_moments(cube)</code>.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../11_multi_OffAxisProjection/">« Projection basics</a><a class="docs-footer-nextpage" href="../13_multi_OffAxis_Validation/">Validation &amp; accuracy »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 15 June 2026 17:09">Monday 15 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+round-trip identical: true</code></pre><h2 id="Play-around"><a class="docs-heading-anchor" href="#Play-around">Play around</a><a id="Play-around-1"></a><a class="docs-heading-anchor-permalink" href="#Play-around" title="Permalink"></a></h2><ul><li><code>quantity=:rho</code>, <code>:cs</code>, <code>:machnumber</code>, … for other per-sightline PDFs;</li><li><code>quantity=(:ax,:ay,:az)</code> with <code>gravity</code> (combined interface) for LOS acceleration;</li><li>change <code>nv</code>/<code>nbins</code>, <code>vrange</code>/<code>qrange</code>, the beam size and noise;</li><li>build moment maps with <code>los_moments(cube)</code> / <code>velocity_moments(cube)</code>.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../11_multi_OffAxisProjection/">« Projection basics</a><a class="docs-footer-nextpage" href="../13_multi_OffAxis_Validation/">Validation &amp; accuracy »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Monday 15 June 2026 21:27">Monday 15 June 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
