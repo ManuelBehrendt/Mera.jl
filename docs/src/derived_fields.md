@@ -122,10 +122,16 @@ Valid kinds: `:hydro`, `:gravity`, `:rt`, `:particle`, `:clump`.
 ## Managing registered fields
 
 ```julia
-list_fields(:hydro)          # names registered for hydro
-field_info(:vmag2)           # (; compute, depends_on, unit, description)
-delete_field(:vmag2)         # remove it (delete_field(name; datatypes=:all) by default)
+list_fields(:hydro)                 # names you added for hydro (custom only)
+list_fields(:hydro; builtin=true)   # built-in derived fields ∪ your custom ones, sorted
+field_info(:vmag2)                  # (; compute, depends_on, unit, description)
+delete_field(:vmag2)                # remove it (delete_field(name; datatypes=:all) by default)
 ```
+
+`list_fields(kind; builtin=true)` is the quickest way to discover what you can ask `getvar` for on a
+given data type — it returns the dependency-registry built-ins together with any fields you registered.
+It covers most but not every built-in quantity (a few specialised fields are computed directly in
+`getvar`); for the complete human-readable catalogue call `getvar()` with no arguments.
 
 !!! note "Registry scope"
     Registered fields live for the current Julia session (they are not persisted to disk).

@@ -236,11 +236,33 @@ function delete_field(name::Symbol; datatypes=:all)
 end
 
 """
-    list_fields(kind::Symbol=:hydro) -> Vector{Symbol}
+    list_fields(kind::Symbol=:hydro; builtin::Bool=false) -> Vector{Symbol}
 
-The user-registered field names for a data-type `kind`.
+The registered derived-field names for a data-type `kind` (`:hydro`, `:gravity`, `:rt`,
+`:particle`, `:clump`), sorted.
+
+By default only the **user-added** fields (registered with [`add_field`](@ref)) are returned —
+this is the back-compatible behaviour. With `builtin=true` the result also includes the
+**built-in** derived quantities known to the dependency registry (`FIELD_DEPS[kind]`), so you get
+a single combined list of everything resolvable for that kind:
+
+```julia
+list_fields(:hydro)                 # only the fields you added
+list_fields(:hydro; builtin=true)   # built-in registry fields ∪ your custom fields
+```
+
+Note: `builtin=true` reflects the dependency registry, which covers most but not every built-in
+quantity (a few specialised fields, e.g. some RT-ionization variables, are computed directly in
+`getvar` without a registry entry). For the full human-readable catalogue call `getvar()` with no
+arguments.
 """
-list_fields(kind::Symbol=:hydro) = haskey(USER_FIELDS, kind) ? sort!(collect(keys(USER_FIELDS[kind]))) : Symbol[]
+function list_fields(kind::Symbol=:hydro; builtin::Bool=false)
+    names = haskey(USER_FIELDS, kind) ? collect(keys(USER_FIELDS[kind])) : Symbol[]
+    if builtin && haskey(FIELD_DEPS, kind)
+        union!(names, keys(FIELD_DEPS[kind]))
+    end
+    return sort!(names)
+end
 
 """
     field_info(name::Symbol; kind::Symbol=:hydro)
