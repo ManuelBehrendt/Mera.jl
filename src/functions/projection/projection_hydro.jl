@@ -1679,7 +1679,7 @@ function projection_offaxis(dataobject, selected_vars, units, lmax_projected, re
             else                                                     # :σlos = √(⟨v²⟩ − ⟨v⟩²)
                 g2 = zeros(Float64, nx, ny); w2 = zeros(Float64, nx, ny)
                 depo!(g2, w2, vlossel .^ 2)
-                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w1[nz]
+                meanv2 = zeros(Float64, nx, ny); meanv2[nz] = g2[nz] ./ w2[nz]   # w2 ≡ w1; use w2 for clarity
                 m = sqrt.(max.(meanv2 .- meanv .^ 2, 0.0)) .* vscale
             end
             imaps[ivar] = m; maps_unit[ivar] = usym

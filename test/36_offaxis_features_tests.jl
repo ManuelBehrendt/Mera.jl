@@ -108,6 +108,62 @@ end
         @test all(moment2(gas, :T, :K; direction=:faceon, center=[:bc], verbose=false).map .>= 0)
     end
 
+    @testset "los_moments mean & dispersion vs independent (unbinned) computation" begin
+        # The cube's moment-1 (mean) and moment-2 (dispersion) — the science-bearing outputs — checked
+        # against the unbinned per-pixel reference los_component(...; dispersion). Catches a sign error,
+        # a bin-centre offset, or a weight mismatch (which would show tens of km/s, far above tolerance).
+        view = (direction=:edgeon, center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], xrange=[-15,15], yrange=[-15,15])
+        vc  = velocity_cube(gas; view..., nv=120, vrange=[-300.,300.], verbose=false)
+        m   = los_moments(vc)
+        lcm = los_component(gas, (:vx,:vy,:vz); view..., unit=:km_s, verbose=false)                 # unbinned ⟨v_los⟩
+        lcd = los_component(gas, (:vx,:vy,:vz); view..., unit=:km_s, dispersion=true, verbose=false) # unbinned σ_los
+        @test size(m.mean) == size(lcm.map) == size(m.dispersion) == size(lcd.map)   # same off-axis frame
+        Δ = vc.bins[2] - vc.bins[1]                                                   # channel width
+        well = m.Σ .> 0.2 * maximum(m.Σ)                                              # well-sampled pixels
+        @test count(well) >= 3
+        # mean is ~unbiased by binning; Sheppard-correct the dispersion (binned σ² ≈ σ² + Δ²/12)
+        σcorr = sqrt.(max.(m.dispersion[well].^2 .- Δ^2/12, 0.0))
+        @test median(abs.(m.mean[well]      .- lcm.map[well])) < 1.5      # km/s; measured ≈0.3
+        @test median(abs.(σcorr             .- lcd.map[well])) < 1.5      # km/s; measured ≈0.4
+        b = argmax(m.Σ)                                                   # brightest sightline
+        @test abs(m.mean[b] - lcm.map[b]) < Δ
+        @test sum(m.Σ) ≈ sum(los_moments(vc).Σ)                          # moment-0 stable
+    end
+
+    @testset "savecube/loadcube round-trips ALL metadata (incl. camera basis & vector quantity)" begin
+        vc = velocity_cube(gas; direction=:edgeon, center=[:bc], pxsize=[1.5,:kpc],
+                           xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, nv=40, verbose=false)
+        fn = tempname() * ".jld2"
+        savecube(vc, fn, verbose=false); vc2 = loadcube(fn, verbose=false)
+        @test vc2 isa Mera.LosCubeType
+        @test vc2.cube == vc.cube && vc2.x == vc.x && vc2.y == vc.y && vc2.bins == vc.bins
+        @test vc2.los == vc.los && vc2.up == vc.up && vc2.cam_right == vc.cam_right   # camera basis preserved
+        @test vc2.center == vc.center && vc2.pixsize == vc.pixsize
+        @test vc2.quantity == vc.quantity && vc2.bin_unit == vc.bin_unit && vc2.weight == vc.weight
+        @test vc2.range_unit == vc.range_unit && vc2.boxlen == vc.boxlen
+        @test los_moments(vc2).Σ == los_moments(vc).Σ                    # reloaded cube is fully usable
+        rm(fn, force=true)
+
+        # a 3-vector quantity round-trips its tuple `quantity` faithfully
+        cv = los_cube(gas, quantity=(:vx,:vy,:vz); direction=:edgeon, center=[:bc], pxsize=[2.0,:kpc],
+                      xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nbins=32, q_unit=:km_s, verbose=false)
+        fn2 = tempname() * ".jld2"; savecube(cv, fn2, verbose=false); cv2 = loadcube(fn2, verbose=false)
+        @test cv2.quantity == (:vx,:vy,:vz) && cv2.cube == cv.cube
+        rm(fn2, force=true)
+    end
+
+    @testset "loadcube rejects a non-cube / corrupt file" begin
+        bad = tempname() * ".jld2"
+        Mera.JLD2.jldsave(bad; loscube = [1,2,3])               # not a LosCubeType
+        @test_throws ErrorException loadcube(bad, verbose=false)
+        rm(bad, force=true)
+    end
+
+    @testset "reversed qrange is rejected" begin
+        @test_throws ArgumentError velocity_cube(gas; direction=:edgeon, center=[:bc], pxsize=[2.0,:kpc],
+                            xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nv=30, vrange=[100.,-100.], verbose=false)
+    end
+
     @testset "offaxis_slice fills the plane (nearest-cell)" begin
         sl = offaxis_slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], pxsize=[0.5,:kpc],
                            xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, verbose=false)
