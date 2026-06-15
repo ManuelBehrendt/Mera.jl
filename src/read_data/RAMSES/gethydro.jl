@@ -443,7 +443,9 @@ end
 function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bool, smallr::Real, smallc::Real, nvarh_list::Array{Int,1}, nvarh_corr::Array{Int,1})
     # DENSITY PROCESSING (variable index 1)
     if smallr != 0. && in(1, nvarh_list)
-        @inbounds vars_1D[nvarh_corr[1],:] = clamp.(vars_1D[nvarh_corr[1],:], smallr, maximum(vars_1D[nvarh_corr[1],:]) + 1)
+        # floor-only: smallr is a minimum-density floor. (The previous upper bound maximum(col)+1 was
+        # above every element so it never clamped — a no-op that also forced an extra maximum() pass.)
+        @inbounds vars_1D[nvarh_corr[1],:] = clamp.(vars_1D[nvarh_corr[1],:], smallr, Inf)
     else
         if check_negvalues == true && in(1, nvarh_list)
             @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[1],:])
@@ -455,7 +457,8 @@ function manageminvalues(vars_1D::ElasticArray{Float64,2,1}, check_negvalues::Bo
 
     # THERMAL PRESSURE PROCESSING (variable index 5)
     if smallc != 0. && in(5, nvarh_list)
-        @inbounds vars_1D[nvarh_corr[5],:] = clamp.(vars_1D[nvarh_corr[5],:], smallc, maximum(vars_1D[nvarh_corr[5],:]) + 1)
+        # floor-only (see density note above): the maximum(col)+1 upper bound never clamped.
+        @inbounds vars_1D[nvarh_corr[5],:] = clamp.(vars_1D[nvarh_corr[5],:], smallc, Inf)
     else
         if check_negvalues == true && in(5, nvarh_list)
             @inbounds count_nv = count(x->x<0., vars_1D[nvarh_corr[5],:])

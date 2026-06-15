@@ -692,7 +692,7 @@ particles = getparticles(  info,
                             xrange=[-16.,16.],
                             yrange=[-16.,16.],
                             zrange=[-2.,2.],
-                            center=[50.,50.,50.],
+                            center=[24.,24.,24.],   # box centre of the 48 kpc box (or use center=[:bc])
                             range_unit=:kpc);
 ```
 
@@ -701,16 +701,16 @@ particles = getparticles(  info,
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
-center: [1.0416667, 1.0416667, 1.0416667] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
-xmin::xmax: 0.7083333 :: 1.0  	==> 34.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.7083333 :: 1.0  	==> 34.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 1.0 :: 1.0  	==> 48.0 [kpc] :: 48.0 [kpc]
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
-Found 0.000000e+00 particles
-Memory used for data table :1.10546875 KB
+Found 1.072360e+05 particles
+Memory used for data table :8.18 MB
 -------------------------------------------------------
 ```
 

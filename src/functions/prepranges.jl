@@ -83,13 +83,19 @@ function prepranges(    dataobject::InfoType,
     if ymax < ymin  error("[Mera]: ymax < ymin") end
     if zmax < zmin  error("[Mera]: zmax < zmin") end
 
-    # ensure that ranges are inside the box
+    # ensure that ranges are inside the box (clamp to the loaded data extent)
+    xmin0, ymin0, zmin0, xmax0, ymax0, zmax0 = xmin, ymin, zmin, xmax, ymax, zmax
     xmin = maximum( [xmin, dataranges[1]] )
     ymin = maximum( [ymin, dataranges[3]] )
     zmin = maximum( [zmin, dataranges[5]] )
     xmax = minimum( [xmax, dataranges[2]] )
     ymax = minimum( [ymax, dataranges[4]] )
     zmax = minimum( [zmax, dataranges[6]] )
+    # warn if the requested selection actually extended past the box and was silently shrunk
+    if verbose && (xmin > xmin0 + 1e-12 || ymin > ymin0 + 1e-12 || zmin > zmin0 + 1e-12 ||
+                   xmax < xmax0 - 1e-12 || ymax < ymax0 - 1e-12 || zmax < zmax0 - 1e-12)
+        @warn "[Mera]: requested range extends outside the simulation box; clamped to the box bounds."
+    end
 
 
     if verbose

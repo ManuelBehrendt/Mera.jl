@@ -93,6 +93,10 @@ function readinfofile!(dataobject::InfoType)
     f = open(dataobject.fnames.info)
     lines = readlines(f)
 
+    # the header is parsed by fixed line index (lines[1..20]); guard against a truncated/malformed
+    # info file with a clear message instead of an opaque BoundsError deep in the parse.
+    length(lines) >= 20 || error("[Mera]: malformed or truncated info file $(dataobject.fnames.info): expected at least 20 header lines, found $(length(lines)).")
+
     ncpu      = parse(Int32, rsplit(lines[1],"=")[2] )
     ndim      = parse(Int32, rsplit(lines[2],"=")[2] )
     levelmin  = parse(Int32, rsplit(lines[3],"=")[2] )
@@ -113,9 +117,9 @@ function readinfofile!(dataobject::InfoType)
     omega_k   = parse(Float64, rsplit(lines[14],"=")[2] )
     omega_b   = parse(Float64, rsplit(lines[15],"=")[2] )
 
-    unit_l    = parse(Float64, rsplit(lines[16],"=")[2] )
-    unit_d    = parse(Float64, rsplit(lines[17],"=")[2] )
-    unit_t    = parse(Float64, rsplit(lines[18],"=")[2] )
+    unit_l    = parse(Float64, strip(rsplit(lines[16],"=")[2]) )
+    unit_d    = parse(Float64, strip(rsplit(lines[17],"=")[2]) )
+    unit_t    = parse(Float64, strip(rsplit(lines[18],"=")[2]) )
     unit_v    = unit_l / unit_t
     unit_m    = unit_d * unit_l^3
 
@@ -730,8 +734,11 @@ function readnamelistfile!(dataobject::InfoType)
             for (j,i) in enumerate(lines)
                 if iheader != "false"
                     if occursin("=", i)
-                        variable = String(rsplit(i, "=" )[1])
-                        content = String(rsplit(i, "=" )[2])
+                        # strip whitespace: a namelist line "eta_sn = 0.1" otherwise yields the key
+                        # "eta_sn " (trailing space), which never matches the exact-string lookups
+                        # below (e.g. == "eta_sn"), silently leaving feedback/age constants at defaults.
+                        variable = String(strip(rsplit(i, "=" )[1]))
+                        content = String(strip(rsplit(i, "=" )[2]))
                         variables[variable] = content
                     end
                 end
