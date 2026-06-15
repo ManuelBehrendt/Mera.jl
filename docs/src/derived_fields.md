@@ -133,8 +133,26 @@ given data type — it returns the dependency-registry built-ins together with a
 It covers most but not every built-in quantity (a few specialised fields are computed directly in
 `getvar`); for the complete human-readable catalogue call `getvar()` with no arguments.
 
-The lists below are generated live from the registry at doc-build time, so they always match the
-installed version. **Hydro:**
+The **default** (`builtin=false`) lists only the fields *you* registered, so it starts empty and grows
+as you `add_field` (and shrinks again on `delete_field`):
+
+```@example listdefault
+using Mera          # hide
+list_fields(:hydro)                 # builtin=false (default): custom fields only — none yet
+```
+
+```@example listdefault
+add_field(:speed2, (o, d) -> d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2; depends_on=[:vx, :vy, :vz])
+list_fields(:hydro)                 # the field you just added now appears
+```
+
+```@example listdefault
+delete_field(:speed2)
+list_fields(:hydro)                 # removed again → back to empty
+```
+
+With `builtin=true` the same call instead returns the full catalogue. The lists below are generated
+live from the registry at doc-build time, so they always match the installed version. **Hydro:**
 
 ```@example fields
 using Mera          # hide
