@@ -81,7 +81,7 @@ function get_data(dataobject::GravDataType,
                 else # if uniform grid
                     vars_dict[i] =  select(masked_data, bpos) .- 2^lmax .* center[2]
                 end
-            elseif i == :cx
+            elseif i == :cz
                 if isamr
                     vars_dict[i] =  select(masked_data, cpos) .- 2 .^select(masked_data, :level) .* center[3]
                 else # if uniform grid
@@ -139,11 +139,14 @@ function get_data(dataobject::GravDataType,
             az = select(masked_data, :az)
             vars_dict[:a_magnitude] = @. sqrt(ax^2 + ay^2 + az^2) * selected_unit
 
-        # Escape speed from gravitational potential - code units by default
+        # Escape speed from gravitational potential - code units by default.
+        # v_esc = sqrt(-2 φ) is only real where the potential is negative (bound). RAMSES φ can be
+        # positive for unbound cells (and near boundaries), which would make sqrt throw a DomainError;
+        # clamp those to 0 (escape speed is 0 / undefined where the cell is not bound).
         elseif i == :escape_speed
             selected_unit = getunit(dataobject, :escape_speed, vars, units)
             epot = select(masked_data, :epot)
-            vars_dict[:escape_speed] = @. sqrt(-2 * epot) * selected_unit
+            vars_dict[:escape_speed] = @. sqrt(max(-2 * epot, 0.0)) * selected_unit
 
         # Gravitational redshift (weak field approximation) - dimensionless by default
         elseif i == :gravitational_redshift

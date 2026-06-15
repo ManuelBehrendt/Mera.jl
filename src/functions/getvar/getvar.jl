@@ -531,6 +531,67 @@ function getvar(   dataobject::RtDataType, vars::Array{Symbol,1};
     return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
 end
 
+# Positional `hydro_data` overloads for RtDataType (parity with the GravDataType+hydro API below):
+# getvar(rt, hydro, :photoionizations) reads the same as getvar(rt, :photoionizations; hydro_data=hydro).
+function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, var::Symbol;
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, unit::Symbol=:standard,
+                    mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, var::Symbol, unit::Symbol;
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    return get_data_userfields(dataobject, [var], [unit], direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, units::Array{Symbol,1};
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1}, unit::Symbol;
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    units = [unit for i in 1:length(vars)]
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
+function getvar(   dataobject::RtDataType, hydro_data::HydroDataType, vars::Array{Symbol,1};
+                    filtered_db::IndexedTables.AbstractIndexedTable=IndexedTables.table([1]),
+                    center::Array{<:Any,1}=[0.,0.,0.], center_unit::Symbol=:standard,
+                    direction::Symbol=:z, unit::Symbol=:standard,
+                    mask::MaskType=[false], ref_time::Real=dataobject.info.time)
+    center = center_in_standardnotation(dataobject.info, center, center_unit)
+    if typeof(filtered_db) != IndexedTable{StructArrays.StructArray{Tuple{Int64},1,Tuple{Array{Int64,1}},Int64}}
+        dataobject = construct_datatype(filtered_db, dataobject)
+    end
+    units = [unit for i in 1:length(vars)]
+    return get_data_userfields(dataobject, vars, units, direction, center, mask, ref_time; hydro_data=hydro_data)
+end
+
 
 # ========== NEW API: GRAVITY + HYDRO WITH POSITIONAL ARGUMENTS ==========
 
@@ -654,8 +715,10 @@ function center_in_standardnotation(dataobject::InfoType, center::Array{<:Any,1}
         if in(:bc, center) || in(:boxcenter, center)
             return [0.5, 0.5, 0.5]
         end
-        return copy(center)
+        # a single numeric value is ambiguous and would later index center[3] → BoundsError.
+        error("center must be [:bc] or a 3-element [x,y,z]; got a length-1 numeric center $(center).")
     end
+    Ncenter == 3 || error("center must be [:bc] or a 3-element [x,y,z]; got length $(Ncenter): $(center).")
     out = similar(center, Float64)
     for i = 1:Ncenter
         if center[i] == :bc || center[i] == :boxcenter
@@ -801,10 +864,14 @@ return vx, vy, vz
 
 """
 function getvelocities( dataobject::DataSetType, unit::Symbol;
+    direction::Symbol=:z,
+    center::Array{<:Any,1}=[0., 0., 0.],
+    center_unit::Symbol=:standard,
     mask::MaskType=[false])
 
     velocities = getvar(dataobject, [:vx, :vy, :vz],
     units=[unit, unit, unit],
+    direction=direction, center=center, center_unit=center_unit,
     mask=mask)
 
     return velocities[:vx], velocities[:vy], velocities[:vz]
@@ -812,11 +879,15 @@ end
 
 function getvelocities( dataobject::DataSetType;
     unit::Symbol=:standard,
+    direction::Symbol=:z,
+    center::Array{<:Any,1}=[0., 0., 0.],
+    center_unit::Symbol=:standard,
     mask::MaskType=[false])
 
 
     velocities = getvar(dataobject, [:vx, :vy, :vz],
     units=[unit, unit, unit],
+    direction=direction, center=center, center_unit=center_unit,
     mask=mask)
 
     return velocities[:vx], velocities[:vy], velocities[:vz]

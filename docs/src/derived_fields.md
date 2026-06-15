@@ -17,6 +17,25 @@ getvar(gas, [:vr_cylinder, :vϕ_cylinder], :km_s; center=[:bc])
 These derived names also work everywhere `getvar` is used internally — in
 [`projection`](@ref), [`profile`](@ref), [`phase`](@ref), and friends.
 
+## Conventions for selected quantities
+
+A few derived quantities carry physical assumptions worth stating explicitly:
+
+- **Jeans length** `:jeanslength` uses the standard form ``λ_J = c_s\,\sqrt{\dfrac{3π}{32\,G\,ρ}}`` (and
+  `:jeansmass`/`:jeansnumber` follow from it). This is one of several Jeans-length conventions in the
+  literature; factors of order unity differ between them.
+- **Magnetosonic Mach numbers** `:mach_alfven`, `:mach_fast`, `:mach_slow` require the magnetic-field
+  components `:bx,:by,:bz` (an MHD run) and error otherwise. The B field is taken in **RAMSES code
+  units** and converted to Gaussian-CGS internally (Alfvén speed ``v_A = B/\sqrt{4πρ}``); fast/slow use
+  ``v_{f}=\sqrt{c_s^2+v_A^2}`` and the isotropic ``v_{s}=c_s v_A/\sqrt{c_s^2+v_A^2}``. All three are
+  dimensionless. (Because they need the field components, `getvar_requirements` lists `:bx,:by,:bz,:rho`
+  among their dependencies.)
+- **Escape speed** `:escape_speed` ``= \sqrt{-2φ}`` is defined only where the potential ``φ<0`` (bound);
+  unbound cells (``φ≥0``, possible near boundaries) are clamped to `0` rather than erroring.
+- **Cosmological-only** quantities — `:overdensity`/`:delta` (hydro) and `:age`-relatives
+  `:formation_time`/`:formation_redshift`/`:zform` (particles) — are defined only for cosmological runs
+  and error on non-cosmological output.
+
 ## The dependency registry
 
 Each derived quantity knows which **raw** variables it is built from. That graph is queryable:
