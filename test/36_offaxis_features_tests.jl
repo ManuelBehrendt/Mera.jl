@@ -6,6 +6,30 @@
 # Each test is an analytic oracle or a conservation/identity check.
 # Required datasets: :spiral_clumps (AMR) and :spiral_ugrid (uniform).
 
+# Data-free profile/phase unit tests (pure-function kernels — run even without simulation data):
+# binning input-validation guards and weighted-statistic oracles against hand-computed values.
+@testset "profile: binning guards + weighted-stat oracles (data-free)" begin
+    # --- binning input validation (silent-mis-bin guards) ---
+    @test_throws ArgumentError Mera._edges_by_step(10.0, 1.0, 1.0)               # reversed range (binsize)
+    @test_throws ArgumentError Mera._edges_by_step(5.0, 5.0, 1.0)                # degenerate lo == hi
+    @test_throws ArgumentError Mera._bin_edges([1.,2,3], (10.,1.), :linear, 5)   # reversed (count path)
+    @test_throws ArgumentError Mera._bin_edges([1.,2,3], (5.,5.),  :linear, 5)   # lo == hi (count path)
+    @test_throws ArgumentError Mera._bin_edges([1.,2,3], (1.,Inf), :linear, 5)   # non-finite explicit range
+    @test_throws ArgumentError Mera._resolve_binsize(-1.0, nothing, :standard, :linear)  # negative binsize
+    # non-finite DATA is dropped (not a crash) on the auto-range path
+    e = Mera._bin_edges([1.0, NaN, 3.0, Inf], nothing, :linear, 4)
+    @test length(e) == 5 && first(e) ≈ 1.0 && last(e) ≈ 3.0
+
+    # --- weighted-statistic oracle: two bins [0,1),[1,2], hand-computed ---
+    x = [0.5, 0.5, 1.5, 1.5]; w = [1.0, 3.0, 2.0, 2.0]; y = [10.0, 20.0, 5.0, 15.0]
+    r = Mera._profile1d(x, w, y, 2, (0.0, 2.0), :linear, [0.5]; edges=[0.0, 1.0, 2.0])
+    @test r.mean[1]   ≈ 17.5 && r.mean[2]   ≈ 10.0   # Σ(w·y)/Σw  = (10+60)/4 , (10+30)/4
+    @test r.median[1] ≈ 20.0 && r.median[2] ≈ 5.0    # weighted lower-convention median
+    @test r.count[1]  == 2   && r.count[2]  == 2
+    @test r.sum[1]    ≈ 4.0  && r.sum[2]    ≈ 4.0     # Σ weight per bin
+    @test r.quantiles[1,1] ≈ r.median[1]             # the q=0.5 column equals the median
+end
+
 if !DATA_AVAILABLE
     @warn "Skipping off-axis feature tests - simulation data not available"
     @test_skip "Simulation data not available"

@@ -20,6 +20,9 @@ end
 # build edges from a fixed step Δ over [lo,hi], keeping `hi` exact (the final bin may be short).
 function _edges_by_step(lo::Float64, hi::Float64, Δ::Float64)
     Δ > 0 || throw(ArgumentError("binsize must be > 0 (got $Δ)"))
+    # require a strictly increasing range: a reversed range (lo>hi) used to return a DECREASING edge
+    # vector ([lo,hi]) that silently mis-binned every point; lo==hi gives a degenerate zero-width bin.
+    lo < hi || throw(ArgumentError("binning range requires lo < hi (got lo=$lo, hi=$hi)"))
     e = collect(lo:Δ:hi)
     (isempty(e) || (hi - e[end]) > 1e-9 * max(abs(hi), abs(lo), 1.0)) && push!(e, hi)
     length(e) < 2 ? [lo, hi] : e
@@ -29,10 +32,20 @@ end
 # every bin holds ~the same number of points). `binsize` (opt-in) sets a fixed bin WIDTH instead of a
 # count: in xunit for linear, a dex (log10) step for :log, and disallowed for :equal.
 function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
-    lo, hi = rng === nothing ? extrema(v) : (Float64(rng[1]), Float64(rng[2]))
+    # range from the data extrema (auto) or an explicit user range. Non-finite (NaN/Inf) values must
+    # not reach extrema/quantile/range: extrema throws on NaN, and Inf produces non-finite edges that
+    # corrupt bin assignment. Drop them once here (auto), and reject a non-finite explicit range.
+    if rng === nothing
+        vfin = filter(isfinite, v)
+        isempty(vfin) && throw(ArgumentError("binning: no finite values to bin"))
+        lo, hi = extrema(vfin)
+    else
+        lo, hi = Float64(rng[1]), Float64(rng[2])
+        (isfinite(lo) && isfinite(hi)) || throw(ArgumentError("binning range must be finite (got lo=$lo, hi=$hi)"))
+    end
     if scale === :log
         if lo <= 0                                   # clamp low edge to the smallest positive value
-            pos = filter(>(0), v)
+            pos = filter(x -> isfinite(x) && x > 0, v)
             isempty(pos) && throw(ArgumentError("log scale requires positive values, but none are positive"))
             lo = minimum(pos)
             @warn "scale=:log: non-positive values are dropped (they have no log bin)" maxlog=1
@@ -44,7 +57,7 @@ function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
     elseif scale === :equal
         binsize === nothing ||
             throw(ArgumentError("binsize is incompatible with scale=:equal (quantile bins have no fixed width); use nbins"))
-        vv = rng === nothing ? collect(float.(v)) : [Float64(x) for x in v if lo <= x <= hi]
+        vv = rng === nothing ? collect(float.(filter(isfinite, v))) : [Float64(x) for x in v if isfinite(x) && lo <= x <= hi]
         isempty(vv) && throw(ArgumentError("equal-count binning (scale=:equal): no data in range"))
         e = collect(quantile(vv, range(0.0, 1.0, length=n+1)))   # equal-population (quantile) edges
         adj = false                                              # ties → nudge to keep edges strictly increasing
@@ -55,6 +68,9 @@ function _bin_edges(v, rng, scale::Symbol, n::Int; binsize=nothing)
         return e
     end
     scale in (:linear,) || throw(ArgumentError("scale must be :linear, :log or :equal (got :$scale)"))
+    # strictly-increasing range (the :log branch guards its own at line 41); a reversed/degenerate
+    # linear range would otherwise build collapsed or decreasing edges and silently mis-bin.
+    hi > lo || throw(ArgumentError("binning range requires lo < hi (got lo=$lo, hi=$hi)"))
     binsize === nothing && return collect(range(lo, hi, length=n+1))
     return _edges_by_step(lo, hi, Float64(binsize))             # binsize = width in xunit
 end
@@ -66,9 +82,11 @@ function _resolve_binsize(bs, info, axunit::Symbol, scale::Symbol)
     bs === nothing && return nothing
     if (bs isa Tuple || bs isa AbstractVector) && length(bs) == 2 && !(bs[2] isa Real)
         scale === :log && throw(ArgumentError("a :log binsize is a dimensionless dex step — pass a scalar, not a (value,:unit) tuple"))
+        Float64(bs[1]) > 0 || throw(ArgumentError("binsize must be > 0 (got $(bs[1]))"))
         gu(u) = u === :standard ? 1.0 : getunit(info, u)
         return Float64(bs[1]) * gu(axunit) / gu(Symbol(bs[2]))
     end
+    Float64(bs) > 0 || throw(ArgumentError("binsize must be > 0 (got $bs)"))
     return Float64(bs)
 end
 
@@ -274,10 +292,12 @@ function _reduce_one(members, nb::Int, y, w, sumw, sumw2, qs, statistic;
                 med_ci[b,1],  med_ci[b,2], mse  = _bootstrap_ci(yv, wv, wmed,  med[b], nboot, ci_level, ci_method, rng)
                 med_se[b] = mse
             end
+            # custom statistic is weight-aware → only meaningful for a positive total weight, so keep
+            # it inside the sw>0 guard (consistent with mean/std/median; it stays NaN otherwise).
+            cust === nothing || (cust[b] = _apply_stat(statistic, (@view y[m]), @view w[m]))
         end
         yb = @view y[m]
-        mn[b] = minimum(yb); mx[b] = maximum(yb)
-        cust === nothing || (cust[b] = _apply_stat(statistic, yb, @view w[m]))
+        mn[b] = minimum(yb); mx[b] = maximum(yb)   # min/max are weight-independent → fine for any non-empty bin
     end
     base = (mean=mean, std=std, var=std.^2, sem=sem, neff=neff, min=mn, max=mx, median=med,
             quantiles=qa, qlevels=qs, skewness=skew, kurtosis=kurt)
@@ -443,7 +463,11 @@ profile of `:vlos`). For the `:r`/`:x`/`:y` cases `center` (default: the map cen
 (`range_unit` accepted as an alias) while `xrange` is in `xunit` (the radius is converted from code units
 via the map's `scale`). `edges`, `geometry`
 (`:cylindrical` annulus area for a 2-D map), `cumulative` and `statistic` work as in the data method.
-Returns the same fields as the data method.
+
+# Returns
+The same per-bin statistic fields as the data [`profile`](@ref) method, plus `var` (the binned map
+variable), `xvar`, `weight`, `xunit`, `unit` (the mapped variable's unit, from the projection), and
+`source=:map`.
 """
 function profile(m::DataMapsType, var::Symbol; xvar::Symbol=:r, weight::Union{Symbol,AbstractVector}=:none,
         nbins::Int=50, xrange=nothing, scale::Symbol=:linear,
@@ -483,7 +507,10 @@ function profile(m::DataMapsType, var::Symbol; xvar::Symbol=:r, weight::Union{Sy
     res = _profile1d(xv[fin], wv[fin], yv[fin], nbins, xrange, scale, quantiles;
                      edges=edges, geometry=geometry, cumulative=cumulative, statistic=statistic, normalize=normalize,
                      binsize=bsz, nboot=bootstrap, ci_level=confidence_level, ci_method=ci, rng=rng)
-    return merge(res, (var=var, xvar=xvar, weight=_wprov(weight), xunit=xunit, source=:map))
+    # carry the mapped variable's unit (from the projection) so the return matches data-`profile`'s
+    # contract, which also reports `unit`.
+    munit = isdefined(m, :maps_unit) ? get(m.maps_unit, var, :standard) : :standard
+    return merge(res, (var=var, xvar=xvar, weight=_wprov(weight), xunit=xunit, unit=munit, source=:map))
 end
 
 """
@@ -499,6 +526,12 @@ selects a richer per-bin reduction of `cvar` in addition to `mean`: `:std`, `:me
 `:max`, `:full` (all four), or a function `f(cview, wview)` (→ `custom`). Any non-`:mean` `cstat`
 also returns a per-bin weighted `quantiles` array (`nbx × nby × length(quantiles)`) at the
 `quantiles` levels (with `qlevels`).
+
+# Returns
+A `NamedTuple` with `xedges`, `yedges` (bin edges), `H` (the `nbx × nby` summed-weight grid),
+`xvar`/`yvar`, `weight`, `xunit`/`yunit`, and `source=:data`. With `normalize`, also `fraction`/`pdf`.
+With a `cvar`: `mean` (and, for a non-`:mean` `cstat`, the corresponding `std`/`median`/`min`/`max`/
+`quantiles`/`custom` grids), plus `cvar`/`cunit`.
 """
 function phase(dataobject, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Union{Symbol,AbstractVector}=:mass,
         nbins=(100,100), xrange=nothing, yrange=nothing, xscale::Symbol=:linear, yscale::Symbol=:linear,
@@ -528,6 +561,10 @@ end
 
 **2D phase diagram from a projected map** — bin two map variables against each other, weighted by
 `:none`/`:area` or another map key, optionally colouring by the weighted mean of a third map `cvar`.
+
+# Returns
+The same fields as the data [`phase`](@ref) method (`xedges`, `yedges`, `H`, the `cstat` grids when
+a `cvar` is given, and `fraction`/`pdf` when normalized), with `source=:map`.
 """
 function phase(m::DataMapsType, xvar::Symbol, yvar::Symbol, cvar=nothing; weight::Union{Symbol,AbstractVector}=:none,
         nbins=(100,100), xrange=nothing, yrange=nothing, xscale::Symbol=:linear, yscale::Symbol=:linear,
@@ -569,11 +606,12 @@ function _cv_stats(members, cv, w, Hflat, cstat, qs)
         if sw > 0
             mu = sum(wb .* cvb) / sw
             std[k] = sqrt(max(sum(wb .* (cvb .- mu) .^ 2) / sw, 0.0))
-            med[k] = _wquantile(cvb, wb, 0.5)
-            for (j, q) in enumerate(qs); qa[k, j] = _wquantile(cvb, wb, q); end
+            med[k], qvv = _bin_quantiles(cv, w, m, qs)   # single sort → median + all quantiles
+            for j in 1:nq; qa[k, j] = qvv[j]; end
+            # weight-aware custom statistic: keep inside the sw>0 guard for consistency (NaN otherwise)
+            cust === nothing || (cust[k] = _apply_stat(cstat, cvb, wb))
         end
-        mn[k] = minimum(cvb); mx[k] = maximum(cvb)
-        cust === nothing || (cust[k] = _apply_stat(cstat, cvb, wb))
+        mn[k] = minimum(cvb); mx[k] = maximum(cvb)   # min/max weight-independent → any non-empty bin
     end
     return (std=std, min=mn, max=mx, median=med, quantiles=qa, custom=cust, isfunc=isfunc)
 end
