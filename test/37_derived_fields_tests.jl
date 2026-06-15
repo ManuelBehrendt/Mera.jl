@@ -45,6 +45,23 @@
         delete_field(:halfrho_f); delete_unit(:per2)
     end
 
+    @testset "list_fields: custom-only default vs builtin=true (data-free)" begin
+        @test list_fields(:hydro) == Symbol[]                       # no custom fields registered yet
+        bi = list_fields(:hydro; builtin=true)
+        @test issorted(bi)
+        @test all(in(bi), [:T, :ekin, :mach, :ϕ, :jeanslength])     # built-ins present
+        # adding a custom field shows in BOTH the default and the builtin listing; built-ins still there
+        add_field(:vmag2, (o,d)->d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2; depends_on=[:vx,:vy,:vz])
+        @test list_fields(:hydro) == [:vmag2]                       # default = custom only
+        bi2 = list_fields(:hydro; builtin=true)
+        @test :vmag2 in bi2 && :T in bi2                            # union of custom + built-in
+        @test length(bi2) == length(bi) + 1
+        delete_field(:vmag2)
+        @test list_fields(:hydro; builtin=true) == bi               # back to just built-ins
+        # other kinds resolve their own registry
+        @test :escape_speed in list_fields(:gravity; builtin=true)
+    end
+
     if !DATA_AVAILABLE
         @warn "Skipping data-backed derived-field tests - simulation data not available"
         @test_skip "Simulation data not available"
