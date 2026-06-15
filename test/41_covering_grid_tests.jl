@@ -123,5 +123,64 @@
                                        zrange=[0.49,0.51], verbose=false)
             @test 0 < prod(est.dims) < 4096^3     # vastly smaller than the full-box level-12 grid (4096³)
         end
+
+        @testset "sub-box grid == the matching sub-array of the full grid (offset/g0 math)" begin
+            # A sub-box covering grid must equal the full-box grid restricted to the same global index
+            # window: output cell (kx) at global index (kx+g0x) sees the same AMR leaves regardless of the
+            # requested box. This empirically validates _grid_dims' g0 offset and the kernel's g0 subtraction
+            # for sub-boxes (the most subtle path, untested before).
+            L = gas.lmax - 1
+            xr = [0.25, 0.5]; yr = [0.5, 1.0]; zr = [0.0, 0.5]
+            full = covering_grid(gas, :rho; lmax=L, verbose=false)
+            sub  = covering_grid(gas, :rho; lmax=L, xrange=xr, yrange=yr, zrange=zr, verbose=false)
+            g0, dims = Mera._grid_dims([xr[1],xr[2], yr[1],yr[2], zr[1],zr[2]], L)
+            @test size(sub[:rho]) == dims
+            fx = (g0[1]+1):(g0[1]+dims[1]); fy = (g0[2]+1):(g0[2]+dims[2]); fz = (g0[3]+1):(g0[3]+dims[3])
+            @test isequal(sub[:rho], full[:rho][fx, fy, fz])     # isequal: NaNs compare equal
+        end
+
+        @testset "gravity data is supported (same AMR-cell path)" begin
+            grav = getgravity(info, verbose=false, show_progress=false)
+            cgg = covering_grid(grav, :epot; lmax=grav.lmax, verbose=false)
+            @test size(cgg[:epot]) == ntuple(_ -> 2^grav.lmax, 3)
+            cx = Int.(getvar(grav, :cx)); cy = Int.(getvar(grav, :cy)); cz = Int.(getvar(grav, :cz))
+            lev = getvar(grav, :level); ep = getvar(grav, :epot)
+            kfin = findfirst(==(grav.lmax), lev)
+            @test cgg[:epot][cx[kfin], cy[kfin], cz[kfin]] ≈ ep[kfin]   # finest leaf maps one-to-one
+        end
+
+        @testset "slice along :x and :y (dropdims / _axis_dim collapse)" begin
+            cg = covering_grid(gas, :rho, :nH; lmax=gas.lmax, verbose=false)
+            k = floor(Int, 0.5 * 2^gas.lmax) + 1
+            for ax in (:x, :y)
+                sl = slice(gas, :rho, :nH; slice_axis=ax, slice_pos=0.5, lmax=gas.lmax, verbose=false)
+                @test sl.slice_axis === ax
+                @test ndims(sl[:rho]) == 2 && length(sl.dims) == 2
+                expected = ax === :x ? cg[:rho][k, :, :] : cg[:rho][:, k, :]
+                @test isequal(sl[:rho], expected)
+            end
+        end
+
+        @testset "pos_unit scales extent/cellsize but not the data" begin
+            # the 1-code-length = 1-kpc test sims would mask a scaling bug, so compare :kpc vs :standard
+            # explicitly and assert the kpc factor is applied.
+            cgs = covering_grid(gas, :rho; lmax=6, verbose=false)                  # code units
+            cgk = covering_grid(gas, :rho; lmax=6, pos_unit=:kpc, verbose=false)   # physical kpc
+            s = gas.scale.kpc
+            @test cgk.pos_unit == :kpc
+            @test cgk.cellsize ≈ cgs.cellsize * s
+            @test cgk.extent   ≈ cgs.extent .* s
+            @test isequal(cgk[:rho], cgs[:rho])                                    # values unaffected
+        end
+
+        @testset "non-AMR data rejected with a clear MethodError" begin
+            if dc.has_clumps
+                cl = getclumps(info, verbose=false)
+                @test_throws MethodError covering_grid(cl, :mass, verbose=false)
+                @test_throws MethodError slice(cl, :mass, verbose=false)
+            else
+                @test_skip "no clump data in fixture"
+            end
+        end
     end
 end

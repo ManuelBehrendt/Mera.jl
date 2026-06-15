@@ -4,6 +4,7 @@
 #  A "covering grid" (yt term) / fixed-resolution buffer (FRB) turns the sparse AMR leaf
 #  cells into a dense, uniform Nx×Ny×Nz array at a chosen level — every output cell sampled,
 #  not integrated (unlike `projection`). `slice` is the 2-D single-layer FRB.
+#  AMR cell data only (hydro/gravity/RT, which carry :cx/:cy/:cz + :level); not particles/clumps.
 #
 #  Resampling is volume-conservative:
 #    * a leaf coarser than the target level (ℓ ≤ L) is **replicated** to fill the (2^{L-ℓ})³
@@ -33,7 +34,7 @@ struct CoveringGridResult
     pos_unit::Symbol
     ranges::Vector{Float64}        # normalized [0,1] box actually covered
     slice_axis::Union{Nothing,Symbol}
-    info
+    info::InfoType
 end
 Base.getindex(c::CoveringGridResult, v::Symbol) = c.grid[v]
 Base.keys(c::CoveringGridResult) = keys(c.grid)
@@ -135,9 +136,10 @@ function _covering_core(obj, vars::Vector{Symbol}, units::Vector{Symbol}, L::Int
     nv = length(vars)
     peak = prod(dims) * sizeof(Float64) * (nv + 1)
     if peak > max_bytes
-        est = covering_grid_memory(obj, vars; lmax=L, verbose=false)   # dims via full box differ; recompute below
-        error("covering_grid would need ~$(_human_bytes(peak)) (peak) for dims $(dims) × $(nv) var(s), " *
-              "above max_bytes=$(_human_bytes(max_bytes)). Reduce lmax, narrow the range, or raise max_bytes.")
+        ncells = prod(dims); amr = length(obj.data)
+        error("covering_grid would need ~$(_human_bytes(peak)) (peak) for dims $(dims) = $(ncells) cells × $(nv) var(s)" *
+              " — a ×$(round(ncells/amr, sigdigits=4)) blow-up over the $(amr) AMR cells — above max_bytes=" *
+              "$(_human_bytes(max_bytes)). Reduce lmax, narrow the range, or raise max_bytes.")
     end
     cxs = select(obj.data, :cx); cys = select(obj.data, :cy); czs = select(obj.data, :cz)
     lvls = in(:level, propertynames(obj.data.columns)) ? select(obj.data, :level) : fill(obj.lmax, length(cxs))
@@ -164,15 +166,22 @@ end
 
 _axis_dim(ax::Symbol) = ax === :x ? 1 : ax === :y ? 2 : 3
 
+# covering_grid/slice operate on AMR CELL data only (these carry :cx/:cy/:cz cell indices and :level).
+# Particles (point positions :x/:y/:z, no cell indices) and clumps (no :lmax / no cells) are excluded so
+# such calls fail with a clear MethodError at the call site instead of a cryptic column/field error deep
+# inside the core (mirrors how `projection` dispatches on the data type).
+const _CGCellData = Union{HydroDataType, GravDataType, RtDataType}
+
 """
     covering_grid(obj, var, [unit]; lmax=obj.lmax, center=[0.,0.,0.],
                   xrange=[missing,missing], yrange=[missing,missing], zrange=[missing,missing],
                   range_unit=:standard, max_bytes=4e9, pos_unit=:standard, verbose=true) -> CoveringGridResult
 
-Resample the AMR data onto a **uniform Nx×Ny×Nz grid** at refinement level `lmax` over the (optional)
-sub-box — every output cell sampled (not integrated). `var` may be a `Symbol` or a vector; `unit`
-likewise (defaults to code units). Coarse leaves are replicated, fine leaves volume-averaged; output
-cells outside the data are `NaN`.
+Resample **AMR cell data** (`HydroDataType`, `GravDataType`, or `RtDataType`) onto a **uniform
+Nx×Ny×Nz grid** at refinement level `lmax` over the (optional) sub-box — every output cell sampled
+(not integrated). `var` may be a `Symbol` or a vector; `unit` likewise (defaults to code units).
+Coarse leaves are replicated, fine leaves volume-averaged; output cells outside the data are `NaN`.
+Particles and clumps are not AMR cells and raise a `MethodError` (use [`projection`](@ref) for particles).
 
 A uniform grid is dense and can be far larger than the AMR data — call [`covering_grid_memory`](@ref)
 first; this errors rather than allocate past `max_bytes`.
@@ -184,10 +193,10 @@ cg  = covering_grid(gas, [:rho, :T], [:nH, :K]; lmax=8) # then build
 cg[:rho]                                                # the 3-D array
 ```
 """
-covering_grid(obj, var::Symbol, unit::Symbol=:standard; kwargs...) = covering_grid(obj, [var], [unit]; kwargs...)
-covering_grid(obj, vars::AbstractVector{Symbol}; kwargs...) =
+covering_grid(obj::_CGCellData, var::Symbol, unit::Symbol=:standard; kwargs...) = covering_grid(obj, [var], [unit]; kwargs...)
+covering_grid(obj::_CGCellData, vars::AbstractVector{Symbol}; kwargs...) =
     covering_grid(obj, vars, fill(:standard, length(vars)); kwargs...)
-function covering_grid(obj, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
+function covering_grid(obj::_CGCellData, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
                        lmax::Int=obj.lmax, center=[0.,0.,0.], xrange=[missing,missing],
                        yrange=[missing,missing], zrange=[missing,missing], range_unit::Symbol=:standard,
                        max_bytes::Real=4e9, pos_unit::Symbol=:standard, verbose::Bool=true)
@@ -212,9 +221,9 @@ sl = slice(gas, :rho, :nH; slice_axis=:z, slice_pos=0.5)   # mid-plane n_H map
 sl[:rho]                                                    # 2-D array
 ```
 """
-slice(obj, var::Symbol, unit::Symbol=:standard; kwargs...) = slice(obj, [var], [unit]; kwargs...)
-slice(obj, vars::AbstractVector{Symbol}; kwargs...) = slice(obj, vars, fill(:standard, length(vars)); kwargs...)
-function slice(obj, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
+slice(obj::_CGCellData, var::Symbol, unit::Symbol=:standard; kwargs...) = slice(obj, [var], [unit]; kwargs...)
+slice(obj::_CGCellData, vars::AbstractVector{Symbol}; kwargs...) = slice(obj, vars, fill(:standard, length(vars)); kwargs...)
+function slice(obj::_CGCellData, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
                slice_axis::Symbol=:z, slice_pos::Real=0.5, slice_unit::Symbol=:standard,
                lmax::Int=obj.lmax, center=[0.,0.,0.], xrange=[missing,missing], yrange=[missing,missing],
                zrange=[missing,missing], range_unit::Symbol=:standard, max_bytes::Real=4e9,
