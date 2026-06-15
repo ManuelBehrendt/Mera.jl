@@ -208,6 +208,11 @@ function getclumps(dataobject::InfoType;
 
     # filter data out of selected ranges
     if ranges[1] !=0. || ranges[2] !=1. || ranges[3] !=0. || ranges[4] !=1. || ranges[5] !=0. || ranges[6] !=1.
+        # the spatial filter keys on the peak position columns; give a clear error if they were not
+        # loaded instead of an opaque "column :peak_x not found" from `filter`.
+        if length(data) > 0 && !all(in(propertynames(data.columns)), (:peak_x, :peak_y, :peak_z))
+            error("[Mera]: getclumps spatial range selection requires the :peak_x/:peak_y/:peak_z columns, which are not in the loaded `vars`. Include them (or load all columns) to use xrange/yrange/zrange.")
+        end
         data = filter(p->       p.peak_x >=  ranges[1] * boxlen &&
                                 p.peak_x <=  ranges[2] * boxlen  &&
                                 p.peak_y >=  ranges[3] * boxlen  &&

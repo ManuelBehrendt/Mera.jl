@@ -223,9 +223,12 @@ function getparticles( dataobject::InfoType;
     end
 
     # ===== SIMULATION PARAMETERS SETUP =====
-    #Todo: limit to a given lmax
-    lmax=dataobject.levelmax # Currently overwrites user input (disabled feature)
-    #checklevelmax(dataobject, lmax)
+    # NOTE: an `lmax` level cap is not yet implemented for particles (unlike gethydro/getgravity).
+    # Warn rather than silently ignore a user-supplied value, then load the full level range.
+    if lmax != dataobject.levelmax
+        @warn "getparticles: the `lmax` level cap is not yet supported for particles; loading the full level range (lmax=$(dataobject.levelmax)). The `lmax` argument is currently ignored."
+    end
+    lmax = dataobject.levelmax
     isamr = checkuniformgrid(dataobject, lmax)         # Check if data is AMR or uniform grid
     #time = dataobject.time
 
@@ -490,6 +493,8 @@ function getparticles( dataobject::InfoType;
             data = filter(p -> p.family != 2, data)
         elseif :birth in col_names
             data = filter(p -> p.birth <= 0.0, data)
+        else
+            @warn "getparticles(stars=false): cannot identify stars without a :family or :birth column in the loaded vars — the star filter was skipped (all particles returned). Add :family (or :birth) to `vars` to enable it."
         end
     end
 

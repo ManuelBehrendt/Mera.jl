@@ -97,8 +97,10 @@ end
             @test info.unit_l > 0
             @test info.unit_d > 0
             @test info.unit_t > 0
-            # (Removed two trivially-true checks on derived unit_v / unit_m
-            #  -- they follow by arithmetic from the three asserts above.)
+            # derived-unit invariants: these guard the parse + the derived-scale formulas in getinfo
+            # (a mis-parsed unit_l/d/t or a wrong derivation would break the relationship).
+            @test isapprox(info.unit_v, info.unit_l / info.unit_t;        rtol=1e-12)
+            @test isapprox(info.unit_m, info.unit_d * info.unit_l^3;      rtol=1e-12)
         end
 
         @testset "Scale and Constants Initialized" begin
@@ -324,6 +326,43 @@ end
             levels = getvar(gravity, :level)
             @test all(levels .>= gravity.info.levelmin)
             @test all(levels .<= gravity.info.levelmax)
+        end
+
+        # Gravity flows through the same Hilbert-CPU selection and variable-mapping code as hydro,
+        # but these selection paths were previously untested for gravity specifically.
+        @testset "Variable Selection (vars=)" begin
+            g2 = getgravity(gravity.info, [:epot, :ax], verbose=false, show_progress=false)
+            cols = propertynames(g2.data.columns)
+            @test :epot in cols && :ax in cols
+            @test !(:ay in cols) && !(:az in cols)   # unrequested acceleration cols excluded
+        end
+
+        @testset "Spatial Range Selection (standard + kpc)" begin
+            boxlen = gravity.info.boxlen
+            # reference full-box load at the same (default) lmax — the fixture may be lmax-capped,
+            # so compare the sub-box against a full read with identical settings.
+            g_full = getgravity(gravity.info, verbose=false, show_progress=false)
+            g_std = getgravity(gravity.info, xrange=[0.25,0.75], yrange=[0.25,0.75], zrange=[0.25,0.75],
+                               range_unit=:standard, verbose=false, show_progress=false)
+            @test 0 < length(g_std.data) <= length(g_full.data)
+            x = getvar(g_std, :x); y = getvar(g_std, :y); z = getvar(g_std, :z)
+            cs = getvar(g_std, :cellsize)                      # half-cell tolerance for AMR boundaries
+            xmin_code, xmax_code = 0.25*boxlen, 0.75*boxlen
+            @test all(x .>= xmin_code .- cs) && all(x .<= xmax_code .+ cs)
+            @test all(y .>= xmin_code .- cs) && all(y .<= xmax_code .+ cs)
+            @test all(z .>= xmin_code .- cs) && all(z .<= xmax_code .+ cs)
+            # kpc-form (about the box centre) selects the same cells as the standard-form request
+            half_kpc = 0.25*boxlen*gravity.info.scale.kpc
+            g_kpc = getgravity(gravity.info, xrange=[-half_kpc,half_kpc], yrange=[-half_kpc,half_kpc],
+                               zrange=[-half_kpc,half_kpc], center=[:boxcenter], range_unit=:kpc,
+                               verbose=false, show_progress=false)
+            @test length(g_kpc.data) == length(g_std.data)
+        end
+
+        @testset "lmax level cap" begin
+            lcap = max(gravity.info.levelmin, gravity.info.levelmax - 1)
+            g_cap = getgravity(gravity.info, lmax=lcap, verbose=false, show_progress=false)
+            @test maximum(getvar(g_cap, :level)) <= lcap     # no cells finer than the cap
         end
     end
 
