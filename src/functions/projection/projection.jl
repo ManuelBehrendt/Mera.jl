@@ -579,20 +579,25 @@ function _offaxis_boxmask!(sel, px, py, pz, half, full)
     return sel
 end
 
-function _offaxis_deposit!(g, w, xc, yc, csize, values, weights, cr, uc, wv, ext, res, binning, max_threads; nmax::Int=64)
+# Deposit samples onto the rotated sky grid. CONTRACT: the value grid `g` accumulates Σ(accum·wt) and
+# the weight grid `w` accumulates Σ(wt). So callers choose the roles deliberately:
+#   • a SUMMED quantity (e.g. a mass cube channel): accum = the quantity, wt = ones  → g = Σ quantity;
+#   • a WEIGHTED MEAN (e.g. ⟨v_los⟩): accum = the field, wt = mass → g/w = Σ(field·mass)/Σmass.
+# (named `accum`/`wt` rather than values/weights so the asymmetric meaning of the two grids is explicit.)
+function _offaxis_deposit!(g, w, xc, yc, csize, accum, wt, cr, uc, wv, ext, res, binning, max_threads; nmax::Int=64)
     if binning === :overlap
-        deposit_rotated_cells_overlap!(g, w, xc, yc, csize, values, weights, cr, uc, ext, res; nmax=nmax, max_threads=max_threads)
+        deposit_rotated_cells_overlap!(g, w, xc, yc, csize, accum, wt, cr, uc, ext, res; nmax=nmax, max_threads=max_threads)
     elseif binning === :exact
-        deposit_rotated_cells_exact!(g, w, xc, yc, csize, values, weights, cr, uc, wv, ext, res; max_threads=max_threads)
+        deposit_rotated_cells_exact!(g, w, xc, yc, csize, accum, wt, cr, uc, wv, ext, res; max_threads=max_threads)
     else
-        deposit_rotated_cells_to_grid!(g, w, xc, yc, values, weights, ext, res; binning=binning)
+        deposit_rotated_cells_to_grid!(g, w, xc, yc, accum, wt, ext, res; binning=binning)
     end
 end
 
 """
     los_cube(dataobject; quantity=:vlos, <view kwargs>, nbins=64, qrange=nothing, q_unit=:standard,
              weight=:mass, res=256, pxsize=[size,:unit], xrange=[missing,missing], yrange=[missing,missing], center=[:bc],
-             range_unit=:standard, binning=:cic, mask=[false]) -> LosCubeType
+             range_unit=:standard, binning=:overlap, mask=[false]) -> LosCubeType
 
 Off-axis **line-of-sight distribution cube**: `cube[i,j,k]` is the deposited `weight` (default
 mass) at sky pixel `(i,j)` in bin `k` of the line-of-sight `quantity`. The distribution along each
@@ -604,9 +609,13 @@ sightline, per pixel — i.e. a "spectrum". `quantity` may be
   line-of-sight component `vector·ŵ`.
 
 The view is chosen with the same keywords as `projection`. `binning` accepts the centre-deposit
-previews `:cic`/`:ngp` and the **hole-free footprint** modes `:overlap`/`:exact` (recommended for
-maps when pixels are finer than cells). Returns a [`LosCubeType`](@ref); store it with
-[`savecube`](@ref). [`los_moments`](@ref) gives the column/mean/dispersion maps.
+previews `:cic`/`:ngp` and the **hole-free footprint** modes `:overlap`/`:exact` (default
+`:overlap`, recommended for maps when pixels are finer than cells). `qrange` (the LOS-axis range) is
+in the scaled `q_unit`; samples outside an explicit `qrange` are dropped. `weight` should be a
+**cumulative/extensive** quantity (`:mass`, default, or `:volume`) — it is *summed* along each
+sightline, so an intensive field like `:rho`/`:T` would give a non-physical "summed density" cube.
+Returns a [`LosCubeType`](@ref); store it with [`savecube`](@ref). [`los_moments`](@ref) gives the
+column/mean/dispersion maps. `cube`'s sky-pixel edges `x`/`y` are in code length units.
 """
 function los_cube(dataobject; quantity=:vlos, los=nothing, theta=nothing, phi=nothing,
         inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
@@ -645,6 +654,9 @@ function los_cube(dataobject; quantity=:vlos, los=nothing, theta=nothing, phi=no
     cs = (binning === :overlap || binning === :exact) ? Float64.(csize_all[sel]) : Float64[]
 
     qmin, qmax = qrange === nothing ? (isempty(qv) ? (0.0, 1.0) : extrema(qv)) : (float(qrange[1]), float(qrange[2]))
+    # a reversed explicit qrange would give dq<0, fail the dq>0 test, and silently dump every sample
+    # into channel 1 (the zero-spread branch) — collapsing the spectrum. Reject it.
+    qmin <= qmax || throw(ArgumentError("qrange must satisfy qrange[1] ≤ qrange[2] (got [$qmin, $qmax])"))
     dq = (qmax - qmin) / nbins
     # bin index along the quantity axis. With an AUTO range (qrange===nothing) every sample lies in
     # [qmin,qmax] by construction, so clamping only re-seats the single sample exactly at qmax. With
@@ -703,16 +715,17 @@ velocity_cube(dataobject; nv::Int=64, vrange=nothing, v_unit::Symbol=:km_s, kwar
 """
     los_component(dataobject, vector; <view kwargs>, weight=:mass, unit=:standard,
                   dispersion=false, res=256, pxsize=[size,:unit], center=[:bc], range_unit=:standard)
-        -> (map, los, up, cam_right, center, pixsize, x, y, unit, dispersion)
+        -> NamedTuple(map, dispersion, los, up, cam_right, center, pixsize, range_unit, unit, x, y)
 
 Mass-weighted 2D map of the **line-of-sight component** `vector·ŵ` of an arbitrary vector field,
 given as a 3-tuple of getvar symbols — e.g. `(:vx,:vy,:vz)` ⇒ vₗₒₛ, `(:ax,:ay,:az)` ⇒ LOS
 acceleration (gravity), `(:bx,:by,:bz)` ⇒ LOS magnetic field. `dispersion=true` returns the
 dispersion instead of the mean.
 
-Returns a `NamedTuple` whose `.map` field holds the 2D array; the camera basis (`los`/`up`/
-`cam_right`), numeric `center`, `pixsize`, bin-edge axes `x`/`y` and `unit` travel with it
-(so it can be fed to [`mock_observe`](@ref) and carries provenance). `result.map` is the array.
+Returns a `NamedTuple` whose `.map` field holds the 2D array (the mean LOS component, or its
+dispersion when `dispersion=true`); the `.dispersion` flag, the camera basis (`los`/`up`/
+`cam_right`), numeric `center`, `pixsize`, `range_unit`, `unit`, and the code-unit bin-edge axes
+`x`/`y` travel with it (so it can be fed to [`mock_observe`](@ref) and carries provenance).
 """
 function los_component(dataobject, vector; los=nothing, theta=nothing, phi=nothing,
         inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
@@ -750,7 +763,7 @@ function los_component(dataobject, vector; los=nothing, theta=nothing, phi=nothi
     if dispersion
         g2=zeros(Float64,nx,ny);w2=zeros(Float64,nx,ny)
         _offaxis_deposit!(g2,w2,xc,yc,cs,qv.^2,ws,right,upc,w,extp,(nx,ny),binning,Threads.nthreads(); nmax=nmax)
-        m2=zeros(Float64,nx,ny); m2[nz]=g2[nz]./w1[nz]
+        m2=zeros(Float64,nx,ny); m2[nz]=g2[nz]./w2[nz]   # w2 ≡ w1 (same weights); use w2 for clarity
         outmap = sqrt.(max.(m2 .- meanmap.^2, 0.0))
     else
         outmap = meanmap
@@ -1093,6 +1106,13 @@ end
 function loadcube(filename::AbstractString; verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
     c = JLD2.load(fn, "loscube")
+    # validate the reconstructed object instead of returning a malformed/foreign struct silently:
+    # a wrong type or mismatched axes would mislocate every sightline downstream.
+    c isa LosCubeType || error("loadcube: $(fn) does not contain a LosCubeType (got $(typeof(c))).")
+    nx, ny, nb = size(c.cube)
+    (length(c.x) == nx + 1 && length(c.y) == ny + 1 && length(c.bins) == nb + 1) ||
+        error("loadcube: $(fn) is corrupt — axis lengths (x=$(length(c.x)), y=$(length(c.y)), " *
+              "bins=$(length(c.bins))) do not match the cube dims $(size(c.cube)) (expected edges = dim+1).")
     verbose && println("Loaded LOS cube $(size(c.cube)) ← ", fn)
     return c
 end
