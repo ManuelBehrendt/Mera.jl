@@ -719,6 +719,23 @@ convenience wrapper; see the profiles tutorial for the manual recipe.
 
 Returns `x` (bin centres), `edges`, `count`, `sigma` (total), `sigma_components` (`nbins × n`) and
 `mean_components` (`nbins × n`) with the `components` order, and `neff` (Kish — small ⇒ noisy σ).
+
+!!! note "What kind of dispersion this is (3-D, per-annulus)"
+    This is the **3-D, per-bin** dispersion: all cells in a radial bin, variance of the velocity
+    *component* about the **single per-bin mean**. The bin-mean rotation/streaming is removed, but a
+    velocity **gradient across the bin** (e.g. the rotation curve varying over the annulus width, a
+    warp, or vertical structure binned only in radius) is *not* — by the law of total variance
+    `σ²_bin = ⟨σ²_local⟩ + Var[⟨v⟩_local]`, this σ also carries the intra-bin shear term, so it is an
+    **upper bound** on the local random dispersion. Shrink the bins, or bin in 2-D/3-D
+    ([`profile3d`](@ref)/[`phase`](@ref) in R and z or azimuth), to localise it.
+
+    For a **local, per-pixel** dispersion of the *line-of-sight* velocity instead, use the projected
+    map `projection(obj, :σlos)` (or [`los_moments`](@ref)/[`los_component`](@ref)`(...; dispersion=true)`)
+    and profile it (`profile(proj, :σlos; xvar=:r, weight=:sd)`). There σ = √(⟨v²⟩−⟨v⟩²) is taken about
+    **each pixel's own mean** (the local bulk/rotation velocity is removed per pixel), so it is locally
+    rest-frame; it still includes sub-pixel / along-the-line-of-sight ordered motion (beam smearing).
+    Note these two are also physically different quantities — a 3-D velocity *component* vs a projected
+    line-of-sight dispersion.
 """
 function velocitydispersion(dataobject; rvar::Symbol=:r_cylinder,
         components=(:vr_cylinder, :vϕ_cylinder, :vz), weight::Union{Symbol,AbstractVector}=:mass,
