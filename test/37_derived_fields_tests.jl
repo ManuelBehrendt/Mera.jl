@@ -101,5 +101,56 @@
             # a velocity projection (mass-weighted ⇒ needs :rho too) still works one-call
             @test haskey(project(info, :vz, :km_s; direction=:z, res=64, verbose=false).maps, :vz)
         end
+
+        @testset "every registered FIELD_DEPS field has a working compute branch" begin
+            # Guards against registry↔implementation drift: a field listed in FIELD_DEPS but missing a
+            # get_data branch (the :ϕ bug) or whose deps are under-reported (the magnetic-Mach bug)
+            # would surface here. Each registered field must compute on real data EXCEPT those that
+            # legitimately need data this fixture lacks (cosmology / magnetic field) — listed explicitly
+            # so a genuinely-unimplemented new field cannot hide behind the skip-set.
+            grav = getgravity(info, verbose=false, show_progress=false)
+            part = getparticles(info, verbose=false, show_progress=false)
+            skip = Dict(
+                :hydro    => Set([:delta, :overdensity,                       # cosmological only
+                                  :mach_alfven, :mach_fast, :mach_slow]),     # need magnetic field
+                :gravity  => Set{Symbol}(),
+                :particle => Set([:formation_redshift, :formation_time, :zform]),  # cosmological only
+            )
+            for (kind, obj) in [(:hydro, gas), (:gravity, grav), (:particle, part)]
+                for k in keys(Mera.FIELD_DEPS[kind])
+                    k in skip[kind] && continue
+                    v = getvar(obj, k, center=[:bc])
+                    @test v isa AbstractArray
+                end
+            end
+        end
+
+        @testset "coordinate transforms, :ϕ, and aggregation helpers" begin
+            x = getvar(gas, :x, center=[:bc]); y = getvar(gas, :y, center=[:bc])
+            # :ϕ (B1 regression) = atan(y,x) ∈ [-π,π]
+            phi = getvar(gas, :ϕ, center=[:bc])
+            @test phi ≈ atan.(y, x)
+            @test all(-π .<= phi .<= π)
+            @test getvar(gas, :r_cylinder, center=[:bc]) ≈ sqrt.(x.^2 .+ y.^2)
+            # aggregation helpers: finite results + the C1 zero-weight guards
+            com = center_of_mass(gas); @test length(com) == 3 && all(isfinite, com)
+            bv  = bulk_velocity(gas);  @test length(bv) == 3 && all(isfinite, bv)
+            ws  = wstat(getvar(gas, :rho), weight=getvar(gas, :mass))
+            @test isfinite(ws.mean) && ws.std >= 0
+            empt = falses(length(gas.data))
+            @test_throws ErrorException center_of_mass(gas, mask=empt)        # was silent NaN
+            @test_throws ErrorException wstat(getvar(gas, :rho), weight=zeros(length(gas.data)))
+        end
+
+        @testset "gravity :cz honors a non-default center (A1 regression)" begin
+            grav = getgravity(info, verbose=false, show_progress=false)
+            cx = getvar(grav, :cx, center=[0.3,0.4,0.7])
+            cz = getvar(grav, :cz, center=[0.3,0.4,0.7])
+            @test !(cx ≈ cz)                                  # distinct branches (was a duplicate :cx)
+            cz_bc = getvar(grav, :cz, center=[:bc])
+            cz_0  = getvar(grav, :cz, center=[0.,0.,0.])
+            @test !(cz_bc ≈ cz_0)                             # the center is actually applied now
+            @test all((cz_0 .- cz_bc) .≈ (cz_0[1] - cz_bc[1]))   # uniform constant center offset
+        end
     end
 end

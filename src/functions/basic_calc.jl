@@ -62,11 +62,6 @@ function msum(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::
     return msum_metaprog(dataobject, Val(unit), mask)
 end
 
-# Deprecated original function - kept for compatibility
-function msum_deprecated(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
-    return sum( getvar(dataobject, :mass, unit=unit, mask=mask) )
-end
-
 
 
 """
@@ -86,11 +81,12 @@ Uses compile-time template generation for maximum performance.
         z_data = getvar(dataobject, :z, mask=mask)
         
         total_mass = sum(mass_data)
-        
+        total_mass > 0 || error("center_of_mass: total mass is zero (empty selection or all-zero masses)")
+
         # Vectorized mass-weighted averages with compile-time unit conversion
         (
             sum(x_data .* mass_data) / total_mass * unit_factor,
-            sum(y_data .* mass_data) / total_mass * unit_factor,  
+            sum(y_data .* mass_data) / total_mass * unit_factor,
             sum(z_data .* mass_data) / total_mass * unit_factor
         )
     end
@@ -125,12 +121,6 @@ function center_of_mass(dataobject::ContainMassDataSetType; unit::Symbol=:standa
     # - Single-pass vectorized operations for maximum performance
     
     return center_of_mass_metaprog(dataobject, Val(unit), mask)
-end
-
-# Deprecated original function - kept for compatibility
-function center_of_mass_deprecated(dataobject::ContainMassDataSetType; unit::Symbol=:standard, mask::MaskType=[false])
-    selected_unit = getunit(dataobject.info, unit)
-    return ( average_mweighted(dataobject, :x, mask=mask), average_mweighted(dataobject, :y, mask=mask), average_mweighted(dataobject, :z,  mask=mask) ) .* selected_unit
 end
 
 
@@ -210,6 +200,7 @@ Uses template-based loop generation with compile-time optimization.
             end
         end
         
+        sum_mass_total > 0 || error("center_of_mass: total mass is zero (empty selection or all-zero masses)")
         # Compute final weighted averages with compile-time unit conversion
         (
             sum_mx_total / sum_mass_total * unit_factor,
@@ -249,41 +240,6 @@ function center_of_mass(dataobject::Array{HydroPartType,1}; unit::Symbol=:standa
     
     return center_of_mass_joint_metaprog(dataobject, Val(unit), mask)
 end
-
-# Deprecated original function - kept for compatibility
-function center_of_mass_deprecated(dataobject::Array{HydroPartType,1}; unit::Symbol=:standard, mask::MaskArrayAbstractType=[[false],[false]])
-    selected_unit = getunit(dataobject[1].info, unit) # assuming both datasets are from same simulation output
-
-    if length(mask[1]) == 1 && length(mask[2]) == 1
-        m1 = getvar(dataobject[1], :mass)
-        m1_sum = sum(m1)
-
-        m2 = getvar(dataobject[2], :mass)
-        m2_sum = sum(m2)
-
-        m_sum = m1_sum + m2_sum
-
-        x_weighted = (sum( getvar(dataobject[1], :x) .* m1 ) + sum( getvar(dataobject[2], :x) .* m2) ) / m_sum
-        y_weighted = (sum( getvar(dataobject[1], :y) .* m1 ) + sum( getvar(dataobject[2], :y) .* m2) ) / m_sum
-        z_weighted = (sum( getvar(dataobject[1], :z) .* m1 ) + sum( getvar(dataobject[2], :z) .* m2) ) / m_sum
-
-    else
-        m1 = getvar(dataobject[1], :mass)[mask[1]]
-        m1_sum = sum(m1)
-
-        m2 = getvar(dataobject[2], :mass)[mask[2]]
-        m2_sum = sum(m2)
-
-        m_sum = m1_sum + m2_sum
-
-        x_weighted = (sum( getvar(dataobject[1], :x)[mask[1]] .* m1 ) + sum( getvar(dataobject[2], :x)[mask[2]] .* m2) ) / m_sum
-        y_weighted = (sum( getvar(dataobject[1], :y)[mask[1]] .* m1 ) + sum( getvar(dataobject[2], :y)[mask[2]] .* m2) ) / m_sum
-        z_weighted = (sum( getvar(dataobject[1], :z)[mask[1]] .* m1 ) + sum( getvar(dataobject[2], :z)[mask[2]] .* m2) ) / m_sum
-
-    end
-    return ( x_weighted, y_weighted, z_weighted ) .* selected_unit
-end
-
 
 
 """
@@ -353,7 +309,8 @@ Generates specialized code for each weighting scheme at compile time.
             vz_data = getvar(dataobject, :vz, mask=mask)
             
             total_mass = sum(mass_data)
-            
+            total_mass > 0 || error("bulk_velocity: total mass is zero (empty selection or all-zero masses)")
+
             # Vectorized mass-weighted averages
             (
                 sum(vx_data .* mass_data) / total_mass * unit_factor,
@@ -376,7 +333,8 @@ Generates specialized code for each weighting scheme at compile time.
                     vz_data = getvar(dataobject, :vz, mask=mask)
                     
                     total_volume = sum(vol_data)
-                    
+                    total_volume > 0 || error("bulk_velocity: total volume is zero (empty selection)")
+
                     (
                         sum(vx_data .* vol_data) / total_volume * unit_factor,
                         sum(vy_data .* vol_data) / total_volume * unit_factor,
@@ -439,26 +397,6 @@ function bulk_velocity(dataobject::ContainMassDataSetType; unit::Symbol=:standar
     
     return bulk_velocity_metaprog(dataobject, Val(unit), Val(weighting), mask)
 end
-
-# Deprecated original function - kept for compatibility
-function bulk_velocity_deprecated(dataobject::ContainMassDataSetType; unit::Symbol=:standard, weighting::Symbol=:mass, mask::MaskType=[false])
-    selected_unit = getunit(dataobject.info, unit)
-    if weighting == :mass
-        return ( average_mweighted(dataobject, :vx, mask=mask), average_mweighted(dataobject, :vy, mask=mask), average_mweighted(dataobject, :vz,  mask=mask) ) .* selected_unit
-    elseif weighting == :volume && typeof(dataobject) == HydroDataType
-        isamr = checkuniformgrid(dataobject, dataobject.lmax)
-        if isamr
-            return ( sum( getvar(dataobject, :vx, mask=mask) .* getvar(dataobject, :volume, mask=mask) ) ./ sum( getvar(dataobject, :volume, mask=mask) ),
-                     sum( getvar(dataobject, :vy, mask=mask) .* getvar(dataobject, :volume, mask=mask) ) ./ sum( getvar(dataobject, :volume, mask=mask) ),
-                     sum( getvar(dataobject, :vz, mask=mask) .* getvar(dataobject, :volume, mask=mask) ) ./ sum( getvar(dataobject, :volume, mask=mask) ) ) .* selected_unit
-        else
-            return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_unit
-        end
-    elseif weighting == :no # for AMR
-            return ( mean( getvar(dataobject, :vx, mask=mask) ), mean( getvar(dataobject, :vy, mask=mask) ), mean( getvar(dataobject, :vz,  mask=mask)) ) .* selected_unit
-    end
-end
-
 
 """
 #### Calculate the average velocity (w/o mass-weight) of any ContainMassDataSetType:
@@ -540,6 +478,7 @@ Generates specialized code for different weighting and masking combinations.
             
             if length(weights) > 1
                 w_sum = sum(weights)
+                w_sum > 0 || error("wstat: sum of weights is zero (empty selection or all-zero weights)")
                 mean_val = sum(array .* weights) / w_sum
                 median_val = median(array, Weights(weights))
                 std_val = std(array, Weights(weights), mean=mean_val, corrected=false)
@@ -547,12 +486,12 @@ Generates specialized code for different weighting and masking combinations.
                 max_val = maximum(array)
                 skew_val = skewness(array, mean_val)
                 kurt_val = kurtosis(array, mean_val)
-                
+
                 WStatType(mean_val, median_val, std_val, skew_val, kurt_val, min_val, max_val)
             else
                 mean_val = mean(array)
                 median_val = median(array)
-                std_val = std(array, mean=mean_val)
+                std_val = std(array, mean=mean_val, corrected=false)   # population std, consistent with the weighted path
                 skew_val = skewness(array, mean_val)
                 kurt_val = kurtosis(array, mean_val)
                 min_val = minimum(array)
@@ -570,7 +509,7 @@ Generates specialized code for different weighting and masking combinations.
             
             mean_val = mean(array)
             median_val = median(array)
-            std_val = std(array, mean=mean_val)
+            std_val = std(array, mean=mean_val, corrected=false)   # population std, consistent with the weighted path
             skew_val = skewness(array, mean_val)
             kurt_val = kurtosis(array, mean_val)
             min_val = minimum(array)
@@ -583,6 +522,7 @@ Generates specialized code for different weighting and masking combinations.
             # Generate optimized weighted statistics
             if length(weights) > 1
                 w_sum = sum(weights)
+                w_sum > 0 || error("wstat: sum of weights is zero (empty selection or all-zero weights)")
                 mean_val = sum(array .* weights) / w_sum
                 median_val = median(array, Weights(weights))
                 std_val = std(array, Weights(weights), mean=mean_val, corrected=false)
@@ -590,12 +530,12 @@ Generates specialized code for different weighting and masking combinations.
                 kurt_val = kurtosis(array, mean_val)
                 min_val = minimum(array)
                 max_val = maximum(array)
-                
+
                 WStatType(mean_val, median_val, std_val, skew_val, kurt_val, min_val, max_val)
             else
                 mean_val = mean(array)
                 median_val = median(array)
-                std_val = std(array, mean=mean_val)
+                std_val = std(array, mean=mean_val, corrected=false)   # population std, consistent with the weighted path
                 skew_val = skewness(array, mean_val)
                 kurt_val = kurtosis(array, mean_val)
                 min_val = minimum(array)
@@ -609,7 +549,7 @@ Generates specialized code for different weighting and masking combinations.
             # Generate optimized simple statistics
             mean_val = mean(array)
             median_val = median(array)
-            std_val = std(array, mean=mean_val)
+            std_val = std(array, mean=mean_val, corrected=false)   # population std, consistent with the weighted path
             skew_val = skewness(array, mean_val)
             kurt_val = kurtosis(array, mean_val)
             min_val = minimum(array)
@@ -618,80 +558,4 @@ Generates specialized code for different weighting and masking combinations.
             WStatType(mean_val, median_val, std_val, skew_val, kurt_val, min_val, max_val)
         end
     end
-end
-
-# ==============================================================================
-# PERFORMANCE BENCHMARKING AND VALIDATION
-# ==============================================================================
-
-"""
-Benchmark symbolic vs original implementations.
-Validates correctness and measures performance improvements.
-"""
-function benchmark_metaprog_basic_calc(dataobject; iterations=100, verbose=true)
-    if verbose
-        println("🚀 Benchmarking Symbolic Programming Optimizations")  
-        println("=" ^ 60)
-    end
-    
-    # Test mass sum
-    result_orig = msum_deprecated(dataobject)
-    result_symb = msum(dataobject)
-    
-    if verbose
-        println("✓ Mass Sum Correctness: $(abs(result_orig - result_symb) < 1e-12)")
-        
-        t_orig = @elapsed for _ in 1:iterations; msum_deprecated(dataobject); end
-        t_symb = @elapsed for _ in 1:iterations; msum(dataobject); end
-        
-        speedup = t_orig / t_symb
-        println("  Original:  $(round(t_orig / iterations * 1e3, digits=3)) ms")
-        println("  Symbolic:  $(round(t_symb / iterations * 1e3, digits=3)) ms")  
-        println("  Speedup:   $(round(speedup, digits=2))x")
-        println()
-    end
-    
-    # Test center of mass
-    result_orig = center_of_mass_deprecated(dataobject)
-    result_symb = center_of_mass(dataobject)
-    
-    if verbose
-        max_diff = maximum(abs.(collect(result_orig) .- collect(result_symb)))
-        println("✓ Center of Mass Correctness: $(max_diff < 1e-12)")
-        
-        t_orig = @elapsed for _ in 1:iterations; center_of_mass_deprecated(dataobject); end
-        t_symb = @elapsed for _ in 1:iterations; center_of_mass(dataobject); end
-        
-        speedup = t_orig / t_symb
-        println("  Original:  $(round(t_orig / iterations * 1e3, digits=3)) ms")
-        println("  Symbolic:  $(round(t_symb / iterations * 1e3, digits=3)) ms")
-        println("  Speedup:   $(round(speedup, digits=2))x")
-        println()
-    end
-    
-    # Test bulk velocity
-    result_orig = bulk_velocity_deprecated(dataobject)
-    result_symb = bulk_velocity(dataobject)
-    
-    if verbose
-        max_diff = maximum(abs.(collect(result_orig) .- collect(result_symb)))
-        println("✓ Bulk Velocity Correctness: $(max_diff < 1e-12)")
-        
-        t_orig = @elapsed for _ in 1:iterations; bulk_velocity_deprecated(dataobject); end
-        t_symb = @elapsed for _ in 1:iterations; bulk_velocity(dataobject); end
-        
-        speedup = t_orig / t_symb
-        println("  Original:  $(round(t_orig / iterations * 1e3, digits=3)) ms")
-        println("  Symbolic:  $(round(t_symb / iterations * 1e3, digits=3)) ms")
-        println("  Speedup:   $(round(speedup, digits=2))x")
-        println()
-        
-        println("🎯 Symbolic Programming Summary:")
-        println("   ✓ All functions maintain mathematical correctness")
-        println("   ✓ Compile-time specialization eliminates overhead")
-        println("   ✓ Template-based generation fuses operations")
-        println("   ✓ SIMD-optimized loops maximize performance")
-    end
-    
-    return true
 end
