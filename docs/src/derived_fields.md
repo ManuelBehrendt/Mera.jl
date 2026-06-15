@@ -133,6 +133,28 @@ given data type — it returns the dependency-registry built-ins together with a
 It covers most but not every built-in quantity (a few specialised fields are computed directly in
 `getvar`); for the complete human-readable catalogue call `getvar()` with no arguments.
 
+The lists below are generated live from the registry at doc-build time, so they always match the
+installed version. **Hydro:**
+
+```@example fields
+using Mera          # hide
+list_fields(:hydro; builtin=true)
+```
+
+**Gravity, RT, particle, clump** (same call, different `kind`):
+
+```@example fields
+list_fields(:gravity;  builtin=true)
+```
+
+```@example fields
+list_fields(:particle; builtin=true)
+```
+
+```@example fields
+(rt = list_fields(:rt; builtin=true), clump = list_fields(:clump; builtin=true))
+```
+
 !!! note "Registry scope"
     Registered fields live for the current Julia session (they are not persisted to disk).
     Put your `add_field` calls in a startup script or at the top of your analysis to make them
