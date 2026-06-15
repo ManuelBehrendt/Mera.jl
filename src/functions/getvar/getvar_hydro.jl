@@ -840,6 +840,14 @@ function get_data(  dataobject::HydroDataType,
             z = getvar(filtered_dataobject, :z, center=center, mask=use_mask_in_recursion)
             vars_dict[:r_sphere] = @. sqrt(x^2 + y^2 + z^2) * selected_unit
 
+        # Azimuthal angle ϕ = atan(y, x) about the chosen center (registered in FIELD_DEPS[:hydro];
+        # mirrors the particle/gravity implementations so getvar(hydro, :ϕ) no longer errors).
+        elseif i == :ϕ
+            selected_unit = getunit(dataobject, :ϕ, vars, units)
+            x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
+            y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
+            vars_dict[:ϕ] = @. atan(y, x) * selected_unit
+
         end
 
     end
