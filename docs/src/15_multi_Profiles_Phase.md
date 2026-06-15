@@ -22,9 +22,12 @@ gas   = gethydro(info,  verbose=false, show_progress=false)
 grav  = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)
 parts = getparticles(getinfo(1, joinpath(BASE,"spiral_ugrid"), verbose=false), verbose=false, show_progress=false)
 ctr = [:bc]                         # box centre; e.g. [24.,24.,24.] with range_unit=:kpc also works
+println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 ```
 
-    gas cells = 590311   particles = 45470
+```
+gas cells = 590311   particles = 45470
+```
 
 ## 1. The simplest profile — binning a quantity
 
@@ -41,6 +44,7 @@ pl  = profile(gas, :r_cylinder; weight=:mass, nbins=50, xrange=(0,24), center=ct
 plg = profile(gas, :r_cylinder; weight=:mass, nbins=50, scale=:log, xrange=(0.3,24), center=ctr, range_unit=:kpc, xunit=:kpc)
 pe  = profile(gas, :r_cylinder; weight=:mass, edges=[0.,2.,4.,8.,16.,24.], center=ctr, range_unit=:kpc, xunit=:kpc)
 pbs = profile(gas, :r_cylinder; weight=:mass, binsize=(500,:pc), xrange=(0,24), center=ctr, range_unit=:kpc, xunit=:kpc)
+println("binsize=(500,:pc) → bin width [kpc] = ", round(diff(pbs.edges)[1], digits=3), "  (", length(pbs.edges)-1, " bins)")
 M(p) = p.sum .* gas.scale.Msol      # code mass -> Msol
 fig = Figure(size=(1080,420))
 ax1 = Axis(fig[1,1], xlabel="R [kpc]", ylabel="mass / bin [M⊙]", title="linear bins")
@@ -52,7 +56,12 @@ stairs!(ax2, pe.x, max.(M(pe),1), color=:crimson, step=:center, label="custom ed
 axislegend(ax2, position=:rt); fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_4_2.png)
+```
+binsize=(500,:pc) → bin width [kpc] = 0.5
+  (48 bins)
+```
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_5_3.png)
 
 ## 2. Per-bin statistics — a binned statistic is not a histogram
 
@@ -83,7 +92,7 @@ errorbars!(ax, x[se], mu[se], sem[se], color=:dodgerblue, whiskerwidth=6)
 axislegend(ax, position=:rt, framevisible=false); fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_6_0.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.png)
 
 ## 3. Density, enclosed mass & normalization (density PDF)
 
@@ -113,14 +122,14 @@ lines!(ax3, dv.x[ov], dv.pdf[ov], color=:teal,    linewidth=2.5, label="volume-w
 axislegend(ax3, position=:lt); fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_8_0.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.png)
 
 ## 4. Weighting & components — mass vs volume vs none
 
 `weight` is `:mass`, `:volume` (grid-only), `:none` (equal cells) or **any field**. Mass- and
 volume-weighted means differ wherever density varies within a bin; `:none` is the unweighted mean.
 Profiles work for every data type — but **gravity/RT carry no `:mass`** (use `:volume`/`:none`).
-To combine components, profile each on **shared `edges`** (here gas vs the gravity potential).
+To combine components, profile each on **shared `edges`** (here gas vs DM vs stars enclosed mass).
 
 ```julia
 ed = collect(range(0,20,length=41))
@@ -137,19 +146,21 @@ ax2 = Axis(fig[1,2], xlabel="r [kpc]", ylabel="⟨Φ⟩ [code]", title="gravity 
 og=isfinite.(pep.mean); lines!(ax2, pep.x[og], pep.mean[og], color=:slateblue, linewidth=2.5); fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_12_0.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.png)
 
 ## 5. Rotation curve — who contributes how much
 
 `rotationcurve` forms the enclosed mass M(<r) and returns the **dynamical** circular velocity
 `v_circ = √(G·M(<r)/r)`. Run it per **component** — gas (optionally **masked**, e.g. cold gas only),
 stars, dark matter — and they add **in quadrature**, `v_tot² = Σ v_i²`. The squared ratio
-`(v_i/v_tot)²` is exactly each component's **fractional contribution** to the rotational support.
+`(v_i/v_tot)²` is exactly each component's **fractional contribution** to the rotational support. This
+is the dynamical mass decomposition (≠ the *kinematic* ⟨v_ϕ⟩ of §7).
 
-`v_circ = √(G·M(<r)/r)` is the **spherical** (shell-theorem) idealization, so for a flattened disk it
-under-shoots at large R. The third panel overplots it against the **exact** curve from the solved
-gravity field, `v = √(R·|a_R|)` with `a_R = getvar(grav, :ar_cylinder)` — the dynamically rigorous
-rotation curve.
+**How `v_circ` is estimated:** the enclosed mass `M(<r)` is an *exact* direct sum of the binned masses;
+`v_circ = √(G·M(<r)/r)` is then the **spherical** (shell-theorem) idealization — it assumes spherical
+symmetry, so for a flattened disk it under-shoots at large R. The third panel overplots it against the
+**exact** curve from the solved gravity field, `v = √(R·|a_R|)` with `a_R = getvar(grav, :ar_cylinder)`
+(the true radial acceleration of all matter) — the dynamically rigorous rotation curve.
 
 ```julia
 opts = (rvar=:r_cylinder, xunit=:kpc, center=ctr, range_unit=:kpc, nbins=50, xrange=(0.3,25))
@@ -183,7 +194,7 @@ lines!(ax3, pa.x, vexact, color=:crimson, linewidth=2.5, label="√(R·|a_R|)  (
 axislegend(ax3, position=:rb); fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_14_0.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_1.png)
 
 ## 6. Phase diagrams — colour is a knob
 
@@ -210,7 +221,7 @@ end
 fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_24_0.png)
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_1.png)
 
 ## 7. Distribution shape & uncertainties — moments, equal-count bins, bootstrap CIs
 
@@ -227,6 +238,7 @@ Three statistics upgrades, all opt-in and composable:
 ```julia
 pe = profile(gas, :r_cylinder, :vz; weight=:mass, unit=:km_s, scale=:equal, nbins=18,
              center=ctr, range_unit=:kpc, xunit=:kpc, bootstrap=800, ci=:bca, confidence_level=0.95)
+println("equal-count points/bin (min..max): ", extrema(pe.count), "  → nearly equal")
 ok = pe.count .> 5
 x = pe.x[ok]; mu = pe.mean[ok]; lo = pe.mean_ci[ok,1]; hi = pe.mean_ci[ok,2]
 sk = pe.skewness[ok]; ku = pe.kurtosis[ok]
@@ -242,7 +254,12 @@ lines!(ax2, x, ku, color=:seagreen, linewidth=2, label="excess kurtosis")
 axislegend(ax2, position=:rt, framevisible=false); fig
 ```
 
-![png](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_30_2.png)
+```
+equal-count points/bin (min..max): (
+32300, 33260)  → nearly equal
+```
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_17_3.png)
 
 ## More features (same API, no separate plot here)
 
@@ -265,8 +282,7 @@ These use exactly the same `profile`/`phase` calls shown above:
 * **3-D profiles** — `profile3d(gas, :rho, :T, :z; weight=:mass, nbins=(80,80,24), …)` bins by three
   fields; marginalizing one axis reproduces `phase` exactly (a built-in consistency check).
 * **Evolution across snapshots** — `profiletimeseries(loadfn, outputs, xvar, yvar; …)` stacks a
-  profile over many outputs into an `(nbins × n_snapshots)` matrix on a fixed radius axis — a
-  radius-vs-time map.
+  profile over many outputs into an `(nbins × n_snapshots)` matrix on a fixed radius axis.
 
 ## Takeaway
 
@@ -277,7 +293,7 @@ These use exactly the same `profile`/`phase` calls shown above:
 | density / enclosed mass / fraction / pdf | `geometry`, `cumulative`, `normalize` |
 | many fields in one pass | `profile(obj, x, [y1,y2])` → `.fields` |
 | mass/volume/none/field weighting; components | `weight=…`, shared `edges` |
-| rotation curve — gas (maskable) / stars / DM contributions | `rotationcurve(obj; mask=…)` |
+| rotation curve — gas (maskable) / stars / DM | `rotationcurve(obj; mask=…)` |
 | velocity decomposition ⟨v_ϕ⟩/⟨v_r⟩ + σ_r/σ_ϕ/σ_z | `profile(obj, r, :vϕ_cylinder/:vr_cylinder/:vz)` |
 | select particles by type/family/tag | `getparticlemask` |
 | profile from a 2-D map (Σ(R), map-weighted) | `profile(m::DataMapsType, …)` |
