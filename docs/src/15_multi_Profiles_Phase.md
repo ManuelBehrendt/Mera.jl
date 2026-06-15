@@ -273,6 +273,9 @@ These use exactly the same `profile`/`phase` calls shown above:
   spherical triplet `:vr_sphere`/`:vθ_sphere`/`:vϕ_sphere`. Profiling them gives ⟨v⟩(R) (`mean`,
   signed) and the **rest-frame dispersion** σ(R) (`std`, about the per-bin mean, so net rotation
   doesn't inflate it). [`velocitydispersion`](@ref) returns σ_R/σ_ϕ/σ_z and the total σ in one call.
+  These are **3-D, per-annulus** dispersions about the bin mean (intra-bin shear retained); for a
+  **local, per-pixel line-of-sight** dispersion use the projected `:σlos` map instead —
+  `profile(projection(gas, :σlos, :km_s; direction=:edgeon, center=ctr, range_unit=:kpc), :σlos; xvar=:r, weight=:sd)`.
 * **Select particles** — `getparticlemask(parts, :stars)` (or `:dm`/`:clouds`/… , a family `Int`, or
   `(family=…, tag=…)`) builds a boolean mask to pass as `mask=` to any profile call.
 * **Profiles from a 2-D map** — `profile` also takes a `projection` result: bin map pixels by
