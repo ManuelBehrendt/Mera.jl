@@ -8,6 +8,13 @@ version (a fixed-resolution buffer through a plane).
 Use it to feed analyses that need a regular grid: power spectra, FFTs, structure functions, volume
 rendering / VTK export, machine-learning inputs, or simple `array`-style indexing.
 
+!!! note "Works on AMR cell data only"
+    `covering_grid` and `slice` operate on the **AMR cell** datasets — hydro ([`gethydro`](@ref)),
+    gravity ([`getgravity`](@ref)), and radiative transfer ([`getrt`](@ref)) — which carry cell
+    indices and refinement levels. They are **not** defined for particles ([`getparticles`](@ref),
+    which are point masses, not cells) or clumps; passing one raises a clear `MethodError`. To grid
+    particles, deposit them with [`projection`](@ref) instead.
+
 !!! warning "Size it first — a uniform grid can be far larger than the AMR data"
     AMR stores cells only where the simulation refined; a covering grid fills **every** cell at the
     target level. Resampling a sparsely-refined region to its finest level can blow up the cell count
@@ -63,7 +70,10 @@ sl[:rho]                       # a 2-D array (single-cell-thick, non-integrated)
 ```
 
 `slice_pos` is in `slice_unit` (`:standard` ⇒ a fraction of the box). The slice equals the
-corresponding layer of the full covering grid, but only that layer is built.
+corresponding layer of the full covering grid, but only that layer is built. `slice_axis` may be
+`:x`, `:y`, or `:z`; `grid[var]` is then a 2-D array. Note that `result.extent` keeps all six
+bounds `[x0,x1,y0,y1,z0,z1]` (the collapsed axis spans one cell), so you always know where the slice
+sits in 3-D.
 
 ![A mid-plane `slice` of the gas number density resampled to a uniform level-8 grid: the spiral
 structure and dense core are reproduced, with coarse de-refined regions shown as the larger
