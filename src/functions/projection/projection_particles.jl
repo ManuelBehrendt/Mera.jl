@@ -1,26 +1,4 @@
 
-# #select particle types
-# function spt( parttypes, id)
-#     if in(:all, parttypes)
-#         return id >=-1
-#     elseif in(:negative, parttypes)
-#         return id < 0
-#     elseif in(:m1, parttypes)
-#         return id == -1
-#     elseif in(:stars, parttypes)
-#         return id >0
-#     elseif in(:dm, parttypes)
-#         return id ==0
-#     elseif in(:stars, parttypes) && in(parttypes, :dm)
-#         return id >=0
-#     end
-# end
-#
-# # select vars and filter parttypes
-# function select_data(data, parttypes, var)
-#     return select( filter( p-> spt( parttypes, p.id), data, select=(:id, var)), var )
-# end
-
 # Convert `parttypes` (e.g. [:stars], [:dm]) into a boolean particle selection that is folded into the
 # tested `mask=` path of projection (histogram weights are multiplied by the :mask column, zeroing
 # excluded particles — works for both the axis-aligned and the off-axis routines). Family-aware:
@@ -630,7 +608,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     pixsize = dataobject.boxlen / res # in code units
     if verbose
         println("Effective resolution: $res^2")
-        #println("Map size: $length1 x $length2")
         px_val, px_unit = humanize(pixsize, dataobject.scale, 3, "length")
         pxmin_val, pxmin_unit = humanize(boxlen/2^dataobject.lmax, dataobject.scale, 3, "length")
         println("Pixel size: $px_val [$px_unit]")
@@ -650,8 +627,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         # range on maximum used grid
         newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
         newrange2 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
-        #println(newrange1)
-        #println(newrange2)
 
         var_a = :x
         var_b = :y
@@ -666,8 +641,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         # range on maximum used grid
         newrange1 = range(r1, stop=r2-1, length=(r2-r1)+1 ) ./ res .* dataobject.boxlen
         newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
-        #println(newrange1)
-        #println(newrange2)
 
         var_a = :x
         var_b = :z
@@ -681,8 +654,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         # range on maximum used grid
         newrange1 = range(r3, stop=r4-1, length=(r4-r3)+1 ) ./ res .* dataobject.boxlen
         newrange2 = range(r5, stop=r6-1, length=(r6-r5)+1 ) ./ res .* dataobject.boxlen
-        #println(newrange1)
-        #println(newrange2)
         var_a = :y
         var_b = :z
         extent=[r3-1,r4-1,r5-1,r6-1] .* dataobject.boxlen ./ res
@@ -697,10 +668,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     length2=length( newrange2) - 1
     map = zeros(Float64, length1, length2, length(selected_vars)  )
     map_weight = zeros(Float64, length1 , length2   );
-    #println("length1,2: (final maps) ", length1 , " ", length2 )
-    #println("-------------------------------------")
-    #println()
-
 
     rows = length(dataobject.data)
     mera_mask_inserted = false
@@ -746,7 +713,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     else
         p = length(selected_vars)+2 # do not show updates
     end
-    #if show_progress p = Progress(length(selected_vars)) end
     # Enable strict failure mode if requested via environment variable.
     strict_projection = lowercase(get(ENV, "MERA_PROJECTION_STRICT", "false")) in ["1","true","yes"]
     failed_projection_vars = Symbol[]
@@ -934,7 +900,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         counter = counter + 1
 
         if in(ivar, σcheck)
-            #for iσ in σcheck
                 try
                     selected_unit, unit_name= getunit(dataobject, ivar, selected_vars, units, uname=true)
                     selected_v = σ_to_v[ivar]
@@ -983,8 +948,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_mode[Symbol( string(ivar)  )] = :failed
                     end
                 end
-                #end
-            #end
         end
     end
 

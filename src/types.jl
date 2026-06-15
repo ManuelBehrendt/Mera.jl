@@ -736,6 +736,37 @@ Mutable Struct: Contains the maps/units returned by an AMR cell-based projection
 (hydro, gravity-with-hydro, and radiative-transfer all return this type; the
 provenance is preserved in the `.info` field). `smallr`/`smallc` are hydro-only and
 set to 0 for RT.
+
+# Fields
+- `maps::SortedDict{Symbol,Array{Float64,2}}` — one 2D map per requested quantity, keyed by
+  variable symbol (e.g. `:sd`, `:rho`, `:vx`, `:T`). For an intensive variable the map is the
+  weighted average per pixel; for an extensive variable (`:sd`, and `:mass`/`:ekin`/`:etherm`/
+  `:volume` under `mode=:sum`) it is the per-pixel column/sum. Access as `proj.maps[:sd]`.
+- `maps_unit::SortedDict{Symbol,Symbol}` — the physical unit of each map (e.g. `:Msol_pc2`,
+  `:g_cm3`, `:km_s`, `:standard` for code units), keyed by the same symbols as `maps`.
+- `maps_lmax::SortedDict` — per-map record of the AMR level a map was projected onto (relevant
+  when a coarser `lmax` than the simulation maximum was requested).
+- `maps_weight::SortedDict{Symbol,Symbol}` — the weighting used per map: `:mass`, `:volume`, or
+  `:nothing` for the extensive `:sum`/`:sd` accumulations that carry no weighting.
+- `maps_mode::SortedDict{Symbol,Symbol}` — how each map was reduced: `:mass_weighted`,
+  `:volume_weighted`, `:standard`, or `:sum`.
+- `lmax_projected::Real` — the maximum AMR level actually used in the projection.
+- `lmin::Int`, `lmax::Int` — the simulation's level range carried over for provenance.
+- `ranges::Array{Float64,1}` — the 6-element projected sub-box `[xmin,xmax,ymin,ymax,zmin,zmax]`
+  in box-fraction units `[0,1]`. (`proj.xrange`/`yrange`/`zrange` are accessor slices of this.)
+- `extent::Array{Float64,1}` — `[xmin,xmax,ymin,ymax]` of the map in **code length** units
+  (multiply by `proj.scale.kpc` etc. for physical axes); the data-plane extent for plotting.
+- `cextent::Array{Float64,1}` — the same extent but **centred** on the chosen projection centre
+  (so the centre sits at 0); use for axes labelled relative to the centre.
+- `ratio::Float64` — pixel aspect ratio of the map (xspan/yspan).
+- `effres::Int` — the effective square resolution (pixels per side); `proj.res` aliases this.
+- `pixsize::Float64` — physical size of one pixel in **code length** units (× `scale` for kpc/pc).
+- `boxlen::Float64` — the simulation box length in code units.
+- `smallr::Float64`, `smallc::Float64` — hydro density/sound-speed floors (0 for RT projections).
+- `scale::ScalesType002` — unit-conversion factors (code↔physical) inherited from the dataset.
+- `info::InfoType` — the full simulation descriptor (provenance: output, paths, cosmology, …).
+- `los`, `up`, `cam_right`, `center::Vector{Float64}` — off-axis camera basis and centre; empty
+  `Float64[]` for axis-aligned projections. `proj.direction` returns `:offaxis` when populated.
 """
 mutable struct AMRMapsType <: DataMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
@@ -785,7 +816,37 @@ keeps working unchanged. Prefer `AMRMapsType` in new code.
 const HydroMapsType = AMRMapsType
 
 """
-Mutable Struct: Contains the maps/units returned by the particles-projection information about the selected simulation
+Mutable Struct: Contains the maps/units returned by a **particle** projection
+(`projection(::PartDataType, …)`). Particle maps are histogram deposits of the selected
+quantity onto the sky grid; provenance is preserved in the `.info` field.
+
+# Fields
+- `maps::SortedDict{Symbol,Array{Float64,2}}` — one 2D map per requested quantity, keyed by
+  variable symbol (e.g. `:sd` surface density, `:vx`, `:age`). `:sd` is the column mass per
+  pixel area; intensive variables are mass- or volume-weighted averages per pixel.
+- `maps_unit::SortedDict{Symbol,Symbol}` — the physical unit of each map (e.g. `:Msol_pc2`,
+  `:km_s`, `:standard` for code units), keyed by the same symbols as `maps`.
+- `maps_lmax::SortedDict` — per-map record of the grid level the deposit used.
+- `maps_mode::SortedDict{Symbol,Symbol}` — how each map was reduced: `:mass_weighted` or
+  `:volume_weighted` (particle projection has no `mode=:sum` path; `weighting` selects between
+  `:mass` and `:volume`).
+- `lmax_projected::Real` — the maximum grid level used.
+- `lmin::Int`, `lmax::Int` — the simulation's level range carried over for provenance.
+- `ref_time::Real` — the reference time (code units) used to convert birth times to ages for
+  age-dependent quantities (e.g. `:age`); taken from `info.time` unless overridden.
+- `ranges::Array{Float64,1}` — the 6-element projected sub-box `[xmin,…,zmax]` in box-fraction
+  units `[0,1]`. (`proj.xrange`/`yrange`/`zrange` are accessor slices.)
+- `extent::Array{Float64,1}` — `[xmin,xmax,ymin,ymax]` of the map in **code length** units
+  (× `proj.scale.kpc` etc. for physical axes).
+- `cextent::Array{Float64,1}` — the same extent **centred** on the projection centre.
+- `ratio::Float64` — pixel aspect ratio of the map (xspan/yspan).
+- `effres::Int` — effective square resolution (pixels per side); `proj.res` aliases this.
+- `pixsize::Float64` — physical size of one pixel in **code length** units (× `scale` for kpc/pc).
+- `boxlen::Float64` — the simulation box length in code units.
+- `scale::ScalesType002` — unit-conversion factors (code↔physical) inherited from the dataset.
+- `info::InfoType` — the full simulation descriptor (provenance).
+- `los`, `up`, `cam_right`, `center::Vector{Float64}` — off-axis camera basis and centre; empty
+  `Float64[]` for axis-aligned projections. `proj.direction` returns `:offaxis` when populated.
 """
 mutable struct PartMapsType <: DataMapsType
     maps::DataStructures.SortedDict{Any,Any,Base.Order.ForwardOrdering}
@@ -888,6 +949,26 @@ Mutable Struct: an off-axis line-of-sight cube returned by `los_cube` / `velocit
 binned line-of-sight `quantity` (e.g. `:vlos`, `:T`, `:rho`, or a vector `(:bx,:by,:bz)`).
 `x`/`y`/`bins` are bin EDGES. Convenience aliases: `.velocity` → `bins`, `.v_unit` → `bin_unit`,
 `.direction` → `:offaxis`. Store with `savecube` / load with `loadcube`.
+
+# Fields
+- `cube::Array{Float64,3}` — the `(nx, ny, nbins)` data cube: deposited `weight` per sky pixel
+  and line-of-sight bin. Summing over the 3rd axis recovers the column (moment-0) map.
+- `x::Vector{Float64}`, `y::Vector{Float64}` — sky-pixel bin **edges** in **code length** units
+  (length `nx+1`, `ny+1`); × `scale.kpc` etc. for physical axes.
+- `bins::Vector{Float64}` — the line-of-sight quantity bin **edges** (length `nbins+1`) in
+  `bin_unit` (e.g. velocity channels for `:vlos`).
+- `quantity::Any` — the binned LOS quantity: a `Symbol` (`:vlos`, `:T`, `:rho`, …) or a 3-tuple/
+  vector of symbols for a vector LOS component (e.g. `(:bx,:by,:bz)`).
+- `bin_unit::Symbol` — unit of the `bins` axis (e.g. `:km_s`, `:standard`). Alias: `.v_unit`.
+- `weight::Symbol` — the deposit weight (`:mass` or `:volume`).
+- `los`, `up`, `cam_right::Vector{Float64}` — the orthonormal off-axis camera basis (line of
+  sight, up vector, right vector).
+- `center::Vector{Float64}` — the projection centre in code units.
+- `pixsize::Float64` — physical size of one sky pixel in **code length** units.
+- `boxlen::Float64` — the simulation box length in code units.
+- `range_unit::Symbol` — the unit the spatial ranges were specified in.
+- `scale::ScalesType002` — unit-conversion factors (code↔physical).
+- `info::InfoType` — the full simulation descriptor (provenance).
 """
 mutable struct LosCubeType
     cube::Array{Float64,3}
