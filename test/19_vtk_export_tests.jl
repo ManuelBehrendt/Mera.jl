@@ -60,6 +60,17 @@
 
 @testset "VTK Export Tests" begin
 
+    # data-free unit test of the safe-log10 helper shared by both exporters (the HIGH bug was an
+    # unsafe log10. broadcast producing NaN/-Inf that were then silently zeroed):
+    @testset "safe log10 helper: no NaN/Inf, correct values" begin
+        out = Mera._safe_log10_vtk([10.0, 0.0, -5.0, 100.0], "test"; verbose=false)
+        @test !any(isnan, out) && !any(isinf, out)
+        @test out[1] ≈ 1.0                       # log10(10)
+        @test out[2] == -30.0                    # log10(0) → sentinel, NOT -Inf
+        @test out[3] ≈ log10(5.0)                # negative → log10(abs)
+        @test out[4] ≈ 2.0                       # log10(100)
+    end
+
     if !DATA_AVAILABLE
         @warn "Skipping VTK Export tests - simulation data not available"
         @test_skip "Simulation data not available"
@@ -437,6 +448,10 @@
             @test occursin("VTKFile", vtm_content)
             @test occursin("vtkMultiBlockDataSet", vtm_content)
             @test occursin("Block", vtm_content)
+            # VTM block indices must be 0-based (VTK convention) — was 1-based, which can make
+            # ParaView skip/misalign the first block.
+            idxs = [parse(Int, m.captures[1]) for m in eachmatch(r"<Block index=\"(\d+)\"", vtm_content)]
+            @test !isempty(idxs) && minimum(idxs) == 0 && idxs == collect(0:length(idxs)-1)
         end
 
         @testset "File Size Validation" begin

@@ -54,6 +54,27 @@ export_vtk(
 - **`verbose`:** If `true` (default), print detailed progress and diagnostic messages.
 
 """
+# Safe element-wise log10 for VTK export, shared by the hydro and particle exporters: log10(v) for
+# v>0, -30.0 for v==0 (instead of -Inf), and log10(|v|) for v<0 (with a count warning). This never
+# emits NaN/Inf — the previous `log10.()` broadcast on possibly-≤0 data produced NaN/-Inf that were
+# then silently overwritten with 0.0 (a valid log value), corrupting the export indistinguishably.
+function _safe_log10_vtk(raw, label::AbstractString; verbose::Bool=false)
+    out = Vector{Float64}(undef, length(raw))
+    nneg = 0
+    @inbounds for i in eachindex(raw)
+        val = raw[i]
+        if val > 0
+            out[i] = log10(val)
+        elseif val == 0
+            out[i] = -30.0
+        else
+            out[i] = log10(abs(val)); nneg += 1
+        end
+    end
+    (verbose && nneg > 0) && println("  Warning: $nneg negative value(s) for $label exported as log10(abs(val))")
+    return out
+end
+
 function export_vtk(
     dataobject::HydroDataType, outprefix::String;
     scalars::Vector{Symbol} = [:rho],
@@ -236,27 +257,7 @@ function export_vtk(
         for (s, sunit) in zip(scalars, scalars_unit)
             if scalars_log10
                 raw_arr = getvar(dataobject, s, sunit, mask=mask)
-                if raw_arr !== nothing
-                    # Safe log10: handle negative and zero values
-                    safe_arr = similar(raw_arr, Float64)
-                    for i in eachindex(raw_arr)
-                        val = raw_arr[i]
-                        if val > 0
-                            safe_arr[i] = log10(val)
-                        elseif val == 0
-                            safe_arr[i] = -30.0  # Very small log value instead of -Inf
-                        else
-                            # For negative values, use log10 of absolute value with warning
-                            safe_arr[i] = log10(abs(val))
-                            if verbose && i <= 5  # Only warn for first few negative values
-                                println("  Warning: Negative value ($val) encountered for $s, using log10(abs(val))")
-                            end
-                        end
-                    end
-                    arr = safe_arr
-                else
-                    arr = nothing
-                end
+                arr = raw_arr === nothing ? nothing : _safe_log10_vtk(raw_arr, string(s); verbose=verbose)
             else
                 arr = getvar(dataobject, s, sunit, mask=mask)
             end
@@ -270,23 +271,7 @@ function export_vtk(
                 if vector_log10
                     raw_arr = getvar(dataobject, v, vector_unit, mask=mask)
                     if raw_arr !== nothing
-                        # Safe log10: handle negative and zero values
-                        safe_arr = similar(raw_arr, Float64)
-                        for i in eachindex(raw_arr)
-                            val = raw_arr[i]
-                            if val > 0
-                                safe_arr[i] = log10(val)
-                            elseif val == 0
-                                safe_arr[i] = -30.0  # Very small log value instead of -Inf
-                            else
-                                # For negative values, use log10 of absolute value
-                                safe_arr[i] = log10(abs(val))
-                                if verbose && i <= 5  # Only warn for first few negative values
-                                    println("  Warning: Negative value ($val) encountered for $v, using log10(abs(val))")
-                                end
-                            end
-                        end
-                        arr = safe_arr
+                        arr = _safe_log10_vtk(raw_arr, string(v); verbose=verbose)
                     else
                         arr = nothing
                     end
@@ -340,16 +325,15 @@ function export_vtk(
         if export_vector
             vname = "$(outprefix)_vec_L$(L)"
             vtk_grid(vname, pts, cells; compress=compress, ascii=false) do vtk
-                mat = Matrix{Float64}(undef, 3, 8 * n)
-                for i in 1:n
-                    vx, vy, vz = vdata[vector[1]][i], vdata[vector[2]][i], vdata[vector[3]][i]
-                    base = (i - 1) * 8 + 1
-                    @inbounds for j in 0:7
-                        idx = base + j
-                        mat[1, idx] = vx; mat[2, idx] = vy; mat[3, idx] = vz
-                    end
+                # one vector per CELL (3×n), matching the scalar VTKCellData path. (Previously this was
+                # an 8×-replicated 3×(8n) point-data array — semantically odd and 8× larger on disk.)
+                mat = Matrix{Float64}(undef, 3, n)
+                @inbounds for i in 1:n
+                    mat[1, i] = vdata[vector[1]][i]
+                    mat[2, i] = vdata[vector[2]][i]
+                    mat[3, i] = vdata[vector[3]][i]
                 end
-                vtk[vector_name, VTKPointData()] = mat  # Attach vector data to points
+                vtk[vector_name, VTKCellData()] = mat
             end
             vec_path = vname * ".vtu"
             isfile(vec_path) || @error("Missing vector VTU: $vec_path")
@@ -387,7 +371,7 @@ function export_vtk(
         block_name = "Level_$(levels[i])"
         vtu_basename = basename(f)
         scalar_vtm_content *= """
-    <Block index="$i" name="$block_name">
+    <Block index="$(i-1)" name="$block_name">
       <DataSet index="0" file="$vtu_basename"/>
     </Block>
 """
@@ -428,7 +412,7 @@ function export_vtk(
             block_name = "vec_Level_$(levels[i])"
             vtu_basename = basename(f)
             vector_vtm_content *= """
-    <Block index="$i" name="$block_name">
+    <Block index="$(i-1)" name="$block_name">
       <DataSet index="0" file="$vtu_basename"/>
     </Block>
 """

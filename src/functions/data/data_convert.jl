@@ -604,6 +604,17 @@ function convertdata(output::Int;
     benchmark["memory_efficiency"] = storage_tot > 0 ? Float64(memtot) / Float64(storage_tot) : 0.0
     benchmark["lmax_processed"] = lmax
     benchmark["lmax_available"] = info.levelmax
+    # conversion provenance: record the spatial selection used, so a reader can tell a SUBSET file from
+    # a full one (the stored `info` keeps the original sim's levelmax/boxlen). See convertstat.benchmark.
+    benchmark["xrange"] = xrange
+    benchmark["yrange"] = yrange
+    benchmark["zrange"] = zrange
+    benchmark["range_unit"] = range_unit
+    benchmark["subset"] = (lmax != info.levelmax) ||
+        any(r -> !(r === missing), vcat(xrange, yrange, zrange))
+    # NB: compression_ratio/memory_efficiency are relative to the FULL simulation raw size on disk
+    # (storageoverview), not to the converted subset — so they are only exact for a full conversion.
+    benchmark["storage_basis"] = "full_simulation_raw_on_disk"
     benchmark["timestamp"] = string(now())
     benchmark["hostname"] = gethostname()
     benchmark["data_reduction_factor"] = foldersize > 0 ? Float64(final_file_size) / Float64(foldersize) : 0.0
