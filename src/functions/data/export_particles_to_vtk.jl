@@ -35,7 +35,7 @@ export_vtk(
 
 ##### Predefined/Optional Keywords:
 - **`scalars`:** List of scalar variables to export (default is particle mass);  from the database or a predefined quantity (see field: info, function getvar(), dataobject.data)
-- **`scalars_unit`**: Sets the unit for the list of scalars (default is Msun).
+- **`scalars_unit`**: Sets the unit for the list of scalars (default is `:Msol`).
 - **`scalars_log10`:** Apply log10 to the scalars (default false).
 - **`vector`:** List of vector component variables to export (default is missing).
 - **`vector_unit`:** Sets the unit for the vector components (default is km/s).
@@ -170,17 +170,11 @@ function export_vtk(
                 verbose && println("Warning: Scalar field '$s' is empty, using zeros")
                 arr = zeros(Float64, n_particles)
             elseif length(raw_data) < n_particles
-                verbose && println("Warning: Scalar field '$s' has insufficient data ($(length(raw_data)) < $n_particles), padding with zeros")
-                arr = Vector{Float64}(undef, n_particles)
-                arr[1:length(raw_data)] = raw_data[1:length(raw_data)]
-                arr[length(raw_data)+1:end] .= 0.0
+                error("export_vtk: scalar field '$s' returned $(length(raw_data)) values < $n_particles particles — refusing to zero-pad (would silently corrupt the export).")
             else
-                # Normal case: sufficient data available
-                if scalars_log10
-                    arr = log10.(raw_data[1:n_particles])
-                else
-                    arr = Vector{Float64}(raw_data[1:n_particles])
-                end
+                # Normal case: sufficient data available (safe log10 → never NaN/Inf)
+                arr = scalars_log10 ? _safe_log10_vtk(raw_data[1:n_particles], string(s); verbose=verbose) :
+                                      Vector{Float64}(raw_data[1:n_particles])
             end
             
             # Final validation - ensure array has correct length
@@ -221,17 +215,11 @@ function export_vtk(
                     verbose && println("Warning: Vector component '$v' is empty, using zeros")
                     arr = zeros(Float64, n_particles)
                 elseif length(raw_data) < n_particles
-                    verbose && println("Warning: Vector component '$v' has insufficient data, padding with zeros")
-                    arr = Vector{Float64}(undef, n_particles)
-                    arr[1:length(raw_data)] = raw_data[1:length(raw_data)]
-                    arr[length(raw_data)+1:end] .= 0.0
+                    error("export_vtk: vector component '$v' returned $(length(raw_data)) values < $n_particles particles — refusing to zero-pad (would silently corrupt the export).")
                 else
-                    # Normal case: sufficient data available
-                    if vector_log10
-                        arr = log10.(raw_data[1:n_particles])
-                    else
-                        arr = Vector{Float64}(raw_data[1:n_particles])
-                    end
+                    # Normal case: sufficient data available (safe log10 → never NaN/Inf)
+                    arr = vector_log10 ? _safe_log10_vtk(raw_data[1:n_particles], string(v); verbose=verbose) :
+                                         Vector{Float64}(raw_data[1:n_particles])
                 end
                 
                 # CRITICAL FIX: Validate vector component array length

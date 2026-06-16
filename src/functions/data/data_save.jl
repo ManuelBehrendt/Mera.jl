@@ -83,7 +83,7 @@ return
 #### Arguments
 ##### Required:
 - **`dataobject`:** needs to be of type: "HydroDataType", "PartDataType", "GravDataType", "ClumpDataType", "RtDataType"
-- **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file or overwriting existing file); fmode=:append further datatype. (overwriting of existing datatypes is not possible)
+- **`fmode`:** nothing is written/appended by default to avoid overwriting files by accident. Need: fmode=:write (new file, or overwrite an existing file); fmode=:append adds a further datatype to an existing file. Re-appending a datatype that is already stored in the file is not supported and raises an error (existing datatypes are not overwritten in place).
 ##### Predefined/Optional Keywords:
 - **`path`:** path to save the file; default is local path.
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
@@ -274,7 +274,8 @@ function check_compression(compress, wdata)
     elseif typeof(compress) == LZ4FrameCompressor && wdata
         ctype = compress
     elseif compress == false || !wdata
-        ctype = :nothing
+        ctype = false   # JLD2 disables compression with `compress=false`; the Symbol :nothing is
+                        # rejected by jldopen ("Unsupported Compressor"), which broke uncompressed saves.
     end
     return ctype
 end

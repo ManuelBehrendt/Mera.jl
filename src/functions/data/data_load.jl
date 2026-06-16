@@ -7,6 +7,7 @@ function loaddata(output::Int, datatype::Symbol;
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    regenerate_scales::Bool=true,
                     verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -18,6 +19,7 @@ function loaddata(output::Int, datatype::Symbol;
                             zrange=zrange,
                             center=center,
                             range_unit=range_unit,
+                            regenerate_scales=regenerate_scales,
                             verbose=verbose,
                             myargs=myargs )
 end
@@ -29,6 +31,7 @@ function loaddata(output::Int, path::String, datatype::Symbol;
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    regenerate_scales::Bool=true,
                     verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -40,6 +43,7 @@ function loaddata(output::Int, path::String, datatype::Symbol;
                             zrange=zrange,
                             center=center,
                             range_unit=range_unit,
+                            regenerate_scales=regenerate_scales,
                             verbose=verbose,
                             myargs=myargs )
 end
@@ -53,6 +57,7 @@ function loaddata(output::Int, path::String;
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    regenerate_scales::Bool=true,
                     verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -64,6 +69,7 @@ function loaddata(output::Int, path::String;
                             zrange=zrange,
                             center=center,
                             range_unit=range_unit,
+                            regenerate_scales=regenerate_scales,
                             verbose=verbose,
                             myargs=myargs )
 end
@@ -121,6 +127,7 @@ function loaddata(output::Int; path::String="./",
                     zrange::Array{<:Any,1}=[missing, missing],
                     center::Array{<:Any,1}=[0., 0., 0.],
                     range_unit::Symbol=:standard,
+                    regenerate_scales::Bool=true,
                     verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
@@ -179,10 +186,14 @@ function loaddata(output::Int; path::String="./",
     
     dataobject = JLD2.load(fpath, dlink, typemap=typemap)
 
-    # update constants and scales
-    dataobject.info.constants = Mera.createconstants()
-    dataobject.info.scale = Mera.createscales(dataobject.info)
-    dataobject.scale = dataobject.info.scale
+    # By default refresh constants/scale from the CURRENT Mera version (so an old file picks up the
+    # current physical constants). This is the one part of load that is intentionally NOT byte-for-byte
+    # with the saved file; pass regenerate_scales=false to keep exactly the stored constants/scale.
+    if regenerate_scales
+        dataobject.info.constants = Mera.createconstants()
+        dataobject.info.scale = Mera.createscales(dataobject.info)
+        dataobject.scale = dataobject.info.scale
+    end
 
     # filter selected data region
     dataobject = subregion(dataobject, :cuboid,

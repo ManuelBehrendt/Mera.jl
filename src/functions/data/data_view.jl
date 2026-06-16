@@ -82,18 +82,19 @@ function viewdata(output::Int;
     vkeys = Dict() # versions keys
     for rname in fkeys
         if rname != "_types" && rname in string.([:hydro, :gravity, :particles, :clumps, :rt])
-            #println(rname)
-            ilink = rname * "/information"
-            ifk = JLD2.load(fpath, ilink)
-            ikeys[rname] = keys(ifk)
-            #println(ikeys[rname])
+            try
+                ilink = rname * "/information"
+                ifk = JLD2.load(fpath, ilink)
+                ikeys[rname] = keys(ifk)
 
-            vlink = ilink * "/versions"
-            vfk = JLD2.load(fpath, vlink)
-            vkeys[rname] = keys(vfk)
-            #println(vkeys[rname])
-
-            #println()
+                vlink = ilink * "/versions"
+                vfk = JLD2.load(fpath, vlink)
+                vkeys[rname] = keys(vfk)
+            catch e
+                # report which datatype could not be read instead of crashing opaquely on a
+                # corrupt/foreign entry; skip it so the rest of the overview still prints.
+                @warn "viewdata: could not read metadata for datatype '$rname' — skipping it." exception=e
+            end
         end
 
     end
@@ -105,14 +106,14 @@ function viewdata(output::Int;
         if rname != "_types" && rname in string.([:hydro, :gravity, :particles, :clumps, :rt])
             idata = Dict()
             vdata = Dict()
-            for i in ikeys[rname]
+            for i in get(ikeys, rname, String[])          # empty if the datatype was skipped above
                 if i != "versions"
                     ilink = rname * "/information/" * i
                     idata[i] = JLD2.load(fpath, ilink)
                 end
             end
 
-            for v in vkeys[rname]
+            for v in get(vkeys, rname, String[])
                 vlink = rname * "/information/" * "versions/" * v
                 vdata[v] = JLD2.load(fpath, vlink)
             end
