@@ -17,6 +17,12 @@ getvar(gas, [:vr_cylinder, :vϕ_cylinder], :km_s; center=[:bc])
 These derived names also work everywhere `getvar` is used internally — in
 [`projection`](@ref), [`profile`](@ref), [`phase`](@ref), and friends.
 
+!!! tip "Exact formulas"
+    For the full set of formulas behind every derived quantity (thermodynamics, velocities,
+    angular momentum, Mach numbers, Jeans/collapse, gravity) and the aggregate statistics
+    (`msum`, `center_of_mass`, `bulk_velocity`, `wstat`), see
+    [How Quantities Are Computed](computation_reference.md).
+
 ## Conventions for selected quantities
 
 A few derived quantities carry physical assumptions worth stating explicitly:
