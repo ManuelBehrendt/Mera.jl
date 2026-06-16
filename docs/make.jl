@@ -111,16 +111,19 @@ makedocs(modules = [Mera],
                                                        "Mera-Files Reading"                 => "benchmarks/JLD2_reading/Mera_files_reading.md",
                                                        "Projections"                        => "benchmarks/Projection/multi_projections.md"]],
 
-                      "Julia Quick Reference" => Any["Getting Started"           => "quickreference/01_getting_started.md",
-                                                     "From Other Languages"      => "quickreference/02_migrators.md", 
+                      "Quick Reference" => Any["Getting Started"           => "quickreference/01_getting_started.md",
+                                                     "From Other Languages"      => "quickreference/02_migrators.md",
                                                      "Essential Packages"        => "quickreference/03_packages.md",
                                                      "Julia Fundamentals"        => "quickreference/04_mera_patterns.md",
                                                      "Performance & Debugging"   => "quickreference/05_performance.md",
-                                                     "Resources & Community"     => "quickreference/06_resources.md"],
+                                                     "Resources & Community"     => "quickreference/06_resources.md",
+                                                     "Julia Cheat Sheet (all-in-one)" => "quickreference/Julia_Quick_Reference.md",
+                                                     "Mera Function Reference"        => "quickreference/Mera_Quick_Reference.md"],
 
                       "Examples & Reference" => Any[
                           "Examples"            => "examples.md",
                           "Miscellaneous"       => "Miscellaneous.md",
+                          "Recommended Packages" => "recommended_packages.md",
                           "Complete API Reference" => "api.md"]
                     ]
 )
