@@ -49,6 +49,8 @@ makedocs(modules = [Mera],
 
                           "Derived Fields & add_field" => "derived_fields.md",
 
+                          "How Quantities Are Computed" => "computation_reference.md",
+
                           "First Look"          => "report.md",
 
                           "Clump Finding"       => "clumpfind.md",
