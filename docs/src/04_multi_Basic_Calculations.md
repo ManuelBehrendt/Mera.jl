@@ -773,7 +773,7 @@ mass3 = getvar(gas, :mass, unit=:Msol) # unit calculation, provided by a keyword
 mass4 = getvar(gas, :mass, :Msol) # unit calculation provided by an argument [Msol]
 
 # construct a three dimensional array to compare the three created arrays column wise:
-mass_overview = ass1 mass2 mass3 mass4]
+mass_overview = [mass1 mass2 mass3 mass4]
 ```
 
 ```
@@ -1150,7 +1150,7 @@ mass3 = map(p->p.rho * (boxlen / 2^p.level)^3, gas.data) .* info.scale.Msol;
 Comparison of the results:
 
 ```julia
-ass1 mass2 mass3]
+[mass1 mass2 mass3]
 ```
 
 ```
