@@ -425,9 +425,9 @@ cb = colorbar(im, label=labeltext);
 
 Define cylindrical selection parameters:
 - **Radius**: Circular cross-section extent in specified units
-- **Height**: Cylinder length along the axis direction (total height, extending in both directions from center)
+- **Height**: the **half-height** — the cylinder extends ±`height` from the center along the axis, so the total length is `2·height`
 - **Center**: Reference point with flexible coordinate specification (`:bc` for box center)
-- **Direction**: Cylinder axis orientation (`:z` by default)
+- **Direction**: Cylinder axis orientation (currently `:z` only; `:x`/`:y` are not yet implemented and raise an error)
 
 Extract cylindrical region with specified radius and height in physical units. The height parameter refers to the total extent in both directions from the central plane.
 
