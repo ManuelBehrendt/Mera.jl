@@ -255,9 +255,9 @@ rm(tmp, force=true)
 ```
 
 ```
-Saved LOS cube (351, 346, 60) → /tmp/claude-502/jl_xAtypA3Uxq.jld2
+Saved LOS cube (351, 346, 60) → /tmp/jl_tmpcube.jld2
 Loaded LOS cube (351, 346, 60) ←
-/tmp/claude-502/jl_xAtypA3Uxq.jld2
+/tmp/jl_tmpcube.jld2
 round-trip identical: true
 ```
 
