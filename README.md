@@ -2,199 +2,204 @@
 
 # MERA.jl
 
-**High-Performance RAMSES Data Analysis in Pure Julia**
+**Analyze RAMSES simulations at scale — in pure Julia.**
 
-📚 **[Complete Documentation](https://manuelbehrendt.github.io/Mera.jl/stable/)**
+[![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)](https://github.com/ManuelBehrendt/Mera.jl/releases)
+[![Documentation](https://img.shields.io/badge/docs-stable%20release-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/)
+[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
+[![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
+[![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-[![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)](https://github.com/ManuelBehrendt/Mera.jl/releases) [![Documentation](https://img.shields.io/badge/docs-stable%20release-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/) [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152) [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl) [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
+**MERA** reads and analyzes [RAMSES](https://github.com/ramses-organisation/ramses) astrophysical
+simulation output natively in Julia. It loads multi-resolution AMR grids, particles, gravity, clumps
+and radiative-transfer fields into memory-efficient tables, computes 100+ physics-derived quantities
+on demand, and provides conservation-correct projections, profiles, flux budgets and structure
+finding — all through one unified, multiple-dispatch API.
 
-*Coverage is measured by the maintainer on a local laptop run (the
-RAMSES test datasets are too large to ship to GitHub Actions) and uploaded
-to Codecov via `scripts/run_local_coverage.sh`. See the **Testing** section
-below for details.*
-
-MERA is a Julia package for analyzing RAMSES astrophysical simulation data. Built entirely in Julia, it provides efficient numerical performance through JIT compilation while maintaining high-level language accessibility. MERA handles multi-resolution AMR grids and particle datasets with a unified API designed for computational research workflows.
+*Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
+GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*
 
 ## Why MERA?
 
-- **Julia-Native Performance**: JIT compilation with comprehensive benchmarking framework for validated speed
-- **Complete RAMSES Workflow**: Seamless pipeline from raw AMR output to publication-ready analysis  
-- **Multi-Threaded I/O**: Performance-tested parallel operations with system-specific optimization guides
-- **Extensive Physics Variables**: 70+ hydro and 30+ particle derived quantities with Unicode equation support
+- **Julia-native** — compiled-language performance in a single, introspectable code path; no Python/C
+  two-language barrier for custom, performance-sensitive analyses.
+- **RAMSES-native** — direct binary reading of AMR outputs with automatic unit conversion and full
+  multi-level support; load only what you need with spatial and refinement-level filtering.
+- **Conservation-correct** — projections and covering grids conserve mass to machine precision with
+  proper per-level cell volumes; flux budgets through surfaces split inflow/outflow explicitly.
+- **Multi-threaded by default** — `gethydro()` and `projection()` use all available cores
+  automatically; benchmarking guides included for system tuning.
+- **100+ derived quantities** — temperature, sound speed, Mach numbers (incl. Alfvén/fast/slow),
+  Jeans length/mass, virial parameter, cylindrical/spherical velocities, specific angular momentum,
+  kinetic/thermal energy and more — all via one `getvar()` interface, extensible with `add_field()`.
 
-*Additional benefits:*  
-• Interactive Development: Write analysis code in Jupyter notebooks, then scale to production scripts without rewriting  
-• Memory-Conscious Design: Load only the data you need with spatial and refinement level filtering  
-• Research Reproducibility: Project.toml/Manifest.jl ensure identical computational environments across systems  
-• Multi-Threading Out-of-the-Box: gethydro() and projection() automatically use all available cores  
-• Compressed Archive Format: MERA files dramatically reduce storage needs and provide significantly faster reading compared to original RAMSES files, especially beneficial for large simulations  
-• Progress Tracking: Built-in progress bars for long-running operations on large datasets
+## First look: a one-call dashboard
 
-<img src="docs/src/assets/representative_picture_60.png" alt="MERA.jl RAMSES Analysis Workflow" width="600">
+```julia
+using Mera
+quicklook(80; path="/path/to/simulation")
+```
 
-*Computational astrophysicists analyzing RAMSES AMR simulation data with MERA.jl's unified Julia workflow*
+![quicklook dashboard: gas surface-density projections, stellar and dark-matter maps, a density–temperature phase diagram, and a per-component census](docs/src/assets/features/quicklook_dashboard.png)
 
-## Quick Start
+*One call: mass-weighted gas Σ (face-on + two edge-on views), stellar and dark-matter surface
+density, the ρ–T phase diagram, and a census of cell/particle counts, component masses and SFR.*
 
-### Installation
+## 30-second quickstart
+
+```julia
+using Mera
+
+# 1. read simulation metadata
+info = getinfo(output=100, path="/path/to/ramses/output")
+
+# 2. load gas (multi-threaded), restricted to a physical sub-box about the box centre
+gas = gethydro(info, lmax=10,
+               xrange=[-10., 10.], yrange=[-10., 10.], zrange=[-5., 5.],
+               center=[:bc], range_unit=:kpc)
+
+# 3. mass-conserving surface-density projection
+proj = projection(gas, :sd, :Msol_pc2; direction=:z, pxsize=[10., :pc])
+
+# 4. plot with your favourite backend
+using CairoMakie
+heatmap(log10.(proj.maps[:sd]), colormap=:inferno)
+```
+
+## Core capabilities
+
+### Loading & filtering
+- **`getinfo`** — simulation metadata (box size, time/redshift, grid structure, units)
+- **`gethydro` / `getparticles` / `getgravity` / `getrt` / `getclumps`** — load each data type, with
+  optional spatial subregioning and refinement-level capping
+- **`subregion` / `shellregion`** — extract cuboid / sphere / cylinder / shell selections that preserve AMR structure
+
+### Projections & grids
+- **`projection`** — mass-conserving 2-D maps of any quantity, on- or off-axis (arbitrary line of
+  sight, face-on/edge-on, angular-momentum-aligned), with hole-free footprint deposition
+- **`covering_grid` / `slice`** — resample AMR onto a dense uniform grid for FFTs, power spectra,
+  volume rendering or ML inputs (with a memory estimator that refuses to over-allocate)
+
+### Profiles & phase diagrams
+- **`profile`** — weighted 1-D profiles of any quantity vs. any axis (radius, height, density…), with
+  per-bin mean/std/sem/quantiles/extrema/shape-moments, equal-count binning and bootstrap CIs; works
+  on 3-D data **or** on a projected 2-D map
+- **`phase`** — 2-D weighted histograms (the classic ρ–T diagram, position–velocity, …)
+
+### Structure finding (7 pluggable algorithms)
+`clumpfind` exposes one verb backed by interchangeable finders sharing one neighbour-search,
+boundedness, validation and catalogue pipeline:
+`DensityWatershed`, `Dendrogram`, `GraphSegFinder`, `HDBSCANFinder`, `PhaseSpaceFoF`,
+`PersistenceFinder` (plus the default friends-of-friends). Gravitational boundedness uses a
+Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) truncation.
+
+### Flux budgets
+- **`fluxbudget` / `fluxprofile` / `fluxtimeseries`** — conservation-correct inflow/outflow of mass,
+  momentum, energy and metals through spheres, cylinders, planes or angular-momentum-aligned
+  surfaces, optionally split by gas phase, with sampling/bootstrap uncertainties and a surface map of
+  where gas enters and leaves.
+
+### Derived fields & extensions
+- **`getvar`** — 100+ derived quantities by name (`:T`, `:cs`, `:mach`, `:jeanslength`,
+  `:vr_cylinder`, `:ekin`, `:escape_speed`, …); `list_fields(:hydro; builtin=true)` lists them all
+- **`add_field`** — register a custom derived field once; it then works inside `projection`, `profile`, `phase`
+- **`getvar_requirements`** — query the raw variables a derived field needs (drives selective I/O)
+
+### Star formation, reports, export
+- **`sfr` / `sfr_snapshot`** — star-formation history and current/time-averaged SFR from stellar ages
+- **`report`** — composable first-look dashboard (projection / profile / phase / SFR cards) with cost estimates
+- **`export_vtk`** — write AMR cells / particles to VTK for ParaView/VisIt
+- **`savedata` / `loaddata`** — compressed MERA-file archive (LZ4/Zlib/Bzip2): smaller and faster to read than raw RAMSES
+
+## A taste of the features
+
+| Feature | Use case | Figure |
+|---|---|---|
+| Flux budgets | inflow/outflow through surfaces (winds, accretion) | ![flux geometries](docs/src/assets/features/flux_geometries.png) |
+| Clump catalogs | star-forming clouds, halo substructure, dense cores | ![clump mass function](docs/src/assets/features/clump_massfunction.png) |
+| Covering grids | FFTs, power spectra, ML inputs | ![covering grid slice](docs/src/assets/features/covering_grid_slice.png) |
+| Phase diagrams | gas thermodynamics, phase structure | ![phase diagram](docs/src/assets/features/flux_phases.png) |
+| Derived fields | temperature, Mach, Jeans, angular momentum | ![derived fields](docs/src/assets/features/derived_fields.png) |
+| Profiles | radial density, SFR, metallicity | ![profile](docs/src/assets/features/fluxprofile.png) |
+| Radiative transfer | Strömgren sphere, ionization fronts | ![RT Strömgren](docs/src/assets/features/rt_stromgren.png) |
+
+## Installation
+
 ```julia
 using Pkg
 Pkg.add("Mera")
 ```
 
-### Typical Analysis Workflow
+**Requirements**: Julia 1.10+ (1.11+ recommended). **Platforms**: macOS (incl. Apple Silicon), Linux.
+
+## One name, many types — multiple dispatch
+
+The same verbs work across gas, particles, clumps and gravity — Julia picks the right method:
+
 ```julia
-using Mera
+getvar(gas,       :mass)   # cell mass (ρ × volume)
+getvar(particles, :mass)   # particle mass
+getvar(clumps,    :mass)   # clump total mass
 
-# Load simulation metadata
-info = getinfo(output=100, path="/path/to/ramses/output")
-
-# Extract hydrodynamic data with spatial filtering (multi-threaded)
-hydro = gethydro(info, lmax=10, 
-                xrange=[-10., 10.], yrange=[-10., 10.], zrange=[-5., 5.],
-                center=[24., 24., 24.], range_unit=:kpc)
-
-# Create high-resolution density projection (multi-threaded)
-proj = projection(hydro, :rho, 
-                 direction=:z, 
-                 pxsize=[10., :pc], 
-                 unit=:Msun_pc2)
-
-# Generate publication-ready visualization using Makie
-using CairoMakie
-heatmap(log10.(proj.maps[:rho]), colormap=:hot, 
-        colorrange=(2, 6),  # log₁₀ of [1e2, 1e6] M☉/pc²
-        axis=(xlabel="x [kpc]", ylabel="y [kpc]", title="Surface Density Σ"))
+projection(gas, :sd)              # gas surface density
+profile(gas, :r_cylinder, :T)     # radial temperature profile
+phase(gas, :rho, :T)              # ρ–T phase diagram
 ```
 
-## Core Capabilities
+Write the analysis once; it works on every data type.
 
-**High-Performance Data Processing**  
-Compressed MERA-files with LZ4/Zlib/Bzip2 compression enable rapid I/O operations. Built on IndexedTables.jl for memory-efficient handling of 100+ GB AMR datasets.
+## How MERA compares
 
-**Complete Analysis Toolkit**  
-Native support for projections, phase diagrams, statistical analysis, and VTK export for 3D visualization. All functions designed for both interactive exploration and batch processing.
+- **vs. `yt`** — a Julia-native code path (no Python/Cython split) for custom, auditable analyses; a
+  first-class, conservation-checked **flux budget** (yt offers only marching-cubes isocontour flux);
+  and a **pluggable clump/halo finder** with several modern algorithms behind one interface.
+- **vs. `pynbody`** — direct RAMSES AMR reading, multi-threaded out of the box, and research-grade
+  derived physics (spherical/cylindrical velocities, Jeans/virial, magnetosonic Mach, tidal truncation).
+- **vs. hand-written scripts** — conservation treated as a *tested* property (a data-free oracle suite
+  checks weighted statistics, projection/covering-grid mass conservation, and the flux estimator
+  against the analytic surface integral on every release).
 
-**RAMSES-Optimized Reader**  
-Direct binary reading of RAMSES outputs with automatic unit conversion, ghost cell handling, and multi-level AMR support. Compatible with RAMSES versions from stable-17.09 through stable-19.10, plus RAMSES 2025.05 (beta support).
+## Documentation
 
-**Julia Ecosystem Integration**  
-Seamless interoperability with the Julia ecosystem enables advanced analyses beyond MERA's core functionality. Data structures integrate naturally with statistical, machine learning, and visualization packages for extended computational workflows.
+- **[Stable documentation & API reference](https://manuelbehrendt.github.io/Mera.jl/stable/)**
+- **[Tutorials](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs)** — step-by-step Jupyter notebooks
+- In the REPL, `?getvar` shows the docstring and `getvar()` (no args) prints the full derived-quantity catalogue
 
-## Documentation & Examples
+## Roadmap
 
-📚 **[Complete Documentation](https://manuelbehrendt.github.io/Mera.jl/stable/)** - API reference, tutorials, and advanced examples
-
-📖 **[Jupyter Notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/59fc4b1194f02a24cb5f183a5cd9b4c05bb032b0/Mera-Docs)** - 15+ step-by-step analysis tutorials incorporated into the documentation
-
-📋 **[Benchmark Suite](https://manuelbehrendt.github.io/Mera.jl/stable/benchmarks/IO/IOperformance/)** - Performance testing and optimization guides
-
-## Requirements
-
-- Julia 1.10+ (1.11+ recommended)
-- Compatible with RAMSES outputs from stable-17.09 through stable-19.10, and RAMSES 2025.05
-- Linux and macOS (Windows not tested)
-
-### RAMSES Version Compatibility Matrix
-
-| RAMSES Version | Compatibility Status | Notes |
-|----------------|---------------------|-------|
-| stable-17.09   | ✅ Fully Supported | Validated |
-| stable-18.xx   | ✅ Fully Supported | Validated |
-| stable-19.10   | ✅ Fully Supported | Current stable |
-| 2025.05        | 🧪 Beta Support    | Core functionality validated, new features in testing |
+MERA is actively developed and its priorities are driven by user needs. Have a feature request, a
+RAMSES variant to support, or a gap to report? Please
+[open an issue](https://github.com/ManuelBehrendt/Mera.jl/issues) or start a
+[discussion](https://github.com/ManuelBehrendt/Mera.jl/discussions) — contributions and ideas are welcome.
 
 ## Testing
 
-The test suite is organised into tiers of increasing complexity in
-`test/runtests.jl`: quality (Aqua) and unit-system tests run unconditionally;
-the remaining tiers exercise readers, derived variables, projections, regions,
-conservation/decomposition consistency, parallelisation, I/O, profiles,
-clumps, VTK export, filter macros, data conversion, and parallel execution
-against real RAMSES outputs.
-
-### Running tests
-
-Three modes are supported:
+MERA ships a tiered suite: data-free **smoke/oracle** tests that run on the full CI Julia matrix
+(1.10 / 1.11 / 1.12), and **data-backed** integration tests run locally against real RAMSES output.
 
 ```bash
-# 1. Smoke run (no simulation data needed — what CI does):
+# smoke/oracle tests only (what CI runs)
 MERA_SMOKE_ONLY=1 julia --project -e 'using Pkg; Pkg.test("Mera")'
 
-# 2. Full local run (requires RAMSES test data mounted):
-julia --project -e 'using Pkg; Pkg.test("Mera")'
-
-# 3. Full local run + Codecov upload (maintainer):
-UPLOAD=1 ./scripts/run_local_coverage.sh
+# full suite (requires the RAMSES test data)
+MERA_TEST_DATA=/path/to/Mera-Tests julia --project -e 'using Pkg; Pkg.test("Mera")'
 ```
 
-The test data location defaults to
-`/Volumes/FASTStorage/Simulations/Mera-Tests` (the maintainer's external
-drive). To point at a different location, export `MERA_TEST_DATA`:
+## Get involved
 
-```bash
-export MERA_TEST_DATA=/path/to/your/Mera-Tests
-```
+- **Cite & star** — if MERA helps your research, please cite the
+  [Zenodo DOI](https://zenodo.org/badge/latestdoi/229728152) and ⭐ the
+  [repository](https://github.com/ManuelBehrendt/Mera.jl); it helps measure impact and sustain development.
+- **Ask** — [Discussions](https://github.com/ManuelBehrendt/Mera.jl/discussions) for questions and show-and-tell.
+- **Report / request** — [Issues](https://github.com/ManuelBehrendt/Mera.jl/issues) for bugs and feature requests.
+- **Contribute** — see [CONTRIBUTING.md](CONTRIBUTING.md); bug reports, docs fixes, examples and new
+  algorithms are all welcome.
 
-To run only specific test files in isolation (handy for debugging a single
-file), set `MERA_FOCUS` to a comma-separated list of file names:
+## License
 
-```bash
-MERA_FOCUS=07_regions.jl julia --project -e 'using Pkg; Pkg.test("Mera")'
-```
-
-`scripts/run_local_coverage.sh` wipes any stale `*.cov` files, runs
-`Pkg.test("Mera"; coverage=true)`, aggregates the coverage data into
-`coverage.lcov` (via `scripts/process_coverage.jl`), and — when `UPLOAD=1`
-is set and `CODECOV_TOKEN` is available — uploads the result to Codecov.
-The token can be stored in `~/.config/mera/codecov.env` (mode 600) instead
-of being exported manually.
-
-The documentation's Jupyter tutorial notebooks also double as end-to-end
-workflow tests, with their execution folded into the coverage report; see the
-Testing Framework page for details.
-
-GitHub Actions runs only the smoke subset (`MERA_SMOKE_ONLY=1`) because
-the RAMSES test datasets are too large to ship to CI runners. Coverage is
-therefore produced and uploaded from the maintainer's laptop, not CI. The CI
-matrix covers Julia `1.10`, `1.11`, and `1.12` on Ubuntu and macOS.
-
-Four GitHub Actions workflows are in use: `CI.yml` (smoke tests + docs build),
-`documentation.yml` (deploys the docs site), `CompatHelper.yml` (dependency
-`[compat]` bump PRs), and `TagBot.yml` (release tagging from the Julia
-registry). See the [Testing Framework](https://manuelbehrendt.github.io/Mera.jl/stable/advanced_features/testing_guide/)
-page for details.
-
-For the full reference — the tiered test-file listing, test datasets, the
-coverage workflow, and notes for reviewers — see the **Testing Framework**
-page in the [documentation](https://manuelbehrendt.github.io/Mera.jl/stable/advanced_features/testing_guide/).
-
-## Stay Updated
-
-⭐ **Star this repository** to show your support and stay informed about updates
-
-📧 **Get release notifications:**
-
-- **GitHub**: Click "Watch" → "Custom" → check "Releases"
-- **NewReleases.io**: Subscribe at [newreleases.io](https://newreleases.io/) for automated email alerts (free)
-
-## Citation
-
-If MERA contributes to your research, please cite:
-
-[![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
-
-## Community & Support
-
-
-- **Questions**: [Email](mailto:mera@manuelbehrendt.com)
-- **Bug Reports**: [GitHub Issues](https://github.com/ManuelBehrendt/Mera.jl/issues)
-- **Feature Requests**: [Email](mailto:mera@manuelbehrendt.com) - We welcome ideas for extending MERA!
-
-## Contributing
-
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and our [documentation](https://manuelbehrendt.github.io/Mera.jl/stable/) for API details.
+MIT — see [LICENSE.md](LICENSE.md).
 
 ---
 
-**Ready to accelerate your RAMSES analysis?** → [**Get Started with MERA**](https://manuelbehrendt.github.io/Mera.jl/stable/)
+**Get started:** [manuelbehrendt.github.io/Mera.jl](https://manuelbehrendt.github.io/Mera.jl/stable/) ·
+**Questions?** [open a discussion](https://github.com/ManuelBehrendt/Mera.jl/discussions)
