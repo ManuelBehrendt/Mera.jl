@@ -92,6 +92,61 @@ Two **modifiers** combine with any of the above:
 | `position_angle` | image **roll** about the line of sight (the on-sky position angle / camera roll) — leaves the line of sight unchanged, rotates the image |
 | `up = [ux, uy, uz]` | explicit camera up-vector (in-plane orientation); by default chosen automatically (reference axis kept pointing up) |
 
+### How the camera basis is built (the math)
+
+Whatever way you specify the view, Mera reduces it to a single unit **line-of-sight** vector
+`ŵ` and then builds a right-handed orthonormal **camera basis** `(r̂, û, ŵ)`: image x
+(`r̂`, stored as `cam_right`), image y (`û`, stored as `up`), and the viewing direction
+(`ŵ`, stored as `los`). The construction is *deterministic*, so the same view always produces
+the same image orientation:
+
+1. **Line of sight.** `ŵ = los / ‖los‖`, where `los` comes from the explicit vector, the
+   `theta`/`phi` form `[sinθ cosφ, sinθ sinφ, cosθ]`, or the inclination/azimuth tilt of the
+   reference axis.
+2. **Up-vector.** An explicit `up` is used as-is (unless it is (anti)parallel to `ŵ`).
+   Otherwise Mera picks the **world axis least parallel to `ŵ`** (ties broken in `x < y < z`
+   order) and Gram–Schmidt-orthogonalises it against `ŵ`:
+
+   ```math
+   \hat{u}_0 = \frac{\hat{a} - (\hat{a}\cdot\hat{w})\,\hat{w}}
+                    {\lVert\,\hat{a} - (\hat{a}\cdot\hat{w})\,\hat{w}\,\rVert}.
+   ```
+
+   This is always perpendicular to `ŵ` and fully reproducible (no random tie-break).
+3. **Right and up.**
+
+   ```math
+   \hat{r} = \frac{\hat{u}_0 \times \hat{w}}{\lVert \hat{u}_0 \times \hat{w}\rVert},
+   \qquad
+   \hat{u} = \hat{w} \times \hat{r},
+   ```
+
+   so the frame is right-handed with `r̂ × û = ŵ`.
+4. **Image roll.** `position_angle` (the camera roll) rotates `(r̂, û)` *together* about `ŵ` —
+   it changes the on-sky image orientation, not the line of sight:
+
+   ```math
+   \hat{r}' = \cos\rho\,\hat{r} + \sin\rho\,\hat{u},
+   \qquad
+   \hat{u}' = -\sin\rho\,\hat{r} + \cos\rho\,\hat{u}.
+   ```
+
+A vector `v` (e.g. a velocity) decomposes onto this frame by projection: its line-of-sight
+component is `v·ŵ` (this is `:vlos`), and its image-plane components are `v·r̂` and `v·û`. A
+position `p` maps the same way,
+
+```math
+p \;\longmapsto\; \big((p-c)\cdot\hat{r},\; (p-c)\cdot\hat{u},\; (p-c)\cdot\hat{w}\big)
+\;=\; R\,(p-c), \qquad R = [\,\hat{r}\;\hat{u}\;\hat{w}\,]^{\mathsf{T}},
+```
+
+where `c` fixes the image origin (the projection centre); the third component `(p-c)·ŵ` is the
+line-of-sight depth used for slab selection. As a convention check, `los=[0,0,1]` with
+`up=[0,1,0]` gives `r̂=[1,0,0]`, `û=[0,1,0]` — the off-axis path then reduces exactly to the
+axis-aligned `direction=:z` mapping (image x → simulation x, image y → simulation y). The basis
+travels on the result as `m.cam_right`, `m.up`, `m.los` (see *Camera metadata on the result*
+below).
+
 `direction=:faceon`/`:edgeon` are the quick disk shortcuts (`= inclination 0°/90°` with
 `axis=:angmom`); they take no `axis` of their own. **Pixel size: prefer `pxsize=[size, :unit]`**
 (a physical pixel size, e.g. `pxsize=[50, :pc]` or `pxsize=[0.3, :kpc]`) so resolution means the
