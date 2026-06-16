@@ -168,8 +168,11 @@ function prepranges(    dataobject::InfoType,
             zmin = - radius + center[3]
             zmax =   radius + center[3]
         end
-        # given center relative to the data range in units: cell centers
-        #todo
+        # In :standard units, center/radius/height are ALREADY fractional box coordinates [0,1] — the
+        # same space the cell helpers (get_radius_sphere/_cylinder) and particle filters compare against.
+        # These shifts were previously left at 0.0 (the #todo), so a :standard sphere/cylinder ignored
+        # `center` and selected about the origin. (radius_shift/height_shift already default correctly.)
+        cx_shift = center[1]; cy_shift = center[2]; cz_shift = center[3]
 
     else
         selected_unit = getunit(dataobject, range_unit)
@@ -278,8 +281,9 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
         zmin = - height + center[3]
         zmax =   height + center[3]
 
-        # given center relative to the data range in units: cell centers
-        #todo
+        # :standard center is already fractional [0,1] (see prepranges sphere/cylinder note); set the
+        # axis shifts so cylindrical shells honour `center` instead of selecting about the origin.
+        cx_shift = center[1]; cy_shift = center[2]; cz_shift = center[3]
 
     else
         selected_unit = getunit(dataobject, range_unit)
@@ -386,8 +390,10 @@ function prep_spherical_shellranges(    dataobject::InfoType,
         zmin = - radius_out + center[3]
         zmax =   radius_out + center[3]
 
-        # given center relative to the data range in units: cell centers
-        #todo
+        # :standard center is already fractional [0,1] (see the prepranges note); set the shifts so the
+        # spherical shell honours `center` instead of selecting about the origin. (radius_*_shift already
+        # default correctly at the top.)
+        cx_shift = center[1]; cy_shift = center[2]; cz_shift = center[3]
 
     else
         selected_unit = getunit(dataobject, range_unit)

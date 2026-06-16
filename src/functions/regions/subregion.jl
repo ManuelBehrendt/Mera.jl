@@ -67,6 +67,8 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     range_unit::Symbol=:standard,           # all
     cell::Bool=true,                        # hydro and gravity
     inverse::Bool=false,                    # all
+    smooth_boundary::Bool=false,            # hydro cylinder only
+    boundary_width::Real=0.1,               # hydro cylinder only
     verbose::Bool=true,             # all
     myargs::ArgumentsType=ArgumentsType() ) # all
 
@@ -83,6 +85,11 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
 
 
     verbose = checkverbose(verbose)
+    # `cell` (cell-overlap vs cell-centre selection) applies only to AMR cell data; warn if a user
+    # sets it on particles/clumps, where it is silently ignored.
+    if cell == false && !(typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType)
+        @warn "subregion: `cell` only applies to AMR cell data (hydro/gravity/RT); it is ignored for $(typeof(dataobject))."
+    end
     # subregion = wrapper over all subregion functions
     if shape == :cuboid
         if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
@@ -103,7 +110,11 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
         end
 
     elseif shape == :cylinder || shape == :disc
-        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
+        # `direction` is not yet implemented in the cylinder filter (the radial test is always on x,y
+        # and the height on z). Reject :x/:y rather than silently returning a z-oriented cylinder.
+        direction === :z || error("subregion :cylinder currently supports only direction=:z; direction=:$(direction) is not implemented (it would silently return a z-oriented cylinder).")
+        if typeof(dataobject) == HydroDataType
+            # only the hydro cylinder filter implements the smooth-boundary kwargs
             return subregioncylinder(dataobject,
                             radius=radius,
                             height=height,
@@ -112,8 +123,20 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
                             direction=direction,
                             cell=cell,
                             inverse=inverse,
-                            smooth_boundary=false,  # Default to sharp boundaries for backward compatibility
-                            boundary_width=0.1,     # Default boundary width
+                            smooth_boundary=smooth_boundary,
+                            boundary_width=boundary_width,
+                            verbose=verbose)
+        elseif typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType
+            # gravity/RT are AMR cells (accept `cell`) but do NOT take smooth_boundary — passing it
+            # here previously raised a MethodError, so cylinder subregions never worked for them.
+            return subregioncylinder(dataobject,
+                            radius=radius,
+                            height=height,
+                            center=center,
+                            range_unit=range_unit,
+                            direction=direction,
+                            cell=cell,
+                            inverse=inverse,
                             verbose=verbose)
         else
             return subregioncylinder(dataobject,

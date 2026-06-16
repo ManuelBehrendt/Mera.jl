@@ -572,22 +572,18 @@ end
     # preferred axis).  For a real fixture mass-counts may differ slightly
     # due to non-isotropy; assert that all three orientations select a
     # NON-EMPTY region with comparable mass (within a factor of 2).
-    @testset "Cylinder direction=:x/:y/:z" begin
+    # `direction` is only implemented for :z. :x/:y were previously a silent no-op (they returned a
+    # z-oriented cylinder, so this test passed tautologically with mass ratio 1.0); they now error.
+    @testset "Cylinder direction: :z works, :x/:y rejected" begin
         radius_kpc = boxlen_kpc / 4
         height_kpc = boxlen_kpc / 2
-        masses = Float64[]
-        for dir in [:x, :y, :z]
-            sub = subregion(hydro, :cylinder,
-                radius=radius_kpc, height=height_kpc,
-                direction=dir,
-                center=[:boxcenter], range_unit=:kpc, verbose=false)
-            @test sub isa Mera.HydroDataType
-            @test length(sub.data) > 0
-            push!(masses, msum(sub))
-        end
-        # All three orientations should be comparable in mass on a
-        # roughly-isotropic fixture.
-        @test maximum(masses) / minimum(masses) < 2.0
+        subz = subregion(hydro, :cylinder, radius=radius_kpc, height=height_kpc, direction=:z,
+                         center=[:boxcenter], range_unit=:kpc, verbose=false)
+        @test subz isa Mera.HydroDataType && length(subz.data) > 0
+        @test_throws ErrorException subregion(hydro, :cylinder, radius=radius_kpc, height=height_kpc,
+                         direction=:x, center=[:boxcenter], range_unit=:kpc, verbose=false)
+        @test_throws ErrorException subregion(hydro, :cylinder, radius=radius_kpc, height=height_kpc,
+                         direction=:y, center=[:boxcenter], range_unit=:kpc, verbose=false)
     end
 
     # ========================================================================
@@ -699,6 +695,45 @@ end
             end
         else
             @test_skip "spiral_ugrid not available for particle subregion tests"
+        end
+    end
+
+    # ========================================================================
+    # Regression: :standard center honored for sphere/cylinder/shell (A1/A2/A3)
+    # ========================================================================
+    # The :standard branch of prepranges left the center shifts at 0, so :standard sphere/cylinder/
+    # shell selected about the ORIGIN regardless of `center` (masked: fixtures have 1 code length ≈
+    # 1 kpc AND no off-origin :standard test existed). Lock-in: an off-origin :standard selection must
+    # return the SAME cells/particles as the equivalent :kpc selection, for every data type.
+    @testset "off-origin :standard selection == :kpc (center honored)" begin
+        cfrac = [0.6, 0.55, 0.5]; ckpc = cfrac .* boxlen_kpc
+        rfrac = 0.12; rkpc = rfrac * boxlen_kpc
+        hfrac = 0.08; hkpc = hfrac * boxlen_kpc
+        grav = load_test_gravity(:spiral_clumps)
+        for (nm, obj) in (("hydro", hydro), ("gravity", grav))
+            s_std = subregion(obj, :sphere, center=cfrac, radius=rfrac, range_unit=:standard, verbose=false)
+            s_kpc = subregion(obj, :sphere, center=ckpc,  radius=rkpc,  range_unit=:kpc,      verbose=false)
+            @test 0 < length(s_std.data) == length(s_kpc.data)
+            c_std = subregion(obj, :cylinder, center=cfrac, radius=rfrac, height=hfrac, range_unit=:standard, verbose=false)
+            c_kpc = subregion(obj, :cylinder, center=ckpc,  radius=rkpc,  height=hkpc,  range_unit=:kpc,      verbose=false)
+            @test 0 < length(c_std.data) == length(c_kpc.data)
+            sh_std = shellregion(obj, :sphere, center=cfrac, radius=[0.04, 0.14], range_unit=:standard, verbose=false)
+            sh_kpc = shellregion(obj, :sphere, center=ckpc,  radius=[0.04boxlen_kpc, 0.14boxlen_kpc], range_unit=:kpc, verbose=false)
+            @test 0 < length(sh_std.data) == length(sh_kpc.data)
+            # the selected sphere is actually centred at cfrac≈0.6 (NOT the origin — that was the bug)
+            xf = getvar(s_std, :x) ./ boxlen
+            @test 0.45 < (minimum(xf) + maximum(xf)) / 2 < 0.75
+        end
+        # particles (A3): off-origin :standard sphere == :kpc
+        ds_p = DATASETS[:spiral_ugrid]
+        if isdir(ds_p.path) && ds_p.has_particles
+            part = getparticles(getinfo(ds_p.output, ds_p.path, verbose=false), verbose=false, show_progress=false)
+            if length(part.data) > 0
+                bpk = part.boxlen * part.info.scale.kpc
+                ps_std = subregion(part, :sphere, center=[0.6,0.55,0.5], radius=0.12, range_unit=:standard, verbose=false)
+                ps_kpc = subregion(part, :sphere, center=[0.6bpk,0.55bpk,0.5bpk], radius=0.12bpk, range_unit=:kpc, verbose=false)
+                @test 0 < length(ps_std.data) == length(ps_kpc.data)
+            end
         end
     end
 
