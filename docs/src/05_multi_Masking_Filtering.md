@@ -1207,7 +1207,7 @@ Particles COM:        (22.891354761211396, 24.17414728268034, 24.003205056545642
 mask1 = map(row->row.rho < 100. / gas.scale.nH, gas.data); # mask for the hydro data
 mask2 = map(row->row.birth < 100.  / particles.scale.Myr, particles.data); # mask for the particle data
 
-println( "Joint COM (Gas + Particles) masked: ", center_of_mass([gas,particles], :kpc, mask=ask1, mask2]) , " kpc" )
+println( "Joint COM (Gas + Particles) masked: ", center_of_mass([gas,particles], :kpc, mask=[mask1, mask2]) , " kpc" )
 println( "Joint COM (Gas + Particles):        ", center_of_mass([gas,particles], :kpc) , " kpc" )
 ```
 

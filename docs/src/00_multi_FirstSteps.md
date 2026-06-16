@@ -571,9 +571,9 @@ info.scale.cm_s2   # Acceleration [cm s⁻²]
 
 **Temperature and Pressure**
 ```julia
-info.scale.K       # Temperature ]
+info.scale.K       # Temperature [K]
 info.scale.Ba      # Pressure [Barye]
-info.scale.p_kB    # Pressure/kB  cm⁻³]
+info.scale.p_kB    # Pressure/kB [K cm⁻³]
 ```
 
 **Energy and Power**
