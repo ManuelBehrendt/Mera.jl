@@ -68,6 +68,9 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
     
     # subregion = wrapper over all subregion shell functions
     if shape == :cylinder || shape == :disc
+        # `direction` is not yet implemented for cylindrical shells (radial test always on x,y, height
+        # on z). Reject :x/:y rather than silently returning a z-oriented shell.
+        direction === :z || error("shellregion :cylinder currently supports only direction=:z; direction=:$(direction) is not implemented.")
         if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
             return shellregioncylinder(dataobject,
                                         radius=radius,
