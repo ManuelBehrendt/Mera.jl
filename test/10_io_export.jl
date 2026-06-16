@@ -143,6 +143,21 @@ using JLD2
         end
     end
 
+    @testset "Data Save/Load: compress=false and regenerate_scales=false" begin
+        mktempdir() do test_dir
+            # uncompressed round-trip reproduces the data exactly
+            savedata(hydro, path=test_dir, fname="nc", fmode=:write, compress=false, verbose=false)
+            lnc = loaddata(hydro.info.output, path=test_dir, fname="nc", datatype=:hydro, verbose=false)
+            @test isapprox(getvar(lnc, :rho), getvar(hydro, :rho), rtol=1e-12)
+            @test isapprox(msum(lnc), msum(hydro), rtol=RTOL_UNITS)
+            # regenerate_scales=false keeps the stored scale (no error; data still round-trips)
+            l0 = loaddata(hydro.info.output, path=test_dir, fname="nc", datatype=:hydro,
+                          regenerate_scales=false, verbose=false)
+            @test l0.info.scale.kpc == hydro.info.scale.kpc
+            @test isapprox(getvar(l0, :rho), getvar(hydro, :rho), rtol=1e-12)
+        end
+    end
+
     # ========================================================================
     # Multi-component file: hydro + gravity + particle via fmode=:append
     # ========================================================================
