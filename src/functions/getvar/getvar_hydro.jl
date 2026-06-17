@@ -1,29 +1,61 @@
-# RT-aware mean molecular weight μ from the tracked ionization state, including
-# metallicity when a per-cell metal mass fraction is available:
-#   μ = 1 / [ X_H(1+xHII) + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z ]
-# with X_H = X(1-Z)/(X+Y), X_He = Y(1-Z)/(X+Y) so that X_H+X_He+Z = 1 per cell.
+# RT-aware mean molecular weight μ from the tracked ionization (and, with H2 chemistry,
+# molecular) state, including metallicity when a per-cell metal mass fraction is available:
+#   μ = 1 / [ X_H·h_p + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z ]
+# where h_p is the number of hydrogen particles per H nucleus:
+#   h_p = 1 + xHII                  without H2 chemistry, or
+#   h_p = xHI + 2·xHII + xH2        with H2 chemistry, xH2 = (1−xHI−xHII)/2
+# (h_p → 1 / 0.5 / 2 for neutral-atomic / fully-ionized / fully-molecular pure H, so
+#  μ → 1 / 0.5 / 2 respectively). X_H = X(1-Z)/(X+Y), X_He = Y(1-Z)/(X+Y) ⇒ X_H+X_He+Z=1.
 #  • X, Y are the primordial H/He mass fractions from the RT descriptor (info_rt).
 #  • Z is the local metal mass fraction (the :metallicity hydro scalar); 0 if absent.
 #  • A_Z ≈ 16 is a representative mean atomic mass of metals (O-dominated).
-#  • He is assumed neutral when its ionization is not tracked (nIons < 3).
-#  • Metal FREE ELECTRONS are neglected: RAMSES-RT does not track metal ionization,
-#    and the metal electron term is a sub-percent correction to μ.
+#  • He is neutral when its ionization is not tracked; metal free electrons are neglected
+#    (RAMSES-RT does not track metal ionization; a sub-percent correction to μ).
 const _RT_A_METAL = 16.0
+
+# RAMSES-RT stores the ionization fractions as passive hydro scalars in a fixed order
+# (set in rt/rt_init.f90): [xHI (only with H2 chemistry), xHII, xHeII, xHeIII (only with
+# He)]. RAMSES writes no isH2 flag, so the species COUNT fixes the layout:
+#   nIons = 1 + isH2 + 2·isHe   ⇒   isH2 = iseven(nIons) (∈ {2,4}),  isHe = nIons ≥ 3.
+# `iIons` points at the FIRST stored fraction (xHI with H2, else xHII). Returns the
+# 1-based variable_list index of each species (0 if that species is not stored).
+function _rt_species(rtd)
+    i0 = rtd[:iIons]
+    nI = get(rtd, :nIons, 1)
+    isH2 = iseven(nI)
+    isHe = nI >= 3
+    iHII = i0 + (isH2 ? 1 : 0)
+    return (isH2=isH2, isHe=isHe,
+            iHI    = isH2 ? i0 : 0,
+            iHII   = iHII,
+            iHeII  = isHe ? iHII + 1 : 0,
+            iHeIII = isHe ? iHII + 2 : 0)
+end
+
 function _rt_mu(dataobject, data, rtd)
+    sp = _rt_species(rtd)
     vlist = dataobject.info.variable_list
     X = get(rtd, :X_fraction, 0.76)
     Y = get(rtd, :Y_fraction, 1.0 - X)
-    xHII = select(data, vlist[rtd[:iIons]])
+    xHII = select(data, vlist[sp.iHII])
     # local metal mass fraction (passive scalar) if the run tracks it
     Z = in(:metallicity, propertynames(data.columns)) ? select(data, :metallicity) : zero(xHII)
     XH  = @. X * (1.0 - Z) / (X + Y)
     XHe = @. Y * (1.0 - Z) / (X + Y)
-    if get(rtd, :nIons, 1) >= 3
-        xHeII  = select(data, vlist[rtd[:iIons] + 1])
-        xHeIII = select(data, vlist[rtd[:iIons] + 2])
-        return @. 1.0 / (XH*(1.0 + xHII) + (XHe/4)*(1.0 + xHeII + 2.0*xHeIII) + Z/_RT_A_METAL)
+    # hydrogen particles per H nucleus (atoms + protons + electrons, + H2 molecules)
+    if sp.isH2
+        xHI = select(data, vlist[sp.iHI])
+        xH2 = @. max((1.0 - xHI - xHII) / 2.0, 0.0)
+        hp  = @. xHI + 2.0*xHII + xH2
     else
-        return @. 1.0 / (XH*(1.0 + xHII) + (XHe/4) + Z/_RT_A_METAL)
+        hp  = @. 1.0 + xHII
+    end
+    if sp.isHe
+        xHeII  = select(data, vlist[sp.iHeII])
+        xHeIII = select(data, vlist[sp.iHeIII])
+        return @. 1.0 / (XH*hp + (XHe/4)*(1.0 + xHeII + 2.0*xHeIII) + Z/_RT_A_METAL)
+    else
+        return @. 1.0 / (XH*hp + (XHe/4) + Z/_RT_A_METAL)
     end
 end
 
@@ -212,17 +244,12 @@ function get_data(  dataobject::HydroDataType,
         # HII, HeII, HeIII. So :xHII = variable iIons, :xHeII = iIons+1, etc.
         elseif i == :xHII || i == :xHeII || i == :xHeIII
             rtd = dataobject.info.descriptor.rt
-            if !haskey(rtd, :iIons)
-                error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
-            end
-            offset = i == :xHII ? 0 : (i == :xHeII ? 1 : 2)
-            nions = get(rtd, :nIons, 0)
-            if offset + 1 > nions
-                error("getvar :$i: simulation tracks only $nions ion fraction(s).")
-            end
-            ion_var = dataobject.info.variable_list[rtd[:iIons] + offset]
+            haskey(rtd, :iIons) || error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
+            sp = _rt_species(rtd)                          # H2-aware species layout
+            ion_idx = i == :xHII ? sp.iHII : (i == :xHeII ? sp.iHeII : sp.iHeIII)
+            ion_idx == 0 && error("getvar :$i: this run does not track that species (nIons=$(get(rtd,:nIons,0))).")
             selected_unit = getunit(dataobject, i, vars, units)
-            vars_dict[i] = select(masked_data, ion_var) .* selected_unit
+            vars_dict[i] = select(masked_data, dataobject.info.variable_list[ion_idx]) .* selected_unit
 
         # Hydrogen recombination emissivity proxy: ∝ n_e·n_HII ≈ n_HII²  [cm^-6].
         # n_HII = n_H · xHII, with the ionization fraction taken from the hydro
@@ -233,10 +260,9 @@ function get_data(  dataobject::HydroDataType,
             if !haskey(rtd, :iIons)
                 error("getvar :em_recomb needs the RT ionization fraction (descriptor :iIons); load an RT run.")
             end
-            xion_var = dataobject.info.variable_list[rtd[:iIons]]   # e.g. :var6 = xHII
             selected_unit = getunit(dataobject, :em_recomb, vars, units)
             nH = _rt_nH(dataobject, masked_data, rtd)                     # n_H [cm^-3]
-            xhii = select(masked_data, xion_var)
+            xhii = select(masked_data, dataobject.info.variable_list[_rt_species(rtd).iHII])
             vars_dict[:em_recomb] = @. (nH * xhii)^2 * selected_unit
 
         # RT-derived number densities [cm^-3]. n_H = rho * scale.nH (= X/m_H * unit_d);
@@ -249,36 +275,70 @@ function get_data(  dataobject::HydroDataType,
             if !haskey(rtd, :iIons)
                 error("getvar :$i needs the RT ionization fractions (descriptor :iIons); load an RT run.")
             end
+            sp = _rt_species(rtd)
             selected_unit = getunit(dataobject, i, vars, units)
             vlist = dataobject.info.variable_list
             nH    = _rt_nH(dataobject, masked_data, rtd)                    # n_H [cm^-3], X from descriptor
-            xHII  = select(masked_data, vlist[rtd[:iIons]])
+            xHII  = select(masked_data, vlist[sp.iHII])
             if i == :n_HII
                 vars_dict[i] = @. nH * xHII * selected_unit
             elseif i == :n_HI
-                vars_dict[i] = @. nH * (1.0 - xHII) * selected_unit
-            else  # :n_e — free electrons from H, plus He if it is tracked (nIons >= 3)
+                # atomic neutral H: the stored xHI with H2 chemistry, else the closure 1 − xHII
+                xHI = sp.isH2 ? select(masked_data, vlist[sp.iHI]) : (1.0 .- xHII)
+                vars_dict[i] = @. nH * xHI * selected_unit
+            else  # :n_e — free electrons from H (H2 is neutral), plus He if it is tracked
                 ne = nH .* xHII
                 # Same X/Y fallback convention as _rt_mu (default X=0.76, Y=1-X) so the
                 # two paths agree when the descriptor omits the fractions.
                 Xf = get(rtd, :X_fraction, 0.76)
                 Yf = get(rtd, :Y_fraction, 1.0 - Xf)
-                if get(rtd, :nIons, 1) >= 3 && Xf > 0
+                if sp.isHe && Xf > 0
                     nHe    = nH .* (Yf / (4.0 * Xf))
-                    xHeII  = select(masked_data, vlist[rtd[:iIons] + 1])
-                    xHeIII = select(masked_data, vlist[rtd[:iIons] + 2])
+                    xHeII  = select(masked_data, vlist[sp.iHeII])
+                    xHeIII = select(masked_data, vlist[sp.iHeIII])
                     ne = @. ne + nHe * (xHeII + 2.0 * xHeIII)
                 end
                 vars_dict[i] = ne .* selected_unit
             end
 
-        # RT neutral-hydrogen fraction xHI = 1 - xHII (located via the descriptor).
+        # RT neutral atomic-hydrogen fraction xHI. With H2 chemistry RAMSES tracks xHI and
+        # xHII as SEPARATE stored scalars, so xHI is read directly; without H2 it is the
+        # closure 1 − xHII (located via the descriptor).
         elseif i == :xHI
             rtd = dataobject.info.descriptor.rt
             haskey(rtd, :iIons) || error("getvar :xHI needs the RT ionization fraction (descriptor :iIons); load an RT run.")
+            sp = _rt_species(rtd)
             selected_unit = getunit(dataobject, :xHI, vars, units)
-            xHII = select(masked_data, dataobject.info.variable_list[rtd[:iIons]])
-            vars_dict[:xHI] = (1.0 .- xHII) .* selected_unit
+            vlist = dataobject.info.variable_list
+            xHI = sp.isH2 ? select(masked_data, vlist[sp.iHI]) :
+                            (1.0 .- select(masked_data, vlist[sp.iHII]))
+            vars_dict[:xHI] = xHI .* selected_unit
+
+        # Molecular-hydrogen fraction (H2 chemistry only): xH2 = (1 − xHI − xHII)/2, the
+        # RAMSES-RT closure — H *molecules* per H nucleus (½ ⇒ fully molecular).
+        elseif i == :xH2
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :iIons) || error("getvar :xH2 needs an RT run with H2 chemistry (descriptor :iIons).")
+            sp = _rt_species(rtd)
+            sp.isH2 || error("getvar :xH2: this run has no H2 chemistry (nIons=$(get(rtd,:nIons,0)) is odd ⇒ xHI is not stored).")
+            selected_unit = getunit(dataobject, :xH2, vars, units)
+            vlist = dataobject.info.variable_list
+            xHI  = select(masked_data, vlist[sp.iHI])
+            xHII = select(masked_data, vlist[sp.iHII])
+            vars_dict[:xH2] = @. max((1.0 - xHI - xHII) / 2.0, 0.0) * selected_unit
+
+        # Molecular-hydrogen number density [cm^-3]: n_H2 = n_H · xH2 (molecules per H nucleus).
+        elseif i == :n_H2
+            rtd = dataobject.info.descriptor.rt
+            haskey(rtd, :iIons) || error("getvar :n_H2 needs an RT run with H2 chemistry (descriptor :iIons).")
+            sp = _rt_species(rtd)
+            sp.isH2 || error("getvar :n_H2: this run has no H2 chemistry (nIons=$(get(rtd,:nIons,0)) is odd).")
+            selected_unit = getunit(dataobject, :n_H2, vars, units)
+            vlist = dataobject.info.variable_list
+            nH   = _rt_nH(dataobject, masked_data, rtd)
+            xHI  = select(masked_data, vlist[sp.iHI])
+            xHII = select(masked_data, vlist[sp.iHII])
+            vars_dict[:n_H2] = @. nH * max((1.0 - xHI - xHII) / 2.0, 0.0) * selected_unit
 
         # Mean molecular weight μ.
         #  • RT run (descriptor :iIons present): ionization- and metallicity-dependent

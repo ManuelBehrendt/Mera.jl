@@ -30,6 +30,29 @@
     @test Mera.RtDataType <: Mera.DataSetType
 end
 
+@testset "RT species layout / H2 detection (data-free)" begin
+    # RAMSES-RT stores ionization fractions in the order [xHI? , xHII, xHeII?, xHeIII?]
+    # (rt/rt_init.f90); the count fixes the layout: nIons = 1 + isH2 + 2·isHe, so
+    # isH2 = iseven(nIons) and isHe = nIons ≥ 3. _rt_species must remap accordingly.
+    sp = Mera._rt_species
+    # default (no H2, with He): [xHII, xHeII, xHeIII] — iIons → xHII (legacy layout)
+    s3 = sp(Dict(:iIons => 6, :nIons => 3))
+    @test (s3.isH2, s3.isHe) == (false, true)
+    @test (s3.iHI, s3.iHII, s3.iHeII, s3.iHeIII) == (0, 6, 7, 8)
+    # H2 + He: [xHI, xHII, xHeII, xHeIII] — iIons → xHI, everything shifts by one
+    s4 = sp(Dict(:iIons => 6, :nIons => 4))
+    @test (s4.isH2, s4.isHe) == (true, true)
+    @test (s4.iHI, s4.iHII, s4.iHeII, s4.iHeIII) == (6, 7, 8, 9)
+    # H only, no He: [xHII]
+    s1 = sp(Dict(:iIons => 6, :nIons => 1))
+    @test (s1.isH2, s1.isHe) == (false, false)
+    @test (s1.iHI, s1.iHII, s1.iHeII, s1.iHeIII) == (0, 6, 0, 0)
+    # H2, no He: [xHI, xHII]
+    s2 = sp(Dict(:iIons => 6, :nIons => 2))
+    @test (s2.isH2, s2.isHe) == (true, false)
+    @test (s2.iHI, s2.iHII, s2.iHeII, s2.iHeIII) == (6, 7, 0, 0)
+end
+
 if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
    @isdefined(DATASETS) &&
    haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
