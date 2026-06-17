@@ -518,6 +518,33 @@ end
 # ===== HELPER FUNCTION: TABLE COLUMN NAME GENERATION =====
 # This function creates appropriate column names for the particle data table
 # Names depend on particle format version, whether CPU info is included, and grid type
+# Resolve the database column name for a particle variable at read-index `i`.
+# Legacy (pversion 0) outputs are purely positional. Descriptor (pversion > 0)
+# outputs carry their variable names in part_file_descriptor.txt, which getinfo
+# reconstructs into `particles_variable_list`; custom fields beyond metallicity
+# (read-index > 8) therefore keep their real descriptor name instead of falling
+# back to the positional :varN. Returns `nothing` for the v1 family/tag slots
+# (indices 5 and 6), which are key columns, not data variables.
+function _particle_varname(pversion::Real, pvarlist::Vector{Symbol}, i::Integer)
+    if pversion == 0   # legacy positional layout
+        i == 1 && return :vx
+        i == 2 && return :vy
+        i == 3 && return :vz
+        i == 4 && return :mass
+        i == 5 && return :birth
+        i  > 5 && return Symbol("var$i")
+    else               # descriptor (v1) layout
+        i == 1 && return :vx
+        i == 2 && return :vy
+        i == 3 && return :vz
+        i == 4 && return :mass
+        i == 7 && return :birth
+        i == 8 && return :metals
+        i  > 8 && return (i <= length(pvarlist)) ? pvarlist[i] : Symbol("var$i")
+    end
+    return nothing     # v1 indices 5,6 (family,tag) are key columns, not data vars
+end
+
 function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::Array{Int, 1}, used_descriptors::Dict{Any,Any}, read_cpu::Bool, lmax::Real, levelmin::Real)
 
     # ===== BASE COLUMN NAMES =====
@@ -557,37 +584,8 @@ function preptablenames_particles(dataobject::InfoType, nvarp::Int, nvarp_list::
     # Different versions have different variable indices for the same physical quantities
     for i=1:nvarp
         if in(i, nvarp_list)  # Only add names for variables that were actually read
-            if dataobject.descriptor.pversion == 0  # Old particle format variable mapping
-                if i == 1
-                    append!(names_constr, [Symbol("vx")] )      # X-velocity
-                elseif i == 2
-                    append!(names_constr, [Symbol("vy")] )      # Y-velocity
-                elseif i == 3
-                    append!(names_constr, [Symbol("vz")] )      # Z-velocity
-                elseif i == 4
-                    append!(names_constr, [Symbol("mass")] )    # Particle mass
-                elseif i == 5
-                    append!(names_constr, [Symbol("birth")] )   # Birth time (for star particles)
-                elseif i > 5
-                    append!(names_constr, [Symbol("var$i")] )   # Generic names for additional variables
-                end
-            elseif dataobject.descriptor.pversion > 0  # New particle format variable mapping
-                if i == 1
-                    append!(names_constr, [Symbol("vx")] )      # X-velocity
-                elseif i == 2
-                    append!(names_constr, [Symbol("vy")] )      # Y-velocity
-                elseif i == 3
-                    append!(names_constr, [Symbol("vz")] )      # Z-velocity
-                elseif i == 4
-                    append!(names_constr, [Symbol("mass")] )    # Particle mass
-                elseif i == 7                                   # Note: birth time moved to index 7 in new format
-                    append!(names_constr, [Symbol("birth")] )   # Birth time (for star particles)
-                elseif i == 8
-                    append!(names_constr, [Symbol("metals")] )  # Metallicity (new in this format)
-                elseif i > 8
-                    append!(names_constr, [Symbol("var$i")] )   # Generic names for additional variables
-                end
-            end
+            nm = _particle_varname(dataobject.descriptor.pversion, dataobject.particles_variable_list, i)
+            nm === nothing || append!(names_constr, [nm])
         end
     end
 

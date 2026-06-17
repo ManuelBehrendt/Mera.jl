@@ -258,7 +258,13 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
             g2 = deepcopy(gas); n = length(g2.data)
             xHeII = fill(0.30, n); xHeIII = fill(0.10, n); Zmet = fill(0.02, n)
             cols = IT.columns(g2.data)
-            g2.data = IT.table(merge(cols, (var7 = xHeII, var8 = xHeIII, metallicity = Zmet)))
+            # inject the He fractions into the hydro scalars at the He-ionisation indices
+            # (xHeII = iIons+1, xHeIII = iIons+2). Name the columns via variable_list so the test
+            # tracks the descriptor-driven names (rt_stromgren → :scalar_01, :scalar_02) instead of
+            # the positional :var7/:var8 that descriptor outputs no longer produce.
+            i0 = g2.info.descriptor.rt[:iIons]
+            cHeII = g2.info.variable_list[i0 + 1]; cHeIII = g2.info.variable_list[i0 + 2]
+            g2.data = IT.table(merge(cols, NamedTuple{(cHeII, cHeIII, :metallicity)}((xHeII, xHeIII, Zmet))))
             g2.info.descriptor.rt[:X_fraction] = 0.76
             g2.info.descriptor.rt[:Y_fraction] = 0.24
             X = 0.76; Y = 0.24; AZ = 16.0
