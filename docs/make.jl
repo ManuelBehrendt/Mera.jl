@@ -22,7 +22,7 @@ makedocs(modules = [Mera],
          
 		authors = "Manuel Behrendt",
 		pages = Any[ "Home"                  => "index.md",
-		              "First Look"             => "first_look.md",
+		              "First Look"             => "report.md",
 		              "Getting Started"        => "00_multi_FirstSteps.md",
                       
                       "Core Workflows" => Any[
@@ -53,8 +53,6 @@ makedocs(modules = [Mera],
                           "How Quantities Are Computed" => "computation_reference.md",
 
                           "Magnetic Fields (MHD)" => "magnetic_fields.md",
-
-                          "First Look"          => "report.md",
 
                           "Clump Finding"       => "clumpfind.md",
 
