@@ -51,6 +51,8 @@ makedocs(modules = [Mera],
 
                           "How Quantities Are Computed" => "computation_reference.md",
 
+                          "Magnetic Fields (MHD)" => "magnetic_fields.md",
+
                           "First Look"          => "report.md",
 
                           "Clump Finding"       => "clumpfind.md",

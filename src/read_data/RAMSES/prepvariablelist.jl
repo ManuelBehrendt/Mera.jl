@@ -11,7 +11,36 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         hydrovar_buffer = copy(vars)
         used_descriptors = Dict()
 
-        if in(:all, hydrovar_buffer) #hydrovar_buffer == [:all]
+        # MHD runs carry canonical per-index names in variable_list (incl. :b*_left/:b*_right
+        # and :p at its true, shifted index), so resolve requested symbols by NAME from it.
+        # Non-MHD outputs keep the original positional resolution (:p→5, :varN→N) unchanged.
+        vlist_mhd = dataobject.variable_list
+        is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), vlist_mhd)
+        if is_mhd
+            if in(:cpu, hydrovar_buffer) || in(:varn1, hydrovar_buffer)
+                read_cpu = true
+            end
+            if in(:all, hydrovar_buffer)
+                nvarh_list = collect(1:nvarh)
+            else
+                for x in hydrovar_buffer
+                    (x === :cpu || x === :varn1 || x === :all) && continue
+                    idx = findfirst(==(x), vlist_mhd)
+                    if idx !== nothing
+                        push!(nvarh_list, idx)
+                    elseif occursin("var", string(x))     # explicit :varN index still works
+                        push!(nvarh_list, parse(Int, string(x)[4:end]))
+                    else
+                        error("[Mera]: variable :$x not found in this MHD hydro output. " *
+                              "Available names: $(vlist_mhd)")
+                    end
+                end
+            end
+            for i in unique(nvarh_list)
+                used_descriptors[i] = vlist_mhd[i]
+            end
+
+        elseif in(:all, hydrovar_buffer) #hydrovar_buffer == [:all]
             nvarh_list=[1,2,3,4,5]
 
             # read_cpu = true
@@ -110,15 +139,13 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         nvarh_list_strings= Symbol[]
         if read_cpu append!(nvarh_list_strings, [:cpu]) end
         for i in nvarh_list
-            #if !haskey(used_descriptors, i)
-                if i < 6
-                    append!(nvarh_list_strings, [Symbol("$(indices_tovariables[i])")])
-                elseif i > 5
-                    append!(nvarh_list_strings, [Symbol("var$i")])
-                end
-            #else
-            #    append!(nvarh_list_strings, [used_descriptors[i]])
-            #end
+            if haskey(used_descriptors, i)            # MHD / descriptor-named columns
+                append!(nvarh_list_strings, [used_descriptors[i]])
+            elseif i < 6
+                append!(nvarh_list_strings, [Symbol("$(indices_tovariables[i])")])
+            else
+                append!(nvarh_list_strings, [Symbol("var$i")])
+            end
         end
 
 

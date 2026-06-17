@@ -187,6 +187,41 @@ function readamrfile1!(dataobject::InfoType)
 
 end
 
+# Map a RAMSES hydro_file_descriptor variable name to Mera's canonical symbol.
+# Works for both descriptor versions (v0 "variable # i: name", v1 "ivar, name, type")
+# since both are parsed to the same name symbols. Recognised:
+#   density→:rho, velocity_{x,y,z}→:v{x,y,z}, (thermal_)pressure→:p,
+#   B_{x,y,z}_{left,right}→:b{x,y,z}_{left,right}.
+# Anything else is passed through lower-cased (e.g. :scalar_00, :metallicity).
+function _canonical_hydro_name(raw)
+    s = lowercase(strip(String(raw)))
+    s == "density"                                && return :rho
+    s == "velocity_x"                             && return :vx
+    s == "velocity_y"                             && return :vy
+    s == "velocity_z"                             && return :vz
+    (s == "pressure" || s == "thermal_pressure")  && return :p
+    m = match(r"^b_([xyz])_(left|right)$", s)
+    m !== nothing && return Symbol("b", m.captures[1], "_", m.captures[2])
+    return Symbol(s)
+end
+
+# A run is MHD (constrained transport) iff its hydro descriptor carries the
+# face-centred magnetic field components B_{x,y,z}_{left,right}.
+_is_mhd_descriptor(names) =
+    any(n -> occursin(r"^b_[xyz]_(left|right)$", lowercase(strip(String(n)))), names)
+
+# Canonical hydro variable_list for an OLD (no-descriptor) 3D RAMSES MHD output. The MHD
+# solver adds 6 constrained-transport faces and shifts thermal pressure to index 11 (the
+# "+3" being B_right). Matches yt's no-descriptor heuristic (nvar ≥ 11, 3D ⇒ MHD); any
+# variables beyond pressure are kept as positional :var12, :var13, …
+function _mhd_nodescriptor_varlist(nvarh::Integer)
+    vl = [:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p]
+    for i in 12:nvarh
+        push!(vl, Symbol("var$i"))
+    end
+    return vl
+end
+
 function readhydrofile1!(dataobject::InfoType)
 
 
@@ -259,6 +294,24 @@ function readhydrofile1!(dataobject::InfoType)
 
     if !isfile(dataobject.fnames.hydro_descriptor)
         variable_descriptor_list = variable_list
+    end
+
+    # MHD (constrained transport): the hydro file stores 6 face-centred B components and
+    # shifts the thermal pressure, so the positional [:rho,:vx,:vy,:vz,:p,:var6…] guess is
+    # wrong (index 5 is B_x_left, not pressure). When the descriptor reveals MHD, take the
+    # variable names canonically from it (density→:rho, pressure→:p at its true index,
+    # B_*_{left,right}→:b*_{left,right}). Non-MHD layouts keep the positional names.
+    if descriptor_file && length(variable_descriptor_list) == nvarh &&
+       _is_mhd_descriptor(variable_descriptor_list)
+        variable_list = [_canonical_hydro_name(n) for n in variable_descriptor_list]
+    elseif !descriptor_file && dataobject.ndim == 3 && nvarh >= 11
+        # No hydro descriptor (older RAMSES MHD): match yt's heuristic — a 3D run with
+        # nvar ≥ 11 is MHD (the CT module silently adds 3 to nvar). B faces at 5–10,
+        # thermal pressure at 11. (Regression-safe: non-MHD test runs all have nvarh ≤ 8.)
+        @info "Mera: no hydro descriptor and nvarh=$nvarh (≥11) on a 3D run — assuming a RAMSES " *
+              "MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive " *
+              "scalars instead, the names are positional (:var6…)."
+        variable_list = _mhd_nodescriptor_varlist(nvarh)
     end
 
     dataobject.hydro            = hydro_files
