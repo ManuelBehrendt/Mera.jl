@@ -22,6 +22,7 @@ makedocs(modules = [Mera],
          
 		authors = "Manuel Behrendt",
 		pages = Any[ "Home"                  => "index.md",
+		              "First Look"             => "first_look.md",
 		              "Getting Started"        => "00_multi_FirstSteps.md",
                       
                       "Core Workflows" => Any[
