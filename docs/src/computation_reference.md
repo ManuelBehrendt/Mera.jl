@@ -13,7 +13,30 @@ the implementation; the code lives in `src/functions/getvar/getvar_hydro.jl`,
     `getvar(gas, :T, :K)`. The formulas below are written in the natural variables (ρ, p, …);
     the unit conversion is the final multiply.
 
+## Which data to load
+
+Each section is marked with the data object(s) the quantity is defined on — load that type from the
+same `info` (`getinfo`) and call `getvar` on it:
+
+| Loader | Object | Provides |
+|---|---|---|
+| `gethydro(info)` | gas cells | density/pressure/velocity (+ magnetic, passive scalars) → thermodynamics, Mach, Jeans, RT ionization |
+| `getgravity(info)` | gravity cells | potential ``\phi`` and acceleration ``\mathbf a`` → gravity quantities |
+| `getparticles(info)` | particles (stars/DM) | particle mass/velocity/age → velocities, angular momentum, SFR |
+| `getclumps(info)` | clump catalogue | clump positions/mass/velocity |
+| `getrt(info)` | RT photon fields | photon density & flux per group (`:Np`, `:Fx…`, `:Gamma_HI`, …) |
+
+**Multi-type names.** Geometry (`:x/:y/:z`, `:r_cylinder`, `:r_sphere`, `:ϕ`), velocities
+(`:v`, `:vr_cylinder`, …), angular momentum (`:hx`, `:lz`, …) and `:ekin` share one name across
+**hydro, particles and clumps** (Julia dispatches on the object). `:cellsize`/`:volume` exist for the
+**AMR cell** types (hydro/gravity/RT), not particles/clumps. The **RT ionization** quantities
+(`:xHII`, `:mu`, `:T_rt`, `:n_*`, …) are passive **hydro** scalars — request them on `gethydro` of an
+RT run — whereas the photon-group fields live on the `getrt` object.
+
 ## Thermodynamics
+
+*Data: **hydro** (`gethydro`) — needs `:rho`, `:p`. (`:ekin`/`:mass` are also defined on particles and clumps.)*
+
 
 | Quantity | Symbol | Formula |
 |---|---|---|
@@ -63,6 +86,8 @@ With ``k_B`` Boltzmann's constant, ``m_u`` the atomic mass unit and ``\gamma`` t
 
 ## Velocities & geometry
 
+*Data: **hydro** or **particles** (velocities); the geometry names `:r_cylinder`, `:r_sphere`, `:ϕ`, `:x/:y/:z` also work on gravity, RT and clumps.*
+
 Positions ``x,y,z`` are **relative to `center`** (pass `center=[:bc]` for the box centre).
 Components that divide by a radius are set to **0** where that radius is zero (on axis / at the
 centre), rather than returning `NaN`.
@@ -85,6 +110,8 @@ in place of ``\mathbf v``; see the **Gravity** section below.)
 
 ## Angular momentum
 
+*Data: **hydro** or **particles** — needs mass + velocity + position.*
+
 Specific angular momentum ``\mathbf h = \mathbf r \times \mathbf v`` (per unit mass), and the
 total ``\mathbf L = m\,\mathbf h``:
 
@@ -102,6 +129,8 @@ corresponding specific component).
 
 ## Mach numbers
 
+*Data: **hydro**. The magnetosonic Mach numbers (`:mach_alfven`, `:mach_fast`, `:mach_slow`) need an MHD run with `:bx,:by,:bz`.*
+
 | Quantity | Formula |
 |---|---|
 | Thermal Mach `:mach` | ``\mathcal{M} = v/c_s`` (components `:machx,:machy,:machz` use ``v_i/c_s``) |
@@ -114,6 +143,8 @@ RAMSES code units and converted to Gaussian-CGS internally (hence the ``4\pi``).
 field components are absent.
 
 ## Jeans & collapse
+
+*Data: **hydro** — needs `:cs` (`:p`) and `:rho`.*
 
 With ``G`` the gravitational constant (`info.constants.G`), ``\Delta x`` the cell size and ``m``
 the cell mass:
@@ -133,6 +164,8 @@ the cell mass:
 
 ## Gravity
 
+*Data: **gravity** (`getgravity`) — needs `:epot` and/or `:ax,:ay,:az`.*
+
 From the gravitational potential ``\phi`` (`:epot`) and acceleration ``\mathbf a`` (`:ax,:ay,:az`):
 
 | Quantity | Formula |
@@ -147,6 +180,8 @@ unbound (``\phi \ge 0``, possible near domain boundaries) — those cells return
 erroring.
 
 ## Radiative-transfer (RT) quantities
+
+*Data: **hydro** of an RT run (`gethydro`) — the ionization fractions are passive hydro scalars. The photon-group fields (`:Np`, fluxes, `:Gamma_HI`, …) live on the `getrt` object.*
 
 These need an **RT run**: the ionization fractions are passive hydro scalars located via the RT
 descriptor (`info.descriptor.rt`, key `:iIons`), and each quantity errors with a clear message on a
@@ -211,6 +246,8 @@ the ``\alpha_B`` power law) and pairs with the RT photoionization rate for ioniz
 
 ## Cell size & volume
 
+*Data: any **AMR cell** type — hydro, gravity or RT (not particles/clumps).*
+
 For an AMR cell at refinement `level` (uniform-grid runs use `lmax`), with box length
 ``L_\mathrm{box}``:
 
@@ -219,6 +256,8 @@ For an AMR cell at refinement `level` (uniform-grid runs use `lmax`), with box l
 ```
 
 ## Aggregate statistics
+
+*Data: any loaded type (hydro / particles / gravity / clumps), depending on the field requested.*
 
 These operate over a whole data object (with optional `mask`), and live in `basic_calc.jl`.
 
@@ -260,6 +299,8 @@ kurtosis, and extrema:
 
 ## Binned reductions — `profile`, `phase`, `profile3d`
 
+*Data: any 3-D data — hydro, particles, gravity or clumps.*
+
 `profile` (1-D), `phase` (2-D) and `profile3d` (3-D) bin cells/particles by one/two/three axis
 fields and reduce a target field ``y`` in each bin (weighted — mass by default, or `:volume`, a
 field, or unweighted). Per bin, with members ``i``, weights ``w_i``, values ``y_i`` and
@@ -289,6 +330,8 @@ adds `density = S_w/\text{shell volume}`; `cumulative` adds `cumsum` (e.g. enclo
 Conceptual guide and worked examples: [Profiles & Phase Diagrams](profiles_phase.md).
 
 ## Projection maps — `projection`
+
+*Data: **hydro** (and **particles**); gravity via the combined hydro+gravity interface.*
 
 `projection` deposits cells onto a 2-D pixel grid (mass-conservatively; see
 [Off-axis Projection](06_offaxis_Projection.md)). Per pixel, with deposited weight ``W=\sum w``
