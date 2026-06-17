@@ -142,54 +142,78 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
     havephase = q.phase !== nothing
     npanels = length(specs) + (havephase ? 1 : 0) + 1                # + census
     ncols   = min(3, max(1, npanels)); nrows = cld(npanels, ncols)
-    sz = size === nothing ? (ncols * 340, 60 + nrows * 270) : size   # compact, adaptive to content
-    fig = Makie.Figure(; size=sz, fontsize=12)
-    tag = q.sampled ? "  [≤ lvl $(q.lmax_used)]" : ""
-    Makie.Label(fig[0, 1:ncols], "Mera quicklook — output $(s.output)$(tag)"; fontsize=15, font=:bold)
+    sz = size === nothing ? (ncols * 380, 96 + nrows * 330) : size   # roomy, adaptive to content
+    fig = Makie.Figure(; size=sz, fontsize=13, figure_padding=(16, 12, 10, 16),
+                       backgroundcolor=:white)
+    tag = q.sampled ? "  [coarse ≤ lvl $(q.lmax_used)]" : ""
+    Makie.Label(fig[0, 1:ncols], "Mera quicklook — output $(s.output)$(tag)";
+                fontsize=19, font=:bold, color=(:black, 0.85), padding=(0, 0, 8, 2))
     gpos(i) = (cld(i, ncols), mod1(i, ncols))                        # row-major fill of a tight grid
 
     skpc = q.info.scale.kpc                                          # projection extent is in code length → kpc
+    # adaptive length unit so axis ticks stay O(1–100) instead of an unreadable ×10⁴ smear:
+    # a Mpc-scale (cosmological) box reads in Mpc, a galaxy-scale box in kpc.
+    boxspan = q.info.boxlen * skpc
+    lenfac, lenunit = boxspan ≥ 3_000 ? (1e-3, "Mpc") : (1.0, "kpc")
+    relabel(l) = replace(l, "kpc" => lenunit)
+    AX = (titlesize=13, titlefont=:regular, titlegap=4,
+          xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
+          xgridvisible=false, ygridvisible=false,
+          xticks=Makie.LinearTicks(4), yticks=Makie.LinearTicks(4))
+    cb(pos, h; label) = Makie.Colorbar(pos, h; label, width=11, labelsize=10,
+                                       ticklabelsize=9, ticksize=3)
+
     for (i, (proj, title, xl, yl, key)) in enumerate(specs)
-        r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent .* skpc
-        ax = Makie.Axis(fig[r, c]; title=title, titlesize=12, xlabel=xl, ylabel=yl, aspect=Makie.DataAspect())
+        r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent .* skpc .* lenfac
+        ax = Makie.Axis(fig[r, c]; title=title, xlabel=relabel(xl), ylabel=relabel(yl),
+                        aspect=Makie.DataAspect(), AX...)
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
-        Makie.Colorbar(fig[r, c][1, 2], hm; label="log₁₀ Σ", width=8, ticklabelsize=9)
+        cb(fig[r, c][1, 2], hm; label="log₁₀ Σ")
     end
     if havephase
         r, c = gpos(length(specs) + 1); ph = q.phase
-        ax2 = Makie.Axis(fig[r, c]; title="ρ–T phase", titlesize=12, xlabel="n_H [cm⁻³]", ylabel="T [K]",
-                         xscale=log10, yscale=log10)
+        ax2 = Makie.Axis(fig[r, c]; title="ρ–T phase", xlabel="n_H [cm⁻³]", ylabel="T [K]",
+                         xscale=log10, yscale=log10, titlesize=13, titlegap=4,
+                         xlabelsize=11, ylabelsize=11, xticklabelsize=9, yticklabelsize=9,
+                         xgridvisible=true, ygridvisible=true,
+                         xgridcolor=(:gray, 0.12), ygridcolor=(:gray, 0.12))
         xc = sqrt.(ph.xedges[1:end-1] .* ph.xedges[2:end]); yc = sqrt.(ph.yedges[1:end-1] .* ph.yedges[2:end])
         hm2 = _loghm!(ax2, xc, yc, ph.H; colormap=cmapof(:phase))
-        Makie.Colorbar(fig[r, c][1, 2], hm2; label="log₁₀ mass", width=8, ticklabelsize=9)
+        cb(fig[r, c][1, 2], hm2; label="log₁₀ mass")
     end
 
-    # text census (not a bar plot) — adapts to which components were read
+    # text census (not a bar plot) — adapts to which components were read; kept short per line so it
+    # never overflows the panel, and rendered in a light "info card" for a cleaner look.
     rt, ct = gpos(npanels); L = String[]
     if get(s, :gas_mass_Msol, nothing) !== nothing
         push!(L, "CELLS"); push!(L, "  $(s.ncells) read" * (q.sampled ? "  (coarse)" : "  (full)"))
     end
     if get(s, :npart, 0) > 0
-        push!(L, ""); push!(L, "PARTICLES"); push!(L, "  total $(s.npart)")
-        push!(L, "  stars $(s.nstars)  DM $(s.ndm)")
+        push!(L, ""); push!(L, "PARTICLES")
+        push!(L, "  total  $(s.npart)"); push!(L, "  stars  $(s.nstars)"); push!(L, "  DM     $(s.ndm)")
         get(s, :particle_subsample, 1.0) < 1.0 && push!(L, "  ⚠ ×$(round(1/s.particle_subsample, digits=1)) subsample")
     end
     push!(L, ""); push!(L, "MASS [M⊙]")
-    get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas   $(nf(s.gas_mass_Msol))")   # exact (mass-conserving)
+    get(s, :gas_mass_Msol, nothing) !== nothing && push!(L, "  gas    $(nf(s.gas_mass_Msol))")   # exact (mass-conserving)
     if get(s, :stellar_mass_Msol, nothing) !== nothing
-        push!(L, "  stars $(nf(s.stellar_mass_Msol))"); push!(L, "  DM    $(nf(s.dm_mass_Msol))")
-        push!(L, ""); push!(L, "SFR [M⊙/yr]"); push!(L, "  $(nf(s.sfr10)) (10Myr) · $(nf(s.sfr100)) (100Myr)")
+        push!(L, "  stars  $(nf(s.stellar_mass_Msol))"); push!(L, "  DM     $(nf(s.dm_mass_Msol))")
+        push!(L, ""); push!(L, "SFR [M⊙/yr]")
+        push!(L, "  10 Myr   $(nf(s.sfr10))"); push!(L, "  100 Myr  $(nf(s.sfr100))")
     end
     if get(s, :nH_range, nothing) !== nothing
-        push!(L, ""); push!(L, "RANGES" * (q.sampled ? " (peaks smoothed)" : ""))
-        push!(L, "  nH $(nf(s.nH_range[1]))…$(nf(s.nH_range[2]))"); push!(L, "  T  $(nf(s.T_range_K[1]))…$(nf(s.T_range_K[2])) K")
+        push!(L, ""); push!(L, "RANGES" * (q.sampled ? " (smoothed)" : ""))
+        push!(L, "  nH  $(nf(s.nH_range[1]))…$(nf(s.nH_range[2]))")
+        push!(L, "  T   $(nf(s.T_range_K[1]))…$(nf(s.T_range_K[2])) K")
     end
-    axt = Makie.Axis(fig[rt, ct]; title="census", titlesize=12)
+    axt = Makie.Axis(fig[rt, ct]; title="census", titlesize=13, titlegap=4,
+                     backgroundcolor=(:gray, 0.05))
     Makie.hidedecorations!(axt); Makie.hidespines!(axt)
-    Makie.text!(axt, 0.0, 1.0; text=join(L, "\n"), align=(:left, :top), space=:relative,
-                font="DejaVu Sans Mono", fontsize=12)
+    Makie.text!(axt, 0.04, 0.97; text=join(L, "\n"), align=(:left, :top), space=:relative,
+                font="DejaVu Sans Mono", fontsize=11, color=(:black, 0.8))
     Makie.xlims!(axt, 0, 1); Makie.ylims!(axt, 0, 1)
+
+    Makie.colgap!(fig.layout, 16); Makie.rowgap!(fig.layout, 14)
     return fig
 end
 
