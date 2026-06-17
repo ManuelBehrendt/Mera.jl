@@ -48,7 +48,8 @@ info.descriptor.hydro[2] = :vel_x                     # Customize variable names
 propertynames(info.descriptor)                        # All descriptor properties
 
 # Access predefined variables (always available)
-# :rho, :vx, :vy, :vz, :p, :var6, :var7, ...
+# :rho, :vx, :vy, :vz, :p, then passive scalars by descriptor name
+# (e.g. :metallicity, :scalar_00, ...) or positional :var6, :var7, ... without a descriptor
 ```
 
 ### IndexedTables Operations
@@ -153,7 +154,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -190,7 +191,7 @@ The output above provides a comprehensive overview of the loaded hydro data prop
 
 ## Variable Names and Descriptors
 
-**Predefined Variable Names**: Mera.jl recognizes standard hydro variable names such as `:rho`, `:vx`, `:vy`, `:vz`, `:p`, `:var6`, `:var7`, etc. These provide a consistent interface for accessing common hydrodynamic quantities across different simulations.
+**Predefined Variable Names**: Mera.jl recognizes the standard hydro variable names `:rho`, `:vx`, `:vy`, `:vz`, `:p`. Passive scalars beyond pressure are named from the `hydro_file_descriptor.txt` when present (e.g. `:metallicity`, `:scalar_00`, `:scalar_01`), and fall back to positional names (`:var6`, `:var7`, ...) only when the output ships no descriptor. Positional `:varN` selectors keep working in both cases, so older scripts continue to load the same columns.
 
 **Custom Variable Descriptors**: In future versions, you will be able to use variable names directly from the hydro descriptor by setting `info.descriptor.usehydro = true`. Currently, you can customize variable names by modifying the descriptor array manually.
 
@@ -318,7 +319,7 @@ gas = gethydro(info);
 ```
 [Mera]: Get hydro data: 2026-06-01T14:05:24.175
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -410,7 +411,7 @@ viewfields(gas)
 ```
 
 ```
-data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
 lmin	= 6
 lmax	= 10
@@ -451,7 +452,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 [Mera]: Get hydro data: 2026-06-01T14:06:24.574
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]

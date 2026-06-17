@@ -31,6 +31,24 @@
     @test Mera._mhd_nodescriptor_varlist(13)[12:13] == [:var12, :var13]
 end
 
+@testset "Particle descriptor drives column names (data-free)" begin
+    pv = Mera._particle_varname
+    # descriptor (v1) layout reconstructed from part_file_descriptor.txt, with two
+    # custom fields beyond metallicity at read-index 9,10:
+    pvl = [:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals, :chem_H, :chem_He]
+    @test pv(1, pvl, 1) == :vx && pv(1, pvl, 4) == :mass
+    @test pv(1, pvl, 7) == :birth && pv(1, pvl, 8) == :metals
+    @test pv(1, pvl, 9) == :chem_H && pv(1, pvl, 10) == :chem_He   # custom fields keep their real names…
+    # …instead of the positional :varN fallback that lost them before:
+    @test pv(1, pvl, 9) != Symbol("var9")
+    # family/tag (indices 5,6) are key columns, never emitted as data vars:
+    @test pv(1, pvl, 5) === nothing && pv(1, pvl, 6) === nothing
+    # out-of-range custom field (descriptor shorter than read-index) → safe :varN fallback:
+    @test pv(1, [:vx, :vy, :vz, :mass, :family, :tag, :birth], 9) == Symbol("var9")
+    # legacy v0 layout stays positional (no descriptor names):
+    @test pv(0, Symbol[], 5) == :birth && pv(0, Symbol[], 6) == Symbol("var6")
+end
+
 if !DATA_AVAILABLE
     @warn "Skipping data-awareness data tests - simulation data not available"
     @test_skip "Simulation data not available"
@@ -99,6 +117,49 @@ end
             # the loaded TABLE columns carry those names (the detection is actually used)
             @test (:bx_left in cols) && (:bx_right in cols) && (:p in cols)
             @test getvar(gas, :bx) ≈ 0.5 .* (select(gas.data, :bx_left) .+ select(gas.data, :bx_right))
+        end
+    end
+end
+
+@testset "Hydro descriptor drives database column names" begin
+    for (key, ds) in DATASETS
+        (isdir(ds.path) && isdir(_awareness_outdir(ds))) || continue
+        info = getinfo(ds.output, ds.path, verbose=false)
+        (info.hydro && info.descriptor.hydrofile) || continue   # descriptor-present hydro only
+        @testset "$key" begin
+            # variable_list is the canonical image of the descriptor (base vars → :rho/:v*/:p,
+            # passive scalars by their descriptor name, e.g. :metallicity, :scalar_00)
+            @test info.variable_list == [Mera._canonical_hydro_name(n) for n in info.descriptor.hydro]
+            gas  = gethydro(info, verbose=false, show_progress=false)
+            cols = propertynames(gas.data.columns)
+            keycols = (:level, :cx, :cy, :cz, :cpu)
+            datacols = filter(c -> !(c in keycols), cols)
+            # every loaded data column carries its descriptor name — none left as positional :varN
+            @test collect(datacols) == info.variable_list
+            @test !any(c -> occursin(r"^var\d+$", string(c)), datacols)
+        end
+    end
+end
+
+@testset "Particle descriptor drives database column names" begin
+    for (key, ds) in DATASETS
+        (isdir(ds.path) && isdir(_awareness_outdir(ds))) || continue
+        info = getinfo(ds.output, ds.path, verbose=false)
+        info.particles || continue
+        @testset "$key" begin
+            part = getparticles(info, verbose=false, show_progress=false)
+            cols = propertynames(part.data.columns)
+            if info.descriptor.pversion > 0   # descriptor (v1): names come from part_file_descriptor.txt
+                # the canonical data columns carry descriptor-driven (not positional :varN) names
+                @test :vx in cols && :mass in cols && :birth in cols
+                # every data variable beyond the key columns resolves to a real name
+                keycols = (:level, :x, :y, :z, :id, :family, :tag, :cpu)
+                datacols = filter(c -> !(c in keycols), cols)
+                @test !isempty(datacols)
+                @test !any(c -> occursin(r"^var\d+$", string(c)), datacols)  # no positional fallback leaked
+                # :metals appears iff the descriptor lists metallicity
+                @test (:metals in cols) == in(:metallicity, info.descriptor.particles)
+            end
         end
     end
 end

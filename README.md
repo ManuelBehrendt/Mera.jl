@@ -40,10 +40,9 @@ using Mera
 quicklook(80; path="/path/to/simulation")
 ```
 
-![quicklook dashboard: gas surface-density projections, stellar and dark-matter maps, a density–temperature phase diagram, and a per-component census](docs/src/assets/features/quicklook_dashboard.png)
-
-*One call: mass-weighted gas Σ (face-on + two edge-on views), stellar and dark-matter surface
-density, the ρ–T phase diagram, and a census of cell/particle counts, component masses and SFR.*
+*One call produces a first-look dashboard: mass-weighted gas Σ (face-on + two edge-on views), stellar
+and dark-matter surface density, the ρ–T phase diagram, and a census of cell/particle counts,
+component masses and SFR.*
 
 ## 30-second quickstart
 
@@ -113,15 +112,17 @@ Barnes–Hut self-potential, SUBFIND-style unbinding and tidal (Hill-radius) tru
 
 ## A taste of the features
 
-| Feature | Use case | Figure |
-|---|---|---|
-| Flux budgets | inflow/outflow through surfaces (winds, accretion) | ![flux geometries](docs/src/assets/features/flux_geometries.png) |
-| Clump catalogs | star-forming clouds, halo substructure, dense cores | ![clump mass function](docs/src/assets/features/clump_massfunction.png) |
-| Covering grids | FFTs, power spectra, ML inputs | ![covering grid slice](docs/src/assets/features/covering_grid_slice.png) |
-| Phase diagrams | gas thermodynamics, phase structure | ![phase diagram](docs/src/assets/features/flux_phases.png) |
-| Derived fields | temperature, Mach, Jeans, angular momentum | ![derived fields](docs/src/assets/features/derived_fields.png) |
-| Profiles | radial density, SFR, metallicity | ![profile](docs/src/assets/features/fluxprofile.png) |
-| Radiative transfer | Strömgren sphere, ionization fronts | ![RT Strömgren](docs/src/assets/features/rt_stromgren.png) |
+| Feature | Use case |
+|---|---|
+| Flux budgets | inflow/outflow through surfaces (winds, accretion) |
+| Clump catalogs | star-forming clouds, halo substructure, dense cores |
+| Covering grids | FFTs, power spectra, ML inputs |
+| Phase diagrams | gas thermodynamics, phase structure |
+| Derived fields | temperature, Mach, Jeans, angular momentum |
+| Profiles | radial density, SFR, metallicity |
+| Radiative transfer | Strömgren sphere, ionization fronts |
+
+See the [documentation](https://manuelbehrendt.github.io/Mera.jl/stable/) for worked examples and figures.
 
 ## Installation
 

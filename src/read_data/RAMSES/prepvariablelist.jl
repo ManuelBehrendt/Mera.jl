@@ -11,12 +11,15 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
         hydrovar_buffer = copy(vars)
         used_descriptors = Dict()
 
-        # MHD runs carry canonical per-index names in variable_list (incl. :b*_left/:b*_right
-        # and :p at its true, shifted index), so resolve requested symbols by NAME from it.
-        # Non-MHD outputs keep the original positional resolution (:p→5, :varN→N) unchanged.
+        # When the output has a hydro descriptor (or is a no-descriptor MHD run), variable_list
+        # carries canonical per-index names (incl. :b*_left/:b*_right and :p at its true, shifted
+        # index, plus passive scalars by name e.g. :metallicity), so resolve requested symbols by
+        # NAME from it and name the loaded columns accordingly. Outputs WITHOUT a descriptor keep
+        # the original positional resolution (:p→5, :varN→N) unchanged.
         vlist_mhd = dataobject.variable_list
         is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), vlist_mhd)
-        if is_mhd
+        use_names = is_mhd || dataobject.descriptor.hydrofile
+        if use_names
             if in(:cpu, hydrovar_buffer) || in(:varn1, hydrovar_buffer)
                 read_cpu = true
             end
@@ -31,7 +34,7 @@ function prepvariablelist(dataobject::InfoType, datatype::Symbol, vars::Array{Sy
                     elseif occursin("var", string(x))     # explicit :varN index still works
                         push!(nvarh_list, parse(Int, string(x)[4:end]))
                     else
-                        error("[Mera]: variable :$x not found in this MHD hydro output. " *
+                        error("[Mera]: variable :$x not found in this hydro output. " *
                               "Available names: $(vlist_mhd)")
                     end
                 end

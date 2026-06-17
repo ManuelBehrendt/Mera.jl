@@ -157,7 +157,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -278,7 +278,7 @@ nvarh	= 7
 nvarp	= 7
 nvarrt	= 0
 variable_list	=
-[:rho, :vx, :vy, :vz, :p, :var6, :var7]
+[:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01]
 gravity_variable_list	= [:epot, :ax, :ay, :az]
 particles_variable_list	= [:vx, :vy, :vz, :mass, :family, :tag, :birth]
 rt_variable_list	= Symbol[]

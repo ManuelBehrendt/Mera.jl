@@ -32,8 +32,10 @@ mass/metals/energy `in ≤ 0` and `out ≥ 0`; for **momentum** the carried quan
 
 !!! note "`:metals` needs a `:metallicity` column"
     The `:metals` flux multiplies cell mass by the gas metallicity, read from a column literally named
-    `:metallicity`. Mera does **not** auto-treat a passive scalar (e.g. `:var6`) as metallicity, so on a
-    run without that column `:metals` raises a clear error rather than silently returning zero — alias
+    `:metallicity`. Mera names hydro columns from the `hydro_file_descriptor.txt`, so a `:metallicity`
+    column appears only when the descriptor labels a field `metallicity`; a generically named scalar
+    (e.g. `:scalar_00`) or a positional `:var6` is **not** treated as metallicity. On a run without a
+    `:metallicity` column `:metals` raises a clear error rather than silently returning zero — alias
     your metal scalar to `:metallicity` before the call if needed. Likewise `:energy` needs the thermal
     energy (pressure `:p`) and errors clearly on an isothermal/pressureless output.
 

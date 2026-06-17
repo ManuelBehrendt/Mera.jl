@@ -76,7 +76,7 @@ level(s): 6 - 7 --> cellsize(s): 234.38 [pc] - 117.19 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-8  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7, :var8)
+8  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01, :scalar_02)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01, :scalar_02)
 γ: 1.4
 gravity:       false

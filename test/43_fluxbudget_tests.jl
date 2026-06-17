@@ -111,15 +111,24 @@
             end
         end
 
-        @testset "metals guard: fail loudly, not silently zero" begin
-            # spiral_clumps stores a passive scalar :var6 but NO :metallicity column, so :metals would
-            # silently return 0 — now it must throw a clear error instead.
-            @test !(:metallicity in gas.info.variable_list)
-            @test_throws ArgumentError fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0,
-                                                  range_unit=:kpc, quantities=[:metals], verbose=false)
-            # the same guard fires on the off-axis (tilted) path
-            @test_throws ArgumentError fluxbudget(gas; surface=:cylinder, radius=10.0, shell_width=2.0,
-                                                  range_unit=:kpc, axis=[1.0,1.0,1.0], quantities=[:metals], verbose=false)
+        @testset "metals guard & descriptor-named scalars" begin
+            # spiral_clumps' hydro descriptor labels scalar #6 'metallicity', so Mera now loads a
+            # :metallicity column (previously this scalar was the unnamed positional :var6) and the
+            # metal flux is computable.
+            @test :metallicity in gas.info.variable_list
+            @test :metallicity in propertynames(gas.data.columns)
+            @test fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0,
+                             range_unit=:kpc, quantities=[:metals], verbose=false) isa FluxBudgetType
+            # A descriptor that names its scalars generically (rt_stromgren: :scalar_00,…) is NOT
+            # mistaken for metallicity, so the :metals guard still fires — fail loudly, never zero.
+            if haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
+                rs   = DATASETS[:rt_stromgren]
+                gas2 = gethydro(getinfo(rs.output, rs.path, verbose=false), verbose=false, show_progress=false)
+                cols2 = propertynames(gas2.data.columns)
+                @test :scalar_00 in cols2                 # descriptor name, not the positional :var6
+                @test !(:metallicity in cols2)
+                @test_throws ArgumentError Mera._flux_validate_quantities(cols2, [:metals])
+            end
             # :mass/:momentum/:energy still work on this output (have rho/v/p)
             @test fluxbudget(gas; surface=:sphere, radius=10.0, shell_width=2.0, range_unit=:kpc,
                              quantities=[:mass, :energy], verbose=false) isa FluxBudgetType

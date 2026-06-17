@@ -129,6 +129,7 @@
             part = getparticles(info, verbose=false, show_progress=false)
             skip = Dict(
                 :hydro    => Set([:delta, :overdensity,                       # cosmological only
+                                  :bx, :by, :bz,                              # need magnetic field
                                   :mach_alfven, :mach_fast, :mach_slow]),     # need magnetic field
                 :gravity  => Set{Symbol}(),
                 :particle => Set([:formation_redshift, :formation_time, :zform]),  # cosmological only

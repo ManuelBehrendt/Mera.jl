@@ -296,13 +296,13 @@ function readhydrofile1!(dataobject::InfoType)
         variable_descriptor_list = variable_list
     end
 
-    # MHD (constrained transport): the hydro file stores 6 face-centred B components and
-    # shifts the thermal pressure, so the positional [:rho,:vx,:vy,:vz,:p,:var6…] guess is
-    # wrong (index 5 is B_x_left, not pressure). When the descriptor reveals MHD, take the
-    # variable names canonically from it (density→:rho, pressure→:p at its true index,
-    # B_*_{left,right}→:b*_{left,right}). Non-MHD layouts keep the positional names.
-    if descriptor_file && length(variable_descriptor_list) == nvarh &&
-       _is_mhd_descriptor(variable_descriptor_list)
+    # When a hydro descriptor is present, take ALL variable names canonically from it
+    # (density→:rho, velocity_*→:v*, (thermal_)pressure→:p, B_*_{left,right}→:b*_{left,right},
+    # and passive scalars by their descriptor name, e.g. :metallicity, :scalar_00). This both
+    # fixes the MHD layout (index 5 is B_x_left, pressure shifted) and gives passive scalars
+    # their real names instead of the positional :var6…. Layouts WITHOUT a descriptor keep the
+    # positional [:rho,:vx,:vy,:vz,:p,:var6…] names (with the no-descriptor MHD heuristic below).
+    if descriptor_file && length(variable_descriptor_list) == nvarh
         variable_list = [_canonical_hydro_name(n) for n in variable_descriptor_list]
     elseif !descriptor_file && dataobject.ndim == 3 && nvarh >= 11
         # No hydro descriptor (older RAMSES MHD): match yt's heuristic — a 3D run with
