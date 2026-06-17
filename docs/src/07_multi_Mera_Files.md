@@ -70,7 +70,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -112,7 +112,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: nothing  -  Compression: nothing
 -----------------------------------
@@ -137,7 +137,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: write
   -  Compression: CodecLz4.LZ4FrameCompressor(Ptr
@@ -402,7 +402,7 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -450,7 +450,7 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -835,7 +835,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: write  -  Compression: ZlibCompressor(level=-1, windowbits=15)
 -----------------------------------
@@ -934,7 +934,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: write  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx}(0x0000000000000000), Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x50, 0xf8, 0x44, 0x11, 0x01, 0x00, 0x00, 0x00, 0x70, 0x35, 0x25, 0x31, 0x01, 0x00, 0x00, 0x00, 0x90, 0xfd, 0x0b], false)
 -----------------------------------

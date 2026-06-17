@@ -336,9 +336,10 @@ _centervec(center, info, range_unit) =
 function _flux_validate_quantities(cols, quantities)
     if :metals in quantities && !(:metallicity in cols)
         throw(ArgumentError("flux :metals needs a :metallicity column, which this output does not have " *
-            "(Mera does not auto-rename passive scalars, so a metal scalar stored as e.g. :var6 is NOT " *
-            "treated as metallicity). Alias your metal field to :metallicity before calling, or drop " *
-            ":metals from `quantities`. (Returning zero silently would be a wrong answer.)"))
+            "(Mera names hydro columns from the descriptor, so a :metallicity column appears only when the " *
+            "hydro descriptor labels a field 'metallicity'; a scalar named e.g. :scalar_00 or a positional " *
+            ":var6 is NOT treated as metallicity). Alias your metal field to :metallicity before calling, or " *
+            "drop :metals from `quantities`. (Returning zero silently would be a wrong answer.)"))
     end
     if :energy in quantities && !(:p in cols)
         throw(ArgumentError("flux :energy needs the thermal energy from pressure (:p), absent on this " *

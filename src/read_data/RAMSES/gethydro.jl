@@ -248,7 +248,7 @@ julia> fieldnames(gas)
 - **`dataobject`:** needs to be of type: "InfoType", created by the function *getinfo*
 ##### Predefined/Optional Keywords:
 - **`lmax`:** the maximum level to be read from the data
-- **`var(s)`:** the selected hydro variables in arbitrary order: :all (default), :cpu, :rho, :vx, :vy, :vz, :p, :var6, :var7...
+- **`var(s)`:** the selected hydro variables in arbitrary order: :all (default), :cpu, :rho, :vx, :vy, :vz, :p, and the passive scalars. When the output has a `hydro_file_descriptor.txt`, the scalars carry their descriptor names (e.g. :metallicity, :scalar_00, :scalar_01...); without a descriptor they are positional (:var6, :var7...). Positional :varN selectors keep working in either case.
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
