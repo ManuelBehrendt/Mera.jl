@@ -148,47 +148,55 @@ erroring.
 
 ## Radiative-transfer (RT) quantities
 
-These need an **RT run**: the ionization fractions are passive hydro scalars whose positions come
-from the RT descriptor (`info.descriptor.rt`, key `:iIons`, in RAMSES order HII, HeII, HeIII), and
-each quantity errors with a clear message on a non-RT run. The hydrogen number density used
-throughout is
+These need an **RT run**: the ionization fractions are passive hydro scalars located via the RT
+descriptor (`info.descriptor.rt`, key `:iIons`), and each quantity errors with a clear message on a
+non-RT run. RAMSES-RT stores them in a fixed order — ``[x_\mathrm{HI}`` *(only with H₂ chemistry)*
+``, x_\mathrm{HII}, x_\mathrm{HeII}, x_\mathrm{HeIII}`` *(only with He)* ``]`` — but writes no
+`isH2` flag, so Mera infers the layout from the species **count**:
+``n_\mathrm{Ions} = 1 + \mathtt{isH2} + 2\,\mathtt{isHe}`` ⇒ ``\mathtt{isH2} = \mathrm{iseven}(n_\mathrm{Ions})``
+(``\in\{2,4\}``) and ``\mathtt{isHe} = n_\mathrm{Ions}\ge 3``, and remaps every species accordingly.
+The hydrogen number density used throughout is
 
 ```math
 n_H = \rho\,\cdot\,\texttt{scale.nH}\,\cdot\,\frac{X}{0.76},
 ```
 
 i.e. `scale.nH` ``= (0.76/m_H)\,\mathrm{unit}_d`` rescaled by the run's **actual** hydrogen mass
-fraction ``X`` from the descriptor — so a pure-hydrogen (``X=1``) Strömgren test is correct, and the
-factor is 1 for the default ``X=0.76``.
+fraction ``X`` from the descriptor (so a pure-hydrogen ``X=1`` Strömgren test is correct; the factor
+is 1 for the default ``X=0.76``).
 
 ### Mean molecular weight & RT temperature
 
 | Quantity | Formula |
 |---|---|
-| Mean molecular weight `:mu` (RT) | ``\mu = \Big[\,X_H(1+x_\mathrm{HII}) + \tfrac{X_\mathrm{He}}{4}(1+x_\mathrm{HeII}+2x_\mathrm{HeIII}) + \tfrac{Z}{A_Z}\,\Big]^{-1}`` |
+| Mean molecular weight `:mu` | ``\mu = \Big[\,X_H\,h_p + \tfrac{X_\mathrm{He}}{4}(1+x_\mathrm{HeII}+2x_\mathrm{HeIII}) + \tfrac{Z}{A_Z}\,\Big]^{-1}`` |
 | RT-aware temperature `:T_rt` | ``T_\mathrm{rt} = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` |
 
-with ``X_H = X(1-Z)/(X+Y)`` and ``X_\mathrm{He} = Y(1-Z)/(X+Y)`` (so ``X_H+X_\mathrm{He}+Z = 1`` per
-cell), the primordial fractions ``X,Y`` from the RT descriptor, ``Z`` the local metal mass fraction
-(the `:metallicity` scalar; ``0`` if absent), and ``A_Z \approx 16`` a representative metal atomic
-mass. When He ionization is not tracked (``n_\mathrm{Ions} < 3``) He is taken neutral and the
-metal free-electron term is dropped (a sub-percent correction). The resulting ``\mu`` runs from
-``\approx 1.32`` (neutral) through ``\approx 0.6`` (ionized H+He) to ``\approx 0.5`` (ionized
-pure-H). On a **non-RT** run, `:mu` returns the constant `scale.K/scale.T_mu` and `:T_rt` reduces
+where the hydrogen particle count per H nucleus is ``h_p = 1 + x_\mathrm{HII}`` without H₂ chemistry,
+or ``h_p = x_\mathrm{HI} + 2x_\mathrm{HII} + x_{\mathrm{H_2}}`` with it (``h_p \to 1,\,0.5,\,2`` for
+neutral-atomic, fully-ionized, fully-molecular pure H). ``X_H = X(1-Z)/(X+Y)`` and ``X_\mathrm{He} =
+Y(1-Z)/(X+Y)`` (so ``X_H+X_\mathrm{He}+Z = 1`` per cell), with ``X,Y`` the primordial fractions, ``Z``
+the local metal mass fraction (`:metallicity`; ``0`` if absent), and ``A_Z \approx 16``. He is taken
+neutral when not tracked; metal free electrons are neglected (sub-percent). So ``\mu`` runs from
+``\approx 2`` (fully molecular) through ``\approx 1.32`` (neutral atomic) to ``\approx 0.5\text{–}0.6``
+(ionized). On a **non-RT** run, `:mu` returns the constant `scale.K/scale.T_mu` and `:T_rt` reduces
 exactly to `:T`.
 
-### Ionization fractions & number densities
+### Ionization & molecular fractions, number densities
 
 | Quantity | Formula |
 |---|---|
-| Ionized fractions `:xHII`, `:xHeII`, `:xHeIII` | passive scalars at descriptor `:iIons` (+0 / +1 / +2) |
-| Neutral H fraction `:xHI` | ``x_\mathrm{HI} = 1 - x_\mathrm{HII}`` |
+| Ionized fractions `:xHII`, `:xHeII`, `:xHeIII` | stored passive scalars (positions from the H₂-aware layout above) |
+| Neutral atomic-H fraction `:xHI` | a stored scalar with H₂ chemistry, else the closure ``1 - x_\mathrm{HII}`` |
+| Molecular-H fraction `:xH2` *(H₂ runs)* | ``x_{\mathrm{H_2}} = (1 - x_\mathrm{HI} - x_\mathrm{HII})/2`` |
 | Ionized-H density `:n_HII` | ``n_\mathrm{HII} = n_H\,x_\mathrm{HII}`` |
-| Neutral-H density `:n_HI` | ``n_\mathrm{HI} = n_H\,(1 - x_\mathrm{HII})`` |
+| Neutral-H density `:n_HI` | ``n_\mathrm{HI} = n_H\,x_\mathrm{HI}`` |
+| Molecular-H density `:n_H2` *(H₂ runs)* | ``n_{\mathrm{H_2}} = n_H\,x_{\mathrm{H_2}}`` |
 | Free-electron density `:n_e` | ``n_e = n_H\,x_\mathrm{HII} + n_\mathrm{He}\,(x_\mathrm{HeII} + 2x_\mathrm{HeIII})`` |
 
-with the helium number density ``n_\mathrm{He} = n_H\,Y/(4X)``. The He term in ``n_e`` is included
-only when He ionization is tracked (``n_\mathrm{Ions}\ge 3``); otherwise ``n_e = n_H\,x_\mathrm{HII}``.
+with ``n_\mathrm{He} = n_H\,Y/(4X)`` (the He term in ``n_e`` enters only when He is tracked; H₂ is
+neutral and contributes no electrons). `:xH2`/`:n_H2` require an H₂-chemistry run (even
+``n_\mathrm{Ions}``) and error otherwise.
 
 ### Recombination
 
