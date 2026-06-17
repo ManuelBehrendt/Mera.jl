@@ -180,10 +180,18 @@ plus `[:L0_eV]`, `[:L1_eV]`, `[:spec2group]`).
 The ionization fractions are passive **hydro** scalars (located via the RT descriptor
 `info.descriptor.rt[:iIons]`); request them on the hydro object (`gas = gethydro(info)`):
 - **`:xHII`, `:xHeII`, `:xHeIII`**  ionization fractions (dimensionless)
-- **`:xHI`**                        neutral-hydrogen fraction = 1 − xHII (dimensionless)
-- **`:n_HII`, `:n_HI`, `:n_e`**     HII / HI / free-electron number density  [cm⁻³]
+- **`:xHI`**                        neutral atomic-hydrogen fraction (a *stored* scalar with H2 chemistry, else the closure 1 − xHII; dimensionless)
+- **`:xH2`**                        molecular-hydrogen fraction = (1 − xHI − xHII)/2 (**H2-chemistry runs only**; ½ ⇒ fully molecular)
+- **`:n_HII`, `:n_HI`, `:n_e`, `:n_H2`**  HII / HI / free-electron / H₂ number density  [cm⁻³] (`:n_H2` is H2-chemistry only)
 - **`:em_recomb`**                  recombination-emissivity proxy ∝ nₑ·n_HII ≈ n_HII²  [cm⁻⁶] (project with `mode=:sum` for a mock emission map)
-- **`:mu`**                         RT-aware mean molecular weight from the ionization state **and metallicity**: μ = 1/[X_H(1+xHII) + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z], with X_H/X_He scaled by the local metal mass fraction Z (the `:metallicity` scalar, 0 if absent) and A_Z≈16. Metal free electrons are neglected (RT does not track metal ionization).
+- **`:mu`**                         RT-aware mean molecular weight from the ionization (and, with H2 chemistry, molecular) state **and metallicity**: μ = 1/[X_H·hₚ + (X_He/4)(1+xHeII+2xHeIII) + Z/A_Z], where hₚ = 1+xHII (no H2) or xHI+2·xHII+xH2 (H2); X_H/X_He scaled by the local metal mass fraction Z (the `:metallicity` scalar, 0 if absent) and A_Z≈16. Metal free electrons are neglected (RT does not track metal ionization).
+
+!!! note "H₂-enabled RAMSES-RT runs"
+    With molecular-hydrogen chemistry (Nickerson et al. 2018) RAMSES stores an extra `xHI`
+    scalar *before* `xHII`, so the species order becomes `[xHI, xHII, xHeII, xHeIII]` and
+    `nIons` is even. Mera detects this from `nIons` (`isH2 = iseven(nIons)`, `isHe = nIons≥3`)
+    and remaps `:xHII`/`:xHeII`/`:xHeIII`/`:n_*`/`:mu`/`:T_rt` accordingly, and exposes `:xHI`,
+    `:xH2`, `:n_H2`. (Standard non-H₂ runs are unchanged.)
 - **`:T_rt`**                       gas temperature [K] using the **local** μ (= (P/ρ)·scale.T_mu·μ). Plain `:T` (unit=:K) bakes in a *constant* μ (= scale.K/scale.T_mu ≈ 1/0.76 ≈ 1.32, the fixed primordial default — independent of the run's X), so it over-estimates the ionized-gas temperature by μ_const/μ_local (e.g. ≈1.32/0.5 ≈ 2.6× for fully-ionized pure hydrogen). Prefer `:T_rt` for RT runs.
 
 ```julia
