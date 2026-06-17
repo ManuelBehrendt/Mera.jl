@@ -56,6 +56,30 @@
 # whole file is skipped via @test_skip.  Individual missing datasets
 # inside the file degrade to per-testset skips.
 
+# Data-free: MHD / hydro-descriptor name handling (constrained-transport B fields).
+# Runs on the full CI matrix; verifies the version-robust descriptor → canonical-name
+# mapping and MHD detection without needing a simulation on disk.
+@testset "MHD descriptor naming (data-free)" begin
+    cn = Mera._canonical_hydro_name
+    ismhd = Mera._is_mhd_descriptor
+    # canonical name normalisation (same for descriptor v0 and v1 — both parse to these names)
+    @test cn("density") == :rho
+    @test cn("velocity_x") == :vx && cn("velocity_y") == :vy && cn("velocity_z") == :vz
+    @test cn("pressure") == :p && cn("thermal_pressure") == :p
+    @test cn("B_x_left") == :bx_left && cn("B_z_right") == :bz_right
+    @test cn("scalar_00") == :scalar_00 && cn("metallicity") == :metallicity
+    # MHD detection from the face fields
+    mhd_names = [:density, :velocity_x, :velocity_y, :velocity_z,
+                 Symbol("B_x_left"), Symbol("B_y_left"), Symbol("B_z_left"),
+                 Symbol("B_x_right"), Symbol("B_y_right"), Symbol("B_z_right"), :pressure]
+    hyd_names = [:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00]
+    @test ismhd(mhd_names) == true
+    @test ismhd(hyd_names) == false
+    # the resulting canonical variable_list places :p at its true (shifted) index, B at the faces
+    @test [cn(n) for n in mhd_names] ==
+          [:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p]
+end
+
 if !DATA_AVAILABLE
     @warn "Skipping Data Readers tests - simulation data not available"
     @test_skip "Simulation data not available"

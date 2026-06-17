@@ -187,6 +187,29 @@ function readamrfile1!(dataobject::InfoType)
 
 end
 
+# Map a RAMSES hydro_file_descriptor variable name to Mera's canonical symbol.
+# Works for both descriptor versions (v0 "variable # i: name", v1 "ivar, name, type")
+# since both are parsed to the same name symbols. Recognised:
+#   density→:rho, velocity_{x,y,z}→:v{x,y,z}, (thermal_)pressure→:p,
+#   B_{x,y,z}_{left,right}→:b{x,y,z}_{left,right}.
+# Anything else is passed through lower-cased (e.g. :scalar_00, :metallicity).
+function _canonical_hydro_name(raw)
+    s = lowercase(strip(String(raw)))
+    s == "density"                                && return :rho
+    s == "velocity_x"                             && return :vx
+    s == "velocity_y"                             && return :vy
+    s == "velocity_z"                             && return :vz
+    (s == "pressure" || s == "thermal_pressure")  && return :p
+    m = match(r"^b_([xyz])_(left|right)$", s)
+    m !== nothing && return Symbol("b", m.captures[1], "_", m.captures[2])
+    return Symbol(s)
+end
+
+# A run is MHD (constrained transport) iff its hydro descriptor carries the
+# face-centred magnetic field components B_{x,y,z}_{left,right}.
+_is_mhd_descriptor(names) =
+    any(n -> occursin(r"^b_[xyz]_(left|right)$", lowercase(strip(String(n)))), names)
+
 function readhydrofile1!(dataobject::InfoType)
 
 
@@ -259,6 +282,16 @@ function readhydrofile1!(dataobject::InfoType)
 
     if !isfile(dataobject.fnames.hydro_descriptor)
         variable_descriptor_list = variable_list
+    end
+
+    # MHD (constrained transport): the hydro file stores 6 face-centred B components and
+    # shifts the thermal pressure, so the positional [:rho,:vx,:vy,:vz,:p,:var6…] guess is
+    # wrong (index 5 is B_x_left, not pressure). When the descriptor reveals MHD, take the
+    # variable names canonically from it (density→:rho, pressure→:p at its true index,
+    # B_*_{left,right}→:b*_{left,right}). Non-MHD layouts keep the positional names.
+    if descriptor_file && length(variable_descriptor_list) == nvarh &&
+       _is_mhd_descriptor(variable_descriptor_list)
+        variable_list = [_canonical_hydro_name(n) for n in variable_descriptor_list]
     end
 
     dataobject.hydro            = hydro_files

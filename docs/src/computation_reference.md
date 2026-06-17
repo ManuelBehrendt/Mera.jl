@@ -129,7 +129,11 @@ corresponding specific component).
 
 ## Mach numbers
 
-*Data: **hydro**. The magnetosonic Mach numbers (`:mach_alfven`, `:mach_fast`, `:mach_slow`) need an MHD run with `:bx,:by,:bz`.*
+*Data: **hydro**. The magnetosonic Mach numbers (`:mach_alfven`, `:mach_fast`, `:mach_slow`) need an
+**MHD run**. RAMSES stores the field as 6 constrained-transport faces (`:b{x,y,z}_left/right`); Mera
+detects MHD from the `hydro_file_descriptor` (any descriptor version), names the variables canonically
+(`:rho/:vx/:vy/:vz/:p` at their true indices), and derives the cell-centred components
+`:bx,:by,:bz = ½(B_left + B_right)`. The Alfvén speed is `vₐ = |B|/√(4πρ)` (Gaussian-CGS).*
 
 | Quantity | Formula |
 |---|---|

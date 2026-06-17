@@ -68,6 +68,8 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :mach_r_cylinder=>[:vr_cylinder,:cs], :mach_phi_cylinder=>[:vϕ_cylinder,:cs],
     :mach_r_sphere=>[:vr_sphere,:cs], :mach_theta_sphere=>[:vθ_sphere,:cs],
     :mach_phi_sphere=>[:vϕ_sphere,:cs],
+    # cell-centred magnetic field = mean of the constrained-transport faces (MHD runs)
+    :bx=>[:bx_left,:bx_right], :by=>[:by_left,:by_right], :bz=>[:bz_left,:bz_right],
     # magnetosonic Mach numbers (need the magnetic field components in addition to v / cs / rho)
     :mach_alfven=>[:v,:bx,:by,:bz,:rho],
     :mach_fast=>[:v,:cs,:bx,:by,:bz,:rho],
