@@ -17,20 +17,37 @@ the implementation; the code lives in `src/functions/getvar/getvar_hydro.jl`,
 
 | Quantity | Symbol | Formula |
 |---|---|---|
-| Temperature | `:T` | ``T = p/\rho`` |
+| Temperature | `:T` | ``T = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` (constant ``\mu = 1/X \approx 1.32``) |
 | Sound speed | `:cs` | ``c_s = \sqrt{\gamma\, p/\rho}`` |
 | Kinetic energy | `:ekin` | ``E_\mathrm{kin} = \tfrac12\, m\, v^2`` |
 | Thermal energy | `:etherm` | ``E_\mathrm{therm} = p\, V`` |
 
-- **Temperature** `:T` is the EOS temperature ``p/\rho`` (in scaled units `:K`). It is the
-  *thermal* temperature **without** a mean-molecular-weight correction; for an ionization-aware
-  temperature in radiative-transfer runs use `:T_rt`.
+- **Temperature** `:T` ``= (p/\rho)\cdot s_K``. The `:K` unit scale already folds in a **constant
+  mean molecular weight**: ``s_K = \tfrac{m_H}{k_B}\big(\tfrac{\mathrm{unit}_l}{\mathrm{unit}_t}\big)^2\,\mu``
+  with ``\mu = 1/X = 1/0.76 \approx 1.32`` — the neutral-primordial value from RAMSES
+  `cooling_module.f90` (hydrogen mass fraction ``X=0.76``). So `:T` *is* a physical temperature, but
+  it assumes **neutral** gas everywhere. The raw "temperature per μ" (RAMSES ``T/\mu``) is the
+  separate scale `scale.T_mu` ``= \tfrac{m_H}{k_B}(\mathrm{unit}_l/\mathrm{unit}_t)^2`` — i.e. the
+  assumed ``\mu`` is exactly `scale.K/scale.T_mu`. In ionized gas the true ``\mu`` falls to
+  ``\approx 0.6``, so `:T` overestimates ``T`` by up to ``\sim\!2\times`` there; use the
+  ionization-aware **`:T_rt`** (see the **Radiative-transfer (RT) quantities** section below) in RT runs.
 - **Sound speed** `:cs` is adiabatic, with ``\gamma`` taken from `info.gamma` (typically 5/3).
 - **Kinetic energy** `:ekin` is *bulk* motion only, with ``v^2 = v_x^2+v_y^2+v_z^2``; it does
   **not** include thermal/random energy (that is `:etherm`).
 - **Thermal energy** `:etherm` is ``p\,V`` over the cell volume ``V`` (equivalently
   ``E_\mathrm{therm} = \tfrac{p}{\gamma-1}V`` up to the EOS constant, in the RAMSES convention
   ``p=(\gamma-1)\rho e``).
+
+!!! note "The adiabatic index γ is a single global value"
+    ``\gamma`` is read **once** from the RAMSES output header (the `gamma` of the `&hydro_params`
+    namelist, usually ``5/3``) and stored as the scalar `info.gamma`. Every quantity that uses it —
+    `:cs` and the whole entropy family — applies that **same** ``\gamma`` to **every cell**. It is
+    *not* varied per cell or per gas phase, and RT does not change it: this mirrors RAMSES's own data
+    model, where one global adiabatic index is carried and the thermal/ionization state lives in the
+    pressure and the cooling, not in a spatially varying ``\gamma``. (A polytropic star-formation
+    pressure floor, if the run uses one, is already baked into the stored pressure ``p`` — it does not
+    make ``\gamma`` a per-cell field.) So `:cs` and entropy are exact for a constant-``\gamma`` run and
+    assume that single value otherwise.
 
 ### Entropy family
 
@@ -129,6 +146,61 @@ The ``\max(\cdot,0)`` clamp on the escape speed avoids a negative argument where
 unbound (``\phi \ge 0``, possible near domain boundaries) — those cells return `0` rather than
 erroring.
 
+## Radiative-transfer (RT) quantities
+
+These need an **RT run**: the ionization fractions are passive hydro scalars whose positions come
+from the RT descriptor (`info.descriptor.rt`, key `:iIons`, in RAMSES order HII, HeII, HeIII), and
+each quantity errors with a clear message on a non-RT run. The hydrogen number density used
+throughout is
+
+```math
+n_H = \rho\,\cdot\,\texttt{scale.nH}\,\cdot\,\frac{X}{0.76},
+```
+
+i.e. `scale.nH` ``= (0.76/m_H)\,\mathrm{unit}_d`` rescaled by the run's **actual** hydrogen mass
+fraction ``X`` from the descriptor — so a pure-hydrogen (``X=1``) Strömgren test is correct, and the
+factor is 1 for the default ``X=0.76``.
+
+### Mean molecular weight & RT temperature
+
+| Quantity | Formula |
+|---|---|
+| Mean molecular weight `:mu` (RT) | ``\mu = \Big[\,X_H(1+x_\mathrm{HII}) + \tfrac{X_\mathrm{He}}{4}(1+x_\mathrm{HeII}+2x_\mathrm{HeIII}) + \tfrac{Z}{A_Z}\,\Big]^{-1}`` |
+| RT-aware temperature `:T_rt` | ``T_\mathrm{rt} = (p/\rho)\cdot\texttt{scale.T\_mu}\cdot\mu`` |
+
+with ``X_H = X(1-Z)/(X+Y)`` and ``X_\mathrm{He} = Y(1-Z)/(X+Y)`` (so ``X_H+X_\mathrm{He}+Z = 1`` per
+cell), the primordial fractions ``X,Y`` from the RT descriptor, ``Z`` the local metal mass fraction
+(the `:metallicity` scalar; ``0`` if absent), and ``A_Z \approx 16`` a representative metal atomic
+mass. When He ionization is not tracked (``n_\mathrm{Ions} < 3``) He is taken neutral and the
+metal free-electron term is dropped (a sub-percent correction). The resulting ``\mu`` runs from
+``\approx 1.32`` (neutral) through ``\approx 0.6`` (ionized H+He) to ``\approx 0.5`` (ionized
+pure-H). On a **non-RT** run, `:mu` returns the constant `scale.K/scale.T_mu` and `:T_rt` reduces
+exactly to `:T`.
+
+### Ionization fractions & number densities
+
+| Quantity | Formula |
+|---|---|
+| Ionized fractions `:xHII`, `:xHeII`, `:xHeIII` | passive scalars at descriptor `:iIons` (+0 / +1 / +2) |
+| Neutral H fraction `:xHI` | ``x_\mathrm{HI} = 1 - x_\mathrm{HII}`` |
+| Ionized-H density `:n_HII` | ``n_\mathrm{HII} = n_H\,x_\mathrm{HII}`` |
+| Neutral-H density `:n_HI` | ``n_\mathrm{HI} = n_H\,(1 - x_\mathrm{HII})`` |
+| Free-electron density `:n_e` | ``n_e = n_H\,x_\mathrm{HII} + n_\mathrm{He}\,(x_\mathrm{HeII} + 2x_\mathrm{HeIII})`` |
+
+with the helium number density ``n_\mathrm{He} = n_H\,Y/(4X)``. The He term in ``n_e`` is included
+only when He ionization is tracked (``n_\mathrm{Ions}\ge 3``); otherwise ``n_e = n_H\,x_\mathrm{HII}``.
+
+### Recombination
+
+| Quantity | Formula |
+|---|---|
+| Emissivity proxy `:em_recomb` | ``\propto n_e\,n_\mathrm{HII} \approx (n_H\,x_\mathrm{HII})^2``  ``[\mathrm{cm}^{-6}]`` |
+| Case-B rate `:recomb_rate` | ``\alpha_B(T)\,n_e\,n_\mathrm{HII}``, with ``\alpha_B(T) = 2.59\times10^{-13}\,(T/10^4\,\mathrm{K})^{-0.7}\ \mathrm{cm^3\,s^{-1}}`` |
+
+`:em_recomb` projected with `mode=:sum` is a mock recombination-line (e.g. Hα) emission map of an
+HII region. `:recomb_rate` uses the RT-aware temperature `:T_rt` (clamped to ``\ge 1\,\mathrm{K}`` in
+the ``\alpha_B`` power law) and pairs with the RT photoionization rate for ionization-balance checks.
+
 ## Cell size & volume
 
 For an AMR cell at refinement `level` (uniform-grid runs use `lmax`), with box length
@@ -177,6 +249,73 @@ kurtosis, and extrema:
 - The **weighted median** uses `StatsBase.median(x, Weights(w))`; **skewness** and **kurtosis**
   use `StatsBase` evaluated at the weighted mean.
 - Without weights it reduces to the ordinary `mean`/`median`/population-`std`.
+
+## Binned reductions — `profile`, `phase`, `profile3d`
+
+`profile` (1-D), `phase` (2-D) and `profile3d` (3-D) bin cells/particles by one/two/three axis
+fields and reduce a target field ``y`` in each bin (weighted — mass by default, or `:volume`, a
+field, or unweighted). Per bin, with members ``i``, weights ``w_i``, values ``y_i`` and
+``S_w=\sum_i w_i``:
+
+| Statistic | Formula |
+|---|---|
+| Weighted mean | ``\bar y = \tfrac{1}{S_w}\sum_i w_i y_i`` |
+| Weighted std / var | ``\sigma = \sqrt{m_2/S_w}``, ``\sigma^2`` — with ``m_2 = \sum_i w_i (y_i-\bar y)^2`` |
+| Effective N (Kish) | ``n_\mathrm{eff} = S_w^2 / \sum_i w_i^2`` |
+| Std. error of the mean | ``\mathrm{sem} = \sigma/\sqrt{n_\mathrm{eff}}`` |
+| Skewness | ``(m_3/S_w)/\sigma^3``, ``m_3 = \sum_i w_i (y_i-\bar y)^3`` |
+| Excess kurtosis | ``(m_4/S_w)/\sigma^4 - 3``, ``m_4 = \sum_i w_i (y_i-\bar y)^4`` |
+| Weighted median / quantiles | value where the cumulative weight first reaches ``q\,S_w`` (lower convention) |
+| min / max / count / ``S_w`` | extrema, member count, summed weight (the mass/volume profile itself) |
+
+Also available: `var`, `neff`, optional bootstrap `mean_ci`/`median_ci` + `median_se` (`nboot>0`);
+bins `:linear` / `:log` / `:equal` (quantile-spaced, equal-population); `geometry=:spherical`/`:cylindrical`
+adds `density = S_w/\text{shell volume}`; `cumulative` adds `cumsum` (e.g. enclosed mass ``M(<r)``);
+`normalize=:pdf` returns a normalised PDF. Two wrappers build on this:
+
+| Quantity | Formula |
+|---|---|
+| Dynamical rotation curve `rotationcurve` | ``v_\mathrm{circ}(r) = \sqrt{G\,M(<r)/r}`` from the binned enclosed mass ``M(<r) = \sum_{r_i<r} m_i`` (also returns ``g = GM/r^2``) |
+| Kinematic dispersion `velocitydispersion` | the per-bin `std` of ``v_R, v_\phi, v_z`` → ``\sigma_R,\sigma_\phi,\sigma_z`` and total ``\sigma = \sqrt{\sigma_R^2+\sigma_\phi^2+\sigma_z^2}`` |
+
+Conceptual guide and worked examples: [Profiles & Phase Diagrams](profiles_phase.md).
+
+## Projection maps — `projection`
+
+`projection` deposits cells onto a 2-D pixel grid (mass-conservatively; see
+[Off-axis Projection](06_offaxis_Projection.md)). Per pixel, with deposited weight ``W=\sum w``
+(mass by default) and field ``q``:
+
+| Map | Formula (per pixel) |
+|---|---|
+| Surface density `:sd` | ``\Sigma = (\textstyle\sum m)/A_\mathrm{pix}`` (column mass / pixel area) |
+| Column mass `:mass` | ``\textstyle\sum m`` |
+| Weighted-mean map — `mode=:standard` (default) | ``\langle q\rangle = \big(\textstyle\sum q\,w\big)\big/\big(\textstyle\sum w\big)`` |
+| Column sum — `mode=:sum` | ``\textstyle\sum q`` (extensive; conserves the total) |
+| Velocity dispersion ``\;`` `:σx :σy :σz :σ :σr_cylinder :σϕ_cylinder` (axis-aligned), `:σlos` (off-axis) | ``\sigma = \sqrt{\max\!\big(\langle v^2\rangle - \langle v\rangle^2,\;0\big)}`` |
+
+The dispersion maps are built from two deposited maps, ``\langle v\rangle`` and ``\langle v^2\rangle``,
+so ``\sigma`` is the spread **about that pixel's own weighted-mean velocity** — the local
+line-of-sight (or component) dispersion, with the per-pixel mean (the bulk + rotation seen down that
+column) removed by construction; the ``\max(\cdot,0)`` guards round-off. The axis-aligned ``:σ*`` are
+map-only and need `direction=:x/:y/:z`; `:σlos` works for any off-axis line of sight.
+
+## Velocity dispersion — which σ am I getting?
+
+Mera never subtracts a single *global* bulk velocity from a dispersion: every ``\sigma`` is a
+weighted variance **about the local mean** of the set it is computed over, so net
+bulk/rotation/streaming *at that scale* cancels automatically. Only the **set** differs:
+
+| Context | Call | ``\sigma`` is the spread about… | Use |
+|---|---|---|---|
+| **Global** | `wstat(getvar(obj,:vz); weight=…)` | the single mean of the whole selection | one number for a region |
+| **3-D, per bin** | `profile(obj, :r_cylinder, :vz).std` | each radial bin's mean (rest-frame) | intrinsic ``\sigma(R)`` in annuli/shells; rotation removed per bin |
+| **2-D, per pixel** | `projection(obj, :σz)` / `:σlos` | each pixel's mean down the sightline | local LOS dispersion map (mock-obs ``\sigma``) |
+
+So `profile(gas, :r_cylinder, :vϕ_cylinder)` returns both the **mean** ``\langle v_\phi\rangle(R)``
+(the kinematic rotation curve — it keeps its sign) and the **`std`** ``\sigma_\phi(R)`` (the spread
+about it). A *projected* σ (profile a per-pixel `:σlos` map vs. radius) and a *3-D* per-bin σ answer
+different questions — see the σ note in [Profiles & Phase Diagrams](profiles_phase.md).
 
 ## Worked example: Mach number end-to-end
 
