@@ -971,6 +971,9 @@ function printsimoverview(info::InfoType, verbose::Bool)
             if info.descriptor.hydrofile
                 println("hydro-descriptor: ", tuple(info.descriptor.hydro...) )
             end
+            if any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
+                println("magnetic field:   true (MHD, constrained transport) --> cell-centred :bx, :by, :bz = ½(left+right)")
+            end
             println("γ: ", info.gamma)
 
         end

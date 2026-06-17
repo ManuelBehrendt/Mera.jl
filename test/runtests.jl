@@ -69,6 +69,7 @@ if isempty(_focus)
         include("32_rt_tests.jl")  # data-free RT API surface + optional rt_stromgren block; runs on 1.10/1.11/1.12
         include("33_offaxis_kinematics_tests.jl")  # data-free off-axis camera kinematics (Phase A1)
         include("42_kernel_oracle_tests.jl")  # data-free conservation + weighted-stats oracle (deposit/profile/phase kernels)
+        include("46_data_awareness_tests.jl")  # data-free descriptor/MHD detection + optional capability/descriptor/quantity-awareness blocks
     end
 
     # ========================================================================
