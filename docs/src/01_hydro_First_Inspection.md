@@ -694,8 +694,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  var6     Float64
-11  var7     Float64
+10  scalar_00 Float64
+11  scalar_01 Float64
 ```
 
 ### Focused Data Examination

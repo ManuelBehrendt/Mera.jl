@@ -194,8 +194,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  var6     Float64
-11  var7     Float64
+10  passive_scalar_1 Float64
+11  passive_scalar_2 Float64
 ```
 
 ## Basic Projections
@@ -216,7 +216,7 @@ Predefined vars for projections:
 ------------------------------------------------
 =====================[gas]:=====================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, passive_scalar_1,...
 further possibilities: :rho, :density, :ρ
               -derived hydro vars-
 :x, :y, :z

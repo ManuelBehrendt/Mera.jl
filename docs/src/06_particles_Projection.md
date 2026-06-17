@@ -175,7 +175,7 @@ Predefined vars for projections:
 ------------------------------------------------
 =====================[gas]:=====================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, scalar_00,...
 further possibilities: :rho, :density, :ρ
               -derived hydro vars-
 :x, :y, :z
