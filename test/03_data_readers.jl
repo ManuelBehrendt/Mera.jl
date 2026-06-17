@@ -782,3 +782,39 @@ end
     end
 
 end
+
+# Real RAMSES MHD output (yt sample "ramses_mhd_128"): exercises MHD detection, the
+# constrained-transport face fields, the shifted pressure index, and cell-centred B.
+if @isdefined(DATASETS) && haskey(DATASETS, :ramses_mhd) && isdir(DATASETS[:ramses_mhd].path)
+    @testset "MHD reading (ramses_mhd_128)" begin
+        ds   = DATASETS[:ramses_mhd]
+        info = getinfo(ds.output, ds.path, verbose=false)
+
+        # MHD layout: B faces at 5–10, thermal pressure at index 11 (NOT index 5)
+        @test info.variable_list[1] == :rho
+        @test info.variable_list[5] == :bx_left
+        @test info.variable_list[11] == :p
+        @test :bx_right in info.variable_list && :bz_left in info.variable_list
+
+        gas  = gethydro(info, verbose=false, show_progress=false)
+        cols = propertynames(gas.data.columns)
+        @test :p in cols && :bx_left in cols && :bx_right in cols
+
+        # pressure must be the real (positive, varying) thermal pressure, not the constant
+        # B_x field that index 5 would have given under the old positional mislabelling
+        p = getvar(gas, :p)
+        @test all(p .> 0)
+        @test maximum(p) > minimum(p)            # it varies (a shock tube), unlike |B_x|
+
+        # cell-centred B equals the mean of the two stored faces
+        bx   = getvar(gas, :bx)
+        bxl  = select(gas.data, :bx_left); bxr = select(gas.data, :bx_right)
+        @test bx ≈ 0.5 .* (bxl .+ bxr)
+
+        # magnetosonic Mach numbers now compute (require B) and are finite & non-negative
+        for q in (:mach_alfven, :mach_fast, :mach_slow)
+            m = getvar(gas, q)
+            @test all(isfinite.(m)) && all(m .>= 0)
+        end
+    end
+end

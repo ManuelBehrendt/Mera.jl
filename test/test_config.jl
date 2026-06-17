@@ -110,6 +110,20 @@ const DATASETS = Dict(
         has_clumps = false,
         has_rt = true
     ),
+    # RAMSES MHD (constrained transport) — yt community sample "ramses_mhd_128"
+    # (3-D MHD tube test, output_00027). Ships WITHOUT a hydro_file_descriptor
+    # (older format), so MHD is detected from the nvar≥11 / 3-D heuristic; the 6
+    # face-centred B components give cell-centred :bx/:by/:bz = ½(left+right).
+    # Download: https://yt-project.org/data/ramses_mhd_128.tar.gz (extract output_00027 here)
+    :ramses_mhd => (
+        path = joinpath(SIMULATION_PATH, "ramses_mhd_128"),
+        output = 27,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = false,
+        has_clumps = false,
+        has_mhd = true
+    ),
 )
 
 # Test tolerances
