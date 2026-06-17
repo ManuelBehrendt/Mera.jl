@@ -124,6 +124,19 @@ const DATASETS = Dict(
         has_clumps = false,
         has_mhd = true
     ),
+    # RAMSES MHD on an AMR grid — yt community sample "ramses_mhd_amr" (output_00019,
+    # levels 5–8). Also ships without a hydro_file_descriptor, so it exercises the
+    # no-descriptor MHD heuristic on the AMR (not uniform-grid) reader path.
+    # Download: https://yt-project.org/data/ramses_mhd_amr.tar.gz (extract output_00019 here)
+    :ramses_mhd_amr => (
+        path = joinpath(SIMULATION_PATH, "ramses_mhd_amr"),
+        output = 19,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = false,
+        has_clumps = false,
+        has_mhd = true
+    ),
 )
 
 # Test tolerances
