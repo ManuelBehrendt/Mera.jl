@@ -696,7 +696,7 @@ Predefined vars that can be calculated for each cell/particle:
 ----------------------------------------------------------------
 =============================[gas]:=============================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, passive_scalar_1,...
               -derived hydro vars-
 :x, :y, :z
 :mass, :cellsize, :volume, :freefall_time
@@ -930,7 +930,7 @@ Predefined vars that can be calculated for each cell/particle:
 ----------------------------------------------------------------
 =============================[gas]:=============================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, passive_scalar_1,...
               -derived hydro vars-
 :x, :y, :z
 :mass, :cellsize, :volume, :freefall_time

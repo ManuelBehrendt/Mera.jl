@@ -468,8 +468,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  var6     Float64
-11  var7     Float64
+10  passive_scalar_1 Float64
+11  passive_scalar_2 Float64
 ```
 
 ### With IndexedTables (example B)
@@ -495,8 +495,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  var6     Float64
-11  var7     Float64
+10  passive_scalar_1 Float64
+11  passive_scalar_2 Float64
 ```
 
 ### Unit Conversion in Filtering
@@ -810,8 +810,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  var6     Float64
-11  var7     Float64
+10  passive_scalar_1 Float64
+11  passive_scalar_2 Float64
 12  mach     Float64
 ```
 
@@ -867,8 +867,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  var6     Float64
-11  var7     Float64
+10  passive_scalar_1 Float64
+11  passive_scalar_2 Float64
 ```
 
 ## Data Table Extension and Modification
