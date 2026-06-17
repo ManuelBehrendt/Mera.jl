@@ -40,7 +40,7 @@ level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --&gt; (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -71,7 +71,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: nothing  -  Compression: nothing
 -----------------------------------
@@ -84,7 +84,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: write
   -  Compression: CodecLz4.LZ4FrameCompressor(Ptr
@@ -296,7 +296,7 @@ amr:           true
 level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -334,7 +334,7 @@ amr:           true
 level(s): 6 - 10 --&gt; cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7  --&gt; (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -549,7 +549,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: write  -  Compression: ZlibCompressor(level=-1, windowbits=15)
 -----------------------------------
@@ -615,7 +615,7 @@ Directory: /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
 -----------------------------------
 merafile_version: 1.0  -  Simulation code: RAMSES
 -----------------------------------
-DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+DataType: hydro  -  Data variables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 -----------------------------------
 I/O mode: write  -  Compression: CodecLz4.LZ4FrameCompressor(Ptr{CodecLz4.LZ4F_cctx}(0x0000000000000000), Base.RefValue{CodecLz4.LZ4F_preferences_t}(CodecLz4.LZ4F_preferences_t(CodecLz4.LZ4F_frameInfo_t(0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x0000000000000000, 0x00000000, 0x00000000), 0, 0x00000000, (0x00000000, 0x00000000, 0x00000000, 0x00000000))), UInt8[0x50, 0xf8, 0x44, 0x11, 0x01, 0x00, 0x00, 0x00, 0x70, 0x35, 0x25, 0x31, 0x01, 0x00, 0x00, 0x00, 0x90, 0xfd, 0x0b], false)
 -----------------------------------
@@ -627,4 +627,4 @@ Mera  1.8.0
 -----------------------------------
 Memory size: 2.321 GB (uncompressed)
 Total file size: 1.276 GB
------------------------------------</code></pre><p>Load the comment (hydro) from JLD2 file:</p><pre><code class="language-julia hljs">vd = viewdata(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/&quot;, verbose=false);</code></pre><pre><code class="language-julia hljs">vd[&quot;hydro&quot;][&quot;comments&quot;]</code></pre><pre><code class="nohighlight hljs">&quot;The simulation is....&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../14_multi_OffAxis_Features/">« Advanced LOS features</a><a class="docs-footer-nextpage" href="../07_1_multi_Mera_Files_Converter/">Converter »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 17 June 2026 10:10">Wednesday 17 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+-----------------------------------</code></pre><p>Load the comment (hydro) from JLD2 file:</p><pre><code class="language-julia hljs">vd = viewdata(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/JLD2_files/&quot;, verbose=false);</code></pre><pre><code class="language-julia hljs">vd[&quot;hydro&quot;][&quot;comments&quot;]</code></pre><pre><code class="nohighlight hljs">&quot;The simulation is....&quot;</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../14_multi_OffAxis_Features/">« Advanced LOS features</a><a class="docs-footer-nextpage" href="../07_1_multi_Mera_Files_Converter/">Converter »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 17 June 2026 15:40">Wednesday 17 June 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

@@ -31,7 +31,7 @@ myargs.zrange=[-2.,2.]
 myargs.center=[:boxcenter]
 myargs.range_unit=:kpc;</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; All functions that hold the upper listed arguments can handle the ArgumentsType struct! &lt;/div&gt;</p><pre><code class="language-julia hljs">gas = gethydro(info, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-06-01T18:51:26.187
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 center: [0.5, 0.5, 0.5]
 ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
@@ -101,7 +101,7 @@ gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">Processing
 # functions is ignored.
 verbose(true)</code></pre><pre><code class="nohighlight hljs">true</code></pre><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-06-01T18:53:32.408
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -131,7 +131,7 @@ showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode
 showprogress(false)</code></pre><pre><code class="nohighlight hljs">false</code></pre><pre><code class="language-julia hljs"># check
 showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: false</code></pre><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-06-01T18:54:30.579
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
@@ -256,4 +256,4 @@ bell ceil all Real real fill kill help</code></pre><pre><code class="nohighlight
 
   julia&gt; notifyme(msg=&quot;Directory listing:&quot;, capture_output=`ls`)
 
-  julia&gt; notifyme(msg=&quot;Function output:&quot;, capture_output=() -&gt; sum(rand(100)))</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../examples/">« Examples</a><a class="docs-footer-nextpage" href="../recommended_packages/">Recommended Packages »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 17 June 2026 10:10">Wednesday 17 June 2026</span>. Using Julia version 1.12.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  julia&gt; notifyme(msg=&quot;Function output:&quot;, capture_output=() -&gt; sum(rand(100)))</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../examples/">« Examples</a><a class="docs-footer-nextpage" href="../recommended_packages/">Recommended Packages »</a><div class="flexbox-break"></div><p class="footer-message">© 2025 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 17 June 2026 15:40">Wednesday 17 June 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
