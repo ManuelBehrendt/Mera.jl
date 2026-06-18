@@ -103,6 +103,7 @@ mutable struct ScalesType002
    Gauss::Float64
    muG::Float64
    microG::Float64
+   nG::Float64
    Tesla::Float64
 
    # Energy scales

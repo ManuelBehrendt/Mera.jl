@@ -816,5 +816,21 @@ if @isdefined(DATASETS) && haskey(DATASETS, :ramses_mhd) && isdir(DATASETS[:rams
             m = getvar(gas, q)
             @test all(isfinite.(m)) && all(m .>= 0)
         end
+
+        # derived magnetic quantities: |B|, magnetic pressure B²/2, plasma β, Alfvén speed, magnetic energy
+        bmag = getvar(gas, :bmag); pmag = getvar(gas, :pmag); beta = getvar(gas, :beta)
+        va   = getvar(gas, :v_alfven); emag = getvar(gas, :e_magnetic)
+        @test all(isfinite, bmag) && all(bmag .> 0) && all(pmag .> 0) && all(beta .> 0)
+        @test bmag ≈ sqrt.(getvar(gas,:bx).^2 .+ getvar(gas,:by).^2 .+ getvar(gas,:bz).^2)  # |B|
+        @test pmag ≈ 0.5 .* bmag.^2                              # magnetic pressure = B²/2 (code units)
+        @test beta ≈ getvar(gas,:p) ./ pmag                      # plasma β = P_thermal / P_mag
+        @test va   ≈ bmag ./ sqrt.(getvar(gas,:rho))             # Alfvén speed v_A = |B|/√ρ
+        @test getvar(gas,:mach_alfven) ≈ getvar(gas,:v) ./ va    # consistent with the Alfvén Mach number
+        @test emag ≈ pmag .* getvar(gas,:volume)                 # magnetic energy per cell = P_mag·V
+        # units resolve via the existing scale (B → μG, pressure → Ba, speed → km/s, energy → erg)
+        @test getvar(gas,:bmag,:muG) ≈ bmag .* info.scale.muG
+        @test getvar(gas,:pmag,:Ba)  ≈ getvar(gas,:p,:Ba) ./ beta   # P_mag in barye, cross-checked vs β
+        @test all(isfinite, getvar(gas,:v_alfven,:km_s)) && all(isfinite, getvar(gas,:e_magnetic,:erg))
+        @test info.scale.nG ≈ info.scale.Gauss * 1e9            # new nanogauss unit
     end
 end
