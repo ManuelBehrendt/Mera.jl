@@ -101,6 +101,9 @@ bx = projection(gas, :bx;            direction=:z)   # mass-weighted ⟨Bx⟩ ma
 heatmap(bx.maps[:bx])
 ```
 
+On an MHD run the [first-look dashboard](report.md) does this for you: `quicklook(output)` adds a
+face-on `|B|` panel and reports the `|B|` and plasma-β ranges automatically.
+
 ## Caveats
 
 - Mera reads **ideal-MHD** RAMSES outputs (the constrained-transport `B` faces). Non-ideal terms
