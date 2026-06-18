@@ -26,7 +26,16 @@ _poscolor(z) = (v = filter(x -> isfinite(x) && x > 0, vec(z)); isempty(v) ? (not
 function _loghm!(ax, xs, ys, A; colormap)
     L = map(v -> (isfinite(v) && v > 0) ? log10(v) : NaN, A)
     fin = filter(isfinite, vec(L))
-    cr = isempty(fin) ? (0.0, 1.0) : (minimum(fin), max(maximum(fin), minimum(fin) + eps()))
+    if isempty(fin)
+        cr = (0.0, 1.0)
+    else
+        lo, hi = minimum(fin), maximum(fin)
+        if hi <= lo                                   # constant map → widen by a RELATIVE amount so
+            d = max(abs(lo), 1.0) * 1e-6              # the bump survives at large |log10| (eps(1) would
+            lo, hi = lo - d, hi + d                   # be absorbed); Makie errors on a zero-width range
+        end
+        cr = (lo, hi)
+    end
     Makie.heatmap!(ax, xs, ys, L; colormap, colorrange=cr)
 end
 
@@ -113,7 +122,8 @@ end
 # (warm/stellar), dark matter = cividis (the CVD-optimised cool map), ρ–T phase = viridis (the 2D-
 # histogram standard). A user-supplied `colormap` overrides all of them.
 const _QL_CMAP = Dict(:z => :viridis, :x => :viridis, :y => :viridis,
-                      :stars => :magma, :dm => :cividis, :phase => :batlow)
+                      :stars => :magma, :dm => :cividis, :phase => :batlow,
+                      :bmag => :plasma)   # magnetic field |B| — distinct from the gas viridis maps
 # :batlow (Crameri) is a multi-hue perceptually-uniform, colorblind-safe map — the recommended
 # rainbow alternative — giving the ρ–T phase histogram more colour range than the single-hue viridis.
 
@@ -134,9 +144,10 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                :x     => ("Gas Σ (edge-on, x)",     "y [kpc]", "z [kpc]"),
                :y     => ("Gas Σ (edge-on, y)",     "x [kpc]", "z [kpc]"),
                :stars => ("Stars Σ (face-on)",      "x [kpc]", "y [kpc]"),
-               :dm    => ("Dark matter Σ (face-on)","x [kpc]", "y [kpc]"))
+               :dm    => ("Dark matter Σ (face-on)","x [kpc]", "y [kpc]"),
+               :bmag  => ("|B| (face-on)",          "x [kpc]", "y [kpc]"))
     specs = Any[]
-    for k in (:z, :x, :y, :stars, :dm)
+    for k in (:z, :x, :y, :stars, :dm, :bmag)
         haskey(m, k) && push!(specs, (m[k], lbl[k]..., k))
     end
     havephase = q.phase !== nothing
@@ -164,12 +175,14 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
                                        ticklabelsize=9, ticksize=3)
 
     for (i, (proj, title, xl, yl, key)) in enumerate(specs)
-        r, c = gpos(i); mp = proj.maps[:sd]; ex = proj.extent .* skpc .* lenfac
+        r, c = gpos(i)
+        mapkey = key === :bmag ? :bmag : :sd        # the |B| panel projects :bmag, the others :sd
+        mp = proj.maps[mapkey]; ex = proj.extent .* skpc .* lenfac
         ax = Makie.Axis(fig[r, c]; title=title, xlabel=relabel(xl), ylabel=relabel(yl),
                         aspect=Makie.DataAspect(), AX...)
         xs = range(ex[1], ex[2], length=Base.size(mp, 1)); ys = range(ex[3], ex[4], length=Base.size(mp, 2))
         hm = _loghm!(ax, xs, ys, mp; colormap=cmapof(key))
-        cb(fig[r, c][1, 2], hm; label="log₁₀ Σ")
+        cb(fig[r, c][1, 2], hm; label=key === :bmag ? "log₁₀ ⟨|B|⟩ [μG]" : "log₁₀ Σ")
     end
     if havephase
         r, c = gpos(length(specs) + 1); ph = q.phase
@@ -205,6 +218,11 @@ function Mera._plot_quicklook(q::Mera.QuickLookResult; size=nothing, colormap=no
         push!(L, ""); push!(L, "RANGES" * (q.sampled ? " (smoothed)" : ""))
         push!(L, "  nH  $(nf(s.nH_range[1]))…$(nf(s.nH_range[2]))")
         push!(L, "  T   $(nf(s.T_range_K[1]))…$(nf(s.T_range_K[2])) K")
+    end
+    if get(s, :bmag_range_muG, nothing) !== nothing            # MHD run
+        push!(L, ""); push!(L, "MAGNETIC")
+        push!(L, "  |B|  $(nf(s.bmag_range_muG[1]))…$(nf(s.bmag_range_muG[2])) μG")
+        push!(L, "  β    $(nf(s.beta_range[1]))…$(nf(s.beta_range[2]))")
     end
     axt = Makie.Axis(fig[rt, ct]; title="census", titlesize=13, titlegap=4,
                      backgroundcolor=(:gray, 0.05))
