@@ -146,6 +146,28 @@ The magnetosonic numbers require an MHD run with `:bx,:by,:bz`; the magnetic fie
 RAMSES code units and converted to Gaussian-CGS internally (hence the ``4\pi``). They error if the
 field components are absent.
 
+## Magnetic quantities
+
+*Data: **hydro** (MHD). Built from the cell-centred field ``\mathbf B = (B_x,B_y,B_z)``. **Code-unit
+convention:** RAMSES-MHD absorbs the Gaussian ``4\pi`` into the field, so in code units the magnetic
+pressure is ``P_\mathrm{mag} = B^2/2`` and the Alfvén speed is ``v_A = |\mathbf B|/\sqrt{\rho}``; the
+factor reappears only in the physical-unit conversion ``B_\mathrm{phys}[\mathrm{G}] = B_\mathrm{code}\cdot\texttt{scale.Gauss}``,
+``\texttt{scale.Gauss} = \sqrt{4\pi\,\rho_0 v_0^2}``. No new unit type is required.*
+
+| Quantity | Formula | Units |
+|---|---|---|
+| Field magnitude `:bmag` | ``|\mathbf B| = \sqrt{B_x^2+B_y^2+B_z^2}`` | `:Gauss`, `:muG`, `:microG`, `:nG`, `:Tesla` |
+| Magnetic pressure `:pmag` | ``P_\mathrm{mag} = \dfrac{B^2}{8\pi}`` (``=B^2/2`` in code units) | `:Ba`, `:g_cm_s2` |
+| Plasma beta `:beta` | ``\beta = \dfrac{P_\mathrm{thermal}}{P_\mathrm{mag}}`` | dimensionless |
+| Alfvén speed `:v_alfven` | ``v_A = \dfrac{|\mathbf B|}{\sqrt{4\pi\rho}}`` (``=|\mathbf B|/\sqrt{\rho}`` in code units) | `:km_s`, `:cm_s` |
+| Magnetic energy `:e_magnetic` | ``E_\mathrm{mag} = P_\mathrm{mag}\cdot V_\mathrm{cell}`` | `:erg` |
+
+All five reuse existing unit scales — magnetic-field strengths (`:Gauss`/`:muG`/`:microG`/`:nG`/`:Tesla`),
+pressure (`:Ba`/`:g_cm_s2`), velocity (`:km_s`/`:cm_s`) and energy (`:erg`) — so introducing MHD
+analysis needed **no new unit dimensions**. The quantities require an MHD run and error if the field
+components are absent. (`:nG`, nanogauss = `scale.Gauss·10⁹`, is the one unit added, for IGM /
+cosmological field strengths.)
+
 ## Jeans & collapse
 
 *Data: **hydro** — needs `:cs` (`:p`) and `:rho`.*

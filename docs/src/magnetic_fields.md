@@ -58,19 +58,36 @@ getvar(gas, :T, :K)        # temperature, from the *correct* pressure
 
 ## Derived magnetic quantities
 
-```julia
-# field magnitude |B| (code units) from the cell-centred components
-bx, by, bz = getvar(gas, [:bx, :by, :bz])
-Bmag = sqrt.(bx.^2 .+ by.^2 .+ bz.^2)
+All of these are **built-in `getvar` quantities** computed from the cell-centred field — no manual
+arithmetic needed — and each takes the units shown:
 
-# magnetosonic Mach numbers (need the magnetic field)
-mA = getvar(gas, :mach_alfven)   # M_A = |v| / v_A,  v_A = |B|/√(4πρ)  (Gaussian-CGS)
+```julia
+# field magnitude |B|  (field-strength units: :Gauss, :muG, :microG, :nG, :Tesla)
+Bmag    = getvar(gas, :bmag)          # code units
+Bmag_uG = getvar(gas, :bmag, :muG)    # μG
+
+# magnetic pressure P_mag = B²/8π  and plasma β = P_thermal / P_mag
+Pmag = getvar(gas, :pmag, :Ba)        # magnetic pressure [barye = erg/cm³]  (also :g_cm_s2)
+beta = getvar(gas, :beta)             # plasma β (dimensionless)
+
+# Alfvén speed and magnetic energy per cell
+vA   = getvar(gas, :v_alfven, :km_s)  # v_A = |B|/√(4πρ)
+Emag = getvar(gas, :e_magnetic, :erg) # magnetic energy per cell = (B²/8π)·V_cell
+
+# magnetosonic Mach numbers
+mA = getvar(gas, :mach_alfven)   # M_A = |v| / v_A
 mf = getvar(gas, :mach_fast)     # fast:  v_f = √(c_s² + v_A²)
 ms = getvar(gas, :mach_slow)     # slow:  v_s = c_s·v_A/√(c_s² + v_A²)
 ```
 
-The exact formulas (and the Alfvén-speed unit conversion) are listed in
-[How Quantities Are Computed](computation_reference.md#Mach-numbers).
+No new units were needed: `B` reuses the field-strength scales (`:Gauss`, `:muG`, `:microG`, `:nG`,
+`:Tesla`), magnetic pressure/energy-density reuse the pressure scales (`:Ba`, `:g_cm_s2`), the Alfvén
+speed reuses the velocity scales (`:km_s`, `:cm_s`), and the magnetic energy reuses `:erg`. (`:nG`,
+nanogauss, is new — handy for IGM/cosmological field strengths.)
+
+The exact formulas (incl. the RAMSES code-unit convention `P_mag = B²/2` and the Alfvén-speed
+conversion) are listed in
+[How Quantities Are Computed](computation_reference.md#Magnetic-quantities).
 
 ## Projecting the magnetic field
 
@@ -90,4 +107,5 @@ heatmap(bx.maps[:bx])
   (e.g. resistivity) are not separate fields.
 - `:bx/:by/:bz` are the **cell-centred** average of the faces; the raw faces remain available as
   `:bx_left`, `:bx_right`, … if you need the divergence-free face representation.
-- On a non-MHD run, `:bx/:by/:bz` and the magnetosonic Mach numbers error with a clear message.
+- On a non-MHD run, `:bx/:by/:bz`, the derived quantities (`:bmag`, `:pmag`, `:beta`, `:v_alfven`,
+  `:e_magnetic`) and the magnetosonic Mach numbers all error with a clear message.

@@ -74,6 +74,10 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :mach_alfven=>[:v,:bx,:by,:bz,:rho],
     :mach_fast=>[:v,:cs,:bx,:by,:bz,:rho],
     :mach_slow=>[:v,:cs,:bx,:by,:bz,:rho],
+    # derived magnetic quantities: |B|, magnetic pressure B²/2, plasma β = P_th/P_mag,
+    # Alfvén speed |B|/√ρ, magnetic energy per cell (B²/2)·V
+    :bmag=>[:bx,:by,:bz], :pmag=>[:bx,:by,:bz], :beta=>[:p,:bx,:by,:bz],
+    :v_alfven=>[:bx,:by,:bz,:rho], :e_magnetic=>[:bx,:by,:bz,:volume],
     :ekin=>[:mass,:v], :etherm=>[:p,:volume],
   ),
 

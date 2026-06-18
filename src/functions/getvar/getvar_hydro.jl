@@ -837,6 +837,38 @@ function get_data(  dataobject::HydroDataType,
                 end
             end
 
+        # Derived magnetic quantities from the cell-centred field. RAMSES-MHD code units put the
+        # magnetic pressure at B²/2 (the Gaussian 4π is absorbed: B_phys[G] = B_code·scale.Gauss =
+        # B_code·√(4π ρ₀v₀²), so B²/2 in code → ×scale.Ba = B²/8π in erg/cm³). Hence, in code units,
+        # P_mag = B²/2, u_mag = P_mag, v_A = |B|/√ρ, E_mag = P_mag·V. Each reuses an existing unit:
+        # :bmag → :Gauss/:muG/:Tesla, :pmag → :Ba, :v_alfven → :km_s, :e_magnetic → :erg; :beta is
+        # dimensionless. (|B| is the cell-centred field from the constrained-transport faces.)
+        elseif i == :bmag || i == :pmag || i == :beta || i == :v_alfven || i == :e_magnetic
+            has_faces = (:bx_left in column_names && :by_left in column_names && :bz_left in column_names)
+            has_cc    = (:bx in column_names && :by in column_names && :bz in column_names)
+            if !(has_faces || has_cc)
+                error("getvar :$i needs the magnetic field (:bx/:by/:bz, or the MHD face fields " *
+                      ":b*_left/:b*_right); load an MHD run.")
+            end
+            selected_unit = getunit(dataobject, i, vars, units)
+            bx = getvar(filtered_dataobject, :bx, mask=use_mask_in_recursion)
+            by = getvar(filtered_dataobject, :by, mask=use_mask_in_recursion)
+            bz = getvar(filtered_dataobject, :bz, mask=use_mask_in_recursion)
+            bmag = sqrt.(bx.^2 .+ by.^2 .+ bz.^2)                          # |B|, code units
+            if i === :bmag
+                vars_dict[:bmag] = bmag .* selected_unit
+            elseif i === :pmag                                            # magnetic pressure = B²/2 (code)
+                vars_dict[:pmag] = 0.5 .* bmag.^2 .* selected_unit
+            elseif i === :beta                                            # plasma β = P_thermal / P_mag
+                p = select(masked_data, :p)
+                vars_dict[:beta] = (p ./ (0.5 .* bmag.^2)) .* selected_unit
+            elseif i === :v_alfven                                        # v_A = |B|/√ρ (code velocity)
+                rho = select(masked_data, :rho)
+                vars_dict[:v_alfven] = (bmag ./ sqrt.(rho)) .* selected_unit
+            else                                                          # :e_magnetic = (B²/2)·V per cell
+                vol = getvar(filtered_dataobject, :volume, mask=use_mask_in_recursion)
+                vars_dict[:e_magnetic] = 0.5 .* bmag.^2 .* vol .* selected_unit
+            end
 
         elseif i == :ekin
             selected_unit = getunit(dataobject, :ekin, vars, units)
