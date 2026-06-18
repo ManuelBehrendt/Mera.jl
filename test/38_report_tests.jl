@@ -61,6 +61,8 @@
             # maps holds Σ projected along each axis (z face-on + x,y edge-on)
             @test haskey(q.maps.z.maps, :sd) && haskey(q.maps.x.maps, :sd) && haskey(q.maps.y.maps, :sd)
             @test haskey(q.phase, :H)
+            # spiral_ugrid is non-MHD → no magnetic panel / ranges
+            @test !haskey(q.maps, :bmag) && q.summary.bmag_range_muG === nothing
             # header particle census (summed from per-family counts; available header-only too)
             @test q.summary.npart > 0 && q.summary.nstars > 0 && q.summary.ndm >= 0
             @test q.summary.npart == q.summary.nstars + q.summary.ndm + q.summary.nsinks
@@ -84,6 +86,24 @@
                 f = tempname() * ".png"; CairoMakie.save(f, fig)
                 @test isfile(f) && filesize(f) > 0
                 rm(f, force=true)
+            end
+        end
+
+        @testset "quicklook MHD panel (ramses_mhd_128)" begin
+            if haskey(DATASETS, :ramses_mhd) && isdir(DATASETS[:ramses_mhd].path)
+                mhd = DATASETS[:ramses_mhd]
+                qm  = quicklook(mhd.output; path=mhd.path, verbose=false)
+                # MHD run → a face-on |B| map (projected :bmag) plus |B| and plasma-β summary ranges
+                @test haskey(qm.maps, :bmag) && haskey(qm.maps.bmag.maps, :bmag)
+                @test qm.summary.bmag_range_muG !== nothing && qm.summary.bmag_range_muG[2] > 0
+                @test qm.summary.beta_range !== nothing && qm.summary.beta_range[1] > 0
+                if Base.find_package("CairoMakie") !== nothing
+                    @eval using CairoMakie
+                    fig = quicklookplot(qm)                       # the |B| panel must render too
+                    @test occursin("Figure", string(typeof(fig)))
+                end
+            else
+                @test_skip "ramses_mhd_128 not available"
             end
         end
 

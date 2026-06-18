@@ -19,8 +19,9 @@
 Result of [`quicklook`](@ref). Fields: `info`, `levelmin`, `levelmax`, `lmax_used`
 (level actually read, `nothing` for a header-only call), `ncells` (cells read),
 `sampled` (true ⇒ coarse/partial ⇒ estimates are approximate), `maps` (a `NamedTuple`
-of surface-density projections: gas `x, y, z` plus face-on `stars`/`dm` when particles are
-present, or `nothing`), `phase` (the ρ–T histogram, or `nothing`), `budget` (a `NamedTuple` global snapshot
+of surface-density projections: gas `x, y, z`, face-on `stars`/`dm` when particles are present,
+plus a face-on magnetic-field map `bmag` (μG) on an MHD run, or `nothing`), `phase` (the ρ–T
+histogram, or `nothing`), `budget` (a `NamedTuple` global snapshot
 budget — gas/stellar/DM mass and current SFR — or `nothing`), and `summary`
 (a `NamedTuple` of facts + estimates).
 """
@@ -95,7 +96,8 @@ levels, finest cell, time/redshift, and the cell & particle census) and — unle
 single **budgeted** hydro read (only the coarse AMR levels when the full output would exceed `budget`
 cells), then builds surface-density projections along **each axis** (`.maps.x/.y/.z` — face-on plus the
 two edge-on views), a ρ–T phase diagram, a **global snapshot budget** (gas / stellar / dark-matter mass
-and the current SFR), and prints a compact dashboard.
+and the current SFR), and prints a compact dashboard. On an **MHD run** it additionally reads the
+magnetic field and adds a face-on `|B|` map (`.maps.bmag`, μG) plus `|B|` and plasma-β ranges.
 
 * `budget` — cell-count cap; if the full output is predicted larger, only coarse levels are read and
   the result is flagged `sampled=true` (estimates labelled APPROXIMATE). `lmax` overrides the choice.
@@ -163,6 +165,7 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     maps = NamedTuple(); ph = nothing
     n = 0; luse = info.levelmax; sampled = false
     gas_mass = nothing; nH_range = nothing; T_range = nothing
+    bmag_range = nothing; beta_range = nothing
 
     # --- gas (hydro): budgeted read → Σ map(s) along the selected axes + ρ–T phase + ranges ---
     # Guard on info.hydro too (mirrors the info.particles guard below): a gravity-/particle-/clumps-only
@@ -170,7 +173,10 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
     if want.hydro && info.hydro
         luse, sampled = lmax === nothing ? _quicklook_level(info, budget) :
                         (clamp(Int(lmax), info.levelmin, info.levelmax), Int(lmax) < info.levelmax)
-        qlvars = getvar_requirements(:hydro, [:sd, :T, :rho])      # read only the needed vars (else full)
+        # MHD run? then also read the magnetic field so the dashboard can show a |B| map + β stats.
+        is_mhd = any(v -> occursin(r"^b[xyz]_(left|right)$", string(v)), info.variable_list)
+        qlreq  = is_mhd ? [:sd, :T, :rho, :bmag] : [:sd, :T, :rho]
+        qlvars = getvar_requirements(:hydro, qlreq)                # read only the needed vars (else full)
         gas = (!isempty(qlvars) && all(in(info.variable_list), qlvars)) ?
               gethydro(info, qlvars, lmax=luse, verbose=false, show_progress=false) :
               gethydro(info, lmax=luse, verbose=false, show_progress=false)
@@ -182,6 +188,12 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                    xunit=:nH, yunit=:K)
         gas_mass = sum(getvar(gas, :mass, :Msol))
         nH_range = extrema(getvar(gas, :rho, :nH)); T_range = extrema(getvar(gas, :T, :K))
+        if is_mhd                          # face-on (mass-weighted) |B| map + |B| / plasma-β ranges
+            bproj = projection(gas, :bmag, :muG; direction=:z, center=[:bc], res=res,
+                               verbose=false, show_progress=false)
+            maps = merge(maps, (bmag = bproj,))
+            bmag_range = extrema(getvar(gas, :bmag, :muG)); beta_range = extrema(getvar(gas, :beta))
+        end
     end
 
     # --- particles (read once, when wanted & present): budget + face-on stellar / dark-matter Σ maps.
@@ -217,7 +229,8 @@ function quicklook(output::Int; path::String=".", budget::Int=2_000_000,
                             npart=ns+nd+facts.nsinks, nstars=ns, ndm=nd, particle_subsample=psub,
                             stellar_mass_Msol=bud.stellar_mass_Msol, dm_mass_Msol=bud.dm_mass_Msol,
                             sfr10=bud.sfr10, sfr100=bud.sfr100,
-                            nH_range=nH_range, T_range_K=T_range, seconds=time()-t0))
+                            nH_range=nH_range, T_range_K=T_range,
+                            bmag_range_muG=bmag_range, beta_range=beta_range, seconds=time()-t0))
     verbose && _quicklook_print(summary, t0)
     return QuickLookResult(info, info.levelmin, info.levelmax, luse, n, sampled, mapsout, ph, bud, summary)
 end
@@ -245,6 +258,10 @@ function _quicklook_print(s, t0)
         rnote = s.sampled ? "  ⚠ peaks smoothed (lower bound)" : ""
         g(:nH_range) !== nothing && println("│ nH range   : $(nf(s.nH_range[1])) … $(nf(s.nH_range[2])) cm⁻³$(rnote)")
         g(:T_range_K) !== nothing && println("│ T  range   : $(nf(s.T_range_K[1])) … $(nf(s.T_range_K[2])) K$(rnote)")
+    end
+    if g(:bmag_range_muG) !== nothing              # MHD run — magnetic field + plasma β
+        println("│ |B| range  : $(nf(s.bmag_range_muG[1])) … $(nf(s.bmag_range_muG[2])) μG")
+        println("│ plasma β   : $(nf(s.beta_range[1])) … $(nf(s.beta_range[2]))  (β<1 ⇒ B-dominated)")
     end
     if g(:stellar_mass_Msol) !== nothing           # particle masses + SFR
         println("│ star mass  : $(nf(s.stellar_mass_Msol)) M⊙        DM mass : $(nf(s.dm_mass_Msol)) M⊙")
