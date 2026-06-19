@@ -12,7 +12,7 @@ makedocs(modules = [Mera],
 		prettyurls = get(ENV, "CI", nothing) == "true", 
 		sidebar_sitename = false,  # Keep false - custom sidebar replaces default
 		edit_link = nothing,
-		size_threshold = 500_000,  # Increase size limit to 500 KiB
+		size_threshold = 1_000_000,  # API autodocs page is large; allow up to ~1 MiB
 		assets = ["assets/custom.css", "assets/custom.js", "assets/music_player.js"],
 		canonical = "https://manuelbehrendt.github.io/Mera.jl/",
 		footer = "© 2025 Manuel Behrendt. Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Julia](https://julialang.org). ",
@@ -63,6 +63,8 @@ makedocs(modules = [Mera],
                           "Star-Formation Rate" => "sfr.md",
 
                           "Time Series (multi-snapshot)" => "timeseries.md",
+
+                          "Auto-Frame (center & orient)" => "galaxyframe.md",
 
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
