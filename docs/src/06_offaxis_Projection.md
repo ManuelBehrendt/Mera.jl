@@ -275,6 +275,15 @@ when `ŵ` is a box axis (then two columns of `Ξ` are axis-aligned and the hexag
 cell's square). `:overlap` is a convergent `n³` sampling of this same footprint; `:exact` is its
 limit. Cost is `O(covered pixels)` per cell.
 
+![Inside :exact — the box-spline footprint is piecewise-linear (its kink lines, where the entering/exiting cube face switches, cut it into convex pieces on which the chord length L is affine), so the integral of L over each pixel is computed in closed form as the sum over convex pieces of area·L(centroid)](assets/offaxis/offaxis_exact_integration.svg)
+
+Concretely (`_oa_pixel_integral!`): the pixel∩footprint polygon is Sutherland–Hodgman-clipped
+(`_oa_clip!`) and split by the kink lines into convex pieces; on each, the entering face (argmax `tmin`)
+and exiting face (argmin `tmax`) are fixed, so `L` is affine and `∫∫ = area · L(centroid)`
+(`_oa_affine_integral`) is exact — at most 6 splits for a cube, `O(covered pixels)` per cell, no `nmax`
+cap. A per-cell renormalisation makes the shares a partition of unity, so the total is conserved to
+machine precision.
+
 References: de Boor, Höllig & Riemenschneider, *Box Splines* (Springer 1993); Westover, *Footprint
 Evaluation for Volume Rendering* (SIGGRAPH 1990). Among **AMR** tools an analytic off-axis cell
 footprint is, to our knowledge, uncommon — yt ray-casts and most others resample to a uniform
