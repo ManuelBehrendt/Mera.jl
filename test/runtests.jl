@@ -106,6 +106,7 @@ if isempty(_focus)
         include("41_covering_grid_tests.jl")        # covering_grid / slice (fixed-resolution buffer): paint/conservation data-free + AMR-backed
         include("43_fluxbudget_tests.jl")           # fluxbudget / fluxtimeseries (surface flux in/out): kernel+analytic data-free + AMR-backed
         include("45_sfr_tests.jl")                  # sfr / sfr_snapshot (SFH + current SFR): data-free kernel + version-robust (neg-birth & cosmological) AMR-backed
+        include("46_timeseries_tests.jl")           # timeseries (multi-snapshot reducer→table): data-free discovery/assembly + 3D Sedov RAMSES & mera-file fixtures
         include("07_regions.jl")
     end
 
