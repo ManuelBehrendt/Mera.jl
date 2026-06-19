@@ -96,6 +96,7 @@ export
     checkoutputs,
     checksimulations,
     gettime,
+    timeseries,
 
 # basic calcs
     msum,
@@ -415,6 +416,7 @@ include("functions/report/report.jl")
 include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
+include("functions/timeseries.jl")
 # ============================================
 
 

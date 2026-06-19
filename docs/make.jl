@@ -62,6 +62,8 @@ makedocs(modules = [Mera],
 
                           "Star-Formation Rate" => "sfr.md",
 
+                          "Time Series (multi-snapshot)" => "timeseries.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 
