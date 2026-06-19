@@ -38,7 +38,42 @@ key.) Once present, `notifyme` posts to the given channel/topic.
 ### Bell
 
 `bell()` needs no configuration — it plays a bundled sound through your audio
-device.
+device when a long calculation finishes:
+
+```julia
+bell()            # default sound (the original Mera :strum)
+bell(:gong)       # pick a sound by name (Symbol or String)
+bell("chime")
+bell(14)          # …or by number, as shown by bell(:list)
+bell(:list)       # print the numbered catalogue of bundled sounds
+```
+
+**Pick a sound** in any of these ways (first match wins):
+
+1. **by name** — `bell(:gong)` (a `Symbol` or `String`);
+2. **by number** — `bell(14)` (the position printed by `bell(:list)`; a numeric
+   string like `bell("14")` works too);
+3. **a default file** — put a sound name *or* number on the first line of
+   `~/bell.txt`, the same home-folder pattern `notifyme` uses with `email.txt` /
+   `zulip.txt`:
+   ```
+   gong
+   ```
+4. **the built-in fallback** — `:strum`, the original Mera sound.
+
+The **19 bundled sounds** (`bell(:list)`):
+
+| | | | |
+|---|---|---|---|
+| `arpeggio` | `bell` | `bird` | `bloop` |
+| `bongo` | `chime` | `coin` | `coindrop` |
+| `cosmic` | `ding` | `done` | `door` |
+| `frog` | `gong` | `knock` | `oscillations` |
+| `owl` | `strum` | `whistle` | |
+
+You can also drop your own `*.wav` into the package's `src/sounds/` folder and
+select it by its file name or number. On a headless machine (no audio device)
+`bell()` simply warns instead of erroring.
 
 !!! note "Both channels are optional"
     If only `~/email.txt` exists, `notifyme` sends email only; if only
