@@ -107,6 +107,7 @@ if isempty(_focus)
         include("43_fluxbudget_tests.jl")           # fluxbudget / fluxtimeseries (surface flux in/out): kernel+analytic data-free + AMR-backed
         include("45_sfr_tests.jl")                  # sfr / sfr_snapshot (SFH + current SFR): data-free kernel + version-robust (neg-birth & cosmological) AMR-backed
         include("46_timeseries_tests.jl")           # timeseries (multi-snapshot reducer→table): data-free discovery/assembly + 3D Sedov RAMSES & mera-file fixtures
+        include("47_galaxyframe_tests.jl")           # auto-frame (center_of/face_on/edge_on): vector helpers data-free + spiral_clumps angular-momentum orientation
         include("07_regions.jl")
     end
 
