@@ -137,6 +137,20 @@ const DATASETS = Dict(
         has_clumps = false,
         has_mhd = true
     ),
+    # 3-D Sedov blast time-series (levelmin=5/levelmax=6 AMR, ~13 outputs) generated
+    # from sedov3d.nml — the multi-snapshot fixture for timeseries() (46_timeseries_tests).
+    # `timeseries_sedov3d_mera` holds the same outputs converted to mera (.jld2) files,
+    # so both the RAMSES and mera-file code paths are exercised.
+    :timeseries_sedov3d => (
+        path = joinpath(SIMULATION_PATH, "timeseries_sedov3d"),
+        mera_path = joinpath(SIMULATION_PATH, "timeseries_sedov3d_mera"),
+        output = 1,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = false,
+        has_clumps = false,
+        is_timeseries = true
+    ),
 )
 
 # Test tolerances
