@@ -156,17 +156,16 @@ factor reappears only in the physical-unit conversion ``B_\mathrm{phys}[\mathrm{
 
 | Quantity | Formula | Units |
 |---|---|---|
-| Field magnitude `:bmag` | ``|\mathbf B| = \sqrt{B_x^2+B_y^2+B_z^2}`` | `:Gauss`, `:muG`, `:microG`, `:nG`, `:Tesla` |
+| Field magnitude `:bmag` | ``|\mathbf B| = \sqrt{B_x^2+B_y^2+B_z^2}`` | `:Gauss`, `:muG`, `:microG`, `:Tesla` |
 | Magnetic pressure `:pmag` | ``P_\mathrm{mag} = \dfrac{B^2}{8\pi}`` (``=B^2/2`` in code units) | `:Ba`, `:g_cm_s2` |
 | Plasma beta `:beta` | ``\beta = \dfrac{P_\mathrm{thermal}}{P_\mathrm{mag}}`` | dimensionless |
 | Alfvén speed `:v_alfven` | ``v_A = \dfrac{|\mathbf B|}{\sqrt{4\pi\rho}}`` (``=|\mathbf B|/\sqrt{\rho}`` in code units) | `:km_s`, `:cm_s` |
 | Magnetic energy `:e_magnetic` | ``E_\mathrm{mag} = P_\mathrm{mag}\cdot V_\mathrm{cell}`` | `:erg` |
 
-All five reuse existing unit scales — magnetic-field strengths (`:Gauss`/`:muG`/`:microG`/`:nG`/`:Tesla`),
+All five reuse existing unit scales — magnetic-field strengths (`:Gauss`/`:muG`/`:microG`/`:Tesla`),
 pressure (`:Ba`/`:g_cm_s2`), velocity (`:km_s`/`:cm_s`) and energy (`:erg`) — so introducing MHD
-analysis needed **no new unit dimensions**. The quantities require an MHD run and error if the field
-components are absent. (`:nG`, nanogauss = `scale.Gauss·10⁹`, is the one unit added, for IGM /
-cosmological field strengths.)
+analysis needed **no new units at all**. The quantities require an MHD run and error if the field
+components are absent.
 
 ## Jeans & collapse
 
