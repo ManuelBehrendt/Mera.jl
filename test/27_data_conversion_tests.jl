@@ -999,6 +999,20 @@ else
         end
     end
 
+    @testset "backward-compat: load a pre-existing (old-schema) mera file" begin
+        # Guards against silent struct-layout breakage of the serialized scale/info types: an OLD
+        # JLD2 mera file (written by an earlier Mera) must still load. Adding a field to ScalesType002
+        # once broke exactly this — old files reconstructed to a mismatched layout and threw on load.
+        jdir = joinpath(SIMULATION_PATH, "JLD2_files")
+        if isfile(joinpath(jdir, "output_00300.jld2"))
+            gas = loaddata(300, jdir, :hydro, verbose=false)
+            @test gas isa HydroDataType && length(gas.data) > 0
+            @test gas.scale.Msol > 0 && gas.scale.Gauss > 0   # the scale type that regressed is intact
+        else
+            @test_skip "old-schema mera file (JLD2_files/output_00300.jld2) not available"
+        end
+    end
+
 end  # DATA_AVAILABLE
 
 end  # @testset

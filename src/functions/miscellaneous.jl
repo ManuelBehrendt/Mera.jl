@@ -204,7 +204,6 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
     scale.muG       = scale.Gauss * 1e6                                          # [μG] Micro-Gauss
     scale.microG    = scale.muG                                                  # Alternative notation
-    scale.nG        = scale.Gauss * 1e9                                          # [nG] Nano-Gauss (IGM/cosmological fields)
     scale.Tesla     = scale.Gauss * 1e-4                                         # [T] Tesla (SI)
     
     # Energy and luminosity scales (corrected)
@@ -404,7 +403,6 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
     scale.muG       = scale.Gauss * 1e6                                          # [μG] Micro-Gauss
     scale.microG    = scale.muG                                                  # Alternative notation
-    scale.nG        = scale.Gauss * 1e9                                          # [nG] Nano-Gauss (IGM/cosmological fields)
     scale.Tesla     = scale.Gauss * 1e-4                                         # [T] Tesla (SI)
     
     # Energy and luminosity scales (corrected)
