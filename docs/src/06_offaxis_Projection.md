@@ -213,6 +213,29 @@ particle-mesh assignment (Hockney & Eastwood 1988); `:overlap`/`:exact` are foot
 The default `:overlap` (and `:exact`) are AMR-aligned and free of the cell-grid moiré that point
 deposits (`:cic`/`:ngp`) leave on coarse cells; use `:cic` only for a quick preview.
 
+### How each AMR cell is treated
+
+Each cell is an axis-aligned cube of side `s = boxlen / 2^ℓ`. The pipeline rotates the cube into the
+camera frame `(r̂, û, ŵ)` — `build_camera_basis` (`src/functions/projection/projection.jl`) — projects
+its centre to image coordinates `x_cam = r̂·r`, `y_cam = û·r`, then deposits its **projected shadow**
+onto the pixel grid. Because the camera basis is orthonormal the rotation preserves volume, which is
+the geometric root of the conservation property. The four `binning` kernels differ only in *how* the
+shadow is spread across pixels — and every one is a *partition of unity* (the per-cell shares sum to 1),
+so the projected total equals the cell total at any angle and any pixel size.
+
+![How each AMR cell is treated in an off-axis projection: AMR grid → rotation by the camera basis → projected box-spline footprint, and the four deposit kernels (:ngp nearest-pixel, :cic 4-pixel bilinear, :overlap sub-point supersampling, :exact analytic chord integral)](assets/offaxis/offaxis_cell_treatment.svg)
+
+* **`:ngp` / `:cic`** treat the cell as its *centre point* — one nearest pixel, or a 4-pixel bilinear
+  stencil. Fast, but a coarse cell that should shadow many pixels collapses to a point (speckle/moiré).
+  `deposit_rotated_cells_to_grid!`.
+* **`:overlap`** splits the cube into `n³` regularly-spaced sub-points (`n = ⌈cellsize/pixel⌉`, capped
+  at `nmax`), each CIC-deposited carrying `weight/n³`. As `n` grows it converges to the true cube
+  shadow; a finest-level cell (`n=1`) reduces to plain CIC. `deposit_rotated_cells_overlap!`.
+* **`:exact`** integrates the exact line-of-sight chord `L(x,y)` over each pixel analytically (the
+  box-spline footprint `M_Ξ`, coloured above by `L`): no sampling, no `nmax` cap. The cube shadow is
+  cut at its kink lines into convex pieces where `L` is affine and integrated in closed form.
+  `deposit_rotated_cells_exact!` (see the next subsection for the math).
+
 ```julia
 # fast preview (point deposit — may speckle on coarse AMR cells)
 preview = projection(gas, :sd, :Msol_pc2, los=[1, 1, 1], binning=:cic, center=[:bc])
