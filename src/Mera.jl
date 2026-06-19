@@ -97,6 +97,10 @@ export
     checksimulations,
     gettime,
     timeseries,
+    center_of,
+    face_on,
+    edge_on,
+    GalaxyFrame,
 
 # basic calcs
     msum,
@@ -417,6 +421,7 @@ include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
 include("functions/timeseries.jl")
+include("functions/galaxy_frame.jl")
 # ============================================
 
 
