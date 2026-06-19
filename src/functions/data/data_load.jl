@@ -181,10 +181,22 @@ function loaddata(output::Int; path::String="./",
         "Mera.ScalesType001" => JLD2.Upgrade(ScalesType003),
         "Mera.ScalesType002" => JLD2.Upgrade(ScalesType003),
         "Mera.ScalesType003" => ScalesType003,
-        
-        # Map old InfoType versions (if they exist)
-        "Mera.InfoType" => InfoType,
-        "Mera.InfoType001" => InfoType,
+
+        # Forward-compatible loading of the container / metadata structs: route them through Upgrade
+        # so a future field addition to any of them does not break already-saved mera files. The
+        # generic _mera_rconvert (src/types.jl) copies present fields and zero-fills new Number fields.
+        "Mera.InfoType" => JLD2.Upgrade(InfoType),
+        "Mera.InfoType001" => JLD2.Upgrade(InfoType),
+        "Mera.FileNamesType" => JLD2.Upgrade(FileNamesType),
+        "Mera.GridInfoType" => JLD2.Upgrade(GridInfoType),
+        "Mera.PartInfoType" => JLD2.Upgrade(PartInfoType),
+        "Mera.CompilationInfoType" => JLD2.Upgrade(CompilationInfoType),
+        "Mera.DescriptorType" => JLD2.Upgrade(DescriptorType),
+        "Mera.HydroDataType" => JLD2.Upgrade(HydroDataType),
+        "Mera.GravDataType" => JLD2.Upgrade(GravDataType),
+        "Mera.RtDataType" => JLD2.Upgrade(RtDataType),
+        "Mera.PartDataType" => JLD2.Upgrade(PartDataType),
+        "Mera.ClumpDataType" => JLD2.Upgrade(ClumpDataType),
     )
     
     dataobject = JLD2.load(fpath, dlink, typemap=typemap)
