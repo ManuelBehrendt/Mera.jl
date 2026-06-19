@@ -1498,6 +1498,37 @@ function JLD2.rconvert(::Type{PhysicalUnitsType002}, nt::NamedTuple)
             setfield!(units, field, 1.0)  # Default fallback
         end
     end
-    
+
     return units
+end
+
+
+# ─────────────────────────────────────────────────────────────────────────────────────────────────
+# Forward-compatible loading of the container / metadata structs.
+# A mera (JLD2) file stores these by their struct layout, so if a future Mera release ADDS a field to
+# any of them an already-saved file would otherwise fail to reconstruct (the same break that adding
+# :nG to ScalesType caused). Routing each through `JLD2.Upgrade` in the loaddata / info typemaps hands
+# the on-disk object to this generic rconvert as a NamedTuple: present fields are copied verbatim; a
+# field that is NEW in the current layout is zero-filled when it is a `Number` (a sane default) and
+# otherwise left unset (a missing Array/Dict/String is better left undefined than silently fabricated).
+# Nested Mera fields (scale, constants, descriptor, grid_info, …) are upgraded via their own typemap
+# entries before they reach here. Adding a field to any of these structs therefore needs no extra code.
+function _mera_rconvert(::Type{T}, nt::NamedTuple) where {T}
+    obj = T()
+    for (i, f) in enumerate(fieldnames(T))
+        if haskey(nt, f)
+            setfield!(obj, f, getfield(nt, f))
+        else
+            FT = fieldtype(T, i)
+            # zero-fill a NEW field only when it is a CONCRETE Number (zero(Real) etc. would throw on an
+            # abstract type); abstract-Number and ref fields are left unset rather than fabricated.
+            (FT <: Number && isconcretetype(FT)) && setfield!(obj, f, zero(FT))
+        end
+    end
+    return obj
+end
+
+for T in (FileNamesType, GridInfoType, PartInfoType, CompilationInfoType, DescriptorType, InfoType,
+          HydroDataType, GravDataType, RtDataType, PartDataType, ClumpDataType)
+    @eval JLD2.rconvert(::Type{$T}, nt::NamedTuple) = _mera_rconvert($T, nt)
 end

@@ -397,4 +397,35 @@ using DataStructures: SortedDict
         @test (viewfields(sc); true)                           # viewfields has a ::ScalesType003 method
         @test Mera.humanize(1.0, sc, 2, "length") isa Tuple    # humanize too
     end
+
+    # ====================================================================
+    # Forward-compatible loading of the CONTAINER / metadata structs
+    # (InfoType, the data containers, and their sub-structs). The loaddata
+    # typemap routes each through JLD2.Upgrade → _mera_rconvert, so a future
+    # field ADDITION to any of them won't break already-saved mera files.
+    # Simulated here by feeding rconvert a NamedTuple with only a SUBSET of
+    # the current fields (i.e. an "old layout"). Data-free.
+    # ====================================================================
+    @testset "container rconvert: present copied, new Number zero-filled, refs left unset" begin
+        gi = JLD2.rconvert(Mera.GridInfoType, (ngridmax = 100, nx = 4, ny = 4, nz = 4))
+        @test gi isa Mera.GridInfoType
+        @test gi.ngridmax == 100 && gi.nx == 4                 # present fields copied
+        @test gi.ngrid_current == 0 && gi.nlevelmax == 0       # absent Int fields → 0, not garbage
+        @test !isdefined(gi, :bound_key)                       # absent ref (Array) field → left unset
+
+        # InfoType: keeps present fields incl. an already-upgraded nested Mera type (scale)
+        sc = Mera.createscales(3.0e21, 1.0e-23, 1.0e15, 2.0e42, Mera.createconstants())
+        info = JLD2.rconvert(Mera.InfoType, (ndim = 3, boxlen = 100.0, scale = sc))
+        @test info isa Mera.InfoType
+        @test info.ndim == 3 && info.boxlen == 100.0
+        @test info.scale === sc && info.scale isa Mera.ScalesType003
+        @test info.ncpu == 0                                   # absent Int field → 0
+
+        # a top-level data container too (this is the object a mera file stores)
+        hd = JLD2.rconvert(Mera.HydroDataType, (lmin = 3, lmax = 7, boxlen = 48.0))
+        @test hd isa HydroDataType
+        @test hd.lmin == 3 && hd.lmax == 7 && hd.boxlen == 48.0
+        @test hd.smallr == 0.0                                 # absent Float64 field → 0.0
+        @test !isdefined(hd, :data)                            # absent table (ref) → left unset
+    end
 end
