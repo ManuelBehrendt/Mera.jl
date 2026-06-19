@@ -170,9 +170,11 @@ function loaddata(output::Int; path::String="./",
     
     # Create comprehensive typemap following JLD2 best practices for backward compatibility
     typemap = Dict(
-        # Map old PhysicalUnitsType versions to current one
-        "Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType001),
-        "Mera.PhysicalUnitsType001" => PhysicalUnitsType001,
+        # Map old PhysicalUnitsType versions to the CURRENT one (002) via Upgrade → rconvert, so an
+        # old file's constants reconstruct into the live type (fills new constants with defaults).
+        "Mera.PhysicalUnitsType" => JLD2.Upgrade(PhysicalUnitsType002),
+        "Mera.PhysicalUnitsType001" => JLD2.Upgrade(PhysicalUnitsType002),
+        "Mera.PhysicalUnitsType002" => PhysicalUnitsType002,
         
         # Map old ScalesType versions to current one using Upgrade for field conversion
         "Mera.ScalesType" => JLD2.Upgrade(ScalesType003),

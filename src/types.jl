@@ -1291,7 +1291,10 @@ function Base.convert(::Type{ScalesType003}, old::Union{ScalesType001,ScalesType
         end
     end
     # nG is new in 003: derive it from Gauss (older types don't store it)
-    new_scales.nG = (isdefined(new_scales, :Gauss) ? new_scales.Gauss : 1.0) * 1e9
+    # nG is new in 003: derive from Gauss when the source actually carried it (ScalesType002), else 0
+    # (ScalesType001 predates the magnetic units; isdefined() can't tell — Float64 fields are isbits and
+    # always "defined", so check the SOURCE type's field set). The scale is refreshed on load anyway.
+    new_scales.nG = hasfield(typeof(old), :Gauss) ? new_scales.Gauss * 1e9 : 0.0
     return new_scales
 end
 
