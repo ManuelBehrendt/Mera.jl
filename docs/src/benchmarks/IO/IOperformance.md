@@ -80,49 +80,29 @@ This distribution analysis directly maps to thread count optimization, helping i
 
 ## Benchmarking Framework and Examples
 
-**Tip:** After running your tests, create a subfolder named with today's date (e.g., `benchmarks_20250726/`) and copy all generated result files (plots, CSVs, JSON, etc.) into it. To ensure full reproducibility, also copy the execution scripts (such as `run_test.jl`—downloadable as part of a zip file from GitHub—and the plotting routines, e.g., `io_performance_plots.jl`, which can also be downloaded from the repository), as well as any shell scripts and your `Project.toml` and `Manifest.toml` files into this folder. This preserves your results and the exact environment used for later reference.
+**Tip:** After running your tests, create a subfolder named with today's date (e.g., `benchmarks_20250726/`) and copy all generated result files (plots, CSVs, JSON, etc.) into it, together with your `Project.toml`/`Manifest.toml`. This preserves your results and the exact environment used for later reference.
 
 ### Basic Usage Example
 
-Download the IO benchmark scripts (and example data bundle) from the repository:
+Both the benchmark and its plot are **built into Mera** — nothing to download. Just load Mera with any
+Makie backend and point [`run_benchmark`](@ref) at one of your output folders, then
+[`plot_results`](@ref) the returned [`IOBenchmark`](@ref):
 
-```bash
-# core timing script + plotting routine
-curl -L -O https://github.com/ManuelBehrendt/Mera.jl/raw/master/src/benchmarks/IO/downloads/run_test.jl
-curl -L -O https://github.com/ManuelBehrendt/Mera.jl/raw/master/src/benchmarks/IO/downloads/io_performance_plots.jl
-# optional: bundled example results
-curl -L -O https://github.com/ManuelBehrendt/Mera.jl/raw/master/src/benchmarks/IO/downloads/Server_io_stats.zip
-```
-
-Then run the timing script with your desired thread count (servers benefit from many threads):
-
-```
-cmd-line % julia +1.11 -t 32 run_test.jl
-```
-### Script:
 ```julia
-# Load the benchmark framework
-using Mera, CairoMakie, Colors # need to be installed by user
+using Mera, CairoMakie     # CairoMakie (or GLMakie) provides plot_results
 
-# Download the plotting routine (io_performance_plots.jl) at:
-# https://github.com/ManuelBehrendt/Mera.jl/blob/master/src/benchmarks/IO/downloads/io_performance_plots.jl
-include("io_performance_plots.jl")
+# Run comprehensive I/O diagnostics on a folder with many files (e.g. one RAMSES output).
+# Increase `runs` for more robust statistics; run Julia multi-threaded to test thread scaling.
+results = run_benchmark("/path/to/your/_data_folder/output_00250/"; runs=50)
 
+fig = plot_results(results)              # 3-panel figure: IOPS scaling, throughput, open/close
+save("server_io_analysis.png", fig)      # save("…pdf", fig) / display(fig) also work
+```
 
-# Run comprehensive I/O diagnostics on your data directory (function included in Mera)
-# Note: The many files in your provided folder are used for the benchmark
-# Increase number of runs (repeated tests) for more robust statistics
-results = run_benchmark(
-            "/path/to/your/_data_folder/output_00250/"; 
-            runs=50)
+Run Julia with as many threads as you want to test (servers benefit from many):
 
-# Generate visualization suite
-fig = plot_results(results)
-
-# Save results for documentation
-save("server_io_analysis.png", fig)
-save("server_io_analysis.pdf", fig)
-# display(fig) # display figure if you are, e.g. in a Jupyter notebook or on your laptop
+```
+cmd-line % julia -t 32 -e 'using Mera, CairoMakie; save("io.png", plot_results(run_benchmark("/path/to/output_00250/"; runs=50)))'
 ```
 
 

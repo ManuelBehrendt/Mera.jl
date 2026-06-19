@@ -36,14 +36,34 @@ end
 
 Returns sample mean μ and two-sided (1–α) confidence interval half-width.
 """
+# Standard-normal quantile (probit) via Acklam's rational approximation (|err| < 1.2e-9) — avoids a
+# Distributions.jl dependency just for a confidence-interval critical value.
+function _norm_invcdf(p::Real)
+    a = (-3.969683028665376e1, 2.209460984245205e2, -2.759285104469687e2,
+          1.383577518672690e2, -3.066479806614716e1, 2.506628277459239e0)
+    b = (-5.447609879822406e1, 1.615858368580409e2, -1.556989798598866e2,
+          6.680131188771972e1, -1.328068155288572e1)
+    c = (-7.784894002430293e-3, -3.223964580411365e-1, -2.400758277161838e0,
+         -2.549732539343734e0, 4.374664141464968e0, 2.938163982698783e0)
+    d = (7.784695709041462e-3, 3.224671290700398e-1, 2.445134137142996e0, 3.754408661907416e0)
+    plow, phigh = 0.02425, 0.97575
+    if p < plow
+        q = sqrt(-2log(p))
+        return (((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6]) / ((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1)
+    elseif p <= phigh
+        q = p - 0.5; r = q*q
+        return (((((a[1]*r+a[2])*r+a[3])*r+a[4])*r+a[5])*r+a[6])*q / (((((b[1]*r+b[2])*r+b[3])*r+b[4])*r+b[5])*r+1)
+    else
+        q = sqrt(-2log(1-p))
+        return -(((((c[1]*q+c[2])*q+c[3])*q+c[4])*q+c[5])*q+c[6]) / ((((d[1]*q+d[2])*q+d[3])*q+d[4])*q+1)
+    end
+end
+
+# mean + half-width of a (normal-approximation) two-sided CI. The per-thread sample sizes here are
+# large (files × runs), so the z critical value is an excellent stand-in for Student-t.
 function mean_ci(data; α=0.05)
     n, μ, σ = length(data), mean(data), std(data)
-    if n > 1
-        t = quantile(TDist(n-1), 1 - α/2)
-        return μ, t * σ / √n
-    else
-        return μ, NaN
-    end
+    n > 1 ? (μ, _norm_invcdf(1 - α/2) * σ / √n) : (μ, NaN)
 end
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -206,10 +226,26 @@ end
 #  Top-Level Benchmark Orchestrator
 # ══════════════════════════════════════════════════════════════════════════════
 """
-    run_benchmark(folder; runs=1) → NamedTuple
+    IOBenchmark
+
+Result of [`run_benchmark`](@ref): the `iops`, `throughput` and `openclose` sub-results (each with
+`.samples`/`.stats`), the number of `runs`, the `threads` levels tested, and `total_elapsed` seconds.
+Pass it to [`plot_results`](@ref) for a figure.
+"""
+struct IOBenchmark
+    iops
+    throughput
+    openclose
+    runs::Int
+    threads::Vector{Int}
+    total_elapsed::Float64
+end
+
+"""
+    run_benchmark(folder; runs=1) → IOBenchmark
 
 Executes IOPS, throughput, and open/close tests. Returns all samples, stats,
-timings, and thread configurations.
+timings, and thread configurations as an [`IOBenchmark`](@ref).
 """
 function run_benchmark(folder; runs=1)
     total_start = time()
@@ -238,8 +274,30 @@ function run_benchmark(folder; runs=1)
     println("TOTAL      : ", fmt_time(total_elapsed))
     println("═"^80)
 
-    return (iops=iops, throughput=throughput, openclose=openclose,
-            runs=runs, threads=levels, total_elapsed=total_elapsed)
+    return IOBenchmark(iops, throughput, openclose, runs, levels, total_elapsed)
 end
+
+
+# ── Plotting (provided by the Makie package extension MeraMakieExt) ───────────────────────────
+# Built in — no separate plotting script to download. `plot_results` dispatches to
+# `_plot_io_benchmark`, which the extension fills in once a Makie backend is loaded; the bare stub
+# gives a friendly load hint (same pattern as `quicklookplot`).
+"""
+    plot_results(res; bins=30) -> Makie.Figure
+
+Visualise a [`run_benchmark`](@ref) result as a 3-panel I/O figure: **IOPS scaling** vs threads, the
+per-file **throughput** distribution, and file **open/close** time vs threads. Needs a Makie backend
+(`using CairoMakie` or `GLMakie`); the `Figure` is returned, so save it with `Makie.save("io.png", fig)`.
+
+```julia
+using Mera, CairoMakie
+res = run_benchmark("/path/to/output_00250/"; runs=20)   # benchmark your own data folder
+fig = plot_results(res)                                   # no download needed — built in
+Makie.save("io_benchmark.png", fig)
+```
+"""
+plot_results(res; kwargs...) = _plot_io_benchmark(res; kwargs...)
+_plot_io_benchmark(res; kwargs...) =
+    error("plot_results needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")
 
 

@@ -313,6 +313,8 @@ export
 
 # benchmarks
     run_benchmark,
+    IOBenchmark,
+    plot_results,
     run_reading_benchmark,
     run_merafile_benchmark
 
