@@ -128,7 +128,7 @@ end
         end
 
         @testset "Scale and Constants Initialized" begin
-            @test info.scale isa Mera.ScalesType002
+            @test info.scale isa Mera.ScalesType003
             @test info.constants isa Mera.PhysicalUnitsType002
             # Scale factors should be populated (not zero)
             @test info.scale.cm > 0
@@ -831,5 +831,6 @@ if @isdefined(DATASETS) && haskey(DATASETS, :ramses_mhd) && isdir(DATASETS[:rams
         @test getvar(gas,:bmag,:muG) ≈ bmag .* info.scale.muG
         @test getvar(gas,:pmag,:Ba)  ≈ getvar(gas,:p,:Ba) ./ beta   # P_mag in barye, cross-checked vs β
         @test all(isfinite, getvar(gas,:v_alfven,:km_s)) && all(isfinite, getvar(gas,:e_magnetic,:erg))
+        @test info.scale.nG ≈ info.scale.Gauss * 1e9            # nanogauss unit (ScalesType003)
     end
 end

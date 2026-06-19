@@ -151,9 +151,10 @@ function infodata(output::Int;
         "Mera.PhysicalUnitsType001" => PhysicalUnitsType001,
         
         # Map old ScalesType versions to current one using Upgrade for field conversion
-        "Mera.ScalesType" => JLD2.Upgrade(ScalesType002),
-        "Mera.ScalesType001" => JLD2.Upgrade(ScalesType002),
-        "Mera.ScalesType002" => ScalesType002,
+        "Mera.ScalesType" => JLD2.Upgrade(ScalesType003),
+        "Mera.ScalesType001" => JLD2.Upgrade(ScalesType003),
+        "Mera.ScalesType002" => JLD2.Upgrade(ScalesType003),
+        "Mera.ScalesType003" => ScalesType003,
         
         # Map old InfoType versions (if they exist)
         "Mera.InfoType" => InfoType,

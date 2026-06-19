@@ -85,7 +85,7 @@ end
 ```julia
 function createscales!(dataobject::InfoType)
 
-return ScalesType002
+return ScalesType003
 ```
 """
 function createscales!(dataobject::InfoType)
@@ -105,7 +105,7 @@ end
 
 function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType001)
     #Initialize scale-object
-    scale = ScalesType002() #zeros(Float64, 32)...)
+    scale = ScalesType003() #zeros(Float64, 32)...)
 
     # Conversion factors from user units to astronomical units
     mH      =   constants.mH        # [g]   H-Atom mass -> from RAMSES
@@ -204,6 +204,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
     scale.muG       = scale.Gauss * 1e6                                          # [μG] Micro-Gauss
     scale.microG    = scale.muG                                                  # Alternative notation
+    scale.nG        = scale.Gauss * 1e9                                          # [nG] Nano-Gauss (IGM/cosmological fields)
     scale.Tesla     = scale.Gauss * 1e-4                                         # [T] Tesla (SI)
     
     # Energy and luminosity scales (corrected)
@@ -304,7 +305,7 @@ end
 # Overload for PhysicalUnitsType002 (same implementation, just different type signature)
 function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType002)
     #Initialize scale-object
-    scale = ScalesType002() #zeros(Float64, 32)...)
+    scale = ScalesType003() #zeros(Float64, 32)...)
 
     # Conversion factors from user units to astronomical units
     mH      =   constants.mH        # [g]   H-Atom mass -> from RAMSES
@@ -403,6 +404,7 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
     scale.muG       = scale.Gauss * 1e6                                          # [μG] Micro-Gauss
     scale.microG    = scale.muG                                                  # Alternative notation
+    scale.nG        = scale.Gauss * 1e9                                          # [nG] Nano-Gauss (IGM/cosmological fields)
     scale.Tesla     = scale.Gauss * 1e-4                                         # [T] Tesla (SI)
     
     # Energy and luminosity scales (corrected)
@@ -503,12 +505,12 @@ end
 ### Convert a value to human-readable astrophysical units and round to ndigits
 (pass the value in code units and the quantity specification (length, time) )
 ```julia
-function humanize(value::Float64, scale::ScalesType002, ndigits::Int, quantity::String)
+function humanize(value::Float64, scale::ScalesType003, ndigits::Int, quantity::String)
 
 return value, value_unit
 ```
 """
-function humanize(value::Float64, scale::ScalesType002, ndigits::Int, quantity::String)
+function humanize(value::Float64, scale::ScalesType003, ndigits::Int, quantity::String)
 
     if quantity == ""
         round(value, digits=ndigits)

@@ -279,6 +279,7 @@ export
 # types
     ScalesType001,
     ScalesType002,
+    ScalesType003,
     ArgumentsType,
     PhysicalUnitsType001,
     PhysicalUnitsType002,
