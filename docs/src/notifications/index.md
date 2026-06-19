@@ -8,7 +8,7 @@ output, timing, and file attachments). Three functions are exported:
 
 | Function | Purpose |
 |----------|---------|
-| `bell()` | Play a short local sound (no configuration needed). |
+| `bell()` | Play a short local sound (no configuration needed). Pick from 19 bundled sounds by name or number — `bell(:gong)`, `bell(14)`, `bell(:list)` — or set a default in `~/bell.txt`. |
 | `notifyme(...)` | Send an email and/or Zulip message, optionally with attachments, captured output, timing, and exception details. |
 | `timed_notify(name, block)` | Run `block`, measure its wall-clock time, and send the result via `notifyme`. |
 
@@ -18,6 +18,7 @@ output, timing, and file attachments). Three functions are exported:
 using Mera
 
 bell()                              # local sound when something finishes
+bell(:gong)                         # …or pick one: bell(:list) shows all 19
 
 notifyme("Calculation finished!")   # email and/or Zulip (after one-time setup)
 ```

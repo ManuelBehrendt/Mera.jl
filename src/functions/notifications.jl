@@ -8,12 +8,95 @@
 # - Output capturing capabilities
 # ====================================================================================
 
-function bell()
-    # Sound folder
-    sounddir = joinpath(@__DIR__, "../sounds/")
-    y, fs = wavread(sounddir * "strum.wav")
-    wavplay(y, fs)
+"""
+    bell(sound = nothing)
+
+Play a short notification sound — e.g. when a long calculation finishes.
+
+Pick the sound in any of these ways (first match wins):
+1. **by name** — `bell(:chime)` (a `Symbol` or `String`);
+2. **by number** — `bell(2)` (the position shown by `bell(:list)`, also a numeric
+   string like `bell("2")`);
+3. **a default file** — put a sound name *or* number on the first line of `~/bell.txt`
+   (the same home-folder pattern `notifyme` uses with `email.txt` / `zulip.txt`);
+4. **the built-in fallback** — `:strum` (the original Mera sound).
+
+List the bundled sounds (with their numbers) using `bell(:list)`:
+`arpeggio`, `bell`, `bird`, `bloop`, `bongo`, `chime`, `coin`, `coindrop`,
+`cosmic`, `ding`, `done`, `door`, `frog`, `gong`, `knock`, `oscillations`,
+`owl`, `strum`, `whistle`.
+
+You can also drop your own `*.wav` into the package's `src/sounds/` folder and
+select it by its file name or number.
+
+```julia
+bell()            # default sound (from ~/bell.txt if present, else :strum)
+bell(:gong)       # a deep blooming gong
+bell("chime")     # a glassy three-note chime
+bell(4)           # the 4th sound in bell(:list)
+bell(:list)       # print the numbered catalogue of available sounds
+```
+"""
+function bell(sound = nothing)
+    sounddir  = joinpath(@__DIR__, "../sounds/")
+    available = sort([splitext(f)[1] for f in readdir(sounddir) if endswith(lowercase(f), ".wav")])
+
+    if sound === :list || sound == "list"
+        println("Available bell sounds:")
+        for (i, s) in enumerate(available)
+            println("  ", lpad(i, 2), ". ", s)
+        end
+        println("Select by name or number, e.g. bell(:gong) or bell(",
+                findfirst(==("gong"), available), ").")
+        println("Or set a default in ", joinpath(homedir(), "bell.txt"),
+                " (first line = sound name or number).")
+        return
+    end
+
+    fallback = _bell_default_sound(available)
+    name = sound === nothing ? fallback : _bell_resolve(sound, available)
+    if name === nothing
+        @warn "bell: unknown sound \"$sound\". Run bell(:list) to see choices. Using \"$fallback\"."
+        name = fallback
+    end
+
+    y, fs = wavread(joinpath(sounddir, name * ".wav"))
+    try
+        wavplay(y, fs)
+    catch e
+        @warn "bell: could not play audio (no sound device?)." exception = e
+    end
     return
+end
+
+# Map a user selection (name, Symbol, integer, or numeric string) to a bundled sound
+# name; return `nothing` when it matches nothing. Numbers are 1-based indices into the
+# sorted `available` list (the order shown by `bell(:list)`).
+function _bell_resolve(spec, available)
+    if spec isa Integer
+        return 1 <= spec <= length(available) ? available[spec] : nothing
+    end
+    s = strip(String(spec))
+    n = tryparse(Int, s)
+    if n !== nothing
+        return 1 <= n <= length(available) ? available[n] : nothing
+    end
+    return s in available ? s : nothing
+end
+
+# Resolve the default sound: the first line of ~/bell.txt (same idea as email.txt /
+# zulip.txt) — a sound name or its number — falling back to :ding (or the first available
+# file). `cfg` is a keyword so the resolution can be unit-tested without touching $HOME.
+function _bell_default_sound(available; cfg = joinpath(homedir(), "bell.txt"))
+    if isfile(cfg)
+        raw = strip(first(split(read(cfg, String), '\n')))
+        if !isempty(raw)
+            name = _bell_resolve(raw, available)
+            name === nothing || return name
+            @warn "bell: $(cfg) names unknown sound \"$raw\"; using fallback."
+        end
+    end
+    return "strum" in available ? "strum" : (isempty(available) ? "ding" : first(available))
 end
 
 

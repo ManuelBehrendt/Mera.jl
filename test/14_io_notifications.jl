@@ -135,6 +135,41 @@ end
 # ============================================================================
 
 # ----------------------------------------------------------------------------
+# B.0  bell() sound selection — bundled sounds, ~/bell.txt default, list (data-free)
+# ----------------------------------------------------------------------------
+@testset "bell() sound selection" begin
+    sounddir = joinpath(pkgdir(Mera), "src", "sounds")
+    avail = sort([splitext(f)[1] for f in readdir(sounddir) if endswith(lowercase(f), ".wav")])
+    # the bundled sounds are present and are real (non-empty) WAV files
+    for s in ("ding", "chime", "arpeggio", "coin", "cosmic", "bloop", "done",
+              "knock", "door", "bell", "gong", "strum",
+              "bongo", "coindrop", "bird", "owl", "frog", "whistle", "oscillations")
+        @test s in avail
+        @test filesize(joinpath(sounddir, s * ".wav")) > 1000
+    end
+    # selection by name, Symbol and number all map to the same bundled file
+    @test Mera._bell_resolve(:chime, avail) == "chime"
+    @test Mera._bell_resolve("gong", avail) == "gong"
+    @test Mera._bell_resolve(3, avail)      == avail[3]            # by index
+    @test Mera._bell_resolve("3", avail)    == avail[3]            # numeric string
+    @test Mera._bell_resolve(0, avail)      === nothing           # out of range
+    @test Mera._bell_resolve(99, avail)     === nothing
+    @test Mera._bell_resolve("nope", avail) === nothing           # unknown name
+    # default resolution from a (temp) bell.txt — first line is a name OR a number
+    mktempdir() do d
+        cfg = joinpath(d, "bell.txt")
+        write(cfg, "chime\n");        @test Mera._bell_default_sound(avail; cfg=cfg) == "chime"
+        write(cfg, "  gong \n");      @test Mera._bell_default_sound(avail; cfg=cfg) == "gong"    # whitespace-tolerant
+        write(cfg, "2\n");            @test Mera._bell_default_sound(avail; cfg=cfg) == avail[2]   # by number
+        write(cfg, "nonsense\n");     @test Mera._bell_default_sound(avail; cfg=cfg) == "strum"    # unknown -> fallback
+        @test Mera._bell_default_sound(avail; cfg=joinpath(d, "missing.txt")) == "strum"           # no file -> strum default
+    end
+    # bell(:list) prints the numbered catalogue and the bell.txt hint (no audio played)
+    out = capture_stdout(() -> bell(:list))
+    @test occursin("gong", out) && occursin("knock", out) && occursin("bell.txt", out)
+end
+
+# ----------------------------------------------------------------------------
 # B.1  System info command helpers
 # ----------------------------------------------------------------------------
 # Return platform-appropriate shell-command strings.  The platform
