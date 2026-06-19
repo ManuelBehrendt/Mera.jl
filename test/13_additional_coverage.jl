@@ -115,7 +115,7 @@ end
 
     scale = Mera.createscales(info.unit_l, info.unit_d,
                               info.unit_t, info.unit_m, constants)
-    @test scale isa Mera.ScalesType002
+    @test scale isa Mera.ScalesType003
     @test scale.kpc  > 0
     @test scale.Msol > 0
     @test scale.km_s > 0

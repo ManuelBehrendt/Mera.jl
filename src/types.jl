@@ -207,6 +207,204 @@ mutable struct ScalesType002
    ScalesType002() = new()
 end
 
+# Current scale type. Identical to ScalesType002 plus the :nG (nanogauss) magnetic unit. Versioned
+# (rather than adding a field to ScalesType002) so pre-existing mera/JLD2 files — which store the
+# 133-field ScalesType002 layout — still reconstruct; the JLD2 typemap upgrades them to ScalesType003.
+mutable struct ScalesType003
+# exported
+
+   # length
+   Mpc::Float64
+   kpc::Float64
+   pc::Float64
+   mpc::Float64
+   ly::Float64
+   Au::Float64
+   km::Float64
+   m::Float64
+   cm::Float64
+   mm::Float64
+   μm::Float64
+
+   # volume
+   Mpc3::Float64
+   kpc3::Float64
+   pc3::Float64
+   mpc3::Float64
+   ly3::Float64
+   Au3::Float64
+   km3::Float64
+   m3::Float64
+   cm3::Float64
+   mm3::Float64
+   μm3::Float64
+
+   # density
+   Msol_pc3::Float64
+   Msun_pc3::Float64
+   g_cm3::Float64
+
+   # surface
+   Msol_pc2::Float64
+   Msun_pc2::Float64
+   g_cm2::Float64
+
+   # time
+   Gyr::Float64
+   Myr::Float64
+   yr::Float64
+   s::Float64
+   ms::Float64
+
+   # mass
+   Msol::Float64
+   Msun::Float64
+   Mearth::Float64
+   Mjupiter::Float64
+   g::Float64
+
+   # speed
+   km_s::Float64
+   m_s::Float64
+   cm_s::Float64
+
+
+   nH::Float64
+   erg::Float64
+   g_cms2::Float64
+
+   T_mu::Float64
+   K_mu::Float64
+   T::Float64
+   K::Float64
+   Ba::Float64
+   g_cm_s2::Float64
+   p_kB::Float64
+   K_cm3::Float64
+
+   # Entropy units
+   erg_g_K::Float64
+   keV_cm2::Float64
+   erg_K::Float64
+   J_K::Float64
+   erg_cm3_K::Float64
+   J_m3_K::Float64
+   kB_per_particle::Float64
+
+   # Angular momentum units
+   J_s::Float64
+   g_cm2_s::Float64
+   kg_m2_s::Float64
+
+   # Magnetic field units
+   Gauss::Float64
+   muG::Float64
+   microG::Float64
+   nG::Float64
+   Tesla::Float64
+
+   # Energy scales
+   eV::Float64
+   keV::Float64
+   MeV::Float64
+
+   # Luminosity
+   erg_s::Float64
+   Lsol::Float64
+   Lsun::Float64
+
+   # Number densities
+   cm_3::Float64
+   pc_3::Float64
+   n_e::Float64
+
+   # Cooling and heating rates
+   erg_g_s::Float64
+   erg_cm3_s::Float64
+
+   # Flux and surface brightness
+   erg_cm2_s::Float64
+   Jy::Float64
+   mJy::Float64
+   microJy::Float64
+
+   # Column density
+   atoms_cm2::Float64
+   NH_cm2::Float64
+
+   # Gravitational and acceleration units
+   cm_s2::Float64
+   m_s2::Float64
+   km_s2::Float64
+   pc_Myr2::Float64
+
+   # Gravitational potential and energy units
+   erg_g::Float64
+   J_kg::Float64
+   km2_s2::Float64
+
+   # Gravitational energy analysis units
+   u_grav::Float64         # Gravitational energy density [erg/cm³]
+   erg_cell::Float64       # Total energy per cell [erg]
+   dyne::Float64           # Force [dyne]
+   s_2::Float64            # Acceleration per length [s⁻²]
+   lambda_J::Float64       # Jeans length scale [cm]
+   M_J::Float64            # Jeans mass scale [g]
+   t_ff::Float64           # Free-fall time scale [s]
+   alpha_vir::Float64      # Dimensionless virial parameter
+   delta_rho::Float64      # Dimensionless density contrast
+
+   # Missing gravity field unit scales
+   a_mag::Float64          # Acceleration magnitude [cm/s²]
+   v_esc::Float64          # Escape velocity [cm/s]
+   ax::Float64             # x-acceleration component [cm/s²]
+   ay::Float64             # y-acceleration component [cm/s²]
+   az::Float64             # z-acceleration component [cm/s²]
+   epot::Float64           # Gravitational potential [erg/g]
+
+   # ===== DERIVED VARIABLE MAPPINGS =====
+   # These map derived variable names to their appropriate physical unit types
+   # Following the hydro pattern: getunit(obj, :variable_name, vars, units)
+
+   # Basic gravity components
+   a_magnitude::Float64                   # Acceleration magnitude [cm/s²]
+   escape_speed::Float64                  # Escape velocity [cm/s]
+   gravitational_redshift::Float64        # Dimensionless redshift
+
+   # Gravitational energy analysis
+   gravitational_energy_density::Float64  # Energy density [erg/cm³]
+   gravitational_binding_energy::Float64  # Binding energy density [erg/cm³]
+   total_binding_energy::Float64          # Total energy per cell [erg]
+   specific_gravitational_energy::Float64 # Specific energy [erg/g]
+   gravitational_work::Float64            # Work/energy [erg]
+   jeans_length_gravity::Float64          # Jeans length [cm]
+   jeans_mass_gravity::Float64            # Jeans mass [g]
+   jeansmass::Float64                     # Jeans mass (hydro) [g]
+   freefall_time_gravity::Float64         # Free-fall time [s]
+   ekin::Float64                          # Kinetic energy [erg]
+   etherm::Float64                        # Thermal energy per cell [erg]
+   virial_parameter_local::Float64        # Dimensionless virial param
+   Fg::Float64                            # Force [dyne]
+   poisson_source::Float64                # Poisson source term [s⁻²]
+
+   # Coordinate system components
+   ar_cylinder::Float64                   # Cylindrical radial acceleration [cm/s²]
+   aϕ_cylinder::Float64                   # Cylindrical azimuthal acceleration [cm/s²]
+   ar_sphere::Float64                     # Spherical radial acceleration [cm/s²]
+   aθ_sphere::Float64                     # Spherical polar acceleration [cm/s²]
+   aϕ_sphere::Float64                     # Spherical azimuthal acceleration [cm/s²]
+   r_cylinder::Float64                    # Cylindrical radius [cm]
+   r_sphere::Float64                      # Spherical radius [cm]
+   ϕ::Float64                             # Azimuthal angle [rad]
+
+   # Dimensionless and angular units
+   dimensionless::Float64
+   rad::Float64
+   deg::Float64
+
+   ScalesType003() = new()
+end
+
 # needed for loading older JLD2 files
 mutable struct ScalesType001
 # exported
@@ -567,7 +765,7 @@ mutable struct InfoType
     compilationfile::Bool
     patchfile::Bool
     Narraysize::Int
-    scale::ScalesType002
+    scale::ScalesType003
     grid_info::GridInfoType
     part_info::PartInfoType
     compilation::CompilationInfoType
@@ -626,7 +824,7 @@ mutable struct HydroDataType <: HydroPartType
     used_descriptors::Dict{Any,Any}
     smallr::Float64
     smallc::Float64
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     HydroDataType() = new()
 end
 
@@ -642,7 +840,7 @@ mutable struct GravDataType <: DataSetType
     ranges::Array{Float64,1}
     selected_gravvars::Array{Int,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     GravDataType() = new()
 end
 
@@ -659,7 +857,7 @@ mutable struct RtDataType <: DataSetType
     ranges::Array{Float64,1}
     selected_rtvars::Array{Int,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType002
+    scale::ScalesType003
     RtDataType() = new()
 end
 
@@ -677,7 +875,7 @@ mutable struct PartDataType <: HydroPartType
     ranges::Array{Float64,1}
     selected_partvars::Array{Symbol,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     PartDataType() = new()
 end
 
@@ -694,7 +892,7 @@ mutable struct ClumpDataType <: ContainMassDataSetType
     ranges::Array{Float64,1}
     selected_clumpvars::Array{Symbol,1}
     used_descriptors::Dict{Any,Any}
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     ClumpDataType() = new()
 end
 
@@ -763,7 +961,7 @@ set to 0 for RT.
 - `pixsize::Float64` — physical size of one pixel in **code length** units (× `scale` for kpc/pc).
 - `boxlen::Float64` — the simulation box length in code units.
 - `smallr::Float64`, `smallc::Float64` — hydro density/sound-speed floors (0 for RT projections).
-- `scale::ScalesType002` — unit-conversion factors (code↔physical) inherited from the dataset.
+- `scale::ScalesType003` — unit-conversion factors (code↔physical) inherited from the dataset.
 - `info::InfoType` — the full simulation descriptor (provenance: output, paths, cosmology, …).
 - `los`, `up`, `cam_right`, `center::Vector{Float64}` — off-axis camera basis and centre; empty
   `Float64[]` for axis-aligned projections. `proj.direction` returns `:offaxis` when populated.
@@ -786,7 +984,7 @@ mutable struct AMRMapsType <: DataMapsType
     boxlen::Float64
     smallr::Float64
     smallc::Float64
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     info::InfoType
     # off-axis camera metadata (empty for axis-aligned projections; see getproperty :direction)
     los::Vector{Float64}
@@ -843,7 +1041,7 @@ quantity onto the sky grid; provenance is preserved in the `.info` field.
 - `effres::Int` — effective square resolution (pixels per side); `proj.res` aliases this.
 - `pixsize::Float64` — physical size of one pixel in **code length** units (× `scale` for kpc/pc).
 - `boxlen::Float64` — the simulation box length in code units.
-- `scale::ScalesType002` — unit-conversion factors (code↔physical) inherited from the dataset.
+- `scale::ScalesType003` — unit-conversion factors (code↔physical) inherited from the dataset.
 - `info::InfoType` — the full simulation descriptor (provenance).
 - `los`, `up`, `cam_right`, `center::Vector{Float64}` — off-axis camera basis and centre; empty
   `Float64[]` for axis-aligned projections. `proj.direction` returns `:offaxis` when populated.
@@ -864,7 +1062,7 @@ mutable struct PartMapsType <: DataMapsType
     effres::Int
     pixsize::Float64
     boxlen::Float64
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     info::InfoType
     # off-axis camera metadata (empty for axis-aligned projections)
     los::Vector{Float64}
@@ -967,7 +1165,7 @@ binned line-of-sight `quantity` (e.g. `:vlos`, `:T`, `:rho`, or a vector `(:bx,:
 - `pixsize::Float64` — physical size of one sky pixel in **code length** units.
 - `boxlen::Float64` — the simulation box length in code units.
 - `range_unit::Symbol` — the unit the spatial ranges were specified in.
-- `scale::ScalesType002` — unit-conversion factors (code↔physical).
+- `scale::ScalesType003` — unit-conversion factors (code↔physical).
 - `info::InfoType` — the full simulation descriptor (provenance).
 """
 mutable struct LosCubeType
@@ -985,7 +1183,7 @@ mutable struct LosCubeType
     pixsize::Float64
     boxlen::Float64
     range_unit::Symbol
-    scale::ScalesType002
+    scale::ScalesType003
     info::InfoType
 end
 
@@ -1009,7 +1207,7 @@ mutable struct Histogram2DMapType
     yrange::StepRangeLen{Float64,Base.TwicePrecision{Float64},Base.TwicePrecision{Float64}}
     extent::Array{Float64,1}
     ratio::Float64
-    scale::ScalesType002  # Updated to current type
+    scale::ScalesType003  # Updated to current type
     info::InfoType
 end
 
@@ -1082,6 +1280,18 @@ function Base.convert(::Type{ScalesType002}, old::ScalesType001)
             setfield!(new_scales, field, getfield(old, field))
         end
     end
+    return new_scales
+end
+
+function Base.convert(::Type{ScalesType003}, old::Union{ScalesType001,ScalesType002})
+    new_scales = ScalesType003()
+    for field in fieldnames(ScalesType003)
+        if hasfield(typeof(old), field) && isdefined(old, field)
+            setfield!(new_scales, field, getfield(old, field))
+        end
+    end
+    # nG is new in 003: derive it from Gauss (older types don't store it)
+    new_scales.nG = (isdefined(new_scales, :Gauss) ? new_scales.Gauss : 1.0) * 1e9
     return new_scales
 end
 
@@ -1185,7 +1395,7 @@ function JLD2.rconvert(::Type{ScalesType002}, nt::NamedTuple)
         # Set reasonable default values for new fields
         if field == :erg_g_K
             setfield!(scale, field, 1.0)
-        elseif field == :keV_cm2  
+        elseif field == :keV_cm2
             setfield!(scale, field, 1.0)
         elseif field == :Gauss
             setfield!(scale, field, 1.0)
@@ -1200,7 +1410,49 @@ function JLD2.rconvert(::Type{ScalesType002}, nt::NamedTuple)
             setfield!(scale, field, 1.0)
         end
     end
-    
+
+    return scale
+end
+
+# Handle ScalesType{,001,002} -> ScalesType003 upgrade using NamedTuple from JLD2 (loads old mera files)
+function JLD2.rconvert(::Type{ScalesType003}, nt::NamedTuple)
+    scale = ScalesType003()
+
+    # Copy all common fields from NamedTuple to new type
+    common_fields = intersect(keys(nt), fieldnames(ScalesType003))
+    for field in common_fields
+        if hasfield(typeof(nt), field) && hasfield(ScalesType003, field)
+            setfield!(scale, field, getfield(nt, field))
+        end
+    end
+
+    # Set default values for new fields that don't exist in old type
+    new_fields = setdiff(fieldnames(ScalesType003), keys(nt))
+    for field in new_fields
+        field == :nG && continue   # derived from Gauss after the loop (Gauss is guaranteed set by then)
+        if field == :erg_g_K
+            setfield!(scale, field, 1.0)
+        elseif field == :keV_cm2
+            setfield!(scale, field, 1.0)
+        elseif field == :Gauss
+            setfield!(scale, field, 1.0)
+        elseif field == :dimensionless
+            setfield!(scale, field, 1.0)
+        elseif field == :rad
+            setfield!(scale, field, 1.0)
+        elseif field == :deg
+            setfield!(scale, field, 180.0 / π)
+        else
+            # For other new fields, set to 1.0 as reasonable default
+            setfield!(scale, field, 1.0)
+        end
+    end
+
+    # :nG (nanogauss) is new in ScalesType003 — derive it from Gauss (now set) rather than default to 1.0
+    if :nG in new_fields
+        setfield!(scale, :nG, scale.Gauss * 1e9)
+    end
+
     return scale
 end
 

@@ -62,7 +62,7 @@ All of these are **built-in `getvar` quantities** computed from the cell-centred
 arithmetic needed — and each takes the units shown:
 
 ```julia
-# field magnitude |B|  (field-strength units: :Gauss, :muG, :microG, :Tesla)
+# field magnitude |B|  (field-strength units: :Gauss, :muG, :microG, :nG, :Tesla)
 Bmag    = getvar(gas, :bmag)          # code units
 Bmag_uG = getvar(gas, :bmag, :muG)    # μG
 
@@ -80,9 +80,10 @@ mf = getvar(gas, :mach_fast)     # fast:  v_f = √(c_s² + v_A²)
 ms = getvar(gas, :mach_slow)     # slow:  v_s = c_s·v_A/√(c_s² + v_A²)
 ```
 
-No new units were needed: `B` reuses the field-strength scales (`:Gauss`, `:muG`, `:microG`,
-`:Tesla`), magnetic pressure/energy-density reuse the pressure scales (`:Ba`, `:g_cm_s2`), the Alfvén
-speed reuses the velocity scales (`:km_s`, `:cm_s`), and the magnetic energy reuses `:erg`.
+Almost no new units were needed: `B` reuses the field-strength scales (`:Gauss`, `:muG`, `:microG`,
+`:nG`, `:Tesla`), magnetic pressure/energy-density reuse the pressure scales (`:Ba`, `:g_cm_s2`), the
+Alfvén speed reuses the velocity scales (`:km_s`, `:cm_s`), and the magnetic energy reuses `:erg`.
+(`:nG`, nanogauss, was added via a new `ScalesType003` so pre-existing mera files still load.)
 
 The exact formulas (incl. the RAMSES code-unit convention `P_mag = B²/2` and the Alfvén-speed
 conversion) are listed in
