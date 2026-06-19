@@ -328,4 +328,73 @@ using DataStructures: SortedDict
             @test isapprox(loaded.deg, s.deg, rtol=1e-12)
         end
     end
+
+    # ====================================================================
+    # ScalesType003 versioning — adding :nG must NOT break old mera files.
+    # 003 = frozen 002 + :nG; old files upgrade through convert/rconvert and
+    # the JLD2 typemap. Covers every path that has to care about the different
+    # ScalesType versions: the structs, convert (in-memory upgrade),
+    # rconvert (NamedTuple load path), the real JLD2 file-upgrade via typemap,
+    # and the functions that consume a scale.
+    # ====================================================================
+    @testset "ScalesType003: struct stays additive over a frozen 002" begin
+        @test Mera.ScalesType003() isa Mera.ScalesType003
+        @test fieldcount(Mera.ScalesType002) == 133            # frozen — old files match this layout
+        @test fieldcount(Mera.ScalesType003) == 134            # 002 + :nG
+        @test :nG in fieldnames(Mera.ScalesType003)
+        @test :nG ∉ fieldnames(Mera.ScalesType002)             # never add to the frozen version
+    end
+
+    @testset "convert ScalesType002/001 → ScalesType003 (derives :nG)" begin
+        old2 = Mera.ScalesType002()
+        old2.kpc = 12.34; old2.Msol = 1.989e33; old2.Gauss = 2.0
+        new = convert(Mera.ScalesType003, old2)
+        @test new isa Mera.ScalesType003
+        @test new.kpc == 12.34 && new.Msol == 1.989e33 && new.Gauss == 2.0
+        @test new.nG == 2.0 * 1e9                              # derived from Gauss (not garbage memory)
+        # ScalesType001 predates the magnetic units (no :Gauss field) → nG is 0 (no info), not garbage
+        @test :Gauss ∉ fieldnames(Mera.ScalesType001)
+        old1 = Mera.ScalesType001(); old1.kpc = 5.0
+        n1 = convert(Mera.ScalesType003, old1)
+        @test n1 isa Mera.ScalesType003 && n1.kpc == 5.0 && n1.nG == 0.0
+    end
+
+    @testset "rconvert ScalesType003 ← old-layout NamedTuple (no :nG)" begin
+        # how JLD2 hands Mera an old 002 file: a NamedTuple WITHOUT :nG.
+        nt = (kpc = 3.5, Msol = 1.989e33, Gauss = 4.0, dimensionless = 1.0)
+        s = JLD2.rconvert(Mera.ScalesType003, nt)
+        @test s isa Mera.ScalesType003
+        @test s.kpc == 3.5 && s.Gauss == 4.0
+        @test s.nG == 4.0 * 1e9                                # filled FROM Gauss, not the 1.0 default
+        @test s.dimensionless == 1.0
+        @test isapprox(s.deg, 180.0 / π, rtol=1e-12)           # the other documented defaults still fill
+        # a NamedTuple that already carries :nG keeps it verbatim
+        @test JLD2.rconvert(Mera.ScalesType003, (Gauss = 4.0, nG = 123.0)).nG == 123.0
+    end
+
+    @testset "JLD2 file upgrade: a saved ScalesType002 loads as 003 via typemap" begin
+        # The real loaddata mechanism: an old file stored "Mera.ScalesType002"; the typemap upgrades it.
+        s2 = Mera.ScalesType002(); s2.kpc = 7.89; s2.Gauss = 5.0
+        mktempdir() do dir
+            f = joinpath(dir, "old_scale.jld2")
+            JLD2.jldsave(f; s = s2)
+            tm = Dict("Mera.ScalesType002" => JLD2.Upgrade(Mera.ScalesType003))
+            loaded = JLD2.load(f, "s"; typemap = tm)
+            @test loaded isa Mera.ScalesType003
+            @test loaded.kpc == 7.89 && loaded.Gauss == 5.0
+            @test loaded.nG == 5.0 * 1e9                       # derived during the upgrade
+        end
+    end
+
+    @testset "functions that consume a ScalesType use the current version (003)" begin
+        consts = Mera.createconstants()
+        sc = Mera.createscales(3.0e21, 1.0e-23, 1.0e15, 2.0e42, consts)
+        @test sc isa Mera.ScalesType003                        # createscales builds the current version
+        @test sc.nG ≈ sc.Gauss * 1e9
+        info = Mera.InfoType(); info.scale = sc                # the scale field accepts a 003
+        @test getunit(info, :muG) ≈ sc.muG                     # getunit resolves units off the 003 scale
+        @test getunit(info, :nG)  ≈ sc.nG
+        @test (viewfields(sc); true)                           # viewfields has a ::ScalesType003 method
+        @test Mera.humanize(1.0, sc, 2, "length") isa Tuple    # humanize too
+    end
 end
