@@ -298,4 +298,56 @@ function Mera._plot_massfunction(cat::Mera.ClumpCatalog; cumulative::Bool=false,
     return fig
 end
 
+# ── I/O benchmark plotting (Mera.plot_results) ───────────────────────────────────────────────
+# Visualise a run_benchmark(...) result. Moved in-package (was a hand-shipped io_performance_plots.jl
+# users had to download) so the workflow is just `using Mera, CairoMakie; plot_results(run_benchmark(p))`.
+function _io_plot_iops!(ax, samples, stats)
+    tc = sort(collect(keys(samples)))
+    μ  = [Mera.mean(samples[t]) for t in tc]
+    σ  = [stats[t][2] for t in tc]; ci = [stats[t][3] for t in tc]
+    Makie.errorbars!(ax, tc, μ, σ, color=:gray, linewidth=2, label="Std dev")
+    Makie.errorbars!(ax, tc, μ, ci, color=:red, linewidth=6, label="95% CI")
+    Makie.scatter!(ax, tc, μ, color=:black, markersize=10, label="Mean IOPS")
+    Makie.lines!(ax, tc, μ[1] .* tc, color=:blue, linestyle=:dash, label="Ideal linear")
+    Makie.axislegend(ax, position=:rt)
+    ax.xlabel = "Threads"; ax.ylabel = "IOPS"; ax.title = "IOPS Scaling"
+end
+
+function _io_plot_throughput!(ax, samples; bins=30)
+    tc  = sort(collect(keys(samples))); allv = vcat(values(samples)...)
+    edges = range(minimum(allv), maximum(allv), length=bins+1)
+    palette = Makie.resample_cmap(:tab10, max(length(tc), 2))
+    for (i, t) in enumerate(tc)
+        h    = Mera.fit(Mera.Histogram, samples[t], edges; closed=:right)
+        dens = h.weights ./ (sum(h.weights) * step(edges))
+        Makie.stairs!(ax, edges[1:end-1], dens; color=palette[i], linewidth=3, label="Threads: $t")
+    end
+    Makie.axislegend(ax, position=:rt)
+    ax.xlabel = "Throughput (MB/s)"; ax.ylabel = "PDF"; ax.title = "Throughput Distribution"
+end
+
+function _io_plot_openclose!(ax, samples, stats, unit, factor)
+    tc  = sort(collect(keys(samples)))
+    μ   = [Mera.mean(samples[t])*factor   for t in tc]
+    med = [Mera.median(samples[t])*factor for t in tc]
+    ci  = [stats[t][3]*factor for t in tc]
+    Makie.errorbars!(ax, tc, μ, ci, color=:red, linewidth=6, label="95% CI")
+    Makie.scatter!(ax, tc, μ,   color=:black,  markersize=10, label="Mean")
+    Makie.scatter!(ax, tc, med, color=:orange, marker=:diamond, markersize=10, label="Median")
+    Makie.axislegend(ax, position=:rt)
+    ax.xlabel = "Threads"; ax.ylabel = "Open/Close Time ($unit)"; ax.title = "File Open/Close vs Threads"
+end
+
+function Mera._plot_io_benchmark(res::Mera.IOBenchmark; bins=30)
+    fig = Makie.Figure(size=(1200, 800), fontsize=12)
+    _io_plot_iops!(Makie.Axis(fig[1, 1]), res.iops.samples, res.iops.stats)
+    _io_plot_throughput!(Makie.Axis(fig[1, 2]), res.throughput.samples; bins=bins)
+    _io_plot_openclose!(Makie.Axis(fig[2, 1:2]), res.openclose.samples, res.openclose.stats,
+                        res.openclose.unit, res.openclose.factor)
+    Makie.Label(fig[0, :], "File I/O Benchmark Results", fontsize=16, font=:bold)
+    Makie.Label(fig[3, :], "Runs: $(res.runs)  Total time: $(Mera.fmt_time(res.total_elapsed))",
+                fontsize=10, color=:gray)
+    return fig
+end
+
 end # module
