@@ -223,7 +223,7 @@ the geometric root of the conservation property. The four `binning` kernels diff
 shadow is spread across pixels — and every one is a *partition of unity* (the per-cell shares sum to 1),
 so the projected total equals the cell total at any angle and any pixel size.
 
-![How each AMR cell is treated in an off-axis projection: AMR grid → rotation by the camera basis → projected box-spline footprint, and the four deposit kernels (:ngp nearest-pixel, :cic 4-pixel bilinear, :overlap sub-point supersampling, :exact analytic chord integral)](assets/offaxis/offaxis_cell_treatment.svg)
+![How a tilted simulation becomes a flat image, one cube at a time: the simulation is a grid of cubes (smaller where the gas is denser); each cube is tilted to the viewing angle and casts a shadow on the pixel grid; then one of four methods shares the cube's gas among the pixels — :ngp drops it all in the nearest pixel, :cic smears it over the 4 nearest, :overlap fills the shadow with sample points (the default), :exact uses the cube's true shadow shape. All keep the total.](assets/offaxis/offaxis_cell_treatment.svg)
 
 * **`:ngp` / `:cic`** treat the cell as its *centre point* — one nearest pixel, or a 4-pixel bilinear
   stencil. Fast, but a coarse cell that should shadow many pixels collapses to a point (speckle/moiré).
@@ -275,7 +275,7 @@ when `ŵ` is a box axis (then two columns of `Ξ` are axis-aligned and the hexag
 cell's square). `:overlap` is a convergent `n³` sampling of this same footprint; `:exact` is its
 limit. Cost is `O(covered pixels)` per cell.
 
-![Inside :exact — the box-spline footprint is piecewise-linear (its kink lines, where the entering/exiting cube face switches, cut it into convex pieces on which the chord length L is affine), so the integral of L over each pixel is computed in closed form as the sum over convex pieces of area·L(centroid)](assets/offaxis/offaxis_exact_integration.svg)
+![Why :exact is exact: a tilted cube's shadow is brightest through the middle, where the line of sight crosses more of the cube; for each pixel, :exact measures exactly how much of that shadow falls inside it and gives the pixel that share — no sampling, so the result never loses gas and barely changes with pixel size.](assets/offaxis/offaxis_exact_integration.svg)
 
 Concretely (`_oa_pixel_integral!`): the pixel∩footprint polygon is Sutherland–Hodgman-clipped
 (`_oa_clip!`) and split by the kink lines into convex pieces; on each, the entering face (argmax `tmin`)
