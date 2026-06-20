@@ -83,3 +83,20 @@ gettime.(N.outputs, path, :Myr)
 1-element Vector{Float64}:
  445.8861174695
 ```
+
+## One call: `timeseries`
+
+The whole pattern above — discover the outputs, load each one, read its physical time,
+collect a quantity — is what [`timeseries`](@ref) automates into a single call. You give it
+a *reducer* (`data -> scalar | NamedTuple`); it loads one snapshot at a time (RAM-safe) and
+returns one table with an `output` column and a physical **`time` column in Myr** (the same
+`gettime(:Myr)` shown above), plus `redshift`/`aexp` columns for a cosmological run:
+
+```julia
+ts = timeseries(path, d -> (mass = msum(d, :Msol), rho_max = maximum(getvar(d, :rho))))
+# columns: output | time [Myr] | mass | rho_max   (one row per output)
+```
+
+Use the manual loop when you want full control per snapshot; reach for `timeseries` when
+you just want X(t) as a table. See **[Time Series](../timeseries.md)** for output selection,
+memory control, mera-file and cosmological runs, projections-over-time, and plotting.
