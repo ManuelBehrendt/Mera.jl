@@ -41,18 +41,27 @@ That is every data object, projection map, and LOS/velocity cube, plus an `InfoT
 | [`getrt`](@ref) | `RtDataType` | ✓ |
 | [`projection`](@ref) | `AMRMapsType` (the map) | ✓ |
 | [`velocity_cube`](@ref) / [`los_cube`](@ref) | `LosCubeType` | ✓ |
+| [`pdf`](@ref) (cell/particle or 2D-map form) | `NamedTuple` with `.info` | ✓ |
+| [`position_velocity`](@ref) | `NamedTuple` with `.info` | ✓ |
+| [`face_on`](@ref) / [`edge_on`](@ref) | [`GalaxyFrame`](@ref) | ✓ |
 
 ```julia
-provenance(getparticles(info))     # particles
-provenance(projection(gas, :sd))   # a projection map
-provenance(velocity_cube(gas))     # a LOS / velocity cube
-provenance(gas.info)               # the InfoType directly
+provenance(getparticles(info))         # particles
+provenance(projection(gas, :sd))       # a projection map
+provenance(velocity_cube(gas))         # a LOS / velocity cube
+provenance(pdf(gas, :rho))             # a PDF result
+provenance(face_on(gas))               # a galaxy frame
+provenance(gas.info)                   # the InfoType directly
 ```
 
-A `NamedTuple`-style result that carries no `.info` — a [`pdf`](@ref), a [`timeseries`](@ref)
-table, a [`position_velocity`](@ref) diagram, a [`GalaxyFrame`](@ref) — cannot be stamped
-directly (you get a clear error saying so); take `provenance` of the **source data object**
-you computed it from.
+These derived results carry an `.info` field, so the same `provenance` call works on them.
+The exceptions, which keep no source snapshot, raise a clear error (pointing you to
+`provenance` of the source data):
+
+- the **raw-matrix** form `pdf(map2d)` (a bare 2D array has no snapshot);
+- a [`timeseries`](@ref) table — it spans *many* outputs, so a single provenance does not
+  describe it; inside the reducer you have the full data object, so e.g.
+  `timeseries(path, d -> (prov = provenance_string(d), …))` records per-snapshot provenance.
 
 ## Stamping a figure or FITS header
 

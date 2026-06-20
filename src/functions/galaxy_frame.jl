@@ -22,7 +22,8 @@ projection(gas, :sd; los=fr.los, up=fr.up, center=fr.center, range_unit=fr.cente
 
 Fields: `center` (in `center_unit`), `los` (unit vector the camera looks along),
 `up` (unit vector for the camera's up direction), `angmom` (the net angular-momentum
-vector the frame was derived from).
+vector the frame was derived from), and `info` (the source snapshot — so `provenance(frame)`
+works).
 """
 struct GalaxyFrame
     center::Vector{Float64}
@@ -30,6 +31,7 @@ struct GalaxyFrame
     los::Vector{Float64}
     up::Vector{Float64}
     angmom::Vector{Float64}
+    info::InfoType        # source snapshot — carries provenance (see `provenance`)
 end
 
 function Base.show(io::IO, f::GalaxyFrame)
@@ -114,7 +116,7 @@ function _galaxy_frame(dataobject; center=:com, aperture=nothing,
     else
         los, up = spin, _vunit(_vcross(spin, inplane))   # look along spin; up in-plane
     end
-    return GalaxyFrame(cen, range_unit, los, up, L)
+    return GalaxyFrame(cen, range_unit, los, up, L, dataobject.info)
 end
 
 """
