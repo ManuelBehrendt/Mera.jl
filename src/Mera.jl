@@ -102,6 +102,9 @@ export
     edge_on,
     GalaxyFrame,
     pdf,
+    provenance,
+    provenance_string,
+    Provenance,
 
 # basic calcs
     msum,
@@ -424,6 +427,7 @@ include("functions/clumpfind.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/statistics.jl")
+include("functions/provenance.jl")
 # ============================================
 
 
