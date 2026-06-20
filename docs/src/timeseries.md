@@ -40,11 +40,12 @@ ts = timeseries("/data/Mera-Tests/timeseries_sedov3d", d -> (
         mass    = msum(d, :Msol),
         rho_max = maximum(getvar(d, :rho)),
         ncells  = length(d.data),
-     ))
+     ); time_unit = :standard)        # this Sedov fixture is dimensionless → code-unit time
 ```
 
 The result is an `IndexedTables` table — one row per output, with `output` and `time`
-columns added automatically:
+columns added automatically (see [Physical time](#Physical-time-and-cosmological-runs) — the
+default `time` is in **Myr**; the dimensionless Sedov sim is shown here in code units):
 
 ```text
 Table with 13 rows, 5 columns:
@@ -97,6 +98,24 @@ Laid side by side, the maps show the shell sweeping outward through the box:
 
 Return a scalar instead when you only need a number per snapshot — for example the peak
 column density over time, `d -> maximum(projection(d, :sd, verbose=false).maps[:sd])`.
+
+## Physical time and cosmological runs
+
+The `time` column is **physical** by default — Myr (from [`gettime`](@ref)), not code units —
+so a time-series plots against a meaningful axis straight away. Choose another unit with
+`time_unit` (`:Gyr`, `:yr`, …), or `time_unit = :standard` for code units (as the
+dimensionless Sedov fixture above).
+
+A **cosmological** run is detected automatically ([`iscosmological`](@ref)) and gets two extra
+columns — `redshift` (`z = 1/aexp − 1`) and `aexp` — so you can plot any quantity against
+redshift directly. The `time` column then holds the **age of the universe** in Myr:
+
+```julia
+ts = timeseries("/data/cosmo_run", d -> (sfr = …, mgas = msum(d, :Msol)))
+# columns: output | time [Myr, = age] | redshift | aexp | sfr | mgas
+using Mera.IndexedTables: columns
+lines(columns(ts).redshift, columns(ts).mgas)     # gas mass vs redshift
+```
 
 ## Selecting which outputs
 
@@ -201,7 +220,7 @@ timeseries(path, d -> maximum(getvar(d, :rho));
 | `loader` | `nothing` | custom `info -> data` (overrides `datatype`/ranges/`lmax`) |
 | `lmax` | `info.levelmax` | max AMR level to read (hydro/gravity) |
 | `xrange`,`yrange`,`zrange`,`center`,`range_unit` | full box | spatial selection → less RAM |
-| `time_unit` | `:standard` | unit of the `time` column (see [`gettime`](@ref)) |
+| `time_unit` | `:Myr` | unit of the `time` column — physical by default; `:standard` for code units (see [`gettime`](@ref)). Cosmological runs also get `redshift`/`aexp` columns |
 | `verbose` | `true` | per-snapshot progress |
 | `notify` | `false` | call [`notifyme`](@ref) when finished |
 

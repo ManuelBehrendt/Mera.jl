@@ -45,6 +45,14 @@ if DATA_AVAILABLE && isdir(TS_RAMSES) && !isempty(checkoutputs(TS_RAMSES, verbos
         @test all(c.ncells .> 0)
     end
 
+    @testset "physical time (Myr) default + code-unit override" begin
+        cmyr  = _cols(timeseries(TS_RAMSES, d -> 1; verbose=false))                 # default :Myr
+        ccode = _cols(timeseries(TS_RAMSES, d -> 1; time_unit=:standard, verbose=false))
+        @test issorted(cmyr.time)                            # Myr column present + monotonic
+        @test ccode.time[end] ≈ 0.2 atol=0.05                # code-unit blast time of the Sedov fixture
+        @test :redshift ∉ propertynames(cmyr)                # a non-cosmological run has no z column
+    end
+
     @testset "output selection + scalar reducer" begin
         sub = timeseries(TS_RAMSES, d -> length(d.data); outputs=avail[1:3], verbose=false)
         @test length(sub) == 3
@@ -126,6 +134,20 @@ if DATA_AVAILABLE && isdir(RT_RAMSES) && !isempty(checkoutputs(RT_RAMSES, verbos
             tm = timeseries(RT_MERA, red; datatype=:rt, mera_files=true, verbose=false)
             @test _cols(tm).output == _cols(tr).output
             @test _cols(tm).np1 ≈ _cols(tr).np1 rtol=1e-9    # mera RT reproduces RAMSES RT
+        end
+    end
+end
+
+# cosmological run → automatic redshift / aexp columns, time as the age in Myr
+let cp = joinpath(SIMULATION_PATH, "yt_cosmo")
+    if DATA_AVAILABLE && isdir(cp)
+        @testset "cosmological run → redshift / aexp columns" begin
+            ic = getinfo(80, cp, verbose=false)
+            c  = _cols(timeseries(cp, d -> maximum(getvar(d, :rho)); outputs=[80], verbose=false))
+            @test :redshift in propertynames(c) && :aexp in propertynames(c)
+            @test c.redshift[1] ≈ (1/ic.aexp - 1) rtol=1e-6
+            @test c.aexp[1] ≈ ic.aexp rtol=1e-6
+            @test c.time[1] > 1000                 # age of the universe, in Myr (~11925)
         end
     end
 end
