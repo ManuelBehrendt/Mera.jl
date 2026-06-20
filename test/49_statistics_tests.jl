@@ -70,9 +70,43 @@ if DATA_AVAILABLE && isdir(ST_PATH)
         Pl = pdf(g, :rho; logbins=false, bins=30, valrange=(0.0, 1.0))
         @test sum(Pl.pdf .* diff(Pl.edges)) ≈ 1 rtol=1e-6
     end
+
+    @testset "gravity (signed field) + 2D map (N-PDF) + matrix" begin
+        grav = getgravity(getinfo(100, ST_PATH, verbose=false), verbose=false, show_progress=false)
+        @test_throws ErrorException pdf(grav, :epot; logbins=true)          # signed → needs linear
+        @test length(pdf(grav, :epot; weight=:volume, logbins=false, bins=20).centers) == 20
+
+        pr = projection(g, :sd, verbose=false, show_progress=false)         # 2D map
+        N  = pdf(pr, :sd; bins=30)                                          # column-density PDF (area-weighted)
+        @test length(N.centers) == 30
+        @test sum(N.pdf .* diff(log10.(N.edges))) ≈ 1 rtol=1e-6
+        @test pdf(pr, :sd; weight=:value, bins=30).pdf != N.pdf
+        @test_throws ArgumentError pdf(pr, :not_a_map)
+
+        M = pdf(pr.maps[:sd]; bins=25)                                      # raw matrix form
+        @test length(M.centers) == 25
+    end
 else
     @testset "pdf data-backed (skipped: spiral_clumps unavailable)" begin
         @test_skip "spiral_clumps not found under SIMULATION_PATH"
+    end
+end
+
+# pdf is generic over data types — particles and RT live in other fixtures
+let pp = joinpath(SIMULATION_PATH, "spiral_ugrid")
+    if DATA_AVAILABLE && isdir(pp)
+        @testset "particles" begin
+            part = getparticles(getinfo(1, pp, verbose=false), verbose=false, show_progress=false)
+            @test length(pdf(part, :vx; weight=:mass, logbins=false, bins=20).centers) == 20
+        end
+    end
+end
+let rp = joinpath(SIMULATION_PATH, "rt_stromgren")
+    if DATA_AVAILABLE && isdir(rp)
+        @testset "RT" begin
+            rt = getrt(getinfo(4, rp, verbose=false), verbose=false, show_progress=false)
+            @test length(pdf(rt, :Np1; weight=:volume, bins=20).centers) == 20
+        end
     end
 end
 

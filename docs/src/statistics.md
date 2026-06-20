@@ -63,6 +63,28 @@ It works on any quantity, not just density — e.g. `pdf(gas, :T)` (temperature)
 :mach)` (Mach number), `pdf(gas, :p)` (pressure). Combine with [`subregion`](@ref) or a
 `mask` to restrict to a region, and with [`timeseries`](@ref) to watch a PDF evolve.
 
+## Any data type — and projected 2D maps
+
+`pdf` is generic over the data object, so it works on **hydro, particle, gravity, and RT**
+data — any quantity/weight [`getvar`](@ref) supports. For a **signed** field (the potential
+`:epot`, a velocity component) pass `logbins=false`, since log bins need positive values:
+
+```julia
+pdf(particles, :vx;   weight=:mass,   logbins=false)   # particle velocity PDF
+pdf(gravity,   :epot; weight=:volume, logbins=false)   # potential PDF
+pdf(rt,        :Np1;  weight=:volume)                  # photon-density PDF
+```
+
+Pass a [`projection`](@ref) result and `pdf` takes the **PDF of the 2D map's pixels** — with
+`:sd` this is the **column-density PDF (N-PDF)**, a standard observational diagnostic. Weight
+by `:area` (default, every pixel equal), `:value`, or another map key; a raw matrix works too:
+
+```julia
+p = projection(gas, :sd)
+N = pdf(p, :sd)                                              # area-weighted N-PDF
+M = pdf(mock_observe(p, :sd; beam_fwhm=1.0, beam_unit=:kpc)) # PDF of a raw image matrix
+```
+
 !!! note "Name clash"
     `pdf` is also exported by `Distributions.jl`; if you `using` both packages, call
     `Mera.pdf`.
