@@ -66,6 +66,8 @@ makedocs(modules = [Mera],
 
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
 
+                          "Mock Observations (cookbook)" => "mock_observations.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 
