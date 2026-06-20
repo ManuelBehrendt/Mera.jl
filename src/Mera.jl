@@ -101,6 +101,7 @@ export
     face_on,
     edge_on,
     GalaxyFrame,
+    pdf,
 
 # basic calcs
     msum,
@@ -422,6 +423,7 @@ include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
+include("functions/statistics.jl")
 # ============================================
 
 
