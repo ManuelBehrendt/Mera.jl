@@ -15,8 +15,9 @@ table — one row per output, ordered by output number.
 
 `reducer` receives the loaded data object of one snapshot and returns either a scalar
 or a `NamedTuple`. The returned table always carries an `output` column and a `time`
-column (from [`gettime`](@ref)); a scalar reducer value lands in a `value` column, a
-`NamedTuple` is expanded into one column per field.
+column (physical time in **Myr** by default, from [`gettime`](@ref); a cosmological run
+additionally gets `redshift` and `aexp` columns). A scalar reducer value lands in a `value`
+column, a `NamedTuple` is expanded into one column per field.
 
 Snapshots are loaded **strictly one at a time** and released before the next, so memory
 stays bounded — suited to a laptop with limited RAM. Loading respects
@@ -38,7 +39,9 @@ stays bounded — suited to a laptop with limited RAM. Loading respects
 - `lmax = nothing` : max AMR level to read (hydro/gravity); `nothing` uses `info.levelmax`.
 - `xrange, yrange, zrange, center, range_unit` : spatial selection passed to the loader —
   cutting the region is the main lever to reduce RAM per snapshot.
-- `time_unit::Symbol = :standard` : unit for the `time` column (see [`gettime`](@ref)).
+- `time_unit::Symbol = :Myr` : unit for the `time` column — physical by default
+  (`:Myr`/`:Gyr`/…); pass `:standard` for code units (see [`gettime`](@ref)). A cosmological
+  run also gets `redshift` and `aexp` columns automatically.
 - `verbose::Bool = true` : print per-snapshot progress.
 - `notify::Bool = false` : call [`notifyme`](@ref) when finished (a no-op unless
   `~/email.txt` / `~/zulip.txt` is configured).
@@ -71,7 +74,7 @@ function timeseries(path::String, reducer;
                     center::Array{<:Any,1} = [0., 0., 0.],
                     range_unit::Symbol = :standard,
                     smallr::Real = 0.,
-                    time_unit::Symbol = :standard,
+                    time_unit::Symbol = :Myr,
                     verbose::Bool = true,
                     notify::Bool = false)
 
@@ -88,8 +91,11 @@ function timeseries(path::String, reducer;
                                 lmax=lmax, xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit, smallr=smallr)
         val  = reducer(data)
-        t    = gettime(data; unit=time_unit)          # from the loaded object's own info
-        push!(rows, merge((output = n, time = t), _astuple(val)))
+        t    = gettime(data; unit=time_unit)          # physical time (Myr by default)
+        base = iscosmological(data.info) ?            # cosmological run → add z and aexp
+               (output = n, time = t, redshift = redshift(data.info), aexp = data.info.aexp) :
+               (output = n, time = t)
+        push!(rows, merge(base, _astuple(val)))
 
         data = nothing            # release the snapshot before loading the next one
         GC.gc(false)              # keep peak memory bounded on RAM-limited machines
