@@ -458,7 +458,8 @@ function position_velocity(dataobject; los=nothing, theta=nothing, phi=nothing,
     end
     return (offset = collect(range(ext[1], ext[2], length=no+1)),
             velocity = collect(range(ext[3], ext[4], length=nv+1)),
-            pv = grid, offset_unit = offset_unit, v_unit = v_unit, los = collect(w))
+            pv = grid, offset_unit = offset_unit, v_unit = v_unit, los = collect(w),
+            info = dataobject.info)        # carries provenance (see `provenance`)
 end
 
 

@@ -62,8 +62,16 @@ if DATA_AVAILABLE && isdir(PV_PATH)
         for o in objs
             @test provenance(o).output == 100
         end
-        # a result with no .info → clear ArgumentError, not a MethodError
-        @test_throws ArgumentError provenance(face_on(g))
+    end
+
+    @testset "wired into derived results (pdf / PV / GalaxyFrame)" begin
+        @test provenance(pdf(g, :rho)).output == 100
+        @test provenance(pdf(projection(g, :sd, verbose=false, show_progress=false), :sd)).output == 100
+        @test provenance(position_velocity(g; nbins=16, verbose=false)).output == 100
+        @test provenance(face_on(g)).output == 100
+        # a result with genuinely no .info (raw matrix pdf, a plain NamedTuple) → clear error
+        @test_throws ArgumentError provenance(pdf(projection(g, :sd, verbose=false, show_progress=false).maps[:sd]))
+        @test_throws ArgumentError provenance((a = 1, b = 2))
     end
 else
     @testset "provenance data-backed (skipped: spiral_clumps unavailable)" begin

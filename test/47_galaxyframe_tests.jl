@@ -44,6 +44,13 @@ if DATA_AVAILABLE && isdir(GF_PATH)
         @test all(abs.(seed.center .- glob.center) .< 0.05)  # re-centred back to the disk
     end
 
+    @testset "frame: struct, show, carries provenance" begin
+        fr = face_on(g)
+        @test fr.center_unit == :standard
+        @test occursin("GalaxyFrame", sprint(show, fr))
+        @test provenance(fr).output == 100        # the frame carries its source snapshot
+    end
+
     @testset "frame feeds projection" begin
         fo = face_on(g)
         pr = projection(g, :sd; los=fo.los, up=fo.up, center=fo.center,
@@ -57,16 +64,11 @@ else
 end
 
 # ------------------------------------------------------------------ PART B
-@testset "vector helpers + GalaxyFrame (data-free)" begin
+@testset "vector helpers (data-free)" begin
     @test Mera._vnorm([3.0, 4.0, 0.0]) == 5.0
     @test Mera._vunit([0.0, 0.0, 2.0]) == [0.0, 0.0, 1.0]
     @test Mera._vcross([1.0, 0, 0], [0.0, 1, 0]) == [0.0, 0.0, 1.0]
     @test Mera._vcross([1.0, 0, 0], [1.0, 0, 0]) == [0.0, 0.0, 0.0]   # parallel → 0
-
-    fr = GalaxyFrame([0.5, 0.5, 0.5], :standard, [0.0, 0, 1], [1.0, 0, 0], [0.0, 0, 10])
-    @test fr.center_unit == :standard
-    @test fr.los == [0.0, 0, 1]
-    @test occursin("GalaxyFrame", sprint(show, fr))
 end
 
 end

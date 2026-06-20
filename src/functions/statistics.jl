@@ -99,7 +99,8 @@ function pdf(dataobject, quantity::Symbol; weight::Symbol=:mass, norm::Symbol=:d
         Float64.(getvar(dataobject, weight, mask=mask))
     r = _weighted_pdf(x, w; bins=bins, valrange=valrange, logbins=logbins, norm=norm)
     return (centers = r.centers, edges = r.edges, pdf = r.pdf, logbins = r.logbins,
-            norm = r.norm, quantity = quantity, unit = unit, weight = weight)
+            norm = r.norm, quantity = quantity, unit = unit, weight = weight,
+            info = dataobject.info)        # carries provenance (see `provenance`)
 end
 
 """
@@ -129,7 +130,7 @@ function pdf(m::DataMapsType, var::Symbol; weight=:area, norm::Symbol=:density,
         end
     r = _weighted_pdf(vals, w; bins=bins, valrange=valrange, logbins=logbins, norm=norm)
     return (centers = r.centers, edges = r.edges, pdf = r.pdf, logbins = r.logbins,
-            norm = r.norm, quantity = var, weight = weight)
+            norm = r.norm, quantity = var, weight = weight, info = m.info)   # provenance
 end
 
 """
