@@ -43,9 +43,9 @@ fr.angmom    # the net angular-momentum vector it was built from
 ```
 
 Why it works without subtracting the bulk velocity: angular momentum measured about the
-**centre of mass** cancels any net translation, because ``\\sum_i m_i \\mathbf r_i = 0``
+**centre of mass** cancels any net translation, because ``\sum_i m_i \mathbf{r}_i = 0``
 there. (The same cancellation removes the Hubble flow in cosmological runs, since
-``\\mathbf r \\times H\\mathbf r = 0``.)
+``\mathbf{r} \times H\mathbf{r} = 0``.)
 
 ## Several galaxies, mergers, cosmological boxes
 
@@ -87,6 +87,45 @@ there. (The same cancellation removes the Hubble flow in cosmological runs, sinc
 | `face_on`/`edge_on` | `range_unit` | `:standard` | unit of `center`/`aperture`/output centre |
 
 Works on hydro and particle data (both carry mass and velocity → angular momentum).
+
+## Method and references
+
+**Aperture.** The `aperture` keyword is a sphere *radius* (in `range_unit`) around the seed
+centre — the region within which the local centre and the spin axis are measured. The name
+is borrowed from aperture photometry: only data inside the sphere contributes, which is what
+isolates one object from its neighbours. `aperture=nothing` (the default) uses all the data,
+which is correct only for an already-isolated object.
+
+**Orientation.** `face_on` / `edge_on` take the net, mass-weighted angular momentum
+
+```math
+\mathbf{L} = \sum_i m_i\, \mathbf{r}_i \times \mathbf{v}_i
+```
+
+of the selected region about the centre, and use ``\hat{\mathbf{L}}`` as the spin axis (the
+face-on line of sight); edge-on looks along a direction in the disc plane. This is the same
+recipe the established simulation-analysis tools use — e.g. pynbody's
+`angmom.faceon`/`sideon` and yt's angular-momentum / off-axis projection.
+
+**Centring.** `:com` is the mass-weighted centre of mass; `:densest` is the density peak.
+With a seed centre plus an `aperture`, the frame re-centres on the *local* CoM inside the
+sphere — one iteration of the shrinking-sphere centre commonly used for haloes.
+
+**Why no bulk-velocity subtraction.** Angular momentum about the centre of mass separates
+into centre-of-mass and internal parts (König's theorem), so a net translation contributes
+nothing about the CoM. The Hubble flow ``\mathbf{v} = H\mathbf{r}`` is parallel to
+``\mathbf{r}``, so ``\mathbf{r} \times \mathbf{v} = 0`` — hence the recipe is also correct
+in cosmological runs.
+
+These are standard techniques in galaxy-simulation analysis rather than any single source;
+the authoritative references for the ingredients:
+
+- A. Pontzen, R. Roškar, G. Stinson, et al., *pynbody: Astrophysics Simulation Analysis for Python* (2013), Astrophysics Source Code Library, ascl:1305.002 — `faceon`/`sideon` orientation by angular momentum.
+- M. J. Turk, B. D. Smith, J. S. Oishi, et al., "yt: A Multi-code Analysis Toolkit for Astrophysical Simulation Data", *ApJS* **192**, 9 (2011).
+- C. Power, J. F. Navarro, A. Jenkins, et al., "The inner structure of ΛCDM haloes — I. A numerical convergence study", *MNRAS* **338**, 14 (2003) — iterative shrinking-sphere centre.
+- V. Springel, N. Yoshida, S. D. M. White, "GADGET … and the SUBFIND algorithm", *MNRAS* **328**, 726 (2001) — density-peak substructure centres.
+- J. Binney & S. Tremaine, *Galactic Dynamics*, 2nd ed. (Princeton University Press, 2008) — angular momentum and disc dynamics.
+- H. Goldstein, C. Poole, J. Safko, *Classical Mechanics*, 3rd ed. (Addison-Wesley, 2002) — König's theorem (decomposition of angular momentum about the CoM).
 
 ## See also
 
