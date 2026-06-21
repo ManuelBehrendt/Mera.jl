@@ -180,13 +180,20 @@ the cell mass:
 | Jeans length `:jeanslength` | ``\lambda_J = c_s\,\sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` |
 | Jeans mass `:jeansmass` | ``M_J = \dfrac{4\pi}{3}\,\Big(\dfrac{\lambda_J}{2}\Big)^3\,\rho`` |
 | Jeans number `:jeansnumber` | ``N_J = \lambda_J/\Delta x`` |
-| Free-fall time `:freefall_time` | ``t_\mathrm{ff} = \sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` |
+| Free-fall time `:freefall_time` | ``t_\mathrm{ff} = \sqrt{\dfrac{3\pi}{32\,G\,\rho}}`` (any time unit: `getvar(gas,:freefall_time,:Myr)`) |
 | Local virial parameter `:virial_parameter_local` | ``\alpha_\mathrm{vir} = \dfrac{5\,c_s^2\,\Delta x}{G\,m}`` |
 
 !!! note "Jeans convention"
     ``\lambda_J`` is one of several Jeans-length conventions in the literature; factors of order
     unity differ between them. `:jeansmass` and `:jeansnumber` are derived from this ``\lambda_J``.
     The local virial parameter uses ``R\approx\Delta x`` (a cell-scale stability estimate).
+
+!!! tip "Star-formation efficiency"
+    [`depletion_time`](@ref) combines the gas mass with a star-formation rate to give the depletion
+    time ``t_\mathrm{depl}=M_\mathrm{gas}/\mathrm{SFR}``, the mass-weighted ``\langle t_\mathrm{ff}\rangle``,
+    and the efficiency per free-fall time ``\varepsilon_\mathrm{ff}=\mathrm{SFR}\cdot\langle t_\mathrm{ff}\rangle/M_\mathrm{gas}``.
+    The SFR itself comes from [`sfr`](@ref)/[`sfr_snapshot`](@ref) (with an optional `eta_sn` SN
+    mass-loss correction). See [Star-Formation Rate](sfr.md).
 
 ## Gravity
 
@@ -352,6 +359,8 @@ adds `density = S_w/\text{shell volume}`; `cumulative` adds `cumsum` (e.g. enclo
 |---|---|
 | Dynamical rotation curve `rotationcurve` | ``v_\mathrm{circ}(r) = \sqrt{G\,M(<r)/r}`` from the binned enclosed mass ``M(<r) = \sum_{r_i<r} m_i`` (also returns ``g = GM/r^2``) |
 | Kinematic dispersion `velocitydispersion` | the per-bin `std` of ``v_R, v_\phi, v_z`` → ``\sigma_R,\sigma_\phi,\sigma_z`` and total ``\sigma = \sqrt{\sigma_R^2+\sigma_\phi^2+\sigma_z^2}`` |
+| Total (turbulent ⊕ thermal) dispersion `velocitydispersion(…; thermal=true, mu=…)` | ``\sigma_\mathrm{turb,1D}=\sqrt{(\sigma_R^2+\sigma_\phi^2+\sigma_z^2)/3}``, thermal ``\sigma_\mathrm{th}=\sqrt{k_B\langle T\rangle/(\mu m_H)}``, total ``\sigma_\mathrm{tot}=\sqrt{\sigma_\mathrm{turb,1D}^2+\sigma_\mathrm{th}^2}``, Mach ``\mathcal{M}=\sigma_\mathrm{turb,1D}/\langle c_s\rangle`` |
+| Local de-streamed dispersion `localdispersion` | as above but the turbulent ``\sigma`` is the residual about the **per-patch** mean velocity (square `patchsize` tiles in ``x,y``) — removes rotation/shear/streaming above the patch scale (TIGRESS/SILCC-style); also returns the anisotropy ``\sigma_z/\sigma_\mathrm{in\text{-}plane}`` and patch-to-patch percentile spread |
 
 Conceptual guide and worked examples: [Profiles & Phase Diagrams](profiles_phase.md).
 
@@ -387,7 +396,12 @@ bulk/rotation/streaming *at that scale* cancels automatically. Only the **set** 
 |---|---|---|---|
 | **Global** | `wstat(getvar(obj,:vz); weight=…)` | the single mean of the whole selection | one number for a region |
 | **3-D, per bin** | `profile(obj, :r_cylinder, :vz).std` | each radial bin's mean (rest-frame) | intrinsic ``\sigma(R)`` in annuli/shells; rotation removed per bin |
+| **3-D, per patch** | `localdispersion(obj; patchsize=…)` | each ``x,y`` patch's mean (de-streamed) | turbulence below `patchsize`; rotation/shear/streaming removed locally (TIGRESS/SILCC) |
 | **2-D, per pixel** | `projection(obj, :σz)` / `:σlos` | each pixel's mean down the sightline | local LOS dispersion map (mock-obs ``\sigma``) |
+
+`velocitydispersion(…; thermal=true)` and `localdispersion(…)` additionally fold in the **thermal**
+line width ``\sigma_\mathrm{th}=\sqrt{k_B\langle T\rangle/(\mu m_H)}`` to give the total
+``\sigma_\mathrm{tot}=\sqrt{\sigma_\mathrm{turb}^2+\sigma_\mathrm{th}^2}`` an observer measures.
 
 So `profile(gas, :r_cylinder, :vϕ_cylinder)` returns both the **mean** ``\langle v_\phi\rangle(R)``
 (the kinematic rotation curve — it keeps its sign) and the **`std`** ``\sigma_\phi(R)`` (the spread
