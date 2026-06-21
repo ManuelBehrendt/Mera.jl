@@ -17,6 +17,17 @@
 const _PLUTO_VARMAP = Dict("rho"=>:rho, "vx1"=>:vx, "vx2"=>:vy, "vx3"=>:vz, "prs"=>:p,
                            "bx1"=>:bx, "bx2"=>:by, "bx3"=>:bz)
 
+# Output numbers of a PLUTO run, read from the first column of dbl.out.
+function pluto_output_numbers(path::String)
+    f = joinpath(path, "dbl.out"); nums = Int[]
+    isfile(f) || return nums
+    for ln in eachline(f)
+        s = split(ln); isempty(s) && continue
+        n = tryparse(Int, s[1]); n === nothing || push!(nums, n)
+    end
+    return sort(nums)
+end
+
 # Detect which simulation code wrote a directory, from its signature files.
 # PLUTO static-grid output has grid.out + dbl.out; RAMSES has output_*/info_*.txt.
 function detect_simcode(path::String)
