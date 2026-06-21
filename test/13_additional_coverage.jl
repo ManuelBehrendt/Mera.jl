@@ -375,6 +375,19 @@ end
         # No-arg form prints current state to stdout.
         @test contains(capture_stdout(() -> verbose()),      "verbose_mode")
         @test contains(capture_stdout(() -> showprogress()), "showprogress_mode")
+
+        # output_mode master switch sets BOTH at once.
+        output_mode(false)
+        @test Mera.verbose_mode == false && Mera.showprogress_mode == false
+        @test Mera.checkverbose(true) == false && Mera.checkprogress(true) == false
+        output_mode(true)
+        @test Mera.verbose_mode == true && Mera.showprogress_mode == true
+        output_mode(nothing)
+        @test Mera.verbose_mode === nothing && Mera.showprogress_mode === nothing
+        @test Mera.checkverbose(true) == true       # neutral → per-function argument wins
+        # no-arg form reports both states
+        out = capture_stdout(() -> output_mode())
+        @test contains(out, "verbose_mode") && contains(out, "showprogress_mode")
     finally
         verbose(orig_verbose)
         showprogress(orig_progress)

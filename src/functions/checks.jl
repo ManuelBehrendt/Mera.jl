@@ -96,3 +96,32 @@ end
 function showprogress()
     println("showprogress_mode: ", showprogress_mode)
 end
+
+
+# global output master switch (verbose + progressbar at once) ===========================
+"""
+    output_mode(mode::Union{Bool,Nothing})
+    output_mode()
+
+Master switch that sets **both** [`verbose`](@ref) and [`showprogress`](@ref) at once — so
+you don't toggle them separately. Same meaning as those: `output_mode(false)` silences all
+Mera text *and* progress bars globally, `output_mode(true)` forces both on, and
+`output_mode(nothing)` reverts both to each function's own `verbose=`/`show_progress=`
+argument (the neutral default). `output_mode()` with no argument prints the current state of
+both.
+
+```julia
+output_mode(false)    # quiet: no messages, no progress bars, anywhere
+output_mode(nothing)  # back to per-function control
+output_mode()         # show current state
+```
+"""
+function output_mode(mode::Union{Bool,Nothing})
+    verbose(mode)
+    showprogress(mode)
+    return nothing
+end
+
+function output_mode()
+    println("verbose_mode: ", verbose_mode, "   showprogress_mode: ", showprogress_mode)
+end
