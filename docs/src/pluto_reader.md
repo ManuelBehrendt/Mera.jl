@@ -70,7 +70,54 @@ This is the proof-of-concept for multi-code support: a new code = "write a reade
 the structs," not "rework Mera." Other Eulerian codes (Enzo, FLASH, Athena++) can follow the
 same pattern.
 
+## A complete PLUTO workflow
+
+Because PLUTO data lands in the standard structs, the *entire* Mera workflow runs on it —
+identical to the RAMSES tutorials. Here is load → inspect → projection → time-series → movie →
+PDF, end to end, on a 3-D Sedov blast (6 PLUTO outputs):
+
+![A complete PLUTO workflow in Mera: the ρ projection of the Sedov blast (output 5), the peak density rising over the 6 outputs, and total mass conserved — produced with the same getvar/projection/timeseries calls used for RAMSES.](assets/pluto/pluto_workflow.png)
+
+```julia
+using Mera
+
+path = "/data/pluto_sedov3d"
+
+# 1. load — getinfo auto-detects PLUTO and prints "Code: PLUTO"
+info = getinfo(5, path)
+gas  = gethydro(info)
+
+# 2. inspect / derive quantities — getvar works unchanged
+extrema(getvar(gas, :rho))          # density range
+getvar(gas, :cellsize)[1]           # = boxlen / 2^level
+msum(gas)                           # total mass (code units)
+
+# 3. projection (the exact off-axis engine)
+p = projection(gas, :rho)
+# heatmap of log10.(p.maps[:rho]) over p.extent  → the blast's shock front
+
+# 4. time-series over all 6 outputs (discovery reads PLUTO's dbl.out)
+ts = timeseries(path, d -> (rho_max = maximum(getvar(d, :rho)), mass = msum(d));
+                time_unit = :standard)
+#   columns: output | time | rho_max | mass   (ρ_max rises 1 → 4 as the blast forms)
+
+# 5. a movie of the blast (frames from the 6 outputs → GIF)
+mv = getmovie(path, :rho; time_unit = :standard)
+savemovie(mv, "pluto_blast.gif"; tags = :output)
+
+# 6. the density PDF
+P = pdf(gas, :rho)
+
+# 7. persist a map / cube the JLD2 way (opens in h5py too)
+savemap(p, "pluto_rho.jld2")
+```
+
+![The PLUTO Sedov blast evolving over its 6 outputs — getmovie/savemovie work on PLUTO data exactly as on RAMSES.](assets/pluto/pluto_blast.gif)
+
+Every step above is the same call you would make on a RAMSES snapshot — that is the whole
+point of the code-blind analysis layer.
+
 ## See also
 
-- [`getvar`](@ref), [`projection`](@ref), [`pdf`](@ref) — the analysis that now runs on PLUTO data.
+- [`getvar`](@ref), [`projection`](@ref), [`pdf`](@ref), [`timeseries`](@ref), [`getmovie`](@ref) — the analysis that now runs on PLUTO data.
 - [`getinfo`](@ref) / [`gethydro`](@ref) — the RAMSES equivalents this mirrors.
