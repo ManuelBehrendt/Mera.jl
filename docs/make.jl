@@ -107,6 +107,10 @@ makedocs(modules = [Mera],
                                                         "API Reference" => "api/volume_rendering.md"]],
 
                       "Advanced Features" => Any[
+                          "Bundling Arguments (myargs)" => "bundled_arguments.md",
+
+                          "Verbose & Progress Switches" => "verbose_progress_switches.md",
+
                           "Multi-Threading"     => Any[ "Tutorial"    => "multi-threading/multi-threading_intro.md",
                                                         "API Reference" => "api/multithreading.md"],
 

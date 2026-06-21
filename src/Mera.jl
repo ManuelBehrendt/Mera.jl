@@ -62,6 +62,7 @@ export
     verbose,
     showprogress_mode,
     showprogress,
+    output_mode,
 # data reader
     getunit,
     getinfo,
