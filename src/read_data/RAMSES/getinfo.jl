@@ -36,8 +36,10 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", code::S
     resolved = code === :auto ? detect_simcode(path == "" ? pwd() : path) : code
     if resolved === :pluto
         return getinfo_pluto(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
+    elseif resolved === :chombo
+        return getinfo_chombo(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
     elseif resolved !== :ramses
-        error("getinfo: unknown code :$resolved (use :auto, :ramses, or :pluto).")
+        error("getinfo: unknown code :$resolved (use :auto, :ramses, :pluto, or :chombo).")
     end
 
 

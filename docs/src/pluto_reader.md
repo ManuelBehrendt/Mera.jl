@@ -6,11 +6,11 @@ the [PLUTO code](http://plutocode.ph.unito.it)** that reads PLUTO's static-grid 
 the same Mera structs — so [`getvar`](@ref), [`projection`](@ref), [`pdf`](@ref),
 [`timeseries`](@ref), and the rest run on PLUTO data unchanged.
 
-!!! warning "Experimental / v1 scope"
-    The PLUTO frontend currently supports **3-D, Cartesian, uniform (static) grids** with a
-    power-of-two cell count per axis (so the grid maps onto Mera's `cellsize = boxlen/2^level`
-    convention). PLUTO's AMR (Chombo) format and non-Cartesian geometries are not yet
-    supported. PLUTO test problems are dimensionless, so data load in **code units**.
+!!! note "Two formats, one analysis"
+    The frontend reads **both** of PLUTO's output formats into the same Mera structs:
+    static **uniform grids** (`grid.out` + `.dbl`) and **AMR** (the Chombo `.hdf5` format, see
+    [below](#PLUTO-AMR-(Chombo))). Scope: 3-D, Cartesian, power-of-two base grid. PLUTO test
+    problems are dimensionless, so data load in **code units**.
 
 ## Usage
 
@@ -116,6 +116,29 @@ savemap(p, "pluto_rho.jld2")
 
 Every step above is the same call you would make on a RAMSES snapshot — that is the whole
 point of the code-blind analysis layer.
+
+## PLUTO AMR (Chombo)
+
+PLUTO's **AMR** output uses the Chombo box-structured HDF5 format (shared with Orion and other
+Chombo codes). The frontend reads it too — `getinfo` auto-detects a `.hdf5` snapshot and loads
+the level hierarchy as a Mera **AMR** `HydroDataType`:
+
+```julia
+info = getinfo(0, "/data/chombo_run")    # detects the Chombo .hdf5 → "Code: CHOMBO"
+gas  = gethydro(info)                      # → AMR HydroDataType (a :level column)
+projection(gas, :rho)                      # the analysis runs unchanged on AMR data
+```
+
+The reader flattens the levels to a **leaf-cell** list (a coarse cell is kept only where it is
+*not* refined by a finer level) and maps each cell to Mera's `(level, cx, cy, cz)` convention —
+Chombo level-0 of `N₀` cells per axis becomes Mera level `log₂N₀`, each finer level adds one
+(`ref_ratio = 2`). Variable names are mapped per code: PLUTO (`rho`, `vx1…`, `prs`) directly;
+Orion (`density`, `X/Y/Z-momentum`, `energy-density`) with velocity = momentum/density and
+pressure derived from the energy. The leaf extraction is validated cell-for-cell against an
+independent reader.
+
+HDF5 reading uses `HDF5.jl` (a dependency of Mera). Requires a power-of-two base grid and
+`ref_ratio = 2` (the common PLUTO/Chombo case).
 
 ## See also
 
