@@ -198,6 +198,11 @@ function getparticles( dataobject::InfoType;
                     subsample::Real=1.0,                     # read only ~this fraction of CPU files (1.0 = all); for very large runs
                     myargs::ArgumentsType=ArgumentsType() )
 
+    # Multi-code: a non-RAMSES info delegates to its own particle frontend.
+    if dataobject.simcode == "PLUTO"
+        return getparticles_pluto(dataobject; verbose=verbose)
+    end
+
     # ===== ARGUMENT OVERRIDE SECTION =====
     # Allow myargs struct to override individual function arguments
     # This provides a convenient way to pass multiple arguments at once
