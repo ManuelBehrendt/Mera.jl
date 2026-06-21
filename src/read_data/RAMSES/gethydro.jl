@@ -333,6 +333,8 @@ function gethydro(dataobject::InfoType;
     # Multi-code: a non-RAMSES info delegates to its own frontend (the analysis stays blind).
     if dataobject.simcode == "PLUTO"
         return gethydro_pluto(dataobject; verbose=verbose)
+    elseif dataobject.simcode == "CHOMBO"
+        return gethydro_chombo(dataobject; verbose=verbose)
     end
 
     # ═══════════════════════════════════════════════════════════════════════════

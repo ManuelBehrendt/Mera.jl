@@ -10,6 +10,7 @@
 # ============================================================================
 
 const PL_PATH = joinpath(SIMULATION_PATH, "pluto_sedov3d")
+const CH_PATH = joinpath(SIMULATION_PATH, "chombo_3d", "IsothermalSphere")
 
 @testset "PLUTO reader" begin
 
@@ -98,6 +99,34 @@ if DATA_AVAILABLE && isdir(PL_PATH)
 else
     @testset "PLUTO reader data-backed (skipped: pluto_sedov3d unavailable)" begin
         @test_skip "pluto_sedov3d not found under SIMULATION_PATH"
+    end
+end
+
+# ---- Chombo / PLUTO-AMR (box-structured AMR, HDF5) ----
+if DATA_AVAILABLE && isdir(CH_PATH)
+    @testset "Chombo / PLUTO-AMR reader" begin
+        info = getinfo(0, CH_PATH; verbose=false)
+        @test info.simcode == "CHOMBO"
+        @test info.levelmin < info.levelmax            # genuine AMR (multi-level)
+        @test :rho in info.variable_list && :vx in info.variable_list
+
+        g = gethydro(info, verbose=false)
+        @test g isa Mera.HydroDataType
+        @test :level in Mera.IndexedTables.colnames(g.data)   # AMR table carries a level column
+        @test length(g.data) == 646248                 # leaf cells — validated vs an independent reader
+        @test all(getvar(g, :rho) .> 0)
+        @test all(isfinite, getvar(g, :vx))            # momentum → velocity derivation
+        # leaf cells span more than one level; cell size halves per level
+        lv = getvar(g, :level)
+        @test length(unique(lv)) >= 2
+        @test getvar(g, :cellsize)[1] ≈ g.boxlen / 2^Int(lv[1])
+        # the analysis layer works unchanged on AMR data
+        pr = projection(g, :rho, verbose=false, show_progress=false)
+        @test sum(pr.maps[:rho]) > 0
+    end
+else
+    @testset "Chombo reader (skipped: chombo_3d unavailable)" begin
+        @test_skip "chombo_3d/IsothermalSphere not found under SIMULATION_PATH"
     end
 end
 

@@ -45,6 +45,7 @@ using ImageTransformations
 using ImageTransformations.Interpolations
 using CSV
 using FileIO
+using HDF5            # Chombo / PLUTO-AMR reader (read_data/PLUTO/reader_chombo.jl)
 using JSON3
 using HTTP
 using MacroTools
@@ -376,6 +377,7 @@ include("read_data/RAMSES/hilbert3d.jl")
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
 include("read_data/PLUTO/reader_pluto.jl")   # PLUTO frontend (static uniform Cartesian grid)
+include("read_data/PLUTO/reader_chombo.jl")  # Chombo / PLUTO-AMR frontend (HDF5)
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
