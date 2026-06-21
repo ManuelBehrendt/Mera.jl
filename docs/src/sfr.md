@@ -71,6 +71,35 @@ s = sfr_snapshot(parts; windows=[5.0, 10.0, 50.0, 100.0])   # custom windows
 For each window `Δt`, `SFR(Δt) = M⋆(age ≤ Δt) / Δt`, where ages are computed correctly for both
 non-cosmological and cosmological runs (the latter via the Friedmann-table [`stellar_age`](@ref)).
 
+## SN mass-loss correction
+
+The SFR should integrate the stars' **initial** (birth) mass; the current `:mass` is reduced by
+post-formation stellar mass loss. `sfr`/`sfr_snapshot` use a stored initial-mass column automatically
+when present. When a run stores only the current mass, pass `eta_sn` to reconstruct the birth mass —
+a star older than `t_sn_delay` Myr (SN onset, default 5) has shed a fraction `eta_sn`, so it is
+rescaled by `1/(1-eta_sn)`:
+
+```julia
+t, s = sfr(parts; eta_sn=0.2)          # 20% SN mass loss → birth-mass-based SFR
+```
+
+`eta_sn=0` (default) is a no-op, and it is ignored (with a warning) when an initial-mass field is
+already used — that column is already the birth mass.
+
+## Depletion time & star-formation efficiency
+
+[`depletion_time`](@ref) combines a gas region with an SFR estimate to return the gas depletion time
+`t_depl = M_gas/SFR`, the mass-weighted free-fall time `⟨t_ff⟩`, and the efficiency per free-fall time
+`ε_ff = SFR·⟨t_ff⟩/M_gas` (Krumholz–McKee). Mask to the star-forming gas to measure its efficiency:
+
+```julia
+d = depletion_time(gas, 1.5; mask = getvar(gas,:rho,:nH) .> 27)   # SFR = 1.5 M⊙/yr
+d.t_depl_Gyr, d.t_ff_mw_Myr, d.eps_ff
+```
+
+The per-cell free-fall time itself is the [`getvar`](@ref) field `:freefall_time` (`= √(3π/32Gρ)`,
+correct in any time unit: `getvar(gas, :freefall_time, :Myr)`).
+
 ## API
 
 [`sfr`](@ref) and [`sfr_snapshot`](@ref) are documented in the [API reference](api.md). The

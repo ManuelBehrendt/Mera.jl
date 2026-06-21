@@ -21,6 +21,24 @@ function _sfr_mass_field(p::PartDataType, mass::Symbol)
     return :mass
 end
 
+# Reconstruct the INITIAL stellar mass from the current mass when no initial-mass column is stored:
+# a star older than `t_sn_delay` (the SN onset) has already shed a fraction `eta_sn` of its birth mass,
+# so m_birth = m_current / (1 - eta_sn). Younger stars have not yet had SNe → unchanged. Applied only
+# when integrating the *current* `:mass` (an initial-mass column is already the birth mass — leaving it
+# untouched, with a warning, avoids a double correction). `eta_sn ≤ 0` is a no-op (backward compatible).
+function _sn_correct_mass!(p::PartDataType, massv::AbstractVector, mfield::Symbol,
+                           eta_sn::Real, t_sn_delay::Real, time_unit::Symbol)
+    eta_sn > 0.0 || return massv
+    0.0 < eta_sn < 1.0 || error("sfr: eta_sn must be in (0,1) (got $eta_sn)")
+    if mfield !== :mass
+        @warn "sfr: eta_sn ignored — an initial-mass field ($mfield) is already the birth mass" maxlog=1
+        return massv
+    end
+    age = getvar(p, :age, time_unit)                       # age since formation, cosmology-correct
+    f = 1.0 / (1.0 - eta_sn)
+    return [ age[i] > t_sn_delay ? massv[i]*f : massv[i] for i in eachindex(massv) ]
+end
+
 # Pure, data-free binning kernel: histogram formation times [Myr] weighted by mass [M⊙] into
 # fixed-width bins and divide by the bin width → SFR [M⊙/yr] (or a normalised SFH fraction).
 # `tform`/`massv` are already restricted to star particles. Testable without simulation data.
@@ -63,17 +81,25 @@ test is *not* reliable. The **formation-time axis is physical** and RAMSES-versi
   stellar mass; current mass underestimates it by post-formation mass loss.
 * `mask` — a Bool vector over the particles (length == number of particles) to subselect.
 * `mode` — `:none` (M⊙/yr) or `:probability` (normalised SFH fraction).
+* `eta_sn`, `t_sn_delay` — **SN mass-loss correction** for runs that store only the *current* mass:
+  a star older than `t_sn_delay` Myr (SN onset, default 5) has shed a fraction `eta_sn` of its birth
+  mass, so its mass is rescaled by `1/(1-eta_sn)` to recover the initial mass. Default `eta_sn=0` is a
+  no-op; ignored (with a warning) when an initial-mass field is used — it is already the birth mass.
 
 ```julia
 t, s = sfr(parts; tbinsize=50.0)            # SFR [M⊙/yr] vs t [Myr]
 t, s = sfr(parts; mass=:minit)              # force a specific initial-mass field
+t, s = sfr(parts; eta_sn=0.2)               # reconstruct birth mass from current mass (20% SN loss)
 ```
 
 See also [`sfr_snapshot`](@ref) for the current SFR from a single snapshot.
 """
 function sfr(p::PartDataType; tbinsize::Real=10.0, trange=[missing, missing], mass::Symbol=:auto,
-             mask=[false], mode::Symbol=:none, closed::Symbol=:left)
-    massv  = getvar(p, _sfr_mass_field(p, mass), :Msol)   # initial (preferred) or current mass [M⊙]
+             mask=[false], mode::Symbol=:none, closed::Symbol=:left,
+             eta_sn::Real=0.0, t_sn_delay::Real=5.0)
+    mfield = _sfr_mass_field(p, mass)
+    massv  = getvar(p, mfield, :Msol)                     # initial (preferred) or current mass [M⊙]
+    massv  = _sn_correct_mass!(p, massv, mfield, eta_sn, t_sn_delay, :Myr)  # reconstruct birth mass if asked
     isstar = getvar(p, :birth) .!= 0.0                    # universal RAMSES star sentinel (non-stars: birth == 0)
     if iscosmological(p.info)
         tform = getvar(p, :formation_time, :Myr)          # physical cosmic formation time [Myr] (non-stars → 0)
@@ -119,10 +145,11 @@ s.mass_field                       # which mass field was used (e.g. :minit or :
 See also [`sfr`](@ref) for the full star-formation history SFR(t).
 """
 function sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit::Symbol=:Myr,
-                      mass::Symbol=:auto, mask=[false])
+                      mass::Symbol=:auto, mask=[false], eta_sn::Real=0.0, t_sn_delay::Real=5.0)
     mfield = _sfr_mass_field(p, mass)
     age  = getvar(p, :age, time_unit)                    # age since formation (cosmological-correct)
     massv = getvar(p, mfield, :Msol)                     # initial (preferred) or current mass [M⊙]
+    massv = _sn_correct_mass!(p, massv, mfield, eta_sn, t_sn_delay, time_unit)  # birth-mass reconstruction
     star = getvar(p, :birth) .!= 0.0
     if length(mask) > 1
         length(mask) == length(age) ||
@@ -137,4 +164,40 @@ function sfr_snapshot(p::PartDataType; windows=[5.0, 10.0, 100.0], time_unit::Sy
     sfr_mean = oldest > 0 ? Mstar / (oldest * yr_per_unit) : 0.0
     return (windows=ws, time_unit=time_unit, sfr=sfrw, sfr_mean=sfr_mean,
             n_stars=count(star), stellar_mass_Msol=Mstar, oldest_age=oldest, mass_field=mfield)
+end
+
+"""
+    depletion_time(dataobject, sfr_Msol_yr; mass=:mass, mask=[false]) -> NamedTuple
+
+**Gas depletion time and star-formation efficiency per free-fall time.** Given a gas region and its
+star-formation rate `sfr_Msol_yr` [M⊙/yr], returns
+
+* `t_depl_Gyr = M_gas / SFR` — how long the present SFR would take to consume the gas;
+* `t_ff_mw_Myr` — the **mass-weighted mean free-fall time** `⟨√(3π/32Gρ)⟩` (per-cell `:freefall_time`);
+* `eps_ff = SFR · ⟨t_ff⟩ / M_gas` — the dimensionless star-formation efficiency *per free-fall time*
+  (Krumholz–McKee), typically ~0.01–0.1;
+* `M_gas_Msol`, `sfr`.
+
+Use a `mask` (e.g. dense star-forming gas `getvar(gas,:rho,:nH) .> 27`) to measure the efficiency of
+the gas actually forming stars. Works on any grid data with `:mass` and `:freefall_time`.
+
+```julia
+_, s = sfr_snapshot(stars).sfr[2], 0   # or any SFR estimate in M⊙/yr
+d = depletion_time(gas, 1.5; mask = getvar(gas,:rho,:nH) .> 27)
+d.t_depl_Gyr, d.eps_ff
+```
+"""
+function depletion_time(dataobject, sfr_Msol_yr::Real; mass::Symbol=:mass, mask=[false])
+    skip = check_mask(dataobject, mask, false)
+    Mg   = getvar(dataobject, mass, :Msol)
+    tff  = getvar(dataobject, :freefall_time, :yr)
+    if !skip
+        sel = collect(Bool.(mask)); Mg = Mg[sel]; tff = tff[sel]
+    end
+    Mtot = sum(Mg)
+    tff_mw = Mtot > 0 ? sum(Mg .* tff) / Mtot : NaN          # mass-weighted ⟨t_ff⟩ [yr]
+    t_depl_yr = sfr_Msol_yr > 0 ? Mtot / sfr_Msol_yr : NaN
+    eps_ff = (Mtot > 0 && sfr_Msol_yr > 0) ? sfr_Msol_yr * tff_mw / Mtot : NaN
+    return (M_gas_Msol=Mtot, sfr=Float64(sfr_Msol_yr), t_depl_Gyr=t_depl_yr/1e9,
+            t_ff_mw_Myr=tff_mw/1e6, eps_ff=eps_ff)
 end

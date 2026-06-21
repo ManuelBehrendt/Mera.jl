@@ -630,6 +630,39 @@ end
             @test vd.sigma ≈ sqrt.(sum(vd.sigma_components.^2, dims=2)[:]) && length(vd.components) == 3
         end
 
+        @testset "D5b velocitydispersion thermal + total + mach" begin
+            vk = (nbins=10, xrange=(0.5,18), center=[:bc], center_unit=:kpc)
+            v0 = velocitydispersion(gas; vk...)
+            vt = velocitydispersion(gas; thermal=true, mu=1.0, vk...)
+            @test vt.sigma == v0.sigma                                     # base kinematic σ unchanged (backward compat)
+            fin = findall(isfinite, vt.sigma_total)
+            @test isapprox(vt.sigma_turb_1d, vt.sigma ./ sqrt(3); rtol=1e-10)   # 1-D reduction √(Σσ²/n)
+            @test all(isapprox.(vt.sigma_total[fin], sqrt.(vt.sigma_turb_1d[fin].^2 .+ vt.sigma_thermal[fin].^2); rtol=1e-10))
+            @test all(vt.sigma_total[fin] .>= vt.sigma_turb_1d[fin] .- 1e-9)
+            @test all(vt.sigma_total[fin] .>= vt.sigma_thermal[fin] .- 1e-9)
+            @test all(vt.sigma_thermal[fin] .> 0)
+            vh = velocitydispersion(gas; thermal=true, mu=2.33, vk...)     # heavier tracer ⇒ narrower thermal line
+            fh = findall(i -> isfinite(vt.sigma_thermal[i]) && isfinite(vh.sigma_thermal[i]), eachindex(vt.sigma_thermal))
+            @test all(vh.sigma_thermal[fh] .< vt.sigma_thermal[fh])
+            @test all(isapprox.(vt.sigma_thermal[fh] ./ vh.sigma_thermal[fh], sqrt(2.33); rtol=1e-6))
+            @test all(isapprox.(vt.mach[fin], vt.sigma_turb_1d[fin] ./ vt.cs[fin]; rtol=1e-10))   # mach = σ_turb_1d/⟨cs⟩
+        end
+
+        @testset "D5c localdispersion (patch de-streaming, Method B)" begin
+            gsub = shellregion(gas, :cylinder, radius=[1.0,8.0], height=3.0, center=[:bc], range_unit=:kpc, verbose=false)
+            ld = localdispersion(gsub; patchsize=[500.,:pc], thermal=true, mu=1.0, min_cells_per_patch=5)
+            @test ld.sigma_turb_3d >= ld.sigma_turb_1d
+            @test isapprox(ld.sigma_turb_1d, ld.sigma_turb_3d/sqrt(3); rtol=1e-10)
+            @test isapprox(ld.sigma_total, sqrt(ld.sigma_turb_1d^2 + ld.sigma_thermal^2); rtol=1e-10)
+            @test ld.n_cell > 0 && ld.n_patch >= 1 && ld.n_eff <= ld.n_cell
+            @test length(ld.sigma_total_q) == 3 && issorted(filter(isfinite, ld.sigma_total_q))
+            # de-streaming removes bulk rotation ⇒ σ_turb ≤ the single-annulus radial σ (which keeps shear)
+            vd = velocitydispersion(gsub; nbins=1, xrange=(1.0,8.0), center=[:bc], center_unit=:kpc)
+            @test ld.sigma_turb_3d <= vd.sigma[1] + 1e-6
+            ld0 = localdispersion(gsub; patchsize=[500.,:pc], thermal=false, min_cells_per_patch=5)
+            @test ld0.sigma_thermal == 0.0 && isapprox(ld0.sigma_total, ld0.sigma_turb_1d; rtol=1e-12)
+        end
+
         @testset "D6 scale=:equal edge cases" begin
             e = Mera._bin_edges([1.0,1.0,1.0,1.0,2.0], nothing, :equal, 4)           # ties → strictly increasing
             @test issorted(e) && allunique(e)

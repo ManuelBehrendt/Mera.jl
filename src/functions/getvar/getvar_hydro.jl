@@ -197,7 +197,11 @@ function get_data(  dataobject::HydroDataType,
 
         elseif i == :freefall_time
             selected_unit = getunit(dataobject, :freefall_time, vars, units)
-            vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(filtered_dataobject, :rho, unit=:g_cm3, mask=use_mask_in_recursion)  ) .* selected_unit
+            # √(3π/32Gρ) with G[cgs], ρ[g/cm³] is in physical SECONDS; divide by scale.s (seconds per
+            # code-time) so the field is in CODE time units — then `selected_unit` (code→requested) makes
+            # every time unit correct (:Myr, :yr, :s, …) and :standard returns code units, as for all
+            # other fields. (Previously the raw seconds were multiplied by code→unit, double-converting.)
+            vars_dict[:freefall_time] = sqrt.( 3. * pi / (32. * dataobject.info.constants.G) ./ getvar(filtered_dataobject, :rho, unit=:g_cm3, mask=use_mask_in_recursion)  ) ./ dataobject.info.scale.s .* selected_unit
 
         elseif i == :virial_parameter_local
             selected_unit = getunit(dataobject, :virial_parameter_local, vars, units)
