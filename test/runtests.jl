@@ -113,6 +113,7 @@ if isempty(_focus)
         include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
         include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
         include("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
+        include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries) + absorption_map (LOS optical depth/transmission)
         include("07_regions.jl")
     end
 

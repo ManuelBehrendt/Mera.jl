@@ -350,4 +350,14 @@ function Mera._plot_io_benchmark(res::Mera.IOBenchmark; bins=30)
     return fig
 end
 
+
+# ---- gridoverlay!: draw AMR cell boundaries (from gridoverlay) onto an axis ---------------
+function Mera.gridoverlay!(ax, go; color=(:white, 0.3), linewidth::Real=0.4)
+    pts = Makie.Point2f[]
+    for s in go.segments
+        push!(pts, Makie.Point2f(s[1], s[2])); push!(pts, Makie.Point2f(s[3], s[4]))
+    end
+    Makie.linesegments!(ax, pts; color=color, linewidth=linewidth)
+end
+
 end # module
