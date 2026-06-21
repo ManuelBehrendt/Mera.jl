@@ -120,6 +120,36 @@ The per-bin `std` of a velocity *component* is already its **rest-frame** kinema
 [`velocitydispersion`](@ref) is a convenience wrapper that returns σ_R / σ_φ / σ_z (cylindrical by
 default) and the total σ = √(σ_R²+σ_φ²+σ_z²) in one call. *(Worked example: tutorial §7.)*
 
+#### Turbulent ⊕ thermal = total line width
+
+The σ above is the **turbulent** (bulk) motion only. The width a spectrograph actually measures also
+includes the gas **thermal** motion. Pass `thermal=true` (with `mu`, the tracer mean molecular weight
+in H-atom masses — `2.33` molecular, `1.0` atomic, `0.6` ionized) to also get, per bin, the 1-D
+turbulent `sigma_turb_1d = √(Σσ_i²/n)`, the thermal speed `sigma_thermal = √(k_B⟨T⟩/(μ m_H))`, the
+**total** `sigma_total = √(sigma_turb_1d² + sigma_thermal²)`, and the turbulent Mach number
+`mach = sigma_turb_1d/⟨c_s⟩`:
+
+```julia
+vt = velocitydispersion(gas; thermal=true, mu=2.33, nbins=20, xrange=(0,18), center=[:bc], center_unit=:kpc)
+vt.sigma_total      # √(turbulent² + thermal²)  [km/s]
+vt.mach             # σ_turb,1D / c_s
+```
+
+#### Local (patch-de-streamed) dispersion — [`localdispersion`](@ref)
+
+`velocitydispersion` removes the mean per *radial bin*, so a velocity gradient across a wide annulus
+(shear, spiral streaming) leaks into "turbulence". [`localdispersion`](@ref) instead tiles the (x, y)
+plane into square `patchsize` patches and removes the **per-patch** mean velocity — the TIGRESS/SILCC
+way to isolate turbulence below a chosen length scale. Restrict the input first (e.g. [`shellregion`](@ref)
+to an annulus) — it returns aggregate scalars over the supplied region, with the turbulent/thermal/total
+σ, Mach, anisotropy, and the patch-to-patch percentile spread (usable as error bars):
+
+```julia
+solar = shellregion(gas, :cylinder, radius=[7,9], height=2, center=[:bc], range_unit=:kpc)
+ld = localdispersion(solar; patchsize=[500,:pc], thermal=true, mu=2.33)
+ld.sigma_total, ld.mach, ld.anisotropy, ld.sigma_total_q   # scalars + (16,50,84)% patch spread
+```
+
 !!! note "Kinematic ⟨v_ϕ⟩ vs dynamical v_circ"
     A *kinematic* rotation curve — the binned mean azimuthal velocity, `profile(gas, :r_cylinder,
     :vϕ_cylinder)` — carries the disk's **rotation sense**, so it can be **negative** (this galaxy's
@@ -147,6 +177,7 @@ phase
 profile3d
 rotationcurve
 velocitydispersion
+localdispersion
 profiletimeseries
 getparticlemask
 ```
