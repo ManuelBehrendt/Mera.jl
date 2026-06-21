@@ -296,10 +296,16 @@ with a built-in bitmap font (no font dependency). Control the look:
 `frame_00001.png`, … in it (the directory is created). Those PNGs can be re-assembled later
 with [`moviefromframes`](@ref) — or fed to `ffmpeg` for an MP4.
 
+**Persisting the movie object.** A `file` ending in `.jld2` stores the whole `MeraMovie`
+(the numeric frames + metadata) to a JLD2 file instead of encoding a GIF — reload it with
+[`loadmovie`](@ref). Same Julia-native way [`savemap`](@ref)/[`savecube`](@ref) persist a map
+or a cube; nothing is re-rendered, so it round-trips exactly.
+
 ```julia
 savemovie(m, "density.gif"; tags=:time, fps=12)
 savemovie(m, "density.gif"; tags=(:output, :time), tag_position=:bottomright, tag_color=:yellow)
 savemovie(m, "density.gif"; tags=:output, tag_scale=3, save_frames="frames/")
+savemovie(m, "density.jld2")        # persist the MeraMovie object (→ loadmovie)
 ```
 """
 function savemovie(m::MeraMovie, file::AbstractString="movie.gif";
@@ -308,6 +314,11 @@ function savemovie(m::MeraMovie, file::AbstractString="movie.gif";
                    tag_scale=:auto, tag_position=:topleft, tag_color=:white,
                    save_frames=nothing, verbose::Bool=true)
     isempty(m.frames) && error("savemovie: the movie has no frames.")
+    if endswith(file, ".jld2")            # persist the MeraMovie object (no rendering) → loadmovie
+        JLD2.jldsave(file; meramovie = m)
+        verbose && println("Saved MeraMovie ($(length(m)) frames) → ", file)
+        return file
+    end
     cmap = _movie_cmap(colormap)
     labels = _tag_lines(m, tags)
     tcolor = _tag_color(tag_color)
@@ -385,4 +396,19 @@ function moviefromframes(dir::AbstractString, file::AbstractString="movie.gif";
     FileIO.save(file, cat(imgs...; dims=3); fps=fps)
     verbose && println("moviefromframes: $(length(files)) image(s) from $dir → $file")
     return file
+end
+
+"""
+    loadmovie(filename; verbose=true) -> MeraMovie
+
+Load a [`MeraMovie`](@ref) saved with `savemovie(m, "….jld2")`. The numeric frames and metadata
+round-trip exactly, so you can re-`savemovie` it to a GIF (with different tags/colormap) without
+re-running [`getmovie`](@ref). JLD2-native, like [`loadmap`](@ref)/[`loadcube`](@ref).
+"""
+function loadmovie(filename::AbstractString; verbose::Bool=true)
+    fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
+    m = JLD2.load(fn, "meramovie")
+    m isa MeraMovie || error("loadmovie: $(fn) does not contain a MeraMovie (got $(typeof(m))).")
+    verbose && println("Loaded MeraMovie ($(length(m)) frames) ← ", fn)
+    return m
 end

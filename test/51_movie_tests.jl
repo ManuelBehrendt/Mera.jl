@@ -137,6 +137,23 @@ if DATA_AVAILABLE && isdir(MV_PATH)
             @test_throws ErrorException moviefromframes(mktempdir())  # no images
         end
     end
+
+    @testset "savemovie .jld2 persistence + loadmovie" begin
+        m = getmovie(MV_PATH, :sd; outputs=avail[1:3], res=32, time_unit=:standard, verbose=false)
+        mktempdir() do d
+            f = joinpath(d, "m.jld2")
+            @test savemovie(m, f; verbose=false) == f            # .jld2 → stores the object
+            @test readdir(d) == ["m.jld2"]                       # no GIF / frames written
+            m2 = loadmovie(f; verbose=false)
+            @test m2 isa MeraMovie
+            @test length(m2) == length(m) && m2.frames == m.frames
+            @test m2.outputs == m.outputs && m2.times == m.times
+            # the reloaded movie re-encodes to a GIF without re-running getmovie
+            @test isfile(savemovie(m2, joinpath(d, "from_jld2.gif"); verbose=false))
+            bad = joinpath(d, "bad.jld2"); Mera.JLD2.jldsave(bad; meramovie = [1,2,3])
+            @test_throws ErrorException loadmovie(bad; verbose=false)
+        end
+    end
 else
     @testset "movie data-backed (skipped: timeseries_sedov3d unavailable)" begin
         @test_skip "timeseries_sedov3d not found under SIMULATION_PATH"
