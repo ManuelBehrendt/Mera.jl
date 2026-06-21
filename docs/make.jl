@@ -64,6 +64,8 @@ makedocs(modules = [Mera],
 
                           "Time Series (multi-snapshot)" => "timeseries.md",
 
+                          "Movies (getmovie)"   => "movie.md",
+
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
 
                           "Mock Observations (cookbook)" => "mock_observations.md",

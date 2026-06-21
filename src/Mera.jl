@@ -98,6 +98,9 @@ export
     checksimulations,
     gettime,
     timeseries,
+    getmovie,
+    savemovie,
+    MeraMovie,
     center_of,
     face_on,
     edge_on,
@@ -429,6 +432,7 @@ include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/statistics.jl")
 include("functions/provenance.jl")
+include("functions/movie.jl")
 # ============================================
 
 
