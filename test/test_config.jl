@@ -151,6 +151,19 @@ const DATASETS = Dict(
         has_clumps = false,
         is_timeseries = true
     ),
+    # PLUTO code frontend fixture — 3-D Cartesian uniform-grid Sedov blast (64³, 6 outputs),
+    # generated from PLUTO's HD/Sedov 3D test (static .dbl + grid.out + dbl.out). Exercises
+    # the multi-code reader: getinfo_pluto/gethydro_pluto fill the standard structs so the
+    # analysis layer (getvar/projection/pdf) runs unchanged. (52_pluto_reader_tests.jl)
+    :pluto_sedov3d => (
+        path = joinpath(SIMULATION_PATH, "pluto_sedov3d"),
+        output = 5,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = false,
+        has_clumps = false,
+        simcode = "PLUTO"
+    ),
 )
 
 # Test tolerances

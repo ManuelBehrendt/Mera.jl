@@ -330,6 +330,11 @@ function gethydro(dataobject::InfoType;
                     myargs::ArgumentsType=ArgumentsType(),
                     max_threads::Int=Threads.nthreads())
 
+    # Multi-code: a non-RAMSES info delegates to its own frontend (the analysis stays blind).
+    if dataobject.simcode == "PLUTO"
+        return gethydro_pluto(dataobject; verbose=verbose)
+    end
+
     # ═══════════════════════════════════════════════════════════════════════════
     # PARAMETER PROCESSING AND VALIDATION
     # ═══════════════════════════════════════════════════════════════════════════

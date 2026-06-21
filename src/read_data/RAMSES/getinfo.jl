@@ -17,19 +17,28 @@ fields like `descriptor`, `grid_info`, `part_info`, `scale`, and helper accessor
 """
 function getinfo end
 
-function getinfo(output::Real; path::String="", namelist::String="", verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
+function getinfo(output::Real; path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true)
+    return getinfo(output=output, path=path, namelist=namelist, code=code, verbose=verbose)
 end
 
-function getinfo(output::Real, path::String; namelist::String="", verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
+function getinfo(output::Real, path::String; namelist::String="", code::Symbol=:auto, verbose::Bool=true)
+    return getinfo(output=output, path=path, namelist=namelist, code=code, verbose=verbose)
 end
 
-function getinfo(path::String; output::Real=1, namelist::String="", verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, verbose=verbose)
+function getinfo(path::String; output::Real=1, namelist::String="", code::Symbol=:auto, verbose::Bool=true)
+    return getinfo(output=output, path=path, namelist=namelist, code=code, verbose=verbose)
 end
 
-function getinfo(; output::Real=1, path::String="", namelist::String="", verbose::Bool=true)
+function getinfo(; output::Real=1, path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true)
+
+    # Multi-code front controller: detect (or honour code=) the simulation code, then
+    # delegate to the matching frontend. RAMSES is the built-in default below.
+    resolved = code === :auto ? detect_simcode(path == "" ? pwd() : path) : code
+    if resolved === :pluto
+        return getinfo_pluto(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
+    elseif resolved !== :ramses
+        error("getinfo: unknown code :$resolved (use :auto, :ramses, or :pluto).")
+    end
 
 
     verbose = checkverbose(verbose)
