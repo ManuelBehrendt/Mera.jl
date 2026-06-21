@@ -36,7 +36,9 @@ end
 
 """
     getmovie(path, quantity; unit=:standard, datatype=:hydro, outputs=:all, mera_files=false,
-             direction=:z, los=nothing, up=nothing, center=[:boxcenter], range_unit=:standard,
+             direction=:z, los=nothing, up=nothing, theta=nothing, phi=nothing,
+             inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
+             angle_unit=:deg, center=[:boxcenter], range_unit=:standard,
              xrange=[missing,missing], yrange=[missing,missing], zrange=[missing,missing],
              res=nothing, lmax=nothing, weighting=[:mass, missing],
              time_unit=:Myr, verbose=true) -> MeraMovie
@@ -46,9 +48,11 @@ Project `quantity` for every output of a simulation and collect the maps into a
 loads **one snapshot at a time** (RAM-safe) and discovers outputs the same way (RAMSES or
 `mera_files`).
 
-The view is whatever [`projection`](@ref) accepts and is held **fixed** across frames so the
-movie is steady: axis-aligned by default (`direction=:z`), or pass a `los`/`up` from
-[`face_on`](@ref)/[`edge_on`](@ref) for an oriented view. `res`/`lmax` and the region
+The view is the **full [`projection`](@ref) view** and is held **fixed** across frames so the
+movie is steady. Axis-aligned by default (`direction=:z`); for an **off-axis** movie use any
+of projection's view controls — a `los`/`up` (e.g. from [`face_on`](@ref)/[`edge_on`](@ref)),
+the angles `inclination`/`azimuth` (or `theta`/`phi`, `position_angle`, with `angle_unit`),
+or `axis=:angmom` to auto-orient face-on. `res`/`lmax` and the region
 keywords cut cost per frame.
 
 ```julia
@@ -65,6 +69,8 @@ function getmovie(path::String, quantity::Symbol;
                   unit::Symbol=:standard,
                   datatype::Symbol=:hydro, outputs=:all, mera_files::Bool=false,
                   direction::Symbol=:z, los=nothing, up=nothing,
+                  theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
+                  position_angle=nothing, axis=nothing, angle_unit::Symbol=:deg,
                   center=[:boxcenter], range_unit::Symbol=:standard,
                   xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                   res=nothing, lmax=nothing, weighting=[:mass, missing],
@@ -82,6 +88,8 @@ function getmovie(path::String, quantity::Symbol;
                                 lmax=lmax, xrange=xrange, yrange=yrange, zrange=zrange,
                                 center=center, range_unit=range_unit, smallr=0.)
         pr = _movie_project(data, quantity, unit; direction=direction, los=los, up=up,
+                            theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
+                            position_angle=position_angle, axis=axis, angle_unit=angle_unit,
                             center=center, range_unit=range_unit,
                             xrange=xrange, yrange=yrange, zrange=zrange, res=res,
                             lmax=lmax, weighting=weighting)
@@ -94,17 +102,24 @@ function getmovie(path::String, quantity::Symbol;
     return MeraMovie(frames, outs, times, extent, quantity, unit, time_unit)
 end
 
-# Forward only the projection kwargs that are set (res/lmax default to projection's own).
-function _movie_project(data, quantity, unit; direction, los, up, center, range_unit,
+# Forward the projection view/region kwargs that are set — including the full off-axis set
+# (los/up, theta/phi, inclination/azimuth, position_angle, axis) — so getmovie can make an
+# off-axis movie exactly as `projection` would (res/lmax default to projection's own).
+function _movie_project(data, quantity, unit; direction, los, up, theta, phi, inclination,
+                        azimuth, position_angle, axis, angle_unit, center, range_unit,
                         xrange, yrange, zrange, res, lmax, weighting)
     kw = Dict{Symbol,Any}(:verbose => false, :show_progress => false,
                           :center => center, :range_unit => range_unit,
                           :xrange => xrange, :yrange => yrange, :zrange => zrange,
-                          :weighting => weighting)
-    los === nothing ? (kw[:direction] = direction) : (kw[:los] = los)
-    up === nothing || (kw[:up] = up)
-    res === nothing || (kw[:res] = res)
-    lmax === nothing || (kw[:lmax] = lmax)
+                          :weighting => weighting, :angle_unit => angle_unit)
+    # the line of sight: an explicit los/up, or angle-based off-axis, else an axis direction
+    any(!isnothing, (los, theta, phi, inclination, azimuth, axis)) || (kw[:direction] = direction)
+    for (name, val) in (:los => los, :up => up, :theta => theta, :phi => phi,
+                        :inclination => inclination, :azimuth => azimuth,
+                        :position_angle => position_angle, :axis => axis,
+                        :res => res, :lmax => lmax)
+        val === nothing || (kw[name] = val)
+    end
     return projection(data, quantity, unit; kw...)
 end
 

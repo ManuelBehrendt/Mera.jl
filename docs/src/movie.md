@@ -32,17 +32,28 @@ want the individual images on disk, ask for them — `savemovie(...; save_frames
 each rendered frame as a PNG (see [Scratch frames](#Scratch-frames-—-keep-the-PNGs)) — and
 [`moviefromframes`](@ref) goes the other way, building a movie from images already on disk.
 
-## Orientation and region
+## Orientation: off-axis movies
 
-The view is whatever [`projection`](@ref) accepts, **fixed across frames**. Axis-aligned by
-default (`direction=:z`); for an oriented movie, pass a `los`/`up` from [`face_on`](@ref) or
-[`edge_on`](@ref) computed on a reference snapshot:
+`getmovie` uses the **full [`projection`](@ref) view**, held fixed across frames so the movie
+is steady. It's axis-aligned by default (`direction=:z`), but every off-axis control that
+`projection` offers works here too:
 
 ```julia
+# 1. a line of sight from the auto-frame (face-on / edge-on)
 ref = gethydro(getinfo(1, "/data/sim"))
 fr  = face_on(ref)
 m   = getmovie("/data/sim", :sd; los=fr.los, up=fr.up, center=fr.center, range_unit=fr.center_unit)
+
+# 2. by viewing angles (the off-axis camera)
+m = getmovie("/data/sim", :sd; inclination=60, azimuth=30)      # degrees by default
+m = getmovie("/data/sim", :sd; theta=45, phi=20, position_angle=15)
+
+# 3. auto face-on from the gas angular momentum, recomputed per frame
+m = getmovie("/data/sim", :sd; axis=:angmom)
 ```
+
+The view is the same for every frame (so the camera doesn't wander) — except `axis=:angmom`,
+which re-derives the face-on orientation from each snapshot's own angular momentum.
 
 `res`, `lmax`, and the `xrange`/`yrange`/`zrange` region keywords cut the cost (and memory)
 of each frame. `outputs` selects which snapshots (`:all`, a range, or a vector), and
