@@ -52,6 +52,22 @@ function checkverbose(verbose::Bool)
     return verbose
 end
 
+"""
+    verbose(mode::Union{Bool,Nothing})
+    verbose()
+
+Set or show the global verbose mode for all subsequent Mera operations. `verbose(false)`
+silences Mera's text messages, `verbose(true)` forces them on (the per-function `verbose=`
+argument is then ignored), and `verbose(nothing)` reverts to each function's own argument
+(the neutral default). `verbose()` with no argument prints the current state. See also
+[`showprogress`](@ref) and the combined master switch [`output_mode`](@ref).
+
+```julia
+verbose(false)    # quiet
+verbose()         # prints "verbose_mode: false"
+verbose(nothing)  # back to per-function control
+```
+"""
 function verbose(mode::Union{Bool,Nothing})
         global verbose_mode = mode
         @eval(Mera, verbose_mode)
