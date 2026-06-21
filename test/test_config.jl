@@ -164,6 +164,19 @@ const DATASETS = Dict(
         has_clumps = false,
         simcode = "PLUTO"
     ),
+    # Chombo / PLUTO-AMR fixture — a 3-D Cartesian box-structured AMR snapshot in the Chombo
+    # HDF5 format (the format PLUTO-AMR writes; this sample is the yt Orion IsothermalSphere,
+    # density/momentum/energy → derived velocity/pressure). Exercises the multi-level leaf-cell
+    # reader. (Chombo section of 52_pluto_reader_tests.jl)
+    :chombo_3d => (
+        path = joinpath(SIMULATION_PATH, "chombo_3d", "IsothermalSphere"),
+        output = 0,
+        has_hydro = true,
+        has_gravity = false,
+        has_particles = false,
+        has_clumps = false,
+        simcode = "CHOMBO"
+    ),
 )
 
 # Test tolerances

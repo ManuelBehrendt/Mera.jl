@@ -29,11 +29,23 @@ function pluto_output_numbers(path::String)
 end
 
 # Detect which simulation code wrote a directory, from its signature files.
-# PLUTO static-grid output has grid.out + dbl.out; RAMSES has output_*/info_*.txt.
+# PLUTO static-grid: grid.out + dbl.out;  Chombo AMR (PLUTO/Orion): a *.hdf5 file;
+# RAMSES: output_*/info_*.txt (the default).
 function detect_simcode(path::String)
     (isfile(joinpath(path, "grid.out")) && isfile(joinpath(path, "dbl.out"))) && return :pluto
-    return :ramses        # default; the RAMSES reader validates its own files
+    isdir(path) && any(f -> endswith(lowercase(f), ".hdf5"), readdir(path)) && return :chombo
+    return :ramses
 end
+
+# First *.hdf5 file in a directory (the Chombo/PLUTO-AMR snapshot).
+function _chombo_file(path::String)
+    isdir(path) || return path
+    for f in sort(readdir(path))
+        endswith(lowercase(f), ".hdf5") && return joinpath(path, f)
+    end
+    error("Chombo: no .hdf5 file in $path")
+end
+# getinfo_chombo / gethydro_chombo are defined in read_data/PLUTO/reader_chombo.jl (uses HDF5).
 
 # --- grid.out: geometry + per-axis cell edges --------------------------------------
 # Returns (geometry, (n1,n2,n3), (xc1,xc2,xc3)) with cell-centre vectors.
