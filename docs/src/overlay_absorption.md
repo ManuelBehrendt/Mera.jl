@@ -45,9 +45,42 @@ a = absorption_map(gas; kappa=50.0)         # κ = 50 cm²/g (grey/dust-like opa
 a = absorption_map(gas; kappa=50.0, los=fr.los, up=fr.up, center=fr.center)   # off-axis
 ```
 
-`kappa` is a constant (grey) opacity in units inverse to `sd_unit` (default `:g_cm2`, so `κ`
-is in cm²/g and `τ` is dimensionless). All [`projection`](@ref) view/region keywords pass
-through. Returns `(tau, transmission, absorbed, sd, extent, los, up, center, pixsize, info)`.
+`kappa` is in units inverse to `sd_unit` (default `:g_cm2`, so `κ` is in cm²/g and `τ` is
+dimensionless). All [`projection`](@ref) view/region keywords pass through. Returns
+`(tau, transmission, absorbed, sd, kappa_eff, extent, los, up, center, pixsize, info)` (`kappa_eff`
+is the column-effective opacity `τ/Σ`).
+
+### Variable opacity — `κ` that depends on physics
+
+The opacity is rarely truly grey. `kappa` may instead be **per-cell**, so it can depend on
+wavelength, metallicity, gas phase, temperature or ionization. The optical depth is then the exact
+`τ = ∫κρ dl = ⟨κ⟩_mass·Σ`:
+
+* a **`Real`** → grey (above);
+* a **`Symbol`** → a per-cell opacity *field* — any [`getvar`](@ref) field, an [`add_field`](@ref)-
+  registered field, or a raw data column (e.g. a stored metallicity);
+* an **`AbstractVector`** → a per-cell opacity (one value per cell), in `kappa_unit` (default cm²/g).
+
+```julia
+# wavelength: a Milky-Way dust opacity per gram of gas (see dust_opacity)
+a = absorption_map(gas; kappa = dust_opacity(0.55))             # V band ≈ 210 cm²/g
+
+# metallicity-dependent dust, per cell, with a hot-gas (dust-sublimation) cutoff
+κcell = dust_opacity(0.44) .* getvar(gas,:metals)./0.0134 .* (getvar(gas,:T,:K) .< 1500)
+a = absorption_map(gas; kappa = κcell, los=fr.los, up=fr.up, center=fr.center)
+
+# phase-specific: only one phase absorbs (a registered field or a raw column)
+a = absorption_map(gas; kappa = :my_kappa_field)
+```
+
+[`dust_opacity(λ_μm; kappa_V=210, Z_over_Zsun=1, beta=1.8)`](@ref) returns an approximate MW
+(R_V≈3.1) dust opacity per gram of *gas* at wavelength `λ`, scaling linearly with metallicity — a
+convenient way to pick a grey `κ` per band, or to build a per-cell `κ` (multiply by a metallicity
+field). It is approximate (one scaled MW curve), not a dust radiative-transfer code.
+
+What `κ` *physically* is — dust extinction (∝ metallicity/dust-to-gas, strongly λ-dependent),
+electron (Thomson) scattering (≈0.4 cm²/g, ionized gas), or line/continuum opacity — is your choice;
+pick the `κ` (scalar, field, or vector) that matches the source and band.
 
 !!! note "Physical units"
     `τ` is meaningful only when the data have physical units — true for RAMSES, and for PLUTO
