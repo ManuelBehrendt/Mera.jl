@@ -13,12 +13,12 @@
   </defs>
 
   <rect width="1000" height="520" fill="#ffffff"/>
-  <text x="500" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#1f2937">Inside `:exact` &#8212; analytic per-pixel integration of the box-spline footprint</text>
-  <text x="500" y="55" text-anchor="middle" font-size="13" fill="#64748b">L(x,y) = min&#8202;<tspan font-style="italic">k</tspan> tmax&#8202;<tspan font-style="italic">k</tspan> &#8722; max&#8202;<tspan font-style="italic">k</tspan> tmin&#8202;<tspan font-style="italic">k</tspan>   (slab method over the 3 cube axes) &#8212; piecewise-linear, integrating to s&#179;</text>
+  <text x="500" y="32" text-anchor="middle" font-size="20" font-weight="bold" fill="#1f2937">Why `:exact` is exact &#8212; it measures the true shadow in every pixel</text>
+  <text x="500" y="55" text-anchor="middle" font-size="13" fill="#64748b">Nothing is sampled or guessed: each pixel receives exactly the amount of the cube&#8217;s shadow that falls inside it.</text>
 
   <!-- ===================== Panel A: piecewise-linear footprint ===================== -->
   <g transform="translate(70,90)">
-    <text x="190" y="6" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#334155">1 &#183; the footprint is piecewise-linear</text>
+    <text x="190" y="6" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#334155">1 &#183; the shadow is darkest through the middle</text>
     <g transform="translate(190,150)">
       <!-- the chord field as a coloured tent (bright centre = long chord, dark rim = 0) -->
       <use xlink:href="#hexO" fill="url(#mesa)" fill-opacity="0.9" stroke="#3b528b" stroke-width="1.6"/>
@@ -29,14 +29,9 @@
         <line x1="-36" y1="21" x2="-82" y2="47"/><line x1="-36" y1="-21" x2="-82" y2="-47"/>
       </g>
       <use xlink:href="#hexI" fill="none" stroke="#b45309" stroke-width="1.6" stroke-dasharray="5 4"/>
-      <!-- centroids: on a piece the entering/exiting face is fixed, so L is affine -->
-      <circle cx="0" cy="0" r="3" fill="#0f172a"/>
-      <circle cx="0" cy="-66" r="3" fill="#0f172a"/>
-      <text x="8" y="4" font-size="11" fill="#0f172a">c</text>
-      <text x="8" y="-62" font-size="11" fill="#0f172a">c'</text>
     </g>
-    <text x="190" y="276" text-anchor="middle" font-size="11.5" fill="#475569">kink lines (orange) = where the entering / exiting cube face switches</text>
-    <text x="190" y="293" text-anchor="middle" font-size="11.5" fill="#475569">&#8658; L is <tspan font-style="italic">affine</tspan> on each convex piece</text>
+    <text x="190" y="276" text-anchor="middle" font-size="12" fill="#475569">brighter where the line of sight crosses more of the cube</text>
+    <text x="190" y="293" text-anchor="middle" font-size="10.5" fill="#94a3b8">technical: the brightness is built from flat ramps meeting at the orange fold lines</text>
 
     <!-- 1-D cross-section: the mesa profile -->
     <g transform="translate(40,330)">
@@ -46,15 +41,15 @@
       <g stroke="#b45309" stroke-width="1" stroke-dasharray="3 3">
         <line x1="110" y1="6" x2="110" y2="60"/><line x1="190" y1="6" x2="190" y2="60"/>
       </g>
-      <text x="-6" y="2" text-anchor="end" font-size="11" fill="#475569" font-style="italic">L</text>
+      <text x="-6" y="2" text-anchor="end" font-size="10" fill="#475569">bright</text>
       <text x="300" y="74" text-anchor="end" font-size="11" fill="#475569">position across the shadow</text>
-      <text x="150" y="-2" text-anchor="middle" font-size="10.5" fill="#0f766e">plateau (full body chord)</text>
+      <text x="150" y="-2" text-anchor="middle" font-size="10.5" fill="#0f766e">deepest crossing</text>
     </g>
   </g>
 
   <!-- ===================== Panel B: exact per-pixel integral ===================== -->
   <g transform="translate(560,90)">
-    <text x="190" y="6" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#334155">2 &#183; each pixel integral is exact</text>
+    <text x="190" y="6" text-anchor="middle" font-size="14.5" font-weight="bold" fill="#334155">2 &#183; each pixel gets its exact share</text>
     <g transform="translate(0,24)">
       <!-- 4x4 pixel grid (52 px) -->
       <g stroke="#cbd5e1" stroke-width="1" fill="#f8fafc">
@@ -75,17 +70,13 @@
       </g>
       <!-- highlighted pixel (straddles a kink line) -->
       <rect x="196" y="52" width="52" height="52" fill="#2563eb" fill-opacity="0.08" stroke="#2563eb" stroke-width="2"/>
-      <!-- pixel ∩ footprint, split by the kink line into two convex pieces -->
-      <!-- piece 1 (inside plateau side) -->
-      <polygon points="196,86 232,73 248,84 248,104 196,104" fill="#16a34a" fill-opacity="0.35" stroke="#15803d" stroke-width="1.2"/>
-      <!-- piece 2 (ramp side) -->
-      <polygon points="196,86 232,73 248,68 248,84" fill="#3b82f6" fill-opacity="0.30" stroke="#1d4ed8" stroke-width="1.2"/>
-      <circle cx="222" cy="92" r="2.6" fill="#0f172a"/><text x="226" y="97" font-size="10.5" fill="#0f172a">c1</text>
-      <circle cx="228" cy="79" r="2.6" fill="#0f172a"/><text x="232" y="76" font-size="10.5" fill="#0f172a">c2</text>
+      <!-- pixel ∩ shadow: the exact piece of shadow this pixel receives -->
+      <polygon points="196,86 232,73 248,68 248,104 196,104" fill="#0d9488" fill-opacity="0.5" stroke="#0f766e" stroke-width="1.7"/>
+      <text x="223" y="132" text-anchor="middle" font-size="10.5" fill="#0f766e">overlap</text>
     </g>
-    <text x="190" y="266" text-anchor="middle" font-size="13.5" fill="#1f2937">&#8747;&#8747;<tspan font-size="9" dy="3">pixel</tspan><tspan dy="-3"> </tspan>L = &#931; A&#8202;<tspan font-style="italic">k</tspan>&#183;L(c&#8202;<tspan font-style="italic">k</tspan>)   <tspan fill="#16a34a">exact</tspan></text>
-    <text x="190" y="287" text-anchor="middle" font-size="11.5" fill="#475569">clip pixel&#8745;footprint (Sutherland&#8211;Hodgman), split by kink lines,</text>
-    <text x="190" y="303" text-anchor="middle" font-size="11.5" fill="#475569">integrate area&#183;L(centroid) per convex piece &#183; &#8804;6 splits/cube</text>
+    <text x="190" y="262" text-anchor="middle" font-size="13.5" fill="#1f2937">the pixel gets <tspan font-weight="bold">exactly</tspan> that overlap &#8212; no sampling</text>
+    <text x="190" y="284" text-anchor="middle" font-size="11.5" fill="#475569">so the result never loses gas and barely changes with pixel size</text>
+    <text x="190" y="303" text-anchor="middle" font-size="10.5" fill="#94a3b8">technical: &#8747;&#8747; of the brightness over each pixel, in closed form (&#8804;6 polygon pieces/cube)</text>
   </g>
 
   <text x="500" y="506" text-anchor="middle" font-size="11" fill="#94a3b8">Mera.jl &#183; projection_hydro.jl: _oa_pixel_integral!, _oa_clip!, _oa_chord, _oa_affine_integral &#183; cost O(covered pixels), no nmax cap, per-cell renorm &#8658; &#931; f = 1</text>
