@@ -111,6 +111,7 @@ if isempty(_focus)
         include("48_mockobs_tests.jl")               # mock-observation pipeline (auto-frame → mock_observe/velocity_moments/position_velocity): data-free beam+noise + spiral_clumps kinematics
         include("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
         include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
+        include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
         include("07_regions.jl")
     end
 
