@@ -1142,6 +1142,14 @@ function savemap(p::DataMapsType, filename::AbstractString; verbose::Bool=true)
     verbose && println("Saved projection maps $(collect(keys(p.maps))) → ", fn)
     return fn
 end
+
+"""
+    loadmap(filename; verbose=true) -> DataMapsType
+
+Load a projection result saved with [`savemap`](@ref) from a JLD2 file (the `.jld2`
+extension is added if missing). The whole `AMRMapsType`/`PartMapsType` round-trips — maps,
+units, geometry, camera basis, and `info` — ready to plot, re-project, or carry [`provenance`](@ref).
+"""
 function loadmap(filename::AbstractString; verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
     p = JLD2.load(fn, "meramap")
