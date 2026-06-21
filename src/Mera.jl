@@ -69,6 +69,7 @@ export
     getinfo,
     getinfo_pluto,
     gethydro_pluto,
+    getparticles_pluto,
     createpath,
     gethydro,
     getgravity,

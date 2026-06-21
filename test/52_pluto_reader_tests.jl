@@ -44,6 +44,48 @@ const CH_PATH = joinpath(SIMULATION_PATH, "chombo_3d", "IsothermalSphere")
     end
 end
 
+@testset "PLUTO particles (synthetic, data-free)" begin
+    # a minimal PLUTO run with a particle file, written in the documented format
+    mktempdir() do d
+        # 4³ grid + one dbl output so getinfo_pluto works
+        gline(n) = "$n\n" * join([" $i  $((i-1)/n)  $(i/n)" for i in 1:n], "\n") * "\n"
+        write(joinpath(d, "grid.out"),
+              "# GEOMETRY:   CARTESIAN\n" * gline(4) * gline(4) * gline(4))
+        write(joinpath(d, "dbl.out"),
+              "0 0.0 1e-9 0 single_file little rho vx1 vx2 vx3 prs\n")
+        write(joinpath(d, "data.0000.dbl"), zeros(UInt8, 4^3 * 5 * 8))   # dummy hydro block
+
+        # particles.0000.dbl: header + particle-major binary (id,x1,x2,x3,vx1,vx2,vx3)
+        np = 50; names = ["id","x1","x2","x3","vx1","vx2","vx3"]
+        open(joinpath(d, "particles.0000.dbl"), "w") do io
+            println(io, "# PLUTO particle file"); println(io, "# field_names ", join(names, " "))
+            println(io, "# field_dim ", join(ones(Int, 7), " "))
+            println(io, "# nparticles $np"); println(io, "# endianity little")
+            for i in 1:np
+                write(io, Float64(i))                                     # id
+                write(io, Float64(i/np), Float64(0.5), Float64(0.25))     # x1,x2,x3
+                write(io, Float64(2.0), Float64(0.0), Float64(0.0))       # vx1,vx2,vx3
+            end
+        end
+
+        # header parser
+        hn, hd, hnp, hend, _ = Mera._pluto_read_particle_header(joinpath(d, "particles.0000.dbl"))
+        @test hn == names && hd == ones(Int, 7) && hnp == 50 && hend == "little"
+
+        # full path: getinfo auto-detects particles → getparticles delegates to PLUTO
+        info = getinfo(0, d)
+        @test info.particles == true
+        @test info.particles_variable_list == [:id, :x, :y, :z, :vx, :vy, :vz]
+        p = getparticles(info, verbose=false)
+        @test p isa Mera.PartDataType
+        @test length(p.data) == 50
+        @test Mera.IndexedTables.colnames(p.data) == (:id, :x, :y, :z, :vx, :vy, :vz)
+        @test getvar(p, :id) == collect(1.0:50.0)                         # particle-major parse
+        @test getvar(p, :x) ≈ (1:50) ./ 50
+        @test all(getvar(p, :vx) .== 2.0)
+    end
+end
+
 # ------------------------------------------------------------------ PART B
 if DATA_AVAILABLE && isdir(PL_PATH)
     @testset "unified getinfo auto-detects + branches" begin

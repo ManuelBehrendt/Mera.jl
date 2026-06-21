@@ -117,6 +117,21 @@ savemap(p, "pluto_rho.jld2")
 Every step above is the same call you would make on a RAMSES snapshot — that is the whole
 point of the code-blind analysis layer.
 
+## PLUTO particles
+
+If a PLUTO run wrote Lagrangian particles (`particles.NNNN.dbl`), `getinfo` flags them and
+`getparticles` reads them into a Mera `PartDataType` — so the particle analysis runs unchanged:
+
+```julia
+info = getinfo(5, "/data/pluto_run")     # info.particles == true if a particle file is present
+part = getparticles(info)                 # → PartDataType (:x,:y,:z, :id, :vx,:vy,:vz, …)
+getvar(part, :vx); msum(part)             # the usual particle analysis
+```
+
+The PLUTO particle format (an ASCII `#` header — `field_names`/`field_dim`/`nparticles`/
+`endianity` — followed by particle-major binary) is read directly; field names map to Mera
+symbols (`x1→:x`, `vx1→:vx`, …), extra fields keep their names.
+
 ## PLUTO AMR (Chombo)
 
 PLUTO's **AMR** output uses the Chombo box-structured HDF5 format (shared with Orion and other

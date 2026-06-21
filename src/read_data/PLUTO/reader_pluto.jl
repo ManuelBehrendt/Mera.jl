@@ -17,6 +17,33 @@
 const _PLUTO_VARMAP = Dict("rho"=>:rho, "vx1"=>:vx, "vx2"=>:vy, "vx3"=>:vz, "prs"=>:p,
                            "bx1"=>:bx, "bx2"=>:by, "bx3"=>:bz)
 
+# PLUTO particle field name → Mera canonical particle symbol
+const _PLUTO_PARTMAP = Dict("id"=>:id, "x1"=>:x, "x2"=>:y, "x3"=>:z,
+                            "vx1"=>:vx, "vx2"=>:vy, "vx3"=>:vz)
+
+# Parse the ASCII '#' header of a PLUTO particles.NNNN.dbl file.
+# Returns (field_names, field_dim, nparticles, endian, header_nbytes).
+function _pluto_read_particle_header(fn::String)
+    names = String[]; dims = Int[]; npart = 0; endian = "little"; hbytes = 0
+    open(fn, "r") do io
+        while !eof(io)
+            mark(io); ln = readline(io)
+            if !startswith(ln, "#")
+                reset(io); break          # binary starts here
+            end
+            hbytes = position(io)
+            s = split(ln)
+            length(s) >= 2 || continue
+            if s[2] == "field_names";      names = String.(s[3:end])
+            elseif s[2] == "field_dim";    dims = parse.(Int, s[3:end])
+            elseif s[2] == "nparticles";   npart = parse(Int, s[3])
+            elseif s[2] == "endianity";    endian = s[3]
+            end
+        end
+    end
+    return names, dims, npart, endian, hbytes
+end
+
 # Output numbers of a PLUTO run, read from the first column of dbl.out.
 function pluto_output_numbers(path::String)
     f = joinpath(path, "dbl.out"); nums = Int[]
@@ -133,11 +160,16 @@ function getinfo_pluto(output::Int, path::String; unit_length::Real=1.0,
     info.unit_l = Float64(unit_length); info.unit_d = Float64(unit_density)
     info.unit_v = Float64(unit_velocity); info.unit_t = info.unit_l / info.unit_v
     info.unit_m = info.unit_d * info.unit_l^3
-    info.hydro = true; info.gravity = false; info.particles = false
+    # PLUTO Lagrangian particles, if a particles.NNNN.dbl is present for this output
+    pfile = joinpath(path, "particles.$(lpad(output, 4, '0')).dbl")
+    has_particles = isfile(pfile)
+    info.hydro = true; info.gravity = false; info.particles = has_particles
     info.rt = false; info.clumps = false; info.sinks = false
     info.variable_list = [get(_PLUTO_VARMAP, v, Symbol(v)) for v in vars]
     info.nvarh = length(vars)
-    info.gravity_variable_list = Symbol[]; info.particles_variable_list = Symbol[]
+    info.gravity_variable_list = Symbol[]
+    info.particles_variable_list = has_particles ?
+        [get(_PLUTO_PARTMAP, f, Symbol(f)) for f in _pluto_read_particle_header(pfile)[1]] : Symbol[]
     info.rt_variable_list = Symbol[]; info.clumps_variable_list = Symbol[]; info.sinks_variable_list = Symbol[]
     info.ncpu = 1
     info.mtime = Dates.unix2datetime(round(Int, mtime(joinpath(path, "grid.out"))))
@@ -203,4 +235,46 @@ function gethydro_pluto(info::InfoType; verbose::Bool=true)
     h.smallr = 0.; h.smallc = 0.; h.scale = info.scale
     verbose && println("[Mera]: PLUTO hydro $(n)³ = $(ncell) cells, vars ", join(string.(vars), ", "))
     return h
+end
+
+"""
+    getparticles_pluto(info::InfoType; verbose=true) -> PartDataType
+
+Read a PLUTO Lagrangian-particle snapshot (`particles.NNNN.dbl`, single binary file with an
+ASCII `#` header) described by `info` into a Mera `PartDataType` — columns `:x,:y,:z, :id,
+:vx,:vy,:vz` (+ any extra PLUTO particle fields by name), so the particle analysis runs
+unchanged. Positions are in code length (= `info` units).
+"""
+function getparticles_pluto(info::InfoType; verbose::Bool=true)
+    output = round(Int, info.output)
+    fn = joinpath(info.path, "particles.$(lpad(output, 4, '0')).dbl")
+    isfile(fn) || error("getparticles_pluto: $fn not found (no PLUTO particle output).")
+    names, dims, npart, endian, hbytes = _pluto_read_particle_header(fn)
+    tot = sum(dims)
+    swap = (endian == "big") != (ENDIAN_BOM == 0x01020304)
+
+    raw = Vector{Float64}(undef, npart * tot)           # binary follows the ASCII header
+    open(fn, "r") do io
+        seek(io, hbytes); read!(io, raw)
+    end
+    swap && (u = reinterpret(UInt64, raw); u .= bswap.(u))
+    mat = reshape(raw, tot, npart)                       # column = one particle (particle-major)
+
+    cols = Any[]; outnames = Symbol[]
+    fcol = 1                                             # running field-column index (field_dim≥1)
+    for (fi, fname) in enumerate(names)
+        sym = get(_PLUTO_PARTMAP, fname, Symbol(fname))
+        push!(cols, vec(mat[fcol, :])); push!(outnames, sym)
+        fcol += dims[fi]
+    end
+    data = table(cols...; names=Tuple(outnames), presorted=false, copy=false)
+
+    p = PartDataType()
+    p.data = data; p.info = info
+    p.lmin = info.levelmin; p.lmax = info.levelmax; p.boxlen = info.boxlen
+    p.ranges = [0., 1., 0., 1., 0., 1.]
+    p.selected_partvars = outnames
+    p.used_descriptors = Dict{Any,Any}(); p.scale = info.scale
+    verbose && println("[Mera]: PLUTO particles = $npart, fields ", join(string.(outnames), ", "))
+    return p
 end
