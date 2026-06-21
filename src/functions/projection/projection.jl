@@ -1104,6 +1104,14 @@ function savecube(c::LosCubeType, filename::AbstractString; verbose::Bool=true)
     verbose && println("Saved LOS cube $(size(c.cube)) → ", fn)
     return fn
 end
+
+"""
+    loadcube(filename; verbose=true) -> LosCubeType
+
+Load a LOS / velocity cube saved with [`savecube`](@ref) from a JLD2 file (the `.jld2`
+extension is added if missing). The cube, its axes, the binned quantity/units, the camera
+basis and the simulation `info` all round-trip, and the reconstructed cube is validated.
+"""
 function loadcube(filename::AbstractString; verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
     c = JLD2.load(fn, "loscube")
