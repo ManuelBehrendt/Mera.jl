@@ -49,6 +49,38 @@ if DATA_AVAILABLE && isdir(OA_PATH)
         fr = face_on(g)
         af = absorption_map(g; kappa=200.0, los=fr.los, up=fr.up, center=fr.center, verbose=false)
         @test maximum(af.tau) > 0
+        @test all(a.kappa_eff .== 200.0)                         # grey ⇒ uniform effective opacity
+    end
+
+    @testset "absorption_map: per-cell opacity (variable coefficients)" begin
+        # a CONSTANT per-cell vector must reproduce the grey result exactly — this pins the
+        # τ = ⟨κ⟩_mass·Σ = ∫κρ dl identity used for spatially varying opacity.
+        a  = absorption_map(g; kappa=200.0, verbose=false)
+        ncol = length(Mera.IndexedTables.colnames(g.data))
+        av = absorption_map(g; kappa=fill(200.0, length(g.data)), verbose=false)
+        @test all(isapprox.(av.tau, a.tau; rtol=1e-8))
+        @test all(av.kappa_eff .≈ 200.0)
+        # the temporary opacity column is removed afterwards (no leak)
+        @test length(Mera.IndexedTables.colnames(g.data)) == ncol
+        @test !(:__kappa_abs__ in Mera.IndexedTables.colnames(g.data))
+        # length guard
+        @test_throws ArgumentError absorption_map(g; kappa=[1.0,2.0], verbose=false)
+        # a genuinely varying κ gives a non-uniform kappa_eff and still finite, non-negative τ
+        kc = 200.0 .* (getvar(g,:rho,:nH) ./ 0.1)
+        av2 = absorption_map(g; kappa=kc, verbose=false)
+        @test all(isfinite, av2.tau) && all(av2.tau .>= 0)
+        @test maximum(av2.kappa_eff) > minimum(av2.kappa_eff)
+        # Symbol field path (mass-weighted κ map) runs and is finite
+        as = absorption_map(g; kappa=:rho, kappa_unit=:nH, verbose=false)
+        @test all(isfinite, as.kappa_eff)
+    end
+
+    @testset "dust_opacity wavelength helper" begin
+        @test isapprox(dust_opacity(0.55), 210.0; rtol=1e-9)         # V band anchor
+        @test dust_opacity(0.15) > dust_opacity(0.55) > dust_opacity(2.2)   # rises to the blue
+        @test isapprox(dust_opacity(0.55; Z_over_Zsun=0.5), 105.0; rtol=1e-9)  # linear in Z
+        @test dust_opacity(100.0) < dust_opacity(2.2)               # IR power-law tail falls
+        @test_throws ArgumentError dust_opacity(-1.0)
     end
 else
     @testset "overlay/absorption (skipped: spiral_clumps unavailable)" begin

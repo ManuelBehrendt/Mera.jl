@@ -114,6 +114,7 @@ export
     gridoverlay,
     gridoverlay!,
     absorption_map,
+    dust_opacity,
     pdf,
     provenance,
     provenance_string,
