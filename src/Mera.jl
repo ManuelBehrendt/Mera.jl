@@ -100,6 +100,7 @@ export
     timeseries,
     getmovie,
     savemovie,
+    moviefromframes,
     MeraMovie,
     center_of,
     face_on,
