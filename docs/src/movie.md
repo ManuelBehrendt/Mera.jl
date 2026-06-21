@@ -6,13 +6,13 @@ builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a
 RAM-safe) and the [`projection`](@ref) engine, with the view held fixed so the movie is
 steady.
 
-![A 3-D Sedov blast over its 13 outputs: the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.gif)
+![A 3-D Sedov blast over its 13 outputs, each frame tagged with its output number (tags=:output): the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.gif)
 
 ```julia
 using Mera
 
 m = getmovie("/data/Mera-Tests/timeseries_sedov3d", :sd)   # one frame per output
-savemovie(m, "density.gif")
+savemovie(m, "density.gif"; tags=:output)                  # label each frame
 ```
 
 ## How it works (no scratch images)
@@ -27,8 +27,10 @@ write a folder of PNGs and stitch them, and it does *not* read existing image fi
    writes a **single** animated GIF in one `FileIO.save` call (using the bundled
    FileIO/Images — no extra package). No per-frame temp files.
 
-The frames stay numeric, so you can post-process them or render them yourself (see
-[Higher quality / MP4](#Higher-quality-/-MP4) below).
+The frames stay numeric, so you can post-process them or render them yourself. If you *do*
+want the individual images on disk, ask for them — `savemovie(...; save_frames="dir/")` writes
+each rendered frame as a PNG (see [Scratch frames](#Scratch-frames-—-keep-the-PNGs)) — and
+[`moviefromframes`](@ref) goes the other way, building a movie from images already on disk.
 
 ## Orientation and region
 
@@ -64,22 +66,75 @@ savemovie(m, "density.gif";
   function mapping `t∈[0,1]` to an `(r, g, b)` tuple — e.g. plug in a `ColorSchemes`/Makie
   colormap if you have one loaded.
 
-## Higher quality / MP4
+## Tags: a timestamp or label on each frame
 
-`savemovie` is the zero-dependency GIF path. Because `m.frames[k]` is a plain numeric array
-(of output `m.outputs[k]` at time `m.times[k]`), you can render each frame yourself for a
-publication-quality movie — e.g. a `CairoMakie` heatmap with axes and a colourbar per frame,
-saved as PNGs, then assembled into an MP4 with `ffmpeg`:
+Pass `tags` to label every frame. The labels are **printed** as the movie is written and,
+with `annotate=true` (the default), **burned onto the frames** with a small built-in bitmap
+font (top-left, no font dependency):
+
+```julia
+savemovie(m, "density.gif"; tags=:time)      # "t=12.3 Myr", "t=24.6 Myr", …
+savemovie(m, "density.gif"; tags=:output)    # "output 00001", "output 00002", …
+```
+
+`tags` accepts:
+
+- `:time` → the frame's physical time and unit; `:output` → its output number;
+- a **vector of strings** (one per frame) — any custom caption you like;
+- a **function** `k -> String` (frame index → label), e.g. `k -> "z = $(redshifts[k])"`;
+- a **tuple** of any of the above to stack **multiple lines**, e.g. `tags=(:output, :time)`.
+
+Control how the labels look — all optional, with sensible defaults:
+
+| keyword | default | options |
+|---------|---------|---------|
+| `tag_scale` | `:auto` | `:auto` (scales with the frame) or an integer font size |
+| `tag_position` | `:topleft` | `:topleft`, `:topright`, `:bottomleft`, `:bottomright`, or `(row, col)` |
+| `tag_color` | `:white` | `:white`, `:yellow`, `:red`, `:cyan`, `:green`, `:black`, an `RGB`, or `(r,g,b)` |
+
+```julia
+savemovie(m, "density.gif"; tags=(:output, :time),         # two lines …
+          tag_position=:bottomright, tag_color=:yellow, tag_scale=2)
+
+savemovie(m, "density.gif"; tags=["start", "mid", "end", …], fps=15)
+```
+
+Set `annotate=false` to print the labels without drawing them on the frames.
+
+## Scratch frames — keep the PNGs
+
+Set `save_frames` to a directory and `savemovie` also writes every rendered frame as
+`frame_00001.png`, `frame_00002.png`, … there (the GIF is still written too):
+
+```julia
+savemovie(m, "density.gif"; tags=:output, save_frames="frames/")
+# frames/frame_00001.png … frames/frame_00013.png
+```
+
+## Build a movie from existing images
+
+The complement: [`moviefromframes`](@ref) assembles a GIF from image files already on disk —
+the PNGs from `save_frames`, or frames you rendered yourself:
+
+```julia
+moviefromframes("frames/", "movie.gif"; fps=12)   # sorts by name, stacks, encodes
+```
+
+This is the "use existing images to make a movie" path — so you can render
+publication-quality frames with `CairoMakie` (axes, a colourbar, your own annotations), save
+them as PNGs, and turn them into a GIF, or feed them to `ffmpeg` for an MP4:
 
 ```julia
 using CairoMakie
-for (k, A) in enumerate(m.frames)
+mkpath("frames")
+for (k, A) in enumerate(m.frames)             # m.frames[k] is a plain numeric array
     fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect(),
                               title="t = $(round(m.times[k], digits=3))")
     heatmap!(ax, log10.(max.(A, 1e-30)); colormap=:inferno)
-    save("frame_$(lpad(k,4,'0')).png", fig)
+    save("frames/frame_$(lpad(k,4,'0')).png", fig)
 end
-# ffmpeg -framerate 10 -i frame_%04d.png -pix_fmt yuv420p movie.mp4
+moviefromframes("frames/", "movie.gif")       # …or:
+# ffmpeg -framerate 10 -i frames/frame_%04d.png -pix_fmt yuv420p movie.mp4
 ```
 
 ## See also
