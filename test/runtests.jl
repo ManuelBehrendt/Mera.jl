@@ -112,6 +112,7 @@ if isempty(_focus)
         include("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
         include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
         include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
+        include("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
         include("07_regions.jl")
     end
 

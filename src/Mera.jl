@@ -66,6 +66,8 @@ export
 # data reader
     getunit,
     getinfo,
+    getinfo_pluto,
+    gethydro_pluto,
     createpath,
     gethydro,
     getgravity,
@@ -373,6 +375,7 @@ include("read_data/RAMSES/hilbert3d.jl")
 # Data reader
 include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
+include("read_data/PLUTO/reader_pluto.jl")   # PLUTO frontend (static uniform Cartesian grid)
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
