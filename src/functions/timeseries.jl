@@ -111,8 +111,13 @@ end
 # Sorted vector of output numbers present in `path`, filtered by the `outputs` selection.
 # Data-free testable: only touches the filesystem listing, not the snapshots.
 function _timeseries_outputs(path::String; mera_files::Bool=false, outputs=:all)
-    avail = mera_files ? _mera_output_numbers(path) :
-                         sort(checkoutputs(path; verbose=false).outputs)
+    avail = if mera_files
+        _mera_output_numbers(path)
+    elseif detect_simcode(path) === :pluto      # PLUTO lists its outputs in dbl.out
+        pluto_output_numbers(path)
+    else
+        sort(checkoutputs(path; verbose=false).outputs)
+    end
     return _select_outputs(avail, outputs)
 end
 
