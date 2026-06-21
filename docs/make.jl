@@ -103,6 +103,8 @@ makedocs(modules = [Mera],
                                                         "Converter"    =>  "07_1_multi_Mera_Files_Converter.md",
                                                         "API Reference" => "api/mera_files.md"],
 
+                          "Other Codes (PLUTO)" => "pluto_reader.md",
+
                           "Volume Rendering"    => Any[ "Intro"      =>  "paraview/paraview_intro.md",
                                                         "Hydro"      =>  "paraview/08_hydro_VTK_export.md",
                                                         "Particles"  =>  "paraview/08_particles_VTK_export.md",
