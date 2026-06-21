@@ -90,6 +90,17 @@ if DATA_AVAILABLE && isdir(MV_PATH)
         @test length(ms) == 3
     end
 
+    @testset "off-axis frames (full projection view set)" begin
+        o = avail[end:end]
+        za  = getmovie(MV_PATH, :sd; outputs=o, res=48, verbose=false).frames[1]          # axis-aligned z
+        inc = getmovie(MV_PATH, :sd; outputs=o, res=48, inclination=45, azimuth=30, verbose=false).frames[1]
+        @test ndims(inc) == 2
+        @test inc != za                                              # angle-based off-axis tilts the frame
+        # an explicit line of sight also works (e.g. from face_on/edge_on)
+        l = getmovie(MV_PATH, :sd; outputs=o, res=48, los=[1.0,0.0,0.0], up=[0.0,0.0,1.0], verbose=false)
+        @test length(l) == 1 && ndims(l.frames[1]) == 2
+    end
+
     @testset "savemovie writes one GIF (no intermediate files)" begin
         m = getmovie(MV_PATH, :sd; outputs=avail[1:4], res=32, time_unit=:standard, verbose=false)
         mktempdir() do d
