@@ -74,6 +74,8 @@ makedocs(modules = [Mera],
 
                           "Provenance"           => "provenance.md",
 
+                          "Grid Overlay & Absorption" => "overlay_absorption.md",
+
                           "Mask/Filter/Meta"    => Any[ "Tutorial"    => "05_multi_Masking_Filtering.md",
                                                         "API Reference" => "api/masking_filtering.md"],
 

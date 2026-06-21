@@ -89,14 +89,28 @@ _ilog2(n::Integer) = (l = round(Int, log2(n)); 2^l == n ? l :
           "Re-run PLUTO with e.g. 64³, or extend the reader for arbitrary sizes."))
 
 """
-    getinfo_pluto(output::Int, path::String; verbose=true) -> InfoType
+    getinfo_pluto(output::Int, path::String; unit_length=1.0, unit_density=1.0,
+                  unit_velocity=1.0, verbose=true) -> InfoType
 
 Read PLUTO static-grid metadata (`grid.out` + `dbl.out`) for snapshot `output` in `path`
 into a Mera `InfoType` (`simcode = "PLUTO"`). Uniform 3-D Cartesian grid → `levelmin ==
-levelmax`; PLUTO is dimensionless here, so code units (`unit_* = 1`). Feed the result to
-[`gethydro`](@ref).
+levelmax`. Feed the result to [`gethydro`](@ref).
+
+**Units.** PLUTO writes data in **code units** and does not store its `UNIT_*` constants in
+the output, so by default the run is treated as dimensionless (`unit_* = 1`) — Mera's scale
+system still works, but physical conversions like `:kpc`/`:Msol` are only meaningful if you
+supply the run's CGS units. Pass PLUTO's `UNIT_LENGTH`, `UNIT_DENSITY`, `UNIT_VELOCITY` (the
+`unit_length`/`unit_density`/`unit_velocity` keywords, in **CGS**) for a dimensional run and
+every `getvar`/`projection` unit conversion becomes physical:
+
+```julia
+# a galactic PLUTO run, say UNIT_LENGTH = 1 kpc, UNIT_DENSITY = m_p, UNIT_VELOCITY = 1 km/s
+info = getinfo_pluto(5, path; unit_length=3.086e21, unit_density=1.67e-24, unit_velocity=1e5)
+getvar(gethydro(info), :x, :kpc)        # now physically correct
+```
 """
-function getinfo_pluto(output::Int, path::String; verbose::Bool=true)
+function getinfo_pluto(output::Int, path::String; unit_length::Real=1.0,
+                       unit_density::Real=1.0, unit_velocity::Real=1.0, verbose::Bool=true)
     geometry, (n1, n2, n3), (xc1, xc2, xc3) = _pluto_read_grid(joinpath(path, "grid.out"))
     geometry == "CARTESIAN" ||
         error("PLUTO reader (v1) supports CARTESIAN geometry only; got $geometry.")
@@ -114,7 +128,11 @@ function getinfo_pluto(output::Int, path::String; verbose::Bool=true)
     info.time = time;              info.gamma = 5/3
     info.aexp = 1.0; info.H0 = 1.0; info.omega_m = 1.0; info.omega_l = 0.0
     info.omega_k = 0.0; info.omega_b = 0.0
-    info.unit_l = 1.0; info.unit_d = 1.0; info.unit_t = 1.0; info.unit_v = 1.0; info.unit_m = 1.0
+    # PLUTO CGS units (UNIT_LENGTH/DENSITY/VELOCITY); unit_t = L/v, unit_m = ρ·L³. Defaults
+    # are 1 (dimensionless / code units).
+    info.unit_l = Float64(unit_length); info.unit_d = Float64(unit_density)
+    info.unit_v = Float64(unit_velocity); info.unit_t = info.unit_l / info.unit_v
+    info.unit_m = info.unit_d * info.unit_l^3
     info.hydro = true; info.gravity = false; info.particles = false
     info.rt = false; info.clumps = false; info.sinks = false
     info.variable_list = [get(_PLUTO_VARMAP, v, Symbol(v)) for v in vars]

@@ -110,6 +110,9 @@ export
     face_on,
     edge_on,
     GalaxyFrame,
+    gridoverlay,
+    gridoverlay!,
+    absorption_map,
     pdf,
     provenance,
     provenance_string,
@@ -439,6 +442,8 @@ include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
+include("functions/gridoverlay.jl")
+include("functions/absorption.jl")
 include("functions/statistics.jl")
 include("functions/provenance.jl")
 include("functions/movie.jl")
