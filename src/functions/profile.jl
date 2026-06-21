@@ -708,7 +708,8 @@ end
 """
     velocitydispersion(dataobject; rvar=:r_cylinder, components=(:vr_cylinder,:vϕ_cylinder,:vz),
                        weight=:mass, vunit=:km_s, nbins=50, xrange=nothing, scale=:linear, binsize=nothing,
-                       center=[:bc], center_unit=:standard, xunit=:kpc, mask=[false]) -> NamedTuple
+                       center=[:bc], center_unit=:standard, xunit=:kpc, mask=[false],
+                       thermal=false, mu=1.0, Tvar=:T) -> NamedTuple
 
 **Radial velocity-dispersion profile.** Bins by `rvar` and returns the per-bin weighted standard
 deviation of each velocity `component` — the *rest-frame* dispersion (about the per-bin mean, so net
@@ -719,6 +720,21 @@ convenience wrapper; see the profiles tutorial for the manual recipe.
 
 Returns `x` (bin centres), `edges`, `count`, `sigma` (total), `sigma_components` (`nbins × n`) and
 `mean_components` (`nbins × n`) with the `components` order, and `neff` (Kish — small ⇒ noisy σ).
+
+**Thermal & total dispersion (`thermal=true`).** The kinematic σ above is *turbulent* (bulk) motion
+only. Set `thermal=true` to also fold in the gas thermal motion and report the quantity an observer
+measures as a line width. It adds, per bin:
+
+* `sigma_turb_1d = √(Σσ_i²/n)` — the **1-D** turbulent dispersion (the `sigma` field is the 3-D √(Σσ_i²));
+* `sigma_thermal = √(k_B⟨T⟩/(μ m_H))` — the 1-D thermal speed of a tracer of mean molecular weight `mu`
+  (in H-atom masses; e.g. `mu=2.33` molecular, `1.0` atomic H, `0.6` ionized), from the mass-weighted ⟨T⟩;
+* `sigma_total = √(sigma_turb_1d² + sigma_thermal²)` — the total (turbulent ⊕ thermal) 1-D dispersion;
+* `mach = sigma_turb_1d / ⟨c_s⟩` — the turbulent Mach number (⟨c_s⟩ the mass-weighted sound speed);
+* `cs`, `T`, `mu` — the per-bin mass-weighted sound speed / temperature and the `mu` used.
+
+`Tvar` selects the temperature field (default `:T`). For a **local, patch-de-streamed** turbulent ⊕
+thermal dispersion (TIGRESS/SILCC-style, removing bulk flow on a chosen length scale rather than
+per-radial-bin), see [`localdispersion`](@ref).
 
 !!! note "What kind of dispersion this is (3-D, per-annulus)"
     This is the **3-D, per-bin** dispersion: all cells in a radial bin, variance of the velocity
@@ -740,7 +756,8 @@ Returns `x` (bin centres), `edges`, `count`, `sigma` (total), `sigma_components`
 function velocitydispersion(dataobject; rvar::Symbol=:r_cylinder,
         components=(:vr_cylinder, :vϕ_cylinder, :vz), weight::Union{Symbol,AbstractVector}=:mass,
         vunit::Symbol=:km_s, nbins::Int=50, xrange=nothing, scale::Symbol=:linear, binsize=nothing,
-        center=[:bc], range_unit::Symbol=:standard, center_unit=nothing, xunit::Symbol=:kpc, mask=[false])
+        center=[:bc], range_unit::Symbol=:standard, center_unit=nothing, xunit::Symbol=:kpc, mask=[false],
+        thermal::Bool=false, mu::Real=1.0, Tvar::Symbol=:T)
     comps = Symbol.(collect(components))
     length(comps) >= 1 || throw(ArgumentError("need at least one velocity component"))
     p = profile(dataobject, rvar, comps; weight=weight, unit=vunit, nbins=nbins, xrange=xrange,
@@ -748,10 +765,156 @@ function velocitydispersion(dataobject; rvar::Symbol=:r_cylinder,
                 center_unit=center_unit, xunit=xunit, mask=mask)
     σmat = reduce(hcat, [p.fields[c].std  for c in comps])      # nbins × ncomp (rest-frame dispersions)
     μmat = reduce(hcat, [p.fields[c].mean for c in comps])
-    σtot = sqrt.(sum(σmat .^ 2, dims=2)[:])
-    return (x=p.x, edges=p.edges, count=p.count, neff=p.fields[comps[1]].neff,
+    σtot = sqrt.(sum(σmat .^ 2, dims=2)[:])                     # 3-D kinematic dispersion √(Σσ_i²)
+    base = (x=p.x, edges=p.edges, count=p.count, neff=p.fields[comps[1]].neff,
             sigma=σtot, sigma_components=σmat, mean_components=μmat, components=comps,
             weight=_wprov(weight), rvar=rvar, vunit=vunit, xunit=xunit, source=:data)
+    thermal || return base
+    # ---- thermal + total dispersion (σ_total = √(σ_turb,1D² + σ_th²)) and the Mach number ----
+    # σ_turb here is the 1-D turbulent dispersion √(Σσ_i²/n); combined with the 1-D thermal speed
+    # √(k_B⟨T⟩/(μ m_H)) it gives the per-bin line-of-sight line width an observer would measure.
+    ncomp  = length(comps)
+    σt1d   = sqrt.(sum(σmat .^ 2, dims=2)[:] ./ ncomp)
+    pT  = profile(dataobject, rvar, Tvar; weight=weight, unit=:K, edges=p.edges,
+                  center=center, range_unit=range_unit, center_unit=center_unit, xunit=xunit, mask=mask)
+    σth = _thermal_sigma(dataobject.info, pT.mean, mu, vunit)
+    σtotal = sqrt.(σt1d .^ 2 .+ σth .^ 2)
+    pcs = profile(dataobject, rvar, :cs; weight=weight, unit=vunit, edges=p.edges,
+                  center=center, range_unit=range_unit, center_unit=center_unit, xunit=xunit, mask=mask)
+    mach = σt1d ./ pcs.mean
+    return merge(base, (sigma_turb_1d=σt1d, sigma_thermal=σth, sigma_total=σtotal,
+                        mach=mach, cs=pcs.mean, T=pT.mean, mu=Float64(mu)))
+end
+
+# 1-D thermal velocity dispersion √(k_B T / (μ m_H)) of a tracer of mean molecular weight `mu`
+# (in units of the H-atom mass), for a temperature (vector) in K, returned in velocity unit `vunit`.
+# Returns NaN where T is non-finite/negative (e.g. empty bins).
+function _thermal_sigma(info, T_K, mu::Real, vunit::Symbol)
+    kB = info.constants.kB; mH = info.constants.mH          # erg/K, g
+    cms_to_vunit = vunit === :standard ? 1.0 :
+                   getunit(info, vunit) / getunit(info, :cm_s)   # physical cm/s → vunit
+    return [ (isfinite(t) && t > 0) ? sqrt(kB * t / (mu * mH)) * cms_to_vunit : NaN for t in T_K ]
+end
+
+# subtract the per-patch weighted mean of `val`: returns the residual val - ⟨val⟩_patch (one pass).
+function _patch_residual(val, w, pid)
+    s = Dict{Int,Float64}(); ws = Dict{Int,Float64}()
+    @inbounds for i in eachindex(val)
+        s[pid[i]]  = get(s,  pid[i], 0.0) + w[i]*val[i]
+        ws[pid[i]] = get(ws, pid[i], 0.0) + w[i]
+    end
+    return [val[i] - s[pid[i]]/ws[pid[i]] for i in eachindex(val)]
+end
+
+"""
+    localdispersion(dataobject; patchsize=[500,:pc], components=(:vr_cylinder,:vϕ_cylinder,:vz),
+                    weight=:mass, vunit=:km_s, thermal=true, mu=1.0, Tvar=:T,
+                    center=[:bc], range_unit=:standard, mask=[false], min_cells_per_patch=20,
+                    quantiles=[0.16,0.5,0.84]) -> NamedTuple
+
+**Local (patch-de-streamed) velocity dispersion — turbulent ⊕ thermal.** The TIGRESS/SILCC-style
+turbulence measure: the field of view is tiled into square `patchsize` patches in the (x, y) plane,
+the **per-patch mass-weighted mean velocity is subtracted** from every cell (so bulk rotation, shear
+and spiral streaming on scales larger than `patchsize` are removed), and the residual dispersion is
+the genuine small-scale turbulence below `patchsize`.
+
+This differs from [`velocitydispersion`](@ref), which removes the mean per *radial bin*: here the
+de-streaming is on a *spatial grid*, so it does not absorb non-circular streaming into "turbulence".
+Restrict the input first (e.g. [`shellregion`](@ref) to a solar annulus, and/or a midplane `mask`) —
+this returns **aggregate scalars over the whole supplied region**, not a radial profile.
+
+Per the supplied region it returns the mass-weighted aggregate:
+* `sigma_r`,`sigma_phi`,`sigma_z` (the `components` order), `sigma_turb_3d = √(Σσ_i²)`,
+  `sigma_turb_1d = √(Σσ_i²/n)`;
+* with `thermal=true`: `sigma_thermal = √(k_B⟨T⟩/(μ m_H))`, `sigma_total = √(sigma_turb_1d²+sigma_thermal²)`;
+* `mach = sigma_turb_1d/⟨c_s⟩`, `anisotropy = sigma_z/σ_in-plane` (for a 3-component triplet, z last);
+* `n_cell`, `n_eff` (Kish), `n_patch`, and the patch-to-patch weighted percentiles of σ_total / Mach /
+  anisotropy at `quantiles` (`sigma_total_q`, `mach_q`, `anisotropy_q`) — the physical region-to-region
+  scatter, suitable as error bars. Only patches with ≥ `min_cells_per_patch` cells enter the percentiles.
+
+`mu` is the tracer mean molecular weight in H-atom masses (`2.33` molecular, `1.0` atomic, `0.6` ionized).
+"""
+function localdispersion(dataobject; patchsize=[500.0, :pc],
+        components=(:vr_cylinder, :vϕ_cylinder, :vz), weight::Union{Symbol,AbstractVector}=:mass,
+        vunit::Symbol=:km_s, thermal::Bool=true, mu::Real=1.0, Tvar::Symbol=:T,
+        center=[:bc], range_unit::Symbol=:standard, center_unit=nothing, mask=[false],
+        min_cells_per_patch::Int=20, quantiles=[0.16, 0.5, 0.84])
+    cu    = center_unit === nothing ? range_unit : center_unit
+    comps = Symbol.(collect(components))
+    info  = dataobject.info
+    # patch size as a scalar in code length units (accept [value,:unit] or a plain code-unit scalar)
+    plen = (patchsize isa Tuple || patchsize isa AbstractVector) && length(patchsize) == 2 ?
+           Float64(patchsize[1]) / (patchsize[2] === :standard ? 1.0 : getunit(info, Symbol(patchsize[2]))) :
+           Float64(patchsize)
+    plen > 0 || throw(ArgumentError("patchsize must be > 0"))
+
+    vs = [Float64.(getvar(dataobject, c, vunit, center=center, center_unit=cu)) for c in comps]
+    xc = Float64.(getvar(dataobject, :x, center=center, center_unit=cu))   # code length, centred
+    yc = Float64.(getvar(dataobject, :y, center=center, center_unit=cu))
+    Tc = Float64.(getvar(dataobject, Tvar, :K))
+    cs = Float64.(getvar(dataobject, :cs, vunit))
+    w  = _weights(dataobject, weight, length(xc))
+    skip = check_mask(dataobject, mask, false)
+    sel  = skip ? trues(length(xc)) : collect(Bool.(mask))
+    keep = sel .& (w .> 0) .& isfinite.(cs) .& (cs .> 0)
+    for v in vs; keep .&= isfinite.(v); end
+    n_cell = count(keep)
+    n_cell == 0 && throw(ArgumentError("localdispersion: no cells pass the selection"))
+    vs = [v[keep] for v in vs]; xc = xc[keep]; yc = yc[keep]
+    Tc = Tc[keep]; cs = cs[keep]; w = w[keep]
+    W = sum(w); n_eff = W^2 / sum(w .^ 2)
+
+    # patch id on the (x,y) grid; 100003 is a prime stride to avoid id collisions between rows
+    pid = floor.(Int, xc ./ plen) .* 100003 .+ floor.(Int, yc ./ plen)
+    res = [_patch_residual(v, w, pid) for v in vs]                 # de-streamed residual per component
+    σ2  = [sum(w .* r .^ 2) / W for r in res]                      # mass-weighted residual variances
+    σcomp = sqrt.(max.(σ2, 0.0))
+    ncomp = length(comps)
+    σ3d = sqrt(sum(σ2)); σ1d = sqrt(sum(σ2) / ncomp)
+    σip = ncomp >= 2 ? sqrt(max(sum(σ2[1:end-1]) / (ncomp - 1), 0.0)) : NaN
+    aniso = (ncomp >= 2 && σip > 0) ? σcomp[end] / σip : NaN
+    Tw  = sum(w .* Tc) / W; csw = sum(w .* cs) / W
+    σth = thermal ? _thermal_sigma(info, [Tw], mu, vunit)[1] : 0.0
+    σtot = sqrt(σ1d^2 + σth^2)
+    mach = csw > 0 ? σ1d / csw : NaN
+
+    # per-patch dispersions → region-to-region percentile spread (error bars)
+    acc3 = Dict{Int,Float64}(); accz = Dict{Int,Float64}(); accip = Dict{Int,Float64}()
+    accT = Dict{Int,Float64}(); acccs = Dict{Int,Float64}(); accW = Dict{Int,Float64}(); accN = Dict{Int,Int}()
+    @inbounds for i in eachindex(pid)
+        k = pid[i]; wi = w[i]
+        ri2 = 0.0; for kk in 1:ncomp; ri2 += res[kk][i]^2; end
+        acc3[k]  = get(acc3, k, 0.0)  + wi*ri2
+        accz[k]  = get(accz, k, 0.0)  + wi*res[end][i]^2
+        ip2 = 0.0; for kk in 1:ncomp-1; ip2 += res[kk][i]^2; end
+        accip[k] = get(accip, k, 0.0) + wi*ip2
+        accT[k]  = get(accT, k, 0.0)  + wi*Tc[i]
+        acccs[k] = get(acccs, k, 0.0) + wi*cs[i]
+        accW[k]  = get(accW, k, 0.0)  + wi
+        accN[k]  = get(accN, k, 0)    + 1
+    end
+    pσ = Float64[]; pM = Float64[]; pA = Float64[]; pw = Float64[]
+    for k in keys(accW)
+        accN[k] >= min_cells_per_patch || continue
+        Wk = accW[k]
+        s1d = sqrt(max(acc3[k]/Wk/ncomp, 0.0))
+        szk = sqrt(max(accz[k]/Wk, 0.0))
+        sipk = ncomp >= 2 ? sqrt(max(accip[k]/Wk/(ncomp-1), 0.0)) : NaN
+        Tk = accT[k]/Wk; csk = acccs[k]/Wk
+        sthk = thermal ? _thermal_sigma(info, [Tk], mu, vunit)[1] : 0.0
+        push!(pσ, sqrt(s1d^2 + sthk^2))
+        push!(pM, csk > 0 ? s1d/csk : NaN)
+        push!(pA, (sipk isa Float64 && sipk > 0) ? szk/sipk : NaN)
+        push!(pw, Wk)
+    end
+    qs = collect(float.(quantiles))
+    wq(v) = [ _wquantile(v, pw, q) for q in qs ]
+    return (sigma_components=σcomp, components=comps,
+            sigma_turb_3d=σ3d, sigma_turb_1d=σ1d, sigma_thermal=σth, sigma_total=σtot,
+            mach=mach, anisotropy=aniso, cs=csw, T=Tw, mu=Float64(mu),
+            n_cell=n_cell, n_eff=n_eff, n_patch=length(pσ),
+            sigma_total_q=wq(pσ), mach_q=wq(pM), anisotropy_q=wq(pA), qlevels=qs,
+            patchsize=plen, weight=_wprov(weight), vunit=vunit, source=:data)
 end
 
 """

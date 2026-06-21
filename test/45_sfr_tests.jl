@@ -68,5 +68,33 @@
                 @test_skip "yt_cosmo dataset not available"
             end
         end
+
+        @testset "SN mass-loss correction (eta_sn) + depletion_time" begin
+            d = DATASETS[:spiral_ugrid]
+            info = getinfo(d.output, d.path, verbose=false)
+            p = getparticles(info, verbose=false, show_progress=false)
+            star = getvar(p, :birth) .!= 0.0; ft = getvar(p, :birth, :Myr)
+            tb = 50.0; tr = [minimum(ft[star]), maximum(ft[star]) + 2tb]
+            # eta_sn forces the :mass fallback (so the reconstruction actually applies) and must RAISE
+            # the SFR of stars older than t_sn_delay by exactly 1/(1-eta_sn); younger stars unchanged.
+            t0, s0 = sfr(p; mass=:mass, trange=tr, tbinsize=tb)
+            t2, s2 = sfr(p; mass=:mass, eta_sn=0.25, t_sn_delay=5.0, trange=tr, tbinsize=tb)
+            @test all(s2 .>= s0 .- 1e-9)                       # never decreases
+            @test sum(s2) > sum(s0)                            # old stars get rescaled up
+            @test sum(s2) <= sum(s0)/(1-0.25) + 1e-6           # at most the full 1/(1-η) factor
+            @test_throws ErrorException sfr(p; mass=:mass, eta_sn=1.5)   # invalid η
+            # eta_sn=0 is a no-op (backward compatible)
+            tz, sz = sfr(p; mass=:mass, eta_sn=0.0, trange=tr, tbinsize=tb)
+            @test sz == s0
+
+            # depletion_time on the matching hydro region
+            gas = gethydro(info, verbose=false, show_progress=false)
+            dt = depletion_time(gas, 1.0)
+            @test dt.M_gas_Msol > 0 && dt.t_depl_Gyr > 0 && isfinite(dt.t_ff_mw_Myr) && dt.t_ff_mw_Myr > 0
+            @test isapprox(dt.t_depl_Gyr, dt.M_gas_Msol / 1.0 / 1e9; rtol=1e-10)   # M/SFR in Gyr
+            @test 0.0 < dt.eps_ff < 1.0e3                      # SFE/t_ff dimensionless, sane magnitude
+            # SFR scaling: doubling SFR halves the depletion time
+            @test isapprox(depletion_time(gas, 2.0).t_depl_Gyr, dt.t_depl_Gyr/2; rtol=1e-10)
+        end
     end
 end

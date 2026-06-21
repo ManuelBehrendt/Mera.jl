@@ -262,6 +262,19 @@ end
 
             @test mean(t_ff[low_rho_idx]) > mean(t_ff[high_rho_idx])
         end
+
+        @testset "Physical units (t_ff = √(3π/32Gρ))" begin
+            # the field is now in CODE units at :standard; explicit time units must be physically correct
+            G   = hydro.info.constants.G
+            ρ_cgs = getvar(hydro, :rho, :g_cm3)
+            tff_s_theory = sqrt.(3π ./ (32 .* G .* ρ_cgs))          # physical seconds
+            @test isapprox(getvar(hydro, :freefall_time, :s), tff_s_theory; rtol=1e-10)
+            # unit conversions are internally consistent (no double counting)
+            tff_s = getvar(hydro, :freefall_time, :s)
+            @test isapprox(getvar(hydro, :freefall_time, :yr),  tff_s ./ hydro.info.constants.yr; rtol=1e-10)
+            @test isapprox(getvar(hydro, :freefall_time, :Myr), tff_s ./ hydro.info.constants.yr ./ 1e6; rtol=1e-10)
+            @test isapprox(getvar(hydro, :freefall_time, :standard) .* hydro.info.scale.s, tff_s; rtol=1e-10)
+        end
     end
 
     # ========================================================================
