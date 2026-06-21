@@ -1119,6 +1119,39 @@ function loadcube(filename::AbstractString; verbose::Bool=true)
 end
 
 """
+    savemap(p::DataMapsType, filename; verbose=true) -> String
+    loadmap(filename; verbose=true) -> DataMapsType
+
+Save / load a projection result (an `AMRMapsType`/`PartMapsType` from [`projection`](@ref)) to a
+JLD2 file — the same lightweight, Julia-native way [`savecube`](@ref)/[`loadcube`](@ref) persist a
+LOS cube (the `.jld2` extension is added if missing). The whole object round-trips: every map and
+its unit, the `extent`/`pixsize`, the off-axis camera basis, and the simulation `info` — so a
+reloaded map still plots, re-projects, and carries [`provenance`](@ref).
+
+```julia
+p = projection(gas, [:sd, :vx])
+savemap(p, "maps.jld2")
+p2 = loadmap("maps.jld2")        # AMRMapsType, identical to p
+```
+
+JLD2 is a subset of the HDF5 format, so these files also open in `h5py` and other HDF5 readers.
+"""
+function savemap(p::DataMapsType, filename::AbstractString; verbose::Bool=true)
+    fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
+    JLD2.jldsave(fn; meramap = p)
+    verbose && println("Saved projection maps $(collect(keys(p.maps))) → ", fn)
+    return fn
+end
+function loadmap(filename::AbstractString; verbose::Bool=true)
+    fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
+    p = JLD2.load(fn, "meramap")
+    p isa DataMapsType ||
+        error("loadmap: $(fn) does not contain a projection map (got $(typeof(p))).")
+    verbose && println("Loaded projection maps $(collect(keys(p.maps))) ← ", fn)
+    return p
+end
+
+"""
     savefits(map::DataMapsType, var::Symbol, filename; unit=nothing, verbose=true) -> String
     savefits(cube::LosCubeType, filename; verbose=true) -> String
 

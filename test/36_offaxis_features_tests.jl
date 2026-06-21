@@ -159,6 +159,26 @@ end
         rm(bad, force=true)
     end
 
+    @testset "savemap/loadmap round-trips a projection result" begin
+        p = projection(gas, [:sd, :vx], verbose=false, show_progress=false)
+        fn = tempname() * ".jld2"
+        @test savemap(p, fn, verbose=false) == fn
+        p2 = loadmap(fn, verbose=false)
+        @test p2 isa Mera.DataMapsType
+        @test collect(keys(p2.maps)) == collect(keys(p.maps))
+        @test p2.maps[:sd] == p.maps[:sd] && p2.maps[:vx] == p.maps[:vx]
+        @test p2.maps_unit == p.maps_unit && p2.extent == p.extent && p2.pixsize == p.pixsize
+        @test provenance(p2).output == provenance(p).output         # info (provenance) survives
+        rm(fn, force=true)
+        # extension auto-added; wrong-type file rejected
+        fn3 = tempname()
+        @test endswith(savemap(p, fn3, verbose=false), ".jld2")
+        rm(fn3 * ".jld2", force=true)
+        bad = tempname() * ".jld2"; Mera.JLD2.jldsave(bad; meramap = [1,2,3])
+        @test_throws ErrorException loadmap(bad, verbose=false)
+        rm(bad, force=true)
+    end
+
     @testset "reversed qrange is rejected" begin
         @test_throws ArgumentError velocity_cube(gas; direction=:edgeon, center=[:bc], pxsize=[2.0,:kpc],
                             xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nv=30, vrange=[100.,-100.], verbose=false)
