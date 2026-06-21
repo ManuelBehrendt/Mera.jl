@@ -148,6 +148,22 @@ moviefromframes("frames/", "movie.gif")       # …or:
 # ffmpeg -framerate 10 -i frames/frame_%04d.png -pix_fmt yuv420p movie.mp4
 ```
 
+## Save and reload the movie object
+
+Computing the frames (especially at high resolution over many outputs) is the expensive part.
+Persist the `MeraMovie` to a **JLD2** file — the same Julia-native way [`savemap`](@ref) and
+[`savecube`](@ref) store a map or a cube — and reload it later with [`loadmovie`](@ref),
+without re-running [`getmovie`](@ref):
+
+```julia
+savemovie(m, "density.jld2")        # a .jld2 filename stores the object (not a GIF)
+m2 = loadmovie("density.jld2")      # → MeraMovie, identical frames + metadata
+
+savemovie(m2, "density.gif"; tags=:time)   # re-encode to a GIF with any tags/colormap, instantly
+```
+
+`savemovie` switches on the extension: `.gif` encodes a movie, `.jld2` persists the object.
+
 ## See also
 
 - [`timeseries`](@ref) — the same outputs/loading machinery, reducing each snapshot to a row instead of a frame.

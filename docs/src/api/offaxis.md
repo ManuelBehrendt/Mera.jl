@@ -38,10 +38,22 @@ position_velocity
 ```@docs
 rotation_sequence
 savecube
+savemap
 ```
 
-(`loadcube` is documented together with [`savecube`](@ref) above; [`savefits`](@ref) and the
-[`LosCubeType`](@ref) struct are in the [Complete API Reference](../api.md).)
+(`loadcube`/`loadmap` are documented together with [`savecube`](@ref)/[`savemap`](@ref) above;
+[`savefits`](@ref) and the [`LosCubeType`](@ref) struct are in the
+[Complete API Reference](../api.md).)
+
+Save a projection result the same Julia-native, JLD2 way a cube is saved:
+
+```julia
+p = projection(gas, [:sd, :vx])
+savemap(p, "maps.jld2")     # all maps + units + geometry + provenance
+p2 = loadmap("maps.jld2")   # → AMRMapsType, ready to plot/re-project
+```
+
+JLD2 is a subset of the HDF5 format, so these files also open in `h5py` / other HDF5 readers.
 
 ## Camera kinematics (internal helpers)
 
