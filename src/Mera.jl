@@ -50,6 +50,7 @@ using JSON3
 using HTTP
 using MacroTools
 using JLD2, CodecZlib, CodecBzip2, CodecLz4
+using JLD2Lz4   # provides Lz4Filter — registers JLD2's LZ4 filter so loaddata can READ and savedata can WRITE LZ4 on JLD2 0.6
 using TranscodingStreams
 using TimerOutputs
 using WAV
