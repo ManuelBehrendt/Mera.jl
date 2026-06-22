@@ -1013,6 +1013,33 @@ else
         end
     end
 
+    @testset "backward-compat: newest Mera reads ALL old-schema datatypes (hydro+particles+gravity)" begin
+        # The newest Mera (now on JLD2 0.6 + JLD2Lz4) must read every datatype in a pre-existing,
+        # LZ4-compressed mera file written by an OLDER Mera/JLD2 — and the data must be *usable*
+        # (getvar), not just loadable. JLD2_complete holds an old hydro+particles+gravity file.
+        # NOTE: we cannot WRITE an older JLD2 version from within one test run (only one JLD2 is
+        # loaded), so backward-compat is verified by reading committed old-format fixtures.
+        cdir = joinpath(SIMULATION_PATH, "JLD2_complete")
+        if isfile(joinpath(cdir, "output_00300.jld2"))
+            @test (viewdata(300, path=cdir, verbose=false); true)  # metadata read of an LZ4 old file doesn't throw
+
+            gas = loaddata(300, cdir, :hydro, verbose=false)
+            @test gas isa HydroDataType && length(gas.data) > 0
+            @test all(getvar(gas, :rho) .> 0)                     # decompressed + usable
+            @test sum(getvar(gas, :mass, :Msol)) > 0
+
+            part = loaddata(300, cdir, :particles, verbose=false)
+            @test part isa PartDataType && length(part.data) > 0
+            @test all(isfinite, getvar(part, :vx, :km_s))
+
+            grav = loaddata(300, cdir, :gravity, verbose=false)
+            @test grav isa GravDataType && length(grav.data) > 0
+            @test any(isfinite, getvar(grav, :ax))
+        else
+            @test_skip "old-schema complete mera file (JLD2_complete/output_00300.jld2) not available"
+        end
+    end
+
 end  # DATA_AVAILABLE
 
 end  # @testset
