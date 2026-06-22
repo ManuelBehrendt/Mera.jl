@@ -476,6 +476,15 @@ patchfile:        true
 
 ## Load The Data from JLD2
 
+!!! tip "Loading older Mera files (backward compatibility)"
+    Mera uses **JLD2 0.6** and bundles **JLD2Lz4**, so its **LZ4** compression (the default — best
+    ratio) is read and written natively. Files written by **older Mera versions load directly** —
+    `loaddata`/`viewdata` work on them with no extra steps and no package to install. You may see a
+    one-off `reconstructing` warning for very old files; the data is correct. To silence it and
+    re-save an archive in the current format, use the [file converter](07_1_multi_Mera_Files_Converter.md)
+    (`batch_convert_mera`). If a fresh environment on Julia 1.12 ever fails to precompile with
+    `ArrayInterface … AbstractTriangular`, run `import Pkg; Pkg.add(name="ArrayInterface", version="7")` once.
+
 ### Full Data
 
 ```julia

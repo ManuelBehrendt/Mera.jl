@@ -2,23 +2,36 @@
 
 ## Overview
 
-The Safe Multithreaded JLD2 File Converter is a comprehensive tool designed to upgrade older Mera.jl data files that exhibit version mismatch warnings. It features active safety margin monitoring, intelligent thread management, and robust error handling to ensure safe and efficient batch conversion of large datasets.
+`batch_convert_mera` is a safe, multithreaded tool to **re-save older Mera.jl data files in the
+current format**. It features active safety-margin monitoring, intelligent thread management, and
+robust error handling for batch conversion of large datasets.
+
+!!! note "You usually don't need to convert just to read"
+    Current Mera (JLD2 0.6, with the bundled `JLD2Lz4`) **reads older LZ4-compressed Mera files
+    directly** — `loaddata`/`viewdata` work on files written by earlier Mera versions with no extra
+    steps (see [Loading older Mera files](07_multi_Mera_Files.md)). Convert when you want to **remove
+    reconstruction warnings**, standardise a large archive on the current format, or speed up repeated
+    loads of very old files.
 
 ## Problem Description
 
-When loading JLD2 files created with older versions of Mera.jl and its dependencies, users encounter this warning:
+JLD2 files created with older Mera/dependency versions can still load, but may print a
+reconstruction warning such as:
 
 ```
-┌ Warning: saved type CodecLz4.LZ4FrameCompressor has field header::TranscodingStreams.Memory, 
+┌ Warning: saved type CodecLz4.LZ4FrameCompressor has field header::TranscodingStreams.Memory,
 but workspace type has field header::Vector{UInt8}, and no applicable convert method exists; reconstructing
 ```
 
-This occurs due to internal changes in the `CodecLz4` and `TranscodingStreams` packages, where field types were modified between versions. The reconstruction process can lead to:
+This comes from internal field-type changes in `CodecLz4`/`TranscodingStreams` between versions. The
+file still reads correctly (Mera reconstructs the type), but the reconstruction can mean:
 
 - **Performance Degradation**: Slower file loading due to reconstruction overhead
 - **Data Integrity Concerns**: Potential inconsistencies in reconstructed objects
 - **Memory Inefficiency**: Higher memory usage during the reconstruction process
 - **Workflow Disruption**: Constant warning messages during data analysis
+
+Converting once re-writes the file cleanly in the current format and removes the warning.
 
 
 ## Solution Architecture
@@ -62,7 +75,7 @@ const DEFAULT_MAX_THREADS = 64       # Maximum thread count
 
 ### Function Parameters
 
-#### `batch_convert_multithreaded()`
+#### `batch_convert_mera()`
 
 | Parameter | Type | Default | Description |
 | :-- | :-- | :-- | :-- |
@@ -84,7 +97,7 @@ const DEFAULT_MAX_THREADS = 64       # Maximum thread count
 Convert a range of files with default safety settings:
 
 ```julia
-results = batch_convert_multithreaded(
+results = batch_convert_mera(
     "/data/old_simulations/",
     "/data/converted_simulations/",
     100, 200
@@ -97,7 +110,7 @@ results = batch_convert_multithreaded(
 For large files or limited memory systems:
 
 ```julia
-results = batch_convert_multithreaded(
+results = batch_convert_mera(
     "/data/old_simulations/",
     "/data/converted_simulations/",
     100, 200;
@@ -113,7 +126,7 @@ results = batch_convert_multithreaded(
 For systems with abundant resources:
 
 ```julia
-results = batch_convert_multithreaded(
+results = batch_convert_mera(
     "/data/old_simulations/",
     "/data/converted_simulations/",
     100, 200;
@@ -130,7 +143,7 @@ results = batch_convert_multithreaded(
 User-guided conversion with prompts:
 
 ```julia
-interactive_multithreaded_converter(
+interactive_mera_converter(
     "/data/old_simulations/",
     "/data/converted_simulations/";
     safety_margin=0.85
