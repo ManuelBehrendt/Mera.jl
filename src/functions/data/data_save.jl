@@ -88,9 +88,9 @@ return
 - **`path`:** path to save the file; default is local path.
 - **`fname`:** default name of the files "output_" and the running number is added. Change the string to apply a user-defined name.
 - **`dataformat`:** currently, only JLD2 can be selected.
-- **`compress`:** by default compression is activated. compress=false (deactivate). 
-If necessary, choose between different compression types: LZ4FrameCompressor() (default), Bzip2Compressor(), ZlibCompressor(). 
-Load the required package to choose the compression type and to see their parameters: CodecZlib, CodecBzip2 or CodecLz4
+- **`compress`:** by default LZ4 compression is activated. `compress=false` deactivates it.
+This build (JLD2 0.6) compresses with LZ4 (best ratio); a legacy `LZ4FrameCompressor()` is accepted,
+and `ZlibCompressor()`/`Bzip2Compressor()` fall back to LZ4 with a warning.
 - **`comments`:** add a string that includes e.g. a description about your simulation
 - **`merafile_version`:** default: 1.; current only version
 - **`verbose`:** print timestamp and further information on screen; default: true
@@ -265,19 +265,24 @@ end
 
 
 function check_compression(compress, wdata)
-    if compress == nothing && wdata
-        ctype = LZ4FrameCompressor() #ZlibCompressor(level=9)
-    elseif typeof(compress) == ZlibCompressor && wdata
-        ctype = compress
-    elseif typeof(compress) == Bzip2Compressor && wdata
-        ctype = compress
-    elseif typeof(compress) == LZ4FrameCompressor && wdata
-        ctype = compress
-    elseif compress == false || !wdata
-        ctype = false   # JLD2 disables compression with `compress=false`; the Symbol :nothing is
-                        # rejected by jldopen ("Unsupported Compressor"), which broke uncompressed saves.
+    # JLD2 ≥0.6 takes the LZ4 filter from JLD2Lz4 (`Lz4Filter`) instead of CodecLz4's compressor
+    # object. Mera writes LZ4 (best ratio); a legacy `LZ4FrameCompressor()` is translated, and the
+    # rarely-used Zlib/Bzip2 codecs (not supported by this build) fall back to LZ4 with a warning.
+    if compress == false || !wdata
+        return false   # JLD2 disables compression with `compress=false`; the Symbol :nothing is
+                       # rejected by jldopen ("Unsupported Compressor"), which broke uncompressed saves.
+    elseif compress === nothing
+        return Lz4Filter()                       # default: LZ4
+    elseif compress isa Lz4Filter
+        return compress
+    elseif compress isa LZ4FrameCompressor
+        return Lz4Filter()                       # legacy CodecLz4 LZ4 compressor → JLD2 0.6 LZ4 filter
+    elseif compress isa ZlibCompressor || compress isa Bzip2Compressor
+        @warn "This Mera build (JLD2 0.6) supports LZ4 compression only — using LZ4 instead of $(typeof(compress))." maxlog=1
+        return Lz4Filter()
+    else
+        return compress                          # any other JLD2-accepted filter, passed through
     end
-    return ctype
 end
 
 
