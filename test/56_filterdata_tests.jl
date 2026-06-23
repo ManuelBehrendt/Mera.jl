@@ -24,7 +24,7 @@
         @test maximum(p.maps[:sd]) > 0
     end
 
-    @testset "derived quantity (the @filter macro can't do this)" begin
+    @testset "derived quantity (derived physics, not a stored column)" begin
         hot = filterdata(gas, Above(:cs, b), verbose=false)
         @test length(hot.data) == count(cs .> b)
         bt  = filterdata(gas, InRange(:cs, 0.0, b), verbose=false)
@@ -51,10 +51,39 @@
         @test isapprox(sum(getvar(gas, :mass, :Msol)[m]), msum(flt, :Msol); rtol=1e-9)
     end
 
+    @testset "more condition types (Equals / IsFinite / percentile / Satisfies)" begin
+        rho = getvar(gas, :rho)            # code units
+        lvl = getvar(gas, :level)
+        # Equals on a discrete field
+        @test length(filterdata(gas, Equals(:level, gas.lmax), verbose=false).data) == count(lvl .== gas.lmax)
+        @test length(filterdata(gas, Equals(:level, gas.lmax - 1), verbose=false).data) == count(lvl .== gas.lmax - 1)
+        # IsFinite: synthetic data is all finite
+        @test length(filterdata(gas, IsFinite(:rho), verbose=false).data) == count(isfinite, rho)
+        @test count(getmask(gas, !IsFinite(:rho))) == 0
+        # adaptive percentile thresholds
+        q90 = Mera.quantile(rho, 0.90)
+        @test length(filterdata(gas, AbovePercentile(:rho, 90), verbose=false).data) == count(rho .> q90)
+        @test length(filterdata(gas, BelowPercentile(:rho, 90), verbose=false).data) == count(rho .< q90)
+        # Satisfies == predicate, and composes with & (unlike the raw shorthand)
+        @test length(filterdata(gas, Satisfies(:rho, x -> x > 50), verbose=false).data) == count(rho .> 50)
+        @test length(filterdata(gas, Satisfies(:rho, >(50)) & Above(:cs, b), verbose=false).data) ==
+              count((rho .> 50) .& (cs .> b))
+    end
+
     @testset "works on particles too" begin
         pv = filterdata(part, Above(:vx, 50.0; unit=:km_s) | Below(:vx, -50.0; unit=:km_s), verbose=false)
         vx = getvar(part, :vx, :km_s)
         @test pv isa Mera.PartDataType
         @test length(pv.data) == count((vx .> 50.0) .| (vx .< -50.0))
+    end
+
+    @testset "@filter macro routes Mera objects through filterdata" begin
+        # on a Mera object: works on a DERIVED quantity and returns a same-type object
+        m = @filter gas :cs >= b
+        @test m isa Mera.HydroDataType
+        @test length(m.data) == count(cs .>= b)
+        # on a raw table: classic per-row column filter (unchanged behaviour)
+        t = @filter gas.data :rho >= a
+        @test length(t) == count(getvar(gas, :rho) .>= a)
     end
 end

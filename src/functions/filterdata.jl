@@ -37,6 +37,37 @@ Keep rows where `lo ≤ getvar(obj, quantity, unit) ≤ hi`."""
 struct InRange <: FilterCondition; quantity::Symbol; lo::Float64; hi::Float64; unit::Symbol; end
 InRange(q::Symbol, lo::Real, hi::Real; unit::Symbol=:standard) = InRange(q, Float64(lo), Float64(hi), unit)
 
+"""    Equals(quantity, value; unit=:standard, atol=0.0)
+
+Keep rows where `getvar(obj, quantity, unit) == value` (within `atol`). Best for discrete
+fields such as `:level`, particle ids or `:family`."""
+struct Equals <: FilterCondition; quantity::Symbol; value::Float64; unit::Symbol; atol::Float64; end
+Equals(q::Symbol, v::Real; unit::Symbol=:standard, atol::Real=0.0) = Equals(q, Float64(v), unit, Float64(atol))
+
+"""    IsFinite(quantity; unit=:standard)
+
+Keep rows where `getvar(obj, quantity, unit)` is finite (drops `NaN`/`Inf`) — data hygiene,
+e.g. before a statistic. Combine with `!` to select the non-finite rows instead."""
+struct IsFinite <: FilterCondition; quantity::Symbol; unit::Symbol; end
+IsFinite(q::Symbol; unit::Symbol=:standard) = IsFinite(q, unit)
+
+"""    AbovePercentile(quantity, p; unit=:standard)
+    BelowPercentile(quantity, p; unit=:standard)
+
+Keep rows above (below) the `p`-th percentile of `quantity` over `obj` (`p ∈ [0,100]`) — an
+**adaptive** threshold, e.g. the densest 10 % of cells: `AbovePercentile(:rho, 90)`."""
+struct AbovePercentile <: FilterCondition; quantity::Symbol; p::Float64; unit::Symbol; end
+AbovePercentile(q::Symbol, p::Real; unit::Symbol=:standard) = AbovePercentile(q, Float64(p), unit)
+struct BelowPercentile <: FilterCondition; quantity::Symbol; p::Float64; unit::Symbol; end
+BelowPercentile(q::Symbol, p::Real; unit::Symbol=:standard) = BelowPercentile(q, Float64(p), unit)
+
+"""    Satisfies(quantity, f; unit=:standard)
+
+Keep rows where `f(value)::Bool` for each `getvar(obj, quantity, unit)` value — a composable
+arbitrary predicate (the value-type form of the `filterdata(obj, :q, pred)` shorthand)."""
+struct Satisfies <: FilterCondition; quantity::Symbol; f; unit::Symbol; end
+Satisfies(q::Symbol, f; unit::Symbol=:standard) = Satisfies(q, f, unit)
+
 # internal boolean combinators (built via the operators below)
 struct _And <: FilterCondition; a::FilterCondition; b::FilterCondition; end
 struct _Or  <: FilterCondition; a::FilterCondition; b::FilterCondition; end
@@ -51,6 +82,11 @@ _qvals(obj, q::Symbol, unit::Symbol) = unit === :standard ? getvar(obj, q) : get
 _mask(c::Above, obj)   = _qvals(obj, c.quantity, c.unit) .> c.value
 _mask(c::Below, obj)   = _qvals(obj, c.quantity, c.unit) .< c.value
 _mask(c::InRange, obj) = (v = _qvals(obj, c.quantity, c.unit); (v .>= c.lo) .& (v .<= c.hi))
+_mask(c::Equals, obj)  = (v = _qvals(obj, c.quantity, c.unit); c.atol == 0.0 ? (v .== c.value) : (abs.(v .- c.value) .<= c.atol))
+_mask(c::IsFinite, obj)        = isfinite.(_qvals(obj, c.quantity, c.unit))
+_mask(c::AbovePercentile, obj) = (v = _qvals(obj, c.quantity, c.unit); v .>  quantile(v, c.p/100))
+_mask(c::BelowPercentile, obj) = (v = _qvals(obj, c.quantity, c.unit); v .<  quantile(v, c.p/100))
+_mask(c::Satisfies, obj)       = c.f.(_qvals(obj, c.quantity, c.unit))
 _mask(c::_And, obj)    = _mask(c.a, obj) .& _mask(c.b, obj)
 _mask(c::_Or, obj)     = _mask(c.a, obj) .| _mask(c.b, obj)
 _mask(c::_Not, obj)    = .!_mask(c.a, obj)
