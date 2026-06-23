@@ -109,9 +109,10 @@ makedocs(modules = [Mera],
                                                         "Converter"    =>  "07_1_multi_Mera_Files_Converter.md",
                                                         "API Reference" => "api/mera_files.md"],
 
-                          "Other Codes (PLUTO)" => "pluto_reader.md",
-                          "Other Codes (Athena++)" => "athena_reader.md",
-                          "Other Codes (FLASH)" => "flash_reader.md",
+                          "Other Codes" => Any[ "Overview"   => "multicode.md",
+                                                "PLUTO"      => "pluto_reader.md",
+                                                "Athena++"   => "athena_reader.md",
+                                                "FLASH"      => "flash_reader.md"],
 
                           "Volume Rendering"    => Any[ "Intro"      =>  "paraview/paraview_intro.md",
                                                         "Hydro"      =>  "paraview/08_hydro_VTK_export.md",
