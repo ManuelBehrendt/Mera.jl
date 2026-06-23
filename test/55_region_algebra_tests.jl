@@ -120,6 +120,22 @@
         @test pixmass(comp) < pixmass(sph)                          # the drilled hole removes mass
     end
 
+    @testset "tilted cylinder: volume invariant under axis direction" begin
+        Rc = 0.12*box; Hc = 0.18*box; Vc = pi*Rc^2*(2Hc)     # fits inside the box
+        v(ax) = vol(subregion(gas, Cylinder(Rc, Hc; axis=ax, range_unit=:kpc); verbose=false))
+        for ax in ([0.,0.,1.], [1.,0.,0.], [0.,1.,0.], [1.,1.,1.], [1.,2.,3.])
+            @test isapprox(v(ax), Vc; rtol=0.02)             # same volume for any orientation
+        end
+        # default axis == the classic z-aligned cylinder (backward compatible)
+        @test v([0.,0.,1.]) == vol(subregion(gas, Cylinder(Rc, Hc; range_unit=:kpc); verbose=false))
+        # geometry actually tilts: a thin disk flat in z spans little z; tilted into the x-axis it stands up
+        thin = 0.03*box
+        zext(g) = (z = getvar(g, :z, :kpc); maximum(z) - minimum(z))
+        flat = subregion(gas, Cylinder(0.2box, thin; axis=[0.,0.,1.], range_unit=:kpc); split=false, verbose=false)
+        vert = subregion(gas, Cylinder(0.2box, thin; axis=[1.,0.,0.], range_unit=:kpc); split=false, verbose=false)
+        @test zext(flat) < zext(vert)
+    end
+
     @testset "symbol API still works (backward compatible)" begin
         old = subregion(gas, :sphere; radius=R, center=[:bc], range_unit=:kpc, verbose=false)
         @test old isa Mera.HydroDataType && length(old.data) > 0
