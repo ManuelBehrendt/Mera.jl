@@ -66,16 +66,18 @@ blocks: 2169 (16³ cells each)   variables: (rho, temp, p, gpot, divb, vx, vy, v
 -------------------------------------------------------
 ```
 
-The PARAMESH hierarchy maps to `levelmin:levelmax = 7:10`; loading and projecting is then the
-ordinary Mera workflow — here the log column density along each axis (the sloshing cold front shows
-as the asymmetric central gas):
+The PARAMESH hierarchy maps to `levelmin:levelmax = 7:10`; analysis is then the ordinary Mera
+workflow. GasSloshing's defining feature is its **sloshing cold front** — a spiral of cool, dense
+gas in the cluster core. A full line-of-sight projection washes it out, but restricting the
+integration to a **thin slab** (a slice) exposes it:
 
 ```julia
 gas = gethydro(info)                              # ~7.8M leaf cells, in Mera's cell convention
-projection(gas, :sd, res=512, center=[:bc], direction=:z)
+# thin slab along the line of sight ⇒ a temperature slice through the cluster
+projection(gas, :temp, res=512, center=[:bc], direction=:z, zrange=[-0.03, 0.03], range_unit=:standard)
 ```
 
-![Log column density of the FLASH GasSloshing snapshot, projected along x, y and z — the PARAMESH leaf cells load into the standard structs, so the projection engine runs unchanged.](assets/flash/gassloshing_projection.png)
+![Temperature slices of the FLASH GasSloshing cluster along x, y and z — the spiral sloshing cold front (cool gas, blue) winding through the hot atmosphere; Mera's projection/slicing runs unchanged on FLASH data.](assets/flash/gassloshing_coldfront.png)
 
 ## Units
 
