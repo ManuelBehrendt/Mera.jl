@@ -999,6 +999,68 @@ function _finalize_all(members, nthr::Int, f::F) where {F}
 end
 
 # =====================================================================================
+#  Validators — composable, value-typed acceptance criteria (spec §5)
+# -------------------------------------------------------------------------------------
+#  A `validators=[...]` chain is sugar over the existing engine: membership-mutating
+#  validators (`Bound` with iterative unbinding) configure the boundedness pass, and
+#  predicate validators (`VirialBelow`/`MassAbove`/`Custom`) filter the resulting clumps.
+#  The chain is an AND: a clump is kept only if it passes every validator. Physically
+#  meaningful order — membership (unbinding) is applied during the analysis, predicates
+#  after — is enforced regardless of the order they are listed in.
+# =====================================================================================
+abstract type AbstractValidator end
+
+"""    MinMembers(n)
+Keep only clumps with at least `n` members.
+"""
+struct MinMembers <: AbstractValidator; n::Int; end
+
+"""    Bound(egrav=:tree; iterative=true, softening=0.0, direct_max=2000)
+Self-boundedness validator: builds the per-clump energy budget with potential `egrav`
+(`:tree` Barnes–Hut / `:direct` exact / `:approx` 3·GM²/5R), optionally strips unbound
+members (`iterative`, SUBFIND), and keeps only self-bound clumps (`e_kin+e_therm[+e_mag] < |e_grav|`).
+"""
+struct Bound <: AbstractValidator
+    egrav::Symbol; iterative::Bool; softening::Float64; direct_max::Int
+end
+Bound(egrav::Symbol=:tree; iterative::Bool=true, softening::Real=0.0, direct_max::Int=2000) =
+    Bound(egrav, iterative, Float64(softening), direct_max)
+
+"""    VirialBelow(alpha)
+Keep clumps with virial parameter `alpha_vir < alpha`. Requires a [`Bound`](@ref) in the chain
+(or `boundedness=true`) so `alpha_vir` is computed; a non-finite `alpha_vir` fails the test.
+"""
+struct VirialBelow <: AbstractValidator; alpha::Float64; end
+
+"""    MassAbove(m)
+Keep clumps with `mass > m` (in the catalog's `mass_unit`).
+"""
+struct MassAbove <: AbstractValidator; mass::Float64; end
+
+"""    Custom(f)
+Keep clumps for which `f(clump)::Bool` is true (`clump` is the per-clump NamedTuple, with fields
+`n_members, mass, com, peak, radius` and — when bound — `e_kin, e_grav, alpha_vir, bound`).
+"""
+struct Custom <: AbstractValidator; f::Function; end
+
+# split a chain into: min-members floor, the (optional) Bound config, and the predicate validators.
+function _validator_settings(vs)
+    mm = 1; b = nothing; preds = AbstractValidator[]
+    for v in vs
+        v isa MinMembers ? (mm = v.n) :
+        v isa Bound      ? (b = v)    :
+        push!(preds, v)
+    end
+    return mm, b, preds
+end
+
+# per-clump predicate test (clump is the result NamedTuple). NaN/Inf alpha_vir ⇒ fails VirialBelow.
+_pass(p::VirialBelow, c) = haskey(c, :alpha_vir) ? (c.alpha_vir < p.alpha) :
+    throw(ArgumentError("VirialBelow needs `alpha_vir` — add a Bound(...) validator or boundedness=true"))
+_pass(p::MassAbove, c)   = c.mass > p.mass
+_pass(p::Custom, c)      = p.f(c)::Bool
+
+# =====================================================================================
 #  3D: structure finding on hydro cells / particles above a field threshold
 # =====================================================================================
 """
@@ -1037,6 +1099,13 @@ COM) — positions in `pos_unit`, mass in `mass_unit`.
 * `hierarchy=true` (for a [`Dendrogram`](@ref) finder) also returns the multi-scale merger tree in
   `cat.tree` (a [`StructureTree`](@ref)).
 * `max_threads` caps the threads used for the per-clump analysis (deterministic regardless of count).
+* `validators` — a **composable chain** of value-typed acceptance criteria
+  ([`MinMembers`](@ref), [`Bound`](@ref), [`VirialBelow`](@ref), [`MassAbove`](@ref), [`Custom`](@ref))
+  that a clump must **all** satisfy (an AND). It is a clearer alternative to the boundedness kwargs:
+  a [`Bound`](@ref) in the chain configures the boundedness pass (potential, iterative unbinding) and
+  keeps only self-bound clumps; the predicate validators filter the catalog. A non-empty `validators`
+  overrides `boundedness`/`bound_only`/`min_members`/`egrav`/`iterative_unbinding`. Membership-mutating
+  validators run during the analysis, predicates after — independent of the order listed.
 
 ```julia
 gas = gethydro(getinfo(output, path))
@@ -1045,6 +1114,9 @@ cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linki
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
                                         linking_length=0.4, persistence=0.3);
                   boundedness=true, egrav=:tree, iterative_unbinding=true)
+# the same, written as a validator chain, plus virial + size cuts:
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
+                  validators=[MinMembers(20), Bound(:tree; iterative=true), VirialBelow(2.0)])
 ```
 """
 function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=:kpc,
@@ -1055,7 +1127,16 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
                    peak_min_distance::Real=2 * finder.linking_length,
                    substructure::Bool=false, sub_min_members::Int=min_members,
                    tidal::Union{Bool,Symbol}=false, gravity=nothing, tidal_sample::Real=3.0,
-                   hierarchy::Bool=false, max_threads::Int=Threads.nthreads())
+                   hierarchy::Bool=false, max_threads::Int=Threads.nthreads(),
+                   validators::AbstractVector{<:AbstractValidator}=AbstractValidator[])
+    preds = AbstractValidator[]                                         # predicate validators → post-filter
+    if !isempty(validators)                                            # a chain overrides the boundedness/min_members kwargs
+        min_members, bv, preds = _validator_settings(validators)
+        if bv !== nothing
+            boundedness = true; bound_only = true; egrav = bv.egrav
+            iterative_unbinding = bv.iterative; softening = bv.softening; direct_max = bv.direct_max
+        end
+    end
     need_b = boundedness || substructure || iterative_unbinding
     tidal === :tensor && gravity === nothing &&
         throw(ArgumentError("tidal=:tensor needs a `gravity` object (getgravity) for the tidal tensor"))
@@ -1102,6 +1183,9 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
     out = _finalize_all(members, nthr,
         mem -> _finalize_clump(mem, xs, ys, zs, ms, fs, bargs, need_b, bound_only,
                                iterative_unbinding, substructure, sub_min_members, tidal, pmd, min_members, tsamp))
+    if !isempty(preds)                                                 # apply predicate validators (AND-chain)
+        out = filter(c -> all(_pass(p, c) for p in preds), out)
+    end
     sort!(out, by=c -> -c.mass)
     out = [merge(c, (id=i,)) for (i, c) in enumerate(out)]
     return ClumpCatalog(length(out), out, meta, tree)
