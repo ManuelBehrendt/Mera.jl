@@ -31,6 +31,14 @@ clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_len
 You can also call the frontend explicitly with [`getinfo_athena`](@ref) / [`gethydro_athena`](@ref)
 (e.g. to pass a direct `.athdf` path).
 
+!!! note "What loads, and how much"
+    The frontend currently **loads the whole snapshot**: the `xrange`/`yrange`/`zrange`/`lmax`
+    load-time sub-selection of the RAMSES reader is *not yet applied* for non-RAMSES codes (those
+    keywords are accepted but ignored), so restrict a region **after** loading with
+    [`subregion`](@ref). Data is loaded per type, exactly as for RAMSES — but only what the code
+    wrote exists: an Athena++ snapshot is **hydro + cell-centred MHD only** (no gravity/particles),
+    so you call [`gethydro`](@ref) and there is nothing for `getgravity`/`getparticles` to read.
+
 ## Worked example: the yt AM06 sample
 
 A good way to see the frontend on real data is the **AM06** snapshot from the
@@ -63,15 +71,47 @@ projection(gas, :sd, res=512, center=[:bc], direction=:z)   # column density, fa
 
 Because the `B`-dataset is read into `:bx,:by,:bz`, the full magnetic [`getvar`](@ref) set
 (`:bmag`, `:pmag`, `:beta`, `:v_alfven`, `:mach_alfven`/`:mach_fast`/`:mach_slow`) and vector
-projections work on Athena++ data too. **Magnetic-field streamlines** over the column density come
-from a vector projection of the in-plane field — note this is the **mass-weighted** field, so the
-streamlines trace field *morphology*, not a flux-rigorous line integral:
+projections work on Athena++ data too.
+
+**Magnetic-field streamlines** over the column density come from a vector projection of the
+in-plane field. Note this is the **mass-weighted** field, so the streamlines trace field
+*morphology*, not a flux-rigorous line integral. Here is the complete [CairoMakie](https://docs.makie.org)
+code (a small box-car smoother tidies the turbulent field into clean lines):
 
 ```julia
 using CairoMakie
-p = projection(gas, [:sd, :bx, :by], res=640, center=[:bc], direction=:z)
-Σ, Bx, By = p.maps[:sd], p.maps[:bx], p.maps[:by]
-# heatmap of log10.(Σ) + Makie streamplot of (Bx, By)  → the field threading the cloud
+
+# separable box-car smoother (the projected field maps are dense, no NaN)
+function smooth2d(A, w)
+    n1, n2 = size(A); tmp = similar(A); B = similar(A)
+    for j in 1:n2, i in 1:n1
+        s = 0.0; c = 0
+        for di in -w:w; ii = i+di; (1<=ii<=n1) && (s += A[ii,j]; c += 1); end
+        tmp[i,j] = s/c
+    end
+    for j in 1:n2, i in 1:n1
+        s = 0.0; c = 0
+        for dj in -w:w; jj = j+dj; (1<=jj<=n2) && (s += tmp[i,jj]; c += 1); end
+        B[i,j] = s/c
+    end
+    return B
+end
+
+res = 640
+p  = projection(gas, [:sd, :bx, :by], res=res, center=[:bc], direction=:z)
+Σ  = p.maps[:sd]
+Bx = smooth2d(p.maps[:bx], 4);  By = smooth2d(p.maps[:by], 4)
+
+fig = Figure(size=(560, 520))
+ax  = Axis(fig[1,1]; title="AM06 — column density + B-field streamlines",
+           xlabel="x", ylabel="y", aspect=DataAspect())
+hm  = heatmap!(ax, 1..res, 1..res, log10.(Σ .+ 1e-30); colormap=:inferno)
+# streamplot wants a function (x,y) → vector; index the (smoothed) field maps
+bfield(q) = (i = clamp(round(Int, q[1]), 1, res); j = clamp(round(Int, q[2]), 1, res); Point2f(Bx[i,j], By[i,j]))
+streamplot!(ax, bfield, 1..res, 1..res; colormap=[(:white, 0.85)], gridsize=(30,30),
+            arrow_size=3.5, linewidth=0.8, density=1.6, stepsize=1.0, maxsteps=900)
+Colorbar(fig[1,2], hm, label="log₁₀ Σ  [code]")
+save("am06_bstream.png", fig, px_per_unit=2)
 ```
 
 ![Athena++ AM06 column density with magnetic-field streamlines overlaid — the mass-weighted in-plane B-field traced over the cloud.](assets/athena/am06_bstream.png)
@@ -81,13 +121,47 @@ histogram — and it recovers the expected flux-freezing scaling (|B| ∝ ρ^~2/
 density, a real physics result extracted entirely through Mera's code-blind analysis layer:
 
 ```julia
-ρ, B, m = getvar(gas, :rho), getvar(gas, :bmag), getvar(gas, :mass)
-# 2-D histogram of (log10 ρ, log10 B) weighted by m  → the B–ρ relation
+ρ, B, m = getvar(gas, :rho), getvar(gas, :bmag), getvar(gas, :mass)   # code units
+lx, ly  = log10.(ρ), log10.(B .+ 1e-30); nb = 180
+xr = range(extrema(lx)...; length=nb+1);  yr = range(extrema(ly)...; length=nb+1)
+H  = zeros(nb, nb)
+for k in eachindex(lx)                       # mass-weighted 2-D histogram
+    i = searchsortedlast(xr, lx[k]); j = searchsortedlast(yr, ly[k])
+    (1 <= i <= nb && 1 <= j <= nb) && (H[i,j] += m[k])
+end
+H[H .== 0] .= NaN
+mids(r) = (r[1:end-1] .+ r[2:end]) ./ 2
+
+fig = Figure(size=(560, 470))
+ax  = Axis(fig[1,1]; title="AM06 — density–|B| phase diagram",
+           xlabel="log₁₀ ρ  [code]", ylabel="log₁₀ |B|  [code]")
+hb  = heatmap!(ax, mids(xr), mids(yr), log10.(H); colormap=:viridis)
+Colorbar(fig[1,2], hb, label="log₁₀ mass")
+save("am06_phase.png", fig, px_per_unit=2)
 ```
 
 ![Athena++ AM06 density–|B| phase diagram (mass-weighted) — the magnetic field follows the flux-freezing scaling B ∝ ρ^~2/3 over six decades in density.](assets/athena/am06_phase.png)
 
-These figures are regenerated from the fixture by `docs/make_reader_figures.jl`.
+### AMR refinement map
+
+The cell `:level` is a projectable quantity, so a **volume-weighted mean level along the line of
+sight** maps where the grid refines — for AM06 it draws the nested MeshBlock hierarchy as
+concentric squares tightening onto the dense core (levels 7 → 11):
+
+```julia
+m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
+
+fig = Figure(size=(560, 470))
+ax  = Axis(fig[1,1]; title="AM06 — AMR refinement level (mean along LOS)",
+           xlabel="x", ylabel="y", aspect=DataAspect())
+hm  = heatmap!(ax, m; colormap=:turbo)
+Colorbar(fig[1,2], hm, label="level (7–11)")
+save("am06_levels.png", fig, px_per_unit=2)
+```
+
+![Athena++ AM06 AMR refinement level — the nested MeshBlock hierarchy shows as concentric squares of increasing level toward the dense core.](assets/athena/am06_levels.png)
+
+All figures on this page are regenerated from the fixture by `docs/make_reader_figures.jl`.
 
 ## Units
 
