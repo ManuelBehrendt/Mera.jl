@@ -13,6 +13,20 @@ CairoMakie.activate!(type="png"); set_theme!(fontsize=15)
 
 mids(r) = (r[1:end-1] .+ r[2:end]) ./ 2
 
+# thin-slab temperature slices along x/y/z — a slice exposes internal structure (e.g. a sloshing
+# cold front) that a full line-of-sight projection would wash out
+function temperature_slices(gas, title, outfile; thin=[-0.03, 0.03])
+    fig = Figure(size=(1150, 380))
+    for (i, d) in enumerate((:x, :y, :z))
+        kw = d === :x ? (xrange=thin,) : d === :y ? (yrange=thin,) : (zrange=thin,)
+        m = projection(gas, :temp, res=512, center=[:bc], direction=d, range_unit=:standard,
+                       verbose=false, show_progress=false; kw...).maps[:temp]
+        ax = Axis(fig[1, i], title="$title — temperature slice :$d", aspect=DataAspect()); hidedecorations!(ax)
+        heatmap!(ax, log10.(permutedims(m) .+ 1e-30); colormap=:turbo)
+    end
+    save(outfile, fig, px_per_unit=2); println("wrote ", outfile)
+end
+
 # separable boxcar smoother (the mass-weighted field maps are dense, no NaN) — half-width w
 function smooth2d(A, w)
     n1, n2 = size(A); tmp = similar(A); B = similar(A)
@@ -128,7 +142,7 @@ let dir = joinpath(TESTDATA, "flash_gassloshing", "GasSloshing")
     if isdir(dir)
         outdir = joinpath(@__DIR__, "src", "assets", "flash"); mkpath(outdir)
         gas = gethydro(getinfo(150, dir, verbose=false), verbose=false)
-        projection_panels(gas, "FLASH GasSloshing", joinpath(outdir, "gassloshing_projection.png"))
+        temperature_slices(gas, "FLASH GasSloshing", joinpath(outdir, "gassloshing_coldfront.png"))
     else
         @warn "GasSloshing FLASH fixture not found at $dir — skipping FLASH figure"
     end
