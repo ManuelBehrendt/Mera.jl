@@ -199,14 +199,17 @@ end
 # the **leaf-cell** list, so a spatial window is an exact, hole-free filter: a cell is kept
 # when its Mera position `cx/2^level` (= `getvar(:x)/boxlen`, so the selection matches
 # [`subregion`](@ref)) lies inside the prepranges-normalised box. Returns `(keep, ranges)`.
-function _external_select(info::InfoType, xrange, yrange, zrange, center, range_unit::Symbol,
-                          verbose::Bool, lvl::AbstractVector, cx::AbstractVector,
-                          cy::AbstractVector, cz::AbstractVector)
+# box-normalised (0..1) selection ranges + whether they cover the whole box
+function _external_ranges(info::InfoType, xrange, yrange, zrange, center, range_unit::Symbol)
     ranges = prepranges(info, range_unit, false, collect(xrange), collect(yrange),
                         collect(zrange), collect(center))
     fullbox = ranges[1] <= 0.0 && ranges[2] >= 1.0 && ranges[3] <= 0.0 &&
               ranges[4] >= 1.0 && ranges[5] <= 0.0 && ranges[6] >= 1.0
-    fullbox && return trues(length(cx)), ranges
+    return ranges, fullbox
+end
+
+# per-cell keep mask: a leaf cell is kept when its position `cx/2^level` lies in the box
+function _external_keep(ranges, lvl::AbstractVector, cx::AbstractVector, cy::AbstractVector, cz::AbstractVector)
     keep = BitVector(undef, length(cx))
     @inbounds for k in eachindex(cx)
         s = 1.0 / 2.0^Int(lvl[k])                       # cell position fraction = cx/2^level
@@ -214,6 +217,16 @@ function _external_select(info::InfoType, xrange, yrange, zrange, center, range_
                   (ranges[3] <= cy[k]*s <= ranges[4]) &
                   (ranges[5] <= cz[k]*s <= ranges[6])
     end
+    return keep
+end
+
+# combined: ranges + per-cell keep (used by the readers that assemble all cells first)
+function _external_select(info::InfoType, xrange, yrange, zrange, center, range_unit::Symbol,
+                          verbose::Bool, lvl::AbstractVector, cx::AbstractVector,
+                          cy::AbstractVector, cz::AbstractVector)
+    ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
+    fullbox && return trues(length(cx)), ranges
+    keep = _external_keep(ranges, lvl, cx, cy, cz)
     verbose && println("[Mera]: load-time range selection (box-normalised) ",
         "x=", round.((ranges[1], ranges[2]), digits=4), " y=", round.((ranges[3], ranges[4]), digits=4),
         " z=", round.((ranges[5], ranges[6]), digits=4), " → ", count(keep), "/", length(cx), " leaf cells")
