@@ -122,3 +122,14 @@ let dir = joinpath(TESTDATA, "chombo_3d", "IsothermalSphere")
         @warn "Chombo fixture not found at $dir — skipping PLUTO-AMR figure"
     end
 end
+
+# ---- FLASH : the yt GasSloshing sample (galaxy-cluster AMR, CGS) -------------
+let dir = joinpath(TESTDATA, "flash_gassloshing", "GasSloshing")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "flash"); mkpath(outdir)
+        gas = gethydro(getinfo(150, dir, verbose=false), verbose=false)
+        projection_panels(gas, "FLASH GasSloshing", joinpath(outdir, "gassloshing_projection.png"))
+    else
+        @warn "GasSloshing FLASH fixture not found at $dir — skipping FLASH figure"
+    end
+end

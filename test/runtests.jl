@@ -75,6 +75,7 @@ if isempty(_focus)
         include("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
         include("56_filterdata_tests.jl")  # data-free: value-space filtering on derived quantities (filterdata/getmask)
         include("57_athena_reader_tests.jl")  # data-free: Athena++ .athdf reader contract (synthetic HDF5)
+        include("58_flash_reader_tests.jl")  # data-free: FLASH HDF5 PARAMESH reader contract (synthetic HDF5)
     end
 
     # ========================================================================

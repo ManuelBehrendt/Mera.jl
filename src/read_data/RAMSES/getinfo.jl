@@ -40,8 +40,10 @@ function getinfo(; output::Real=1, path::String="", namelist::String="", code::S
         return getinfo_chombo(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
     elseif resolved === :athena
         return getinfo_athena(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
+    elseif resolved === :flash
+        return getinfo_flash(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
     elseif resolved !== :ramses
-        error("getinfo: unknown code :$resolved (use :auto, :ramses, :pluto, :chombo, or :athena).")
+        error("getinfo: unknown code :$resolved (use :auto, :ramses, :pluto, :chombo, :athena, or :flash).")
     end
 
 
