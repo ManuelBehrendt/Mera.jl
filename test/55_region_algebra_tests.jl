@@ -108,4 +108,18 @@
         @test old isa Mera.HydroDataType && length(old.data) > 0
         @test !in(:fraction, propertynames(Mera.columns(old.data)))   # legacy path unchanged
     end
+
+    @testset "legacy symbol API prints a one-shot value-type hint" begin
+        Mera._REGION_HINT_SHOWN[] = false
+        out = capture_stdout() do
+            Mera._region_value_type_hint(:sphere; radius=10.0, center=[:bc], range_unit=:kpc)
+        end
+        @test occursin("Sphere(10.0", out)                 # shows the equivalent value-type call
+        @test occursin("split=false", out)                 # and how to keep the classic behaviour
+        out2 = capture_stdout() do                          # only once per session
+            Mera._region_value_type_hint(:sphere; radius=10.0, center=[:bc], range_unit=:kpc)
+        end
+        @test isempty(out2)
+        Mera._REGION_HINT_SHOWN[] = false                   # reset so other tests/sessions can see it
+    end
 end

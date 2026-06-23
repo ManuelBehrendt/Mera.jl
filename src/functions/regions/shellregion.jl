@@ -65,7 +65,10 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
     if !(myargs.verbose       === missing)       verbose = myargs.verbose end
 
     verbose = checkverbose(verbose)
-    
+    verbose && typeof(dataobject) == HydroDataType &&
+        _region_value_type_hint(shape; radius=radius, height=height, center=center,
+                                range_unit=range_unit, shell=true)
+
     # subregion = wrapper over all subregion shell functions
     if shape == :cylinder || shape == :disc
         # `direction` is not yet implemented for cylindrical shells (radial test always on x,y, height
