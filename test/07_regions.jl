@@ -737,6 +737,24 @@ end
         end
     end
 
+    @testset "value-type regions on a uniform grid (no :level column)" begin
+        # spiral_ugrid is a uniform grid: its hydro table has no :level column, so the cell
+        # method must fall back to lmax (regression for the AMR-only assumption).
+        hydro = load_test_hydro(:spiral_ugrid)
+        if length(hydro.data) > 0
+            @test !(:level in propertynames(hydro.data.columns))         # genuinely uniform grid
+            R = 0.20 * hydro.boxlen * hydro.info.scale.kpc
+            gs = subregion(hydro, Sphere(R; center=[:bc], range_unit=:kpc); verbose=false)
+            gw = subregion(hydro, Sphere(R; center=[:bc], range_unit=:kpc); split=false, verbose=false)
+            @test gs isa Mera.HydroDataType && length(gs.data) > 0
+            @test in(:fraction, propertynames(gs.data.columns))          # split attached a :fraction
+            @test isapprox(msum(gs, :Msol), msum(gw, :Msol); rtol=0.05)  # split & centre-test bracket the exact mass
+            # combinators work on the uniform grid too
+            gc = subregion(hydro, Sphere(R; range_unit=:kpc) \ Cylinder(0.3R, R; range_unit=:kpc); verbose=false)
+            @test gc isa Mera.HydroDataType
+        end
+    end
+
     @testset "value-type regions on clumps (point membership)" begin
         clumps = load_test_clumps(:spiral_clumps)
         n = length(clumps.data)

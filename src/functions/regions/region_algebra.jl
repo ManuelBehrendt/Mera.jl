@@ -229,11 +229,14 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     verbose = checkverbose(verbose)
     cellfrac, contains = _prepare(region, obj; nsub=nsub)
     data = obj.data
-    lvl = IndexedTables.select(data, :level)
     cxv = IndexedTables.select(data, :cx); cyv = IndexedTables.select(data, :cy); czv = IndexedTables.select(data, :cz)
+    # AMR carries a per-cell :level; a uniform grid has none → every cell is at lmax
+    isamr = :level in propertynames(IndexedTables.columns(data))
+    lvl = isamr ? IndexedTables.select(data, :level) : nothing
     nrows = length(data); frac = Vector{Float64}(undef, nrows)
     @inbounds for idx in 1:nrows
-        f = 1.0 / 2^lvl[idx]; nx = cxv[idx]*f; ny = cyv[idx]*f; nz = czv[idx]*f; half = 0.5f
+        f = 1.0 / 2^(isamr ? lvl[idx] : obj.lmax)
+        nx = cxv[idx]*f; ny = cyv[idx]*f; nz = czv[idx]*f; half = 0.5f
         fr = split ? cellfrac(nx,ny,nz,half) : (contains(nx,ny,nz) ? 1.0 : 0.0)
         frac[idx] = inverse ? 1.0 - fr : fr
     end
@@ -241,7 +244,7 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     cols = IndexedTables.columns(data)
     keptcols = map(c -> c[keep], cols)
     newcols = split ? merge(keptcols, (fraction = frac[keep],)) : keptcols
-    newdata = IndexedTables.table(newcols; pkey = [:level, :cx, :cy, :cz])
+    newdata = IndexedTables.table(newcols; pkey = collect(IndexedTables.pkeynames(data)))
     if verbose
         println("Region: ", nameof(typeof(region)), split ? "  (exact cell splitting)" : "  (whole cells)")
         println("Selected cells: ", length(newdata), " / ", nrows)
