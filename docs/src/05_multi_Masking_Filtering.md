@@ -11,6 +11,25 @@ This comprehensive tutorial explores the sophisticated data manipulation capabil
 - **Data Table Extension**: Adding computed variables and derived quantities to existing datasets
 - **Metaprogramming**: Using MERA's pipeline macros (@filter, @apply, @where) for elegant data processing workflows
 
+### Quick Start
+
+If you just want to **select data by a physical quantity**, reach for [`filterdata`](@ref): it filters on *any* [`getvar`](@ref) quantity (temperature, density, radius, velocity, …) in any unit, composes with `&` (and), `|` (or), `!` (not), and returns a **new object of the same type** that you can feed straight into `projection`, `getvar`, `subregion`, …
+
+```julia
+hot  = filterdata(gas, Above(:T, 1e6, unit=:K))                                  # HydroDataType of the hot halo
+disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc) & Below(:T, 1e5, unit=:K))
+projection(hot, :sd, :Msol_pc2)                                                  # chain it like any Mera object
+```
+
+To analyse a subset **without copying** the data, build a boolean mask with [`getmask`](@ref) and hand it to any masking-aware function via `mask=`:
+
+```julia
+m = getmask(gas, Above(:T, 1e6, unit=:K))
+msum(gas, mask=m, unit=:Msol)                                                    # in-mask mass; original object untouched
+```
+
+That covers most needs. The rest of this tutorial is the full toolbox, building up step by step: table-level column selection, the IndexedTables / `@filter` macros, the complete set of condition types ([`Above`](@ref) / [`Below`](@ref) / [`InRange`](@ref) / [`Equals`](@ref) / [`IsFinite`](@ref) / [`AbovePercentile`](@ref) / [`BelowPercentile`](@ref) / [`Satisfies`](@ref)), hand-built masks and how to combine them, applying masks to statistics, and adding derived columns.
+
 ### Learning Objectives
 
 By completing this tutorial, you will master:
@@ -23,11 +42,12 @@ By completing this tutorial, you will master:
 2. **Advanced Filtering Operations**:
    - Single and multi-condition filtering using IndexedTables syntax
    - MERA's pipeline macros for streamlined data processing
+   - **Value-space selection with `filterdata`/`getmask`**: composable `Above`/`Below`/`InRange`/`Equals`/`AbovePercentile`/`Satisfies` conditions on any derived quantity, combined with `&`/`|`/`!`
    - Creating custom filtering functions for complex geometric conditions
    - Comparing performance between different filtering approaches
 
 3. **Masking and Boolean Operations**:
-   - Creating boolean masks for selective analysis
+   - Creating boolean masks for selective analysis — by hand, or with `getmask(obj, condition)` from composable physical conditions
    - Combining multiple masks using logical operations
    - Applying masks to statistical functions without data modification
    - Understanding mask types: Array{Bool,1} vs BitArray{1}
@@ -1020,6 +1040,10 @@ MERA supports three approaches for creating boolean masks:
 - Direct mathematical operations on extracted arrays
 - Highest performance for vectorized calculations
 - Ideal for mathematical transformations
+
+#### 4. **Condition-based with `getmask` (recommended)**
+- `getmask(obj, Above(:T, 1e4, unit=:K) & Below(:rho, 100, unit=:nH))` — build a mask from composable conditions on **any** `getvar` quantity, in any unit (see [Value-Space Filtering](#Value-Space-Filtering:-filterdata-and-getmask))
+- Vectorised and unit-aware; the modern replacement for hand-built masks, and works the same across hydro/gravity/RT/particles/clumps
 
 ### Mask Types and Performance
 
