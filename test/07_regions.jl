@@ -755,6 +755,23 @@ end
         end
     end
 
+    @testset "filterdata value-space selection on gravity & clumps" begin
+        grav = load_test_gravity(:spiral_clumps)
+        if length(grav.data) > 0
+            ep = getvar(grav, :epot)
+            g = filterdata(grav, BelowPercentile(:epot, 50), verbose=false)   # the more bound half
+            @test g isa Mera.GravDataType
+            @test length(g.data) == count(ep .< Mera.quantile(ep, 0.50))
+        end
+        clumps = load_test_clumps(:spiral_clumps)
+        if length(clumps.data) > 1
+            mcl = getvar(clumps, :mass)
+            c = filterdata(clumps, AbovePercentile(:mass, 50), verbose=false)
+            @test c isa Mera.ClumpDataType
+            @test length(c.data) == count(mcl .> Mera.quantile(mcl, 0.50))
+        end
+    end
+
     @testset "value-type regions on clumps (point membership)" begin
         clumps = load_test_clumps(:spiral_clumps)
         n = length(clumps.data)

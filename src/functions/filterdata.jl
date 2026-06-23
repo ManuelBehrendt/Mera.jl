@@ -58,6 +58,11 @@ Keep rows above (below) the `p`-th percentile of `quantity` over `obj` (`p ∈ [
 **adaptive** threshold, e.g. the densest 10 % of cells: `AbovePercentile(:rho, 90)`."""
 struct AbovePercentile <: FilterCondition; quantity::Symbol; p::Float64; unit::Symbol; end
 AbovePercentile(q::Symbol, p::Real; unit::Symbol=:standard) = AbovePercentile(q, Float64(p), unit)
+
+"""    BelowPercentile(quantity, p; unit=:standard)
+
+Keep rows below the `p`-th percentile of `quantity` over `obj` (`p ∈ [0,100]`); the lower
+counterpart of [`AbovePercentile`](@ref)."""
 struct BelowPercentile <: FilterCondition; quantity::Symbol; p::Float64; unit::Symbol; end
 BelowPercentile(q::Symbol, p::Real; unit::Symbol=:standard) = BelowPercentile(q, Float64(p), unit)
 
