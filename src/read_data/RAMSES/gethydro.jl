@@ -335,6 +335,8 @@ function gethydro(dataobject::InfoType;
         return gethydro_pluto(dataobject; verbose=verbose)
     elseif dataobject.simcode == "CHOMBO"
         return gethydro_chombo(dataobject; verbose=verbose)
+    elseif dataobject.simcode == "Athena++"
+        return gethydro_athena(dataobject; verbose=verbose)
     end
 
     # ═══════════════════════════════════════════════════════════════════════════

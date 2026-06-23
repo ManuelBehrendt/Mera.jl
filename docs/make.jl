@@ -108,6 +108,7 @@ makedocs(modules = [Mera],
                                                         "API Reference" => "api/mera_files.md"],
 
                           "Other Codes (PLUTO)" => "pluto_reader.md",
+                          "Other Codes (Athena++)" => "athena_reader.md",
 
                           "Volume Rendering"    => Any[ "Intro"      =>  "paraview/paraview_intro.md",
                                                         "Hydro"      =>  "paraview/08_hydro_VTK_export.md",

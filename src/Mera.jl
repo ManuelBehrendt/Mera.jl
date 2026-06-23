@@ -72,6 +72,8 @@ export
     getinfo_pluto,
     gethydro_pluto,
     getparticles_pluto,
+    getinfo_athena,
+    gethydro_athena,
     createpath,
     gethydro,
     getgravity,
@@ -413,6 +415,7 @@ include("read_data/RAMSES/gethydro.jl")
 include("read_data/RAMSES/reader_hydro.jl")
 include("read_data/PLUTO/reader_pluto.jl")   # PLUTO frontend (static uniform Cartesian grid)
 include("read_data/PLUTO/reader_chombo.jl")  # Chombo / PLUTO-AMR frontend (HDF5)
+include("read_data/Athena/reader_athena.jl") # Athena++ frontend (HDF5 .athdf MeshBlocks)
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")
