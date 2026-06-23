@@ -72,6 +72,7 @@ if isempty(_focus)
         include("46_data_awareness_tests.jl")  # data-free descriptor/MHD detection + optional capability/descriptor/quantity-awareness blocks
         include("47_benchmark_tests.jl")  # data-free I/O benchmark (run_benchmark/plot_results) on a temp folder
         include("54_clumpfind_synthetic_tests.jl")  # data-free: all 7 finders + features scored vs synthetic ground truth
+        include("55_region_algebra_tests.jl")  # data-free: composable regions + exact cell splitting vs analytic volumes
     end
 
     # ========================================================================
