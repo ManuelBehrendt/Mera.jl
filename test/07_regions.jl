@@ -737,4 +737,19 @@ end
         end
     end
 
+    @testset "value-type regions on clumps (point membership)" begin
+        clumps = load_test_clumps(:spiral_clumps)
+        n = length(clumps.data)
+        if n > 0
+            R = 0.25 * clumps.boxlen * clumps.info.scale.kpc      # quarter-box radius about the centre
+            inn = subregion(clumps, Sphere(R; center=[:bc], range_unit=:kpc); verbose=false)
+            out = subregion(clumps, Sphere(R; center=[:bc], range_unit=:kpc); inverse=true, verbose=false)
+            @test inn isa Mera.ClumpDataType
+            @test length(inn.data) + length(out.data) == n        # region + complement = all clumps
+            # a difference removes (at most) the cylinder's clumps from the ball
+            comp = subregion(clumps, Sphere(R; range_unit=:kpc) \ Cylinder(0.3R, R; range_unit=:kpc); verbose=false)
+            @test length(comp.data) <= length(inn.data)
+        end
+    end
+
 end

@@ -267,3 +267,22 @@ function subregion(obj::PartDataType, region::AbstractRegion; inverse::Bool=fals
     end
     return _copy_with_data(obj, newdata)
 end
+
+function subregion(obj::ClumpDataType, region::AbstractRegion; inverse::Bool=false, verbose::Bool=true)
+    verbose = checkverbose(verbose)
+    _, contains = _prepare(region, obj)
+    data = obj.data; bl = obj.boxlen          # clumps are points at their peak position (code units)
+    xs = IndexedTables.select(data, :peak_x); ys = IndexedTables.select(data, :peak_y); zs = IndexedTables.select(data, :peak_z)
+    nrows = length(data); keep = Vector{Bool}(undef, nrows)
+    @inbounds for i in 1:nrows
+        ins = contains(xs[i]/bl, ys[i]/bl, zs[i]/bl)
+        keep[i] = inverse ? !ins : ins
+    end
+    cols = IndexedTables.columns(data)
+    newdata = IndexedTables.table(map(c -> c[keep], cols); pkey = collect(IndexedTables.pkeynames(data)))
+    if verbose
+        println("Region: ", nameof(typeof(region)), "  (clumps)")
+        println("Selected clumps: ", count(keep), " / ", nrows)
+    end
+    return _copy_with_data(obj, newdata)
+end
