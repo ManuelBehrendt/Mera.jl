@@ -407,4 +407,7 @@ clumptable
 save_clumps
 load_clumps
 ClumpCard
+synthetic_clumps
+save_synthetic_clumps
+load_synthetic_clumps
 ```

@@ -7,7 +7,7 @@
 # documentation example (docs/src/clumpfind_synthetic.md).
 # ==============================================================================
 
-include(joinpath(@__DIR__, "..", "examples", "synthetic_clumps.jl"))
+# `synthetic_clumps` / `save_`/`load_synthetic_clumps` are exported by Mera (src/functions/synthetic_clumps.jl).
 
 @testset verbose=true "clumpfind on synthetic ground truth (data-free)" begin
     F   = synthetic_clumps()
@@ -51,6 +51,21 @@ include(joinpath(@__DIR__, "..", "examples", "synthetic_clumps.jl"))
         # the most massive recovered clump sits on truth clump A (0.25,0.25,0.5)
         c1 = cat[1]
         @test all(abs.(c1.com .- (0.25,0.25,0.5)) .< 0.03)
+    end
+
+    @testset "3-D: clumps overlapping in projection are separated by depth" begin
+        # clump E (z=0.25) sits almost directly under the G1/G2 pair (z=0.75); they overlap
+        # in the x-y projection (Δxy ≈ 0.02 kpc) but the 3-D finder separates them by z.
+        d3(a,b)   = sqrt(sum((a .- b).^2))
+        cat       = clumpfind(gas, fof())
+        nearE(c)  = d3(c.com, (0.50,0.50,0.25)) < 0.05                       # the low clump
+        nearTop(c)= 0.40<c.com[1]<0.62 && 0.45<c.com[2]<0.60 && 0.68<c.com[3]<0.82  # pair, z≈0.75
+        @test count(nearE, cat.clumps) == 1                                 # E is its own clump…
+        @test any(nearTop, cat.clumps)                                      # …distinct from the pair above
+        @test maximum(c.com[3] for c in cat.clumps) - minimum(c.com[3] for c in cat.clumps) > 0.4  # spread in z
+        # a 2-D projection collapses the depth → E and the pair land on the same sky pixel
+        sd = projection(gas, :sd, :Msol_pc2; res=128, center=[:bc], verbose=false, show_progress=false)
+        @test sd.maps[:sd][64, 64] > 0      # the stacked column at (x,y)≈(0.5,0.5) is non-empty
     end
 
     @testset "boundedness separates cold (bound) from hot (unbound)" begin

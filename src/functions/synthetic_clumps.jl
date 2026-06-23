@@ -1,41 +1,28 @@
 # =====================================================================================
-#  examples/synthetic_clumps.jl — a fully synthetic, data-free Mera test bench for
-#  the structure finder (`clumpfind`).
+#  synthetic_clumps.jl — a fully synthetic, data-free test bench for the structure
+#  finder (`clumpfind`), shipped as part of Mera.
 # -------------------------------------------------------------------------------------
-#  Builds a reproducible Mera hydro + particle object whose clump population is KNOWN
+#  Builds a reproducible Mera hydro + particle object whose 3-D clump population is KNOWN
 #  exactly (positions, masses, sizes, bound/unbound virial state, a touching pair for
-#  deblending/substructure, and a phase-space stream), so every finder and feature can
-#  be exercised AND scored against ground truth. No simulation files required: a
+#  deblending/substructure, and a phase-space stream), so every finder and feature can be
+#  exercised AND scored against ground truth. No simulation files required: a
 #  self-consistent unit system is built from `createconstants()` / `createscales()`,
 #  exactly as a real RAMSES read would produce — so `getvar`, `projection`, boundedness
 #  and all seven finders run unchanged.
 #
-#  Used by `test/42_clumpfind_synthetic_tests.jl` (accuracy assertions, runs in CI with
-#  no data) and by `docs/make_clumpfind_figures.jl` (renders the documentation figures).
-#
-#  Public entry point:
-#     field = synthetic_clumps()                  # ::NamedTuple
-#     field.gas        # ::HydroDataType  (Gaussian density clumps on a level-lmax grid)
-#     field.particles  # ::PartDataType   (one bag of particles per clump + a stream)
-#     field.truth      # ::Vector{NamedTuple}  ground-truth clump catalog
-#     field.info       # ::InfoType
-#     field.true_label(x,y,z) -> Int   dominant ground-truth clump id at a position (0=bg)
+#  Exported API: `synthetic_clumps`, `save_synthetic_clumps`, `load_synthetic_clumps`.
+#  Used by `test/54_clumpfind_synthetic_tests.jl` (accuracy assertions, CI, no data) and
+#  by `docs/make_clumpfind_figures.jl` (documentation figures). See the "Clump Finding —
+#  Synthetic Example" docs page.
 # =====================================================================================
 
-using Mera
-import Random
-# IndexedTables / JLD2 / JLD2Lz4 are Mera dependencies; reach them through Mera so this
-# example runs in any environment that has Mera (no extra direct deps required).
-const IndexedTables = Mera.IndexedTables
-const JLD2 = Mera.JLD2
-const JLD2Lz4 = Mera.JLD2Lz4
-
 # ---- ground-truth clump population --------------------------------------------------
-# Units below: positions in kpc (box = 1 kpc), `amp` is peak gas overdensity in code
-# density (≈ nH/0.76), `w` the Gaussian width in kpc, `vsig` the internal 1-D velocity
-# dispersion in km/s. `bound` is the *intended* virial state: cold clumps (small vsig)
-# are self-gravitating, hot ones are unbound. The population is deliberately varied so
-# that every finder has something only it resolves well.
+# Units: positions in kpc (box = 1 kpc), `amp` is peak gas overdensity in code density
+# (≈ nH/0.76), `w` the Gaussian width in kpc, `vsig` the internal 1-D velocity dispersion
+# in km/s. `bound` is the *intended* virial state: cold clumps (small vsig) are
+# self-gravitating, hot ones are unbound. The eight clumps are spread through the VOLUME
+# (note the varied z) and deliberately varied so each finder has something only it
+# resolves well.
 const _SYNTH_CLUMPS = [
     # name        x      y      z     amp     w      vsig  bound  kind
     (:A,         0.25,  0.25,  0.50, 600.0,  0.035,  1.5,  true,  :isolated),
@@ -54,10 +41,13 @@ const _LMAX   = 7                     # 128^3 base grid
 const _BG     = 1.0                   # uniform background overdensity (code density)
 const _FLOOR  = 8.0                   # a cell "belongs" to a clump above this overdensity
 
+const SYNTH_FILE = "mera_synthetic_clumps.jld2"
+const SYNTH_URL  = "https://github.com/ManuelBehrendt/Mera.jl/releases/download/synthetic-data-v1/" * SYNTH_FILE
+
 # self-consistent, data-free unit system (1 code length = 1 kpc, 1 code vel = 1 km/s,
 # 1 code density = m_H, so nH ≈ 0.76·rho_code and T follows from p/rho).
 function _synth_info(; boxlen=_BOXLEN, lmax=_LMAX)
-    info = Mera.InfoType()
+    info = InfoType()
     c = createconstants()
     info.constants = c
     info.boxlen = boxlen
@@ -146,7 +136,7 @@ function _synth_hydro(info; lmax=_LMAX, seed=1, background::Symbol=:floor, noise
     end
     data = IndexedTables.table(lvl,cxv,cyv,czv,rhov,vxv,vyv,vzv,pv;
         names=[:level,:cx,:cy,:cz,:rho,:vx,:vy,:vz,:p], pkey=[:level,:cx,:cy,:cz])
-    g = Mera.HydroDataType()
+    g = HydroDataType()
     g.data=data; g.info=info; g.lmin=lmax; g.lmax=lmax; g.boxlen=info.boxlen
     g.ranges=[0.,1.,0.,1.,0.,1.]; g.selected_hydrovars=[1,2,3,4,5]
     g.used_descriptors=Dict(); g.smallr=0.0; g.smallc=0.0; g.scale=info.scale
@@ -185,7 +175,7 @@ function _synth_particles(info; seed=7)
     data = IndexedTables.table(idv, fill(_LMAX,length(idv)), xs.*info.boxlen, ys.*info.boxlen,
         zs.*info.boxlen, vx, vy, vz, mp;
         names=[:id,:level,:x,:y,:z,:vx,:vy,:vz,:mass], pkey=[:id])
-    p = Mera.PartDataType()
+    p = PartDataType()
     p.data=data; p.info=info; p.lmin=_LMAX; p.lmax=_LMAX; p.boxlen=info.boxlen
     p.ranges=[0.,1.,0.,1.,0.,1.]; p.selected_partvars=[:vx,:vy,:vz,:mass]
     p.used_descriptors=Dict(); p.scale=info.scale
@@ -196,11 +186,19 @@ end
     synthetic_clumps(; seed=1, lmax=7, background=:floor, noise=0.0,
                        disk_amp=14.0, disk_hr=0.22, disk_hz=0.10) -> NamedTuple
 
-Build a reproducible, data-free Mera test bench with a known clump population. Returns
-`(; gas, particles, truth, info, true_label)`. See the file header for the layout.
+Build a reproducible, **data-free** 3-D Mera test bench with a known clump population — no
+simulation files required. Returns `(; gas, particles, truth, info, true_label)`:
 
-The same eight clumps can be embedded in different environments to test how well a finder
-separates them from the floor:
+* `gas`        — a [`HydroDataType`](@ref): eight Gaussian density clumps spread through the
+  `2^lmax`³ volume (box = 1 kpc), with per-cell velocities and pressure.
+* `particles`  — a [`PartDataType`](@ref): one particle bag per clump plus a two-component
+  kinematic stream (for [`PhaseSpaceFoF`](@ref)).
+* `truth`      — the ground-truth catalog (`id, name, kind, pos, mass, width, vsig, bound`).
+* `true_label` — `true_label(x,y,z)::Int`, the dominant clump id at a position (0 = background).
+
+The data and all finders are fully **three-dimensional**; the clumps sit at different `z`,
+including a touching pair and a kinematically-hot unbound clump. The same eight clumps can
+be embedded in different environments to test how well a finder separates them from the floor:
 
 * `background=:floor` (default) — a flat low background; clumps are isolated islands.
 * `background=:galaxy` — clumps embedded in a smooth exponential ISM disk (`disk_amp`,
@@ -210,8 +208,16 @@ separates them from the floor:
   the dispersion of `ln ρ` (e.g. `0.2`).
 
 Either non-default option fills the **whole** grid (use `lmax=6` to keep it fast). The clump
-ground truth (`truth`, `true_label`) is unchanged — the background is labelled 0, so a finder
-that absorbs the floor into its clumps is penalised by `clump_recovery`.
+ground truth is unchanged — the background is labelled 0, so a finder that absorbs the floor
+into its clumps is penalised by [`clump_recovery`](@ref).
+
+```julia
+F = synthetic_clumps()
+cat = clumpfind(F.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=2.0/2^7))
+```
+
+See also [`save_synthetic_clumps`](@ref), [`load_synthetic_clumps`](@ref), and the
+"Clump Finding — Synthetic Example" documentation page.
 """
 function synthetic_clumps(; seed=1, lmax=_LMAX, background::Symbol=:floor, noise::Real=0.0,
                             disk_amp::Real=14.0, disk_hr::Real=0.22, disk_hz::Real=0.10)
@@ -245,47 +251,49 @@ function synthetic_clumps(; seed=1, lmax=_LMAX, background::Symbol=:floor, noise
     return (; gas, particles=part, truth, info, true_label=_true_label)
 end
 
-# ---- downloadable / reproducible dataset --------------------------------------------
-# The generator above is deterministic, so the in-memory field is reproduced exactly by
-# `synthetic_clumps()` (this is what the test suite uses — no download required). For the
-# documentation examples we also ship the identical field as a single LZ4-compressed JLD2
-# file so it can be downloaded and loaded without re-running the generator (and reused from
-# other tools). The stored `gas`/`particles` are ordinary Mera `HydroDataType`/`PartDataType`
-# objects: every Mera verb (`getvar`, `projection`, `clumpfind`, …) works on them unchanged.
-
-const SYNTH_FILE = "mera_synthetic_clumps.jld2"
-
 """
     save_synthetic_clumps(path="."; seed=1) -> String
 
-Generate the synthetic field and write it to `path/mera_synthetic_clumps.jld2`
-(LZ4-compressed). Returns the file path. Stores `gas`, `particles` and `truth`.
+Generate the synthetic field with [`synthetic_clumps`](@ref) and write it to
+`path/mera_synthetic_clumps.jld2` (LZ4-compressed). Returns the file path. Stores the
+`gas`, `particles` and `truth` objects; reload with [`load_synthetic_clumps`](@ref).
 """
 function save_synthetic_clumps(path::AbstractString="."; seed::Int=1)
-
     F = synthetic_clumps(seed=seed)
     fn = joinpath(path, SYNTH_FILE)
     JLD2.jldopen(fn, "w"; compress=JLD2Lz4.Lz4Filter()) do f
         f["gas"]       = F.gas
         f["particles"] = F.particles
         f["truth"]     = F.truth
-        f["readme"]    = "Mera synthetic clump test field — see examples/synthetic_clumps.jl"
+        f["readme"]    = "Mera synthetic clump test field — see the Clump Finding — Synthetic Example docs"
     end
     return fn
 end
 
 """
-    load_synthetic_clumps(file_or_dir=".") -> NamedTuple
+    load_synthetic_clumps(file_or_dir="."; download=false, url=Mera.SYNTH_URL) -> NamedTuple
 
-Load the downloadable synthetic field, returning `(; gas, particles, truth)`. Accepts
+Load the synthetic clump field, returning `(; gas, particles, truth)`. `file_or_dir` is
 either the `.jld2` file itself or a directory containing `mera_synthetic_clumps.jld2`.
-Requires only `using Mera` (the stored objects are standard Mera data types).
-"""
-function load_synthetic_clumps(file_or_dir::AbstractString=".")
 
+With `download=true` the file is fetched from `url` (the GitHub release asset) when it is not
+already present locally. The stored objects are standard Mera data types, so every Mera verb
+(`getvar`, `projection`, `clumpfind`, …) works on them — `using Mera` is all that is needed.
+
+```julia
+D = load_synthetic_clumps(tempdir(); download=true)   # fetch once, then load
+clumpfind(D.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=2.0/2^7))
+```
+"""
+function load_synthetic_clumps(file_or_dir::AbstractString="."; download::Bool=false,
+                               url::AbstractString=SYNTH_URL)
     fn = isdir(file_or_dir) ? joinpath(file_or_dir, SYNTH_FILE) : file_or_dir
+    if download && !isfile(fn)
+        mkpath(dirname(abspath(fn)))
+        Downloads.download(url, fn)
+    end
     isfile(fn) || error("synthetic-clump file not found: $fn — regenerate with " *
-                        "save_synthetic_clumps(), or download it (see docs/src/clumpfind_synthetic.md)")
+                        "save_synthetic_clumps(), or pass download=true to fetch it.")
     return JLD2.jldopen(fn, "r") do f
         (; gas=f["gas"], particles=f["particles"], truth=f["truth"])
     end
