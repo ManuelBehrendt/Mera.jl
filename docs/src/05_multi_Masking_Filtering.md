@@ -794,6 +794,9 @@ sub    = @filter gas.data :rho >= 1e-2     # raw table → filtered table (class
 Add costum columns/variables to the data that can be automatically processed in some functions:
 (note: to take advantage of the Mera unit management, store new data in code-units)
 
+!!! tip "Simpler alternative — derived quantities"
+    If you only need a quantity for *analysis* (not a stored column), you usually don't have to add one. [`getvar`](@ref) computes many derived quantities directly — e.g. `getvar(gas, :mach)`, `:T`, `:vr`, `:r_cylinder`, `:cs`, … — and these are exactly what `filterdata`/`getmask`, `projection` and the statistics functions accept. To register *your own* reusable derived quantity by formula, use [`add_field`](@ref). See [Derived Fields & add_field](derived_fields.md) and [How Quantities Are Computed](computation_reference.md). Materialising a column (below) is only needed when you want the values stored in the table itself.
+
 ```julia
 # calculate the Mach number in each cell
 mach = getvar(gas, :mach);
