@@ -166,6 +166,37 @@ or raise the threshold above the local ISM — a single absolute threshold with 
 will merge clumps into the floor. This is exactly what
 `test/54_clumpfind_synthetic_tests.jl` asserts.
 
+## Tuning — how the parameters behave
+
+Because the ground truth is known, the bench doubles as a **tuning guide**: you can watch
+recovery respond as you turn each knob. Sweeping the three most important parameters:
+
+![Parameter sensitivity](assets/clumpfind/sensitivity.png)
+
+* **Linking length** (`ThresholdFoF`) — *left*. Below one cell nothing links (empty catalog);
+  then a **wide stable plateau** (ARI ≈ 0.89, 7 clumps) that is forgiving of the exact value;
+  then a **cliff** where clumps fuse and the partition collapses toward a single blob. Pick a
+  value a few cells wide — well inside the plateau, far from the cliff.
+* **Persistence / `min_delta`** (`DensityWatershed`, `Dendrogram`, `PersistenceFinder`) —
+  *centre*. A pure contrast knob: below the **saddle prominence** (~150 here) the touching pair
+  splits into two; above it they merge into one. Set it to the smallest peak-to-saddle contrast
+  you want to call a separate clump.
+* **Threshold** — *right*. The classic **detection-vs-purity trade-off**: raising it sharpens
+  purity (clumps shed their diffuse envelopes) but **drops the low-mass clumps** entirely
+  (detection falls). Lower to be complete, raise to be clean.
+
+```julia
+# the linking-length plateau is wide and forgiving; the threshold trade-off is not:
+F = synthetic_clumps()
+for ll in (1, 2, 5) .* (1/128)
+    cat = clumpfind(F.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=ll))
+    println("ll=", round(ll, digits=4), "  → ", cat.nclumps, " clumps")   # all ≈ 7
+end
+```
+
+`test/54_clumpfind_synthetic_tests.jl` pins these trends (plateau, over-merge cliff, the
+persistence split point, and the threshold dropout).
+
 ## When to use which finder
 
 What this synthetic bench shows about each algorithm, and the situation it's the right tool for:

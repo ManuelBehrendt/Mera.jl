@@ -101,6 +101,26 @@
         @test any(get(c, :n_subclumps, 0) == 2 for c in csub.clumps)
     end
 
+    @testset "parameter sensitivity: linking length, persistence, threshold" begin
+        h  = 1/128
+        Pf = Mera._make_points(gas, :rho; threshold=5.0, threshold_unit=:standard)
+        tl = [F.true_label(Pf.x[i], Pf.y[i], Pf.z[i]) for i in eachindex(Pf.x)]
+        ari(llen) = clump_recovery(first(Mera._label(ThresholdFoF(:rho; threshold=5.0, linking_length=llen), Pf)), tl).ari
+        nfof(llen; thr2=5.0) = clumpfind(gas, ThresholdFoF(:rho; threshold=thr2, linking_length=llen); min_members=3).nclumps
+        # linking length: below the cell size nothing links; a wide stable plateau; then over-merging
+        @test nfof(0.5h) == 0                          # < cell spacing → all singletons, filtered out
+        @test ari(2h) > 0.8                            # stable plateau (robust to the exact value)
+        @test ari(2h) > ari(0.5)                       # a too-large ll fuses clumps and destroys the partition
+        @test nfof(0.5) < nfof(2h)                     # … collapsing the catalog toward one blob
+        # persistence: small contrast splits the touching pair, large contrast merges it
+        near(c) = 0.40 < c.com[1] < 0.62 && 0.45 < c.com[2] < 0.60 && 0.68 < c.com[3] < 0.82
+        wpers(p) = count(near, clumpfind(gas, DensityWatershed(:rho; threshold=5.0, linking_length=2h, persistence=p)).clumps)
+        @test wpers(50.0)  == 2                        # below the saddle prominence (~150) → split
+        @test wpers(250.0) == 1                        # above it → merged
+        # threshold: raising it sharpens purity but drops the low-mass clumps (completeness falls)
+        @test nfof(2h; thr2=150.0) < nfof(2h; thr2=5.0)
+    end
+
     @testset "dendrogram hierarchy attaches a merge tree" begin
         ch = clumpfind(gas, Dendrogram(:rho; threshold=thr, linking_length=ll, min_delta=20.0); hierarchy=true)
         @test ch.tree !== nothing
