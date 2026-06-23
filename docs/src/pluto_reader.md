@@ -18,11 +18,19 @@ The normal [`getinfo`](@ref) / [`gethydro`](@ref) entry points **auto-detect the
 nothing special to call:
 
 ```julia
-using Mera
+julia> info = getinfo(5, "/data/pluto_sedov3d");   # detects PLUTO (grid.out + dbl.out)
 
-info = getinfo(5, "/data/pluto_sedov3d")   # detects PLUTO (grid.out + dbl.out) → prints "Code: PLUTO"
-gas  = gethydro(info)                       # branches on info.simcode → the PLUTO frontend
+Code: PLUTO
+output: 5  time: 0.5 [code units]
+grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
+variables: (rho, vx, vy, vz, p)
+-------------------------------------------------------
+
+julia> gas = gethydro(info);                        # branches on info.simcode → the PLUTO frontend
 ```
+
+The overview reports the code, the uniform `64³` grid (mapped to Mera `level = log₂64 = 6`), the
+box length and the variable list — the same overview a RAMSES snapshot prints.
 
 `getinfo` sniffs the directory for each code's signature files; the detected code is stored in
 `info.simcode` (`"PLUTO"` / `"RAMSES"`) and printed in the overview. Force it with `code=`:
@@ -93,8 +101,8 @@ getvar(gas, :cellsize)[1]           # = boxlen / 2^level
 msum(gas)                           # total mass (code units)
 
 # 3. projection (the exact off-axis engine)
-p = projection(gas, :rho)
-# heatmap of log10.(p.maps[:rho]) over p.extent  → the blast's shock front
+p = projection(gas, :sd, res=512, center=[:bc], direction=:z)
+# heatmap of log10.(p.maps[:sd]) over p.extent  → the blast's shock front
 
 # 4. time-series over all 6 outputs (discovery reads PLUTO's dbl.out)
 ts = timeseries(path, d -> (rho_max = maximum(getvar(d, :rho)), mass = msum(d));
@@ -113,6 +121,13 @@ savemap(p, "pluto_rho.jld2")
 ```
 
 ![The PLUTO Sedov blast evolving over its 6 outputs — getmovie/savemovie work on PLUTO data exactly as on RAMSES.](assets/pluto/pluto_blast.gif)
+
+Projecting the loaded blast along each axis shows the spherical shock front directly — the
+column density rendered along `x`, `y` and `z` with the same [`projection`](@ref) call used for
+RAMSES (the Sedov test runs in one octant, so the shell appears as a quarter-circle from each
+direction):
+
+![Log column density of the PLUTO Sedov blast (output 5), projected along x, y and z — the uniform-grid PLUTO data feed Mera's projection engine unchanged.](assets/pluto/pluto_projection.png)
 
 Every step above is the same call you would make on a RAMSES snapshot — that is the whole
 point of the code-blind analysis layer.
