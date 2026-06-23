@@ -1132,6 +1132,36 @@ cb = colorbar(im, label=labeltext);
 
 ![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_85_1.png)
 
+## Value-Type Regions
+
+`subregion` also accepts composable **region value types** — `Sphere`, `Cuboid`, `Cylinder`, `SphericalShell` — that compose with the boolean operators `∩` `∪` `\` `!`. For particles the region is a **point-membership** test (particles are points, so there is no fractional volume — `split`/`nsub` do not apply). `inverse=true` selects the complement.
+
+```julia
+# particles inside a ball, and the complement outside it
+part_in  = subregion(particles, Sphere(10.0; center=[:bc], range_unit=:kpc))
+part_out = subregion(particles, Sphere(10.0; center=[:bc], range_unit=:kpc), inverse=true)
+println("inside: ", length(part_in.data), "   outside: ", length(part_out.data),
+        "   total: ", length(particles.data))
+```
+
+```
+inside: 419529   outside: 89410   total: 508939
+```
+
+### Boolean Combinations
+
+Compose primitives into complex regions — e.g. a ball with a tilted cylinder removed:
+
+```julia
+# a ball with a cylindrical channel removed (tilted along [1,0,2])
+part_sel = subregion(particles, Sphere(12.0; range_unit=:kpc) \ Cylinder(3.0, 12.0; axis=[1.0,0.0,2.0], range_unit=:kpc))
+println("type: ", typeof(part_sel), "   selected: ", length(part_sel.data))
+```
+
+```
+type: PartDataType   selected: 338503
+```
+
 ## Summary
 
 This tutorial demonstrated comprehensive spatial selection techniques for particle simulation data using Mera.jl. The key accomplishments include:

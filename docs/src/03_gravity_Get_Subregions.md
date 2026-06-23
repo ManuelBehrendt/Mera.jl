@@ -42,3 +42,12 @@ Memory used for data table :
 ```julia
 # Follow the same steps as for the hydro data!
 ```
+
+## Value-Type Regions
+
+The composable **region value types** (`Sphere`, `Cuboid`, `Cylinder`, `SphericalShell`, and their `∩` `∪` `\` `!` combinations) work on gravity data exactly as on hydro, with **exact edge-cell splitting** — `getvar(:volume)` / `msum` over a split region are exact (gravity carries no mass, so the splitting weights the cell *volume*). See the Hydro notebook for the full walk-through.
+
+```julia
+grav_sphere = subregion(grav, Sphere(10.0; center=[:bc], range_unit=:kpc))   # split=true
+sum(getvar(grav_sphere, :volume, :kpc3))                                     # exact in-region volume
+```
