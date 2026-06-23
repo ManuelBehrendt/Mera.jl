@@ -62,6 +62,47 @@
         @test isapprox(vol(s) + vol(inv), Vbox; rtol=1e-6)      # region + complement = whole box
     end
 
+    @testset "boolean combinators (∩ ∪ \\ !)" begin
+        A = Sphere(R; range_unit=:kpc)
+        B = Cylinder(0.18box, 0.5box; range_unit=:kpc)
+        # set identities hold on the sampled fractions
+        @test isapprox(vol(subregion(gas, A ∪ B; verbose=false)),
+                       vol(subregion(gas, A; verbose=false)) + vol(subregion(gas, B; verbose=false))
+                       - vol(subregion(gas, A ∩ B; verbose=false)); rtol=1e-6)         # inclusion–exclusion
+        @test isapprox(vol(subregion(gas, A ∩ B; verbose=false)) + vol(subregion(gas, A \ B; verbose=false)),
+                       vol(subregion(gas, A; verbose=false)); rtol=2e-2)               # partition of A
+        @test isapprox(vol(subregion(gas, !A; verbose=false)), Vbox - vol(subregion(gas, A; verbose=false)); rtol=1e-6)  # complement
+        # a concentric difference reproduces the analytic spherical shell
+        diff = subregion(gas, Sphere(R; range_unit=:kpc) \ Sphere(0.15box; range_unit=:kpc); verbose=false)
+        @test isapprox(vol(diff), (4/3)*pi*(R^3 - (0.15box)^3); rtol=0.02)
+        # operator and explicit-constructor forms agree
+        @test vol(subregion(gas, A ∩ B; verbose=false)) == vol(subregion(gas, Mera.RegionIntersection(A,B); verbose=false))
+        @test (A & B) isa Mera.RegionIntersection && (A | B) isa Mera.RegionUnion
+    end
+
+    @testset "error quantification: split beats whole-cell and converges" begin
+        Vsphere(Rk) = (4/3)*pi*Rk^3
+        relerr(g, Rk) = abs(sum(getvar(g, :volume, :kpc3)) / Vsphere(Rk) - 1)
+        serr = Float64[]
+        for lmax in (4, 5, 6)
+            g  = synthetic_clumps(background=:galaxy, lmax=lmax).gas
+            bx = g.boxlen * g.scale.kpc; Rk = 0.30*bx
+            es = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); split=true,  verbose=false), Rk)
+            ew = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); split=false, verbose=false), Rk)
+            @test es < 0.3*ew + 1e-6        # exact splitting is far more accurate than whole cells
+            @test es < 0.01                 # and well under 1% even on a coarse grid
+            push!(serr, es)
+        end
+        @test serr[end] < serr[1]           # split error shrinks with resolution (converges)
+
+        # the nsub knob trades cost for accuracy: more sub-samples ⇒ smaller boundary error
+        g  = synthetic_clumps(background=:galaxy, lmax=5).gas
+        bx = g.boxlen * g.scale.kpc; Rk = 0.30*bx
+        e_coarse = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); nsub=2, verbose=false), Rk)
+        e_fine   = relerr(subregion(g, Sphere(Rk; range_unit=:kpc); nsub=8, verbose=false), Rk)
+        @test e_fine < e_coarse
+    end
+
     @testset "symbol API still works (backward compatible)" begin
         old = subregion(gas, :sphere; radius=R, center=[:bc], range_unit=:kpc, verbose=false)
         @test old isa Mera.HydroDataType && length(old.data) > 0

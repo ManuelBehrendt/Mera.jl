@@ -89,10 +89,36 @@ subregion(gas, Cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic
 ```
 
 `split=false` reproduces the classic centre-inside, whole-cell selection (no `:fraction`).
-`inverse=true` selects the complement. (Phase 1: hydro; boolean combinators, tilted axes and
-projection-of-split-cells are planned follow-ups.) The region types
-([`AbstractRegion`](@ref), [`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref),
-[`SphericalShell`](@ref)) are listed in the [API reference](../api.md#Types).
+`inverse=true` selects the complement. The region types ([`AbstractRegion`](@ref),
+[`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref)) are listed in
+the [API reference](../api.md#Types).
+
+### Boolean combinations
+
+Regions compose with the operators `∩` (intersection), `∪` (union), `\` (difference) and `!`
+(complement) — each result is itself a region, so they nest. The children may even have
+different centres.
+
+```julia
+subregion(gas, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 30.0; range_unit=:kpc))  # ball, cylinder drilled out
+subregion(gas, Sphere(20.0; range_unit=:kpc) ∩ Cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-3,3], range_unit=:kpc))
+subregion(gas, !Sphere(20.0; range_unit=:kpc))                                        # everything outside the ball
+```
+
+### Accuracy of the splitting
+
+Exact splitting is dramatically more accurate than whole-cell selection, and converges with grid
+resolution. For a sphere, the whole-cell volume error stays at the ~0.5–1.5 % level and is erratic
+(it is a step function of which cell centres fall inside), while exact splitting (default
+`nsub=8`) is 10–100× smaller and falls smoothly as the cells shrink:
+
+![Region splitting accuracy](../assets/regions/split_accuracy.png)
+
+`nsub` (per-axis sub-sampling of boundary cells, default `8`) trades cost for accuracy; the error
+floor past `nsub≈8` is set by the grid resolution, not the sampling (right panel). Only boundary
+cells are ever sub-sampled — interior/exterior cells are an O(1) corner test — so the cost is
+modest. Cuboids are split analytically (exact, no sampling). The figure is reproduced by
+`test/55_region_algebra_tests.jl` (a CI convergence test) and `docs/make_region_figures.jl`.
 
 ## Additional Analysis Functions
 

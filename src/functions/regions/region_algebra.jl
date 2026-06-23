@@ -6,8 +6,10 @@
 #  and — with `split=true` (default) — attaches a per-cell `:fraction ∈ (0,1]` giving the
 #  exact volume fraction of the cell inside the region, so `getvar(:mass)`/`:volume`/`msum`
 #  report the exact in-region totals (a sphere of radius R returns (4/3)πR³, no edge
-#  over/under-counting). Boolean combinators, projection integration and tilted axes are
-#  later phases.
+#  over/under-counting). Regions compose with boolean operators (∩ ∪ \ !). Boundary cells of
+#  curved/composite regions are sub-sampled n³ (`nsub`, default 8 — see the convergence study
+#  in test/55: split error is ~100× below whole-cell and converges with resolution). Projection
+#  integration and tilted axes are later phases.
 #
 #  Everything works in the normalised [0,1] box frame, matching the existing region filters
 #  (cell centre = cx/2^level, half-size = 0.5/2^level). Physical centre/lengths are converted
@@ -19,7 +21,9 @@
 Supertype of the composable region value types passed to [`subregion`](@ref):
 [`Cuboid`](@ref), [`Sphere`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref). A region
 is a geometry-relative-to-`center` value type; `subregion(obj, region)` selects the cells it
-covers and, with `split=true`, attaches the exact per-cell inside-fraction."""
+covers and, with `split=true`, attaches the exact per-cell inside-fraction. Regions compose
+with the boolean operators `∩` (intersection), `∪` (union), `\\` (difference) and `!`
+(complement) — e.g. `Sphere(20) \\ Cylinder(5, 30)` drills a cylindrical hole through a ball."""
 abstract type AbstractRegion end
 
 """    Sphere(radius; center=[:bc], range_unit=:kpc)
@@ -70,17 +74,17 @@ end
 # `_prepare(region, obj) -> (cellfrac, contains)` in the normalised frame:
 #   cellfrac(nx,ny,nz,half) -> exact volume fraction of the cell in the region (0..1)
 #   contains(nx,ny,nz)      -> Bool, cell-centre-inside test (for split=false)
-function _prepare(r::Sphere, obj)
+function _prepare(r::Sphere, obj; nsub::Int=8)
     c, tonorm = _norm_frame(obj, r.center, r.range_unit); R = tonorm(r.radius)
     inside(x,y,z) = (x-c[1])^2 + (y-c[2])^2 + (z-c[3])^2 <= R*R
-    return ((nx,ny,nz,h) -> _convex_fraction(inside,nx,ny,nz,h)), inside
+    return ((nx,ny,nz,h) -> _sample_fraction(inside,nx,ny,nz,h;n=nsub)), inside
 end
-function _prepare(r::Cylinder, obj)
+function _prepare(r::Cylinder, obj; nsub::Int=8)
     c, tonorm = _norm_frame(obj, r.center, r.range_unit); R = tonorm(r.radius); H = tonorm(r.height)
     inside(x,y,z) = (x-c[1])^2 + (y-c[2])^2 <= R*R && abs(z-c[3]) <= H
-    return ((nx,ny,nz,h) -> _convex_fraction(inside,nx,ny,nz,h)), inside
+    return ((nx,ny,nz,h) -> _sample_fraction(inside,nx,ny,nz,h;n=nsub)), inside
 end
-function _prepare(r::Cuboid, obj)
+function _prepare(r::Cuboid, obj; nsub::Int=8)
     c, tonorm = _norm_frame(obj, r.center, r.range_unit)
     xlo=c[1]+tonorm(r.xrange[1]); xhi=c[1]+tonorm(r.xrange[2])
     ylo=c[2]+tonorm(r.yrange[1]); yhi=c[2]+tonorm(r.yrange[2])
@@ -91,17 +95,60 @@ function _prepare(r::Cuboid, obj)
     cellfrac(nx,ny,nz,h) = ov(xlo,xhi,nx,h) * ov(ylo,yhi,ny,h) * ov(zlo,zhi,nz,h)
     return cellfrac, inside
 end
-function _prepare(r::SphericalShell, obj)
-    cf_out, in_out = _prepare(Sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj)
-    cf_in,  in_in  = _prepare(Sphere(r.r_in;  center=r.center, range_unit=r.range_unit), obj)
+function _prepare(r::SphericalShell, obj; nsub::Int=8)
+    cf_out, in_out = _prepare(Sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cf_in,  in_in  = _prepare(Sphere(r.r_in;  center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
     cellfrac(nx,ny,nz,h) = cf_out(nx,ny,nz,h) - cf_in(nx,ny,nz,h)   # both convex → exact difference
     contains(x,y,z) = in_out(x,y,z) && !in_in(x,y,z)
     return cellfrac, contains
 end
 
-# exact-in-the-limit fraction for a CONVEX region: 8 corners + centre fast-path, else n³ sub-sample.
-# (Only boundary cells reach the sub-sample; interior/exterior are O(1).)
-@inline function _convex_fraction(inside, nx, ny, nz, half; n::Int=6)
+# ---- boolean combinators -----------------------------------------------------------
+# Each composes child point-membership predicates; the fraction is sampled from the combined
+# predicate (the only exact route for a non-convex composite). Children resolve in the same
+# normalised frame, so they may even have different centres. Build via the operators below.
+# (`Union` is a core Julia builtin, so the combinator types take a `Region` prefix; users
+#  build them through the operators below, not by name.)
+struct RegionIntersection <: AbstractRegion; a::AbstractRegion; b::AbstractRegion; end
+struct RegionUnion        <: AbstractRegion; a::AbstractRegion; b::AbstractRegion; end
+struct RegionDifference   <: AbstractRegion; a::AbstractRegion; b::AbstractRegion; end
+struct RegionComplement   <: AbstractRegion; a::AbstractRegion; end
+
+function _prepare(r::RegionIntersection, obj; nsub::Int=8)
+    _, ca = _prepare(r.a, obj; nsub=nsub); _, cb = _prepare(r.b, obj; nsub=nsub)
+    contains(x,y,z) = ca(x,y,z) && cb(x,y,z)
+    return ((nx,ny,nz,h) -> _sample_fraction(contains,nx,ny,nz,h;n=nsub)), contains
+end
+function _prepare(r::RegionUnion, obj; nsub::Int=8)
+    _, ca = _prepare(r.a, obj; nsub=nsub); _, cb = _prepare(r.b, obj; nsub=nsub)
+    contains(x,y,z) = ca(x,y,z) || cb(x,y,z)
+    return ((nx,ny,nz,h) -> _sample_fraction(contains,nx,ny,nz,h;n=nsub)), contains
+end
+function _prepare(r::RegionDifference, obj; nsub::Int=8)
+    _, ca = _prepare(r.a, obj; nsub=nsub); _, cb = _prepare(r.b, obj; nsub=nsub)
+    contains(x,y,z) = ca(x,y,z) && !cb(x,y,z)
+    return ((nx,ny,nz,h) -> _sample_fraction(contains,nx,ny,nz,h;n=nsub)), contains
+end
+function _prepare(r::RegionComplement, obj; nsub::Int=8)
+    _, ca = _prepare(r.a, obj; nsub=nsub)
+    contains(x,y,z) = !ca(x,y,z)
+    return ((nx,ny,nz,h) -> _sample_fraction(contains,nx,ny,nz,h;n=nsub)), contains
+end
+
+# region algebra: `A ∩ B`, `A ∪ B`, `A \ B`, `!A` (also ASCII `A & B`, `A | B`)
+Base.intersect(a::AbstractRegion, b::AbstractRegion) = RegionIntersection(a, b)
+Base.union(a::AbstractRegion, b::AbstractRegion)     = RegionUnion(a, b)
+Base.setdiff(a::AbstractRegion, b::AbstractRegion)   = RegionDifference(a, b)
+Base.:\(a::AbstractRegion, b::AbstractRegion)        = RegionDifference(a, b)
+Base.:!(a::AbstractRegion)                           = RegionComplement(a)
+Base.:&(a::AbstractRegion, b::AbstractRegion)        = RegionIntersection(a, b)
+Base.:|(a::AbstractRegion, b::AbstractRegion)        = RegionUnion(a, b)
+
+# Volume fraction of a cell inside a region from its point-membership predicate `inside`:
+# an 8-corner + centre fast-path (fully in → 1, fully out → 0) then an n³ sub-sample of the
+# boundary cells. Exact in the limit; assumes region features are resolved by the cell size
+# (true of any cell-based method). Works for any predicate, so combinators reuse it directly.
+@inline function _sample_fraction(inside, nx, ny, nz, half; n::Int=8)
     allin = true; allout = true
     @inbounds for dz in (-half,half), dy in (-half,half), dx in (-half,half)
         if inside(nx+dx, ny+dy, nz+dz); allout = false; else; allin = false; end
@@ -117,19 +164,22 @@ end
 end
 
 """
-    subregion(obj::HydroDataType, region::AbstractRegion; split=true, inverse=false, verbose=true)
+    subregion(obj::HydroDataType, region::AbstractRegion; split=true, inverse=false, nsub=8, verbose=true)
 
 Select the cells covered by a composable `region` ([`Sphere`](@ref), [`Cuboid`](@ref),
-[`Cylinder`](@ref), [`SphericalShell`](@ref)). With `split=true` (default) each kept cell
-carries an exact `:fraction ∈ (0,1]` — the volume fraction inside the region — and
-`getvar(:mass)`/`getvar(:volume)`/`msum` report the **exact in-region totals** (no boundary
-over/under-counting). With `split=false` whole cells are kept by a centre-inside test (the
-classic behaviour) and no `:fraction` is attached. `inverse=true` selects the complement.
+[`Cylinder`](@ref), [`SphericalShell`](@ref), or any boolean combination `∩`/`∪`/`\\`/`!`).
+With `split=true` (default) each kept cell carries an exact `:fraction ∈ (0,1]` — the volume
+fraction inside the region — and `getvar(:mass)`/`getvar(:volume)`/`msum` report the **exact
+in-region totals** (no boundary over/under-counting). With `split=false` whole cells are kept
+by a centre-inside test (the classic behaviour) and no `:fraction` is attached. `inverse=true`
+selects the complement. `nsub` (default 8) is the per-axis sub-sampling of boundary cells for
+curved/composite regions — larger is more accurate, with diminishing returns past ~8 (where the
+grid resolution, not the sampling, sets the error floor).
 """
 function subregion(obj::HydroDataType, region::AbstractRegion; split::Bool=true,
-                   inverse::Bool=false, verbose::Bool=true)
+                   inverse::Bool=false, nsub::Int=8, verbose::Bool=true)
     verbose = checkverbose(verbose)
-    cellfrac, contains = _prepare(region, obj)
+    cellfrac, contains = _prepare(region, obj; nsub=nsub)
     data = obj.data
     lvl = IndexedTables.select(data, :level)
     cxv = IndexedTables.select(data, :cx); cyv = IndexedTables.select(data, :cy); czv = IndexedTables.select(data, :cz)
