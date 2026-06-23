@@ -56,6 +56,8 @@ makedocs(modules = [Mera],
 
                           "Clump Finding"       => "clumpfind.md",
 
+                          "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md",
+
                           "Covering Grid / FRB" => "covering_grid.md",
 
                           "Flux Budgets"        => "fluxbudget.md",
