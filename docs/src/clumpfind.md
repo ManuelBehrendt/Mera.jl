@@ -8,6 +8,11 @@ two ways:
 
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
+!!! tip "Try it on known ground truth"
+    The [synthetic, data-free example](clumpfind_synthetic.md) builds a Mera object whose
+    clumps are known exactly and scores every finder and feature against it (downloadable
+    dataset included) — the quickest way to see the behaviour and accuracy of each algorithm.
+
 The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value (one of seven —
 [`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
 [`HDBSCANFinder`](@ref), [`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref)) selects the algorithm,
