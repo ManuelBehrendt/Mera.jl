@@ -62,6 +62,21 @@
         @test isapprox(vol(s) + vol(inv), Vbox; rtol=1e-6)      # region + complement = whole box
     end
 
+    @testset "shell value types (spherical + cylindrical)" begin
+        rin, rout = 0.12box, 0.28box
+        ss = subregion(gas, SphericalShell(rin, rout; range_unit=:kpc); verbose=false)
+        @test isapprox(vol(ss), (4/3)*pi*(rout^3 - rin^3); rtol=0.02)
+        # a cylindrical shell of half-height H
+        H = 0.20box
+        cs = subregion(gas, CylindricalShell(rin, rout, H; range_unit=:kpc); verbose=false)
+        @test isapprox(vol(cs), pi*(rout^2 - rin^2)*(2H); rtol=0.02)
+        # a tilted cylindrical shell has the same volume (orientation-invariant)
+        cst = subregion(gas, CylindricalShell(rin, rout, H; axis=[1.,1.,1.], range_unit=:kpc); verbose=false)
+        @test isapprox(vol(cst), pi*(rout^2 - rin^2)*(2H); rtol=0.03)
+        # the spherical shell equals a concentric Sphere-difference
+        @test isapprox(vol(ss), vol(subregion(gas, Sphere(rout; range_unit=:kpc) \ Sphere(rin; range_unit=:kpc); verbose=false)); rtol=1e-6)
+    end
+
     @testset "boolean combinators (∩ ∪ \\ !)" begin
         A = Sphere(R; range_unit=:kpc)
         B = Cylinder(0.18box, 0.5box; range_unit=:kpc)

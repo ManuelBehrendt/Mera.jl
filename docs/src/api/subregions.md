@@ -73,7 +73,7 @@ shellregion(data, :sphere, radius=[8., 12.], range_unit=:kpc)
 ## Composable regions with exact cell splitting
 
 Alongside the symbol API (`subregion(data, :sphere; …)`), `subregion` accepts a **region value
-type** ([`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref)). With
+type** ([`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref), [`CylindricalShell`](@ref)). With
 `split=true` (the default for this form), cells straddling the region boundary are **clipped
 exactly**: each kept cell carries a `:fraction ∈ (0,1]` equal to the volume fraction inside the
 region, and [`getvar`](@ref)`(:mass)` / `(:volume)` / [`msum`](@ref) report the **exact in-region
@@ -85,6 +85,7 @@ msum(gas_in, :Msol)        # exact enclosed mass (boundary cells weighted by the
 
 subregion(gas, Cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-2,2], range_unit=:kpc))
 subregion(gas, SphericalShell(10.0, 20.0; range_unit=:kpc))
+subregion(gas, CylindricalShell(3.0, 8.0, 4.0; range_unit=:kpc))   # value-type analogue of shellregion(:cylinder)
 subregion(gas, Cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic whole-cell selection
 ```
 

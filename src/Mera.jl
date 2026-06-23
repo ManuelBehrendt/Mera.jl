@@ -270,6 +270,7 @@ export
     Cylinder,
     Cuboid,
     SphericalShell,
+    CylindricalShell,
 
 # miscellaneous
     viewmodule,

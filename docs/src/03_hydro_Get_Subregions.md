@@ -1261,6 +1261,22 @@ println("tilted-disk cells: ", length(gas_disk.data), "   mass: ", msum(gas_disk
 tilted-disk cells: 4557706   mass: 6.295667826746608e9 Msol
 ```
 
+### Shell Regions
+
+`SphericalShell` and `CylindricalShell` are the value-type analogues of `shellregion(:sphere)` / `shellregion(:cylinder)`, with the same exact edge-cell splitting (and a tunable `axis` for the cylindrical shell). A shell is also just a difference, e.g. `Sphere(r_out) \ Sphere(r_in)`.
+
+```julia
+gas_sshell = subregion(gas, SphericalShell(6.0, 10.0; range_unit=:kpc))
+gas_cshell = subregion(gas, CylindricalShell(3.0, 8.0, 4.0; range_unit=:kpc))
+println("spherical shell:   mass = ", msum(gas_sshell, :Msol), " Msol   cells = ", length(gas_sshell.data))
+println("cylindrical shell: mass = ", msum(gas_cshell, :Msol), " Msol   cells = ", length(gas_cshell.data))
+```
+
+```
+spherical shell:   mass = 8.254683536097689e9 Msol   cells = 4157946
+cylindrical shell: mass = 1.0586921852642824e10 Msol   cells = 6859080
+```
+
 ## Summary
 
 This notebook provided comprehensive coverage of spatial selection techniques for hydrodynamic simulation data analysis using Mera.jl's powerful geometric filtering capabilities.

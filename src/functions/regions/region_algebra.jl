@@ -69,6 +69,16 @@ end
 SphericalShell(r_in::Real, r_out::Real; center=[:bc], range_unit::Symbol=:kpc) =
     SphericalShell(Float64(r_in), Float64(r_out), Vector{Any}(center), range_unit)
 
+"""    CylindricalShell(r_in, r_out, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
+
+A cylindrical shell `r_in ≤ r_cyl ≤ r_out` of half-height `height` along `axis` (the value-type
+analogue of `shellregion(:cylinder)`; `axis` allows a tilted shell)."""
+struct CylindricalShell <: AbstractRegion
+    r_in::Float64; r_out::Float64; height::Float64; axis::Vector{Float64}; center::Vector{Any}; range_unit::Symbol
+end
+CylindricalShell(r_in::Real, r_out::Real, height::Real; axis=[0.,0.,1.], center=[:bc], range_unit::Symbol=:kpc) =
+    CylindricalShell(Float64(r_in), Float64(r_out), Float64(height), Float64.(axis), Vector{Any}(center), range_unit)
+
 """    Cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
 A cylinder of cylindrical `radius` spanning `±height` along `axis` (so `height` is the
@@ -131,6 +141,13 @@ end
 function _prepare(r::SphericalShell, obj; nsub::Int=8)
     cf_out, in_out = _prepare(Sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
     cf_in,  in_in  = _prepare(Sphere(r.r_in;  center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cellfrac(nx,ny,nz,h) = cf_out(nx,ny,nz,h) - cf_in(nx,ny,nz,h)   # both convex → exact difference
+    contains(x,y,z) = in_out(x,y,z) && !in_in(x,y,z)
+    return cellfrac, contains
+end
+function _prepare(r::CylindricalShell, obj; nsub::Int=8)
+    cf_out, in_out = _prepare(Cylinder(r.r_out, r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
+    cf_in,  in_in  = _prepare(Cylinder(r.r_in,  r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj; nsub=nsub)
     cellfrac(nx,ny,nz,h) = cf_out(nx,ny,nz,h) - cf_in(nx,ny,nz,h)   # both convex → exact difference
     contains(x,y,z) = in_out(x,y,z) && !in_in(x,y,z)
     return cellfrac, contains
