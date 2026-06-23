@@ -8,32 +8,30 @@ every feature can be both *exercised* and *scored* (Adjusted Rand Index, complet
 purity, recovered mass, virial state). The same field drives the accuracy test
 `test/54_clumpfind_synthetic_tests.jl`, which runs in CI on every platform.
 
-The generator lives in [`examples/synthetic_clumps.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/examples/synthetic_clumps.jl).
+[`synthetic_clumps`](@ref), [`save_synthetic_clumps`](@ref) and [`load_synthetic_clumps`](@ref)
+are part of Mera (source: [`src/functions/synthetic_clumps.jl`](https://github.com/ManuelBehrendt/Mera.jl/blob/master/src/functions/synthetic_clumps.jl)).
 
 ## Get the data
 
 The generator is deterministic, so you can either **regenerate** the identical field
-locally or **download** the prebuilt dataset (≈1.8 MB, LZ4-compressed Mera/JLD2).
+locally or **download** the prebuilt dataset (≈1.8 MB, LZ4-compressed Mera/JLD2). Both need
+only `using Mera`.
 
 ```julia
 using Mera
-include(joinpath(pkgdir(Mera), "examples", "synthetic_clumps.jl"))
 
 # Option A — regenerate the identical field locally (no download):
 F = synthetic_clumps()
 gas, particles, truth = F.gas, F.particles, F.truth
 
-# Option B — download the prebuilt dataset once, then load it:
-using Downloads
-url = "https://github.com/ManuelBehrendt/Mera.jl/releases/download/synthetic-data-v1/mera_synthetic_clumps.jld2"
-Downloads.download(url, "mera_synthetic_clumps.jld2")
-D = load_synthetic_clumps("mera_synthetic_clumps.jld2")
+# Option B — download the prebuilt dataset once (cached in `dir`), then load it:
+D = load_synthetic_clumps(tempdir(); download=true)
 gas, particles, truth = D.gas, D.particles, D.truth
 ```
 
 The stored `gas` / `particles` are ordinary Mera data objects: every Mera verb
-(`getvar`, `projection`, `clumpfind`, …) works on them unchanged. `save_synthetic_clumps(dir)`
-writes the file yourself.
+(`getvar`, `projection`, `clumpfind`, …) works on them unchanged. Write the file yourself
+with `save_synthetic_clumps(dir)`.
 
 ## The field
 
@@ -51,6 +49,19 @@ matching particle bags; plus a two-component kinematic stream for the phase-spac
 
 *Left: the gas column density (note the G1+G2 "peanut" at centre). Right: the eight
 injected ground-truth clumps, coloured by id.*
+
+### The data and finders are fully 3-D
+
+The figures above collapse the box along `z` for display, but the field is a genuine **3-D
+volume** and every finder runs in three dimensions. The clumps sit at different depths — in
+particular clump **E** (z ≈ 0.25) lies almost directly under the **G1/G2** pair (z ≈ 0.75),
+so they overlap in the x–y projection yet are distinct in 3-D:
+
+![3-D clump distribution](assets/clumpfind/three_d.png)
+
+*Left: the clumps in the 3-D volume. Right: the x–y projection — E and G1/G2 (red circle)
+land on the same sky position. A 3-D finder separates them by depth; a 2-D connected-component
+search on the projection would merge them. `test/54` asserts exactly this.*
 
 ## Run every finder and score it
 
@@ -154,6 +165,28 @@ The lesson: on a structured background, prefer a **density-contrast** finder
 or raise the threshold above the local ISM — a single absolute threshold with friends-of-friends
 will merge clumps into the floor. This is exactly what
 `test/54_clumpfind_synthetic_tests.jl` asserts.
+
+## When to use which finder
+
+What this synthetic bench shows about each algorithm, and the situation it's the right tool for:
+
+| Finder | Use it when… | On this bench |
+|---|---|---|
+| [`ThresholdFoF`](@ref) | clumps are **isolated islands** over a clear, flat background; you want the fastest, most robust connectivity finder | recovers the isolated clumps (ARI 0.89); **merges** the touching pair and **fuses** the ISM disk |
+| [`DensityWatershed`](@ref) | touching clumps must be **split along their saddle**; you can set a `persistence` contrast | splits G1/G2; recovers 8/8 on the ISM disk |
+| [`Dendrogram`](@ref) | you want the **multi-scale merge tree** (`hierarchy=true`), or leaves above a `min_delta` contrast | 8 leaves + tree; rejects the smooth floor |
+| [`PersistenceFinder`](@ref) | you want **topologically robust** peaks, pruning low-prominence noise bumps | 8/8, prominence-pruned |
+| [`HDBSCANFinder`](@ref) | clumps span a **wide density range** and you don't want to tune a single threshold | density-adaptive; needs `min_cluster_size`, sensitive on a heavy floor |
+| [`GraphSegFinder`](@ref) | fast **multi-scale** segmentation / a deblender; granularity set by `scale` | scale-dependent segment count |
+| [`PhaseSpaceFoF`](@ref) | populations **overlap in space but separate in velocity** (streams, shells, debris) | splits the ±120 km/s kinematic stream |
+
+Add `boundedness=true` (or a [`Bound`](@ref) validator) to any of them to keep only
+self-gravitating structures, and a [`validators`](clumpfind.md) chain to filter the catalog.
+
+**Rules of thumb:** start with `ThresholdFoF`; reach for `DensityWatershed`/`Dendrogram`/
+`PersistenceFinder` when clumps **touch** or sit on a **structured background**; use
+`PhaseSpaceFoF` when the separation is **kinematic**; and always score new settings against a
+known case — that's what `synthetic_clumps()` is for.
 
 See [Clump Finding](clumpfind.md) for the full API, the seven finders, and the
 gravitational-boundedness / validator details.

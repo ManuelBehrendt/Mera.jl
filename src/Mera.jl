@@ -23,6 +23,7 @@ using Printf
 using Dates
 using Statistics
 using Random
+using Downloads
 using PrecompileTools
 using Pkg
 using Base.Threads
@@ -223,6 +224,9 @@ export
     VirialBelow,
     MassAbove,
     Custom,
+    synthetic_clumps,
+    save_synthetic_clumps,
+    load_synthetic_clumps,
     AbstractFinder,
     ThresholdFoF,
     DensityWatershed,
@@ -451,6 +455,7 @@ include("functions/report/report.jl")
 include("functions/report/report_render.jl")
 include("functions/report/report_cost.jl")
 include("functions/clumpfind.jl")
+include("functions/synthetic_clumps.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/gridoverlay.jl")
