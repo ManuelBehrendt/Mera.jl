@@ -762,41 +762,77 @@ sum(var_filtered)
 
 ## Value-Space Filtering: `filterdata` and `getmask`
 
-The macros above filter on *stored* table columns. `filterdata` (and `getmask`) instead select by **any [`getvar`](@ref) quantity** — including derived physics such as temperature `:T`, radial velocity `:vr`, Mach number `:mach` or cylindrical radius `:r_cylinder` — in any unit, and return a **new object of the same type** (chainable with `projection`, `getvar`, `subregion`, …). Conditions are composable value types ([`Above`](@ref), [`Below`](@ref), [`InRange`](@ref)) combined with `&` (and), `|` (or) and `!` (not). Masks are built vectorised through `getvar`, so they are fast and work on quantities the raw-column `@filter` cannot see.
+The macros above filter on *stored* table columns. `filterdata` (and `getmask`) instead select by **any [`getvar`](@ref) quantity** — including derived physics such as temperature `:T`, radial velocity `:vr`, Mach number `:mach` or cylindrical radius `:r_cylinder` — in any unit, and return a **new object of the same type** (chainable with `projection`, `getvar`, `subregion`, …). Conditions are composable value types ([`Above`](@ref), [`Below`](@ref), [`InRange`](@ref), [`Equals`](@ref), [`IsFinite`](@ref), [`AbovePercentile`](@ref)/[`BelowPercentile`](@ref), [`Satisfies`](@ref)) combined with `&` (and), `|` (or) and `!` (not). Masks are built vectorised through `getvar`, so they are fast and work on quantities the raw-column `@filter` cannot see. They work on hydro, gravity, RT, particles and clumps.
 
 ```julia
-# select by a DERIVED quantity (temperature), returning a chainable HydroDataType
-hot = filterdata(gas, Above(:T, 1e4, unit=:K))
-projection(hot, :sd, :Msol_pc2)            # the result is a normal Mera object
-
-# boolean algebra over several physical quantities
-cold_dense = filterdata(gas, Below(:T, 1e3, unit=:K) & Above(:rho, 100, unit=:nH))
-
-# a kinematically/radially confined slice (several positional conditions are AND-combined)
-disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc), Below(:vz, 50, unit=:km_s))
-
-# quantity/predicate shorthand for a single condition
-hot2 = filterdata(gas, :T, >(1e4), unit=:K)
-
-# or get just the boolean mask and reuse it via the `mask=` keyword (no data copy):
-m = getmask(gas, Above(:T, 1e4, unit=:K))
-msum(gas, mask=m)                          # in-mask total mass, original object untouched
+# select by a DERIVED quantity (the hot halo, T > 1e6 K) — returns a chainable HydroDataType
+hot = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)
+length(hot.data)
 ```
 
-`filterdata`/`getmask` work on hydro, gravity, RT, particles and clumps.
-
-More condition types: `Equals` (discrete fields like `:level`), `IsFinite` (drop `NaN`/`Inf`), `AbovePercentile`/`BelowPercentile` (adaptive thresholds) and `Satisfies` (a composable arbitrary predicate):
+```
+489608
+```
 
 ```julia
-dense10 = filterdata(gas, AbovePercentile(:rho, 90))       # the densest 10 % of cells (adaptive)
-clean   = filterdata(gas, IsFinite(:T))                    # drop non-finite temperatures
-core    = filterdata(gas, Equals(:level, gas.lmax) & AbovePercentile(:rho, 99))
+# boolean algebra over several physical quantities: cold AND dense gas
+cold_dense = filterdata(gas, Above(:rho, 1, unit=:nH) & Below(:T, 1e5, unit=:K), verbose=false)
+length(cold_dense.data)
 ```
 
-The `@filter` macro is also routed through this engine: on a Mera object it filters by any
-`getvar` quantity and returns a same-type object (`hot = @filter gas :rho >= 1e2`); on a raw
-table it keeps the classic per-row behaviour.
+```
+10080
+```
 
+```julia
+# a radially/kinematically confined slice (several positional conditions are AND-combined)
+disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc), Below(:vz, 50, unit=:km_s), verbose=false)
+length(disc.data)
+```
+
+```
+17432
+```
+
+```julia
+# get just the boolean mask and reuse it via the `mask=` keyword (no data copy):
+m = getmask(gas, Above(:T, 1e6, unit=:K))
+msum(gas, mask=m, unit=:Msol)            # hot-halo mass; the original object is untouched
+```
+
+```
+2.145e9
+```
+
+### Adaptive and discrete selectors
+
+`Equals` (discrete fields like `:level`), `IsFinite` (drop `NaN`/`Inf`), `AbovePercentile`/`BelowPercentile` (data-relative **adaptive** thresholds) and `Satisfies` (a composable arbitrary predicate):
+
+```julia
+dense10 = filterdata(gas, AbovePercentile(:rho, 90), verbose=false)   # densest 10% of cells (adaptive)
+length(dense10.data)
+```
+
+```
+84934
+```
+
+```julia
+# finest-level cells in the top 1% by density
+core = filterdata(gas, Equals(:level, gas.lmax) & AbovePercentile(:rho, 99), verbose=false)
+length(core.data)
+```
+
+```
+8494
+```
+
+The `@filter` macro is also routed through this engine: on a Mera object it filters by a single comparison and returns a same-type object (in **code units** — use `filterdata` for unit-aware thresholds and compound conditions); on a raw table it keeps the classic per-row behaviour.
+
+```julia
+finest = @filter gas :level == gas.lmax    # Mera object → HydroDataType of the finest-level cells
+sub    = @filter gas.data :rho >= 1e-2     # raw table → filtered table (classic behaviour)
+```
 
 ## Extend the Data Table
 Add costum columns/variables to the data that can be automatically processed in some functions:

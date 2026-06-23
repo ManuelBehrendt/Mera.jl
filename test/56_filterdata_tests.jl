@@ -77,6 +77,16 @@
         @test length(pv.data) == count((vx .> 50.0) .| (vx .< -50.0))
     end
 
+    @testset "edge cases: empty / all-pass / partition" begin
+        none = filterdata(gas, Above(:rho, 1e30; unit=:nH), verbose=false)   # matches nothing
+        @test none isa Mera.HydroDataType && length(none.data) == 0
+        all_ = filterdata(gas, Above(:rho, -1.0; unit=:nH), verbose=false)   # matches everything
+        @test length(all_.data) == n
+        # a region and its complement partition the data exactly
+        c = Above(:rho, a; unit=:nH)
+        @test length(filterdata(gas, c, verbose=false).data) + length(filterdata(gas, !c, verbose=false).data) == n
+    end
+
     @testset "@filter macro routes Mera objects through filterdata" begin
         # on a Mera object: works on a DERIVED quantity and returns a same-type object
         m = @filter gas :cs >= b
