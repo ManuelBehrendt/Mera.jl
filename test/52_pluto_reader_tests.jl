@@ -183,14 +183,24 @@ if DATA_AVAILABLE && isdir(CH_PATH)
         pr = projection(g, :rho, verbose=false, show_progress=false)
         @test sum(pr.maps[:rho]) > 0
 
-        # load-time spatial selection on AMR data — a central box keeps only the refined core
+        # load-time spatial selection on AMR data — a central box keeps only the refined core,
+        # read via per-box HDF5 pruning (only the intersecting boxes' data are loaded)
         x = getvar(g, :x); y = getvar(g, :y); z = getvar(g, :z); bl = info.boxlen
         sub = gethydro(info; xrange=[-0.1, 0.1], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
                        center=[:bc], range_unit=:standard, verbose=false)
         lo = 0.4bl; hi = 0.6bl
-        @test length(sub.data) == count((lo .<= x .<= hi) .& (lo .<= y .<= hi) .& (lo .<= z .<= hi))
+        mask = (lo .<= x .<= hi) .& (lo .<= y .<= hi) .& (lo .<= z .<= hi)
+        @test length(sub.data) == count(mask)
         @test maximum(getvar(sub, :level)) == maximum(lv)        # the finest level survives at the centre
         @test sub.ranges != [0., 1., 0., 1., 0., 1.]
+        # the pruned per-box read preserves values: rho matches the full load cell-for-cell
+        k(l,a,b,c) = (Int(l), Int(a), Int(b), Int(c))
+        fl = getvar(g, :level); fx = Mera.select(g.data,:cx); fy = Mera.select(g.data,:cy); fz = Mera.select(g.data,:cz)
+        frho = getvar(g, :rho)
+        D = Dict(k(fl[i],fx[i],fy[i],fz[i]) => frho[i] for i in eachindex(fl) if mask[i])
+        sl = getvar(sub,:level); sx = Mera.select(sub.data,:cx); sy = Mera.select(sub.data,:cy); sz = Mera.select(sub.data,:cz)
+        srho = getvar(sub, :rho)
+        @test all(D[k(sl[i],sx[i],sy[i],sz[i])] == srho[i] for i in eachindex(sl))
     end
 else
     @testset "Chombo reader (skipped: chombo_3d unavailable)" begin
