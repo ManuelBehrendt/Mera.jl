@@ -16,28 +16,37 @@ function transform_field_references(expr)
 end
 
 """
-Find examples in the Mera Documentation for: filter data with macros
+    @filter(obj, :column op value)
+
+Filter by a single comparison. If `obj` is a **Mera data object** (hydro/gravity/RT/particles/
+clumps) it routes through [`filterdata`](@ref): the column may be any `getvar` quantity (derived
+physics, code units) and the result is a **new object of the same type**. If `obj` is a raw
+`IndexedTable`, the classic per-row column filter is used. For units, compound conditions
+(`&`/`|`/`!`) and percentile/finite selectors, use `filterdata` with [`Above`](@ref) etc.
+
+```julia
+hot = @filter gas :rho >= 1e2     # Mera object → HydroDataType of the matching cells
+sub = @filter gas.data :rho >= 1e2  # raw table → filtered table (classic behaviour)
+```
 """
 macro filter(table, expr)
-    if expr isa Expr && expr.head == :call && length(expr.args) == 3
-        op = expr.args[1]   # Extract the operator (e.g., >=)
-        lhs = expr.args[2]  # Extract the left-hand side (e.g., :rho)
-        rhs = expr.args[3]  # Extract the right-hand side (e.g., density)
-
-        if lhs isa QuoteNode
-            lhs_val = lhs.value
-            filter_func = quote
-                let rhs_val = $(rhs)
-                    row -> $op(getfield(row, $(QuoteNode(lhs_val))), rhs_val)
-                end
-            end
-        else
-            error("Left-hand side must be a quoted column name, e.g. :rho")
-        end
-    else
+    (expr isa Expr && expr.head == :call && length(expr.args) == 3) ||
         error("Expected a comparison expression like :rho >= density")
+    op, lhs, rhs = expr.args[1], expr.args[2], expr.args[3]   # operator, :column, value
+    lhs isa QuoteNode || error("Left-hand side must be a quoted column name, e.g. :rho")
+    q = lhs.value
+    # If `table` is a Mera object, route to the value-space engine: this filters on ANY getvar
+    # quantity (derived physics, code units) and returns a NEW object of the same type. For a
+    # raw IndexedTable the classic per-row column filter is kept (unchanged behaviour).
+    return quote
+        let _o = $(esc(table)), _rhs = $(esc(rhs))
+            if _o isa $(GlobalRef(@__MODULE__, :DataSetType))
+                $(GlobalRef(@__MODULE__, :filterdata))(_o, $(QuoteNode(q)), x -> $(op)(x, _rhs); verbose=false)
+            else
+                filter(row -> $(op)(getfield(row, $(QuoteNode(q))), _rhs), _o)
+            end
+        end
     end
-    esc(:(filter($filter_func, $table)))
 end
 
 """
