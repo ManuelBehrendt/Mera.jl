@@ -108,7 +108,9 @@ function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
     end
 end
 
-function gethydro_chombo(info::InfoType; verbose::Bool=true)
+function gethydro_chombo(info::InfoType;
+                         xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                         center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
     fn = _chombo_file(info.path)
     h5open(fn, "r") do f
         a = attributes(f)
@@ -169,14 +171,17 @@ function gethydro_chombo(info::InfoType; verbose::Bool=true)
         allcols = Any[lvlcol, cxcol, cycol, czcol]
         names = Symbol[:level, :cx, :cy, :cz]
         for s in info.variable_list; push!(allcols, cols[s]); push!(names, s); end
+        keep, ranges = _external_select(info, xrange, yrange, zrange, center, range_unit, verbose,
+                                        lvlcol, cxcol, cycol, czcol)
+        all(keep) || (allcols = _select_cols(allcols, keep))
         data = table(allcols...; names=Tuple(names), pkey=[:level,:cx,:cy,:cz], presorted=false, copy=false)
 
         h = HydroDataType(); h.data = data; h.info = info
         h.lmin = info.levelmin; h.lmax = info.levelmax; h.boxlen = info.boxlen
-        h.ranges = [0., 1., 0., 1., 0., 1.]
+        h.ranges = ranges
         h.selected_hydrovars = collect(1:length(info.variable_list))
         h.used_descriptors = Dict{Any,Any}(); h.smallr = 0.; h.smallc = 0.; h.scale = info.scale
-        verbose && println("[Mera]: CHOMBO AMR → ", length(lvlcol), " leaf cells, levels ",
+        verbose && println("[Mera]: CHOMBO AMR → ", length(allcols[1]), " leaf cells, levels ",
                            info.levelmin, "–", info.levelmax, ", vars ", join(string.(info.variable_list), ", "))
         return h
     end

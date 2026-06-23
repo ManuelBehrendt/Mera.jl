@@ -78,6 +78,23 @@ end
         @test all(getvar(gas, :rho) .> 0)
     end
 
+    @testset "load-time spatial selection (xrange/yrange/zrange)" begin
+        fn = joinpath(dir, "sel.out1.00003.athdf")
+        _write_athdf(fn)                                  # 8 blocks of 2³ = a 4³ uniform grid, level 2
+        info = getinfo_athena(3, dir, verbose=false)
+        full = gethydro_athena(info, verbose=false)
+        x = getvar(full, :x)                              # boxlen = 1 → x = cx/4 ∈ {.25,.5,.75,1}
+        # lower-x half, relative to the box origin (center = 0)
+        sub = gethydro_athena(info; xrange=[0.0, 0.5], center=[0., 0., 0.], range_unit=:standard, verbose=false)
+        @test length(sub.data) == count(x .<= 0.5)        # the leaf-cell window matches a getvar(:x) filter
+        @test maximum(getvar(sub, :x)) <= 0.5 + 1e-9
+        @test sub.ranges[1:2] == [0.0, 0.5]               # the window is recorded
+        # the generic router forwards the same selection
+        sub2 = gethydro(info; xrange=[0.0, 0.5], center=[0., 0., 0.], range_unit=:standard, verbose=false)
+        @test length(sub2.data) == length(sub.data)
+        @test length(gethydro_athena(info, verbose=false).data) == 64    # full box unchanged
+    end
+
     # PART B (data-backed): a REAL Athena++ snapshot — the yt AM06 sample (Cartesian AMR MHD).
     # Download AM06.tar.gz from yt-project.org/data into MERA_TEST_DATA/athena_AM06/.
     @testset "real Athena++ snapshot — yt AM06 (data-backed)" begin
@@ -92,6 +109,14 @@ end
             @test sort(unique(Mera.select(gas.data, :level))) == [7, 8, 9, 10, 11]
             @test all(getvar(gas, :rho) .> 0) && msum(gas) > 0
             @test maximum(projection(gas, :sd, res=64, center=[:bc], verbose=false, show_progress=false).maps[:sd]) > 0
+
+            # load-time spatial selection: a central box reduces to the refined core
+            sub = gethydro(info; xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 0.05],
+                           center=[:bc], range_unit=:standard, verbose=false)
+            @test 0 < length(sub.data) < length(gas.data)
+            @test minimum(Mera.select(sub.data, :level)) >= 10      # only the finest levels survive at the centre
+            @test sub.ranges != [0., 1., 0., 1., 0., 1.]
+            @test all(getvar(sub, :rho) .> 0)
         else
             @test_skip "yt AM06 Athena++ fixture not present (MERA_TEST_DATA/athena_AM06/AM06/*.athdf)"
         end

@@ -120,16 +120,22 @@ function _athena_fill_col!(col::Vector{Float64}, arr::AbstractArray{<:Real,5}, l
 end
 
 """
-    gethydro_athena(info::InfoType; verbose=true) -> HydroDataType
+    gethydro_athena(info::InfoType; xrange, yrange, zrange, center, range_unit, verbose=true) -> HydroDataType
 
 Read an Athena++ HDF5 snapshot described by `info` (from [`getinfo_athena`](@ref)) into a
 `HydroDataType` with columns `(:level, :cx, :cy, :cz, <vars…>)` in Mera's AMR convention, so the
 analysis layer works on it unchanged. Each MeshBlock's cells are placed on the level lattice via
 its `LogicalLocation` and `level`.
+
+`xrange`/`yrange`/`zrange` (+ `center`, `range_unit`) select a spatial window at load time
+(the leaf-cell analogue of Athena++'s own `athdf(x1_min=…, x1_max=…)`), exactly as for the
+RAMSES [`gethydro`](@ref); the returned object's `ranges` records it.
 """
-function gethydro_athena(info::InfoType; verbose::Bool=true)
+function gethydro_athena(info::InfoType;
+                         xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                         center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
     fn = _athena_file(round(Int, info.output), info.path)
-    data = nothing; ncell = 0; vsyms = info.variable_list
+    data = nothing; ncell = 0; vsyms = info.variable_list; ranges = [0., 1., 0., 1., 0., 1.]
     h5open(fn, "r") do f
         a = attributes(f)
         rootlevel = _athena_rootlevel(Int.(read(a["RootGridSize"]))[1])
@@ -154,11 +160,14 @@ function gethydro_athena(info::InfoType; verbose::Bool=true)
             _athena_fill_col!(col, dsets[di], li, nblk, nx1, nx2, nx3)   # function barrier ⇒ type-stable
             push!(cols, col); push!(names, vsym)
         end
+        keep, sel_ranges = _external_select(info, xrange, yrange, zrange, center, range_unit, verbose, lvl, cx, cy, cz)
+        all(keep) || (cols = _select_cols(cols, keep))
+        ncell = length(cols[1]); ranges = sel_ranges
         data = table(cols...; names=Tuple(names), pkey=[:level, :cx, :cy, :cz], presorted=false, copy=false)
     end
     h = HydroDataType()
     h.data = data; h.info = info; h.lmin = info.levelmin; h.lmax = info.levelmax; h.boxlen = info.boxlen
-    h.ranges = [0., 1., 0., 1., 0., 1.]; h.selected_hydrovars = collect(1:length(vsyms))
+    h.ranges = ranges; h.selected_hydrovars = collect(1:length(vsyms))
     h.used_descriptors = Dict{Any,Any}(); h.smallr = 0.; h.smallc = 0.; h.scale = info.scale
     verbose && println("[Mera]: Athena++ hydro $(ncell) cells, vars ", join(string.(vsyms), ", "))
     return h
