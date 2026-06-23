@@ -121,6 +121,36 @@ include(joinpath(@__DIR__, "..", "examples", "synthetic_clumps.jl"))
         @test cmf.nclumps >= 1
     end
 
+    # ----- backgrounds & noise: distinguishing clumps from a structured ISM floor -----
+    dist(a,b) = sqrt(sum((a .- b).^2))
+    detected(cat, tr) = count(t -> any(dist(c.peak_pos, t.pos) < 0.05 for c in cat.clumps), tr)
+
+    @testset "noisy floor: turbulent ISM below the threshold is rejected" begin
+        Gn  = synthetic_clumps(noise=0.35, lmax=6)            # 35% log-normal density noise on a flat floor
+        cat = clumpfind(Gn.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=2.0/2^6); min_members=15)
+        fp  = count(c -> all(dist(c.peak_pos, t.pos) >= 0.05 for t in Gn.truth), cat.clumps)
+        @test detected(cat, Gn.truth) >= 6                   # resolved clumps recovered despite the noise
+        @test fp == 0                                        # floor (≪ threshold) yields no spurious clumps
+    end
+
+    @testset "structured ISM disk: contrast finders beat a fixed threshold" begin
+        G    = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)  # clumps embedded in an exp. disk
+        gasg = G.gas; tr = G.truth; thr2 = 4.0; llg = 2.0/2^6
+        nsel = count(>=(thr2), getvar(gasg, :rho, :standard))
+        # a fixed low threshold fuses the diffuse disk + clumps into a couple of giant blobs
+        cfof = clumpfind(gasg, ThresholdFoF(:rho; threshold=thr2, linking_length=llg); min_members=20)
+        @test detected(cfof, tr) <= 3
+        @test maximum(c.n_members for c in cfof.clumps) > 0.5*nsel        # one blob dominates the field
+        # density-contrast finders separate the clumps from the smooth floor (prominence pruning)
+        for fdr in (DensityWatershed(:rho;  threshold=thr2, linking_length=llg, persistence=20.0),
+                    Dendrogram(:rho;        threshold=thr2, linking_length=llg, min_delta=20.0),
+                    PersistenceFinder(:rho; threshold=thr2, linking_length=llg, persistence=20.0))
+            cat = clumpfind(gasg, fdr; min_members=20)
+            @test detected(cat, tr) >= 7                     # ≥7/8 clumps recovered from the disk
+            @test detected(cat, tr) > detected(cfof, tr)     # strictly better than the fixed threshold
+        end
+    end
+
     @testset "downloadable dataset round-trips (save -> load)" begin
         dir = mktempdir()
         fn  = save_synthetic_clumps(dir)

@@ -80,6 +80,16 @@ end
 @inline _clump_rho(cl, x, y, z) =
     cl[5] * exp(-((x-cl[2])^2 + (y-cl[3])^2 + (z-cl[4])^2) / (2*cl[6]^2))
 
+# smooth background ISM field at (x,y,z), in code density (before per-cell noise):
+#   :floor  — uniform floor (the default; clumps sit on a flat background)
+#   :galaxy — an exponential disk (radial scale hr, vertical scale hz) centred in the box,
+#             i.e. clumps embedded in a structured ISM whose inner region is itself elevated.
+@inline function _bg(x, y, z, mode, floor, amp, hr, hz)
+    mode === :floor && return floor
+    rc = sqrt((x-0.5)^2 + (y-0.5)^2)
+    return floor + amp * exp(-rc/hr) * exp(-abs(z-0.5)/hz)
+end
+
 # dominant ground-truth clump id at a position (0 = background)
 function _true_label(x, y, z)
     best = 0; bestv = _FLOOR - _BG
@@ -90,33 +100,48 @@ function _true_label(x, y, z)
     return best
 end
 
-function _synth_hydro(info; lmax=_LMAX, seed=1)
+function _synth_hydro(info; lmax=_LMAX, seed=1, background::Symbol=:floor, noise::Real=0.0,
+                      disk_amp::Real=14.0, disk_hr::Real=0.22, disk_hz::Real=0.10)
     rng = Random.MersenneTwister(seed)
     N = 2^lmax; h = info.boxlen / N
     lvl=Int[]; cxv=Int[]; cyv=Int[]; czv=Int[]
     rhov=Float64[]; vxv=Float64[]; vyv=Float64[]; vzv=Float64[]; pv=Float64[]
-    # iterate only over bounding boxes around each clump (keeps the table small/fast)
-    touched = Set{NTuple{3,Int}}()
-    for cl in _SYNTH_CLUMPS
-        rad = 4*cl[6]
-        ilo=max(1,floor(Int,(cl[2]-rad)/h)); ihi=min(N,ceil(Int,(cl[2]+rad)/h))
-        jlo=max(1,floor(Int,(cl[3]-rad)/h)); jhi=min(N,ceil(Int,(cl[3]+rad)/h))
-        klo=max(1,floor(Int,(cl[4]-rad)/h)); khi=min(N,ceil(Int,(cl[4]+rad)/h))
-        for k in klo:khi, j in jlo:jhi, i in ilo:ihi
-            (i,j,k) in touched && continue
+    structured = background !== :floor || noise > 0      # need the whole grid, not just clump cores
+    keep = structured ? 0.5*_BG : _FLOOR                 # drop only deep voids when a floor is present
+    function emit!(i,j,k,x,y,z,r)
+        tl = _true_label(x,y,z)
+        vs = tl==0 ? 8.0 : _SYNTH_CLUMPS[tl][7]          # background ISM turbulence ≈ 8 km/s
+        push!(lvl,lmax); push!(cxv,i); push!(cyv,j); push!(czv,k); push!(rhov,r)
+        push!(vxv, vs*randn(rng)); push!(vyv, vs*randn(rng)); push!(vzv, vs*randn(rng))
+        push!(pv, r*0.09)                                 # cold thermal floor (cs≈0.3 km/s)
+    end
+    if structured
+        # full grid: clumps on a (possibly structured) background with per-cell lognormal noise
+        for k in 1:N, j in 1:N, i in 1:N
             x=(i-0.5)*h; y=(j-0.5)*h; z=(k-0.5)*h
-            r = _BG
-            for c2 in _SYNTH_CLUMPS
-                r += _clump_rho(c2, x, y, z)
+            r = _bg(x,y,z, background, _BG, disk_amp, disk_hr, disk_hz)
+            for c2 in _SYNTH_CLUMPS; r += _clump_rho(c2, x, y, z); end
+            noise > 0 && (r *= exp(noise*randn(rng)))     # turbulent ISM: multiplicative lognormal
+            r < keep && continue
+            emit!(i,j,k,x,y,z,r)
+        end
+    else
+        # default: iterate only the clump bounding boxes (small/fast, flat floor)
+        touched = Set{NTuple{3,Int}}()
+        for cl in _SYNTH_CLUMPS
+            rad = 4*cl[6]
+            ilo=max(1,floor(Int,(cl[2]-rad)/h)); ihi=min(N,ceil(Int,(cl[2]+rad)/h))
+            jlo=max(1,floor(Int,(cl[3]-rad)/h)); jhi=min(N,ceil(Int,(cl[3]+rad)/h))
+            klo=max(1,floor(Int,(cl[4]-rad)/h)); khi=min(N,ceil(Int,(cl[4]+rad)/h))
+            for k in klo:khi, j in jlo:jhi, i in ilo:ihi
+                (i,j,k) in touched && continue
+                x=(i-0.5)*h; y=(j-0.5)*h; z=(k-0.5)*h
+                r = _BG
+                for c2 in _SYNTH_CLUMPS; r += _clump_rho(c2, x, y, z); end
+                r < _FLOOR && continue
+                push!(touched,(i,j,k))
+                emit!(i,j,k,x,y,z,r)
             end
-            r < _FLOOR && continue
-            push!(touched,(i,j,k))
-            # per-cell velocity: dispersion of the dominant clump (zero mean -> v_com≈0)
-            tl = _true_label(x,y,z); vs = tl==0 ? 1.0 : _SYNTH_CLUMPS[tl][7]
-            push!(lvl,lmax); push!(cxv,i); push!(cyv,j); push!(czv,k); push!(rhov,r)
-            push!(vxv, vs*randn(rng)); push!(vyv, vs*randn(rng)); push!(vzv, vs*randn(rng))
-            # cold thermal floor: p = rho*cs^2 with cs≈0.3 km/s (code units)
-            push!(pv, r*0.09)
         end
     end
     data = IndexedTables.table(lvl,cxv,cyv,czv,rhov,vxv,vyv,vzv,pv;
@@ -168,14 +193,31 @@ function _synth_particles(info; seed=7)
 end
 
 """
-    synthetic_clumps(; seed=1, lmax=7) -> NamedTuple
+    synthetic_clumps(; seed=1, lmax=7, background=:floor, noise=0.0,
+                       disk_amp=14.0, disk_hr=0.22, disk_hz=0.10) -> NamedTuple
 
 Build a reproducible, data-free Mera test bench with a known clump population. Returns
 `(; gas, particles, truth, info, true_label)`. See the file header for the layout.
+
+The same eight clumps can be embedded in different environments to test how well a finder
+separates them from the floor:
+
+* `background=:floor` (default) — a flat low background; clumps are isolated islands.
+* `background=:galaxy` — clumps embedded in a smooth exponential ISM disk (`disk_amp`,
+  radial/vertical scales `disk_hr`/`disk_hz`) whose inner region is itself elevated, so a
+  fixed low threshold captures the diffuse disk as a spurious structure.
+* `noise>0` — multiplicative log-normal per-cell fluctuations (turbulent ISM); `noise` is
+  the dispersion of `ln ρ` (e.g. `0.2`).
+
+Either non-default option fills the **whole** grid (use `lmax=6` to keep it fast). The clump
+ground truth (`truth`, `true_label`) is unchanged — the background is labelled 0, so a finder
+that absorbs the floor into its clumps is penalised by `clump_recovery`.
 """
-function synthetic_clumps(; seed=1, lmax=_LMAX)
+function synthetic_clumps(; seed=1, lmax=_LMAX, background::Symbol=:floor, noise::Real=0.0,
+                            disk_amp::Real=14.0, disk_hr::Real=0.22, disk_hz::Real=0.10)
     info = _synth_info(lmax=lmax)
-    gas  = _synth_hydro(info; lmax=lmax, seed=seed)
+    gas  = _synth_hydro(info; lmax=lmax, seed=seed, background=background, noise=noise,
+                        disk_amp=disk_amp, disk_hr=disk_hr, disk_hz=disk_hz)
     part = _synth_particles(info; seed=seed+6)
     cellM = (info.boxlen/2^lmax)^3 * info.scale.Msol
     # ground-truth catalog (mass = injected grid mass attributed to the dominant clump)
