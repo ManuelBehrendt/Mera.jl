@@ -1228,6 +1228,36 @@ ylabel("z [kpc]");
 
 ![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_87_1.png)
 
+## Value-Type Regions
+
+`subregion` also accepts composable **region value types** — `Sphere`, `Cuboid`, `Cylinder`, `SphericalShell` — that compose with the boolean operators `∩` `∪` `\` `!`. Clumps are points (their peak position), so the region is a **point-membership** test; `inverse=true` selects the complement.
+
+```julia
+# clumps inside a ball about the box centre, and the complement
+clumps_in  = subregion(clumps, Sphere(20.0; center=[:bc], range_unit=:kpc))
+clumps_out = subregion(clumps, Sphere(20.0; center=[:bc], range_unit=:kpc), inverse=true)
+println("inside: ", length(clumps_in.data), "   outside: ", length(clumps_out.data),
+        "   total: ", length(clumps.data))
+x, y, z = getpositions(clumps_in, :kpc, center=[:boxcenter]);
+```
+
+```
+inside: 644   outside: 0   total: 644
+```
+
+### Boolean Combinations
+
+Build composite selections — e.g. a ball with a central cylinder removed:
+
+```julia
+clumps_sel = subregion(clumps, Sphere(30.0; range_unit=:kpc) \ Cylinder(8.0, 30.0; range_unit=:kpc))
+println("type: ", typeof(clumps_sel), "   selected clumps: ", length(clumps_sel.data))
+```
+
+```
+type: ClumpDataType   selected clumps: 292
+```
+
 ## Summary
 ### Key Techniques Mastered
 
