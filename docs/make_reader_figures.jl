@@ -1,15 +1,33 @@
 # docs/make_reader_figures.jl
 # -----------------------------------------------------------------------------
-# Renders the projection illustrations for the Athena++ / PLUTO reader docs from the
-# real test fixtures. Run locally with the data available:
+# Renders the projection / MHD / AMR illustrations for the Athena++ and PLUTO reader docs
+# from the real test fixtures. Run locally with the data available:
 #     MERA_TEST_DATA=/path/to/Mera-Tests julia --project=docs docs/make_reader_figures.jl
-# Writes docs/src/assets/athena/am06_projection.png and assets/pluto/pluto_projection.png
-# (committed; not part of the Documenter build).
+# Writes the PNGs under docs/src/assets/{athena,pluto}/ (committed; not part of the build).
+# The plotting code here is the canonical source for the snippets shown in the doc pages.
 # -----------------------------------------------------------------------------
 using Mera, CairoMakie
 
 const TESTDATA = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 CairoMakie.activate!(type="png"); set_theme!(fontsize=15)
+
+mids(r) = (r[1:end-1] .+ r[2:end]) ./ 2
+
+# separable boxcar smoother (the mass-weighted field maps are dense, no NaN) — half-width w
+function smooth2d(A, w)
+    n1, n2 = size(A); tmp = similar(A); B = similar(A)
+    for j in 1:n2, i in 1:n1
+        s = 0.0; c = 0
+        for di in -w:w; ii = i+di; (1<=ii<=n1) && (s += A[ii,j]; c += 1); end
+        tmp[i,j] = s/c
+    end
+    for j in 1:n2, i in 1:n1
+        s = 0.0; c = 0
+        for dj in -w:w; jj = j+dj; (1<=jj<=n2) && (s += tmp[i,jj]; c += 1); end
+        B[i,j] = s/c
+    end
+    return B
+end
 
 # log column-density panels along x/y/z (code units) for a loaded hydro object
 function projection_panels(gas, title, outfile)
@@ -23,21 +41,31 @@ function projection_panels(gas, title, outfile)
     save(outfile, fig, px_per_unit=2); println("wrote ", outfile)
 end
 
-mids(r) = (r[1:end-1] .+ r[2:end]) ./ 2
+# volume-weighted mean refinement level along the LOS (the AMR structure shows as nested boxes)
+function level_map(gas, title, lohi, outfile)
+    m = projection(gas, :level, res=512, center=[:bc], direction=:z,
+                   weighting=[:volume], verbose=false, show_progress=false).maps[:level]
+    fig = Figure(size=(560, 470))
+    ax = Axis(fig[1,1], title=title, xlabel="x", ylabel="y", aspect=DataAspect())
+    hm = heatmap!(ax, m; colormap=:turbo)
+    Colorbar(fig[1,2], hm, label="level ($lohi)")
+    save(outfile, fig, px_per_unit=2); println("wrote ", outfile)
+end
 
 # MHD illustrations for a magnetised dataset: B-field streamlines over Σ, and the ρ–|B| phase diagram
 function mhd_figures(gas, outdir)
     res = 640
     p = projection(gas, [:sd, :bx, :by], res=res, center=[:bc], direction=:z,
                    verbose=false, show_progress=false)
-    SD, BX, BY = p.maps[:sd], p.maps[:bx], p.maps[:by]
+    SD = p.maps[:sd]
+    BX = smooth2d(p.maps[:bx], 4); BY = smooth2d(p.maps[:by], 4)   # smooth the turbulent field for clean lines
     figA = Figure(size=(560, 520))
     ax = Axis(figA[1,1], title="Athena++ AM06 — column density + B-field streamlines",
               xlabel="x", ylabel="y", aspect=DataAspect())
     hm = heatmap!(ax, 1..res, 1..res, log10.(SD .+ 1e-30); colormap=:inferno)
     bfield(q) = (i = clamp(round(Int, q[1]),1,res); j = clamp(round(Int, q[2]),1,res); Point2f(BX[i,j], BY[i,j]))
-    streamplot!(ax, bfield, 1..res, 1..res; colormap=[(:white,0.9)], gridsize=(30,30),
-                arrow_size=8, linewidth=0.7, density=1.2)
+    streamplot!(ax, bfield, 1..res, 1..res; colormap=[(:white,0.85)], gridsize=(30,30),
+                arrow_size=3.5, linewidth=0.8, density=1.6, stepsize=1.0, maxsteps=900)
     Colorbar(figA[1,2], hm, label="log₁₀ Σ  [code]")
     save(joinpath(outdir, "am06_bstream.png"), figA, px_per_unit=2); println("wrote am06_bstream.png")
 
@@ -61,25 +89,36 @@ end
 # ---- Athena++ : the yt AM06 sample (Cartesian AMR MHD) ----------------------
 let dir = joinpath(TESTDATA, "athena_AM06", "AM06")
     if isdir(dir)
-        mkpath(joinpath(@__DIR__, "src", "assets", "athena"))
-        outdir = joinpath(@__DIR__, "src", "assets", "athena")
-        info = getinfo(400, dir, verbose=false)
-        gas  = gethydro(info, verbose=false)
+        outdir = joinpath(@__DIR__, "src", "assets", "athena"); mkpath(outdir)
+        gas = gethydro(getinfo(400, dir, verbose=false), verbose=false)
         projection_panels(gas, "Athena++ AM06", joinpath(outdir, "am06_projection.png"))
-        mhd_figures(gas, outdir)      # B-field streamlines + density–|B| phase diagram
+        mhd_figures(gas, outdir)                                          # streamlines + ρ–|B| phase
+        level_map(gas, "Athena++ AM06 — AMR refinement level (mean along LOS)",
+                  "7–11", joinpath(outdir, "am06_levels.png"))            # nested AMR boxes
     else
-        @warn "AM06 fixture not found at $dir — skipping Athena++ figure"
+        @warn "AM06 fixture not found at $dir — skipping Athena++ figures"
     end
 end
 
-# ---- PLUTO : the 3-D Sedov blast fixture ------------------------------------
+# ---- PLUTO : the 3-D Sedov blast (uniform) ----------------------------------
 let dir = joinpath(TESTDATA, "pluto_sedov3d")
     if isdir(dir)
-        mkpath(joinpath(@__DIR__, "src", "assets", "pluto"))
-        info = getinfo(5, dir, verbose=false)        # evolved blast (output 0 is the uniform t=0 IC)
-        gas  = gethydro(info, verbose=false)
-        projection_panels(gas, "PLUTO Sedov 3-D", joinpath(@__DIR__, "src", "assets", "pluto", "pluto_projection.png"))
+        outdir = joinpath(@__DIR__, "src", "assets", "pluto"); mkpath(outdir)
+        gas = gethydro(getinfo(5, dir, verbose=false), verbose=false)    # output 0 is the uniform t=0 IC
+        projection_panels(gas, "PLUTO Sedov 3-D", joinpath(outdir, "pluto_projection.png"))
     else
-        @warn "PLUTO fixture not found at $dir — skipping PLUTO figure"
+        @warn "PLUTO Sedov fixture not found at $dir — skipping PLUTO figure"
+    end
+end
+
+# ---- PLUTO-AMR (Chombo) : the IsothermalSphere sample -----------------------
+let dir = joinpath(TESTDATA, "chombo_3d", "IsothermalSphere")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "pluto"); mkpath(outdir)
+        gas = gethydro(getinfo(0, dir, verbose=false), verbose=false)
+        level_map(gas, "PLUTO-AMR (Chombo) — AMR refinement level (mean along LOS)",
+                  "6–7", joinpath(outdir, "pluto_amr_levels.png"))
+    else
+        @warn "Chombo fixture not found at $dir — skipping PLUTO-AMR figure"
     end
 end
