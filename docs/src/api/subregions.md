@@ -120,6 +120,24 @@ cells are ever sub-sampled — interior/exterior cells are an O(1) corner test �
 modest. Cuboids are split analytically (exact, no sampling). The figure is reproduced by
 `test/55_region_algebra_tests.jl` (a CI convergence test) and `docs/make_region_figures.jl`.
 
+### Projections of split regions
+
+The `:fraction` carries through to [`projection`](@ref) automatically: projection takes its mass
+weight from `getvar(:mass)`, which honours `:fraction`, so a projection of a split subregion is
+**exactly region-clipped** — boundary cells are dimmed by their inside-fraction (a smooth,
+anti-aliased edge instead of a blocky one), and a `:sd` map integrates to the exact enclosed mass.
+
+```julia
+ball = subregion(gas, Sphere(20.0; range_unit=:kpc))                                  # split=true
+projection(ball, :sd, :Msol_pc2; res=512)                                             # exact clipped Σ-map
+projection(subregion(gas, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 40.0; range_unit=:kpc)), :sd, :Msol_pc2)
+```
+
+![Projection of split regions](../assets/regions/region_projection.png)
+
+*Left → right: a sphere selected with whole cells (blocky edge), the same sphere with exact
+splitting (smooth edge), and a composite `Sphere \ Cylinder` (a ball with a cylindrical hole).*
+
 ## Additional Analysis Functions
 
 - [`getextent`](@ref) - Get spatial extent information  

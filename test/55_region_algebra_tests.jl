@@ -103,6 +103,23 @@
         @test e_fine < e_coarse
     end
 
+    @testset "projection honours :fraction (exact region-clipped maps)" begin
+        # projection routes mass through getvar(:mass), which honours :fraction — so a projection
+        # of a split subregion is region-clipped, and its :sd map integrates to the EXACT enclosed mass.
+        pixmass(g) = begin
+            p = projection(g, :sd, :Msol_pc2; res=128, center=[:bc], verbose=false, show_progress=false)
+            (box*1000/128)^2 * sum(p.maps[:sd])          # Σ(Σ_d · pixarea) in Msol (box kpc → pc)
+        end
+        sph = subregion(gas, Sphere(R; range_unit=:kpc); split=true,  verbose=false)
+        whl = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
+        @test isapprox(pixmass(sph), msum(sph, :Msol); rtol=1e-3)   # map integrates to exact in-region mass
+        @test pixmass(sph) < pixmass(whl)                           # whole cells over-count the boundary
+        # a composite region projects too (sphere with a cylinder drilled out)
+        comp = subregion(gas, Sphere(R; range_unit=:kpc) \ Cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
+        @test isapprox(pixmass(comp), msum(comp, :Msol); rtol=1e-3)
+        @test pixmass(comp) < pixmass(sph)                          # the drilled hole removes mass
+    end
+
     @testset "symbol API still works (backward compatible)" begin
         old = subregion(gas, :sphere; radius=R, center=[:bc], range_unit=:kpc, verbose=false)
         @test old isa Mera.HydroDataType && length(old.data) > 0

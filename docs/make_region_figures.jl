@@ -41,6 +41,22 @@ lines!(axb, nsubs, max.(e_nsub,1e-6); color=:seagreen); scatter!(axb, nsubs, max
 vlines!(axb, [8]; color=:gray, linestyle=:dash); text!(axb, 8.3, maximum(e_nsub)/3; text="default", fontsize=11, color=:gray)
 save(joinpath(OUT,"split_accuracy.png"), fig, px_per_unit=2)
 println("wrote ", joinpath(OUT,"split_accuracy.png"))
+
+# ---- projection of split cells: exact region-clipped maps -------------------
+gp = synthetic_clumps(background=:galaxy, lmax=6).gas; bp = gp.boxlen*gp.scale.kpc; Rp = 0.32bp
+projmap(g) = projection(g, :sd, :Msol_pc2; res=256, center=[:bc], verbose=false, show_progress=false).maps[:sd]
+m_whole = projmap(subregion(gp, Mera.Sphere(Rp; range_unit=:kpc); split=false, verbose=false))
+m_split = projmap(subregion(gp, Mera.Sphere(Rp; range_unit=:kpc); split=true,  verbose=false))
+m_comp  = projmap(subregion(gp, Mera.Sphere(Rp; range_unit=:kpc) \ Mera.Cylinder(0.12bp, 0.6bp; range_unit=:kpc); verbose=false))
+crange = (log10(maximum(m_split))-3, log10(maximum(m_split)))
+fig2 = Figure(size=(1150,400))
+for (i,(ttl,m)) in enumerate((("whole-cell (blocky edge)",m_whole),("exact split (smooth edge)",m_split),
+                              ("composite: Sphere \\ Cylinder",m_comp)))
+    ax = Axis(fig2[1,i], title=ttl, aspect=DataAspect()); hidedecorations!(ax)
+    heatmap!(ax, range(0,1,256), range(0,1,256), log10.(m'.+1e-3); colormap=:magma, colorrange=crange)
+end
+save(joinpath(OUT,"region_projection.png"), fig2, px_per_unit=2)
+println("wrote ", joinpath(OUT,"region_projection.png"))
 println("dx/R: ", round.(dxR,digits=3))
 println("whole err %: ", round.(100 .* e_whole,digits=3))
 println("split err %: ", round.(100 .* e_split,digits=4))
