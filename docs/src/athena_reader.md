@@ -31,6 +31,34 @@ clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_len
 You can also call the frontend explicitly with [`getinfo_athena`](@ref) / [`gethydro_athena`](@ref)
 (e.g. to pass a direct `.athdf` path).
 
+## Worked example: the yt AM06 sample
+
+A good way to see the frontend on real data is the **AM06** snapshot from the
+[yt sample-data collection](https://yt-project.org/data/) — a Cartesian **AMR MHD** run
+(`128³` root grid + 4 refinement levels, 3424 MeshBlocks of `16³` = 14,024,704 cells, with both a
+`prim` and a `B` dataset). `getinfo` auto-detects it from the `.athdf` file and prints the overview:
+
+```julia
+julia> info = getinfo(400, "/data/athena_AM06/AM06");
+
+Code: Athena++
+output: 400  time: 4000.0 [code units]
+root grid: 128³ (level 7), MaxLevel 4 ⇒ levels 7:11, boxlen = 4000.0
+MeshBlocks: 3424   variables: (rho, p, vx, vy, vz, bx, by, bz)
+-------------------------------------------------------
+```
+
+The AMR hierarchy lands in `levelmin:levelmax = 7:11`, and the MHD fields appear as
+`:bx,:by,:bz` alongside `:rho,:p,:vx,:vy,:vz`. Loading and projecting is then the ordinary
+Mera workflow — here the log column density along each axis:
+
+```julia
+gas = gethydro(info)                              # 14,024,704 cells, in Mera's cell convention
+projection(gas, :sd, res=512, center=[:bc], direction=:z)   # column density, face-on
+```
+
+![Log column density of the Athena++ AM06 snapshot, projected along x, y and z with Mera's projection engine — the AMR MHD data load into the standard structs, so the off-axis projection runs unchanged.](assets/athena/am06_projection.png)
+
 ## Units
 
 Athena++ writes data in code units and does not store CGS scale factors, so by default the run is
