@@ -785,6 +785,19 @@ msum(gas, mask=m)                          # in-mask total mass, original object
 
 `filterdata`/`getmask` work on hydro, gravity, RT, particles and clumps.
 
+More condition types: `Equals` (discrete fields like `:level`), `IsFinite` (drop `NaN`/`Inf`), `AbovePercentile`/`BelowPercentile` (adaptive thresholds) and `Satisfies` (a composable arbitrary predicate):
+
+```julia
+dense10 = filterdata(gas, AbovePercentile(:rho, 90))       # the densest 10 % of cells (adaptive)
+clean   = filterdata(gas, IsFinite(:T))                    # drop non-finite temperatures
+core    = filterdata(gas, Equals(:level, gas.lmax) & AbovePercentile(:rho, 99))
+```
+
+The `@filter` macro is also routed through this engine: on a Mera object it filters by any
+`getvar` quantity and returns a same-type object (`hot = @filter gas :rho >= 1e2`); on a raw
+table it keeps the classic per-row behaviour.
+
+
 ## Extend the Data Table
 Add costum columns/variables to the data that can be automatically processed in some functions:
 (note: to take advantage of the Mera unit management, store new data in code-units)
