@@ -59,7 +59,9 @@ end
 # PLUTO static-grid: grid.out + dbl.out;  Chombo AMR (PLUTO/Orion): a *.hdf5 file;
 # RAMSES: output_*/info_*.txt (the default).
 function detect_simcode(path::String)
+    (isfile(path) && endswith(lowercase(path), ".athdf")) && return :athena
     (isfile(joinpath(path, "grid.out")) && isfile(joinpath(path, "dbl.out"))) && return :pluto
+    isdir(path) && any(f -> endswith(lowercase(f), ".athdf"), readdir(path)) && return :athena
     isdir(path) && any(f -> endswith(lowercase(f), ".hdf5"), readdir(path)) && return :chombo
     return :ramses
 end
