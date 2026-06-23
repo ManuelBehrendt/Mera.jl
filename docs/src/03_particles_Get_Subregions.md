@@ -1162,6 +1162,19 @@ println("type: ", typeof(part_sel), "   selected: ", length(part_sel.data))
 type: PartDataType   selected: 338503
 ```
 
+### Shell Regions
+
+`SphericalShell` / `CylindricalShell` work as point-membership selections too:
+
+```julia
+part_shell = subregion(particles, SphericalShell(10.0, 20.0; range_unit=:kpc))
+println("particles in spherical shell [10,20] kpc: ", length(part_shell.data), " / ", length(particles.data))
+```
+
+```
+particles in spherical shell [10,20] kpc: 88446 / 508939
+```
+
 ## Summary
 
 This tutorial demonstrated comprehensive spatial selection techniques for particle simulation data using Mera.jl. The key accomplishments include:
