@@ -119,6 +119,48 @@ function _athena_fill_col!(col::Vector{Float64}, arr::AbstractArray{<:Real,5}, l
     end
 end
 
+# --- block I/O pruning: read only the MeshBlocks a spatial window intersects (yt-style) ---
+
+# normalised bounding box [x0,x1,y0,y1,z0,z1] of MeshBlock at level L, logical loc (l1,l2,l3)
+@inline function _athena_block_bbox(L::Int, l1::Int, l2::Int, l3::Int, nx1::Int, nx2::Int, nx3::Int)
+    s = 1.0 / 2.0^L
+    return ((l1*nx1)*s, (l1*nx1+nx1)*s, (l2*nx2)*s, (l2*nx2+nx2)*s, (l3*nx3)*s, (l3*nx3+nx3)*s)
+end
+
+# indices of the blocks whose bbox intersects `ranges` (inclusive; the per-cell filter is exact)
+function _athena_select_blocks(ranges, nblk, nx1, nx2, nx3, ll, levels, rootlevel)
+    sel = Int[]
+    @inbounds for m in 1:nblk
+        L = rootlevel + levels[m]
+        x0, x1, y0, y1, z0, z1 = _athena_block_bbox(L, Int(ll[1,m]), Int(ll[2,m]), Int(ll[3,m]), nx1, nx2, nx3)
+        (x1 >= ranges[1] && x0 <= ranges[2] && y1 >= ranges[3] && y0 <= ranges[4] &&
+         z1 >= ranges[5] && z0 <= ranges[6]) && push!(sel, m)
+    end
+    return sel
+end
+
+# fill the index columns for a chosen subset of blocks (compacted, in `sel` order)
+function _athena_fill_idx_sel!(cx, cy, cz, lvl, sel, nx1, nx2, nx3, ll, levels, rootlevel)
+    k = 0
+    @inbounds for m in sel
+        L = Int32(rootlevel + levels[m]); l1 = Int(ll[1,m]); l2 = Int(ll[2,m]); l3 = Int(ll[3,m])
+        for c in 1:nx3, b in 1:nx2, a in 1:nx1
+            k += 1
+            cx[k] = l1*nx1 + a; cy[k] = l2*nx2 + b; cz[k] = l3*nx3 + c; lvl[k] = L
+        end
+    end
+end
+
+# fill one variable column from a single-block hyperslab (nx1,nx2,nx3,1,nvar) at offset `pos`
+function _athena_fill_col_block!(col::Vector{Float64}, slab::AbstractArray{<:Real,5}, li::Int,
+                                 pos::Int, nx1::Int, nx2::Int, nx3::Int)
+    k = pos
+    @inbounds for c in 1:nx3, b in 1:nx2, a in 1:nx1
+        k += 1
+        col[k] = slab[a, b, c, 1, li]
+    end
+end
+
 """
     gethydro_athena(info::InfoType; xrange, yrange, zrange, center, range_unit, verbose=true) -> HydroDataType
 
@@ -145,24 +187,52 @@ function gethydro_athena(info::InfoType;
         ll = Int.(read(f["LogicalLocations"]))               # (3, nblk): logical (i,j,k) per block
         dsetnames = String.(read(a["DatasetNames"]))
         numvars   = Int.(read(a["NumVariables"]))            # variable count per dataset
-        dsets = [read(f[d]) for d in dsetnames]              # each (nx1, nx2, nx3, nblk, nvar_d)
-        # map each global variable to its (dataset, local index)
+        # map each global variable to its (dataset, local index), grouped per dataset
         varloc = Tuple{Int,Int}[]
         for (di, nv) in enumerate(numvars), li in 1:nv; push!(varloc, (di, li)); end
+        dvars = [Tuple{Int,Int}[] for _ in dsetnames]        # dataset → [(global vi, local li)…]
+        for (vi, (di, li)) in enumerate(varloc); push!(dvars[di], (vi, li)); end
 
-        ncell = nblk * nx1 * nx2 * nx3
+        # Which blocks to read? A spatial window reads only the intersecting MeshBlocks (yt-style
+        # block pruning); a full box keeps the fast bulk read of every block.
+        fullbox = false; sel = Int[]
+        ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
+        sel = fullbox ? collect(1:nblk) :
+              _athena_select_blocks(ranges, nblk, nx1, nx2, nx3, ll, levels, rootlevel)
+        nsel = length(sel); blockcells = nx1 * nx2 * nx3; ncell = nsel * blockcells
+
         cx = Vector{Int32}(undef, ncell); cy = similar(cx); cz = similar(cx); lvl = similar(cx)
-        _athena_fill_idx!(cx, cy, cz, lvl, nblk, nx1, nx2, nx3, ll, levels, rootlevel)
-        cols = Any[lvl, cx, cy, cz]; names = Symbol[:level, :cx, :cy, :cz]
-        for (vi, vsym) in enumerate(vsyms)
-            di, li = varloc[vi]
-            col = Vector{Float64}(undef, ncell)
-            _athena_fill_col!(col, dsets[di], li, nblk, nx1, nx2, nx3)   # function barrier ⇒ type-stable
-            push!(cols, col); push!(names, vsym)
+        _athena_fill_idx_sel!(cx, cy, cz, lvl, sel, nx1, nx2, nx3, ll, levels, rootlevel)
+        vcols = [Vector{Float64}(undef, ncell) for _ in vsyms]
+        if fullbox
+            for di in eachindex(dsetnames)                   # one full read per dataset (fast path)
+                arr = read(f[dsetnames[di]])                 # (nx1,nx2,nx3,nblk,nvar_d)
+                for (vi, li) in dvars[di]
+                    _athena_fill_col!(vcols[vi], arr, li, nblk, nx1, nx2, nx3)
+                end
+            end
+        else
+            dsetobjs = [f[d] for d in dsetnames]             # dataset handles, sliced per block
+            for (s, m) in enumerate(sel)                     # read ONLY the selected blocks
+                pos = (s-1) * blockcells
+                for di in eachindex(dsetobjs)
+                    slab = dsetobjs[di][:, :, :, m:m, :]      # (nx1,nx2,nx3,1,nvar_d) hyperslab
+                    for (vi, li) in dvars[di]
+                        _athena_fill_col_block!(vcols[vi], slab, li, pos, nx1, nx2, nx3)
+                    end
+                end
+            end
         end
-        keep, sel_ranges = _external_select(info, xrange, yrange, zrange, center, range_unit, verbose, lvl, cx, cy, cz)
-        all(keep) || (cols = _select_cols(cols, keep))
-        ncell = length(cols[1]); ranges = sel_ranges
+
+        cols = Any[lvl, cx, cy, cz]; names = Symbol[:level, :cx, :cy, :cz]
+        for (vi, vsym) in enumerate(vsyms); push!(cols, vcols[vi]); push!(names, vsym); end
+        if !fullbox                                          # block prune is conservative → exact per-cell filter
+            keep = _external_keep(ranges, lvl, cx, cy, cz)
+            verbose && println("[Mera]: load-time range selection → ", count(keep), "/", ncell,
+                               " leaf cells in ", nsel, "/", nblk, " MeshBlocks")
+            all(keep) || (cols = _select_cols(cols, keep))
+        end
+        ncell = length(cols[1])
         data = table(cols...; names=Tuple(names), pkey=[:level, :cx, :cy, :cz], presorted=false, copy=false)
     end
     h = HydroDataType()
