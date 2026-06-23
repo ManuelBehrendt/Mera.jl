@@ -141,5 +141,49 @@ ax5b.aspect=DataAspect(); ax5b.xlabel="x [kpc]"; ax5b.ylabel="y [kpc]"; xlims!(a
 poly!(ax5b, Circle(Point2f(0.5,0.51), 0.06); color=(:black,0), strokecolor=:red, strokewidth=1.5)
 save(joinpath(OUT,"three_d.png"), fig5, px_per_unit=2)
 
+# ---- Figure 6: parameter sensitivity (tuning guide) -------------------------
+hh = 1/128
+recov(fdr) = clump_recovery(labels_of(fdr), tlab)
+fig6 = Figure(size=(1250,370))
+# (a) FoF linking length: ARI (left) + n clumps (right), log-x
+lls = [0.5,1,1.5,2,3,5,10,20,40,64] .* hh
+ari_ll = [recov(ThresholdFoF(:rho; threshold=thr, linking_length=l)).ari for l in lls]
+ncl_ll = [clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=l); min_members=3).nclumps for l in lls]
+ax6a = Axis(fig6[1,1], title="FoF linking length", xlabel="linking length / cell", ylabel="ARI",
+            xscale=log10, ylabelcolor=:steelblue, yticklabelcolor=:steelblue)
+lines!(ax6a, lls./hh, ari_ll; color=:steelblue); scatter!(ax6a, lls./hh, ari_ll; color=:steelblue, markersize=8)
+ylims!(ax6a, -0.05, 1.05)
+ax6a2 = Axis(fig6[1,1], ylabel="n clumps", yaxisposition=:right, xscale=log10,
+             ylabelcolor=:darkorange, yticklabelcolor=:darkorange)
+hidespines!(ax6a2); hidexdecorations!(ax6a2)
+lines!(ax6a2, lls./hh, Float64.(ncl_ll); color=:darkorange, linestyle=:dash)
+scatter!(ax6a2, lls./hh, Float64.(ncl_ll); color=:darkorange, marker=:rect, markersize=8)
+linkxaxes!(ax6a, ax6a2)
+# (b) watershed persistence: clumps on the touching pair (2 -> 1 at the saddle prominence)
+perss = [10,30,60,100,150,200,300.0]
+nearp(c)= 0.40<c.com[1]<0.62 && 0.45<c.com[2]<0.60 && 0.68<c.com[3]<0.82
+pairn = [count(nearp, clumpfind(gas, DensityWatershed(:rho; threshold=thr, linking_length=2hh, persistence=p)).clumps) for p in perss]
+ax6b = Axis(fig6[1,2], title="Watershed persistence", xlabel="persistence (contrast)", ylabel="clumps on the pair")
+stairs!(ax6b, perss, Float64.(pairn); step=:center, color=:purple); scatter!(ax6b, perss, Float64.(pairn); color=:purple, markersize=9)
+vlines!(ax6b, [150]; color=:gray, linestyle=:dash); text!(ax6b, 152, 1.5; text="saddle\nprominence", fontsize=10, color=:gray)
+ylims!(ax6b, 0.6, 2.4)
+# (c) threshold: detection (falls — low-mass clumps drop out) vs purity (rises), log-x
+thrs = [2,5,10,20,50,100,200.0]
+dist6(a,b) = sqrt(sum((a .- b).^2))
+detfrac = Float64[]; pur = Float64[]
+for t in thrs
+    cat = clumpfind(gas, ThresholdFoF(:rho; threshold=t, linking_length=2hh); min_members=3)
+    push!(detfrac, count(tr -> any(dist6(c.peak_pos, tr.pos) < 0.05 for c in cat.clumps), truth) / length(truth))
+    Pt = Mera._make_points(gas, :rho; threshold=t, threshold_unit=:standard)
+    tl = [F.true_label(Pt.x[i], Pt.y[i], Pt.z[i]) for i in eachindex(Pt.x)]
+    push!(pur, clump_recovery(first(Mera._label(ThresholdFoF(:rho; threshold=t, linking_length=2hh), Pt)), tl).purity)
+end
+ax6c = Axis(fig6[1,3], title="Threshold: detection vs purity", xlabel="threshold (code density)",
+            ylabel="score", xscale=log10)
+lines!(ax6c, thrs, detfrac; color=:seagreen, label="clumps detected /8"); scatter!(ax6c, thrs, detfrac; color=:seagreen, markersize=8)
+lines!(ax6c, thrs, pur; color=:crimson, label="purity"); scatter!(ax6c, thrs, pur; color=:crimson, markersize=8)
+ylims!(ax6c, 0, 1.05); axislegend(ax6c; position=:lc, framevisible=false)
+save(joinpath(OUT,"sensitivity.png"), fig6, px_per_unit=2)
+
 println("wrote figures to ", OUT)
 foreach(f->println("  ", f), readdir(OUT))
