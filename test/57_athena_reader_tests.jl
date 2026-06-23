@@ -77,4 +77,23 @@ end
         @test length(unique(round.(cs, sigdigits=8))) == 2            # coarse & fine cell sizes differ
         @test all(getvar(gas, :rho) .> 0)
     end
+
+    # PART B (data-backed): a REAL Athena++ snapshot — the yt AM06 sample (Cartesian AMR MHD).
+    # Download AM06.tar.gz from yt-project.org/data into MERA_TEST_DATA/athena_AM06/.
+    @testset "real Athena++ snapshot — yt AM06 (data-backed)" begin
+        am06 = joinpath(SIMULATION_PATH, "athena_AM06", "AM06")
+        if isdir(am06) && any(f -> endswith(lowercase(f), ".athdf"), readdir(am06))
+            info = getinfo(400, am06, verbose=false)            # auto-detect from the .athdf file
+            @test info.simcode == "Athena++"
+            @test info.levelmin == 7 && info.levelmax == 11     # 128³ root (level 7) + 4 AMR levels
+            @test Set(info.variable_list) ⊇ Set([:rho, :p, :vx, :vy, :vz, :bx, :by, :bz])  # prim + B datasets
+            gas = gethydro(info, verbose=false)
+            @test length(gas.data) == 3424 * 16^3              # 3424 MeshBlocks × 16³
+            @test sort(unique(Mera.select(gas.data, :level))) == [7, 8, 9, 10, 11]
+            @test all(getvar(gas, :rho) .> 0) && msum(gas) > 0
+            @test maximum(projection(gas, :sd, res=64, center=[:bc], verbose=false, show_progress=false).maps[:sd]) > 0
+        else
+            @test_skip "yt AM06 Athena++ fixture not present (MERA_TEST_DATA/athena_AM06/AM06/*.athdf)"
+        end
+    end
 end
