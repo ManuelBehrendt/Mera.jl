@@ -136,6 +136,32 @@
         @test zext(flat) < zext(vert)
     end
 
+    @testset "particles: point-membership region selection" begin
+        part = F.particles
+        ball = subregion(part, Sphere(R; range_unit=:kpc); verbose=false)
+        p = getvar(part, [:x,:y,:z], :kpc); bc = box/2
+        manual = count(i -> (p[:x][i]-bc)^2 + (p[:y][i]-bc)^2 + (p[:z][i]-bc)^2 <= R^2, 1:length(part.data))
+        @test ball isa Mera.PartDataType
+        @test length(ball.data) == manual                       # exact membership, no fractional volume
+        @test !in(:fraction, propertynames(Mera.columns(ball.data)))
+        inv = subregion(part, Sphere(R; range_unit=:kpc); inverse=true, verbose=false)
+        @test length(ball.data) + length(inv.data) == length(part.data)   # region + complement = all
+        # combinators work on particles too
+        comp = subregion(part, Sphere(R; range_unit=:kpc) \ Cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
+        @test length(comp.data) <= length(ball.data)
+    end
+
+    @testset "gravity (AMR cells): exact volume splitting, returns GravDataType" begin
+        gd = Mera.GravDataType()
+        gd.data = gas.data; gd.info = gas.info; gd.lmin = gas.lmin; gd.lmax = gas.lmax
+        gd.boxlen = gas.boxlen; gd.ranges = gas.ranges; gd.selected_gravvars = [1]
+        gd.used_descriptors = Dict(); gd.scale = gas.scale
+        gs = subregion(gd, Sphere(R; range_unit=:kpc); split=true, verbose=false)
+        @test gs isa Mera.GravDataType
+        @test in(:fraction, propertynames(Mera.columns(gs.data)))
+        @test isapprox(sum(getvar(gs, :volume, :kpc3)), (4/3)*pi*R^3; rtol=0.02)   # getvar :volume honours :fraction
+    end
+
     @testset "symbol API still works (backward compatible)" begin
         old = subregion(gas, :sphere; radius=R, center=[:bc], range_unit=:kpc, verbose=false)
         @test old isa Mera.HydroDataType && length(old.data) > 0
