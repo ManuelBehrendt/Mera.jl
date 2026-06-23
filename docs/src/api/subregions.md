@@ -105,6 +105,23 @@ subregion(gas, Sphere(20.0; range_unit=:kpc) ∩ Cuboid(xrange=[-10,10], yrange=
 subregion(gas, !Sphere(20.0; range_unit=:kpc))                                        # everything outside the ball
 ```
 
+### Tilted cylinders / disks (arbitrary axis)
+
+`Cylinder` takes an `axis` (any non-zero 3-vector, normalised internally) — its symmetry
+direction — so you can select an inclined disk or cylinder, e.g. along a galaxy's spin vector.
+The default `[0,0,1]` is the classic z-aligned cylinder; the volume is invariant under the
+orientation. A thin cylinder is a disk:
+
+```julia
+subregion(gas, Cylinder(15.0, 1.0; axis=[1,0,2], range_unit=:kpc))      # a thin disk tilted in the x–z plane
+subregion(gas, Cylinder(15.0, 5.0; axis=spin, range_unit=:kpc))         # cylinder along an arbitrary spin vector
+```
+
+![Tilted disks](../assets/regions/tilted_disk.png)
+
+*The same thin disk projected along z for three `axis` directions — face-on (a circle) and two
+tilts (foreshortened ellipses).*
+
 ### Accuracy of the splitting
 
 Exact splitting is dramatically more accurate than whole-cell selection, and converges with grid

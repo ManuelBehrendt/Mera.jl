@@ -57,6 +57,18 @@ for (i,(ttl,m)) in enumerate((("whole-cell (blocky edge)",m_whole),("exact split
 end
 save(joinpath(OUT,"region_projection.png"), fig2, px_per_unit=2)
 println("wrote ", joinpath(OUT,"region_projection.png"))
+
+# ---- tilted cylinder/disk: arbitrary axis ------------------------------------
+disk(ax) = projmap(subregion(gp, Mera.Cylinder(0.34bp, 0.06bp; axis=ax, range_unit=:kpc); verbose=false))
+fig3 = Figure(size=(1150,400))
+for (i,(ttl,ax)) in enumerate((("axis = [0,0,1] (face-on)",[0.,0.,1.]),
+                               ("axis = [1,0,2] (tilted)",[1.,0.,2.]),
+                               ("axis = [1,1,1] (tilted)",[1.,1.,1.])))
+    a = Axis(fig3[1,i], title="thin disk, $ttl", aspect=DataAspect()); hidedecorations!(a)
+    heatmap!(a, range(0,1,256), range(0,1,256), log10.(disk(ax)'.+1e-3); colormap=:magma, colorrange=crange)
+end
+save(joinpath(OUT,"tilted_disk.png"), fig3, px_per_unit=2)
+println("wrote ", joinpath(OUT,"tilted_disk.png"))
 println("dx/R: ", round.(dxR,digits=3))
 println("whole err %: ", round.(100 .* e_whole,digits=3))
 println("split err %: ", round.(100 .* e_split,digits=4))
