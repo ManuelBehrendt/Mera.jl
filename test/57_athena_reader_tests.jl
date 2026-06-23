@@ -89,6 +89,9 @@ end
         @test length(sub.data) == count(x .<= 0.5)        # the leaf-cell window matches a getvar(:x) filter
         @test maximum(getvar(sub, :x)) <= 0.5 + 1e-9
         @test sub.ranges[1:2] == [0.0, 0.5]               # the window is recorded
+        # the block-pruned, per-block hyperslab read keeps the exact cell→value mapping (rho = f(cx,cy,cz))
+        cxs = Mera.select(sub.data, :cx); cys = Mera.select(sub.data, :cy); czs = Mera.select(sub.data, :cz)
+        @test getvar(sub, :rho) == cxs .+ 100 .* cys .+ 10000 .* czs
         # the generic router forwards the same selection
         sub2 = gethydro(info; xrange=[0.0, 0.5], center=[0., 0., 0.], range_unit=:standard, verbose=false)
         @test length(sub2.data) == length(sub.data)
