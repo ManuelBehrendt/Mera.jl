@@ -60,9 +60,18 @@ end
 # RAMSES: output_*/info_*.txt (the default).
 function detect_simcode(path::String)
     (isfile(path) && endswith(lowercase(path), ".athdf")) && return :athena
+    (isfile(path) && _is_flash_h5(path)) && return :flash
     (isfile(joinpath(path, "grid.out")) && isfile(joinpath(path, "dbl.out"))) && return :pluto
     isdir(path) && any(f -> endswith(lowercase(f), ".athdf"), readdir(path)) && return :athena
-    isdir(path) && any(f -> endswith(lowercase(f), ".hdf5"), readdir(path)) && return :chombo
+    # FLASH: extensionless `*_hdf5_plt_cnt_*` / `*_hdf5_chk_*` — peek to confirm (vs. Chombo HDF5)
+    if isdir(path)
+        for c in filter(f -> occursin("_hdf5_plt_cnt_", f) || occursin("_hdf5_chk_", f), readdir(path))
+            _is_flash_h5(joinpath(path, c)) && return :flash
+        end
+        for c in filter(f -> endswith(lowercase(f), ".hdf5"), readdir(path))
+            return _is_flash_h5(joinpath(path, c)) ? :flash : :chombo   # an .hdf5 could be either
+        end
+    end
     return :ramses
 end
 

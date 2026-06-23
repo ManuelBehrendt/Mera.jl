@@ -342,6 +342,9 @@ function gethydro(dataobject::InfoType;
     elseif dataobject.simcode == "Athena++"
         return gethydro_athena(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
                                center=center, range_unit=range_unit, verbose=verbose)
+    elseif dataobject.simcode == "FLASH"
+        return gethydro_flash(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                              center=center, range_unit=range_unit, verbose=verbose)
     end
 
     # ═══════════════════════════════════════════════════════════════════════════
