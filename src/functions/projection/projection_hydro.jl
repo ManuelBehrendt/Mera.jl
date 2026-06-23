@@ -1973,7 +1973,9 @@ function prep_data(dataobject, x_coord, y_coord, z_coord, mask, ranges, weightin
             # No masking needed
             xval = select(dataobject.data, x_coord)
             yval = select(dataobject.data, y_coord)
-            # Get weight data using appropriate getvar call
+            # Get weight data using appropriate getvar call. NB: weighting via getvar(:mass)/(:volume)
+            # means a split subregion's per-cell `:fraction` is honoured automatically — projections
+            # of `subregion(obj, ::AbstractRegion)` are exactly region-clipped (see region_algebra.jl).
             if gravity_data !== nothing
                 weightval = getvar(gravity_data, dataobject, weighting, center=center, center_unit=range_unit)
             else
