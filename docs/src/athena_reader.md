@@ -59,6 +59,36 @@ projection(gas, :sd, res=512, center=[:bc], direction=:z)   # column density, fa
 
 ![Log column density of the Athena++ AM06 snapshot, projected along x, y and z with Mera's projection engine — the AMR MHD data load into the standard structs, so the off-axis projection runs unchanged.](assets/athena/am06_projection.png)
 
+### MHD analysis
+
+Because the `B`-dataset is read into `:bx,:by,:bz`, the full magnetic [`getvar`](@ref) set
+(`:bmag`, `:pmag`, `:beta`, `:v_alfven`, `:mach_alfven`/`:mach_fast`/`:mach_slow`) and vector
+projections work on Athena++ data too. **Magnetic-field streamlines** over the column density come
+from a vector projection of the in-plane field — note this is the **mass-weighted** field, so the
+streamlines trace field *morphology*, not a flux-rigorous line integral:
+
+```julia
+using CairoMakie
+p = projection(gas, [:sd, :bx, :by], res=640, center=[:bc], direction=:z)
+Σ, Bx, By = p.maps[:sd], p.maps[:bx], p.maps[:by]
+# heatmap of log10.(Σ) + Makie streamplot of (Bx, By)  → the field threading the cloud
+```
+
+![Athena++ AM06 column density with magnetic-field streamlines overlaid — the mass-weighted in-plane B-field traced over the cloud.](assets/athena/am06_bstream.png)
+
+A **density–|B| phase diagram** is just `getvar` on the loaded cells plus a mass-weighted 2-D
+histogram — and it recovers the expected flux-freezing scaling (|B| ∝ ρ^~2/3) across ~6 decades in
+density, a real physics result extracted entirely through Mera's code-blind analysis layer:
+
+```julia
+ρ, B, m = getvar(gas, :rho), getvar(gas, :bmag), getvar(gas, :mass)
+# 2-D histogram of (log10 ρ, log10 B) weighted by m  → the B–ρ relation
+```
+
+![Athena++ AM06 density–|B| phase diagram (mass-weighted) — the magnetic field follows the flux-freezing scaling B ∝ ρ^~2/3 over six decades in density.](assets/athena/am06_phase.png)
+
+These figures are regenerated from the fixture by `docs/make_reader_figures.jl`.
+
 ## Units
 
 Athena++ writes data in code units and does not store CGS scale factors, so by default the run is
