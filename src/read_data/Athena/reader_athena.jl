@@ -97,6 +97,28 @@ function getinfo_athena(output::Int, path::String; unit_length::Real=1.0, unit_d
     return info
 end
 
+# Type-stable cell fills (function barriers): the HDF5 datasets come back as `Any` from `read`,
+# so the per-element work MUST happen behind a typed-argument function or it boxes every value
+# (a real Athena++ AMR snapshot is ~1e7 cells × ~8 vars).
+function _athena_fill_idx!(cx, cy, cz, lvl, nblk, nx1, nx2, nx3, ll, levels, rootlevel)
+    k = 0
+    @inbounds for m in 1:nblk
+        L = Int32(rootlevel + levels[m]); l1 = Int(ll[1,m]); l2 = Int(ll[2,m]); l3 = Int(ll[3,m])
+        for c in 1:nx3, b in 1:nx2, a in 1:nx1
+            k += 1
+            cx[k] = l1*nx1 + a; cy[k] = l2*nx2 + b; cz[k] = l3*nx3 + c; lvl[k] = L
+        end
+    end
+end
+function _athena_fill_col!(col::Vector{Float64}, arr::AbstractArray{<:Real,5}, li::Int,
+                           nblk::Int, nx1::Int, nx2::Int, nx3::Int)
+    k = 0
+    @inbounds for m in 1:nblk, c in 1:nx3, b in 1:nx2, a in 1:nx1
+        k += 1
+        col[k] = arr[a, b, c, m, li]
+    end
+end
+
 """
     gethydro_athena(info::InfoType; verbose=true) -> HydroDataType
 
@@ -124,20 +146,14 @@ function gethydro_athena(info::InfoType; verbose::Bool=true)
 
         ncell = nblk * nx1 * nx2 * nx3
         cx = Vector{Int32}(undef, ncell); cy = similar(cx); cz = similar(cx); lvl = similar(cx)
-        vcols = [Vector{Float64}(undef, ncell) for _ in vsyms]
-        k = 0
-        @inbounds for m in 1:nblk
-            L = rootlevel + levels[m]; l1 = ll[1,m]; l2 = ll[2,m]; l3 = ll[3,m]
-            for c in 1:nx3, b in 1:nx2, aa in 1:nx1
-                k += 1
-                cx[k] = l1*nx1 + aa; cy[k] = l2*nx2 + b; cz[k] = l3*nx3 + c; lvl[k] = L
-                for (vi, (di, li)) in enumerate(varloc)
-                    vcols[vi][k] = dsets[di][aa, b, c, m, li]
-                end
-            end
-        end
+        _athena_fill_idx!(cx, cy, cz, lvl, nblk, nx1, nx2, nx3, ll, levels, rootlevel)
         cols = Any[lvl, cx, cy, cz]; names = Symbol[:level, :cx, :cy, :cz]
-        for (vi, vsym) in enumerate(vsyms); push!(cols, vcols[vi]); push!(names, vsym); end
+        for (vi, vsym) in enumerate(vsyms)
+            di, li = varloc[vi]
+            col = Vector{Float64}(undef, ncell)
+            _athena_fill_col!(col, dsets[di], li, nblk, nx1, nx2, nx3)   # function barrier ⇒ type-stable
+            push!(cols, col); push!(names, vsym)
+        end
         data = table(cols...; names=Tuple(names), pkey=[:level, :cx, :cy, :cz], presorted=false, copy=false)
     end
     h = HydroDataType()
