@@ -70,6 +70,30 @@ shellregion(data, :sphere, radius=[8., 12.], range_unit=:kpc)
 ### Spherical Parameters
 - **`radius`**: Sphere radius (solid) or `[inner, outer]` (shell)
 
+## Composable regions with exact cell splitting
+
+Alongside the symbol API (`subregion(data, :sphere; …)`), `subregion` accepts a **region value
+type** ([`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref)). With
+`split=true` (the default for this form), cells straddling the region boundary are **clipped
+exactly**: each kept cell carries a `:fraction ∈ (0,1]` equal to the volume fraction inside the
+region, and [`getvar`](@ref)`(:mass)` / `(:volume)` / [`msum`](@ref) report the **exact in-region
+totals** — a sphere of radius `R` returns `(4/3)πR³`, with no boundary over- or under-counting.
+
+```julia
+gas_in = subregion(gas, Sphere(20.0; center=[:bc], range_unit=:kpc))   # split=true
+msum(gas_in, :Msol)        # exact enclosed mass (boundary cells weighted by their inside-fraction)
+
+subregion(gas, Cuboid(xrange=[-10,10], yrange=[-10,10], zrange=[-2,2], range_unit=:kpc))
+subregion(gas, SphericalShell(10.0, 20.0; range_unit=:kpc))
+subregion(gas, Cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic whole-cell selection
+```
+
+`split=false` reproduces the classic centre-inside, whole-cell selection (no `:fraction`).
+`inverse=true` selects the complement. (Phase 1: hydro; boolean combinators, tilted axes and
+projection-of-split-cells are planned follow-ups.) The region types
+([`AbstractRegion`](@ref), [`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref),
+[`SphericalShell`](@ref)) are listed in the [API reference](../api.md#Types).
+
 ## Additional Analysis Functions
 
 - [`getextent`](@ref) - Get spatial extent information  

@@ -265,6 +265,11 @@ export
     show_threading_info,
     subregion,
     shellregion,
+    AbstractRegion,
+    Sphere,
+    Cylinder,
+    Cuboid,
+    SphericalShell,
 
 # miscellaneous
     viewmodule,
@@ -442,6 +447,7 @@ include("functions/regions/subregion_clumps.jl")
 # Shellregion
 include("functions/regions/shellregion.jl")
 include("functions/regions/shellregion_hydro.jl")
+include("functions/regions/region_algebra.jl")
 include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
