@@ -16,6 +16,32 @@
 #  to that frame with `prepboxcenter` + the `·getunit/boxlen` rule (identical to `prepranges`).
 # =====================================================================================
 
+# One-shot discoverability hint: when the legacy symbol API (subregion/shellregion with a
+# :sphere/:cuboid/:cylinder Symbol) is used on hydro, point the user at the value-type form,
+# which adds EXACT edge-cell splitting. Shown once per session, only when verbose.
+const _REGION_HINT_SHOWN = Ref(false)
+function _region_value_type_hint(shape::Symbol; radius=0., height=0., xrange=[0.,0.], yrange=[0.,0.],
+                                 zrange=[0.,0.], center=[:bc], range_unit::Symbol=:standard, shell::Bool=false)
+    _REGION_HINT_SHOWN[] && return
+    _REGION_HINT_SHOWN[] = true
+    eq = if shell
+        shape === :sphere ? "SphericalShell($(radius[1]), $(radius[2]); center=$(center), range_unit=:$(range_unit))" :
+                            "Cylinder(r_out, $(height); …) \\ Cylinder(r_in, $(height); …)"
+    elseif shape === :sphere
+        "Sphere($(radius); center=$(center), range_unit=:$(range_unit))"
+    elseif shape === :cylinder || shape === :disc
+        "Cylinder($(radius), $(height); center=$(center), range_unit=:$(range_unit))"
+    else
+        "Cuboid(xrange=$(xrange), yrange=$(yrange), zrange=$(zrange), center=$(center), range_unit=:$(range_unit))"
+    end
+    printstyled("[Mera] Tip: regions also work as value types with EXACT edge-cell splitting " *
+                "(exact getvar :mass/:volume/msum), composable with ∩ ∪ \\ !:\n"; color=:light_black)
+    printstyled("           subregion(data, $eq)\n"; color=:light_black)
+    printstyled("           (the symbol form above still works; pass split=false for classic whole cells. " *
+                "Shown once per session — see ?subregion.)\n"; color=:light_black)
+    return
+end
+
 """    AbstractRegion
 
 Supertype of the composable region value types passed to [`subregion`](@ref):
