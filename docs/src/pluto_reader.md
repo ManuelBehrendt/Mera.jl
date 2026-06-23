@@ -133,20 +133,21 @@ savemap(p, "pluto_rho.jld2")
 Projecting the loaded blast along each axis shows the spherical shock front directly — the
 column density rendered along `x`, `y` and `z` with the same [`projection`](@ref) call used for
 RAMSES (the Sedov test runs in one octant, so the shell appears as a quarter-circle from each
-direction). The complete [CairoMakie](https://docs.makie.org) code for that three-panel figure:
+direction).
 
-```julia
-using CairoMakie
+!!! details "Show the CairoMakie code"
+    ```julia
+    using CairoMakie
 
-fig = Figure(size=(1150, 380))
-for (i, dir) in enumerate((:x, :y, :z))
-    Σ  = projection(gas, :sd, res=512, center=[:bc], direction=dir).maps[:sd]
-    ax = Axis(fig[1, i]; title="PLUTO Sedov 3-D — direction :$dir", aspect=DataAspect())
-    hidedecorations!(ax)
-    heatmap!(ax, log10.(Σ' .+ 1e-30); colormap=:inferno)   # transpose: array (col,row) → (x,y)
-end
-save("pluto_projection.png", fig, px_per_unit=2)
-```
+    fig = Figure(size=(1150, 380))
+    for (i, dir) in enumerate((:x, :y, :z))
+        Σ  = projection(gas, :sd, res=512, center=[:bc], direction=dir).maps[:sd]
+        ax = Axis(fig[1, i]; title="PLUTO Sedov 3-D — direction :$dir", aspect=DataAspect())
+        hidedecorations!(ax)
+        heatmap!(ax, log10.(Σ' .+ 1e-30); colormap=:inferno)   # transpose: array (col,row) → (x,y)
+    end
+    save("pluto_projection.png", fig, px_per_unit=2)
+    ```
 
 ![Log column density of the PLUTO Sedov blast (output 5), projected along x, y and z — the uniform-grid PLUTO data feed Mera's projection engine unchanged.](assets/pluto/pluto_projection.png)
 
@@ -193,18 +194,19 @@ plottable** — a volume-weighted mean level along the line of sight shows where
 (here a self-gravitating isothermal sphere refined toward its centre, Mera levels 6 → 7). The full
 [CairoMakie](https://docs.makie.org) code is identical to the Athena++ AMR map:
 
-```julia
-using CairoMakie
+!!! details "Show the CairoMakie code"
+    ```julia
+    using CairoMakie
 
-m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
+    m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
 
-fig = Figure(size=(560, 470))
-ax  = Axis(fig[1,1]; title="PLUTO-AMR (Chombo) — AMR refinement level (mean along LOS)",
-           xlabel="x", ylabel="y", aspect=DataAspect())
-hm  = heatmap!(ax, m; colormap=:turbo)
-Colorbar(fig[1,2], hm, label="level (6–7)")
-save("pluto_amr_levels.png", fig, px_per_unit=2)
-```
+    fig = Figure(size=(560, 470))
+    ax  = Axis(fig[1,1]; title="PLUTO-AMR (Chombo) — AMR refinement level (mean along LOS)",
+               xlabel="x", ylabel="y", aspect=DataAspect())
+    hm  = heatmap!(ax, m; colormap=:turbo)
+    Colorbar(fig[1,2], hm, label="level (6–7)")
+    save("pluto_amr_levels.png", fig, px_per_unit=2)
+    ```
 
 ![PLUTO-AMR (Chombo) AMR refinement level — the refined central block around the isothermal sphere, the analysis layer reading the level hierarchy unchanged.](assets/pluto/pluto_amr_levels.png)
 
