@@ -177,6 +177,9 @@ function get_data(  dataobject::HydroDataType,
                 cellsize_vals = getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion)
                 vars_dict[:volume] = convert(Array{Float64,1}, cellsize_vals .^3 .* selected_unit)
             end
+            # exact region splitting (subregion(obj, ::AbstractRegion; split=true)): scale the
+            # occupied volume by the per-cell inside-fraction so totals are exact in-region.
+            in(:fraction, column_names) && (vars_dict[:volume] .*= select(masked_data, :fraction))
 
         elseif i == :jeanslength
             selected_unit = getunit(dataobject, :jeanslength, vars, units)
@@ -221,6 +224,8 @@ function get_data(  dataobject::HydroDataType,
             else # if uniform grid
                 vars_dict[:mass] = select( masked_data, :rho=>p->p * (boxlen / 2^lmax)^3 ) .* selected_unit
             end
+            # exact region splitting: weight by the per-cell inside-fraction (see :volume above)
+            in(:fraction, column_names) && (vars_dict[:mass] .*= select(masked_data, :fraction))
 
         elseif i == :cs
             selected_unit = getunit(dataobject, :cs, vars, units)
