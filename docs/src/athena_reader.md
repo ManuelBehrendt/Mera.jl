@@ -75,44 +75,45 @@ projections work on Athena++ data too.
 
 **Magnetic-field streamlines** over the column density come from a vector projection of the
 in-plane field. Note this is the **mass-weighted** field, so the streamlines trace field
-*morphology*, not a flux-rigorous line integral. Here is the complete [CairoMakie](https://docs.makie.org)
-code (a small box-car smoother tidies the turbulent field into clean lines):
+*morphology*, not a flux-rigorous line integral (a small box-car smoother tidies the turbulent
+field into clean lines):
 
-```julia
-using CairoMakie
+!!! details "Show the CairoMakie code"
+    ```julia
+    using CairoMakie
 
-# separable box-car smoother (the projected field maps are dense, no NaN)
-function smooth2d(A, w)
-    n1, n2 = size(A); tmp = similar(A); B = similar(A)
-    for j in 1:n2, i in 1:n1
-        s = 0.0; c = 0
-        for di in -w:w; ii = i+di; (1<=ii<=n1) && (s += A[ii,j]; c += 1); end
-        tmp[i,j] = s/c
+    # separable box-car smoother (the projected field maps are dense, no NaN)
+    function smooth2d(A, w)
+        n1, n2 = size(A); tmp = similar(A); B = similar(A)
+        for j in 1:n2, i in 1:n1
+            s = 0.0; c = 0
+            for di in -w:w; ii = i+di; (1<=ii<=n1) && (s += A[ii,j]; c += 1); end
+            tmp[i,j] = s/c
+        end
+        for j in 1:n2, i in 1:n1
+            s = 0.0; c = 0
+            for dj in -w:w; jj = j+dj; (1<=jj<=n2) && (s += tmp[i,jj]; c += 1); end
+            B[i,j] = s/c
+        end
+        return B
     end
-    for j in 1:n2, i in 1:n1
-        s = 0.0; c = 0
-        for dj in -w:w; jj = j+dj; (1<=jj<=n2) && (s += tmp[i,jj]; c += 1); end
-        B[i,j] = s/c
-    end
-    return B
-end
 
-res = 640
-p  = projection(gas, [:sd, :bx, :by], res=res, center=[:bc], direction=:z)
-Σ  = p.maps[:sd]
-Bx = smooth2d(p.maps[:bx], 4);  By = smooth2d(p.maps[:by], 4)
+    res = 640
+    p  = projection(gas, [:sd, :bx, :by], res=res, center=[:bc], direction=:z)
+    Σ  = p.maps[:sd]
+    Bx = smooth2d(p.maps[:bx], 4);  By = smooth2d(p.maps[:by], 4)
 
-fig = Figure(size=(560, 520))
-ax  = Axis(fig[1,1]; title="AM06 — column density + B-field streamlines",
-           xlabel="x", ylabel="y", aspect=DataAspect())
-hm  = heatmap!(ax, 1..res, 1..res, log10.(Σ .+ 1e-30); colormap=:inferno)
-# streamplot wants a function (x,y) → vector; index the (smoothed) field maps
-bfield(q) = (i = clamp(round(Int, q[1]), 1, res); j = clamp(round(Int, q[2]), 1, res); Point2f(Bx[i,j], By[i,j]))
-streamplot!(ax, bfield, 1..res, 1..res; colormap=[(:white, 0.85)], gridsize=(30,30),
-            arrow_size=3.5, linewidth=0.8, density=1.6, stepsize=1.0, maxsteps=900)
-Colorbar(fig[1,2], hm, label="log₁₀ Σ  [code]")
-save("am06_bstream.png", fig, px_per_unit=2)
-```
+    fig = Figure(size=(560, 520))
+    ax  = Axis(fig[1,1]; title="AM06 — column density + B-field streamlines",
+               xlabel="x", ylabel="y", aspect=DataAspect())
+    hm  = heatmap!(ax, 1..res, 1..res, log10.(Σ .+ 1e-30); colormap=:inferno)
+    # streamplot wants a function (x,y) → vector; index the (smoothed) field maps
+    bfield(q) = (i = clamp(round(Int, q[1]), 1, res); j = clamp(round(Int, q[2]), 1, res); Point2f(Bx[i,j], By[i,j]))
+    streamplot!(ax, bfield, 1..res, 1..res; colormap=[(:white, 0.85)], gridsize=(30,30),
+                arrow_size=3.5, linewidth=0.8, density=1.6, stepsize=1.0, maxsteps=900)
+    Colorbar(fig[1,2], hm, label="log₁₀ Σ  [code]")
+    save("am06_bstream.png", fig, px_per_unit=2)
+    ```
 
 ![Athena++ AM06 column density with magnetic-field streamlines overlaid — the mass-weighted in-plane B-field traced over the cloud.](assets/athena/am06_bstream.png)
 
@@ -120,25 +121,26 @@ A **density–|B| phase diagram** is just `getvar` on the loaded cells plus a ma
 histogram — and it recovers the expected flux-freezing scaling (|B| ∝ ρ^~2/3) across ~6 decades in
 density, a real physics result extracted entirely through Mera's code-blind analysis layer:
 
-```julia
-ρ, B, m = getvar(gas, :rho), getvar(gas, :bmag), getvar(gas, :mass)   # code units
-lx, ly  = log10.(ρ), log10.(B .+ 1e-30); nb = 180
-xr = range(extrema(lx)...; length=nb+1);  yr = range(extrema(ly)...; length=nb+1)
-H  = zeros(nb, nb)
-for k in eachindex(lx)                       # mass-weighted 2-D histogram
-    i = searchsortedlast(xr, lx[k]); j = searchsortedlast(yr, ly[k])
-    (1 <= i <= nb && 1 <= j <= nb) && (H[i,j] += m[k])
-end
-H[H .== 0] .= NaN
-mids(r) = (r[1:end-1] .+ r[2:end]) ./ 2
+!!! details "Show the CairoMakie code"
+    ```julia
+    ρ, B, m = getvar(gas, :rho), getvar(gas, :bmag), getvar(gas, :mass)   # code units
+    lx, ly  = log10.(ρ), log10.(B .+ 1e-30); nb = 180
+    xr = range(extrema(lx)...; length=nb+1);  yr = range(extrema(ly)...; length=nb+1)
+    H  = zeros(nb, nb)
+    for k in eachindex(lx)                       # mass-weighted 2-D histogram
+        i = searchsortedlast(xr, lx[k]); j = searchsortedlast(yr, ly[k])
+        (1 <= i <= nb && 1 <= j <= nb) && (H[i,j] += m[k])
+    end
+    H[H .== 0] .= NaN
+    mids(r) = (r[1:end-1] .+ r[2:end]) ./ 2
 
-fig = Figure(size=(560, 470))
-ax  = Axis(fig[1,1]; title="AM06 — density–|B| phase diagram",
-           xlabel="log₁₀ ρ  [code]", ylabel="log₁₀ |B|  [code]")
-hb  = heatmap!(ax, mids(xr), mids(yr), log10.(H); colormap=:viridis)
-Colorbar(fig[1,2], hb, label="log₁₀ mass")
-save("am06_phase.png", fig, px_per_unit=2)
-```
+    fig = Figure(size=(560, 470))
+    ax  = Axis(fig[1,1]; title="AM06 — density–|B| phase diagram",
+               xlabel="log₁₀ ρ  [code]", ylabel="log₁₀ |B|  [code]")
+    hb  = heatmap!(ax, mids(xr), mids(yr), log10.(H); colormap=:viridis)
+    Colorbar(fig[1,2], hb, label="log₁₀ mass")
+    save("am06_phase.png", fig, px_per_unit=2)
+    ```
 
 ![Athena++ AM06 density–|B| phase diagram (mass-weighted) — the magnetic field follows the flux-freezing scaling B ∝ ρ^~2/3 over six decades in density.](assets/athena/am06_phase.png)
 
@@ -148,16 +150,17 @@ The cell `:level` is a projectable quantity, so a **volume-weighted mean level a
 sight** maps where the grid refines — for AM06 it draws the nested MeshBlock hierarchy as
 concentric squares tightening onto the dense core (levels 7 → 11):
 
-```julia
-m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
+!!! details "Show the CairoMakie code"
+    ```julia
+    m = projection(gas, :level, res=512, center=[:bc], direction=:z, weighting=[:volume]).maps[:level]
 
-fig = Figure(size=(560, 470))
-ax  = Axis(fig[1,1]; title="AM06 — AMR refinement level (mean along LOS)",
-           xlabel="x", ylabel="y", aspect=DataAspect())
-hm  = heatmap!(ax, m; colormap=:turbo)
-Colorbar(fig[1,2], hm, label="level (7–11)")
-save("am06_levels.png", fig, px_per_unit=2)
-```
+    fig = Figure(size=(560, 470))
+    ax  = Axis(fig[1,1]; title="AM06 — AMR refinement level (mean along LOS)",
+               xlabel="x", ylabel="y", aspect=DataAspect())
+    hm  = heatmap!(ax, m; colormap=:turbo)
+    Colorbar(fig[1,2], hm, label="level (7–11)")
+    save("am06_levels.png", fig, px_per_unit=2)
+    ```
 
 ![Athena++ AM06 AMR refinement level — the nested MeshBlock hierarchy shows as concentric squares of increasing level toward the dense core.](assets/athena/am06_levels.png)
 
