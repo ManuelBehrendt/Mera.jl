@@ -333,6 +333,11 @@ function gethydro(dataobject::InfoType;
     # Multi-code: a non-RAMSES info delegates to its own frontend (the analysis stays blind).
     # The spatial-window selection (xrange/yrange/zrange/center/range_unit) is honoured by the
     # frontends; lmax/resolution is a leaf-data analysis-time choice and is not forwarded.
+    if dataobject.simcode in ("PLUTO", "CHOMBO", "Athena++", "FLASH")
+        lmax < dataobject.levelmax && @warn "gethydro: `lmax` is not applied to the " *
+            "$(dataobject.simcode) reader — external readers load all leaf cells; choose the " *
+            "resolution at analysis time instead (e.g. `projection(…, lmax=, res=)`)." maxlog=1
+    end
     if dataobject.simcode == "PLUTO"
         return gethydro_pluto(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
                               center=center, range_unit=range_unit, verbose=verbose)
