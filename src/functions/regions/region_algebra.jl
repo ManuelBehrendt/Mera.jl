@@ -69,15 +69,17 @@ end
 SphericalShell(r_in::Real, r_out::Real; center=[:bc], range_unit::Symbol=:kpc) =
     SphericalShell(Float64(r_in), Float64(r_out), Vector{Any}(center), range_unit)
 
-"""    Cylinder(radius, height; center=[:bc], range_unit=:kpc)
+"""    Cylinder(radius, height; axis=[0,0,1], center=[:bc], range_unit=:kpc)
 
-A z-aligned cylinder of cylindrical `radius`, spanning `center_z ± height` (so `height` is the
-half-height, matching the existing `subregion(:cylinder)` convention)."""
+A cylinder of cylindrical `radius` spanning `±height` along `axis` (so `height` is the
+half-height, matching the existing `subregion(:cylinder)` convention). `axis` is the symmetry
+direction (any non-zero 3-vector, normalised internally) — e.g. a galaxy's spin vector for a
+tilted disk; the default `[0,0,1]` is the classic z-aligned cylinder."""
 struct Cylinder <: AbstractRegion
-    radius::Float64; height::Float64; center::Vector{Any}; range_unit::Symbol
+    radius::Float64; height::Float64; axis::Vector{Float64}; center::Vector{Any}; range_unit::Symbol
 end
-Cylinder(radius::Real, height::Real; center=[:bc], range_unit::Symbol=:kpc) =
-    Cylinder(Float64(radius), Float64(height), Vector{Any}(center), range_unit)
+Cylinder(radius::Real, height::Real; axis=[0.,0.,1.], center=[:bc], range_unit::Symbol=:kpc) =
+    Cylinder(Float64(radius), Float64(height), Float64.(axis), Vector{Any}(center), range_unit)
 
 """    Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit=:kpc)
 
@@ -107,7 +109,12 @@ function _prepare(r::Sphere, obj; nsub::Int=8)
 end
 function _prepare(r::Cylinder, obj; nsub::Int=8)
     c, tonorm = _norm_frame(obj, r.center, r.range_unit); R = tonorm(r.radius); H = tonorm(r.height)
-    inside(x,y,z) = (x-c[1])^2 + (y-c[2])^2 <= R*R && abs(z-c[3]) <= H
+    w = r.axis ./ sqrt(sum(abs2, r.axis))           # unit symmetry axis (direction is frame-invariant)
+    function inside(x,y,z)                            # axial = d·ŵ; radial² = |d|² − axial²
+        dx = x-c[1]; dy = y-c[2]; dz = z-c[3]
+        ax = dx*w[1] + dy*w[2] + dz*w[3]
+        return (dx*dx + dy*dy + dz*dz - ax*ax) <= R*R && abs(ax) <= H
+    end
     return ((nx,ny,nz,h) -> _sample_fraction(inside,nx,ny,nz,h;n=nsub)), inside
 end
 function _prepare(r::Cuboid, obj; nsub::Int=8)
