@@ -264,6 +264,12 @@ export
     benchmark_projection_hydro,
     show_threading_info,
     subregion,
+    filterdata,
+    getmask,
+    FilterCondition,
+    Above,
+    Below,
+    InRange,
     shellregion,
     AbstractRegion,
     Sphere,
@@ -449,6 +455,7 @@ include("functions/regions/subregion_clumps.jl")
 include("functions/regions/shellregion.jl")
 include("functions/regions/shellregion_hydro.jl")
 include("functions/regions/region_algebra.jl")
+include("functions/filterdata.jl")
 include("functions/regions/shellregion_gravity.jl")
 include("functions/regions/shellregion_rt.jl")
 include("functions/regions/shellregion_particles.jl")
