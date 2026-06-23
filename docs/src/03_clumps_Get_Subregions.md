@@ -1258,6 +1258,17 @@ println("type: ", typeof(clumps_sel), "   selected clumps: ", length(clumps_sel.
 type: ClumpDataType   selected clumps: 292
 ```
 
+### Shell Regions
+
+```julia
+clumps_shell = subregion(clumps, SphericalShell(5.0, 20.0; range_unit=:kpc))
+println("clumps in spherical shell [5,20] kpc: ", length(clumps_shell.data), " / ", length(clumps.data))
+```
+
+```
+clumps in spherical shell [5,20] kpc: 427 / 644
+```
+
 ## Summary
 ### Key Techniques Mastered
 
