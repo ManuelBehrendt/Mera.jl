@@ -760,6 +760,31 @@ sum(var_filtered)
 2.7506324500621886e9
 ```
 
+## Value-Space Filtering: `filterdata` and `getmask`
+
+The macros above filter on *stored* table columns. `filterdata` (and `getmask`) instead select by **any [`getvar`](@ref) quantity** — including derived physics such as temperature `:T`, radial velocity `:vr`, Mach number `:mach` or cylindrical radius `:r_cylinder` — in any unit, and return a **new object of the same type** (chainable with `projection`, `getvar`, `subregion`, …). Conditions are composable value types ([`Above`](@ref), [`Below`](@ref), [`InRange`](@ref)) combined with `&` (and), `|` (or) and `!` (not). Masks are built vectorised through `getvar`, so they are fast and work on quantities the raw-column `@filter` cannot see.
+
+```julia
+# select by a DERIVED quantity (temperature), returning a chainable HydroDataType
+hot = filterdata(gas, Above(:T, 1e4, unit=:K))
+projection(hot, :sd, :Msol_pc2)            # the result is a normal Mera object
+
+# boolean algebra over several physical quantities
+cold_dense = filterdata(gas, Below(:T, 1e3, unit=:K) & Above(:rho, 100, unit=:nH))
+
+# a kinematically/radially confined slice (several positional conditions are AND-combined)
+disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc), Below(:vz, 50, unit=:km_s))
+
+# quantity/predicate shorthand for a single condition
+hot2 = filterdata(gas, :T, >(1e4), unit=:K)
+
+# or get just the boolean mask and reuse it via the `mask=` keyword (no data copy):
+m = getmask(gas, Above(:T, 1e4, unit=:K))
+msum(gas, mask=m)                          # in-mask total mass, original object untouched
+```
+
+`filterdata`/`getmask` work on hydro, gravity, RT, particles and clumps.
+
 ## Extend the Data Table
 Add costum columns/variables to the data that can be automatically processed in some functions:
 (note: to take advantage of the Mera unit management, store new data in code-units)
