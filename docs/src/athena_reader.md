@@ -31,13 +31,30 @@ clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_len
 You can also call the frontend explicitly with [`getinfo_athena`](@ref) / [`gethydro_athena`](@ref)
 (e.g. to pass a direct `.athdf` path).
 
-!!! note "What loads, and how much"
-    The frontend currently **loads the whole snapshot**: the `xrange`/`yrange`/`zrange`/`lmax`
-    load-time sub-selection of the RAMSES reader is *not yet applied* for non-RAMSES codes (those
-    keywords are accepted but ignored), so restrict a region **after** loading with
-    [`subregion`](@ref). Data is loaded per type, exactly as for RAMSES — but only what the code
-    wrote exists: an Athena++ snapshot is **hydro + cell-centred MHD only** (no gravity/particles),
-    so you call [`gethydro`](@ref) and there is nothing for `getgravity`/`getparticles` to read.
+### Loading a spatial sub-region
+
+`gethydro` honours the RAMSES **spatial-window** arguments `xrange`/`yrange`/`zrange` (with
+`center` and `range_unit`), so you load only the part of the box you need:
+
+```julia
+# central 10 % box, fractions of the box relative to its centre
+gas = gethydro(info; xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 0.05],
+               center=[:bc], range_unit=:standard)
+# or a physical window once units are set (see "Units" below)
+gas = gethydro(info; xrange=[-200, 200], center=[:bc], range_unit=:pc)
+```
+
+This is the leaf-cell analogue of Athena++'s **own** reader and of yt — the upstream tools Mera's
+selection mirrors (and is validated against), see [Reference readers](#Reference-readers) below.
+Because Mera keeps the **leaf cells** (each point covered by exactly one cell at its finest level),
+a spatial window is an *exact, hole-free* filter; the returned object records it in `gas.ranges`.
+Resolution/level is chosen later at analysis time (`projection(…, res=)`), not at load — a level
+cap would leave gaps, since no coarse data sits under a leaf.
+
+!!! note "What is available per data type"
+    Data is loaded per type, exactly as for RAMSES — but only what the code wrote exists: an
+    Athena++ snapshot is **hydro + cell-centred MHD only** (no gravity/particles), so you call
+    [`gethydro`](@ref) and there is nothing for `getgravity`/`getparticles` to read.
 
 ## Worked example: the yt AM06 sample
 
@@ -199,3 +216,21 @@ cx    = l1·nx1 + a            # a = 1…nx1, 1-based index on the level-L cell 
 so off-axis projections, profiles, subregions and movies are all correct. This contract is
 verified data-free in `test/57_athena_reader_tests.jl`, which synthesises tiny `.athdf` files and
 checks that a value written at a known cell reads back at the right `(:level,:cx,:cy,:cz)`.
+
+## Reference readers
+
+This frontend is built to agree with — and is validated against — Athena++'s **own** tooling and
+the wider community readers, which are the *origin* of the `.athdf` format and its selection
+semantics:
+
+- **`athena_read.py`** — the official reader shipped with Athena++ (`athena/vis/python/athena_read.py`),
+  whose `athdf()` function reads a snapshot and supports a spatial window (`x1_min`/`x1_max`/…) and a
+  level argument. Mera's load-time `xrange`/`yrange`/`zrange` is the leaf-cell analogue of that
+  window. See the [Athena++ wiki](https://github.com/PrincetonUniversity/athena/wiki).
+- **[yt](https://yt-project.org)** — its `athena_pp` frontend reads `.athdf` lazily through *data
+  objects* (`ds.box`, `ds.sphere`, `ds.r[...]`), touching only the MeshBlocks a region intersects.
+  Mera's spatial selection mirrors that region-selector behaviour on the leaf-cell list. The AM06
+  sample used above comes from the [yt sample-data collection](https://yt-project.org/data/).
+
+Athena++ data are dimensionless (code units) and carry no CGS factors, exactly as both readers
+above assume — supply the run's units explicitly (see [Units](#Units)).

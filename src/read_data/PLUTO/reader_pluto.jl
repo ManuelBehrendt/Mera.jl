@@ -189,15 +189,54 @@ function getinfo_pluto(output::Int, path::String; unit_length::Real=1.0,
     return info
 end
 
+# ----------------------------------------------------------------------------------------
+# Shared load-time spatial selection for the external (non-RAMSES) frontends.
+#
+# The native readers select a window, not the whole box: yt's region selectors
+# (`ds.box`/`ds.sphere`/`ds.r[...]`) read only intersecting chunks, and Athena++'s own
+# `athdf(x1_min=…, x1_max=…)` reads a sub-volume. The same `xrange`/`yrange`/`zrange` +
+# `center` + `range_unit` arguments the RAMSES `gethydro` takes are honoured here. We work on
+# the **leaf-cell** list, so a spatial window is an exact, hole-free filter: a cell is kept
+# when its Mera position `cx/2^level` (= `getvar(:x)/boxlen`, so the selection matches
+# [`subregion`](@ref)) lies inside the prepranges-normalised box. Returns `(keep, ranges)`.
+function _external_select(info::InfoType, xrange, yrange, zrange, center, range_unit::Symbol,
+                          verbose::Bool, lvl::AbstractVector, cx::AbstractVector,
+                          cy::AbstractVector, cz::AbstractVector)
+    ranges = prepranges(info, range_unit, false, collect(xrange), collect(yrange),
+                        collect(zrange), collect(center))
+    fullbox = ranges[1] <= 0.0 && ranges[2] >= 1.0 && ranges[3] <= 0.0 &&
+              ranges[4] >= 1.0 && ranges[5] <= 0.0 && ranges[6] >= 1.0
+    fullbox && return trues(length(cx)), ranges
+    keep = BitVector(undef, length(cx))
+    @inbounds for k in eachindex(cx)
+        s = 1.0 / 2.0^Int(lvl[k])                       # cell position fraction = cx/2^level
+        keep[k] = (ranges[1] <= cx[k]*s <= ranges[2]) &
+                  (ranges[3] <= cy[k]*s <= ranges[4]) &
+                  (ranges[5] <= cz[k]*s <= ranges[6])
+    end
+    verbose && println("[Mera]: load-time range selection (box-normalised) ",
+        "x=", round.((ranges[1], ranges[2]), digits=4), " y=", round.((ranges[3], ranges[4]), digits=4),
+        " z=", round.((ranges[5], ranges[6]), digits=4), " → ", count(keep), "/", length(cx), " leaf cells")
+    return keep, ranges
+end
+
+# apply a keep-mask to a list of equal-length columns
+_select_cols(cols::AbstractVector, keep::BitVector) = Any[c[keep] for c in cols]
+
 """
-    gethydro_pluto(info::InfoType; verbose=true) -> HydroDataType
+    gethydro_pluto(info::InfoType; xrange, yrange, zrange, center, range_unit, verbose=true) -> HydroDataType
 
 Read a PLUTO static-grid snapshot (`data.NNNN.dbl`, single-file double precision) described
 by `info` (from [`getinfo_pluto`](@ref)) into a uniform-grid `HydroDataType` — columns
 `(:cx,:cy,:cz, :rho,:vx,:vy,:vz,:p)`, the same schema the RAMSES uniform-grid reader produces,
 so the whole analysis layer works on it unchanged.
+
+`xrange`/`yrange`/`zrange` (+ `center`, `range_unit`) select a spatial window at load time,
+exactly as for the RAMSES [`gethydro`](@ref); the returned object's `ranges` records it.
 """
-function gethydro_pluto(info::InfoType; verbose::Bool=true)
+function gethydro_pluto(info::InfoType;
+                        xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                        center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
     path = info.path; n = 2^info.levelmin; ncell = n^3
     output = round(Int, info.output)
     vars = info.variable_list
@@ -227,15 +266,19 @@ function gethydro_pluto(info::InfoType; verbose::Bool=true)
         push!(cols, Float64.(block)); push!(names, vsym)
     end
 
+    lvl = fill(Int32(info.levelmin), ncell)            # uniform grid: every cell at levelmin
+    keep, ranges = _external_select(info, xrange, yrange, zrange, center, range_unit, verbose, lvl, cx, cy, cz)
+    all(keep) || (cols = _select_cols(cols, keep))
+
     data = table(cols...; names=Tuple(names), pkey=[:cx, :cy, :cz], presorted=false, copy=false)
     h = HydroDataType()
     h.data = data; h.info = info
     h.lmin = info.levelmin; h.lmax = info.levelmax; h.boxlen = info.boxlen
-    h.ranges = [0., 1., 0., 1., 0., 1.]
+    h.ranges = ranges
     h.selected_hydrovars = collect(1:nv)
     h.used_descriptors = Dict{Any,Any}()
     h.smallr = 0.; h.smallc = 0.; h.scale = info.scale
-    verbose && println("[Mera]: PLUTO hydro $(n)³ = $(ncell) cells, vars ", join(string.(vars), ", "))
+    verbose && println("[Mera]: PLUTO hydro $(length(cols[1])) cells (of $(ncell)), vars ", join(string.(vars), ", "))
     return h
 end
 

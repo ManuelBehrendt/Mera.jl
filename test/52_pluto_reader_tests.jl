@@ -127,6 +127,23 @@ if DATA_AVAILABLE && isdir(PL_PATH)
         @test sum(P.pdf .* diff(log10.(P.edges))) ≈ 1 rtol=1e-6
     end
 
+    @testset "load-time spatial selection (xrange/yrange/zrange)" begin
+        info = getinfo_pluto(5, PL_PATH; verbose=false)
+        full = gethydro_pluto(info; verbose=false)
+        x = getvar(full, :x); y = getvar(full, :y)               # code units (boxlen = 1)
+        # lower-x half × middle-y band, relative to the box origin (center = 0)
+        sub = gethydro_pluto(info; xrange=[0.0, 0.5], yrange=[0.25, 0.75],
+                             center=[0., 0., 0.], range_unit=:standard, verbose=false)
+        @test length(sub.data) == count((x .<= 0.5) .& (0.25 .<= y .<= 0.75))   # matches getvar(:x) filter
+        @test maximum(getvar(sub, :x)) <= 0.5 + 1e-9
+        @test sub.ranges == [0.0, 0.5, 0.25, 0.75, 0.0, 1.0]     # the window is recorded
+        # the generic router forwards the same selection
+        sub2 = gethydro(info; xrange=[0.0, 0.5], yrange=[0.25, 0.75],
+                        center=[0., 0., 0.], range_unit=:standard, verbose=false)
+        @test length(sub2.data) == length(sub.data)
+        @test length(gethydro_pluto(info; verbose=false).data) == 64^3          # full box unchanged
+    end
+
     @testset "coordinate mapping matches the raw file (no transpose)" begin
         g = gethydro_pluto(getinfo_pluto(5, PL_PATH; verbose=false); verbose=false)
         rho = getvar(g, :rho); i = argmax(rho)
@@ -165,6 +182,15 @@ if DATA_AVAILABLE && isdir(CH_PATH)
         # the analysis layer works unchanged on AMR data
         pr = projection(g, :rho, verbose=false, show_progress=false)
         @test sum(pr.maps[:rho]) > 0
+
+        # load-time spatial selection on AMR data — a central box keeps only the refined core
+        x = getvar(g, :x); y = getvar(g, :y); z = getvar(g, :z); bl = info.boxlen
+        sub = gethydro(info; xrange=[-0.1, 0.1], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
+                       center=[:bc], range_unit=:standard, verbose=false)
+        lo = 0.4bl; hi = 0.6bl
+        @test length(sub.data) == count((lo .<= x .<= hi) .& (lo .<= y .<= hi) .& (lo .<= z .<= hi))
+        @test maximum(getvar(sub, :level)) == maximum(lv)        # the finest level survives at the centre
+        @test sub.ranges != [0., 1., 0., 1., 0., 1.]
     end
 else
     @testset "Chombo reader (skipped: chombo_3d unavailable)" begin

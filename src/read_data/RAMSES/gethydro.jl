@@ -331,12 +331,17 @@ function gethydro(dataobject::InfoType;
                     max_threads::Int=Threads.nthreads())
 
     # Multi-code: a non-RAMSES info delegates to its own frontend (the analysis stays blind).
+    # The spatial-window selection (xrange/yrange/zrange/center/range_unit) is honoured by the
+    # frontends; lmax/resolution is a leaf-data analysis-time choice and is not forwarded.
     if dataobject.simcode == "PLUTO"
-        return gethydro_pluto(dataobject; verbose=verbose)
+        return gethydro_pluto(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                              center=center, range_unit=range_unit, verbose=verbose)
     elseif dataobject.simcode == "CHOMBO"
-        return gethydro_chombo(dataobject; verbose=verbose)
+        return gethydro_chombo(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                               center=center, range_unit=range_unit, verbose=verbose)
     elseif dataobject.simcode == "Athena++"
-        return gethydro_athena(dataobject; verbose=verbose)
+        return gethydro_athena(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                               center=center, range_unit=range_unit, verbose=verbose)
     end
 
     # ═══════════════════════════════════════════════════════════════════════════

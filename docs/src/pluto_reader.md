@@ -42,12 +42,21 @@ info = getinfo(5, path; code=:pluto)        # or :ramses, or :auto (the default)
 The low-level frontend functions are also exported if you want them directly:
 `getinfo_pluto(output, path)` and `gethydro_pluto(info)`.
 
-!!! note "What loads, and how much"
-    The frontend currently **loads the whole snapshot**: the `xrange`/`yrange`/`zrange`/`lmax`
-    load-time sub-selection of the RAMSES reader is *not yet applied* for non-RAMSES codes (those
-    keywords are accepted but ignored), so restrict a region **after** loading with
-    [`subregion`](@ref). Data is loaded per type, exactly as for RAMSES: [`gethydro`](@ref) always,
-    and [`getparticles`](@ref) when a PLUTO particle file is present (`info.particles == true`).
+`gethydro` honours the RAMSES **spatial-window** arguments `xrange`/`yrange`/`zrange` (with
+`center`/`range_unit`), so you can load only the part of the box you need — the same selection the
+upstream readers offer (see [Reference readers](#Reference-readers)):
+
+```julia
+gas = gethydro(info; xrange=[0.0, 0.5], yrange=[0.25, 0.75], range_unit=:standard)  # a sub-box
+```
+
+The selection acts on the **leaf cells**, so it is an exact, hole-free filter and the returned
+object records the window in `gas.ranges`; resolution is chosen later at analysis time
+(`projection(…, res=)`), not at load.
+
+!!! note "What is available per data type"
+    Data is loaded per type, exactly as for RAMSES: [`gethydro`](@ref) always, and
+    [`getparticles`](@ref) when a PLUTO particle file is present (`info.particles == true`).
     PLUTO snapshots carry no separate gravity dataset.
 
 `gas` is an ordinary `HydroDataType` (uniform grid, columns `:cx,:cy,:cz, :rho,:vx,:vy,:vz,:p`),
@@ -212,6 +221,21 @@ plottable** — a volume-weighted mean level along the line of sight shows where
 
 HDF5 reading uses `HDF5.jl` (a dependency of Mera). Requires a power-of-two base grid and
 `ref_ratio = 2` (the common PLUTO/Chombo case).
+
+## Reference readers
+
+This frontend is built to agree with the *origin* tools — the readers that define PLUTO's output
+formats and their selection semantics:
+
+- **`pyPLUTO`** — PLUTO's own Python reader, which documents the static-grid (`grid.out` + `.dbl`)
+  layout this frontend parses. Mera's coordinate mapping is validated against it cell-for-cell.
+- **[yt](https://yt-project.org)** — reads PLUTO's Chombo-HDF5 AMR output through its `chombo`
+  frontend, and selects sub-volumes lazily via *data objects* (`ds.box`, `ds.sphere`, `ds.r[...]`).
+  Mera's load-time `xrange`/`yrange`/`zrange` mirrors that region-selector behaviour on the
+  leaf-cell list.
+
+PLUTO test problems are dimensionless (code units) and carry no CGS factors — exactly as both
+readers above assume; the run's units live in its compiled `definitions.h`, not in the snapshot.
 
 ## See also
 
