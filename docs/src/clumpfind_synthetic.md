@@ -117,5 +117,43 @@ bound = clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll);
 bound.nclumps == cat.nclumps - 1     # Fhot removed
 ```
 
+## Backgrounds & noise — telling clumps from the ISM floor
+
+Real clumps don't sit on a flat floor; they're embedded in a structured, turbulent ISM. The
+generator can place the same eight clumps in different environments via `synthetic_clumps`:
+
+```julia
+flat   = synthetic_clumps()                                   # flat floor (the default)
+noisy  = synthetic_clumps(noise=0.35, lmax=6)                 # +35% log-normal density noise
+galaxy = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)   # clumps inside an exp. ISM disk
+```
+
+* **Turbulent floor** — log-normal per-cell noise far below the threshold is simply rejected:
+  the resolved clumps are still recovered and the floor produces **no spurious clumps**.
+* **Structured disk** — when the diffuse ISM itself rises above the threshold, the choice of
+  finder becomes decisive:
+
+![Clumps in an ISM disk](assets/clumpfind/ism_background.png)
+
+*Left: the eight clumps embedded in a smooth exponential disk. Centre: a fixed-threshold
+`ThresholdFoF` connects the elevated disk and the clumps into **2 giant blobs** — only 2 of 8
+clumps are detected. Right: `DensityWatershed` (and `Dendrogram`/`PersistenceFinder` with a
+prominence/`min_delta` cut) reject the smooth floor by **density contrast** and recover all 8.*
+
+```julia
+gasg = galaxy.gas; thr, ll = 4.0, 2.0/2^6
+peakpos(cat) = [c.peak_pos for c in cat.clumps]
+ndet(cat) = count(t -> any(p -> sum((p .- t.pos).^2) < 0.05^2, peakpos(cat)), galaxy.truth)
+
+ndet(clumpfind(gasg, ThresholdFoF(:rho; threshold=thr, linking_length=ll); min_members=20))       # 2/8 — disk fuses
+ndet(clumpfind(gasg, DensityWatershed(:rho; threshold=thr, linking_length=ll, persistence=20.0); min_members=20))  # 8/8
+```
+
+The lesson: on a structured background, prefer a **density-contrast** finder
+(`DensityWatershed`, `Dendrogram` with `min_delta`, `PersistenceFinder`, or `HDBSCANFinder`),
+or raise the threshold above the local ISM — a single absolute threshold with friends-of-friends
+will merge clumps into the floor. This is exactly what
+`test/54_clumpfind_synthetic_tests.jl` asserts.
+
 See [Clump Finding](clumpfind.md) for the full API, the seven finders, and the
 gravitational-boundedness / validator details.

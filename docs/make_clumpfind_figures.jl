@@ -101,5 +101,30 @@ stairs!(axc, m, Float64.(n); step=:post, color=:black)
 scatter!(axc, m, Float64.(n); color=:black, markersize=8)
 save(joinpath(OUT,"accuracy.png"), fig3, px_per_unit=2)
 
+# ---- Figure 4: clumps embedded in a structured ISM disk ---------------------
+G    = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)
+gasg = G.gas; thr2 = 4.0; llg = 2.0/2^6
+Pg   = Mera._make_points(gasg, :rho; threshold=thr2, threshold_unit=:standard)
+xg, yg = Pg.x, Pg.y
+labg(fdr) = first(Mera._label(fdr, Pg))
+function scatter_g!(ax, lab; ms=2.5)
+    scatter!(ax, xg, yg; color=[colorof(l) for l in lab], markersize=ms, strokewidth=0)
+    ax.aspect=DataAspect(); ax.xlabel="x [kpc]"; ax.ylabel="y [kpc]"; xlims!(ax,0,1); ylims!(ax,0,1)
+end
+fig4 = Figure(size=(1200,380))
+ax4a = Axis(fig4[1,1], title="Clumps in an ISM disk (column, log)")
+sdg = projection(gasg, :sd, :Msol_pc2; res=256, center=[:bc], verbose=false, show_progress=false)
+hm4 = heatmap!(ax4a, range(0,1,256), range(0,1,256), log10.(sdg.maps[:sd]'.+1e-3); colormap=:magma)
+ax4a.aspect=DataAspect(); ax4a.xlabel="x [kpc]"; ax4a.ylabel="y [kpc]"
+Colorbar(fig4[1,2], hm4, label="log₁₀ Σ")
+cfof = clumpfind(gasg, ThresholdFoF(:rho; threshold=thr2, linking_length=llg); min_members=20)
+ax4b = Axis(fig4[1,3], title="ThresholdFoF — disk fuses in\n$(cfof.nclumps) blobs")
+scatter_g!(ax4b, labg(ThresholdFoF(:rho; threshold=thr2, linking_length=llg)))
+cws = clumpfind(gasg, DensityWatershed(:rho; threshold=thr2, linking_length=llg, persistence=20.0); min_members=20)
+ax4c = Axis(fig4[1,4], title="DensityWatershed (persistence)\n$(cws.nclumps) clumps recovered")
+scatter_g!(ax4c, labg(DensityWatershed(:rho; threshold=thr2, linking_length=llg, persistence=20.0)))
+for (col,ax) in ((1,ax4a),(3,ax4b),(4,ax4c)); colsize!(fig4.layout, col, Aspect(1,1.0)); end
+save(joinpath(OUT,"ism_background.png"), fig4, px_per_unit=2)
+
 println("wrote figures to ", OUT)
 foreach(f->println("  ", f), readdir(OUT))
