@@ -1057,15 +1057,9 @@ BitVector
 #### Combine Multiple Masks
 
 ```julia
-# create individual masks for different density and temperature regions
-mask_h = getvar(gas, :rho, :nH) .< 10. # cm-3
-mask_l = getvar(gas, :rho, :nH) .> 1e-2  # cm-3
-
-mask_T1 = getvar(gas, :Temperature, :K) .< 1e4 # K
-mask_T2 = getvar(gas, :Temperature, :K) .> 1e3  # K
-
-# combine several masks to one
-mask_tot = mask_h .* mask_l .* mask_T1 .* mask_T2
+# one composable condition replaces several hand-built masks:
+# intermediate density AND warm-cool gas, in physical units
+mask_tot = getmask(gas, InRange(:rho, 1e-2, 10, unit=:nH) & InRange(:Temperature, 1e3, 1e4, unit=:K))
 
 println( length(mask_tot) )
 println( typeof(mask_tot) )
@@ -1114,7 +1108,7 @@ MERA's masking system integrates seamlessly with statistical and analysis functi
 ### Total Mass
 
 ```julia
-mask = map(row->row.rho < 1. / gas.scale.Msol_pc3, gas.data);
+mask = getmask(gas, Below(:rho, 1, unit=:Msol_pc3));
 mtot_masked = msum(gas, :Msol, mask=mask)
 mtot        = msum(gas, :Msol)
 println()
@@ -1130,7 +1124,7 @@ Gas Mtot:        3.0968754148332745e10 Msol
 ```
 
 ```julia
-mask = map(row->row.birth < 100. / particles.scale.Myr, particles.data);
+mask = getmask(particles, Below(:birth, 100, unit=:Myr));
 mtot_masked = msum(particles, :Msol, mask=mask)
 mtot        = msum(particles, :Msol)
 println()
@@ -1146,7 +1140,7 @@ Particles Mtot:        5.804426008528429e9 Msol
 ```
 
 ```julia
-mask = map(row->row.mass_cl < 1e6 / clumps.scale.Msol, clumps.data);
+mask = getmask(clumps, Below(:mass, 1e6, unit=:Msol));
 mtot_masked = msum(clumps, :Msol, mask=mask)
 mtot        = msum(clumps, :Msol)
 println()
@@ -1192,20 +1186,15 @@ All three methods produce identical boolean results, differing only in implement
 
 This example creates a **complex thermodynamic selection**:
 ```julia
-# Define individual conditions
-mask_h = getvar(gas, :rho, :nH) .< 10.0    # Low density: < 10 cm⁻³
-mask_l = getvar(gas, :rho, :nH) .> 1e-2    # Higher density: > 0.01 cm⁻³
-mask_T1 = getvar(gas, :Temperature, :K) .< 1e4 # Cool gas: < 10⁴ K
-mask_T2 = getvar(gas, :Temperature, :K) .> 1e3  # Warm gas: > 10³ K
-
-# Combine all conditions
-mask_tot = mask_h .* mask_l .* mask_T1 .* mask_T2
+# the same selection as one composable condition (any getvar quantity, physical units):
+mask_tot = getmask(gas, Above(:rho, 1e-2, unit=:nH) & Below(:rho, 10, unit=:nH) &
+                        Above(:Temperature, 1e3, unit=:K) & Below(:Temperature, 1e4, unit=:K))
 ```
 
-**Efficiency Note**: Using `.*` (element-wise multiplication) is computationally equivalent to `.&` but often more readable for multiple conditions.
+With `getmask`, the boolean algebra is on the *conditions* themselves (`&`/`|`/`!`); you no longer hand-combine arrays with `.&`/`.*`.
 
 ```julia
-mask = map(row->row.rho < 100. / gas.scale.nH, gas.data);
+mask = getmask(gas, Below(:rho, 100, unit=:nH));
 com_gas_masked = center_of_mass(gas, :kpc, mask=mask)
 com_gas        = center_of_mass(gas, :kpc)
 println()
@@ -1221,7 +1210,7 @@ Gas COM:        (23.472214016322592, 23.939318698656532, 24.084836371167793) kpc
 ```
 
 ```julia
-mask = map(row->row.birth < 100. / particles.scale.Myr, particles.data);
+mask = getmask(particles, Below(:birth, 100, unit=:Myr));
 com_particles_masked = center_of_mass(particles, :kpc, mask=mask)
 com_particles        = center_of_mass(particles, :kpc)
 println()
@@ -1238,8 +1227,8 @@ Particles COM:        (22.891354761211396, 24.17414728268034, 24.003205056545642
 
 ```julia
 # calculate joint center-of-mass from gas and particles
-mask1 = map(row->row.rho < 100. / gas.scale.nH, gas.data); # mask for the hydro data
-mask2 = map(row->row.birth < 100.  / particles.scale.Myr, particles.data); # mask for the particle data
+mask1 = getmask(gas, Below(:rho, 100, unit=:nH));            # mask for the hydro data
+mask2 = getmask(particles, Below(:birth, 100, unit=:Myr));  # mask for the particle data
 
 println( "Joint COM (Gas + Particles) masked: ", center_of_mass([gas,particles], :kpc, mask=[mask1, mask2]) , " kpc" )
 println( "Joint COM (Gas + Particles):        ", center_of_mass([gas,particles], :kpc) , " kpc" )
@@ -1253,7 +1242,7 @@ Joint COM (Gas + Particles):        (
 ```
 
 ```julia
-mask = map(row->row.mass_cl < 1e6 / clumps.scale.Msol, clumps.data);
+mask = getmask(clumps, Below(:mass, 1e6, unit=:Msol));
 com_clumps_masked = center_of_mass(clumps, mask=mask)
 com_clumps        = center_of_mass(clumps)
 println()
@@ -1270,7 +1259,7 @@ Clumps COM:       (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ### Bulk-Velocity
 
 ```julia
-mask = map(row->row.rho < 100. / gas.scale.nH, gas.data);
+mask = getmask(gas, Below(:rho, 100, unit=:nH));
 bv_gas_masked = bulk_velocity(gas, :km_s, mask=mask)
 bv_gas        = bulk_velocity(gas, :km_s)
 println()
@@ -1286,7 +1275,7 @@ Gas bulk velocity:        (-1.1999253584798222, -10.678485153330127, -0.44038538
 ```
 
 ```julia
-mask = map(row->row.birth < 100. / particles.scale.Myr, particles.data);
+mask = getmask(particles, Below(:birth, 100, unit=:Myr));
 bv_particles_masked = bulk_velocity(particles, :km_s, mask=mask)
 bv_particles        = bulk_velocity(particles, :km_s)
 println()
@@ -1306,9 +1295,9 @@ Particles bulk velocity:        (-11.623422700314567, -18.440572802490294, -0.32
 (It is also possible to use the mask within the `getvar` function)
 
 ```julia
-maskgas   = map(row->row.rho < 100. / gas.scale.nH, gas.data);
-maskpart  = map(row->row.birth < 100.  / particles.scale.Myr, particles.data);
-maskclump = map(row->row.mass_cl < 1e7 / clumps.scale.Msol, clumps.data);
+maskgas   = getmask(gas, Below(:rho, 100, unit=:nH));
+maskpart  = getmask(particles, Below(:birth, 100, unit=:Myr));
+maskclump = getmask(clumps, Below(:mass, 1e7, unit=:Msol));
 
 stats_gas_masked       = wstat( getvar(gas,       :vx,     :km_s), weight=getvar(gas,       :mass  ),  mask=maskgas);
 stats_particles_masked = wstat( getvar(particles, :vx,     :km_s), weight=getvar(particles, :mass   ), mask=maskpart);
