@@ -196,20 +196,35 @@ Base.:|(a::AbstractRegion, b::AbstractRegion)        = RegionUnion(a, b)
     return cnt / (n^3)
 end
 
-"""
-    subregion(obj::HydroDataType, region::AbstractRegion; split=true, inverse=false, nsub=8, verbose=true)
+# rebuild a data object of the same type with new data, copying every other (defined) field
+function _copy_with_data(obj::T, newdata) where {T}
+    out = T()
+    @inbounds for f in fieldnames(T)
+        f === :data ? setfield!(out, f, newdata) : (isdefined(obj, f) && setfield!(out, f, getfield(obj, f)))
+    end
+    return out
+end
 
-Select the cells covered by a composable `region` ([`Sphere`](@ref), [`Cuboid`](@ref),
-[`Cylinder`](@ref), [`SphericalShell`](@ref), or any boolean combination `∩`/`∪`/`\\`/`!`).
-With `split=true` (default) each kept cell carries an exact `:fraction ∈ (0,1]` — the volume
-fraction inside the region — and `getvar(:mass)`/`getvar(:volume)`/`msum` report the **exact
-in-region totals** (no boundary over/under-counting). With `split=false` whole cells are kept
-by a centre-inside test (the classic behaviour) and no `:fraction` is attached. `inverse=true`
-selects the complement. `nsub` (default 8) is the per-axis sub-sampling of boundary cells for
-curved/composite regions — larger is more accurate, with diminishing returns past ~8 (where the
-grid resolution, not the sampling, sets the error floor).
+const _CellData = Union{HydroDataType, GravDataType, RtDataType}
+
 """
-function subregion(obj::HydroDataType, region::AbstractRegion; split::Bool=true,
+    subregion(obj, region::AbstractRegion; split=true, inverse=false, nsub=8, verbose=true)
+
+Select the data covered by a composable `region` ([`Sphere`](@ref), [`Cuboid`](@ref),
+[`Cylinder`](@ref), [`SphericalShell`](@ref), or any boolean combination `∩`/`∪`/`\\`/`!`).
+Works on hydro, gravity, RT (AMR cells) and particle data.
+
+For **AMR cell** data with `split=true` (default) each kept cell carries an exact
+`:fraction ∈ (0,1]` — the volume fraction inside the region — and `getvar(:mass)` /
+`getvar(:volume)` / `msum` report the **exact in-region totals** (no boundary over/under-
+counting). With `split=false` whole cells are kept by a centre-inside test (the classic
+behaviour) and no `:fraction` is attached. `nsub` (default 8) is the per-axis sub-sampling of
+boundary cells for curved/composite regions (diminishing returns past ~8).
+
+For **particle** data the region is a point-membership test (particles are points — there is
+no fractional volume, so `split`/`nsub` do not apply). `inverse=true` selects the complement.
+"""
+function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
                    inverse::Bool=false, nsub::Int=8, verbose::Bool=true)
     verbose = checkverbose(verbose)
     cellfrac, contains = _prepare(region, obj; nsub=nsub)
@@ -231,10 +246,24 @@ function subregion(obj::HydroDataType, region::AbstractRegion; split::Bool=true,
         println("Region: ", nameof(typeof(region)), split ? "  (exact cell splitting)" : "  (whole cells)")
         println("Selected cells: ", length(newdata), " / ", nrows)
     end
-    out = HydroDataType()
-    out.data = newdata; out.info = obj.info; out.lmin = obj.lmin; out.lmax = obj.lmax
-    out.boxlen = obj.boxlen; out.ranges = obj.ranges; out.selected_hydrovars = obj.selected_hydrovars
-    out.used_descriptors = obj.used_descriptors; out.smallr = obj.smallr; out.smallc = obj.smallc
-    out.scale = obj.scale
-    return out
+    return _copy_with_data(obj, newdata)
+end
+
+function subregion(obj::PartDataType, region::AbstractRegion; inverse::Bool=false, verbose::Bool=true)
+    verbose = checkverbose(verbose)
+    _, contains = _prepare(region, obj)
+    data = obj.data; bl = obj.boxlen
+    xs = IndexedTables.select(data, :x); ys = IndexedTables.select(data, :y); zs = IndexedTables.select(data, :z)
+    nrows = length(data); keep = Vector{Bool}(undef, nrows)
+    @inbounds for i in 1:nrows
+        ins = contains(xs[i]/bl, ys[i]/bl, zs[i]/bl)
+        keep[i] = inverse ? !ins : ins
+    end
+    cols = IndexedTables.columns(data)
+    newdata = IndexedTables.table(map(c -> c[keep], cols); pkey = collect(IndexedTables.pkeynames(data)))
+    if verbose
+        println("Region: ", nameof(typeof(region)), "  (particles)")
+        println("Selected particles: ", count(keep), " / ", nrows)
+    end
+    return _copy_with_data(obj, newdata)
 end

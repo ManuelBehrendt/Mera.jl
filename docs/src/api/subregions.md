@@ -93,6 +93,16 @@ subregion(gas, Cylinder(15.0, 3.0; range_unit=:kpc); split=false)      # classic
 [`Sphere`](@ref), [`Cuboid`](@ref), [`Cylinder`](@ref), [`SphericalShell`](@ref)) are listed in
 the [API reference](../api.md#Types).
 
+The value-type form works on **all data types**: hydro, gravity and RT (AMR cells, with exact
+volume splitting and a `:fraction` column), and particles — where it is a point-membership test
+(particles are points, so `split`/`nsub` do not apply and no `:fraction` is attached).
+
+```julia
+subregion(particles, Sphere(20.0; range_unit=:kpc))                    # stars/DM inside a ball
+subregion(particles, Sphere(20.0; range_unit=:kpc) \ Cylinder(5.0, 30.0; range_unit=:kpc))
+subregion(gravity,   Sphere(20.0; range_unit=:kpc))                    # exact-split gravity cells
+```
+
 ### Boolean combinations
 
 Regions compose with the operators `∩` (intersection), `∪` (union), `\` (difference) and `!`
