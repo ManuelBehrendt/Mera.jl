@@ -8,8 +8,7 @@
 # Writes PNGs into docs/src/assets/clumpfind/. Not part of the Documenter build
 # (the images are committed); re-run only when the example or finders change.
 # -----------------------------------------------------------------------------
-using Mera, CairoMakie
-include(joinpath(@__DIR__, "..", "examples", "synthetic_clumps.jl"))
+using Mera, CairoMakie         # synthetic_clumps is exported by Mera
 
 const OUT = joinpath(@__DIR__, "src", "assets", "clumpfind")
 mkpath(OUT)
@@ -125,6 +124,22 @@ ax4c = Axis(fig4[1,4], title="DensityWatershed (persistence)\n$(cws.nclumps) clu
 scatter_g!(ax4c, labg(DensityWatershed(:rho; threshold=thr2, linking_length=llg, persistence=20.0)))
 for (col,ax) in ((1,ax4a),(3,ax4b),(4,ax4c)); colsize!(fig4.layout, col, Aspect(1,1.0)); end
 save(joinpath(OUT,"ism_background.png"), fig4, px_per_unit=2)
+
+# ---- Figure 5: the field is 3-D (depth separates projected overlaps) --------
+zs = P.z
+fig5 = Figure(size=(900,440))
+ax5a = Axis3(fig5[1,1], title="3-D clump distribution", xlabel="x", ylabel="y", zlabel="z",
+             azimuth=0.65, elevation=0.32)
+ss = 1:3:length(xs)                                   # subsample for a legible 3-D scatter
+scatter!(ax5a, xs[ss], ys[ss], zs[ss]; color=[colorof(tlab[i]) for i in ss], markersize=4, strokewidth=0)
+# highlight that E (z≈0.25) sits under the G1/G2 pair (z≈0.75) — same x,y, different depth
+text!(ax5a, 0.50,0.50,0.25; text="E", fontsize=16, font=:bold)
+text!(ax5a, 0.51,0.52,0.78; text="G1/G2", fontsize=14, font=:bold)
+ax5b = Axis(fig5[1,2], title="x–y projection (depth collapsed):\nE and G1/G2 overlap")
+scatter!(ax5b, xs, ys; color=[colorof(l) for l in tlab], markersize=3, strokewidth=0)
+ax5b.aspect=DataAspect(); ax5b.xlabel="x [kpc]"; ax5b.ylabel="y [kpc]"; xlims!(ax5b,0,1); ylims!(ax5b,0,1)
+poly!(ax5b, Circle(Point2f(0.5,0.51), 0.06); color=(:black,0), strokecolor=:red, strokewidth=1.5)
+save(joinpath(OUT,"three_d.png"), fig5, px_per_unit=2)
 
 println("wrote figures to ", OUT)
 foreach(f->println("  ", f), readdir(OUT))
