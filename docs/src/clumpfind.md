@@ -138,6 +138,25 @@ cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
                                         linking_length=0.4, persistence=0.3))
 ```
 
+### Validators — a composable acceptance chain
+
+Instead of the boundedness keywords, pass a `validators` chain of value-typed criteria that a clump
+must **all** satisfy (an AND): [`MinMembers`](@ref), [`Bound`](@ref) (configures the boundedness pass —
+potential `egrav`, iterative unbinding — and keeps only self-bound clumps), [`VirialBelow`](@ref),
+[`MassAbove`](@ref), and [`Custom`](@ref) (an arbitrary `clump -> Bool` predicate). Membership-mutating
+validators (`Bound` with unbinding) act during the analysis; predicates filter the catalog afterwards —
+regardless of the order listed. A non-empty `validators` overrides the
+`boundedness`/`bound_only`/`min_members`/`egrav`/`iterative_unbinding` keywords.
+
+```julia
+# ≥20 members, tree-gravity self-bound (iterative unbinding), and virially bound:
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
+                  validators=[MinMembers(20), Bound(:tree; iterative=true), VirialBelow(2.0)])
+# arbitrary cut via Custom:
+big = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2);
+                validators=[Custom(c -> c.mass > 1e4 && c.radius < 0.1)])
+```
+
 ### Deblending overlapping clumps
 
 A single threshold merges touching structures into one friends-of-friends group. `deblend` splits

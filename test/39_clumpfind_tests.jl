@@ -59,6 +59,24 @@
             @test all(cl.n_members >= 3 for cl in cbig)
         end
 
+        @testset "validator chain == boundedness kwargs (+ predicate cuts)" begin
+            fdr() = DensityWatershed(:rho; threshold=maximum(getvar(gas,:rho,:nH))/10, threshold_unit=:nH, linking_length=0.5)
+            # a Bound+MinMembers chain reproduces the equivalent boundedness kwargs byte-for-byte
+            ckw = clumpfind(gas, fdr(); boundedness=true, bound_only=true, egrav=:tree,
+                            iterative_unbinding=true, min_members=3)
+            cval = clumpfind(gas, fdr(); validators=[MinMembers(3), Bound(:tree; iterative=true)])
+            @test cval.nclumps == ckw.nclumps
+            @test Float64[cl.mass for cl in cval] ≈ Float64[cl.mass for cl in ckw]
+            @test all(cl.n_members >= 3 && cl.bound for cl in cval)
+            # predicate validators only shrink the catalog (AND-chain), and respect the cut
+            cmass = clumpfind(gas, fdr(); validators=[Bound(:tree), MassAbove(0.0)])
+            @test cmass.nclumps <= clumpfind(gas, fdr(); validators=[Bound(:tree)]).nclumps
+            cvir = clumpfind(gas, fdr(); validators=[Bound(:tree), VirialBelow(2.0)])
+            @test all(cl.alpha_vir < 2.0 for cl in cvir)
+            # VirialBelow with no Bound/boundedness ⇒ no alpha_vir ⇒ clear error
+            @test_throws ArgumentError clumpfind(gas, fdr(); validators=[VirialBelow(2.0)])
+        end
+
         @testset "3D particle FoF" begin
             p = getparticles(info, verbose=false, show_progress=false)
             cat = clumpfind(p, :mass; threshold=0.0, linking_length=1.0)
