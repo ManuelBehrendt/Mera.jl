@@ -198,6 +198,10 @@ Orion (`density`, `X/Y/Z-momentum`, `energy-density`) with velocity = momentum/d
 pressure derived from the energy. The leaf extraction is validated cell-for-cell against an
 independent reader.
 
+A windowed load **prunes box I/O** here too: with `xrange`/`yrange`/`zrange` set, only the Chombo
+boxes whose extent intersects the window are read from the HDF5 file (the level geometry, hence the
+leaf/covered logic, still uses every box), so a sub-region costs a fraction of the snapshot.
+
 Because the `:level` column survives into the standard struct, the **AMR structure is itself
 plottable** — a volume-weighted mean level along the line of sight shows where the grid refines
 (here a self-gravitating isothermal sphere refined toward its centre, Mera levels 6 → 7). The full

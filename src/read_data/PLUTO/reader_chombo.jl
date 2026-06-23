@@ -27,12 +27,19 @@ struct _Level
     exists::BitArray{3}
 end
 
-function _read_level(g, ncomp::Int)
+# Read one level. `window`, when given, is `(s, ranges)` with `s = 1/2^rlevel`: cell data is read
+# ONLY for the boxes whose normalised extent intersects `ranges` (yt-style box I/O pruning). The
+# `exists` mask is always built from the (cheap) box geometry, so the leaf/covered logic across
+# levels stays exact; out-of-window boxes keep zero grid values and are dropped by the caller's
+# per-cell filter. A full-box read (`window === nothing`) keeps the fast single bulk read.
+function _read_level(g, ncomp::Int; window=nothing)
     pd = read(attributes(g)["prob_domain"])          # a Chombo "box" compound → NamedTuple
     lo = (Int(pd.lo_i), Int(pd.lo_j), Int(pd.lo_k))
     n = (Int(pd.hi_i)-lo[1]+1, Int(pd.hi_j)-lo[2]+1, Int(pd.hi_k)-lo[3]+1)
     dx = Float64(read(attributes(g)["dx"]))
-    boxes = g["boxes"][]; data = g["data:datatype=0"][]; off = g["data:offsets=0"][]
+    boxes = g["boxes"][]; off = g["data:offsets=0"][]
+    dataset = g["data:datatype=0"]
+    fulldata = window === nothing ? dataset[] : nothing          # one bulk read for the full path
     grids = Dict{Int,Array{Float64,3}}(c => zeros(Float64, n...) for c in 0:ncomp-1)
     exists = falses(n...)
     for (bi, b) in enumerate(boxes)
@@ -40,9 +47,16 @@ function _read_level(g, ncomp::Int)
         nc = bnx*bny*bnz; start = Int(off[bi])
         i0 = b.lo_i-lo[1]; j0 = b.lo_j-lo[2]; k0 = b.lo_k-lo[3]
         exists[i0+1:i0+bnx, j0+1:j0+bny, k0+1:k0+bnz] .= true
+        if window !== nothing
+            s, r = window                                        # cell position = (i0+a)·s, a = 1…bnx
+            ((i0+bnx)*s >= r[1] && (i0+1)*s <= r[2] &&
+             (j0+bny)*s >= r[3] && (j0+1)*s <= r[4] &&
+             (k0+bnz)*s >= r[5] && (k0+1)*s <= r[6]) || continue # box outside window → skip its data
+        end
+        blk = window === nothing ? (@view fulldata[start+1 : start+nc*ncomp]) :
+                                   dataset[start+1 : start+nc*ncomp]   # per-box hyperslab read
         for c in 0:ncomp-1
-            blk = @view data[start + c*nc + 1 : start + (c+1)*nc]   # i fastest, then j, k
-            sub = reshape(blk, (bnx, bny, bnz))
+            sub = reshape(@view(blk[c*nc + 1 : (c+1)*nc]), (bnx, bny, bnz))   # i fastest, then j, k
             grids[c][i0+1:i0+bnx, j0+1:j0+bny, k0+1:k0+bnz] .= sub
         end
     end
@@ -116,7 +130,11 @@ function gethydro_chombo(info::InfoType;
         a = attributes(f)
         ncomp = Int(read(a["num_components"])); nlev = Int(read(a["num_levels"]))
         comps = [String(read(a["component_$i"])) for i in 0:ncomp-1]
-        levels = [_read_level(f["level_$L"], ncomp) for L in 0:nlev-1]
+        # spatial window (box-normalised); read only intersecting boxes per level when set
+        ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
+        levels = [_read_level(f["level_$L"], ncomp;
+                              window = fullbox ? nothing : (1.0/2.0^(info.levelmin + L), ranges))
+                  for L in 0:nlev-1]
         ref = 2
 
         # which component index supplies each canonical symbol, and how to combine
@@ -171,9 +189,12 @@ function gethydro_chombo(info::InfoType;
         allcols = Any[lvlcol, cxcol, cycol, czcol]
         names = Symbol[:level, :cx, :cy, :cz]
         for s in info.variable_list; push!(allcols, cols[s]); push!(names, s); end
-        keep, ranges = _external_select(info, xrange, yrange, zrange, center, range_unit, verbose,
-                                        lvlcol, cxcol, cycol, czcol)
-        all(keep) || (allcols = _select_cols(allcols, keep))
+        if !fullbox                                         # exact per-cell clip (box prune is conservative)
+            keep = _external_keep(ranges, lvlcol, cxcol, cycol, czcol)
+            verbose && println("[Mera]: load-time range selection → ", count(keep), "/",
+                               length(lvlcol), " leaf cells")
+            all(keep) || (allcols = _select_cols(allcols, keep))
+        end
         data = table(allcols...; names=Tuple(names), pkey=[:level,:cx,:cy,:cz], presorted=false, copy=false)
 
         h = HydroDataType(); h.data = data; h.info = info
