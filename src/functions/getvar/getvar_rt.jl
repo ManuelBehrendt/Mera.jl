@@ -137,6 +137,8 @@ function get_data(dataobject::RtDataType,
         elseif i == :volume
             selected_unit = getunit(dataobject, :volume, vars, units)
             vars_dict[:volume] =  convert(Array{Float64,1}, getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion) .^3 .* selected_unit)
+            # exact region splitting: weight occupied volume by the per-cell inside-fraction
+            in(:fraction, column_names) && (vars_dict[:volume] .*= select(masked_data, :fraction))
 
 
         elseif i == :x
