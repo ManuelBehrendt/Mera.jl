@@ -463,7 +463,9 @@ vtuple.rho
 - **Column tuples**: For mathematical operations requiring multiple variables
 - **Dictionary extraction**: When working with different units or derived quantities
 
-## Filter by Condition
+## Filtering by Condition (table level)
+
+Two layers of filtering are available. **Table-level** filtering (this section) works on the *stored* columns in **code units**, via IndexedTables' `filter` or MERA's [`@filter`](@ref) macro, and returns a table (or, with `construct_datatype`, a new object). **Value-space** filtering ([further below](#Value-Space-Filtering:-filterdata-and-getmask)) instead selects by any `getvar` quantity in physical units and returns a chainable object — see the **Quick Start** above for the recommended path.
 
 ### With IndexedTables (example A)
 
@@ -561,38 +563,6 @@ sum(mass_filtered_tot)
 1.4862767967535206e10
 ```
 
-## Conditional Data Filtering
-
-### Overview
-
-Filtering enables selective data analysis by creating subsets based on specific conditions. MERA supports multiple filtering approaches, each optimized for different complexity levels and performance requirements.
-
-### Filtering Methodologies
-
-1. **IndexedTables Native Filtering**:
-   - Uses `filter(condition_function, table)` syntax
-   - Highest performance for simple conditions
-   - Returns new table structure with filtered rows
-   - Memory efficient through lazy evaluation
-
-2. **MERA Macro Filtering**:
-   - Custom `@filter` macro for streamlined syntax
-   - Automatic type handling and unit conversion
-   - Supports complex expressions with field references
-   - Optimized for astrophysical data patterns
-
-3. **Chained Filtering**:
-   - Sequential application of multiple conditions
-   - Pipeline-style operations for complex criteria
-   - Progressive refinement of datasets
-
-### Performance Considerations
-
-- **Simple conditions**: IndexedTables native filtering is fastest
-- **Complex expressions**: MERA macros provide better readability
-- **Multiple conditions**: Chain operations for optimal memory usage
-- **Large datasets**: Consider filtering before expensive calculations
-
 ## Create a New DataSetType from a Filtered Data Table
 The macros @filter is created by Mera and are not included in IndexedTables.jl.
 
@@ -624,41 +594,7 @@ sum(mass_filtered_tot)
 1.4862767967535206e10
 ```
 
-## Multi-Criteria Filtering
-
-### Advanced Filtering Strategies
-
-Multi-condition filtering enables sophisticated data selection by combining multiple criteria. This section demonstrates various approaches for handling complex geometric and physical constraints.
-
-### Filtering Approaches Comparison
-
-#### 1. **Sequential IndexedTables Filtering**
-```julia
-# Step-by-step refinement
-filtered_db = filter(p->p.rho >= density, gas.data)
-filtered_db = filter(row->geometric_condition(row), filtered_db)
-```
-**Advantages**: Clear logical flow, easy debugging, memory efficient
-**Use case**: When conditions have different computational costs
-
-#### 2. **Combined Condition Filtering**
-```julia
-# Single filter with compound condition
-filtered_db = filter(row-> condition1 && condition2 && condition3, gas.data)
-```
-**Advantages**: Single pass through data, optimal performance
-**Use case**: When all conditions have similar computational requirements
-
-#### 3. **MERA Pipeline Macros**
-```julia
-# Elegant pipeline syntax
-filtered_db = @apply gas.data begin
-    @where :rho >= density
-    @where geometric_condition
-end
-```
-**Advantages**: Readable syntax, automatic optimization, extensible
-**Use case**: Complex analysis workflows with many conditions
+## Multi-Criteria & Geometric Filtering
 
 ### Geometric Filtering Techniques
 
