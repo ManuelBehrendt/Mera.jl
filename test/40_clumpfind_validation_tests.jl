@@ -571,3 +571,36 @@ end
     kept = Mera._tidal_truncate([1,2,3,4], [1,2,3,4], bargs, xs, ys, zs, :tensor, 5.0)
     @test 4 ∉ kept && Set(kept) ⊇ Set([1,2,3])                   # far member stripped, core kept
 end
+
+@testset verbose=true "clumpfind validators (value-type chain, data-free)" begin
+    @testset "Bound constructor defaults" begin
+        b = Bound(:tree)
+        @test b.egrav == :tree && b.iterative == true && b.softening == 0.0 && b.direct_max == 2000
+        b2 = Bound(:approx; iterative=false, softening=0.1, direct_max=500)
+        @test b2.egrav == :approx && b2.iterative == false && b2.softening == 0.1 && b2.direct_max == 500
+    end
+
+    @testset "chain split is order-independent" begin
+        mm, b, preds = Mera._validator_settings([MinMembers(5), Bound(:tree; iterative=true), VirialBelow(2.0), MassAbove(1e3)])
+        @test mm == 5 && b isa Bound && b.iterative && length(preds) == 2
+        # listing the SAME validators in a different order yields the same settings
+        mm2, b2, preds2 = Mera._validator_settings([MassAbove(1e3), VirialBelow(2.0), Bound(:tree; iterative=true), MinMembers(5)])
+        @test mm2 == 5 && b2.egrav == :tree && length(preds2) == 2
+        # empty chain → defaults
+        mm0, b0, preds0 = Mera._validator_settings(AbstractValidator[])
+        @test mm0 == 1 && b0 === nothing && isempty(preds0)
+    end
+
+    @testset "predicate _pass on synthetic clumps" begin
+        @test  Mera._pass(MassAbove(10.0), (mass=20.0,))
+        @test !Mera._pass(MassAbove(10.0), (mass=5.0,))
+        @test  Mera._pass(VirialBelow(2.0), (alpha_vir=1.5,))
+        @test !Mera._pass(VirialBelow(2.0), (alpha_vir=3.0,))
+        @test !Mera._pass(VirialBelow(2.0), (alpha_vir=NaN,))      # non-finite ⇒ not bound ⇒ fails
+        @test !Mera._pass(VirialBelow(2.0), (alpha_vir=Inf,))
+        @test  Mera._pass(Custom(c -> c.n_members > 10), (n_members=20,))
+        @test !Mera._pass(Custom(c -> c.n_members > 10), (n_members=5,))
+        # VirialBelow without an alpha_vir field (no Bound/boundedness) is a clear error
+        @test_throws ArgumentError Mera._pass(VirialBelow(2.0), (mass=1.0,))
+    end
+end
