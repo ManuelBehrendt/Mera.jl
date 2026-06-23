@@ -85,6 +85,9 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
 
 
     verbose = checkverbose(verbose)
+    verbose && typeof(dataobject) == HydroDataType &&
+        _region_value_type_hint(shape; radius=radius, height=height, xrange=xrange, yrange=yrange,
+                                zrange=zrange, center=center, range_unit=range_unit)
     # `cell` (cell-overlap vs cell-centre selection) applies only to AMR cell data; warn if a user
     # sets it on particles/clumps, where it is silently ignored.
     if cell == false && !(typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType)
