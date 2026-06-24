@@ -36,6 +36,21 @@ dm    = getparticles_gadget(info; families=[1])      # just the dark matter
 Masses come from each type's `Masses` dataset, or from `Header/MassTable` for types that store a
 single per-type value (e.g. dark matter).
 
+### Loading a spatial sub-region
+
+`getparticles` honours the RAMSES **spatial-window** arguments `xrange`/`yrange`/`zrange` (with
+`center`/`range_unit`). Particles outside the box are dropped **per type as they are read**, so a
+sub-region of a huge snapshot never accumulates in memory:
+
+```julia
+# the central 20 % box (fractions of the box, relative to its centre)
+part = getparticles(info; xrange=[-0.1, 0.1], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
+                    center=[:bc], range_unit=:standard)
+```
+
+The result equals a full load filtered by `getvar(:x)`, and the window is recorded in `part.ranges`.
+Combine with `families=` (on the frontend) to load, say, only the stars in a region.
+
 ## Worked example: the yt GadgetDiskGalaxy sample
 
 The [yt GadgetDiskGalaxy sample](https://yt-project.org/data/) is a `z ≈ 1.9` galaxy with ~11.9M
