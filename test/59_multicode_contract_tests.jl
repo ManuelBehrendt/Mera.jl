@@ -104,3 +104,20 @@ end
         _assert_contract("FLASH (AMR)", info; uniform=false)
     end
 end
+
+# Output-number discovery (filename-only) powers timeseries/getmovie across codes.
+@testset "output-number discovery (timeseries/getmovie)" begin
+    let d = mktempdir()
+        for n in (10, 20, 5); touch(joinpath(d, "sim.out1." * lpad(n, 5, '0') * ".athdf")); end
+        @test Mera._athena_output_numbers(d) == [5, 10, 20]
+    end
+    let d = mktempdir()
+        for n in (100, 150); touch(joinpath(d, "s_hdf5_plt_cnt_" * lpad(n, 4, '0'))); end
+        touch(joinpath(d, "s_hdf5_chk_0200"))
+        @test Mera._flash_output_numbers(d) == [100, 150, 200]
+    end
+    let d = mktempdir()
+        touch(joinpath(d, "data.0003.3d.hdf5")); touch(joinpath(d, "data.0007.3d.hdf5"))
+        @test Mera._chombo_output_numbers(d) == [3, 7]
+    end
+end

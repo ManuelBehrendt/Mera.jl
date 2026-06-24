@@ -27,6 +27,11 @@ Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, a
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 
+**Multi-output workflows** are code-blind too: [`timeseries`](@ref) and
+[`getmovie`](@ref)/[`savemovie`](@ref) discover the output numbers in a directory per format
+(`*.NNNNN.athdf`, `*_hdf5_plt_cnt_NNNN`, PLUTO's `dbl.out`, …) and iterate them through the generic
+loader — so a time-series or movie reduction runs the same call on every supported code.
+
 ## The shared contract
 
 Whatever the source code, a loaded object obeys the same rules — this is what makes the analysis
