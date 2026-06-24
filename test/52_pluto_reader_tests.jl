@@ -172,6 +172,8 @@ if DATA_AVAILABLE && isdir(CH_PATH)
         g = gethydro(info, verbose=false)
         @test g isa Mera.HydroDataType
         @test :level in Mera.IndexedTables.colnames(g.data)   # AMR table carries a level column
+        @test Mera._CHOMBO_MAP["gravitational-potential"][1] == :gpot   # potential → canonical :gpot
+        @test :gpot in info.variable_list && all(isfinite, getvar(g, :gpot))   # self-gravity field, code-blind
         @test length(g.data) == 646248                 # leaf cells — validated vs an independent reader
         @test all(getvar(g, :rho) .> 0)
         @test all(isfinite, getvar(g, :vx))            # momentum → velocity derivation

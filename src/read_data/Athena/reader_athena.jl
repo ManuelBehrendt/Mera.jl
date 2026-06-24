@@ -21,7 +21,7 @@
 # Athena++ variable name → Mera canonical symbol (primitive and conserved outputs)
 const _ATHENA_VARMAP = Dict(
     "rho"=>:rho, "press"=>:p, "vel1"=>:vx, "vel2"=>:vy, "vel3"=>:vz,
-    "Bcc1"=>:bx, "Bcc2"=>:by, "Bcc3"=>:bz,
+    "Bcc1"=>:bx, "Bcc2"=>:by, "Bcc3"=>:bz, "phi"=>:gpot,        # self-gravity potential → :gpot
     "dens"=>:rho, "Etot"=>:Etot, "mom1"=>:momx, "mom2"=>:momy, "mom3"=>:momz)
 
 _athena_rootlevel(n::Integer) = (l = round(Int, log2(n)); 2^l == n ? l :

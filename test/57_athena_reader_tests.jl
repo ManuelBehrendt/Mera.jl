@@ -98,6 +98,20 @@ end
         @test length(gethydro_athena(info, verbose=false).data) == 64    # full box unchanged
     end
 
+    @testset "self-gravity potential maps to :gpot (code-blind gravity-as-field)" begin
+        @test Mera._ATHENA_VARMAP["phi"] == :gpot                  # Athena `phi` → canonical :gpot
+        sg = joinpath(SIMULATION_PATH, "athena_selfgravity")       # small multigrid Jeans run
+        if isdir(sg) && any(f -> endswith(lowercase(f), ".athdf"), readdir(sg))
+            info = getinfo(2, sg, verbose=false)
+            @test :gpot in info.variable_list
+            gas = gethydro(info, verbose=false)
+            @test all(isfinite, getvar(gas, :gpot)) && extrema(getvar(gas, :gpot)) != (0.0, 0.0)
+            @test Mera._athena_output_numbers(sg) == [0, 1, 2, 3, 4]   # a self-gravity time series
+        else
+            @test_skip "athena_selfgravity fixture not present (MERA_TEST_DATA/athena_selfgravity/)"
+        end
+    end
+
     # PART B (data-backed): a REAL Athena++ snapshot — the yt AM06 sample (Cartesian AMR MHD).
     # Download AM06.tar.gz from yt-project.org/data into MERA_TEST_DATA/athena_AM06/.
     @testset "real Athena++ snapshot — yt AM06 (data-backed)" begin

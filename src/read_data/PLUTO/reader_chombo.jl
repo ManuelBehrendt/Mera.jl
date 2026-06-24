@@ -18,6 +18,7 @@ const _CHOMBO_MAP = Dict(
     "vx1"=>(:vx,:direct), "vx2"=>(:vy,:direct), "vx3"=>(:vz,:direct),
     "X-momentum"=>(:vx,:mom), "Y-momentum"=>(:vy,:mom), "Z-momentum"=>(:vz,:mom),
     "prs"=>(:p,:direct), "energy-density"=>(:p,:energy),
+    "gravitational-potential"=>(:gpot,:direct),       # self-gravity potential → :gpot (code-blind)
 )
 
 # --- read one Chombo level: leaf mask + per-component cell grids -----------------------
