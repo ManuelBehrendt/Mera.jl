@@ -147,3 +147,28 @@ let dir = joinpath(TESTDATA, "flash_gassloshing", "GasSloshing")
         @warn "GasSloshing FLASH fixture not found at $dir — skipping FLASH figure"
     end
 end
+
+# ---- Athena++ self-built MHD blast: time-evolution montage + timeseries reduction ----
+let dir = joinpath(TESTDATA, "athena_blast")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "athena"); mkpath(outdir)
+        fig = Figure(size=(1150, 640))
+        for (i, n) in enumerate((0, 3, 6, 10))
+            gas = gethydro(getinfo(n, dir, verbose=false), verbose=false)
+            m = projection(gas, :sd, res=256, center=[:bc], direction=:z, verbose=false, show_progress=false).maps[:sd]
+            ax = Axis(fig[1, i], title="t = $(round(gas.info.time, digits=2))  (output $n)", aspect=DataAspect())
+            hidedecorations!(ax); heatmap!(ax, log10.(permutedims(m) .+ 1e-30); colormap=:inferno)
+        end
+        ts = Mera.timeseries(dir, d -> (rmax=maximum(getvar(d, :rho)), bmax=maximum(getvar(d, :bmag)));
+                             time_unit=:standard, verbose=false)
+        t = Mera.select(ts, :time); rmax = Mera.select(ts, :rmax); bmax = Mera.select(ts, :bmax)
+        ax = Axis(fig[2, 1:4], xlabel="time [code]", ylabel="maximum", title="timeseries over 11 outputs")
+        lines!(ax, t, rmax, label="ρ_max", linewidth=2); scatter!(ax, t, rmax)
+        lines!(ax, t, bmax, label="|B|_max", linewidth=2); scatter!(ax, t, bmax)
+        axislegend(ax, position=:rt)
+        save(joinpath(outdir, "blast_reference_run.png"), fig, px_per_unit=2)
+        println("wrote blast_reference_run.png")
+    else
+        @warn "athena_blast fixture not found at $dir — skipping blast showcase"
+    end
+end

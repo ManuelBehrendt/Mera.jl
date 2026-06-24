@@ -32,6 +32,38 @@ available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 (`*.NNNNN.athdf`, `*_hdf5_plt_cnt_NNNN`, PLUTO's `dbl.out`, …) and iterate them through the generic
 loader — so a time-series or movie reduction runs the same call on every supported code.
 
+## Worked example: a self-built time series
+
+A small reproducible run makes this concrete — a 3-D **MHD blast** built from source with Athena++
+(32³ root + 2 adaptive-AMR levels, 11 HDF5 outputs). `getinfo` reads one snapshot:
+
+```julia
+julia> info = getinfo(5, "/data/athena_blast");
+
+Code: Athena++
+output: 5  time: 0.50111 [code units]
+root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
+MeshBlocks: 148   variables: (rho, p, vx, vy, vz, bx, by, bz)
+-------------------------------------------------------
+```
+
+and `timeseries` reduces all 11 outputs with the *same call* used for RAMSES — here the peak
+density and field strength over time:
+
+```julia
+ts = timeseries("/data/athena_blast",
+                d -> (rmax = maximum(getvar(d, :rho)), bmax = maximum(getvar(d, :bmag)));
+                time_unit = :standard)
+#  output | time | rmax  | bmax       (ρ_max rises 1.0 → 2.1 as the blast forms;
+#  ───────┼──────┼───────┼─────       the blast elongates along B — top row below)
+```
+
+![Self-built Athena++ MHD blast: log column density at t = 0, 0.3, 0.6, 1.0 (top) — the blast expands and is channelled along the magnetic field — and the timeseries reduction of ρ_max and |B|_max over all 11 outputs (bottom). Loaded, projected and reduced with the same calls used for RAMSES.](assets/athena/blast_reference_run.png)
+
+Every snapshot can also be written to Mera's portable JLD2 format
+([`savedata`](@ref)/[`loaddata`](@ref)) — converting *any* supported code into mera-files that the
+whole toolchain (including `timeseries(…; mera_files=true)`) then reads back identically.
+
 ## The shared contract
 
 Whatever the source code, a loaded object obeys the same rules — this is what makes the analysis
