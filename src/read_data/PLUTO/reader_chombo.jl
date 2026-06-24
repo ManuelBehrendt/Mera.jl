@@ -77,7 +77,7 @@ function _covered(coarse::_Level, fine::_Level, ref::Int)
 end
 
 function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
-    fn = _chombo_file(path)
+    fn = _chombo_file(output, path)
     h5open(fn, "r") do f
         a = attributes(f)
         ncomp = Int(read(a["num_components"])); nlev = Int(read(a["num_levels"]))
@@ -125,7 +125,7 @@ end
 function gethydro_chombo(info::InfoType;
                          xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                          center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
-    fn = _chombo_file(info.path)
+    fn = _chombo_file(round(Int, info.output), info.path)
     h5open(fn, "r") do f
         a = attributes(f)
         ncomp = Int(read(a["num_components"])); nlev = Int(read(a["num_levels"]))

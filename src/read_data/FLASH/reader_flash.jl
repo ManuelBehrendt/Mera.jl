@@ -45,6 +45,17 @@ function _flash_params(f, dname::String)
     return d
 end
 
+# Output numbers present in a directory of FLASH snapshots (`…_hdf5_{plt_cnt,chk}_NNNN`).
+function _flash_output_numbers(path::String)
+    nums = Int[]
+    isdir(path) || return nums
+    for f in readdir(path)
+        m = match(r"_hdf5_(?:plt_cnt|chk)_(\d+)$", f)
+        m === nothing || push!(nums, parse(Int, m.captures[1]))
+    end
+    return sort(unique(nums))
+end
+
 # resolve the FLASH snapshot file: a direct path, or `…_hdf5_{plt_cnt,chk}_NNNN` in a directory
 function _flash_file(output::Int, path::String)
     isfile(path) && return path

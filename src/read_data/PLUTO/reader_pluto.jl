@@ -76,12 +76,28 @@ function detect_simcode(path::String)
 end
 
 # First *.hdf5 file in a directory (the Chombo/PLUTO-AMR snapshot).
-function _chombo_file(path::String)
+# Resolve the Chombo `.hdf5` snapshot: prefer a file whose name carries the output number
+# (e.g. `data.0007.3d.hdf5`); fall back to the only/first file (single-output runs ignore it).
+function _chombo_file(output::Int, path::String)
     isdir(path) || return path
-    for f in sort(readdir(path))
-        endswith(lowercase(f), ".hdf5") && return joinpath(path, f)
+    files = sort(filter(f -> endswith(lowercase(f), ".hdf5"), readdir(path)))
+    isempty(files) && error("Chombo: no .hdf5 file in $path")
+    tag = lpad(output, 4, '0')
+    for f in files; occursin("." * tag * ".", f) && return joinpath(path, f); end
+    return joinpath(path, files[1])
+end
+_chombo_file(path::String) = _chombo_file(0, path)            # back-compatible 1-arg form
+
+# Output numbers present in a directory of Chombo snapshots (`…\.NNNN\.…\.hdf5`).
+function _chombo_output_numbers(path::String)
+    nums = Int[]
+    isdir(path) || return nums
+    for f in readdir(path)
+        endswith(lowercase(f), ".hdf5") || continue
+        m = match(r"\.(\d+)\.", f)
+        m === nothing || push!(nums, parse(Int, m.captures[1]))
     end
-    error("Chombo: no .hdf5 file in $path")
+    return sort(unique(nums))
 end
 # getinfo_chombo / gethydro_chombo are defined in read_data/PLUTO/reader_chombo.jl (uses HDF5).
 

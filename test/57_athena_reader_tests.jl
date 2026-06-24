@@ -113,6 +113,12 @@ end
             @test all(getvar(gas, :rho) .> 0) && msum(gas) > 0
             @test maximum(projection(gas, :sd, res=64, center=[:bc], verbose=false, show_progress=false).maps[:sd]) > 0
 
+            # multi-output workflow: timeseries discovers + iterates the .athdf snapshots
+            @test Mera._athena_output_numbers(am06) == [300, 400, 500]
+            ts = timeseries(am06, d -> (rmax = maximum(getvar(d, :rho)),); outputs=[300, 400],
+                            time_unit=:standard, verbose=false)
+            @test length(ts) == 2 && :rmax in Mera.IndexedTables.colnames(ts)
+
             # load-time spatial selection: a central box reduces to the refined core
             sub = gethydro(info; xrange=[-0.05, 0.05], yrange=[-0.05, 0.05], zrange=[-0.05, 0.05],
                            center=[:bc], range_unit=:standard, verbose=false)
