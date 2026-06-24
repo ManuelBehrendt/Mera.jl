@@ -22,7 +22,7 @@ files in the directory (override with `code=`); the detected code is stored in `
 | **PLUTO-AMR / Chombo** | Chombo HDF5 | AMR | hydro | code | ✅ | ✅ (per box) | [PLUTO](pluto_reader.md#PLUTO-AMR-(Chombo)) |
 | **Athena++** | `.athdf` HDF5 | AMR | hydro · MHD | code | ✅ | ✅ (per MeshBlock) | [Athena++](athena_reader.md) |
 | **FLASH** | HDF5 PARAMESH | AMR | hydro · MHD | CGS | ✅ | ✅ (per leaf block) | [FLASH](flash_reader.md) |
-| **GADGET** (+ GIZMO/AREPO/SWIFT/TNG) | HDF5 `PartType*` | particles | particles (gas · DM · stars · …) | code | — | n/a | [GADGET](gadget_reader.md) |
+| **GADGET** (+ GIZMO/AREPO/SWIFT/TNG) | HDF5 `PartType*` | particles | particles (gas · DM · stars · …) | code | ✅ | ✅ (per type, on read) | [GADGET](gadget_reader.md) |
 
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is

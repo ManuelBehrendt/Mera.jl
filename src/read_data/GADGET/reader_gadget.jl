@@ -97,21 +97,39 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
     return info
 end
 
-# read one (3,N) vector dataset row into a column (function barrier: HDF5 read is boxed `Any`)
-_gadget_row(a::AbstractArray{<:Real,2}, r::Int) = Float64.(@view a[r, :])
+# read selected columns of a (3,N) row (function barrier: HDF5 read is boxed `Any`)
+_gadget_row(a::AbstractArray{<:Real,2}, r::Int, keep) = Float64.(@view a[r, keep])
+
+# indices of particles whose position lies in the (box-normalised) `ranges`
+function _gadget_keep(coords::AbstractArray{<:Real,2}, bl::Float64, ranges)
+    idx = Int[]
+    @inbounds for j in 1:size(coords, 2)
+        ((ranges[1] <= coords[1,j]/bl <= ranges[2]) && (ranges[3] <= coords[2,j]/bl <= ranges[4]) &&
+         (ranges[5] <= coords[3,j]/bl <= ranges[6])) && push!(idx, j)
+    end
+    return idx
+end
 
 """
-    getparticles_gadget(info::InfoType; families=:all, verbose=true) -> PartDataType
+    getparticles_gadget(info::InfoType; families=:all, xrange, yrange, zrange, center,
+                        range_unit, verbose=true) -> PartDataType
 
 Read the particles of a GADGET HDF5 snapshot described by `info` (from [`getinfo_gadget`](@ref))
 into a `PartDataType` with columns `(:x,:y,:z, :vx,:vy,:vz, :mass, :id, :family)`. `:family` is the
 GADGET particle type (0 gas, 1 halo/DM, 2 disk, 3 bulge, 4 stars, 5 boundary/BH). Restrict to a
-subset with `families` (e.g. `families=[4]` for stars, `[1,4]` for DM+stars) — useful to keep RAM
-bounded on large snapshots.
+subset with `families` (e.g. `families=[4]` for stars, `[1,4]` for DM+stars).
+
+`xrange`/`yrange`/`zrange` (+ `center`, `range_unit`) select a spatial window at load time —
+particles outside it are dropped **per type as they are read**, so a sub-region of a large snapshot
+never accumulates in memory (the RAMSES/grid [`getparticles`](@ref) convention).
 """
-function getparticles_gadget(info::InfoType; families=:all, verbose::Bool=true)
+function getparticles_gadget(info::InfoType; families=:all,
+                             xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                             center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
     fn = _gadget_file(round(Int, info.output), info.path)
     want = families === :all ? collect(0:5) : collect(families)
+    ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
+    bl = info.boxlen
     x = Float64[]; y = Float64[]; z = Float64[]; vx = Float64[]; vy = Float64[]; vz = Float64[]
     mass = Float64[]; id = Int64[]; fam = Int32[]
     h5open(fn, "r") do f
@@ -120,18 +138,19 @@ function getparticles_gadget(info::InfoType; families=:all, verbose::Bool=true)
             grp = "PartType$pt"
             (haskey(f, grp) && haskey(f[grp], "Coordinates")) || continue
             coords = read(f[grp]["Coordinates"]); vels = read(f[grp]["Velocities"])   # (3, N)
-            n = size(coords, 2)
-            append!(x, _gadget_row(coords, 1)); append!(y, _gadget_row(coords, 2)); append!(z, _gadget_row(coords, 3))
-            append!(vx, _gadget_row(vels, 1)); append!(vy, _gadget_row(vels, 2)); append!(vz, _gadget_row(vels, 3))
-            m = haskey(f[grp], "Masses") ? Float64.(read(f[grp]["Masses"])) : fill(masstable[pt+1], n)
-            append!(mass, m); append!(id, Int64.(read(f[grp]["ParticleIDs"]))); append!(fam, fill(Int32(pt), n))
+            keep = fullbox ? (1:size(coords, 2)) : _gadget_keep(coords, bl, ranges)    # spatial window
+            isempty(keep) && continue
+            append!(x, _gadget_row(coords, 1, keep)); append!(y, _gadget_row(coords, 2, keep)); append!(z, _gadget_row(coords, 3, keep))
+            append!(vx, _gadget_row(vels, 1, keep)); append!(vy, _gadget_row(vels, 2, keep)); append!(vz, _gadget_row(vels, 3, keep))
+            m = haskey(f[grp], "Masses") ? Float64.(@view read(f[grp]["Masses"])[keep]) : fill(masstable[pt+1], length(keep))
+            append!(mass, m); append!(id, Int64.(@view read(f[grp]["ParticleIDs"])[keep])); append!(fam, fill(Int32(pt), length(keep)))
         end
     end
     data = table(x, y, z, vx, vy, vz, mass, id, fam;
                  names=(:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family), presorted=false, copy=false)
     p = PartDataType()
     p.data = data; p.info = info; p.lmin = info.levelmin; p.lmax = info.levelmax; p.boxlen = info.boxlen
-    p.ranges = [0., 1., 0., 1., 0., 1.]
+    p.ranges = ranges
     p.selected_partvars = [:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family]
     p.used_descriptors = Dict{Any,Any}(); p.scale = info.scale
     verbose && println("[Mera]: GADGET particles = $(length(x)), families ",

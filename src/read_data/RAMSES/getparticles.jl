@@ -202,7 +202,8 @@ function getparticles( dataobject::InfoType;
     if dataobject.simcode == "PLUTO"
         return getparticles_pluto(dataobject; verbose=verbose)
     elseif dataobject.simcode == "GADGET"
-        return getparticles_gadget(dataobject; verbose=verbose)
+        return getparticles_gadget(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                                   center=center, range_unit=range_unit, verbose=verbose)
     end
 
     # ===== ARGUMENT OVERRIDE SECTION =====
