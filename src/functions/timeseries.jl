@@ -83,7 +83,7 @@ function timeseries(path::String, reducer;
                           "(mera_files=$mera_files, outputs=$outputs).")
 
     verbose && println("timeseries: $(length(sel)) snapshot(s) from \"$path\" " *
-                       "($(mera_files ? "mera files" : "RAMSES outputs"), :$datatype)")
+                       "($(mera_files ? "mera files" : "$(detect_simcode(path)) outputs"), :$datatype)")
 
     rows = Vector{NamedTuple}(undef, 0)
     for (k, n) in enumerate(sel)
@@ -113,10 +113,14 @@ end
 function _timeseries_outputs(path::String; mera_files::Bool=false, outputs=:all)
     avail = if mera_files
         _mera_output_numbers(path)
-    elseif detect_simcode(path) === :pluto      # PLUTO lists its outputs in dbl.out
-        pluto_output_numbers(path)
-    else
-        sort(checkoutputs(path; verbose=false).outputs)
+    else                                        # code-blind discovery (timeseries + getmovie)
+        code = detect_simcode(path)
+        if     code === :pluto;  pluto_output_numbers(path)        # PLUTO lists its outputs in dbl.out
+        elseif code === :athena; _athena_output_numbers(path)      # *.NNNNN.athdf
+        elseif code === :flash;  _flash_output_numbers(path)       # *_hdf5_plt_cnt_NNNN
+        elseif code === :chombo; _chombo_output_numbers(path)      # *.NNNN.*.hdf5
+        else   sort(checkoutputs(path; verbose=false).outputs)     # RAMSES
+        end
     end
     return _select_outputs(avail, outputs)
 end

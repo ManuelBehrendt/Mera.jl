@@ -27,6 +27,17 @@ const _ATHENA_VARMAP = Dict(
 _athena_rootlevel(n::Integer) = (l = round(Int, log2(n)); 2^l == n ? l :
     error("Athena++ reader: RootGridSize must be a power of two per axis; got $n."))
 
+# Output numbers present in a directory of Athena++ snapshots (`…NNNNN.athdf`), for timeseries/movies.
+function _athena_output_numbers(path::String)
+    nums = Int[]
+    isdir(path) || return nums
+    for f in readdir(path)
+        m = match(r"\.(\d+)\.athdf$"i, f)
+        m === nothing || push!(nums, parse(Int, m.captures[1]))
+    end
+    return sort(unique(nums))
+end
+
 # Resolve the .athdf snapshot file: accept a direct file path, or find `…NNNNN.athdf` in a dir.
 function _athena_file(output::Int, path::String)
     (isfile(path) && endswith(lowercase(path), ".athdf")) && return path

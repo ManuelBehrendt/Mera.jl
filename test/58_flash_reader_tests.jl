@@ -103,6 +103,11 @@ end
             @test all(getvar(gas, :rho) .> 0) && msum(gas) > 0
             @test sum(getvar(gas, :volume)) ≈ gas.boxlen^3 rtol=1e-12   # leaf cells tile the box (no gaps/overlaps)
             @test maximum(projection(gas, :rho, res=64, center=[:bc], verbose=false, show_progress=false).maps[:rho]) > 0
+            # multi-output workflow: timeseries discovers + iterates the FLASH plot files
+            @test Mera._flash_output_numbers(gd) == [100, 150]
+            ts = timeseries(gd, d -> (rmax = maximum(getvar(d, :rho)),); time_unit=:standard, verbose=false)
+            @test length(ts) == 2 && :rmax in Mera.IndexedTables.colnames(ts)
+
             # load-time sub-region reads only the intersecting leaf blocks
             sub = gethydro(info; xrange=[-0.1, 0.1], yrange=[-0.1, 0.1], zrange=[-0.1, 0.1],
                            center=[:bc], range_unit=:standard, verbose=false)
