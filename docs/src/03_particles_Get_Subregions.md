@@ -1,5 +1,9 @@
 # 3. Particles: Spatial Sub-Region Selection and Analysis
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `03_particles_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_particles_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This tutorial provides comprehensive guidance for selecting and analyzing spatial sub-regions from particle simulation data using Mera.jl. Learn to extract cuboid, cylindrical, spherical, and shell regions with practical visualization examples and advanced spatial filtering techniques.
 
 ## Learning Objectives

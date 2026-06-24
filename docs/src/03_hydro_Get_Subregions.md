@@ -1,5 +1,9 @@
 # 3. Hydro: Sub-Regions and Spatial Selections
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `03_hydro_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_hydro_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 ## Learning Objectives
 
 This notebook provides comprehensive coverage of spatial selection techniques for hydrodynamic simulation data analysis. You will learn to:

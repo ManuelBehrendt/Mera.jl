@@ -1,5 +1,9 @@
 # Hydro Data Projections
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `06_hydro_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/06_hydro_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This tutorial demonstrates advanced projection techniques for hydrodynamical simulation data using MERA.jl. Learn how to create 2D projections from 3D data, handle different coordinate systems, and visualize complex astrophysical datasets.
 
 ## Quick Reference
