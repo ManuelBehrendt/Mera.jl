@@ -172,3 +172,39 @@ let dir = joinpath(TESTDATA, "athena_blast")
         @warn "athena_blast fixture not found at $dir — skipping blast showcase"
     end
 end
+
+# ---- Athena++ self-gravity (Jeans): density + the :gpot potential ----
+let dir = joinpath(TESTDATA, "athena_selfgravity")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "athena"); mkpath(outdir)
+        gas = gethydro(getinfo(2, dir, verbose=false), verbose=false)
+        fig = Figure(size=(760, 360))
+        for (i, (q, lab, cmap)) in enumerate([(:rho, "density ρ", :viridis), (:gpot, "potential :gpot", :RdBu)])
+            m = projection(gas, q, res=128, center=[:bc], direction=:z, verbose=false, show_progress=false).maps[q]
+            ax = Axis(fig[1, i], title="Athena++ self-gravity — $lab", aspect=DataAspect()); hidedecorations!(ax)
+            heatmap!(ax, permutedims(m); colormap=cmap)
+        end
+        save(joinpath(outdir, "selfgravity.png"), fig, px_per_unit=2); println("wrote selfgravity.png")
+    else
+        @warn "athena_selfgravity fixture not found at $dir — skipping gravity figure"
+    end
+end
+
+# ---- Athena++ chemistry (H–H2): the formation curve over time ----
+let dir = joinpath(TESTDATA, "athena_chemistry")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "athena"); mkpath(outdir)
+        ts = Mera.timeseries(dir, d -> (xHI=getvar(d, :xHI)[1], xH2=getvar(d, :xH2)[1]);
+                             time_unit=:standard, verbose=false)
+        t = Mera.select(ts, :time); xHI = Mera.select(ts, :xHI); xH2 = Mera.select(ts, :xH2)
+        fig = Figure(size=(560, 360))
+        ax = Axis(fig[1, 1], xlabel="time [Myr]", ylabel="abundance (per H nucleus)",
+                  title="Athena++ chemistry — H→H₂ formation")
+        lines!(ax, t, xHI, label=":xHI (atomic H)", linewidth=2.5); scatter!(ax, t, xHI)
+        lines!(ax, t, xH2, label=":xH2 (molecular H₂)", linewidth=2.5); scatter!(ax, t, xH2)
+        axislegend(ax, position=:rc)
+        save(joinpath(outdir, "chemistry.png"), fig, px_per_unit=2); println("wrote chemistry.png")
+    else
+        @warn "athena_chemistry fixture not found at $dir — skipping chemistry figure"
+    end
+end

@@ -47,10 +47,15 @@ FLASH/PLUTO particle reading needs a registered-download run.)
 (`*.NNNNN.athdf`, `*_hdf5_plt_cnt_NNNN`, PLUTO's `dbl.out`, …) and iterate them through the generic
 loader — so a time-series or movie reduction runs the same call on every supported code.
 
-## Worked example: a self-built time series
+## Worked examples: self-built runs
 
-A small reproducible run makes this concrete — a 3-D **MHD blast** built from source with Athena++
-(32³ root + 2 adaptive-AMR levels, 11 HDF5 outputs). `getinfo` reads one snapshot:
+These three small Athena++ runs (built from source, regenerable, a few MB each) exercise the
+multi-code workflow end to end — multi-output time series, self-gravity, and chemistry — each loaded
+and analysed with the *same calls* used for RAMSES.
+
+### MHD blast (time series)
+
+A 3-D **MHD blast** (32³ root + 2 adaptive-AMR levels, 11 HDF5 outputs). `getinfo` reads one snapshot:
 
 ```julia
 julia> info = getinfo(5, "/data/athena_blast");
@@ -78,6 +83,35 @@ ts = timeseries("/data/athena_blast",
 Every snapshot can also be written to Mera's portable JLD2 format
 ([`savedata`](@ref)/[`loaddata`](@ref)) — converting *any* supported code into mera-files that the
 whole toolchain (including `timeseries(…; mera_files=true)`) then reads back identically.
+
+### Self-gravity
+
+A **Jeans** run with self-gravity (multigrid) writes the gravitational potential, which the reader
+exposes as the canonical `:gpot` field — `getvar`/`projection`/`timeseries` then treat it like any
+other quantity:
+
+```julia
+gas = gethydro(getinfo(2, "/data/athena_selfgravity"))
+projection(gas, :gpot)                       # the potential well tracking the density (right panel)
+projection(gas, :rho)                        # the Jeans-mode density perturbation (left panel)
+```
+
+![Athena++ self-gravity (Jeans mode): the density perturbation ρ (left) and the gravitational potential `:gpot` (right) — the potential well tracks the over-densities. Same getvar(:gpot)/projection call as FLASH and Chombo.](assets/athena/selfgravity.png)
+
+### Chemistry
+
+A run with the **H₂ chemistry network** writes the species abundances, mapped to canonical
+fractions `:xHI`/`:xH2`. A `timeseries` of a species is the same call as any other reduction — here
+the H→H₂ formation over 50 Myr:
+
+```julia
+ts = timeseries("/data/athena_chemistry",
+                d -> (xHI = getvar(d, :xHI)[1], xH2 = getvar(d, :xH2)[1]);
+                time_unit = :standard)
+#  output | time | xHI  | xH2     (xH2 rises 0 → 0.45 as molecular hydrogen forms)
+```
+
+![Athena++ H–H₂ chemistry: the atomic (`:xHI`) and molecular (`:xH2`) hydrogen fractions over 50 Myr — H₂ forms until the network saturates. Species load as canonical fractions across codes; the time-series uses the same call as any other reduction.](assets/athena/chemistry.png)
 
 ## The shared contract
 
