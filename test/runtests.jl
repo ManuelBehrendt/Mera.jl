@@ -77,6 +77,7 @@ if isempty(_focus)
         include("57_athena_reader_tests.jl")  # data-free: Athena++ .athdf reader contract (synthetic HDF5)
         include("58_flash_reader_tests.jl")  # data-free: FLASH HDF5 PARAMESH reader contract (synthetic HDF5)
         include("59_multicode_contract_tests.jl")  # data-free: cross-reader contract (PLUTO/Athena++/FLASH satisfy the same invariants)
+        include("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
     end
 
     # ========================================================================

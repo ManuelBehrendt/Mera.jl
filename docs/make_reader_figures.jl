@@ -226,3 +226,22 @@ let dir = joinpath(TESTDATA, "athena_chemistry")
         @warn "athena_chemistry fixture not found at $dir — skipping chemistry figure"
     end
 end
+
+# ---- GADGET disk galaxy: DM cosmic web + star particles (scatter) ----
+let dir = joinpath(TESTDATA, "gadget_diskgalaxy", "GadgetDiskGalaxy")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "gadget"); mkpath(outdir)
+        info = getinfo(200, dir, verbose=false)
+        sub(v, n) = v[1:max(1, length(v) ÷ n):end]                 # ~n points for plotting
+        fig = Figure(size=(900, 400))
+        dm = getparticles_gadget(info, families=[1], verbose=false)
+        ax1 = Axis(fig[1, 1], title="GADGET — dark-matter halo (4.8M)", xlabel="x [code]", ylabel="y [code]", aspect=DataAspect())
+        scatter!(ax1, sub(getvar(dm, :x), 60000), sub(getvar(dm, :y), 60000); markersize=1.0, color=(:steelblue, 0.25))
+        st = getparticles_gadget(info, families=[4], verbose=false)
+        ax2 = Axis(fig[1, 2], title="GADGET — star particles (451k)", xlabel="x [code]", ylabel="y [code]", aspect=DataAspect())
+        scatter!(ax2, sub(getvar(st, :x), 60000), sub(getvar(st, :y), 60000); markersize=1.0, color=(:darkorange, 0.3))
+        save(joinpath(outdir, "diskgalaxy.png"), fig, px_per_unit=2); println("wrote diskgalaxy.png")
+    else
+        @warn "GadgetDiskGalaxy fixture not found at $dir — skipping GADGET figure"
+    end
+end

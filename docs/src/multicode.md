@@ -22,6 +22,7 @@ files in the directory (override with `code=`); the detected code is stored in `
 | **PLUTO-AMR / Chombo** | Chombo HDF5 | AMR | hydro | code | ✅ | ✅ (per box) | [PLUTO](pluto_reader.md#PLUTO-AMR-(Chombo)) |
 | **Athena++** | `.athdf` HDF5 | AMR | hydro · MHD | code | ✅ | ✅ (per MeshBlock) | [Athena++](athena_reader.md) |
 | **FLASH** | HDF5 PARAMESH | AMR | hydro · MHD | CGS | ✅ | ✅ (per leaf block) | [FLASH](flash_reader.md) |
+| **GADGET** (+ GIZMO/AREPO/SWIFT/TNG) | HDF5 `PartType*` | particles | particles (gas · DM · stars · …) | code | — | n/a | [GADGET](gadget_reader.md) |
 
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
@@ -46,8 +47,10 @@ stiff network overruns the forward-Euler solver, so the run is built against **C
 the [Radiative transfer (PDR)](#Radiative-transfer-(PDR)) example below is one such run. Mera's
 reading of all 12 species and the 8 photon-group fields is independent of the solver.
 
-(**Particles**, by contrast, exist only in PLUTO so far — the public Athena++ has none, and
-FLASH/PLUTO particle reading needs a registered-download run.)
+**Particles** load through [`getparticles`](@ref) into a `PartDataType`, code-blind too: PLUTO
+Lagrangian particles, and the **GADGET HDF5** family (GADGET/GIZMO/AREPO/SWIFT/EAGLE/TNG) with its
+gas/DM/star particle types — so `msum`, `center_of_mass`, `getvar` and projections run the same on a
+RAMSES halo or a GADGET galaxy. (Athena++/FLASH particle reading is not yet wired.)
 
 **Multi-output workflows** are code-blind too: [`timeseries`](@ref) and
 [`getmovie`](@ref)/[`savemovie`](@ref) discover the output numbers in a directory per format
