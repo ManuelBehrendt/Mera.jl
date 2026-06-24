@@ -1,5 +1,9 @@
 # 10. Radiative Transfer (RT)
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `10_multi_RadiativeTransfer.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/10_multi_RadiativeTransfer.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 RAMSES can run with **radiative transfer** (`RT=1`): on top of the gas it transports, per
 photon group `g`, a photon number density `Np`g` and the photon flux `Fx`g`/`Fy`g`/`Fz`g`
 (an **M1 moment** field, so `nvarrt = 4·nGroups`). Mera reads it with **`getrt`**, exactly

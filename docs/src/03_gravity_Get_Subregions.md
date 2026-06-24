@@ -1,5 +1,9 @@
 # 3. Gravity: Get Sub-Regions of The Loaded Data
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `03_gravity_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_gravity_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 ## Load the Data
 
 ```julia

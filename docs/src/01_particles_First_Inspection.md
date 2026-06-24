@@ -1,5 +1,9 @@
 # Particle Data: First Inspection
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `01_particles_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_particles_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This notebook provides a comprehensive introduction to loading and analyzing particle simulation data using Mera.jl. You'll learn the fundamentals of working with RAMSES particle data and its relationship to AMR (Adaptive Mesh Refinement) structures.
 
 ## Learning Objectives

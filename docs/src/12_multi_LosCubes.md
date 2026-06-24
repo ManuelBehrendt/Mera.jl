@@ -1,5 +1,9 @@
 # Line-of-sight cubes, kinematics & mock observations
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `12_multi_LosCubes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/12_multi_LosCubes.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 A projection gives **one** value per pixel (a sum or weighted average down the sightline).
 Here we go further: the **distribution** of a quantity along each sightline (a per-pixel
 spectrum), line-of-sight velocity fields, position–velocity diagrams, and beam+noise mock
