@@ -1,5 +1,9 @@
 # 3. Clumps: Get Sub-Regions of The Loaded Data
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 ## Learning Objectives
 
 By the end of this tutorial, you will be able to:

@@ -1,5 +1,9 @@
 # Off-axis projection: validation & error analysis
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `13_multi_OffAxis_Validation.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/13_multi_OffAxis_Validation.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 Two questions every projection must answer: **does it conserve** (nothing lost), and **is it
 accurate** (mass in the right place)? This notebook reproduces both, plus the parallel speed-up.
 Follows the *Conservation proof* and *binning fidelity* docs.

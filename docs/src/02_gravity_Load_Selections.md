@@ -1,5 +1,9 @@
 # Gravity Data: Load Selected Variables and Spatial Ranges
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `02_gravity_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/02_gravity_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This notebook provides a comprehensive guide to selective gravitational field data loading and spatial filtering in Mera.jl. You'll learn advanced techniques for efficiently loading only the gravity data you need from large gravitational field simulations.
 
 ## Learning Objectives

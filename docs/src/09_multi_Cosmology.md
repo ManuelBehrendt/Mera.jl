@@ -1,5 +1,9 @@
 # 9. Cosmological Simulations
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 RAMSES writes the *same* info-file fields for every run, so Mera reads them for
 both idealised and cosmological simulations. A **non-cosmological** run carries
 sentinel values (`aexp = 1`, `H0 = 1`, `omega_m = 1`, `omega_l = 0`); a

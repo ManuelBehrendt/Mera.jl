@@ -1,5 +1,9 @@
 # Data Masking, Filtering, and Metaprogramming
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 ## Advanced Data Manipulation and Selection Techniques
 
 ### Tutorial Overview

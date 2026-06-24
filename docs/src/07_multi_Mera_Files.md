@@ -1,4 +1,8 @@
 # Save/Convert/Load MERA-Files
+
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `07_multi_Mera_Files.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/07_multi_Mera_Files.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 The RAMSES simulation data is stored in JLD2 file format and can be accessed from these files. Our high-resolution galaxy simulations, run on over 5,000 cores, show that using compressed Mera files greatly decreases storage requirements and accelerates data loading compared to standard RAMSES files. Refer to the Benchmarks section.
 
 ## Quick Reference

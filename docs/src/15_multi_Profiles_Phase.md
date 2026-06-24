@@ -1,5 +1,9 @@
 # Profiles & phase diagrams — a step-by-step guide
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 `profile`, `phase`, `profile3d`, `rotationcurve` and `profiletimeseries` are **general, weighted
 reductions** over any Mera field — a *profile* bins by one quantity (often a **radius**) and reports
 per-bin **statistics** of another; a *phase diagram* is a 2-D weighted histogram. They work on

@@ -1,5 +1,9 @@
 # First Steps with Mera.jl
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `00_multi_FirstSteps.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/00_multi_FirstSteps.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This notebook introduces the essential concepts and workflow for inspecting, loading, and analyzing RAMSES simulation outputs using Mera.jl.
 
 ## Learning Objectives

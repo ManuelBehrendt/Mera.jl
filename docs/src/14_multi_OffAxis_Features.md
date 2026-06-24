@@ -1,5 +1,9 @@
 # Off-axis: advanced LOS features & mock observations
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `14_multi_OffAxis_Features.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/14_multi_OffAxis_Features.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This tutorial walks through the line-of-sight analysis tools built on top of Mera's off-axis
 projection — **velocity/field dispersion (`moment2`)**, the **integrated spectrum**, **off-axis
 slices**, the **column integral**, **emission + absorption (`emission_map`)**, a telescope **beam

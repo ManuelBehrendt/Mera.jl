@@ -1,5 +1,9 @@
 # Off-axis projection with Mera
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `11_multi_OffAxisProjection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/11_multi_OffAxisProjection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 Project hydro / RT / gravity / particle data along **any line of sight**, not just the box
 axes. An off-axis projection is **orthographic**: the observer is at infinity, so all sightlines
 are parallel; each cell is carried along the line of sight onto the image plane.

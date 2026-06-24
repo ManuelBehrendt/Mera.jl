@@ -1,5 +1,9 @@
 # 4. Multi-Physics Basic Calculations and Statistical Analysis
 
+!!! tip "Run it yourself"
+    This tutorial is also an executable **Jupyter notebook** — [open / download `04_multi_Basic_Calculations.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/04_multi_Basic_Calculations.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 This comprehensive tutorial demonstrates essential computational methods for analyzing multi-physics simulation data using MERA.jl. Learn to calculate fundamental quantities, statistical measures, and derived properties across hydro, particle, and clump datasets with proper unit handling and weighting schemes.
 
 ## Learning Objectives
