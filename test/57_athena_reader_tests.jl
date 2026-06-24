@@ -112,6 +112,24 @@ end
         end
     end
 
+    @testset "chemistry species map to canonical fractions (:xHI/:xH2/…)" begin
+        @test Mera._ATHENA_VARMAP["rH"] == :xHI && Mera._ATHENA_VARMAP["rH2"] == :xH2
+        @test Mera._ATHENA_VARMAP["rCO"] == :xCO && Mera._ATHENA_VARMAP["rH+"] == :xHII
+        @test Mera._ATHENA_VARMAP["Er"] == :Erad            # RT-transport field naming (framework)
+        ch = joinpath(SIMULATION_PATH, "athena_chemistry")  # small H–H2 chemistry run
+        if isdir(ch) && any(f -> endswith(lowercase(f), ".athdf"), readdir(ch))
+            info = getinfo(5, ch, verbose=false)
+            @test :xHI in info.variable_list && :xH2 in info.variable_list   # rH/rH2 → canonical
+            gas = gethydro(info, verbose=false)
+            @test all(0 .<= getvar(gas, :xH2) .<= 1)        # a sensible molecular fraction
+            g0 = gethydro(getinfo(0, ch, verbose=false), verbose=false)
+            @test getvar(gas, :xH2)[1] > getvar(g0, :xH2)[1]               # H2 forms over the run
+            @test Mera._athena_output_numbers(ch) == [0, 1, 2, 3, 4, 5]     # a chemistry time series
+        else
+            @test_skip "athena_chemistry fixture not present (MERA_TEST_DATA/athena_chemistry/)"
+        end
+    end
+
     # PART B (data-backed): a REAL Athena++ snapshot — the yt AM06 sample (Cartesian AMR MHD).
     # Download AM06.tar.gz from yt-project.org/data into MERA_TEST_DATA/athena_AM06/.
     @testset "real Athena++ snapshot — yt AM06 (data-backed)" begin

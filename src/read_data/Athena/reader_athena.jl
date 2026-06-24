@@ -22,7 +22,14 @@
 const _ATHENA_VARMAP = Dict(
     "rho"=>:rho, "press"=>:p, "vel1"=>:vx, "vel2"=>:vy, "vel3"=>:vz,
     "Bcc1"=>:bx, "Bcc2"=>:by, "Bcc3"=>:bz, "phi"=>:gpot,        # self-gravity potential → :gpot
-    "dens"=>:rho, "Etot"=>:Etot, "mom1"=>:momx, "mom2"=>:momy, "mom3"=>:momz)
+    "dens"=>:rho, "Etot"=>:Etot, "mom1"=>:momx, "mom2"=>:momy, "mom3"=>:momz,
+    # --- chemistry species abundances (Athena writes them as `r<species>`) → canonical x-fractions.
+    #     They land as direct columns, so getvar(:xHI)/:xH2/:xCO/… return them across codes.
+    "rH"=>:xHI, "rH2"=>:xH2, "rH+"=>:xHII, "rH2+"=>:xH2II, "rH3+"=>:xH3II, "re"=>:xe, "r*e"=>:xe,
+    "rHe+"=>:xHeII, "rC+"=>:xCII, "rCO"=>:xCO, "rCHx"=>:xCHx, "rOHx"=>:xOHx,
+    "rHCO+"=>:xHCOII, "rO+"=>:xOII, "rSi+"=>:xSiII,
+    # --- radiative-transfer fields (six-ray / nr_radiation), when a run writes them.
+    "Er"=>:Erad, "Fr1"=>:Frad_x, "Fr2"=>:Frad_y, "Fr3"=>:Frad_z)
 
 _athena_rootlevel(n::Integer) = (l = round(Int, log2(n)); 2^l == n ? l :
     error("Athena++ reader: RootGridSize must be a power of two per axis; got $n."))
