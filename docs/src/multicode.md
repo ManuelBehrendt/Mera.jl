@@ -34,10 +34,18 @@ identically on every code.
 
 **Chemistry & radiative transfer** follow suit. A code's species abundances (Athena++ writes its
 chemistry networks as `rH`/`rH2`/`rCO`/`rH+`/…) are mapped to **canonical fractions** — `:xHI`,
-`:xH2`, `:xCO`, `:xHII`, … — and radiation-transport fields to `:Erad`/`:Frad_*`. Because these land
-as direct columns, `getvar(gas, :xH2)`, a `projection` of it, or a `timeseries` of an abundance runs
-the same on every code that writes them (e.g. an H–H₂ formation series, or a CO map). RAMSES RT runs
-keep their own descriptor-based `getvar` species; the canonical names are the shared vocabulary.
+`:xH2`, `:xCO`, `:xHII`, … — and radiation-transport fields to canonical names too: `nr_radiation`
+energy/flux → `:Erad`/`:Frad_*`, and a six-ray chemistry run's per-frequency mean intensities
+(`ir_avg0…7`) → **photon groups** `:Np1…:Np8` (the RAMSES-RT convention). Because these land as
+direct columns, `getvar(gas, :xH2)` or `getvar(gas, :Np1)`, a `projection` of either, or a
+`timeseries` of an abundance runs the same on every code that writes them. RAMSES RT runs keep their
+own descriptor-based `getvar` species; the canonical names are the shared vocabulary.
+
+!!! note "Stiff chemistry needs an implicit solver"
+    The full gow17 (C/O) network + six-ray transfer is stiff; the public Athena++ forward-Euler
+    solver cannot evolve it, so a complete PDR run (attenuated radiation + evolving abundances) needs
+    the **CVODE** solver (`--chem_ode_solver cvode`, SUNDIALS). Mera's reading of all 12 species and
+    the 8 photon-group fields is independent of the solver.
 
 (**Particles**, by contrast, exist only in PLUTO so far — the public Athena++ has none, and
 FLASH/PLUTO particle reading needs a registered-download run.)

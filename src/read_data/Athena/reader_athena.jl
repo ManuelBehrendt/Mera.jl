@@ -28,8 +28,11 @@ const _ATHENA_VARMAP = Dict(
     "rH"=>:xHI, "rH2"=>:xH2, "rH+"=>:xHII, "rH2+"=>:xH2II, "rH3+"=>:xH3II, "re"=>:xe, "r*e"=>:xe,
     "rHe+"=>:xHeII, "rC+"=>:xCII, "rCO"=>:xCO, "rCHx"=>:xCHx, "rOHx"=>:xOHx,
     "rHCO+"=>:xHCOII, "rO+"=>:xOII, "rSi+"=>:xSiII,
-    # --- radiative-transfer fields (six-ray / nr_radiation), when a run writes them.
-    "Er"=>:Erad, "Fr1"=>:Frad_x, "Fr2"=>:Frad_y, "Fr3"=>:Frad_z)
+    # --- radiative-transfer fields. nr_radiation: Er/Fr*. six-ray chem radiation: per-frequency
+    #     mean intensity ir_avg0..N → canonical photon groups :Np1..:Np(N+1) (RAMSES-RT convention).
+    "Er"=>:Erad, "Fr1"=>:Frad_x, "Fr2"=>:Frad_y, "Fr3"=>:Frad_z,
+    "ir_avg0"=>:Np1, "ir_avg1"=>:Np2, "ir_avg2"=>:Np3, "ir_avg3"=>:Np4,
+    "ir_avg4"=>:Np5, "ir_avg5"=>:Np6, "ir_avg6"=>:Np7, "ir_avg7"=>:Np8)
 
 _athena_rootlevel(n::Integer) = (l = round(Int, log2(n)); 2^l == n ? l :
     error("Athena++ reader: RootGridSize must be a power of two per axis; got $n."))
