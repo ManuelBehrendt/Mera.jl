@@ -27,6 +27,12 @@ Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, a
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 
+**Self-gravity** rides along the same way: where a code writes a gravitational potential into its
+snapshot (Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`) the reader exposes it as
+a single canonical field, so `getvar(gas, :gpot)` — and `projection`, `timeseries`, … on it — runs
+identically on every code. (Particles, by contrast, exist only in PLUTO so far; the public Athena++
+has none, and FLASH particle reading is future work.)
+
 **Multi-output workflows** are code-blind too: [`timeseries`](@ref) and
 [`getmovie`](@ref)/[`savemovie`](@ref) discover the output numbers in a directory per format
 (`*.NNNNN.athdf`, `*_hdf5_plt_cnt_NNNN`, PLUTO's `dbl.out`, …) and iterate them through the generic
