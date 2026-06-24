@@ -65,6 +65,16 @@ end
         @test length(getparticles(info2, verbose=false).data) == 5
     end
 
+    @testset "load-time spatial selection (xrange/yrange/zrange)" begin
+        info = getinfo_gadget(0, dir, verbose=false)
+        x = getvar(getparticles_gadget(info, verbose=false), :x)        # [10,40,5,15,25], boxlen 100
+        sub = getparticles_gadget(info; xrange=[0.0, 0.2], center=[0., 0., 0.], range_unit=:standard, verbose=false)
+        @test length(sub.data) == count(x .<= 20.0)                     # x/boxlen ≤ 0.2 ⇒ x ≤ 20  (3 particles)
+        @test maximum(getvar(sub, :x)) <= 20.0 && sub.ranges[1:2] == [0.0, 0.2]
+        # the generic router forwards the same window
+        @test length(getparticles(info; xrange=[0.0, 0.2], center=[0., 0., 0.], range_unit=:standard, verbose=false).data) == length(sub.data)
+    end
+
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
     @testset "real GADGET snapshot — yt GadgetDiskGalaxy (data-backed)" begin
         gd = joinpath(SIMULATION_PATH, "gadget_diskgalaxy", "GadgetDiskGalaxy")
@@ -76,6 +86,13 @@ end
             @test all(Mera.select(stars.data, :family) .== 4)
             @test all(0 .<= getvar(stars, :x) .<= info.boxlen) && msum(stars) > 0
             @test length(center_of_mass(stars)) == 3
+            # load-time spatial window: a central box drops out-of-region stars, matching a getvar(:x) filter
+            x = getvar(stars, :x); y = getvar(stars, :y); z = getvar(stars, :z); bl = info.boxlen
+            sub = getparticles_gadget(info; families=[4], xrange=[-0.1, 0.1], yrange=[-0.1, 0.1],
+                                      zrange=[-0.1, 0.1], center=[:bc], range_unit=:standard, verbose=false)
+            lo = 0.4bl; hi = 0.6bl
+            @test length(sub.data) == count((lo .<= x .<= hi) .& (lo .<= y .<= hi) .& (lo .<= z .<= hi))
+            @test 0 < length(sub.data) < length(stars.data) && sub.ranges != [0., 1., 0., 1., 0., 1.]
         else
             @test_skip "GadgetDiskGalaxy fixture not present (MERA_TEST_DATA/gadget_diskgalaxy/)"
         end
