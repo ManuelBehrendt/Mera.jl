@@ -93,6 +93,18 @@ convention the RAMSES/PLUTO particle readers use, so the particle analysis works
 mapping is verified data-free in `test/60_gadget_reader_tests.jl` (a synthesised GADGET file with a
 `MassTable` fallback) and on the real GadgetDiskGalaxy sample.
 
+## Reference readers
+
+The GADGET HDF5 layout is shared and well-documented; this frontend agrees with the *origin* tools:
+
+- **The GADGET snapshot specification** — the `Header` + `PartType*` group format (`Coordinates`/
+  `Velocities`/`Masses`/`ParticleIDs`, `Header/MassTable`/`BoxSize`/…), documented in the
+  [GADGET-4 guide](https://wwwmpa.mpa-garching.mpg.de/gadget4/) and reused by GIZMO, AREPO, SWIFT,
+  EAGLE and IllustrisTNG.
+- **[yt](https://yt-project.org)** — its particle frontends read the same format and select
+  sub-volumes lazily via *data objects*; Mera's load-time window mirrors that on the particle list.
+  The GadgetDiskGalaxy sample used above comes from the [yt sample-data collection](https://yt-project.org/data/).
+
 ## See also
 
 - [Multi-code support](multicode.md) — the code-blind architecture and the other readers.
