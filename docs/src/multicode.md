@@ -41,11 +41,10 @@ direct columns, `getvar(gas, :xH2)` or `getvar(gas, :Np1)`, a `projection` of ei
 `timeseries` of an abundance runs the same on every code that writes them. RAMSES RT runs keep their
 own descriptor-based `getvar` species; the canonical names are the shared vocabulary.
 
-!!! note "Stiff chemistry needs an implicit solver"
-    The full gow17 (C/O) network + six-ray transfer is stiff; the public Athena++ forward-Euler
-    solver cannot evolve it, so a complete PDR run (attenuated radiation + evolving abundances) needs
-    the **CVODE** solver (`--chem_ode_solver cvode`, SUNDIALS). Mera's reading of all 12 species and
-    the 8 photon-group fields is independent of the solver.
+A full **PDR** run (gow17 C/O chemistry + six-ray transfer) needs an implicit ODE solver — the
+stiff network overruns the forward-Euler solver, so the run is built against **CVODE** (SUNDIALS);
+the [Radiative transfer (PDR)](#Radiative-transfer-(PDR)) example below is one such run. Mera's
+reading of all 12 species and the 8 photon-group fields is independent of the solver.
 
 (**Particles**, by contrast, exist only in PLUTO so far — the public Athena++ has none, and
 FLASH/PLUTO particle reading needs a registered-download run.)
@@ -120,6 +119,21 @@ ts = timeseries("/data/athena_chemistry",
 ```
 
 ![Athena++ H–H₂ chemistry: the atomic (`:xHI`) and molecular (`:xH2`) hydrogen fractions over 50 Myr — H₂ forms until the network saturates. Species load as canonical fractions across codes; the time-series uses the same call as any other reduction.](assets/athena/chemistry.png)
+
+### Radiative transfer (PDR)
+
+A **photo-dissociation region**: gow17 (C/O) chemistry + **six-ray radiative transfer** (CVODE
+solver). The eight radiation frequency bins load as photon groups `:Np1…:Np8`, the species as
+canonical fractions — so the whole PDR stratification is just `getvar`/`projection`:
+
+```julia
+gas = gethydro(getinfo(5, "/data/athena_sixray"))
+projection(gas, :Np1)                        # the UV radiation field, attenuated into the cloud
+projection(gas, :xH2)                        # molecular H₂, forming in the shielded interior
+projection(gas, :xCII)                       # ionized carbon, at the UV-exposed surface
+```
+
+![Athena++ six-ray PDR: the UV radiation field `:Np1` shielded toward the centre (left), molecular `:xH2` forming in the shielded interior (middle), and ionized carbon `:xCII` at the irradiated surface (right) — the textbook PDR stratification, read code-blind via canonical names.](assets/athena/pdr_sixray.png)
 
 ## The shared contract
 

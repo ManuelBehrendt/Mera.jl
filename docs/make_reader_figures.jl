@@ -190,6 +190,24 @@ let dir = joinpath(TESTDATA, "athena_selfgravity")
     end
 end
 
+# ---- Athena++ six-ray PDR: radiation + chemistry stratification ----
+let dir = joinpath(TESTDATA, "athena_sixray")
+    if isdir(dir)
+        outdir = joinpath(@__DIR__, "src", "assets", "athena"); mkpath(outdir)
+        gas = gethydro(getinfo(5, dir, verbose=false), verbose=false)
+        fig = Figure(size=(1140, 360))
+        for (i, (q, lab, cmap)) in enumerate([(:Np1, "radiation :Np1 (six-ray)", :inferno),
+                                              (:xH2, "molecular :xH2", :viridis), (:xCII, "ionized C :xCII", :plasma)])
+            m = projection(gas, q, res=128, center=[:bc], direction=:z, verbose=false, show_progress=false).maps[q]
+            ax = Axis(fig[1, i], title="PDR — $lab", aspect=DataAspect()); hidedecorations!(ax)
+            heatmap!(ax, permutedims(m); colormap=cmap)
+        end
+        save(joinpath(outdir, "pdr_sixray.png"), fig, px_per_unit=2); println("wrote pdr_sixray.png")
+    else
+        @warn "athena_sixray fixture not found at $dir — skipping PDR figure"
+    end
+end
+
 # ---- Athena++ chemistry (H–H2): the formation curve over time ----
 let dir = joinpath(TESTDATA, "athena_chemistry")
     if isdir(dir)
