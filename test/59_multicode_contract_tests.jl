@@ -87,6 +87,12 @@ function _assert_contract(name, info; uniform::Bool)
         @test length(sub.data) == count(x .<= 0.5)
         @test sub.ranges[1:2] == [0.0, 0.5]
         @test maximum(getvar(sub, :x)) <= 0.5 + 1e-9
+
+        # Mera-file persistence round-trips (savedata/loaddata) — converts any code to Mera's JLD2
+        tmp = mktempdir(); savedata(gas, tmp; fmode=:write, verbose=false)
+        g2 = loaddata(round(Int, info.output), tmp, :hydro; verbose=false)
+        @test length(g2.data) == length(gas.data) && getvar(g2, :rho) == getvar(gas, :rho)
+        @test g2.info.simcode == info.simcode
     end
 end
 

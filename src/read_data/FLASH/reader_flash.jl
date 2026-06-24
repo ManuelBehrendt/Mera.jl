@@ -89,7 +89,7 @@ and `:kpc`/`:Msol`/… conversions are already physical. Override `unit_length`/
 function getinfo_flash(output::Int, path::String; unit_length::Real=1.0, unit_density::Real=1.0,
                        unit_velocity::Real=1.0, verbose::Bool=true)
     fn = _flash_file(output, path)
-    info = InfoType(); info.descriptor = DescriptorType()
+    info = InfoType(); info.descriptor = _external_descriptor()
     h5open(fn, "r") do f
         rp = _flash_params(f, "real runtime parameters")
         ip = _flash_params(f, "integer runtime parameters")
@@ -143,6 +143,7 @@ function getinfo_flash(output::Int, path::String; unit_length::Real=1.0, unit_de
         end
     end
     createconstants!(info); createscales!(info)
+    _fill_undefined!(info)
     return info
 end
 
