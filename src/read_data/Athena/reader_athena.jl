@@ -64,7 +64,7 @@ dimensionless, see [`getinfo_pluto`](@ref) for the same convention).
 function getinfo_athena(output::Int, path::String; unit_length::Real=1.0, unit_density::Real=1.0,
                         unit_velocity::Real=1.0, verbose::Bool=true)
     fn = _athena_file(output, path)
-    info = InfoType(); info.descriptor = DescriptorType()
+    info = InfoType(); info.descriptor = _external_descriptor()
     h5open(fn, "r") do f
         a = attributes(f)
         coord = lowercase(String(read(a["Coordinates"])))
@@ -105,6 +105,7 @@ function getinfo_athena(output::Int, path::String; unit_length::Real=1.0, unit_d
         end
     end
     createconstants!(info); createscales!(info)
+    _fill_undefined!(info)
     return info
 end
 

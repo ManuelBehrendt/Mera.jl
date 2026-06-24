@@ -175,7 +175,7 @@ function getinfo_pluto(output::Int, path::String; unit_length::Real=1.0,
     boxlen = (xc1[end] - xc1[1]) + (xc1[2] - xc1[1])     # domain length (centres + one cell)
 
     info = InfoType()
-    info.descriptor = DescriptorType()
+    info.descriptor = _external_descriptor()
     info.output = output;          info.path = abspath(path); info.simcode = "PLUTO"
     info.Narraysize = 0;           info.ndim = 3
     info.levelmin = level;         info.levelmax = level;     info.boxlen = boxlen
@@ -203,6 +203,7 @@ function getinfo_pluto(output::Int, path::String; unit_length::Real=1.0,
     info.ctime = info.mtime
     createconstants!(info)
     createscales!(info)
+    _fill_undefined!(info)
     if verbose
         printtime("", verbose)
         println("Code: ", info.simcode)
@@ -224,6 +225,37 @@ end
 # the **leaf-cell** list, so a spatial window is an exact, hole-free filter: a cell is kept
 # when its Mera position `cx/2^level` (= `getvar(:x)/boxlen`, so the selection matches
 # [`subregion`](@ref)) lies inside the prepranges-normalised box. Returns `(keep, ranges)`.
+# Fill any UNDEFINED fields of a mutable struct with type-appropriate empties (recursing into
+# nested structs). The external readers don't populate the RAMSES-only InfoType fields (`fnames`,
+# `grid_info`, `part_info`, `compilation`, …); leaving them as `new()` undefined refs breaks
+# serialization (savedata/JLD2). This defines them without clobbering anything already set.
+_blankval(::Type{<:AbstractString}) = ""
+_blankval(::Type{T}) where {T<:Integer} = zero(T)
+_blankval(::Type{T}) where {T<:AbstractFloat} = zero(T)
+_blankval(::Type{Array{S,N}}) where {S,N} = Array{S,N}(undef, ntuple(_ -> 0, N)...)
+_blankval(::Type{Dict{K,V}}) where {K,V} = Dict{K,V}()
+_blankval(::Type{T}) where {T} = _fill_undefined!(T())   # nested mutable struct (its own `new()`)
+function _fill_undefined!(x)
+    for f in fieldnames(typeof(x))
+        isdefined(x, f) || setfield!(x, f, _blankval(fieldtype(typeof(x), f)))
+    end
+    return x
+end
+
+# A fully-initialised, empty DescriptorType for the external readers. RAMSES fills the descriptor
+# from its files; the non-RAMSES codes have none, but the fields must still be DEFINED (not left as
+# `new()` undefined refs) so downstream code — e.g. savedata's `check_datasource` — can read them.
+function _external_descriptor()
+    d = DescriptorType()
+    d.hversion = 0; d.hydro = Symbol[]; d.htypes = String[]; d.usehydro = false; d.hydrofile = false
+    d.pversion = 0; d.particles = Symbol[]; d.ptypes = String[]; d.useparticles = false; d.particlesfile = false
+    d.gravity = Symbol[]; d.usegravity = false; d.gravityfile = false
+    d.rtversion = 0; d.rt = Dict{Any,Any}(); d.rtPhotonGroups = Dict{Any,Any}(); d.usert = false; d.rtfile = false
+    d.clumps = Symbol[]; d.useclumps = false; d.clumpsfile = false
+    d.sinks = Symbol[]; d.usesinks = false; d.sinksfile = false
+    return d
+end
+
 # box-normalised (0..1) selection ranges + whether they cover the whole box
 function _external_ranges(info::InfoType, xrange, yrange, zrange, center, range_unit::Symbol)
     ranges = prepranges(info, range_unit, false, collect(xrange), collect(yrange),

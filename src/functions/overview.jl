@@ -154,6 +154,12 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     #println(fnames)
     fnames = dataobject.fnames
 
+    # External (non-RAMSES) snapshots have no RAMSES output directory to tally — return empty.
+    if !isdefined(fnames, :output) || isempty(fnames.output) || !isdir(fnames.output)
+        verbose && println("(storage overview unavailable — no RAMSES output directory for $(dataobject.simcode))")
+        return dictoutput
+    end
+
     all_files = readdir(fnames.output)
     folder = filesize.(  fnames.output .* "/" .* all_files)
     folder_size = sum( folder )

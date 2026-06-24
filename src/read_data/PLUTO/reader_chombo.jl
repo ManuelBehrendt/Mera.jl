@@ -88,7 +88,7 @@ function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
         2^base == n0 || error("Chombo reader: level-0 size $n0 must be a power of two.")
         dx0 = Float64(read(attributes(f["level_0"])["dx"]))
 
-        info = InfoType(); info.descriptor = DescriptorType()
+        info = InfoType(); info.descriptor = _external_descriptor()
         info.output = output; info.path = abspath(path); info.simcode = "CHOMBO"
         info.Narraysize = 0; info.ndim = 3
         info.levelmin = base; info.levelmax = base + nlev - 1
@@ -110,6 +110,7 @@ function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
         info.ncpu = 1
         info.mtime = Dates.unix2datetime(round(Int, mtime(fn))); info.ctime = info.mtime
         createconstants!(info); createscales!(info)
+        _fill_undefined!(info)
         if verbose
             println("Code: CHOMBO  (PLUTO-AMR / Orion format)")
             println("output: ", output, "  time: ", round(time, sigdigits=5), " [code units]")
