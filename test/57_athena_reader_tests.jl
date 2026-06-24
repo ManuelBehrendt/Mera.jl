@@ -133,14 +133,16 @@ end
     @testset "six-ray RT: radiation bins → photon groups, gow17 species (code-blind)" begin
         @test Mera._ATHENA_VARMAP["ir_avg0"] == :Np1 && Mera._ATHENA_VARMAP["ir_avg7"] == :Np8
         @test Mera._ATHENA_VARMAP["rCO"] == :xCO && Mera._ATHENA_VARMAP["rC+"] == :xCII   # gow17 set
-        sr = joinpath(SIMULATION_PATH, "athena_sixray")     # gow17 + six-ray snapshot (24 fields)
+        sr = joinpath(SIMULATION_PATH, "athena_sixray")     # gow17 + six-ray PDR (24 fields, evolving)
         if isdir(sr) && any(f -> endswith(lowercase(f), ".athdf"), readdir(sr))
-            info = getinfo(0, sr, verbose=false)
+            info = getinfo(5, sr, verbose=false)
             @test all(g -> g in info.variable_list, (:Np1, :Np8))           # 8 radiation photon groups
             @test all(s -> s in info.variable_list, (:xH2, :xCO, :xCII))    # gow17 chemistry species
             gas = gethydro(info, verbose=false)
             @test all(isfinite, getvar(gas, :Np1)) && all(isfinite, getvar(gas, :xCO))
-            @test maximum(projection(gas, :Np1, res=8, center=[:bc], verbose=false, show_progress=false).maps[:Np1]) != 0
+            lo, hi = extrema(getvar(gas, :Np1))
+            @test hi - lo > 0                          # six-ray transfer attenuates the field (PDR shielding)
+            @test maximum(getvar(gas, :xH2)) > 0       # H2 formed in the shielded interior
         else
             @test_skip "athena_sixray fixture not present (MERA_TEST_DATA/athena_sixray/)"
         end
