@@ -1,5 +1,12 @@
 # Multi-code support
 
+!!! tip "Run it yourself"
+    All of the readers below are exercised in one executable **Jupyter notebook** —
+    [open / download `16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/16_multi_OtherCodes.ipynb).
+    It loads PLUTO / Chombo / Athena++ / FLASH / GADGET, shows MHD / gravity / chemistry / RT
+    fields, a load-time sub-region, and a save/load round-trip — and runs end-to-end as part of
+    Mera's test suite.
+
 Mera began as a RAMSES tool, but its analysis layer is **code-blind**: every quantity
 ([`getvar`](@ref)), map ([`projection`](@ref)), region ([`subregion`](@ref)), filter
 ([`filterdata`](@ref)), profile, PDF, time-series and clump finder works on a *generic* uniform/AMR
