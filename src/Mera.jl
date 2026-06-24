@@ -76,6 +76,8 @@ export
     gethydro_athena,
     getinfo_flash,
     gethydro_flash,
+    getinfo_gadget,
+    getparticles_gadget,
     createpath,
     gethydro,
     getgravity,
@@ -419,6 +421,7 @@ include("read_data/PLUTO/reader_pluto.jl")   # PLUTO frontend (static uniform Ca
 include("read_data/PLUTO/reader_chombo.jl")  # Chombo / PLUTO-AMR frontend (HDF5)
 include("read_data/Athena/reader_athena.jl") # Athena++ frontend (HDF5 .athdf MeshBlocks)
 include("read_data/FLASH/reader_flash.jl")   # FLASH frontend (HDF5 PARAMESH leaf blocks)
+include("read_data/GADGET/reader_gadget.jl") # GADGET/GIZMO/… frontend (HDF5 particles)
 
 include("read_data/RAMSES/getgravity.jl")
 include("read_data/RAMSES/reader_gravity.jl")

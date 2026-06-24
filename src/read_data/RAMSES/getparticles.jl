@@ -201,6 +201,8 @@ function getparticles( dataobject::InfoType;
     # Multi-code: a non-RAMSES info delegates to its own particle frontend.
     if dataobject.simcode == "PLUTO"
         return getparticles_pluto(dataobject; verbose=verbose)
+    elseif dataobject.simcode == "GADGET"
+        return getparticles_gadget(dataobject; verbose=verbose)
     end
 
     # ===== ARGUMENT OVERRIDE SECTION =====
