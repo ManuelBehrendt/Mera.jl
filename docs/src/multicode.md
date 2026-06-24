@@ -30,8 +30,17 @@ available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 **Self-gravity** rides along the same way: where a code writes a gravitational potential into its
 snapshot (Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`) the reader exposes it as
 a single canonical field, so `getvar(gas, :gpot)` — and `projection`, `timeseries`, … on it — runs
-identically on every code. (Particles, by contrast, exist only in PLUTO so far; the public Athena++
-has none, and FLASH particle reading is future work.)
+identically on every code.
+
+**Chemistry & radiative transfer** follow suit. A code's species abundances (Athena++ writes its
+chemistry networks as `rH`/`rH2`/`rCO`/`rH+`/…) are mapped to **canonical fractions** — `:xHI`,
+`:xH2`, `:xCO`, `:xHII`, … — and radiation-transport fields to `:Erad`/`:Frad_*`. Because these land
+as direct columns, `getvar(gas, :xH2)`, a `projection` of it, or a `timeseries` of an abundance runs
+the same on every code that writes them (e.g. an H–H₂ formation series, or a CO map). RAMSES RT runs
+keep their own descriptor-based `getvar` species; the canonical names are the shared vocabulary.
+
+(**Particles**, by contrast, exist only in PLUTO so far — the public Athena++ has none, and
+FLASH/PLUTO particle reading needs a registered-download run.)
 
 **Multi-output workflows** are code-blind too: [`timeseries`](@ref) and
 [`getmovie`](@ref)/[`savemovie`](@ref) discover the output numbers in a directory per format
