@@ -56,11 +56,6 @@ makedocs(modules = [Mera],
                           "Structure Finding" => Any[
                               "Clump Finding"               => "clumpfind.md",
                               "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md"],
-                          "Maps & Mock Observations" => Any[
-                              "Covering Grid / FRB"         => "covering_grid.md",
-                              "Grid Overlay & Absorption"   => "overlay_absorption.md",
-                              "Auto-Frame (center & orient)"=> "galaxyframe.md",
-                              "Mock Observations (cookbook)"=> "mock_observations.md"],
                           "Gas Flows & Star Formation" => Any[
                               "Flux Budgets"                => "fluxbudget.md",
                               "Star-Formation Rate"         => "sfr.md"],
@@ -70,7 +65,10 @@ makedocs(modules = [Mera],
                               "Cosmological Runs"           => "09_multi_Cosmology.md",
                               "Provenance"                  => "provenance.md"]],
 
-                      "Projection" => Any[
+                      # projection IS map-making; overlay/absorption/mock-observe operate on its
+                      # output and auto-frame sets up the view — so they live together here.
+                      "Projection & Maps" => Any[
+                          "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],
                           "Off-axis"             => Any[ "Guide"              => "06_offaxis_Projection.md",
@@ -79,7 +77,10 @@ makedocs(modules = [Mera],
                                                              "Projection basics"       => "11_multi_OffAxisProjection.md",
                                                              "LOS cubes & kinematics"  => "12_multi_LosCubes.md",
                                                              "Validation & accuracy"   => "13_multi_OffAxis_Validation.md",
-                                                             "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]]],
+                                                             "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]],
+                          "Covering Grid / FRB"          => "covering_grid.md",
+                          "Grid Overlay & Absorption"    => "overlay_absorption.md",
+                          "Mock Observations (cookbook)" => "mock_observations.md"],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",
