@@ -95,6 +95,7 @@ makedocs(modules = [Mera],
 
                       # --- code-agnostic readers: their own top-level section, not buried under Data ---
                       "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
+                                                       "Worked Examples" => "multicode_examples.md",
                                                        "PLUTO"    => "pluto_reader.md",
                                                        "Athena++" => "athena_reader.md",
                                                        "FLASH"    => "flash_reader.md",
