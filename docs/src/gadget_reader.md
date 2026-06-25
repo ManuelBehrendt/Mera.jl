@@ -114,12 +114,21 @@ projection(gas, :T, weighting=:volume)                   # volume-weighted ⟨T�
 projection(gas, :sd, :Msol_pc2, weighting=:sph)          # SPH-kernel: smear each cell over its footprint
 ```
 
-By default each Voronoi cell is deposited at its position (fast, mass-conserving). `weighting=:sph`
-instead smears every cell over an **M4 cubic-spline kernel** sized from its `:volume`
-(`h = α·(3V/4π)^⅓`, floored at one pixel), so the map resolves each cell's footprint instead of
-speckling — still mass-conserving to machine precision (`Σ pixel·area == msum` for cells inside the
-field; cells straddling the edge contribute only their in-field share). Comoving→physical `a`/`h`
-is handled automatically for cosmological snapshots.
+!!! note "Moving-mesh projection"
+    AREPO is a **Voronoi moving-mesh** code — gas lives in irregular polyhedral cells, not on a grid
+    and not as SPH particles. The default deposits each cell at its mesh-generating point (fast,
+    mass-conserving, but it ignores the cell's extent and can speckle in sparse regions).
+    `weighting=:sph` is the **moving-mesh conversion**: it smears every cell over an **M4
+    cubic-spline kernel** sized from the cell volume (`h = α·(3V/4π)^⅓`, floored at one pixel),
+    treating each Voronoi cell as an SPH-like blob — the same approach `yt` uses for AREPO. It
+    resolves each cell's footprint while staying mass-conserving to machine precision
+    (`Σ pixel·area == msum` for cells inside the field; cells straddling the edge contribute only
+    their in-field share). A fully Voronoi-exact renderer (analytic polyhedron–pixel clipping) would
+    be more faithful still, but is not needed for correct, conserving maps. Comoving→physical
+    `a`/`h` is applied automatically for cosmological snapshots.
+
+(Tip: for a halo *cutout* in a large box, zoom the projection — `center=[…], range_unit=:kpc,
+xrange=[-R,R], …` — and raise `res` so the window spans enough pixels, since `res` is full-box-relative.)
 
 ## Units
 
