@@ -201,7 +201,7 @@ function getparticles( dataobject::InfoType;
     # Multi-code: a non-RAMSES info delegates to its own particle frontend.
     if dataobject.simcode == "PLUTO"
         return getparticles_pluto(dataobject; verbose=verbose)
-    elseif dataobject.simcode == "GADGET"
+    elseif dataobject.simcode in ("GADGET", "AREPO", "SWIFT", "GIZMO")   # the GADGET-HDF5 family
         return getparticles_gadget(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
                                    center=center, range_unit=range_unit, verbose=verbose)
     end

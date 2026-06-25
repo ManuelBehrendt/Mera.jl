@@ -33,6 +33,16 @@ function _is_gadget_h5(fn::String)
     catch; return false; end
 end
 
+# The GADGET HDF5 layout is shared by several codes; name the actual producer from header/group
+# markers so getinfo reports the real code (AREPO ≠ plain GADGET). AREPO (incl. IllustrisTNG) writes
+# a `Config` group (yt's discriminator); SWIFT sets a `Header/Code` attribute. Falls back to GADGET.
+function _gadget_subcode(f)
+    h = attributes(f["Header"])
+    haskey(h, "Code")   && return uppercase(strip(string(read(h["Code"]))))   # SWIFT (and any code that sets it)
+    haskey(f, "Config") && return "AREPO"                                      # AREPO / IllustrisTNG
+    return "GADGET"
+end
+
 # resolve the GADGET snapshot file: a direct path, or `snap*_NNN.hdf5` in a directory
 function _gadget_file(output::Int, path::String)
     (isfile(path) && endswith(lowercase(path), ".hdf5")) && return path
@@ -69,7 +79,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         npart  = Int.(_gadget_attr(h, "NumPart_Total", zeros(Int, 6)))
         time   = Float64(_gadget_attr(h, "Time", 0.0))
         hub    = Float64(_gadget_attr(h, "HubbleParam", 1.0))
-        info.output = output; info.path = abspath(path); info.simcode = "GADGET"
+        info.output = output; info.path = abspath(path); info.simcode = _gadget_subcode(f)
         info.Narraysize = 0; info.ndim = 3
         info.levelmin = 1; info.levelmax = 1               # particle code: no grid levels
         info.boxlen = boxlen == 0 ? 1.0 : boxlen
