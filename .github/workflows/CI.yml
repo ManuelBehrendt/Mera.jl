@@ -43,21 +43,8 @@ jobs:
           MERA_SMOKE_ONLY: "1"
         run: julia --project -e 'using Pkg; Pkg.test("Mera")'
 
-  docs:
-    name: Documentation
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: julia-actions/setup-julia@v2
-        with:
-          version: '1'
-      - run: |
-          julia --project=docs -e '
-            using Pkg
-            Pkg.develop(PackageSpec(path=pwd()))
-            Pkg.instantiate()
-          '
-      - run: julia --project=docs docs/make.jl
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+# Docs are built + deployed by the dedicated `documentation.yml` workflow
+# (which has `permissions: contents: write`, and builds on PRs too). A second
+# docs/deploy job here raced it to push gh-pages — whichever lost got a
+# non-fast-forward rejection, so master pushes failed intermittently. Removed
+# to leave a single deployer.
