@@ -843,24 +843,41 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_unit[Symbol( string(i_var)  )] = unit_name
                         maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     else
+                        # volume-weighted mean of an intensive quantity: Σ(q·V) / Σ(V).
+                        # Mirrors the mass-weighted branch (with :volume as the weight); needs a
+                        # :volume column, e.g. AREPO/GADGET gas cells. (The previous code deposited
+                        # Σq and divided by a volume constant — neither a mean nor conserved.)
+                        in(:volume, propertynames(filtered_data.columns)) || throw(ArgumentError(
+                            "projection (particles): weighting=:volume on '$(i_var)' needs a :volume column " *
+                            "(e.g. AREPO/GADGET gas); use weighting=:mass for particles without one."))
                         if length(mask) == 1
                             h = fit(Histogram, (select(filtered_data, var_a) ,
                                                 select(filtered_data, var_b) ),
-                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  ),
+                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :volume) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                            h_vol = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :volume) ),
                                                 closed=closed,
                                                 (newrange1, newrange2) )
                         else
                             h = fit(Histogram, (select(filtered_data, var_a) ,
                                                 select(filtered_data, var_b) ),
-                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)  .* select(filtered_data, :mask)  ),
+                                                weights( getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time) .* select(filtered_data, :volume) .* select(filtered_data, :mask) ),
+                                                closed=closed,
+                                                (newrange1, newrange2) )
+                            h_vol = fit(Histogram, (select(filtered_data, var_a) ,
+                                                select(filtered_data, var_b) ),
+                                                weights( select(filtered_data, :volume) .* select(filtered_data, :mask) ),
                                                 closed=closed,
                                                 (newrange1, newrange2) )
                         end
                         selected_unit, unit_name= getunit(dataobject, i_var, selected_vars, units, uname=true)
                         if selected_unit != 1.
-                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res) .* selected_unit
+                            maps[Symbol(i_var)] = h.weights ./ h_vol.weights .* selected_unit
                         else
-                            maps[Symbol(i_var)] = h.weights ./ ( (dataobject.info.boxlen / res )^3 * res)
+                            maps[Symbol(i_var)] = h.weights ./ h_vol.weights
                         end
                         maps_unit[Symbol( string(i_var)  )] = unit_name
                         maps_mode[Symbol( string(i_var)  )] = :volume_weighted
