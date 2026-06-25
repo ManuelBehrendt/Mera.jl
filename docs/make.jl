@@ -40,7 +40,11 @@ makedocs(modules = [Mera],
                           "Get Subregions"    => Any[ "Hydro"     => "03_hydro_Get_Subregions.md",
                                                       "Gravity"   => "03_gravity_Get_Subregions.md",
                                                       "Particles" => "03_particles_Get_Subregions.md",
-                                                      "Clumps"    => "03_clumps_Get_Subregions.md"]],
+                                                      "Clumps"    => "03_clumps_Get_Subregions.md"],
+                          # shaping the loaded data into another representation
+                          "Uniform Grid / Resampling" => "covering_grid.md",
+                          # working with a cosmological run (redshift, scale factor, comoving units)
+                          "Cosmological Runs" => "09_multi_Cosmology.md"],
 
                       "Analysis & Calculations" => Any[
                           "Quantities & Fields" => Any[
@@ -49,21 +53,20 @@ makedocs(modules = [Mera],
                               "Derived Fields & add_field"  => "derived_fields.md",
                               "Magnetic Fields (MHD)"       => "magnetic_fields.md",
                               "Radiative Transfer"          => "10_multi_RadiativeTransfer.md"],
-                          "Selection & Statistics" => Any[
+                          "Selection, Statistics & Metadata" => Any[
                               "Mask/Filter/Meta"            => "05_multi_Masking_Filtering.md",
                               "Statistics (PDFs)"           => "statistics.md",
-                              "Profiles & Phase Diagrams"   => "15_multi_Profiles_Phase.md"],
+                              "Profiles & Phase Diagrams"   => "15_multi_Profiles_Phase.md",
+                              "Provenance"                  => "provenance.md"],
                           "Structure Finding" => Any[
                               "Clump Finding"               => "clumpfind.md",
                               "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md"],
                           "Gas Flows & Star Formation" => Any[
                               "Flux Budgets"                => "fluxbudget.md",
                               "Star-Formation Rate"         => "sfr.md"],
-                          "Time Evolution & Provenance" => Any[
+                          "Time Series & Movies" => Any[
                               "Time Series (multi-snapshot)"=> "timeseries.md",
-                              "Movies (getmovie)"           => "movie.md",
-                              "Cosmological Runs"           => "09_multi_Cosmology.md",
-                              "Provenance"                  => "provenance.md"]],
+                              "Movies (getmovie)"           => "movie.md"]],
 
                       # projection IS map-making; overlay/absorption/mock-observe operate on its
                       # output and auto-frame sets up the view — so they live together here.
@@ -78,7 +81,6 @@ makedocs(modules = [Mera],
                                                              "LOS cubes & kinematics"  => "12_multi_LosCubes.md",
                                                              "Validation & accuracy"   => "13_multi_OffAxis_Validation.md",
                                                              "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]],
-                          "Covering Grid / FRB"          => "covering_grid.md",
                           "Grid Overlay & Absorption"    => "overlay_absorption.md",
                           "Mock Observations (cookbook)" => "mock_observations.md"],
 
