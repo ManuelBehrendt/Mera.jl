@@ -103,11 +103,16 @@ maps (temperature, metallicity) take a `weighting`:
 ```julia
 projection(gas, :sd, :Msol_pc2)                          # surface density (mass-conserving)
 projection(gas, :T, weighting=:mass)                     # mass-weighted  ⟨T⟩  (dense gas)
-projection(gas, :T, weighting=:volume)                   # volume-weighted ⟨T⟩ (diffuse gas) — needs :volume
+projection(gas, :T, weighting=:volume)                   # volume-weighted ⟨T⟩ (diffuse gas)
+projection(gas, :sd, :Msol_pc2, weighting=:sph)          # SPH-kernel: smear each cell over its footprint
 ```
 
-(The cells are deposited as points; a smoothing-kernel deposition that resolves each cell's footprint
-is planned. Comoving→physical `a`/`h` is handled automatically for cosmological snapshots.)
+By default each Voronoi cell is deposited at its position (fast, mass-conserving). `weighting=:sph`
+instead smears every cell over an **M4 cubic-spline kernel** sized from its `:volume`
+(`h = α·(3V/4π)^⅓`, floored at one pixel), so the map resolves each cell's footprint instead of
+speckling — still mass-conserving to machine precision (`Σ pixel·area == msum` for cells inside the
+field; cells straddling the edge contribute only their in-field share). Comoving→physical `a`/`h`
+is handled automatically for cosmological snapshots.
 
 ## Units
 
