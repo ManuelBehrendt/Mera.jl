@@ -42,6 +42,45 @@ function _sph_deposit(xs, ys, ws, hs, edges1::AbstractVector, edges2::AbstractVe
     return grid
 end
 
+# --- Voronoi (nearest-generator) projection: respect the actual moving-mesh cells, not an SPH blob ---
+# AREPO writes only the mesh-generating points (not the cell faces), so the Voronoi tessellation is
+# implicit: any point in space belongs to the cell of its NEAREST generator. We march each pixel's
+# line of sight and assign each sample to the nearest generator (KD-tree) — the exact piecewise-
+# constant Voronoi field, sampled. Returns the density column ∫ρ dl [code surface density] and the
+# ρ-weighted column ∫ρ·v dl (for an intensive map ⟨v⟩ = ∫ρv dl / ∫ρ dl). `ea/eb` are the in-plane
+# pixel edges (code length); `plos`/`lo`/`hi` the line-of-sight coordinate and its range.
+function _voronoi_los(pa, pb, plos, dens, vals, reff, ea::AbstractVector, eb::AbstractVector,
+                      lo::Float64, hi::Float64, nlos::Int)
+    pts = Matrix{Float64}(undef, 3, length(pa))
+    @inbounds for i in eachindex(pa); pts[1,i]=Float64(pa[i]); pts[2,i]=Float64(pb[i]); pts[3,i]=Float64(plos[i]); end
+    tree = KDTree(pts)
+    n1 = length(ea)-1; n2 = length(eb)-1
+    colρ = zeros(Float64, n1, n2); colρv = zeros(Float64, n1, n2)
+    ca = [(Float64(ea[i])+Float64(ea[i+1]))/2 for i in 1:n1]
+    cb = [(Float64(eb[j])+Float64(eb[j+1]))/2 for j in 1:n2]
+    dl = (hi-lo)/nlos
+    Q = Matrix{Float64}(undef, 3, n1*n2)
+    @inbounds for k in 1:nlos
+        z = lo + (k-0.5)*dl
+        c = 0
+        for j in 1:n2, i in 1:n1
+            c += 1; Q[1,c]=ca[i]; Q[2,c]=cb[j]; Q[3,c]=z
+        end
+        idxs, dists = nn(tree, Q)                   # nearest generator per LOS sample = its Voronoi cell
+        c = 0
+        for j in 1:n2, i in 1:n1
+            c += 1; ix = idxs[c]
+            # cap the cell's reach at its effective radius so empty space stays empty and each cell
+            # contributes ~its own volume (else a cutout/zoom assigns far samples to inflate mass).
+            dists[c] <= Float64(reff[ix]) || continue
+            ρ = Float64(dens[ix])
+            colρ[i,j]  += ρ*dl
+            colρv[i,j] += ρ*Float64(vals[ix])*dl
+        end
+    end
+    return colρ, colρv
+end
+
 # Convert `parttypes` (e.g. [:stars], [:dm]) into a boolean particle selection that is folded into the
 # tested `mask=` path of projection (histogram weights are multiplied by the :mask column, zeroing
 # excluded particles — works for both the axis-aligned and the off-axis routines). Family-aware:
@@ -81,7 +120,7 @@ end
   stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
   Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
   (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
-- select between mass (default), volume, or SPH-kernel weighting
+- select between mass (default), volume, SPH-kernel, or Voronoi (nearest-generator) weighting
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
 - toggle progress bar
@@ -129,7 +168,9 @@ return PartMapsType
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
 - **`weighting`:** select between `:mass` weighting (default), `:volume` weighting, or `:sph`
-  (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column)
+  (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column),
+  or `:voronoi` (nearest-generator: sample each LOS through the nearest cell — sharp, genuinely
+  moving-mesh; intensive maps exact, surface density approximate)
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** axis-aligned `:x`, `:y`, `:z`, or the disk presets `:faceon`/`:edgeon`
@@ -594,7 +635,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
     # ========================================================
-    weighting in (:mass, :volume, :sph) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, or :sph."))
+    weighting in (:mass, :volume, :sph, :voronoi) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, :sph, or :voronoi."))
     if weighting == :mass
         use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
         # only add :sd if there are also other variables than in ranglecheck
@@ -952,12 +993,38 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     end
                     maps_unit[Symbol(string(i_var))] = unit_name
                     maps_mode[Symbol(string(i_var))] = :sph
+                elseif weighting == :voronoi
+                    # Voronoi (nearest-generator) deposition: sample each pixel's line of sight through
+                    # the nearest mesh-generating point (its Voronoi cell). Sharp, cell-respecting; the
+                    # genuine moving-mesh field rather than an SPH blob. Axis-aligned; needs :rho.
+                    in(:volume, propertynames(filtered_data.columns)) || throw(ArgumentError(
+                        "projection (particles): weighting=:voronoi needs :rho/:volume columns (AREPO/GADGET gas)."))
+                    direction in (:x, :y, :z) || throw(ArgumentError(
+                        "projection (particles): weighting=:voronoi supports axis-aligned directions only (no off-axis yet)."))
+                    lo, hi = direction == :z ? (zmin, zmax) : direction == :y ? (ymin, ymax) : (xmin, xmax)
+                    lo *= dataobject.boxlen; hi *= dataobject.boxlen
+                    nlos = clamp(round(Int, (hi - lo) / pixsize), 1, 512)        # sample the LOS at ~pixel depth
+                    pa = select(filtered_data, var_a); pb = select(filtered_data, var_b)
+                    plos = select(filtered_data, direction); dens = select(filtered_data, :rho)
+                    reff = (3.0 .* select(filtered_data, :volume) ./ (4 * pi)) .^ (1/3)   # cell effective radius
+                    isstd = in(i_var, sd_names)
+                    vals = isstd ? dens : getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
+                    if length(mask) != 1                                          # honour the particle mask
+                        mk = select(filtered_data, :mask) .> 0
+                        pa = pa[mk]; pb = pb[mk]; plos = plos[mk]; dens = dens[mk]; reff = reff[mk]; isstd || (vals = vals[mk])
+                    end
+                    colρ, colρv = _voronoi_los(pa, pb, plos, dens, vals, reff, newrange1, newrange2, lo, hi, nlos)
+                    selected_unit, unit_name = getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    m = isstd ? colρ : (colρv ./ colρ)                           # sd = ∫ρ dl ; intensive = ∫ρv dl / ∫ρ dl
+                    maps[Symbol(i_var)] = selected_unit != 1. ? m .* selected_unit : m
+                    maps_unit[Symbol(string(i_var))] = unit_name
+                    maps_mode[Symbol(string(i_var))] = :voronoi
                 else
-                    # particle projection only supports weighting=:mass, :volume or :sph. The former
-                    # code had an `elseif mode == :sum` branch here, but particle projection has no
-                    # `mode` kwarg, so `mode` was undefined: any other weighting threw
+                    # particle projection supports weighting=:mass, :volume, :sph or :voronoi. The
+                    # former code had an `elseif mode == :sum` branch here, but particle projection has
+                    # no `mode` kwarg, so `mode` was undefined: any other weighting threw
                     # UndefVarError(:mode), swallowed by the try/catch into a silent NaN map. Fail clearly.
-                    throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, or :sph."))
+                    throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, :sph, or :voronoi."))
                 end
             catch e
                 push!(failed_projection_vars, i_var)
