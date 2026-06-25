@@ -1,5 +1,8 @@
 # AMR Grid Overlay & Absorption
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `overlay_absorption.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/overlay_absorption.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 Two analysis additions inspired by features in PLUTO's `pyPLUTO` and `yt`: drawing the AMR
 grid structure over a map, and a line-of-sight **absorption** (optical-depth / transmission)
 map.

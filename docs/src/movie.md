@@ -1,5 +1,8 @@
 # Movies (`getmovie` / `savemovie`)
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the
 maps into the frames of a movie; [`savemovie`](@ref) writes them to an animated GIF. It
 builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a time,
