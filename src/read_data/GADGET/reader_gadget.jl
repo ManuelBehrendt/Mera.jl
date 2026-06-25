@@ -74,22 +74,31 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         info.levelmin = 1; info.levelmax = 1               # particle code: no grid levels
         info.boxlen = boxlen == 0 ? 1.0 : boxlen
         info.time = time
-        info.aexp = haskey(h, "Redshift") ? time : 1.0     # cosmological GADGET: Time = scale factor
-        info.H0 = hub * 100; info.omega_m = Float64(_gadget_attr(h, "Omega0", 1.0))
-        info.omega_l = Float64(_gadget_attr(h, "OmegaLambda", 0.0))
+        # cosmological? — real cosmological runs carry ΩΛ > 0 and use Time as the scale factor a;
+        # idealised/non-cosmological AREPO runs set Ω = 0 and use Time as a physical time (a = 1).
+        om = Float64(_gadget_attr(h, "Omega0", 0.0)); ol = Float64(_gadget_attr(h, "OmegaLambda", 0.0))
+        cosmo = ol > 0.0
+        a = cosmo ? (time == 0.0 ? 1.0 : time) : 1.0
+        info.aexp = a
+        info.H0 = hub * 100; info.omega_m = om; info.omega_l = ol
         info.omega_k = 0.0; info.omega_b = Float64(_gadget_attr(h, "OmegaBaryon", 0.0))
-        # base CGS units: prefer the snapshot Header (UnitLength/Mass/Velocity_in_*), which
-        # AREPO/GADGET/TNG all store, so physical conversions work out of the box; a caller-set
-        # kwarg (≠ the 1.0 default) still wins.
+        # base CGS units from the Header (UnitLength/Mass/Velocity_in_*; a kwarg ≠ 1.0 overrides),
+        # then apply the comoving→physical factors so getvar returns *physical* quantities:
+        #   length ∝ a/h,  density ∝ h²/a³,  mass = ρ·l³ ∝ 1/h.
+        # The velocity √a factor is applied to the velocity columns at read instead — InternalEnergy
+        # is also a velocity² but is stored a-free, so it must not inherit an a from unit_v here.
         hul = Float64(_gadget_attr(h, "UnitLength_in_cm", 0.0))
         huv = Float64(_gadget_attr(h, "UnitVelocity_in_cm_per_s", 0.0))
         hum = Float64(_gadget_attr(h, "UnitMass_in_g", 0.0))
-        ul = (unit_length   == 1.0 && hul > 0)             ? hul        : Float64(unit_length)
-        uv = (unit_velocity == 1.0 && huv > 0)             ? huv        : Float64(unit_velocity)
-        ud = (unit_density  == 1.0 && hum > 0 && hul > 0)  ? hum / hul^3 : Float64(unit_density)
-        info.unit_l = ul; info.unit_d = ud; info.unit_v = uv
-        info.unit_t = info.unit_l / info.unit_v
+        hfac = hub > 0 ? hub : 1.0
+        ul0 = (unit_length   == 1.0 && hul > 0)            ? hul         : Float64(unit_length)
+        uv0 = (unit_velocity == 1.0 && huv > 0)            ? huv         : Float64(unit_velocity)
+        ud0 = (unit_density  == 1.0 && hum > 0 && hul > 0) ? hum / hul^3 : Float64(unit_density)
+        info.unit_l = ul0 * a / hfac
+        info.unit_v = uv0
+        info.unit_d = ud0 * hfac^2 / a^3
         info.unit_m = info.unit_d * info.unit_l^3
+        info.unit_t = info.unit_l / info.unit_v
         info.hydro = false; info.gravity = false; info.particles = true
         info.rt = false; info.clumps = false; info.sinks = false
         info.variable_list = Symbol[]; info.nvarh = 0
@@ -187,6 +196,11 @@ function getparticles_gadget(info::InfoType; families=:all,
                 append!(gas[sym], (pt == 0 && haskey(f[grp], ds)) ? _gadget_col(read(f[grp][ds]), keep) : fill(NaN, nkeep))
             end
         end
+    end
+    # GADGET cosmological velocity convention: the stored value is v_peculiar/√a, so multiply by
+    # √a to recover the physical peculiar velocity (no-op for non-cosmological runs, a = 1).
+    if info.aexp != 1.0
+        sqa = sqrt(info.aexp); vx .*= sqa; vy .*= sqa; vz .*= sqa
     end
     # per-cell volume V = m/ρ (NaN where ρ is absent or zero: non-gas rows, empty cells)
     if haskey(gas, :rho)
