@@ -43,26 +43,33 @@ makedocs(modules = [Mera],
                                                       "Clumps"    => "03_clumps_Get_Subregions.md"]],
 
                       "Analysis & Calculations" => Any[
+                          # --- quantities & fields (foundational → physics) ---
                           "Basic Calculations"  => "04_multi_Basic_Calculations.md",
-                          "Derived Fields & add_field" => "derived_fields.md",
                           "How Quantities Are Computed" => "computation_reference.md",
+                          "Derived Fields & add_field" => "derived_fields.md",
                           "Magnetic Fields (MHD)" => "magnetic_fields.md",
+                          "Radiative Transfer"  => "10_multi_RadiativeTransfer.md",
+                          # --- selection & statistics ---
+                          "Mask/Filter/Meta"    => "05_multi_Masking_Filtering.md",
+                          "Statistics (PDFs)"    => "statistics.md",
+                          "Profiles & Phase Diagrams" => "15_multi_Profiles_Phase.md",
+                          # --- structure finding ---
                           "Clump Finding"       => "clumpfind.md",
                           "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md",
+                          # --- maps & mock observations ---
                           "Covering Grid / FRB" => "covering_grid.md",
-                          "Flux Budgets"        => "fluxbudget.md",
-                          "Star-Formation Rate" => "sfr.md",
-                          "Time Series (multi-snapshot)" => "timeseries.md",
-                          "Movies (getmovie)"   => "movie.md",
+                          "Grid Overlay & Absorption" => "overlay_absorption.md",
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Mock Observations (cookbook)" => "mock_observations.md",
-                          "Statistics (PDFs)"    => "statistics.md",
-                          "Provenance"           => "provenance.md",
-                          "Grid Overlay & Absorption" => "overlay_absorption.md",
-                          "Mask/Filter/Meta"    => "05_multi_Masking_Filtering.md",
-                          "Profiles & Phase Diagrams" => "15_multi_Profiles_Phase.md",
+                          # --- flux & star formation ---
+                          "Flux Budgets"        => "fluxbudget.md",
+                          "Star-Formation Rate" => "sfr.md",
+                          # --- time domain & cosmology ---
+                          "Time Series (multi-snapshot)" => "timeseries.md",
+                          "Movies (getmovie)"   => "movie.md",
                           "Cosmological Runs"   => "09_multi_Cosmology.md",
-                          "Radiative Transfer"  => "10_multi_RadiativeTransfer.md"],
+                          # --- reproducibility ---
+                          "Provenance"           => "provenance.md"],
 
                       "Projection" => Any[
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
@@ -78,14 +85,16 @@ makedocs(modules = [Mera],
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",
                                                         "Converter"  => "07_1_multi_Mera_Files_Converter.md"],
-                          "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
-                                                           "PLUTO"    => "pluto_reader.md",
-                                                           "Athena++" => "athena_reader.md",
-                                                           "FLASH"    => "flash_reader.md",
-                                                           "GADGET"   => "gadget_reader.md"],
                           "Volume Rendering"    => Any[ "Intro"     => "paraview/paraview_intro.md",
                                                         "Hydro"     => "paraview/08_hydro_VTK_export.md",
                                                         "Particles" => "paraview/08_particles_VTK_export.md"]],
+
+                      # --- code-agnostic readers: their own top-level section, not buried under Data ---
+                      "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
+                                                       "PLUTO"    => "pluto_reader.md",
+                                                       "Athena++" => "athena_reader.md",
+                                                       "FLASH"    => "flash_reader.md",
+                                                       "GADGET"   => "gadget_reader.md"],
 
                       # --- one home for all the formerly-scattered per-topic API pages ---
                       "API Reference" => Any[
