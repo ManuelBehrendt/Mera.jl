@@ -102,6 +102,23 @@ end
         @test length(getparticles(info; xrange=[0.0, 0.2], center=[0., 0., 0.], range_unit=:standard, verbose=false).data) == length(sub.data)
     end
 
+    @testset "code discrimination (AREPO Config group) + family routing" begin
+        # a GADGET-HDF5 file with a `Config` group is AREPO (yt's rule); without it, plain GADGET.
+        fn = joinpath(dir, "snap_009.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 10.0; hg["NumPart_Total"] = UInt32[1, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            create_group(f, "Config")                                          # ⇐ the AREPO marker
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = reshape(Float64[5, 5, 5], 3, 1); g0["Velocities"] = reshape(Float32[0, 0, 0], 3, 1)
+            g0["Masses"] = Float32[1.0]; g0["ParticleIDs"] = UInt32[1]
+        end
+        arepo = getinfo_gadget(9, dir, verbose=false)
+        @test arepo.simcode == "AREPO"                                         # Config ⇒ AREPO, not GADGET
+        @test length(getparticles(arepo, verbose=false).data) == 1            # AREPO still routes to the gadget frontend
+        @test getinfo_gadget(0, dir, verbose=false).simcode == "GADGET"        # the no-Config file stays plain GADGET
+    end
+
     @testset "gas-cell fields → :rho/:u/:ne/:volume/:T (+ Header units)" begin
         fn = joinpath(dir, "snap_010.hdf5"); _write_gadget_gas(fn)
         info = getinfo_gadget(10, dir, verbose=false)
@@ -253,7 +270,7 @@ end
         tng = joinpath(SIMULATION_PATH, "arepo", "TNGHalo", "TNGHalo", "halo_59.hdf5")
         if isfile(tng)
             info = getinfo_gadget(59, tng, verbose=false)
-            @test info.simcode == "GADGET" && info.particles
+            @test info.simcode == "AREPO" && info.particles                     # detected from the Config group
             @test info.scale.g_cm3 != 1.0                                       # units read from Header
             @test all(s -> s in info.particles_variable_list, (:rho, :u, :ne, :metallicity, :sfr, :volume, :T))
             gas = getparticles_gadget(info; families=[0], verbose=false)        # 4.0M gas cells
