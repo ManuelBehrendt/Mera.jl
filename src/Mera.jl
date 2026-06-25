@@ -30,6 +30,7 @@ using Base.Threads
 using Base: Semaphore, acquire, release
 using LinearAlgebra
 using SparseArrays
+import NearestNeighbors: KDTree, nn   # Voronoi (nearest-generator) projection of moving-mesh gas
 
 # External libraries
 using BenchmarkTools
