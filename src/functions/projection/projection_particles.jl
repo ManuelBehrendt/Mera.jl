@@ -1,4 +1,47 @@
 
+# --- SPH-kernel deposition (for weighting=:sph: smooth Voronoi/SPH gas cells over their footprint) ---
+
+# Unnormalised 2-D M4 cubic spline (the normalisation cancels under the discrete renormalisation below).
+@inline _m4kernel(q::Float64) = q < 1.0 ? 1.0 - 1.5q^2 + 0.75q^3 : (q < 2.0 ? 0.25 * (2.0 - q)^3 : 0.0)
+
+# Deposit each point's weight `ws[p]` onto the pixel grid, spread over an M4 kernel of size `hs[p]`
+# (code length, support 2h). The kernel is renormalised by the DISCRETE summed weight over its *full*
+# footprint (incl. off-grid pixels), and only the in-grid pixels receive a share — so a cell fully
+# inside conserves exactly (Σgrid == Σw) while a cell straddling the edge contributes only its
+# in-grid fraction (boundary leakage is physical, not corrected away). `edges1/2` are the pixel edges.
+function _sph_deposit(xs, ys, ws, hs, edges1::AbstractVector, edges2::AbstractVector)
+    n1 = length(edges1) - 1; n2 = length(edges2) - 1
+    grid = zeros(Float64, n1, n2)
+    lo1 = Float64(first(edges1)); d1 = (Float64(last(edges1)) - lo1) / n1
+    lo2 = Float64(first(edges2)); d2 = (Float64(last(edges2)) - lo2) / n2
+    @inbounds for p in eachindex(xs)
+        x = Float64(xs[p]); y = Float64(ys[p]); w = Float64(ws[p]); h = Float64(hs[p])
+        (w == 0.0 || !isfinite(w) || h <= 0.0) && continue
+        # full (unclamped) footprint covered by the 2h support → normalisation
+        if0 = floor(Int, (x - 2h - lo1)/d1) + 1; if1 = floor(Int, (x + 2h - lo1)/d1) + 1
+        jf0 = floor(Int, (y - 2h - lo2)/d2) + 1; jf1 = floor(Int, (y + 2h - lo2)/d2) + 1
+        wsum = 0.0
+        for i in if0:if1
+            cx = lo1 + (i - 0.5) * d1
+            for j in jf0:jf1
+                cy = lo2 + (j - 0.5) * d2
+                wsum += _m4kernel(sqrt((cx - x)^2 + (cy - y)^2) / h)
+            end
+        end
+        wsum == 0.0 && continue
+        f = w / wsum
+        # deposit only into the in-grid pixels (clamp); the off-grid share leaks out (physical)
+        for i in max(1, if0):min(n1, if1)
+            cx = lo1 + (i - 0.5) * d1
+            for j in max(1, jf0):min(n2, jf1)
+                cy = lo2 + (j - 0.5) * d2
+                grid[i, j] += f * _m4kernel(sqrt((cx - x)^2 + (cy - y)^2) / h)
+            end
+        end
+    end
+    return grid
+end
+
 # Convert `parttypes` (e.g. [:stars], [:dm]) into a boolean particle selection that is folded into the
 # tested `mask=` path of projection (histogram weights are multiplied by the :mask column, zeroing
 # excluded particles — works for both the axis-aligned and the off-axis routines). Family-aware:
@@ -38,7 +81,7 @@ end
   stored on the returned map (`.los`, `.up`, `.cam_right`, `.center`; `.direction==:offaxis`).
   Point particles have no footprint, so `binning=:cic` (default) / `:ngp` apply
   (`:overlap` and `:exact` fall back to `:cic`). See the hydro `projection` docstring for details.
-- select between mass (default) and volume weighting
+- select between mass (default), volume, or SPH-kernel weighting
 - pass a mask to exclude elements (cells/particles/...) from the calculation
 - toggle verbose mode
 - toggle progress bar
@@ -85,7 +128,8 @@ return PartMapsType
 - **`zrange`:** the range between [zmin, zmax] in units given by argument `range_unit` and relative to the given `center`; zero length for zmin=zmax=0. is converted to maximum possible length
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
-- **`weighting`:** select between `:mass` weighting (default) and `:volume` weighting
+- **`weighting`:** select between `:mass` weighting (default), `:volume` weighting, or `:sph`
+  (smear each cell over an M4 kernel sized from its `:volume`; mass-conserving; needs a `:volume` column)
 - **`data_center`:** to calculate the data relative to the data_center; in units given by argument `data_center_unit`; by default the argument data_center = center ;
 - **`data_center_unit`:** :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
 - **`direction`:** axis-aligned `:x`, `:y`, `:z`, or the disk presets `:faceon`/`:edgeon`
@@ -550,7 +594,7 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
         end
     end
     # ========================================================
-    weighting in (:mass, :volume) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default) or :volume."))
+    weighting in (:mass, :volume, :sph) || throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, or :sph."))
     if weighting == :mass
         use_sd_map = Mera.checkformaps(selected_vars, ranglecheck)
         # only add :sd if there are also other variables than in ranglecheck
@@ -882,12 +926,38 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                         maps_unit[Symbol( string(i_var)  )] = unit_name
                         maps_mode[Symbol( string(i_var)  )] = :volume_weighted
                     end
+                elseif weighting == :sph
+                    # SPH-kernel deposition: smear each gas cell over an M4 kernel sized from its
+                    # volume (h = α·(3V/4π)^⅓, floored at one pixel), instead of depositing a point.
+                    # Resolves each Voronoi cell's footprint; mass-conserving by construction.
+                    in(:volume, propertynames(filtered_data.columns)) || throw(ArgumentError(
+                        "projection (particles): weighting=:sph needs a :volume column (e.g. AREPO/GADGET gas); use :mass for particles without one."))
+                    α = 1.5                                                            # smoothing factor (conservation-neutral; tunes smoothness)
+                    Vc = select(filtered_data, :volume)
+                    hs = max.(α .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)          # smoothing length [code], floored at the pixel
+                    xa = select(filtered_data, var_a); xb = select(filtered_data, var_b)
+                    mw = length(mask) == 1 ? select(filtered_data, :mass) :
+                                             select(filtered_data, :mass) .* select(filtered_data, :mask)
+                    selected_unit, unit_name = getunit(dataobject, i_var, selected_vars, units, uname=true)
+                    if in(i_var, sd_names)
+                        grid = _sph_deposit(xa, xb, mw, hs, newrange1, newrange2)      # Σmass per pixel (smoothed)
+                        sd = grid ./ pixsize^2                                          # → surface density [code]
+                        maps[Symbol(i_var)] = selected_unit != 1. ? sd .* selected_unit : sd
+                    else
+                        q   = getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
+                        num = _sph_deposit(xa, xb, q .* mw, hs, newrange1, newrange2)   # Σ(q·m·W)
+                        den = _sph_deposit(xa, xb, mw,      hs, newrange1, newrange2)   # Σ(m·W)
+                        m   = num ./ den                                               # mass-weighted ⟨q⟩
+                        maps[Symbol(i_var)] = selected_unit != 1. ? m .* selected_unit : m
+                    end
+                    maps_unit[Symbol(string(i_var))] = unit_name
+                    maps_mode[Symbol(string(i_var))] = :sph
                 else
-                    # particle projection only supports weighting=:mass or :volume. The former code
-                    # had an `elseif mode == :sum` branch here, but particle projection has no `mode`
-                    # kwarg, so `mode` was undefined: any other weighting threw UndefVarError(:mode),
-                    # which the surrounding try/catch swallowed into a silent NaN map. Fail clearly.
-                    throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default) or :volume."))
+                    # particle projection only supports weighting=:mass, :volume or :sph. The former
+                    # code had an `elseif mode == :sum` branch here, but particle projection has no
+                    # `mode` kwarg, so `mode` was undefined: any other weighting threw
+                    # UndefVarError(:mode), swallowed by the try/catch into a silent NaN map. Fail clearly.
+                    throw(ArgumentError("projection (particles): unsupported weighting=$(weighting); use :mass (default), :volume, or :sph."))
                 end
             catch e
                 push!(failed_projection_vars, i_var)
