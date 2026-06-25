@@ -174,6 +174,28 @@ end
         @test getvar(getparticles_gadget(info2; families=[0], verbose=false), :vx) == [10.0, 20.0]  # no √a
     end
 
+    @testset "volume-weighted particle projection Σ(qV)/ΣV (gas)" begin
+        # two gas cells at the same position ⇒ one filled pixel = the weighted mean of their T
+        fn = joinpath(dir, "snap_007.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["NumPart_Total"] = UInt32[2, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = Float64[50 50; 50 50; 50 50]; g0["Velocities"] = Float32[0 0; 0 0; 0 0]
+            g0["Masses"] = Float32[1.0, 1.0]; g0["Density"] = Float32[1.0, 0.5]      # ⇒ V = 1, 2
+            g0["InternalEnergy"] = Float32[100.0, 400.0]; g0["ParticleIDs"] = UInt32[1, 2]
+        end
+        info = getinfo_gadget(7, dir, verbose=false)
+        gas = getparticles_gadget(info; families=[0], verbose=false)
+        T = getvar(gas, :T); V = getvar(gas, :volume); m = getvar(gas, :mass)
+        pv = projection(gas, :T, weighting=:volume, res=8, verbose=false, show_progress=false)
+        pm = projection(gas, :T, weighting=:mass,   res=8, verbose=false, show_progress=false)
+        @test maximum(filter(isfinite, pv.maps[:T])) ≈ sum(T .* V) / sum(V)     # Σ(T·V)/ΣV (the fix)
+        @test maximum(filter(isfinite, pm.maps[:T])) ≈ sum(T .* m) / sum(m)     # Σ(T·m)/Σm
+        @test !(sum(T .* V) / sum(V) ≈ sum(T .* m) / sum(m))                    # the two genuinely differ
+    end
+
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
     @testset "real GADGET snapshot — yt GadgetDiskGalaxy (data-backed)" begin
         gd = joinpath(SIMULATION_PATH, "gadget_diskgalaxy", "GadgetDiskGalaxy")
