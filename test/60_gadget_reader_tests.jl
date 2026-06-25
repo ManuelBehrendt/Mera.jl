@@ -29,6 +29,33 @@ function _write_gadget(fn)
     end
 end
 
+# write a GADGET HDF5 with gas (PartType0: Density/InternalEnergy/ElectronAbundance) + DM, and
+# base CGS units in the Header — exercises the AREPO/TNG gas-cell path (Phase 1a).
+function _write_gadget_gas(fn)
+    h5open(fn, "w") do f
+        hg = create_group(f, "Header")
+        attributes(hg)["BoxSize"] = 100.0
+        attributes(hg)["NumPart_Total"] = UInt32[3, 2, 0, 0, 0, 0]      # 3 gas + 2 DM
+        attributes(hg)["MassTable"] = [0.0, 2.0, 0.0, 0.0, 0.0, 0.0]    # DM mass 2.0
+        attributes(hg)["Time"] = 1.0; attributes(hg)["HubbleParam"] = 0.7
+        attributes(hg)["UnitLength_in_cm"] = 3.085678e21               # kpc — reader auto-reads these
+        attributes(hg)["UnitMass_in_g"] = 1.989e43                     # 1e10 M⊙
+        attributes(hg)["UnitVelocity_in_cm_per_s"] = 1.0e5             # km/s
+        g0 = create_group(f, "PartType0")                              # gas (Float64 coords, like TNG)
+        g0["Coordinates"]       = Float64[10 50 90; 10 50 90; 10 50 90]   # (3,3)
+        g0["Velocities"]        = Float32[0 0 0; 0 0 0; 0 0 0]
+        g0["Masses"]            = Float32[1.0, 2.0, 4.0]
+        g0["Density"]           = Float32[0.5, 1.0, 2.0]               # ⇒ volume = m/ρ = 2,2,2
+        g0["InternalEnergy"]    = Float32[100.0, 200.0, 400.0]
+        g0["ElectronAbundance"] = Float32[1.0, 1.0, 1.0]
+        g0["ParticleIDs"]       = UInt32[1, 2, 3]
+        g1 = create_group(f, "PartType1")                              # DM (no gas datasets)
+        g1["Coordinates"] = Float32[20 80; 20 80; 20 80]
+        g1["Velocities"]  = Float32[0 0; 0 0; 0 0]
+        g1["ParticleIDs"] = UInt32[4, 5]
+    end
+end
+
 @testset verbose=true "GADGET reader (HDF5 particles, data-free contract)" begin
     dir = mktempdir()
 
@@ -75,6 +102,35 @@ end
         @test length(getparticles(info; xrange=[0.0, 0.2], center=[0., 0., 0.], range_unit=:standard, verbose=false).data) == length(sub.data)
     end
 
+    @testset "gas-cell fields → :rho/:u/:ne/:volume/:T (+ Header units)" begin
+        fn = joinpath(dir, "snap_010.hdf5"); _write_gadget_gas(fn)
+        info = getinfo_gadget(10, dir, verbose=false)
+        # base CGS units are read from the Header (no longer the identity default)
+        @test info.unit_l ≈ 3.085678e21 && info.unit_v ≈ 1.0e5
+        @test info.unit_d ≈ 1.989e43 / 3.085678e21^3 && info.scale.g_cm3 != 1.0
+        # getinfo advertises the gas fields present (+ derived :volume, :T), and only those
+        @test all(s -> s in info.particles_variable_list, (:rho, :u, :ne, :volume, :T))
+        @test !(:metallicity in info.particles_variable_list) && !(:sfr in info.particles_variable_list)
+
+        gas = getparticles_gadget(info; families=[0], verbose=false)
+        cn = Mera.IndexedTables.colnames(gas.data)
+        @test all(c -> c in cn, (:rho, :u, :ne, :volume))
+        @test getvar(gas, :rho) == [0.5, 1.0, 2.0]
+        @test getvar(gas, :volume) == [2.0, 2.0, 2.0]                  # m/ρ
+        # T = (γ-1)·u·T_mu·μ, μ = 4/(1+3·X_H+4·X_H·ne)  — compare to the closed form
+        γ = 5/3; XH = 0.76; ne = 1.0; μ = 4 / (1 + 3XH + 4XH*ne)
+        @test getvar(gas, :T) ≈ (γ-1) .* [100.0, 200.0, 400.0] .* info.scale.T_mu .* μ
+        @test all(getvar(gas, :T) .> 0)
+
+        # loading only DM ⇒ no gas columns at all
+        dm = getparticles_gadget(info; families=[1], verbose=false)
+        @test !(:rho in Mera.IndexedTables.colnames(dm.data))
+        # mixed gas+DM load ⇒ gas columns are NaN on the DM rows, real on the gas rows
+        both = getparticles_gadget(info; families=[0, 1], verbose=false)
+        rho = Mera.select(both.data, :rho); fam = Mera.select(both.data, :family)   # raw column (getvar maps NaN→0)
+        @test all(.!isnan.(rho[fam .== 0])) && all(isnan.(rho[fam .== 1]))
+    end
+
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
     @testset "real GADGET snapshot — yt GadgetDiskGalaxy (data-backed)" begin
         gd = joinpath(SIMULATION_PATH, "gadget_diskgalaxy", "GadgetDiskGalaxy")
@@ -95,6 +151,44 @@ end
             @test 0 < length(sub.data) < length(stars.data) && sub.ranges != [0., 1., 0., 1., 0., 1.]
         else
             @test_skip "GadgetDiskGalaxy fixture not present (MERA_TEST_DATA/gadget_diskgalaxy/)"
+        end
+    end
+
+    # PART C (data-backed): real AREPO/TNG snapshots — gas-cell physics (Phase 1a).
+    @testset "real AREPO/TNG snapshots — gas fields (data-backed)" begin
+        tng = joinpath(SIMULATION_PATH, "arepo", "TNGHalo", "TNGHalo", "halo_59.hdf5")
+        if isfile(tng)
+            info = getinfo_gadget(59, tng, verbose=false)
+            @test info.simcode == "GADGET" && info.particles
+            @test info.scale.g_cm3 != 1.0                                       # units read from Header
+            @test all(s -> s in info.particles_variable_list, (:rho, :u, :ne, :metallicity, :sfr, :volume, :T))
+            gas = getparticles_gadget(info; families=[0], verbose=false)        # 4.0M gas cells
+            cn = Mera.IndexedTables.colnames(gas.data)
+            @test all(c -> c in cn, (:rho, :u, :ne, :metallicity, :sfr, :volume))
+            rho = getvar(gas, :rho); vol = getvar(gas, :volume); T = getvar(gas, :T)
+            @test all(rho .> 0) && all(vol .> 0) && all(isfinite, T)
+            @test minimum(T) > 1.0 && maximum(T) < 1e10                         # physical gas temperatures
+            @test 1e3 < sort(T)[length(T) ÷ 2] < 1e9                            # median in the warm/hot range
+            @test msum(gas) > 0
+        else
+            @test_skip "TNGHalo fixture not present (MERA_TEST_DATA/arepo/TNGHalo/)"
+        end
+
+        bullet = joinpath(SIMULATION_PATH, "arepo", "ArepoBullet", "ArepoBullet", "snapshot_150.hdf5")
+        if isfile(bullet)
+            info = getinfo_gadget(150, bullet, verbose=false)
+            @test info.scale.g_cm3 != 1.0
+            # minimal gas (no GFM / no ElectronAbundance): only :rho/:u/:volume/:T advertised
+            @test all(s -> s in info.particles_variable_list, (:rho, :u, :volume, :T))
+            @test !(:ne in info.particles_variable_list) && !(:metallicity in info.particles_variable_list)
+            # a central window keeps the load light; the T fallback (no :ne) still yields finite K
+            gas = getparticles_gadget(info; families=[0], xrange=[-0.25, 0.25], yrange=[-0.25, 0.25],
+                                      zrange=[-0.25, 0.25], center=[:bc], range_unit=:standard, verbose=false)
+            @test !(:ne in Mera.IndexedTables.colnames(gas.data))
+            @test length(gas.data) > 0
+            @test all(isfinite, getvar(gas, :T)) && all(getvar(gas, :volume) .> 0)
+        else
+            @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/arepo/ArepoBullet/)"
         end
     end
 end

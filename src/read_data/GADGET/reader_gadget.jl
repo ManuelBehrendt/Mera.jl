@@ -11,10 +11,18 @@
 # `getparticles` — columns `(:x,:y,:z, :vx,:vy,:vz, :mass, :id, :family)` — and the particle
 # analysis (getvar / projection / msum / …) runs unchanged. `:family` is the PartType (0–5).
 #
-# Scope (v1): the particles. Gas SPH fields (Density/InternalEnergy/…) are not yet exposed.
+# Gas (PartType0): the Voronoi/SPH cell fields present in the file are read as columns —
+# Density→:rho, InternalEnergy→:u, ElectronAbundance→:ne, GFM_Metallicity→:metallicity,
+# StarFormationRate→:sfr — and :volume = mass/ρ is derived; getvar adds :T, :p, :cs. Base CGS
+# units are read from the Header. (a/h comoving→physical conversion is a later phase.)
 # ====================================================================================
 
 const _GADGET_FAMILY = Dict(0=>"gas", 1=>"halo/DM", 2=>"disk", 3=>"bulge", 4=>"stars", 5=>"bndry/BH")
+
+# 1-D gas-cell fields (AREPO/TNG PartType0) exposed as columns: HDF5 dataset => Mera symbol.
+# Only those actually present in a given snapshot are read (illustris_python-style field selection).
+const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
+                            ("GFM_Metallicity", :metallicity), ("StarFormationRate", :sfr))
 
 # does this HDF5 file look like GADGET? (a Header group carrying NumPart_Total)
 function _is_gadget_h5(fn::String)
@@ -70,14 +78,32 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         info.H0 = hub * 100; info.omega_m = Float64(_gadget_attr(h, "Omega0", 1.0))
         info.omega_l = Float64(_gadget_attr(h, "OmegaLambda", 0.0))
         info.omega_k = 0.0; info.omega_b = Float64(_gadget_attr(h, "OmegaBaryon", 0.0))
-        info.unit_l = Float64(unit_length); info.unit_d = Float64(unit_density)
-        info.unit_v = Float64(unit_velocity); info.unit_t = info.unit_l / info.unit_v
+        # base CGS units: prefer the snapshot Header (UnitLength/Mass/Velocity_in_*), which
+        # AREPO/GADGET/TNG all store, so physical conversions work out of the box; a caller-set
+        # kwarg (≠ the 1.0 default) still wins.
+        hul = Float64(_gadget_attr(h, "UnitLength_in_cm", 0.0))
+        huv = Float64(_gadget_attr(h, "UnitVelocity_in_cm_per_s", 0.0))
+        hum = Float64(_gadget_attr(h, "UnitMass_in_g", 0.0))
+        ul = (unit_length   == 1.0 && hul > 0)             ? hul        : Float64(unit_length)
+        uv = (unit_velocity == 1.0 && huv > 0)             ? huv        : Float64(unit_velocity)
+        ud = (unit_density  == 1.0 && hum > 0 && hul > 0)  ? hum / hul^3 : Float64(unit_density)
+        info.unit_l = ul; info.unit_d = ud; info.unit_v = uv
+        info.unit_t = info.unit_l / info.unit_v
         info.unit_m = info.unit_d * info.unit_l^3
         info.hydro = false; info.gravity = false; info.particles = true
         info.rt = false; info.clumps = false; info.sinks = false
         info.variable_list = Symbol[]; info.nvarh = 0
         info.gravity_variable_list = Symbol[]
         info.particles_variable_list = [:vx, :vy, :vz, :mass, :id, :family]
+        # advertise the gas-cell fields actually present in PartType0 (+ derived :volume, :T)
+        if haskey(f, "PartType0")
+            g0 = f["PartType0"]
+            for (ds, sym) in _GADGET_GAS_FIELDS
+                haskey(g0, ds) && push!(info.particles_variable_list, sym)
+            end
+            haskey(g0, "Density")        && push!(info.particles_variable_list, :volume)
+            haskey(g0, "InternalEnergy") && push!(info.particles_variable_list, :T)
+        end
         info.rt_variable_list = Symbol[]; info.clumps_variable_list = Symbol[]; info.sinks_variable_list = Symbol[]
         info.ncpu = 1
         info.mtime = Dates.unix2datetime(round(Int, mtime(fn))); info.ctime = info.mtime
@@ -99,6 +125,9 @@ end
 
 # read selected columns of a (3,N) row (function barrier: HDF5 read is boxed `Any`)
 _gadget_row(a::AbstractArray{<:Real,2}, r::Int, keep) = Float64.(@view a[r, keep])
+
+# read selected entries of a 1-D dataset (function barrier, as above)
+_gadget_col(a::AbstractVector{<:Real}, keep) = Float64.(@view a[keep])
 
 # indices of particles whose position lies in the (box-normalised) `ranges`
 function _gadget_keep(coords::AbstractArray{<:Real,2}, bl::Float64, ranges)
@@ -132,28 +161,54 @@ function getparticles_gadget(info::InfoType; families=:all,
     bl = info.boxlen
     x = Float64[]; y = Float64[]; z = Float64[]; vx = Float64[]; vy = Float64[]; vz = Float64[]
     mass = Float64[]; id = Int64[]; fam = Int32[]
+    gas = Dict{Symbol,Vector{Float64}}()    # gas-cell columns; NaN for non-gas families, kept aligned
     h5open(fn, "r") do f
         masstable = Float64.(_gadget_attr(attributes(f["Header"]), "MassTable", zeros(6)))
+        # which gas-cell fields to expose: gas is requested AND the dataset is in this snapshot
+        gascols = Tuple{String,Symbol}[]
+        if (0 in want) && haskey(f, "PartType0")
+            for (ds, sym) in _GADGET_GAS_FIELDS
+                haskey(f["PartType0"], ds) && (push!(gascols, (ds, sym)); gas[sym] = Float64[])
+            end
+        end
         for pt in want
             grp = "PartType$pt"
             (haskey(f, grp) && haskey(f[grp], "Coordinates")) || continue
             coords = read(f[grp]["Coordinates"]); vels = read(f[grp]["Velocities"])   # (3, N)
             keep = fullbox ? (1:size(coords, 2)) : _gadget_keep(coords, bl, ranges)    # spatial window
             isempty(keep) && continue
+            nkeep = length(keep)
             append!(x, _gadget_row(coords, 1, keep)); append!(y, _gadget_row(coords, 2, keep)); append!(z, _gadget_row(coords, 3, keep))
             append!(vx, _gadget_row(vels, 1, keep)); append!(vy, _gadget_row(vels, 2, keep)); append!(vz, _gadget_row(vels, 3, keep))
-            m = haskey(f[grp], "Masses") ? Float64.(@view read(f[grp]["Masses"])[keep]) : fill(masstable[pt+1], length(keep))
-            append!(mass, m); append!(id, Int64.(@view read(f[grp]["ParticleIDs"])[keep])); append!(fam, fill(Int32(pt), length(keep)))
+            m = haskey(f[grp], "Masses") ? Float64.(@view read(f[grp]["Masses"])[keep]) : fill(masstable[pt+1], nkeep)
+            append!(mass, m); append!(id, Int64.(@view read(f[grp]["ParticleIDs"])[keep])); append!(fam, fill(Int32(pt), nkeep))
+            # gas-cell fields: real values for gas, NaN for every other family (columns stay aligned)
+            for (ds, sym) in gascols
+                append!(gas[sym], (pt == 0 && haskey(f[grp], ds)) ? _gadget_col(read(f[grp][ds]), keep) : fill(NaN, nkeep))
+            end
         end
     end
-    data = table(x, y, z, vx, vy, vz, mass, id, fam;
-                 names=(:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family), presorted=false, copy=false)
+    # per-cell volume V = m/ρ (NaN where ρ is absent or zero: non-gas rows, empty cells)
+    if haskey(gas, :rho)
+        rho = gas[:rho]; vol = similar(rho)
+        @inbounds @simd for k in eachindex(rho)
+            vol[k] = rho[k] > 0 ? mass[k] / rho[k] : NaN
+        end
+        gas[:volume] = vol
+    end
+    # deterministic column order: base columns, then gas fields in catalogue order, then :volume
+    gasnames = Symbol[]
+    for (_, sym) in _GADGET_GAS_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
+    haskey(gas, :volume) && push!(gasnames, :volume)
+    cols  = Any[x, y, z, vx, vy, vz, mass, id, fam]; append!(cols, (gas[s] for s in gasnames))
+    names = (:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family, gasnames...)
+    data = table(cols...; names=names, presorted=false, copy=false)
     p = PartDataType()
     p.data = data; p.info = info; p.lmin = info.levelmin; p.lmax = info.levelmax; p.boxlen = info.boxlen
     p.ranges = ranges
-    p.selected_partvars = [:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family]
+    p.selected_partvars = collect(names)
     p.used_descriptors = Dict{Any,Any}(); p.scale = info.scale
     verbose && println("[Mera]: GADGET particles = $(length(x)), families ",
-                       join(sort(unique(fam)), ","), "  (:x,:y,:z,:vx,:vy,:vz,:mass,:id,:family)")
+                       join(sort(unique(fam)), ","), "  (", join(names, ","), ")")
     return p
 end

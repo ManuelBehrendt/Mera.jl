@@ -8,9 +8,13 @@ unchanged.
 
 !!! note "Scope"
     GADGET is particle-based (no Eulerian grid), so this is a **particle** reader: it loads the
-    `PartType*` groups into a Mera [`PartDataType`](@ref) via [`getparticles`](@ref). Gas SPH fields
-    (Density/InternalEnergy/…) are not yet exposed; the gas particles load as particles like the
-    rest. 3-D.
+    `PartType*` groups into a Mera [`PartDataType`](@ref) via [`getparticles`](@ref). For **gas**
+    (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns —
+    `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
+    `StarFormationRate→:sfr` — and `:volume = mass/ρ` is derived; [`getvar`](@ref) adds `:T`, `:p`,
+    `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ fallback when `:ne` is absent).
+    Base CGS units are read from the snapshot `Header`. 3-D. (Comoving→physical `a`/`h` conversion
+    is a planned next step.)
 
 ## Usage
 
