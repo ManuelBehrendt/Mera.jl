@@ -29,13 +29,6 @@ using Mera
 base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 ```
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (4), mismatched flags (10))
-
-
-    
-    SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-
-
     
     *__   __ _______ ______   _______ 
 
@@ -69,7 +62,7 @@ gas  = gethydro(info, verbose=false)
 maximum(getvar(gas, :rho))                           # the usual analysis, unchanged
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:01:30.449[22m
+    [0m[1m[Mera]: 2026-06-25T23:14:32.338[22m
     
 
 
@@ -123,7 +116,7 @@ gsub = gethydro(ia; xrange=[-0.1,0.1], yrange=[-0.1,0.1], zrange=[-0.1,0.1],
 length(gsub.data), length(ga.data)                   # sub-region ≪ full snapshot
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:01:41.458[22m
+    [0m[1m[Mera]: 2026-06-25T23:14:43.762[22m
     
 
 
@@ -173,14 +166,14 @@ stars = getparticles_gadget(ig; families=[4])        # just the star particles
 length(stars.data), msum(stars) > 0
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:02:04.867[22m
+    [0m[1m[Mera]: 2026-06-25T23:15:07.582[22m
     
-
-
     Code: GADGET
     output: 200  time: 0.34483  redshift: 1.9
     boxlen = 64000.0
-    particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
+    particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH
+
+      (total 11907080)
     -------------------------------------------------------
     [Mera]: GADGET particles = 450921, families 4
 
@@ -210,7 +203,7 @@ println("T   [K]     : ", extrema(getvar(gas, :T)))
 println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:02:06.313[22m
+    [0m[1m[Mera]: 2026-06-25T23:15:08.951[22m
     
     Code: AREPO
     output: 59  time: 1.0  redshift: 0.0
@@ -221,9 +214,7 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 
       (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,metallicity,sfr,volume)
     gas cells   : 4006794
-    rho [g/cm³] : 
-
-    (1.3854807197342735e-30, 1.17827292777639e-22)
+    rho [g/cm³] : (1.3854807197342735e-30, 1.17827292777639e-22)
     T   [K]     : 
 
     (17.965557996942835, 1.2925814640761332e8)
@@ -240,21 +231,28 @@ println("gas mass [Msol]: ", msum(gas, :Msol))
 ```
 
     median T [K]   : 1.436872560859919e7
+    median Z       : 
 
-    
-    median Z       : 0.001993876649066806
+    0.001993876649066806
     gas mass [Msol]: 4.6930995577059625e13
 
 
-Gas maps come from the particle projection — point deposition (default) or `weighting=:sph`, which
-smears each cell over an M4 kernel sized from its `:volume`. Both are mass-conserving.
+Gas maps come from the particle projection. AREPO gas is a **Voronoi moving mesh**, so for maps each
+cell is smeared over an **M4 kernel sized from its `:volume`** (`weighting=:sph`) — the standard
+conversion for moving-mesh / SPH data (the same approach `yt` uses) — or deposited as a point
+(default). Both are mass-conserving. `TNGHalo` is a *cutout*, so we zoom to the halo.
 
 
 ```julia
-using CairoMakie
-c  = [sum(getvar(gas,:x)), sum(getvar(gas,:y)), sum(getvar(gas,:z))] ./ length(gas.data) ./ gas.boxlen
-sd = projection(gas, :sd, :Msol_pc2, res=256, center=c, weighting=:sph)   # SPH surface density
-Tm = projection(gas, :T,             res=256, center=c, weighting=:mass)   # mass-weighted ⟨T⟩
+using CairoMakie, Statistics
+# zoom to the halo (the gas fills only a small part of the 205 Mpc box); res is full-box-relative,
+# so scale it up so the zoom window spans ~256 px.
+cx, cy, cz = mean(getvar(gas,:x,:kpc)), mean(getvar(gas,:y,:kpc)), mean(getvar(gas,:z,:kpc))
+R   = maximum(maximum(abs, getvar(gas,q,:kpc) .- m) for (q,m) in zip((:x,:y,:z),(cx,cy,cz))) * 1.05
+res = ceil(Int, 256 * it.boxlen * it.scale.kpc / (2R))
+zoom = (res=res, center=[cx,cy,cz], range_unit=:kpc, xrange=[-R,R], yrange=[-R,R], zrange=[-R,R])
+sd = projection(gas, :sd, :Msol_pc2; weighting=:sph,  zoom...)   # SPH-kernel surface density
+Tm = projection(gas, :T;             weighting=:mass, zoom...)   # mass-weighted ⟨T⟩
 fig = Figure(size=(900, 400))
 a1 = Axis(fig[1,1]; title="Sigma_gas (SPH) [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(a1)
 a2 = Axis(fig[1,2]; title="T (mass-weighted) [K]",        aspect=DataAspect()); hidedecorations!(a2)
@@ -263,44 +261,34 @@ heatmap!(a2, log10.(ifelse.(Tm.maps[:T]  .> 0, Tm.maps[:T],  NaN))'; colormap=:p
 fig
 ```
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (18))
-
-
-    
-    SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-
-
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mMera v1.8.0
-
-
-    [0m[1m[Mera]: 2026-06-25T23:02:24.117[22m
+    [0m[1m[Mera]: 2026-06-25T23:15:21.508[22m
     
 
 
     center: [0.2352905, 0.2634881, 0.3024498] ==> [71.205 [Mpc] :: 79.739 [Mpc] :: 91.53 [Mpc]]
     
     domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 302.628 [Mpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 302.628 [Mpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 302.628 [Mpc]
+    xmin::xmax: 0.2194149 :: 0.251166  	==> 66.401 [Mpc] :: 76.01 [Mpc]
+    ymin::ymax: 0.2476126 :: 0.2793636  	==> 74.934 [Mpc] :: 84.543 [Mpc]
+    zmin::zmax: 0.2865743 :: 0.3183253  	==> 86.725 [Mpc] :: 96.334 [Mpc]
     
-    Effective resolution: 256^2
-    Pixel size: 1.182 [Mpc]
+    Effective resolution: 8063^2
+    Pixel size: 37.533 [kpc]
     Simulation min.: 151.314 [Mpc]
     
-    [0m[1m[Mera]: 2026-06-25T23:02:41.328[22m
+    [0m[1m[Mera]: 2026-06-25T23:15:38.828[22m
 
 
     
     center: [0.2352905, 0.2634881, 0.3024498] ==> [71.205 [Mpc] :: 79.739 [Mpc] :: 91.53 [Mpc]]
     
     domain:
-    xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 302.628 [Mpc]
-    ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 302.628 [Mpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 302.628 [Mpc]
+    xmin::xmax: 0.2194149 :: 0.251166  	==> 66.401 [Mpc] :: 76.01 [Mpc]
+    ymin::ymax: 0.2476126 :: 0.2793636  	==> 74.934 [Mpc] :: 84.543 [Mpc]
+    zmin::zmax: 0.2865743 :: 0.3183253  	==> 86.725 [Mpc] :: 96.334 [Mpc]
     
-    Effective resolution: 256^2
-    Pixel size: 1.182 [Mpc]
+    Effective resolution: 8063^2
+    Pixel size: 37.533 [kpc]
     Simulation min.: 151.314 [Mpc]
     
 
@@ -308,7 +296,7 @@ fig
 
 
 
-![Gas surface density (SPH-kernel) and mass-weighted temperature of an IllustrisTNG halo — produced by Mera's projection on AREPO gas cells.](assets/multicode/arepo_tng_gas_maps.png)
+![Gas surface density (SPH-kernel) and mass-weighted temperature of an IllustrisTNG halo, zoomed to the halo — produced by Mera's projection on AREPO Voronoi gas cells.](assets/multicode/arepo_tng_gas_maps.png)
 
 
 
