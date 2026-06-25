@@ -123,9 +123,13 @@ projection(gas, :sd, :Msol_pc2, weighting=:sph)          # SPH-kernel: smear eac
     treating each Voronoi cell as an SPH-like blob — the same approach `yt` uses for AREPO. It
     resolves each cell's footprint while staying mass-conserving to machine precision
     (`Σ pixel·area == msum` for cells inside the field; cells straddling the edge contribute only
-    their in-field share). A fully Voronoi-exact renderer (analytic polyhedron–pixel clipping) would
-    be more faithful still, but is not needed for correct, conserving maps. Comoving→physical
-    `a`/`h` is applied automatically for cosmological snapshots.
+    their in-field share). For a **genuinely cell-respecting** map, `weighting=:voronoi` (nearest
+    generator: each line-of-sight sample is assigned to its nearest cell via a KD-tree, capped at the
+    cell's effective radius) gives sharp, piecewise-constant cells — **intensive** quantities (`T`,
+    metallicity) are *exact* (the column ratio cancels cell-volume errors); **surface density** is
+    approximate (use `:sph`/`:mass` for conserving column mass). A fully Voronoi-exact renderer
+    (analytic polyhedron–pixel clipping, as in AREPO's `ArepoVTK`) would be more faithful still but
+    is rarely needed. Comoving→physical `a`/`h` is applied automatically for cosmological snapshots.
 
 (Tip: for a halo *cutout* in a large box, zoom the projection — `center=[…], range_unit=:kpc,
 xrange=[-R,R], …` — and raise `res` so the window spans enough pixels, since `res` is full-box-relative.)

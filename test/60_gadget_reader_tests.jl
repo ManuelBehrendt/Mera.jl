@@ -213,6 +213,52 @@ end
         @test !(sum(T .* V) / sum(V) ≈ sum(T .* m) / sum(m))                    # the two genuinely differ
     end
 
+    @testset "Voronoi (nearest-generator) projection: sharp + conserving" begin
+        # (a) conservation: a regular grid of cells ⇒ Voronoi cells == grid cells, so V_stored is the
+        #     true Voronoi volume and the nearest-cell column integral recovers the total mass.
+        N = 6; box = 10.0; vg = (box / N)^3; xs = Float64[(i + 0.5) * box / N for i in 0:N-1]
+        coords = Matrix{Float64}(undef, 3, N^3); c = 0
+        for i in xs, j in xs, k in xs; c += 1; coords[:, c] = [i, j, k]; end
+        fn = joinpath(dir, "snap_011.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = box; hg["NumPart_Total"] = UInt32[N^3, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = coords; g0["Velocities"] = zeros(Float32, 3, N^3)
+            g0["Masses"] = fill(Float32(vg), N^3); g0["Density"] = fill(1.0f0, N^3); g0["InternalEnergy"] = fill(100.0f0, N^3)
+            g0["ParticleIDs"] = UInt32.(1:N^3)
+        end
+        gas = getparticles_gadget(getinfo_gadget(11, dir, verbose=false); families=[0], verbose=false)
+        sd = projection(gas, :sd, res=24, weighting=:voronoi, verbose=false, show_progress=false)
+        frac = sum(sd.maps[:sd]) * (gas.boxlen / 24)^2 / msum(gas)
+        @test 0.6 < frac < 1.1          # nearest-cell capped at r_eff ⇒ approximately conserving (no gross over/under-count)
+
+        # (b) sharpness: two cells filling half the box each ⇒ piecewise-constant T (exactly the two
+        #     cell values, no smoothing). V = half-box so r_eff covers the cell.
+        fn2 = joinpath(dir, "snap_012.hdf5")
+        h5open(fn2, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 10.0; hg["NumPart_Total"] = UInt32[2, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = Float64[2.5 7.5; 5 5; 5 5]; g0["Velocities"] = zeros(Float32, 3, 2)
+            g0["Masses"] = Float32[500, 500]; g0["Density"] = Float32[1, 1]; g0["InternalEnergy"] = Float32[100, 400]
+            g0["ParticleIDs"] = UInt32[1, 2]
+        end
+        g2 = getparticles_gadget(getinfo_gadget(12, dir, verbose=false); families=[0], verbose=false)
+        Tmap = projection(g2, :T, res=16, weighting=:voronoi, verbose=false, show_progress=false).maps[:T]
+        Tcell = getvar(g2, :T)
+        @test Set(round.(filter(isfinite, Tmap), digits=1)) == Set(round.(Tcell, digits=1))   # only the cell values
+        @test Tmap[4, 8] ≈ Tcell[1] && Tmap[12, 8] ≈ Tcell[2]                                  # sharp split at x=5
+
+        # guards: needs a :rho column; axis-aligned only
+        st = getparticles_gadget(getinfo_gadget(0, dir, verbose=false); families=[4], verbose=false)
+        withenv("MERA_PROJECTION_STRICT" => "true") do
+            @test_throws ArgumentError projection(st, :vx, res=8, weighting=:voronoi, verbose=false, show_progress=false)
+        end
+    end
+
     @testset "SPH-kernel projection (weighting=:sph): conserving + smoothing" begin
         # three gas cells near the box centre (far from edges ⇒ no boundary leakage ⇒ exact conservation)
         fn = joinpath(dir, "snap_008.hdf5")
