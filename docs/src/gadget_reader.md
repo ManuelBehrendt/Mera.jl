@@ -13,8 +13,8 @@ unchanged.
     `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
     `StarFormationRate→:sfr` — and `:volume = mass/ρ` is derived; [`getvar`](@ref) adds `:T`, `:p`,
     `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ fallback when `:ne` is absent).
-    Base CGS units are read from the snapshot `Header`. 3-D. (Comoving→physical `a`/`h` conversion
-    is a planned next step.)
+    Base CGS units are read from the snapshot `Header`, and for cosmological runs the
+    comoving→physical `a`/`h` factors are applied automatically. 3-D.
 
 ## Usage
 
@@ -83,10 +83,15 @@ dm = getparticles_gadget(info; families=[1]); st = getparticles_gadget(info; fam
 ## Units
 
 GADGET data is in **code units** (commonly length kpc/h, mass 10¹⁰ M⊙/h, velocity km/s, with `h`
-the dimensionless Hubble parameter). The defaults treat the run as dimensionless; pass the run's CGS
-`unit_length`/`unit_density`/`unit_velocity` to [`getinfo_gadget`](@ref) for physical conversions
-(mind the `h` factors). Cosmological metadata (`Time` = scale factor, `Redshift`, `HubbleParam`,
-`Omega0`/`OmegaLambda`) is read from the `Header`.
+the dimensionless Hubble parameter). The base CGS units are read from the `Header`
+(`UnitLength/Mass/Velocity_in_*`), so `getvar(gas, :rho, :g_cm3)`, `getvar(part, :vx, :km_s)`, etc.
+return physical quantities out of the box; the `unit_length`/`unit_density`/`unit_velocity` keywords
+override them. Cosmological metadata (`Time` = scale factor, `Redshift`, `HubbleParam`,
+`Omega0`/`OmegaLambda`) is read from the `Header`, and a run is treated as **cosmological** when
+`OmegaLambda > 0`. For cosmological runs the **comoving→physical** factors are applied
+automatically: positions ∝ `a/h`, density ∝ `h²/a³`, mass ∝ `1/h`, and velocities carry the `√a`
+factor — so a code that returns physical values to `getvar` needs no manual `h`/`a` bookkeeping. (A
+non-cosmological run, `OmegaLambda = 0`, is left untouched: `a = 1`, `Time` is a physical time.)
 
 ## How it maps onto Mera's structs
 

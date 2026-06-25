@@ -37,7 +37,7 @@ function _write_gadget_gas(fn)
         attributes(hg)["BoxSize"] = 100.0
         attributes(hg)["NumPart_Total"] = UInt32[3, 2, 0, 0, 0, 0]      # 3 gas + 2 DM
         attributes(hg)["MassTable"] = [0.0, 2.0, 0.0, 0.0, 0.0, 0.0]    # DM mass 2.0
-        attributes(hg)["Time"] = 1.0; attributes(hg)["HubbleParam"] = 0.7
+        attributes(hg)["Time"] = 1.0                                    # h defaults to 1 (no a/h folding here)
         attributes(hg)["UnitLength_in_cm"] = 3.085678e21               # kpc — reader auto-reads these
         attributes(hg)["UnitMass_in_g"] = 1.989e43                     # 1e10 M⊙
         attributes(hg)["UnitVelocity_in_cm_per_s"] = 1.0e5             # km/s
@@ -129,6 +129,49 @@ end
         both = getparticles_gadget(info; families=[0, 1], verbose=false)
         rho = Mera.select(both.data, :rho); fam = Mera.select(both.data, :family)   # raw column (getvar maps NaN→0)
         @test all(.!isnan.(rho[fam .== 0])) && all(isnan.(rho[fam .== 1]))
+    end
+
+    @testset "comoving→physical a/h conversion (cosmological run)" begin
+        # cosmological gas snapshot: ΩΛ>0, Time = scale factor a, h<1
+        fn = joinpath(dir, "snap_005.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 1000.0; hg["NumPart_Total"] = UInt32[2, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6)
+            hg["Time"] = 0.5; hg["HubbleParam"] = 0.7; hg["Omega0"] = 0.3; hg["OmegaLambda"] = 0.7
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"]    = Float64[100 200; 100 200; 100 200]
+            g0["Velocities"]     = Float32[10 20; 0 0; 0 0]
+            g0["Masses"]         = Float32[1.0, 1.0]
+            g0["Density"]        = Float32[1.0, 1.0]
+            g0["InternalEnergy"] = Float32[100.0, 100.0]
+            g0["ParticleIDs"]    = UInt32[1, 2]
+        end
+        info = getinfo_gadget(5, dir, verbose=false)
+        a = 0.5; h = 0.7
+        @test info.aexp == a && Mera.iscosmological(info)            # cosmo flag from ΩΛ, a from Time
+        @test info.unit_l ≈ 3.0e21 * a / h                           # length  ∝ a/h
+        @test info.unit_d ≈ (2.0e43 / 3.0e21^3) * h^2 / a^3          # density ∝ h²/a³
+        @test info.unit_m ≈ info.unit_d * info.unit_l^3              # mass = ρ·l³  (∝ 1/h)
+        gas = getparticles_gadget(info; families=[0], verbose=false)
+        @test getvar(gas, :vx) ≈ [10.0, 20.0] .* sqrt(a)            # velocity √a applied at read
+        @test getvar(gas, :T)[1] ≈ getvar(gas, :T)[2] > 0           # T is a/h-free (same u ⇒ same T)
+
+        # a non-cosmological twin (ΩΛ=0) gets a=1 and no √a / a-factor
+        fn2 = joinpath(dir, "snap_006.hdf5")
+        h5open(fn2, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 1000.0; hg["NumPart_Total"] = UInt32[2, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6)
+            hg["Time"] = 0.5; hg["HubbleParam"] = 0.7; hg["Omega0"] = 0.0; hg["OmegaLambda"] = 0.0
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = Float64[100 200; 100 200; 100 200]; g0["Velocities"] = Float32[10 20; 0 0; 0 0]
+            g0["Masses"] = Float32[1.0, 1.0]; g0["Density"] = Float32[1.0, 1.0]
+            g0["InternalEnergy"] = Float32[100.0, 100.0]; g0["ParticleIDs"] = UInt32[1, 2]
+        end
+        info2 = getinfo_gadget(6, dir, verbose=false)
+        @test info2.aexp == 1.0 && !Mera.iscosmological(info2)       # ΩΛ=0 ⇒ non-cosmological, a=1
+        @test getvar(getparticles_gadget(info2; families=[0], verbose=false), :vx) == [10.0, 20.0]  # no √a
     end
 
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
