@@ -196,6 +196,35 @@ end
         @test !(sum(T .* V) / sum(V) ≈ sum(T .* m) / sum(m))                    # the two genuinely differ
     end
 
+    @testset "SPH-kernel projection (weighting=:sph): conserving + smoothing" begin
+        # three gas cells near the box centre (far from edges ⇒ no boundary leakage ⇒ exact conservation)
+        fn = joinpath(dir, "snap_008.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0; hg["NumPart_Total"] = UInt32[3, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = Float64[48 50 52; 50 50 50; 50 50 50]; g0["Velocities"] = Float32[0 0 0; 0 0 0; 0 0 0]
+            g0["Masses"] = Float32[1.0, 2.0, 3.0]; g0["Density"] = Float32[1.0, 1.0, 1.0]
+            g0["InternalEnergy"] = Float32[100.0, 200.0, 300.0]; g0["ParticleIDs"] = UInt32[1, 2, 3]
+        end
+        info = getinfo_gadget(8, dir, verbose=false); gas = getparticles_gadget(info; families=[0], verbose=false)
+        pixarea = (info.boxlen / 64)^2
+        sph = projection(gas, :sd, res=64, weighting=:sph,  verbose=false, show_progress=false)
+        pt  = projection(gas, :sd, res=64, weighting=:mass, verbose=false, show_progress=false)
+        @test sum(sph.maps[:sd]) * pixarea ≈ msum(gas)                          # mass-conserving (machine precision)
+        @test count(>(0), sph.maps[:sd]) > count(>(0), pt.maps[:sd])           # SPH spreads over the cell footprint
+        Tm = projection(gas, :T, res=64, weighting=:sph, verbose=false, show_progress=false)
+        tf = filter(isfinite, Tm.maps[:T])
+        @test !isempty(tf) && minimum(tf) > 0                                  # intensive SPH map is finite & positive
+
+        # :sph requires a :volume column — particles without one error clearly (strict mode rethrows)
+        st = getparticles_gadget(getinfo_gadget(0, dir, verbose=false); families=[4], verbose=false)  # stars, no :volume
+        withenv("MERA_PROJECTION_STRICT" => "true") do
+            @test_throws ArgumentError projection(st, :vx, res=8, weighting=:sph, verbose=false, show_progress=false)
+        end
+    end
+
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
     @testset "real GADGET snapshot — yt GadgetDiskGalaxy (data-backed)" begin
         gd = joinpath(SIMULATION_PATH, "gadget_diskgalaxy", "GadgetDiskGalaxy")
