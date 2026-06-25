@@ -43,33 +43,32 @@ makedocs(modules = [Mera],
                                                       "Clumps"    => "03_clumps_Get_Subregions.md"]],
 
                       "Analysis & Calculations" => Any[
-                          # --- quantities & fields (foundational → physics) ---
-                          "Basic Calculations"  => "04_multi_Basic_Calculations.md",
-                          "How Quantities Are Computed" => "computation_reference.md",
-                          "Derived Fields & add_field" => "derived_fields.md",
-                          "Magnetic Fields (MHD)" => "magnetic_fields.md",
-                          "Radiative Transfer"  => "10_multi_RadiativeTransfer.md",
-                          # --- selection & statistics ---
-                          "Mask/Filter/Meta"    => "05_multi_Masking_Filtering.md",
-                          "Statistics (PDFs)"    => "statistics.md",
-                          "Profiles & Phase Diagrams" => "15_multi_Profiles_Phase.md",
-                          # --- structure finding ---
-                          "Clump Finding"       => "clumpfind.md",
-                          "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md",
-                          # --- maps & mock observations ---
-                          "Covering Grid / FRB" => "covering_grid.md",
-                          "Grid Overlay & Absorption" => "overlay_absorption.md",
-                          "Auto-Frame (center & orient)" => "galaxyframe.md",
-                          "Mock Observations (cookbook)" => "mock_observations.md",
-                          # --- flux & star formation ---
-                          "Flux Budgets"        => "fluxbudget.md",
-                          "Star-Formation Rate" => "sfr.md",
-                          # --- time domain & cosmology ---
-                          "Time Series (multi-snapshot)" => "timeseries.md",
-                          "Movies (getmovie)"   => "movie.md",
-                          "Cosmological Runs"   => "09_multi_Cosmology.md",
-                          # --- reproducibility ---
-                          "Provenance"           => "provenance.md"],
+                          "Quantities & Fields" => Any[
+                              "Basic Calculations"          => "04_multi_Basic_Calculations.md",
+                              "How Quantities Are Computed" => "computation_reference.md",
+                              "Derived Fields & add_field"  => "derived_fields.md",
+                              "Magnetic Fields (MHD)"       => "magnetic_fields.md",
+                              "Radiative Transfer"          => "10_multi_RadiativeTransfer.md"],
+                          "Selection & Statistics" => Any[
+                              "Mask/Filter/Meta"            => "05_multi_Masking_Filtering.md",
+                              "Statistics (PDFs)"           => "statistics.md",
+                              "Profiles & Phase Diagrams"   => "15_multi_Profiles_Phase.md"],
+                          "Structure Finding" => Any[
+                              "Clump Finding"               => "clumpfind.md",
+                              "Clump Finding — Synthetic Example" => "clumpfind_synthetic.md"],
+                          "Maps & Mock Observations" => Any[
+                              "Covering Grid / FRB"         => "covering_grid.md",
+                              "Grid Overlay & Absorption"   => "overlay_absorption.md",
+                              "Auto-Frame (center & orient)"=> "galaxyframe.md",
+                              "Mock Observations (cookbook)"=> "mock_observations.md"],
+                          "Gas Flows & Star Formation" => Any[
+                              "Flux Budgets"                => "fluxbudget.md",
+                              "Star-Formation Rate"         => "sfr.md"],
+                          "Time Evolution & Provenance" => Any[
+                              "Time Series (multi-snapshot)"=> "timeseries.md",
+                              "Movies (getmovie)"           => "movie.md",
+                              "Cosmological Runs"           => "09_multi_Cosmology.md",
+                              "Provenance"                  => "provenance.md"]],
 
                       "Projection" => Any[
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
