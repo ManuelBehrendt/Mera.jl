@@ -1,5 +1,8 @@
 # Clump Finding
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `clumpfind.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/clumpfind.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 `clumpfind` locates **connected over-dense structures** and returns a per-clump catalog. It works
 two ways:
 

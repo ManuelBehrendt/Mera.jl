@@ -1,5 +1,8 @@
 # Mock Observations (cookbook)
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `mock_observations.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/mock_observations.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 Mera ships a full mock-observation toolkit — beam/PSF convolution, velocity cubes and moment
 maps, position–velocity diagrams, spectra, emission maps, and FITS export. This page ties
 them together with the [auto-frame](galaxyframe.md): orient the galaxy **once**, then reuse

@@ -1,5 +1,8 @@
 # Off-axis Conservation Proof
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `offaxis_conservation_proof.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/offaxis_conservation_proof.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 A projection only changes the **viewing geometry** of the data — it must not change the
 physical content. For an *extensive* quantity (one whose pixel values sum to a physical
 total, e.g. mass) the sum over the projected map must equal the geometry-independent ground

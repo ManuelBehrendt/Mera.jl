@@ -1,5 +1,8 @@
 # Clump Finding — a synthetic, ground-truth example
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `clumpfind_synthetic.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/clumpfind_synthetic.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 This page is a self-contained, **data-free** worked example for the structure finder
 ([`clumpfind`](@ref)). It builds a small Mera simulation *from scratch* — a real
 `HydroDataType` + `PartDataType` on a self-consistent unit system, no RAMSES files — whose
