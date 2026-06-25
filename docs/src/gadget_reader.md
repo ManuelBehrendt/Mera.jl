@@ -80,6 +80,35 @@ dm = getparticles_gadget(info; families=[1]); st = getparticles_gadget(info; fam
 
 ![GADGET disk galaxy: the dark-matter halo and filaments (left, 4.8M particles) and the star particles tracing the forming galaxy (right, 451k) — read into a PartDataType and plotted with the usual getvar calls.](assets/gadget/diskgalaxy.png)
 
+## Gas analysis (AREPO / IllustrisTNG)
+
+For **gas** (`PartType0`) the cell fields are read alongside the kinematics, so the full thermodynamic
+analysis runs through the usual `getvar`/`projection` calls — in physical units:
+
+```julia
+info = getinfo(59, "/data/TNG/halo_59")          # IllustrisTNG cutout (AREPO)
+gas  = getparticles(info; families=[0])           # PartType0 → :rho,:u,:ne,:metallicity,:sfr,:volume
+
+getvar(gas, :rho, :g_cm3)                          # physical density (a/h applied for cosmological runs)
+getvar(gas, :T)                                    # temperature [K] from :u (+ :ne when present)
+getvar(gas, :metallicity)                          # mass-fraction metallicity
+
+pdf(gas, :rho); profile(gas, :r_sphere, :T)        # PDFs / radial profiles on the gas
+```
+
+Maps come from the particle projection, which deposits each Voronoi cell at its position. **Extensive**
+maps (surface density) are mass-conserving to machine precision (`Σ pixel·area == msum`); **intensive**
+maps (temperature, metallicity) take a `weighting`:
+
+```julia
+projection(gas, :sd, :Msol_pc2)                          # surface density (mass-conserving)
+projection(gas, :T, weighting=:mass)                     # mass-weighted  ⟨T⟩  (dense gas)
+projection(gas, :T, weighting=:volume)                   # volume-weighted ⟨T⟩ (diffuse gas) — needs :volume
+```
+
+(The cells are deposited as points; a smoothing-kernel deposition that resolves each cell's footprint
+is planned. Comoving→physical `a`/`h` is handled automatically for cosmological snapshots.)
+
 ## Units
 
 GADGET data is in **code units** (commonly length kpc/h, mass 10¹⁰ M⊙/h, velocity km/s, with `h`
