@@ -1,5 +1,8 @@
 # Magnetic Fields (MHD)
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `magnetic_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/magnetic_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 Mera reads **RAMSES MHD** (ideal magnetohydrodynamics) outputs and exposes the magnetic field for
 analysis. RAMSES evolves **B** with a *constrained-transport* scheme, so the field is stored as the
 **six face-centred components** `B_{x,y,z}_left` and `B_{x,y,z}_right` in the ordinary hydro files

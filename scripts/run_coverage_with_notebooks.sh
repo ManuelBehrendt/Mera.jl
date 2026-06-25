@@ -91,7 +91,19 @@ TOP_NBS=(
 )
 # Note: 11_caligo_OpticalDepth is intentionally excluded — it belongs to a
 # separate package (getcaligo), not Mera, and is not part of this coverage suite.
-for nb in "${TOP_NBS[@]}"; do
+
+# Feature notebooks: one runnable .ipynb per analysis-feature doc page (named to match
+# the docs/src/<page>.md basename). Each was execution-verified against the fixtures.
+# clumpfind caps lmax/window so its finders run in ~100s (not the whole lmax=14 galaxy).
+FEATURE_NBS=(
+  magnetic_fields derived_fields statistics sfr fluxbudget
+  covering_grid galaxyframe mock_observations overlay_absorption
+  clumpfind clumpfind_synthetic provenance
+  timeseries movie 07_1_multi_Mera_Files_Converter
+  06_offaxis_Projection offaxis_conservation_proof
+)
+
+for nb in "${TOP_NBS[@]}" "${FEATURE_NBS[@]}"; do
     [ -s "$nb.ipynb" ] && run_nb "$nb" "" || echo "    -- skip (missing/empty): $nb"
 done
 for nb in examples/ExportImportData examples/LoadFromExistingOutputs examples/Miscellaneous; do

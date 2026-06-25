@@ -1,5 +1,8 @@
 # Time Series (multi-snapshot analysis)
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `timeseries.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/timeseries.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 Most post-processing is not about one snapshot — it is about *evolution*: how a mass, a
 peak density, a star-formation rate, or a profile changes across the outputs of a run.
 Writing that loop by hand (find the outputs, load each one, handle a missing snapshot,

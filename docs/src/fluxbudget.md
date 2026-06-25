@@ -1,5 +1,8 @@
 # Flux Budgets (inflow / outflow)
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `fluxbudget.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/fluxbudget.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 [`fluxbudget`](@ref) measures the **flux of mass, momentum, energy and metals through a surface**
 (a sphere at radius R, or a cylinder wall), with the surface-normal velocity split into separate
 **inflow** and **outflow** rates — the thin-shell estimator that galactic-feedback and gas-cycle

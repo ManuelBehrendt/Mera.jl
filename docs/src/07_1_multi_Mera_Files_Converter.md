@@ -1,5 +1,8 @@
 # MERA/JLD2 File Converter - Multithreaded
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `07_1_multi_Mera_Files_Converter.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/07_1_multi_Mera_Files_Converter.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 ## Overview
 
 `batch_convert_mera` is a safe, multithreaded tool to **re-save older Mera.jl data files in the

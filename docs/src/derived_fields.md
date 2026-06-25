@@ -1,5 +1,8 @@
 # Derived Fields & `add_field`
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 Mera computes a large catalogue of **derived quantities** on demand through
 [`getvar`](@ref) — temperature, sound speed, Mach number, cylindrical/spherical velocities,
 specific angular momentum, Jeans length, kinetic/thermal energy, and many more. You ask for

@@ -1,5 +1,8 @@
 # Off-axis Projection
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 !!! tip "New to off-axis projection?"
     Start with the runnable walk-through — [Projection basics](11_multi_OffAxisProjection.md) —
     then come back here for the reference details. The notebook series is: basics →
