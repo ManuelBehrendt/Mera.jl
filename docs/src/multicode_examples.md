@@ -29,6 +29,13 @@ using Mera
 base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 ```
 
+    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (4), mismatched flags (10))
+
+
+    
+    SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+
     
     *__   __ _______ ______   _______ 
 
@@ -62,7 +69,7 @@ gas  = gethydro(info, verbose=false)
 maximum(getvar(gas, :rho))                           # the usual analysis, unchanged
 ```
 
-    [0m[1m[Mera]: 2026-06-25T22:45:26.601[22m
+    [0m[1m[Mera]: 2026-06-25T23:01:30.449[22m
     
 
 
@@ -116,7 +123,7 @@ gsub = gethydro(ia; xrange=[-0.1,0.1], yrange=[-0.1,0.1], zrange=[-0.1,0.1],
 length(gsub.data), length(ga.data)                   # sub-region ≪ full snapshot
 ```
 
-    [0m[1m[Mera]: 2026-06-25T22:45:38.431[22m
+    [0m[1m[Mera]: 2026-06-25T23:01:41.458[22m
     
 
 
@@ -166,12 +173,12 @@ stars = getparticles_gadget(ig; families=[4])        # just the star particles
 length(stars.data), msum(stars) > 0
 ```
 
-    [0m[1m[Mera]: 2026-06-25T22:46:01.508[22m
+    [0m[1m[Mera]: 2026-06-25T23:02:04.867[22m
     
-    Code: GADGET
-    output: 
 
-    200  time: 0.34483  redshift: 1.9
+
+    Code: GADGET
+    output: 200  time: 0.34483  redshift: 1.9
     boxlen = 64000.0
     particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
     -------------------------------------------------------
@@ -203,9 +210,9 @@ println("T   [K]     : ", extrema(getvar(gas, :T)))
 println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
-    [0m[1m[Mera]: 2026-06-25T22:46:02.924[22m
+    [0m[1m[Mera]: 2026-06-25T23:02:06.313[22m
     
-    Code: GADGET
+    Code: AREPO
     output: 59  time: 1.0  redshift: 0.0
     boxlen = 205000.0
     particles: 4006794 gas, 5567314 halo/DM, 533034 stars  (total 10107142)
@@ -233,9 +240,9 @@ println("gas mass [Msol]: ", msum(gas, :Msol))
 ```
 
     median T [K]   : 1.436872560859919e7
-    median Z       : 
 
-    0.001993876649066806
+    
+    median Z       : 0.001993876649066806
     gas mass [Msol]: 4.6930995577059625e13
 
 
@@ -256,7 +263,17 @@ heatmap!(a2, log10.(ifelse.(Tm.maps[:T]  .> 0, Tm.maps[:T],  NaN))'; colormap=:p
 fig
 ```
 
-    [0m[1m[Mera]: 2026-06-25T22:46:10.511[22m
+    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (18))
+
+
+    
+    SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+
+
+    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mMera v1.8.0
+
+
+    [0m[1m[Mera]: 2026-06-25T23:02:24.117[22m
     
 
 
@@ -271,7 +288,7 @@ fig
     Pixel size: 1.182 [Mpc]
     Simulation min.: 151.314 [Mpc]
     
-    [0m[1m[Mera]: 2026-06-25T22:46:27.659[22m
+    [0m[1m[Mera]: 2026-06-25T23:02:41.328[22m
 
 
     
