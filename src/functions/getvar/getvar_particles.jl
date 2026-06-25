@@ -94,6 +94,29 @@ function get_data(dataobject::PartDataType,
                                   select(masked_data, :vy).^2 .+
                                   select(masked_data, :vz).^2 ) .* selected_unit .^2
 
+        # --- gas-cell thermodynamics (AREPO/GADGET PartType0), from specific internal energy :u ---
+        elseif i == :T || i == :Temp || i == :Temperature
+            # T = (γ-1)·u·μ·m_H/k_B [K]. scale.T_mu maps code (p/ρ)=(γ-1)u → T/μ; μ from the
+            # electron abundance :ne when present, else a neutral-primordial fallback (μ ≈ 1.22).
+            γ = 5/3; XH = 0.76
+            T_over_mu = (γ - 1) .* select(masked_data, :u) .* dataobject.info.scale.T_mu
+            if in(:ne, column_names)
+                ne = select(masked_data, :ne)
+                vars_dict[i] = @. T_over_mu * 4 / (1 + 3XH + 4XH * ne)         # [K]
+            else
+                vars_dict[i] = T_over_mu .* (4 / (1 + 3XH))                     # [K]
+            end
+
+        elseif i == :p || i == :pressure
+            # ideal-gas pressure p = (γ-1)·ρ·u
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] = (5/3 - 1) .* select(masked_data, :rho) .* select(masked_data, :u) .* selected_unit
+
+        elseif i == :cs || i == :sound_speed
+            # adiabatic sound speed c_s = √(γ(γ-1)·u)
+            selected_unit = getunit(dataobject, i, vars, units)
+            vars_dict[i] = sqrt.((5/3) * (5/3 - 1) .* select(masked_data, :u)) .* selected_unit
+
        elseif i == :vϕ_cylinder
             x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
             y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
