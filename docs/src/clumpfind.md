@@ -377,6 +377,107 @@ cat = clumpfind(gas, PersistenceFinder(:rho; threshold=1e2, threshold_unit=:nH,
                                        linking_length=0.5, persistence=0.3))
 ```
 
+## Algorithms & implementation
+
+This section documents *how* the finders are implemented and gives the source references. Every finder
+shares one pipeline and differs only in the grouping rule, so the algorithms compose from a small set
+of building blocks.
+
+### Shared architecture (three layers)
+
+A finder supplies only a grouping rule and inherits statistics, units, boundedness, the catalog and the
+hierarchy from the surrounding driver:
+
+1. **Neighbour layer.** A single uniform-grid spatial index answers *"all unique point pairs within the
+   linking length `b`"* (and *"neighbours of point `i`"*). Points are hashed into cells of side `b`; a
+   27-cell stencil then yields every pair within `b`. Three interchangeable backends produce **identical**
+   pairs and differ only in memory/cache behaviour (`backend=`): `HashGrid` (`Dict(cell ⇒ members)`,
+   baseline), `CellLinkedList` (head/next linked list per cell — the default, no per-bucket allocation),
+   and `MortonGrid` (same pairs, but points are visited in Morton / Z-order so spatial neighbours are
+   cache-near). Index build and pair enumeration are ~O(N) at roughly uniform density.
+2. **Union-find.** A disjoint-set forest with path-halving merges linked points into connected groups in
+   ~O(N·α(N)) and relabels roots to dense ids `1…k`. FoF, graph-segmentation, phase-space FoF and
+   HDBSCAN's spanning tree all reuse it.
+3. **Finder layer.** Each [`AbstractFinder`](@ref) value type implements `_label(finder, points) →
+   (labels, k)` — the *only* algorithm-specific code. The `clumpfind` driver applies the threshold
+   pre-cut, runs `_label`, then computes per-clump statistics, boundedness, deblending and the optional
+   hierarchy identically for every finder.
+
+### The finders
+
+- **[`ThresholdFoF`](@ref) — friends-of-friends** (Davis et al. 1985). Link every above-threshold pair
+  closer than `linking_length`, then take connected components (within-`b` pairs → union-find). One
+  parameter, ~O(N); the classic halo definition and the default.
+- **[`DensityWatershed`](@ref) — watershed deblending** (immersion watershed: Vincent & Soille 1991;
+  density-maximum/DENMAX lineage: Gelb & Bertschinger 1994; SUBFIND: Springel et al. 2001). Points are
+  processed in **descending field order**; each joins the basin of its highest already-processed
+  neighbour (steepest ascent), and a point with no higher neighbour starts a new basin (a peak). Where
+  basins meet at a **saddle**, `persistence` merges any basin whose prominence (`peak − saddle`) is below
+  threshold into the deepest neighbour (a union-find over basins). `persistence=0` is the bare watershed.
+- **[`Dendrogram`](@ref) — multi-scale merge tree** (Rosolowsky et al. 2008; cf. `astrodendro`). Takes the
+  persistence-watershed basins as **leaves**, measures each adjacent pair's **saddle height** (highest
+  field on their shared boundary), and builds the single-linkage tree of the basin-adjacency graph keyed
+  by saddle height — **highest saddle merges first**. Returns a [`StructureTree`](@ref) (leaves → branches
+  → roots), each node carrying its peak value, merge level and member counts.
+- **[`GraphSegFinder`](@ref) — graph segmentation** (Felzenszwalb & Huttenlocher 2004). Neighbour-graph
+  edges weighted `|fᵢ − fⱼ|` are merged **cheapest-first** while the weight stays below the per-component
+  internal contrast `Int(C) + scale/|C|`. Larger `scale` ⇒ coarser segments; near-linear; for
+  smoothly-varying fields with no clean threshold.
+- **[`HDBSCANFinder`](@ref) — density-based hierarchical clustering** (HDBSCAN*: Campello et al. 2013;
+  McInnes et al. 2017), self-contained: (1) **core distance** = distance to the `min_samples`-th nearest
+  neighbour; (2) **mutual-reachability** weights `max(core_i, core_j, d_ij)` and their **minimum spanning
+  tree** (Kruskal via union-find); (3) **condense** the tree — at increasing density `λ=1/d`, a split into
+  two parts each ≥ `min_cluster_size` spawns two clusters, smaller fragments fall out as noise, and each
+  cluster accrues a **stability** `Σ(λ_fall − λ_birth)`; (4) **excess-of-mass** selection keeps a cluster
+  iff its stability ≥ that of its sub-clusters. Points in no selected cluster are **noise** (label 0).
+- **[`PhaseSpaceFoF`](@ref) — 6-D position+velocity FoF** (Rockstar-style; Behroozi et al. 2013). Links a
+  pair only when within `linking_length_pos` in space **and** `linking_length_vel` in velocity (spatial
+  index for the position test; velocity test per spatial pair). Separates structures that overlap on the
+  sky but differ kinematically (streams, mergers, substructure).
+- **[`PersistenceFinder`](@ref) — topological persistence** (ToMATo; Chazal et al. 2013). A superlevel-set
+  filtration: densest-first, each point flows by steepest ascent into its highest seen neighbour's basin;
+  when basins meet, the **younger** (lower-peak) dies with persistence `peak − saddle` and merges into the
+  elder iff that prominence is below `τ`. Surviving basins are the clusters — a parameter-light prominence
+  ranking, robust in crowded fields.
+- **2-D maps.** On a projection, `clumpfind(proj, :sd; threshold, connectivity)` runs union-find connected
+  components of the above-threshold mask (4-/8-connectivity); with deblending, a Meyer-style priority-flood
+  watershed from the map's local maxima (Meyer 1994).
+
+### Deblending and gravitational boundedness
+
+- **Peak deblending** (`deblend=true`). Independent of the watershed finders: local field maxima within
+  `min_sep` are found (near-duplicate/plateau peaks merged, stronger kept), then every member is assigned
+  to its **nearest peak** — splitting merged overlapping clumps post-hoc.
+- **Self-boundedness** (the [`Bound`](@ref) validator). Per clump, an energy budget (kinetic + thermal
+  [+ magnetic] vs. gravitational) is built. The potential uses `egrav=:tree` (Barnes–Hut tree gravity;
+  Barnes & Hut 1986), `:direct` (exact O(N²) below `direct_max`), or `:approx` (`3GM²/5R`). With
+  `iterative=true` it performs **SUBFIND-style iterative unbinding** — repeatedly stripping positive-energy
+  members until only the self-bound core remains (Springel et al. 2001) — keeping clumps with
+  `E_kin + E_therm [+ E_mag] < |E_grav|`; nested bound basins form the substructure tree.
+
+### Validation
+
+[`clump_recovery`](@ref)`(found, truth)` scores a segmentation against per-point ground truth via the
+**Adjusted Rand Index** (Hubert & Arabie 1985) plus completeness, purity and bijective merit — the basis
+of the data-free [synthetic benchmark](clumpfind_synthetic.md).
+
+### References
+
+- Barnes, J. & Hut, P. 1986, *Nature* 324, 446 — hierarchical (tree) force calculation.
+- Behroozi, P. S., Wechsler, R. H. & Wu, H.-Y. 2013, *ApJ* 762, 109 — Rockstar (6-D phase-space halo finder).
+- Campello, R. J. G. B., Moulavi, D. & Sander, J. 2013, *PAKDD*, LNCS 7819, 160 — density-based clustering on hierarchical density estimates (HDBSCAN).
+- Chazal, F., Guibas, L. J., Oudot, S. Y. & Skraba, P. 2013, *J. ACM* 60(6), 41 — persistence-based clustering (ToMATo).
+- Davis, M., Efstathiou, G., Frenk, C. S. & White, S. D. M. 1985, *ApJ* 292, 371 — friends-of-friends.
+- Edelsbrunner, H., Letscher, D. & Zomorodian, A. 2002, *Discrete & Comput. Geom.* 28, 511 — topological persistence.
+- Felzenszwalb, P. F. & Huttenlocher, D. P. 2004, *Int. J. Computer Vision* 59, 167 — efficient graph-based segmentation.
+- Gelb, J. M. & Bertschinger, E. 1994, *ApJ* 436, 467 — DENMAX (density-maximum clump finding).
+- Hubert, L. & Arabie, P. 1985, *J. Classification* 2, 193 — Adjusted Rand Index.
+- McInnes, L., Healy, J. & Astels, S. 2017, *J. Open Source Software* 2(11), 205 — `hdbscan`.
+- Meyer, F. 1994, *Signal Processing* 38, 113 — topographic distance / priority-flood watershed.
+- Rosolowsky, E. W., Pineda, J. E., Kauffmann, J. & Goodman, A. A. 2008, *ApJ* 679, 1338 — dendrograms.
+- Springel, V., White, S. D. M., Tormen, G. & Kauffmann, G. 2001, *MNRAS* 328, 726 — SUBFIND (gravitational unbinding).
+- Vincent, L. & Soille, P. 1991, *IEEE Trans. PAMI* 13, 583 — watersheds by immersion.
+
 ## Saving & validation
 
 Persist a catalog (full fidelity — boundedness, nested `subclumps`, the `tree`) and reload it:
