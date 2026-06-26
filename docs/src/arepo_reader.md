@@ -1,4 +1,4 @@
-# Reading AREPO / IllustrisTNG data (experimental)
+# Reading AREPO data (experimental)
 
 !!! tip "Run it yourself"
     The AREPO/IllustrisTNG gas workflow below — physical `getvar(:rho/:T/:metallicity)`, PDFs/profiles,
