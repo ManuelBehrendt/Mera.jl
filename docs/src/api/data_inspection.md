@@ -14,6 +14,7 @@ Functions for inspecting and exploring simulation data.
 - [`viewallfields`](@ref) - View all available fields across data types
 - [`dataoverview`](@ref) - Get comprehensive data overview
 - [`amroverview`](@ref) - Overview of AMR structure
+- [`overviewplot`](@ref) - Visual statistics overview (AMR cells / particles); needs a Makie backend
 - [`storageoverview`](@ref) - Storage and memory information
 - [`checkoutputs`](@ref) - Check available simulation outputs
 

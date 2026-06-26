@@ -1055,3 +1055,23 @@ end
 gettime(output::Real, path::String, unit::Symbol) = gettime(output; path=path, unit=unit)
 gettime(dataobject::DataSetType, unit::Symbol) = gettime(dataobject; unit=unit)
 gettime(dataobject::InfoType, unit::Symbol) = gettime(dataobject; unit=unit)
+
+# ---- overviewplot: a one-figure visual statistics summary of a loaded object -------------
+# Companion to the textual `amroverview`/`dataoverview`. Computes everything in a single
+# vectorized pass (no per-level table filter), then renders via the Makie extension.
+"""
+    overviewplot(dataobject; size=nothing) -> Makie figure
+
+Visual statistics overview of a **loaded** object (needs a Makie backend: `using CairoMakie`).
+
+- **Hydro / AMR:** cells per level, mass per level, the mass-weighted density PDF, and the ρ–T phase
+  diagram (when a temperature is available).
+- **Particles:** the per-family census, the mass distribution, the projected x–y density, and the
+  speed distribution.
+
+All panels use [`getvar`](@ref) (physical units, derived fields) and are computed in one pass over the
+cells/particles — the visual companion to [`amroverview`](@ref) / [`dataoverview`](@ref).
+"""
+overviewplot(dataobject::DataSetType; kwargs...) = _plot_overview(dataobject; kwargs...)
+_plot_overview(dataobject; kwargs...) =
+    error("overviewplot needs a Makie backend — load one first: `using CairoMakie` (or GLMakie).")

@@ -272,10 +272,15 @@
             if Base.find_package("CairoMakie") === nothing
                 @test_throws Exception clumpplot(cat)                          # friendly "load a backend" error
                 @test_throws Exception massfunctionplot(cat)
+                @test_throws Exception overviewplot(gas)
             else
                 @eval using CairoMakie
                 f1 = clumpplot(cat); @test occursin("Figure", string(typeof(f1)))
                 f2 = massfunctionplot(cat; cumulative=true); @test occursin("Figure", string(typeof(f2)))
+                # visual statistics overview (AMR cells + particles)
+                fo = overviewplot(gas); @test occursin("Figure", string(typeof(fo)))
+                po = getparticles(info, verbose=false, show_progress=false)
+                fp = overviewplot(po); @test occursin("Figure", string(typeof(fp)))
             end
             # empty catalog refuses to plot with a clear message
             empty = clumpfind(gas, :rho; threshold=1e30, threshold_unit=:nH, linking_length=0.5)
