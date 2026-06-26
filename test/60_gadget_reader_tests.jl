@@ -340,6 +340,11 @@ end
             # unit consistency: μG = 10⁶ × Gauss
             bmagG = sqrt.(getvar(gas,:bx,:Gauss).^2 .+ getvar(gas,:by,:Gauss).^2 .+ getvar(gas,:bz,:Gauss).^2)
             @test maximum(bmag) ≈ 1e6 * maximum(bmagG)  rtol=1e-9
+            # derived magnetic fields (wired for particles): :bmag/:pmag/:beta/:v_alfven/:mach_*
+            @test getvar(gas, :bmag, :muG) ≈ bmag  rtol=1e-9                    # |B| == component magnitude
+            @test getvar(gas, :pmag, :Ba) ≈ getvar(gas, :bmag, :Gauss).^2 ./ (8π)  rtol=1e-6  # P_mag = B²/8π
+            @test all(getvar(gas, :beta) .> 0) && all(getvar(gas, :v_alfven, :km_s) .> 0)
+            @test all(getvar(gas, :mach_alfven) .> 0) && all(isfinite, getvar(gas, :mach_fast))
             gpot = getvar(gas, :gpot)
             @test sort(gpot)[length(gpot) ÷ 2] < 0                              # bound system: potential negative
             nh = getvar(gas, :nh); mach = getvar(gas, :mach)
@@ -366,6 +371,7 @@ end
             @test :gpot in Mera.IndexedTables.colnames(gas.data)
             @test sort(getvar(gas, :gpot))[length(gas.data) ÷ 2] < 0           # bound: potential negative
             @test !(:bx in Mera.IndexedTables.colnames(gas.data))             # no MagneticField in this run
+            @test_throws ErrorException getvar(gas, :bmag)                     # derived B errors without a field
         else
             @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/AREPO/ArepoBullet/)"
         end
