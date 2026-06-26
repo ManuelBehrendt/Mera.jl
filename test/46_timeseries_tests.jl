@@ -14,6 +14,11 @@
 # Fully-qualified accessor so the test needs only `using Mera`.
 _cols(t) = Mera.IndexedTables.columns(t)
 
+# Explicit import: in the full suite an earlier figure test loads CairoMakie, which also exports
+# `timeseries` (a Makie recipe) and would shadow Mera's function. The explicit `using` overrides
+# that ambiguity so bare `timeseries(...)` resolves to Mera's here.
+using Mera: timeseries
+
 const TS_RAMSES = joinpath(SIMULATION_PATH, "RAMSES/timeseries_sedov3d")
 const TS_MERA   = joinpath(SIMULATION_PATH, "MERA-FILES/timeseries_sedov3d_mera")
 const RT_RAMSES = joinpath(SIMULATION_PATH, "RAMSES/rt_stromgren")
