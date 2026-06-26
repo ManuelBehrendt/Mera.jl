@@ -440,7 +440,33 @@ function Mera._plot_overview(p::Mera.PartDataType; size=(960, 720))
     return fig
 end
 
+function Mera._plot_overview(grav::Mera.GravDataType; size=(960, 720))
+    cn = propertynames(grav.data.columns)
+    n  = length(grav.data)
+    lvals = (:level in cn) ? Int.(Mera.getvar(grav, :level)) : fill(Int(grav.lmax), n)   # uniform grid → one level
+    lmin, lmax = minimum(lvals), maximum(lvals); nlev = lmax - lmin + 1
+    cells = zeros(Int, nlev)
+    @inbounds for k in 1:n
+        i = lvals[k] - lmin + 1; (1 <= i <= nlev) && (cells[i] += 1)
+    end
+    levs = collect(lmin:lmax); pop = cells .> 0
+    amag = Mera.getvar(grav, :a_magnitude)     # |a| (code units)
+    epot = Mera.getvar(grav, :epot)            # gravitational potential (code; negative = bound)
+    fig = Makie.Figure(; size=size, fontsize=13)
+    Makie.Label(fig[0, 1:2], "Mera overview - gravity: $(n) cells, levels $(lmin)-$(lmax)"; fontsize=16, font=:bold)
+    a1 = Makie.Axis(fig[1,1]; title="cells per level", xlabel="level", ylabel="N cells", yscale=log10)
+    Makie.barplot!(a1, levs[pop], cells[pop]; color=:steelblue)
+    a2 = Makie.Axis(fig[1,2]; title="acceleration |a| (code)", xlabel="log10 |a|", ylabel="N", yscale=log10)
+    c, h = _ov_hist1d(log10.(amag[amag .> 0]), nothing, 50); !isempty(c) && Makie.stairs!(a2, c, max.(h, 0.5); step=:center, color=:black)
+    a3 = Makie.Axis(fig[2,1]; title="potential epot (code)", xlabel="epot", ylabel="N", yscale=log10)
+    c2, h2 = _ov_hist1d(epot, nothing, 50); !isempty(c2) && Makie.stairs!(a3, c2, max.(h2, 0.5); step=:center, color=:black)
+    a4 = Makie.Axis(fig[2,2][1,1]; title="|a| - potential", xlabel="log10 |a| (code)", ylabel="epot (code)")
+    xc, yc, H = _ov_hist2d(log10.(amag), epot, nothing, 60); hm = Makie.heatmap!(a4, xc, yc, _ov_loghm(H); colormap=:viridis)
+    Makie.Colorbar(fig[2,2][1,2], hm; label="log10 N", width=10)
+    return fig
+end
+
 Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
-    error("overviewplot: no visual overview defined for $(typeof(d)) — supported: HydroDataType, PartDataType.")
+    error("overviewplot: no visual overview defined for $(typeof(d)) — supported: HydroDataType, GravDataType, PartDataType.")
 
 end # module
