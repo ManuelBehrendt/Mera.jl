@@ -156,6 +156,25 @@ using Statistics, LinearAlgebra, Random
         @test sum(ge) ≈ Σvw rtol=1e-12
     end
 
+    @testset ":overlap fills coarse (capped) cells with no interior holes" begin
+        # A coarse AMR cell whose footprint spans many pixels forces the nmax supersampling cap. The
+        # old fixed-±1px CIC then left a sparse lattice of spikes with gaps between them (the "AMR not
+        # overlapping" artefact); the capped top-hat deposit must tile the footprint hole-free.
+        nx = ny = 40; ext = (-2.0, 2.0, -2.0, 2.0); px = (ext[2]-ext[1]) / nx     # pixel = 0.1
+        r, u, w = Mera.build_camera_basis([0.0,0.0,1.0])                          # face-on
+        xc = [0.0]; yc = [0.0]; cs = [1.0]; vals = [1.0]; wts = [1.0]             # one 10×10-px cell
+        g = zeros(nx, ny); wg = zeros(nx, ny)
+        # ns_full = ceil(1.0/0.1) = 10 > nmax=2  ⇒  capped path
+        Mera.deposit_rotated_cells_overlap!(g, wg, xc, yc, cs, vals, wts, r, u, ext, (nx, ny); nmax=2, max_threads=1)
+        @test sum(wg) ≈ 1.0 rtol=1e-12                                            # still conserves
+        interior_zeros = 0
+        for i in 1:nx, j in 1:ny
+            xcen = ext[1] + (i-0.5)*px; ycen = ext[3] + (j-0.5)*px
+            (abs(xcen) < 0.5-px && abs(ycen) < 0.5-px && wg[i,j] == 0.0) && (interior_zeros += 1)
+        end
+        @test interior_zeros == 0                                                 # hole-free interior (the fix)
+    end
+
     @testset "projection deposit conserves mass off-axis (rotation invariance)" begin
         nx = ny = 48; ext = (-2.0, 2.0, -2.0, 2.0)
         rng = MersenneTwister(5); n = 25

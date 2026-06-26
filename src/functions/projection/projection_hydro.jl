@@ -504,8 +504,10 @@ default** (`angle_unit=:rad` to switch).
 - **`angle_unit::Symbol`**: `:deg` (default) or `:rad`
 - **`binning::Symbol`**: how rotated cells are deposited onto the camera plane —
   - `:overlap` (default) — per-cell footprint supersampling (`ns = ceil(cellsize/pixel)` sub-points
-    per cube axis, capped at `nmax`); AMR-aligned (no moiré, no holes), converges to `:exact`, and
-    is usually *faster* than `:exact`. Cells coarser than the `nmax` cap stay mildly blocky.
+    per cube axis, capped at `nmax`); AMR-aligned (no moiré, no interior holes), converges to
+    `:exact`, and is usually *faster* than `:exact`. Cells coarser than the `nmax` cap (`ns` would
+    exceed `nmax`) deposit each sub-cell as a footprint-sized top-hat so they still tile the camera
+    plane without gaps — fine cells keep the sharp ±1px deposit.
   - `:exact` — analytic box-spline footprint: integrates the line-of-sight column (chord length
     through the cube) over each pixel exactly; no supersampling cap, the reference for fidelity.
   - `:cic` — fast preview, bilinear deposit of cell centres; speckles/moiré on coarse AMR cells
@@ -2404,36 +2406,62 @@ function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matr
             g = gbufs[t]; wg = wbufs[t]
             @inbounds for i in bounds[t]:(bounds[t+1]-1)
                 s = cellsize[i]
-                ns = clamp(ceil(Int, s * inv_px), 1, nmax)   # sub-points per cube axis
+                ns_full = ceil(Int, s * inv_px)
+                capped  = ns_full > nmax                      # coarse cell: supersampling would be capped
+                ns = capped ? nmax : max(ns_full, 1)          # sub-points per cube axis
                 share = 1.0 / (ns^3)
                 w_i  = weights[i] * share
                 vw_i = values[i] * weights[i] * share
                 xc = x_cam[i]; yc = y_cam[i]
                 inv_ns = 1.0 / ns
+                # Capped (coarse) cells deposit each sub-cell as a top-hat over the camera-plane bounding
+                # box of the ROTATED sub-cube (half-extents along cam_right/cam_up), so the ns³ tiles
+                # overlap — hole-free at any view angle, fixing the moiré/holes the old fixed-±1px CIC
+                # left on coarse AMR cells. Fine (un-capped) cells keep the sharp ±1px CIC (already
+                # hole-free, since their sub-points are ≤1px apart). Weight 1/ns³ ⇒ conservation kept.
+                ss = s * inv_ns
+                hx = 0.5 * ss * (abs(rx) + abs(ry) + abs(rz))
+                hy = 0.5 * ss * (abs(ux) + abs(uy) + abs(uz))
                 for ka in 0:ns-1
                     oa = (-0.5 + (ka + 0.5)*inv_ns) * s
                     for kb in 0:ns-1
                         ob = (-0.5 + (kb + 0.5)*inv_ns) * s
-                        # partial camera offsets from the (a,b) cube axes
                         dxab = oa*rx + ob*ry
                         dyab = oa*ux + ob*uy
                         for kc in 0:ns-1
                             oc = (-0.5 + (kc + 0.5)*inv_ns) * s
                             xs = xc + dxab + oc*rz
                             ys = yc + dyab + oc*uz
-                            # CIC deposit of this sub-point
-                            fx = (xs - x_min)*inv_px - 0.5
-                            fy = (ys - y_min)*inv_py - 0.5
-                            ix0 = floor(Int, fx); iy0 = floor(Int, fy)
-                            wx = fx - ix0; wy = fy - iy0
-                            ixl = clamp(ix0+1, 1, nx); ixr = clamp(ix0+2, 1, nx)
-                            iyl = clamp(iy0+1, 1, ny); iyr = clamp(iy0+2, 1, ny)
-                            wll = (1.0-wx)*(1.0-wy); wrl = wx*(1.0-wy)
-                            wlr = (1.0-wx)*wy;       wrr = wx*wy
-                            g[ixl,iyl] += vw_i*wll; wg[ixl,iyl] += w_i*wll
-                            g[ixr,iyl] += vw_i*wrl; wg[ixr,iyl] += w_i*wrl
-                            g[ixl,iyr] += vw_i*wlr; wg[ixl,iyr] += w_i*wlr
-                            g[ixr,iyr] += vw_i*wrr; wg[ixr,iyr] += w_i*wrr
+                            if capped
+                                gxl = (xs - hx - x_min)*inv_px; gxr = (xs + hx - x_min)*inv_px
+                                gyl = (ys - hy - y_min)*inv_py; gyr = (ys + hy - y_min)*inv_py
+                                pxa = clamp(floor(Int, gxl)+1, 1, nx); pxb = clamp(floor(Int, gxr)+1, 1, nx)
+                                pya = clamp(floor(Int, gyl)+1, 1, ny); pyb = clamp(floor(Int, gyr)+1, 1, ny)
+                                invwx = 1.0/max(gxr-gxl, 1e-30); invwy = 1.0/max(gyr-gyl, 1e-30)
+                                for px in pxa:pxb
+                                    fxov = (min(gxr, Float64(px)) - max(gxl, Float64(px-1))) * invwx
+                                    fxov <= 0.0 && continue
+                                    for py in pya:pyb
+                                        fyov = (min(gyr, Float64(py)) - max(gyl, Float64(py-1))) * invwy
+                                        fyov <= 0.0 && continue
+                                        f = fxov*fyov
+                                        g[px,py]  += vw_i*f; wg[px,py] += w_i*f
+                                    end
+                                end
+                            else
+                                fx = (xs - x_min)*inv_px - 0.5
+                                fy = (ys - y_min)*inv_py - 0.5
+                                ix0 = floor(Int, fx); iy0 = floor(Int, fy)
+                                wx = fx - ix0; wy = fy - iy0
+                                ixl = clamp(ix0+1, 1, nx); ixr = clamp(ix0+2, 1, nx)
+                                iyl = clamp(iy0+1, 1, ny); iyr = clamp(iy0+2, 1, ny)
+                                wll = (1.0-wx)*(1.0-wy); wrl = wx*(1.0-wy)
+                                wlr = (1.0-wx)*wy;       wrr = wx*wy
+                                g[ixl,iyl] += vw_i*wll; wg[ixl,iyl] += w_i*wll
+                                g[ixr,iyl] += vw_i*wrl; wg[ixr,iyl] += w_i*wrl
+                                g[ixl,iyr] += vw_i*wlr; wg[ixl,iyr] += w_i*wlr
+                                g[ixr,iyr] += vw_i*wrr; wg[ixr,iyr] += w_i*wrr
+                            end
                         end
                     end
                 end
