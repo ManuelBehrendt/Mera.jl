@@ -327,6 +327,24 @@ end
             @test minimum(T) > 1.0 && maximum(T) < 1e10                         # physical gas temperatures
             @test 1e3 < sort(T)[length(T) ÷ 2] < 1e9                            # median in the warm/hot range
             @test msum(gas) > 0
+            # Phase 2: MagneticField (MHD) → :bx/:by/:bz, Potential → :gpot, bonus :nh/:mach
+            @test all(s -> s in info.particles_variable_list, (:bx, :by, :bz, :gpot, :nh, :mach))
+            @test all(c -> c in cn, (:bx, :by, :bz, :gpot, :nh, :mach))
+            bx = getvar(gas, :bx, :muG); by = getvar(gas, :by, :muG); bz = getvar(gas, :bz, :muG)
+            bmag = sqrt.(bx.^2 .+ by.^2 .+ bz.^2)                               # |B| in micro-Gauss
+            @test all(isfinite, bmag) && all(bmag .>= 0)
+            thr = sort(rho)[end - length(rho) ÷ 100]                            # ~99th-percentile density
+            bdense = sort(bmag[rho .> thr])
+            @test 1.0 < bdense[length(bdense) ÷ 2] < 20.0                       # dense-gas |B| ~ few μG (TNG MHD)
+            @test 50.0 < maximum(bmag) < 2000.0                                 # peak |B| ~ hundreds of μG
+            # unit consistency: μG = 10⁶ × Gauss
+            bmagG = sqrt.(getvar(gas,:bx,:Gauss).^2 .+ getvar(gas,:by,:Gauss).^2 .+ getvar(gas,:bz,:Gauss).^2)
+            @test maximum(bmag) ≈ 1e6 * maximum(bmagG)  rtol=1e-9
+            gpot = getvar(gas, :gpot)
+            @test sort(gpot)[length(gpot) ÷ 2] < 0                              # bound system: potential negative
+            nh = getvar(gas, :nh); mach = getvar(gas, :mach)
+            @test 0.0 <= minimum(nh) && maximum(nh) <= 1.0                      # neutral H fraction ∈ [0,1]
+            @test minimum(mach) >= 0 && maximum(mach) > 1                       # Mach number; shocks present
         else
             @test_skip "TNGHalo fixture not present (MERA_TEST_DATA/AREPO/TNGHalo/)"
         end
@@ -344,6 +362,10 @@ end
             @test !(:ne in Mera.IndexedTables.colnames(gas.data))
             @test length(gas.data) > 0
             @test all(isfinite, getvar(gas, :T)) && all(getvar(gas, :volume) .> 0)
+            # Potential is present on all AREPO types → :gpot; this non-MHD run has no MagneticField
+            @test :gpot in Mera.IndexedTables.colnames(gas.data)
+            @test sort(getvar(gas, :gpot))[length(gas.data) ÷ 2] < 0           # bound: potential negative
+            @test !(:bx in Mera.IndexedTables.colnames(gas.data))             # no MagneticField in this run
         else
             @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/AREPO/ArepoBullet/)"
         end

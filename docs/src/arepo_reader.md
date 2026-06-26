@@ -48,6 +48,10 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `ElectronAbundance` | `:ne` | sets the mean molecular weight μ |
 | `GFM_Metallicity` | `:metallicity` | metal mass fraction |
 | `StarFormationRate` | `:sfr` | M⊙/yr |
+| `MagneticField` | `:bx`, `:by`, `:bz` | MHD field; comoving→physical `a⁻²` and cgs→Gauss baked in — `getvar(:bx, :muG)` / `:Gauss` / `:nG` |
+| `Potential` | `:gpot` | gravitational potential (peculiar, `a⁻¹`); present on all particle types |
+| `NeutralHydrogenAbundance` | `:nh` | neutral-hydrogen fraction (dimensionless) |
+| `Machnumber` | `:mach` | cell Mach number (dimensionless) |
 | *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 
 ```julia
