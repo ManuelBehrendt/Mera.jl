@@ -2099,6 +2099,9 @@ end
             nx, ny, nv = size(vc.cube)
             @test nv == 32 && length(vc.velocity) == 33 && length(vc.x) == nx+1
             @test isapprox(sum(vc.cube), sum(getvar(hydro, :mass)); rtol=1e-6)   # cube conserves total mass
+            # getextent on a cube: code-unit edges → physical sky extent (matches the DataMapsType accessor)
+            @test getextent(vc) == [vc.x[1], vc.x[end], vc.y[1], vc.y[end]]
+            @test getextent(vc, :kpc) ≈ [vc.x[1], vc.x[end], vc.y[1], vc.y[end]] .* vc.scale.kpc
             mom = velocity_moments(vc)
             @test size(mom.Σ) == (nx, ny) && size(mom.vlos) == (nx, ny) && size(mom.σlos) == (nx, ny)
             @test isapprox(sum(mom.Σ), sum(vc.cube); rtol=1e-9)                 # moment-0 == column sum
