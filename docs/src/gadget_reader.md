@@ -23,8 +23,10 @@ unchanged.
     `PartType*` groups into a Mera [`PartDataType`](@ref) via [`getparticles`](@ref). For **gas**
     (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns —
     `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
-    `StarFormationRate→:sfr` — and `:volume = mass/ρ` is derived; [`getvar`](@ref) adds `:T`, `:p`,
-    `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ fallback when `:ne` is absent).
+    `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`, the `MagneticField`
+    vector→`:bx,:by,:bz` (MHD, physical Gauss), `Potential→:gpot` — and `:volume = mass/ρ` is derived;
+    [`getvar`](@ref) adds `:T`, `:p`, `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ
+    fallback when `:ne` is absent).
     Base CGS units are read from the snapshot `Header`, and for cosmological runs the
     comoving→physical `a`/`h` factors are applied automatically. 3-D.
 
