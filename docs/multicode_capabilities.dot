@@ -54,12 +54,12 @@ digraph Capabilities {
         <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
       </TR>
       <TR>
-        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Gravity</B></FONT></TD>
-        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Gravity</B><BR/><FONT POINT-SIZE="8.5" COLOR="#64748b">potential</FONT></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT><BR/><FONT POINT-SIZE="8" COLOR="#64748b">object</FONT></TD>
         <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
-        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
-        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
-        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#eff6ff"><FONT POINT-SIZE="9.5" COLOR="#1d4ed8">:gpot</FONT></TD>
+        <TD BGCOLOR="#eff6ff"><FONT POINT-SIZE="9.5" COLOR="#1d4ed8">:gpot</FONT></TD>
+        <TD BGCOLOR="#eff6ff"><FONT POINT-SIZE="9.5" COLOR="#1d4ed8">:gpot</FONT></TD>
         <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
         <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
       </TR>
@@ -76,7 +76,7 @@ digraph Capabilities {
       <TR>
         <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>MHD</B></FONT></TD>
         <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
-        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
         <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
         <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
         <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
@@ -134,7 +134,7 @@ digraph Capabilities {
         <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
       </TR>
 
-      <TR><TD COLSPAN="8" BORDER="0" ALIGN="LEFT" CELLPADDING="8"><FONT POINT-SIZE="9.5" COLOR="#64748b">RAMSES additionally: radiative transfer (<FONT FACE="Courier">getrt</FONT>) + native clumps (<FONT FACE="Courier">getclumps</FONT>).&#160;&#160;* GADGET gas-cell physics present when the snapshot has gas (AREPO/TNG).&#160;&#160;All codes fill the same Mera structs &#8212; analysis is code-blind.</FONT></TD></TR>
+      <TR><TD COLSPAN="8" BORDER="0" ALIGN="LEFT" CELLPADDING="8"><FONT POINT-SIZE="9.5" COLOR="#64748b">&#10003;/&#8211; = what Mera reads today (not what a code can write).&#160;&#160;Gravity: RAMSES as a dedicated <FONT FACE="Courier">GravDataType</FONT> (<FONT FACE="Courier">getgravity</FONT>); Athena++/FLASH/Chombo expose the potential as a <FONT FACE="Courier">:gpot</FONT> hydro field.&#160;&#160;RAMSES additionally: radiative transfer (<FONT FACE="Courier">getrt</FONT>) + native clumps (<FONT FACE="Courier">getclumps</FONT>).&#160;&#160;* GADGET gas-cell physics when the snapshot has gas (AREPO/TNG).&#160;&#160;All codes fill the same structs &#8212; analysis is code-blind.</FONT></TD></TR>
     </TABLE>
     >];
 }
