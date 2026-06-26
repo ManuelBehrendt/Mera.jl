@@ -496,6 +496,20 @@ end
             @test haskey(d, k)
             @test d[k] > 0
         end
+        # the per-datatype tallies are disjoint and fit inside the folder total — guards against the
+        # prefix-collision bug where "rt" ⊂ "part" made the RT tally double-count the particle files.
+        @test d[:amr] + d[:hydro] + d[:gravity] + d[:particle] + d[:clump] + d[:rt] + d[:sink] <= d[:folder]
+    end
+
+    @testset "storageoverview (non-RAMSES reports a snapshot footprint)" begin
+        tng = joinpath(SIMULATION_PATH, "AREPO", "TNGHalo", "TNGHalo", "halo_59.hdf5")
+        if isfile(tng)
+            it = getinfo(59, tng, verbose=false)
+            d = redirect_stdout(devnull) do; storageoverview(it, verbose=false); end
+            @test d isa Dict && haskey(d, :snapshot) && d[:snapshot] > 0   # was an empty dict before
+        else
+            @test_skip "TNGHalo fixture not present (MERA_TEST_DATA/AREPO/TNGHalo/)"
+        end
     end
 
     # File-content accessors: just verify non-crash.
