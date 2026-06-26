@@ -1,0 +1,140 @@
+// Mera.jl multi-code capability matrix — source for docs/src/assets/MulticodeCapabilities.png
+// Render: dot -Tpng -Gdpi=170 docs/multicode_capabilities.dot -o docs/src/assets/MulticodeCapabilities.png
+//
+// Companion to TypeHierarchy.png: that one maps codes -> structs; this one compares what each
+// code supports. Header colour = family (orange native, blue grid/AMR, green particle/moving-mesh).
+// Grounded in the "Supported codes" table in docs/src/multicode.md + the AREPO gas/projection rows.
+digraph Capabilities {
+    bgcolor="transparent";
+    pad=0.2;
+    node [shape=plaintext, fontname="Helvetica"];
+
+    M [label=<
+    <TABLE BORDER="0" CELLBORDER="1" CELLSPACING="0" CELLPADDING="7">
+      <TR><TD COLSPAN="8" BORDER="0" CELLPADDING="9"><FONT POINT-SIZE="17" COLOR="#0f172a"><B>Supported simulation codes &#8212; capability matrix</B></FONT></TD></TR>
+      <TR>
+        <TD BORDER="0"></TD>
+        <TD BGCOLOR="#ffedd5"><FONT COLOR="#7c2d12"><B>RAMSES</B><BR/><FONT POINT-SIZE="9">native</FONT></FONT></TD>
+        <TD BGCOLOR="#e0f2fe"><FONT COLOR="#0c2a3e"><B>PLUTO</B></FONT></TD>
+        <TD BGCOLOR="#e0f2fe"><FONT COLOR="#0c2a3e"><B>Chombo</B><BR/><FONT POINT-SIZE="9">PLUTO-AMR</FONT></FONT></TD>
+        <TD BGCOLOR="#e0f2fe"><FONT COLOR="#0c2a3e"><B>Athena++</B></FONT></TD>
+        <TD BGCOLOR="#e0f2fe"><FONT COLOR="#0c2a3e"><B>FLASH</B></FONT></TD>
+        <TD BGCOLOR="#dcfce7"><FONT COLOR="#14352a"><B>GADGET</B><BR/><FONT POINT-SIZE="9">GIZMO&#183;SWIFT</FONT></FONT></TD>
+        <TD BGCOLOR="#dcfce7"><FONT COLOR="#14352a"><B>AREPO</B><BR/><FONT POINT-SIZE="9">IllustrisTNG</FONT></FONT></TD>
+      </TR>
+
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>File format</B></FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">binary</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">.dbl</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">HDF5</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">.athdf</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">HDF5</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">HDF5</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">HDF5</FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Geometry</B></FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">AMR</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">uniform</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">AMR</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">AMR</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">AMR</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">particles</FONT></TD>
+        <TD BGCOLOR="#fff7ed"><FONT POINT-SIZE="10" COLOR="#9a3412"><B>Voronoi</B></FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Hydro (grid)</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Gravity</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Particles</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>MHD</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Gas-cell physics</B><BR/><FONT POINT-SIZE="8.5" COLOR="#64748b">particle gas: &#961;&#183;T&#183;Z</FONT></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT><FONT POINT-SIZE="9" COLOR="#64748b">*</FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Cosmology</B><BR/><FONT POINT-SIZE="8.5" COLOR="#64748b">comoving &#8594; physical a/h</FONT></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#f8fafc"><FONT COLOR="#cbd5e1">&#8211;</FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Units returned</B></FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">physical</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">code</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">code</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">code</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">CGS</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">physical</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">physical</FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Projection deposit</B></FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">grid cell</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">grid cell</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">grid cell</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">grid cell</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">grid cell</FONT></TD>
+        <TD><FONT POINT-SIZE="10" COLOR="#334155">point</FONT></TD>
+        <TD BGCOLOR="#fff7ed"><FONT POINT-SIZE="9.5" COLOR="#9a3412"><B>mass&#183;vol&#183;sph&#183;voronoi</B></FONT></TD>
+      </TR>
+      <TR>
+        <TD ALIGN="LEFT" BGCOLOR="#f1f5f9"><FONT POINT-SIZE="11"><B>Lazy load window</B><BR/><FONT POINT-SIZE="8.5" COLOR="#64748b">+ block-I/O pruning</FONT></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+        <TD BGCOLOR="#ecfdf5"><FONT COLOR="#16a34a"><B>&#10003;</B></FONT></TD>
+      </TR>
+
+      <TR><TD COLSPAN="8" BORDER="0" ALIGN="LEFT" CELLPADDING="8"><FONT POINT-SIZE="9.5" COLOR="#64748b">RAMSES additionally: radiative transfer (<FONT FACE="Courier">getrt</FONT>) + native clumps (<FONT FACE="Courier">getclumps</FONT>).&#160;&#160;* GADGET gas-cell physics present when the snapshot has gas (AREPO/TNG).&#160;&#160;All codes fill the same Mera structs &#8212; analysis is code-blind.</FONT></TD></TR>
+    </TABLE>
+    >];
+}
