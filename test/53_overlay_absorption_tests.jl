@@ -6,8 +6,8 @@
 # on the Chombo AMR fixture for the multi-level case.
 # ============================================================================
 
-const OA_PATH = joinpath(SIMULATION_PATH, "spiral_clumps")
-const OA_CHOMBO = joinpath(SIMULATION_PATH, "chombo_3d", "IsothermalSphere")
+const OA_PATH = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps")
+const OA_CHOMBO = joinpath(SIMULATION_PATH, "CHOMBO/chombo_3d", "IsothermalSphere")
 
 @testset "gridoverlay + absorption_map" begin
 

@@ -33,7 +33,7 @@ end
 const DATASETS = Dict(
     # Primary test dataset - has hydro, gravity, clumps, cooling (4 CPUs, L3-L7)
     :spiral_clumps => (
-        path = joinpath(SIMULATION_PATH, "spiral_clumps"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps"),
         output = 100,
         has_hydro = true,
         has_gravity = true,
@@ -42,7 +42,7 @@ const DATASETS = Dict(
     ),
     # Uniform grid simulation with particles - good for projection tests
     :spiral_ugrid => (
-        path = joinpath(SIMULATION_PATH, "spiral_ugrid"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/spiral_ugrid"),
         output = 1,
         has_hydro = true,
         has_gravity = true,
@@ -51,7 +51,7 @@ const DATASETS = Dict(
     ),
     # Milky Way simulation - multi-CPU for parallelization tests
     :mw_L10 => (
-        path = joinpath(SIMULATION_PATH, "mw_L10"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/mw_L10"),
         output = 300,
         has_hydro = false,
         has_gravity = false,
@@ -61,7 +61,7 @@ const DATASETS = Dict(
     # Star formation simulation with clumps and *legacy-format* particles
     # (RAMSES output without part_file_descriptor.txt → pversion = 0)
     :manu_sf => (
-        path = joinpath(SIMULATION_PATH, "manu_sim_sf_L14"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/manu_sim_sf_L14"),
         output = 400,
         has_hydro = false,
         has_gravity = false,
@@ -70,7 +70,7 @@ const DATASETS = Dict(
     ),
     # Simulation with gravity data
     :mlike => (
-        path = joinpath(SIMULATION_PATH, "mlike"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/mlike"),
         output = 500,
         has_hydro = false,
         has_gravity = true,
@@ -79,7 +79,7 @@ const DATASETS = Dict(
     ),
     # Stable disk simulation with particles
     :manu_stable => (
-        path = joinpath(SIMULATION_PATH, "manu_stable_2019"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/manu_stable_2019"),
         output = 1,
         has_hydro = true,
         has_gravity = false,
@@ -90,7 +90,7 @@ const DATASETS = Dict(
     # cosmological run in the suite; used to exercise the cosmology accessors.
     # z ≈ 0.143 (aexp ≈ 0.875), H0 = 70.3, Ωm = 0.276, ΩΛ = 0.724, flat (Ωk = 0).
     :yt_cosmo => (
-        path = joinpath(SIMULATION_PATH, "yt_cosmo"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/yt_cosmo"),
         output = 80,
         has_hydro = true,
         has_gravity = false,
@@ -102,7 +102,7 @@ const DATASETS = Dict(
     # the ionization fractions are passive hydro scalars located via the RT
     # descriptor (info_rt → iIons). Used to exercise getrt/RT getvar/projection.
     :rt_stromgren => (
-        path = joinpath(SIMULATION_PATH, "rt_stromgren"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/rt_stromgren"),
         output = 4,
         has_hydro = true,
         has_gravity = false,
@@ -116,7 +116,7 @@ const DATASETS = Dict(
     # face-centred B components give cell-centred :bx/:by/:bz = ½(left+right).
     # Download: https://yt-project.org/data/ramses_mhd_128.tar.gz (extract output_00027 here)
     :ramses_mhd => (
-        path = joinpath(SIMULATION_PATH, "ramses_mhd_128"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/ramses_mhd_128"),
         output = 27,
         has_hydro = true,
         has_gravity = false,
@@ -129,7 +129,7 @@ const DATASETS = Dict(
     # no-descriptor MHD heuristic on the AMR (not uniform-grid) reader path.
     # Download: https://yt-project.org/data/ramses_mhd_amr.tar.gz (extract output_00019 here)
     :ramses_mhd_amr => (
-        path = joinpath(SIMULATION_PATH, "ramses_mhd_amr"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/ramses_mhd_amr"),
         output = 19,
         has_hydro = true,
         has_gravity = false,
@@ -142,8 +142,8 @@ const DATASETS = Dict(
     # `timeseries_sedov3d_mera` holds the same outputs converted to mera (.jld2) files,
     # so both the RAMSES and mera-file code paths are exercised.
     :timeseries_sedov3d => (
-        path = joinpath(SIMULATION_PATH, "timeseries_sedov3d"),
-        mera_path = joinpath(SIMULATION_PATH, "timeseries_sedov3d_mera"),
+        path = joinpath(SIMULATION_PATH, "RAMSES/timeseries_sedov3d"),
+        mera_path = joinpath(SIMULATION_PATH, "MERA-FILES/timeseries_sedov3d_mera"),
         output = 1,
         has_hydro = true,
         has_gravity = false,
@@ -156,7 +156,7 @@ const DATASETS = Dict(
     # the multi-code reader: getinfo_pluto/gethydro_pluto fill the standard structs so the
     # analysis layer (getvar/projection/pdf) runs unchanged. (52_pluto_reader_tests.jl)
     :pluto_sedov3d => (
-        path = joinpath(SIMULATION_PATH, "pluto_sedov3d"),
+        path = joinpath(SIMULATION_PATH, "PLUTO/pluto_sedov3d"),
         output = 5,
         has_hydro = true,
         has_gravity = false,
@@ -169,7 +169,7 @@ const DATASETS = Dict(
     # density/momentum/energy → derived velocity/pressure). Exercises the multi-level leaf-cell
     # reader. (Chombo section of 52_pluto_reader_tests.jl)
     :chombo_3d => (
-        path = joinpath(SIMULATION_PATH, "chombo_3d", "IsothermalSphere"),
+        path = joinpath(SIMULATION_PATH, "CHOMBO/chombo_3d", "IsothermalSphere"),
         output = 0,
         has_hydro = true,
         has_gravity = false,

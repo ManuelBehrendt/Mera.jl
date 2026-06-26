@@ -9,8 +9,8 @@
 #           convention, and confirm getvar/projection/pdf work unchanged.
 # ============================================================================
 
-const PL_PATH = joinpath(SIMULATION_PATH, "pluto_sedov3d")
-const CH_PATH = joinpath(SIMULATION_PATH, "chombo_3d", "IsothermalSphere")
+const PL_PATH = joinpath(SIMULATION_PATH, "PLUTO/pluto_sedov3d")
+const CH_PATH = joinpath(SIMULATION_PATH, "CHOMBO/chombo_3d", "IsothermalSphere")
 
 @testset "PLUTO reader" begin
 

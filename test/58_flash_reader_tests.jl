@@ -92,7 +92,7 @@ end
 
     # PART B (data-backed): the real yt GasSloshing FLASH sample (3-D AMR, CGS).
     @testset "real FLASH snapshot — yt GasSloshing (data-backed)" begin
-        gd = joinpath(SIMULATION_PATH, "flash_gassloshing", "GasSloshing")
+        gd = joinpath(SIMULATION_PATH, "FLASH/flash_gassloshing", "GasSloshing")
         if isdir(gd) && any(f -> occursin("_hdf5_plt_cnt_", f), readdir(gd))
             info = getinfo(150, gd, verbose=false)              # auto-detect (extensionless file)
             @test info.simcode == "FLASH"

@@ -100,7 +100,7 @@ end
 
     @testset "self-gravity potential maps to :gpot (code-blind gravity-as-field)" begin
         @test Mera._ATHENA_VARMAP["phi"] == :gpot                  # Athena `phi` → canonical :gpot
-        sg = joinpath(SIMULATION_PATH, "athena_selfgravity")       # small multigrid Jeans run
+        sg = joinpath(SIMULATION_PATH, "ATHENA/athena_selfgravity")       # small multigrid Jeans run
         if isdir(sg) && any(f -> endswith(lowercase(f), ".athdf"), readdir(sg))
             info = getinfo(2, sg, verbose=false)
             @test :gpot in info.variable_list
@@ -116,7 +116,7 @@ end
         @test Mera._ATHENA_VARMAP["rH"] == :xHI && Mera._ATHENA_VARMAP["rH2"] == :xH2
         @test Mera._ATHENA_VARMAP["rCO"] == :xCO && Mera._ATHENA_VARMAP["rH+"] == :xHII
         @test Mera._ATHENA_VARMAP["Er"] == :Erad            # RT-transport field naming (framework)
-        ch = joinpath(SIMULATION_PATH, "athena_chemistry")  # small H–H2 chemistry run
+        ch = joinpath(SIMULATION_PATH, "ATHENA/athena_chemistry")  # small H–H2 chemistry run
         if isdir(ch) && any(f -> endswith(lowercase(f), ".athdf"), readdir(ch))
             info = getinfo(5, ch, verbose=false)
             @test :xHI in info.variable_list && :xH2 in info.variable_list   # rH/rH2 → canonical
@@ -133,7 +133,7 @@ end
     @testset "six-ray RT: radiation bins → photon groups, gow17 species (code-blind)" begin
         @test Mera._ATHENA_VARMAP["ir_avg0"] == :Np1 && Mera._ATHENA_VARMAP["ir_avg7"] == :Np8
         @test Mera._ATHENA_VARMAP["rCO"] == :xCO && Mera._ATHENA_VARMAP["rC+"] == :xCII   # gow17 set
-        sr = joinpath(SIMULATION_PATH, "athena_sixray")     # gow17 + six-ray PDR (24 fields, evolving)
+        sr = joinpath(SIMULATION_PATH, "ATHENA/athena_sixray")     # gow17 + six-ray PDR (24 fields, evolving)
         if isdir(sr) && any(f -> endswith(lowercase(f), ".athdf"), readdir(sr))
             info = getinfo(5, sr, verbose=false)
             @test all(g -> g in info.variable_list, (:Np1, :Np8))           # 8 radiation photon groups
@@ -151,7 +151,7 @@ end
     # PART B (data-backed): a REAL Athena++ snapshot — the yt AM06 sample (Cartesian AMR MHD).
     # Download AM06.tar.gz from yt-project.org/data into MERA_TEST_DATA/athena_AM06/.
     @testset "real Athena++ snapshot — yt AM06 (data-backed)" begin
-        am06 = joinpath(SIMULATION_PATH, "athena_AM06", "AM06")
+        am06 = joinpath(SIMULATION_PATH, "ATHENA/athena_AM06", "AM06")
         if isdir(am06) && any(f -> endswith(lowercase(f), ".athdf"), readdir(am06))
             info = getinfo(400, am06, verbose=false)            # auto-detect from the .athdf file
             @test info.simcode == "Athena++"

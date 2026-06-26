@@ -7,7 +7,7 @@
 #   PART B (data-free)   — vector helpers + GalaxyFrame.
 # ============================================================================
 
-const GF_PATH = joinpath(SIMULATION_PATH, "spiral_clumps")
+const GF_PATH = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps")
 
 @testset "auto-frame (center_of / face_on / edge_on)" begin
 
