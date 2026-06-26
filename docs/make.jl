@@ -99,7 +99,8 @@ makedocs(modules = [Mera],
                                                        "PLUTO"    => "pluto_reader.md",
                                                        "Athena++" => "athena_reader.md",
                                                        "FLASH"    => "flash_reader.md",
-                                                       "GADGET"   => "gadget_reader.md"],
+                                                       "GADGET"   => "gadget_reader.md",
+                                                       "AREPO / TNG" => "arepo_reader.md"],
 
                       # --- one home for all the formerly-scattered per-topic API pages ---
                       "API Reference" => Any[
