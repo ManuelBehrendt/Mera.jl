@@ -129,6 +129,12 @@ Provide a storage overview for loaded data, showing memory usage and data struct
 Displays comprehensive information about the storage characteristics of the selected simulation
 output. It helps users understand the resource requirements and structure of their data.
 
+For **RAMSES** outputs it tallies the on-disc size per file type — folder total, and the `amr`,
+`hydro`, `gravity`, `particle`, `clump`, `rt` and `sink` files present — returned in a `Dict`. For
+**other codes** (GADGET/AREPO, PLUTO, Athena++, FLASH, Chombo) every quantity is packed into one file
+or folder, so a per-datatype split is not meaningful; instead the snapshot's disc footprint is reported
+under `:snapshot` (the file size for a single-file snapshot, else the folder total).
+
 # Examples
 ```julia
 # Get storage overview for hydro data
@@ -154,9 +160,21 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     #println(fnames)
     fnames = dataobject.fnames
 
-    # External (non-RAMSES) snapshots have no RAMSES output directory to tally — return empty.
+    # External (non-RAMSES) snapshots have no per-datatype RAMSES output directory — those codes pack
+    # every quantity into one file (HDF5) or folder. Report the snapshot's disc footprint instead of
+    # nothing: the file size for a single-file snapshot (GADGET/AREPO/…), else the folder total.
     if !isdefined(fnames, :output) || isempty(fnames.output) || !isdir(fnames.output)
-        verbose && println("(storage overview unavailable — no RAMSES output directory for $(dataobject.simcode))")
+        p = dataobject.path
+        sz, isfolder = isfile(p) ? (filesize(p), false) :
+                       isdir(p)  ? (sum(filesize(f) for f in joinpath.(p, readdir(p)) if isfile(f); init=0), true) :
+                                   (0, false)
+        v, u = usedmemory(sz, false)
+        if verbose
+            println("Snapshot ($(dataobject.simcode)): ", round(v, digits=2), " ", u,
+                    isfolder ? "  (folder total; the per-datatype breakdown is RAMSES-specific)" : "")
+            println(); println("mtime: ", dataobject.mtime); println("ctime: ", dataobject.ctime)
+        end
+        dictoutput[:snapshot] = sz
         return dictoutput
     end
 
@@ -170,7 +188,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
         println( "Folder:         ", round(folder_value,digits=2),   " ", folder_unit,  " \t<", round(folder_meanvalue, digits=2),  " ", folder_meanunit,">/file" )
     end
 
-    amr_files = all_files[ occursin.( "amr", all_files) ]
+    amr_files = all_files[ startswith.(all_files, "amr_") ]
     amr = filesize.( fnames.output .* "/" .* amr_files )
     amr_size = sum( amr )
     amr_mean = mean( amr )
@@ -181,7 +199,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     end
 
     if dataobject.hydro
-        hydro_files = all_files[ occursin.( "hydro", all_files) ]
+        hydro_files = all_files[ startswith.(all_files, "hydro_") ]
         hydro = filesize.( fnames.output .* "/" .* hydro_files )
         hydro_size = sum( hydro )
         hydro_mean = mean( hydro )
@@ -195,7 +213,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     end
 
     if dataobject.gravity
-        gravity_files = all_files[ occursin.( "grav", all_files) ]
+        gravity_files = all_files[ startswith.(all_files, "grav_") ]
         gravity = filesize.(fnames.output .* "/" .* gravity_files )
         gravity_size = sum( gravity )
         gravity_mean = mean( gravity )
@@ -209,7 +227,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     end
 
     if dataobject.particles
-        particle_files = all_files[ occursin.( "part", all_files) ]
+        particle_files = all_files[ startswith.(all_files, "part_") ]
         particle = filesize.( fnames.output .* "/" .* particle_files )
         particle_size = sum( particle )
         particle_mean = mean( particle )
@@ -223,7 +241,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     end
 
     if dataobject.clumps
-        clump_files = all_files[ occursin.( "clump", all_files) ]
+        clump_files = all_files[ startswith.(all_files, "clump_") ]
         clump = filesize.( fnames.output .* "/" .* clump_files )
         clump_size = sum( clump )
         clump_mean = mean( clump )
@@ -237,7 +255,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
     end
 
     if dataobject.rt
-        rt_files = all_files[ occursin.( "rt", all_files) ]
+        rt_files = all_files[ startswith.(all_files, "rt_") ]
         rt = filesize.( fnames.output .* "/" .* rt_files )
         rt_size = sum( rt )
         rt_mean = mean( rt )
@@ -253,7 +271,7 @@ function storageoverview(dataobject::InfoType; verbose::Bool=true)
 
     # todo: check for sink files
     if dataobject.sinks
-        sink_files = all_files[ occursin.( "sink", all_files) ]
+        sink_files = all_files[ startswith.(all_files, "sink_") ]
         sink = filesize.( fnames.output .* "/" .* sink_files )
         sink_size = sum( sink )
         sink_mean = mean( sink )
