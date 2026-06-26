@@ -31,6 +31,11 @@ files in the directory (override with `code=`); the detected code is stored in `
 | **FLASH** | HDF5 PARAMESH | AMR | hydro · MHD | CGS | ✅ | ✅ (per leaf block) | [FLASH](flash_reader.md) |
 | **GADGET** (+ GIZMO/AREPO/SWIFT/TNG) | HDF5 `PartType*` | particles | particles · **gas-cell physics** (ρ · T · Z · …) | physical (a/h applied) | ✅ | ✅ (per type, on read) | [GADGET](gadget_reader.md) |
 
+The same support at a glance — which capability each code carries (MHD, particle gas-cell
+physics, cosmological a/h, projection deposition modes):
+
+![Capability matrix: each supported code (RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO/TNG) versus its capabilities — geometry, hydro/gravity/particles/MHD, particle gas-cell physics, comoving→physical cosmology, units returned, projection deposition, and lazy load-time windowing. RAMSES is native; grid/AMR codes return code units; GADGET/AREPO carry gas physics and AREPO adds mass/volume/SPH/Voronoi projection.](assets/MulticodeCapabilities.png)
+
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
