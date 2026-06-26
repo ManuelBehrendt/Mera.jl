@@ -403,6 +403,21 @@ hierarchy from the surrounding driver:
    pre-cut, runs `_label`, then computes per-clump statistics, boundedness, deblending and the optional
    hierarchy identically for every finder.
 
+!!! note "Works on AMR, uniform grids, particles and Voronoi alike"
+    The finders never look at the grid — `clumpfind` first flattens the object into a **point set**:
+    every cell (any AMR level) becomes one point at its centre (`getvar(:x,:y,:z)`) carrying its field
+    value and its **level-dependent mass and volume** (`getvar(:mass)`/`getvar(:volume)` =
+    `ρ·(boxlen/2^level)³`). So a clump's mass, centre of mass, radius and energy budget sum per-cell
+    masses that already encode each cell's level — no uniform-cell-size assumption. The neighbour index
+    finds *all* pairs within the linking length `b` regardless of how cell sizes or point density vary
+    across refinement levels (the 27-cell stencil is exact, not a uniform-grid approximation), so the
+    same finder runs unchanged on RAMSES AMR, a uniform grid, SPH/N-body particles, and AREPO Voronoi
+    cells. The one thing to set relative to resolution is `b` itself: it is a metric distance, so pick
+    a small multiple of the cell size *in the region of interest* (clumps sit at high density → maximum
+    refinement, hence internally uniform resolution; e.g. `linking_length ≈ 2·boxlen/2^lmax`). The only
+    edge case is a sharp refinement jump *inside* a structure, where a lone coarse cell's centre may lie
+    beyond `b` from its fine neighbours — rarely an issue, since clumps are fully refined.
+
 ### The finders
 
 - **[`ThresholdFoF`](@ref) — friends-of-friends** (Davis et al. 1985). Link every above-threshold pair
