@@ -62,7 +62,7 @@ gas  = gethydro(info, verbose=false)
 maximum(getvar(gas, :rho))                           # the usual analysis, unchanged
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:14:32.338[22m
+    [0m[1m[Mera]: 2026-06-26T00:13:46.193[22m
     
 
 
@@ -116,7 +116,7 @@ gsub = gethydro(ia; xrange=[-0.1,0.1], yrange=[-0.1,0.1], zrange=[-0.1,0.1],
 length(gsub.data), length(ga.data)                   # sub-region ≪ full snapshot
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:14:43.762[22m
+    [0m[1m[Mera]: 2026-06-26T00:13:58.158[22m
     
 
 
@@ -166,14 +166,14 @@ stars = getparticles_gadget(ig; families=[4])        # just the star particles
 length(stars.data), msum(stars) > 0
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:15:07.582[22m
+    [0m[1m[Mera]: 2026-06-26T00:14:22.786[22m
     
     Code: GADGET
     output: 200  time: 0.34483  redshift: 1.9
-    boxlen = 64000.0
-    particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH
+    boxlen = 
 
-      (total 11907080)
+    64000.0
+    particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
     -------------------------------------------------------
     [Mera]: GADGET particles = 450921, families 4
 
@@ -203,7 +203,7 @@ println("T   [K]     : ", extrema(getvar(gas, :T)))
 println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:15:08.951[22m
+    [0m[1m[Mera]: 2026-06-26T00:14:24.201[22m
     
     Code: AREPO
     output: 59  time: 1.0  redshift: 0.0
@@ -214,7 +214,9 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 
       (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,metallicity,sfr,volume)
     gas cells   : 4006794
-    rho [g/cm³] : (1.3854807197342735e-30, 1.17827292777639e-22)
+    rho [g/cm³] : 
+
+    (1.3854807197342735e-30, 1.17827292777639e-22)
     T   [K]     : 
 
     (17.965557996942835, 1.2925814640761332e8)
@@ -231,9 +233,9 @@ println("gas mass [Msol]: ", msum(gas, :Msol))
 ```
 
     median T [K]   : 1.436872560859919e7
-    median Z       : 
 
-    0.001993876649066806
+    
+    median Z       : 0.001993876649066806
     gas mass [Msol]: 4.6930995577059625e13
 
 
@@ -261,7 +263,7 @@ heatmap!(a2, log10.(ifelse.(Tm.maps[:T]  .> 0, Tm.maps[:T],  NaN))'; colormap=:p
 fig
 ```
 
-    [0m[1m[Mera]: 2026-06-25T23:15:21.508[22m
+    [0m[1m[Mera]: 2026-06-26T00:14:36.539[22m
     
 
 
@@ -276,7 +278,7 @@ fig
     Pixel size: 37.533 [kpc]
     Simulation min.: 151.314 [Mpc]
     
-    [0m[1m[Mera]: 2026-06-25T23:15:38.828[22m
+    [0m[1m[Mera]: 2026-06-26T00:14:53.815[22m
 
 
     
@@ -296,7 +298,31 @@ fig
 
 
 
-![Gas surface density (SPH-kernel) and mass-weighted temperature of an IllustrisTNG halo, zoomed to the halo — produced by Mera's projection on AREPO Voronoi gas cells.](assets/multicode/arepo_tng_gas_maps.png)
+![Gas surface density (SPH-kernel) and mass-weighted temperature of an IllustrisTNG halo, zoomed to the halo — Mera's projection on AREPO Voronoi gas cells.](assets/multicode/arepo_tng_gas_maps.png)
+
+
+
+**SPH vs Voronoi.** The same temperature map two ways: `weighting=:sph` (smooth, isotropic kernel —
+the conserving default, as in `yt`) vs `weighting=:voronoi` (nearest-generator — sharp, cell-respecting;
+exact for intensive fields, and it shows the moving-mesh cell structure).
+
+
+```julia
+Ts = projection(gas, :T; weighting=:sph,     zoom..., verbose=false, show_progress=false)
+Tv = projection(gas, :T; weighting=:voronoi, zoom..., verbose=false, show_progress=false)
+cr = Tuple(quantile(log10.(filter(>(0), Ts.maps[:T])), [0.02, 0.98]))     # shared colour scale
+fig2 = Figure(size=(900, 400))
+b1 = Axis(fig2[1,1]; title="T — SPH kernel (smooth)",           aspect=DataAspect()); hidedecorations!(b1)
+b2 = Axis(fig2[1,2]; title="T — Voronoi nearest-cell (sharp)",  aspect=DataAspect()); hidedecorations!(b2)
+heatmap!(b1, log10.(ifelse.(Ts.maps[:T] .> 0, Ts.maps[:T], NaN))'; colormap=:plasma, colorrange=cr)
+heatmap!(b2, log10.(ifelse.(Tv.maps[:T] .> 0, Tv.maps[:T], NaN))'; colormap=:plasma, colorrange=cr)
+fig2
+```
+
+
+
+
+![Temperature of the same halo: SPH kernel (smooth, left) vs Voronoi nearest-cell (sharp, right) — the moving-mesh cell structure.](assets/multicode/arepo_tng_sph_vs_voronoi.png)
 
 
 
