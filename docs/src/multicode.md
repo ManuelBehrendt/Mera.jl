@@ -40,6 +40,12 @@ Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, a
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.
 
+!!! note "“Chombo” is a format, not a code"
+    The **Chombo** row above is a *file format*, not a physics code: Chombo is a block-structured AMR
+    **framework** (Lawrence Berkeley National Laboratory) whose HDF5 output is shared by PLUTO (AMR
+    mode), Orion, Charm, BISICLES and others. Mera reads any Chombo-format `.hdf5` the same way — see
+    [PLUTO-AMR (Chombo)](pluto_reader.md#PLUTO-AMR-(Chombo)).
+
 **Self-gravity** rides along the same way: where a code writes a gravitational potential into its
 snapshot (Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`) the reader exposes it as
 a single canonical field, so `getvar(gas, :gpot)` — and `projection`, `timeseries`, … on it — runs

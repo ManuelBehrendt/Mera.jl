@@ -160,9 +160,18 @@ extra fields keep their names.
 
 ## PLUTO-AMR (Chombo)
 
-PLUTO's **AMR** output uses the Chombo box-structured HDF5 format (shared with Orion and other Chombo
-codes). The frontend reads it too — `getinfo` auto-detects a `.hdf5` snapshot and loads the level
-hierarchy as a Mera **AMR** `HydroDataType`:
+!!! info "What is Chombo?"
+    **Chombo** is not a simulation code but a **block-structured adaptive-mesh-refinement (AMR)
+    framework** — a library from Lawrence Berkeley National Laboratory (the Applied Numerical Algorithms
+    Group) that supplies the grid hierarchy, parallel data structures and HDF5 I/O that many simulation
+    codes are built on. Because they share Chombo's machinery they also share its **HDF5 output format**
+    (a hierarchy of refined rectangular *boxes*): **PLUTO** in AMR mode, **Orion**, **Charm** and
+    **BISICLES**, among others, all write the same layout. So Mera's `Code: CHOMBO` labels the **file
+    format**, not a single physics code — any Chombo-format `.hdf5` is read the same way, with the
+    per-code variable-name maps (PLUTO vs Orion conventions) layered on top.
+
+PLUTO's **AMR** output uses this Chombo format. The frontend reads it — `getinfo` auto-detects a
+`.hdf5` snapshot and loads the level hierarchy as a Mera **AMR** `HydroDataType`:
 
 ```julia
 info = getinfo(0, "/data/chombo_run")     # detects the Chombo .hdf5 → "Code: CHOMBO"
