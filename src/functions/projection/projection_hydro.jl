@@ -681,11 +681,13 @@ fine_detail = projection(gas, :density, :g_cm3,
 
 Returns `AMRMapsType` (alias: `HydroMapsType`) containing:
 - **`.maps`**: Dictionary of projected variable maps (2D arrays)
-- **`.extent`**: Physical extent of projection [xmin, xmax, ymin, ymax]
-- **`.pixsize`**: Physical size of each pixel
+- **`.extent`**: extent `[xmin, xmax, ymin, ymax]` in **code length** units. The map *values* may be
+  physical (e.g. `:Msol_pc2`); the axes are NOT — multiply by `proj.scale.kpc`/`.pc`/… for a physical
+  plotting extent, or use [`getextent`](@ref)`(proj, :kpc)`. `.cextent` is the same, centred on `.center`.
+- **`.pixsize`**: pixel size in **code length** units (× `proj.scale.<unit>` for physical)
 - **`.lmax_projected`**: Maximum AMR level included in projection
-- **`.ranges`**: Normalized coordinate ranges used
-- **`.center`**: Physical center coordinates of projection
+- **`.ranges`**: normalized `[0,1]` coordinate ranges (this is the fractional field, unlike `.extent`)
+- **`.center`**: projection centre, in **code length** units
 
 ### Radiative transfer (RT) projections
 

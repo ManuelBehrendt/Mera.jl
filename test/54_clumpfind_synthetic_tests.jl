@@ -147,6 +147,11 @@
         c2d = clumpfind(sd, :sd; threshold=maximum(sd.maps[:sd])/20, connectivity=8)
         @test c2d isa ClumpCatalog && c2d.meta.dim == Symbol("2D")
         @test c2d.nclumps >= 4
+        # getextent on a projection result: .extent/.cextent are code length units; getextent scales them
+        @test getextent(sd) == sd.extent                                    # :standard == code units
+        @test getextent(sd, :kpc) ≈ sd.extent .* sd.scale.kpc               # physical axes for an Msol/pc² map
+        @test getextent(sd, :pc)  ≈ getextent(sd, :kpc) .* 1e3              # pc = 1000 × kpc
+        @test getextent(sd, :kpc; center=true) ≈ sd.cextent .* sd.scale.kpc # centre-relative
     end
 
     @testset "multi-field gas + particles" begin

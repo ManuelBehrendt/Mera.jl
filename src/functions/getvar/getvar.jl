@@ -916,6 +916,21 @@ end
 
 
 """
+    getextent(proj::DataMapsType, unit::Symbol=:standard; center::Bool=false) -> [xmin,xmax,ymin,ymax]
+
+Map extent of a [`projection`](@ref) result in a physical `unit` (e.g. `:kpc`, `:pc`, `:Mpc`).
+
+The stored `proj.extent`/`proj.cextent` fields are in **code length** units — so when the map values
+are physical (e.g. surface density in `:Msol_pc2`) the plotting axes would otherwise be mismatched.
+This scales them: `getextent(proj, :kpc)` gives `[xmin,xmax,ymin,ymax]` in kpc. `center=true` returns
+the centre-relative extent (`proj.cextent`). Equivalent to `proj.extent .* proj.scale.<unit>`.
+"""
+function getextent(proj::DataMapsType, unit::Symbol=:standard; center::Bool=false)
+    e = center ? proj.cextent : proj.extent
+    return unit === :standard ? copy(e) : e .* getfield(proj.scale, unit)
+end
+
+"""
 #### Get the extent of the dataset-domain:
 ```julia
 function getextent( dataobject::DataSetType;
