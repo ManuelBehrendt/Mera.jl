@@ -196,4 +196,25 @@
         @test isempty(out2)
         Mera._REGION_HINT_SHOWN[] = false                   # reset so other tests/sessions can see it
     end
+
+    @testset "symbol-form subregion: physical units match :standard" begin
+        # Regression: subregion(:sphere/:cylinder; range_unit≠:standard) collapsed to 0 cells because
+        # prepranges multiplied by selected_unit/boxlen instead of dividing by boxlen·selected_unit
+        # (cuboids used the correct form, so the bug hid). A physical-unit selection must match the
+        # equivalent :standard one cell-for-cell. The value-type Sphere(...) path (above) was fine;
+        # this guards the legacy symbol path.
+        sph_std = subregion(gas, :sphere; center=[:bc], radius=0.3,      range_unit=:standard, verbose=false)
+        sph_kpc = subregion(gas, :sphere; center=[:bc], radius=0.3box,   range_unit=:kpc,      verbose=false)
+        @test length(sph_kpc.data) > 0                      # was 0 before the fix
+        @test length(sph_kpc.data) == length(sph_std.data)  # physical == standard, cell-for-cell
+
+        cyl_std = subregion(gas, :cylinder; center=[:bc], radius=0.3,    height=0.2,    range_unit=:standard, verbose=false)
+        cyl_kpc = subregion(gas, :cylinder; center=[:bc], radius=0.3box, height=0.2box, range_unit=:kpc,      verbose=false)
+        @test length(cyl_kpc.data) > 0 && length(cyl_kpc.data) == length(cyl_std.data)
+
+        # an off-centre sphere exercises the cx/cy/cz shift conversion too
+        off_std = subregion(gas, :sphere; center=[0.6, 0.6, 0.6],          radius=0.15,    range_unit=:standard, verbose=false)
+        off_kpc = subregion(gas, :sphere; center=[0.6box, 0.6box, 0.6box], radius=0.15box, range_unit=:kpc,      verbose=false)
+        @test length(off_kpc.data) == length(off_std.data) > 0
+    end
 end

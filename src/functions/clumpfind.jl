@@ -1174,7 +1174,13 @@ function clumpfind(obj::HydroPartType, finder::AbstractFinder; pos_unit::Symbol=
                            finder.linking_length, finder.min_delta; backend=finder.backend)) : nothing
     labels, k = _label(finder, P)
     members = [Int[] for _ in 1:k]
-    @inbounds for i in eachindex(labels); push!(members[labels[i]], i); end
+    # HDBSCAN (and only it) emits noise labels == 0; skip them. Without the guard `members[0]` was
+    # an out-of-bounds write masked by `@inbounds`, corrupting an adjacent array → the cryptic
+    # ConcurrencyViolationError. (The deblend path already guards this in `_split_group`.)
+    @inbounds for i in eachindex(labels)
+        l = labels[i]
+        l > 0 && push!(members[l], i)
+    end
     if deblend !== false   # split each clump (peak/watershed, or a composed finder per group)
         members = reduce(vcat, (_split_group(deblend, mem, xs, ys, zs, ms, fs, Float64(peak_min_distance))
                                 for mem in members); init=Vector{Int}[])

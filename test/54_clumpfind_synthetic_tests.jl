@@ -196,4 +196,14 @@
         # the reloaded object behaves identically under clumpfind
         @test clumpfind(D.gas, fof()).nclumps == clumpfind(gas, fof()).nclumps
     end
+
+    @testset "HDBSCAN runs with noise labels (no out-of-bounds)" begin
+        # HDBSCAN is the only finder that emits noise labels (== 0). The main labelling loop must
+        # skip them — otherwise `members[0]` was an out-of-bounds write masked by `@inbounds`,
+        # corrupting an adjacent array → a cryptic ConcurrencyViolationError. Guard the regression.
+        cat = clumpfind(gas, HDBSCANFinder(:rho; threshold=thr, linking_length=ll, min_cluster_size=8))
+        @test cat isa ClumpCatalog                           # returns a catalog instead of throwing
+        @test all(c -> c.n_members >= 1, cat.clumps)         # member lists well-formed (no corruption)
+        @test cat.nclumps >= 1                               # finds at least one cluster on the synthetic field
+    end
 end

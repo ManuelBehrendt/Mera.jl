@@ -176,24 +176,31 @@ function prepranges(    dataobject::InfoType,
 
     else
         selected_unit = getunit(dataobject, range_unit)
-        xmin = (-radius + center[1]) * selected_unit /dataobject.boxlen
-        xmax = ( radius + center[1]) * selected_unit /dataobject.boxlen
-        ymin = (-radius + center[2]) * selected_unit /dataobject.boxlen
-        ymax = ( radius + center[2]) * selected_unit /dataobject.boxlen
+        # Convert physical units → fractional box coordinates by dividing by boxlen·selected_unit.
+        # (selected_unit is the value of one code length in `range_unit`, so code = unit/selected_unit
+        # and fraction = unit/(boxlen·selected_unit) — the same form as `center` below.) These shifts
+        # previously multiplied by selected_unit/boxlen, inverted by a factor selected_unit², which
+        # collapsed the sphere/cylinder to a ~zero-radius ball at the origin (0 cells). Cuboids used
+        # the correct form, so the bug stayed hidden.
+        conv = dataobject.boxlen * selected_unit
+        xmin = (-radius + center[1]) / conv
+        xmax = ( radius + center[1]) / conv
+        ymin = (-radius + center[2]) / conv
+        ymax = ( radius + center[2]) / conv
         if height != 0.
-            zmin = ( -height + center[3]) * selected_unit /dataobject.boxlen
-            zmax = (  height + center[3]) * selected_unit /dataobject.boxlen
+            zmin = ( -height + center[3]) / conv
+            zmax = (  height + center[3]) / conv
         else
-            zmin = ( -radius + center[3]) * selected_unit /dataobject.boxlen
-            zmax = (  radius + center[3]) * selected_unit /dataobject.boxlen
+            zmin = ( -radius + center[3]) / conv
+            zmax = (  radius + center[3]) / conv
         end
         # given center relative to the data range in units: cell centers
-        cx_shift = center[1] * selected_unit /dataobject.boxlen
-        cy_shift = center[2] * selected_unit /dataobject.boxlen
-        cz_shift = center[3] * selected_unit /dataobject.boxlen
-    radius_shift = radius * selected_unit /dataobject.boxlen
-    if height != 0. height_shift = height * selected_unit /dataobject.boxlen end
-        center  =  center / (dataobject.boxlen * selected_unit )
+        cx_shift = center[1] / conv
+        cy_shift = center[2] / conv
+        cz_shift = center[3] / conv
+        radius_shift = radius / conv
+        if height != 0. height_shift = height / conv end
+        center  =  center / conv
     end
 
     if verbose
