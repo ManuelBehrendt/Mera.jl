@@ -14,10 +14,10 @@
 # Fully-qualified accessor so the test needs only `using Mera`.
 _cols(t) = Mera.IndexedTables.columns(t)
 
-const TS_RAMSES = joinpath(SIMULATION_PATH, "timeseries_sedov3d")
-const TS_MERA   = joinpath(SIMULATION_PATH, "timeseries_sedov3d_mera")
-const RT_RAMSES = joinpath(SIMULATION_PATH, "rt_stromgren")
-const RT_MERA   = joinpath(SIMULATION_PATH, "rt_stromgren_mera")
+const TS_RAMSES = joinpath(SIMULATION_PATH, "RAMSES/timeseries_sedov3d")
+const TS_MERA   = joinpath(SIMULATION_PATH, "MERA-FILES/timeseries_sedov3d_mera")
+const RT_RAMSES = joinpath(SIMULATION_PATH, "RAMSES/rt_stromgren")
+const RT_MERA   = joinpath(SIMULATION_PATH, "MERA-FILES/rt_stromgren_mera")
 
 @testset "timeseries()" begin
 
@@ -139,7 +139,7 @@ if DATA_AVAILABLE && isdir(RT_RAMSES) && !isempty(checkoutputs(RT_RAMSES, verbos
 end
 
 # cosmological run → automatic redshift / aexp columns, time as the age in Myr
-let cp = joinpath(SIMULATION_PATH, "yt_cosmo")
+let cp = joinpath(SIMULATION_PATH, "RAMSES/yt_cosmo")
     if DATA_AVAILABLE && isdir(cp)
         @testset "cosmological run → redshift / aexp columns" begin
             ic = getinfo(80, cp, verbose=false)

@@ -9,7 +9,7 @@
 
 using Dates
 
-const PV_PATH = joinpath(SIMULATION_PATH, "spiral_clumps")
+const PV_PATH = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps")
 
 @testset "provenance" begin
 
@@ -80,7 +80,7 @@ else
 end
 
 # cosmological snapshot → redshift comes through
-let cp = joinpath(SIMULATION_PATH, "yt_cosmo")
+let cp = joinpath(SIMULATION_PATH, "RAMSES/yt_cosmo")
     if DATA_AVAILABLE && isdir(cp)
         @testset "cosmological snapshot → redshift" begin
             ic = getinfo(80, cp, verbose=false)

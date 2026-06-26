@@ -6,7 +6,7 @@
 #   PART B (data-backed) — density PDF of spiral_clumps (mass vs volume weighting).
 # ============================================================================
 
-const ST_PATH = joinpath(SIMULATION_PATH, "spiral_clumps")
+const ST_PATH = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps")
 
 @testset "pdf (statistics)" begin
 
@@ -93,7 +93,7 @@ else
 end
 
 # pdf is generic over data types — particles and RT live in other fixtures
-let pp = joinpath(SIMULATION_PATH, "spiral_ugrid")
+let pp = joinpath(SIMULATION_PATH, "RAMSES/spiral_ugrid")
     if DATA_AVAILABLE && isdir(pp)
         @testset "particles" begin
             part = getparticles(getinfo(1, pp, verbose=false), verbose=false, show_progress=false)
@@ -101,7 +101,7 @@ let pp = joinpath(SIMULATION_PATH, "spiral_ugrid")
         end
     end
 end
-let rp = joinpath(SIMULATION_PATH, "rt_stromgren")
+let rp = joinpath(SIMULATION_PATH, "RAMSES/rt_stromgren")
     if DATA_AVAILABLE && isdir(rp)
         @testset "RT" begin
             rt = getrt(getinfo(4, rp, verbose=false), verbose=false, show_progress=false)

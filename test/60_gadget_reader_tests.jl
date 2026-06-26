@@ -290,7 +290,7 @@ end
 
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
     @testset "real GADGET snapshot — yt GadgetDiskGalaxy (data-backed)" begin
-        gd = joinpath(SIMULATION_PATH, "gadget_diskgalaxy", "GadgetDiskGalaxy")
+        gd = joinpath(SIMULATION_PATH, "GADGET/gadget_diskgalaxy", "GadgetDiskGalaxy")
         if isdir(gd) && any(f -> endswith(lowercase(f), ".hdf5"), readdir(gd))
             info = getinfo(200, gd, verbose=false)                    # auto-detect
             @test info.simcode == "GADGET" && info.particles
@@ -307,13 +307,13 @@ end
             @test length(sub.data) == count((lo .<= x .<= hi) .& (lo .<= y .<= hi) .& (lo .<= z .<= hi))
             @test 0 < length(sub.data) < length(stars.data) && sub.ranges != [0., 1., 0., 1., 0., 1.]
         else
-            @test_skip "GadgetDiskGalaxy fixture not present (MERA_TEST_DATA/gadget_diskgalaxy/)"
+            @test_skip "GadgetDiskGalaxy fixture not present (MERA_TEST_DATA/GADGET/gadget_diskgalaxy/)"
         end
     end
 
     # PART C (data-backed): real AREPO/TNG snapshots — gas-cell physics (Phase 1a).
     @testset "real AREPO/TNG snapshots — gas fields (data-backed)" begin
-        tng = joinpath(SIMULATION_PATH, "arepo", "TNGHalo", "TNGHalo", "halo_59.hdf5")
+        tng = joinpath(SIMULATION_PATH, "AREPO", "TNGHalo", "TNGHalo", "halo_59.hdf5")
         if isfile(tng)
             info = getinfo_gadget(59, tng, verbose=false)
             @test info.simcode == "AREPO" && info.particles                     # detected from the Config group
@@ -328,10 +328,10 @@ end
             @test 1e3 < sort(T)[length(T) ÷ 2] < 1e9                            # median in the warm/hot range
             @test msum(gas) > 0
         else
-            @test_skip "TNGHalo fixture not present (MERA_TEST_DATA/arepo/TNGHalo/)"
+            @test_skip "TNGHalo fixture not present (MERA_TEST_DATA/AREPO/TNGHalo/)"
         end
 
-        bullet = joinpath(SIMULATION_PATH, "arepo", "ArepoBullet", "ArepoBullet", "snapshot_150.hdf5")
+        bullet = joinpath(SIMULATION_PATH, "AREPO", "ArepoBullet", "ArepoBullet", "snapshot_150.hdf5")
         if isfile(bullet)
             info = getinfo_gadget(150, bullet, verbose=false)
             @test info.scale.g_cm3 != 1.0
@@ -345,7 +345,7 @@ end
             @test length(gas.data) > 0
             @test all(isfinite, getvar(gas, :T)) && all(getvar(gas, :volume) .> 0)
         else
-            @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/arepo/ArepoBullet/)"
+            @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/AREPO/ArepoBullet/)"
         end
     end
 end

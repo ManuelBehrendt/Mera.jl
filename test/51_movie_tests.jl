@@ -6,7 +6,7 @@
 #   PART B (data-backed) — frames from the 3-D Sedov series + GIF round-trip.
 # ============================================================================
 
-const MV_PATH = joinpath(SIMULATION_PATH, "timeseries_sedov3d")
+const MV_PATH = joinpath(SIMULATION_PATH, "RAMSES/timeseries_sedov3d")
 
 @testset "getmovie / savemovie" begin
 

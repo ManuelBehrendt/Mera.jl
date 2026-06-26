@@ -1003,7 +1003,7 @@ else
         # Guards against silent struct-layout breakage of the serialized scale/info types: an OLD
         # JLD2 mera file (written by an earlier Mera) must still load. Adding a field to ScalesType002
         # once broke exactly this — old files reconstructed to a mismatched layout and threw on load.
-        jdir = joinpath(SIMULATION_PATH, "JLD2_files")
+        jdir = joinpath(SIMULATION_PATH, "MERA-FILES/JLD2_files")
         if isfile(joinpath(jdir, "output_00300.jld2"))
             gas = loaddata(300, jdir, :hydro, verbose=false)
             @test gas isa HydroDataType && length(gas.data) > 0
@@ -1019,7 +1019,7 @@ else
         # (getvar), not just loadable. JLD2_complete holds an old hydro+particles+gravity file.
         # NOTE: we cannot WRITE an older JLD2 version from within one test run (only one JLD2 is
         # loaded), so backward-compat is verified by reading committed old-format fixtures.
-        cdir = joinpath(SIMULATION_PATH, "JLD2_complete")
+        cdir = joinpath(SIMULATION_PATH, "MERA-FILES/JLD2_complete")
         if isfile(joinpath(cdir, "output_00300.jld2"))
             @test (viewdata(300, path=cdir, verbose=false); true)  # metadata read of an LZ4 old file doesn't throw
 
