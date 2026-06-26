@@ -1066,6 +1066,8 @@ Visual statistics overview of a **loaded** object (needs a Makie backend: `using
 
 - **Hydro / AMR:** cells per level, mass per level, the mass-weighted density PDF, and the ρ–T phase
   diagram (when a temperature is available).
+- **Gravity / AMR:** cells per level, the acceleration |a| and potential distributions, and the
+  |a|–potential relation.
 - **Particles:** the per-family census, the mass distribution, the projected x–y density, and the
   speed distribution.
 
