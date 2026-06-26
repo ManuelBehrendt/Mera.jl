@@ -18,6 +18,7 @@ const _CHOMBO_MAP = Dict(
     "vx1"=>(:vx,:direct), "vx2"=>(:vy,:direct), "vx3"=>(:vz,:direct),
     "X-momentum"=>(:vx,:mom), "Y-momentum"=>(:vy,:mom), "Z-momentum"=>(:vz,:mom),
     "prs"=>(:p,:direct), "energy-density"=>(:p,:energy),
+    "bx1"=>(:bx,:direct), "bx2"=>(:by,:direct), "bx3"=>(:bz,:direct),  # PLUTO-AMR MHD (untested: no MHD fixture yet)
     "gravitational-potential"=>(:gpot,:direct),       # self-gravity potential → :gpot (code-blind)
 )
 

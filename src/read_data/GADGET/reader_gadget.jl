@@ -13,16 +13,20 @@
 #
 # Gas (PartType0): the Voronoi/SPH cell fields present in the file are read as columns —
 # Density→:rho, InternalEnergy→:u, ElectronAbundance→:ne, GFM_Metallicity→:metallicity,
-# StarFormationRate→:sfr — and :volume = mass/ρ is derived; getvar adds :T, :p, :cs. Base CGS
-# units are read from the Header. (a/h comoving→physical conversion is a later phase.)
+# StarFormationRate→:sfr, NeutralHydrogenAbundance→:nh, Machnumber→:mach, Potential→:gpot — and
+# :volume = mass/ρ is derived; getvar adds :T, :p, :cs. The MagneticField vector (AREPO/TNG MHD)
+# becomes :bx,:by,:bz. Base CGS units come from the Header; comoving→physical a/h is applied.
 # ====================================================================================
 
 const _GADGET_FAMILY = Dict(0=>"gas", 1=>"halo/DM", 2=>"disk", 3=>"bulge", 4=>"stars", 5=>"bndry/BH")
 
 # 1-D gas-cell fields (AREPO/TNG PartType0) exposed as columns: HDF5 dataset => Mera symbol.
 # Only those actually present in a given snapshot are read (illustris_python-style field selection).
+# :gpot carries an a⁻¹ comoving→physical factor (applied after read); :nh/:mach are dimensionless.
 const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
-                            ("GFM_Metallicity", :metallicity), ("StarFormationRate", :sfr))
+                            ("GFM_Metallicity", :metallicity), ("StarFormationRate", :sfr),
+                            ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach),
+                            ("Potential", :gpot))
 
 # does this HDF5 file look like GADGET? (a Header group carrying NumPart_Total)
 function _is_gadget_h5(fn::String)
@@ -120,6 +124,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             for (ds, sym) in _GADGET_GAS_FIELDS
                 haskey(g0, ds) && push!(info.particles_variable_list, sym)
             end
+            haskey(g0, "MagneticField")  && append!(info.particles_variable_list, [:bx, :by, :bz])
             haskey(g0, "Density")        && push!(info.particles_variable_list, :volume)
             haskey(g0, "InternalEnergy") && push!(info.particles_variable_list, :T)
         end
@@ -190,6 +195,9 @@ function getparticles_gadget(info::InfoType; families=:all,
                 haskey(f["PartType0"], ds) && (push!(gascols, (ds, sym)); gas[sym] = Float64[])
             end
         end
+        # MagneticField (AREPO/TNG MHD) is a (3,N) vector → :bx,:by,:bz columns (NaN for non-gas).
+        has_bfield = (0 in want) && haskey(f, "PartType0") && haskey(f["PartType0"], "MagneticField")
+        if has_bfield; gas[:bx] = Float64[]; gas[:by] = Float64[]; gas[:bz] = Float64[]; end
         for pt in want
             grp = "PartType$pt"
             (haskey(f, grp) && haskey(f[grp], "Coordinates")) || continue
@@ -205,12 +213,31 @@ function getparticles_gadget(info::InfoType; families=:all,
             for (ds, sym) in gascols
                 append!(gas[sym], (pt == 0 && haskey(f[grp], ds)) ? _gadget_col(read(f[grp][ds]), keep) : fill(NaN, nkeep))
             end
+            if has_bfield
+                if pt == 0 && haskey(f[grp], "MagneticField")
+                    B = read(f[grp]["MagneticField"])   # (3, N)
+                    append!(gas[:bx], _gadget_row(B, 1, keep)); append!(gas[:by], _gadget_row(B, 2, keep)); append!(gas[:bz], _gadget_row(B, 3, keep))
+                else
+                    append!(gas[:bx], fill(NaN, nkeep)); append!(gas[:by], fill(NaN, nkeep)); append!(gas[:bz], fill(NaN, nkeep))
+                end
+            end
         end
     end
     # GADGET cosmological velocity convention: the stored value is v_peculiar/√a, so multiply by
     # √a to recover the physical peculiar velocity (no-op for non-cosmological runs, a = 1).
     if info.aexp != 1.0
         sqa = sqrt(info.aexp); vx .*= sqa; vy .*= sqa; vz .*= sqa
+    end
+    # comoving→physical scalings not folded into the base units:
+    #   MagneticField  B_phys = B_code·√(UnitPressure)·h·a⁻²; we store B_code/√(4π·a) so that
+    #     getvar(:bx,:Gauss) = column·scale.Gauss (= √(4π·UnitPressure)·h·a⁻¹·⁵) returns B_phys.
+    #   Potential (:gpot)  peculiar potential carries an a⁻¹ comoving→physical factor.
+    let a = info.aexp
+        if haskey(gas, :bx)
+            f4 = 1.0 / sqrt(4π * a)
+            gas[:bx] .*= f4; gas[:by] .*= f4; gas[:bz] .*= f4
+        end
+        haskey(gas, :gpot) && a != 1.0 && (gas[:gpot] .*= 1.0 / a)
     end
     # per-cell volume V = m/ρ (NaN where ρ is absent or zero: non-gas rows, empty cells)
     if haskey(gas, :rho)
@@ -223,6 +250,7 @@ function getparticles_gadget(info::InfoType; families=:all,
     # deterministic column order: base columns, then gas fields in catalogue order, then :volume
     gasnames = Symbol[]
     for (_, sym) in _GADGET_GAS_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
+    for s in (:bx, :by, :bz); haskey(gas, s) && push!(gasnames, s); end
     haskey(gas, :volume) && push!(gasnames, :volume)
     cols  = Any[x, y, z, vx, vy, vz, mass, id, fam]; append!(cols, (gas[s] for s in gasnames))
     names = (:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family, gasnames...)
