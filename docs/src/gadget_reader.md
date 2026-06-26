@@ -16,7 +16,7 @@ unchanged.
 !!! tip "AREPO / IllustrisTNG"
     AREPO/TNG snapshots use this same format but are **auto-detected as AREPO** and get richer
     handling (gas-cell physics in physical units, comoving→physical `a`/`h`, Voronoi maps) — see the
-    dedicated [AREPO / TNG page](arepo_reader.md).
+    dedicated [AREPO page](arepo_reader.md).
 
 !!! note "Scope"
     GADGET is particle-based (no Eulerian grid), so this is a **particle** reader: it loads the
