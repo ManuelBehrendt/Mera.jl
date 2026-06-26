@@ -133,7 +133,9 @@
                                   :bmag, :pmag, :beta, :v_alfven, :e_magnetic,# need magnetic field
                                   :mach_alfven, :mach_fast, :mach_slow]),     # need magnetic field
                 :gravity  => Set{Symbol}(),
-                :particle => Set([:formation_redshift, :formation_time, :zform]),  # cosmological only
+                :particle => Set([:formation_redshift, :formation_time, :zform,    # cosmological only
+                                  :bmag, :pmag, :beta, :v_alfven, :e_magnetic,     # need magnetic field (AREPO/TNG gas)
+                                  :mach_alfven, :mach_fast, :mach_slow]),
             )
             for (kind, obj) in [(:hydro, gas), (:gravity, grav), (:particle, part)]
                 for k in keys(Mera.FIELD_DEPS[kind])
