@@ -253,6 +253,7 @@ export
     clump_recovery,
     clumptable,
     clumpplot,
+    overviewplot,
     massfunctionplot,
     save_clumps,
     load_clumps,
