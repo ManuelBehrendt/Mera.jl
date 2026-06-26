@@ -117,6 +117,52 @@ function get_data(dataobject::PartDataType,
             selected_unit = getunit(dataobject, i, vars, units)
             vars_dict[i] = sqrt.((5/3) * (5/3 - 1) .* select(masked_data, :u)) .* selected_unit
 
+        # Derived magnetic quantities from the gas field :bx/:by/:bz (AREPO/TNG MHD). The columns are
+        # stored so B_phys = B_code·scale.Gauss — the same code convention as RAMSES-MHD — so the code
+        # forms carry over verbatim: P_mag = B²/2, v_A = |B|/√ρ, E_mag = (B²/2)·V. Each reuses an
+        # existing unit (:bmag→:Gauss/:muG, :pmag→:Ba, :v_alfven→:km_s, :e_magnetic→:erg; :beta is
+        # dimensionless). :p is derived for particles, so β fetches it via getvar (not a raw column).
+        elseif i == :bmag || i == :pmag || i == :beta || i == :v_alfven || i == :e_magnetic
+            if !(:bx in column_names && :by in column_names && :bz in column_names)
+                error("getvar :$i needs the magnetic field :bx/:by/:bz — load an MHD gas snapshot " *
+                      "(e.g. an AREPO/IllustrisTNG run carrying a MagneticField dataset).")
+            end
+            selected_unit = getunit(dataobject, i, vars, units)
+            bmag = sqrt.(select(masked_data, :bx).^2 .+ select(masked_data, :by).^2 .+ select(masked_data, :bz).^2)
+            if i === :bmag
+                vars_dict[:bmag] = bmag .* selected_unit
+            elseif i === :pmag                                              # magnetic pressure = B²/2 (code)
+                vars_dict[:pmag] = 0.5 .* bmag.^2 .* selected_unit
+            elseif i === :beta                                             # plasma β = P_thermal / P_mag
+                p = getvar(filtered_dataobject, :p, mask=use_mask_in_recursion)
+                vars_dict[:beta] = (p ./ (0.5 .* bmag.^2)) .* selected_unit
+            elseif i === :v_alfven                                         # v_A = |B|/√ρ (code velocity)
+                vars_dict[:v_alfven] = (bmag ./ sqrt.(select(masked_data, :rho))) .* selected_unit
+            else                                                           # :e_magnetic = (B²/2)·V per cell
+                vol = getvar(filtered_dataobject, :volume, mask=use_mask_in_recursion)
+                vars_dict[:e_magnetic] = 0.5 .* bmag.^2 .* vol .* selected_unit
+            end
+
+        # Magnetosonic Mach numbers — physical Alfvén speed v_A = |B|/√(4πρ), then v/v_A (Alfvén),
+        # v/√(cs²+v_A²) (fast), v/(cs·v_A/√(cs²+v_A²)) (slow); identical construction to the hydro path.
+        elseif i == :mach_alfven || i == :mach_fast || i == :mach_slow
+            if !(:bx in column_names && :by in column_names && :bz in column_names)
+                error("getvar :$i needs the magnetic field :bx/:by/:bz — load an MHD gas snapshot.")
+            end
+            bmag = sqrt.(select(masked_data, :bx).^2 .+ select(masked_data, :by).^2 .+ select(masked_data, :bz).^2)
+            rho = select(masked_data, :rho)
+            unit_rho = dataobject.info.unit_d; unit_v = dataobject.info.unit_v
+            B_physical = bmag .* sqrt(4π * unit_rho * unit_v^2)             # B_code → physical (Gaussian)
+            v_alfven   = (B_physical ./ sqrt.(4π .* rho .* unit_rho)) ./ unit_v   # → code velocity
+            v = getvar(filtered_dataobject, :v, mask=use_mask_in_recursion)
+            if i === :mach_alfven
+                vars_dict[i] = v ./ v_alfven
+            else
+                cs = getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
+                vars_dict[i] = i === :mach_fast ? v ./ sqrt.(cs.^2 .+ v_alfven.^2) :
+                                                  v ./ ((cs .* v_alfven) ./ sqrt.(cs.^2 .+ v_alfven.^2))
+            end
+
        elseif i == :vϕ_cylinder
             x = getvar(filtered_dataobject, :x, center=center, mask=use_mask_in_recursion)
             y = getvar(filtered_dataobject, :y, center=center, mask=use_mask_in_recursion)
