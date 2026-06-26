@@ -11,11 +11,21 @@ velocity (PPV)** cube (or position–position–*quantity*), exactly what a spec
 From it you get velocity fields, dispersion maps, position–velocity diagrams, per-pixel spectra and
 mock observations — all at any inclination/position-angle, on AMR data, mass-conserving.
 
+The kinematic demos use a resolved star-forming disk (`manu_sim_sf_L14`); the **AMR binning ladder**
+below uses the clumpy `spiral_clumps` run (coarse cells make the deposition differences visible).
+
 ```julia
-using Mera, CairoMakie
-info = getinfo(100, "/path/to/spiral_clumps")
-gas  = gethydro(info)
+using Mera, CairoMakie, Statistics
+info = getinfo(400, "/path/to/manu_sim_sf_L14")
+gas  = gethydro(info; lmax=11, xrange=[-0.3,0.3], yrange=[-0.3,0.3], zrange=[-0.3,0.3], center=[:bc])  # central disk
 ```
+
+!!! note "Display convention"
+    Real simulation data is not a textbook galaxy: a few hot/diffuse cells carry extreme velocities,
+    and the faint outskirts are noisy. The kinematic figures below therefore follow standard practice —
+    **mask by surface density** (only show where there is real gas) and **clip the colour scale to a
+    robust percentile** (e.g. `quantile(abs.(v), 0.98)`), not the raw extremum. The runnable notebook
+    defines a small `show_map!`/`maskby` helper for this.
 
 ## AMR deposition quality — the `binning` knob
 
@@ -24,8 +34,9 @@ that footprint is laid down is the `binning` kwarg, and it matters most where co
 meet. The ladder below is the same zoomed edge-on view at a pixel **finer than the coarse cells**:
 
 ```julia
+clumps = gethydro(getinfo(100, "/path/to/spiral_clumps"))   # an AMR run with coarse cells
 for b in (:ngp, :cic, :overlap, :exact)
-    projection(gas, :sd, :Msol_pc2; direction=:edgeon, center=[:bc],
+    projection(clumps, :sd, :Msol_pc2; direction=:edgeon, center=[:bc],
                xrange=[-8,8], yrange=[-8,8], range_unit=:kpc, pxsize=[0.12,:kpc], binning=b)
 end
 ```
