@@ -1,7 +1,8 @@
 // Mera.jl type families — source for docs/src/assets/TypeHierarchy.png
 // Render: dot -Tpng -Gdpi=170 docs/type_hierarchy.dot -o docs/src/assets/TypeHierarchy.png
 //
-// Top card  : DataSetType hierarchy (data sources). Abstract = italic/dashed; concrete
+// Top card  : simulation codes (code-blind frontends) → which structs they populate.
+// Mid card  : DataSetType hierarchy (data sources). Abstract = italic/dashed; concrete
 //             = filled card + loader. Blue = contains mass, green = massless field.
 // Bottom card: DataMapsType (projection results). AMR maps are shared by hydro/gravity/RT;
 //             particle projections return PartMapsType.
@@ -14,6 +15,23 @@ digraph TypeHierarchy {
     fontname="Helvetica";
     edge [color="#475569", arrowsize=0.85, penwidth=1.5];
     node [fontname="Helvetica", shape=box, style="rounded,filled", penwidth=1.6, margin="0.22,0.12"];
+
+    // ───────────────── simulation codes (code-blind frontends) ─────────────────
+    subgraph cluster_codes {
+        style="rounded,filled";
+        fillcolor="#fffbf5";
+        color="#fde8c8";
+        penwidth=2.2;
+        margin=18;
+        labelloc="t";
+        label=<<FONT POINT-SIZE="13" COLOR="#9a3412"><B>Simulation codes — one code-blind reader per format, same structs for every code</B></FONT>>;
+
+        node [style="rounded,filled", fillcolor="#ffedd5", color="#ea580c", fontcolor="#7c2d12", fontsize=13.5];
+        RamsesCode [label=<<B>RAMSES</B> &#8729; native<BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">gethydro · getgravity · getparticles · getclumps · getrt</FONT>>];
+        GridCodes  [label=<<B>Grid / AMR codes</B><BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">PLUTO &#8729; Athena++ &#8729; FLASH &#8729; Chombo</FONT>>];
+        PartCodes  [label=<<B>Particle / moving-mesh</B><BR/><FONT POINT-SIZE="10.5" COLOR="#9a3412">GADGET &#8729; AREPO/TNG &#8729; GIZMO &#8729; SWIFT</FONT>>];
+        { rank=same; RamsesCode; GridCodes; PartCodes; }
+    }
 
     // ───────────────── data sources ─────────────────
     subgraph cluster_data {
@@ -51,6 +69,14 @@ digraph TypeHierarchy {
         DataSetType   -> Rt;
         { rank=same; Hydro; Part; Clump; Grav; Rt; }
     }
+
+    // codes → the structs they fill (RAMSES feeds the whole family; grid codes → Hydro;
+    // particle / moving-mesh codes → Part, with AREPO gas carrying an explicit :volume)
+    edge [color="#ea580c", penwidth=1.4, arrowsize=0.8];
+    RamsesCode -> DataSetType [label=<<FONT POINT-SIZE="9.5" COLOR="#9a3412">all</FONT>>];
+    GridCodes  -> Hydro;
+    PartCodes  -> Part [label=<<FONT POINT-SIZE="9.5" COLOR="#9a3412">gas: +:volume</FONT>>];
+    edge [color="#475569", penwidth=1.5];
 
     // ───────────────── projection results ─────────────────
     subgraph cluster_maps {
