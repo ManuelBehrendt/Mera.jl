@@ -403,6 +403,16 @@ level  particles
 10     0
 ```
 
+For a **visual** summary, [`overviewplot`](@ref) (needs `using CairoMakie`) renders the per-family
+census, the mass distribution, the projected x–y density, and the speed distribution in one figure:
+
+```julia
+using CairoMakie
+overviewplot(particles)
+```
+
+![overviewplot on particles: the per-family census, the mass distribution, the projected x–y number density, and the speed distribution.](assets/overviewplot_particles.png)
+
 ### Statistical Data Analysis
 
 The `dataoverview()` function computes comprehensive statistics for all particle variables in our dataset. This analysis provides:

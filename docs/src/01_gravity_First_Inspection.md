@@ -449,6 +449,16 @@ level  cells     cellsize
 10     7298576   0.046875
 ```
 
+For a **visual** version, [`overviewplot`](@ref) (needs `using CairoMakie`) renders cells per level, the
+acceleration `|a|` and potential distributions, and the `|a|`–potential relation in one figure:
+
+```julia
+using CairoMakie
+overviewplot(grav)
+```
+
+![overviewplot on AMR gravity: cells per level, the acceleration and potential distributions, and the |a|–potential relation.](assets/overviewplot_gravity.png)
+
 ### Statistical Data Analysis
 
 The `dataoverview()` function computes comprehensive statistics for all gravity variables in our dataset. This analysis provides:

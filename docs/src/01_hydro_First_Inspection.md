@@ -533,6 +533,17 @@ level  cells     cellsize
 10     7298576   0.046875
 ```
 
+For a **visual** version of the same statistics, [`overviewplot`](@ref) (needs a Makie backend,
+`using CairoMakie`) renders a one-figure summary in a single pass — cells and mass per AMR level, the
+mass-weighted density PDF, and the ρ–T phase diagram:
+
+```julia
+using CairoMakie
+overviewplot(gas)
+```
+
+![overviewplot on AMR hydro: cells per level and mass per level (log bars), the mass-weighted density PDF, and the density–temperature phase diagram.](assets/overviewplot_hydro.png)
+
 ### Statistical Data Analysis
 
 The `dataoverview()` function computes comprehensive statistics for all hydro variables in our dataset. This analysis provides:
