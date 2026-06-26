@@ -74,6 +74,11 @@
 #
 # If DATA_AVAILABLE is false the whole file is skipped via @test_skip.
 
+# Explicit import: in the full suite an earlier figure test loads CairoMakie, which re-exports
+# `Sphere`/`Cylinder` from GeometryBasics and would shadow Mera's region types. The explicit
+# `using` overrides that ambiguity so bare `Sphere(...)`/`Cylinder(...)` resolve to Mera's here.
+using Mera: Sphere, Cylinder
+
 if !DATA_AVAILABLE
     @warn "Skipping Region Operations tests - simulation data not available"
     @test_skip "Simulation data not available"
