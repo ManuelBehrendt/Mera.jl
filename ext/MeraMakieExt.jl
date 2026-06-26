@@ -360,4 +360,87 @@ function Mera.gridoverlay!(ax, go; color=(:white, 0.3), linewidth::Real=0.4)
     Makie.linesegments!(ax, pts; color=color, linewidth=linewidth)
 end
 
+# ── overviewplot: one-figure visual statistics overview (AMR cells / particles) ──────────────
+# weighted 1-D histogram of the finite entries of `x` into `nb` equal bins (weights `w`, or counts)
+function _ov_hist1d(x, w, nb)
+    m = isfinite.(x); xs = x[m]; ws = w === nothing ? ones(length(xs)) : w[m]
+    isempty(xs) && return Float64[], Float64[]
+    lo, hi = extrema(xs); hi == lo && (hi = lo + 1)
+    edges = range(lo, hi; length=nb + 1); h = zeros(nb)
+    @inbounds for k in eachindex(xs)
+        b = clamp(searchsortedlast(edges, xs[k]), 1, nb); h[b] += ws[k]
+    end
+    return collect((edges[1:end-1] .+ edges[2:end]) ./ 2), h
+end
+# weighted 2-D histogram (x,y already in the desired axis space, e.g. log10)
+function _ov_hist2d(x, y, w, nb)
+    m = isfinite.(x) .& isfinite.(y); xs = x[m]; ys = y[m]; ws = w === nothing ? ones(length(xs)) : w[m]
+    isempty(xs) && return Float64[], Float64[], zeros(nb, nb)
+    xlo, xhi = extrema(xs); ylo, yhi = extrema(ys); xhi == xlo && (xhi = xlo + 1); yhi == ylo && (yhi = ylo + 1)
+    xe = range(xlo, xhi; length=nb + 1); ye = range(ylo, yhi; length=nb + 1); H = zeros(nb, nb)
+    @inbounds for k in eachindex(xs)
+        i = clamp(searchsortedlast(xe, xs[k]), 1, nb); j = clamp(searchsortedlast(ye, ys[k]), 1, nb); H[i, j] += ws[k]
+    end
+    return collect((xe[1:end-1] .+ xe[2:end]) ./ 2), collect((ye[1:end-1] .+ ye[2:end]) ./ 2), H
+end
+_ov_loghm(H) = map(v -> v > 0 ? log10(v) : NaN, H)   # log10 with empty bins → NaN (transparent)
+
+function Mera._plot_overview(gas::Mera.HydroDataType; size=(960, 720))
+    cn = propertynames(gas.data.columns)
+    n  = length(gas.data)
+    lvals = (:level in cn) ? Int.(Mera.getvar(gas, :level)) : fill(Int(gas.lmax), n)   # uniform grid → one level
+    mass = Mera.getvar(gas, :mass, :Msol)
+    lmin, lmax = minimum(lvals), maximum(lvals); nlev = lmax - lmin + 1
+    cells = zeros(Int, nlev); mpl = zeros(nlev)                       # single pass: cells & mass per level
+    @inbounds for k in 1:n
+        i = lvals[k] - lmin + 1; (1 <= i <= nlev) || continue
+        cells[i] += 1; mpl[i] += mass[k]
+    end
+    levs = collect(lmin:lmax); pop = cells .> 0
+    nH = Mera.getvar(gas, :rho, :nH)
+    T = (:p in cn || :u in cn) ? Mera.getvar(gas, :T) : nothing   # ideal-gas T when pressure/energy present
+    fig = Makie.Figure(; size=size, fontsize=13)
+    Makie.Label(fig[0, 1:2], "Mera overview - hydro: $(n) cells, levels $(lmin)-$(lmax), " *
+                "Mtot = $(round(sum(mass), sigdigits=4)) Msol"; fontsize=16, font=:bold)
+    a1 = Makie.Axis(fig[1,1]; title="cells per level", xlabel="level", ylabel="N cells", yscale=log10)
+    Makie.barplot!(a1, levs[pop], cells[pop]; color=:steelblue)
+    a2 = Makie.Axis(fig[1,2]; title="mass per level", xlabel="level", ylabel="M [M⊙]", yscale=log10)
+    Makie.barplot!(a2, levs[pop], max.(mpl[pop], eps()); color=:darkorange)
+    a3 = Makie.Axis(fig[2,1]; title="density PDF (mass-weighted)", xlabel="log₁₀ nH [cm⁻³]", ylabel="M [M⊙]")
+    c, h = _ov_hist1d(log10.(nH), mass, 50); !isempty(c) && Makie.stairs!(a3, c, h; step=:center, color=:black)
+    if T !== nothing
+        a4 = Makie.Axis(fig[2,2][1,1]; title="ρ–T phase (mass-weighted)", xlabel="log₁₀ nH [cm⁻³]", ylabel="log₁₀ T [K]")
+        xc, yc, H = _ov_hist2d(log10.(nH), log10.(T), mass, 60)
+        hm = Makie.heatmap!(a4, xc, yc, _ov_loghm(H); colormap=:inferno)
+        Makie.Colorbar(fig[2,2][1,2], hm; label="log₁₀ M [M⊙]", width=10)
+    else
+        a4 = Makie.Axis(fig[2,2]; title="(no temperature available)"); Makie.hidedecorations!(a4)
+    end
+    return fig
+end
+
+function Mera._plot_overview(p::Mera.PartDataType; size=(960, 720))
+    n = length(p.data); cn = propertynames(p.data.columns)
+    fam = (:family in cn) ? Int.(Mera.getvar(p, :family)) : zeros(Int, n)
+    m = Mera.getvar(p, :mass, :Msol); x = Mera.getvar(p, :x, :kpc); y = Mera.getvar(p, :y, :kpc); v = Mera.getvar(p, :v, :km_s)
+    fams = sort(unique(fam)); counts = [count(==(f), fam) for f in fams]
+    fig = Makie.Figure(; size=size, fontsize=13)
+    Makie.Label(fig[0, 1:2], "Mera overview - particles: $(n), Mtot = $(round(sum(m), sigdigits=4)) Msol";
+                fontsize=16, font=:bold)
+    a1 = Makie.Axis(fig[1,1]; title="census (per family)", xlabel="family", ylabel="N", yscale=log10,
+                    xticks=(Float64.(fams), string.(fams)))
+    Makie.barplot!(a1, Float64.(fams), max.(counts, 1); color=:teal)
+    a2 = Makie.Axis(fig[1,2]; title="mass distribution", xlabel="log₁₀ m [M⊙]", ylabel="N", yscale=log10)
+    c, h = _ov_hist1d(log10.(m[m .> 0]), nothing, 50); !isempty(c) && Makie.stairs!(a2, c, max.(h, 0.5); step=:center, color=:black)
+    a3 = Makie.Axis(fig[2,1][1,1]; title="projected density (x–y)", xlabel="x [kpc]", ylabel="y [kpc]", aspect=Makie.DataAspect())
+    xc, yc, H = _ov_hist2d(x, y, nothing, 80); hm = Makie.heatmap!(a3, xc, yc, _ov_loghm(H); colormap=:viridis)
+    Makie.Colorbar(fig[2,1][1,2], hm; label="log₁₀ N", width=10)
+    a4 = Makie.Axis(fig[2,2]; title="speed distribution", xlabel="|v| [km/s]", ylabel="N")
+    c2, h2 = _ov_hist1d(v, nothing, 50); !isempty(c2) && Makie.stairs!(a4, c2, h2; step=:center, color=:black)
+    return fig
+end
+
+Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
+    error("overviewplot: no visual overview defined for $(typeof(d)) — supported: HydroDataType, PartDataType.")
+
 end # module
