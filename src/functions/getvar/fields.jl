@@ -109,6 +109,12 @@ const FIELD_DEPS = Dict{Symbol, Dict{Symbol,Vector{Symbol}}}(
     :lϕ_sphere=>[:mass,:x,:y,:z,:vx,:vy,:vz],
     :ekin=>[:mass,:vx,:vy,:vz],
     :age=>[:birth], :zform=>[:birth], :formation_redshift=>[:birth], :formation_time=>[:birth],
+    # gas magnetic field (AREPO/TNG): :bx/:by/:bz are stored leaves; these are the derived quantities
+    :bmag=>[:bx,:by,:bz], :pmag=>[:bx,:by,:bz], :beta=>[:rho,:u,:bx,:by,:bz],
+    :v_alfven=>[:bx,:by,:bz,:rho], :e_magnetic=>[:bx,:by,:bz,:volume],
+    :mach_alfven=>[:vx,:vy,:vz,:bx,:by,:bz,:rho],
+    :mach_fast=>[:vx,:vy,:vz,:rho,:u,:bx,:by,:bz],
+    :mach_slow=>[:vx,:vy,:vz,:rho,:u,:bx,:by,:bz],
   ),
 
   :clump => Dict{Symbol,Vector{Symbol}}(

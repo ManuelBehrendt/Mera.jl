@@ -58,6 +58,7 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 getvar(gas, :rho, :g_cm3)        # physical density
 getvar(gas, :T)                  # temperature [K] — matches the official TNG formula
 getvar(gas, :metallicity)        # metal mass fraction
+getvar(gas, :bmag, :muG)         # |B| [μG]; also :pmag (:Ba), :beta, :v_alfven (:km_s), :mach_alfven/fast/slow
 pdf(gas, :rho); profile(gas, :r_sphere, :T)   # PDFs / radial profiles on the gas
 ```
 
