@@ -9,7 +9,7 @@
 
 using Random
 
-const MO_PATH = joinpath(SIMULATION_PATH, "spiral_clumps")
+const MO_PATH = joinpath(SIMULATION_PATH, "RAMSES/spiral_clumps")
 
 @testset "mock observations" begin
 
