@@ -75,6 +75,7 @@ digraph TypeHierarchy {
     edge [color="#ea580c", penwidth=1.4, arrowsize=0.8];
     RamsesCode -> DataSetType [label=<<FONT POINT-SIZE="9.5" COLOR="#9a3412">all</FONT>>];
     GridCodes  -> Hydro;
+    GridCodes  -> Part [style=dashed, penwidth=1.1, label=<<FONT POINT-SIZE="9" COLOR="#9a3412">PLUTO only</FONT>>];
     PartCodes  -> Part [label=<<FONT POINT-SIZE="9.5" COLOR="#9a3412">gas: +:volume</FONT>>];
     edge [color="#475569", penwidth=1.5];
 
