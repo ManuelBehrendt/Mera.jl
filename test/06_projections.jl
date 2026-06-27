@@ -2107,6 +2107,13 @@ end
             au = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90], res=48)
             @test (au[1].extent[2]-au[1].extent[1]) < 0.9*hydro.boxlen
             @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, au)
+            # parallel_frames (frame-level threading) gives identical frames to round-off
+            sp = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90,180,270],
+                                   fov=15, fov_unit=:kpc, res=64, parallel_frames=true)
+            @test length(sp) == length(seq)
+            @test all(k -> size(sp[k].maps[:mass]) == size(seq[k].maps[:mass]), eachindex(seq))
+            @test all(k -> maximum(abs.(sp[k].maps[:mass] .- seq[k].maps[:mass])) <=
+                           1e-9*max(maximum(abs.(seq[k].maps[:mass])), eps()), eachindex(seq))
         end
 
         @testset "off-axis :exact ≡ :overlap per-pixel on real AMR" begin
