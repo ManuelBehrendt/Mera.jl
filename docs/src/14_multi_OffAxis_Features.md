@@ -133,14 +133,23 @@ frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
                            aperture=:square)   # fov omitted → auto-fit the whole galaxy; full square frame
 
 fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
-record(fig, "orbit.gif", eachindex(frames); framerate=8) do k     # animate to a GIF
+record(fig, "orbit.mp4", eachindex(frames); framerate=12, compression=18) do k  # .mp4 (or "orbit.gif")
     empty!(ax); heatmap!(ax, log10.(frames[k].maps[:sd]); colormap=:inferno)
 end
 ```
 
+`record` picks the format from the file extension: `"orbit.mp4"` writes an H.264 video (much smaller
+and higher quality — a finer sweep like `angles=0:10:350` stays a few hundred kB where the GIF is
+several MB), `"orbit.gif"` an animated GIF. For mp4, `compression` (0–51, lower = better/larger) tunes
+quality; `framerate` sets playback speed. Both need no extra packages — CairoMakie ships the encoder.
+
 ![Orbit montage — a galaxy at azimuths 0–300° (inclination 55°), full square frame, one fixed field of view.](assets/offaxis/orbit_montage.png)
 
-![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
+```@raw html
+<video src="../assets/offaxis/orbit_movie.mp4" autoplay loop muted playsinline width="420"></video>
+```
+
+*Orbit movie (mp4) — azimuth sweep at 55° inclination. The same loop with `"orbit.gif"` gives* [the GIF version](assets/offaxis/orbit_movie.gif).
 
 Each frame is a `projection` at that viewing angle. The off-axis camera is **orthographic**, so the
 only control over what is in frame is `fov` (omit it to auto-fit the galaxy — the mass-enclosed
