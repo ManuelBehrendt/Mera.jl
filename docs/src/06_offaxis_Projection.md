@@ -528,20 +528,57 @@ conserve the total mass.
 ### Off-axis cutting plane
 
 [`offaxis_slice`](@ref) returns an off-axis **cutting plane** (the field *on* the plane, not
-integrated through it) with the same view keywords. Not line-of-sight specific, but often used
-alongside projections: `profile` (1D) and `phase` (2D weighted histograms, e.g.
-density–temperature) are general reductions over any field — see
+integrated through it) with the same view keywords. Each pixel gets the value of the cell the plane
+passes through (a nearest-cell sample — resolution-dependent, not mass-conserving), so reach for
+[`projection`](@ref) when you need a conserved column.
+
+```julia
+win = (center=[:bc], xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.25,:kpc])
+sf = offaxis_slice(gas, :rho, :nH; direction=:faceon, win...)          # midplane density
+se = offaxis_slice(gas, :rho, :nH; direction=:edgeon, win...)          # vertical (R–z) cut
+si = offaxis_slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)  # tilted cut
+heatmap(log10.(sf.map))                                                # sf.x/sf.y, sf.extent travel with it
+```
+
+![Off-axis density slices of the same galaxy: face-on midplane, edge-on vertical cut, and a tilted 60° cut.](assets/offaxis/offaxis_slice.png)
+
+Pass an `xrange`/`yrange` window (as above) so the frame fills; without one the auto-fit frame is
+the bounding box of the rotated view and its corners — where the plane∩box polygon has no cell —
+come back `NaN` (expected geometry, shown black). The few black specks in the thin edge-on cut are
+the inherent sub-percent nearest-cell gaps at AMR refinement boundaries.
+
+Not line-of-sight specific, but often used alongside projections: `profile` (1D) and `phase` (2D
+weighted histograms, e.g. density–temperature) are general reductions over any field — see
 [Profiles & Phase Diagrams](profiles_phase.md).
 
 ### Orbit movies
 
 [`rotation_sequence`](@ref) renders an angle sweep with **one shared field of view**, so frames
-don't jitter (a plain per-angle `projection` recomputes the extent each frame):
+don't jitter (a plain per-angle `projection` recomputes the extent each frame). It returns a vector
+of map objects — one per angle — ready to assemble into a montage or animate:
 
 ```julia
-frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:10:350,
-                           fov=20, fov_unit=:kpc, axis=:angmom, pxsize=[0.3, :kpc])   # 36 same-FOV maps
+frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
+                           inclination=55, axis=:angmom, fov=16, fov_unit=:kpc, pxsize=[0.2,:kpc])
+
+using CairoMakie                                          # animate to a GIF
+fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
+record(fig, "orbit.gif", eachindex(frames); framerate=8) do k
+    empty!(ax); heatmap!(ax, log10.(frames[k].maps[:sd]); colormap=:inferno)
+end
 ```
+
+![Orbit montage: a galaxy at azimuths 0–300° (inclination 55°), all sharing one field of view.](assets/offaxis/orbit_montage.png)
+
+![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
+
+Each frame is a `projection` of the chosen quantity (here `:sd`) at that viewing angle. The shared
+field of view is a **sphere of radius `fov`** — a sphere looks the same from every direction, so the
+object keeps **exactly the same scale and centring** at every angle (no zoom/jitter). That sphere is
+the **circular aperture** you see; the frame corners outside it carry no data and are empty by design.
+
+`sweep` can also be `:inclination` (tip from face-on to edge-on) or `:position_angle` (roll the
+camera). Leave `fov` out to auto-fit the object at every angle.
 
 ## Troubleshooting
 

@@ -4,8 +4,8 @@
     This tutorial is also an executable **Jupyter notebook** — [open / download `14_multi_OffAxis_Features.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/14_multi_OffAxis_Features.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-This tutorial walks through the **off-axis slice** (cutting plane) built on top of Mera's
-off-axis projection.
+This tutorial walks through two off-axis tools built on Mera's projection core: the **off-axis
+slice** (cutting plane) and the **orbit movie** (`rotation_sequence`).
 
 Run the cells top to bottom and change the numbers. We use **one galaxy** throughout
 (`spiral_clumps`) and set pixel sizes physically with `pxsize=[size, :unit]`.
@@ -89,9 +89,62 @@ fig
     
 ![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_10_0.png)
 
+### The same plane at three orientations
+
+A slice works for **any** line of sight. Face-on cuts the mid-plane (you see the spiral/clumpy
+structure), edge-on cuts vertically (the thin disk as a bright R–z band), and a tilted view cuts
+obliquely. Pass an `xrange`/`yrange` window so the frame fills:
+
+```julia
+win = (center=[:bc], xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.25,:kpc])
+sf = offaxis_slice(gas, :rho, :nH; direction=:faceon, win...)
+se = offaxis_slice(gas, :rho, :nH; direction=:edgeon, win...)
+si = offaxis_slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)
+
+fig = Figure(size=(1500,440))
+for (k,(s,t)) in enumerate(((sf,"face-on (midplane)"),(se,"edge-on (vertical cut)"),(si,"inclined 60°")))
+    showmap!(fig, (1,2k-1), s.map, s.extent .* gas.scale.kpc; title="$t  nH", clabel="log₁₀ n_H [cm⁻³]")
+end
+fig
+```
+
+![Off-axis density slices of the same galaxy at three orientations: face-on midplane, edge-on vertical cut, and an inclined 60° cut.](assets/offaxis/offaxis_slice.png)
+
+Empty (black) pixels are expected geometry: without a window the auto-fit frame's corners (the
+plane∩box polygon) have no cell, and the few specks in the thin edge-on cut are the inherent
+sub-percent nearest-cell gaps at AMR refinement boundaries. For a gap-free, conserved map use
+[`projection`](@ref).
+
+## 2. Orbit movie — `rotation_sequence`
+
+[`rotation_sequence`](@ref) renders the same field from a sweep of viewing angles, **all sharing one
+field of view** so the frames don't jitter (a plain per-angle `projection` would recompute the
+extent each frame). It returns a vector of map objects, ready to montage or animate:
+
+```julia
+frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
+                           inclination=55, axis=:angmom, fov=16, fov_unit=:kpc, pxsize=[0.2,:kpc])
+
+fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
+record(fig, "orbit.gif", eachindex(frames); framerate=8) do k     # animate to a GIF
+    empty!(ax); heatmap!(ax, log10.(frames[k].maps[:sd]); colormap=:inferno)
+end
+```
+
+![Orbit montage — a galaxy at azimuths 0–300° (inclination 55°), one shared field of view.](assets/offaxis/orbit_montage.png)
+
+![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
+
+Each frame is a `projection` at that viewing angle. The shared field of view is a **sphere of radius
+`fov`** (rotation-invariant), so the galaxy keeps the **same scale and centring** at every angle — no
+zoom. The **circular aperture** is that sphere; the corners outside it are empty by design. `sweep`
+can also be `:inclination` (face-on → edge-on) or `:position_angle` (camera roll); omit `fov` to
+auto-fit the object at every angle.
+
 ## Takeaway
 
-- `offaxis_slice` — the field on a cutting plane (vs the conserved projection).
+- `offaxis_slice` — the field on a cutting plane (vs the conserved projection), at any orientation.
+- `rotation_sequence` — a shared-FOV angle sweep for jitter-free orbit movies.
 
 The off-axis column integral, emission+absorption mock image, and FITS export now live in the
 in-development `MeraOffAxisSynthObs` / `MeraFITS` modules (`dev/offaxis_synthobs/`), which ship
