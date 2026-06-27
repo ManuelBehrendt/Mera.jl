@@ -547,16 +547,17 @@ conserve the total mass.
 
 ### Off-axis cutting plane
 
-[`offaxis_slice`](@ref) returns an off-axis **cutting plane** (the field *on* the plane, not
-integrated through it) with the same view keywords. Each pixel gets the value of the cell the plane
-passes through (a nearest-cell sample — resolution-dependent, not mass-conserving), so reach for
-[`projection`](@ref) when you need a conserved column.
+[`slice`](@ref) with any off-axis view keyword (`los`/`inclination`/`direction=:edgeon`/…) returns an
+off-axis **cutting plane** (the field *on* the plane, not integrated through it). Each pixel gets the
+value of the cell the plane passes through (a nearest-cell sample — resolution-dependent, not
+mass-conserving), so reach for [`projection`](@ref) when you need a conserved column. (`offaxis_slice`
+is the equivalent explicit name; axis-aligned keywords instead give the covering-grid cut.)
 
 ```julia
 win = (center=[:bc], xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.25,:kpc])
-sf = offaxis_slice(gas, :rho, :nH; direction=:faceon, win...)          # midplane density
-se = offaxis_slice(gas, :rho, :nH; direction=:edgeon, win...)          # vertical (R–z) cut
-si = offaxis_slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)  # tilted cut
+sf = slice(gas, :rho, :nH; direction=:faceon, win...)          # midplane density
+se = slice(gas, :rho, :nH; direction=:edgeon, win...)          # vertical (R–z) cut
+si = slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)  # tilted cut
 heatmap(log10.(sf.map))                                                # sf.x/sf.y, sf.extent travel with it
 ```
 

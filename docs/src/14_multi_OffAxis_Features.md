@@ -64,16 +64,17 @@ function showmap!(fig, pos, M, ext_kpc; title="", clabel="", cmap=:inferno, logs
 end;
 ```
 
-## 1. Off-axis slice (cutting plane) — `offaxis_slice`
+## 1. Off-axis slice (cutting plane) — `slice`
 
-`offaxis_slice` gives the field **on** the camera plane through the centre — a cut, not an
+`slice` with any off-axis view keyword (`los`/`inclination`/`direction=:edgeon`/…) gives the field
+**on** the camera plane through the centre — a cut, not an
 integral. Compare the mid-plane density (slice) with the surface density (projection) of the
 same edge-on view. A slice is a nearest-cell sample (resolution-dependent), so use a projection
 when you need a conserved quantity.
 
 
 ```julia
-sl = offaxis_slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16],
+sl = slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16],
                    range_unit=:kpc, pxsize=[0.3,:kpc], verbose=false)
 pj = projection(gas, :sd, :Msol_pc2; direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16],
                 range_unit=:kpc, pxsize=[0.3,:kpc], binning=:exact, verbose=false, show_progress=false)
@@ -97,9 +98,9 @@ obliquely. Pass an `xrange`/`yrange` window so the frame fills:
 
 ```julia
 win = (center=[:bc], xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.25,:kpc])
-sf = offaxis_slice(gas, :rho, :nH; direction=:faceon, win...)
-se = offaxis_slice(gas, :rho, :nH; direction=:edgeon, win...)
-si = offaxis_slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)
+sf = slice(gas, :rho, :nH; direction=:faceon, win...)
+se = slice(gas, :rho, :nH; direction=:edgeon, win...)
+si = slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)
 
 fig = Figure(size=(1500,440))
 for (k,(s,t)) in enumerate(((sf,"face-on (midplane)"),(se,"edge-on (vertical cut)"),(si,"inclined 60°")))
@@ -154,7 +155,7 @@ aperture (empty corners); `aperture=:square` (used above) selects a √2·`fov` 
 
 ## Takeaway
 
-- `offaxis_slice` — the field on a cutting plane (vs the conserved projection), at any orientation.
+- `slice` (with off-axis view keywords) — the field on a cutting plane (vs the conserved projection), at any orientation.
 - `rotation_sequence` — a shared-FOV angle sweep for jitter-free orbit movies.
 
 The off-axis column integral, emission+absorption mock image, and FITS export now live in the
