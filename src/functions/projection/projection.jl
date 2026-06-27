@@ -62,16 +62,13 @@ function projection()
     println("  los=[lx,ly,lz]   or   theta=, phi=")
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
     println()
-    println("  line-of-sight cubes & kinematics (same view kwargs):")
-    println("    velocity_cube / los_cube      -> per-pixel spectrum (LosCubeType)")
-    println("    getspectrum(cube; x=,y=)      -> spectrum at a sky position")
-    println("    velocity_moments / los_moments-> Σ, mean, dispersion maps")
-    println("    los_component(obj,(:vx,:vy,:vz)) -> LOS component of a vector; moment2 -> dispersion")
+    println("  line-of-sight / synthetic-observation tools (same view kwargs):")
+    println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
     println("    column_integral(obj, q)       -> ∫ q dl ;  emission_map -> e^-τ RT mock image")
-    println("    integrated_spectrum(cube)     -> global profile ;  offaxis_slice -> cutting plane")
-    println("    position_velocity             -> PV diagram ;  profile / phase -> 1D/2D reductions")
-    println("    mock_observe                  -> beam(+arcsec/distance)+noise; rotation_sequence")
-    println("    savecube/loadcube (JLD2) ;  savefits (needs `using FITSIO`) -> FITS/WCS (linear|sky)")
+    println("    offaxis_slice                 -> cutting plane ;  profile / phase -> 1D/2D reductions")
+    println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
+    println("    savemap/loadmap (JLD2) ;  savefits (needs `using FITSIO`) -> FITS/WCS (linear|sky)")
+    println("    (PPV cubes, spectra, moment maps, position_velocity & mock_observe -> dev/loscubes)")
     println()
     println("------------------------------------------------")
     println()
@@ -337,165 +334,8 @@ function is_offaxis(; los=nothing, theta=nothing, phi=nothing,
 end
 
 
-# =====================================================================================
-#  Mock observation: turn a projected map into a telescope-like image
-# -------------------------------------------------------------------------------------
-#  Pure 2D post-processing of a projection result: convolve with a Gaussian "beam" (PSF)
-#  and optionally add Gaussian noise. This is what makes a physically-correct off-axis
-#  map comparable to a real observation (finite angular resolution + detector noise).
-# =====================================================================================
-"""
-    mock_observe(map2d; beam_fwhm, pixsize=1.0, noise=0.0, rng=nothing) -> Matrix
-    mock_observe(m::DataMapsType, var; beam_fwhm, beam_unit=:standard,
-                 distance=0.0, distance_unit=:standard, noise=0.0, rng=nothing) -> Matrix
-
-Convolve a 2D map with a Gaussian beam of full-width-half-maximum `beam_fwhm` and (optionally)
-add Gaussian `noise` (standard deviation, in map units), returning the "observed" image.
-
-* Matrix form: `pixsize` is the physical size of a pixel and `beam_fwhm` is in the same unit
-  (so `beam_fwhm/pixsize` is the beam in pixels).
-* `DataMapsType` form: pass a projection result `m` and a variable key; the pixel size is taken
-  from `m.pixsize`. `beam_fwhm` is interpreted in `beam_unit`:
-    * a **physical** unit (`:kpc`, `:pc`, …) — a beam fixed in physical size;
-    * an **angular** unit (`:arcsec`, `:arcmin`, `:deg`, `:rad`) **with a source `distance`**
-      (in `distance_unit`) — the beam is `θ[rad] × distance` physical (small-angle). Use
-      `Mera`'s cosmology helpers for the angular-diameter distance of a redshifted source.
-
-Beam σ = FWHM / (2√(2 ln 2)). Convolution uses a Gaussian kernel (Images.jl `imfilter`).
-Pass a seeded `rng` for reproducible noise.
-"""
-function mock_observe(map2d::AbstractMatrix{<:Real}; beam_fwhm::Real, pixsize::Real=1.0,
-                      noise::Real=0.0, rng=nothing)
-    A = Float64.(map2d)
-    σ_pix = beam_fwhm / (pixsize * 2.3548200450309493)        # FWHM → σ, in pixels
-    out = σ_pix > 0 ? imfilter(A, Kernel.gaussian(σ_pix)) : copy(A)
-    if noise > 0
-        out = out .+ noise .* (rng === nothing ? randn(size(out)) : randn(rng, size(out)))
-    end
-    return out
-end
-
-# angular FWHM → radians
-const _ANGLE_TO_RAD = Dict(:arcsec => π/648000, :arcmin => π/10800, :deg => π/180, :rad => 1.0)
-
-function mock_observe(m::DataMapsType, var::Symbol; beam_fwhm::Real, beam_unit::Symbol=:standard,
-                      distance::Real=0.0, distance_unit::Symbol=:standard, noise::Real=0.0, rng=nothing)
-    haskey(m.maps, var) || throw(ArgumentError("map :$var not found (have: $(collect(keys(m.maps))))"))
-    if haskey(_ANGLE_TO_RAD, beam_unit)
-        # angular beam: physical FWHM (in distance_unit) = θ[rad] · distance[distance_unit]
-        distance > 0 || throw(ArgumentError(
-            "an angular beam_unit=:$beam_unit requires a positive `distance` (in distance_unit)"))
-        phys_fwhm = beam_fwhm * _ANGLE_TO_RAD[beam_unit] * distance
-        pix = distance_unit === :standard ? m.pixsize : m.pixsize * getunit(m.info, distance_unit)
-        return mock_observe(m.maps[var]; beam_fwhm=phys_fwhm, pixsize=pix, noise=noise, rng=rng)
-    end
-    # physical (or :standard/pixel) beam: m.pixsize is code units → convert with the scale factor
-    pix = beam_unit === :standard ? m.pixsize : m.pixsize * getunit(m.info, beam_unit)
-    return mock_observe(m.maps[var]; beam_fwhm=beam_fwhm, pixsize=pix, noise=noise, rng=rng)
-end
 
 
-# =====================================================================================
-#  Off-axis position–velocity diagram
-# -------------------------------------------------------------------------------------
-#  Bin the data into (position along an in-plane camera axis, line-of-sight velocity v·ŵ),
-#  weighted by mass — the standard kinematic diagnostic (rotation curves, outflows, mock
-#  long-slit / PV cuts) for an arbitrary line of sight. The line of sight is chosen exactly
-#  as in `projection` (los / inclination,azimuth,axis / theta,phi / :faceon,:edgeon).
-# =====================================================================================
-"""
-    position_velocity(dataobject; <view kwargs>, offset_axis=:right, nbins=256,
-                      offset_unit=:kpc, v_unit=:km_s, center=[:bc], range_unit=:standard,
-                      mask=[false]) -> NamedTuple
-
-Off-axis **position–velocity (PV) diagram**: a 2D mass histogram in
-(in-plane offset, line-of-sight velocity). Returns a NamedTuple
-`(offset, velocity, pv, offset_unit, v_unit, los)` where `offset`/`velocity` are the bin edges
-and `pv` is the `nbins×nbins` mass map (M⊙ in code mass units).
-
-The view is set with the same keywords as `projection` (`los`, `inclination`/`azimuth`/`axis`,
-`theta`/`phi`, `direction=:faceon`/`:edgeon`, `position_angle`). `offset_axis` selects which
-in-plane camera axis is the position coordinate (`:right` = image x, or `:up` = image y).
-"""
-function position_velocity(dataobject; los=nothing, theta=nothing, phi=nothing,
-        inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
-        direction=:z, angle_unit::Symbol=:deg, up=nothing,
-        center=[:bc], range_unit::Symbol=:standard, offset_axis::Symbol=:right,
-        nbins=256, offset_unit::Symbol=:kpc, v_unit::Symbol=:km_s, mask=[false], verbose::Bool=true)
-    info = dataobject.info
-    Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
-        [sum(getvar(dataobject, :lx, center=center, center_unit=range_unit)),
-         sum(getvar(dataobject, :ly, center=center, center_unit=range_unit)),
-         sum(getvar(dataobject, :lz, center=center, center_unit=range_unit))] : nothing
-    losv, uph = resolve_los(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
-                            axis=axis, direction=direction, angle_unit=angle_unit, up=up, L=Lvec)
-    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
-    right, upc, w = build_camera_basis(losv, uph; roll=roll)
-
-    px = getvar(dataobject, :x, center=center, center_unit=range_unit)
-    py = getvar(dataobject, :y, center=center, center_unit=range_unit)
-    pz = getvar(dataobject, :z, center=center, center_unit=range_unit)
-    a  = offset_axis === :up ? upc : right
-    offset = px .* a[1] .+ py .* a[2] .+ pz .* a[3]                    # code units, along the image axis
-    vlos = getvar(dataobject, :vx) .* w[1] .+ getvar(dataobject, :vy) .* w[2] .+ getvar(dataobject, :vz) .* w[3]
-    mass = getvar(dataobject, :mass)
-
-    skip = check_mask(dataobject, mask, verbose)
-    sel  = skip ? trues(length(offset)) : collect(Bool.(mask))
-    off  = Float64.(offset[sel]) .* (offset_unit === :standard ? 1.0 : getunit(info, offset_unit))
-    vl   = Float64.(vlos[sel])   .* (v_unit === :standard ? 1.0 : getunit(info, v_unit))
-    ms   = Float64.(mass[sel])
-
-    no = nbins isa Tuple ? nbins[1] : nbins
-    nv = nbins isa Tuple ? nbins[2] : nbins
-    omin, omax = extrema(off); vmin, vmax = extrema(vl)
-    ext = (omin - (omax-omin)/no, omax + (omax-omin)/no, vmin - (vmax-vmin)/nv, vmax + (vmax-vmin)/nv)
-    grid = zeros(Float64, no, nv); wg = zeros(Float64, no, nv)
-    deposit_rotated_cells_to_grid!(grid, wg, off, vl, ms, ones(Float64, length(ms)), ext, (no, nv); binning=:cic)
-    if verbose
-        println("Position–velocity diagram  (los=", round.(w, digits=4), ")")
-        println("  offset $(offset_axis) [$offset_unit] × v_los [$v_unit],  $(no)×$(nv) bins"); println()
-    end
-    return (offset = collect(range(ext[1], ext[2], length=no+1)),
-            velocity = collect(range(ext[3], ext[4], length=nv+1)),
-            pv = grid, offset_unit = offset_unit, v_unit = v_unit, los = collect(w),
-            info = dataobject.info)        # carries provenance (see `provenance`)
-end
-
-
-# =====================================================================================
-#  Off-axis velocity-channel cube (spectral cube)
-# -------------------------------------------------------------------------------------
-#  The full per-pixel line-of-sight velocity DISTRIBUTION: cube[i,j,k] = mass at sky pixel
-#  (i,j) in velocity channel k. Summing over velocity gives the column mass; the moments
-#  give the :sd (moment 0), :vlos (moment 1) and :σlos (moment 2) maps. This is a mock
-#  data-cube (HI/CO/Hα-style) for any line of sight, built on the same camera basis.
-# =====================================================================================
-"""
-    velocity_cube(dataobject; <view kwargs>, nv=64, vrange=nothing, v_unit=:km_s,
-                  res=256, pxsize=[size,:unit], xrange=[missing,missing], yrange=[missing,missing], center=[:bc], range_unit=:standard,
-                  binning=:cic, mask=[false]) -> NamedTuple
-
-Off-axis **velocity-channel (spectral) cube**: `cube[i,j,k]` is the mass at sky pixel `(i,j)` in
-line-of-sight velocity channel `k` (a mock HI/CO/Hα data-cube for an arbitrary line of sight).
-Returns `(x, y, velocity, cube, v_unit, los)` where `x`/`y`/`velocity` are bin edges. Summing the
-cube over the velocity axis reproduces the column-mass map; see [`velocity_moments`](@ref) for the
-moment-0/1/2 (Σ, vₗₒₛ, σₗₒₛ) maps. The view is chosen with the same keywords as `projection`.
-"""
-# per-cell value of the binning quantity: a scalar getvar var (:T, :rho, …), the special
-# :vlos (= v·ŵ), or a 3-component vector whose line-of-sight component is taken (e.g.
-# (:vx,:vy,:vz) ⇒ v_los, (:ax,:ay,:az) ⇒ LOS acceleration, (:bx,:by,:bz) ⇒ LOS B-field).
-function _los_quantity(dataobject, quantity, w)
-    if quantity isa Tuple || (quantity isa AbstractVector && eltype(quantity) <: Symbol)
-        length(quantity) == 3 || throw(ArgumentError("a vector quantity needs 3 components, e.g. (:vx,:vy,:vz)"))
-        c = Symbol.(quantity)
-        return getvar(dataobject, c[1]).*w[1] .+ getvar(dataobject, c[2]).*w[2] .+ getvar(dataobject, c[3]).*w[3]
-    elseif quantity === :vlos
-        return getvar(dataobject, :vx).*w[1] .+ getvar(dataobject, :vy).*w[2] .+ getvar(dataobject, :vz).*w[3]
-    else
-        return getvar(dataobject, quantity)
-    end
-end
 
 # Resolve a center specification (numeric in `range_unit`, or [:bc]/[:boxcenter]) to a real
 # numeric center in CODE units, so it can be stored on the returned cube/map for provenance
@@ -595,273 +435,7 @@ function _offaxis_deposit!(g, w, xc, yc, csize, accum, wt, cr, uc, wv, ext, res,
     end
 end
 
-"""
-    los_cube(dataobject; quantity=:vlos, <view kwargs>, nbins=64, qrange=nothing, q_unit=:standard,
-             weight=:mass, res=256, pxsize=[size,:unit], xrange=[missing,missing], yrange=[missing,missing], center=[:bc],
-             range_unit=:standard, binning=:overlap, mask=[false]) -> LosCubeType
 
-Off-axis **line-of-sight distribution cube**: `cube[i,j,k]` is the deposited `weight` (default
-mass) at sky pixel `(i,j)` in bin `k` of the line-of-sight `quantity`. The distribution along each
-sightline, per pixel — i.e. a "spectrum". `quantity` may be
-
-* a **scalar** field name (`:T`, `:rho`, `:cs`, …) → its per-sightline distribution (a PDF),
-* `:vlos` → the line-of-sight velocity (a spectral / velocity-channel cube), or
-* a **3-vector** of component names (`(:vx,:vy,:vz)`, `(:ax,:ay,:az)`, `(:bx,:by,:bz)`) → its
-  line-of-sight component `vector·ŵ`.
-
-The view is chosen with the same keywords as `projection`. `binning` accepts the centre-deposit
-previews `:cic`/`:ngp` and the **hole-free footprint** modes `:overlap`/`:exact` (default
-`:overlap`, recommended for maps when pixels are finer than cells). `qrange` (the LOS-axis range) is
-in the scaled `q_unit`; samples outside an explicit `qrange` are dropped. `weight` should be a
-**cumulative/extensive** quantity (`:mass`, default, or `:volume`) — it is *summed* along each
-sightline, so an intensive field like `:rho`/`:T` would give a non-physical "summed density" cube.
-Returns a [`LosCubeType`](@ref); store it with [`savecube`](@ref). [`los_moments`](@ref) gives the
-column/mean/dispersion maps. `cube`'s sky-pixel edges `x`/`y` are in code length units.
-"""
-function los_cube(dataobject; quantity=:vlos, los=nothing, theta=nothing, phi=nothing,
-        inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
-        direction=:z, angle_unit::Symbol=:deg, up=nothing, center=[:bc], range_unit::Symbol=:standard,
-        res::Int=256, pxsize=nothing, xrange=[missing,missing], yrange=[missing,missing],
-        nbins::Int=64, qrange=nothing, q_unit::Symbol=:standard, weight::Symbol=:mass,
-        binning::Symbol=:overlap, nmax::Int=64, mask=[false], verbose::Bool=true)
-    info = dataobject.info; boxlen = dataobject.boxlen
-    Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
-        [sum(getvar(dataobject, :lx, center=center, center_unit=range_unit)),
-         sum(getvar(dataobject, :ly, center=center, center_unit=range_unit)),
-         sum(getvar(dataobject, :lz, center=center, center_unit=range_unit))] : nothing
-    losv, uph = resolve_los(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
-                            axis=axis, direction=direction, angle_unit=angle_unit, up=up, L=Lvec)
-    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
-    cam_right, cam_up, cam_w = build_camera_basis(losv, uph; roll=roll)
-
-    pivot, half, full = _offaxis_view(info, boxlen, xrange, yrange, [missing,missing], center, range_unit, dataobject.ranges)
-    px = getvar(dataobject, :x, center=pivot, center_unit=:standard)
-    py = getvar(dataobject, :y, center=pivot, center_unit=:standard)
-    pz = getvar(dataobject, :z, center=pivot, center_unit=:standard)
-    x_cam = px .* cam_right[1] .+ py .* cam_right[2] .+ pz .* cam_right[3]
-    y_cam = px .* cam_up[1]    .+ py .* cam_up[2]    .+ pz .* cam_up[3]
-    qvals = _los_quantity(dataobject, quantity, cam_w) .* (q_unit === :standard ? 1.0 : getunit(info, q_unit))
-    wt    = getvar(dataobject, weight)
-
-    skip = check_mask(dataobject, mask, verbose)
-    sel  = skip ? trues(length(x_cam)) : collect(Bool.(mask))
-    _offaxis_boxmask!(sel, px, py, pz, half, full)               # world-space sub-box (xrange/yrange)
-    pixsize = _pixsize_code(info, boxlen, res, pxsize)
-    csize_all = Float64.(getvar(dataobject, :cellsize))
-    x0,x1,y0,y1,sel = _offaxis_frame(x_cam, y_cam, sel, csize_all, cam_right, cam_up, pixsize, nothing)
-    nx = max(1, round(Int,(x1-x0)/pixsize)); ny = max(1, round(Int,(y1-y0)/pixsize))
-    x1 = x0+nx*pixsize; y1 = y0+ny*pixsize; ext=(x0,x1,y0,y1)
-    xc = Float64.(x_cam[sel]); yc = Float64.(y_cam[sel]); qv = Float64.(qvals[sel]); ws = Float64.(wt[sel])
-    cs = (binning === :overlap || binning === :exact) ? Float64.(csize_all[sel]) : Float64[]
-
-    qmin, qmax = qrange === nothing ? (isempty(qv) ? (0.0, 1.0) : extrema(qv)) : (float(qrange[1]), float(qrange[2]))
-    # a reversed explicit qrange would give dq<0, fail the dq>0 test, and silently dump every sample
-    # into channel 1 (the zero-spread branch) — collapsing the spectrum. Reject it.
-    qmin <= qmax || throw(ArgumentError("qrange must satisfy qrange[1] ≤ qrange[2] (got [$qmin, $qmax])"))
-    dq = (qmax - qmin) / nbins
-    # bin index along the quantity axis. With an AUTO range (qrange===nothing) every sample lies in
-    # [qmin,qmax] by construction, so clamping only re-seats the single sample exactly at qmax. With
-    # an EXPLICIT qrange, samples outside [qmin,qmax] must be DROPPED (index 0 / >nbins, never selected
-    # by the k-loop below), NOT clamped onto the edge channels — clamping silently piles the wings of
-    # the distribution onto the first/last bin and corrupts the spectrum and any moment taken from it.
-    # A zero-spread quantity (single cell / constant field / qrange=[a,a]) routes all samples to
-    # channel 1 instead of dividing by dq=0 (→ floor(NaN) InexactError).
-    ndropped = 0
-    if dq > 0
-        chan = floor.(Int, (qv .- qmin) ./ dq) .+ 1
-        if qrange === nothing
-            chan = clamp.(chan, 1, nbins)
-        else
-            ndropped = count(c -> c < 1 || c > nbins, chan)
-        end
-    else
-        chan = ones(Int, length(qv))                            # NGP along the quantity axis
-    end
-
-    cube = zeros(Float64, nx, ny, nbins)
-    for k in 1:nbins
-        ck = chan .== k
-        any(ck) || continue
-        g = zeros(Float64, nx, ny); ww = zeros(Float64, nx, ny)
-        csk = isempty(cs) ? cs : cs[ck]
-        _offaxis_deposit!(g, ww, xc[ck], yc[ck], csk, ws[ck], ones(Float64, count(ck)),
-                          cam_right, cam_up, cam_w, ext, (nx, ny), binning, Threads.nthreads(); nmax=nmax)
-        cube[:, :, k] = g
-    end
-    if verbose
-        println("LOS cube  (quantity=", quantity, ", los=", round.(cam_w, digits=4), ")")
-        println("  $(nx)×$(ny) sky pixels × $(nbins) bins of $(quantity) ∈ [$(round(qmin,digits=3)),$(round(qmax,digits=3))] $q_unit")
-        if ndropped > 0
-            pct = round(100 * ndropped / length(chan), digits=1)
-            println("  note: $(ndropped) sample(s) ($(pct)%) outside qrange were dropped (not clamped onto the edge bins)")
-        end
-        println()
-    end
-    return LosCubeType(cube, collect(range(x0,x1,length=nx+1)), collect(range(y0,y1,length=ny+1)),
-                       collect(range(qmin,qmax,length=nbins+1)), quantity, q_unit, weight,
-                       collect(cam_w), collect(cam_up), collect(cam_right),
-                       _center_code(dataobject, center, range_unit),
-                       pixsize, boxlen, range_unit, dataobject.scale, info)
-end
-
-"""
-    velocity_cube(dataobject; nv=64, vrange=nothing, v_unit=:km_s, <los_cube kwargs>) -> LosCubeType
-
-Convenience wrapper of [`los_cube`](@ref) with `quantity=:vlos` — a velocity-channel (spectral)
-cube. The result exposes `.velocity` (= `.bins`) and `.v_unit` aliases.
-"""
-velocity_cube(dataobject; nv::Int=64, vrange=nothing, v_unit::Symbol=:km_s, kwargs...) =
-    los_cube(dataobject; quantity=:vlos, nbins=nv, qrange=vrange, q_unit=v_unit, kwargs...)
-
-"""
-    los_component(dataobject, vector; <view kwargs>, weight=:mass, unit=:standard,
-                  dispersion=false, res=256, pxsize=[size,:unit], center=[:bc], range_unit=:standard)
-        -> NamedTuple(map, dispersion, los, up, cam_right, center, pixsize, range_unit, unit, x, y)
-
-Mass-weighted 2D map of the **line-of-sight component** `vector·ŵ` of an arbitrary vector field,
-given as a 3-tuple of getvar symbols — e.g. `(:vx,:vy,:vz)` ⇒ vₗₒₛ, `(:ax,:ay,:az)` ⇒ LOS
-acceleration (gravity), `(:bx,:by,:bz)` ⇒ LOS magnetic field. `dispersion=true` returns the
-dispersion instead of the mean.
-
-Returns a `NamedTuple` whose `.map` field holds the 2D array (the mean LOS component, or its
-dispersion when `dispersion=true`); the `.dispersion` flag, the camera basis (`los`/`up`/
-`cam_right`), numeric `center`, `pixsize`, `range_unit`, `unit`, and the code-unit bin-edge axes
-`x`/`y` travel with it (so it can be fed to [`mock_observe`](@ref) and carries provenance).
-"""
-function los_component(dataobject, vector; los=nothing, theta=nothing, phi=nothing,
-        inclination=nothing, azimuth=nothing, position_angle=nothing, axis=nothing,
-        direction=:z, angle_unit::Symbol=:deg, up=nothing, center=[:bc], range_unit::Symbol=:standard,
-        res::Int=256, pxsize=nothing, xrange=[missing,missing], yrange=[missing,missing],
-        weight::Symbol=:mass, unit::Symbol=:standard, dispersion::Bool=false,
-        binning::Symbol=:overlap, nmax::Int=64, mask=[false], verbose::Bool=true)
-    info = dataobject.info; boxlen = dataobject.boxlen
-    Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
-        [sum(getvar(dataobject,:lx,center=center,center_unit=range_unit)),
-         sum(getvar(dataobject,:ly,center=center,center_unit=range_unit)),
-         sum(getvar(dataobject,:lz,center=center,center_unit=range_unit))] : nothing
-    losv, uph = resolve_los(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
-                            axis=axis, direction=direction, angle_unit=angle_unit, up=up, L=Lvec)
-    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
-    right, upc, w = build_camera_basis(losv, uph; roll=roll)
-    pivot, half, full = _offaxis_view(info, boxlen, xrange, yrange, [missing,missing], center, range_unit, dataobject.ranges)
-    px = getvar(dataobject,:x,center=pivot,center_unit=:standard)
-    py = getvar(dataobject,:y,center=pivot,center_unit=:standard)
-    pz = getvar(dataobject,:z,center=pivot,center_unit=:standard)
-    xcam = px.*right[1].+py.*right[2].+pz.*right[3]; ycam = px.*upc[1].+py.*upc[2].+pz.*upc[3]
-    q  = _los_quantity(dataobject, vector, w) .* (unit === :standard ? 1.0 : getunit(info, unit))
-    wt = getvar(dataobject, weight)
-    skip = check_mask(dataobject, mask, verbose); sel = skip ? trues(length(xcam)) : collect(Bool.(mask))
-    _offaxis_boxmask!(sel, px, py, pz, half, full)               # world-space sub-box (xrange/yrange)
-    pixsize = _pixsize_code(info, boxlen, res, pxsize)
-    csize_all = Float64.(getvar(dataobject, :cellsize))
-    x0,x1,y0,y1,sel = _offaxis_frame(xcam, ycam, sel, csize_all, right, upc, pixsize, nothing)
-    nx=max(1,round(Int,(x1-x0)/pixsize));ny=max(1,round(Int,(y1-y0)/pixsize));x1=x0+nx*pixsize;y1=y0+ny*pixsize;extp=(x0,x1,y0,y1)
-    xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); qv = Float64.(q[sel]); ws = Float64.(wt[sel])
-    cs = (binning === :overlap || binning === :exact) ? Float64.(csize_all[sel]) : Float64[]
-    g1=zeros(Float64,nx,ny);w1=zeros(Float64,nx,ny)
-    _offaxis_deposit!(g1,w1,xc,yc,cs,qv,ws,right,upc,w,extp,(nx,ny),binning,Threads.nthreads(); nmax=nmax)
-    nz = w1 .> 0; meanmap = zeros(Float64,nx,ny); meanmap[nz] = g1[nz]./w1[nz]
-    if dispersion
-        g2=zeros(Float64,nx,ny);w2=zeros(Float64,nx,ny)
-        _offaxis_deposit!(g2,w2,xc,yc,cs,qv.^2,ws,right,upc,w,extp,(nx,ny),binning,Threads.nthreads(); nmax=nmax)
-        m2=zeros(Float64,nx,ny); m2[nz]=g2[nz]./w2[nz]   # w2 ≡ w1 (same weights); use w2 for clarity
-        outmap = sqrt.(max.(m2 .- meanmap.^2, 0.0))
-    else
-        outmap = meanmap
-    end
-    return (map = outmap, dispersion = dispersion, los = collect(w), up = collect(upc),
-            cam_right = collect(right), center = _center_code(dataobject, center, range_unit),
-            pixsize = pixsize, range_unit = range_unit, unit = unit,
-            x = collect(range(x0, x1, length=nx+1)), y = collect(range(y0, y1, length=ny+1)))
-end
-
-"""
-    los_moments(c::LosCubeType) -> (Σ, mean, dispersion)
-
-Moment-0/1/2 maps of a LOS cube `c`: the column `Σ` (summed weight, e.g. column mass), the
-weight-weighted **mean** of the binned quantity, and its **dispersion** — each a 2D array.
-
-!!! note "Discretization bias of the dispersion"
-    The moments are computed from the cube's **bin centres**, so the dispersion is biased high by
-    roughly the *Sheppard correction* σ²_true ≈ σ²_measured − Δ²/12, where Δ = bin width
-    (`step(c.bins)`). The bias is negligible once a feature spans several bins (Δ ≪ σ); it only
-    matters for under-resolved, near-delta distributions. To reduce it, build the cube with more
-    `nbins` or a tighter `qrange`. For an **unbinned** (bias-free) dispersion of a vector's LOS
-    component, use [`los_component`](@ref)`(...; dispersion=true)`, which accumulates the moments
-    from the continuous per-cell samples directly.
-"""
-function los_moments(c::LosCubeType)
-    cube = c.cube; nx, ny, nb = size(cube)
-    ctr = (c.bins[1:end-1] .+ c.bins[2:end]) ./ 2
-    Σ    = dropdims(sum(cube, dims=3), dims=3)
-    mean = zeros(Float64, nx, ny); disp = zeros(Float64, nx, ny)
-    @inbounds for j in 1:ny, i in 1:nx
-        m = @view cube[i, j, :]; s = sum(m)
-        s <= 0 && continue
-        mu = sum(m .* ctr) / s
-        mean[i, j] = mu
-        disp[i, j] = sqrt(max(sum(m .* (ctr .- mu).^2) / s, 0.0))
-    end
-    return (Σ = Σ, mean = mean, dispersion = disp)
-end
-
-"""
-    velocity_moments(vc::LosCubeType) -> (Σ, vlos, σlos)
-
-Velocity-cube moments: column mass `Σ`, mass-weighted mean line-of-sight velocity `vlos`, and
-dispersion `σlos` — i.e. the `:sd`/`:mass`, `:vlos` and `:σlos` maps recovered from the cube.
-"""
-velocity_moments(vc::LosCubeType) = (r = los_moments(vc); (Σ = r.Σ, vlos = r.mean, σlos = r.dispersion))
-
-"""
-    getspectrum(c::LosCubeType, i::Integer, j::Integer) -> (centres, values)
-    getspectrum(c::LosCubeType; x, y, range_unit=c.range_unit) -> (centres, values)
-
-The per-pixel line-of-sight **spectrum** from a LOS / velocity cube: the binned `quantity`
-distribution along the sightline through sky pixel `(i,j)`, or — second form — through the pixel
-nearest the physical sky position `(x, y)` (offsets from the cube centre, in `range_unit`).
-
-Returns the bin **centres** and the per-bin `weight` (e.g. mass), ready to plot as a line:
-`lines(getspectrum(vc; x=0, y=0)...)`. For a velocity cube the centres are line-of-sight
-velocities (a synthetic emission-line profile); for a `los_cube(:T)` they are temperatures (a PDF).
-Integrating `values` over the bins recovers that pixel's column (the moment-0 value).
-"""
-function getspectrum(c::LosCubeType, i::Integer, j::Integer)
-    nx, ny, nb = size(c.cube)
-    (1 <= i <= nx && 1 <= j <= ny) ||
-        throw(BoundsError("pixel ($i,$j) outside the $(nx)×$(ny) sky grid"))
-    centres = (c.bins[1:end-1] .+ c.bins[2:end]) ./ 2
-    return centres, c.cube[i, j, :]
-end
-function getspectrum(c::LosCubeType; x::Real=0.0, y::Real=0.0, range_unit::Symbol=c.range_unit)
-    cu = range_unit === :standard ? 1.0 : getunit(c.info, range_unit)
-    xc = x / cu; yc = y / cu                                   # → code units (camera-plane offset)
-    i = clamp(searchsortedlast(c.x, xc), 1, length(c.x) - 1)   # c.x / c.y are bin EDGES
-    j = clamp(searchsortedlast(c.y, yc), 1, length(c.y) - 1)
-    return getspectrum(c, i, j)
-end
-
-"""
-    integrated_spectrum(c::LosCubeType; mask=nothing) -> (bins, values)
-
-The **integrated (global) spectrum** of a LOS / velocity cube: the per-pixel spectra summed over
-the whole sky map (or over a boolean `mask` of size `(nx, ny)`) — the synthetic global line
-profile (e.g. an HI/CO single-dish profile). Returns the bin **centres** and the summed `weight`
-per channel. Summing `values` over the channels equals the cube's total deposited weight (the
-moment-0 total, e.g. the enclosed mass for a velocity cube).
-"""
-function integrated_spectrum(c::LosCubeType; mask=nothing)
-    nx, ny, nb = size(c.cube)
-    centres = (c.bins[1:end-1] .+ c.bins[2:end]) ./ 2
-    if mask === nothing
-        values = dropdims(sum(c.cube, dims=(1,2)), dims=(1,2))
-    else
-        size(mask) == (nx, ny) || throw(ArgumentError("mask must be size ($nx,$ny), got $(size(mask))"))
-        m = collect(Bool.(mask))
-        values = [sum(@view(c.cube[:, :, k])[m]) for k in 1:nb]
-    end
-    return centres, values
-end
 
 """
     column_integral(dataobject, quantity[, unit]; binning=:exact, <view & range kwargs>)
@@ -965,18 +539,6 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
             range_unit = range_unit, scale = dataobject.scale)
 end
 
-"""
-    moment2(dataobject, quantity [, unit]; weight=:mass, <view & range kwargs>) -> NamedTuple
-
-Off-axis line-of-sight **dispersion** (moment 2) of an arbitrary field `quantity`: the
-weight-weighted standard deviation σ = √(⟨q²⟩_w − ⟨q⟩_w²) of `q` along each sightline. Works for
-`quantity=:vlos` (reproduces the `σlos` map), any scalar getvar field (`:T`, `:rho`, …), or a
-3-vector `(:vx,:vy,:vz)` (its line-of-sight component). Returns the same metadata-carrying result
-as [`los_component`](@ref) — `.map` holds the dispersion; the matching mean (moment 1) is
-`los_component(dataobject, quantity; …)`.
-"""
-moment2(dataobject, quantity, unit::Symbol=:standard; weight::Symbol=:mass, kwargs...) =
-    los_component(dataobject, quantity; unit=unit, weight=weight, dispersion=true, kwargs...)
 
 """
     emission_map(dataobject; kappa, source, <view & range kwargs>, res=256, pxsize=nothing)
@@ -1091,48 +653,14 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     return identity.(maps)
 end
 
-"""
-    savecube(c::LosCubeType, filename; verbose=true) -> String
-    loadcube(filename; verbose=true) -> LosCubeType
-
-Save / load a LOS cube to a JLD2 file (the `.jld2` extension is added if missing). The cube, its
-axes, the binned quantity/units, the camera basis and the simulation `info` are all stored.
-"""
-function savecube(c::LosCubeType, filename::AbstractString; verbose::Bool=true)
-    fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
-    JLD2.jldsave(fn; loscube = c)
-    verbose && println("Saved LOS cube $(size(c.cube)) → ", fn)
-    return fn
-end
-
-"""
-    loadcube(filename; verbose=true) -> LosCubeType
-
-Load a LOS / velocity cube saved with [`savecube`](@ref) from a JLD2 file (the `.jld2`
-extension is added if missing). The cube, its axes, the binned quantity/units, the camera
-basis and the simulation `info` all round-trip, and the reconstructed cube is validated.
-"""
-function loadcube(filename::AbstractString; verbose::Bool=true)
-    fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"
-    c = JLD2.load(fn, "loscube")
-    # validate the reconstructed object instead of returning a malformed/foreign struct silently:
-    # a wrong type or mismatched axes would mislocate every sightline downstream.
-    c isa LosCubeType || error("loadcube: $(fn) does not contain a LosCubeType (got $(typeof(c))).")
-    nx, ny, nb = size(c.cube)
-    (length(c.x) == nx + 1 && length(c.y) == ny + 1 && length(c.bins) == nb + 1) ||
-        error("loadcube: $(fn) is corrupt — axis lengths (x=$(length(c.x)), y=$(length(c.y)), " *
-              "bins=$(length(c.bins))) do not match the cube dims $(size(c.cube)) (expected edges = dim+1).")
-    verbose && println("Loaded LOS cube $(size(c.cube)) ← ", fn)
-    return c
-end
 
 """
     savemap(p::DataMapsType, filename; verbose=true) -> String
     loadmap(filename; verbose=true) -> DataMapsType
 
 Save / load a projection result (an `AMRMapsType`/`PartMapsType` from [`projection`](@ref)) to a
-JLD2 file — the same lightweight, Julia-native way [`savecube`](@ref)/[`loadcube`](@ref) persist a
-LOS cube (the `.jld2` extension is added if missing). The whole object round-trips: every map and
+JLD2 file — a lightweight, Julia-native persistence format (the `.jld2` extension is added if
+missing). The whole object round-trips: every map and
 its unit, the `extent`/`pixsize`, the off-axis camera basis, and the simulation `info` — so a
 reloaded map still plots, re-projects, and carries [`provenance`](@ref).
 
@@ -1169,16 +697,13 @@ end
 
 """
     savefits(map::DataMapsType, var::Symbol, filename; unit=nothing, verbose=true) -> String
-    savefits(cube::LosCubeType, filename; verbose=true) -> String
 
-Write an off-axis map (a variable of an `AMRMapsType`/`PartMapsType`) or a whole `LosCubeType`
+Write an off-axis map (a variable of an `AMRMapsType`/`PartMapsType`)
 to a **FITS** file with a minimal WCS (linear pixel scale; reference pixel at the projection
-centre; the cube's 3rd axis is the binned quantity), for interoperability with DS9 / CASA /
-astropy.
+centre), for interoperability with DS9 / CASA / astropy.
 
 This is a **package extension**: it is only available after `using FITSIO` (add FITSIO to your
-environment). Without it, a helpful error is thrown. JLD2 storage (`savecube`/`loadcube`) needs
-no extra package.
+environment). Without it, a helpful error is thrown.
 """
 function savefits end
 savefits(args...; kwargs...) = throw(ArgumentError(

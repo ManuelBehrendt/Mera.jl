@@ -331,22 +331,6 @@ end
     end
 end
 
-@testset "mock_observe — beam smoothing (data-free)" begin
-    # a point source spread by a Gaussian beam: peak drops, neighbours gain, flux ~conserved
-    A = zeros(Float64, 21, 21); A[11, 11] = 1.0
-    b = mock_observe(A; beam_fwhm=4.0)                 # pixsize=1 (pixels), no noise
-    @test size(b) == size(A)
-    @test b[11, 11] < 1.0                              # beam lowers the peak
-    @test b[11, 12] > 0 && b[12, 11] > 0               # neighbours gain flux
-    @test isapprox(sum(b), sum(A); rtol=0.02)          # normalized Gaussian conserves flux
-    @test mock_observe(A; beam_fwhm=0.0) == A          # zero beam -> unchanged
-    # noise increases scatter; a fixed rng is reproducible
-    n1 = mock_observe(A; beam_fwhm=2.0, noise=0.1, rng=MersenneTwister(7))
-    n2 = mock_observe(A; beam_fwhm=2.0, noise=0.1, rng=MersenneTwister(7))
-    @test n1 == n2                                     # reproducible with a seeded rng
-    @test n1 != mock_observe(A; beam_fwhm=2.0)         # noise actually added
-end
-
 @testset "Off-axis EXACT binning — analytic box-spline footprint (data-free)" begin
     # The exact kernel integrates the line-of-sight column (chord length through the cube)
     # over each pixel analytically.  We check it against two independent references:

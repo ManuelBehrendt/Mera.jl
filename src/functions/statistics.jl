@@ -136,7 +136,7 @@ end
 """
     pdf(map2d::AbstractMatrix; weights=nothing, norm=:density, logbins=true, bins=60, valrange=nothing)
 
-PDF of the values of a raw 2D array (e.g. a [`mock_observe`](@ref) image or any matrix).
+PDF of the values of a raw 2D array (e.g. a `mock_observe` image or any matrix).
 `weights` is an optional matrix of the same size (default: equal per pixel).
 """
 function pdf(map2d::AbstractMatrix{<:Real}; weights=nothing, norm::Symbol=:density,

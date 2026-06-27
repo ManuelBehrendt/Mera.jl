@@ -930,15 +930,6 @@ function getextent(proj::DataMapsType, unit::Symbol=:standard; center::Bool=fals
     return unit === :standard ? copy(e) : e .* getfield(proj.scale, unit)
 end
 
-"""
-    getextent(cube::LosCubeType, unit::Symbol=:standard) -> [xmin,xmax,ymin,ymax]
-
-Sky-plane extent of a [`los_cube`](@ref) / [`velocity_cube`](@ref) result in a physical `unit`
-(e.g. `:kpc`). The stored `cube.x`/`cube.y` pixel edges are in **code length**; this scales them so
-the spatial axes match a physical map — `getextent(cube, :kpc)` → `[xmin,xmax,ymin,ymax]` in kpc.
-"""
-getextent(cube::LosCubeType, unit::Symbol=:standard) =
-    (unit === :standard ? 1.0 : getfield(cube.scale, unit)) .* [cube.x[1], cube.x[end], cube.y[1], cube.y[end]]
 
 """
 #### Get the extent of the dataset-domain:

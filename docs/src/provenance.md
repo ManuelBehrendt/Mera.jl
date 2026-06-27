@@ -43,15 +43,12 @@ That is every data object, projection map, and LOS/velocity cube, plus an `InfoT
 | [`getclumps`](@ref) | `ClumpDataType` | ✓ |
 | [`getrt`](@ref) | `RtDataType` | ✓ |
 | [`projection`](@ref) | `AMRMapsType` (the map) | ✓ |
-| [`velocity_cube`](@ref) / [`los_cube`](@ref) | `LosCubeType` | ✓ |
 | [`pdf`](@ref) (cell/particle or 2D-map form) | `NamedTuple` with `.info` | ✓ |
-| [`position_velocity`](@ref) | `NamedTuple` with `.info` | ✓ |
 | [`face_on`](@ref) / [`edge_on`](@ref) | [`GalaxyFrame`](@ref) | ✓ |
 
 ```julia
 provenance(getparticles(info))         # particles
 provenance(projection(gas, :sd))       # a projection map
-provenance(velocity_cube(gas))         # a LOS / velocity cube
 provenance(pdf(gas, :rho))             # a PDF result
 provenance(face_on(gas))               # a galaxy frame
 provenance(gas.info)                   # the InfoType directly
