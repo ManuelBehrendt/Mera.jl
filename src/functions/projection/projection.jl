@@ -569,7 +569,9 @@ default).
 Because the off-axis camera is **orthographic** (parallel rays, observer at infinity), the only
 control over what is in frame is the FOV, not a camera distance. The FOV must be **rotation-
 invariant** or the frame would breathe with angle, so a **sphere** of radius `fov` is selected
-about `center` (`fov=nothing` ⇒ the object radius, capped to the box, so the whole object fits):
+about `center`. Omit `fov` (`fov=nothing`) to **auto-fit the galaxy**: the mass-enclosed 99% radius
+(so the frame fits the object rather than chasing the few sparse outermost cells / a diffuse halo),
+capped so the selection stays inside the box. The aperture chooses how the sphere is framed:
 
 * `aperture=:circle` (default) — the sphere shows as a **circular aperture**; the rectangular
   frame's corners (beyond radius `fov`) are empty.
@@ -589,10 +591,23 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     # window-unit per code unit (xrange with range_unit=:standard is a box FRACTION = code/boxlen;
     # a physical range_unit converts via getunit). We work in code units, then convert to fov_unit.
     cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
-    fov_code = fov === nothing ?
-        maximum(getvar(dataobject, :r_sphere, center=center)) :   # auto: object radius (code units)
-        float(fov) / cuw                                          # user fov given in fov_unit → code
-    fov_code = min(fov_code, 0.49 * dataobject.boxlen)
+    # auto FOV (fov=nothing): the MASS-ENCLOSED 99% radius, so the frame fits the galaxy itself and
+    # is not blown out by the few sparse outermost cells / a diffuse halo (the old `maximum(r)` did,
+    # leaving the galaxy tiny). Falls back to the max radius if there is no mass field.
+    if fov === nothing
+        r  = getvar(dataobject, :r_sphere, center=center)
+        mw = try getvar(dataobject, :mass) catch; nothing end
+        fov_code = if mw === nothing || isempty(r)
+            isempty(r) ? 0.0 : maximum(r)
+        else
+            o = sortperm(r); cum = cumsum(mw[o]); r[o][searchsortedfirst(cum, 0.99*cum[end])]
+        end
+    else
+        fov_code = float(fov) / cuw                               # user fov given in fov_unit → code
+    end
+    # cap so the SELECTION sphere stays inside the box (for :square that sphere has radius √2·fov, so
+    # its cap is tighter) → the framed window is always fully covered by data.
+    fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
     rfov = fov_code * cuw                                         # FOV radius back in fov_unit
     # TRUE shared FOV needs a ROTATION-INVARIANT selection — a cubic x/y/z window's rotated
     # camera-plane bounding box (and the auto-fit frame, pixel scale, empty corners) changes with

@@ -559,8 +559,9 @@ of map objects — one per angle — ready to assemble into a montage or animate
 
 ```julia
 frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
-                           inclination=55, axis=:angmom, fov=16, fov_unit=:kpc,
-                           pxsize=[0.2,:kpc], aperture=:square)   # full rectangular frame
+                           inclination=55, axis=:angmom, pxsize=[0.35,:kpc],
+                           aperture=:square)   # fov omitted → auto-fit the whole galaxy; full square frame
+# (set fov=… explicitly to zoom in, e.g. fov=16, fov_unit=:kpc)
 
 using CairoMakie                                          # animate to a GIF
 fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
@@ -575,8 +576,9 @@ end
 
 Each frame is a `projection` of the chosen quantity (here `:sd`) at that viewing angle. The off-axis
 camera is **orthographic** (parallel rays) — there is no perspective, so "moving the camera away"
-does nothing; the only control over what is in frame is the **`fov`** (omit it to auto-fit the whole
-object). The FOV must be **rotation-invariant** or the frame would breathe with angle, so a sphere of
+does nothing; the only control over what is in frame is the **`fov`** (omit it to auto-fit the galaxy
+— the mass-enclosed 99% radius — or set it explicitly, e.g. `fov=16, fov_unit=:kpc`, to zoom in).
+The FOV must be **rotation-invariant** or the frame would breathe with angle, so a sphere of
 radius `fov` is used; `aperture` picks how it is framed:
 
 | `aperture` | frame | corners |
