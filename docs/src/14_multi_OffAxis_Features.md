@@ -64,16 +64,17 @@ function showmap!(fig, pos, M, ext_kpc; title="", clabel="", cmap=:inferno, logs
 end;
 ```
 
-## 1. Off-axis slice (cutting plane) — `offaxis_slice`
+## 1. Off-axis slice (cutting plane) — `slice`
 
-`offaxis_slice` gives the field **on** the camera plane through the centre — a cut, not an
+`slice` with any off-axis view keyword (`los`/`inclination`/`direction=:edgeon`/…) gives the field
+**on** the camera plane through the centre — a cut, not an
 integral. Compare the mid-plane density (slice) with the surface density (projection) of the
 same edge-on view. A slice is a nearest-cell sample (resolution-dependent), so use a projection
 when you need a conserved quantity.
 
 
 ```julia
-sl = offaxis_slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16],
+sl = slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16],
                    range_unit=:kpc, pxsize=[0.3,:kpc], verbose=false)
 pj = projection(gas, :sd, :Msol_pc2; direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16],
                 range_unit=:kpc, pxsize=[0.3,:kpc], binning=:exact, verbose=false, show_progress=false)
@@ -97,9 +98,9 @@ obliquely. Pass an `xrange`/`yrange` window so the frame fills:
 
 ```julia
 win = (center=[:bc], xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.25,:kpc])
-sf = offaxis_slice(gas, :rho, :nH; direction=:faceon, win...)
-se = offaxis_slice(gas, :rho, :nH; direction=:edgeon, win...)
-si = offaxis_slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)
+sf = slice(gas, :rho, :nH; direction=:faceon, win...)
+se = slice(gas, :rho, :nH; direction=:edgeon, win...)
+si = slice(gas, :rho, :nH; inclination=60, azimuth=30, axis=:angmom, win...)
 
 fig = Figure(size=(1500,440))
 for (k,(s,t)) in enumerate(((sf,"face-on (midplane)"),(se,"edge-on (vertical cut)"),(si,"inclined 60°")))
@@ -132,14 +133,23 @@ frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
                            aperture=:square)   # fov omitted → auto-fit the whole galaxy; full square frame
 
 fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
-record(fig, "orbit.gif", eachindex(frames); framerate=8) do k     # animate to a GIF
+record(fig, "orbit.mp4", eachindex(frames); framerate=12, compression=18) do k  # .mp4 (or "orbit.gif")
     empty!(ax); heatmap!(ax, log10.(frames[k].maps[:sd]); colormap=:inferno)
 end
 ```
 
+`record` picks the format from the file extension: `"orbit.mp4"` writes an H.264 video (much smaller
+and higher quality — a finer sweep like `angles=0:10:350` stays a few hundred kB where the GIF is
+several MB), `"orbit.gif"` an animated GIF. For mp4, `compression` (0–51, lower = better/larger) tunes
+quality; `framerate` sets playback speed. Both need no extra packages — CairoMakie ships the encoder.
+
 ![Orbit montage — a galaxy at azimuths 0–300° (inclination 55°), full square frame, one fixed field of view.](assets/offaxis/orbit_montage.png)
 
-![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
+```@raw html
+<video src="../assets/offaxis/orbit_movie.mp4" autoplay loop muted playsinline width="420"></video>
+```
+
+*Orbit movie (mp4) — azimuth sweep at 55° inclination. The same loop with `"orbit.gif"` gives* [the GIF version](assets/offaxis/orbit_movie.gif).
 
 Each frame is a `projection` at that viewing angle. The off-axis camera is **orthographic**, so the
 only control over what is in frame is `fov` (omit it to auto-fit the galaxy — the mass-enclosed
@@ -154,7 +164,7 @@ aperture (empty corners); `aperture=:square` (used above) selects a √2·`fov` 
 
 ## Takeaway
 
-- `offaxis_slice` — the field on a cutting plane (vs the conserved projection), at any orientation.
+- `slice` (with off-axis view keywords) — the field on a cutting plane (vs the conserved projection), at any orientation.
 - `rotation_sequence` — a shared-FOV angle sweep for jitter-free orbit movies.
 
 The off-axis column integral, emission+absorption mock image, and FITS export now live in the
