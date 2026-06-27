@@ -387,11 +387,29 @@ Measured strong scaling of one `pxsize=[0.3, :kpc]²` off-axis `:overlap` projec
 
 ![Off-axis :overlap deposit strong scaling](assets/offaxis/offaxis_scaling.png)
 
-The deposit speeds up ≈1.9× / 3.0× / 4.5× on 2 / 4 / 8 threads. It does not reach the ideal linear
-line because the per-cell value/coordinate setup (`getvar`) runs serially — an Amdahl ceiling, not a
-deposit inefficiency. `:cic`/`:ngp` previews are already cheap and run serially. For animations
-(many frames) parallelism across frames/processes is the bigger lever; for a single high-resolution
-publication frame, `:overlap` with all threads is the fast path.
+Reproduce the curve — time one off-axis projection at increasing thread counts (run with `julia -t N`,
+so `Threads.nthreads()` is > 1):
+
+```julia
+using CairoMakie
+nts  = 1:Threads.nthreads()
+bench(nt) = projection(gas, :sd, :Msol_pc2; los=[1,1,1], center=[:bc], res=1024,
+                       binning=:overlap, max_threads=nt, verbose=false, show_progress=false)
+bench(1)                                           # warm up (compile)
+t        = [ @elapsed bench(nt) for nt in nts ]
+speedup  = t[1] ./ t
+fig = Figure(); ax = Axis(fig[1,1], xlabel="threads", ylabel="speed-up")
+lines!(ax, collect(nts), Float64.(collect(nts)), linestyle=:dash, color=:gray)  # ideal
+scatterlines!(ax, collect(nts), speedup); fig
+```
+
+The deposit speeds up ≈1.9× / 3.0× / 4.5× on 2 / 4 / 8 threads (your numbers depend on the machine).
+It does not reach the ideal linear line because the per-cell value/coordinate setup (`getvar`) runs
+serially — an Amdahl ceiling, not a deposit inefficiency. `:cic`/`:ngp` previews are already cheap and
+run serially. For **animations** (many frames) the bigger lever is parallelism *across frames*:
+[`rotation_sequence`](@ref)`(…; parallel_frames=true)` runs the frames concurrently (each projection
+single-threaded), ≈1.5–2× on top. For a single high-resolution publication frame, `:overlap` with all
+threads is the fast path.
 
 ## Particles and gravity
 
