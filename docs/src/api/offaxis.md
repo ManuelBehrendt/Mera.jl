@@ -8,14 +8,7 @@ selected through the same [`projection`](@ref) call documented in the
 ## Line-of-sight maps
 
 ```@docs
-column_integral
 offaxis_slice
-```
-
-## Synthetic observations
-
-```@docs
-emission_map
 ```
 
 ## Sequences, storage & export
@@ -25,8 +18,12 @@ rotation_sequence
 savemap
 ```
 
-(`loadmap` is documented together with [`savemap`](@ref) above;
-[`savefits`](@ref) is in the [Complete API Reference](../api.md).)
+(`loadmap` is documented together with [`savemap`](@ref) above.)
+
+!!! note
+    The off-axis column integral (`∫ q dl`), the emission+absorption mock image, and FITS export
+    now live in an in-development module (`MeraOffAxisSynthObs` / `MeraFITS`,
+    `dev/offaxis_synthobs/`) that ships separately from the released Mera package.
 
 Save a projection result the Julia-native, JLD2 way:
 

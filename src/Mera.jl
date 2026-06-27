@@ -122,8 +122,6 @@ export
     GalaxyFrame,
     gridoverlay,
     gridoverlay!,
-    absorption_map,
-    dust_opacity,
     pdf,
     provenance,
     provenance_string,
@@ -170,9 +168,7 @@ export
 #
     projection,
     project,
-    column_integral,
     offaxis_slice,
-    emission_map,
     profile,
     phase,
     profile3d,
@@ -256,7 +252,6 @@ export
     rotation_sequence,
     savemap,
     loadmap,
-    savefits,
     benchmark_projection_hydro,
     show_threading_info,
     subregion,
@@ -476,7 +471,6 @@ include("functions/synthetic_clumps.jl")
 include("functions/timeseries.jl")
 include("functions/galaxy_frame.jl")
 include("functions/gridoverlay.jl")
-include("functions/absorption.jl")
 include("functions/statistics.jl")
 include("functions/provenance.jl")
 include("functions/movie.jl")
