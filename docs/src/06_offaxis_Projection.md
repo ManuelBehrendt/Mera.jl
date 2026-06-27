@@ -500,14 +500,17 @@ view-orientation keywords documented here.
 ## Kinematics & synthetic observations
 
 Because the camera knows the viewing direction `ŵ`, Mera can turn an off-axis projection into the
-quantities an observer actually measures: line-of-sight velocity/dispersion maps, the column
-integral, an emission+absorption mock image, off-axis cutting planes, and FITS export.
+quantities an observer actually measures: line-of-sight velocity/dispersion maps, off-axis cutting
+planes, and orbit movies.
 
-!!! note "PPV cubes and full mock observations ship separately"
-    Line-of-sight PPV cubes, per-pixel spectra, moment maps, position–velocity diagrams and
-    `mock_observe` (beam/PSF convolution + per-pixel noise) now live in an in-development module
-    (`MeraLosCubes`) that ships **separately** from the released Mera package. The projection
-    quantities `:vlos`/`:σlos` and all the tools documented below remain part of Mera.
+!!! note "Column integral, emission+absorption and FITS export ship separately"
+    The off-axis **column integral** (`∫ q dl`), the **emission+absorption** radiative-transfer
+    mock image, and **FITS export** now live in an in-development module
+    (`MeraOffAxisSynthObs` / `MeraFITS`, `dev/offaxis_synthobs/`) that ships **separately** from
+    the released Mera package. Likewise, line-of-sight PPV cubes, per-pixel spectra, moment maps,
+    position–velocity diagrams and `mock_observe` (beam/PSF convolution + per-pixel noise) live in
+    a separate in-development module. The projection quantities `:vlos`/`:σlos` and the tools
+    documented below remain part of Mera.
 
 **Line-of-sight velocity and dispersion** — `:vlos = v·ŵ` (mass-weighted), and `:σlos` =
 √(⟨v²⟩−⟨v⟩²) along the same direction. Unlike the axis-tied `:σx`/`:σy`/`:σz`, these are defined
@@ -521,36 +524,6 @@ sigma = projection(gas, :σlos, :km_s, direction=:edgeon, center=[:bc])   # velo
 These build directly on the line-of-sight depth/velocity that the off-axis camera already
 computes; the deposit uses the conservative CIC scheme (Hockney & Eastwood 1988), so the maps
 conserve the total mass.
-
-### True column integral / optical depth
-
-[`column_integral`](@ref) gives the **path-length-weighted** line integral `∫ q dl` (not the
-mass-weighted mean) — the geometric basis of a column-density or optical-depth map. With
-`binning=:exact` the chord length through each cube is integrated per pixel analytically:
-
-```julia
-Nrho = column_integral(gas, :rho; los=[1,1,1], center=[:bc], binning=:exact)  # ∫ρ dl  (the mass column; ≈ :sd up to code↔physical units)
-# τ = κ ∫ρ dl for a grey opacity κ:   tau = κ .* Nrho.map .* gas.scale.cm   (dl → physical length)
-```
-
-### Emission + absorption (radiative-transfer mock image)
-
-[`emission_map`](@ref) goes one step further than a column integral: it solves the front-to-back
-radiative-transfer equation `I = Σ S·(1 − e^{−Δτ})·e^{−τ_front}` along each sightline, using the
-exact box-spline chord length per cell for `Δτ = κ·ℓ`. Emission is attenuated by the optical
-depth in front of it, so it is an approximate RT mock observation rather than an optically-thin
-sum. Provide an absorption coefficient `kappa` (per code length) and a source function `source`
-(field name, constant, or per-cell vector):
-
-```julia
-em = emission_map(gas; kappa=:rho, source=:rho, inclination=60, axis=:angmom, center=[:bc])
-em.map     # observed intensity I   ;   em.tau   # total optical depth
-```
-
-A uniform slab of depth `L` with constant `κ,S` returns `I = S(1 − e^{−κL})` exactly. Because the
-emissivity is `κ·S`, a **small but nonzero** `κ` gives the optically-thin limit `I ≈ S·κL`, while
-`kappa=0` yields zero emission — for a κ-independent optically-thin column use `column_integral`.
-These limits are verified in `test/36_offaxis_features_tests.jl`.
 
 ### Off-axis cutting plane
 
@@ -568,18 +541,6 @@ don't jitter (a plain per-angle `projection` recomputes the extent each frame):
 ```julia
 frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:10:350,
                            fov=20, fov_unit=:kpc, axis=:angmom, pxsize=[0.3, :kpc])   # 36 same-FOV maps
-```
-
-### FITS export
-
-For interoperability with DS9 / CASA / astropy, export a map to **FITS** with
-[`savefits`](@ref) (a minimal linear WCS travels with it). This is a package extension — load
-`FITSIO` to enable it:
-
-```julia
-using FITSIO                                  # activates the FITS extension
-m = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc)
-savefits(m, :sd, "sd_map")                    # an off-axis map variable → sd_map.fits
 ```
 
 ## Troubleshooting
@@ -603,10 +564,6 @@ savefits(m, :sd, "sd_map")                    # an off-axis map variable → sd_
 - **Orthographic only.** Off-axis projection is a *parallel* (orthographic) projection — the
   observer is at infinity, all sightlines are parallel. There is no perspective/pinhole camera
   and no observer-in-the-box all-sky view (those are separate, planned capabilities).
-- **`column_integral` is geometric.** [`column_integral`](@ref) returns the line integral `∫ q dl`;
-  turning it into a real optical depth or surface brightness needs your opacity/emissivity model.
-  For an actual emission-with-absorption solve use [`emission_map`](@ref) — an *approximate*
-  radiative transfer (grey, given source function, no scattering), not a full RT code.
 - **LOS-depth slab is a cell-centre cut.** A `zrange`/thickness selection keeps cells whose
   *centre* lies in the slab (it does not clip a cell straddling the slab face). The projected
   *total* is conserved to machine precision for a full column; for a thin slab the slab edge is

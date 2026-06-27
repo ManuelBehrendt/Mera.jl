@@ -62,13 +62,13 @@ function projection()
     println("  los=[lx,ly,lz]   or   theta=, phi=")
     println("  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact")
     println()
-    println("  line-of-sight / synthetic-observation tools (same view kwargs):")
+    println("  line-of-sight tools (same view kwargs):")
     println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
-    println("    column_integral(obj, q)       -> ∫ q dl ;  emission_map -> e^-τ RT mock image")
     println("    offaxis_slice                 -> cutting plane ;  profile / phase -> 1D/2D reductions")
     println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
-    println("    savemap/loadmap (JLD2) ;  savefits (needs `using FITSIO`) -> FITS/WCS (linear|sky)")
-    println("    (PPV cubes, spectra, moment maps, position_velocity & mock_observe -> dev/loscubes)")
+    println("    savemap/loadmap (JLD2)        -> store/restore a projection result")
+    println("    (PPV cubes, spectra, moments -> dev/loscubes ; column_integral, emission/absorption,")
+    println("     optical depth, FITS export   -> dev/offaxis_synthobs)")
     println()
     println("------------------------------------------------")
     println()
@@ -437,32 +437,6 @@ end
 
 
 
-"""
-    column_integral(dataobject, quantity[, unit]; binning=:exact, <view & range kwargs>)
-        -> (map, quantity, unit, los, up, cam_right, center, pixsize, extent, boxlen, scale)
-
-Line-of-sight **column integral** `∫ q dl` of an arbitrary field `q` — the path-length-weighted
-sum along each sightline (not mass-weighted). This is the geometric primitive behind a true
-column density / optical-depth map: e.g. `q=:rho` gives the mass column (the same physical
-quantity as `:sd`, up to the code↔physical unit conversion of ρ and the path length), a constant
-opacity κ gives τ = κ·∫ρ dl, and `q=:ne` (with `unit`) the dispersion-measure-like ∫n dl.
-
-It is exact when `binning=:exact` (the analytic chord length through each cube is integrated per
-pixel) and approximate for `:overlap`/`:cic`. Internally this is
-`projection(dataobject, quantity; mode=:sum, weighting=:volume, binning=binning, …)` divided by
-the pixel area, since the volume-weighted `:sum` deposits `Σ q·(cube∩pixel-column volume)`.
-
-`.map` holds `∫ q dl` with the **path length in code units** (multiply by the appropriate
-`dataobject.scale` factor for a physical length, e.g. `.map .* dataobject.scale.cm`). The camera
-basis and extent travel with the result.
-"""
-function column_integral(dataobject, quantity, unit::Symbol=:standard; binning::Symbol=:exact, kwargs...)
-    p = projection(dataobject, quantity, unit; mode=:sum, weighting=[:volume], binning=binning, kwargs...)
-    area = p.pixsize^2                                         # code-unit pixel area (⟂ to LOS)
-    return (map = p.maps[quantity] ./ area, quantity = quantity, unit = p.maps_unit[quantity],
-            los = p.los, up = p.up, cam_right = p.cam_right, center = p.center,
-            pixsize = p.pixsize, extent = p.extent, boxlen = p.boxlen, scale = p.scale)
-end
 
 """
     offaxis_slice(dataobject, var [, unit]; <view & range kwargs>, res=256, pxsize=nothing)
@@ -475,6 +449,13 @@ Unlike a projection it does **not** integrate along the line of sight — each p
 value of the cell that the plane passes through there (the cell nearest the plane wins; a coarse
 cell fills its footprint). This is a **nearest-cell sample**, hence resolution-dependent and
 *not* mass-conserving (unlike `projection`). Grid data only (hydro/gravity/RT).
+
+**Empty (NaN) pixels are expected** where the cutting plane carries no cell. Two cases: (1) without
+`xrange`/`yrange` the frame is the axis-aligned bounding box of the rotated view, and the
+plane∩box *polygon* cannot fill that rectangle, so the corners/border are NaN — pass a window
+inside the box (`xrange=…, yrange=…`) and the frame fills (0% empty on a uniform grid). (2) at fine
+`pxsize` over coarse AMR cells, nearest-cell sampling leaves sub-percent pixel-scale gaps at
+refinement boundaries — for a gap-free, mass-conserving map use [`projection`](@ref) instead.
 """
 function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
@@ -500,8 +481,11 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     csize = Float64.(getvar(dataobject, :cellsize))   # code length; works for AMR + uniform
     vals = getvar(dataobject, var, unit, center=center, center_unit=range_unit)
     skip = check_mask(dataobject, mask, verbose); sel = skip ? trues(length(xcam)) : collect(Bool.(mask))
-    # keep cells the plane passes through (|z_cam| within half a cell)
-    sel = sel .& (abs.(zcam) .<= 0.5 .* csize)
+    # keep cells the plane passes through. A cube of edge `csize` rotated to the line of sight has
+    # half-thickness along ŵ of 0.5·csize·(|w₁|+|w₂|+|w₃|) (=0.5·csize only for an axis-aligned view,
+    # up to 0.5·csize·√3 at a corner-on tilt). Omitting this factor drops cells the plane really
+    # crosses on tilted views and leaves scattered interior holes.
+    sel = sel .& (abs.(zcam) .<= 0.5 .* csize .* (abs(w[1]) + abs(w[2]) + abs(w[3])))
     xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(abs.(zcam[sel]))
     cs = Float64.(csize[sel]); vv = Float64.(vals[sel])
     pixsize = _pixsize_code(info, boxlen, res, pxsize)
@@ -540,75 +524,6 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
 end
 
 
-"""
-    emission_map(dataobject; kappa, source, <view & range kwargs>, res=256, pxsize=nothing)
-        -> (map, tau, x, y, extent, los, up, cam_right, center, pixsize, scale)
-
-Off-axis **emission + absorption** map: the front-to-back formal solution of radiative transfer
-along each sightline, `I = Σ_cells S·(1 − e^{−Δτ})·e^{−τ_front}` with `Δτ = κ·ℓ` and the exact
-box-spline chord length `ℓ` per cell (the geometry the `:exact` deposit already computes). This
-turns the conservative projection into an approximate radiative-transfer mock observation
-(emission attenuated by intervening optical depth).
-
-* `kappa` — absorption coefficient (per **code length**): a getvar field name (`Symbol`), a
-  constant (`Real`), or a per-cell vector. The emissivity is `κ·S`, so a **small but nonzero** `κ`
-  gives the optically-thin limit `I ≈ S·κL`, while `kappa=0` yields **zero** emission. For a
-  κ-independent optically-thin column use [`column_integral`](@ref) or `mode=:sum`.
-* `source` — source function / emissivity `S`: a field name, constant, or per-cell vector.
-
-Cells are accumulated nearest→farthest from the observer (the observer is on the `−ŵ` side; `ŵ`
-points away from the observer). Returns `.map` = observed intensity `I` and `.tau` = total optical
-depth, plus the camera metadata. **Validation:** a uniform slab of depth `L` with constant `κ,S`
-gives `I = S(1 − e^{−κL})` (thin limit `S·κL`, thick limit `S`). View/centring keywords are the
-same as [`projection`](@ref).
-"""
-function emission_map(dataobject; kappa, source,
-        los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
-        position_angle=nothing, axis=nothing, direction=:z, angle_unit::Symbol=:deg, up=nothing,
-        center=[:bc], range_unit::Symbol=:standard, res::Int=256, pxsize=nothing,
-        xrange=[missing,missing], yrange=[missing,missing], zrange=nothing,
-        source_unit::Symbol=:standard, mask=[false], verbose::Bool=true)
-    info = dataobject.info; boxlen = dataobject.boxlen
-    Lvec = (direction === :faceon || direction === :edgeon || axis === :angmom || axis === :L) ?
-        [sum(getvar(dataobject,:lx,center=center,center_unit=range_unit)),
-         sum(getvar(dataobject,:ly,center=center,center_unit=range_unit)),
-         sum(getvar(dataobject,:lz,center=center,center_unit=range_unit))] : nothing
-    losv, uph = resolve_los(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
-                            axis=axis, direction=direction, angle_unit=angle_unit, up=up, L=Lvec)
-    roll = position_angle === nothing ? 0.0 : float(position_angle) * _angle_factor(angle_unit)
-    cr, uc, w = build_camera_basis(losv, uph; roll=roll)
-    pivot, half, full = _offaxis_view(info, boxlen, xrange, yrange, [missing,missing], center, range_unit, dataobject.ranges)
-    px = getvar(dataobject,:x,center=pivot,center_unit=:standard)
-    py = getvar(dataobject,:y,center=pivot,center_unit=:standard)
-    pz = getvar(dataobject,:z,center=pivot,center_unit=:standard)
-    xcam = px.*cr[1].+py.*cr[2].+pz.*cr[3]; ycam = px.*uc[1].+py.*uc[2].+pz.*uc[3]
-    zcam = px.*w[1] .+py.*w[2] .+pz.*w[3]
-    csize = Float64.(getvar(dataobject, :cellsize))   # code length; works for AMR + uniform
-    ncells = length(xcam)
-    _field(f, u) = f isa Symbol ? Float64.(getvar(dataobject, f, u, center=center, center_unit=range_unit)) :
-                   f isa Real   ? fill(Float64(f), ncells) : Float64.(f)
-    κ = _field(kappa, :standard); S = _field(source, source_unit)
-    skip = check_mask(dataobject, mask, verbose); sel = skip ? trues(ncells) : collect(Bool.(mask))
-    _offaxis_boxmask!(sel, px, py, pz, half, full)   # world-space sub-box (xrange/yrange)
-    if zrange !== nothing      # optional camera-depth slab on z_cam (limits the RT integration depth)
-        sel = sel .& (zcam .>= zrange[1]) .& (zcam .<= zrange[2])
-    end
-    pixsize = _pixsize_code(info, boxlen, res, pxsize)
-    x0,x1,y0,y1,sel = _offaxis_frame(xcam, ycam, sel, csize, cr, uc, pixsize, nothing)
-    xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(zcam[sel])
-    cs = Float64.(csize[sel]); κs = κ[sel]; Ss = S[sel]
-    nx=max(1,round(Int,(x1-x0)/pixsize)); ny=max(1,round(Int,(y1-y0)/pixsize))
-    x1=x0+nx*pixsize; y1=y0+ny*pixsize
-    order = sortperm(zc)                       # ascending z_cam = nearest→farthest (front to back)
-    Imap = zeros(Float64,nx,ny); taumap = zeros(Float64,nx,ny)
-    deposit_rotated_cells_emission!(Imap, taumap, xc, yc, cs, κs, Ss, order, cr, uc, w,
-                                    (x0,x1,y0,y1), (nx,ny))
-    return (map = Imap, tau = taumap, x = collect(range(x0,x1,length=nx+1)),
-            y = collect(range(y0,y1,length=ny+1)), extent = [x0,x1,y0,y1],
-            los = collect(w), up = collect(uc), cam_right = collect(cr),
-            center = _center_code(dataobject, center, range_unit), pixsize = pixsize,
-            scale = dataobject.scale)
-end
 
 """
     rotation_sequence(dataobject, var, [unit]; sweep=:azimuth, angles,
@@ -695,18 +610,3 @@ function loadmap(filename::AbstractString; verbose::Bool=true)
     return p
 end
 
-"""
-    savefits(map::DataMapsType, var::Symbol, filename; unit=nothing, verbose=true) -> String
-
-Write an off-axis map (a variable of an `AMRMapsType`/`PartMapsType`)
-to a **FITS** file with a minimal WCS (linear pixel scale; reference pixel at the projection
-centre), for interoperability with DS9 / CASA / astropy.
-
-This is a **package extension**: it is only available after `using FITSIO` (add FITSIO to your
-environment). Without it, a helpful error is thrown.
-"""
-function savefits end
-savefits(args...; kwargs...) = throw(ArgumentError(
-    "savefits requires FITSIO.jl — add it (`import Pkg; Pkg.add(\"FITSIO\")`) and run " *
-    "`using FITSIO` to enable FITS export (it is a package extension). " *
-    "Use savecube/loadcube for dependency-free JLD2 storage."))

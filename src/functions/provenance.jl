@@ -83,7 +83,7 @@ _prov_time(p::Provenance) = p.cosmological ?
     provenance_string(x) -> String
 
 A compact one-line provenance string — drop it into a figure caption, a `COMMENT` card when
-you [`savefits`](@ref), or a log. Accepts the same inputs as [`provenance`](@ref) (or a
+you export to FITS, or a log. Accepts the same inputs as [`provenance`](@ref) (or a
 `Provenance`). The time is shown as `z=…` for a cosmological run, otherwise in Myr/Gyr.
 """
 provenance_string(p::Provenance) =

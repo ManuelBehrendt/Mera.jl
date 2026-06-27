@@ -80,7 +80,7 @@ makedocs(modules = [Mera],
                                                              "Projection basics"       => "11_multi_OffAxisProjection.md",
                                                              "Validation & accuracy"   => "13_multi_OffAxis_Validation.md",
                                                              "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]],
-                          "Grid Overlay & Absorption"    => "overlay_absorption.md"],
+                          "Grid Overlay"                 => "overlay_absorption.md"],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",

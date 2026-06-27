@@ -193,3 +193,85 @@ using Statistics, LinearAlgebra, Random
         end
     end
 end
+
+# ------------------------------------------------------------------------------------------
+# Off-axis AMR deposit: registration / seam-free contract (DATA-FREE).
+# A synthetic, fully-filled two-level uniform medium (left half coarse, right half fine, ρ=1) has a
+# FLAT true column everywhere — so any stripe/seam/hole at the level interface would be an artefact.
+# Locks in that :exact and :overlap register every AMR level to the same pixel grid (no half-pixel
+# offset, no level seam, no holes), incl. the #245 capped top-hat path. Guards against a recurrence
+# of the "AMR misalignment" reports (which were actually the :cic/:ngp point-deposit moiré).
+# ------------------------------------------------------------------------------------------
+function _oadep_twolevel_box(sC)
+    sF = sC/2
+    nCx = round(Int,0.5/sC); nCyz = round(Int,1.0/sC)
+    nFx = round(Int,0.5/sF); nFyz = round(Int,1.0/sF)
+    x=Float64[]; y=Float64[]; z=Float64[]; s=Float64[]
+    for i in 0:nCx-1, j in 0:nCyz-1, k in 0:nCyz-1
+        push!(x,(i+0.5)*sC); push!(y,(j+0.5)*sC); push!(z,(k+0.5)*sC); push!(s,sC); end
+    for i in 0:nFx-1, j in 0:nFyz-1, k in 0:nFyz-1
+        push!(x,0.5+(i+0.5)*sF); push!(y,(j+0.5)*sF); push!(z,(k+0.5)*sF); push!(s,sF); end
+    x,y,z,s
+end
+function _oadep_column(sC, pixsize, los, binning; nmax=64)
+    x,y,z,s = _oadep_twolevel_box(sC)
+    cr,uc,w = Mera.build_camera_basis(los)
+    xc = (x.-0.5).*cr[1] .+ (y.-0.5).*cr[2] .+ (z.-0.5).*cr[3]
+    yc = (x.-0.5).*uc[1] .+ (y.-0.5).*uc[2] .+ (z.-0.5).*uc[3]
+    mass = s.^3; wt = ones(length(s))
+    ar=sum(abs,cr); au=sum(abs,uc); smax=maximum(s)
+    x0=minimum(xc)-(pixsize+0.5*smax*ar); x1=maximum(xc)+(pixsize+0.5*smax*ar)
+    y0=minimum(yc)-(pixsize+0.5*smax*au); y1=maximum(yc)+(pixsize+0.5*smax*au)
+    nx=max(1,round(Int,(x1-x0)/pixsize)); ny=max(1,round(Int,(y1-y0)/pixsize))
+    x1=x0+nx*pixsize; y1=y0+ny*pixsize; ext=(x0,x1,y0,y1); res=(nx,ny)
+    g=zeros(nx,ny); wg=zeros(nx,ny)
+    if binning===:exact
+        Mera.deposit_rotated_cells_exact!(g,wg,xc,yc,s,mass,wt,cr,uc,w,ext,res)
+    elseif binning===:overlap
+        Mera.deposit_rotated_cells_overlap!(g,wg,xc,yc,s,mass,wt,cr,uc,ext,res; nmax=nmax)
+    else
+        Mera.deposit_rotated_cells_to_grid!(g,wg,xc,yc,mass,wt,ext,res; binning=binning)
+    end
+    g ./ (pixsize^2), ext, res
+end
+function _oadep_interior(M; f=0.2)
+    nx,ny = size(M)
+    M[round(Int,nx*f):round(Int,nx*(1-f)), round(Int,ny*f):round(Int,ny*(1-f))]
+end
+
+@testset "off-axis deposit: AMR two-level seam-free (data-free)" begin
+    # 1. faceon axis-aligned uniform medium → perfectly flat, no holes (column == ρ·depth)
+    for b in (:exact,:overlap)
+        M,_,_ = _oadep_column(1/16,(1/16)/4,[0.0,0.0,1.0],b); I = _oadep_interior(M)
+        @test count(==(0.0),I)==0
+        @test std(I)/mean(I) < 1e-6
+        @test isapprox(mean(I),1.0; rtol=1e-6)
+    end
+    # 2. tilted view: exact & overlap hole-free and agree across the level interface (no offset)
+    los=[0.35,0.22,1.0]
+    Me,_,_=_oadep_column(1/16,(1/16)/4,los,:exact); Mo,_,_=_oadep_column(1/16,(1/16)/4,los,:overlap)
+    Ie=_oadep_interior(Me); Io=_oadep_interior(Mo)
+    @test count(==(0.0),Ie)==0 && count(==(0.0),Io)==0
+    rel=abs.(Io.-Ie)./max.(Ie,1e-30)
+    @test median(rel) < 5e-3 && maximum(rel) < 5e-2
+    # 3. capped (#245) top-hat path: coarse cells span > nmax px, still seam-free & match exact
+    Me2,_,_=_oadep_column(1/4,0.002,los,:exact); Mo2,_,_=_oadep_column(1/4,0.002,los,:overlap; nmax=64)
+    Ie2=_oadep_interior(Me2); Io2=_oadep_interior(Mo2)
+    @test count(==(0.0),Ie2)==0 && count(==(0.0),Io2)==0
+    @test median(abs.(Io2.-Ie2)./max.(Ie2,1e-30)) < 5e-3
+    # 4. pixel-registration invariant: snapped extent keeps the exact pixel size
+    _,ext,res=_oadep_column(1/16,0.01,los,:exact); x0,x1,_,_=ext; nx,_=res
+    @test isapprox((x1-x0)/nx, 0.01; rtol=1e-12)
+    # 5. conservation: total deposited mass == Σ cell masses (exact & overlap)
+    x,y,z,s=_oadep_twolevel_box(1/16); cr,uc,w=Mera.build_camera_basis(los)
+    xc=(x.-0.5).*cr[1].+(y.-0.5).*cr[2].+(z.-0.5).*cr[3]; yc=(x.-0.5).*uc[1].+(y.-0.5).*uc[2].+(z.-0.5).*uc[3]
+    mass=s.^3; wt=ones(length(s)); pixsize=(1/16)/4; ar=sum(abs,cr); au=sum(abs,uc); smax=maximum(s)
+    x0=minimum(xc)-(pixsize+0.5*smax*ar); x1=maximum(xc)+(pixsize+0.5*smax*ar)
+    y0=minimum(yc)-(pixsize+0.5*smax*au); y1=maximum(yc)+(pixsize+0.5*smax*au)
+    nx=max(1,round(Int,(x1-x0)/pixsize)); ny=max(1,round(Int,(y1-y0)/pixsize)); x1=x0+nx*pixsize; y1=y0+ny*pixsize
+    ext=(x0,x1,y0,y1); res=(nx,ny)
+    g=zeros(nx,ny); wg=zeros(nx,ny); Mera.deposit_rotated_cells_exact!(g,wg,xc,yc,s,mass,wt,cr,uc,w,ext,res)
+    @test isapprox(sum(g), sum(mass); rtol=1e-10)
+    g=zeros(nx,ny); wg=zeros(nx,ny); Mera.deposit_rotated_cells_overlap!(g,wg,xc,yc,s,mass,wt,cr,uc,ext,res; nmax=64)
+    @test isapprox(sum(g), sum(mass); rtol=1e-10)
+end

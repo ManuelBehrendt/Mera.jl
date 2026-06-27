@@ -4,20 +4,21 @@
     This tutorial is also an executable **Jupyter notebook** — [open / download `14_multi_OffAxis_Features.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/14_multi_OffAxis_Features.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-This tutorial walks through the line-of-sight analysis tools built on top of Mera's off-axis
-projection — **off-axis slices**, the **column integral**, **emission + absorption
-(`emission_map`)**, and **FITS export with a sky WCS**.
+This tutorial walks through the **off-axis slice** (cutting plane) built on top of Mera's
+off-axis projection.
 
 Run the cells top to bottom and change the numbers. We use **one galaxy** throughout
 (`spiral_clumps`) and set pixel sizes physically with `pxsize=[size, :unit]`.
 
 Prerequisite: the [off-axis projection tutorial](11_multi_OffAxisProjection.md).
 
-!!! note
-    Line-of-sight PPV cubes, per-pixel spectra, moment maps (`moment2`/`integrated_spectrum`),
-    position–velocity diagrams and `mock_observe` now live in an in-development module
-    (`MeraLosCubes`) that ships separately from the released package, so this page has no
-    broken examples.
+!!! note "Column integral, emission+absorption, FITS export and PPV cubes ship separately"
+    The off-axis **column integral**, **emission+absorption** mock image, and **FITS export**
+    now live in an in-development module (`MeraOffAxisSynthObs` / `MeraFITS`,
+    `dev/offaxis_synthobs/`) that ships separately from the released package. Likewise,
+    line-of-sight PPV cubes, per-pixel spectra, moment maps (`moment2`/`integrated_spectrum`),
+    position–velocity diagrams and `mock_observe` live in a separate in-development module. So
+    this page has no broken examples.
 
 
 ```julia
@@ -87,132 +88,11 @@ fig
 
     
 ![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_10_0.png)
-    
-
-
-
-## 2. Column integral — `column_integral`
-
-`column_integral` is the path-length-weighted line integral `∫ q dl` (the geometric basis of a
-column-density / optical-depth map): `q=:rho` gives the mass column (the same physical quantity
-as `:sd`), and `τ = κ·∫ρ dl` for a grey opacity. With `binning=:exact` the chord length through
-each cube is integrated per pixel analytically.
-
-
-```julia
-N = column_integral(gas, :rho; direction=:edgeon, center=[:bc], xrange=[-18,18], yrange=[-18,18],
-                    range_unit=:kpc, pxsize=[0.4,:kpc], binning=:exact)
-fig = Figure(size=(560,470)); e = N.extent .* gas.scale.kpc
-showmap!(fig, (1,1), N.map, e; title="∫ρ dl  (mass column, edge-on)", clabel="log₁₀ ∫ρ dl [code]")
-fig
-```
-
-    [Mera]: 2026-06-06T10:10:44.143
-    
-
-
-    center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-    
-    domain:
-    xmin::xmax: 0.32 :: 0.68  	==> 32.0 [kpc] :: 68.0 [kpc]
-    ymin::ymax: 0.32 :: 0.68  	==> 32.0 [kpc] :: 68.0 [kpc]
-    zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-    
-    Selected var(s)=(:rho,) 
-
-
-    Weighting      = :volume
-    Off-axis LOS   = 
-
-    [0.9999, 0.0003, -0.0143]  (binning=:exact)
-    Effective resolution: 251^2  →  map size: 98 x 98
-    
-
-
-
-
-
-    
-![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_12_4.png)
-    
-
-
-
-## 3. Emission + absorption — `emission_map`
-
-`emission_map` solves the front-to-back radiative-transfer equation
-`I = Σ S·(1−e^{−Δτ})·e^{−τ_front}` along each sightline, with `Δτ = κ·ℓ` and the **exact**
-box-spline chord length `ℓ`. The emissivity is the source function times the opacity, so at
-small `κ` the result is the optically-thin limit `I ≈ S·κL`, and as `κ` grows the **far side of
-the disk is absorbed** and the near side dominates (a uniform slab of depth `L` gives exactly
-`I = S(1−e^{−κL})`). Here the source function is the density (`source=:rho`).
-
-
-```julia
-win5 = (direction=:edgeon, center=[:bc], xrange=[-20,20], yrange=[-20,20], range_unit=:kpc, pxsize=[0.4,:kpc])
-fig = Figure(size=(1500,430))
-for (k,κ) in enumerate((0.02, 0.1, 0.5))
-    em = emission_map(gas; kappa=κ, source=:rho, win5..., verbose=false)
-    A = log10.(replace(em.map, 0.0=>NaN)); ee = em.extent .* gas.scale.kpc
-    ax = Axis(fig[1,k], aspect=DataAspect(), title="κ = $(κ)  (τ_max≈$(round(maximum(em.tau),digits=1)))")
-    heatmap!(ax, range(ee[1],ee[2],length=size(A,1)), range(ee[3],ee[4],length=size(A,2)), A, colormap=:inferno, nan_color=:black)
-    hidedecorations!(ax)
-end
-Label(fig[0,:], "Edge-on emission attenuated by increasing optical depth (emissivity ∝ ρ)", fontsize=15, font=:bold)
-fig
-```
-
-
-
-
-    
-![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_14_0.png)
-    
-
-
-
-The optical-depth map `em.tau` (the `e^{−τ}` that attenuates emission from behind) for the most
-opaque case — this is the quantity that makes the far side fade:
-
-
-```julia
-em = emission_map(gas; kappa=0.5, source=:rho, win5..., verbose=false)
-fig = Figure(size=(560,470)); e = em.extent .* gas.scale.kpc
-showmap!(fig, (1,1), em.tau, e; title="optical depth τ  (κ=0.5, edge-on)", clabel="τ", logscale=false, cmap=:viridis)
-fig
-```
-
-
-
-
-    
-![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_16_0.png)
-    
-
-
-
-## 4. FITS export with a sky WCS — `savefits`
-
-Maps export to **FITS** for DS9/CASA/CARTA/astropy. `savefits` is a package extension —
-load `FITSIO` to enable it. With `wcs=:sky` and a `distance` it writes a celestial WCS
-(`RA---TAN`/`DEC--TAN`):
-
-```julia
-using FITSIO                                   # activates the FITS extension
-m = projection(gas, :sd, :Msol_pc2; direction=:faceon, center=[:bc], xrange=[-18,18], yrange=[-18,18],
-               range_unit=:kpc, pxsize=[0.2,:kpc], binning=:exact, verbose=false, show_progress=false)
-# a map with a celestial WCS (the pixel scale derives from pxsize and the distance)
-savefits(m, :sd, "disk_sd"; wcs=:sky, distance=1.0e4, distance_unit=:kpc, sky_center=(150.0, 2.0))
-```
-
-The default `wcs=:linear` writes a camera-plane WCS in code units (no distance needed).
 
 ## Takeaway
 
-- `offaxis_slice` — the field on a cutting plane (vs the conserved projection);
-- `column_integral` — the line integral `∫ q dl` (mass column / optical-depth basis);
-- `emission_map` — emission **with absorption** (e^{−τ}) using the exact chord length;
-- `savefits(…; wcs=:sky)` — celestial WCS, ready for CASA/CARTA/DS9.
+- `offaxis_slice` — the field on a cutting plane (vs the conserved projection).
 
-All build on the conservative off-axis core; everything here is regression-tested
-(`test/36_offaxis_features_tests.jl`).
+The off-axis column integral, emission+absorption mock image, and FITS export now live in the
+in-development `MeraOffAxisSynthObs` / `MeraFITS` modules (`dev/offaxis_synthobs/`), which ship
+separately from the released Mera package.
