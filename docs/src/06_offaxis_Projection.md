@@ -577,7 +577,18 @@ end
 Each frame is a `projection` of the chosen quantity (here `:sd`) at that viewing angle. The off-axis
 camera is **orthographic** (parallel rays) — there is no perspective, so "moving the camera away"
 does nothing; the only control over what is in frame is the **`fov`** (omit it to auto-fit the galaxy
-— the mass-enclosed 99% radius — or set it explicitly, e.g. `fov=16, fov_unit=:kpc`, to zoom in).
+— the mass-enclosed 99% radius — or set it explicitly to zoom in). Because each frame fills the
+image, a **larger `fov` shows the same galaxy smaller**:
+
+```julia
+for fv in (16, 30, 48)
+    rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=[30], inclination=55,
+                      axis=:angmom, fov=fv, fov_unit=:kpc, pxsize=[0.3,:kpc])
+end
+```
+
+![The same view at fov = 16, 30, 48 kpc: each frame fills the image, so a larger field of view shows the galaxy progressively smaller.](assets/offaxis/orbit_fov.png)
+
 The FOV must be **rotation-invariant** or the frame would breathe with angle, so a sphere of
 radius `fov` is used; `aperture` picks how it is framed:
 
