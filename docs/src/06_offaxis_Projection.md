@@ -591,13 +591,16 @@ does nothing; the only control over what is in frame is the **`fov`** (omit it t
 image, a **larger `fov` shows the same galaxy smaller**:
 
 ```julia
-for fv in (16, 30, 48)
+for fv in (10, 22, 34)
     rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=[30], inclination=55,
-                      axis=:angmom, fov=fv, fov_unit=:kpc, pxsize=[0.3,:kpc])
+                      axis=:angmom, fov=fv, fov_unit=:kpc, pxsize=[0.25,:kpc], aperture=:square)
 end
 ```
 
-![The same view at fov = 16, 30, 48 kpc: each frame fills the image, so a larger field of view shows the galaxy progressively smaller.](assets/offaxis/orbit_fov.png)
+![The same view at fov = 10, 22, 34 kpc (full square frames): each frame fills the image, so a larger field of view shows the galaxy progressively smaller.](assets/offaxis/orbit_fov.png)
+
+(With `aperture=:square` the FOV is bounded by the box — the √2·`fov` selection sphere must fit — so
+to zoom out further than this use `aperture=:circle`, which allows a larger `fov`.)
 
 The FOV must be **rotation-invariant** or the frame would breathe with angle, so a sphere of
 radius `fov` is used; `aperture` picks how it is framed:
