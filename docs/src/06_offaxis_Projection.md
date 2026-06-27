@@ -547,6 +547,16 @@ the bounding box of the rotated view and its corners — where the plane∩box p
 come back `NaN` (expected geometry, shown black). The few black specks in the thin edge-on cut are
 the inherent sub-percent nearest-cell gaps at AMR refinement boundaries.
 
+!!! note "Why inclined slices show tilted, non-square cells"
+    A slice is the **intersection of the camera plane with each cubic cell**, so each cell is drawn
+    as that intersection. Cut **face-on** a cube gives a square; cut **at an angle** it gives a
+    polygon (a parallelogram, or a hexagon in general), elongated along the tilt direction — a pixel
+    belongs to a cell when `|x'·r̂ₖ + y'·ûₖ − cellₖ| ≤ ½·cellsize` on all three axes `k`, i.e. the
+    intersection of three tilted slabs. So the tilted, elongated blocks in an inclined slice are the
+    **true shape of the cut, not an artefact**; they are largest for the coarse, low-density cells
+    and shrink with refinement (the dense, finely-refined midplane looks smooth). For a smooth,
+    resolution-independent map use [`projection`](@ref) (a line-of-sight integral) instead of a slice.
+
 Not line-of-sight specific, but often used alongside projections: `profile` (1D) and `phase` (2D
 weighted histograms, e.g. density–temperature) are general reductions over any field — see
 [Profiles & Phase Diagrams](profiles_phase.md).
