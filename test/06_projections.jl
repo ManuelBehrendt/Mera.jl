@@ -2097,6 +2097,16 @@ end
             @test (maximum(wseq) - minimum(wseq)) / minimum(wseq) < 0.02     # < 2% FOV drift (was ~35%)
             @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, seq)
             @test all(m -> m.direction == :offaxis, seq)
+            # aperture=:square → full rectangular frame (no circular cutout), still fixed FOV
+            sq = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90,180,270],
+                                   fov=15, fov_unit=:kpc, res=64, aperture=:square)
+            @test length(unique([size(m.maps[:mass]) for m in sq])) == 1        # identical frames
+            @test count(==(0.0), sq[1].maps[:mass]) < count(==(0.0), seq[1].maps[:mass])  # corners filled
+            @test_throws ArgumentError rotation_sequence(hydro, :mass; angles=[0], aperture=:hex)
+            # fov omitted → auto-fit the galaxy (mass-enclosed radius), not blown out to the full box
+            au = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90], res=48)
+            @test (au[1].extent[2]-au[1].extent[1]) < 0.9*hydro.boxlen
+            @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, au)
         end
 
         @testset "off-axis :exact ≡ :overlap per-pixel on real AMR" begin

@@ -540,50 +540,97 @@ end
 
 
 
+# crop a frame's maps to the central `nt×nt` pixels (nt = fixed FOV pixel count) so every angle gets
+# an IDENTICAL square window — used by aperture=:square to turn the larger √2·FOV sphere projection
+# into a full rectangular frame with no circular aperture.
+function _rotseq_crop_square!(m, fov_code)
+    A = first(values(m.maps)); nx, ny = size(A); px = m.pixsize
+    nt = clamp(round(Int, 2*fov_code/px), 1, min(nx, ny))
+    i0 = (nx - nt) ÷ 2 + 1; j0 = (ny - nt) ÷ 2 + 1
+    for k in collect(keys(m.maps)); m.maps[k] = m.maps[k][i0:i0+nt-1, j0:j0+nt-1]; end
+    cx = (m.extent[1]+m.extent[2])/2; cy = (m.extent[3]+m.extent[4])/2; h = nt*px/2
+    m.extent  = [cx-h, cx+h, cy-h, cy+h]
+    m.cextent = [-h, h, -h, h]
+    m.ratio   = 1.0
+    return m
+end
+
 """
     rotation_sequence(dataobject, var, [unit]; sweep=:azimuth, angles,
                       axis=:angmom, inclination=0, fov=nothing, fov_unit=:standard,
-                      center=[:bc], range_unit=:standard, res=256, <projection kwargs>)
+                      aperture=:circle, center=[:bc], res=256, <projection kwargs>)
         -> Vector{AMRMapsType}
 
-Render `var` from a sequence of viewing angles for an **orbit movie**, all sharing ONE fixed
-field of view so successive frames do not jitter (a plain per-frame `projection` recomputes the
-extent for every angle). `sweep` selects which angle varies (`:azimuth`, `:inclination`, or
-`:position_angle`) and `angles` is the list of values (degrees by default).
+Render `var` from a sequence of viewing angles for an **orbit movie**, all sharing ONE truly fixed
+field of view so successive frames do not jitter or zoom. `sweep` selects which angle varies
+(`:azimuth`, `:inclination`, or `:position_angle`) and `angles` is the list of values (degrees by
+default).
 
-The shared FOV is the symmetric window `±fov` (in `fov_unit`) about `center`. If `fov` is
-`nothing` it is set to the maximum cell/particle distance from `center` (so the object fits at
-every angle). Returns a `Vector` of map objects — one per angle — ready to animate.
+Because the off-axis camera is **orthographic** (parallel rays, observer at infinity), the only
+control over what is in frame is the FOV, not a camera distance. The FOV must be **rotation-
+invariant** or the frame would breathe with angle, so a **sphere** of radius `fov` is selected
+about `center`. Omit `fov` (`fov=nothing`) to **auto-fit the galaxy**: the mass-enclosed 99% radius
+(so the frame fits the object rather than chasing the few sparse outermost cells / a diffuse halo),
+capped so the selection stays inside the box. The aperture chooses how the sphere is framed:
+
+* `aperture=:circle` (default) — the sphere shows as a **circular aperture**; the rectangular
+  frame's corners (beyond radius `fov`) are empty.
+* `aperture=:square` — a slightly larger sphere (radius `√2·fov`, enclosing the `±fov` square at
+  every angle) is selected and each frame cropped to that square → a **full rectangular frame** with
+  no circular aperture and no data dropped inside it.
+
+Returns a `Vector` of map objects — one per angle — ready to montage or animate.
 """
 function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbol=:azimuth,
         angles, axis=:angmom, inclination::Real=0, fov=nothing, fov_unit::Symbol=:standard,
-        center=[:bc], res::Int=256, pxsize=nothing, verbose::Bool=false, kwargs...)
+        aperture::Symbol=:circle, center=[:bc], res::Int=256, pxsize=nothing, verbose::Bool=false, kwargs...)
     sweep in (:azimuth, :inclination, :position_angle) ||
         throw(ArgumentError("sweep must be :azimuth, :inclination or :position_angle, got :$sweep"))
+    aperture in (:circle, :square) ||
+        throw(ArgumentError("aperture must be :circle or :square, got :$aperture"))
     # window-unit per code unit (xrange with range_unit=:standard is a box FRACTION = code/boxlen;
     # a physical range_unit converts via getunit). We work in code units, then convert to fov_unit.
     cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
-    fov_code = fov === nothing ?
-        maximum(getvar(dataobject, :r_sphere, center=center)) :   # auto: object radius (code units)
-        float(fov) / cuw                                          # user fov given in fov_unit → code
-    fov_code = min(fov_code, 0.49 * dataobject.boxlen)
+    # auto FOV (fov=nothing): the MASS-ENCLOSED 99% radius, so the frame fits the galaxy itself and
+    # is not blown out by the few sparse outermost cells / a diffuse halo (the old `maximum(r)` did,
+    # leaving the galaxy tiny). Falls back to the max radius if there is no mass field.
+    if fov === nothing
+        r  = getvar(dataobject, :r_sphere, center=center)
+        mw = try getvar(dataobject, :mass) catch; nothing end
+        fov_code = if mw === nothing || isempty(r)
+            isempty(r) ? 0.0 : maximum(r)
+        else
+            o = sortperm(r); cum = cumsum(mw[o]); r[o][searchsortedfirst(cum, 0.99*cum[end])]
+        end
+    else
+        fov_code = float(fov) / cuw                               # user fov given in fov_unit → code
+    end
+    # cap so the SELECTION sphere stays inside the box (for :square that sphere has radius √2·fov, so
+    # its cap is tighter) → the framed window is always fully covered by data.
+    fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
     rfov = fov_code * cuw                                         # FOV radius back in fov_unit
-    win  = [-rfov, rfov]
-    # TRUE shared FOV: a cubic x/y/z window is NOT rotation-invariant — its rotated camera-plane
-    # bounding box (and hence the auto-fit frame, pixel scale, and the empty corners) changes with
-    # angle, so the object visibly "zooms"/jitters frame to frame. Select a SPHERE of radius = FOV
-    # instead: a sphere projects to the same disc of radius `rfov` at every orientation, so every
-    # frame shares one camera FOV (a circular aperture; the corners outside it are empty by design).
-    src = subregion(dataobject, :sphere, radius=rfov, center=center, range_unit=fov_unit, verbose=false)
+    # TRUE shared FOV needs a ROTATION-INVARIANT selection — a cubic x/y/z window's rotated
+    # camera-plane bounding box (and the auto-fit frame, pixel scale, empty corners) changes with
+    # angle, so the object visibly "zooms"/jitters. A SPHERE projects to the same disc at every
+    # orientation, so every frame shares one camera FOV.
+    #   aperture=:circle (default) — sphere of radius FOV → a CIRCULAR aperture (corners empty).
+    #   aperture=:square           — sphere of radius √2·FOV (encloses the ±FOV square at any angle),
+    #                                then crop to that square → a FULL RECTANGULAR frame, no circular
+    #                                aperture and no data dropped inside it.
+    rsel = aperture === :square ? rfov * sqrt(2) : rfov
+    win  = [-rsel, rsel]
+    src = subregion(dataobject, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
     maps = Vector{Any}(undef, length(angles))
     for (k, a) in enumerate(angles)
         view = sweep === :azimuth        ? (inclination=inclination, azimuth=a, axis=axis) :
                sweep === :inclination    ? (inclination=a, axis=axis) :
                                            (inclination=inclination, axis=axis, position_angle=a)
         szkw = pxsize === nothing ? (res=res,) : (pxsize=pxsize,)   # prefer physical pxsize
-        maps[k] = projection(src, var, unit; center=center, range_unit=fov_unit,
-                             xrange=win, yrange=win, zrange=win, verbose=verbose, show_progress=false,
-                             szkw..., view..., kwargs...)
+        m = projection(src, var, unit; center=center, range_unit=fov_unit,
+                       xrange=win, yrange=win, zrange=win, verbose=verbose, show_progress=false,
+                       szkw..., view..., kwargs...)
+        aperture === :square && _rotseq_crop_square!(m, fov_code)
+        maps[k] = m
     end
     return identity.(maps)
 end

@@ -123,7 +123,8 @@ extent each frame). It returns a vector of map objects, ready to montage or anim
 
 ```julia
 frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
-                           inclination=55, axis=:angmom, fov=16, fov_unit=:kpc, pxsize=[0.2,:kpc])
+                           inclination=55, axis=:angmom, pxsize=[0.35,:kpc],
+                           aperture=:square)   # fov omitted → auto-fit the whole galaxy; full square frame
 
 fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
 record(fig, "orbit.gif", eachindex(frames); framerate=8) do k     # animate to a GIF
@@ -131,15 +132,20 @@ record(fig, "orbit.gif", eachindex(frames); framerate=8) do k     # animate to a
 end
 ```
 
-![Orbit montage — a galaxy at azimuths 0–300° (inclination 55°), one shared field of view.](assets/offaxis/orbit_montage.png)
+![Orbit montage — a galaxy at azimuths 0–300° (inclination 55°), full square frame, one fixed field of view.](assets/offaxis/orbit_montage.png)
 
 ![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
 
-Each frame is a `projection` at that viewing angle. The shared field of view is a **sphere of radius
-`fov`** (rotation-invariant), so the galaxy keeps the **same scale and centring** at every angle — no
-zoom. The **circular aperture** is that sphere; the corners outside it are empty by design. `sweep`
-can also be `:inclination` (face-on → edge-on) or `:position_angle` (camera roll); omit `fov` to
-auto-fit the object at every angle.
+Each frame is a `projection` at that viewing angle. The off-axis camera is **orthographic**, so the
+only control over what is in frame is `fov` (omit it to auto-fit the galaxy — the mass-enclosed
+99% radius — or set `fov=…` to zoom in), and the FOV is
+made **rotation-invariant** by selecting a sphere about `center` — so the galaxy keeps the **same
+scale** at every angle (no zoom). `aperture=:circle` (default) shows that sphere as a circular
+aperture (empty corners); `aperture=:square` (used above) selects a √2·`fov` sphere and crops to the
+`±fov` square for a **full rectangular frame** with no empty corners. `sweep` can also be
+`:inclination` (face-on → edge-on) or `:position_angle` (camera roll).
+
+![Circle vs square aperture — the circular cutout leaves empty corners; the square fills the frame, both at a fixed scale.](assets/offaxis/orbit_aperture.png)
 
 ## Takeaway
 
