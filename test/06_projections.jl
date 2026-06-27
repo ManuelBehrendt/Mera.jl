@@ -2114,6 +2114,16 @@ end
             @test all(k -> size(sp[k].maps[:mass]) == size(seq[k].maps[:mass]), eachindex(seq))
             @test all(k -> maximum(abs.(sp[k].maps[:mass] .- seq[k].maps[:mass])) <=
                            1e-9*max(maximum(abs.(seq[k].maps[:mass])), eps()), eachindex(seq))
+            # orbit ALSO works for PARTICLES (regression: PartDataType projection has no max_threads
+            # kwarg, so the threading hook must be hydro-only), both sequential and frame-parallel
+            pcl = getparticles(hydro.info, verbose=false, show_progress=false)
+            for pf in (false, true)
+                fpart = rotation_sequence(pcl, :sd, :Msol; sweep=:azimuth, angles=[0,90,180,270],
+                                          fov=15, fov_unit=:kpc, res=48, aperture=:square, parallel_frames=pf)
+                @test length(fpart) == 4
+                @test length(unique([size(m.maps[:sd]) for m in fpart])) == 1
+                @test all(m -> all(isfinite, m.maps[:sd]) && sum(m.maps[:sd]) > 0, fpart)
+            end
         end
 
         @testset "off-axis :exact ≡ :overlap per-pixel on real AMR" begin

@@ -632,9 +632,12 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     # (`Threads.@threads`) and each projection is single-threaded — this fills all cores when there
     # are ≳ nthreads frames (and the internal deposit's per-frame setup/sync no longer serialises),
     # typically ~1.5–2× faster for an orbit movie. It runs N projections at once, so it uses ~N×
-    # the transient memory; results are identical to round-off. We set `max_threads` here, so drop
-    # any user-supplied one.
+    # the transient memory; results are identical to round-off.
+    # NB: only the hydro-grid `projection` accepts `max_threads` — particle / gravity / RT projections
+    # do not, so we pass it ONLY for HydroDataType (and drop any user-supplied one). This works for
+    # every data type; for non-hydro, parallel_frames still parallelises over the frames.
     mt = parallel_frames ? 1 : Threads.nthreads()
+    mtkw = src isa HydroDataType ? (; max_threads = mt) : (;)
     kw = Base.structdiff((; kwargs...), (; max_threads = 0))
     maps = Vector{Any}(undef, length(angles))
     frame!(k) = begin
@@ -645,7 +648,7 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
         szkw = pxsize === nothing ? (res=res,) : (pxsize=pxsize,)   # prefer physical pxsize
         m = projection(src, var, unit; center=center, range_unit=fov_unit,
                        xrange=win, yrange=win, zrange=win, verbose=false, show_progress=false,
-                       max_threads=mt, szkw..., view..., kw...)
+                       mtkw..., szkw..., view..., kw...)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         maps[k] = m
     end
