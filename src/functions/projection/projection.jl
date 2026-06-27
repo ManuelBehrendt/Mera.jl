@@ -488,6 +488,7 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     sel = sel .& (abs.(zcam) .<= 0.5 .* csize .* (abs(w[1]) + abs(w[2]) + abs(w[3])))
     xc = Float64.(xcam[sel]); yc = Float64.(ycam[sel]); zc = Float64.(abs.(zcam[sel]))
     cs = Float64.(csize[sel]); vv = Float64.(vals[sel])
+    pcx = Float64.(px[sel]); pcy = Float64.(py[sel]); pcz = Float64.(pz[sel])   # cell world coords (about pivot)
     pixsize = _pixsize_code(info, boxlen, res, pxsize)
     # nearest-cell plane painter (NOT a conservative footprint deposit): unlike the cube/projection
     # paths it deliberately uses a TIGHT frame — a requested xrange/yrange becomes the exact
@@ -504,17 +505,31 @@ function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
     nx=max(1,round(Int,(x1-x0)/pixsize)); ny=max(1,round(Int,(y1-y0)/pixsize))
     x1=x0+nx*pixsize; y1=y0+ny*pixsize
     invpx=nx/(x1-x0); invpy=ny/(y1-y0)
-    # depth-buffer paint: nearest-to-plane cell wins per pixel; coarse cells fill their footprint
+    # depth-buffer paint: nearest-to-plane cell wins per pixel. Each cell is scanned over its
+    # axis-aligned camera-plane bounding box (its projected shadow), but a pixel is only painted if
+    # its sightline actually pierces the cube — the pixel's world point on the slice plane,
+    # X·r̂ + Y·û (about the pivot), must lie inside the cell's axis-aligned cube |·| ≤ h on all three
+    # world axes. This deposits the TRUE plane∩cell cross-section (a rotated quadrilateral for a
+    # tilted view), not the oversized projected rectangle — so cells keep their real shape and large
+    # border cells no longer bleed a low-value frame outward.
     rx,ry,rz = cr[1],cr[2],cr[3]; ux,uy,uz = uc[1],uc[2],uc[3]
+    pxstep = (x1-x0)/nx; pystep = (y1-y0)/ny
+    tol = 0.5*pixsize                 # half-pixel slack: adjacent cells overlap by ≤1px so the
+                                      # true cross-sections tile with no sub-pixel seam at level
+                                      # boundaries, without re-introducing the oversized footprint.
     zbuf = fill(Inf, nx, ny); vbuf = fill(NaN, nx, ny)
     @inbounds for i in eachindex(xc)
-        h = 0.5*cs[i]
-        radx = h*(abs(rx)+abs(ry)+abs(rz)); rady = h*(abs(ux)+abs(uy)+abs(uz))
+        ht = 0.5*cs[i] + tol; zi = zc[i]; pX=pcx[i]; pY=pcy[i]; pZ=pcz[i]
+        radx = ht*(abs(rx)+abs(ry)+abs(rz)); rady = ht*(abs(ux)+abs(uy)+abs(uz))
         ix0=clamp(floor(Int,(xc[i]-radx-x0)*invpx)+1,1,nx); ix1=clamp(floor(Int,(xc[i]+radx-x0)*invpx)+1,1,nx)
         iy0=clamp(floor(Int,(yc[i]-rady-y0)*invpy)+1,1,ny); iy1=clamp(floor(Int,(yc[i]+rady-y0)*invpy)+1,1,ny)
-        zi = zc[i]
-        for ix in ix0:ix1, iy in iy0:iy1
-            if zi < zbuf[ix,iy]; zbuf[ix,iy]=zi; vbuf[ix,iy]=vv[i]; end
+        for ix in ix0:ix1
+            X = x0 + (ix-0.5)*pxstep
+            for iy in iy0:iy1
+                Y = y0 + (iy-0.5)*pystep
+                (abs(X*rx + Y*ux - pX) <= ht && abs(X*ry + Y*uy - pY) <= ht && abs(X*rz + Y*uz - pZ) <= ht) || continue
+                if zi < zbuf[ix,iy]; zbuf[ix,iy]=zi; vbuf[ix,iy]=vv[i]; end
+            end
         end
     end
     return (map = vbuf, x = collect(range(x0,x1,length=nx+1)), y = collect(range(y0,y1,length=ny+1)),
@@ -551,18 +566,23 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     fov_code = fov === nothing ?
         maximum(getvar(dataobject, :r_sphere, center=center)) :   # auto: object radius (code units)
         float(fov) / cuw                                          # user fov given in fov_unit → code
-    # keep the window strictly inside the box so every frame uses the SAME camera-plane window
-    # (a full-box window makes the engine fall back to the per-angle rotated AABB → frames jitter)
     fov_code = min(fov_code, 0.49 * dataobject.boxlen)
-    win = [-fov_code * cuw, fov_code * cuw]                       # back to fov_unit for projection
+    rfov = fov_code * cuw                                         # FOV radius back in fov_unit
+    win  = [-rfov, rfov]
+    # TRUE shared FOV: a cubic x/y/z window is NOT rotation-invariant — its rotated camera-plane
+    # bounding box (and hence the auto-fit frame, pixel scale, and the empty corners) changes with
+    # angle, so the object visibly "zooms"/jitters frame to frame. Select a SPHERE of radius = FOV
+    # instead: a sphere projects to the same disc of radius `rfov` at every orientation, so every
+    # frame shares one camera FOV (a circular aperture; the corners outside it are empty by design).
+    src = subregion(dataobject, :sphere, radius=rfov, center=center, range_unit=fov_unit, verbose=false)
     maps = Vector{Any}(undef, length(angles))
     for (k, a) in enumerate(angles)
         view = sweep === :azimuth        ? (inclination=inclination, azimuth=a, axis=axis) :
                sweep === :inclination    ? (inclination=a, axis=axis) :
                                            (inclination=inclination, axis=axis, position_angle=a)
         szkw = pxsize === nothing ? (res=res,) : (pxsize=pxsize,)   # prefer physical pxsize
-        maps[k] = projection(dataobject, var, unit; center=center, range_unit=fov_unit,
-                             xrange=win, yrange=win, verbose=verbose, show_progress=false,
+        maps[k] = projection(src, var, unit; center=center, range_unit=fov_unit,
+                             xrange=win, yrange=win, zrange=win, verbose=verbose, show_progress=false,
                              szkw..., view..., kwargs...)
     end
     return identity.(maps)
