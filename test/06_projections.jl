@@ -2085,16 +2085,6 @@ end
             @test σ_glob > 0 && maximum(ps.maps[:σlos]) > 0
         end
 
-        @testset "column_integral (∫q dl) — :rho ≡ surface density" begin
-            # the line-of-sight column ∫ρ dl must equal the mass surface density Σ (both = mass
-            # column); this verifies the chord-integral the :exact deposit computes is exposed.
-            ci = column_integral(hydro, :rho; los=[1.0,1,1], center=[:bc], res=96, binning=:exact)
-            sd = projection(hydro, :sd, los=[1.0,1,1], center=[:bc], res=96, binning=:exact,
-                            verbose=false, show_progress=false)
-            @test isapprox(ci.map, sd.maps[:sd]; rtol=1e-10)
-            @test length(ci.los) == 3 && length(ci.center) == 3        # provenance travels
-        end
-
         @testset "rotation_sequence — fixed FOV" begin
             seq = rotation_sequence(hydro, :mass, :Msol; sweep=:azimuth, angles=[0,90,180,270],
                                     fov=15, fov_unit=:kpc, res=64)
@@ -2102,25 +2092,6 @@ end
             @test length(unique([size(m.maps[:mass]) for m in seq])) == 1   # one shared FOV → no jitter
             @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, seq)
             @test all(m -> m.direction == :offaxis, seq)
-        end
-
-        @testset "savefits export (FITSIO extension)" begin
-            # savefits is a package extension; without FITSIO it must error helpfully. With FITSIO
-            # available it round-trips a map and a cube through FITS. Self-skips if FITSIO absent
-            # (it is not a hard test dependency).
-            have_fitsio = try; @eval import FITSIO; true; catch; false; end
-            if have_fitsio
-                FITSIO = Base.require(Base.PkgId(Base.UUID("525bcba6-941b-5504-bd06-fd0dc1a4d2eb"), "FITSIO"))
-                m  = projection(hydro, :sd, :Msol_pc2, los=[1.0,1,1], center=[:bc], pxsize=[0.6,:kpc],
-                                range_unit=:kpc, verbose=false, show_progress=false)
-                dmap = tempname()*".fits"
-                savefits(m, :sd, dmap; verbose=false)
-                f = FITSIO.FITS(dmap); a = read(f[1]); close(f)
-                @test a == Array{Float64}(m.maps[:sd])           # map round-trips bit-for-bit
-                rm(dmap, force=true)
-            else
-                @test_throws ArgumentError savefits("x", "y")    # helpful error without FITSIO
-            end
         end
 
         @testset "off-axis :exact ≡ :overlap per-pixel on real AMR" begin

@@ -105,7 +105,7 @@ if isempty(_focus)
         include("06_projections.jl")
         include("34_offaxis_invariance_tests.jl")  # off-axis conservation regression (angle × pixel size)
         include("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
-        include("36_offaxis_features_tests.jl")    # LOS features: emission_map, profile/phase, offaxis_slice
+        include("36_offaxis_features_tests.jl")    # LOS features: profile/phase, offaxis_slice
         include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
         include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
         include("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
@@ -119,7 +119,7 @@ if isempty(_focus)
         include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
         include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip
         include("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
-        include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries) + absorption_map (LOS optical depth/transmission)
+        include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
         include("07_regions.jl")
     end
 

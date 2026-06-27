@@ -1,7 +1,7 @@
 # 36_offaxis_features_tests.jl  --  Off-axis / LOS feature additions
 # ==============================================================================
 # Covers the post-review feature set built on the off-axis core:
-#   offaxis_slice, emission_map (optical-depth RT), profile / phase.
+#   offaxis_slice, profile / phase.
 # Each test is an analytic oracle or a conservation/identity check.
 # Required datasets: :spiral_clumps (AMR) and :spiral_ugrid (uniform).
 
@@ -65,22 +65,25 @@ end
                            xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, verbose=false)
         @test count(!isnan, sl.map) == length(sl.map)                  # every plane pixel sampled
         @test maximum(filter(!isnan, sl.map)) > 0 && length(sl.los) == 3
-    end
-
-    @testset "emission_map — uniform-slab RT oracle I = S(1-e^{-κL})" begin
-        L = ug.boxlen; S = 1.0
-        for κ in (1e-6, 0.01, 10.0)
-            em = emission_map(ug; kappa=κ, source=S, los=[0,0,1], center=[:bc], res=64, verbose=false)
-            core = em.map[20:44, 20:44]
-            Iexp = S*(1 - exp(-κ*L))
-            @test isapprox(sort(vec(core))[length(core)÷2], Iexp; rtol=3e-3)   # interior = analytic
+        # uniform grid, windowed inside the box: fully gap-free across resolutions & views
+        for px in ([0.5,:kpc],[0.2,:kpc]), dir in (:faceon,:edgeon)
+            slu = offaxis_slice(ug, :rho, :nH; direction=dir, center=[:bc],
+                     xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, pxsize=px, verbose=false)
+            @test count(isnan, slu.map) == 0
         end
-        # τ accumulates to κL; pure-emission (κ→0) → optically-thin limit S·κL
-        em = emission_map(ug; kappa=0.01, source=1.0, los=[0,0,1], center=[:bc], res=64, verbose=false)
-        @test isapprox(em.tau[32,32], 0.01*L; rtol=1e-6)
-        # emissivity is κ·S ⇒ kappa=0 yields exactly zero emission (NOT an optically-thin sum)
-        em0 = emission_map(ug; kappa=0.0, source=1.0, los=[0,0,1], center=[:bc], res=64, verbose=false)
-        @test all(em0.map .== 0.0) && all(em0.tau .== 0.0)
+        # regression (projection.jl depth-slab rotation factor): a TILTED slice must have NO
+        # interior holes. Before the fix the slab test |z_cam| ≤ 0.5·csize dropped cells the plane
+        # actually crossed on tilted views, leaving scattered interior NaNs.
+        for (inc,az) in ((45,30),(60,40))
+            slt = offaxis_slice(gas, :rho, :nH; inclination=inc, azimuth=az, center=[:bc],
+                     xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, pxsize=[0.1,:kpc], verbose=false)
+            m = slt.map; nx,ny = size(m); interior_holes = 0
+            for i in 2:nx-1, j in 2:ny-1
+                (isnan(m[i,j]) && !isnan(m[i-1,j]) && !isnan(m[i+1,j]) &&
+                 !isnan(m[i,j-1]) && !isnan(m[i,j+1])) && (interior_holes += 1)
+            end
+            @test interior_holes == 0
+        end
     end
 
     @testset "profile: conservation + per-bin statistics" begin

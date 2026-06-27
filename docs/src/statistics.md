@@ -96,7 +96,7 @@ M = pdf(p.maps[:sd])                                         # PDF of a raw 2-D 
 
 Density/velocity **power spectra** and **structure functions** are planned as a follow-up;
 they need an FFT backend and will ship as a package extension (`using FFTW`), the same way
-[`savefits`](@ref) uses FITSIO. Many derived quantities are already available through
+a FITS exporter uses FITSIO. Many derived quantities are already available through
 [`getvar`](@ref) — e.g. `:freefall_time`, `:jeanslength`/`:jeansmass`,
 `:virial_parameter_local`, the sound speed `:cs`, and the Mach numbers `:mach*`.
 

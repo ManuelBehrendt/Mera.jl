@@ -66,7 +66,7 @@ The exceptions, which keep no source snapshot, raise a clear error (pointing you
 ## Stamping a figure or FITS header
 
 [`provenance_string`](@ref) renders a one-liner — drop it into a figure caption, a log, or
-a `COMMENT` card when you [`savefits`](@ref):
+a `COMMENT` card when you export to FITS (`savefits`):
 
 ```julia
 provenance_string(gas)
@@ -97,5 +97,5 @@ safe to use in tests and comparisons.
 ## See also
 
 - [`getinfo`](@ref) — the `InfoType` provenance is read from.
-- [`savefits`](@ref) — export a map/cube to FITS, where the provenance string makes a good header comment.
+- `savefits` (in the in-development `MeraFITS` module, `dev/offaxis_synthobs/`) — export a map/cube to FITS, where the provenance string makes a good header comment.
 - [MERA-Files](07_multi_Mera_Files.md) — the `scale_type` version matters when loading older files.

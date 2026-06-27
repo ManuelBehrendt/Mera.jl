@@ -337,7 +337,7 @@ Everything in this notebook is locked by the CI test suite:
 - **`test/33`** — data-free camera kinematics + the `:exact` box-spline deposit (exactness vs an analytic square-overlap to ~1e-16 and a chord oracle);
 - **`test/34`** — conservation across angles × pixel sizes × `{:cic,:overlap,:exact}`;
 - **`test/35`** — spatial fidelity (holes vs resolution; `:exact` hole-free; exact↔overlap);
-- **`test/06`** off-axis testsets — the `:vlos`/`:σlos` kinematics oracle, `column_integral`, `rotation_sequence`, and the off-axis map round-trips.
+- **`test/06`** off-axis testsets — the `:vlos`/`:σlos` kinematics oracle, `rotation_sequence`, and the off-axis map round-trips.
 
 ## Takeaway
 - **Conservation** (this notebook §1) is exact to ~10⁻¹⁶ for every angle, pixel size and binning;

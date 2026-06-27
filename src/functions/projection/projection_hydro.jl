@@ -2805,67 +2805,6 @@ end
 #  per-pixel τ accumulator attenuates each cell by the dust/gas IN FRONT of it. Order-dependent
 #  ⇒ single-threaded by construction.  κ is in 1/(code length); S in the caller's source units.
 # =====================================================================================
-function deposit_rotated_cells_emission!(Imap::Matrix{Float64}, taumap::Matrix{Float64},
-        x_cam::AbstractVector, y_cam::AbstractVector, cellsize::AbstractVector,
-        kappa::AbstractVector{Float64}, source::AbstractVector{Float64},
-        order::AbstractVector{<:Integer},
-        cam_right::AbstractVector{<:Real}, cam_up::AbstractVector{<:Real}, cam_w::AbstractVector{<:Real},
-        grid_extent::NTuple{4,Float64}, grid_resolution::NTuple{2,Int})
-
-    nx, ny = grid_resolution
-    x_min, x_max, y_min, y_max = grid_extent
-    inv_px = nx/(x_max-x_min); inv_py = ny/(y_max-y_min)
-    pxx = (x_max-x_min)/nx; pxy = (y_max-y_min)/ny; parea = pxx*pxy
-    a = (Float64(cam_right[1]), Float64(cam_right[2]), Float64(cam_right[3]))
-    b = (Float64(cam_up[1]),    Float64(cam_up[2]),    Float64(cam_up[3]))
-    c = (Float64(cam_w[1]),     Float64(cam_w[2]),     Float64(cam_w[3]))
-    cwabs = (abs(c[1]), abs(c[2]), abs(c[3])); cthr = 1e-9
-    cap = 512
-    PX = [Vector{Float64}(undef, 32) for _ in 1:cap]
-    PY = [Vector{Float64}(undef, 32) for _ in 1:cap]
-    PN = Vector{Int}(undef, cap); LA = Vector{Int}(undef, cap); LB = Vector{Int}(undef, cap)
-    wAs = zeros(Float64, 4); wBs = zeros(Float64, 4); wCs = zeros(Float64, 4)
-
-    @inbounds for i in order
-        s = cellsize[i]; h = 0.5*s; xc = x_cam[i]; yc = y_cam[i]
-        κ = kappa[i]; S = source[i]
-        radx = h*(abs(a[1])+abs(a[2])+abs(a[3])); rady = h*(abs(b[1])+abs(b[2])+abs(b[3]))
-        # sub-pixel cell → one pixel; mean chord over the pixel = cube volume / pixel area
-        if radx <= 0.5*pxx && rady <= 0.5*pxy
-            ix = clamp(floor(Int,(xc-x_min)*inv_px)+1, 1, nx); iy = clamp(floor(Int,(yc-y_min)*inv_py)+1, 1, ny)
-            Δτ = κ * (s*s*s/parea)
-            Imap[ix,iy] += S*(1.0-exp(-Δτ))*exp(-taumap[ix,iy]); taumap[ix,iy] += Δτ
-            continue
-        end
-        active = (cwabs[1] >= cthr, cwabs[2] >= cthr, cwabs[3] >= cthr)
-        k1 = _oa_axis_coef(a[1], b[1], c[1], h, xc, yc, active[1])
-        k2 = _oa_axis_coef(a[2], b[2], c[2], h, xc, yc, active[2])
-        k3 = _oa_axis_coef(a[3], b[3], c[3], h, xc, yc, active[3])
-        qa=(k1[1],k2[1],k3[1]); ra=(k1[2],k2[2],k3[2]); pmina=(k1[3],k2[3],k3[3]); pmaxa=(k1[4],k2[4],k3[4])
-        nwall = 0
-        for k in 1:3
-            if !active[k]
-                nwall += 1; wAs[nwall]=-a[k]; wBs[nwall]=-b[k]; wCs[nwall]=h+a[k]*xc+b[k]*yc
-                nwall += 1; wAs[nwall]= a[k]; wBs[nwall]= b[k]; wCs[nwall]=h-a[k]*xc-b[k]*yc
-            end
-        end
-        wallA=(wAs[1],wAs[2],wAs[3],wAs[4]); wallB=(wBs[1],wBs[2],wBs[3],wBs[4]); wallC=(wCs[1],wCs[2],wCs[3],wCs[4])
-        ix0=clamp(floor(Int,(xc-radx-x_min)*inv_px)+1,1,nx); ix1=clamp(floor(Int,(xc+radx-x_min)*inv_px)+1,1,nx)
-        iy0=clamp(floor(Int,(yc-rady-y_min)*inv_py)+1,1,ny); iy1=clamp(floor(Int,(yc+rady-y_min)*inv_py)+1,1,ny)
-        for ix in ix0:ix1
-            pxl = x_min + (ix-1)*pxx; pxr = pxl + pxx
-            for iy in iy0:iy1
-                pyl = y_min + (iy-1)*pxy; pyr = pyl + pxy
-                vol = _oa_pixel_integral!(pxl,pxr,pyl,pyr, active,qa,ra,pmina,pmaxa, wallA,wallB,wallC,nwall, PX,PY,PN,LA,LB)
-                if vol > 0.0
-                    Δτ = κ * (vol/parea)
-                    Imap[ix,iy] += S*(1.0-exp(-Δτ))*exp(-taumap[ix,iy]); taumap[ix,iy] += Δτ
-                end
-            end
-        end
-    end
-    return nothing
-end
 
 # affine coefficients (q,r,pmin,pmax) of tmin_k(x,y)=q·x+r·y+pmin and tmax_k=q·x+r·y+pmax
 # for cube axis k with projected components a=right·êk, b=up·êk, c=ŵ·êk.  Inactive (wall)
