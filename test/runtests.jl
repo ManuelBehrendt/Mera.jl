@@ -105,7 +105,7 @@ if isempty(_focus)
         include("06_projections.jl")
         include("34_offaxis_invariance_tests.jl")  # off-axis conservation regression (angle × pixel size)
         include("35_offaxis_accuracy_tests.jl")    # off-axis spatial fidelity: where the binnings differ
-        include("36_offaxis_features_tests.jl")    # LOS features: integrated_spectrum, moment2, emission_map, profile/phase, slice
+        include("36_offaxis_features_tests.jl")    # LOS features: emission_map, profile/phase, offaxis_slice
         include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
         include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
         include("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
@@ -115,7 +115,6 @@ if isempty(_focus)
         include("45_sfr_tests.jl")                  # sfr / sfr_snapshot (SFH + current SFR): data-free kernel + version-robust (neg-birth & cosmological) AMR-backed
         include("46_timeseries_tests.jl")           # timeseries (multi-snapshot reducer→table): data-free discovery/assembly + 3D Sedov RAMSES & mera-file fixtures
         include("47_galaxyframe_tests.jl")           # auto-frame (center_of/face_on/edge_on): vector helpers data-free + spiral_clumps angular-momentum orientation
-        include("48_mockobs_tests.jl")               # mock-observation pipeline (auto-frame → mock_observe/velocity_moments/position_velocity): data-free beam+noise + spiral_clumps kinematics
         include("49_statistics_tests.jl")            # pdf (probability distribution functions): data-free weighted-histogram kernel + spiral_clumps density PDF (mass vs volume)
         include("50_provenance_tests.jl")            # provenance / provenance_string: data-free struct+string + spiral_clumps snapshot/projection extraction
         include("51_movie_tests.jl")                 # getmovie / savemovie: data-free colormaps/struct + 3D Sedov frames → single-GIF round-trip

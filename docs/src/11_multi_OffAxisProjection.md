@@ -594,4 +594,4 @@ fig
 - compare `binning=:cic` (fast preview) with the `:overlap` default at small `pxsize`, and raise `nmax` for very coarse cells;
 - the returned map stores the camera: `m.los`, `m.up`, `m.cam_right`, `m.center`, `m.direction`.
 
-Next: **LOS cubes & kinematics** (`12_multi_LosCubes`) and **validation** (`13_multi_OffAxis_Validation`).
+Next: **validation & accuracy** (`13_multi_OffAxis_Validation`) and **advanced LOS features** (`14_multi_OffAxis_Features`).

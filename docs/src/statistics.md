@@ -85,7 +85,7 @@ by `:area` (default, every pixel equal), `:value`, or another map key; a raw mat
 ```julia
 p = projection(gas, :sd)
 N = pdf(p, :sd)                                              # area-weighted N-PDF
-M = pdf(mock_observe(p, :sd; beam_fwhm=1.0, beam_unit=:kpc)) # PDF of a raw image matrix
+M = pdf(p.maps[:sd])                                         # PDF of a raw 2-D map matrix
 ```
 
 !!! note "Name clash"

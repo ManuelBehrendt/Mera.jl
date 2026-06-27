@@ -1140,59 +1140,6 @@ function Base.getproperty(p::PartMapsType, s::Symbol)
 end
 
 
-"""
-Mutable Struct: an off-axis line-of-sight cube returned by `los_cube` / `velocity_cube`.
-
-`cube[i,j,k]` is the deposited `weight` (default mass) at sky pixel `(i,j)` in bin `k` of the
-binned line-of-sight `quantity` (e.g. `:vlos`, `:T`, `:rho`, or a vector `(:bx,:by,:bz)`).
-`x`/`y`/`bins` are bin EDGES. Convenience aliases: `.velocity` → `bins`, `.v_unit` → `bin_unit`,
-`.direction` → `:offaxis`. Store with `savecube` / load with `loadcube`.
-
-# Fields
-- `cube::Array{Float64,3}` — the `(nx, ny, nbins)` data cube: deposited `weight` per sky pixel
-  and line-of-sight bin. Summing over the 3rd axis recovers the column (moment-0) map.
-- `x::Vector{Float64}`, `y::Vector{Float64}` — sky-pixel bin **edges** in **code length** units
-  (length `nx+1`, `ny+1`); × `scale.kpc` etc. for physical axes.
-- `bins::Vector{Float64}` — the line-of-sight quantity bin **edges** (length `nbins+1`) in
-  `bin_unit` (e.g. velocity channels for `:vlos`).
-- `quantity::Any` — the binned LOS quantity: a `Symbol` (`:vlos`, `:T`, `:rho`, …) or a 3-tuple/
-  vector of symbols for a vector LOS component (e.g. `(:bx,:by,:bz)`).
-- `bin_unit::Symbol` — unit of the `bins` axis (e.g. `:km_s`, `:standard`). Alias: `.v_unit`.
-- `weight::Symbol` — the deposit weight (`:mass` or `:volume`).
-- `los`, `up`, `cam_right::Vector{Float64}` — the orthonormal off-axis camera basis (line of
-  sight, up vector, right vector).
-- `center::Vector{Float64}` — the projection centre in code units.
-- `pixsize::Float64` — physical size of one sky pixel in **code length** units.
-- `boxlen::Float64` — the simulation box length in code units.
-- `range_unit::Symbol` — the unit the spatial ranges were specified in.
-- `scale::ScalesType003` — unit-conversion factors (code↔physical).
-- `info::InfoType` — the full simulation descriptor (provenance).
-"""
-mutable struct LosCubeType
-    cube::Array{Float64,3}
-    x::Vector{Float64}
-    y::Vector{Float64}
-    bins::Vector{Float64}
-    quantity::Any            # Symbol or 3-tuple/vector of Symbols (vector LOS component)
-    bin_unit::Symbol
-    weight::Symbol
-    los::Vector{Float64}
-    up::Vector{Float64}
-    cam_right::Vector{Float64}
-    center::Vector{Float64}
-    pixsize::Float64
-    boxlen::Float64
-    range_unit::Symbol
-    scale::ScalesType003
-    info::InfoType
-end
-
-function Base.getproperty(c::LosCubeType, s::Symbol)
-    s === :velocity  && return getfield(c, :bins)        # alias for the velocity-cube case
-    s === :v_unit    && return getfield(c, :bin_unit)
-    s === :direction && return :offaxis
-    return getfield(c, s)
-end
 
 
 """

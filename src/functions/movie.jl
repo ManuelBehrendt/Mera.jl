@@ -298,8 +298,8 @@ with [`moviefromframes`](@ref) — or fed to `ffmpeg` for an MP4.
 
 **Persisting the movie object.** A `file` ending in `.jld2` stores the whole `MeraMovie`
 (the numeric frames + metadata) to a JLD2 file instead of encoding a GIF — reload it with
-[`loadmovie`](@ref). Same Julia-native way [`savemap`](@ref)/[`savecube`](@ref) persist a map
-or a cube; nothing is re-rendered, so it round-trips exactly.
+[`loadmovie`](@ref). Same Julia-native way [`savemap`](@ref) persists a map;
+nothing is re-rendered, so it round-trips exactly.
 
 ```julia
 savemovie(m, "density.gif"; tags=:time, fps=12)
@@ -403,7 +403,7 @@ end
 
 Load a [`MeraMovie`](@ref) saved with `savemovie(m, "….jld2")`. The numeric frames and metadata
 round-trip exactly, so you can re-`savemovie` it to a GIF (with different tags/colormap) without
-re-running [`getmovie`](@ref). JLD2-native, like [`loadmap`](@ref)/[`loadcube`](@ref).
+re-running [`getmovie`](@ref). JLD2-native, like [`loadmap`](@ref).
 """
 function loadmovie(filename::AbstractString; verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"

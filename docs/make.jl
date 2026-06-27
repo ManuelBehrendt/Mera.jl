@@ -80,11 +80,7 @@ makedocs(modules = [Mera],
                                                              "Projection basics"       => "11_multi_OffAxisProjection.md",
                                                              "Validation & accuracy"   => "13_multi_OffAxis_Validation.md",
                                                              "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]],
-                          # LOS / position-velocity cubes are a headline capability — promoted out
-                          # of the off-axis notebook bundle to a visible entry of its own.
-                          "LOS Cubes & Kinematics"       => "12_multi_LosCubes.md",
-                          "Grid Overlay & Absorption"    => "overlay_absorption.md",
-                          "Mock Observations (cookbook)" => "mock_observations.md"],
+                          "Grid Overlay & Absorption"    => "overlay_absorption.md"],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",

@@ -746,7 +746,7 @@ per-radial-bin), see [`localdispersion`](@ref).
     ([`profile3d`](@ref)/[`phase`](@ref) in R and z or azimuth), to localise it.
 
     For a **local, per-pixel** dispersion of the *line-of-sight* velocity instead, use the projected
-    map `projection(obj, :σlos)` (or [`los_moments`](@ref)/[`los_component`](@ref)`(...; dispersion=true)`)
+    map `projection(obj, :σlos)` (or `los_moments`/`los_component``(...; dispersion=true)`)
     and profile it (`profile(proj, :σlos; xvar=:r, weight=:sd)`). There σ = √(⟨v²⟩−⟨v⟩²) is taken about
     **each pixel's own mean** (the local bulk/rotation velocity is removed per pixel), so it is locally
     rest-frame; it still includes sub-pixel / along-the-line-of-sight ordered motion (beam smearing).

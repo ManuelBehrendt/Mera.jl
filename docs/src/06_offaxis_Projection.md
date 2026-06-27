@@ -6,8 +6,7 @@
 !!! tip "New to off-axis projection?"
     Start with the runnable walk-through — [Projection basics](11_multi_OffAxisProjection.md) —
     then come back here for the reference details. The notebook series is: basics →
-    [LOS cubes & kinematics](12_multi_LosCubes.md) → [validation](13_multi_OffAxis_Validation.md)
-    → [advanced features](14_multi_OffAxis_Features.md).
+    [validation](13_multi_OffAxis_Validation.md) → [advanced features](14_multi_OffAxis_Features.md).
 
 Mera can project hydro, RT, gravity and particle data along **any line of sight**, not
 just the coordinate axes `:x` / `:y` / `:z`. The same `projection` function is used — you
@@ -154,7 +153,7 @@ below).
 `axis=:angmom`); they take no `axis` of their own. **Pixel size: prefer `pxsize=[size, :unit]`**
 (a physical pixel size, e.g. `pxsize=[50, :pc]` or `pxsize=[0.3, :kpc]`) so resolution means the
 same thing regardless of field of view; `res` (a raw pixel count) also works. This applies to
-`projection`, `los_cube`/`velocity_cube`, `los_component` and `rotation_sequence` alike.
+`projection` and `rotation_sequence` alike.
 
 ```julia
 fo = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc)  # disk face-on
@@ -498,15 +497,17 @@ For the shared keywords (`center`, `range_unit`, `xrange`/`yrange`/`zrange`, `re
 [particle projection](06_particles_Projection.md) tutorials — off-axis adds only the
 view-orientation keywords documented here.
 
-## Kinematics, cubes & synthetic observations
-
-Two related families of tools, all sharing the off-axis view keywords: **kinematics & cubes**
-(line-of-sight velocity/dispersion, PV diagrams, per-pixel spectra and PPV cubes) and **synthetic
-observations** (the column integral, the emission+absorption `emission_map`, beam convolution, and
-FITS export). They are grouped together below.
+## Kinematics & synthetic observations
 
 Because the camera knows the viewing direction `ŵ`, Mera can turn an off-axis projection into the
-quantities an observer actually measures.
+quantities an observer actually measures: line-of-sight velocity/dispersion maps, the column
+integral, an emission+absorption mock image, off-axis cutting planes, and FITS export.
+
+!!! note "PPV cubes and full mock observations ship separately"
+    Line-of-sight PPV cubes, per-pixel spectra, moment maps, position–velocity diagrams and
+    `mock_observe` (beam/PSF convolution + per-pixel noise) now live in an in-development module
+    (`MeraLosCubes`) that ships **separately** from the released Mera package. The projection
+    quantities `:vlos`/`:σlos` and all the tools documented below remain part of Mera.
 
 **Line-of-sight velocity and dispersion** — `:vlos = v·ŵ` (mass-weighted), and `:σlos` =
 √(⟨v²⟩−⟨v⟩²) along the same direction. Unlike the axis-tied `:σx`/`:σy`/`:σz`, these are defined
@@ -517,95 +518,9 @@ vlos  = projection(gas, :vlos, :km_s, direction=:edgeon, center=[:bc])   # rotat
 sigma = projection(gas, :σlos, :km_s, direction=:edgeon, center=[:bc])   # velocity dispersion
 ```
 
-**Position–velocity (PV) diagram** — `position_velocity` bins the data into (in-plane offset,
-`vlos`), the standard rotation-curve / outflow diagnostic, for any line of sight:
-
-```julia
-pv = position_velocity(gas; direction=:edgeon, center=[:bc], range_unit=:kpc,
-                       offset_unit=:kpc, v_unit=:km_s, nbins=200)
-# pv.offset, pv.velocity (bin edges), pv.pv (mass in each offset–velocity bin)
-```
-
-**Mock observation** — `mock_observe` applies a Gaussian-beam (PSF) convolution and adds **white,
-per-pixel Gaussian noise** (`noise` is the per-pixel standard deviation, in the map's units) — a
-first-order mock, not a full instrument simulation (the noise is not beam-correlated):
-
-```julia
-m   = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc, pxsize=[0.3, :kpc])
-img = mock_observe(m, :sd; beam_fwhm=0.8, beam_unit=:kpc, noise=1.0)   # beam (0.8 kpc) + σ=1 M⊙/pc² noise
-```
-
-The four products for a stellar disk — line-of-sight velocity (rotation), dispersion, the PV
-diagram (note the rotation-curve ridge), and a beam+noise mock image:
-
-![Off-axis kinematics: v_los, sigma_los, PV diagram, and a mock observation](assets/offaxis/offaxis_kinematics.png)
-
 These build directly on the line-of-sight depth/velocity that the off-axis camera already
-computes; the deposit into the velocity/offset bins again uses the conservative CIC scheme
-(Hockney & Eastwood 1988), so the PV diagram conserves the total mass.
-
-### Velocity-channel cube — the full per-pixel velocity distribution
-
-A `projection` gives **one** value per pixel (a sum or a weighted average down the sightline);
-`:vlos` and `:σlos` are the first two *moments* of the line-of-sight velocity distribution. To get
-the **whole distribution per pixel** — the spectrum / line profile — use `velocity_cube`, which
-returns a mock data-cube `cube[i,j,k]` = mass at sky pixel `(i,j)` in velocity channel `k`:
-
-```julia
-vc = velocity_cube(gas; direction=:edgeon, center=[:bc], range_unit=:kpc,
-                   pxsize=[0.3, :kpc], nv=120, v_unit=:km_s)
-# vc.cube[i,j,:] is the line-of-sight velocity profile of pixel (i,j)
-
-Σ, vlos, σlos = velocity_moments(vc)   # moment 0/1/2 → the Σ, vlos and σlos maps
-```
-
-Summing the cube over the velocity axis returns the column-mass map, and the moments reproduce the
-`:sd`, `:vlos` and `:σlos` projections — i.e. those maps are compressions of this cube. Each panel
-below is one velocity channel of an edge-on stellar disk: the approaching (blue-shifted) and
-receding (red-shifted) sides light up in different channels — the rotation resolved in velocity.
-
-![Velocity-channel cube: channel maps of an edge-on disk](assets/offaxis/offaxis_channels.png)
-
-The cube is the enabling structure for mock spectral observations (HI/CO/Hα data-cubes, moment
-maps, channel maps, integrated spectra); `position_velocity` is the cube collapsed onto one spatial
-axis. Binning is conservative, so the cube sums to the total mass.
-
-### Any quantity along the line of sight — `los_cube`, `los_component`
-
-`velocity_cube` is a shortcut for the general [`los_cube`](@ref), which builds the per-pixel
-distribution of **any** line-of-sight quantity. The `quantity` keyword accepts
-
-* a **scalar** field (`:T`, `:rho`, `:cs`, …) → its per-sightline distribution (e.g. a temperature
-  or density PDF per pixel — the multiphase structure along each ray),
-* `:vlos` → the velocity spectrum (what `velocity_cube` does), or
-* a **3-vector** of components → its line-of-sight projection, e.g. `(:vx,:vy,:vz)` (velocity),
-  `(:ax,:ay,:az)` (gravitational acceleration), `(:bx,:by,:bz)` (magnetic field).
-
-```julia
-tcube = los_cube(gas; quantity=:T, q_unit=:K, direction=:faceon, center=[:bc], nbins=50)
-Σ, meanT, dispT = los_moments(tcube)        # column, mass-weighted mean & dispersion of T
-```
-
-### The per-pixel spectrum
-
-A cube *is* a spectrum per pixel. Pull one out with [`getspectrum`](@ref) — by pixel index, or
-by physical sky position (offset from the centre) — and plot it as a line:
-
-```julia
-vc = velocity_cube(gas; direction=:edgeon, center=[:bc], range_unit=:kpc, nv=80)
-v, I = getspectrum(vc; x=2.0, y=-1.0, range_unit=:kpc)   # spectrum at sky offset (2,-1) kpc
-lines(v, I)                                              # the line-of-sight velocity profile
-# ∑ I over the channels equals that pixel's column (its moment-0 value)
-```
-
-For just the **2D line-of-sight-component map** of an arbitrary vector (no binning), use
-[`los_component`](@ref) — it returns a metadata-carrying result whose `.map` field is the array:
-
-```julia
-vlos = los_component(gas, (:vx,:vy,:vz); direction=:edgeon, center=[:bc], unit=:km_s)
-heatmap(vlos.map)                                        # the camera basis travels in vlos.los/.up/…
-alos = los_component(gas, (:ax,:ay,:az); inclination=60, axis=:angmom, unit=:cm_s2).map  # gravity
-```
+computes; the deposit uses the conservative CIC scheme (Hockney & Eastwood 1988), so the maps
+conserve the total mass.
 
 ### True column integral / optical depth
 
@@ -637,16 +552,12 @@ emissivity is `κ·S`, a **small but nonzero** `κ` gives the optically-thin lim
 `kappa=0` yields zero emission — for a κ-independent optically-thin column use `column_integral`.
 These limits are verified in `test/36_offaxis_features_tests.jl`.
 
-### More line-of-sight tools
+### Off-axis cutting plane
 
-* [`moment2`](@ref) — the weighted line-of-sight **dispersion** of any field (`moment2(gas, :T)`),
-  generalising `σlos` beyond velocity.
-* [`integrated_spectrum`](@ref) — the **global profile** of a cube, summed over the map
-  (`integrated_spectrum(velocity_cube(gas; …))`).
-* [`offaxis_slice`](@ref) — an off-axis **cutting plane** (the field *on* the plane, not integrated
-  through it) with the same view keywords.
-Not line-of-sight specific, but often used alongside projections: `profile` (1D) and `phase` (2D
-weighted histograms, e.g. density–temperature) are general reductions over any field — see
+[`offaxis_slice`](@ref) returns an off-axis **cutting plane** (the field *on* the plane, not
+integrated through it) with the same view keywords. Not line-of-sight specific, but often used
+alongside projections: `profile` (1D) and `phase` (2D weighted histograms, e.g.
+density–temperature) are general reductions over any field — see
 [Profiles & Phase Diagrams](profiles_phase.md).
 
 ### Orbit movies
@@ -659,21 +570,16 @@ frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:10:350,
                            fov=20, fov_unit=:kpc, axis=:angmom, pxsize=[0.3, :kpc])   # 36 same-FOV maps
 ```
 
-Cubes are returned as a [`LosCubeType`](@ref) and can be **saved/loaded** (JLD2):
+### FITS export
 
-```julia
-savecube(tcube, "myrun_Tcube")        # → myrun_Tcube.jld2
-tcube = loadcube("myrun_Tcube.jld2")  # restores the cube, axes, units and camera metadata
-```
-
-For interoperability with DS9 / CASA / astropy, export a map or cube to **FITS** with
+For interoperability with DS9 / CASA / astropy, export a map to **FITS** with
 [`savefits`](@ref) (a minimal linear WCS travels with it). This is a package extension — load
 `FITSIO` to enable it:
 
 ```julia
 using FITSIO                                  # activates the FITS extension
+m = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc)
 savefits(m, :sd, "sd_map")                    # an off-axis map variable → sd_map.fits
-savefits(tcube, "Tcube")                      # a whole cube (3rd axis = the binned quantity)
 ```
 
 ## Troubleshooting

@@ -41,7 +41,7 @@ end
 
 Build a [`Provenance`](@ref) record from an `InfoType` or from any result that carries one —
 a **data object** (`gethydro`/`getparticles`/`getgravity`/`getclumps`/`getrt`), a
-[`projection`](@ref) map, or a [`velocity_cube`](@ref)/[`los_cube`](@ref). Deterministic: it
+[`projection`](@ref) map, or a `velocity_cube`/`los_cube`. Deterministic: it
 reads only the snapshot's own metadata, so it is safe to compare across runs.
 
 ```julia
@@ -53,7 +53,7 @@ provenance(gas.info)                 # the InfoType directly
 ```
 
 For a `NamedTuple`-style result that carries no `.info` (a [`pdf`](@ref), a
-[`timeseries`](@ref) table, a [`position_velocity`](@ref) diagram), take the provenance of
+[`timeseries`](@ref) table, a `position_velocity` diagram), take the provenance of
 the source data object you computed it from.
 """
 function provenance(info::InfoType)

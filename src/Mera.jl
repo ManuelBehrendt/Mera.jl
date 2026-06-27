@@ -170,18 +170,8 @@ export
 #
     projection,
     project,
-    mock_observe,
-    position_velocity,
-    velocity_cube,
-    velocity_moments,
-    los_cube,
-    los_component,
-    los_moments,
-    getspectrum,
-    integrated_spectrum,
     column_integral,
     offaxis_slice,
-    moment2,
     emission_map,
     profile,
     phase,
@@ -264,8 +254,6 @@ export
     CostModel,
     getparticlemask,
     rotation_sequence,
-    savecube,
-    loadcube,
     savemap,
     loadmap,
     savefits,
@@ -367,7 +355,6 @@ export
     AMRMapsType,
     HydroMapsType,   # deprecated alias of AMRMapsType (kept for backward compatibility)
     PartMapsType,
-    LosCubeType,
 
     Histogram2DMapType,
 
