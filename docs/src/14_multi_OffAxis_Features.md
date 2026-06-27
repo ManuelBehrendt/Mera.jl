@@ -110,6 +110,11 @@ fig
 
 ![Off-axis density slices of the same galaxy at three orientations: face-on midplane, edge-on vertical cut, and an inclined 60° cut.](assets/offaxis/offaxis_slice.png)
 
+The **tilted, non-square cells** in the inclined panel are not an artefact: a slice draws each cell
+as the *intersection of the camera plane with the cube*, which is a square only face-on and a
+polygon (parallelogram/hexagon, elongated along the tilt) at an angle. They are largest for the
+coarse low-density cells and shrink with refinement.
+
 Empty (black) pixels are expected geometry: without a window the auto-fit frame's corners (the
 plane∩box polygon) have no cell, and the few specks in the thin edge-on cut are the inherent
 sub-percent nearest-cell gaps at AMR refinement boundaries. For a gap-free, conserved map use
