@@ -206,24 +206,58 @@ function covering_grid(obj::_CGCellData, vars::AbstractVector{Symbol}, units::Ab
                           max_bytes, nothing, verbose)
 end
 
-"""
-    slice(obj, var, [unit]; slice_axis=:z, slice_pos=0.5, slice_unit=:standard, lmax=obj.lmax,
-          center=[0.,0.,0.], xrange=…, yrange=…, zrange=…, range_unit=:standard,
-          max_bytes=4e9, pos_unit=:standard, verbose=true) -> CoveringGridResult
+# Off-axis view keywords. If a `slice(...)` call carries ANY of these it is a cutting plane along an
+# arbitrary line of sight (routed to the camera-plane sampler `offaxis_slice`); with none of them
+# `slice` does the axis-aligned covering-grid cut in `_covering_grid_slice` below. The two keyword
+# sets are disjoint, so the dispatch is unambiguous.
+const _OFFAXIS_SLICE_KW = (:los, :theta, :phi, :inclination, :azimuth, :position_angle,
+                           :axis, :up, :direction, :res, :pxsize, :mask, :angle_unit)
+_wants_offaxis_slice(kw) = any(k -> k in _OFFAXIS_SLICE_KW, keys(kw))
 
-A **2-D fixed-resolution buffer**: a single-cell-thick, non-integrated cut through the AMR data at
-`slice_pos` along `slice_axis` (`:x`/`:y`/`:z`), resampled to level `lmax` (cf. [`covering_grid`](@ref)
-for the 3-D version, `projection` for the integrated map). `slice_pos` is in `slice_unit` (`:standard`
-⇒ a fraction of the box). The result's `grid[var]` is a 2-D array.
+"""
+    slice(obj, var, [unit]; ...) -> CoveringGridResult  (axis-aligned)  |  NamedTuple  (off-axis)
+
+A single, **non-integrated cutting plane** through AMR cell data (`HydroDataType`, `GravDataType`,
+`RtDataType`). One name, two modes, chosen automatically from the keywords:
+
+**Axis-aligned (default).** `slice_axis=:z, slice_pos=0.5, slice_unit=:standard, lmax=obj.lmax,
+center=[0.,0.,0.], xrange, yrange, zrange, range_unit=:standard, max_bytes=4e9, pos_unit=:standard,
+verbose=true`. A single-cell-thick cut at `slice_pos` along `slice_axis` (`:x`/`:y`/`:z`), resampled
+to a uniform level-`lmax` buffer (cf. [`covering_grid`](@ref) for the 3-D version, `projection` for the
+integrated map). `slice_pos` is in `slice_unit` (`:standard` ⇒ a fraction of the box). Returns a
+`CoveringGridResult` whose `grid[var]` is a 2-D array.
+
+**Off-axis (cutting plane along any line of sight).** Triggered by passing any off-axis view keyword —
+`los`/`inclination`/`azimuth`/`axis`/`theta`/`phi`/`direction=:faceon`/`:edgeon`/`position_angle`/`up`,
+or the output controls `res`/`pxsize`. The field is sampled on the camera plane through `center` for an
+arbitrary orientation (the same view keywords as [`projection`](@ref)), but as a **nearest-cell
+sample**, not an integral — resolution-dependent and not mass-conserving. Returns a `NamedTuple` with
+`.map`, `.extent` and the camera basis. Empty (NaN) pixels are expected where the plane carries no
+cell; pass `xrange`/`yrange` to fill the frame, or use [`projection`](@ref) for a conserved map. One
+variable at a time.
 
 ```julia
-sl = slice(gas, :rho, :nH; slice_axis=:z, slice_pos=0.5)   # mid-plane n_H map
-sl[:rho]                                                    # 2-D array
+sl = slice(gas, :rho, :nH; slice_axis=:z, slice_pos=0.5)          # axis-aligned mid-plane n_H map
+sl[:rho]                                                          # 2-D array
+oa = slice(gas, :rho, :nH; inclination=60, axis=:angmom,         # off-axis cutting plane
+           xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.3,:kpc])
+oa.map                                                            # 2-D camera-plane array
 ```
 """
-slice(obj::_CGCellData, var::Symbol, unit::Symbol=:standard; kwargs...) = slice(obj, [var], [unit]; kwargs...)
+function slice(obj::_CGCellData, var::Symbol, unit::Symbol=:standard; kwargs...)
+    _wants_offaxis_slice(kwargs) && return offaxis_slice(obj, var, unit; kwargs...)
+    return _covering_grid_slice(obj, [var], [unit]; kwargs...)
+end
 slice(obj::_CGCellData, vars::AbstractVector{Symbol}; kwargs...) = slice(obj, vars, fill(:standard, length(vars)); kwargs...)
-function slice(obj::_CGCellData, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
+function slice(obj::_CGCellData, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol}; kwargs...)
+    if _wants_offaxis_slice(kwargs)
+        length(vars) == 1 || throw(ArgumentError(
+            "off-axis slice handles one variable at a time; call slice(obj, var; …) per field"))
+        return offaxis_slice(obj, vars[1], units[1]; kwargs...)
+    end
+    return _covering_grid_slice(obj, vars, units; kwargs...)
+end
+function _covering_grid_slice(obj::_CGCellData, vars::AbstractVector{Symbol}, units::AbstractVector{Symbol};
                slice_axis::Symbol=:z, slice_pos::Real=0.5, slice_unit::Symbol=:standard,
                lmax::Int=obj.lmax, center=[0.,0.,0.], xrange=[missing,missing], yrange=[missing,missing],
                zrange=[missing,missing], range_unit::Symbol=:standard, max_bytes::Real=4e9,

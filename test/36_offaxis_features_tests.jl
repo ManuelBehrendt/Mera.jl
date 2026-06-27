@@ -1,7 +1,7 @@
 # 36_offaxis_features_tests.jl  --  Off-axis / LOS feature additions
 # ==============================================================================
 # Covers the post-review feature set built on the off-axis core:
-#   offaxis_slice, profile / phase.
+#   slice (off-axis cutting plane; alias offaxis_slice), profile / phase.
 # Each test is an analytic oracle or a conservation/identity check.
 # Required datasets: :spiral_clumps (AMR) and :spiral_ugrid (uniform).
 
@@ -60,14 +60,24 @@ end
         rm(bad, force=true)
     end
 
-    @testset "offaxis_slice fills the plane (nearest-cell)" begin
-        sl = offaxis_slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], pxsize=[0.5,:kpc],
-                           xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, verbose=false)
+    @testset "slice (off-axis) fills the plane (nearest-cell)" begin
+        # an off-axis view keyword routes slice() to the camera-plane cutting plane …
+        sl = slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], pxsize=[0.5,:kpc],
+                   xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, verbose=false)
         @test count(!isnan, sl.map) == length(sl.map)                  # every plane pixel sampled
         @test maximum(filter(!isnan, sl.map)) > 0 && length(sl.los) == 3
+        # … and the explicit `offaxis_slice` name is the exact same call (no deprecation)
+        sl2 = offaxis_slice(gas, :rho, :nH; direction=:edgeon, center=[:bc], pxsize=[0.5,:kpc],
+                            xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, verbose=false)
+        @test isequal(sl.map, sl2.map)
+        # axis-aligned keywords instead → slice() returns the covering-grid cut (CoveringGridResult)
+        sa = slice(gas, :rho, :nH; slice_axis=:z, slice_pos=0.5, lmax=7, verbose=false)
+        @test ndims(sa[:rho]) == 2
+        # multi-variable off-axis is rejected with a clear message
+        @test_throws ArgumentError slice(gas, [:rho,:T], [:nH,:K]; inclination=30, verbose=false)
         # uniform grid, windowed inside the box: fully gap-free across resolutions & views
         for px in ([0.5,:kpc],[0.2,:kpc]), dir in (:faceon,:edgeon)
-            slu = offaxis_slice(ug, :rho, :nH; direction=dir, center=[:bc],
+            slu = slice(ug, :rho, :nH; direction=dir, center=[:bc],
                      xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, pxsize=px, verbose=false)
             @test count(isnan, slu.map) == 0
         end
@@ -75,7 +85,7 @@ end
         # interior holes. Before the fix the slab test |z_cam| ≤ 0.5·csize dropped cells the plane
         # actually crossed on tilted views, leaving scattered interior NaNs.
         for (inc,az) in ((45,30),(60,40))
-            slt = offaxis_slice(gas, :rho, :nH; inclination=inc, azimuth=az, center=[:bc],
+            slt = slice(gas, :rho, :nH; inclination=inc, azimuth=az, center=[:bc],
                      xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, pxsize=[0.1,:kpc], verbose=false)
             m = slt.map; nx,ny = size(m); interior_holes = 0
             for i in 2:nx-1, j in 2:ny-1
@@ -349,9 +359,9 @@ end
             @test_throws ArgumentError Mera._bin_edges([1.0,2.0,3.0], (1.0,-1.0), :log, 4)
         end
 
-        @testset "P1-6 offaxis_slice with an all-excluding mask returns a map" begin
+        @testset "P1-6 slice (off-axis) with an all-excluding mask returns a map" begin
             me = falses(length(getvar(gas,:rho)))
-            sl = offaxis_slice(gas, :rho; los=[0.,0.,1.], mask=me, res=12, verbose=false)
+            sl = slice(gas, :rho; los=[0.,0.,1.], mask=me, res=12, verbose=false)
             @test size(sl.map) == (12,12)
         end
 

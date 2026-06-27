@@ -64,7 +64,7 @@ function projection()
     println()
     println("  line-of-sight tools (same view kwargs):")
     println("    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)")
-    println("    offaxis_slice                 -> cutting plane ;  profile / phase -> 1D/2D reductions")
+    println("    slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions")
     println("    rotation_sequence             -> shared-FOV angle sweep (orbit movies)")
     println("    savemap/loadmap (JLD2)        -> store/restore a projection result")
     println("    (PPV cubes, spectra, moments -> dev/loscubes ; column_integral, emission/absorption,")
@@ -441,6 +441,9 @@ end
 """
     offaxis_slice(dataobject, var [, unit]; <view & range kwargs>, res=256, pxsize=nothing)
         -> (map, x, y, extent, los, up, cam_right, center, pixsize, range_unit, scale)
+
+The explicit off-axis name for [`slice`](@ref); `slice(obj, var; los=…/inclination=…/…)` dispatches
+here whenever an off-axis view keyword is given, so the two are interchangeable.
 
 Off-axis **slice** (cutting plane): the value of `var` on the camera plane through the projection
 `center`, for an arbitrary line of sight (same view keywords as [`projection`](@ref):

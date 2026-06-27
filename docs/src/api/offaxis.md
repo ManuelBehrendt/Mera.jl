@@ -7,8 +7,12 @@ selected through the same [`projection`](@ref) call documented in the
 
 ## Line-of-sight maps
 
+[`slice`](@ref) is the single cutting-plane function: with axis-aligned keywords it returns the
+covering-grid cut, and with any off-axis view keyword (`los`/`inclination`/`azimuth`/…) it returns the
+camera-plane cut along that line of sight. `offaxis_slice` remains as the equivalent explicit off-axis name.
+
 ```@docs
-offaxis_slice
+slice
 ```
 
 ## Sequences, storage & export
