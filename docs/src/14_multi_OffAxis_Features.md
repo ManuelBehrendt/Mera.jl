@@ -135,8 +135,11 @@ end
 
 ![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
 
-`sweep` can also be `:inclination` (face-on → edge-on) or `:position_angle` (camera roll); omit
-`fov` to auto-fit the object at every angle.
+Each frame is a `projection` at that viewing angle. The shared field of view is a **sphere of radius
+`fov`** (rotation-invariant), so the galaxy keeps the **same scale and centring** at every angle — no
+zoom. The **circular aperture** is that sphere; the corners outside it are empty by design. `sweep`
+can also be `:inclination` (face-on → edge-on) or `:position_angle` (camera roll); omit `fov` to
+auto-fit the object at every angle.
 
 ## Takeaway
 

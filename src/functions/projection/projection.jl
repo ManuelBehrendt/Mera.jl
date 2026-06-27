@@ -566,18 +566,23 @@ function rotation_sequence(dataobject, var, unit::Symbol=:standard; sweep::Symbo
     fov_code = fov === nothing ?
         maximum(getvar(dataobject, :r_sphere, center=center)) :   # auto: object radius (code units)
         float(fov) / cuw                                          # user fov given in fov_unit → code
-    # keep the window strictly inside the box so every frame uses the SAME camera-plane window
-    # (a full-box window makes the engine fall back to the per-angle rotated AABB → frames jitter)
     fov_code = min(fov_code, 0.49 * dataobject.boxlen)
-    win = [-fov_code * cuw, fov_code * cuw]                       # back to fov_unit for projection
+    rfov = fov_code * cuw                                         # FOV radius back in fov_unit
+    win  = [-rfov, rfov]
+    # TRUE shared FOV: a cubic x/y/z window is NOT rotation-invariant — its rotated camera-plane
+    # bounding box (and hence the auto-fit frame, pixel scale, and the empty corners) changes with
+    # angle, so the object visibly "zooms"/jitters frame to frame. Select a SPHERE of radius = FOV
+    # instead: a sphere projects to the same disc of radius `rfov` at every orientation, so every
+    # frame shares one camera FOV (a circular aperture; the corners outside it are empty by design).
+    src = subregion(dataobject, :sphere, radius=rfov, center=center, range_unit=fov_unit, verbose=false)
     maps = Vector{Any}(undef, length(angles))
     for (k, a) in enumerate(angles)
         view = sweep === :azimuth        ? (inclination=inclination, azimuth=a, axis=axis) :
                sweep === :inclination    ? (inclination=a, axis=axis) :
                                            (inclination=inclination, axis=axis, position_angle=a)
         szkw = pxsize === nothing ? (res=res,) : (pxsize=pxsize,)   # prefer physical pxsize
-        maps[k] = projection(dataobject, var, unit; center=center, range_unit=fov_unit,
-                             xrange=win, yrange=win, verbose=verbose, show_progress=false,
+        maps[k] = projection(src, var, unit; center=center, range_unit=fov_unit,
+                             xrange=win, yrange=win, zrange=win, verbose=verbose, show_progress=false,
                              szkw..., view..., kwargs...)
     end
     return identity.(maps)

@@ -572,6 +572,11 @@ end
 
 ![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
 
+Each frame is a `projection` of the chosen quantity (here `:sd`) at that viewing angle. The shared
+field of view is a **sphere of radius `fov`** — a sphere looks the same from every direction, so the
+object keeps **exactly the same scale and centring** at every angle (no zoom/jitter). That sphere is
+the **circular aperture** you see; the frame corners outside it carry no data and are empty by design.
+
 `sweep` can also be `:inclination` (tip from face-on to edge-on) or `:position_angle` (roll the
 camera). Leave `fov` out to auto-fit the object at every angle.
 

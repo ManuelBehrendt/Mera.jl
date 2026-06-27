@@ -2090,6 +2090,11 @@ end
                                     fov=15, fov_unit=:kpc, res=64)
             @test length(seq) == 4
             @test length(unique([size(m.maps[:mass]) for m in seq])) == 1   # one shared FOV → no jitter
+            # the PHYSICAL extent must also be (near-)constant across angles, not just the pixel count
+            # — a cubic window's rotated bounding box varies with angle (the object visibly zooms); the
+            # rotation-invariant spherical FOV keeps the camera-plane extent fixed.
+            wseq = [m.extent[2]-m.extent[1] for m in seq]
+            @test (maximum(wseq) - minimum(wseq)) / minimum(wseq) < 0.02     # < 2% FOV drift (was ~35%)
             @test all(m -> all(isfinite, m.maps[:mass]) && sum(m.maps[:mass]) > 0, seq)
             @test all(m -> m.direction == :offaxis, seq)
         end
