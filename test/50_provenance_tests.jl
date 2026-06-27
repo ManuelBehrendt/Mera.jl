@@ -57,8 +57,7 @@ if DATA_AVAILABLE && isdir(PV_PATH)
         objs = Any[g,
                    getgravity(info, verbose=false, show_progress=false),
                    getclumps(info, verbose=false),
-                   projection(g, :sd, verbose=false, show_progress=false),
-                   velocity_cube(g; nv=8, verbose=false)]
+                   projection(g, :sd, verbose=false, show_progress=false)]
         for o in objs
             @test provenance(o).output == 100
         end
@@ -67,7 +66,6 @@ if DATA_AVAILABLE && isdir(PV_PATH)
     @testset "wired into derived results (pdf / PV / GalaxyFrame)" begin
         @test provenance(pdf(g, :rho)).output == 100
         @test provenance(pdf(projection(g, :sd, verbose=false, show_progress=false), :sd)).output == 100
-        @test provenance(position_velocity(g; nbins=16, verbose=false)).output == 100
         @test provenance(face_on(g)).output == 100
         # a result with genuinely no .info (raw matrix pdf, a plain NamedTuple) → clear error
         @test_throws ArgumentError provenance(pdf(projection(g, :sd, verbose=false, show_progress=false).maps[:sd]))

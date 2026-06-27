@@ -90,7 +90,8 @@ pick the `κ` (scalar, field, or vector) that matches the source and band.
     when you load with the run's `UNIT_*` constants (see [Reading PLUTO data](pluto_reader.md)).
 
 A velocity-resolved absorption-**line** spectrum along a sightline (a mock spectrograph) is a
-planned follow-up; combine [`velocity_cube`](@ref) with this τ for now.
+planned follow-up; for now combine this τ with a line-of-sight velocity cube from the
+in-development `MeraLosCubes` module (see `dev/loscubes/`).
 
 ## See also
 

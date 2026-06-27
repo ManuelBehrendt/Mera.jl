@@ -154,8 +154,8 @@ moviefromframes("frames/", "movie.gif")       # …or:
 ## Save and reload the movie object
 
 Computing the frames (especially at high resolution over many outputs) is the expensive part.
-Persist the `MeraMovie` to a **JLD2** file — the same Julia-native way [`savemap`](@ref) and
-[`savecube`](@ref) store a map or a cube — and reload it later with [`loadmovie`](@ref),
+Persist the `MeraMovie` to a **JLD2** file — the same Julia-native way [`savemap`](@ref)
+stores a map — and reload it later with [`loadmovie`](@ref),
 without re-running [`getmovie`](@ref):
 
 ```julia
@@ -172,4 +172,3 @@ savemovie(m2, "density.gif"; tags=:time)   # re-encode to a GIF with any tags/co
 - [`timeseries`](@ref) — the same outputs/loading machinery, reducing each snapshot to a row instead of a frame.
 - [`projection`](@ref) — the per-frame projection engine and its view keywords.
 - [Auto-Frame](galaxyframe.md) — `face_on`/`edge_on` for an oriented movie.
-- [Mock Observations](mock_observations.md) — beam/noise and kinematics on a single frame.

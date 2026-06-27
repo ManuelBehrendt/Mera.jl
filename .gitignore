@@ -143,3 +143,7 @@ docs/dev/
 
 # Internal comparison/benchmark harness — kept local, never published (src/benchmarks/ stays tracked)
 /benchmarks/
+
+# In-development LOS-cube / kinematics / mock-observation module (extracted from the
+# package; not public, not in runtests). Kept local-only — see dev/loscubes/README.md.
+dev/

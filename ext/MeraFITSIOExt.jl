@@ -64,18 +64,9 @@ function _sky_axes!(K, V, C, nx, ny, px, scalefac, distance, sky_center, beam)
     end
 end
 
-function _spectral_axis!(K, V, C, bins, quantity, bin_unit, specsys, restfreq)
-    nb = length(bins)-1; db = (bins[end]-bins[1])/nb; c0 = bins[1] + 0.5*db
-    ctype = quantity === :vlos || bin_unit in _VEL_UNITS ? "VRAD" :
-            bin_unit in _FREQ_UNITS ? "FREQ" : uppercase(string(quantity))
-    _push!(K,V,C,"CTYPE3",ctype,"LOS quantity axis")
-    _push!(K,V,C,"CRPIX3",1.0,"first channel"); _push!(K,V,C,"CRVAL3",c0,"first channel centre")
-    _push!(K,V,C,"CDELT3",db,"channel width"); _push!(K,V,C,"CUNIT3",string(bin_unit),"")
-    (ctype == "VRAD" || ctype == "FREQ") && _push!(K,V,C,"SPECSYS",specsys,"spectral frame")
-    restfreq !== nothing && _push!(K,V,C,"RESTFRQ",Float64(restfreq),"Hz")
-end
-
 # ---- header builders --------------------------------------------------------------------
+# (LOS-cube FITS export — _spectral_axis!/_cube_header + savefits(::LosCubeType) — moved to the
+#  in-development module: dev/loscubes/loscubes_fits.jl)
 function _map_header(m, var; wcs, distance, distance_unit, sky_center, beam)
     nx, ny = size(m.maps[var]); K=String[]; V=Any[]; C=String[]
     _push!(K,V,C,"BUNIT", string(get(m.maps_unit, var, :standard)), "value unit")
@@ -86,20 +77,6 @@ function _map_header(m, var; wcs, distance, distance_unit, sky_center, beam)
         _linear_axes!(K,V,C,nx,ny,m.pixsize)
     end
     _camera_prov!(K,V,C,m.los,m.up,m.boxlen)
-    return FITSHeader(K,V,C)
-end
-
-function _cube_header(c; wcs, distance, distance_unit, sky_center, beam, specsys, restfreq)
-    nx, ny, _ = size(c.cube); K=String[]; V=Any[]; C=String[]
-    _push!(K,V,C,"BUNIT", string(c.weight), "deposited weight")
-    _push!(K,V,C,"QUANT", string(c.quantity), "binned LOS quantity")
-    if wcs === :sky
-        _sky_axes!(K,V,C,nx,ny,c.pixsize,_unitfac(c.info,distance_unit),distance,sky_center,beam)
-    else
-        _linear_axes!(K,V,C,nx,ny,c.pixsize)
-    end
-    _spectral_axis!(K,V,C,c.bins,c.quantity,c.bin_unit,specsys,restfreq)
-    _camera_prov!(K,V,C,c.los,c.up,c.boxlen)
     return FITSHeader(K,V,C)
 end
 
@@ -115,20 +92,6 @@ function Mera.savefits(m::Mera.DataMapsType, var::Symbol, filename::AbstractStri
               distance_unit=distance_unit, sky_center=sky_center, beam=beam))
     end
     verbose && println("Saved FITS map $(size(data)) [$var, wcs=:$wcs] → ", fn)
-    return fn
-end
-
-function Mera.savefits(c::Mera.LosCubeType, filename::AbstractString;
-        wcs::Symbol=:linear, distance::Real=0.0, distance_unit::Symbol=:standard,
-        sky_center=(0.0,0.0), beam=nothing, specsys::AbstractString="LSRK", restfreq=nothing,
-        verbose::Bool=true)
-    fn = endswith(filename, ".fits") ? filename : filename * ".fits"
-    FITS(fn, "w") do f
-        write(f, Array{Float64}(c.cube); header=_cube_header(c; wcs=wcs, distance=distance,
-              distance_unit=distance_unit, sky_center=sky_center, beam=beam,
-              specsys=specsys, restfreq=restfreq))
-    end
-    verbose && println("Saved FITS cube $(size(c.cube)) [$(c.quantity), wcs=:$wcs] → ", fn)
     return fn
 end
 

@@ -322,29 +322,16 @@ end
     end
 
     @testset "nmax caps sub-sampling cost" begin
-        # huge cell but nmax=1 => single sub-point (cheap), still conserves
+        # huge cell, nmax=1 => a single sub-point (cost is capped), but the hole-free :overlap
+        # deposit lays that sub-point down as a footprint-sized top-hat, so a capped coarse cell
+        # still spreads over its projected shadow and conserves its mass — it no longer collapses
+        # onto one pixel. Center it so the size-8 footprint fits the [0,8]² grid (no edge clipping).
         g, wg = newgrids()
-        Mera.deposit_rotated_cells_overlap!(g, wg, [4.5], [4.5], [8.0], [10.0], [1.0],
+        Mera.deposit_rotated_cells_overlap!(g, wg, [4.0], [4.0], [8.0], [10.0], [1.0],
                                             R, U, ext, res; nmax=1)
-        @test sum(g) ≈ 10.0
-        @test count(!iszero, g) == 1            # nmax=1 collapses to a single point (at a pixel centre)
+        @test sum(g) ≈ 10.0                      # conserves under the nmax cap
+        @test count(!iszero, g) > 1             # spreads over its footprint (not a single pixel)
     end
-end
-
-@testset "mock_observe — beam smoothing (data-free)" begin
-    # a point source spread by a Gaussian beam: peak drops, neighbours gain, flux ~conserved
-    A = zeros(Float64, 21, 21); A[11, 11] = 1.0
-    b = mock_observe(A; beam_fwhm=4.0)                 # pixsize=1 (pixels), no noise
-    @test size(b) == size(A)
-    @test b[11, 11] < 1.0                              # beam lowers the peak
-    @test b[11, 12] > 0 && b[12, 11] > 0               # neighbours gain flux
-    @test isapprox(sum(b), sum(A); rtol=0.02)          # normalized Gaussian conserves flux
-    @test mock_observe(A; beam_fwhm=0.0) == A          # zero beam -> unchanged
-    # noise increases scatter; a fixed rng is reproducible
-    n1 = mock_observe(A; beam_fwhm=2.0, noise=0.1, rng=MersenneTwister(7))
-    n2 = mock_observe(A; beam_fwhm=2.0, noise=0.1, rng=MersenneTwister(7))
-    @test n1 == n2                                     # reproducible with a seeded rng
-    @test n1 != mock_observe(A; beam_fwhm=2.0)         # noise actually added
 end
 
 @testset "Off-axis EXACT binning — analytic box-spline footprint (data-free)" begin

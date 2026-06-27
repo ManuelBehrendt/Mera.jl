@@ -2085,71 +2085,6 @@ end
             @test σ_glob > 0 && maximum(ps.maps[:σlos]) > 0
         end
 
-        @testset "position_velocity diagram" begin
-            pv = position_velocity(hydro; direction=:edgeon, center=[:bc], range_unit=:kpc, nbins=128, verbose=false)
-            @test size(pv.pv) == (128, 128)
-            @test length(pv.offset) == 129 && length(pv.velocity) == 129
-            @test sum(pv.pv) > 0
-            @test isapprox(sum(pv.pv), sum(getvar(hydro, :mass)); rtol=1e-6)   # mass conserved into the PV plane
-            @test pv.v_unit == :km_s
-        end
-
-        @testset "velocity_cube + velocity_moments" begin
-            vc = velocity_cube(hydro; direction=:edgeon, center=[:bc], range_unit=:kpc, res=96, nv=32, verbose=false)
-            nx, ny, nv = size(vc.cube)
-            @test nv == 32 && length(vc.velocity) == 33 && length(vc.x) == nx+1
-            @test isapprox(sum(vc.cube), sum(getvar(hydro, :mass)); rtol=1e-6)   # cube conserves total mass
-            # getextent on a cube: code-unit edges → physical sky extent (matches the DataMapsType accessor)
-            @test getextent(vc) == [vc.x[1], vc.x[end], vc.y[1], vc.y[end]]
-            @test getextent(vc, :kpc) ≈ [vc.x[1], vc.x[end], vc.y[1], vc.y[end]] .* vc.scale.kpc
-            mom = velocity_moments(vc)
-            @test size(mom.Σ) == (nx, ny) && size(mom.vlos) == (nx, ny) && size(mom.σlos) == (nx, ny)
-            @test isapprox(sum(mom.Σ), sum(vc.cube); rtol=1e-9)                 # moment-0 == column sum
-            @test all(mom.σlos .>= 0)
-            @test minimum(mom.vlos) < 0 && maximum(mom.vlos) > 0               # edge-on rotation
-            # a bright pixel carries a real velocity profile (a distribution, not one number)
-            @test count(vc.cube[argmax(mom.Σ), :] .> 0) >= 1
-            # getspectrum: per-pixel spectrum integrates to that pixel's column (moment 0)
-            ij = argmax(mom.Σ)
-            ctr, vals = getspectrum(vc, ij[1], ij[2])
-            @test length(ctr) == nv && length(vals) == nv
-            @test isapprox(sum(vals), mom.Σ[ij]; rtol=1e-9)        # Σ over channels == column
-            @test ctr ≈ (vc.bins[1:end-1] .+ vc.bins[2:end]) ./ 2  # centres of the bin edges
-            # physical-position accessor lands on a valid pixel and returns nv channels
-            c2, v2 = getspectrum(vc; x=0, y=0, range_unit=:kpc)
-            @test length(c2) == nv && length(v2) == nv
-        end
-
-        @testset "los_cube (arbitrary quantity) + los_component + save/load" begin
-            # bin by an ARBITRARY scalar quantity (per-pixel temperature distribution)
-            tc = los_cube(hydro; quantity=:T, q_unit=:K, direction=:faceon, center=[:bc],
-                          range_unit=:kpc, res=96, nbins=40, verbose=false)
-            @test tc isa Mera.LosCubeType
-            @test tc.quantity == :T && tc.bin_unit == :K && tc.direction == :offaxis
-            @test isapprox(sum(tc.cube), sum(getvar(hydro, :mass)); rtol=1e-6)   # mass conserved
-            r = los_moments(tc)
-            @test size(r.mean) == size(tc.cube)[1:2] && all(r.dispersion .>= 0)
-            # LOS component of an arbitrary vector (velocity here) as a 2D map (metadata-carrying)
-            vc = los_component(hydro, (:vx,:vy,:vz); direction=:edgeon, center=[:bc], unit=:km_s, verbose=false)
-            @test vc.map isa Matrix && minimum(vc.map) < 0 && maximum(vc.map) > 0
-            @test length(vc.los) == 3 && length(vc.center) == 3 && vc.unit == :km_s   # provenance travels
-            @test all(los_component(hydro, (:vx,:vy,:vz); direction=:edgeon, center=[:bc],
-                                    unit=:km_s, dispersion=true, verbose=false).map .>= 0)
-            # JLD2 save/load FULL-FIELD round-trip — a dropped/transposed camera frame would
-            # silently reconstruct a wrongly-oriented cube, so check every stored field.
-            tmp = tempname() * ".jld2"
-            savecube(tc, tmp; verbose=false)
-            tc2 = loadcube(tmp; verbose=false)
-            @test tc2 isa Mera.LosCubeType
-            @test tc2.cube == tc.cube && tc2.bins == tc.bins && tc2.quantity == tc.quantity
-            @test tc2.los == tc.los && tc2.up == tc.up && tc2.cam_right == tc.cam_right
-            @test tc2.center == tc.center && tc2.pixsize == tc.pixsize && tc2.boxlen == tc.boxlen
-            @test tc2.bin_unit == tc.bin_unit && tc2.weight == tc.weight
-            @test tc2.x == tc.x && tc2.y == tc.y
-            @test length(tc.center) == 3 && all(isfinite, tc.center)   # numeric provenance present
-            rm(tmp, force=true)
-        end
-
         @testset "column_integral (∫q dl) — :rho ≡ surface density" begin
             # the line-of-sight column ∫ρ dl must equal the mass surface density Σ (both = mass
             # column); this verifies the chord-integral the :exact deposit computes is exposed.
@@ -2178,28 +2113,14 @@ end
                 FITSIO = Base.require(Base.PkgId(Base.UUID("525bcba6-941b-5504-bd06-fd0dc1a4d2eb"), "FITSIO"))
                 m  = projection(hydro, :sd, :Msol_pc2, los=[1.0,1,1], center=[:bc], pxsize=[0.6,:kpc],
                                 range_unit=:kpc, verbose=false, show_progress=false)
-                vc = velocity_cube(hydro; direction=:edgeon, center=[:bc], pxsize=[1.0,:kpc],
-                                   xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nv=24, verbose=false)
-                dmap = tempname()*".fits"; dcub = tempname()*".fits"
-                savefits(m, :sd, dmap; verbose=false); savefits(vc, dcub; verbose=false)
+                dmap = tempname()*".fits"
+                savefits(m, :sd, dmap; verbose=false)
                 f = FITSIO.FITS(dmap); a = read(f[1]); close(f)
-                g = FITSIO.FITS(dcub); b = read(g[1]); close(g)
                 @test a == Array{Float64}(m.maps[:sd])           # map round-trips bit-for-bit
-                @test b == Array{Float64}(vc.cube)               # cube round-trips bit-for-bit
-                rm(dmap, force=true); rm(dcub, force=true)
+                rm(dmap, force=true)
             else
                 @test_throws ArgumentError savefits("x", "y")    # helpful error without FITSIO
             end
-        end
-
-        @testset "mock_observe (beam + noise)" begin
-            m = projection(hydro, :sd, :Msol_pc2, direction=:faceon, center=[:bc], range_unit=:kpc, res=256, verbose=false, show_progress=false)
-            obs = mock_observe(m, :sd; beam_fwhm=1.0, beam_unit=:kpc)
-            @test size(obs) == size(m.maps[:sd])
-            @test maximum(obs) < maximum(m.maps[:sd])                  # beam lowers the peak
-            @test isapprox(sum(obs), sum(m.maps[:sd]); rtol=0.05)      # flux ~conserved by the (normalized) beam
-            @test mock_observe(m.maps[:sd]; beam_fwhm=2.0) isa Matrix  # matrix form
-            @test_throws ArgumentError mock_observe(m, :not_a_var; beam_fwhm=1.0)
         end
 
         @testset "off-axis :exact ≡ :overlap per-pixel on real AMR" begin

@@ -1,8 +1,7 @@
 # 36_offaxis_features_tests.jl  --  Off-axis / LOS feature additions
 # ==============================================================================
 # Covers the post-review feature set built on the off-axis core:
-#   integrated_spectrum, angular beam in mock_observe, moment2, offaxis_slice,
-#   emission_map (optical-depth RT), profile / phase, and (guarded) FITS sky WCS.
+#   offaxis_slice, emission_map (optical-depth RT), profile / phase.
 # Each test is an analytic oracle or a conservation/identity check.
 # Required datasets: :spiral_clumps (AMR) and :spiral_ugrid (uniform).
 
@@ -41,124 +40,6 @@ end
     du = DATASETS[:spiral_ugrid];  ug  = gethydro(getinfo(du.output, du.path, verbose=false), verbose=false, show_progress=false)
     mtot = sum(getvar(gas, :mass))
 
-    @testset "integrated_spectrum conserves the cube total" begin
-        vc = velocity_cube(gas; direction=:edgeon, center=[:bc], pxsize=[1.0,:kpc],
-                           xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, nv=60, verbose=false)
-        b, I = integrated_spectrum(vc)
-        @test length(b) == 60 && length(I) == 60
-        @test isapprox(sum(I), sum(vc.cube); rtol=1e-12)               # Σ channels == cube total
-        @test isapprox(sum(I), sum(los_moments(vc).Σ); rtol=1e-12)     # == moment-0 total
-        _, I2 = integrated_spectrum(vc; mask=trues(size(vc.cube)[1:2]...))
-        @test I2 ≈ I                                                    # mask=all equals full
-    end
-
-    @testset "LOS cube: explicit qrange drops out-of-range samples (no edge pile-up)" begin
-        # Regression: an explicit qrange used to CLAMP out-of-range samples onto the first/last
-        # channel, piling the wings of the distribution onto the edge bins and corrupting the
-        # spectrum. They must be DROPPED instead. A narrow qrange must therefore hold STRICTLY less
-        # total than the auto-range cube, and the edge channels must not balloon.
-        win = (direction=:edgeon, center=[:bc], xrange=[-15,15], yrange=[-15,15], range_unit=:kpc,
-               pxsize=[1.0,:kpc], nv=60, v_unit=:km_s)
-        full   = velocity_cube(gas; win..., verbose=false)                       # auto range
-        vmax   = maximum(abs.(extrema(full.bins)))
-        narrow = velocity_cube(gas; win..., vrange=[-vmax/3, vmax/3], verbose=false)
-        @test sum(narrow.cube) < sum(full.cube)                                   # wings genuinely dropped
-        # edge channels of the narrow cube must not collect the dropped wings:
-        Σnar  = dropdims(sum(narrow.cube, dims=(1,2)), dims=(1,2))                # per-channel total
-        @test Σnar[1]   <= maximum(Σnar)                                          # first bin not a spike
-        @test Σnar[end] <= maximum(Σnar)                                          # last  bin not a spike
-        # a generous qrange that brackets all data keeps everything (== auto range total)
-        wide = velocity_cube(gas; win..., vrange=[-vmax*2, vmax*2], verbose=false)
-        @test isapprox(sum(wide.cube), sum(full.cube); rtol=1e-9)
-    end
-
-    @testset "cubes/los_component support hole-free :overlap binning" begin
-        # the footprint deposit (:overlap) works in cubes too: conserves the total AND fills the
-        # cell footprints (no centre-deposit holes), unlike the default :cic.
-        win = (direction=:edgeon, center=[:bc], xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, pxsize=[0.4,:kpc], nv=40)
-        vo = velocity_cube(gas; binning=:overlap, win..., verbose=false)
-        vc = velocity_cube(gas; binning=:cic,     win..., verbose=false)
-        @test isapprox(sum(vo.cube), sum(vc.cube); rtol=1e-9)           # overlap conserves like cic
-        Σo = dropdims(sum(vo.cube,dims=3),dims=3); Σc = dropdims(sum(vc.cube,dims=3),dims=3)
-        @test count(iszero, Σo) < count(iszero, Σc)                     # overlap fills holes cic leaves
-        lc = los_component(gas, (:vx,:vy,:vz); binning=:overlap, direction=:edgeon, center=[:bc],
-                           xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, pxsize=[0.4,:kpc], unit=:km_s, verbose=false)
-        @test lc.map isa Matrix && all(isfinite, lc.map)                # los_component accepts :overlap
-    end
-
-    @testset "angular beam == equivalent physical beam" begin
-        m = projection(gas, :sd, :Msol_pc2, direction=:faceon, center=[:bc], pxsize=[0.3,:kpc],
-                       range_unit=:kpc, verbose=false, show_progress=false)
-        θ = 20.0; D = 10_000.0                                          # 20 arcsec at 10 Mpc(=1e4 kpc)
-        a1 = mock_observe(m, :sd; beam_fwhm=θ, beam_unit=:arcsec, distance=D, distance_unit=:kpc)
-        a2 = mock_observe(m, :sd; beam_fwhm=θ*(π/648000)*D, beam_unit=:kpc)
-        @test a1 == a2                                                  # bit-identical
-        @test_throws ArgumentError mock_observe(m, :sd; beam_fwhm=θ, beam_unit=:arcsec)  # needs distance
-    end
-
-    @testset "moment2 reproduces σlos (interior)" begin
-        kw = (direction=:edgeon, center=[:bc], xrange=[-12,12], yrange=[-12,12],
-              range_unit=:kpc, res=120, binning=:cic)
-        A = moment2(gas, :vlos, :km_s; verbose=false, kw...).map
-        B = projection(gas, :σlos, :km_s; verbose=false, show_progress=false, kw...).maps[:σlos]
-        @test size(A) == size(B)
-        c = 12:size(A,1)-11                                            # interior (edges differ by clamp/window convention)
-        sub = A[c, c]; subB = B[c, c]; nz = (sub .> 0) .& (subB .> 0)
-        @test maximum(abs.(sub[nz] .- subB[nz])) <= 1e-6 * maximum(subB[nz])
-        @test all(moment2(gas, :T, :K; direction=:faceon, center=[:bc], verbose=false).map .>= 0)
-    end
-
-    @testset "los_moments mean & dispersion vs independent (unbinned) computation" begin
-        # The cube's moment-1 (mean) and moment-2 (dispersion) — the science-bearing outputs — checked
-        # against the unbinned per-pixel reference los_component(...; dispersion). Catches a sign error,
-        # a bin-centre offset, or a weight mismatch (which would show tens of km/s, far above tolerance).
-        view = (direction=:edgeon, center=[:bc], range_unit=:kpc, pxsize=[1.0,:kpc], xrange=[-15,15], yrange=[-15,15])
-        vc  = velocity_cube(gas; view..., nv=120, vrange=[-300.,300.], verbose=false)
-        m   = los_moments(vc)
-        lcm = los_component(gas, (:vx,:vy,:vz); view..., unit=:km_s, verbose=false)                 # unbinned ⟨v_los⟩
-        lcd = los_component(gas, (:vx,:vy,:vz); view..., unit=:km_s, dispersion=true, verbose=false) # unbinned σ_los
-        @test size(m.mean) == size(lcm.map) == size(m.dispersion) == size(lcd.map)   # same off-axis frame
-        Δ = vc.bins[2] - vc.bins[1]                                                   # channel width
-        well = m.Σ .> 0.2 * maximum(m.Σ)                                              # well-sampled pixels
-        @test count(well) >= 3
-        # mean is ~unbiased by binning; Sheppard-correct the dispersion (binned σ² ≈ σ² + Δ²/12)
-        σcorr = sqrt.(max.(m.dispersion[well].^2 .- Δ^2/12, 0.0))
-        @test median(abs.(m.mean[well]      .- lcm.map[well])) < 1.5      # km/s; measured ≈0.3
-        @test median(abs.(σcorr             .- lcd.map[well])) < 1.5      # km/s; measured ≈0.4
-        b = argmax(m.Σ)                                                   # brightest sightline
-        @test abs(m.mean[b] - lcm.map[b]) < Δ
-        @test sum(m.Σ) ≈ sum(los_moments(vc).Σ)                          # moment-0 stable
-    end
-
-    @testset "savecube/loadcube round-trips ALL metadata (incl. camera basis & vector quantity)" begin
-        vc = velocity_cube(gas; direction=:edgeon, center=[:bc], pxsize=[1.5,:kpc],
-                           xrange=[-12,12], yrange=[-12,12], range_unit=:kpc, nv=40, verbose=false)
-        fn = tempname() * ".jld2"
-        savecube(vc, fn, verbose=false); vc2 = loadcube(fn, verbose=false)
-        @test vc2 isa Mera.LosCubeType
-        @test vc2.cube == vc.cube && vc2.x == vc.x && vc2.y == vc.y && vc2.bins == vc.bins
-        @test vc2.los == vc.los && vc2.up == vc.up && vc2.cam_right == vc.cam_right   # camera basis preserved
-        @test vc2.center == vc.center && vc2.pixsize == vc.pixsize
-        @test vc2.quantity == vc.quantity && vc2.bin_unit == vc.bin_unit && vc2.weight == vc.weight
-        @test vc2.range_unit == vc.range_unit && vc2.boxlen == vc.boxlen
-        @test los_moments(vc2).Σ == los_moments(vc).Σ                    # reloaded cube is fully usable
-        rm(fn, force=true)
-
-        # a 3-vector quantity round-trips its tuple `quantity` faithfully
-        cv = los_cube(gas, quantity=(:vx,:vy,:vz); direction=:edgeon, center=[:bc], pxsize=[2.0,:kpc],
-                      xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nbins=32, q_unit=:km_s, verbose=false)
-        fn2 = tempname() * ".jld2"; savecube(cv, fn2, verbose=false); cv2 = loadcube(fn2, verbose=false)
-        @test cv2.quantity == (:vx,:vy,:vz) && cv2.cube == cv.cube
-        rm(fn2, force=true)
-    end
-
-    @testset "loadcube rejects a non-cube / corrupt file" begin
-        bad = tempname() * ".jld2"
-        Mera.JLD2.jldsave(bad; loscube = [1,2,3])               # not a LosCubeType
-        @test_throws ErrorException loadcube(bad, verbose=false)
-        rm(bad, force=true)
-    end
-
     @testset "savemap/loadmap round-trips a projection result" begin
         p = projection(gas, [:sd, :vx], verbose=false, show_progress=false)
         fn = tempname() * ".jld2"
@@ -177,11 +58,6 @@ end
         bad = tempname() * ".jld2"; Mera.JLD2.jldsave(bad; meramap = [1,2,3])
         @test_throws ErrorException loadmap(bad, verbose=false)
         rm(bad, force=true)
-    end
-
-    @testset "reversed qrange is rejected" begin
-        @test_throws ArgumentError velocity_cube(gas; direction=:edgeon, center=[:bc], pxsize=[2.0,:kpc],
-                            xrange=[-10,10], yrange=[-10,10], range_unit=:kpc, nv=30, vrange=[100.,-100.], verbose=false)
     end
 
     @testset "offaxis_slice fills the plane (nearest-cell)" begin
@@ -449,20 +325,6 @@ end
             tv = profiletimeseries(loadfn, [dc.output], :r_cylinder, [:rho, :T];
                      field=(:T,:mean), weight=:mass, nbins=12, xrange=(0,20), rckw...)
             @test size(tv.M) == (12,1) && tv.field == (:T,:mean) && any(tv.M .> 0)
-        end
-
-        @testset "P0-3 zero-spread cube quantity (single-cell mask)" begin
-            m1 = falses(length(getvar(gas,:rho))); m1[1] = true
-            c1 = los_cube(gas; quantity=:rho, los=[0.,0.,1.], mask=m1, res=16, nbins=8, verbose=false)
-            @test size(c1.cube,3) == 8 && sum(c1.cube) > 0
-        end
-
-        @testset "P0-4 cube window frames the SAME region as projection" begin
-            kwin = (los=[0.,0.,1.], xrange=[0.,20.], yrange=[-5.,15.], center=[:bc], range_unit=:kpc, res=48)
-            pj = projection(gas, :sd, :Msol_pc2; kwin..., verbose=false, show_progress=false)
-            cb = los_cube(gas; quantity=:rho, kwin..., verbose=false)
-            @test isapprox(cb.x[1], pj.extent[1]; atol=1e-9) && isapprox(cb.x[end], pj.extent[2]; atol=1e-9)
-            @test isapprox(cb.y[1], pj.extent[3]; atol=1e-9) && isapprox(cb.y[end], pj.extent[4]; atol=1e-9)
         end
 
         @testset "P1-1/P1-2 subregion conserves mass (off-axis & axis-:z)" begin

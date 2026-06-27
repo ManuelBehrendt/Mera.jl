@@ -5,14 +5,19 @@
 
 
 This tutorial walks through the line-of-sight analysis tools built on top of Mera's off-axis
-projection — **velocity/field dispersion (`moment2`)**, the **integrated spectrum**, **off-axis
-slices**, the **column integral**, **emission + absorption (`emission_map`)**, a telescope **beam
-in angular units**, and **FITS export with a sky WCS**.
+projection — **off-axis slices**, the **column integral**, **emission + absorption
+(`emission_map`)**, and **FITS export with a sky WCS**.
 
 Run the cells top to bottom and change the numbers. We use **one galaxy** throughout
 (`spiral_clumps`) and set pixel sizes physically with `pxsize=[size, :unit]`.
 
 Prerequisite: the [off-axis projection tutorial](11_multi_OffAxisProjection.md).
+
+!!! note
+    Line-of-sight PPV cubes, per-pixel spectra, moment maps (`moment2`/`integrated_spectrum`),
+    position–velocity diagrams and `mock_observe` now live in an in-development module
+    (`MeraLosCubes`) that ships separately from the released package, so this page has no
+    broken examples.
 
 
 ```julia
@@ -58,66 +63,7 @@ function showmap!(fig, pos, M, ext_kpc; title="", clabel="", cmap=:inferno, logs
 end;
 ```
 
-## 1. Dispersion of any field — `moment2`
-
-`moment2(obj, q)` is the weight-weighted line-of-sight **standard deviation** σ = √(⟨q²⟩−⟨q⟩²)
-of a field `q`. For `q=:vlos` it is the velocity dispersion `σlos`; but it works for **any**
-field — here the temperature dispersion along each edge-on sightline, next to the mean v_los.
-
-
-```julia
-win = (direction=:edgeon, center=[:bc], xrange=[-16,16], yrange=[-16,16], range_unit=:kpc, pxsize=[0.4,:kpc])
-sv  = moment2(gas, :vlos, :km_s; win..., verbose=false)        # σ_los  (velocity dispersion)
-sT  = moment2(gas, :T,    :K;    win..., verbose=false)        # σ_T    (temperature dispersion)
-e   = [sv.x[1], sv.x[end], sv.y[1], sv.y[end]] .* gas.scale.kpc   # moment2/los_component give x,y edges
-fig = Figure(size=(1050,430))
-showmap!(fig, (1,1), sv.map, e; title="σ_los  (edge-on)", clabel="km/s", logscale=false, cmap=:viridis)
-showmap!(fig, (1,3), sT.map, e; title="σ_T  (LOS temperature spread)", clabel="log₁₀ σ_T [K]")
-fig
-```
-
-
-
-
-    
-![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_6_0.png)
-    
-
-
-
-## 2. The global spectrum — `integrated_spectrum`
-
-A velocity cube holds a spectrum per pixel; summing them over the map gives the **integrated
-(global) line profile** — the single-dish HI/CO-style profile. (Summing the profile over the
-channels returns the enclosed mass.)
-
-
-```julia
-vc = velocity_cube(gas; direction=:edgeon, center=[:bc], xrange=[-18,18], yrange=[-18,18],
-                   range_unit=:kpc, pxsize=[0.4,:kpc], nv=120, verbose=false)
-v, I = integrated_spectrum(vc)
-println("∫ spectrum dv = ", round(sum(I), sigdigits=4), "  (code mass) = enclosed mass")
-fig = Figure(size=(680,430)); ax = Axis(fig[1,1], xlabel="v_los [km/s]", ylabel="mass / channel",
-                                        title="integrated (global) line profile — edge-on disk")
-band!(ax, v, zero(I), I, color=(:teal,0.3)); lines!(ax, v, I, color=:teal, linewidth=2)
-fig
-```
-
-    ∫ spectrum dv = 19.45
-
-      (code mass) = enclosed mass
-
-
-
-
-
-    
-![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_8_2.png)
-    
-
-
-
-## 3. Off-axis slice (cutting plane) — `offaxis_slice`
+## 1. Off-axis slice (cutting plane) — `offaxis_slice`
 
 `offaxis_slice` gives the field **on** the camera plane through the centre — a cut, not an
 integral. Compare the mid-plane density (slice) with the surface density (projection) of the
@@ -145,7 +91,7 @@ fig
 
 
 
-## 4. Column integral — `column_integral`
+## 2. Column integral — `column_integral`
 
 `column_integral` is the path-length-weighted line integral `∫ q dl` (the geometric basis of a
 column-density / optical-depth map): `q=:rho` gives the mass column (the same physical quantity
@@ -192,7 +138,7 @@ fig
 
 
 
-## 5. Emission + absorption — `emission_map`
+## 3. Emission + absorption — `emission_map`
 
 `emission_map` solves the front-to-back radiative-transfer equation
 `I = Σ S·(1−e^{−Δτ})·e^{−τ_front}` along each sightline, with `Δτ = κ·ℓ` and the **exact**
@@ -245,58 +191,28 @@ fig
 
 
 
-## 6. A telescope beam in angular units — `mock_observe`
+## 4. FITS export with a sky WCS — `savefits`
 
-`mock_observe` convolves a map with a Gaussian beam. Beyond a physical beam (`:kpc`), it accepts
-an **angular** beam (`:arcsec`) together with a source **`distance`** — the beam is `θ × distance`
-physical (small-angle). Here a face-on disk observed with a 5″ beam at 10 Mpc (`distance=1e4, distance_unit=:kpc`).
-
-
-```julia
-m   = projection(gas, :sd, :Msol_pc2; direction=:faceon, center=[:bc], xrange=[-18,18], yrange=[-18,18],
-                 range_unit=:kpc, pxsize=[0.2,:kpc], binning=:exact, verbose=false, show_progress=false)
-obs = mock_observe(m, :sd; beam_fwhm=5.0, beam_unit=:arcsec, distance=1.0e4, distance_unit=:kpc, noise=2.0)
-fig = Figure(size=(1050,430)); e = m.extent .* gas.scale.kpc
-showmap!(fig, (1,1), m.maps[:sd], e; title="model Σ (exact projection)", clabel="log₁₀ Σ [M⊙/pc²]")
-showmap!(fig, (1,3), obs, e; title="observed: 5″ beam @ 10 Mpc + noise", clabel="log₁₀ Σ")
-fig
-```
-
-
-
-
-    
-![png](14_multi_OffAxis_Features_files/14_multi_OffAxis_Features_18_0.png)
-    
-
-
-
-## 7. FITS export with a sky WCS — `savefits`
-
-Maps and cubes export to **FITS** for DS9/CASA/CARTA/astropy. `savefits` is a package extension —
+Maps export to **FITS** for DS9/CASA/CARTA/astropy. `savefits` is a package extension —
 load `FITSIO` to enable it. With `wcs=:sky` and a `distance` it writes a celestial WCS
-(`RA---TAN`/`DEC--TAN`) and, for cubes, a proper spectral axis (`VRAD`):
+(`RA---TAN`/`DEC--TAN`):
 
 ```julia
 using FITSIO                                   # activates the FITS extension
-# a map with a celestial WCS (5″/pix scale derives from pxsize and the distance)
+m = projection(gas, :sd, :Msol_pc2; direction=:faceon, center=[:bc], xrange=[-18,18], yrange=[-18,18],
+               range_unit=:kpc, pxsize=[0.2,:kpc], binning=:exact, verbose=false, show_progress=false)
+# a map with a celestial WCS (the pixel scale derives from pxsize and the distance)
 savefits(m, :sd, "disk_sd"; wcs=:sky, distance=1.0e4, distance_unit=:kpc, sky_center=(150.0, 2.0))
-# a velocity cube with celestial + spectral (VRAD) WCS — opens in CASA/CARTA/spectral-cube
-savefits(vc, "disk_cube"; wcs=:sky, distance=1.0e4, distance_unit=:kpc)
 ```
 
-For dependency-free storage use `savecube`/`loadcube` (JLD2). The default `wcs=:linear` writes a
-camera-plane WCS in code units (no distance needed).
+The default `wcs=:linear` writes a camera-plane WCS in code units (no distance needed).
 
 ## Takeaway
 
-- `moment2` — LOS dispersion of *any* field;
-- `integrated_spectrum` — the global line profile of a cube;
 - `offaxis_slice` — the field on a cutting plane (vs the conserved projection);
 - `column_integral` — the line integral `∫ q dl` (mass column / optical-depth basis);
 - `emission_map` — emission **with absorption** (e^{−τ}) using the exact chord length;
-- `mock_observe` — physical *or* angular beam (with a distance) + noise;
-- `savefits(…; wcs=:sky)` — celestial + spectral WCS, ready for CASA/CARTA/DS9.
+- `savefits(…; wcs=:sky)` — celestial WCS, ready for CASA/CARTA/DS9.
 
 All build on the conservative off-axis core; everything here is regression-tested
 (`test/36_offaxis_features_tests.jl`).
