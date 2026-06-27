@@ -559,7 +559,8 @@ of map objects — one per angle — ready to assemble into a montage or animate
 
 ```julia
 frames = rotation_sequence(gas, :sd, :Msol_pc2; sweep=:azimuth, angles=0:30:330,
-                           inclination=55, axis=:angmom, fov=16, fov_unit=:kpc, pxsize=[0.2,:kpc])
+                           inclination=55, axis=:angmom, fov=16, fov_unit=:kpc,
+                           pxsize=[0.2,:kpc], aperture=:square)   # full rectangular frame
 
 using CairoMakie                                          # animate to a GIF
 fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect()); hidedecorations!(ax)
@@ -568,17 +569,24 @@ record(fig, "orbit.gif", eachindex(frames); framerate=8) do k
 end
 ```
 
-![Orbit montage: a galaxy at azimuths 0–300° (inclination 55°), all sharing one field of view.](assets/offaxis/orbit_montage.png)
+![Orbit montage: a galaxy at azimuths 0–300° (inclination 55°), full square frame, one fixed field of view.](assets/offaxis/orbit_montage.png)
 
 ![Animated orbit movie — azimuth sweep at 55° inclination.](assets/offaxis/orbit_movie.gif)
 
-Each frame is a `projection` of the chosen quantity (here `:sd`) at that viewing angle. The shared
-field of view is a **sphere of radius `fov`** — a sphere looks the same from every direction, so the
-object keeps **exactly the same scale and centring** at every angle (no zoom/jitter). That sphere is
-the **circular aperture** you see; the frame corners outside it carry no data and are empty by design.
+Each frame is a `projection` of the chosen quantity (here `:sd`) at that viewing angle. The off-axis
+camera is **orthographic** (parallel rays) — there is no perspective, so "moving the camera away"
+does nothing; the only control over what is in frame is the **`fov`** (omit it to auto-fit the whole
+object). The FOV must be **rotation-invariant** or the frame would breathe with angle, so a sphere of
+radius `fov` is used; `aperture` picks how it is framed:
 
-`sweep` can also be `:inclination` (tip from face-on to edge-on) or `:position_angle` (roll the
-camera). Leave `fov` out to auto-fit the object at every angle.
+| `aperture` | frame | corners |
+|---|---|---|
+| `:circle` (default) | the sphere → a **circular aperture** | empty (no data beyond radius `fov`) |
+| `:square` | a √2·`fov` sphere cropped to the `±fov` square → a **full rectangular frame** | filled (no data dropped inside) |
+
+![Circle vs square aperture: the circular cutout leaves empty corners; the square fills the frame, both at a fixed scale.](assets/offaxis/orbit_aperture.png)
+
+`sweep` can also be `:inclination` (tip from face-on to edge-on) or `:position_angle` (roll the camera).
 
 ## Troubleshooting
 
