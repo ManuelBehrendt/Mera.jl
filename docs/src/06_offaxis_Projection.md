@@ -383,30 +383,32 @@ m = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:overl
                center=[:bc], range_unit=:kpc, pxsize=[0.3, :kpc], max_threads=8)
 ```
 
-Measured strong scaling of one `pxsize=[0.3, :kpc]²` off-axis `:overlap` projection of a galaxy:
-
-![Off-axis :overlap deposit strong scaling](assets/offaxis/offaxis_scaling.png)
-
-Reproduce the curve — time one off-axis projection at increasing thread counts (run with `julia -t N`,
-so `Threads.nthreads()` is > 1):
+**Strong scaling.** The figure below is produced by exactly the benchmark that follows — time one
+off-axis `:overlap` projection (`res=1536`) of the `gas` loaded above at increasing thread counts
+(start Julia with `julia -t N`), taking the best of 3 runs per count:
 
 ```julia
 using CairoMakie
-nts  = 1:Threads.nthreads()
-bench(nt) = projection(gas, :sd, :Msol_pc2; los=[1,1,1], center=[:bc], res=1024,
+nts = 1:Threads.nthreads()                              # run with: julia -t N
+bench(nt) = projection(gas, :sd, :Msol_pc2; los=[1,1,1], center=[:bc], res=1536,
                        binning=:overlap, max_threads=nt, verbose=false, show_progress=false)
-bench(1)                                           # warm up (compile)
-t        = [ @elapsed bench(nt) for nt in nts ]
-speedup  = t[1] ./ t
+bench(1)                                                # warm up (compile)
+t       = [ minimum(@elapsed(bench(nt)) for _ in 1:3) for nt in nts ]   # best of 3 runs
+speedup = t[1] ./ t
 fig = Figure(); ax = Axis(fig[1,1], xlabel="threads", ylabel="speed-up")
-lines!(ax, collect(nts), Float64.(collect(nts)), linestyle=:dash, color=:gray)  # ideal
-scatterlines!(ax, collect(nts), speedup); fig
+lines!(ax, collect(nts), Float64.(collect(nts)), linestyle=:dash, color=:gray, label="ideal")
+scatterlines!(ax, collect(nts), speedup, label="measured"); axislegend(ax, position=:lt)
+save("offaxis_scaling.png", fig); fig
 ```
 
-The deposit speeds up ≈1.9× / 3.0× / 4.5× on 2 / 4 / 8 threads (your numbers depend on the machine).
-It does not reach the ideal linear line because the per-cell value/coordinate setup (`getvar`) runs
-serially — an Amdahl ceiling, not a deposit inefficiency. `:cic`/`:ngp` previews are already cheap and
-run serially. For **animations** (many frames) the bigger lever is parallelism *across frames*:
+![Off-axis :overlap deposit strong scaling — the output of the benchmark above (spiral_clumps, 12 cores).](assets/offaxis/offaxis_scaling.png)
+
+On `spiral_clumps` (a small 590k-cell AMR galaxy) this gives ≈1.2× / 1.5× / 2.6× / 3.4× on 2 / 4 / 8 /
+12 threads (your numbers depend on the machine and problem size). It falls short of the ideal linear
+line because the per-cell value/coordinate setup (`getvar`) runs serially — an Amdahl ceiling, not a
+deposit inefficiency — and a small box has relatively little deposit work to amortise it; a larger box
+or higher `res` scales better. `:cic`/`:ngp` previews are already cheap and run serially. For
+**animations** (many frames) the bigger lever is parallelism *across frames*:
 [`rotation_sequence`](@ref)`(…; parallel_frames=true)` runs the frames concurrently (each projection
 single-threaded), ≈1.5–2× on top. For a single high-resolution publication frame, `:overlap` with all
 threads is the fast path.
