@@ -45,6 +45,8 @@ using OnlineStats
 using Images
 using ImageTransformations
 using ImageTransformations.Interpolations
+using Colors           # RGB/parse/Colorant for the immersive ray-caster (image assembly)
+using ColorSchemes     # named colormaps for the immersive ray-caster
 using CSV
 using FileIO
 using HDF5            # Chombo / PLUTO-AMR reader (read_data/PLUTO/reader_chombo.jl)
@@ -183,6 +185,30 @@ export
     covering_grid_memory,
     slice,
     CoveringGridResult,
+
+    # immersive 3-D visualisation (volume ray-caster)
+    AmrVolume,
+    amr_volume,
+    boxcenter,
+    boxspan,
+    Camera,
+    perspective_camera,
+    equirect_camera,
+    fisheye_camera,
+    render_view,
+    render_scene,
+    VolumeChannel,
+    PointChannel,
+    field_channel,
+    points_channel,
+    as_image,
+    view_figure,
+    scene_figure,
+    save_view,
+    save_scene,
+    orbit_keyframes,
+    flythrough_montage,
+    flythrough,
     fluxbudget,
     fluxtimeseries,
     fluxprofile,
@@ -436,6 +462,7 @@ include("functions/projection/projection.jl")
 include("functions/projection/projection_hydro.jl")
 include("functions/projection/projection_particles.jl")
 include("functions/project.jl")
+include("functions/immersive.jl")   # volume ray-caster: equirect/dome/perspective, multi-tracer, fly-through
 
 # ============================================
 
