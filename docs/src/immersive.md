@@ -4,13 +4,6 @@ CairoMakie.activate!()
 println("threads = ", Threads.nthreads())
 ```
 
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (6), wrong dep version loaded (2), wrong source (2), dep missing source (2))
-
-
-    
-    SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-
-
     
     *__   __ _______ ______   _______ 
 
@@ -23,18 +16,6 @@ println("threads = ", Threads.nthreads())
     |_|   |_|_______|___|  |_|__| |__|
     Mera v1.8.0
     
-
-
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (8))
-
-
-    
-    SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-
-
-    [36m[1m[ [22m[39m[36m[1mInfo: [22m[39mMera v1.8.0
-
-
     threads = 8
 
     
@@ -220,6 +201,79 @@ The full movies (mp4) are embedded in the rendered documentation page:
 <video src="../assets/immersive/flythrough_equirect.mp4" autoplay loop muted playsinline width="640"></video>
 ```
 
+## 6. Isosurface (`mode=:iso`) — physical value-surfaces, gradient-shaded
+
+Render the surface where a field crosses a value (here `nH = 1 cm⁻³`), lit by the field gradient
+(normal). Physically meaningful structure with real 3-D form (vs a smear).
+
+
+```julia
+iso = render_view(vol, perspective_camera(c .+ (30,20,24), c; fov_deg=55);
+                  res=420, mode=:iso, level=1.0, aa=2)        # nH = 1 cm⁻³ surface, gradient-shaded
+as_image(iso; colormap=:bone, logscale=false)
+```
+
+
+
+
+![](immersive_files/immersive_19_0.png)
+
+
+
+## 7. Field-driven RT absorption (`absorb_by`)
+
+Emission from one field, **absorption from another** — the physical emission + self-absorption case.
+Here density emits (coloured by temperature) and is self-absorbed by its own column (a stand-in for
+dust); the far side of the disk is dimmed.
+
+
+```julia
+em = field_channel(gas, :rho, :nH; color_by=:T, color_unit=:K, colormap=:RdYlBu, reverse=true,
+                  vmin=-0.5, vmax=2.3, color_vmin=3.5, color_vmax=6.5,
+                  absorb_by=:rho, absorb_unit=:nH, absorb_vmin=0.0, absorb_vmax=2.3, opacity=9)
+render_scene([em], perspective_camera(c .+ (34,10,16), c; fov_deg=50); res=480, aa=2, exposure=2.4)
+```
+
+
+
+
+![](immersive_files/immersive_21_0.png)
+
+
+
+## 8. `smooth=:kernel` — cosmetic de-blocking of coarse cells
+
+A narrow high-temperature band makes a near-binary mask of the **coarsest** AMR cells → blocky faces
+with `smooth=true` (trilinear, C⁰). `smooth=:kernel` (cubic B-spline, C²) blurs those facets — *softer
+but non-conservative*, for beauty frames only. **Left: trilinear · Right: :kernel.**
+
+
+```julia
+hot  = field_channel(gas, :T, :K; colormap=[:black,:orangered,:gold], vmin=6.9, vmax=7.8, opacity=2.0)
+camk = perspective_camera(c .+ (40,6,15), c; fov_deg=52)
+tri  = render_scene([hot], camk; res=300, aa=2, smooth=true,    exposure=1.6)   # C0 trilinear (faceted)
+ker  = render_scene([hot], camk; res=300, aa=2, smooth=:kernel, exposure=1.6)   # C2 kernel (softened)
+hcat(tri, ker)
+```
+
+
+
+
+![](immersive_files/immersive_23_0.png)
+
+
+
+## 9. Interactive window (live, pure AMR)
+
+`interactive_view` opens a live window that **ray-casts the AMR data directly** (no uniform grid) and
+re-renders as you orbit (left-drag) / zoom (scroll) — low-res while moving, crisp on release. It needs
+an interactive backend, so it is shown here as code (not executed in this CairoMakie notebook):
+
+```julia
+using GLMakie                          # interactive backend
+interactive_view(vol; mode=:max)       # orbit: left-drag · zoom: scroll · also :emission/:rt/:iso
+```
+
 ## Parameters & tuning — the dials
 
 Everything is exported from Mera (`using Mera`; add `using CairoMakie` only for the mp4 `flythrough`).
@@ -231,11 +285,8 @@ then `amr_volume(data, var, unit)` (any `getvar` quantity). Camera positions are
 |---|---|---|
 | Viewpoint / zoom | camera `pos`, `target`, `fov_deg` (smaller = more zoom) | `perspective_camera(pos, target; fov_deg=…)` |
 | View type | `perspective_camera` / `equirect_camera` (360°) / `fisheye_camera` (dome) | — |
-| Resolution / smoothness | `res`, `aa` (1–3), `smooth=` `true` (trilinear) / `false` (fast) / `:kernel` (C² cubic-spline blur — **cosmetic, non-conservative**, beauty frames only) | `render_view` / `render_scene` |
+| Resolution / smoothness | `res`, `aa` (1–3), `smooth=true` | `render_view` / `render_scene` |
 | What accumulates | `mode=` `:max` (crisp MIP) / `:emission` / `:rt` / `:sum` | `render_view` |
-| **Isosurface** at a value | `mode=:iso`, `level=` (+ `light`, `ambient`, `diffuse`, `specular`) | `render_view` |
-| **Gradient shading** (3-D form) | built into `:iso`; `shade=…` lighting controls | `render_view` |
-| **Physical RT absorption** from a field | `absorb_by=` (e.g. dust/`n_H`) + `absorb_vmin/vmax` | `field_channel` |
 | Which density range shows | `vmin` / `vmax` (log of the opacity field) | `field_channel` |
 | Colour from a 2nd field (coloured-density) | `color_by=:T`, `color_vmin` / `color_vmax`, `colormap`, `reverse` | `field_channel` |
 | How solid / wispy | `opacity` (higher = solider), `gamma` (>1 = wispier) | `field_channel` |
@@ -251,22 +302,9 @@ extrema(log10.(filter(>(0), getvar(gas, :rho, :nH))))   # → vmin/vmax for the 
 extrema(log10.(filter(>(0), getvar(gas, :T,   :K))))    # → color_vmin/color_vmax for the hue field
 ```
 
-Then iterate: render a low-`res` still, adjust the dials, re-render. `smooth=false`/lower `res` for
-fast previews; raise `res`/`aa` for the final frame. Diffuse channels (a hot halo) should use a low
-`opacity` so you see *through* them; raise `gamma` to thin them further.
-
-
-
-## Interactive window (live, pure AMR)
-
-`interactive_view(vol)` opens a live window that **ray-casts the AMR data directly** (no uniform grid)
-and re-renders as you orbit (left-drag) and zoom (scroll) — low resolution while dragging, crisp on
-release. It needs an interactive backend:
-
-```julia
-using GLMakie                       # interactive backend (CairoMakie can't show live windows)
-interactive_view(vol; mode=:max)    # or :emission / :rt / :iso (with level=…)
-```
+Then iterate: render a low-`res` still, adjust the dials, re-render. `smooth=false`/lower `res` for fast
+previews; raise `res`/`aa` for the final frame. Diffuse channels (a hot halo) should use a low `opacity`
+so you see *through* them; raise `gamma` to thin them further.
 
 ## Concepts & references
 
