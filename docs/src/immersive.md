@@ -43,7 +43,7 @@ println("threads = ", Threads.nthreads())
 # Immersive 3-D visualisation (equirectangular, dome, fly-through, multi-tracer)
 
 Mera's `projection` is **orthographic** (parallel rays). Immersive formats need a camera **at a
-point** with rays fanning outward, so the in-development `MeraImmersive` module (`dev/immersive/`)
+point** with rays fanning outward, so Mera's volume ray-caster
 **ray-marches the AMR octree directly** — it does *not* resample to a uniform grid (that would be the
 `(2^lmax)³` memory blow-up AMR exists to avoid). Each leaf is stored once in a per-level hash; each ray
 steps by the **local cell size**, so cost scales like the simulation, not the box.
