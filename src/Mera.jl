@@ -209,6 +209,7 @@ export
     orbit_keyframes,
     flythrough_montage,
     flythrough,
+    interactive_view,
     fluxbudget,
     fluxtimeseries,
     fluxprofile,

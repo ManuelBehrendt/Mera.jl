@@ -504,4 +504,49 @@ function Mera.flythrough(vol::Mera.AmrVolume, kind::Symbol, keyframes;
     return filename
 end
 
+"""
+    interactive_view(vol; target=boxcenter(vol), distance=0.6·boxlen, azimuth=0.6, elevation=0.5,
+                     fov_deg=55, mode=:max, level=1.0, res=420, drag_res=170, smooth=true,
+                     colormap=:inferno, logscale=true) -> Figure
+
+Open a live window that **ray-casts the pure AMR data directly** (no uniform grid) and re-renders as you
+orbit (left-drag) and zoom (scroll) — low resolution while dragging, crisp on release. Needs an
+interactive backend (`using GLMakie`). `mode` is any `render_view` mode (`:max`/`:emission`/`:rt`/`:iso`…).
+"""
+function Mera.interactive_view(vol::Mera.AmrVolume; target=Mera.boxcenter(vol),
+        distance::Real=0.6*vol.boxlen, azimuth::Real=0.6, elevation::Real=0.5, fov_deg=55,
+        mode::Symbol=:max, level::Real=1.0, res::Int=420, drag_res::Int=170, smooth::Bool=true,
+        colormap=:inferno, logscale::Bool=true)
+    az = Ref(float(azimuth)); el = Ref(float(elevation)); dist = Ref(float(distance))
+    tg = (Float64(target[1]), Float64(target[2]), Float64(target[3]))
+    eye() = (tg[1]+dist[]*cos(el[])*cos(az[]), tg[2]+dist[]*cos(el[])*sin(az[]), tg[3]+dist[]*sin(el[]))
+    shoot(r) = Mera._prep(Mera.render_view(vol, Mera.perspective_camera(eye(), tg; fov_deg=fov_deg);
+                          res=r, mode=mode, smooth=smooth, level=level); logscale=logscale)
+    frame = Makie.Observable(shoot(res))
+    fig = Makie.Figure(size=(res, res))
+    ax = Makie.Axis(fig[1,1], aspect=Makie.DataAspect()); Makie.hidedecorations!(ax); Makie.hidespines!(ax)
+    Makie.heatmap!(ax, frame; colormap=colormap, nan_color=:black)
+    sc = fig.scene; drag = Ref(false); last = Ref((0.0, 0.0))
+    Makie.on(Makie.events(sc).mousebutton) do ev
+        if ev.button == Makie.Mouse.left
+            if ev.action == Makie.Mouse.press
+                drag[] = true; last[] = Tuple(Float64.(Makie.events(sc).mouseposition[]))
+            else
+                drag[] = false; frame[] = shoot(res)                 # crisp render on release
+            end
+        end
+    end
+    Makie.on(Makie.events(sc).mouseposition) do p
+        if drag[]
+            dx = p[1]-last[][1]; dy = p[2]-last[][2]; last[] = Tuple(Float64.(p))
+            az[] -= 0.01*dx; el[] = clamp(el[] + 0.01*dy, -1.4, 1.4)
+            frame[] = shoot(drag_res)                                # fast render while dragging
+        end
+    end
+    Makie.on(Makie.events(sc).scroll) do (sx, sy)
+        dist[] = clamp(dist[]*(1 - 0.12*sy), 0.05*vol.boxlen, 3*vol.boxlen); frame[] = shoot(res)
+    end
+    Makie.display(fig); return fig
+end
+
 end # module

@@ -80,7 +80,7 @@ end
     @test Mera._aces(1e6) ≤ 1.0 && Mera._aces(1e6) > 0.95     # saturates ≤ 1
     @test Mera._aces(0.2) < Mera._aces(0.8)                   # monotone increasing
     vol = _imm_uniform(3, (i,j,k)->5.0); c = boxcenter(vol)
-    ch = Mera.VolumeChannel(vol, nothing, Mera._to_cmap(:viridis), -1.0, 1.0, -1.0, 1.0, true, true, 12.0, 1.0, "x")
+    ch = Mera.VolumeChannel(vol, nothing, nothing, Mera._to_cmap(:viridis), -1.0,1.0, -1.0,1.0, -1.0,1.0, true,true,true, 12.0, 1.0, "x")
     sc = render_scene([ch], perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, exposure=2.0)
     @test eltype(sc) <: Mera.Colorant && size(sc) == (24, 24)
     @test all(x -> 0 ≤ Mera.red(x) ≤ 1 && 0 ≤ Mera.green(x) ≤ 1 && 0 ≤ Mera.blue(x) ≤ 1, sc)  # in gamut
@@ -98,7 +98,7 @@ end
     @test eltype(im) <: Mera.Colorant && size(im) == (24, 24)
     tmp = tempname() * ".png"
     @test save_view(sv, tmp) == tmp && isfile(tmp) && filesize(tmp) > 0
-    rgb = render_scene([Mera.VolumeChannel(vol, nothing, Mera._to_cmap(:viridis), 0.0,3.0,0.0,3.0,false,false,10.0,1.0,"x")],
+    rgb = render_scene([Mera.VolumeChannel(vol, nothing, nothing, Mera._to_cmap(:viridis), 0.0,3.0, 0.0,3.0, 0.0,3.0, false,false,false, 10.0,1.0, "x")],
                        perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24)
     tmp2 = tempname() * ".png"
     @test save_scene(rgb, tmp2) == tmp2 && isfile(tmp2) && filesize(tmp2) > 0
@@ -113,8 +113,34 @@ end
     vol = _imm_uniform(3, (i,j,k)->Float64(i)); c = boxcenter(vol)
     mont = flythrough_montage(vol, :perspective, [(c.+(1.,1.,1.), c), (c.+(0.6,0.,0.3), c)]; nframes=4, cols=2, res=16)
     @test eltype(mont) <: Mera.Colorant && size(mont) == (32, 32)             # 2 rows × 2 cols of 16×16
-    # mp4 flythrough needs a Makie backend; without one the core errors helpfully
+    # mp4 flythrough + interactive window need a Makie backend; without one the core errors helpfully
     @test_throws ErrorException flythrough(vol, :perspective, [(c.+(1.,1.,1.), c), (c, c)])
+    @test_throws ErrorException interactive_view(vol)
+end
+
+@testset "immersive: isosurface + gradient shading + field-driven absorption (data-free)" begin
+    # gradient of a linear x-ramp points along +x → unit normal ≈ (1,0,0)
+    ramp = _imm_uniform(4, (i,j,k)->Float64(i))
+    gx, gy, gz = Mera._grad(ramp, 0.5, 0.5, 0.5, 1/16)
+    @test isapprox(gx, 1.0; atol=1e-6) && abs(gy) < 1e-6 && abs(gz) < 1e-6
+    # shading is bounded and includes the ambient floor
+    sval = Mera._shade(1.,0.,0., 0.,0.,-1., 1.,0.,0., 0.25, 0.8, 0.3, 16.0)
+    @test 0.25 ≤ sval ≤ 1.0
+    # isosurface: a ray crossing the bright cube's level returns a shade in (0,1]; a miss → NaN
+    vol = _imm_uniform(3, (i,j,k)-> (3<=i<=6 && 3<=j<=6 && 3<=k<=6) ? 10.0 : 0.01); c = boxcenter(vol)
+    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., 1.0, true, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0)
+    @test isfinite(hit) && 0 < hit ≤ 1
+    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., 1.0, true, 0.,0.,1., 0.25,0.8,0.3,16.0))  # parallel, outside
+    iso = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=1.0)
+    fin = filter(isfinite, iso)
+    @test !isempty(fin) && all(0 .≤ fin .≤ 1) && any(isnan, iso)
+    # field-driven absorption: a channel with a separate absorption field renders in gamut & differs
+    av  = _imm_uniform(3, (i,j,k)->0.1)                                   # uniform low absorption field
+    cm  = Mera._to_cmap(:viridis); cam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
+    ch0 = Mera.VolumeChannel(vol, nothing, nothing, cm, -2.,1., -2.,1., -2.,1., true,true,true, 8.,1., "no-abs")
+    cha = Mera.VolumeChannel(vol, nothing, av,      cm, -2.,1., -2.,1., -2.,1., true,true,true, 8.,1., "abs")
+    s0 = render_scene([ch0], cam; res=24); sa = render_scene([cha], cam; res=24)
+    @test all(x -> 0 ≤ Mera.red(x) ≤ 1, sa) && s0 != sa                  # absorption field changes the result
 end
 
 # ---- data-backed integration (only with simulation data) ----
