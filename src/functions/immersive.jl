@@ -103,6 +103,48 @@ end
     return a0*(1-tz)+a1*tz
 end
 
+# central-difference gradient of the (trilinear) field at a point, step ~ half the local cell → unit
+# normal (for isosurface / gradient shading). Returns (0,0,0) where the field is flat.
+@inline function _grad(v::AmrVolume, x, y, z, h)
+    e = 0.5h
+    gx = _trilin(v, x+e,y,z,h) - _trilin(v, x-e,y,z,h)
+    gy = _trilin(v, x,y+e,z,h) - _trilin(v, x,y-e,z,h)
+    gz = _trilin(v, x,y,z+e,h) - _trilin(v, x,y,z-e,h)
+    n = sqrt(gx^2+gy^2+gz^2)
+    n < 1e-30 ? (0.0,0.0,0.0) : (gx/n, gy/n, gz/n)
+end
+
+# Lambert + Blinn specular shading. Normal lit from both sides (abs) so isosurfaces are never black.
+@inline function _shade(nx,ny,nz, vx,vy,vz, lx,ly,lz, ambient, diffuse, specular, shininess)
+    diff = diffuse*abs(nx*lx+ny*ly+nz*lz)
+    hx=lx-vx; hy=ly-vy; hz=lz-vz; hn=sqrt(hx^2+hy^2+hz^2); hn<1e-12 && (hn=1.0)
+    spec = specular*abs(nx*hx/hn+ny*hy/hn+nz*hz/hn)^shininess
+    return clamp(ambient+diff+spec, 0.0, 1.0)
+end
+
+# march for an ISOSURFACE at `level`: first crossing along the ray, linearly refined, then shaded by
+# the field gradient (surface normal). NaN if the ray never crosses the level.
+@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, smooth, lx,ly,lz, ambient, diffuse, specular, shininess)
+    t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return NaN
+    floor_dt = 1e-6*v.boxlen
+    prev = NaN; pt = t0; t = t0
+    @inbounds while t < t1
+        x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
+        _, h = _leaf(v, x, y, z)
+        val = smooth ? _trilin(v,x,y,z,h) : _leaf(v,x,y,z)[1]
+        if !isnan(prev) && (prev-level)*(val-level) <= 0 && prev != val
+            frac = (level-prev)/(val-prev); tc = pt + frac*(t-pt)
+            cx=ox+tc*dx; cy=oy+tc*dy; cz=oz+tc*dz; _, hc = _leaf(v,cx,cy,cz)
+            nx,ny,nz = _grad(v,cx,cy,cz,hc)
+            (nx==0.0 && ny==0.0 && nz==0.0) && return ambient
+            return _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
+        end
+        prev = val; pt = t
+        t += max(0.5*h, floor_dt)
+    end
+    return NaN
+end
+
 # ray ∩ box [0,boxlen]³ → (t_enter, t_exit); t_exit<t_enter when missed
 @inline function _box_t(v::AmrVolume, ox,oy,oz, dx,dy,dz)
     bl = v.boxlen; t0 = 0.0; t1 = Inf
@@ -244,17 +286,22 @@ trilinear reconstruction (de-blocked); `aa` is jittered supersampling. Backgroun
 is `NaN`. Turn it into an image with [`as_image`](@ref)/[`save_view`](@ref).
 """
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, mode::Symbol=:emission,
-        stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth::Bool=true, aa::Int=1)
+        stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth::Bool=true, aa::Int=1,
+        level::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
+        specular::Real=0.3, shininess::Real=16.0)
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
     img = fill(NaN, nx, ny); sf = Float64(stepfrac); pw = Float64(power); kp = Float64(kappa); ia = 1.0/aa
+    lv = Float64(level); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
+    iso = mode === :iso
     Threads.@threads for j in 1:ny
         @inbounds for i in 1:nx
             acc = 0.0; n = 0
             for sj in 1:aa, si in 1:aa
                 uu = (i-1 + (si-0.5)*ia)/nx; vv = (j-1 + (sj-0.5)*ia)/ny
                 rd = _raydir(cam, uu, vv); rd === nothing && continue
-                val = _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, smooth)
+                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, smooth, ln..., am, di, sp, sh) :
+                            _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, smooth)
                 isnan(val) || (acc += val; n += 1)
             end
             n > 0 && (img[i,j] = acc/n)
@@ -334,12 +381,14 @@ field driving colour (`cvol`, the coloured-density technique), a colormap, value
 strength and a transfer `gamma`. Construct with [`field_channel`](@ref).
 """
 struct VolumeChannel
-    vol::AmrVolume
-    cvol::Union{Nothing,AmrVolume}
+    vol::AmrVolume                    # drives OPACITY (and emission if avol is set)
+    cvol::Union{Nothing,AmrVolume}   # drives COLOUR (coloured-density); nothing → use vol
+    avol::Union{Nothing,AmrVolume}   # drives ABSORPTION (field-driven RT); nothing → absorption from vol
     cmap::Vector{RGB{Float64}}
     vmin::Float64; vmax::Float64
     cvmin::Float64; cvmax::Float64
-    logscale::Bool; clogscale::Bool
+    avmin::Float64; avmax::Float64
+    logscale::Bool; clogscale::Bool; alogscale::Bool
     opacity::Float64
     gamma::Float64
     label::String
@@ -384,18 +433,19 @@ channel). `vmin/vmax` (and `color_vmin/color_vmax`) default to the 50ᵗʰ/99.9�
 makes faint gas wispier. Combine several in [`render_scene`](@ref).
 """
 function field_channel(data, var::Symbol, unit::Symbol=:standard; color_by=nothing,
-        color_unit::Symbol=:standard, colormap=:inferno, reverse::Bool=false, vmin=nothing, vmax=nothing,
-        color_vmin=nothing, color_vmax=nothing, logscale::Bool=true, color_logscale::Bool=true,
+        color_unit::Symbol=:standard, absorb_by=nothing, absorb_unit::Symbol=:standard,
+        colormap=:inferno, reverse::Bool=false, vmin=nothing, vmax=nothing,
+        color_vmin=nothing, color_vmax=nothing, absorb_vmin=nothing, absorb_vmax=nothing,
+        logscale::Bool=true, color_logscale::Bool=true, absorb_logscale::Bool=true,
         opacity::Real=4.0, gamma::Real=1.0, label::String=string(var), verbose::Bool=false)
     vol = amr_volume(data, var, unit; verbose=verbose)
     lo, hi = _autorange(vol, logscale, vmin, vmax); cmap = _to_cmap(colormap; reverse=reverse)
-    if color_by === nothing
-        VolumeChannel(vol, nothing, cmap, lo, hi, lo, hi, logscale, logscale, Float64(opacity), Float64(gamma), label)
-    else
-        cvol = amr_volume(data, color_by, color_unit; verbose=verbose)
-        clo, chi = _autorange(cvol, color_logscale, color_vmin, color_vmax)
-        VolumeChannel(vol, cvol, cmap, lo, hi, clo, chi, logscale, color_logscale, Float64(opacity), Float64(gamma), label)
-    end
+    cvol = color_by  === nothing ? nothing : amr_volume(data, color_by,  color_unit;  verbose=verbose)
+    avol = absorb_by === nothing ? nothing : amr_volume(data, absorb_by, absorb_unit; verbose=verbose)
+    clo, chi = cvol === nothing ? (lo, hi) : _autorange(cvol, color_logscale,  color_vmin,  color_vmax)
+    alo, ahi = avol === nothing ? (lo, hi) : _autorange(avol, absorb_logscale, absorb_vmin, absorb_vmax)
+    VolumeChannel(vol, cvol, avol, cmap, lo, hi, clo, chi, alo, ahi,
+                  logscale, color_logscale, absorb_logscale, Float64(opacity), Float64(gamma), label)
 end
 
 """
@@ -430,8 +480,17 @@ end
             val = smooth ? _trilin(ch.vol,x,y,z,h) : _leaf(ch.vol,x,y,z)[1]
             s = ch.logscale ? (val > 0 ? log10(val) : -Inf) : val
             n = (s-ch.vmin)/(ch.vmax-ch.vmin); n = n<0 ? 0. : n>1 ? 1. : n
-            n <= 0 && continue
-            ng = ch.gamma == 1.0 ? n : n^ch.gamma
+            # absorption from a separate field (field-driven RT) or from the opacity field itself
+            if ch.avol === nothing
+                na = n; em = 1.0
+            else
+                av = smooth ? _trilin(ch.avol,x,y,z,h) : _leaf(ch.avol,x,y,z)[1]
+                as = ch.alogscale ? (av > 0 ? log10(av) : -Inf) : av
+                na = (as-ch.avmin)/(ch.avmax-ch.avmin); na = na<0 ? 0. : na>1 ? 1. : na
+                em = n                                          # main field = emissivity when absorption is separate
+            end
+            (na <= 0 || em <= 0) && continue
+            ng = ch.gamma == 1.0 ? na : na^ch.gamma
             a = 1 - exp(-ch.opacity*ng*seg/ch.vol.boxlen*100); a <= 0 && continue
             if ch.cvol === nothing
                 nc = n
@@ -440,8 +499,8 @@ end
                 cs = ch.clogscale ? (cv > 0 ? log10(cv) : -Inf) : cv
                 nc = (cs-ch.cvmin)/(ch.cvmax-ch.cvmin); nc = nc<0 ? 0. : nc>1 ? 1. : nc
             end
-            cr,cg,cb = _cmcol(ch.cmap, nc); w = (1-A)*a
-            R += w*cr; G += w*cg; B += w*cb; A += w
+            cr,cg,cb = _cmcol(ch.cmap, nc); w = (1-A)*a*em
+            R += w*cr; G += w*cg; B += w*cb; A += (1-A)*a
         end
         t = tend
     end
@@ -571,3 +630,11 @@ function flythrough end
 flythrough(args...; kwargs...) = error(
     "`flythrough` records an mp4 and needs a Makie backend — run `using CairoMakie` (loads MeraMakieExt). " *
     "For a Makie-free still summary of the path use `flythrough_montage`.")
+
+# `interactive_view` opens a live window that re-ray-casts the AMR data on orbit/zoom → real method in
+# MeraMakieExt (needs an INTERACTIVE backend, GLMakie). It marches the pure AMR octree per frame — no
+# uniform grid — at a low resolution while dragging and a crisp one on release.
+function interactive_view end
+interactive_view(args...; kwargs...) = error(
+    "`interactive_view` opens a live, mouse-controlled window and needs an INTERACTIVE Makie backend — " *
+    "run `using GLMakie` (CairoMakie cannot show interactive windows). It re-renders the AMR data directly.")
