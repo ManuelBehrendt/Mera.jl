@@ -613,21 +613,30 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
             end
         end
     end
-    for pc in pts                                 # core+halo emissive splat (√-compressed brightness)
-        bref = isempty(pc.bright) ? 1.0 : maximum(pc.bright)
+    # core+halo emissive splat (√-compressed brightness), THREADED: points are chunked across threads,
+    # each writing its own RGB buffer (no write races on the shared image), then reduced.
+    nt = Threads.nthreads()
+    for pc in pts
+        N = size(pc.pos, 1); N == 0 && continue
+        bref = isempty(pc.bright) ? 1.0 : maximum(pc.bright); bref <= 0 && (bref = 1.0)
         rc = pc.size; rh = 2.6*pc.size; cr,cg,cb = pc.col
-        for k in 1:size(pc.pos,1)
-            pr = _project(cam, pc.pos[k,1], pc.pos[k,2], pc.pos[k,3]); pr===nothing && continue
-            u,v,_ = pr; (u<0||u>1||v<0||v>1) && continue
-            cx=u*nx; cy=v*ny; inten = pc.opacity*sqrt(pc.bright[k]/bref)
-            i0=max(1,floor(Int,cx-3rh)); i1=min(nx,ceil(Int,cx+3rh))
-            j0=max(1,floor(Int,cy-3rh)); j1=min(ny,ceil(Int,cy+3rh))
-            @inbounds for i in i0:i1, j in j0:j1
-                d2=(i-cx)^2+(j-cy)^2
-                gg = inten*(0.75*exp(-d2/(2rc^2)) + 0.25*exp(-d2/(2rh^2)))
-                R[i,j]+=gg*cr; G[i,j]+=gg*cg; B[i,j]+=gg*cb
+        bufs = [(zeros(nx,ny), zeros(nx,ny), zeros(nx,ny)) for _ in 1:nt]
+        Threads.@threads for ci in 1:nt
+            br,bg,bb = bufs[ci]; lo = ((ci-1)*N)÷nt + 1; hi = (ci*N)÷nt
+            @inbounds for k in lo:hi
+                pr = _project(cam, pc.pos[k,1], pc.pos[k,2], pc.pos[k,3]); pr===nothing && continue
+                u,v,_ = pr; (u<0||u>1||v<0||v>1) && continue
+                cx=u*nx; cy=v*ny; inten = pc.opacity*sqrt(pc.bright[k]/bref)
+                i0=max(1,floor(Int,cx-3rh)); i1=min(nx,ceil(Int,cx+3rh))
+                j0=max(1,floor(Int,cy-3rh)); j1=min(ny,ceil(Int,cy+3rh))
+                for i in i0:i1, j in j0:j1
+                    d2=(i-cx)^2+(j-cy)^2
+                    gg = inten*(0.75*exp(-d2/(2rc^2)) + 0.25*exp(-d2/(2rh^2)))
+                    br[i,j]+=gg*cr; bg[i,j]+=gg*cg; bb[i,j]+=gg*cb
+                end
             end
         end
+        for (br,bg,bb) in bufs; R .+= br; G .+= bg; B .+= bb; end
     end
     e=Float64(exposure); sat=Float64(saturation); ginv=1.0/Float64(gamma)
     out = Matrix{RGB{Float64}}(undef, nx, ny)
