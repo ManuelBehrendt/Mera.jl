@@ -469,4 +469,39 @@ end
 Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
     error("overviewplot: no visual overview defined for $(typeof(d)) — supported: HydroDataType, GravDataType, PartDataType.")
 
+# -------------------------------------------------------------------------------------
+#  Immersive fly-through mp4 recorder (needs a Makie backend for Makie.record / FFMPEG).
+#  The Makie-free core (ray-caster, stills, PNG, montage) lives in src/functions/immersive.jl;
+#  only the movie recorder is here.
+# -------------------------------------------------------------------------------------
+"""
+    flythrough(vol, kind, keyframes; nframes=120, filename="flythrough.mp4", res=480, mode=:max,
+               smooth=true, aa=1, power=1.0, kappa=0.1, fov_deg=60, up=(0,0,1), framerate=24,
+               colormap=:inferno, logscale=true) -> filename
+
+Record a moving-camera movie. `keyframes` is a vector of `(position, target)` tuples; the camera is
+interpolated (Catmull–Rom) across `nframes`. `kind` ∈ `:perspective` / `:equirect` / `:fisheye`. Writes
+an mp4 (or .gif by extension). Available once a Makie backend is loaded (`using CairoMakie`); the
+Makie-free still summary is `flythrough_montage`.
+"""
+function Mera.flythrough(vol::Mera.AmrVolume, kind::Symbol, keyframes;
+        nframes::Int=120, filename::AbstractString="flythrough.mp4", res::Int=480, mode::Symbol=:max,
+        smooth::Bool=true, aa::Int=1, power::Real=1.0, kappa::Real=0.1, fov_deg=60, up=(0.,0.,1.),
+        framerate::Int=24, colormap=:inferno, logscale::Bool=true, bg=:black, verbose::Bool=true)
+    poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
+    mk(s) = Mera._immcam(kind, Mera._spline(poss, s), Mera._spline(tgts, s), up, fov_deg)
+    probe = Mera.render_view(vol, mk(0.0); res=res, mode=mode, smooth=smooth, aa=aa, power=power, kappa=kappa)
+    nx, ny = size(probe)
+    fig = Makie.Figure(size=(nx, ny), figure_padding=0)
+    ax = Makie.Axis(fig[1,1], aspect=Makie.DataAspect()); Makie.hidedecorations!(ax); Makie.hidespines!(ax)
+    Makie.record(fig, filename, 1:nframes; framerate=framerate, compression=18) do fr
+        s = nframes == 1 ? 0.0 : (fr-1)/(nframes-1)
+        img = Mera.render_view(vol, mk(s); res=res, mode=mode, smooth=smooth, aa=aa, power=power, kappa=kappa)
+        Makie.empty!(ax)
+        Makie.heatmap!(ax, Mera._prep(img; logscale=logscale), colormap=colormap, nan_color=bg)
+        verbose && fr % 20 == 0 && println("  frame $fr/$nframes")
+    end
+    return filename
+end
+
 end # module

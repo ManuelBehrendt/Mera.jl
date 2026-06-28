@@ -4,6 +4,8 @@ version = "1.8.0"
 authors = ["Manuel Behrendt"]
 
 [deps]
+ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
+Colors = "5ae59095-9a9b-59fe-a467-6f913c188581"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 CodecBzip2 = "523fee87-0ab8-5b00-afb7-3ecf72e48cfd"
@@ -48,6 +50,8 @@ Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
 MeraMakieExt = "Makie"
 
 [compat]
+ColorSchemes = "3"
+Colors = "0.12, 0.13"
 Aqua = "0.8"
 BenchmarkTools = "1"
 CSV = "0.10"
