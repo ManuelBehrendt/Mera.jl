@@ -37,6 +37,7 @@ struct AmrVolume
     boxlen::Float64
     unit::Symbol
     nleaf::Int
+    scale                                           # dataobject.scale (for pxsize unit conversion); nothing if synthetic
 end
 
 """
@@ -59,13 +60,36 @@ function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; verbose::Bo
     n = length(lv)
     verbose && println("amr_volume: $n leaves, levels $(lmin)–$(lmax), boxlen $(dataobject.boxlen) " *
                        "[code]  (no uniform grid — native AMR marching)")
-    return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n)
+    return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n, dataobject.scale)
 end
 
 "Centre of the simulation box in code units, as an NTuple{3}."
 boxcenter(v::AmrVolume) = (0.5v.boxlen, 0.5v.boxlen, 0.5v.boxlen)
 "Box side length (boxlen, boxlen, boxlen) in code units."
 boxspan(v::AmrVolume) = (v.boxlen, v.boxlen, v.boxlen)
+
+# physical pixel size → code units. Accepts a number (code units) or [value, unit] like projection
+# (e.g. [0.3, :kpc]); units need the volume's scale (present when built from a dataobject).
+function _pxcode(v::AmrVolume, pxsize)
+    pxsize isa Number && return Float64(pxsize)
+    val = Float64(pxsize[1]); unit = pxsize[2]
+    unit === :standard && return val
+    v.scale === nothing && error("pxsize with unit :$unit needs a scale — build the volume from a " *
+                                 "dataobject with `amr_volume`, or pass pxsize as a number (code units).")
+    return val / getfield(v.scale, unit)
+end
+
+# resolve the output `res` (pixels along the short axis): if `pxsize` is given it sets the PHYSICAL pixel
+# size at the subject (box centre), so res = (physical span at that distance) / pxsize. Perspective uses
+# the focal-plane height 2·d·tan(fov/2); equirect the full π vertical; fisheye the fov·d arc.
+function _resolve_res(v::AmrVolume, cam, res::Int, pxsize)   # cam is a Camera (defined below)
+    pxsize === nothing && return res
+    pxc = _pxcode(v, pxsize)
+    bc = boxcenter(v); dx=bc[1]-cam.pos[1]; dy=bc[2]-cam.pos[2]; dz=bc[3]-cam.pos[3]
+    d = sqrt(dx^2+dy^2+dz^2); d <= 0 && (d = 0.5*v.boxlen)
+    span = cam.kind === :perspective ? 2*d*tan(cam.fov/2) : cam.kind === :equirect ? pi*d : cam.fov*d
+    return max(1, round(Int, span/pxc))
+end
 
 # point→leaf lookup. x,y,z in CODE units [0,boxlen]. Returns (value, local cell size).
 # Convention (verified against Mera): cell centre is at cx·boxlen/2^L, so cx = round(frac·2^L).
@@ -155,12 +179,14 @@ end
     return clamp(ambient+diff+spec, 0.0, 1.0)
 end
 
-# march for an ISOSURFACE at `level`: first crossing along the ray, linearly refined, then shaded by
-# the field gradient (surface normal). NaN if the ray never crosses the level.
-@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess)
+# march for an ISOSURFACE at `level`: each crossing is linearly refined and gradient-shaded. With
+# `alpha >= 1` it is OPAQUE (first crossing wins — solid surface). With `alpha < 1` it is TRANSLUCENT:
+# every crossing is composited front-to-back with that per-surface opacity, so nested shells and the
+# front+back faces of a clump show through. Returns the (composited) shade, or NaN if no crossing.
+@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
-    prev = NaN; pt = t0; t = t0
+    prev = NaN; pt = t0; t = t0; I = 0.0; A = 0.0; hit = false
     @inbounds while t < t1
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
         _, h = _leaf(v, x, y, z)
@@ -169,13 +195,16 @@ end
             frac = (level-prev)/(val-prev); tc = pt + frac*(t-pt)
             cx=ox+tc*dx; cy=oy+tc*dy; cz=oz+tc*dz; _, hc = _leaf(v,cx,cy,cz)
             nx,ny,nz = _grad(v,cx,cy,cz,hc)
-            (nx==0.0 && ny==0.0 && nz==0.0) && return ambient
-            return _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
+            sh = (nx==0.0 && ny==0.0 && nz==0.0) ? ambient :
+                 _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
+            alpha >= 1.0 && return sh                       # opaque: first surface wins
+            I += (1-A)*alpha*sh; A += (1-A)*alpha; hit = true  # translucent: composite front-to-back
+            A >= 0.997 && return I
         end
         prev = val; pt = t
         t += max(0.5*h, floor_dt)
     end
-    return NaN
+    return hit ? I : NaN
 end
 
 # ray ∩ box [0,boxlen]³ → (t_enter, t_exit); t_exit<t_enter when missed
@@ -309,27 +338,32 @@ end
 #  Single-field render → scalar image
 # -------------------------------------------------------------------------------------
 """
-    render_view(vol, cam; res=512, mode=:emission, stepfrac=0.5, power=1.0, kappa=0.1,
-                smooth=true, aa=1) -> Matrix{Float64}
+    render_view(vol, cam; res=512, pxsize=nothing, mode=:emission, stepfrac=0.5, power=1.0,
+                kappa=0.1, smooth=true, aa=1) -> Matrix{Float64}
 
-Ray-cast `vol` through `cam` to a scalar image. Dims follow the camera: equirect → `2res×res`,
-fisheye → `res×res`, perspective → `round(res·aspect)×res`. `mode`: `:emission` (∫ j dl, j=val^`power`),
+Ray-cast `vol` through `cam` to a scalar image. Resolution is set by `res` (pixels on the short axis)
+or, like [`projection`](@ref), by **`pxsize`** — a physical pixel size, a number in code units or
+`[value, :unit]` (e.g. `[0.3, :kpc]`); it sets the pixel size **at the box centre** (perspective uses
+the focal-plane height there, equirect/fisheye the arc at that distance) and overrides `res`. Dims
+follow the camera: equirect → `2res×res`, fisheye → `res×res`, perspective → `round(res·aspect)×res`. `mode`: `:emission` (∫ j dl, j=val^`power`),
 `:rt` (emission+absorption, opacity `kappa`), `:max` (MIP), `:sum`, `:iso` (isosurface at `level`,
-gradient-shaded). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
+gradient-shaded; `iso_alpha=1` opaque first-hit, `iso_alpha<1` **translucent** — every crossing
+composited front-to-back, so nested shells / front+back faces show through). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
 fast preview), or `:kernel` (cubic B-spline blur — softer than trilinear but **cosmetic and
 NON-conservative**: it spreads coarse-cell values beyond their volume, so use it for beauty frames, not
 quantitative emission/column work). `aa` is jittered supersampling. Background (ray misses the box) is
 `NaN`. Turn it into an image with [`as_image`](@ref)/[`save_view`](@ref).
 """
-function render_view(vol::AmrVolume, cam::Camera; res::Int=512, mode::Symbol=:emission,
+function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, mode::Symbol=:emission,
         stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
-        level::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
+        level::Real=1.0, iso_alpha::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
         specular::Real=0.3, shininess::Real=16.0)
+    res = _resolve_res(vol, cam, res, pxsize)        # pxsize (physical/code) overrides res when given
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
     img = fill(NaN, nx, ny); sf = Float64(stepfrac); pw = Float64(power); kp = Float64(kappa); ia = 1.0/aa
     sm = _smode(smooth)
-    lv = Float64(level); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
+    lv = Float64(level); ia_=Float64(iso_alpha); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
     iso = mode === :iso
     Threads.@threads for j in 1:ny
         @inbounds for i in 1:nx
@@ -337,7 +371,7 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, mode::Symbol=:em
             for sj in 1:aa, si in 1:aa
                 uu = (i-1 + (si-0.5)*ia)/nx; vv = (j-1 + (sj-0.5)*ia)/ny
                 rd = _raydir(cam, uu, vv); rd === nothing && continue
-                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh) :
+                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh, ia_) :
                             _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, sm)
                 isnan(val) || (acc += val; n += 1)
             end
@@ -556,11 +590,12 @@ volume channel blended front-to-back (its own colormap + opacity), particle chan
 top with a core+halo PSF. The HDR result is ACES filmic tone-mapped, then `saturation`/`gamma` graded.
 `channels` may be a single channel or a vector. Display inline directly or save with [`save_scene`](@ref).
 """
-function render_scene(channels, cam::Camera; res::Int=512, aa::Int=1, smooth=true,
+function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::Int=1, smooth=true,
         stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0)
     chs = channels isa ImmersiveChannel ? ImmersiveChannel[channels] : collect(channels)
     vols = VolumeChannel[c for c in chs if c isa VolumeChannel]
     pts  = PointChannel[c for c in chs if c isa PointChannel]
+    pxsize !== nothing && !isempty(vols) && (res = _resolve_res(vols[1].vol, cam, res, pxsize))
     nx, ny = cam.kind === :equirect ? (2res, res) : cam.kind === :fisheye ? (res, res) :
              (round(Int, res*cam.aspect), res)
     R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa; sm=_smode(smooth)
@@ -646,12 +681,12 @@ into a grid — a still "contact sheet" of the movie (displays inline / saves vi
 so the fly-through has a visible code→picture output without recording an mp4.
 """
 function flythrough_montage(vol::AmrVolume, kind::Symbol, keyframes; nframes::Int=6, cols::Int=nframes,
-        res::Int=240, mode::Symbol=:max, smooth=true, aa::Int=1, fov_deg=60, up=(0.,0.,1.),
+        res::Int=240, pxsize=nothing, mode::Symbol=:max, smooth=true, aa::Int=1, fov_deg=60, up=(0.,0.,1.),
         colormap=:inferno, logscale::Bool=true)
     poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
     tiles = [as_image(render_view(vol, _immcam(kind, _spline(poss, nframes==1 ? 0.0 : (k-1)/(nframes-1)),
                                                      _spline(tgts, nframes==1 ? 0.0 : (k-1)/(nframes-1)), up, fov_deg);
-                                  res=res, mode=mode, smooth=smooth, aa=aa); colormap=colormap, logscale=logscale)
+                                  res=res, pxsize=pxsize, mode=mode, smooth=smooth, aa=aa); colormap=colormap, logscale=logscale)
              for k in 1:nframes]
     rows = cld(nframes, cols); th, tw = size(tiles[1])             # tiles already oriented (row,col)
     canvas = fill(RGB{Float64}(0,0,0), rows*th, cols*tw)
