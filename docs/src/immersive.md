@@ -233,6 +233,9 @@ then `amr_volume(data, var, unit)` (any `getvar` quantity). Camera positions are
 | View type | `perspective_camera` / `equirect_camera` (360°) / `fisheye_camera` (dome) | — |
 | Resolution / smoothness | `res`, `aa` (1–3), `smooth=true` | `render_view` / `render_scene` |
 | What accumulates | `mode=` `:max` (crisp MIP) / `:emission` / `:rt` / `:sum` | `render_view` |
+| **Isosurface** at a value | `mode=:iso`, `level=` (+ `light`, `ambient`, `diffuse`, `specular`) | `render_view` |
+| **Gradient shading** (3-D form) | built into `:iso`; `shade=…` lighting controls | `render_view` |
+| **Physical RT absorption** from a field | `absorb_by=` (e.g. dust/`n_H`) + `absorb_vmin/vmax` | `field_channel` |
 | Which density range shows | `vmin` / `vmax` (log of the opacity field) | `field_channel` |
 | Colour from a 2nd field (coloured-density) | `color_by=:T`, `color_vmin` / `color_vmax`, `colormap`, `reverse` | `field_channel` |
 | How solid / wispy | `opacity` (higher = solider), `gamma` (>1 = wispier) | `field_channel` |
@@ -251,6 +254,19 @@ extrema(log10.(filter(>(0), getvar(gas, :T,   :K))))    # → color_vmin/color_v
 Then iterate: render a low-`res` still, adjust the dials, re-render. `smooth=false`/lower `res` for
 fast previews; raise `res`/`aa` for the final frame. Diffuse channels (a hot halo) should use a low
 `opacity` so you see *through* them; raise `gamma` to thin them further.
+
+
+
+## Interactive window (live, pure AMR)
+
+`interactive_view(vol)` opens a live window that **ray-casts the AMR data directly** (no uniform grid)
+and re-renders as you orbit (left-drag) and zoom (scroll) — low resolution while dragging, crisp on
+release. It needs an interactive backend:
+
+```julia
+using GLMakie                       # interactive backend (CairoMakie can't show live windows)
+interactive_view(vol; mode=:max)    # or :emission / :rt / :iso (with level=…)
+```
 
 ## Concepts & references
 
