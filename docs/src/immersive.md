@@ -219,3 +219,49 @@ The full movies (mp4) are embedded in the rendered documentation page:
 ```@raw html
 <video src="../assets/immersive/flythrough_equirect.mp4" autoplay loop muted playsinline width="640"></video>
 ```
+
+## Parameters & tuning — the dials
+
+Everything is exported from Mera (`using Mera`; add `using CairoMakie` only for the mp4 `flythrough`).
+It works on **any** simulation Mera reads — point `getinfo` at your output, `gethydro`/`getparticles`,
+then `amr_volume(data, var, unit)` (any `getvar` quantity). Camera positions are in **code units**
+(`0…boxlen`); `boxcenter(vol)` is the centre.
+
+| Want to change… | Parameter | Where |
+|---|---|---|
+| Viewpoint / zoom | camera `pos`, `target`, `fov_deg` (smaller = more zoom) | `perspective_camera(pos, target; fov_deg=…)` |
+| View type | `perspective_camera` / `equirect_camera` (360°) / `fisheye_camera` (dome) | — |
+| Resolution / smoothness | `res`, `aa` (1–3), `smooth=true` | `render_view` / `render_scene` |
+| What accumulates | `mode=` `:max` (crisp MIP) / `:emission` / `:rt` / `:sum` | `render_view` |
+| Which density range shows | `vmin` / `vmax` (log of the opacity field) | `field_channel` |
+| Colour from a 2nd field (coloured-density) | `color_by=:T`, `color_vmin` / `color_vmax`, `colormap`, `reverse` | `field_channel` |
+| How solid / wispy | `opacity` (higher = solider), `gamma` (>1 = wispier) | `field_channel` |
+| Stars | `weight`, `filter` (e.g. young), `color`, `size`, `opacity` | `points_channel` |
+| Overall look | `exposure` (brightness), `saturation`, `gamma`, `bg` | `render_scene` |
+| Big sim → zoom region | pass a `subregion(data, …)` before `amr_volume` | `amr_volume` |
+
+**Tip — pick value ranges from the data.** On a new simulation, inspect the field ranges to choose
+`vmin/vmax` (and `color_vmin/color_vmax`):
+
+```julia
+extrema(log10.(filter(>(0), getvar(gas, :rho, :nH))))   # → vmin/vmax for the opacity field
+extrema(log10.(filter(>(0), getvar(gas, :T,   :K))))    # → color_vmin/color_vmax for the hue field
+```
+
+Then iterate: render a low-`res` still, adjust the dials, re-render. `smooth=false`/lower `res` for
+fast previews; raise `res`/`aa` for the final frame. Diffuse channels (a hot halo) should use a low
+`opacity` so you see *through* them; raise `gamma` to thin them further.
+
+## Concepts & references
+
+- **Volume rendering / emission–absorption integral** (`mode=:emission`/`:rt`). Max (1995), *Optical Models for Direct Volume Rendering*, IEEE TVCG 1(2).
+- **Front-to-back alpha compositing** ("over"). Porter & Duff (1984), *Compositing Digital Images*, SIGGRAPH.
+- **Transfer functions / coloured-density** (`color_by`, `colormap`, `opacity`, `gamma`). Levoy (1988), *Display of Surfaces from Volume Data*, IEEE CG&A 8(3).
+- **Maximum-intensity projection** (`mode=:max`). Wallis et al. (1989), IEEE TMI 8(4).
+- **Trilinear reconstruction** (the `smooth=true` de-blocking). Engel et al. (2006), *Real-Time Volume Graphics*.
+- **Adaptive Mesh Refinement** (the data marched natively). Berger & Colella (1989), JCP 82(1).
+- **Catmull–Rom splines** (camera paths in `flythrough`). Catmull & Rom (1974).
+- **Equirectangular (plate-carrée) mapping** (`equirect_camera`). Snyder (1987), *Map Projections — A Working Manual*.
+- **Angular fisheye / dome master** (`fisheye_camera`). Bourke (2004), *Computer Generated Angular Fisheye Projections*.
+- **ACES filmic tone mapping** (`render_scene`). Narkowicz (2016), *ACES Filmic Tone Mapping Curve*.
+- **Perceptually-uniform colormaps** (`:inferno`/`:magma`). Kovesi (2015), arXiv:1509.03700.
