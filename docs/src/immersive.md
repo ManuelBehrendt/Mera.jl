@@ -231,7 +231,7 @@ then `amr_volume(data, var, unit)` (any `getvar` quantity). Camera positions are
 |---|---|---|
 | Viewpoint / zoom | camera `pos`, `target`, `fov_deg` (smaller = more zoom) | `perspective_camera(pos, target; fov_deg=…)` |
 | View type | `perspective_camera` / `equirect_camera` (360°) / `fisheye_camera` (dome) | — |
-| Resolution / smoothness | `res`, `aa` (1–3), `smooth=true` | `render_view` / `render_scene` |
+| Resolution / smoothness | `res`, `aa` (1–3), `smooth=` `true` (trilinear) / `false` (fast) / `:kernel` (C² cubic-spline blur — **cosmetic, non-conservative**, beauty frames only) | `render_view` / `render_scene` |
 | What accumulates | `mode=` `:max` (crisp MIP) / `:emission` / `:rt` / `:sum` | `render_view` |
 | **Isosurface** at a value | `mode=:iso`, `level=` (+ `light`, `ambient`, `diffuse`, `specular`) | `render_view` |
 | **Gradient shading** (3-D form) | built into `:iso`; `shade=…` lighting controls | `render_view` |

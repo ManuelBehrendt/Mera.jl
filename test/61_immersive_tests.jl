@@ -46,6 +46,10 @@ end
     ramp = _imm_uniform(4, (i,j,k)->Float64(i))              # value = x-index → linear in x
     @test Mera._trilin(ramp, 0.5, 0.5, 0.5, 1/16) ≈ 8.0 atol=1e-9   # x/h = 0.5*16
     @test Mera._trilin(ramp, 0.25, 0.5, 0.5, 1/16) ≈ 4.0 atol=1e-9
+    # smoothing selector + cosmetic cubic B-spline kernel (smooth=:kernel)
+    @test (Mera._smode(false), Mera._smode(true), Mera._smode(:kernel), Mera._smode(:nearest), Mera._smode(:trilinear)) == (0,1,2,0,1)
+    @test Mera._kernel(cst, 0.4, 0.6, 0.5, 1/16) ≈ 7.0 atol=1e-9    # B-spline blur of a constant = constant
+    @test sum(Mera._bspline4(0.3)) ≈ 1.0 atol=1e-12                 # weights are a partition of unity
 end
 
 @testset "immersive: camera ray directions + projection (data-free)" begin
@@ -73,6 +77,11 @@ end
     @test any(isnan, pv)                                     # corners miss the box → NaN background
     @test size(render_view(vol, equirect_camera(c); res=20)) == (40, 20)     # equirect = 2res×res
     @test size(render_view(vol, fisheye_camera(c, (0.5,0.5,0.0)); res=20)) == (20, 20)
+    # all three smoothing modes run and produce signal (nearest / trilinear / cosmetic kernel)
+    for s in (false, true, :kernel)
+        pk = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=20, mode=:emission, smooth=s)
+        @test size(pk) == (20, 20) && any(isfinite, pk)
+    end
 end
 
 @testset "immersive: compositing + ACES tone-map math (data-free)" begin
@@ -128,9 +137,9 @@ end
     @test 0.25 ≤ sval ≤ 1.0
     # isosurface: a ray crossing the bright cube's level returns a shade in (0,1]; a miss → NaN
     vol = _imm_uniform(3, (i,j,k)-> (3<=i<=6 && 3<=j<=6 && 3<=k<=6) ? 10.0 : 0.01); c = boxcenter(vol)
-    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., 1.0, true, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0)
+    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., 1.0, 1, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0)
     @test isfinite(hit) && 0 < hit ≤ 1
-    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., 1.0, true, 0.,0.,1., 0.25,0.8,0.3,16.0))  # parallel, outside
+    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., 1.0, 1, 0.,0.,1., 0.25,0.8,0.3,16.0))  # parallel, outside
     iso = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=1.0)
     fin = filter(isfinite, iso)
     @test !isempty(fin) && all(0 .≤ fin .≤ 1) && any(isnan, iso)

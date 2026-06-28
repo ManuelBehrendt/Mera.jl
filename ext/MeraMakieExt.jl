@@ -486,7 +486,7 @@ Makie-free still summary is `flythrough_montage`.
 """
 function Mera.flythrough(vol::Mera.AmrVolume, kind::Symbol, keyframes;
         nframes::Int=120, filename::AbstractString="flythrough.mp4", res::Int=480, mode::Symbol=:max,
-        smooth::Bool=true, aa::Int=1, power::Real=1.0, kappa::Real=0.1, fov_deg=60, up=(0.,0.,1.),
+        smooth=true, aa::Int=1, power::Real=1.0, kappa::Real=0.1, fov_deg=60, up=(0.,0.,1.),
         framerate::Int=24, colormap=:inferno, logscale::Bool=true, bg=:black, verbose::Bool=true)
     poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
     mk(s) = Mera._immcam(kind, Mera._spline(poss, s), Mera._spline(tgts, s), up, fov_deg)
@@ -515,7 +515,7 @@ interactive backend (`using GLMakie`). `mode` is any `render_view` mode (`:max`/
 """
 function Mera.interactive_view(vol::Mera.AmrVolume; target=Mera.boxcenter(vol),
         distance::Real=0.6*vol.boxlen, azimuth::Real=0.6, elevation::Real=0.5, fov_deg=55,
-        mode::Symbol=:max, level::Real=1.0, res::Int=420, drag_res::Int=170, smooth::Bool=true,
+        mode::Symbol=:max, level::Real=1.0, res::Int=420, drag_res::Int=170, smooth=true,
         colormap=:inferno, logscale::Bool=true)
     az = Ref(float(azimuth)); el = Ref(float(elevation)); dist = Ref(float(distance))
     tg = (Float64(target[1]), Float64(target[2]), Float64(target[3]))

@@ -103,6 +103,39 @@ end
     return a0*(1-tz)+a1*tz
 end
 
+# Cubic B-spline weights for the 4 taps at offsets -1,0,1,2 (C², sums to 1). This is an APPROXIMATING
+# spline — it smooths rather than interpolates, hence the softer-than-trilinear look.
+@inline function _bspline4(t)
+    t2=t*t; t3=t2*t
+    ((1-t)^3/6, (3t3-6t2+4)/6, (-3t3+3t2+3t+1)/6, t3/6)
+end
+
+# COSMETIC cubic-spline kernel reconstruction (smooth=:kernel): C² blur over the 4×4×4 leaf neighbourhood
+# at the local cell spacing. Softer than trilinear (no facet creases) but NON-CONSERVATIVE — it spreads a
+# coarse cell's value beyond its volume, so it is for beauty frames, not quantitative emission/column work.
+@inline function _kernel(v::AmrVolume, x, y, z, h)
+    bl=v.boxlen; ux=x/h; uy=y/h; uz=z/h
+    ix=floor(Int,ux); iy=floor(Int,uy); iz=floor(Int,uz)
+    wx=_bspline4(ux-ix); wy=_bspline4(uy-iy); wz=_bspline4(uz-iz)
+    acc=0.0
+    @inbounds for oz in 0:3
+        z0=clamp((iz-1+oz)*h, 0.0, bl); wzz=wz[oz+1]
+        for oy in 0:3
+            y0=clamp((iy-1+oy)*h, 0.0, bl); wyz=wzz*wy[oy+1]
+            for ox in 0:3
+                x0=clamp((ix-1+ox)*h, 0.0, bl)
+                acc += wyz*wx[ox+1]*_valat(v,x0,y0,z0)
+            end
+        end
+    end
+    return acc
+end
+
+# smoothing selector: false/:nearest→0 (nearest-leaf), true/:trilinear→1 (trilinear), :kernel→2 (cubic spline)
+@inline _smode(s) = s === false || s === :nearest ? 0 : (s === :kernel ? 2 : 1)
+@inline _sample_at(v::AmrVolume, x, y, z, h, sm::Int) =
+    sm == 0 ? _leaf(v,x,y,z)[1] : sm == 1 ? _trilin(v,x,y,z,h) : _kernel(v,x,y,z,h)
+
 # central-difference gradient of the (trilinear) field at a point, step ~ half the local cell → unit
 # normal (for isosurface / gradient shading). Returns (0,0,0) where the field is flat.
 @inline function _grad(v::AmrVolume, x, y, z, h)
@@ -124,14 +157,14 @@ end
 
 # march for an ISOSURFACE at `level`: first crossing along the ray, linearly refined, then shaded by
 # the field gradient (surface normal). NaN if the ray never crosses the level.
-@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, smooth, lx,ly,lz, ambient, diffuse, specular, shininess)
+@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
     prev = NaN; pt = t0; t = t0
     @inbounds while t < t1
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
         _, h = _leaf(v, x, y, z)
-        val = smooth ? _trilin(v,x,y,z,h) : _leaf(v,x,y,z)[1]
+        val = _sample_at(v, x, y, z, h, sm)
         if !isnan(prev) && (prev-level)*(val-level) <= 0 && prev != val
             frac = (level-prev)/(val-prev); tc = pt + frac*(t-pt)
             cx=ox+tc*dx; cy=oy+tc*dy; cz=oz+tc*dz; _, hc = _leaf(v,cx,cy,cz)
@@ -160,15 +193,15 @@ end
 end
 
 # march one ray with ADAPTIVE steps (= stepfrac · local cell size). NaN ⇒ ray missed the box.
-@inline function _cast(v::AmrVolume, ox,oy,oz, dx,dy,dz, mode::Symbol, stepfrac, power, kappa, smooth::Bool)
+@inline function _cast(v::AmrVolume, ox,oy,oz, dx,dy,dz, mode::Symbol, stepfrac, power, kappa, sm::Int)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz)
     t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
     I = 0.0; tau = 0.0; mip = 0.0; t = t0
     @inbounds while t < t1
         x = ox+t*dx; y = oy+t*dy; z = oz+t*dz
-        lv, h = _leaf(v, x, y, z)
-        val = smooth ? _trilin(v, x, y, z, h) : lv
+        _, h = _leaf(v, x, y, z)
+        val = _sample_at(v, x, y, z, h, sm)
         dt = max(stepfrac*h, floor_dt); tend = min(t+dt, t1); seg = tend - t
         if mode === :max
             val > mip && (mip = val)
@@ -281,17 +314,21 @@ end
 
 Ray-cast `vol` through `cam` to a scalar image. Dims follow the camera: equirect → `2res×res`,
 fisheye → `res×res`, perspective → `round(res·aspect)×res`. `mode`: `:emission` (∫ j dl, j=val^`power`),
-`:rt` (emission+absorption, opacity `kappa`), `:max` (MIP), `:sum`. `smooth=true` is cross-level
-trilinear reconstruction (de-blocked); `aa` is jittered supersampling. Background (ray misses the box)
-is `NaN`. Turn it into an image with [`as_image`](@ref)/[`save_view`](@ref).
+`:rt` (emission+absorption, opacity `kappa`), `:max` (MIP), `:sum`, `:iso` (isosurface at `level`,
+gradient-shaded). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
+fast preview), or `:kernel` (cubic B-spline blur — softer than trilinear but **cosmetic and
+NON-conservative**: it spreads coarse-cell values beyond their volume, so use it for beauty frames, not
+quantitative emission/column work). `aa` is jittered supersampling. Background (ray misses the box) is
+`NaN`. Turn it into an image with [`as_image`](@ref)/[`save_view`](@ref).
 """
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, mode::Symbol=:emission,
-        stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth::Bool=true, aa::Int=1,
+        stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
         level::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
         specular::Real=0.3, shininess::Real=16.0)
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
     img = fill(NaN, nx, ny); sf = Float64(stepfrac); pw = Float64(power); kp = Float64(kappa); ia = 1.0/aa
+    sm = _smode(smooth)
     lv = Float64(level); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
     iso = mode === :iso
     Threads.@threads for j in 1:ny
@@ -300,8 +337,8 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, mode::Symbol=:em
             for sj in 1:aa, si in 1:aa
                 uu = (i-1 + (si-0.5)*ia)/nx; vv = (j-1 + (sj-0.5)*ia)/ny
                 rd = _raydir(cam, uu, vv); rd === nothing && continue
-                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, smooth, ln..., am, di, sp, sh) :
-                            _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, smooth)
+                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh) :
+                            _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, sm)
                 isnan(val) || (acc += val; n += 1)
             end
             n > 0 && (img[i,j] = acc/n)
@@ -467,7 +504,7 @@ function points_channel(data; weight::Symbol=:mass, unit::Symbol=:standard, filt
 end
 
 # composite all volume channels front-to-back along one ray → (R,G,B,A)
-@inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, smooth)
+@inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int)
     v1 = vols[1].vol
     t0,t1 = _box_t(v1, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.)
     floor_dt = 1e-6*v1.boxlen
@@ -477,14 +514,14 @@ end
         _, h = _leaf(v1, x, y, z)
         dt = max(stepfrac*h, floor_dt); tend = min(t+dt, t1); seg = tend-t
         for ch in vols
-            val = smooth ? _trilin(ch.vol,x,y,z,h) : _leaf(ch.vol,x,y,z)[1]
+            val = _sample_at(ch.vol, x, y, z, h, sm)
             s = ch.logscale ? (val > 0 ? log10(val) : -Inf) : val
             n = (s-ch.vmin)/(ch.vmax-ch.vmin); n = n<0 ? 0. : n>1 ? 1. : n
             # absorption from a separate field (field-driven RT) or from the opacity field itself
             if ch.avol === nothing
                 na = n; em = 1.0
             else
-                av = smooth ? _trilin(ch.avol,x,y,z,h) : _leaf(ch.avol,x,y,z)[1]
+                av = _sample_at(ch.avol, x, y, z, h, sm)
                 as = ch.alogscale ? (av > 0 ? log10(av) : -Inf) : av
                 na = (as-ch.avmin)/(ch.avmax-ch.avmin); na = na<0 ? 0. : na>1 ? 1. : na
                 em = n                                          # main field = emissivity when absorption is separate
@@ -495,7 +532,7 @@ end
             if ch.cvol === nothing
                 nc = n
             else
-                cv = smooth ? _trilin(ch.cvol,x,y,z,h) : _leaf(ch.cvol,x,y,z)[1]
+                cv = _sample_at(ch.cvol, x, y, z, h, sm)
                 cs = ch.clogscale ? (cv > 0 ? log10(cv) : -Inf) : cv
                 nc = (cs-ch.cvmin)/(ch.cvmax-ch.cvmin); nc = nc<0 ? 0. : nc>1 ? 1. : nc
             end
@@ -519,14 +556,14 @@ volume channel blended front-to-back (its own colormap + opacity), particle chan
 top with a core+halo PSF. The HDR result is ACES filmic tone-mapped, then `saturation`/`gamma` graded.
 `channels` may be a single channel or a vector. Display inline directly or save with [`save_scene`](@ref).
 """
-function render_scene(channels, cam::Camera; res::Int=512, aa::Int=1, smooth::Bool=true,
+function render_scene(channels, cam::Camera; res::Int=512, aa::Int=1, smooth=true,
         stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0)
     chs = channels isa ImmersiveChannel ? ImmersiveChannel[channels] : collect(channels)
     vols = VolumeChannel[c for c in chs if c isa VolumeChannel]
     pts  = PointChannel[c for c in chs if c isa PointChannel]
     nx, ny = cam.kind === :equirect ? (2res, res) : cam.kind === :fisheye ? (res, res) :
              (round(Int, res*cam.aspect), res)
-    R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa
+    R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa; sm=_smode(smooth)
     if !isempty(vols)
         Threads.@threads for j in 1:ny
             @inbounds for i in 1:nx
@@ -534,7 +571,7 @@ function render_scene(channels, cam::Camera; res::Int=512, aa::Int=1, smooth::Bo
                 for sj in 1:aa, si in 1:aa
                     uu=(i-1+(si-0.5)*ia)/nx; vv=(j-1+(sj-0.5)*ia)/ny
                     rd=_raydir(cam,uu,vv); rd===nothing && continue
-                    cr,cg,cb,_ = _cast_rgb(vols, cam.pos..., rd..., sf, smooth)
+                    cr,cg,cb,_ = _cast_rgb(vols, cam.pos..., rd..., sf, sm)
                     r+=cr; g+=cg; b+=cb; n+=1
                 end
                 if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; end
@@ -609,7 +646,7 @@ into a grid — a still "contact sheet" of the movie (displays inline / saves vi
 so the fly-through has a visible code→picture output without recording an mp4.
 """
 function flythrough_montage(vol::AmrVolume, kind::Symbol, keyframes; nframes::Int=6, cols::Int=nframes,
-        res::Int=240, mode::Symbol=:max, smooth::Bool=true, aa::Int=1, fov_deg=60, up=(0.,0.,1.),
+        res::Int=240, mode::Symbol=:max, smooth=true, aa::Int=1, fov_deg=60, up=(0.,0.,1.),
         colormap=:inferno, logscale::Bool=true)
     poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
     tiles = [as_image(render_view(vol, _immcam(kind, _spline(poss, nframes==1 ? 0.0 : (k-1)/(nframes-1)),
