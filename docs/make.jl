@@ -87,7 +87,8 @@ makedocs(modules = [Mera],
                                                         "Converter"  => "07_1_multi_Mera_Files_Converter.md"],
                           "Volume Rendering"    => Any[ "Intro"     => "paraview/paraview_intro.md",
                                                         "Hydro"     => "paraview/08_hydro_VTK_export.md",
-                                                        "Particles" => "paraview/08_particles_VTK_export.md"]],
+                                                        "Particles" => "paraview/08_particles_VTK_export.md",
+                                                        "Immersive (360°/dome/fly-through)" => "immersive.md"]],
 
                       # --- code-agnostic readers: their own top-level section, not buried under Data ---
                       "Other Simulation Codes" => Any[ "Overview" => "multicode.md",
