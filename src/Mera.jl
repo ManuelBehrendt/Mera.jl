@@ -189,6 +189,7 @@ export
     # immersive 3-D visualisation (volume ray-caster)
     AmrVolume,
     amr_volume,
+    set_occupancy,
     boxcenter,
     boxspan,
     Camera,

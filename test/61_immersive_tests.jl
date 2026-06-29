@@ -37,6 +37,10 @@ end
         same &= Mera._leaf(v2, x, y, z) == Mera._leaf(v2o, x, y, z)
     end
     @test same
+    # toggle on/off (reuses the leaf hash), result unchanged
+    @test set_occupancy(v2, true).occ !== nothing
+    @test set_occupancy(v2o, false).occ === nothing
+    @test Mera._leaf(set_occupancy(v2, true), 0.5, 0.5, 0.5) == Mera._leaf(v2, 0.5, 0.5, 0.5)
 end
 
 @testset "immersive: ray–box intersection (data-free)" begin
@@ -210,10 +214,16 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE && haskey(DATASETS, :spiral_clum
         @test vol.nleaf == length(getvar(gas, :rho))                          # one leaf per cell, no resample
         @test vol.boxlen ≈ gas.boxlen
         c = boxcenter(vol)
+        @test vol.occ !== nothing                                            # occupancy accel on by default
         cam = perspective_camera(c .+ (30,20,24), c; fov_deg=55)
         img = render_view(vol, cam; res=80, mode=:max, smooth=true)
         fin = filter(isfinite, img)
         @test !isempty(fin) && maximum(fin) > 0                               # non-empty, real signal
+        # occupancy on vs off: identical render (accel only skips failed probes), and a no-occ build works
+        voloff = amr_volume(gas, :rho, :nH; occupancy=false, verbose=false)
+        @test voloff.occ === nothing
+        @test isequal(render_view(voloff, cam; res=64, mode=:max, smooth=true),
+                      render_view(vol,    cam; res=64, mode=:max, smooth=true))
         # pxsize with a physical unit resolves via the volume's scale (like projection)
         imgpx = render_view(vol, cam; pxsize=[2.0, :kpc], mode=:max)
         @test size(imgpx, 1) == size(imgpx, 2) && size(imgpx, 1) > 4          # perspective square, sane dims
