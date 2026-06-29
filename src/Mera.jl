@@ -207,6 +207,7 @@ export
     scene_figure,
     save_view,
     save_scene,
+    save_figure,
     orbit_keyframes,
     flythrough_montage,
     flythrough,

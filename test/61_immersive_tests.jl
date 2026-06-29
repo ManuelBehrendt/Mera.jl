@@ -135,7 +135,11 @@ end
     @test eltype(vf) <: Mera.Colorant
     tmp3 = tempname() * ".png"
     @test save_view(vf, tmp3) == tmp3 && isfile(tmp3) && filesize(tmp3) > 0
-    rm(tmp, force=true); rm(tmp2, force=true); rm(tmp3, force=true)
+    # save_figure: unified saver — scalar (coloured) AND RGB (as-is)
+    tmp4 = tempname()*".png"; tmp5 = tempname()*".png"
+    @test save_figure(sv, tmp4; colormap=:viridis) == tmp4 && filesize(tmp4) > 0
+    @test save_figure(scene_figure(rgb), tmp5) == tmp5 && filesize(tmp5) > 0
+    rm(tmp, force=true); rm(tmp2, force=true); rm(tmp3, force=true); rm(tmp4, force=true); rm(tmp5, force=true)
     # the show_progress flag is accepted and the render still returns a correct image
     pp = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=12, mode=:max, show_progress=true)
     @test size(pp) == (12, 12)
@@ -149,6 +153,9 @@ end
     vol = _imm_uniform(3, (i,j,k)->Float64(i)); c = boxcenter(vol)
     mont = flythrough_montage(vol, :perspective, [(c.+(1.,1.,1.), c), (c.+(0.6,0.,0.3), c)]; nframes=4, cols=2, res=16)
     @test eltype(mont) <: Mera.Colorant && size(mont) == (32, 32)             # 2 rows × 2 cols of 16×16
+    # pxsize varies per-frame dims → montage must still tile (uniform tile size), not DimensionMismatch
+    montpx = flythrough_montage(vol, :perspective, [(c.+(1.,1.,1.), c), (c.+(0.6,0.,0.3), c)]; nframes=4, cols=2, pxsize=0.1)
+    @test eltype(montpx) <: Mera.Colorant && size(montpx,1) > 0 && size(montpx,1) == 2*(size(montpx,1)÷2)
     # mp4 flythrough + interactive window need a Makie backend; without one the core errors helpfully
     @test_throws ErrorException flythrough(vol, :perspective, [(c.+(1.,1.,1.), c), (c, c)])
     @test_throws ErrorException interactive_view(vol)
