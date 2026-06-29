@@ -177,9 +177,9 @@ end
     @test 0.25 ≤ sval ≤ 1.0
     # isosurface: a ray crossing the bright cube's level returns a shade in (0,1]; a miss → NaN
     vol = _imm_uniform(3, (i,j,k)-> (3<=i<=6 && 3<=j<=6 && 3<=k<=6) ? 10.0 : 0.01); c = boxcenter(vol)
-    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., 1.0, 1, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0, 1.0)
+    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., [1.0], 1, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0, 1.0)
     @test isfinite(hit) && 0 < hit ≤ 1
-    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., 1.0, 1, 0.,0.,1., 0.25,0.8,0.3,16.0, 1.0))  # parallel, outside
+    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., [1.0], 1, 0.,0.,1., 0.25,0.8,0.3,16.0, 1.0))  # parallel, outside
     iso = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=1.0)
     fin = filter(isfinite, iso)
     @test !isempty(fin) && all(0 .≤ fin .≤ 1) && any(isnan, iso)
@@ -187,6 +187,10 @@ end
     isot = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=1.0, iso_alpha=0.4)
     fint = filter(isfinite, isot)
     @test !isempty(fint) && all(0 .≤ fint .≤ 1) && !isequal(iso, isot)
+    # multiple iso values (nested shells) in one pass: more crossings composited → differs from single level
+    isom = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=[0.5, 1.0, 5.0], iso_alpha=0.4)
+    finm = filter(isfinite, isom)
+    @test !isempty(finm) && all(0 .≤ finm .≤ 1) && !isequal(isot, isom)
     # field-driven absorption: a channel with a separate absorption field renders in gamut & differs
     av  = _imm_uniform(3, (i,j,k)->0.1)                                   # uniform low absorption field
     cm  = Mera._to_cmap(:viridis); cam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
