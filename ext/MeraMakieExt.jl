@@ -485,20 +485,23 @@ an mp4 (or .gif by extension). Available once a Makie backend is loaded (`using 
 Makie-free still summary is `flythrough_montage`.
 """
 function Mera.flythrough(vol::Mera.AmrVolume, kind::Symbol, keyframes;
-        nframes::Int=120, filename::AbstractString="flythrough.mp4", res::Int=480, mode::Symbol=:max,
-        smooth::Bool=true, aa::Int=1, power::Real=1.0, kappa::Real=0.1, fov_deg=60, up=(0.,0.,1.),
-        framerate::Int=24, colormap=:inferno, logscale::Bool=true, bg=:black, verbose::Bool=true)
+        nframes::Int=120, filename::AbstractString="flythrough.mp4", res::Int=480, pxsize=nothing, mode::Symbol=:max,
+        smooth=true, aa::Int=1, power::Real=1.0, kappa::Real=0.1, fov_deg=60, up=(0.,0.,1.),
+        framerate::Int=24, colormap=:inferno, logscale::Bool=true, bg=:black,
+        show_progress::Bool=true, verbose::Bool=false)
     poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
     mk(s) = Mera._immcam(kind, Mera._spline(poss, s), Mera._spline(tgts, s), up, fov_deg)
-    probe = Mera.render_view(vol, mk(0.0); res=res, mode=mode, smooth=smooth, aa=aa, power=power, kappa=kappa)
+    probe = Mera.render_view(vol, mk(0.0); res=res, pxsize=pxsize, mode=mode, smooth=smooth, aa=aa, power=power, kappa=kappa)
     nx, ny = size(probe)
     fig = Makie.Figure(size=(nx, ny), figure_padding=0)
     ax = Makie.Axis(fig[1,1], aspect=Makie.DataAspect()); Makie.hidedecorations!(ax); Makie.hidespines!(ax)
+    prog = show_progress ? Mera.Progress(nframes; desc="flythrough ", dt=0.5) : nothing
     Makie.record(fig, filename, 1:nframes; framerate=framerate, compression=18) do fr
         s = nframes == 1 ? 0.0 : (fr-1)/(nframes-1)
-        img = Mera.render_view(vol, mk(s); res=res, mode=mode, smooth=smooth, aa=aa, power=power, kappa=kappa)
+        img = Mera.render_view(vol, mk(s); res=res, pxsize=pxsize, mode=mode, smooth=smooth, aa=aa, power=power, kappa=kappa)
         Makie.empty!(ax)
         Makie.heatmap!(ax, Mera._prep(img; logscale=logscale), colormap=colormap, nan_color=bg)
+        prog === nothing || Mera.next!(prog)
         verbose && fr % 20 == 0 && println("  frame $fr/$nframes")
     end
     return filename
@@ -515,7 +518,7 @@ interactive backend (`using GLMakie`). `mode` is any `render_view` mode (`:max`/
 """
 function Mera.interactive_view(vol::Mera.AmrVolume; target=Mera.boxcenter(vol),
         distance::Real=0.6*vol.boxlen, azimuth::Real=0.6, elevation::Real=0.5, fov_deg=55,
-        mode::Symbol=:max, level::Real=1.0, res::Int=420, drag_res::Int=170, smooth::Bool=true,
+        mode::Symbol=:max, level::Real=1.0, res::Int=420, drag_res::Int=170, smooth=true,
         colormap=:inferno, logscale::Bool=true)
     az = Ref(float(azimuth)); el = Ref(float(elevation)); dist = Ref(float(distance))
     tg = (Float64(target[1]), Float64(target[2]), Float64(target[3]))
