@@ -274,6 +274,25 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE && haskey(DATASETS, :spiral_clum
                              res=48, exposure=8.0, saturation=1.8)
         @test all(x -> all(isfinite, (Mera.red(x),Mera.green(x),Mera.blue(x))) &&
                        0 ≤ Mera.red(x) ≤ 1 && 0 ≤ Mera.green(x) ≤ 1 && 0 ≤ Mera.blue(x) ≤ 1, schot)
+        # --- science wrappers (C) ---
+        # derived_volume: per-leaf f(ρ,T) ∝ bremsstrahlung; renders a non-empty :sum map
+        em = derived_volume(gas, (n,T)->n^2*sqrt(T), [:rho,:T]; units=[:nH,:K], verbose=false)
+        @test em isa Mera.AmrVolume && em.nleaf == vol.nleaf
+        emap = render_view(em, cam; res=48, mode=:sum); @test any(x -> isfinite(x) && x > 0, emap)
+        # column_map: N_H [cm⁻²] = ∫nH dl · (cm per code length); = render_view(:sum) × scale.cm
+        col = column_map(vol, cam; res=48)
+        cfin = filter(isfinite, col)
+        @test !isempty(cfin) && maximum(cfin) > 0
+        @test isapprox(col[.!isnan.(col)], (render_view(vol, cam; res=48, mode=:sum) .* gas.scale.cm)[.!isnan.(col)])
+        # moment_maps: density-weighted LOS kinematics; m0≥0, m1 has both signs (rotation), m2≥0
+        vx = amr_volume(gas,:vx,:km_s; signed=true, verbose=false)
+        vy = amr_volume(gas,:vy,:km_s; signed=true, verbose=false)
+        vz = amr_volume(gas,:vz,:km_s; signed=true, verbose=false)
+        m0,m1,m2 = moment_maps(vol, vx,vy,vz, cam; res=48)
+        @test size(m0)==(48,48) && size(m1)==(48,48) && size(m2)==(48,48)
+        f0=filter(isfinite,m0); f1=filter(isfinite,m1); f2=filter(isfinite,m2)
+        @test !isempty(f0) && all(≥(0), f0) && all(≥(0), f2)                  # intensity & dispersion ≥ 0
+        @test minimum(f1) < 0 && maximum(f1) > 0                              # blue- and red-shifted gas
     end
 else
     @warn "Skipping immersive data-backed tests — simulation data not available"
