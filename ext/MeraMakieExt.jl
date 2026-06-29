@@ -507,6 +507,32 @@ function Mera.flythrough(vol::Mera.AmrVolume, kind::Symbol, keyframes;
     return filename
 end
 
+# multi-tracer fly-through: a vector of field_channel/points_channel layers rendered with render_scene
+# (coloured-density + stars) per frame → mp4. `_disp` maps render_scene's display-oriented RGB to Makie's
+# image! convention (i→x, j→y-up) so the movie matches save_scene / inline display.
+_disp(D) = reverse(permutedims(D), dims=2)
+function Mera.flythrough(channels::AbstractVector, kind::Symbol, keyframes;
+        nframes::Int=120, filename::AbstractString="flythrough.mp4", res::Int=480, pxsize=nothing,
+        aa::Int=1, smooth=true, fov_deg=60, up=(0.,0.,1.), framerate::Int=24,
+        exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0, bg=(0.,0.,0.),
+        show_progress::Bool=true)
+    poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
+    mk(s) = Mera._immcam(kind, Mera._spline(poss, s), Mera._spline(tgts, s), up, fov_deg)
+    rs(s) = Mera.render_scene(channels, mk(s); res=res, pxsize=pxsize, aa=aa, smooth=smooth,
+                              exposure=exposure, saturation=saturation, gamma=gamma, bg=bg)
+    h, w = size(rs(0.0))
+    fig = Makie.Figure(size=(w, h), figure_padding=0)
+    ax = Makie.Axis(fig[1,1], aspect=Makie.DataAspect()); Makie.hidedecorations!(ax); Makie.hidespines!(ax)
+    prog = show_progress ? Mera.Progress(nframes; desc="flythrough ", dt=0.5) : nothing
+    Makie.record(fig, filename, 1:nframes; framerate=framerate, compression=18) do fr
+        s = nframes == 1 ? 0.0 : (fr-1)/(nframes-1)
+        Makie.empty!(ax); Makie.image!(ax, _disp(rs(s)))
+        prog === nothing || Mera.next!(prog)
+    end
+    return filename
+end
+Mera.flythrough(ch::Mera.ImmersiveChannel, kind::Symbol, keyframes; kw...) = Mera.flythrough([ch], kind, keyframes; kw...)
+
 """
     interactive_view(vol; target=boxcenter(vol), distance=0.6·boxlen, azimuth=0.6, elevation=0.5,
                      fov_deg=55, mode=:max, level=1.0, res=420, drag_res=170, smooth=true,
@@ -551,5 +577,45 @@ function Mera.interactive_view(vol::Mera.AmrVolume; target=Mera.boxcenter(vol),
     end
     Makie.display(fig); return fig
 end
+
+# multi-tracer interactive orbit: render_scene (coloured-density + stars) live, RGB via image!
+function Mera.interactive_view(channels::AbstractVector; target=nothing, distance=nothing,
+        azimuth::Real=0.6, elevation::Real=0.5, fov_deg=55, res::Int=420, drag_res::Int=160, smooth=true,
+        exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0, bg=(0.,0.,0.))
+    vc = findfirst(c -> c isa Mera.VolumeChannel, channels)
+    vc === nothing && error("interactive_view needs at least one field_channel (volume layer)")
+    vol = channels[vc].vol
+    tg = target === nothing ? Mera.boxcenter(vol) : (Float64(target[1]),Float64(target[2]),Float64(target[3]))
+    az = Ref(float(azimuth)); el = Ref(float(elevation))
+    dist = Ref(float(distance === nothing ? 0.6*vol.boxlen : distance))
+    eye() = (tg[1]+dist[]*cos(el[])*cos(az[]), tg[2]+dist[]*cos(el[])*sin(az[]), tg[3]+dist[]*sin(el[]))
+    shoot(r) = _disp(Mera.render_scene(channels, Mera.perspective_camera(eye(), tg; fov_deg=fov_deg);
+                     res=r, smooth=smooth, exposure=exposure, saturation=saturation, gamma=gamma, bg=bg))
+    frame = Makie.Observable(shoot(res))
+    fig = Makie.Figure(size=(res, res))
+    ax = Makie.Axis(fig[1,1], aspect=Makie.DataAspect()); Makie.hidedecorations!(ax); Makie.hidespines!(ax)
+    Makie.image!(ax, frame)
+    sc = fig.scene; drag = Ref(false); last = Ref((0.0, 0.0))
+    Makie.on(Makie.events(sc).mousebutton) do ev
+        if ev.button == Makie.Mouse.left
+            if ev.action == Makie.Mouse.press
+                drag[] = true; last[] = Tuple(Float64.(Makie.events(sc).mouseposition[]))
+            else
+                drag[] = false; frame[] = shoot(res)
+            end
+        end
+    end
+    Makie.on(Makie.events(sc).mouseposition) do p
+        if drag[]
+            dx = p[1]-last[][1]; dy = p[2]-last[][2]; last[] = Tuple(Float64.(p))
+            az[] -= 0.01*dx; el[] = clamp(el[] + 0.01*dy, -1.4, 1.4); frame[] = shoot(drag_res)
+        end
+    end
+    Makie.on(Makie.events(sc).scroll) do (sx, sy)
+        dist[] = clamp(dist[]*(1 - 0.12*sy), 0.05*vol.boxlen, 3*vol.boxlen); frame[] = shoot(res)
+    end
+    Makie.display(fig); return fig
+end
+Mera.interactive_view(ch::Mera.ImmersiveChannel; kw...) = Mera.interactive_view([ch]; kw...)
 
 end # module

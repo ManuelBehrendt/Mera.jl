@@ -149,6 +149,17 @@ end
     tmp6 = tempname()*".png"
     @test save_view(sv, tmp6; colormap=:inferno, vmin=0.0, vmax=1.0) == tmp6 && filesize(tmp6) > 0
     rm(tmp6, force=true)
+    # orientation: render_scene is already display-oriented → scene_figure/save must NOT re-orient it,
+    # and it must agree with the render_view(scalar) path. Bright slab at LOW x:
+    vola = _imm_uniform(4, (i,j,k)-> i ≤ 4 ? 9.0 : 0.02)
+    cam2 = perspective_camera((0.5,0.5,2.4),(0.5,0.5,0.5); fov_deg=30, aspect=1.0)
+    sv2  = view_figure(render_view(vola, cam2; res=30, mode=:max))
+    ch2  = Mera.VolumeChannel(vola, nothing,nothing, Mera._to_cmap(:grays), 0.,9., 0.,9., 0.,9., false,false,false, 40.,1., "x")
+    sd2  = render_scene([ch2], cam2; res=30)
+    @test isequal(scene_figure(sd2), sd2)                         # no double-orientation (identity passthrough)
+    lum(x)=Float64(Mera.red(x))+Float64(Mera.green(x))+Float64(Mera.blue(x))
+    leftbright(M)=sum(lum, @view M[:,1:end÷2]) > sum(lum, @view M[:,end÷2+1:end])
+    @test leftbright(sv2) == leftbright(sd2)                      # scalar & scene paths share orientation
 end
 
 @testset "immersive: camera paths, montage, flythrough fallback (data-free)" begin
@@ -244,12 +255,25 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE && haskey(DATASETS, :spiral_clum
         # pxsize with a physical unit resolves via the volume's scale (like projection)
         imgpx = render_view(vol, cam; pxsize=[2.0, :kpc], mode=:max)
         @test size(imgpx, 1) == size(imgpx, 2) && size(imgpx, 1) > 4          # perspective square, sane dims
+        # signed fields: signed=true keeps negatives (velocity), signed=false clamps them to 0
+        neg(v) = any(x -> x < 0, Iterators.flatten(values(d) for d in v.dicts))
+        vsgn = amr_volume(gas, :vx, :km_s; signed=true,  verbose=false)
+        vclp = amr_volume(gas, :vx, :km_s; signed=false, verbose=false)
+        @test neg(vsgn) && !neg(vclp)                                        # signed retains inflow/blueshift
+        # _autorange (subsampled) returns a sane increasing range
+        alo, ahi = Mera._autorange(vol, true, nothing, nothing)
+        @test isfinite(alo) && isfinite(ahi) && alo < ahi
         # multi-tracer composite (coloured-density: opacity from ρ, hue from T) + RGB output
         ch = field_channel(gas, :rho, :nH; color_by=:T, color_unit=:K, vmin=-0.5, vmax=2.3,
                            color_vmin=3.5, color_vmax=6.5, opacity=10, verbose=false)
         sc = render_scene([ch], perspective_camera(c .+ (30,20,24), c; fov_deg=55); res=80, exposure=2.0)
         @test eltype(sc) <: Mera.Colorant && size(sc) == (80, 80)
         @test any(x -> Mera.red(x)+Mera.green(x)+Mera.blue(x) > 0.05, sc)     # the galaxy shows up
+        # luminance-preserving tone-map: even pushed hard, output stays in gamut [0,1] and finite
+        schot = render_scene([ch], perspective_camera(c .+ (30,20,24), c; fov_deg=55);
+                             res=48, exposure=8.0, saturation=1.8)
+        @test all(x -> all(isfinite, (Mera.red(x),Mera.green(x),Mera.blue(x))) &&
+                       0 ≤ Mera.red(x) ≤ 1 && 0 ≤ Mera.green(x) ≤ 1 && 0 ≤ Mera.blue(x) ≤ 1, schot)
     end
 else
     @warn "Skipping immersive data-backed tests — simulation data not available"

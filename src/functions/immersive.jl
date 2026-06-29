@@ -88,13 +88,15 @@ end
 Index AMR cell data for ray-casting **without resampling to a uniform grid**. Each leaf is stored
 once in a per-level hash keyed by its integer cell coordinates; memory is the data size, not
 `(2^lmax)³`. To zoom, pass a Mera [`subregion`](@ref) of `dataobject` first — only those leaves are
-indexed. Negative/NaN values are clamped to 0 (so voids and outside-data add nothing).
+indexed. NaN→0; negatives are clamped to 0 too **unless `signed=true`** — set it for signed fields
+(velocity components, `B_z`, divergence, radial velocity) and display them with `logscale=false` + a
+diverging colormap + symmetric `vmin/vmax` (or, in a scene, `color_logscale=false` + `color_vmin/vmax`).
 
 `occupancy=true` (default) also builds a coarse max-level map so `_leaf` starts its descent at the finest
 level present near a point — a real speed-up for deep AMR (it skips failed fine-level lookups), and
 result-identical. Set `occupancy=false` to disable it, or toggle later with [`set_occupancy`](@ref).
 """
-function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; occupancy::Bool=true, verbose::Bool=true)
+function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; signed::Bool=false, occupancy::Bool=true, verbose::Bool=true)
     cx = getvar(dataobject, :cx); cy = getvar(dataobject, :cy); cz = getvar(dataobject, :cz)
     lv = getvar(dataobject, :level); val = getvar(dataobject, var, unit)
     lmax = Int(maximum(lv)); lmin = Int(minimum(lv))
@@ -103,7 +105,7 @@ function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; occupancy::
     occ = occupancy ? zeros(UInt8, Nc, Nc, Nc) : nothing
     @inbounds for i in eachindex(lv)
         L = Int(lv[i]); cxi = cx[i]; cyi = cy[i]; czi = cz[i]
-        vv = val[i]; vv = (isnan(vv) || vv < 0) ? 0.0 : Float64(vv)
+        vv = val[i]; vv = isnan(vv) ? 0.0 : Float64(vv); (!signed && vv < 0) && (vv = 0.0)
         dicts[L][(Int32(cxi), Int32(cyi), Int32(czi))] = vv
         occupancy && _mark_occ!(occ, Nc, cxi, cyi, czi, L)
     end
@@ -522,7 +524,7 @@ function as_image(img::AbstractMatrix{<:Real}; colormap=:inferno, logscale::Bool
     end
     return _orient(out)
 end
-as_image(rgb::AbstractMatrix{<:Colorant}) = _orient(rgb)
+as_image(rgb::AbstractMatrix{<:Colorant}) = rgb   # render_scene already returns a display-oriented image — pass through (don't re-orient)
 
 "Inline-display alias of [`as_image`](@ref) (kept for convenience)."
 view_figure(img; kw...) = as_image(img; kw...)
@@ -589,8 +591,13 @@ const ImmersiveChannel = Union{VolumeChannel,PointChannel}
 # auto value range from the leaf values (percentiles), unless given
 function _autorange(vol::AmrVolume, logscale, vmin, vmax)
     (vmin !== nothing && vmax !== nothing) && return (Float64(vmin), Float64(vmax))
-    vals = Float64[]
-    for d in vol.dicts; isempty(d) || append!(vals, values(d)); end
+    cap = 100_000                                  # systematic subsample → percentiles without copying/sorting
+    stride = max(1, vol.nleaf ÷ cap)               # all 167M leaves (sort 1e5 not 1e8, ~1 MB not ~1 GB)
+    vals = Float64[]; sizehint!(vals, min(vol.nleaf, cap) + 1); c = 0
+    for d in vol.dicts
+        isempty(d) && continue
+        for v in values(d); c += 1; (c % stride == 0) && push!(vals, v); end
+    end
     vals = logscale ? log10.(filter(x -> x > 0, vals)) : vals
     isempty(vals) && return (0.0, 1.0)
     sort!(vals); q(p) = vals[clamp(round(Int, p*length(vals)), 1, length(vals))]
@@ -612,11 +619,12 @@ function field_channel(data, var::Symbol, unit::Symbol=:standard; color_by=nothi
         colormap=:inferno, reverse::Bool=false, vmin=nothing, vmax=nothing,
         color_vmin=nothing, color_vmax=nothing, absorb_vmin=nothing, absorb_vmax=nothing,
         logscale::Bool=true, color_logscale::Bool=true, absorb_logscale::Bool=true,
+        signed::Bool=false, color_signed::Bool=false, absorb_signed::Bool=false,
         opacity::Real=4.0, gamma::Real=1.0, label::String=string(var), verbose::Bool=false)
-    vol = amr_volume(data, var, unit; verbose=verbose)
+    vol = amr_volume(data, var, unit; signed=signed, verbose=verbose)
     lo, hi = _autorange(vol, logscale, vmin, vmax); cmap = _to_cmap(colormap; reverse=reverse)
-    cvol = color_by  === nothing ? nothing : amr_volume(data, color_by,  color_unit;  verbose=verbose)
-    avol = absorb_by === nothing ? nothing : amr_volume(data, absorb_by, absorb_unit; verbose=verbose)
+    cvol = color_by  === nothing ? nothing : amr_volume(data, color_by,  color_unit;  signed=color_signed,  verbose=verbose)
+    avol = absorb_by === nothing ? nothing : amr_volume(data, absorb_by, absorb_unit; signed=absorb_signed, verbose=verbose)
     clo, chi = cvol === nothing ? (lo, hi) : _autorange(cvol, color_logscale,  color_vmin,  color_vmax)
     alo, ahi = avol === nothing ? (lo, hi) : _autorange(avol, absorb_logscale, absorb_vmin, absorb_vmax)
     VolumeChannel(vol, cvol, avol, cmap, lo, hi, clo, chi, alo, ahi,
@@ -749,14 +757,16 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
         end
         for (br,bg,bb) in bufs; R .+= br; G .+= bg; B .+= bb; end
     end
-    e=Float64(exposure); sat=Float64(saturation); ginv=1.0/Float64(gamma)
+    e=Float64(exposure); sat=Float64(saturation); ginv=1.0/Float64(gamma); wr,wg,wb=0.2126,0.7152,0.0722
     out = Matrix{RGB{Float64}}(undef, nx, ny)
     @inbounds for idx in eachindex(R)
-        r=_aces(e*R[idx]); g=_aces(e*G[idx]); b=_aces(e*B[idx])
-        if sat != 1.0
-            L=0.2126r+0.7152g+0.0722b
-            r=L+sat*(r-L); g=L+sat*(g-L); b=L+sat*(b-L)
+        r=e*R[idx]; g=e*G[idx]; b=e*B[idx]
+        if sat != 1.0                                   # saturate in LINEAR light, before tone-mapping
+            L=wr*r+wg*g+wb*b; r=max(L+sat*(r-L),0.); g=max(L+sat*(g-L),0.); b=max(L+sat*(b-L),0.)
         end
+        L=wr*r+wg*g+wb*b                                # luminance-preserving ACES: tone-map L, keep chroma
+        s = L > 1e-12 ? _aces(L)/L : 0.0                # ratios → no hue→white wash in highlights
+        r*=s; g*=s; b*=s
         if ginv != 1.0; r=r^ginv; g=g^ginv; b=b^ginv; end
         out[idx] = RGB{Float64}(clamp(r+bg[1],0,1), clamp(g+bg[2],0,1), clamp(b+bg[3],0,1))
     end
