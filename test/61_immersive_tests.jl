@@ -160,6 +160,14 @@ end
     lum(x)=Float64(Mera.red(x))+Float64(Mera.green(x))+Float64(Mera.blue(x))
     leftbright(M)=sum(lum, @view M[:,1:end÷2]) > sum(lum, @view M[:,end÷2+1:end])
     @test leftbright(sv2) == leftbright(sd2)                      # scalar & scene paths share orientation
+    # depth-composited stars: an opaque (black) gas slab in FRONT of a star dims it (occlusion)
+    slab = _imm_uniform(3, (i,j,k)-> k ≥ 4 ? 50.0 : 0.0)          # opaque in the near half (high z)
+    gblk = Mera.VolumeChannel(slab, nothing,nothing, Mera._to_cmap([:black,:black]), 0.,50.,0.,50.,0.,50.,
+                              false,false,false, 200.,1., "blk")
+    star = Mera.PointChannel(reshape([0.5,0.5,0.25],1,3), [1.0], (1.,1.,1.), 2.5, 1.0, "s")  # behind the slab
+    ocam = perspective_camera((0.5,0.5,2.6),(0.5,0.5,0.5); fov_deg=40, aspect=1.0)
+    Lsum(M)=sum(x->Float64(Mera.red(x))+Float64(Mera.green(x))+Float64(Mera.blue(x)), M)
+    @test Lsum(render_scene([star], ocam; res=40)) > Lsum(render_scene([gblk, star], ocam; res=40))
 end
 
 @testset "immersive: camera paths, montage, flythrough fallback (data-free)" begin
