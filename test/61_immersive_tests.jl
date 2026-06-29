@@ -82,6 +82,12 @@ end
         pk = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=20, mode=:emission, smooth=s)
         @test size(pk) == (20, 20) && any(isfinite, pk)
     end
+    # jittered sampling (anti-moiré) is deterministic, changes the result vs no-jitter, stays sane
+    jcam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
+    jon  = render_view(vol, jcam; res=20, mode=:emission, jitter=true)
+    joff = render_view(vol, jcam; res=20, mode=:emission, jitter=false)
+    @test !isequal(jon, joff) && all(x -> !isfinite(x) || x ≥ 0, jon)
+    @test isequal(jon, render_view(vol, jcam; res=20, mode=:emission, jitter=true))   # deterministic
 end
 
 @testset "immersive: compositing + ACES tone-map math (data-free)" begin

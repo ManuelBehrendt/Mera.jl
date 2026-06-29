@@ -60,6 +60,9 @@ function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; verbose::Bo
     n = length(lv)
     verbose && println("amr_volume: $n leaves, levels $(lmin)–$(lmax), boxlen $(dataobject.boxlen) " *
                        "[code]  (no uniform grid — native AMR marching)")
+    n > 50_000_000 && @warn "amr_volume indexed $n leaves (~$(round(n*40/1e9, digits=1)) GB of index, " *
+        "lookups descend $(lmax-lmin+1) levels). For a big box, `subregion(data, …)` before amr_volume " *
+        "indexes only the zoom region — far less RAM and much faster."
     return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n, dataobject.scale)
 end
 
@@ -155,6 +158,15 @@ end
     return acc
 end
 
+# deterministic per-pixel hash → [0,1), for jittered (dithered) ray-march starts. Breaks the moiré/
+# banding that fixed-step sampling produces against the regular AMR grid (worst in equirect/fisheye),
+# trading a structured artefact for unstructured noise that averages out under `aa` supersampling.
+@inline function _hash01(a::Integer, b::Integer)
+    h = (UInt32(a & 0xffff) * 0x9e3779b1) ⊻ (UInt32(b & 0xffff) * 0x85ebca77)
+    h ⊻= h >> 13; h *= 0xc2b2ae35; h ⊻= h >> 16
+    return Float64(h & 0x00ffffff) / Float64(0x01000000)
+end
+
 # smoothing selector: false/:nearest→0 (nearest-leaf), true/:trilinear→1 (trilinear), :kernel→2 (cubic spline)
 @inline _smode(s) = s === false || s === :nearest ? 0 : (s === :kernel ? 2 : 1)
 @inline _sample_at(v::AmrVolume, x, y, z, h, sm::Int) =
@@ -183,9 +195,13 @@ end
 # `alpha >= 1` it is OPAQUE (first crossing wins — solid surface). With `alpha < 1` it is TRANSLUCENT:
 # every crossing is composited front-to-back with that per-surface opacity, so nested shells and the
 # front+back faces of a clump show through. Returns the (composited) shade, or NaN if no crossing.
-@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha)
+@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha, jit=0.0)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
+    if jit > 0
+        _, h0 = _leaf(v, ox+t0*dx, oy+t0*dy, oz+t0*dz)
+        off = jit*max(0.5*h0, floor_dt); t0+off < t1 && (t0 += off)
+    end
     prev = NaN; pt = t0; t = t0; I = 0.0; A = 0.0; hit = false
     @inbounds while t < t1
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
@@ -222,10 +238,14 @@ end
 end
 
 # march one ray with ADAPTIVE steps (= stepfrac · local cell size). NaN ⇒ ray missed the box.
-@inline function _cast(v::AmrVolume, ox,oy,oz, dx,dy,dz, mode::Symbol, stepfrac, power, kappa, sm::Int)
+@inline function _cast(v::AmrVolume, ox,oy,oz, dx,dy,dz, mode::Symbol, stepfrac, power, kappa, sm::Int, jit=0.0)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz)
     t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
+    if jit > 0                                   # jittered start → breaks fixed-step moiré/banding
+        _, h0 = _leaf(v, ox+t0*dx, oy+t0*dy, oz+t0*dz)
+        off = jit*max(stepfrac*h0, floor_dt); t0+off < t1 && (t0 += off)
+    end
     I = 0.0; tau = 0.0; mip = 0.0; t = t0
     @inbounds while t < t1
         x = ox+t*dx; y = oy+t*dy; z = oz+t*dz
@@ -358,7 +378,7 @@ quantitative emission/column work). `aa` is jittered supersampling. Background (
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, mode::Symbol=:emission,
         stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
         level::Real=1.0, iso_alpha::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
-        specular::Real=0.3, shininess::Real=16.0, show_progress::Bool=false)
+        specular::Real=0.3, shininess::Real=16.0, jitter::Bool=true, show_progress::Bool=false)
     res = _resolve_res(vol, cam, res, pxsize)        # pxsize (physical/code) overrides res when given
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
@@ -373,8 +393,9 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, 
             for sj in 1:aa, si in 1:aa
                 uu = (i-1 + (si-0.5)*ia)/nx; vv = (j-1 + (sj-0.5)*ia)/ny
                 rd = _raydir(cam, uu, vv); rd === nothing && continue
-                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh, ia_) :
-                            _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, sm)
+                jt = jitter ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
+                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh, ia_, jt) :
+                            _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, sm, jt)
                 isnan(val) || (acc += val; n += 1)
             end
             n > 0 && (img[i,j] = acc/n)
@@ -541,10 +562,14 @@ function points_channel(data; weight::Symbol=:mass, unit::Symbol=:standard, filt
 end
 
 # composite all volume channels front-to-back along one ray → (R,G,B,A)
-@inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int)
+@inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int, jit=0.0)
     v1 = vols[1].vol
     t0,t1 = _box_t(v1, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.)
     floor_dt = 1e-6*v1.boxlen
+    if jit > 0
+        _, h0 = _leaf(v1, ox+t0*dx, oy+t0*dy, oz+t0*dz)
+        off = jit*max(stepfrac*h0, floor_dt); t0+off < t1 && (t0 += off)
+    end
     R=0.;G=0.;B=0.;A=0.; t=t0
     @inbounds while t < t1 && A < 0.997
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
@@ -595,7 +620,7 @@ top with a core+halo PSF. The HDR result is ACES filmic tone-mapped, then `satur
 """
 function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::Int=1, smooth=true,
         stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0,
-        show_progress::Bool=false)
+        jitter::Bool=true, show_progress::Bool=false)
     chs = channels isa ImmersiveChannel ? ImmersiveChannel[channels] : collect(channels)
     vols = VolumeChannel[c for c in chs if c isa VolumeChannel]
     pts  = PointChannel[c for c in chs if c isa PointChannel]
@@ -611,7 +636,8 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
                 for sj in 1:aa, si in 1:aa
                     uu=(i-1+(si-0.5)*ia)/nx; vv=(j-1+(sj-0.5)*ia)/ny
                     rd=_raydir(cam,uu,vv); rd===nothing && continue
-                    cr,cg,cb,_ = _cast_rgb(vols, cam.pos..., rd..., sf, sm)
+                    jt = jitter ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
+                    cr,cg,cb,_ = _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt)
                     r+=cr; g+=cg; b+=cb; n+=1
                 end
                 if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; end
