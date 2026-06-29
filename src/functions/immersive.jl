@@ -238,6 +238,7 @@ end
             I += (power == 1.0 ? val : val^power) * seg
         elseif mode === :rt
             I += (power == 1.0 ? val : val^power) * exp(-tau) * seg; tau += kappa*val*seg
+            tau > 20.0 && break          # early-ray-termination: medium opaque (e^-τ ≈ 2e-9) → stop marching
         else # :sum
             I += val*seg
         end
@@ -357,7 +358,7 @@ quantitative emission/column work). `aa` is jittered supersampling. Background (
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, mode::Symbol=:emission,
         stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
         level::Real=1.0, iso_alpha::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
-        specular::Real=0.3, shininess::Real=16.0)
+        specular::Real=0.3, shininess::Real=16.0, show_progress::Bool=false)
     res = _resolve_res(vol, cam, res, pxsize)        # pxsize (physical/code) overrides res when given
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
@@ -365,6 +366,7 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, 
     sm = _smode(smooth)
     lv = Float64(level); ia_=Float64(iso_alpha); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
     iso = mode === :iso
+    prog = show_progress ? Progress(ny; desc="render_view ", dt=0.3) : nothing
     Threads.@threads for j in 1:ny
         @inbounds for i in 1:nx
             acc = 0.0; n = 0
@@ -377,6 +379,7 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, 
             end
             n > 0 && (img[i,j] = acc/n)
         end
+        prog === nothing || next!(prog)
     end
     return img
 end
@@ -591,7 +594,8 @@ top with a core+halo PSF. The HDR result is ACES filmic tone-mapped, then `satur
 `channels` may be a single channel or a vector. Display inline directly or save with [`save_scene`](@ref).
 """
 function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::Int=1, smooth=true,
-        stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0)
+        stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0,
+        show_progress::Bool=false)
     chs = channels isa ImmersiveChannel ? ImmersiveChannel[channels] : collect(channels)
     vols = VolumeChannel[c for c in chs if c isa VolumeChannel]
     pts  = PointChannel[c for c in chs if c isa PointChannel]
@@ -600,6 +604,7 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
              (round(Int, res*cam.aspect), res)
     R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa; sm=_smode(smooth)
     if !isempty(vols)
+        prog = show_progress ? Progress(ny; desc="render_scene ", dt=0.3) : nothing
         Threads.@threads for j in 1:ny
             @inbounds for i in 1:nx
                 r=0.;g=0.;b=0.;n=0
@@ -611,6 +616,7 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
                 end
                 if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; end
             end
+            prog === nothing || next!(prog)
         end
     end
     # core+halo emissive splat (√-compressed brightness), THREADED: points are chunked across threads,

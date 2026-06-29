@@ -111,7 +111,15 @@ end
                        perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24)
     tmp2 = tempname() * ".png"
     @test save_scene(rgb, tmp2) == tmp2 && isfile(tmp2) && filesize(tmp2) > 0
-    rm(tmp, force=true); rm(tmp2, force=true)
+    # view_figure returns a (displayable) RGB image — and it is saveable via save_view/save_scene
+    vf = view_figure(sv; colormap=:viridis)
+    @test eltype(vf) <: Mera.Colorant
+    tmp3 = tempname() * ".png"
+    @test save_view(vf, tmp3) == tmp3 && isfile(tmp3) && filesize(tmp3) > 0
+    rm(tmp, force=true); rm(tmp2, force=true); rm(tmp3, force=true)
+    # the show_progress flag is accepted and the render still returns a correct image
+    pp = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=12, mode=:max, show_progress=true)
+    @test size(pp) == (12, 12)
 end
 
 @testset "immersive: camera paths, montage, flythrough fallback (data-free)" begin
