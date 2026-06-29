@@ -65,32 +65,55 @@ function _build_occ(v::AmrVolume)
 end
 
 """
+    set_occupancy(vol, on::Bool) -> AmrVolume
+
+Turn the occupancy acceleration on/off on an existing [`amr_volume`](@ref), **reusing the leaf hash** (so
+it is cheap — no re-indexing). `on=true` builds the coarse map; `on=false` drops it (full level descent).
+Handy for benchmarking the speed-up. (Equivalent at build time: `amr_volume(…; occupancy=false)`.)
+"""
+function set_occupancy(vol::AmrVolume, on::Bool)
+    if on
+        vol.occ === nothing || return vol
+        occ, Lc = _build_occ(vol)
+        return AmrVolume(vol.dicts, vol.lmin, vol.lmax, vol.boxlen, vol.unit, vol.nleaf, vol.scale, occ, Lc)
+    else
+        vol.occ === nothing && return vol
+        return AmrVolume(vol.dicts, vol.lmin, vol.lmax, vol.boxlen, vol.unit, vol.nleaf, vol.scale, nothing, 0)
+    end
+end
+
+"""
     amr_volume(dataobject, var, [unit]; verbose=true) -> AmrVolume
 
 Index AMR cell data for ray-casting **without resampling to a uniform grid**. Each leaf is stored
 once in a per-level hash keyed by its integer cell coordinates; memory is the data size, not
 `(2^lmax)³`. To zoom, pass a Mera [`subregion`](@ref) of `dataobject` first — only those leaves are
 indexed. Negative/NaN values are clamped to 0 (so voids and outside-data add nothing).
+
+`occupancy=true` (default) also builds a coarse max-level map so `_leaf` starts its descent at the finest
+level present near a point — a real speed-up for deep AMR (it skips failed fine-level lookups), and
+result-identical. Set `occupancy=false` to disable it, or toggle later with [`set_occupancy`](@ref).
 """
-function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; verbose::Bool=true)
+function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; occupancy::Bool=true, verbose::Bool=true)
     cx = getvar(dataobject, :cx); cy = getvar(dataobject, :cy); cz = getvar(dataobject, :cz)
     lv = getvar(dataobject, :level); val = getvar(dataobject, var, unit)
     lmax = Int(maximum(lv)); lmin = Int(minimum(lv))
     dicts = [Dict{NTuple{3,Int32},Float64}() for _ in 1:lmax]
-    Lc = min(lmin, 8); Nc = 1 << Lc; occ = zeros(UInt8, Nc, Nc, Nc)   # coarse max-level occupancy (level-skip accel)
+    Lc = min(lmin, 8); Nc = 1 << Lc                                   # coarse max-level occupancy (level-skip accel)
+    occ = occupancy ? zeros(UInt8, Nc, Nc, Nc) : nothing
     @inbounds for i in eachindex(lv)
         L = Int(lv[i]); cxi = cx[i]; cyi = cy[i]; czi = cz[i]
         vv = val[i]; vv = (isnan(vv) || vv < 0) ? 0.0 : Float64(vv)
         dicts[L][(Int32(cxi), Int32(cyi), Int32(czi))] = vv
-        _mark_occ!(occ, Nc, cxi, cyi, czi, L)
+        occupancy && _mark_occ!(occ, Nc, cxi, cyi, czi, L)
     end
     n = length(lv)
     verbose && println("amr_volume: $n leaves, levels $(lmin)–$(lmax), boxlen $(dataobject.boxlen) " *
-                       "[code]  (no uniform grid — native AMR marching)")
+                       "[code]  (no uniform grid — native AMR marching$(occupancy ? "" : ", occupancy OFF"))")
     n > 50_000_000 && @warn "amr_volume indexed $n leaves (~$(round(n*40/1e9, digits=1)) GB of index, " *
         "lookups descend $(lmax-lmin+1) levels). For a big box, `subregion(data, …)` before amr_volume " *
         "indexes only the zoom region — far less RAM and much faster."
-    return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n, dataobject.scale, occ, Lc)
+    return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n, dataobject.scale, occ, occupancy ? Lc : 0)
 end
 
 "Centre of the simulation box in code units, as an NTuple{3}."
