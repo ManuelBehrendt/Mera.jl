@@ -253,27 +253,32 @@ end
 # `alpha >= 1` it is OPAQUE (first crossing wins — solid surface). With `alpha < 1` it is TRANSLUCENT:
 # every crossing is composited front-to-back with that per-surface opacity, so nested shells and the
 # front+back faces of a clump show through. Returns the (composited) shade, or NaN if no crossing.
-@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, level, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha, jit=0.0)
+# `levels` is a sorted Vector{Float64} of one or more iso values (nested shells). Per segment we test every
+# level; crossings are composited in front-to-back order (within a segment that order follows the field's
+# sign, so no sort/alloc needed). Opaque (alpha≥1) returns the nearest surface of any level.
+@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, levels, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha, jit=0.0)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
-    if jit > 0
-        _, h0 = _leaf(v, ox+t0*dx, oy+t0*dy, oz+t0*dz)
-        off = jit*max(0.5*h0, floor_dt); t0+off < t1 && (t0 += off)
-    end
+    nlev = length(levels)
     prev = NaN; pt = t0; t = t0; I = 0.0; A = 0.0; hit = false
     @inbounds while t < t1
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
         _, h = _leaf(v, x, y, z)
         val = _sample_at(v, x, y, z, h, sm)
-        if !isnan(prev) && (prev-level)*(val-level) <= 0 && prev != val
-            frac = (level-prev)/(val-prev); tc = pt + frac*(t-pt)
-            cx=ox+tc*dx; cy=oy+tc*dy; cz=oz+tc*dz; _, hc = _leaf(v,cx,cy,cz)
-            nx,ny,nz = _grad(v,cx,cy,cz,hc)
-            sh = (nx==0.0 && ny==0.0 && nz==0.0) ? ambient :
-                 _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
-            alpha >= 1.0 && return sh                       # opaque: first surface wins
-            I += (1-A)*alpha*sh; A += (1-A)*alpha; hit = true  # translucent: composite front-to-back
-            A >= 0.997 && return I
+        if !isnan(prev) && val != prev
+            inc = val > prev                                  # field rising → lower levels are crossed first
+            for li in (inc ? (1:nlev) : (nlev:-1:1))          # ⇒ visit levels in front-to-back (tc-ascending) order
+                lev = levels[li]
+                ((prev-lev)*(val-lev) <= 0) || continue
+                frac = (lev-prev)/(val-prev); tc = pt + frac*(t-pt)
+                cx=ox+tc*dx; cy=oy+tc*dy; cz=oz+tc*dz; _, hc = _leaf(v,cx,cy,cz)
+                nx,ny,nz = _grad(v,cx,cy,cz,hc)
+                sh = (nx==0.0 && ny==0.0 && nz==0.0) ? ambient :
+                     _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
+                alpha >= 1.0 && return sh                     # opaque: nearest surface of any level wins
+                I += (1-A)*alpha*sh; A += (1-A)*alpha; hit = true   # translucent: composite each shell
+                A >= 0.997 && return I
+            end
         end
         prev = val; pt = t
         t += max(0.5*h, floor_dt)
@@ -424,7 +429,9 @@ the focal-plane height there, equirect/fisheye the arc at that distance) and ove
 follow the camera: equirect → `2res×res`, fisheye → `res×res`, perspective → `round(res·aspect)×res`. `mode`: `:emission` (∫ j dl, j=val^`power`),
 `:rt` (emission+absorption, opacity `kappa`), `:max` (MIP), `:sum`, `:iso` (isosurface at `level`,
 gradient-shaded; `iso_alpha=1` opaque first-hit, `iso_alpha<1` **translucent** — every crossing
-composited front-to-back, so nested shells / front+back faces show through). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
+composited front-to-back, so nested shells / front+back faces show through). `level` is the field's
+physical value (linear, in the volume's unit) and may be a **vector of values** for several nested
+shells in one pass (e.g. `level=[0.1, 1, 10]`; best with `iso_alpha<1`). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
 fast preview), or `:kernel` (cubic B-spline blur — softer than trilinear but **cosmetic and
 NON-conservative**: it spreads coarse-cell values beyond their volume, so use it for beauty frames, not
 quantitative emission/column work). `aa` is jittered supersampling. Background (ray misses the box) is
@@ -432,14 +439,15 @@ quantitative emission/column work). `aa` is jittered supersampling. Background (
 """
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, mode::Symbol=:emission,
         stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
-        level::Real=1.0, iso_alpha::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
+        level=1.0, iso_alpha::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
         specular::Real=0.3, shininess::Real=16.0, jitter::Bool=true, show_progress::Bool=false)
     res = _resolve_res(vol, cam, res, pxsize)        # pxsize (physical/code) overrides res when given
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
     img = fill(NaN, nx, ny); sf = Float64(stepfrac); pw = Float64(power); kp = Float64(kappa); ia = 1.0/aa
     sm = _smode(smooth)
-    lv = Float64(level); ia_=Float64(iso_alpha); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
+    lv = level isa Real ? [Float64(level)] : sort!(Float64.(collect(level)))   # one or more iso values (nested shells)
+    ia_=Float64(iso_alpha); ln = _imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); sh=Float64(shininess)
     iso = mode === :iso
     prog = show_progress ? Progress(ny; desc="render_view ", dt=0.3) : nothing
     Threads.@threads for j in 1:ny
