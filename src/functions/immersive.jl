@@ -300,16 +300,13 @@ end
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz)
     t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
-    if jit > 0                                   # jittered start → breaks fixed-step moiré/banding
-        _, h0 = _leaf(v, ox+t0*dx, oy+t0*dy, oz+t0*dz)
-        off = jit*max(stepfrac*h0, floor_dt); t0+off < t1 && (t0 += off)
-    end
     I = 0.0; tau = 0.0; mip = 0.0; t = t0
     @inbounds while t < t1
         x = ox+t*dx; y = oy+t*dy; z = oz+t*dz
         _, h = _leaf(v, x, y, z)
-        val = _sample_at(v, x, y, z, h, sm)
         dt = max(stepfrac*h, floor_dt); tend = min(t+dt, t1); seg = tend - t
+        ts = jit > 0 ? t + jit*seg : t          # jitter the sample WITHIN the segment → scales with the
+        val = _sample_at(v, ox+ts*dx, oy+ts*dy, oz+ts*dz, h, sm)   # local cell, so it breaks moiré at all distances
         if mode === :max
             val > mip && (mip = val)
         elseif mode === :emission
@@ -636,15 +633,14 @@ end
     v1 = vols[1].vol
     t0,t1 = _box_t(v1, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.)
     floor_dt = 1e-6*v1.boxlen
-    if jit > 0
-        _, h0 = _leaf(v1, ox+t0*dx, oy+t0*dy, oz+t0*dz)
-        off = jit*max(stepfrac*h0, floor_dt); t0+off < t1 && (t0 += off)
-    end
     R=0.;G=0.;B=0.;A=0.; t=t0
     @inbounds while t < t1 && A < 0.997
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
         _, h = _leaf(v1, x, y, z)
         dt = max(stepfrac*h, floor_dt); tend = min(t+dt, t1); seg = tend-t
+        if jit > 0                              # jitter the sample within the segment (scales with local cell)
+            ts = t + jit*seg; x = ox+ts*dx; y = oy+ts*dy; z = oz+ts*dz
+        end
         for ch in vols
             val = _sample_at(ch.vol, x, y, z, h, sm)
             s = ch.logscale ? (val > 0 ? log10(val) : -Inf) : val
