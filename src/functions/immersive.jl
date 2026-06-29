@@ -451,7 +451,8 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, 
             for sj in 1:aa, si in 1:aa
                 uu = (i-1 + (si-0.5)*ia)/nx; vv = (j-1 + (sj-0.5)*ia)/ny
                 rd = _raydir(cam, uu, vv); rd === nothing && continue
-                jt = jitter ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
+                # jitter only helps accumulating modes; on :max / :iso it just adds speckle → skip there
+                jt = (jitter && !iso && mode !== :max) ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
                 val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh, ia_, jt) :
                             _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, sm, jt)
                 isnan(val) || (acc += val; n += 1)
@@ -522,6 +523,17 @@ scene_figure(img) = as_image(img)
 
 Colour a scalar [`render_view`](@ref) image and write it to PNG (via FileIO)."""
 save_view(img, filename::AbstractString; kw...) = (FileIO.save(filename, as_image(img; kw...)); filename)
+
+"""
+    save_figure(img, filename; colormap=:inferno, logscale=true, bg=:black, reverse=false) -> filename
+
+Write any immersive image to a file — the saving counterpart of [`view_figure`](@ref)/[`scene_figure`](@ref).
+A scalar [`render_view`](@ref) result is coloured via `colormap`; an already-RGB
+[`render_scene`](@ref)/`view_figure`/`scene_figure` result is written as-is (colour kwargs ignored)."""
+save_figure(img::AbstractMatrix{<:Real}, filename::AbstractString; kw...) =
+    (FileIO.save(filename, as_image(img; kw...)); filename)
+save_figure(img::AbstractMatrix{<:Colorant}, filename::AbstractString; kw...) =
+    (FileIO.save(filename, as_image(img)); filename)
 
 # -------------------------------------------------------------------------------------
 #  Multi-channel compositing — several tracers, each its own colormap + opacity, blended
@@ -783,10 +795,11 @@ function flythrough_montage(vol::AmrVolume, kind::Symbol, keyframes; nframes::In
         res::Int=240, pxsize=nothing, mode::Symbol=:max, smooth=true, aa::Int=1, fov_deg=60, up=(0.,0.,1.),
         colormap=:inferno, logscale::Bool=true)
     poss = [k[1] for k in keyframes]; tgts = [k[2] for k in keyframes]
-    tiles = [as_image(render_view(vol, _immcam(kind, _spline(poss, nframes==1 ? 0.0 : (k-1)/(nframes-1)),
-                                                     _spline(tgts, nframes==1 ? 0.0 : (k-1)/(nframes-1)), up, fov_deg);
-                                  res=res, pxsize=pxsize, mode=mode, smooth=smooth, aa=aa); colormap=colormap, logscale=logscale)
-             for k in 1:nframes]
+    sof(k) = nframes == 1 ? 0.0 : (k-1)/(nframes-1)
+    mk(k) = _immcam(kind, _spline(poss, sof(k)), _spline(tgts, sof(k)), up, fov_deg)
+    rfix = pxsize === nothing ? res : _resolve_res(vol, mk(1), res, pxsize)   # one tile size for all frames
+    tiles = [as_image(render_view(vol, mk(k); res=rfix, mode=mode, smooth=smooth, aa=aa);
+                      colormap=colormap, logscale=logscale) for k in 1:nframes]
     rows = cld(nframes, cols); th, tw = size(tiles[1])             # tiles already oriented (row,col)
     canvas = fill(RGB{Float64}(0,0,0), rows*th, cols*tw)
     for k in 1:nframes
