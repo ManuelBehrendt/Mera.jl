@@ -143,6 +143,12 @@ end
     # the show_progress flag is accepted and the render still returns a correct image
     pp = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=12, mode=:max, show_progress=true)
     @test size(pp) == (12, 12)
+    # vmin/vmax fix the colour range (instead of auto min/max) and flow through view_figure/save_view
+    @test as_image(sv; colormap=:inferno) != as_image(sv; colormap=:inferno, vmin=0.0, vmax=0.5)
+    @test eltype(view_figure(sv; vmin=0.2, vmax=0.9)) <: Mera.Colorant
+    tmp6 = tempname()*".png"
+    @test save_view(sv, tmp6; colormap=:inferno, vmin=0.0, vmax=1.0) == tmp6 && filesize(tmp6) > 0
+    rm(tmp6, force=true)
 end
 
 @testset "immersive: camera paths, montage, flythrough fallback (data-free)" begin

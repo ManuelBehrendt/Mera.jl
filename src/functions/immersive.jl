@@ -494,18 +494,23 @@ _orient(M) = Base.reverse(permutedims(M), dims=1)
     as_image(img; colormap=:inferno, logscale=true, bg=:black, reverse=false) -> Matrix{RGB}
     as_image(rgb)                                                            -> Matrix{RGB}
 
-Turn a scalar [`render_view`](@ref) image into a colour image (log-normalised over its finite range,
+Turn a scalar [`render_view`](@ref) image into a colour image; pass **`vmin`/`vmax`** to fix the colour
+range (in **log10 units** when `logscale=true`, else linear; default = auto data min/max) — flows through
+view_figure/save_view/save_figure, for every mode. (log-normalised over its finite range,
 mapped through `colormap`, NaN→`bg`), or just orient an RGB [`render_scene`](@ref) image. The result
 is a `Matrix{RGB}` that displays inline (IJulia) and is written by [`save_view`](@ref)/[`save_scene`](@ref).
 """
-function as_image(img::AbstractMatrix{<:Real}; colormap=:inferno, logscale::Bool=true, bg=:black, reverse::Bool=false)
+function as_image(img::AbstractMatrix{<:Real}; colormap=:inferno, logscale::Bool=true, bg=:black,
+                  reverse::Bool=false, vmin=nothing, vmax=nothing)
     cm = _to_cmap(colormap; reverse=reverse); bgc = RGB{Float64}(parse(Colorant, bg))
     A = _prep(img; logscale=logscale)
-    fin = filter(isfinite, A); lo, hi = isempty(fin) ? (0.0,1.0) : (minimum(fin), maximum(fin))
+    fin = filter(isfinite, A)                         # vmin/vmax fix the colour range (in log10 units when
+    lo = vmin === nothing ? (isempty(fin) ? 0.0 : minimum(fin)) : Float64(vmin)   # logscale, else linear);
+    hi = vmax === nothing ? (isempty(fin) ? 1.0 : maximum(fin)) : Float64(vmax)   # default = auto data range
     d = hi > lo ? hi-lo : 1.0
     out = map(A) do x
         isfinite(x) || return bgc
-        cr,cg,cb = _cmcol(cm, (x-lo)/d); RGB{Float64}(cr,cg,cb)
+        cr,cg,cb = _cmcol(cm, (x-lo)/d); RGB{Float64}(cr,cg,cb)   # _cmcol clamps → values outside clip to the ends
     end
     return _orient(out)
 end
