@@ -12,7 +12,7 @@ function _imm_uniform(L::Int, f)
     N = 1 << L; d = Dict{NTuple{3,Int32},Float64}()
     for i in 1:N, j in 1:N, k in 1:N; d[(Int32(i),Int32(j),Int32(k))] = Float64(f(i,j,k)); end
     dicts = [Dict{NTuple{3,Int32},Float64}() for _ in 1:L]; dicts[L] = d
-    Mera.AmrVolume(dicts, L, L, 1.0, :standard, N^3)
+    Mera.AmrVolume(dicts, L, L, 1.0, :standard, N^3, nothing, nothing, 0)
 end
 
 @testset "immersive: AMR volume + leaf lookup (data-free)" begin
@@ -25,9 +25,18 @@ end
     # finest-first: a coarse leaf everywhere + one fine leaf at centre → fine wins there
     dc = Dict((Int32(i),Int32(j),Int32(k))=>1.0 for i in 1:4, j in 1:4, k in 1:4)   # level 2
     df = Dict((Int32(4),Int32(4),Int32(4))=>9.0)                                     # level 3 at centre
-    v2 = Mera.AmrVolume([Dict{NTuple{3,Int32},Float64}(), dc, df], 2, 3, 1.0, :standard, 65)
+    v2 = Mera.AmrVolume([Dict{NTuple{3,Int32},Float64}(), dc, df], 2, 3, 1.0, :standard, 65, nothing, nothing, 0)
     @test Mera._leaf(v2, 0.5, 0.5, 0.5)[1] == 9.0             # level-3 leaf at the centre wins
     @test Mera._leaf(v2, 0.1, 0.1, 0.1)[1] == 1.0            # elsewhere the level-2 leaf
+    # occupancy acceleration must change NOTHING — identical leaf everywhere, only fewer level lookups
+    occ, occL = Mera._build_occ(v2)
+    @test occL == 2 && maximum(occ) == 3                     # centre coarse cell sees the level-3 leaf
+    v2o = Mera.AmrVolume(v2.dicts, v2.lmin, v2.lmax, v2.boxlen, v2.unit, v2.nleaf, v2.scale, occ, occL)
+    same = true
+    for x in 0.05:0.07:0.95, y in 0.05:0.07:0.95, z in 0.05:0.07:0.95
+        same &= Mera._leaf(v2, x, y, z) == Mera._leaf(v2o, x, y, z)
+    end
+    @test same
 end
 
 @testset "immersive: ray–box intersection (data-free)" begin
@@ -46,6 +55,10 @@ end
     ramp = _imm_uniform(4, (i,j,k)->Float64(i))              # value = x-index → linear in x
     @test Mera._trilin(ramp, 0.5, 0.5, 0.5, 1/16) ≈ 8.0 atol=1e-9   # x/h = 0.5*16
     @test Mera._trilin(ramp, 0.25, 0.5, 0.5, 1/16) ≈ 4.0 atol=1e-9
+    # smoothing selector + cosmetic cubic B-spline kernel (smooth=:kernel)
+    @test (Mera._smode(false), Mera._smode(true), Mera._smode(:kernel), Mera._smode(:nearest), Mera._smode(:trilinear)) == (0,1,2,0,1)
+    @test Mera._kernel(cst, 0.4, 0.6, 0.5, 1/16) ≈ 7.0 atol=1e-9    # B-spline blur of a constant = constant
+    @test sum(Mera._bspline4(0.3)) ≈ 1.0 atol=1e-12                 # weights are a partition of unity
 end
 
 @testset "immersive: camera ray directions + projection (data-free)" begin
@@ -73,6 +86,17 @@ end
     @test any(isnan, pv)                                     # corners miss the box → NaN background
     @test size(render_view(vol, equirect_camera(c); res=20)) == (40, 20)     # equirect = 2res×res
     @test size(render_view(vol, fisheye_camera(c, (0.5,0.5,0.0)); res=20)) == (20, 20)
+    # all three smoothing modes run and produce signal (nearest / trilinear / cosmetic kernel)
+    for s in (false, true, :kernel)
+        pk = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=20, mode=:emission, smooth=s)
+        @test size(pk) == (20, 20) && any(isfinite, pk)
+    end
+    # jittered sampling (anti-moiré) is deterministic, changes the result vs no-jitter, stays sane
+    jcam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
+    jon  = render_view(vol, jcam; res=20, mode=:emission, jitter=true)
+    joff = render_view(vol, jcam; res=20, mode=:emission, jitter=false)
+    @test !isequal(jon, joff) && all(x -> !isfinite(x) || x ≥ 0, jon)
+    @test isequal(jon, render_view(vol, jcam; res=20, mode=:emission, jitter=true))   # deterministic
 end
 
 @testset "immersive: compositing + ACES tone-map math (data-free)" begin
@@ -102,7 +126,15 @@ end
                        perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24)
     tmp2 = tempname() * ".png"
     @test save_scene(rgb, tmp2) == tmp2 && isfile(tmp2) && filesize(tmp2) > 0
-    rm(tmp, force=true); rm(tmp2, force=true)
+    # view_figure returns a (displayable) RGB image — and it is saveable via save_view/save_scene
+    vf = view_figure(sv; colormap=:viridis)
+    @test eltype(vf) <: Mera.Colorant
+    tmp3 = tempname() * ".png"
+    @test save_view(vf, tmp3) == tmp3 && isfile(tmp3) && filesize(tmp3) > 0
+    rm(tmp, force=true); rm(tmp2, force=true); rm(tmp3, force=true)
+    # the show_progress flag is accepted and the render still returns a correct image
+    pp = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=12, mode=:max, show_progress=true)
+    @test size(pp) == (12, 12)
 end
 
 @testset "immersive: camera paths, montage, flythrough fallback (data-free)" begin
@@ -128,12 +160,16 @@ end
     @test 0.25 ≤ sval ≤ 1.0
     # isosurface: a ray crossing the bright cube's level returns a shade in (0,1]; a miss → NaN
     vol = _imm_uniform(3, (i,j,k)-> (3<=i<=6 && 3<=j<=6 && 3<=k<=6) ? 10.0 : 0.01); c = boxcenter(vol)
-    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., 1.0, true, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0)
+    hit = Mera._cast_iso(vol, 0.1,0.1,0.1, Mera._imm_n((1.,1.,1.))..., 1.0, 1, Mera._imm_n((-1.,-1.,1.))..., 0.25,0.8,0.3,16.0, 1.0)
     @test isfinite(hit) && 0 < hit ≤ 1
-    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., 1.0, true, 0.,0.,1., 0.25,0.8,0.3,16.0))  # parallel, outside
+    @test isnan(Mera._cast_iso(vol, 2.0,2.0,2.0, 1.,0.,0., 1.0, 1, 0.,0.,1., 0.25,0.8,0.3,16.0, 1.0))  # parallel, outside
     iso = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=1.0)
     fin = filter(isfinite, iso)
     @test !isempty(fin) && all(0 .≤ fin .≤ 1) && any(isnan, iso)
+    # translucent iso (iso_alpha<1) composites every crossing → differs from opaque, still in [0,1]
+    isot = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=1.0, iso_alpha=0.4)
+    fint = filter(isfinite, isot)
+    @test !isempty(fint) && all(0 .≤ fint .≤ 1) && !isequal(iso, isot)
     # field-driven absorption: a channel with a separate absorption field renders in gamut & differs
     av  = _imm_uniform(3, (i,j,k)->0.1)                                   # uniform low absorption field
     cm  = Mera._to_cmap(:viridis); cam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
@@ -141,6 +177,28 @@ end
     cha = Mera.VolumeChannel(vol, nothing, av,      cm, -2.,1., -2.,1., -2.,1., true,true,true, 8.,1., "abs")
     s0 = render_scene([ch0], cam; res=24); sa = render_scene([cha], cam; res=24)
     @test all(x -> 0 ≤ Mera.red(x) ≤ 1, sa) && s0 != sa                  # absorption field changes the result
+end
+
+@testset "immersive: pxsize resolution + RT attenuation + kernel smoothing (data-free)" begin
+    v = _imm_uniform(3, (i,j,k)->1.0)
+    @test Mera._pxcode(v, 0.05) == 0.05                       # number → code units
+    @test Mera._pxcode(v, [0.5, :standard]) == 0.5
+    @test_throws ErrorException Mera._pxcode(v, [0.3, :kpc])  # synthetic volume has no scale
+    # pxsize sets resolution at the box centre: perspective span = 2·d·tan(fov/2); here d=1, tan45=1 → 2
+    cam = perspective_camera((0.5,0.5,1.5), (0.5,0.5,0.5); fov_deg=90, aspect=1.0)
+    @test size(render_view(v, cam; pxsize=0.1, mode=:max)) == (20, 20)   # 2 / 0.1
+    @test size(render_view(v, cam; pxsize=0.2, mode=:max)) == (10, 10)
+    # RT (emission+absorption) only DIMS vs pure emission — physical attenuation oracle
+    cube = _imm_uniform(3, (i,j,k)-> (3<=i<=6 && 3<=j<=6 && 3<=k<=6) ? 10.0 : 0.01); cc = boxcenter(cube)
+    pcam = perspective_camera(cc .+ (1.6,1.6,1.6), cc; fov_deg=45)
+    em = sum(filter(isfinite, render_view(cube, pcam; res=24, mode=:emission)))
+    rt = sum(filter(isfinite, render_view(cube, pcam; res=24, mode=:rt, kappa=5.0)))
+    @test 0 < rt < em
+    @test sum(filter(isfinite, render_view(cube, pcam; res=24, mode=:sum))) > 0   # :sum = column, positive
+    # cubic-spline kernel blurs a step: intermediate value where nearest is at an extreme
+    step = _imm_uniform(4, (i,j,k)-> i<=8 ? 0.0 : 10.0); xb = 8.5/16
+    @test Mera._leaf(step, xb, 0.5, 0.5)[1] in (0.0, 10.0)    # nearest snaps to one side
+    @test 0.0 < Mera._kernel(step, xb, 0.5, 0.5, 1/16) < 10.0 # kernel smooths across the step
 end
 
 # ---- data-backed integration (only with simulation data) ----
@@ -152,9 +210,13 @@ if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE && haskey(DATASETS, :spiral_clum
         @test vol.nleaf == length(getvar(gas, :rho))                          # one leaf per cell, no resample
         @test vol.boxlen ≈ gas.boxlen
         c = boxcenter(vol)
-        img = render_view(vol, perspective_camera(c .+ (30,20,24), c; fov_deg=55); res=80, mode=:max, smooth=true)
+        cam = perspective_camera(c .+ (30,20,24), c; fov_deg=55)
+        img = render_view(vol, cam; res=80, mode=:max, smooth=true)
         fin = filter(isfinite, img)
         @test !isempty(fin) && maximum(fin) > 0                               # non-empty, real signal
+        # pxsize with a physical unit resolves via the volume's scale (like projection)
+        imgpx = render_view(vol, cam; pxsize=[2.0, :kpc], mode=:max)
+        @test size(imgpx, 1) == size(imgpx, 2) && size(imgpx, 1) > 4          # perspective square, sane dims
         # multi-tracer composite (coloured-density: opacity from ρ, hue from T) + RGB output
         ch = field_channel(gas, :rho, :nH; color_by=:T, color_unit=:K, vmin=-0.5, vmax=2.3,
                            color_vmin=3.5, color_vmax=6.5, opacity=10, verbose=false)
