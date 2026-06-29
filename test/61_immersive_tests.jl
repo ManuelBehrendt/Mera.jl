@@ -12,7 +12,7 @@ function _imm_uniform(L::Int, f)
     N = 1 << L; d = Dict{NTuple{3,Int32},Float64}()
     for i in 1:N, j in 1:N, k in 1:N; d[(Int32(i),Int32(j),Int32(k))] = Float64(f(i,j,k)); end
     dicts = [Dict{NTuple{3,Int32},Float64}() for _ in 1:L]; dicts[L] = d
-    Mera.AmrVolume(dicts, L, L, 1.0, :standard, N^3, nothing)
+    Mera.AmrVolume(dicts, L, L, 1.0, :standard, N^3, nothing, nothing, 0)
 end
 
 @testset "immersive: AMR volume + leaf lookup (data-free)" begin
@@ -25,9 +25,18 @@ end
     # finest-first: a coarse leaf everywhere + one fine leaf at centre → fine wins there
     dc = Dict((Int32(i),Int32(j),Int32(k))=>1.0 for i in 1:4, j in 1:4, k in 1:4)   # level 2
     df = Dict((Int32(4),Int32(4),Int32(4))=>9.0)                                     # level 3 at centre
-    v2 = Mera.AmrVolume([Dict{NTuple{3,Int32},Float64}(), dc, df], 2, 3, 1.0, :standard, 65, nothing)
+    v2 = Mera.AmrVolume([Dict{NTuple{3,Int32},Float64}(), dc, df], 2, 3, 1.0, :standard, 65, nothing, nothing, 0)
     @test Mera._leaf(v2, 0.5, 0.5, 0.5)[1] == 9.0             # level-3 leaf at the centre wins
     @test Mera._leaf(v2, 0.1, 0.1, 0.1)[1] == 1.0            # elsewhere the level-2 leaf
+    # occupancy acceleration must change NOTHING — identical leaf everywhere, only fewer level lookups
+    occ, occL = Mera._build_occ(v2)
+    @test occL == 2 && maximum(occ) == 3                     # centre coarse cell sees the level-3 leaf
+    v2o = Mera.AmrVolume(v2.dicts, v2.lmin, v2.lmax, v2.boxlen, v2.unit, v2.nleaf, v2.scale, occ, occL)
+    same = true
+    for x in 0.05:0.07:0.95, y in 0.05:0.07:0.95, z in 0.05:0.07:0.95
+        same &= Mera._leaf(v2, x, y, z) == Mera._leaf(v2o, x, y, z)
+    end
+    @test same
 end
 
 @testset "immersive: ray–box intersection (data-free)" begin

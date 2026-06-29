@@ -38,6 +38,30 @@ struct AmrVolume
     unit::Symbol
     nleaf::Int
     scale                                           # dataobject.scale (for pxsize unit conversion); nothing if synthetic
+    occ::Union{Nothing,Array{UInt8,3}}              # coarse max-level occupancy (Lc grid): finest leaf level present
+    occL::Int                                       # per coarse cell, so _leaf skips finer-than-present levels. nothing→full descent
+end
+
+# mark every coarse (level-occL) cell that a leaf's extent overlaps with at least that leaf's level, so a
+# point's coarse-cell max-level is ≥ the leaf level at that point (correct across coarse-cell boundaries).
+@inline function _mark_occ!(occ, Nc, cx, cy, cz, L)
+    iL = 1 << L; L8 = UInt8(L > 255 ? 255 : L)
+    ax0=clamp(round(Int,(cx-0.5)*Nc/iL),1,Nc); ax1=clamp(round(Int,(cx+0.5)*Nc/iL),1,Nc)
+    ay0=clamp(round(Int,(cy-0.5)*Nc/iL),1,Nc); ay1=clamp(round(Int,(cy+0.5)*Nc/iL),1,Nc)
+    az0=clamp(round(Int,(cz-0.5)*Nc/iL),1,Nc); az1=clamp(round(Int,(cz+0.5)*Nc/iL),1,Nc)
+    @inbounds for az in az0:az1, ay in ay0:ay1, ax in ax0:ax1
+        occ[ax,ay,az] < L8 && (occ[ax,ay,az] = L8)
+    end
+end
+
+# rebuild the occupancy grid from a volume's leaf dicts (used to retrofit/verify; amr_volume builds it inline)
+function _build_occ(v::AmrVolume)
+    Lc = min(v.lmin, 8); Nc = 1 << Lc; occ = zeros(UInt8, Nc, Nc, Nc)
+    for L in v.lmin:v.lmax
+        d = v.dicts[L]; isempty(d) && continue
+        for k in keys(d); _mark_occ!(occ, Nc, Float64(k[1]), Float64(k[2]), Float64(k[3]), L); end
+    end
+    return occ, Lc
 end
 
 """
@@ -53,9 +77,12 @@ function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; verbose::Bo
     lv = getvar(dataobject, :level); val = getvar(dataobject, var, unit)
     lmax = Int(maximum(lv)); lmin = Int(minimum(lv))
     dicts = [Dict{NTuple{3,Int32},Float64}() for _ in 1:lmax]
+    Lc = min(lmin, 8); Nc = 1 << Lc; occ = zeros(UInt8, Nc, Nc, Nc)   # coarse max-level occupancy (level-skip accel)
     @inbounds for i in eachindex(lv)
-        v = val[i]; v = (isnan(v) || v < 0) ? 0.0 : Float64(v)
-        dicts[Int(lv[i])][(Int32(cx[i]), Int32(cy[i]), Int32(cz[i]))] = v
+        L = Int(lv[i]); cxi = cx[i]; cyi = cy[i]; czi = cz[i]
+        vv = val[i]; vv = (isnan(vv) || vv < 0) ? 0.0 : Float64(vv)
+        dicts[L][(Int32(cxi), Int32(cyi), Int32(czi))] = vv
+        _mark_occ!(occ, Nc, cxi, cyi, czi, L)
     end
     n = length(lv)
     verbose && println("amr_volume: $n leaves, levels $(lmin)–$(lmax), boxlen $(dataobject.boxlen) " *
@@ -63,7 +90,7 @@ function amr_volume(dataobject, var::Symbol, unit::Symbol=:standard; verbose::Bo
     n > 50_000_000 && @warn "amr_volume indexed $n leaves (~$(round(n*40/1e9, digits=1)) GB of index, " *
         "lookups descend $(lmax-lmin+1) levels). For a big box, `subregion(data, …)` before amr_volume " *
         "indexes only the zoom region — far less RAM and much faster."
-    return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n, dataobject.scale)
+    return AmrVolume(dicts, lmin, lmax, Float64(dataobject.boxlen), unit, n, dataobject.scale, occ, Lc)
 end
 
 "Centre of the simulation box in code units, as an NTuple{3}."
@@ -99,7 +126,15 @@ end
 @inline function _leaf(v::AmrVolume, x, y, z)
     bl = v.boxlen; fx = x/bl; fy = y/bl; fz = z/bl
     (fx < 0 || fx > 1 || fy < 0 || fy > 1 || fz < 0 || fz > 1) && return (0.0, bl/(1<<v.lmax))
-    @inbounds for L in v.lmax:-1:v.lmin
+    startL = v.lmax
+    if v.occ !== nothing                         # occupancy accel: start at the finest level present here
+        Nc = 1 << v.occL
+        cix = clamp(round(Int, fx*Nc),1,Nc); ciy = clamp(round(Int, fy*Nc),1,Nc); ciz = clamp(round(Int, fz*Nc),1,Nc)
+        m = @inbounds v.occ[cix,ciy,ciz]
+        m == 0 && return (0.0, bl/(1<<v.lmin))   # no leaf in this coarse cell → empty space
+        startL = Int(m) < v.lmax ? Int(m) : v.lmax
+    end
+    @inbounds for L in startL:-1:v.lmin
         d = v.dicts[L]; isempty(d) && continue
         N = 1 << L
         ix = clamp(round(Int, fx*N), 1, N); iy = clamp(round(Int, fy*N), 1, N); iz = clamp(round(Int, fz*N), 1, N)
