@@ -189,6 +189,9 @@ export
     # immersive 3-D visualisation (volume ray-caster)
     AmrVolume,
     amr_volume,
+    derived_volume,
+    column_map,
+    moment_maps,
     set_occupancy,
     boxcenter,
     boxspan,
