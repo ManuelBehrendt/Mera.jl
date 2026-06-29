@@ -465,8 +465,10 @@ physical value (linear, in the volume's unit) and may be a **vector of values** 
 shells in one pass (e.g. `level=[0.1, 1, 10]`; best with `iso_alpha<1`). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
 fast preview), or `:kernel` (cubic B-spline blur — softer than trilinear but **cosmetic and
 NON-conservative**: it spreads coarse-cell values beyond their volume, so use it for beauty frames, not
-quantitative emission/column work). `aa` is jittered supersampling. Background (ray misses the box) is
-`NaN`. Turn it into an image with [`as_image`](@ref)/[`save_view`](@ref).
+quantitative emission/column work). `aa` is jittered supersampling. `kappa` (`:rt` opacity) and `power`
+(`:emission` exponent) are **normalized rendering dials**, not physical cross-sections — for a quantitative
+column use `mode=:sum` (or [`column_map`](@ref)). Background (ray misses the box) is `NaN`. Turn it into an
+image with [`as_image`](@ref)/[`save_view`](@ref).
 """
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, mode::Symbol=:emission,
         stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
@@ -711,7 +713,11 @@ A volume channel from ANY Mera AMR field — `data` is hydro/gravity/RT, `var` a
 drives the **opacity**; set `color_by` to a SECOND field (e.g. `:T`) to drive the **colour** (the
 "coloured-density" technique: opacity from density, hue from temperature — clean phase separation in one
 channel). `vmin/vmax` (and `color_vmin/color_vmax`) default to the 50ᵗʰ/99.9ᵗʰ percentiles; `gamma>1`
-makes faint gas wispier. Combine several in [`render_scene`](@ref).
+makes faint gas wispier. Combine several in [`render_scene`](@ref). For a signed `color_by` (velocity → in/outflow)
+set `color_signed=true`, `color_logscale=false`, a diverging colormap and symmetric `color_vmin/vmax`.
+
+`opacity` and `absorb_*` are **normalized visual dials** (box-size-invariant: τ accumulates per box-fraction),
+not a physical optical depth — tune them by eye, not from cm²/g.
 """
 function field_channel(data, var::Symbol, unit::Symbol=:standard; color_by=nothing,
         color_unit::Symbol=:standard, absorb_by=nothing, absorb_unit::Symbol=:standard,
@@ -751,9 +757,9 @@ end
 # composite all volume channels front-to-back along one ray → (R,G,B,A)
 @inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int, jit=0.0)
     v1 = vols[1].vol
-    t0,t1 = _box_t(v1, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.)
+    t0,t1 = _box_t(v1, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.,Inf)
     floor_dt = 1e-6*v1.boxlen
-    R=0.;G=0.;B=0.;A=0.; t=t0
+    R=0.;G=0.;B=0.;A=0.; t=t0; dhalf=Inf      # dhalf = depth (ray param ≈ distance) where opacity reaches ½
     @inbounds while t < t1 && A < 0.997
         x=ox+t*dx; y=oy+t*dy; z=oz+t*dz
         _, h = _leaf(v1, x, y, z)
@@ -787,9 +793,10 @@ end
             cr,cg,cb = _cmcol(ch.cmap, nc); w = (1-A)*a*em
             R += w*cr; G += w*cg; B += w*cb; A += (1-A)*a
         end
+        (dhalf == Inf && A >= 0.5) && (dhalf = t)    # record the gas "surface" depth for star occlusion
         t = tend
     end
-    return (R,G,B,A)
+    return (R,G,B,A,dhalf)
 end
 
 # ACES filmic tone-map (Narkowicz fit): linear HDR → display-referred, soft highlight roll-off
@@ -814,19 +821,20 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
     nx, ny = cam.kind === :equirect ? (2res, res) : cam.kind === :fisheye ? (res, res) :
              (round(Int, res*cam.aspect), res)
     R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa; sm=_smode(smooth)
+    Amat=zeros(nx,ny); Dmat=fill(Inf,nx,ny)        # per-pixel gas opacity + ½-opacity depth → star occlusion
     if !isempty(vols)
         prog = show_progress ? Progress(ny; desc="render_scene ", dt=0.3) : nothing
         Threads.@threads for j in 1:ny
             @inbounds for i in 1:nx
-                r=0.;g=0.;b=0.;n=0
+                r=0.;g=0.;b=0.;asum=0.;dsum=0.;nd=0;n=0
                 for sj in 1:aa, si in 1:aa
                     uu=(i-1+(si-0.5)*ia)/nx; vv=(j-1+(sj-0.5)*ia)/ny
                     rd=_raydir(cam,uu,vv); rd===nothing && continue
                     jt = jitter ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
-                    cr,cg,cb,_ = _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt)
-                    r+=cr; g+=cg; b+=cb; n+=1
+                    cr,cg,cb,ca,cd = _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt)
+                    r+=cr; g+=cg; b+=cb; asum+=ca; isfinite(cd) && (dsum+=cd; nd+=1); n+=1
                 end
-                if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; end
+                if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; Amat[i,j]=asum/n; nd>0 && (Dmat[i,j]=dsum/nd); end
             end
             prog === nothing || next!(prog)
         end
@@ -842,14 +850,17 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
         Threads.@threads for ci in 1:nt
             br,bg,bb = bufs[ci]; lo = ((ci-1)*N)÷nt + 1; hi = (ci*N)÷nt
             @inbounds for k in lo:hi
-                pr = _project(cam, pc.pos[k,1], pc.pos[k,2], pc.pos[k,3]); pr===nothing && continue
+                px=pc.pos[k,1]; py=pc.pos[k,2]; pz=pc.pos[k,3]
+                pr = _project(cam, px, py, pz); pr===nothing && continue
                 u,v,_ = pr; (u<0||u>1||v<0||v>1) && continue
+                tk = sqrt((px-cam.pos[1])^2+(py-cam.pos[2])^2+(pz-cam.pos[3])^2)   # star depth (euclidean)
                 cx=u*nx; cy=v*ny; inten = pc.opacity*sqrt(pc.bright[k]/bref)
                 i0=max(1,floor(Int,cx-3rh)); i1=min(nx,ceil(Int,cx+3rh))
                 j0=max(1,floor(Int,cy-3rh)); j1=min(ny,ceil(Int,cy+3rh))
                 for i in i0:i1, j in j0:j1
+                    occ = tk > Dmat[i,j] ? (1.0 - Amat[i,j]) : 1.0     # gas in front of the star dims it
                     d2=(i-cx)^2+(j-cy)^2
-                    gg = inten*(0.75*exp(-d2/(2rc^2)) + 0.25*exp(-d2/(2rh^2)))
+                    gg = occ*inten*(0.75*exp(-d2/(2rc^2)) + 0.25*exp(-d2/(2rh^2)))
                     br[i,j]+=gg*cr; bg[i,j]+=gg*cg; bb[i,j]+=gg*cb
                 end
             end
