@@ -344,6 +344,37 @@ end
     return hit ? I : NaN
 end
 
+# COLOURED isosurfaces: like _cast_iso but each level li gets its own RGB (clr,clg,clb), gradient-shaded
+# (+ optional ao/shadow) and composited front-to-back → returns (R,G,B,A). For per-level-coloured shells.
+@inline function _cast_iso_rgb(v::AmrVolume, ox,oy,oz, dx,dy,dz, levels, clr,clg,clb, sm::Int, lx,ly,lz,
+        ambient, diffuse, specular, shininess, alpha, jit=0.0, ao=0.0, aorad=2.0, shadow=0.0, nshadow=6)
+    t0,t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.)
+    floor_dt = 1e-6*v.boxlen; nlev = length(levels)
+    prev = NaN; pt = t0; t = t0; R=0.;G=0.;B=0.;A=0.
+    @inbounds while t < t1 && A < 0.997
+        x=ox+t*dx; y=oy+t*dy; z=oz+t*dz; _, h = _leaf(v, x, y, z)
+        val = _sample_at(v, x, y, z, h, sm)
+        if !isnan(prev) && val != prev
+            inc = val > prev
+            for li in (inc ? (1:nlev) : (nlev:-1:1))
+                lev = levels[li]; ((prev-lev)*(val-lev) <= 0) || continue
+                frac = (lev-prev)/(val-prev); tc = pt + frac*(t-pt)
+                cx=ox+tc*dx; cy=oy+tc*dy; cz=oz+tc*dz; _, hc = _leaf(v,cx,cy,cz)
+                nx,ny,nz = _grad(v,cx,cy,cz,hc)
+                sh = (nx==0.0 && ny==0.0 && nz==0.0) ? ambient :
+                     _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
+                ao > 0     && (sh *= 1.0 - ao*_ao(v, cx,cy,cz, hc, lev, aorad, sm))
+                shadow > 0 && (sh *= 1.0 - shadow*_shadow(v, cx,cy,cz, hc, lev, lx,ly,lz, nshadow, sm))
+                a = alpha >= 1.0 ? 1.0 : alpha
+                R += (1-A)*a*sh*clr[li]; G += (1-A)*a*sh*clg[li]; B += (1-A)*a*sh*clb[li]; A += (1-A)*a
+                A >= 0.997 && return (R,G,B,A)
+            end
+        end
+        prev = val; pt = t; t += max(0.5*h, floor_dt)
+    end
+    return (R,G,B,A)
+end
+
 # ray ∩ box [0,boxlen]³ → (t_enter, t_exit); t_exit<t_enter when missed
 @inline function _box_t(v::AmrVolume, ox,oy,oz, dx,dy,dz)
     bl = v.boxlen; t0 = 0.0; t1 = Inf
@@ -531,6 +562,53 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, 
         prog === nothing || next!(prog)
     end
     return img
+end
+
+@inline _rgb3(c) = c isa Tuple ? (Float64(c[1]),Float64(c[2]),Float64(c[3])) :
+    (rc = c isa Colorant ? RGB{Float64}(c) : RGB{Float64}(parse(Colorant, c)); (rc.r, rc.g, rc.b))
+
+"""
+    render_isosurfaces(vol, cam; levels, colors, iso_alpha=0.4, …) -> Matrix{RGB}
+
+Render several isosurfaces, **each in its own colour**, as gradient-shaded translucent shells composited
+front-to-back (depth-ordered). `levels` is a vector of field values, `colors` the matching colours (RGB
+tuples, names or `Colorant`s). `iso_alpha` is the per-shell opacity (<1 = see nested shells through outer
+ones). Supports `ao`/`shadow` (depth), `light`/`ambient`/`diffuse`/`specular`/`shininess`, and the usual
+`res`/`pxsize`/`aa`/`smooth`. Returns an RGB image (display/save with [`scene_figure`](@ref)/[`save_scene`](@ref)).
+"""
+function render_isosurfaces(vol::AmrVolume, cam::Camera; levels, colors, iso_alpha::Real=0.4,
+        res::Int=512, pxsize=nothing, aa::Int=1, smooth=true, light=(-1.,-1.,1.), ambient::Real=0.25,
+        diffuse::Real=0.8, specular::Real=0.3, shininess::Real=16.0, ao::Real=0.0, ao_radius::Real=2.0,
+        shadow::Real=0.0, shadow_steps::Int=6, jitter::Bool=false, bg=(0.,0.,0.), show_progress::Bool=false)
+    lvs = Float64.(collect(levels)); cols = collect(colors)
+    length(cols) == length(lvs) || throw(ArgumentError("colors must match levels length"))
+    p = sortperm(lvs); lvs = lvs[p]; cols = cols[p]                        # ascending → correct depth order
+    rgbs = _rgb3.(cols); clr=[c[1] for c in rgbs]; clg=[c[2] for c in rgbs]; clb=[c[3] for c in rgbs]
+    res = _resolve_res(vol, cam, res, pxsize)
+    nx,ny = cam.kind===:equirect ? (2res,res) : cam.kind===:fisheye ? (res,res) : (round(Int,res*cam.aspect),res)
+    R=zeros(nx,ny);G=zeros(nx,ny);B=zeros(nx,ny);Av=zeros(nx,ny); ia=1.0/aa; sm=_smode(smooth)
+    ln=_imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); shn=Float64(shininess)
+    al=Float64(iso_alpha); aor=Float64(ao_radius); shd=Float64(shadow); aoo=Float64(ao)
+    prog = show_progress ? Progress(ny; desc="render_iso ", dt=0.3) : nothing
+    Threads.@threads for j in 1:ny
+        @inbounds for i in 1:nx
+            r=0.;g=0.;b=0.;av=0.;n=0
+            for sj in 1:aa, si in 1:aa
+                uu=(i-1+(si-0.5)*ia)/nx; vv=(j-1+(sj-0.5)*ia)/ny
+                rd=_raydir(cam,uu,vv); rd===nothing && continue
+                jt = jitter ? _hash01((i-1)*aa+si,(j-1)*aa+sj) : 0.0
+                cr,cg,cb,ca = _cast_iso_rgb(vol, cam.pos..., rd..., lvs, clr,clg,clb, sm, ln..., am,di,sp,shn, al, jt, aoo,aor, shd,shadow_steps)
+                r+=cr;g+=cg;b+=cb;av+=ca;n+=1
+            end
+            if n>0; R[i,j]=r/n;G[i,j]=g/n;B[i,j]=b/n;Av[i,j]=av/n; end
+        end
+        prog === nothing || next!(prog)
+    end
+    br,bgc,bb = _rgb3(bg); out = Matrix{RGB{Float64}}(undef, nx, ny)
+    @inbounds for idx in eachindex(R)
+        a=Av[idx]; out[idx]=RGB{Float64}(clamp(R[idx]+(1-a)*br,0,1), clamp(G[idx]+(1-a)*bgc,0,1), clamp(B[idx]+(1-a)*bb,0,1))
+    end
+    return _orient(out)
 end
 
 """
@@ -834,7 +912,8 @@ end
 end
 
 # composite all volume channels front-to-back along one ray → (R,G,B,A)
-@inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int, jit=0.0)
+@inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int, jit=0.0,
+        shade=0.0, lx=0.0,ly=0.0,lz=0.0, amb=0.3, dif=0.8, spc=0.2, shin=12.0)
     v1 = vols[1].vol
     t0,t1 = _box_t(v1, ox,oy,oz, dx,dy,dz); t1 <= t0 && return (0.,0.,0.,0.,Inf)
     floor_dt = 1e-6*v1.boxlen
@@ -870,6 +949,11 @@ end
                 nc = (cs-ch.cvmin)/(ch.cvmax-ch.cvmin); nc = nc<0 ? 0. : nc>1 ? 1. : nc
             end
             cr,cg,cb = _cmcol(ch.cmap, nc); w = (1-A)*a*em
+            if shade > 0                                        # gradient-shade the gas (ParaView "Shade"): form/depth
+                gx,gy,gz = _grad(ch.vol, x, y, z, h)
+                lit = (gx==0.0 && gy==0.0 && gz==0.0) ? amb : _shade(gx,gy,gz, dx,dy,dz, lx,ly,lz, amb,dif,spc,shin)
+                shf = (1.0-shade) + shade*lit; cr*=shf; cg*=shf; cb*=shf
+            end
             R += w*cr; G += w*cg; B += w*cb; A += (1-A)*a
         end
         (dhalf == Inf && A >= 0.5) && (dhalf = t)    # record the gas "surface" depth for star occlusion
@@ -892,7 +976,8 @@ top with a core+halo PSF. The HDR result is ACES filmic tone-mapped, then `satur
 """
 function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::Int=1, smooth=true,
         stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0,
-        preintegrate::Bool=false, jitter::Bool=true, show_progress::Bool=false)
+        shade::Real=0.0, light=(-1.,-1.,1.), ambient::Real=0.3, diffuse::Real=0.8, specular::Real=0.2,
+        shininess::Real=12.0, preintegrate::Bool=false, jitter::Bool=true, show_progress::Bool=false)
     chs = channels isa ImmersiveChannel ? ImmersiveChannel[channels] : collect(channels)
     vols = VolumeChannel[c for c in chs if c isa VolumeChannel]
     pts  = PointChannel[c for c in chs if c isa PointChannel]
@@ -901,6 +986,7 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
              (round(Int, res*cam.aspect), res)
     R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa; sm=_smode(smooth)
     Amat=zeros(nx,ny); Dmat=fill(Inf,nx,ny)        # per-pixel gas opacity + ½-opacity depth → star occlusion
+    shd=Float64(shade); ln=_imm_n(_imm_T(light)); am=Float64(ambient); di=Float64(diffuse); sp=Float64(specular); shn=Float64(shininess)
     # pre-integration (Engel et al. 2001): single-field channel only (colour+opacity from one colormap)
     usePI = preintegrate && length(vols) == 1 && vols[1].cvol === nothing && vols[1].avol === nothing
     preintegrate && !usePI && @warn "preintegrate ignored — only a single field_channel with no color_by/absorb_by is supported"
@@ -915,7 +1001,7 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
                     rd=_raydir(cam,uu,vv); rd===nothing && continue
                     jt = jitter ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
                     cr,cg,cb,ca,cd = usePI ? _cast_rgb_pi(vols[1], PIt..., cam.pos..., rd..., sf, sm, jt) :
-                                             _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt)
+                                             _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt, shd, ln..., am, di, sp, shn)
                     r+=cr; g+=cg; b+=cb; asum+=ca; isfinite(cd) && (dsum+=cd; nd+=1); n+=1
                 end
                 if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; Amat[i,j]=asum/n; nd>0 && (Dmat[i,j]=dsum/nd); end
