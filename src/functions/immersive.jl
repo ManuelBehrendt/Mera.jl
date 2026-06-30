@@ -280,6 +280,31 @@ end
     return clamp(ambient+diff+spec, 0.0, 1.0)
 end
 
+# vicinity / ambient-occlusion probe (Stewart 2003, "Vicinity shading"): fraction of nearby directions
+# whose field is INSIDE the surface (val>level). Crevices/enclosed points read as more occluded and get
+# darkened → isosurfaces gain real 3-D depth. NOT done by yt's volume renderer; cheap (12 samples per hit).
+const _AO_DIRS = (let s = 1/sqrt(3.0)
+    ((1.,0.,0.),(-1.,0.,0.),(0.,1.,0.),(0.,-1.,0.),(0.,0.,1.),(0.,0.,-1.),
+     (s,s,s),(-s,-s,-s),(s,-s,s),(-s,s,-s),(s,s,-s),(-s,-s,s)) end)
+@inline function _ao(v::AmrVolume, x,y,z, h, level, radius, sm::Int)
+    r = radius*h; inside = 0
+    @inbounds for d in _AO_DIRS
+        _sample_at(v, x+r*d[1], y+r*d[2], z+r*d[3], h, sm) > level && (inside += 1)
+    end
+    return inside / length(_AO_DIRS)
+end
+
+# directional self-shadow probe: march from the surface toward the light; fraction of steps that hit
+# material (val>level) ⇒ the point is in shadow of a denser clump. Gives cast shadows (depth), not in yt.
+@inline function _shadow(v::AmrVolume, x,y,z, h, level, lx,ly,lz, nsteps::Int, sm::Int)
+    occ = 0
+    @inbounds for k in 1:nsteps
+        s = k*h
+        _sample_at(v, x+s*lx, y+s*ly, z+s*lz, h, sm) > level && (occ += 1)
+    end
+    return occ / nsteps
+end
+
 # march for an ISOSURFACE at `level`: each crossing is linearly refined and gradient-shaded. With
 # `alpha >= 1` it is OPAQUE (first crossing wins — solid surface). With `alpha < 1` it is TRANSLUCENT:
 # every crossing is composited front-to-back with that per-surface opacity, so nested shells and the
@@ -287,7 +312,7 @@ end
 # `levels` is a sorted Vector{Float64} of one or more iso values (nested shells). Per segment we test every
 # level; crossings are composited in front-to-back order (within a segment that order follows the field's
 # sign, so no sort/alloc needed). Opaque (alpha≥1) returns the nearest surface of any level.
-@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, levels, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha, jit=0.0)
+@inline function _cast_iso(v::AmrVolume, ox,oy,oz, dx,dy,dz, levels, sm::Int, lx,ly,lz, ambient, diffuse, specular, shininess, alpha, jit=0.0, ao=0.0, aorad=2.0, shadow=0.0, nshadow=6)
     t0, t1 = _box_t(v, ox,oy,oz, dx,dy,dz); t1 <= t0 && return NaN
     floor_dt = 1e-6*v.boxlen
     nlev = length(levels)
@@ -306,6 +331,8 @@ end
                 nx,ny,nz = _grad(v,cx,cy,cz,hc)
                 sh = (nx==0.0 && ny==0.0 && nz==0.0) ? ambient :
                      _shade(nx,ny,nz, dx,dy,dz, lx,ly,lz, ambient, diffuse, specular, shininess)
+                ao > 0     && (sh *= 1.0 - ao*_ao(v, cx,cy,cz, hc, lev, aorad, sm))            # vicinity AO: crevices
+                shadow > 0 && (sh *= 1.0 - shadow*_shadow(v, cx,cy,cz, hc, lev, lx,ly,lz, nshadow, sm))  # cast shadows
                 alpha >= 1.0 && return sh                     # opaque: nearest surface of any level wins
                 I += (1-A)*alpha*sh; A += (1-A)*alpha; hit = true   # translucent: composite each shell
                 A >= 0.997 && return I
@@ -462,7 +489,10 @@ follow the camera: equirect → `2res×res`, fisheye → `res×res`, perspective
 gradient-shaded; `iso_alpha=1` opaque first-hit, `iso_alpha<1` **translucent** — every crossing
 composited front-to-back, so nested shells / front+back faces show through). `level` is the field's
 physical value (linear, in the volume's unit) and may be a **vector of values** for several nested
-shells in one pass (e.g. `level=[0.1, 1, 10]`; best with `iso_alpha<1`). `smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
+shells in one pass (e.g. `level=[0.1, 1, 10]`; best with `iso_alpha<1`). For 3-D depth on isosurfaces,
+`ao` (0–1, ambient/vicinity occlusion — darkens crevices, radius `ao_radius` in cells) and `shadow` (0–1,
+cast shadows toward `light`, `shadow_steps` long) add depth cues volume renderers like yt don't.
+`smooth` = `true` (cross-level trilinear, de-blocked — default), `false` (nearest-leaf,
 fast preview), or `:kernel` (cubic B-spline blur — softer than trilinear but **cosmetic and
 NON-conservative**: it spreads coarse-cell values beyond their volume, so use it for beauty frames, not
 quantitative emission/column work). `aa` is jittered supersampling. `kappa` (`:rt` opacity) and `power`
@@ -473,7 +503,8 @@ image with [`as_image`](@ref)/[`save_view`](@ref).
 function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, mode::Symbol=:emission,
         stepfrac::Real=0.5, power::Real=1.0, kappa::Real=0.1, smooth=true, aa::Int=1,
         level=1.0, iso_alpha::Real=1.0, light=(-1.,-1.,1.), ambient::Real=0.25, diffuse::Real=0.8,
-        specular::Real=0.3, shininess::Real=16.0, jitter::Bool=true, show_progress::Bool=false)
+        specular::Real=0.3, shininess::Real=16.0, ao::Real=0.0, ao_radius::Real=2.0,
+        shadow::Real=0.0, shadow_steps::Int=6, jitter::Bool=true, show_progress::Bool=false)
     res = _resolve_res(vol, cam, res, pxsize)        # pxsize (physical/code) overrides res when given
     nx, ny = cam.kind === :equirect ? (2res, res) :
              cam.kind === :fisheye  ? (res, res)  : (round(Int, res*cam.aspect), res)
@@ -491,7 +522,7 @@ function render_view(vol::AmrVolume, cam::Camera; res::Int=512, pxsize=nothing, 
                 rd = _raydir(cam, uu, vv); rd === nothing && continue
                 # jitter only helps accumulating modes; on :max / :iso it just adds speckle → skip there
                 jt = (jitter && !iso && mode !== :max) ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
-                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh, ia_, jt) :
+                val = iso ? _cast_iso(vol, cam.pos..., rd..., lv, sm, ln..., am, di, sp, sh, ia_, jt, Float64(ao), Float64(ao_radius), Float64(shadow), shadow_steps) :
                             _cast(vol, cam.pos..., rd..., mode, sf, pw, kp, sm, jt)
                 isnan(val) || (acc += val; n += 1)
             end
