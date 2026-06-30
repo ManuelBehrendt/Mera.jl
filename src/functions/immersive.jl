@@ -785,6 +785,54 @@ function points_channel(data; weight::Symbol=:mass, unit::Symbol=:standard, filt
                  (Float64(color[1]),Float64(color[2]),Float64(color[3])), Float64(size), Float64(opacity), label)
 end
 
+# normalized [0,1] field value for a channel's opacity field (log + vmin/vmax, clamped)
+@inline function _nval(ch::VolumeChannel, val)
+    s = ch.logscale ? (val > 0 ? log10(val) : -Inf) : val
+    n = (s-ch.vmin)/(ch.vmax-ch.vmin); n < 0 ? 0.0 : n > 1 ? 1.0 : n
+end
+
+# PRE-INTEGRATION tables (Engel, Kraus & Ertl 2001): cumulative ∫τ(n)dn and ∫c(n)τ(n)dn over the
+# normalized field n∈[0,1], so a ray SEGMENT [n_f,n_b] is integrated analytically (no missing a sharp
+# transfer-function feature between samples). τ(n) is the per-length extinction matching _cast_rgb.
+function _preint(ch::VolumeChannel; N::Int=512)
+    bl = ch.vol.boxlen; Tint=zeros(N+1); Cr=zeros(N+1); Cg=zeros(N+1); Cb=zeros(N+1); dn=1/N
+    @inbounds for i in 1:N
+        n=(i-0.5)*dn; ng = ch.gamma == 1.0 ? n : n^ch.gamma
+        tau = ch.opacity*ng*100/bl
+        cr,cg,cb = _cmcol(ch.cmap, n)
+        Tint[i+1]=Tint[i]+tau*dn; Cr[i+1]=Cr[i]+cr*tau*dn; Cg[i+1]=Cg[i]+cg*tau*dn; Cb[i+1]=Cb[i]+cb*tau*dn
+    end
+    return Tint, Cr, Cg, Cb
+end
+
+# pre-integrated single-channel cast (colour+opacity from one field's colormap). Samples the field at each
+# segment's endpoints and looks up the integrated extinction/emission → smooth even at coarse stepfrac.
+@inline function _cast_rgb_pi(ch::VolumeChannel, Tint, Cr, Cg, Cb, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int, jit=0.0)
+    v=ch.vol; t0,t1=_box_t(v,ox,oy,oz,dx,dy,dz); t1<=t0 && return (0.,0.,0.,0.,Inf)
+    floor_dt=1e-6*v.boxlen; N=length(Tint)-1; bl=v.boxlen
+    R=0.;G=0.;B=0.;A=0.;t=t0; dhalf=Inf
+    _,h0=_leaf(v,ox+t0*dx,oy+t0*dy,oz+t0*dz); nf=_nval(ch,_sample_at(v,ox+t0*dx,oy+t0*dy,oz+t0*dz,h0,sm))
+    @inbounds while t<t1 && A<0.997
+        x=ox+t*dx;y=oy+t*dy;z=oz+t*dz; _,h=_leaf(v,x,y,z)
+        dt=max(stepfrac*h,floor_dt); tend=min(t+dt,t1); seg=tend-t
+        nb=_nval(ch,_sample_at(v,ox+tend*dx,oy+tend*dy,oz+tend*dz,h,sm))
+        dnn=nb-nf
+        if abs(dnn) < 1e-6                                   # ~flat segment → point value
+            ng=ch.gamma==1.0 ? nf : nf^ch.gamma; tau=ch.opacity*ng*100/bl
+            cr,cg,cb=_cmcol(ch.cmap,nf); τs=tau*seg; Csr=cr*tau*seg; Csg=cg*tau*seg; Csb=cb*tau*seg
+        else                                                # integrate the TF across the segment
+            fi=clamp(round(Int,nf*N),0,N)+1; bi=clamp(round(Int,nb*N),0,N)+1
+            τs =seg*(Tint[bi]-Tint[fi])/dnn
+            Csr=seg*(Cr[bi]-Cr[fi])/dnn; Csg=seg*(Cg[bi]-Cg[fi])/dnn; Csb=seg*(Cb[bi]-Cb[fi])/dnn
+        end
+        α=1-exp(-τs); α<0 && (α=0.0)
+        R+=(1-A)*Csr; G+=(1-A)*Csg; B+=(1-A)*Csb; A+=(1-A)*α
+        (dhalf==Inf && A>=0.5) && (dhalf=t)
+        nf=nb; t=tend
+    end
+    return (R,G,B,A,dhalf)
+end
+
 # composite all volume channels front-to-back along one ray → (R,G,B,A)
 @inline function _cast_rgb(vols::Vector{VolumeChannel}, ox,oy,oz, dx,dy,dz, stepfrac, sm::Int, jit=0.0)
     v1 = vols[1].vol
@@ -844,7 +892,7 @@ top with a core+halo PSF. The HDR result is ACES filmic tone-mapped, then `satur
 """
 function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::Int=1, smooth=true,
         stepfrac::Real=0.6, bg=(0.,0.,0.), exposure::Real=1.0, saturation::Real=1.15, gamma::Real=1.0,
-        jitter::Bool=true, show_progress::Bool=false)
+        preintegrate::Bool=false, jitter::Bool=true, show_progress::Bool=false)
     chs = channels isa ImmersiveChannel ? ImmersiveChannel[channels] : collect(channels)
     vols = VolumeChannel[c for c in chs if c isa VolumeChannel]
     pts  = PointChannel[c for c in chs if c isa PointChannel]
@@ -853,6 +901,10 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
              (round(Int, res*cam.aspect), res)
     R=zeros(nx,ny); G=zeros(nx,ny); B=zeros(nx,ny); sf=Float64(stepfrac); ia=1.0/aa; sm=_smode(smooth)
     Amat=zeros(nx,ny); Dmat=fill(Inf,nx,ny)        # per-pixel gas opacity + ½-opacity depth → star occlusion
+    # pre-integration (Engel et al. 2001): single-field channel only (colour+opacity from one colormap)
+    usePI = preintegrate && length(vols) == 1 && vols[1].cvol === nothing && vols[1].avol === nothing
+    preintegrate && !usePI && @warn "preintegrate ignored — only a single field_channel with no color_by/absorb_by is supported"
+    PIt = usePI ? _preint(vols[1]) : (Float64[],Float64[],Float64[],Float64[])
     if !isempty(vols)
         prog = show_progress ? Progress(ny; desc="render_scene ", dt=0.3) : nothing
         Threads.@threads for j in 1:ny
@@ -862,7 +914,8 @@ function render_scene(channels, cam::Camera; res::Int=512, pxsize=nothing, aa::I
                     uu=(i-1+(si-0.5)*ia)/nx; vv=(j-1+(sj-0.5)*ia)/ny
                     rd=_raydir(cam,uu,vv); rd===nothing && continue
                     jt = jitter ? _hash01((i-1)*aa+si, (j-1)*aa+sj) : 0.0
-                    cr,cg,cb,ca,cd = _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt)
+                    cr,cg,cb,ca,cd = usePI ? _cast_rgb_pi(vols[1], PIt..., cam.pos..., rd..., sf, sm, jt) :
+                                             _cast_rgb(vols, cam.pos..., rd..., sf, sm, jt)
                     r+=cr; g+=cg; b+=cb; asum+=ca; isfinite(cd) && (dsum+=cd; nd+=1); n+=1
                 end
                 if n>0; R[i,j]=r/n; G[i,j]=g/n; B[i,j]=b/n; Amat[i,j]=asum/n; nd>0 && (Dmat[i,j]=dsum/nd); end
