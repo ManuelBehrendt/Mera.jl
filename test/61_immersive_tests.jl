@@ -121,6 +121,10 @@ end
     ptc = render_scene([rc], cam2; res=24, stepfrac=2.0, preintegrate=false)
     @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, pic)  # in gamut
     @test !isequal(pic, ptc)                                                  # PI changes the coarse-step result
+    # gradient shading (ParaView-style "Shade"): lights the gas via its gradient → differs from flat, in gamut
+    shd = render_scene([rc], cam2; res=24, shade=1.0, light=(1.,0.,0.))
+    @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, shd)
+    @test !isequal(shd, render_scene([rc], cam2; res=24, shade=0.0))
 end
 
 @testset "immersive: colormaps + image assembly + PNG save (data-free)" begin
@@ -226,6 +230,13 @@ end
     @test all(x -> !isfinite(x) || 0 ≤ x ≤ 1, iao) && all(x -> !isfinite(x) || 0 ≤ x ≤ 1, ish)
     @test !isequal(iso, iao) && !isequal(iso, ish)                          # AO/shadow change the shading
     @test sum(filter(isfinite, iao)) < sum(filter(isfinite, iso))          # AO only darkens (never brightens)
+    # per-level coloured shells → RGB image, in gamut, with both colours present (ramp → shells separated)
+    rmp = _imm_uniform(4, (i,j,k)->Float64(i)); rcam = perspective_camera((1.6,1.6,1.6), boxcenter(rmp); fov_deg=45)
+    isc = render_isosurfaces(rmp, rcam; res=28, levels=[4.0, 12.0],
+                             colors=[(0.2,0.4,1.0),(1.0,0.3,0.2)], iso_alpha=0.6)
+    @test eltype(isc) <: Mera.Colorant && size(isc) == (28,28)
+    @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, isc)
+    @test any(x -> Mera.blue(x) > Mera.red(x)+0.05, isc) && any(x -> Mera.red(x) > Mera.blue(x)+0.05, isc)
     # field-driven absorption: a channel with a separate absorption field renders in gamut & differs
     av  = _imm_uniform(3, (i,j,k)->0.1)                                   # uniform low absorption field
     cm  = Mera._to_cmap(:viridis); cam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
