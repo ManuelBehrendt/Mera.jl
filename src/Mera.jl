@@ -213,6 +213,7 @@ export
     save_view,
     save_scene,
     save_figure,
+    overlay_grid,
     orbit_keyframes,
     flythrough_montage,
     flythrough,

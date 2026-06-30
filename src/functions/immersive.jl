@@ -758,6 +758,90 @@ save_figure(img::AbstractMatrix{<:Colorant}, filename::AbstractString; kw...) =
     (FileIO.save(filename, as_image(img)); filename)
 
 # -------------------------------------------------------------------------------------
+#  Coordinate / graticule overlay (planning aid) — drawn in the renderer's own (i,j) frame so it aligns
+# -------------------------------------------------------------------------------------
+# rasterize a segment (in (u,v)∈[0,1]² render coords) into the un-oriented overlay buffer O[i,j]
+@inline function _oline!(Or,Og,Ob,Oa, nx,ny, u0,v0,u1,v1, cr,cg,cb)
+    abs(u1-u0) > 0.5 && return                          # equirect longitude-wrap guard
+    i0=u0*nx; j0=v0*ny; i1=u1*nx; j1=v1*ny
+    n = ceil(Int, max(abs(i1-i0), abs(j1-j0))) + 1
+    @inbounds for t in range(0.0, 1.0; length=n)
+        i=round(Int, i0+t*(i1-i0)); j=round(Int, j0+t*(j1-j0))
+        (1<=i<=nx && 1<=j<=ny) || continue
+        Or[i,j]=cr; Og[i,j]=cg; Ob[i,j]=cb; Oa[i,j]=1.0
+    end
+end
+# draw a world-space segment pA→pB through the camera (sampled, so it curves correctly in equirect/fisheye)
+function _wedge!(Or,Og,Ob,Oa, nx,ny, cam, pA, pB, cr,cg,cb; n=48)
+    prev=nothing
+    for t in range(0.0, 1.0; length=n)
+        p=(pA[1]+t*(pB[1]-pA[1]), pA[2]+t*(pB[2]-pA[2]), pA[3]+t*(pB[3]-pA[3]))
+        pr=_project(cam, p...); cur = pr===nothing ? nothing : (pr[1],pr[2])
+        prev!==nothing && cur!==nothing && _oline!(Or,Og,Ob,Oa,nx,ny, prev[1],prev[2],cur[1],cur[2], cr,cg,cb)
+        prev=cur
+    end
+end
+
+"""
+    overlay_grid(img, cam; vol=nothing, boxlen=nothing, box=true, axes=true, graticule=true,
+                 graticule_deg=30, color=(1,1,1), axis_colors=…, alpha=0.6, axis_len=0.4) -> Matrix{RGB}
+
+Draw the **coordinate system** of the view onto a rendered image — for planning camera placement/orientation.
+`box` = the simulation bounding-box wireframe, `axes` = world x/y/z axes (red/green/blue) from the origin
+(both need `vol` or `boxlen` for the scale), `graticule` = a longitude/latitude sphere grid (for
+`:equirect`/`:fisheye`). Lines are projected through `cam`, so they curve correctly in panoramas. Returns
+an RGB image (the input may be a scalar [`render_view`](@ref) or an RGB [`render_scene`](@ref) result).
+"""
+function overlay_grid(img, cam::Camera; vol=nothing, boxlen=nothing, box::Bool=true, axes::Bool=true,
+        graticule::Bool=true, graticule_deg::Real=30, color=(1.,1.,1.),
+        axis_colors=((1.,.35,.35),(.35,1.,.35),(.45,.6,1.)), alpha::Real=0.6, axis_len::Real=0.4)
+    D = Matrix{RGB{Float64}}(as_image(img))            # working RGB copy, display-oriented [ny,nx]
+    ny,nx = size(D); Or=zeros(nx,ny); Og=zeros(nx,ny); Ob=zeros(nx,ny); Oa=zeros(nx,ny)
+    bl = boxlen !== nothing ? Float64(boxlen) : vol !== nothing ? vol.boxlen : nothing
+    cr,cg,cb = Float64(color[1]),Float64(color[2]),Float64(color[3]); gd=Float64(graticule_deg)
+    if graticule && cam.kind in (:equirect, :fisheye)  # sphere graticule via world directions
+        for lon in 0:gd:359.0                          # meridians
+            prev=nothing
+            for lat in -90:5:90
+                la=deg2rad(lon); lb=deg2rad(lat)
+                p=(cam.pos[1]+cos(lb)*cos(la), cam.pos[2]+cos(lb)*sin(la), cam.pos[3]+sin(lb))
+                pr=_project(cam,p...); cur=pr===nothing ? nothing : (pr[1],pr[2])
+                prev!==nothing && cur!==nothing && _oline!(Or,Og,Ob,Oa,nx,ny,prev[1],prev[2],cur[1],cur[2],cr,cg,cb)
+                prev=cur
+            end
+        end
+        for lat in (-90+gd):gd:(90-gd)                 # parallels
+            prev=nothing
+            for lon in 0:5:360
+                la=deg2rad(lon); lb=deg2rad(lat)
+                p=(cam.pos[1]+cos(lb)*cos(la), cam.pos[2]+cos(lb)*sin(la), cam.pos[3]+sin(lb))
+                pr=_project(cam,p...); cur=pr===nothing ? nothing : (pr[1],pr[2])
+                prev!==nothing && cur!==nothing && _oline!(Or,Og,Ob,Oa,nx,ny,prev[1],prev[2],cur[1],cur[2],cr,cg,cb)
+                prev=cur
+            end
+        end
+    end
+    if bl !== nothing && box                            # bounding-box wireframe (12 edges)
+        cs=[(0.,0.,0.),(bl,0.,0.),(bl,bl,0.),(0.,bl,0.),(0.,0.,bl),(bl,0.,bl),(bl,bl,bl),(0.,bl,bl)]
+        for (a,b) in ((1,2),(2,3),(3,4),(4,1),(5,6),(6,7),(7,8),(8,5),(1,5),(2,6),(3,7),(4,8))
+            _wedge!(Or,Og,Ob,Oa,nx,ny,cam,cs[a],cs[b],cr,cg,cb)
+        end
+    end
+    if bl !== nothing && axes                           # world axes from the origin (R=x, G=y, B=z)
+        L=axis_len*bl
+        _wedge!(Or,Og,Ob,Oa,nx,ny,cam,(0.,0.,0.),(L,0.,0.),axis_colors[1]...)
+        _wedge!(Or,Og,Ob,Oa,nx,ny,cam,(0.,0.,0.),(0.,L,0.),axis_colors[2]...)
+        _wedge!(Or,Og,Ob,Oa,nx,ny,cam,(0.,0.,0.),(0.,0.,L),axis_colors[3]...)
+    end
+    Rr=_orient(Or); Gg=_orient(Og); Bb=_orient(Ob); Aa=_orient(Oa); a=Float64(alpha)
+    @inbounds for idx in eachindex(D)
+        oa=Aa[idx]*a; oa<=0 && continue
+        p=D[idx]; D[idx]=RGB{Float64}((1-oa)*red(p)+oa*Rr[idx], (1-oa)*green(p)+oa*Gg[idx], (1-oa)*blue(p)+oa*Bb[idx])
+    end
+    return D
+end
+
+# -------------------------------------------------------------------------------------
 #  Multi-channel compositing — several tracers, each its own colormap + opacity, blended
 # -------------------------------------------------------------------------------------
 """
