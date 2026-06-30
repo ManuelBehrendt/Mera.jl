@@ -180,6 +180,17 @@ end
     ocam = perspective_camera((0.5,0.5,2.6),(0.5,0.5,0.5); fov_deg=40, aspect=1.0)
     Lsum(M)=sum(x->Float64(Mera.red(x))+Float64(Mera.green(x))+Float64(Mera.blue(x)), M)
     @test Lsum(render_scene([star], ocam; res=40)) > Lsum(render_scene([gblk, star], ocam; res=40))
+    # coordinate overlay (planning aid): box+axes on perspective, graticule on equirect → draws onto the image
+    volu = _imm_uniform(3, (i,j,k)->1.0); cu = boxcenter(volu)
+    pcam = perspective_camera(cu .+ (1.6,1.6,1.6), cu; fov_deg=45)
+    base = render_view(volu, pcam; res=32, mode=:max)
+    ov = overlay_grid(base, pcam; vol=volu, box=true, axes=true, graticule=false)
+    @test eltype(ov) <: Mera.Colorant && size(ov) == (32,32)
+    @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, ov)
+    @test !isequal(ov, as_image(base))                                   # the box/axes were drawn
+    oe = overlay_grid(render_view(volu, equirect_camera(cu); res=20, mode=:max), equirect_camera(cu);
+                      graticule=true, graticule_deg=30, box=false, axes=false)
+    @test eltype(oe) <: Mera.Colorant && size(oe) == (20,40)             # graticule on the panorama
 end
 
 @testset "immersive: camera paths, montage, flythrough fallback (data-free)" begin
