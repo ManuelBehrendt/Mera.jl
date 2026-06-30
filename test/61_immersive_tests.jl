@@ -211,6 +211,13 @@ end
     isom = render_view(vol, perspective_camera((1.6,1.6,1.6), c; fov_deg=45); res=24, mode=:iso, level=[0.5, 1.0, 5.0], iso_alpha=0.4)
     finm = filter(isfinite, isom)
     @test !isempty(finm) && all(0 .≤ finm .≤ 1) && !isequal(isot, isom)
+    # ambient occlusion + self-shadow darken the surface (changes shading, stays in gamut; opt-in, off by default)
+    icam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
+    iao = render_view(vol, icam; res=24, mode=:iso, level=1.0, ao=0.9)
+    ish = render_view(vol, icam; res=24, mode=:iso, level=1.0, shadow=0.9)
+    @test all(x -> !isfinite(x) || 0 ≤ x ≤ 1, iao) && all(x -> !isfinite(x) || 0 ≤ x ≤ 1, ish)
+    @test !isequal(iso, iao) && !isequal(iso, ish)                          # AO/shadow change the shading
+    @test sum(filter(isfinite, iao)) < sum(filter(isfinite, iso))          # AO only darkens (never brightens)
     # field-driven absorption: a channel with a separate absorption field renders in gamut & differs
     av  = _imm_uniform(3, (i,j,k)->0.1)                                   # uniform low absorption field
     cm  = Mera._to_cmap(:viridis); cam = perspective_camera((1.6,1.6,1.6), c; fov_deg=45)
