@@ -113,6 +113,14 @@ end
     @test eltype(sc) <: Mera.Colorant && size(sc) == (24, 24)
     @test all(x -> 0 ≤ Mera.red(x) ≤ 1 && 0 ≤ Mera.green(x) ≤ 1 && 0 ≤ Mera.blue(x) ≤ 1, sc)  # in gamut
     @test any(x -> Mera.red(x)+Mera.green(x)+Mera.blue(x) > 0, sc)            # not all black
+    # pre-integration (single field, coarse steps): in gamut, and differs from point sampling on a varying field
+    rv = _imm_uniform(4, (i,j,k)->Float64(i))                                 # x-ramp
+    rc = Mera.VolumeChannel(rv, nothing,nothing, Mera._to_cmap(:viridis), 0.,16., 0.,16., 0.,16., false,false,false, 8.,1., "r")
+    cam2 = perspective_camera((1.6,1.6,1.6), boxcenter(rv); fov_deg=45)
+    pic = render_scene([rc], cam2; res=24, stepfrac=2.0, preintegrate=true)
+    ptc = render_scene([rc], cam2; res=24, stepfrac=2.0, preintegrate=false)
+    @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, pic)  # in gamut
+    @test !isequal(pic, ptc)                                                  # PI changes the coarse-step result
 end
 
 @testset "immersive: colormaps + image assembly + PNG save (data-free)" begin
