@@ -208,6 +208,7 @@ export
     as_image,
     view_figure,
     scene_figure,
+    view_colorbar,
     save_view,
     save_scene,
     save_figure,

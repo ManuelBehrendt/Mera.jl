@@ -951,3 +951,10 @@ function interactive_view end
 interactive_view(args...; kwargs...) = error(
     "`interactive_view` opens a live, mouse-controlled window and needs an INTERACTIVE Makie backend — " *
     "run `using GLMakie` (CairoMakie cannot show interactive windows). It re-renders the AMR data directly.")
+
+# `view_colorbar` shows a SCALAR render_view map (column_map / moment / single field) with a labelled,
+# aligned colorbar so you can read values off it → real method in MeraMakieExt (needs a Makie backend).
+function view_colorbar end
+view_colorbar(args...; kwargs...) = error(
+    "`view_colorbar` draws a scalar map with a value colorbar and needs a Makie backend — run " *
+    "`using CairoMakie`. For a bare image (no axes/bar) use `view_figure`/`as_image`.")
