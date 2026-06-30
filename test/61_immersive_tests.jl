@@ -184,6 +184,7 @@ end
     # mp4 flythrough + interactive window need a Makie backend; without one the core errors helpfully
     @test_throws ErrorException flythrough(vol, :perspective, [(c.+(1.,1.,1.), c), (c, c)])
     @test_throws ErrorException interactive_view(vol)
+    @test_throws ErrorException view_colorbar(render_view(vol, perspective_camera(c.+(1.,1.,1.),c;fov_deg=45); res=8))
 end
 
 @testset "immersive: isosurface + gradient shading + field-driven absorption (data-free)" begin
