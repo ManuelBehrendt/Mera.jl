@@ -201,6 +201,7 @@ export
     fisheye_camera,
     render_view,
     render_scene,
+    render_isosurfaces,
     VolumeChannel,
     PointChannel,
     field_channel,
