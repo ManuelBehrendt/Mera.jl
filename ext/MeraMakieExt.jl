@@ -622,4 +622,24 @@ function Mera.interactive_view(channels::AbstractVector; target=nothing, distanc
 end
 Mera.interactive_view(ch::Mera.ImmersiveChannel; kw...) = Mera.interactive_view([ch]; kw...)
 
+# Scalar render_view map (column_map / moment / single field) shown WITH an aligned, labelled colorbar so
+# values are readable. `logscale=true` (default) maps log₁₀(value); set `vmin/vmax` (same units) to fix the
+# range, `label` for the axis text, `filename` to also save. Same colormapping as the heatmap path.
+function Mera.view_colorbar(img::AbstractMatrix{<:Real}; colormap=:inferno, logscale::Bool=true,
+        vmin=nothing, vmax=nothing, label=nothing, reverse::Bool=false, bg=:black,
+        size=(620, 480), filename=nothing)
+    A = Mera._prep(img; logscale=logscale)                      # oriented + log₁₀ when logscale
+    ff = filter(isfinite, vec(A))
+    lo = vmin === nothing ? (isempty(ff) ? 0.0 : minimum(ff)) : Float64(vmin)
+    hi = vmax === nothing ? (isempty(ff) ? 1.0 : maximum(ff)) : Float64(vmax)
+    lo == hi && (hi = lo + 1.0)
+    cmap = reverse ? Makie.Reverse(colormap) : colormap
+    fig = Makie.Figure(; size=size)
+    ax = Makie.Axis(fig[1,1], aspect=Makie.DataAspect()); Makie.hidedecorations!(ax); Makie.hidespines!(ax)
+    hm = Makie.heatmap!(ax, A; colormap=cmap, colorrange=(lo, hi), nan_color=bg)
+    Makie.Colorbar(fig[1,2], hm; label = label === nothing ? (logscale ? "log₁₀ value" : "value") : label)
+    filename === nothing || Makie.save(filename, fig)
+    Makie.display(fig); return fig
+end
+
 end # module
