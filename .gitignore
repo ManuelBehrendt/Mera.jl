@@ -150,3 +150,9 @@ dev/
 
 # JOSS paper draft — kept local/offline until the maintainer decides to publish it
 paper/
+
+# Internal planning docs and AI-assistant instructions — kept local, never published
+CLAUDE.md
+.claude/
+AREPO_ROADMAP.md
+docs/immersive_roadmap.md
