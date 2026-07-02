@@ -34,3 +34,18 @@
         rm(dir; recursive=true, force=true)
     end
 end
+
+@testset "clumpfind benchmark (data-free smoke)" begin
+    # runs on the synthetic generator — no simulation data; a high threshold keeps the
+    # selection (and therefore the finder/boundedness timings) small and CI-friendly
+    F = synthetic_clumps(lmax=6)
+    rho = getvar(F.gas, :rho, :nH)
+    thr = 0.5 * maximum(rho)                       # only the densest clump cores
+    out = redirect_stdout(devnull) do
+        clumpfind_benchmarks(F.gas; threshold=thr, threshold_unit=:nH, reps=1)
+    end
+    @test out.n_selected > 0
+    @test length(out.finders) == 5 && all(f -> f.time >= 0 && f.nclumps >= 1, out.finders)
+    @test length(out.gravity) == 3                 # :approx / :direct / :tree all timed
+    @test !isempty(out.scaling) && out.scaling[1].threads == 1
+end

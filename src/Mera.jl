@@ -401,7 +401,8 @@ export
     IOBenchmark,
     plot_results,
     run_reading_benchmark,
-    run_merafile_benchmark
+    run_merafile_benchmark,
+    clumpfind_benchmarks
 
 include("types.jl")
 
@@ -532,6 +533,7 @@ include("benchmarks/IO/IOperformance.jl")
 include("benchmarks/RAMSES_reading/ramses_reading_stats.jl")
 include("benchmarks/JLD2_reading/merafile_reading_stats.jl")
 include("benchmarks/Projections/projection_benchmarks.jl")
+include("benchmarks/Clumpfind/clumpfind_benchmarks.jl")
 
 # Functions under development (private, git-ignored; absent in the public package)
 devfile = joinpath(@__DIR__, "dev/dev.jl")

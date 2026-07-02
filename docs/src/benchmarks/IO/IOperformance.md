@@ -173,3 +173,30 @@ cmd-line % julia -t 32 -e 'using Mera, CairoMakie; save("io.png", plot_results(r
 **What this tells you:** Even when average performance looks acceptable, individual file operations can vary dramatically in timing. When running multiple threads together, the slowest operations hold up everything else if your program needs all threads to finish before proceeding.
 
 **Practical guidance:** If you see large error bars or rapidly increasing timing variability at higher thread counts, it indicates you're approaching the point where additional threads become counterproductive for overall system performance.
+
+## Reference results — laptop (2026-07)
+
+Provenance: Apple M2 Pro (12 cores), macOS 15, Julia 1.12.3, Mera revamp/2026,
+8 Julia threads; dataset `mw_L10/output_00300` (2,570 files) on an external
+Thunderbolt SSD (`FASTStorage`); `run_benchmark(dir; runs=2)`.
+
+| Threads | IOPS (mean) | Throughput [MB/s] |
+|---:|---:|---:|
+| 1 | 11,970 | 871 |
+| 2 | 37,681 | 5,043 |
+| 4 | 51,819 | 4,129 |
+| 8 | 69,872 | 2,875 |
+
+Open/close latency at 8 threads: 42.7 μs (median). IOPS keep scaling with
+concurrency while sequential throughput peaks at 2 threads and then declines —
+typical external-SSD behaviour, and exactly the kind of machine profile this
+diagnostic is meant to reveal (a many-core server with parallel storage looks
+different; see the historical server results above).
+
+Run it yourself:
+
+```julia
+using Mera
+res = run_benchmark("path/to/output_00300"; runs=2)
+plot_results(res)     # needs a Makie backend (e.g. using CairoMakie)
+```

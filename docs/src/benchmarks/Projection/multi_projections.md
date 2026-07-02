@@ -55,3 +55,32 @@ small-to-moderate projections a single thread is typically sufficient.
 - Resolution drives both time and memory: doubling `res` roughly quadruples the
   output grid (and its memory); choose the smallest resolution that resolves
   the structures you care about.
+
+## Reference results — laptop (2026-07)
+
+Provenance: Apple M2 Pro (12 cores), Julia 1.12.3, Mera revamp/2026, 8 Julia
+threads; `mw_L10` output 300 hydro (28.3M cells);
+`benchmark_projection_hydro(gas, [1,2,4,8], 3)`.
+
+| Threads | single-var `:sd` (median) | multi-var, 10 vars (median) |
+|---:|---:|---:|
+| 1 | 1.56 s | 21.0 s |
+| 2 | 1.62 s | 13.3 s |
+| 4 | 1.58 s | 13.3 s |
+| 8 | 1.62 s | 12.9 s |
+
+Peak memory ~1.1 GiB. Two honest lessons in one table: a **single light
+projection is serial-fraction dominated** (flat at every thread count — the
+same effect measured in [Julia for Simulation Analysis](../../julia_for_simulation_analysis.md)),
+while the 10-variable projection gains ×1.6 and then saturates on this
+machine's memory bandwidth. Threading pays in proportion to the compute per
+cell — the off-axis `:exact` kernel reaches ×3.8 at 8 threads on the same
+hardware.
+
+Run it yourself:
+
+```julia
+gas = gethydro(getinfo(OUTPUT, "path/to/simulation"))
+benchmark_projection_hydro(gas, [1, 2, 4, 8], 3, "my_bench")   # writes my_bench.{json,csv}
+clumpfind_benchmarks(gas; threshold=1e2, threshold_unit=:nH)   # structure-finder timings
+```

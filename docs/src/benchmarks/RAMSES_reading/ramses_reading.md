@@ -418,3 +418,23 @@ ctime: 2024-06-06T17:13:46.723
 
 If you completed all steps above, your benchmarking environment is ready and you can confidently analyze RAMSES file reading performance with Mera.jl!
 
+
+## Reference results — laptop (2026-07)
+
+Provenance: Apple M2 Pro (12 cores), Julia 1.12.3, Mera revamp/2026, 8 compute +
+8 GC threads; `mw_L10` output 300 (28.3M cells) on an external Thunderbolt SSD;
+`run_reading_benchmark(300, path)` (10 repetitions).
+
+| Component | Time |
+|---|---:|
+| hydro | 43.3 s ± 1.4 s |
+| gravity | 4.6 s ± 2.6 s |
+| particles | 1.3 s ± 0.9 s |
+| **total** | **49.2 s** |
+
+GC accounts for ~9% of the hydro read. Compare the MERA-files page: the same
+snapshot re-loads from its converted JLD2 file in ~1.2–1.4 s (warm) — the
+motivation for converting any snapshot you touch more than once.
+
+Run it yourself: `run_reading_benchmark(OUTPUT, "path/to/simulation")` in a
+session started with your target thread count (`julia -t 8`).
