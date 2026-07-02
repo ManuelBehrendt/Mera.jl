@@ -47,10 +47,14 @@ serves. Entry-function contracts:
 - `particles(info::InfoType; xrange, yrange, zrange, center, range_unit, verbose)` → `PartDataType`
 - `gravity` / `rt` / `clumps`: analogous to `hydro`.
 
-Wrap a function in a closure if it does not accept the full keyword set. A capability
-left `nothing` marks the code as not supporting it — the public entry points then raise
-a clear error, `supports` returns `false`, and the docs capability matrix shows a gap.
-`detect` (optional) is tried by `detect_simcode` before the built-in detection chain.
+Wrap a function in a closure if it does not accept the full keyword set. The public
+entry points also pass any EXTRA user keywords through to the frontend (e.g.
+`getparticles(info; families=[0])` reaches `getparticles_gadget`), so a frontend with
+code-specific options just declares them; unknown keywords raise its MethodError.
+A capability left `nothing` marks the code as not supporting it — the public entry
+points then raise a clear error, `supports` returns `false`, and the docs capability
+matrix shows a gap. `detect` (optional) is tried by `detect_simcode` before the
+built-in detection chain.
 """
 function register_reader!(code::Symbol; simcodes::Vector{String},
                           name::String=String(code),

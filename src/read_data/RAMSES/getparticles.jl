@@ -196,15 +196,20 @@ function getparticles( dataobject::InfoType;
                     show_progress::Bool=true,
                     max_threads::Int=Threads.nthreads(),
                     subsample::Real=1.0,                     # read only ~this fraction of CPU files (1.0 = all); for very large runs
-                    myargs::ArgumentsType=ArgumentsType() )
+                    myargs::ArgumentsType=ArgumentsType(),
+                    kwargs... )
 
     # Multi-code: a non-RAMSES info delegates to its registered particle frontend.
+    # Extra keyword arguments (e.g. families= for the GADGET family) are passed through;
+    # the native RAMSES path rejects leftovers so misspelled keywords still fail loudly.
     rdr = _reader_by_simcode(dataobject.simcode)
     if rdr !== nothing && rdr.code !== :ramses
         haskey(rdr.funcs, :particles) || _capability_error(rdr, :particles, "getparticles")
         return rdr.funcs[:particles](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                                     center=center, range_unit=range_unit, verbose=verbose)
+                                     center=center, range_unit=range_unit, verbose=verbose, kwargs...)
     end
+    isempty(kwargs) || error("[Mera]: getparticles: unsupported keyword argument(s) for RAMSES data: " *
+                             join(keys(kwargs), ", ") * ".")
 
     # ===== ARGUMENT OVERRIDE SECTION =====
     # Allow myargs struct to override individual function arguments
