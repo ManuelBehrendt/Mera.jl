@@ -147,3 +147,6 @@ docs/dev/
 # In-development LOS-cube / kinematics / mock-observation module (extracted from the
 # package; not public, not in runtests). Kept local-only — see dev/loscubes/README.md.
 dev/
+
+# JOSS paper draft — kept local/offline until the maintainer decides to publish it
+paper/
