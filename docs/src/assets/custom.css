@@ -63,3 +63,61 @@ button[id^="mera-top-"]:hover {
 
 /* Placeholder for existing custom styles */
 /* This file ensures compatibility with the current build system */
+
+/* ==========================================================================
+   Multi-code tabs (code-switcher)
+   Markup is emitted by the notebook converter:
+     <div class="mera-tabs"><div class="mera-tab" data-code="PLUTO">…</div>…</div>
+   custom.js builds the tab bar and adds .mera-tabs-js; without JS the
+   sections render stacked with their headings (graceful fallback).
+   ========================================================================== */
+.mera-tab-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 1rem 0 0.9rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 2px solid #dbdbdb;
+}
+.mera-tab-btn {
+    border: 1px solid #dbdbdb;
+    border-radius: 9999px;
+    background: #f5f5f5;
+    color: #363636;
+    padding: 0.25rem 0.9rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+.mera-tab-btn:hover {
+    background: #e8e8e8;
+}
+.mera-tab-btn-active,
+.mera-tab-btn-active:hover {
+    background: #2e63b8;      /* Documenter link blue */
+    border-color: #2e63b8;
+    color: #fff;
+}
+.mera-tabs-js > .mera-tab { display: none; }
+.mera-tabs-js > .mera-tab.mera-tab-active { display: block; }
+
+/* dark theme */
+html.theme--documenter-dark .mera-tab-bar { border-bottom-color: #5e6d6f; }
+html.theme--documenter-dark .mera-tab-btn {
+    background: #282f2f;
+    border-color: #5e6d6f;
+    color: #fff;
+}
+html.theme--documenter-dark .mera-tab-btn:hover { background: #3b4444; }
+html.theme--documenter-dark .mera-tab-btn-active,
+html.theme--documenter-dark .mera-tab-btn-active:hover {
+    background: #1abc9c;
+    border-color: #1abc9c;
+    color: #fff;
+}
+
+/* print: show every code variant, hide the bar */
+@media print {
+    .mera-tabs-js > .mera-tab { display: block; }
+    .mera-tab-bar { display: none; }
+}
