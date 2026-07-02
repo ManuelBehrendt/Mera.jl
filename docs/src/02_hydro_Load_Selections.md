@@ -1,7 +1,7 @@
 # Hydro Data: Load Selected Variables and Spatial Ranges
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `02_hydro_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/02_hydro_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `02_hydro_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/02_hydro_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive guide to selective data loading and spatial filtering in Mera.jl. You'll learn advanced techniques for efficiently loading only the data you need from large hydrodynamic simulations.
@@ -102,7 +102,7 @@ Before exploring data selection techniques, let's load our simulation and examin
 
 ```julia
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
 ```
 
 ```
@@ -123,7 +123,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -186,7 +186,7 @@ gas = gethydro(info);
 ```
 [Mera]: Get hydro data: 2026-06-01T14:13:18.380
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -231,8 +231,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  scalar_00 Float64
-11  scalar_01 Float64
+10  var6     Float64
+11  var7     Float64
 ```
 
 ### Selecting Multiple Variables
@@ -482,7 +482,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:15:44.404
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
@@ -539,7 +539,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:15:54.988
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
@@ -589,7 +589,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:15:59.497
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
@@ -773,7 +773,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:16:02.459
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -829,7 +829,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:16:05.832
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 center: [0.5, 0.5, 0.5]
 ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
@@ -870,7 +870,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:16:09.252
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -912,7 +912,7 @@ gas = gethydro(info, lmax=8,
 ```
 [Mera]: Get hydro data: 2026-06-01T14:16:12.660
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 center: [0.5, 0.5, 0.5]
 ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:

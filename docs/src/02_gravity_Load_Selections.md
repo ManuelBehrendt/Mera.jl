@@ -1,7 +1,7 @@
 # Gravity Data: Load Selected Variables and Spatial Ranges
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `02_gravity_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/02_gravity_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `02_gravity_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/02_gravity_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive guide to selective gravitational field data loading and spatial filtering in Mera.jl. You'll learn advanced techniques for efficiently loading only the gravity data you need from large gravitational field simulations.
@@ -101,7 +101,7 @@ Before exploring gravitational field data selection techniques, let's load our s
 
 ```julia
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
 ```
 
 ```
@@ -122,7 +122,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------

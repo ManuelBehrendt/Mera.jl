@@ -1,7 +1,7 @@
 # 3. Hydro: Sub-Regions and Spatial Selections
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `03_hydro_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_hydro_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_hydro_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_hydro_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 ## Learning Objectives
@@ -103,7 +103,7 @@ rc("figure", dpi=300); rc("savefig", dpi=300)
 using ColorSchemes
 cmap = ColorMap(ColorSchemes.lajolla.colors) # See http://www.fabiocrameri.ch/colourmaps.php
 
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14")
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14")
 gas  = gethydro(info,:rho,lmax=12, smallr=1e-11);
 ```
 
@@ -125,7 +125,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -1213,7 +1213,12 @@ cb = colorbar(im, label=labeltext);
 
 ## Value-Type Regions: Exact Cell Splitting
 
-Besides the `:sphere` / `:cuboid` / `:cylinder` *symbol* form used above, `subregion` also accepts composable **region value types** — `Sphere`, `Cuboid`, `Cylinder` and `SphericalShell` — which add **exact edge-cell splitting**. With `split=true` (the default for this form), cells straddling the region boundary are clipped to the exact volume inside: each kept cell carries a per-cell `:fraction ∈ (0,1]`, so `getvar(:mass)`, `getvar(:volume)` and `msum` report the **exact** in-region totals (a sphere of radius `R` returns exactly `(4/3)πR³`, with no boundary over- or under-counting). Pass `split=false` for the classic whole-cell behaviour.
+Besides the `:sphere` / `:cuboid` / `:cylinder` *symbol* form used above, `subregion` also accepts
+composable **region value types** — `Sphere`, `Cuboid`, `Cylinder` and
+`SphericalShell` — which add **exact edge-cell splitting**. With `split=true` (the default
+for this form), cells straddling the region boundary are clipped to the exact volume inside: each
+kept cell carries a per-cell `:fraction ∈ (0,1]`, so `getvar(:mass)`, `getvar(:volume)` and `msum`
+report the **exact** in-region totals (a sphere of radius `R` returns exactly `(4/3)πR³`, with no
 
 ```julia
 # value-type sphere with exact edge-cell splitting (split=true by default)
@@ -1231,20 +1236,14 @@ println("whole-cell mass  = ", whole_mass, " Msol   (over-count = ",
         round(100*(whole_mass/exact_mass - 1), digits=2), " %)")
 ```
 
-```
-exact split mass = 1.8209742878294815e10 Msol
-whole-cell mass  = 1.82059992640131e10 Msol   (over-count = -0.02 %)
-```
-
 ### Boolean Combinations
 
-Regions compose with `∩` (intersection), `∪` (union), `\` (difference) and `!` (complement). Each result is itself a region, so they nest — e.g. a ball with a cylindrical hole drilled through it:
+Regions compose with `∩` (intersection), `∪` (union), `\` (difference) and `!` (complement). Each
 
 ```julia
-# a ball with a cylindrical hole drilled out (the projection of the result is exactly region-clipped,
-# because projection weights by getvar(:mass), which honours the per-cell :fraction)
+# a ball with a cylindrical hole drilled out, then projected (the map is exactly region-clipped:
+# projection weights by getvar(:mass), which honours the per-cell :fraction)
 gas_holed = subregion(gas, Sphere(12.0; range_unit=:kpc) \ Cylinder(3.0, 12.0; range_unit=:kpc))
-println("type: ", typeof(gas_holed), "   cells: ", length(gas_holed.data))
 ```
 
 ```
@@ -1253,12 +1252,12 @@ type: HydroDataType   cells: 12081619
 
 ### Tilted Cylinders / Disks
 
-`Cylinder` takes an `axis` (any non-zero 3-vector — its symmetry direction), so you can select an inclined disk or cylinder, e.g. along a galaxy's spin vector. A thin cylinder is a disk; the default `axis=[0,0,1]` is the classic z-aligned cylinder.
+`Cylinder` takes an `axis` (any non-zero 3-vector — its symmetry direction), so you can select an
+inclined disk or cylinder, e.g. along a galaxy's spin vector. A thin cylinder is a disk; the default
 
 ```julia
 # a thin disk tilted in the x-z plane
 gas_disk = subregion(gas, Cylinder(15.0, 1.0; axis=[1.0,0.0,2.0], range_unit=:kpc))
-println("tilted-disk cells: ", length(gas_disk.data), "   mass: ", msum(gas_disk, :Msol), " Msol")
 ```
 
 ```
@@ -1267,13 +1266,13 @@ tilted-disk cells: 4557706   mass: 6.295667826746608e9 Msol
 
 ### Shell Regions
 
-`SphericalShell` and `CylindricalShell` are the value-type analogues of `shellregion(:sphere)` / `shellregion(:cylinder)`, with the same exact edge-cell splitting (and a tunable `axis` for the cylindrical shell). A shell is also just a difference, e.g. `Sphere(r_out) \ Sphere(r_in)`.
+`SphericalShell` and `CylindricalShell` are the value-type analogues of `shellregion(:sphere)` /
+`shellregion(:cylinder)`, with the same exact edge-cell splitting (and a tunable `axis` for the
 
 ```julia
 gas_sshell = subregion(gas, SphericalShell(6.0, 10.0; range_unit=:kpc))
 gas_cshell = subregion(gas, CylindricalShell(3.0, 8.0, 4.0; range_unit=:kpc))
 println("spherical shell:   mass = ", msum(gas_sshell, :Msol), " Msol   cells = ", length(gas_sshell.data))
-println("cylindrical shell: mass = ", msum(gas_cshell, :Msol), " Msol   cells = ", length(gas_cshell.data))
 ```
 
 ```

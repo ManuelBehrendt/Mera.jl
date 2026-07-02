@@ -1,7 +1,7 @@
 # Profiles & phase diagrams — a step-by-step guide
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `profile`, `phase`, `profile3d`, `rotationcurve` and `profiletimeseries` are **general, weighted
@@ -21,10 +21,10 @@ Load hydro, gravity and clumps from one snapshot, plus a companion run that carr
 using Mera, CairoMakie
 CairoMakie.activate!()
 BASE = "/Volumes/FASTStorage/Simulations/Mera-Tests"   # <-- change me
-info  = getinfo(100, joinpath(BASE,"spiral_clumps"), verbose=false)
+info  = getinfo(100, joinpath(BASE,"RAMSES/spiral_clumps"), verbose=false)
 gas   = gethydro(info,  verbose=false, show_progress=false)
 grav  = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)
-parts = getparticles(getinfo(1, joinpath(BASE,"spiral_ugrid"), verbose=false), verbose=false, show_progress=false)
+parts = getparticles(getinfo(1, joinpath(BASE,"RAMSES/spiral_ugrid"), verbose=false), verbose=false, show_progress=false)
 ctr = [:bc]                         # box centre; e.g. [24.,24.,24.] with range_unit=:kpc also works
 println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 ```

@@ -1,7 +1,7 @@
 # Hydro Data Projections
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `06_hydro_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/06_hydro_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `06_hydro_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/06_hydro_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This tutorial demonstrates advanced projection techniques for hydrodynamical simulation data using MERA.jl. Learn how to create 2D projections from 3D data, handle different coordinate systems, and visualize complex astrophysical datasets.
@@ -100,7 +100,7 @@ using Mera
 
 # Load simulation metadata
 # Replace with your simulation path and output number
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14")
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14")
 
 # Load hydrodynamical data with specified constraints
 # smallr: sets minimum density value in loaded data, lmax: maximum level to load
@@ -125,7 +125,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -151,7 +151,7 @@ patchfile:        true
 =======================================================
 [Mera]: Get hydro data: 2026-06-01T20:27:43.446
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -198,8 +198,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  passive_scalar_1 Float64
-11  passive_scalar_2 Float64
+10  var6     Float64
+11  var7     Float64
 ```
 
 ## Basic Projections
@@ -220,7 +220,7 @@ Predefined vars for projections:
 ------------------------------------------------
 =====================[gas]:=====================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, passive_scalar_1,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
 further possibilities: :rho, :density, :ρ
               -derived hydro vars-
 :x, :y, :z
@@ -701,6 +701,22 @@ proj1_z.cextent # ranges in code units relative to a given center (by default: b
    2.0039062499844444
 ```
 
+#### Physical-unit axes with `getextent`
+
+`proj.extent`/`proj.cextent` above are in **code length** units. To get plot axes in a physical unit
+that matches the map (surface density here is `Msol/pc²`), use `getextent(proj, :kpc)` rather than the
+raw field — it returns `[xmin, xmax, ymin, ymax]` scaled to the unit (`center=true` for the
+centre-relative form, like `.cextent`). This is the robust idiom: for these tutorial runs one code
+length happens to equal 1 kpc, but for a run in pc / Mpc — or a GADGET/AREPO snapshot — the raw
+code-unit extent would mislabel the axes.
+
+```julia
+# physical-unit extent for plot axes (robust regardless of the sim's code-length convention)
+println("kpc           : ", getextent(proj1_z, :kpc))
+println("pc            : ", getextent(proj1_z, :pc))                 # ×1000 — raw .extent (code units) is NOT physical in general
+println("kpc, centered : ", getextent(proj1_z, :kpc; center=true))  # like .cextent; pass straight to imshow(extent=…)
+```
+
 ```julia
 proj1_z.ratio # the ratio between the two ranges
 ```
@@ -769,7 +785,7 @@ im = imshow(log10.(permutedims(proj_z.maps[:sd])),  # Transpose for correct orie
            cmap=cmap,                               # Apply scientific colormap
            aspect=proj_z.ratio,                     # Maintain aspect ratio
            origin="lower",                          # Origin at bottom-left
-           extent=proj_z.cextent,                   # Physical coordinate extent
+           extent=getextent(proj_z, :kpc; center=true),  # kpc axes (matches the 'x [kpc]' label)
            vmin=0, vmax=3)                          # Set color scale limits
 xlabel("x [kpc]")
 ylabel("y [kpc]")
@@ -780,7 +796,7 @@ subplot(1,2,2)
 im = imshow(log10.(permutedims(proj_x.maps[:sd])),
            cmap=cmap,
            origin="lower",
-           extent=proj_x.cextent,
+           extent=getextent(proj_x, :kpc; center=true),
            vmin=0, vmax=3)
 xlabel("x [kpc]")
 ylabel("z [kpc]")
@@ -790,7 +806,7 @@ cb = colorbar(im,
              pad=0.2)
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_47_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
 
 ```
 PyObject <matplotlib.colorbar.Colorbar object at 0x30dcc2830>
@@ -825,7 +841,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_51_1.png)
 
 ```
 PyObject <matplotlib.colorbar.Colorbar object at 0x30de46620>
@@ -971,7 +987,7 @@ imshow( permutedims(proj_z.maps[:σz]) , cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_59_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_61_1.png)
 
 #### Cylindrical Coordinate System
 
@@ -1116,7 +1132,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_64_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_66_1.png)
 
 ### Performance Tips for Kinematic Analysis
 
@@ -1254,7 +1270,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_70_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_72_1.png)
 
 #### Direct Resolution Specification (`res`)
 
@@ -1338,7 +1354,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_73_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_75_1.png)
 
 #### Physical Pixel Size Control (`pxsize`)
 
@@ -1440,7 +1456,7 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=proj
 colorbar();
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_76_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_78_1.png)
 
 ## Thermal Properties Analysis
 
@@ -1518,7 +1534,7 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(c_s) \ [km \ s^{-1}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_80_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_82_1.png)
 
 #### Custom Adiabatic Index
 
@@ -1646,7 +1662,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_88_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_90_1.png)
 
 ## Weighting and Integration Schemes
 
@@ -1756,7 +1772,7 @@ cb = colorbar(im, label=L"\mathrm{log10(v) \ [km \ s^{-1}]}");
 # Note: Ultra-thin slices provide all cells that intersect the 2D plane
 ```
 
-![](06_hydro_Projection_files/06_hydro_Projection_95_1.png)
+![](06_hydro_Projection_files/06_hydro_Projection_97_1.png)
 
 ## Summary
 

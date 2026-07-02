@@ -1,7 +1,7 @@
 # Hydro Data: First Inspection
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `01_hydro_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_hydro_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `01_hydro_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_hydro_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive introduction to loading and analyzing hydrodynamic simulation data using Mera.jl. You'll learn the fundamentals of working with RAMSES hydro data and AMR (Adaptive Mesh Refinement) structures.
@@ -52,8 +52,7 @@ info.descriptor.hydro[2] = :vel_x                     # Customize variable names
 propertynames(info.descriptor)                        # All descriptor properties
 
 # Access predefined variables (always available)
-# :rho, :vx, :vy, :vz, :p, then passive scalars by descriptor name
-# (e.g. :metallicity, :scalar_00, ...) or positional :var6, :var7, ... without a descriptor
+# :rho, :vx, :vy, :vz, :p, :var6, :var7, ...
 ```
 
 ### IndexedTables Operations
@@ -137,7 +136,7 @@ Let's start by importing Mera.jl and loading simulation information for output 3
 
 ```julia
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
 ```
 
 ```
@@ -158,7 +157,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -195,7 +194,7 @@ The output above provides a comprehensive overview of the loaded hydro data prop
 
 ## Variable Names and Descriptors
 
-**Predefined Variable Names**: Mera.jl recognizes the standard hydro variable names `:rho`, `:vx`, `:vy`, `:vz`, `:p`. Passive scalars beyond pressure are named from the `hydro_file_descriptor.txt` when present (e.g. `:metallicity`, `:scalar_00`, `:scalar_01`), and fall back to positional names (`:var6`, `:var7`, ...) only when the output ships no descriptor. Positional `:varN` selectors keep working in both cases, so older scripts continue to load the same columns.
+**Predefined Variable Names**: Mera.jl recognizes standard hydro variable names such as `:rho`, `:vx`, `:vy`, `:vz`, `:p`, `:var6`, `:var7`, etc. These provide a consistent interface for accessing common hydrodynamic quantities across different simulations.
 
 **Custom Variable Descriptors**: In future versions, you will be able to use variable names directly from the hydro descriptor by setting `info.descriptor.usehydro = true`. Currently, you can customize variable names by modifying the descriptor array manually.
 
@@ -305,7 +304,7 @@ The `gethydro()` function is the primary tool for loading hydrodynamic data from
 First, let's reload the simulation information to reset any changes we made to the descriptor:
 
 ```julia
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10", verbose=false); # here, used to overwrite the previous changes
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10", verbose=false); # here, used to overwrite the previous changes
 ```
 
 ### Loading Complete Hydro Dataset
@@ -323,7 +322,7 @@ gas = gethydro(info);
 ```
 [Mera]: Get hydro data: 2026-06-01T14:05:24.175
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -415,7 +414,7 @@ viewfields(gas)
 ```
 
 ```
-data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
 info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
 lmin	= 6
 lmax	= 10
@@ -456,7 +455,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 [Mera]: Get hydro data: 2026-06-01T14:06:24.574
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -533,16 +532,16 @@ level  cells     cellsize
 10     7298576   0.046875
 ```
 
-For a **visual** version of the same statistics, [`overviewplot`](@ref) (needs a Makie backend,
-`using CairoMakie`) renders a one-figure summary in a single pass — cells and mass per AMR level, the
-mass-weighted density PDF, and the ρ–T phase diagram:
+#### Visual overview
+
+`overviewplot` is the visual companion to `amroverview`/`dataoverview`: a one-figure summary computed in
+a single pass — cells and mass per AMR level, the mass-weighted density PDF, and the ρ–T phase diagram.
+It needs a Makie backend (`using CairoMakie`).
 
 ```julia
 using CairoMakie
 overviewplot(gas)
 ```
-
-![overviewplot on AMR hydro: cells per level and mass per level (log bars), the mass-weighted density PDF, and the density–temperature phase diagram.](assets/overviewplot_hydro.png)
 
 ### Statistical Data Analysis
 
@@ -709,8 +708,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  scalar_00 Float64
-11  scalar_01 Float64
+10  var6     Float64
+11  var7     Float64
 ```
 
 ### Focused Data Examination

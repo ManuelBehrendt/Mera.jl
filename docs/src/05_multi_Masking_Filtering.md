@@ -1,7 +1,7 @@
 # Data Masking, Filtering, and Metaprogramming
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 ## Advanced Data Manipulation and Selection Techniques
@@ -15,25 +15,6 @@ This comprehensive tutorial explores the sophisticated data manipulation capabil
 - **Data Table Extension**: Adding computed variables and derived quantities to existing datasets
 - **Metaprogramming**: Using MERA's pipeline macros (@filter, @apply, @where) for elegant data processing workflows
 
-### Quick Start
-
-If you just want to **select data by a physical quantity**, reach for [`filterdata`](@ref): it filters on *any* [`getvar`](@ref) quantity (temperature, density, radius, velocity, …) in any unit, composes with `&` (and), `|` (or), `!` (not), and returns a **new object of the same type** that you can feed straight into `projection`, `getvar`, `subregion`, …
-
-```julia
-hot  = filterdata(gas, Above(:T, 1e6, unit=:K))                                  # HydroDataType of the hot halo
-disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc) & Below(:T, 1e5, unit=:K))
-projection(hot, :sd, :Msol_pc2)                                                  # chain it like any Mera object
-```
-
-To analyse a subset **without copying** the data, build a boolean mask with [`getmask`](@ref) and hand it to any masking-aware function via `mask=`:
-
-```julia
-m = getmask(gas, Above(:T, 1e6, unit=:K))
-msum(gas, mask=m, unit=:Msol)                                                    # in-mask mass; original object untouched
-```
-
-That covers most needs. The rest of this tutorial is the full toolbox, building up step by step: table-level column selection, the IndexedTables / `@filter` macros, the complete set of condition types ([`Above`](@ref) / [`Below`](@ref) / [`InRange`](@ref) / [`Equals`](@ref) / [`IsFinite`](@ref) / [`AbovePercentile`](@ref) / [`BelowPercentile`](@ref) / [`Satisfies`](@ref)), hand-built masks and how to combine them, applying masks to statistics, and adding derived columns.
-
 ### Learning Objectives
 
 By completing this tutorial, you will master:
@@ -46,12 +27,11 @@ By completing this tutorial, you will master:
 2. **Advanced Filtering Operations**:
    - Single and multi-condition filtering using IndexedTables syntax
    - MERA's pipeline macros for streamlined data processing
-   - **Value-space selection with `filterdata`/`getmask`**: composable `Above`/`Below`/`InRange`/`Equals`/`AbovePercentile`/`Satisfies` conditions on any derived quantity, combined with `&`/`|`/`!`
    - Creating custom filtering functions for complex geometric conditions
    - Comparing performance between different filtering approaches
 
 3. **Masking and Boolean Operations**:
-   - Creating boolean masks for selective analysis — by hand, or with `getmask(obj, condition)` from composable physical conditions
+   - Creating boolean masks for selective analysis
    - Combining multiple masks using logical operations
    - Applying masks to statistical functions without data modification
    - Understanding mask types: Array{Bool,1} vs BitArray{1}
@@ -107,7 +87,7 @@ For this tutorial, we load data with specific constraints to optimize memory usa
 
 ```julia
 using Mera
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14");
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14");
 gas       = gethydro(info, lmax=8, smallr=1e-5);
 particles = getparticles(info)
 clumps    = getclumps(info);
@@ -132,7 +112,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -158,7 +138,7 @@ patchfile:        true
 =======================================================
 [Mera]: Get hydro data: 2026-06-01T20:26:28.613
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -208,6 +188,24 @@ Read 12 colums:
 Memory used for data table :
 61.58203125 KB
 -------------------------------------------------------
+```
+
+## Quick Start
+
+```julia
+hot = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)
+```
+
+```
+489608
+```
+
+```julia
+m = getmask(gas, Above(:T, 1e6, unit=:K))
+```
+
+```
+2.145e9
 ```
 
 ## Data Selection from Tables
@@ -467,9 +465,7 @@ vtuple.rho
 - **Column tuples**: For mathematical operations requiring multiple variables
 - **Dictionary extraction**: When working with different units or derived quantities
 
-## Filtering by Condition (table level)
-
-Two layers of filtering are available. **Table-level** filtering (this section) works on the *stored* columns in **code units**, via IndexedTables' `filter` or MERA's [`@filter`](@ref) macro, and returns a table (or, with `construct_datatype`, a new object). **Value-space** filtering ([further below](#Value-Space-Filtering:-filterdata-and-getmask)) instead selects by any `getvar` quantity in physical units and returns a chainable object — see the **Quick Start** above for the recommended path.
+## Filter by Condition
 
 ### With IndexedTables (example A)
 
@@ -494,8 +490,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  passive_scalar_1 Float64
-11  passive_scalar_2 Float64
+10  var6     Float64
+11  var7     Float64
 ```
 
 ### With IndexedTables (example B)
@@ -521,8 +517,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  passive_scalar_1 Float64
-11  passive_scalar_2 Float64
+10  var6     Float64
+11  var7     Float64
 ```
 
 ### Unit Conversion in Filtering
@@ -598,7 +594,41 @@ sum(mass_filtered_tot)
 1.4862767967535206e10
 ```
 
-## Multi-Criteria & Geometric Filtering
+## Multi-Criteria Filtering
+
+### Advanced Filtering Strategies
+
+Multi-condition filtering enables sophisticated data selection by combining multiple criteria. This section demonstrates various approaches for handling complex geometric and physical constraints.
+
+### Filtering Approaches Comparison
+
+#### 1. **Sequential IndexedTables Filtering**
+```julia
+# Step-by-step refinement
+filtered_db = filter(p->p.rho >= density, gas.data)
+filtered_db = filter(row->geometric_condition(row), filtered_db)
+```
+**Advantages**: Clear logical flow, easy debugging, memory efficient
+**Use case**: When conditions have different computational costs
+
+#### 2. **Combined Condition Filtering**
+```julia
+# Single filter with compound condition
+filtered_db = filter(row-> condition1 && condition2 && condition3, gas.data)
+```
+**Advantages**: Single pass through data, optimal performance
+**Use case**: When all conditions have similar computational requirements
+
+#### 3. **MERA Pipeline Macros**
+```julia
+# Elegant pipeline syntax
+filtered_db = @apply gas.data begin
+    @where :rho >= density
+    @where geometric_condition
+end
+```
+**Advantages**: Readable syntax, automatic optimization, extensible
+**Use case**: Complex analysis workflows with many conditions
 
 ### Geometric Filtering Techniques
 
@@ -722,12 +752,9 @@ sum(var_filtered)
 
 ## Value-Space Filtering: `filterdata` and `getmask`
 
-The macros above filter on *stored* table columns. `filterdata` (and `getmask`) instead select by **any [`getvar`](@ref) quantity** — including derived physics such as temperature `:T`, radial velocity `:vr`, Mach number `:mach` or cylindrical radius `:r_cylinder` — in any unit, and return a **new object of the same type** (chainable with `projection`, `getvar`, `subregion`, …). Conditions are composable value types ([`Above`](@ref), [`Below`](@ref), [`InRange`](@ref), [`Equals`](@ref), [`IsFinite`](@ref), [`AbovePercentile`](@ref)/[`BelowPercentile`](@ref), [`Satisfies`](@ref)) combined with `&` (and), `|` (or) and `!` (not). Masks are built vectorised through `getvar`, so they are fast and work on quantities the raw-column `@filter` cannot see. They work on hydro, gravity, RT, particles and clumps.
-
 ```julia
 # select by a DERIVED quantity (the hot halo, T > 1e6 K) — returns a chainable HydroDataType
 hot = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)
-length(hot.data)
 ```
 
 ```
@@ -737,7 +764,6 @@ length(hot.data)
 ```julia
 # boolean algebra over several physical quantities: cold AND dense gas
 cold_dense = filterdata(gas, Above(:rho, 1, unit=:nH) & Below(:T, 1e5, unit=:K), verbose=false)
-length(cold_dense.data)
 ```
 
 ```
@@ -747,7 +773,6 @@ length(cold_dense.data)
 ```julia
 # a radially/kinematically confined slice (several positional conditions are AND-combined)
 disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc), Below(:vz, 50, unit=:km_s), verbose=false)
-length(disc.data)
 ```
 
 ```
@@ -757,7 +782,6 @@ length(disc.data)
 ```julia
 # get just the boolean mask and reuse it via the `mask=` keyword (no data copy):
 m = getmask(gas, Above(:T, 1e6, unit=:K))
-msum(gas, mask=m, unit=:Msol)            # hot-halo mass; the original object is untouched
 ```
 
 ```
@@ -766,11 +790,8 @@ msum(gas, mask=m, unit=:Msol)            # hot-halo mass; the original object is
 
 ### Adaptive and discrete selectors
 
-`Equals` (discrete fields like `:level`), `IsFinite` (drop `NaN`/`Inf`), `AbovePercentile`/`BelowPercentile` (data-relative **adaptive** thresholds) and `Satisfies` (a composable arbitrary predicate):
-
 ```julia
 dense10 = filterdata(gas, AbovePercentile(:rho, 90), verbose=false)   # densest 10% of cells (adaptive)
-length(dense10.data)
 ```
 
 ```
@@ -780,7 +801,6 @@ length(dense10.data)
 ```julia
 # finest-level cells in the top 1% by density
 core = filterdata(gas, Equals(:level, gas.lmax) & AbovePercentile(:rho, 99), verbose=false)
-length(core.data)
 ```
 
 ```
@@ -791,15 +811,13 @@ The `@filter` macro is also routed through this engine: on a Mera object it filt
 
 ```julia
 finest = @filter gas :level == gas.lmax    # Mera object → HydroDataType of the finest-level cells
-sub    = @filter gas.data :rho >= 1e-2     # raw table → filtered table (classic behaviour)
 ```
 
 ## Extend the Data Table
 Add costum columns/variables to the data that can be automatically processed in some functions:
 (note: to take advantage of the Mera unit management, store new data in code-units)
 
-!!! tip "Simpler alternative — derived quantities"
-    If you only need a quantity for *analysis* (not a stored column), you usually don't have to add one. [`getvar`](@ref) computes many derived quantities directly — e.g. `getvar(gas, :mach)`, `:T`, `:vr`, `:r_cylinder`, `:cs`, … — and these are exactly what `filterdata`/`getmask`, `projection` and the statistics functions accept. To register *your own* reusable derived quantity by formula, use [`add_field`](@ref). See [Derived Fields & add_field](derived_fields.md) and [How Quantities Are Computed](computation_reference.md). Materialising a column (below) is only needed when you want the values stored in the table itself.
+> **Simpler alternative — derived quantities.** If you only need a quantity for *analysis* (not a stored column), you usually don't have to add one. `getvar` computes many derived quantities directly — e.g. `getvar(gas, :mach)`, `:T`, `:vr`, `:r_cylinder`, `:cs`, … — and these are exactly what `filterdata`/`getmask`, `projection` and the statistics functions accept. To register your *own* reusable derived quantity by formula, use `add_field` (see the "Derived Fields & add_field" and "How Quantities Are Computed" docs). Materialising a column (below) is only needed when you want the values stored in the table.
 
 ```julia
 # calculate the Mach number in each cell
@@ -847,8 +865,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  passive_scalar_1 Float64
-11  passive_scalar_2 Float64
+10  var6     Float64
+11  var7     Float64
 12  mach     Float64
 ```
 
@@ -882,7 +900,7 @@ imshow( ( permutedims(proj_z.maps[:mach]) ), origin="lower", extent=proj_z.cexte
 colorbar();
 ```
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_60_1.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_73_1.png)
 
 Remove the column :mach from the table:
 
@@ -904,8 +922,8 @@ Columns:
 7   vy       Float64
 8   vz       Float64
 9   p        Float64
-10  passive_scalar_1 Float64
-11  passive_scalar_2 Float64
+10  var6     Float64
+11  var7     Float64
 ```
 
 ## Data Table Extension and Modification
@@ -983,10 +1001,6 @@ MERA supports three approaches for creating boolean masks:
 - Direct mathematical operations on extracted arrays
 - Highest performance for vectorized calculations
 - Ideal for mathematical transformations
-
-#### 4. **Condition-based with `getmask` (recommended)**
-- `getmask(obj, Above(:T, 1e4, unit=:K) & Below(:rho, 100, unit=:nH))` — build a mask from composable conditions on **any** `getvar` quantity, in any unit (see [Value-Space Filtering](#Value-Space-Filtering:-filterdata-and-getmask))
-- Vectorised and unit-aware; the modern replacement for hand-built masks, and works the same across hydro/gravity/RT/particles/clumps
 
 ### Mask Types and Performance
 
@@ -1193,12 +1207,17 @@ All three methods produce identical boolean results, differing only in implement
 
 This example creates a **complex thermodynamic selection**:
 ```julia
-# the same selection as one composable condition (any getvar quantity, physical units):
-mask_tot = getmask(gas, Above(:rho, 1e-2, unit=:nH) & Below(:rho, 10, unit=:nH) &
-                        Above(:Temperature, 1e3, unit=:K) & Below(:Temperature, 1e4, unit=:K))
+# Define individual conditions
+mask_h = getvar(gas, :rho, :nH) .< 10.0    # Low density: < 10 cm⁻³
+mask_l = getvar(gas, :rho, :nH) .> 1e-2    # Higher density: > 0.01 cm⁻³
+mask_T1 = getvar(gas, :Temperature, :K) .< 1e4 # Cool gas: < 10⁴ K
+mask_T2 = getvar(gas, :Temperature, :K) .> 1e3  # Warm gas: > 10³ K
+
+# Combine all conditions
+mask_tot = mask_h .* mask_l .* mask_T1 .* mask_T2
 ```
 
-With `getmask`, the boolean algebra is on the *conditions* themselves (`&`/`|`/`!`); you no longer hand-combine arrays with `.&`/`.*`.
+**Efficiency Note**: Using `.*` (element-wise multiplication) is computationally equivalent to `.&` but often more readable for multiple conditions.
 
 ```julia
 mask = getmask(gas, Below(:rho, 100, unit=:nH));
