@@ -1,8 +1,13 @@
-# Reading Other Simulation Codes
+# Other Simulation Codes — Worked Examples
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/16_multi_OtherCodes.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `multicode_examples.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/multicode_examples.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
+!!! note "Executed notebook"
+    This page loads PLUTO / Chombo / Athena++ / FLASH / GADGET and the AREPO/IllustrisTNG
+    gas workflow end-to-end — real snapshots, real outputs. See
+    [Multi-code support](multicode.md) for the overview and the per-code reader pages.
 
 Mera began as a RAMSES tool, but its analysis layer is **code-blind** — it works on a generic
 uniform/AMR cell list (or particle list), not on RAMSES file formats. So the *same* calls
@@ -27,6 +32,21 @@ using Mera
 base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 ```
 
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+```
+
+```
+"/Volumes/FASTStorage/Simulations/Mera-Tests"
+```
+
 
 ```@raw html
 <div class="mera-tabs" data-tab-group="simcode">
@@ -48,6 +68,19 @@ gas  = gethydro(info, verbose=false)
 maximum(getvar(gas, :rho))                           # the usual analysis, unchanged
 ```
 
+```
+[Mera]: 2026-07-02T19:26:17.505
+Code: PLUTO
+output: 5  time: 0.5 [code units]
+grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
+variables: (rho, vx, vy, vz, p)
+-------------------------------------------------------
+```
+
+```
+4.040484204505616
+```
+
 
 ```@raw html
 </div>
@@ -65,6 +98,12 @@ PLUTO's AMR output (the Chombo HDF5 format) loads as a Mera **AMR** object with 
 ```julia
 gc = gethydro(getinfo(0, joinpath(base, "CHOMBO/chombo_3d/IsothermalSphere"), verbose=false), verbose=false)
 sort(unique(getvar(gc, :level)))                # the refinement levels present
+```
+
+```
+2-element Vector{Float64}:
+ 6.0
+ 7.0
 ```
 
 
@@ -93,6 +132,20 @@ gsub = gethydro(ia; xrange=[-0.1,0.1], yrange=[-0.1,0.1], zrange=[-0.1,0.1],
 length(gsub.data), length(ga.data)                   # sub-region ≪ full snapshot
 ```
 
+```
+[Mera]: 2026-07-02T19:26:29.346
+Code: Athena++
+output: 5  time: 0.50111 [code units]
+root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
+MeshBlocks: 148   variables: (rho, p, vx, vy, vz, bx, by, bz)
+-------------------------------------------------------
+maximum(getvar(ga, :bmag)) = 1.1211309571451635
+```
+
+```
+(15625, 606208)
+```
+
 
 ```@raw html
 </div>
@@ -110,6 +163,10 @@ FLASH plot files load as AMR hydro/MHD; a self-gravity potential (if present) ap
 ```julia
 gf = gethydro(getinfo(150, joinpath(base, "FLASH/flash_gassloshing/GasSloshing"), verbose=false), verbose=false)
 :gpot in gf.info.variable_list
+```
+
+```
+true
 ```
 
 
@@ -133,6 +190,22 @@ stars = getparticles_gadget(ig; families=[4])        # just the star particles
 length(stars.data), msum(stars) > 0
 ```
 
+```
+[Mera]: 2026-07-02T19:26:52.923
+Code: GADGET
+output: 200  time: 0.34483  redshift: 1.9
+boxlen =
+64000.0
+particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
+-------------------------------------------------------
+[Mera]: GADGET particles = 450921, families 4
+  (x,y,z,vx,vy,vz,mass,id,family)
+```
+
+```
+(450921, true)
+```
+
 ### AREPO / IllustrisTNG — gas-cell physics
 
 For **gas** (`PartType0`) the Voronoi-cell fields are read too, so the full thermodynamic analysis
@@ -148,12 +221,36 @@ println("T   [K]     : ", extrema(getvar(gas, :T)))
 println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
+```
+[Mera]: 2026-07-02T19:26:56.367
+Code: AREPO
+output: 59  time: 1.0  redshift: 0.0
+boxlen = 205000.0
+particles: 4006794 gas, 5567314 halo/DM, 533034 stars  (total 10107142)
+-------------------------------------------------------
+[Mera]: GADGET particles = 4006794, families 0
+  (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,metallicity,sfr,nh,mach,gpot,bx,by,bz,volume)
+gas cells   : 4006794
+rho [g/cm³] :
+(1.3854807197342735e-30, 1.17827292777639e-22)
+T   [K]     : (17.965557996942835, 1.2925814640761332e8)
+metallicity :
+(8.100937520794105e-8, 0.04447760060429573)
+```
+
 ```julia
 # the usual reductions run unchanged on AREPO gas, in physical units
 n = length(gas.data)
 println("median T [K]   : ", sort(getvar(gas, :T))[n ÷ 2])
 println("median Z       : ", sort(getvar(gas, :metallicity))[n ÷ 2])
 println("gas mass [Msol]: ", msum(gas, :Msol))
+```
+
+```
+median T [K]   : 1.436872560859919e7
+median Z       :
+0.001993876649066806
+gas mass [Msol]: 4.6930995577059625e13
 ```
 
 ### Magnetic fields (MHD)
@@ -174,6 +271,14 @@ println("plasma β        : median ", round(sort(getvar(gas, :beta))[nB ÷ 2], s
 println("v_Alfvén [km/s] : median ", round(sort(getvar(gas, :v_alfven, :km_s))[nB ÷ 2], sigdigits=3))
 ```
 
+```
+|B|  [μG]       : (9.88e-7, 357.0)
+median |B| [μG] : 0.243
+plasma β        : median
+201.0  (≫1 ⇒ thermal-dominated)
+v_Alfvén [km/s] : median 43.0
+```
+
 ```julia
 using CairoMakie, Statistics
 ρ = getvar(gas, :rho, :g_cm3);  Bμ = getvar(gas, :bmag, :muG);  T = getvar(gas, :T)
@@ -185,6 +290,8 @@ a2 = Axis(figB[1,2]; title="|B| across thermal phases",   xlabel="log T [K]",   
 hexbin!(a2, log10.(T[ok]), log10.(Bμ[ok]); bins=70, colormap=:viridis)
 figB
 ```
+
+![](multicode_examples_files/multicode_examples_18_1.png)
 
 ### Box-filling maps — a full AREPO volume
 
@@ -206,6 +313,37 @@ heatmap!(a2, log10.(ifelse.(Tm.maps[:T]  .> 0, Tm.maps[:T],  NaN))'; colormap=:p
 fig
 ```
 
+```
+[Mera]: 2026-07-02T19:27:16.054
+Code: AREPO
+output: 150  time: 1.5381  redshift: 0.0
+boxlen = 40000.0
+particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
+-------------------------------------------------------
+[Mera]: GADGET particles = 12865831, families 0
+  (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
+[Mera]: 2026-07-02T19:27:20.014
+center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+Effective resolution: 256^2
+Pixel size: 156.246 [kpc]
+Simulation min.: 19.999 [Mpc]
+[Mera]: 2026-07-02T19:28:08.595
+center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+Effective resolution: 256^2
+Pixel size: 156.246 [kpc]
+Simulation min.: 19.999 [Mpc]
+```
+
+![](multicode_examples_files/multicode_examples_20_7.png)
+
 **SPH vs Voronoi** on the same box-filling run: `weighting=:sph` (smooth, isotropic kernel — the
 conserving default) vs `weighting=:voronoi` (nearest-generator — sharp, showing the moving-mesh cells).
 
@@ -220,6 +358,8 @@ heatmap!(b1, log10.(ifelse.(Ts.maps[:T] .> 0, Ts.maps[:T], NaN))'; colormap=:pla
 heatmap!(b2, log10.(ifelse.(Tv.maps[:T] .> 0, Tv.maps[:T], NaN))'; colormap=:plasma, colorrange=cr)
 fig2
 ```
+
+![](multicode_examples_files/multicode_examples_22_1.png)
 
 
 ```@raw html
@@ -246,6 +386,10 @@ rt = gethydro(getinfo(5, joinpath(base, "ATHENA/athena_sixray"),     verbose=fal
  Np1  = extrema(getvar(rt, :Np1)))                   # UV radiation field, attenuated by shielding
 ```
 
+```
+(gpot = (-0.03948165848851204, 0.0446300245821476), xH2 = 0.4545285999774933, Np1 = (2.655466318130493, 7.641556739807129))
+```
+
 ## Convert any code to a Mera file
 
 `savedata`/`loaddata` round-trips **any** loaded object to Mera's portable JLD2 format — so a saved
@@ -256,6 +400,10 @@ tmp = mktempdir()
 savedata(ga, tmp; fmode=:write, verbose=false)
 g2 = loaddata(5, tmp, :hydro; verbose=false)
 length(g2.data) == length(ga.data) && getvar(g2, :rho) == getvar(ga, :rho)
+```
+
+```
+true
 ```
 
 ---

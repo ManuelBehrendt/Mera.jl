@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `fluxbudget.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/fluxbudget.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 [`fluxbudget`](@ref) measures the **flux of mass, momentum, energy and metals through a surface**
 (a sphere at radius R, or a cylinder wall), with the surface-normal velocity split into separate
 **inflow** and **outflow** rates — the thin-shell estimator that galactic-feedback and gas-cycle
@@ -14,18 +15,22 @@ the surface-normal velocity `v⊥` (`:vr_sphere` for a sphere, `:vr_cylinder` fo
 shell this approximates the surface integral `∮ q·v⊥ dA`. Everything is computed from `getvar` (with
 correct per-level AMR cell volumes) and returned in physical rate units.
 
+```julia
+using Mera
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
+gas  = gethydro(info, verbose=false);
+```
+
 ## Basic use
 
 ```julia
-gas = gethydro(getinfo(output, path))
-
 fb = fluxbudget(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc,
-                quantities=[:mass, :momentum, :energy, :metals])
-
-fb.rates.mass.out      # outflow rate          [Msol/yr]
-fb.rates.mass.in       # inflow rate (≤ 0)     [Msol/yr]
-fb.rates.mass.net      # net = in + out        [Msol/yr]
-fb.rates.energy.net    # net energy flux       [erg/s]
+                quantities=[:mass, :momentum, :energy])
+println("mass outflow  [Msol/yr] : ", fb.rates.mass.out)
+println("mass inflow   [Msol/yr] : ", fb.rates.mass.in)
+println("mass net      [Msol/yr] : ", fb.rates.mass.net)
+println("energy net    [erg/s]   : ", fb.rates.energy.net)
 ```
 
 Units per quantity: **mass** and **metals** in `Msol/yr`, **momentum** in `Msol·km/s/yr`, **energy** in
@@ -107,12 +112,13 @@ The phases sum exactly to the total (per quantity and per direction), so a paper
 once and trust the budget closes:
 
 ```julia
-fb = fluxbudget(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc,
+fbp = fluxbudget(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc,
                 phases = (cold = s -> getvar(s,:T,:K) .< 1e4,
                           hot  = s -> getvar(s,:T,:K) .>= 1e4))
-fb.components.cold.mass.out      # cold-gas outflow rate
-fb.components.hot.mass.out       # hot-gas outflow rate
-# cold.out + hot.out == fb.rates.mass.out   (conservation across the partition)
+println("cold outflow [Msol/yr] : ", fbp.components.cold.mass.out)
+println("hot  outflow [Msol/yr] : ", fbp.components.hot.mass.out)
+println("cold+hot              : ", fbp.components.cold.mass.out + fbp.components.hot.mass.out)
+println("total (fb.rates)      : ", fbp.rates.mass.out)
 ```
 
 ## Derived diagnostics: mass loading, phase velocities, weighting
@@ -217,10 +223,11 @@ map the surface-normal velocity to see *where* on the shell gas flows in (`< 0`)
 
 ```julia
 sh = fluxshell(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc)
+println("shell cells           : ", length(sh.data))
 
-projection(sh, :sd, :Msol_pc2; center=[:bc])          # the shell as a ring/annulus
-projection(sh, :vr_sphere, :km_s; center=[:bc])       # inflow (blue) / outflow (red) over the shell
-# combine with a Makie backend to render the maps, or feed sh to profile/phase
+fp = fluxprofile(gas; surface=:sphere, radii=5:5:50, shell_width=2.0, range_unit=:kpc)
+println("radii [kpc]           : ", collect(fp.radius))
+println("net Mdot(R) [Msol/yr] : ", round.(fp.net, digits=3))
 ```
 
 ![`fluxshell` makes the measured surface explicit. *Left:* the full gas of a disk galaxy, edge-on.
@@ -242,11 +249,13 @@ by **surface coordinates** — (φ, cosθ) for a sphere (an equal-solid-angle sk
 cylinder (the wall unrolled) — so each cell sits at its own location, no superposition:
 
 ```julia
+using CairoMakie
 fm = fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc, quantity=:vr)
-fm.map        # nφ × ncosθ map of mean v⊥ [km/s] — heatmap it (red = outflow, blue = inflow)
-
-fmd = fluxmap(gas; surface=:sphere, radius=30.0, shell_width=2.0, range_unit=:kpc, quantity=:mdot)
-sum(fmd.map)  # == fluxbudget(...).rates.mass.net   — the surface map closes to the budget
+fig = Figure(size=(560,420))
+ax = Axis(fig[1,1], title="flux sky-map: mean v_perp [km/s] (red=out, blue=in)",
+          xlabel="phi bin", ylabel="cos(theta) bin")
+hm = heatmap!(ax, fm.map; colormap=:balance); Colorbar(fig[1,2], hm)
+fig
 ```
 
 `quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`

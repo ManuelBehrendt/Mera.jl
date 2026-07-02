@@ -1,321 +1,444 @@
+# Immersive 3-D visualisation of AMR data
+
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `immersive.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/immersive.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
+`projection` is **orthographic** (parallel rays). **Immersive** rendering puts a camera *at a point* and
+shoots rays outward — perspective fly-ins, 360° panoramas, fisheye/dome masters, multi-tracer composites,
+isosurfaces — marching the **AMR octree directly** (no uniform-grid resample), so cost scales with the data,
+not the bounding box.
+
+This notebook is a **ladder**: each rung shows a result first, then the one parameter that produced it,
+then builds toward **quantitative, publication-grade** maps (column density, mock emission, kinematics).
+
+**Performance.** Renders are multithreaded — use the **8-thread Julia kernel** (`Threads.nthreads()` below
+should be > 1). For a huge box: `subregion` before `amr_volume`, preview with `smooth=false`/coarse `pxsize`,
+final frame with `smooth=true, aa=2`. `show_progress=true` shows a bar.
+
 ```julia
-using Mera, CairoMakie   # immersive ray-caster is part of Mera; CairoMakie enables mp4 flythrough
+using Mera, CairoMakie
 CairoMakie.activate!()
-println("threads = ", Threads.nthreads())
+println("threads = ", Threads.nthreads(), "   (use the 8-thread kernel for fast renders)")
 ```
 
-    
-    *__   __ _______ ______   _______ 
-
-    
-    |  |_|  |       |    _ | |   _   |
-    |       |    ___|   | || |  |_|  |
-    |       |   |___|   |_||_|       |
-    |       |    ___|    __  |       |
-    | ||_|| |   |___|   |  | |   _   |
-    |_|   |_|_______|___|  |_|__| |__|
-    Mera v1.8.0
-    
-    threads = 8
-
-    
-
-
-# Immersive 3-D visualisation (equirectangular, dome, fly-through, multi-tracer)
-
-Mera's `projection` is **orthographic** (parallel rays). Immersive formats need a camera **at a
-point** with rays fanning outward, so Mera's volume ray-caster
-**ray-marches the AMR octree directly** — it does *not* resample to a uniform grid (that would be the
-`(2^lmax)³` memory blow-up AMR exists to avoid). Each leaf is stored once in a per-level hash; each ray
-steps by the **local cell size**, so cost scales like the simulation, not the box.
-
-**De-blocking AMR.** Nearest-leaf sampling is piecewise-constant → coarse
-cells look blocky. `render_view`/`render_scene` default to `smooth=true`: **cross-level trilinear**
-reconstruction (interpolate the 8 surrounding leaf values at the local cell spacing, each looked up
-finest→coarsest), plus `aa` supersampling. To zoom a large simulation,
-pass a `subregion` to `amr_volume` first.
-
-
-```julia
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
-info = getinfo(100, joinpath(base, "RAMSES/spiral_clumps"), verbose=false)
-gas  = gethydro(info, verbose=false, show_progress=false)
-vol  = amr_volume(gas, :rho, :nH)          # per-level leaf hash; NO uniform grid
-c    = boxcenter(vol)                       # box centre, code units
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+threads = 8
+   (use the 8-thread kernel for fast renders)
 ```
 
-    amr_volume: 590311 leaves, levels 5–7, boxlen 100.0 [code]  (no uniform grid — native AMR marching)
+## 1 · Load, and the minimal pipeline
 
+Five lines: load gas → index it → place a camera → render → show. Zero tuning parameters. Camera positions
+are code units; `boxcenter`/`boxspan` make them box-relative (`eye(fx,fy,fz)`), so the same recipe frames
+*any* box size.
 
-
-
-
-    (50.0, 50.0, 50.0)
-
-
-
-## 1. Equirectangular 360° all-sky
-
-An observer **at the galaxy centre** looking out in every direction. The 2:1 panorama is what VR
-viewers, YouTube-360 and planetariums consume — the disk appears as a bright band, the poles empty.
-
+> **The `eye` helper.** `eye(fx,fy,fz) = bc .+ boxspan(vol).*(fx,fy,fz)` places the camera **relative to the box**: `fx,fy,fz` are fractions of the box size measured from the centre `bc`. So `eye(0.3,0.2,0.24)` sits 0.3·boxlen right, 0.2 up-y, 0.24 up-z of centre — the *same framing on any sim*, no hard-coded code units. **Avoid exact axis values** like `eye(0,0,0.6)` (straight down a grid axis): that lines every ray up with the cell grid and makes concentric-ring / lattice aliasing — keep a small lateral offset, e.g. `eye(0.12,0.08,0.6)`.
 
 ```julia
-img = render_view(vol, equirect_camera(c; forward=(1.,0.,0.)); res=420, mode=:emission, smooth=true, aa=2)
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/AVALONpaper")
+path = joinpath(base, "AV05CDhr/mera_v2/")
+info = infodata(390, path, verbose=false)
+gas  = loaddata(390, path, :hydro, verbose=false)
+# Big & slow? Zoom first (also lets finer pxsize render fast):
+# MEMORY: a full deep box is heavy — gas + vol for a 167M-cell run is ~10+ GB; if you hit OOM /
+# a kernel restart, zoom FIRST (uncomment) so neither data nor index is ever held at full size:
+# gas = subregion(gas, :cylinder; center=[:boxcenter], radius=15., height=4., direction=:z, range_unit=:kpc)
+
+vol = amr_volume(gas, :rho, :nH)
+bc  = boxcenter(vol)
+eye(fx,fy,fz) = bc .+ boxspan(vol) .* (fx,fy,fz)     # box-relative camera offset → works on any boxlen
+println("boxlen=", vol.boxlen, "  nleaf=", vol.nleaf)
+println("nH  range (log10): ", round.(log10.(extrema(filter(>(0), getvar(gas,:rho,:nH)))), digits=2))
+println("T   range (log10): ", round.(log10.(extrema(filter(>(0), getvar(gas,:T,:K)))), digits=2))
+```
+
+```
+amr_volume: 166991609 leaves, levels 6–13, boxlen 48.0 [code]  (no uniform grid — native AMR marching)
+┌ Warning: amr_volume indexed 166991609 leaves (~6.7 GB of index, lookups descend 8 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+boxlen=48.0  nleaf=166991609
+nH  range (log10):
+(-6.53, 3.91)
+T   range (log10):
+(1.04, 8.74)
+```
+
+```julia
+# the whole pipeline, no parameters:
+img = render_view(vol, perspective_camera(eye(0.3,0.2,0.24), bc; fov_deg=55); mode=:max, aa=2)
 view_figure(img; colormap=:inferno)
 ```
 
+![](immersive_files/immersive_5_1.png)
 
+## 2 · Render modes — what gets accumulated along each ray
 
-
-![](immersive_files/immersive_4_0.png)
-
-
-
-## 2. Fisheye / dome master
-
-Hemispherical projection for a planetarium dome — here looking down on the disk (`fov_deg=180`).
-
-
-```julia
-img = render_view(vol, fisheye_camera(c .+ (0,0,38), c; fov_deg=180); res=480, mode=:max, smooth=true, aa=2)
-view_figure(img; colormap=:magma)
-```
-
-
-
-
-![](immersive_files/immersive_6_0.png)
-
-
-
-## 3. Perspective view (smooth, de-blocked)
-
-`mode=:max` (maximum-intensity projection). `smooth=true` (cross-level trilinear) removes the AMR
-blockiness; use `smooth=false` for a faster, blocky preview.
-
+| mode | does | use for |
+|---|---|---|
+| `:max` | brightest sample (MIP) | crisp clumps/filaments; hides the diffuse halo |
+| `:emission` | `∫ jᵖᵒʷᵉʳ dl` (optically thin) | diffuse glow; **reveals** the coarse halo |
+| `:rt` | emission **+** self-absorption (`kappa`) | suppress the bright core / dust-lane look |
+| `:sum` | `∫ value dl` (column) | quantitative columns (≡ `:emission` at `power=1`) |
+| `:iso` | gradient-shaded surface(s) at `level` | 3-D shape of a density/temperature surface |
 
 ```julia
-cam = perspective_camera(c .+ (28,18,22), c; fov_deg=55)
-img = render_view(vol, cam; res=480, mode=:max, smooth=true, aa=2)
-view_figure(img; colormap=:inferno)
+cam = perspective_camera(eye(0.3,0.2,0.24), bc; fov_deg=55); px=[0.4,:kpc]
+tiles = [as_image(render_view(vol, cam; pxsize=px, mode=m, aa=2); colormap=:inferno) for m in (:max,:emission,:rt,:sum)]
+vcat(hcat(tiles[1],tiles[2]), hcat(tiles[3],tiles[4]))   # :max | :emission  /  :rt | :sum
 ```
 
+![](immersive_files/immersive_7_1.png)
 
+## 3 · Reconstruction (`smooth=`) — and what it costs
 
+`false` = nearest-leaf (blocky, fast), `true` = cross-level **trilinear** (de-blocked, conservative —
+default), `:kernel` = cubic B-spline (softest, but **cosmetic & non-conservative**, ~8× slower — beauty
+frames only). The timings make the trade-off concrete.
 
-![](immersive_files/immersive_8_0.png)
-
-
-
-## 4. Multiple tracers in one image — the "coloured-density" technique
-
-The **coloured-density** technique: **opacity from one field, colour from another**.
-Here a single gas channel takes its *opacity* from density (`:rho`) and its *hue* from temperature
-(`color_by=:T`) — cold dense gas reads blue, hot gas red — instead of separate channels fighting. Add
-**stars** as a particle channel. The HDR result is ACES filmic tone-mapped, then saturation-graded. The
-value ranges (`vmin/vmax` for opacity, `color_vmin/vmax` for hue) and `opacity`/`gamma` are your dials.
-
+> **Speckle / dots?** That's *aliasing* — at `aa=1` each pixel is one ray, so a clumpy field samples unevenly. Raise **`aa=2`–`3`** (supersampling) to smooth it; `smooth=:kernel` additionally softens coarse-cell facets in the integrating modes. Use `aa=1` only for quick previews.
 
 ```julia
-# one coherent gas channel: opacity from density, colour from temperature
-gas_ch = field_channel(gas, :rho, :nH; color_by=:T, color_unit=:K, colormap=:RdYlBu, reverse=true,
-                       vmin=-0.5, vmax=2.3, color_vmin=3.5, color_vmax=6.5, opacity=12, gamma=1.4,
-                       label="gas (ρ→opacity, T→colour)")
-parts  = getparticles(info, verbose=false, show_progress=false)
-stars  = points_channel(parts; weight=:mass, color=(1.0,0.85,0.6), size=0.8, opacity=0.18,
-                        label="stars")   # filter=getvar(parts,:age,:Myr).<50 for young stars only
-
-img = render_scene([gas_ch, stars], perspective_camera(c .+ (34,10,16), c; fov_deg=50);
-                   res=600, aa=2, smooth=true, exposure=2.4, saturation=1.4)
-save_scene(img, "/Users/mabe/code-github/Mera.jl/docs/src/assets/immersive/composite.png")
-scene_figure(img)
+render_view(vol, cam; pxsize=px, mode=:max, smooth=false)   # warm up
+for s in (false, true, :kernel)
+    t = @elapsed render_view(vol, cam; pxsize=px, mode=:max, smooth=s)
+    println(rpad("smooth=$s", 16), round(t, digits=2), " s")
+end
+hcat(as_image(render_view(vol,cam;pxsize=px,mode=:max,smooth=false); colormap=:inferno),
+     as_image(render_view(vol,cam;pxsize=px,mode=:max,smooth=true);  colormap=:inferno),
+     as_image(render_view(vol,cam;pxsize=px,mode=:max,smooth=:kernel);colormap=:inferno))
 ```
 
+```
+smooth=false    0.06 s
+smooth=true     0.22 s
+smooth=kernel   1.24 s
+```
 
+![](immersive_files/immersive_9_4.png)
 
+## 4 · The colour range (transfer function)
 
-![](immersive_files/immersive_10_0.png)
-
-
-
-## 5. Fly-through movies
-
-`flythrough` interpolates the camera (Catmull–Rom) through `(position, target)` keyframes and records an
-mp4. `kind=:perspective` is a normal fly-through; `:equirect` a moving 360° panorama; `:fisheye` a moving
-dome. (Rendering is `smooth=true` by default; use `smooth=false`/lower `res` for faster previews.)
-
+`render_view` returns the raw field; you set how it maps to colour when you display it. **`vmin`/`vmax`**
+fix the range (in **log10** units when `logscale=true`, default) — values outside clip. Raise `vmin` to
+hide a faint background; lower `vmax` to bring out faint structure. (For emission, `power>1` compresses
+toward bright peaks at the ray-cast stage.)
 
 ```julia
-ASSET = "/Users/mabe/code-github/Mera.jl/docs/src/assets/immersive"; mkpath(ASSET)
-
-kf_persp = [(c.+(40,30,34), c), (c.+(20,-25,16), c), (c.+(-22,-8,7), c), (c.+(-4,6,2.5), c)]
-kf_equi  = [(c.+(-30,0,3), c.+(1,0,0)), (c.+(0,0,2), c.+(1,0,0)), (c.+(30,0,3), c.+(1,0,0))]
-
-flythrough(vol, :perspective, kf_persp; nframes=72, res=420, mode=:max, framerate=20, fov_deg=58,
-           filename=joinpath(ASSET, "flythrough_perspective.mp4"), verbose=false)
-flythrough(vol, :equirect,    kf_equi;  nframes=48, res=300, mode=:emission, framerate=16,
-           filename=joinpath(ASSET, "flythrough_equirect.mp4"), verbose=false)
-println("wrote fly-through mp4s")
+em = render_view(vol, cam; pxsize=px, mode=:emission, aa=2)
+hcat(view_figure(em; colormap=:inferno),                       # auto range
+     view_figure(em; colormap=:inferno, vmin=0.5, vmax=3.0))   # fixed log10 range (clips)
 ```
 
-    wrote fly-through mp4s
+![](immersive_files/immersive_11_1.png)
 
+## 5 · The coarse-halo artefact — shown, then fixed
 
-**Frame strip of the perspective fly-in** (`flythrough_montage` renders frames along the same path
-so the movie has a visible code→picture output here in the notebook):
-
+A 360° **equirectangular** view from the box centre integrates radially through the low-resolution halo, so
+`:emission`/`:rt` can look blocky above the disk (the halo's real AMR cell structure, stretched by the log
+display). `:max` hides it; `smooth=:kernel` softens the facets; a `subregion` removes the halo from the
+line of sight. Not a bug — it's the data's resolution. Use `aa≥2` (jittered) for clean panoramas.
+>
+> **Rings / lattice dots?** If the camera sits exactly on a grid axis (e.g. straight down z, or at the exact box centre), rays related by that symmetry cross the axis-aligned cells identically → concentric-ring or dotted aliasing that supersampling/jitter can't remove. **Offset the camera slightly off-axis** (a small lateral term in `eye`) and it disappears.
 
 ```julia
-flythrough_montage(vol, :perspective, kf_persp; nframes=6, res=240, mode=:max, fov_deg=58)
+ec = equirect_camera(bc .+ (0.37, 0.21, 0.13))   # nudge off the exact (grid-aligned) centre → fewer lattice dots
+hcat0 = view_figure(render_view(vol, ec; pxsize=[0.3,:kpc], mode=:emission, aa=2); colormap=:inferno)
+hcatk = view_figure(render_view(vol, ec; pxsize=[0.3,:kpc], mode=:emission, aa=2, smooth=:kernel); colormap=:inferno)
+vcat(hcat0, hcatk)    # top: trilinear (halo facets)   bottom: kernel (softened)
 ```
 
+![](immersive_files/immersive_13_1.png)
 
+## 6 · Cameras & physical pixels
 
-
-![](immersive_files/immersive_14_0.png)
-
-
-
-**Frame strip of the moving 360° equirectangular fly-through:**
-
+`perspective_camera` (navigation/fly-in), `equirect_camera` (360° survey), `fisheye_camera` (dome).
+**`pxsize=[v,:kpc]`** sets the pixel size *at the box centre* (overrides `res`) → consistent physical
+resolution across zooms, exactly like `projection`. Smaller `pxsize` = more pixels = larger image (slower).
 
 ```julia
-flythrough_montage(vol, :equirect, kf_equi; nframes=4, cols=2, res=200, mode=:emission)
+# same `res` → equal heights so hcat works (pxsize also works, but gives view-dependent sizes)
+p = view_figure(render_view(vol, perspective_camera(eye(0.28,0.18,0.22), bc; fov_deg=55);
+                            res=420, mode=:max, aa=2); colormap=:inferno)
+f = view_figure(render_view(vol, fisheye_camera(eye(0,0,0.4), bc; fov_deg=180);
+                            res=420, mode=:max, aa=2); colormap=:magma)
+hcat(p, f)
 ```
 
+![](immersive_files/immersive_15_1.png)
 
+## Planning the view — coordinate overlay
 
-
-![](immersive_files/immersive_16_0.png)
-
-
-
-The full movies (mp4) are embedded in the rendered documentation page:
-
-```@raw html
-<video src="../assets/immersive/flythrough_perspective.mp4" autoplay loop muted playsinline width="480"></video>
-```
-
-```@raw html
-<video src="../assets/immersive/flythrough_equirect.mp4" autoplay loop muted playsinline width="640"></video>
-```
-
-## 6. Isosurface (`mode=:iso`) — physical value-surfaces, gradient-shaded
-
-Render the surface where a field crosses a value (here `nH = 1 cm⁻³`), lit by the field gradient
-(normal). Physically meaningful structure with real 3-D form (vs a smear).
-
+`overlay_grid(img, cam; vol, box, axes, graticule)` draws the **view's coordinate system** onto a render so
+you can plan camera placement/orientation: the simulation **bounding-box wireframe**, the **world x/y/z axes**
+(red/green/blue, from the origin), and a **graticule** (lon/lat meridians + parallels) for equirect/fisheye.
+Lines are projected through the camera, so they curve correctly in the panoramas.
 
 ```julia
-iso = render_view(vol, perspective_camera(c .+ (30,20,24), c; fov_deg=55);
-                  res=420, mode=:iso, level=1.0, aa=2)        # nH = 1 cm⁻³ surface, gradient-shaded
-as_image(iso; colormap=:bone, logscale=false)
+# box wireframe + world axes on a perspective view (planning aid)
+ocam = perspective_camera(eye(0.45,0.3,0.35), bc; fov_deg=50)
+img  = render_view(vol, ocam; pxsize=[0.12,:kpc], mode=:max, aa=2)
+scene_figure(overlay_grid(img, ocam; vol=vol, box=true, axes=true, color=(1,1,1), alpha=0.7))
 ```
 
-
-
-
-![](immersive_files/immersive_19_0.png)
-
-
-
-## 7. Field-driven RT absorption (`absorb_by`)
-
-Emission from one field, **absorption from another** — the physical emission + self-absorption case.
-Here density emits (coloured by temperature) and is self-absorbed by its own column (a stand-in for
-dust); the far side of the disk is dimmed.
-
+![](immersive_files/immersive_17_1.png)
 
 ```julia
-em = field_channel(gas, :rho, :nH; color_by=:T, color_unit=:K, colormap=:RdYlBu, reverse=true,
-                  vmin=-0.5, vmax=2.3, color_vmin=3.5, color_vmax=6.5,
-                  absorb_by=:rho, absorb_unit=:nH, absorb_vmin=0.0, absorb_vmax=2.3, opacity=9)
-render_scene([em], perspective_camera(c .+ (34,10,16), c; fov_deg=50); res=480, aa=2, exposure=2.4)
+# lon/lat graticule on a 360° panorama (+ the box outline)
+eg = equirect_camera(bc .+ (0.4,0.2,0.1))
+pan = render_view(vol, eg; pxsize=[0.25,:kpc], mode=:emission, aa=2)
+scene_figure(overlay_grid(pan, eg; vol=vol, graticule=true, graticule_deg=30, box=true, axes=false,
+                          color=(0.6,1.0,0.6), alpha=0.6))
 ```
 
+![](immersive_files/immersive_18_1.png)
 
+## 7 · `subregion` is the zoom **and** speed lever
 
-
-![](immersive_files/immersive_21_0.png)
-
-
-
-## 8. `smooth=:kernel` — cosmetic de-blocking of coarse cells
-
-A narrow high-temperature band makes a near-binary mask of the **coarsest** AMR cells → blocky faces
-with `smooth=true` (trilinear, C⁰). `smooth=:kernel` (cubic B-spline, C²) blurs those facets — *softer
-but non-conservative*, for beauty frames only. **Left: trilinear · Right: :kernel.**
-
+`res`/`pxsize` set image size; **`subregion` sets how much data each ray traverses.** Indexing only the
+region you'll view cuts both RAM and time. Rough cost: `res² · steps · leaf_cost · (trilinear? 8 : 1) / nthreads`.
 
 ```julia
-hot  = field_channel(gas, :T, :K; colormap=[:black,:orangered,:gold], vmin=6.9, vmax=7.8, opacity=2.0)
-camk = perspective_camera(c .+ (40,6,15), c; fov_deg=52)
-tri  = render_scene([hot], camk; res=300, aa=2, smooth=true,    exposure=1.6)   # C0 trilinear (faceted)
-ker  = render_scene([hot], camk; res=300, aa=2, smooth=:kernel, exposure=1.6)   # C2 kernel (softened)
-hcat(tri, ker)
+# MEMORY: a subregion copies its cells; for a galaxy most cells live in the disk, so a *large* cylinder
+# barely shrinks the data and — built on top of the full `vol` (~7 GB here) — can exhaust RAM and kill the
+# kernel. Keep the zoom SMALL and GC temporaries. (If RAM is tight, restart and subregion `gas` in cell 1.)
+sub  = subregion(gas, :cylinder; center=[:boxcenter], radius=5., height=1.5, direction=:z, range_unit=:kpc)
+volS = amr_volume(sub, :rho, :nH; verbose=false)
+println("full nleaf = ", vol.nleaf, "   cylinder nleaf = ", volS.nleaf)   # far fewer cells = less RAM, faster
+sub = nothing; GC.gc()
+view_figure(render_view(volS, perspective_camera(eye(0.25,0.18,0.22), bc; fov_deg=50);
+                        pxsize=[0.04,:kpc], mode=:max, aa=2); colormap=:inferno)
 ```
 
+```
+[Mera] Tip: regions also work as value types with EXACT edge-cell splitting (exact getvar :mass/:volume/msum), composable with ∩ ∪ \ !:
+           subregion(data, Cylinder(5.0, 1.5; center=[:boxcenter], range_unit=:kpc))
+           (the symbol form above still works; pass split=false for classic whole cells. Shown once per session — see ?subregion.)
+[Mera]: 2026-07-02T10:53:14.986
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+zmin::zmax: 0.46875 :: 0.53125  	==> 22.5 [kpc] :: 25.5 [kpc]
+Radius: 5.0 [kpc]
+Height: 1.5 [kpc]
+Memory used for data table :
+4.217771562747657 GB
+-------------------------------------------------------
+┌ Warning: amr_volume indexed 51463597 leaves (~2.1 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+full nleaf = 166991609   cylinder nleaf = 51463597
+```
 
+![](immersive_files/immersive_20_7.png)
 
+## 8 · `render_scene` — the multi-tracer layer cake
 
-![](immersive_files/immersive_23_0.png)
-
-
-
-## 9. Interactive window (live, pure AMR)
-
-`interactive_view` opens a live window that **ray-casts the AMR data directly** (no uniform grid) and
-re-renders as you orbit (left-drag) / zoom (scroll) — low-res while moving, crisp on release. It needs
-an interactive backend, so it is shown here as code (not executed in this CairoMakie notebook):
+Composite layers, each with its own colormap + opacity. Build it up: density → colour it by temperature
+(opacity from ρ, **hue from T**) → add self-absorption (`absorb_by`) → add stars (`points_channel`).
+`opacity`/`kappa`/`absorb_*` are **normalized visual dials** (not physical optical depth). Stars need the
+particle files; if unavailable the cell skips them.
+>
+> **`shade=` for form/depth.** Flat emission-absorption looks like colour patches; `shade` (0–1) lights each gas sample by its density **gradient** (ParaView's 'Shade') so clumps gain 3-D relief. Pair with a calmer colormap + `gamma>1` to avoid an over-saturated look.
 
 ```julia
-using GLMakie                          # interactive backend
-interactive_view(vol; mode=:max)       # orbit: left-drag · zoom: scroll · also :emission/:rt/:iso
+scam = perspective_camera(eye(0.34,0.10,0.16), bc; fov_deg=50); spx=[0.07,:kpc]
+# multi-tracer scene builds several full-box indices; on 32 GB build them on a subregion
+# (same boxlen/center, so the full-box camera is unchanged), then free them.
+g21  = subregion(gas, :cylinder; center=[:boxcenter], radius=8., height=2.5, direction=:z, range_unit=:kpc, verbose=false)
+gch = field_channel(g21, :rho, :nH; color_by=:T, color_unit=:K, colormap=:RdYlBu, reverse=true,
+                    vmin=-0.5, vmax=2.3, color_vmin=3.5, color_vmax=6.5, opacity=12, gamma=1.4)
+stars = try
+    parts = getparticles(info, verbose=false, show_progress=false)   # or loaddata(390, path, :particles)
+    age = getvar(parts, :age, :Myr)
+    [points_channel(parts; filter=age.<50, weight=:mass, color=(0.4,0.9,1.0), size=1.0, opacity=0.5),  # young = blue
+     points_channel(parts; filter=age.>800, weight=:mass, color=(1.0,0.8,0.4), size=0.7, opacity=0.12)] # old = amber
+catch e; @warn "particles unavailable — skipping stars ($(typeof(e)))"; []
+end
+fig21 = scene_figure(render_scene([gch; stars], scam; pxsize=spx, aa=2, exposure=2.4, saturation=1.4,
+                          shade=0.8, light=(-1,-0.5,1), show_progress=true))
+gch = nothing; g21 = nothing; GC.gc()
+fig21
 ```
+
+```
+┌ Warning: amr_volume indexed 104570892 leaves (~4.2 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+┌ Warning: amr_volume indexed 104570892 leaves (~4.2 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+┌ Warning: particles unavailable — skipping stars (CompositeException)
+└ @ Main In[12]:12
+render_scene 100%|██████████████████████████████████████| Time: 0:01:26
+```
+
+![](immersive_files/immersive_22_72.png)
+
+## 9 · Isosurfaces — physical value-surfaces
+
+`mode=:iso`, `level` = the field's **physical value** (linear, in the volume's unit; any real). `iso_alpha<1`
+makes shells translucent; pass a **vector** of levels for nested shells in one pass (depth-ordered).
+
+```julia
+icam = perspective_camera(eye(0.30,0.20,0.24), bc; fov_deg=55)
+as_image(render_view(vol, icam; pxsize=[0.07,:kpc], mode=:iso, level=[0.1,1.0,10.0], iso_alpha=0.3, aa=2);
+         colormap=:bone, logscale=false)
+```
+
+![](immersive_files/immersive_24_1.png)
+
+```julia
+# each isosurface in its OWN colour (gradient-shaded shells + ambient occlusion for depth)
+render_isosurfaces(vol, icam; pxsize=[0.07,:kpc], aa=2, ao=0.7,
+    levels=[0.1, 1.0, 10.0], colors=[(0.25,0.5,1.0), (0.3,1.0,0.4), (1.0,0.45,0.2)], iso_alpha=0.35)
+```
+
+![](immersive_files/immersive_25_1.png)
+
+## 10 · Quantitative science — numbers you can compare to data
+
+These return **physical maps**, not just pretty pictures.
+
+> **Read the values:** `view_colorbar(map; vmin, vmax, logscale, colormap, label)` shows a scalar map with an **aligned, labelled colorbar** (and `filename=` to save). Use it instead of `view_figure` whenever the numbers matter (column density, velocity, dispersion).
+
+**Column density** `N_H` [cm⁻²]: `column_map` = `∫ nH dl` with the path length in cm (via the volume's scale).
+
+```julia
+NH = column_map(vol, perspective_camera(eye(0.12,0.08,0.62), bc; fov_deg=22); pxsize=[0.05,:kpc], aa=2)  # OFF-axis: no rings   # ~face-on
+println("log10 N_H range: ", round.(extrema(filter(isfinite, log10.(NH[NH.>0]))), digits=2))
+view_colorbar(NH; colormap=:magma, vmin=19.5, vmax=22.5, label="log10 N_H  [cm^-2]")
+```
+
+```
+log10 N_H range: (
+19.71, 23.11)
+```
+
+![](immersive_files/immersive_28_3.png)
+
+![](immersive_files/immersive_28_4.png)
+
+**Mock emission** from a derived emissivity (here thermal bremsstrahlung `∝ n²√T`), rendered as a `:sum` surface brightness.
+
+```julia
+xray = derived_volume(gas, (n,T)->n^2*sqrt(T), [:rho,:T]; units=[:nH,:K], verbose=false)
+figx = view_colorbar(render_view(xray, scam; pxsize=[0.06,:kpc], mode=:sum, aa=2); colormap=:inferno,
+              label="integral n^2 sqrt(T) dl   (arb. bremsstrahlung units)")
+xray = nothing; GC.gc()          # free the extra full-box index before the next cell
+figx
+```
+
+```
+┌ Warning: amr_volume indexed 166991609 leaves (~6.7 GB of index, lookups descend 8 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+```
+
+![](immersive_files/immersive_30_2.png)
+
+![](immersive_files/immersive_30_3.png)
+
+**Line-of-sight kinematics** (moment maps), evaluated per ray so they're correct for perspective.
+`moment1` = mean v∥ (**+ = receding**); colour it with a diverging map. Velocity volumes need `signed=true`.
+
+```julia
+# moment maps need vol+vx+vy+vz simultaneously — 4 full 167M indices would exceed 32 GB RAM (-> swap).
+# Build them together on a subregion (the rotating disk); same boxlen/center, so the camera is unchanged.
+msub = subregion(gas, :cylinder; center=[:boxcenter], radius=6., height=2., direction=:z, range_unit=:kpc, verbose=false)
+volm = amr_volume(msub, :rho, :nH; verbose=false)
+vx   = amr_volume(msub, :vx, :km_s; signed=true, verbose=false)
+vy   = amr_volume(msub, :vy, :km_s; signed=true, verbose=false)
+vz   = amr_volume(msub, :vz, :km_s; signed=true, verbose=false)
+msub = nothing; GC.gc()
+m0, m1, m2 = moment_maps(volm, vx,vy,vz, perspective_camera(eye(0.05,0.55,0.12), bc; fov_deg=30); pxsize=[0.07,:kpc], aa=2)
+vx = vy = vz = volm = nothing; GC.gc()
+view_colorbar(m1; colormap=:RdBu, reverse=true, logscale=false, vmin=-200, vmax=200,
+              label="v_los  [km/s]   (+receding = red)")   # rotation curve, readable in km/s
+# m0 = intensity (integral rho dl), m2 = dispersion:  view_colorbar(m2; logscale=false, colormap=:viridis, label="sigma_los [km/s]")
+```
+
+```
+┌ Warning: amr_volume indexed 72312794 leaves (~2.9 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+┌ Warning: amr_volume indexed 72312794 leaves (~2.9 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+┌ Warning: amr_volume indexed 72312794 leaves (~2.9 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+┌ Warning: amr_volume indexed 72312794 leaves (~2.9 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+```
+
+![](immersive_files/immersive_32_3.png)
+
+![](immersive_files/immersive_32_4.png)
+
+**Inflow / outflow** in one image: density (opacity) coloured by **vertical velocity** `vz` (the
+galactic fountain — up vs down out of the disk). Signed colour field + diverging map + symmetric range.
+
+```julia
+# density (opacity) coloured by vertical velocity — build the channel on a subregion (memory-safe on 32 GB)
+g33  = subregion(gas, :cylinder; center=[:boxcenter], radius=8., height=2.5, direction=:z, range_unit=:kpc, verbose=false)
+wind = field_channel(g33, :rho, :nH; color_by=:vz, color_unit=:km_s, color_signed=true,
+                     color_logscale=false, colormap=:RdBu, color_vmin=-80, color_vmax=80,
+                     vmin=-1.0, vmax=2.0, opacity=6)
+fig33 = scene_figure(render_scene([wind], perspective_camera(eye(0.05,0.5,0.1), bc; fov_deg=35);
+                          pxsize=[0.08,:kpc], aa=2, exposure=1.8))
+wind = nothing; g33 = nothing; GC.gc()
+fig33
+```
+
+```
+┌ Warning: amr_volume indexed 104570892 leaves (~4.2 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+┌ Warning: amr_volume indexed 104570892 leaves (~4.2 GB of index, lookups descend 5 levels). For a big box, `subregion(data, …)` before amr_volume indexes only the zoom region — far less RAM and much faster.
+└ @ Mera ~/code-github/Mera.jl/src/functions/immersive.jl:122
+```
+
+![](immersive_files/immersive_34_2.png)
+
+## 11 · Animation
+
+`orbit_keyframes` → `flythrough_montage` (a still contact sheet, shown here) → `flythrough` (mp4; needs
+`CairoMakie`). `flythrough` also accepts a **vector of channels** for ρ+T+stars movies.
+
+```julia
+kf = orbit_keyframes(bc, 0.45*vol.boxlen; inclination=35, n=10)
+flythrough_montage(vol, :perspective, kf; nframes=8, cols=4, pxsize=[0.3,:kpc], mode=:max)
+# movie:        flythrough(vol, :perspective, kf; nframes=96, pxsize=[0.15,:kpc], filename="orbit.mp4")
+# multi-tracer: flythrough([gch; stars], :perspective, kf; nframes=96, pxsize=[0.12,:kpc], filename="scene.mp4")
+```
+
+![](immersive_files/immersive_36_1.png)
+
+**Interactive orbit** (live, needs `using GLMakie`): `interactive_view(vol; mode=:max)` — or a
+scene: `interactive_view([gch; stars])`. Left-drag to orbit, scroll to zoom (coarse while moving, crisp on release).
 
 ## Parameters & tuning — the dials
 
-Everything is exported from Mera (`using Mera`; add `using CairoMakie` only for the mp4 `flythrough`).
-It works on **any** simulation Mera reads — point `getinfo` at your output, `gethydro`/`getparticles`,
-then `amr_volume(data, var, unit)` (any `getvar` quantity). Camera positions are in **code units**
-(`0…boxlen`); `boxcenter(vol)` is the centre.
-
 | Want to change… | Parameter | Where |
 |---|---|---|
-| Viewpoint / zoom | camera `pos`, `target`, `fov_deg` (smaller = more zoom) | `perspective_camera(pos, target; fov_deg=…)` |
-| View type | `perspective_camera` / `equirect_camera` (360°) / `fisheye_camera` (dome) | — |
-| Resolution / smoothness | `res`, `aa` (1–3), `smooth=true` | `render_view` / `render_scene` |
-| What accumulates | `mode=` `:max` (crisp MIP) / `:emission` / `:rt` / `:sum` | `render_view` |
-| Which density range shows | `vmin` / `vmax` (log of the opacity field) | `field_channel` |
-| Colour from a 2nd field (coloured-density) | `color_by=:T`, `color_vmin` / `color_vmax`, `colormap`, `reverse` | `field_channel` |
-| How solid / wispy | `opacity` (higher = solider), `gamma` (>1 = wispier) | `field_channel` |
-| Stars | `weight`, `filter` (e.g. young), `color`, `size`, `opacity` | `points_channel` |
-| Overall look | `exposure` (brightness), `saturation`, `gamma`, `bg` | `render_scene` |
-| Big sim → zoom region | pass a `subregion(data, …)` before `amr_volume` | `amr_volume` |
+| Viewpoint / zoom | `pos`, `target`, `fov_deg` | `perspective_camera` |
+| View type | perspective / `equirect` (360°) / `fisheye` (dome) | camera constructor |
+| Resolution | **`pxsize`** (`[v,:unit]`, overrides `res`) | `render_view`/`render_scene` |
+| Smoothness / AA | `smooth` (`false`/`true`/`:kernel`), `aa`, `jitter` | render |
+| Accumulation | `mode` (`:max`/`:emission`/`:rt`/`:sum`/`:iso`) | `render_view` |
+| Isosurface | `mode=:iso`, `level` (scalar or **vector**), `iso_alpha`, lighting | `render_view` |
+| Displayed colour range | `vmin`/`vmax` (log10), `colormap`, `logscale` | `view_figure`/`as_image`/`save_view` |
+| Colour by 2nd field | `color_by`, `color_vmin/vmax`, `color_signed` | `field_channel` |
+| Absorption field | `absorb_by`, `absorb_vmin/vmax` | `field_channel` |
+| Look | `opacity`, `gamma`, `exposure`, `saturation` | `field_channel`/`render_scene` |
+| Stars | `weight`, `filter`, `color`, `size`, `opacity` | `points_channel` |
+| **Quantitative** | `column_map` (N_H), `derived_volume` (mock emission), `moment_maps` (kinematics) | — |
+| **Speed** | 8-thread kernel · `subregion` · occupancy (auto, `set_occupancy`) · `smooth=false`/coarse `pxsize` previews | — |
+| **Save** | `save_view` (scalar) · `save_scene` (RGB) · `save_figure` (either) | — |
 
-**Tip — pick value ranges from the data.** On a new simulation, inspect the field ranges to choose
-`vmin/vmax` (and `color_vmin/color_vmax`):
-
-```julia
-extrema(log10.(filter(>(0), getvar(gas, :rho, :nH))))   # → vmin/vmax for the opacity field
-extrema(log10.(filter(>(0), getvar(gas, :T,   :K))))    # → color_vmin/color_vmax for the hue field
-```
-
-Then iterate: render a low-`res` still, adjust the dials, re-render. `smooth=false`/lower `res` for fast
-previews; raise `res`/`aa` for the final frame. Diffuse channels (a hot halo) should use a low `opacity`
-so you see *through* them; raise `gamma` to thin them further.
-
-## Concepts & references
-
-- **Volume rendering / emission–absorption integral** (`mode=:emission`/`:rt`). Max (1995), *Optical Models for Direct Volume Rendering*, IEEE TVCG 1(2).
-- **Front-to-back alpha compositing** ("over"). Porter & Duff (1984), *Compositing Digital Images*, SIGGRAPH.
-- **Transfer functions / coloured-density** (`color_by`, `colormap`, `opacity`, `gamma`). Levoy (1988), *Display of Surfaces from Volume Data*, IEEE CG&A 8(3).
-- **Maximum-intensity projection** (`mode=:max`). Wallis et al. (1989), IEEE TMI 8(4).
-- **Trilinear reconstruction** (the `smooth=true` de-blocking). Engel et al. (2006), *Real-Time Volume Graphics*.
-- **Adaptive Mesh Refinement** (the data marched natively). Berger & Colella (1989), JCP 82(1).
-- **Catmull–Rom splines** (camera paths in `flythrough`). Catmull & Rom (1974).
-- **Equirectangular (plate-carrée) mapping** (`equirect_camera`). Snyder (1987), *Map Projections — A Working Manual*.
-- **Angular fisheye / dome master** (`fisheye_camera`). Bourke (2004), *Computer Generated Angular Fisheye Projections*.
-- **ACES filmic tone mapping** (`render_scene`). Narkowicz (2016), *ACES Filmic Tone Mapping Curve*.
-- **Perceptually-uniform colormaps** (`:inferno`/`:magma`). Kovesi (2015), arXiv:1509.03700.
+**Concepts & references:** emission–absorption volume rendering (Max 1995); front-to-back compositing
+(Porter & Duff 1984); transfer functions / coloured-density (Levoy 1988); trilinear reconstruction (Engel
+et al. 2006); ACES tone-map (Narkowicz 2016); equirectangular (Snyder 1987); fisheye (Bourke 2004);
+Catmull–Rom paths (1974).

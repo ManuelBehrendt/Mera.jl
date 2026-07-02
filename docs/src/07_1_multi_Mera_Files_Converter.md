@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `07_1_multi_Mera_Files_Converter.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/07_1_multi_Mera_Files_Converter.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 ## Overview
 
 `batch_convert_mera` is a safe, multithreaded tool to **re-save older Mera.jl data files in the
@@ -36,7 +37,6 @@ file still reads correctly (Mera reconstructs the type), but the reconstruction 
 
 Converting once re-writes the file cleanly in the current format and removes the warning.
 
-
 ## Solution Architecture
 
 ### Core Components
@@ -55,6 +55,10 @@ Converting once re-writes the file cleanly in the current format and removes the
 - **Configurable Parameters**: All safety and performance settings are user-adjustable
 - **Comprehensive Reporting**: Detailed conversion statistics and resource usage metrics
 
+This notebook runs end-to-end on the `timeseries_sedov3d` RAMSES test run: `convertdata`
+first builds a small archive of Mera `.jld2` files, then `batch_convert_mera` re-saves it.
+**Every file it writes goes to a temporary directory** (`mktempdir()`), so nothing pollutes
+the repo or fills the disk.
 
 ## Installation and Dependencies
 
@@ -62,19 +66,59 @@ Converting once re-writes the file cleanly in the current format and removes the
 
 ```julia
 using Mera
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+run  = joinpath(base, "RAMSES/timeseries_sedov3d")   # RAMSES outputs output_00001 … output_00013
+
+jld_dir = mktempdir()                          # all .jld2 output goes here
+println("RAMSES source : ", run)
+println("JLD2 target   : ", jld_dir)
 ```
 
+## Step 1 — convert a RAMSES output to a Mera file
 
-## Configuration Parameters
-
-### Default Constants
+`convertdata(output; datatypes, path, fpath)` reads RAMSES output `output` from `path` and
+writes `output_<n>.jld2` into `fpath`. The Sedov run is hydro-only, so we request `[:hydro]`.
 
 ```julia
-const DEFAULT_SAFETY_MARGIN = 0.8    # Use max 80% of system memory
-const DEFAULT_MIN_THREADS = 1        # Minimum thread count
-const DEFAULT_MAX_THREADS = 64       # Maximum thread count
+convertdata(1, datatypes=[:hydro], path=run, fpath=jld_dir)
+
+jld_file = joinpath(jld_dir, "output_00001.jld2")
+println("wrote          : ", jld_file)
+println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 ```
 
+Inspect the written file with `viewdata` and read it back with `loaddata` — the round-trip
+gives back an ordinary Mera hydro object.
+
+```julia
+viewdata(1, jld_dir)
+
+gas = loaddata(1, jld_dir, :hydro)
+println("cells loaded   : ", length(gas.data))
+println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
+```
+
+### Convert a few outputs (a small loop)
+
+`convertdata` is per-output; loop over a handful of output numbers to build a small archive
+of Mera files. We keep it to three outputs to stay tiny on disk.
+
+```julia
+for n in 1:3
+    convertdata(n, datatypes=[:hydro], path=run, fpath=jld_dir, verbose=false)
+end
+made = sort(filter(f -> endswith(f, ".jld2"), readdir(jld_dir)))
+println("mera files     : ", made)
+```
+
+## Step 2 — `batch_convert_mera`: re-save an archive in the current format
+
+`batch_convert_mera(input_dir, output_dir, start_output, end_output; ...)` discovers
+`output_<n>.jld2` files in `input_dir`, filters them to the `[start_output, end_output]`
+range, and re-writes each cleanly into `output_dir`. It monitors memory against a
+`safety_margin` and manages thread count.
+
+## Configuration Parameters
 
 ### Function Parameters
 
@@ -97,62 +141,73 @@ const DEFAULT_MAX_THREADS = 64       # Maximum thread count
 
 ### Basic Conversion
 
-Convert a range of files with default safety settings:
-
-```julia
-results = batch_convert_mera(
-    "/data/old_simulations/",
-    "/data/converted_simulations/",
-    100, 200
-)
-```
-
+Convert a range of files with default safety settings —
+`batch_convert_mera(input_dir, output_dir, start_output, end_output)`.
 
 ### Memory-Conscious Conversion
 
-For large files or limited memory systems:
-
-```julia
-results = batch_convert_mera(
-    "/data/old_simulations/",
-    "/data/converted_simulations/",
-    100, 200;
-    requested_threads=2,
-    safety_margin=0.9,      # Use only 90% of memory
-    max_threads=4
-)
-```
-
+For large files or limited memory systems, reduce `requested_threads` (e.g. 2), raise
+`safety_margin` (e.g. 0.9), and cap `max_threads`.
 
 ### High-Performance Conversion
 
-For systems with abundant resources:
-
-```julia
-results = batch_convert_mera(
-    "/data/old_simulations/",
-    "/data/converted_simulations/",
-    100, 200;
-    requested_threads=16,
-    safety_margin=0.7,      # Allow up to 70% memory usage
-    max_threads=32,
-    skip_existing=false     # Force re-conversion of existing files
-)
-```
-
+For systems with abundant resources, raise `requested_threads`/`max_threads`, allow more
+memory headroom (e.g. `safety_margin=0.7`), and set `skip_existing=false` to force
+re-conversion of existing files.
 
 ### Interactive Mode
 
 User-guided conversion with prompts:
+`interactive_mera_converter(input_dir, output_dir; safety_margin=0.85)`.
+
+### This notebook's example
+
+We point it at the Mera files we just wrote and send the clean copies to a second temp dir.
+`show_confirmation=false` makes it non-interactive (no `y/n` prompt).
 
 ```julia
-interactive_mera_converter(
-    "/data/old_simulations/",
-    "/data/converted_simulations/";
-    safety_margin=0.85
+converted_dir = mktempdir()
+
+results = batch_convert_mera(
+    jld_dir,            # input: the .jld2 files from step 1
+    converted_dir,     # output: cleanly re-saved files
+    1, 3;              # output-number range
+    requested_threads = 1,
+    safety_margin     = 0.8,
+    skip_existing     = true,
+    show_confirmation = false,
 )
+
+println()
+println("return dict    : ", results)
+println("converted dir  : ", sort(readdir(converted_dir)))
 ```
 
+The returned `Dict` summarises the run — keys include `"success"`, `"failed"`,
+`"skipped"`, `"safety_violations"`, `"conversion_time"`, `"threads_used"`, and
+`"final_memory_usage_percent"`.
+
+```julia
+for k in ("success", "failed", "skipped", "safety_violations", "threads_used")
+    haskey(results, k) && println(rpad(k, 20), " => ", results[k])
+end
+```
+
+Confirm the re-saved files load identically to the originals.
+
+```julia
+g0 = loaddata(1, jld_dir,        :hydro)
+g1 = loaddata(1, converted_dir,  :hydro)
+println("cells  (orig / converted) : ", length(g0.data), " / ", length(g1.data))
+println("mass   (orig / converted) : ",
+        round(msum(g0, :Msol), sigdigits=6), " / ",
+        round(msum(g1, :Msol), sigdigits=6))
+```
+
+That is the full converter workflow — `convertdata` to turn RAMSES outputs into compact
+Mera files, and `batch_convert_mera` to re-save an archive of older Mera files cleanly in the
+current format, with memory-safe multithreading. All writes here went to temporary
+directories. The sections below are the full reference for the safety system and behaviour.
 
 ## Safety Margin Monitoring
 
@@ -165,14 +220,6 @@ The safety margin system monitors real-time memory usage and compares it against
 3. **Periodic Monitoring**: Regular checks every 3 files during batch processing
 4. **Violation Handling**: Automatic garbage collection and warning generation
 5. **Final Reporting**: Summary of violations and system state
-
-### Memory Usage Calculation
-
-```julia
-memory_usage_percent = (total_memory - available_memory) / total_memory * 100
-safety_violation = memory_usage_percent > (safety_margin * 100)
-```
-
 
 ### Violation Response
 
@@ -223,7 +270,6 @@ For each file:
 5. **Save Operation**: Write converted data to output file
 6. **Cleanup**: Explicit memory cleanup and garbage collection
 
-
 ## Error Handling and Recovery
 
 ### Common Error Scenarios
@@ -251,7 +297,6 @@ For each file:
 - **Memory Pressure**: Automatic garbage collection and thread reduction recommendations
 - **Interrupted Processing**: Skip existing files allows resuming partial conversions
 - **Validation**: Post-conversion file existence verification
-
 
 ## Sample Output and Interpretation
 
@@ -309,29 +354,12 @@ Consider using fewer threads or processing smaller batches for future conversion
 Conversion complete!
 ```
 
-
 ### Interpreting Results
 
 - **Success Rate**: 99/101 files (98% success rate)
 - **Safety Violations**: 5 violations indicate memory pressure
 - **Performance**: 4.17 seconds average per file with 8 threads
 - **Recommendations**: Consider reducing to 6 threads for future batches
-
-
-### Return Dictionary Structure
-
-```julia
-results = Dict(
-    "success" => 99,                    # Successfully converted files
-    "failed" => 2,                      # Failed conversions
-    "skipped" => 0,                     # Already existing files skipped
-    "safety_violations" => 5,           # Safety margin violations
-    "conversion_time" => 421.3,         # Total time in seconds
-    "threads_used" => 8,                # Actual threads used
-    "final_memory_usage_percent" => 15.2 # Final memory usage percentage
-)
-```
-
 
 ## Troubleshooting Guide
 
@@ -345,7 +373,6 @@ results = Dict(
 - Process smaller batches (e.g., 20-50 files at a time)
 - Close other memory-intensive applications
 
-
 ### Poor Performance
 
 **Symptoms**: Low threading efficiency, long conversion times
@@ -356,7 +383,6 @@ results = Dict(
 - Increase `safety_margin` to 0.7 if memory allows
 - Monitor system load during conversion
 
-
 ### Conversion Failures
 
 **Symptoms**: High failure rate, type conversion errors
@@ -366,7 +392,6 @@ results = Dict(
 - Check file permissions
 - Update JLD2 and CodecLz4 packages
 - Test with single-threaded conversion first
-
 
 ## Integration with Mera.jl Workflows
 

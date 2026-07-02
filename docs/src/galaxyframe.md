@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `galaxyframe.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/galaxyframe.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 "Find the centre, then rotate to face-on / edge-on" is a ritual every disk-galaxy analysis
 repeats by hand. [`center_of`](@ref) and [`face_on`](@ref) / [`edge_on`](@ref) do it from
 the data: the centre from the mass distribution, the orientation from the **gas angular
@@ -10,9 +11,17 @@ momentum**. The result drops straight into [`projection`](@ref).
 
 ![Face-on and edge-on views of the spiral_clumps disk, both obtained automatically from the gas angular momentum with face_on(gas) and edge_on(gas).](assets/galaxyframe/face_edge.png)
 
+This notebook runs on the `mw_L10` disk-galaxy snapshot (output 300) — an isolated spiral, so
+the bare `face_on(gas)` call is correct. Each cell prints the real frame it computed.
+
 ```julia
-fr = face_on(gas)        # line of sight = the disk's spin axis
-projection(gas, :sd; los=fr.los, up=fr.up, center=fr.center, range_unit=fr.center_unit)
+using Mera
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+
+info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
+gas  = gethydro(info);
+
+println("cells loaded : ", length(gas.data))
 ```
 
 ## Finding the centre
@@ -20,9 +29,13 @@ projection(gas, :sd; los=fr.los, up=fr.up, center=fr.center, range_unit=fr.cente
 [`center_of`](@ref) returns `[x, y, z]`:
 
 ```julia
-center_of(gas)                    # mass-weighted centre of mass (default)
-center_of(gas, method=:densest)   # position of the densest hydro cell
-center_of(gas, unit=:kpc)         # in physical units
+c_com     = center_of(gas)                    # mass-weighted CoM (box fraction)
+c_densest = center_of(gas, method=:densest)   # densest hydro cell
+c_kpc     = center_of(gas, unit=:kpc)         # CoM in physical units
+
+println("center_of (:com,  fraction) : ", round.(c_com,     digits=5))
+println("center_of (:densest)        : ", round.(c_densest, digits=5))
+println("center_of (:com,  kpc)      : ", round.(c_kpc,     digits=4))
 ```
 
 For `:standard` the result is a **box fraction (0–1)** — the convention that
@@ -39,16 +52,54 @@ centre and return a [`GalaxyFrame`](@ref):
 
 ```julia
 fr = face_on(gas)
-fr.los       # unit vector the camera looks along
-fr.up        # camera up vector
-fr.center    # centre, in fr.center_unit
-fr.angmom    # the net angular-momentum vector it was built from
+
+println(fr)                       # GalaxyFrame pretty-print
+println()
+println("los    : ", round.(fr.los,    digits=4))   # camera looks along this
+println("up     : ", round.(fr.up,     digits=4))   # camera up
+println("center : ", round.(fr.center, digits=5), "  [", fr.center_unit, "]")
+println("angmom : ", round.(fr.angmom, sigdigits=4))
+```
+
+```julia
+eo = edge_on(gas)
+
+println(eo)
+println()
+println("edge-on los : ", round.(eo.los, digits=4))
+println("edge-on up  : ", round.(eo.up,  digits=4))
+# face-on and edge-on lines of sight are orthogonal:
+println("los_faceon · los_edgeon = ", round(sum(fr.los .* eo.los), digits=6))
 ```
 
 Why it works without subtracting the bulk velocity: angular momentum measured about the
 **centre of mass** cancels any net translation, because ``\sum_i m_i \mathbf{r}_i = 0``
 there. (The same cancellation removes the Hubble flow in cosmological runs, since
 ``\mathbf{r} \times H\mathbf{r} = 0``.)
+
+## Drive a projection with the frame
+
+Splat the frame's `los`/`up`/`center` into `projection` — face-on for morphology, edge-on for
+the rotating disk.
+
+```julia
+using CairoMakie
+
+p_face = projection(gas, :sd, :Msol_pc2; los=fr.los, up=fr.up,
+                    center=fr.center, range_unit=fr.center_unit)
+p_edge = projection(gas, :sd, :Msol_pc2; los=eo.los, up=eo.up,
+                    center=eo.center, range_unit=eo.center_unit)
+
+println("face-on Sigma extrema : ", extrema(p_face.maps[:sd]))
+println("edge-on Sigma extrema : ", extrema(p_edge.maps[:sd]))
+
+fig = Figure(size=(900, 420))
+ax1 = Axis(fig[1,1]; title="face-on  Sigma [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax1)
+ax2 = Axis(fig[1,2]; title="edge-on  Sigma [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax2)
+heatmap!(ax1, log10.(p_face.maps[:sd]'); colormap=:inferno)
+heatmap!(ax2, log10.(p_edge.maps[:sd]'); colormap=:inferno)
+fig
+```
 
 ## Several galaxies, mergers, cosmological boxes
 
@@ -77,6 +128,15 @@ there. (The same cancellation removes the Hubble flow in cosmological runs, sinc
     Because the spin is then taken about the **local** CoM, this is also the correct recipe
     for a merger progenitor and for any galaxy moving through a cosmological box. Choosing
     the `aperture` to enclose the disk (but not the neighbours) is the one judgement call.
+
+`mw_L10` is isolated, so here we just demonstrate the aperture form locks onto the disk.
+
+```julia
+fr_ap = face_on(gas; center=:densest, aperture=30, range_unit=:kpc)
+
+println(fr_ap)
+println("aperture-framed center [kpc] : ", round.(fr_ap.center, digits=4))
+```
 
 ## Options
 

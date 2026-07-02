@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `clumpfind.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/clumpfind.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 `clumpfind` locates **connected over-dense structures** and returns a per-clump catalog. It works
 two ways:
 
@@ -55,15 +56,40 @@ Cells/particles with `field ≥ threshold` are linked into a clump when they lie
 `linking_length` (in `pos_unit`) of one another:
 
 ```julia
-gas = gethydro(getinfo(output, path))
+using Mera
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 
+info = getinfo(400, joinpath(base, "RAMSES/manu_sim_sf_L14"))
+# cap the refinement (lmax=10) and load only the central box, so the finders run in seconds
+gas  = gethydro(info; lmax=10, xrange=[-5,5], yrange=[-5,5], zrange=[-5,5],
+                center=[:bc], range_unit=:kpc);
+println("cells loaded : ", length(gas.data))
+println("box length   : ", gas.boxlen, " kpc")
+```
+
+Select cells above 100 cm⁻³, link within 0.2 kpc, and keep clumps with ≥ 5 cells:
+
+```julia
 cat = clumpfind(gas, :rho;
-                threshold=1e2, threshold_unit=:nH,   # select cells above 100 cm⁻³
+                threshold=1e2, threshold_unit=:nH,   # select cells above 100 cm^-3
                 linking_length=0.2, pos_unit=:kpc,    # link within 0.2 kpc
-                mass_unit=:Msol, min_members=5)       # keep clumps with ≥ 5 cells
+                mass_unit=:Msol, min_members=5)       # keep clumps with >= 5 cells
 
-length(cat)        # number of clumps
-cat[1]             # most massive clump (a NamedTuple)
+println("number of clumps : ", length(cat))
+println()
+println(cat)                       # ClumpCatalog summary
+```
+
+```julia
+# the most massive clump is a NamedTuple
+c1 = cat[1]
+println("largest clump:")
+@show c1.id
+@show c1.n_members
+@show c1.mass
+@show c1.com
+@show c1.peak
+@show c1.radius
 ```
 
 With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly — each clump's centre of
@@ -98,28 +124,35 @@ threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
     `Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
     other six finders have unique names.
 
-The same call works on particles (e.g. cluster-finding on stars):
+## Choosing a finder explicitly
+
+The keyword form builds a [`ThresholdFoF`](@ref) for you; pass a finder value to pick the
+algorithm. For watershed deblending, a [`DensityWatershed`](@ref) finder additionally accepts `persistence`
+(in `field` units): a basin whose prominence (peak − saddle) is below `persistence` is merged into the
+deeper basin it meets, suppressing over-segmentation of shallow saddles (Rosolowsky & Leroy 2008
+`min_delta`):
 
 ```julia
-stars = getparticles(getinfo(output, path))
-cat = clumpfind(stars, :mass; threshold=0.0, linking_length=0.5)
-```
+fof   = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4))
+cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
+                                        linking_length=0.4, persistence=0.3))
 
-**Choosing parameters.** `linking_length` should be a few times the local resolution — comparable to
-or larger than the finest cell size (3D AMR) or the mean interparticle separation (particles);
-too small and dense regions fragment, too large and separate clumps merge. `threshold` sets which
-material is considered (e.g. a number-density floor for the cold/dense gas). `min_members` drops
-noise-sized detections; `mask` restricts the search to a pre-selected subset.
+println("ThresholdFoF     : ", length(fof),   " clumps")
+println("DensityWatershed : ", length(cores), " clumps (saddle-split)")
+```
 
 ### Gravitational boundedness
 
 `boundedness=true` adds per-clump energetics (cgs) and keeps, optionally, only self-bound structures:
 
 ```julia
-cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
-                boundedness=true, bound_only=true)
-cat[1].alpha_vir       # virial parameter 2·E_kin/|E_grav|
-cat[1].bound           # E_kin + E_therm < |E_grav|
+catb = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2,
+                 min_members=5, boundedness=true, egrav=:tree)
+
+b1 = catb[1]
+@show b1.alpha_vir        # virial parameter 2*E_kin/|E_grav|
+@show b1.bound            # E_kin + E_therm < |E_grav| ?
+@show b1.e_grav
 ```
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
@@ -136,16 +169,6 @@ cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2
                 boundedness=true, egrav=:tree, iterative_unbinding=true)
 ```
 
-For watershed deblending, a [`DensityWatershed`](@ref) finder additionally accepts `persistence`
-(in `field` units): a basin whose prominence (peak − saddle) is below `persistence` is merged into the
-deeper basin it meets, suppressing over-segmentation of shallow saddles (Rosolowsky & Leroy 2008
-`min_delta`):
-
-```julia
-cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH,
-                                        linking_length=0.4, persistence=0.3))
-```
-
 ### Validators — a composable acceptance chain
 
 Instead of the boundedness keywords, pass a `validators` chain of value-typed criteria that a clump
@@ -157,13 +180,34 @@ regardless of the order listed. A non-empty `validators` overrides the
 `boundedness`/`bound_only`/`min_members`/`egrav`/`iterative_unbinding` keywords.
 
 ```julia
+big = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2);
+                validators=[MinMembers(10), Custom(c -> c.mass > 1e4)])
+println("clumps passing the validator chain: ", length(big))
+```
+
+```julia
 # ≥20 members, tree-gravity self-bound (iterative unbinding), and virially bound:
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
                   validators=[MinMembers(20), Bound(:tree; iterative=true), VirialBelow(2.0)])
-# arbitrary cut via Custom:
-big = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2);
-                validators=[Custom(c -> c.mass > 1e4 && c.radius < 0.1)])
 ```
+
+## Particles — cluster-finding on stars
+
+The same call works on particles (e.g. cluster-finding on stars):
+
+```julia
+stars = getparticles(info; xrange=[-5,5], yrange=[-5,5], zrange=[-5,5],
+                     center=[:bc], range_unit=:kpc);
+cats  = clumpfind(stars, :mass; threshold=0.0, linking_length=0.5, min_members=10)
+println("stellar groups found : ", length(cats))
+println(cats)
+```
+
+**Choosing parameters.** `linking_length` should be a few times the local resolution — comparable to
+or larger than the finest cell size (3D AMR) or the mean interparticle separation (particles);
+too small and dense regions fragment, too large and separate clumps merge. `threshold` sets which
+material is considered (e.g. a number-density floor for the cold/dense gas). `min_members` drops
+noise-sized detections; `mask` restricts the search to a pre-selected subset.
 
 ### Deblending overlapping clumps
 
@@ -230,18 +274,62 @@ Pass `boundedness=true` to get the combined-cloud energetics (`e_kin`, `e_therm`
 together while the `components` breakdown stays the per-species mass budget (`egrav`, `softening`,
 `iterative_unbinding`, `bound_only` work as in the single-object form).
 
+## The catalog
+
+Each entry is a `NamedTuple`; the fields differ slightly between 3D and 2D:
+
+| field | meaning |
+|-------|---------|
+| `id` | rank (1 = most massive) |
+| `n_members` | cells / particles (3D) or pixels (2D) |
+| `mass` | clump mass (3D) or area-integral (2D) |
+| `com` | centre of mass — `(x,y,z)` (3D) or `(x,y)` (2D) |
+| `peak`, `peak_pos` | maximum field value and its position |
+| `radius` | maximum member distance from the COM |
+
+`ClumpCatalog` behaves like a vector (`length`, `cat[i]`, iteration). For analysis/export, get a
+columnar table (a `NamedTuple` of vectors — including boundedness and per-component columns when
+present), ready for `DataFrame` / `CSV.write`:
+
+```julia
+masses = [c.mass for c in cat]
+println("mass range [Msol] : ", extrema(masses))
+
+tbl = clumptable(cat)
+println("table columns     : ", keys(tbl))
+println("search meta       : ", cat.meta)
+```
+
+See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
+yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
+
 ## Mass function & report integration
 
 ```julia
-m, N   = clump_massfunction(cat; nbins=20, scale=:log)   # differential dN per mass bin
-m, Ngt = clump_massfunction(cat; cumulative=true)        # cumulative N(≥M)
-
-using CairoMakie
-fig = massfunctionplot(cat; cumulative=true)             # plot it directly (log–log)
+m, Ngt = clump_massfunction(cat; cumulative=true)
+println("cumulative mass-function bins : ", length(m))
+println("N(>= M_min)                   : ", first(Ngt))
 ```
 
-![Cumulative clump mass function ([`massfunctionplot`](@ref) / [`clump_massfunction`](@ref)): the number
-of clumps with mass ≥ M, on log–log axes.](assets/features/clump_massfunction.png)
+```julia
+using CairoMakie
+
+bg  = projection(gas, :sd, :Msol_pc2; center=[:bc])
+fig = Figure(size=(950, 420))
+
+ax1 = Axis(fig[1,1]; title="Clumps over surface density", aspect=DataAspect())
+hidedecorations!(ax1)
+heatmap!(ax1, log10.(bg.maps[:sd]'); colormap=:inferno)
+coms = [c.com for c in cat]
+scatter!(ax1, [c[1] for c in coms], [c[2] for c in coms];
+         color=:cyan, markersize=6, strokewidth=0.5, strokecolor=:black)
+
+ax2 = Axis(fig[1,2]; title="Cumulative clump mass function",
+           xlabel="mass [Msol]", ylabel="N(>= M)", xscale=log10, yscale=log10)
+scatterlines!(ax2, m, Ngt)
+
+fig
+```
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):
@@ -256,43 +344,15 @@ report(output; path, cards=[ ClumpCard(:hydro, :rho; threshold=1e2, threshold_un
 Run it on any [`projection`](@ref) result to segment a map above a threshold:
 
 ```julia
-sd  = projection(gas, :sd, :Msol_pc2; res=512, center=[:bc])
-cat = clumpfind(sd, :sd; threshold=50.0, connectivity=8)   # regions ≥ 50 M⊙/pc²
+sd2  = projection(gas, :sd, :Msol_pc2; res=512, center=[:bc])
+cat2 = clumpfind(sd2, :sd; threshold=50.0, connectivity=8)   # regions >= 50 Msol/pc^2
+println("2D regions found : ", length(cat2))
+length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, mass ",
+                            round(cat2[1].mass, sigdigits=4))
 ```
 
 `connectivity` is `8` (diagonals count) or `4`. For a surface-density map each region's `mass` is the
 exact area-integral `Σ value · pixel_area`; positions are in the map's extent units.
-
-## The catalog
-
-Each entry is a `NamedTuple`; the fields differ slightly between 3D and 2D:
-
-| field | meaning |
-|-------|---------|
-| `id` | rank (1 = most massive) |
-| `n_members` | cells / particles (3D) or pixels (2D) |
-| `mass` | clump mass (3D) or area-integral (2D) |
-| `com` | centre of mass — `(x,y,z)` (3D) or `(x,y)` (2D) |
-| `peak`, `peak_pos` | maximum field value and its position |
-| `radius` | maximum member distance from the COM |
-
-```julia
-cat = clumpfind(gas, :rho; threshold=1e2, threshold_unit=:nH, linking_length=0.2)
-[c.mass for c in cat]               # mass function input
-cat[1].com                          # densest clump's centre
-cat.meta                            # the search parameters used
-```
-
-`ClumpCatalog` behaves like a vector (`length`, `cat[i]`, iteration). For analysis/export, get a
-columnar table (a `NamedTuple` of vectors — including boundedness and per-component columns when
-present), ready for `DataFrame` / `CSV.write`:
-
-```julia
-tbl = clumptable(cat)         # (; id, n_members, mass, com_x, com_y, com_z, radius, …)
-```
-
-See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
-yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
 
 ## Multi-scale hierarchy (dendrogram)
 
