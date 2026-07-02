@@ -1,7 +1,7 @@
 # Gravity Data: First Inspection
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `01_gravity_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_gravity_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive introduction to loading and analyzing gravitational field data using Mera.jl. You'll learn the fundamentals of working with RAMSES gravity data and its relationship to AMR (Adaptive Mesh Refinement) structures.
@@ -114,7 +114,7 @@ Let's start by importing Mera.jl and loading simulation information for output 3
 
 ```julia
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
 ```
 
 ```
@@ -135,7 +135,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -281,7 +281,7 @@ The `getgravity()` function is the primary tool for loading gravitational field 
 First, let's reload the simulation information to reset any changes we made to the descriptor:
 
 ```julia
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10", verbose=false); # here, used to overwrite the previous changes
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10", verbose=false); # here, used to overwrite the previous changes
 ```
 
 ### Loading Complete Gravity Dataset
@@ -448,16 +448,6 @@ level  cells     cellsize
 9      12774134  0.09375
 10     7298576   0.046875
 ```
-
-For a **visual** version, [`overviewplot`](@ref) (needs `using CairoMakie`) renders cells per level, the
-acceleration `|a|` and potential distributions, and the `|a|`–potential relation in one figure:
-
-```julia
-using CairoMakie
-overviewplot(grav)
-```
-
-![overviewplot on AMR gravity: cells per level, the acceleration and potential distributions, and the |a|–potential relation.](assets/overviewplot_gravity.png)
 
 ### Statistical Data Analysis
 

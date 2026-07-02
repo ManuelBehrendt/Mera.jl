@@ -1,7 +1,7 @@
 # 9. Cosmological Simulations
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 RAMSES writes the *same* info-file fields for every run, so Mera reads them for
@@ -49,7 +49,7 @@ the snapshot, not the raw conformal `info.time`.
 
 ```julia
 using Mera
-info = getinfo(80, "/Volumes/FASTStorage/Simulations/Mera-Tests/yt_cosmo");
+info = getinfo(80, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/yt_cosmo");
 ```
 
 ```

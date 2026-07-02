@@ -1,7 +1,7 @@
 # 3. Gravity: Get Sub-Regions of The Loaded Data
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `03_gravity_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_gravity_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_gravity_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_gravity_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 ## Load the Data
@@ -9,7 +9,7 @@
 ```julia
 using Mera
 
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14", verbose=false)
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", verbose=false)
 grav  = getgravity(info, :epot, lmax=10);
 ```
 
@@ -49,9 +49,12 @@ Memory used for data table :
 
 ## Value-Type Regions
 
-The composable **region value types** (`Sphere`, `Cuboid`, `Cylinder`, `SphericalShell`, and their `∩` `∪` `\` `!` combinations) work on gravity data exactly as on hydro, with **exact edge-cell splitting** — `getvar(:volume)` / `msum` over a split region are exact (gravity carries no mass, so the splitting weights the cell *volume*). See the Hydro notebook for the full walk-through.
+The composable **region value types** (`Sphere`, `Cuboid`, `Cylinder`,
+`SphericalShell`, and their `∩` `∪` `\` `!` combinations) work on gravity data exactly as on
+hydro, with **exact edge-cell splitting** — `getvar(:volume)` / `msum` over a split region are exact
+(gravity carries no mass, so the splitting weights the cell *volume*). See the Hydro notebook for the
+full walk-through.
 
 ```julia
 grav_sphere = subregion(grav, Sphere(10.0; center=[:bc], range_unit=:kpc))   # split=true
-sum(getvar(grav_sphere, :volume, :kpc3))                                     # exact in-region volume
-```
+sum(getvar(grav_sphere, :volume, :kpc3))                                        # exact in-region volume

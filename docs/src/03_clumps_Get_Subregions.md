@@ -1,7 +1,7 @@
 # 3. Clumps: Get Sub-Regions of The Loaded Data
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 ## Learning Objectives
@@ -74,7 +74,7 @@ subregion(clumps, :cuboid, xrange=[x1,x2], inverse=true)
 ```julia
 using Mera, PyPlot
 rc("figure", dpi=300); rc("savefig", dpi=300)
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14")
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14")
 clumps = getclumps(info);
 ```
 
@@ -96,7 +96,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -1234,7 +1234,9 @@ ylabel("z [kpc]");
 
 ## Value-Type Regions
 
-`subregion` also accepts composable **region value types** — `Sphere`, `Cuboid`, `Cylinder`, `SphericalShell` — that compose with the boolean operators `∩` `∪` `\` `!`. Clumps are points (their peak position), so the region is a **point-membership** test; `inverse=true` selects the complement.
+`subregion` also accepts composable **region value types** — `Sphere`, `Cuboid`,
+`Cylinder`, `SphericalShell` — that compose with the boolean operators `∩` `∪` `\`
+`!`. Clumps are points (their peak position), so the region is a **point-membership** test;
 
 ```julia
 # clumps inside a ball about the box centre, and the complement
@@ -1242,7 +1244,6 @@ clumps_in  = subregion(clumps, Sphere(20.0; center=[:bc], range_unit=:kpc))
 clumps_out = subregion(clumps, Sphere(20.0; center=[:bc], range_unit=:kpc), inverse=true)
 println("inside: ", length(clumps_in.data), "   outside: ", length(clumps_out.data),
         "   total: ", length(clumps.data))
-x, y, z = getpositions(clumps_in, :kpc, center=[:boxcenter]);
 ```
 
 ```
@@ -1251,11 +1252,8 @@ inside: 644   outside: 0   total: 644
 
 ### Boolean Combinations
 
-Build composite selections — e.g. a ball with a central cylinder removed:
-
 ```julia
 clumps_sel = subregion(clumps, Sphere(30.0; range_unit=:kpc) \ Cylinder(8.0, 30.0; range_unit=:kpc))
-println("type: ", typeof(clumps_sel), "   selected clumps: ", length(clumps_sel.data))
 ```
 
 ```
@@ -1266,7 +1264,6 @@ type: ClumpDataType   selected clumps: 292
 
 ```julia
 clumps_shell = subregion(clumps, SphericalShell(5.0, 20.0; range_unit=:kpc))
-println("clumps in spherical shell [5,20] kpc: ", length(clumps_shell.data), " / ", length(clumps.data))
 ```
 
 ```

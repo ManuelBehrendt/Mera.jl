@@ -1,7 +1,7 @@
 # Particle Data: First Inspection
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `01_particles_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_particles_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `01_particles_First_Inspection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/01_particles_First_Inspection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook provides a comprehensive introduction to loading and analyzing particle simulation data using Mera.jl. You'll learn the fundamentals of working with RAMSES particle data and its relationship to AMR (Adaptive Mesh Refinement) structures.
@@ -117,7 +117,7 @@ Let's start by importing Mera.jl and loading simulation information for output 3
 
 ```julia
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10");
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
 ```
 
 ```
@@ -138,7 +138,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -402,16 +402,6 @@ level  particles
 9      0
 10     0
 ```
-
-For a **visual** summary, [`overviewplot`](@ref) (needs `using CairoMakie`) renders the per-family
-census, the mass distribution, the projected x–y density, and the speed distribution in one figure:
-
-```julia
-using CairoMakie
-overviewplot(particles)
-```
-
-![overviewplot on particles: the per-family census, the mass distribution, the projected x–y number density, and the speed distribution.](assets/overviewplot_particles.png)
 
 ### Statistical Data Analysis
 

@@ -1,7 +1,7 @@
 # First Steps with Mera.jl
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `00_multi_FirstSteps.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/00_multi_FirstSteps.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `00_multi_FirstSteps.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/00_multi_FirstSteps.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This notebook introduces the essential concepts and workflow for inspecting, loading, and analyzing RAMSES simulation outputs using Mera.jl.
@@ -140,7 +140,7 @@ Here are some common issues and how to resolve them:
 These tips will help you work efficiently with RAMSES data in Mera.
 
 ```julia
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"); # output=300 in given path
+info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
@@ -161,7 +161,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -254,7 +254,7 @@ println("First 5 constants: $(constant_fields[1:5])")
 === InfoType Object Exploration ===
 output	=
 300
-path	= /Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10
+path	= /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10
 fnames ==> subfields: (:output, :info, :amr, :hydro, :hydro_descriptor, :gravity, :particles, :part_descriptor, :rt, :rt_descriptor, :rt_descriptor_v0, :clumps, :timer, :header, :namelist, :compilation, :makefile, :patchfile)
 simcode	= RAMSES
 mtime	= 2023-04-09T05:34:09
@@ -282,7 +282,7 @@ nvarh	= 7
 nvarp	= 7
 nvarrt	= 0
 variable_list	=
-[:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01]
+[:rho, :vx, :vy, :vz, :p, :var6, :var7]
 gravity_variable_list	= [:epot, :ax, :ay, :az]
 particles_variable_list	= [:vx, :vy, :vz, :mass, :family, :tag, :birth]
 rt_variable_list	= Symbol[]
@@ -1266,7 +1266,7 @@ This information helps you understand:
 - Potential issues with specific outputs
 
 ```julia
-co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/");
+co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10/");
 ```
 
 ```

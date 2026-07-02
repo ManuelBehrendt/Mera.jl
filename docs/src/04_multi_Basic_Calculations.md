@@ -1,7 +1,7 @@
 # 4. Multi-Physics Basic Calculations and Statistical Analysis
 
 !!! tip "Run it yourself"
-    This tutorial is also an executable **Jupyter notebook** — [open / download `04_multi_Basic_Calculations.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/04_multi_Basic_Calculations.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `04_multi_Basic_Calculations.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/04_multi_Basic_Calculations.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This comprehensive tutorial demonstrates essential computational methods for analyzing multi-physics simulation data using MERA.jl. Learn to calculate fundamental quantities, statistical measures, and derived properties across hydro, particle, and clump datasets with proper unit handling and weighting schemes.
@@ -127,7 +127,7 @@ Load multi-physics simulation data for comprehensive analysis demonstrations:
 
 ```julia
 using Mera
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14");
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14");
 gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8);
 particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
@@ -152,7 +152,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -700,7 +700,7 @@ Predefined vars that can be calculated for each cell/particle:
 ----------------------------------------------------------------
 =============================[gas]:=============================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, passive_scalar_1,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
               -derived hydro vars-
 :x, :y, :z
 :mass, :cellsize, :volume, :freefall_time
@@ -934,7 +934,7 @@ Predefined vars that can be calculated for each cell/particle:
 ----------------------------------------------------------------
 =============================[gas]:=============================
        -all the non derived hydro vars-
-:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, passive_scalar_1,...
+:cpu, :level, :rho, :cx, :cy, :cz, :vx, :vy, :vz, :p, var6,...
               -derived hydro vars-
 :x, :y, :z
 :mass, :cellsize, :volume, :freefall_time
@@ -1225,7 +1225,7 @@ println("Range: ", stats.min, " to ", stats.max)
 ```
 
 ```julia
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14", verbose=false);
+info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", verbose=false);
 gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8, smallr=1e-5, verbose=false);
 particles = getparticles(info, [:mass, :vx, :vy, :vz], verbose=false)
 clumps    = getclumps(info, verbose=false);
