@@ -54,6 +54,15 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Fixed
 
+- **GADGET/AREPO reader — multi-file snapshots.** Chunked snapshots (`snap_NNN.0.hdf5 …
+  snap_NNN.K.hdf5`, incl. the IllustrisTNG `snapdir_NNN/` layout) are now read completely,
+  chunk by chunk with the spatial window applied per chunk; previously only the first file
+  was read, silently dropping most of the box. A header/found chunk-count mismatch warns.
+  Also: total particle counts use the 64-bit `NumPart_Total_HighWord` convention (no
+  overflow above 2³² particles), and ΩΛ=0 (Einstein–de-Sitter) cosmological runs are now
+  recognised via `Time ≡ 1/(1+z)` self-consistency, so their comoving→physical a/h and √a
+  factors are applied (previously treated as non-cosmological).
+
 - **Projection mass conservation (`mode=:sum`).** Surface-density / mass maps no longer over-count;
   `:sd`/`:mass` and the extensive `:ekin`/`:etherm`/`:volume` sums conserve to machine precision, both
   axis-aligned and off-axis. (#85, #86)

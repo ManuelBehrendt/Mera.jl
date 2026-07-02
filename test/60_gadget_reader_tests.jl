@@ -288,6 +288,130 @@ end
         end
     end
 
+    @testset "multi-file snapshots (chunked, TNG layout)" begin
+        # one snapshot split over 3 chunks; chunk 0 is deliberately gas-free so the
+        # gas-field discovery has to scan past it. Totals: 3 gas + 2 DM + 1 star.
+        function _write_chunk(fn; nfsp=3, total=UInt32[3, 2, 0, 0, 1, 0],
+                              gas=nothing, dm=nothing, star=nothing)
+            h5open(fn, "w") do f
+                hg = attributes(create_group(f, "Header"))
+                hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+                hg["NumPart_Total"] = total; hg["NumFilesPerSnapshot"] = Int32(nfsp)
+                hg["MassTable"] = [0.0, 2.0, 0.0, 0.0, 0.0, 0.0]      # DM mass from table
+                if gas !== nothing
+                    g0 = create_group(f, "PartType0")
+                    g0["Coordinates"] = gas; n = size(gas, 2)
+                    g0["Velocities"] = zeros(Float32, 3, n)
+                    g0["Masses"] = Float32.(fill(1.0, n)); g0["Density"] = Float32.(fill(0.5, n))
+                    g0["InternalEnergy"] = Float32.(fill(100.0, n)); g0["ParticleIDs"] = UInt32.(1:n)
+                end
+                if dm !== nothing
+                    g1 = create_group(f, "PartType1")
+                    g1["Coordinates"] = dm; n = size(dm, 2)
+                    g1["Velocities"] = zeros(Float32, 3, n); g1["ParticleIDs"] = UInt32.(100 .+ (1:n))
+                end
+                if star !== nothing
+                    g4 = create_group(f, "PartType4")
+                    g4["Coordinates"] = star; n = size(star, 2)
+                    g4["Velocities"] = zeros(Float32, 3, n)
+                    g4["Masses"] = Float32.(fill(0.5, n)); g4["ParticleIDs"] = UInt32.(200 .+ (1:n))
+                end
+            end
+        end
+        dir2 = mktempdir()
+        _write_chunk(joinpath(dir2, "snap_005.0.hdf5"); dm=Float64[10 90; 50 50; 50 50])
+        _write_chunk(joinpath(dir2, "snap_005.1.hdf5"); gas=Float64[20 30; 50 50; 50 50])
+        _write_chunk(joinpath(dir2, "snap_005.2.hdf5"); gas=Float64[80; 50; 50][:, :],
+                     star=Float64[85; 50; 50][:, :])
+
+        @test length(Mera._gadget_files(5, dir2)) == 3
+        info = getinfo_gadget(5, dir2, verbose=false)
+        part = getparticles_gadget(info, verbose=false)
+        @test length(part.data) == 6                                   # all chunks read
+        fam = Mera.select(part.data, :family)
+        @test count(==(0), fam) == 3 && count(==(1), fam) == 2 && count(==(4), fam) == 1
+        @test msum(part) ≈ 3 * 1.0 + 2 * 2.0 + 0.5                       # gas + DM(table) + star
+        # gas columns discovered from chunk 1 (chunk 0 has no PartType0), NaN-aligned elsewhere
+        # (raw column contract; getvar additionally maps the non-gas NaN rows to 0.0)
+        rho = Mera.select(part.data, :rho)
+        @test count(isfinite, rho) == 3 && all(isnan.(rho[fam .!= 0]))
+        @test all(rho[fam .== 0] .== 0.5)
+        # spatial window applies across chunks: x/boxlen ≤ 0.35 keeps DM@10, gas@20, gas@30
+        sub = getparticles_gadget(info; xrange=[0.0, 0.35], center=[0., 0., 0.],
+                                  range_unit=:standard, verbose=false)
+        @test sort(getvar(sub, :x)) == [10.0, 20.0, 30.0]
+        # a direct chunk path gathers its siblings
+        info1 = getinfo_gadget(5, joinpath(dir2, "snap_005.1.hdf5"), verbose=false)
+        @test length(getparticles_gadget(info1, verbose=false).data) == 6
+        # header/found chunk-count mismatch warns (header claims 4, only 3 on disk)
+        dir3 = mktempdir()
+        for k in 0:2
+            _write_chunk(joinpath(dir3, "snap_005.$k.hdf5"); nfsp=4,
+                         dm=Float64[10; 50; 50][:, :])
+        end
+        @test_logs (:warn, r"expects 4 snapshot chunks but 3") match_mode=:any getinfo_gadget(5, dir3, verbose=false)
+    end
+
+    @testset "snapdir_NNN/ chunk directory (TNG layout)" begin
+        dir2 = mktempdir()
+        sd = joinpath(dir2, "snapdir_007"); mkpath(sd)
+        for (k, xpos) in ((0, 10.0), (1, 90.0))
+            h5open(joinpath(sd, "snap_007.$k.hdf5"), "w") do f
+                hg = attributes(create_group(f, "Header"))
+                hg["BoxSize"] = 100.0; hg["Time"] = 1.0
+                hg["NumPart_Total"] = UInt32[0, 2, 0, 0, 0, 0]; hg["NumFilesPerSnapshot"] = Int32(2)
+                hg["MassTable"] = [0.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+                g1 = create_group(f, "PartType1")
+                g1["Coordinates"] = Float64[xpos; 50.0; 50.0][:, :]
+                g1["Velocities"] = zeros(Float32, 3, 1); g1["ParticleIDs"] = UInt32[k + 1]
+            end
+        end
+        info = getinfo_gadget(7, dir2, verbose=false)                  # resolves snapdir_007/
+        @test sort(getvar(getparticles_gadget(info, verbose=false), :x)) == [10.0, 90.0]
+    end
+
+    @testset "64-bit particle counts (NumPart_Total_HighWord)" begin
+        fn = joinpath(dir, "snap_011.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 1.0; hg["Time"] = 1.0
+            hg["NumPart_Total"] = UInt32[1, 5, 0, 0, 0, 0]
+            hg["NumPart_Total_HighWord"] = UInt32[0, 2, 0, 0, 0, 0]    # +2·2³² DM
+        end
+        h5open(fn, "r") do f
+            n = Mera._gadget_npart_total(attributes(f["Header"]))
+            @test n[2] == 5 + 2 * Int64(2)^32 && n[1] == 1             # no Int32 overflow
+        end
+    end
+
+    @testset "ΩΛ=0 cosmology (Einstein–de-Sitter) is still comoving" begin
+        function _write_eds(fn; redshift)
+            h5open(fn, "w") do f
+                hg = attributes(create_group(f, "Header"))
+                hg["BoxSize"] = 100.0; hg["Time"] = 0.5; hg["HubbleParam"] = 0.7
+                hg["Omega0"] = 1.0; hg["OmegaLambda"] = 0.0            # EdS: ΩΛ = 0
+                redshift === nothing || (hg["Redshift"] = redshift)
+                hg["UnitLength_in_cm"] = 3.085678e24                   # Mpc
+                hg["NumPart_Total"] = UInt32[0, 1, 0, 0, 0, 0]; hg["MassTable"] = [0., 1., 0., 0., 0., 0.]
+                g1 = create_group(f, "PartType1")
+                g1["Coordinates"] = Float64[50.0; 50.0; 50.0][:, :]
+                g1["Velocities"] = Float32[8.0; 0.0; 0.0][:, :]; g1["ParticleIDs"] = UInt32[1]
+            end
+        end
+        d2 = mktempdir()
+        _write_eds(joinpath(d2, "snap_012.hdf5"); redshift=1.0)        # Time = 1/(1+z) = 0.5 ⇒ a
+        info = getinfo_gadget(12, d2, verbose=false)
+        @test info.aexp == 0.5 && Mera.iscosmological(info)
+        @test info.unit_l ≈ 3.085678e24 * 0.5 / 0.7                    # a/h folded into length
+        vx = Mera.select(getparticles_gadget(info, verbose=false).data, :vx)
+        @test vx[1] ≈ 8.0 * sqrt(0.5)                                  # √a velocity factor applied
+        # without a consistent Redshift attribute, Time is a physical time ⇒ non-cosmological
+        d3 = mktempdir()
+        _write_eds(joinpath(d3, "snap_013.hdf5"); redshift=nothing)
+        info2 = getinfo_gadget(13, d3, verbose=false)
+        @test info2.aexp == 1.0 && !Mera.iscosmological(info2)
+    end
+
     # PART B (data-backed): the real yt GadgetDiskGalaxy sample.
     @testset "real GADGET snapshot — yt GadgetDiskGalaxy (data-backed)" begin
         gd = joinpath(SIMULATION_PATH, "GADGET/gadget_diskgalaxy", "GadgetDiskGalaxy")
