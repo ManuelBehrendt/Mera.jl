@@ -33,13 +33,15 @@ CairoMakie.activate!()
 BASE = "/Volumes/FASTStorage/Simulations/Mera-Tests"   # <-- change me
 info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"), verbose=false)
 gas  = gethydro(info, verbose=false, show_progress=false)
-proj() = projection(gas, :sd; res=128, verbose=false, show_progress=false)
+proj() = projection(gas, :sd; pxsize=[0.4, :kpc], verbose=false, show_progress=false)
 t1 = @elapsed proj()      # includes compilation
 t2 = @elapsed proj()      # pure runtime
 println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, digits=3), " s")
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), dep missing source (6), mismatched flags (10))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -48,8 +50,14 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-first call: 11.78
- s   second call: 0.04 s
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (2), dep missing source (2))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+first call: 10.67
+ s   second call: 0.044 s
 ```
 
 Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-launching
@@ -80,7 +88,7 @@ println("mass-weighted T (ρ>1e-24 g/cm³): ", round(mwT(rho, T, vol), sigdigits
 
 ```
 mass-weighted T (ρ>1e-24 g/cm³): 67870.0
- K   —   590311 cells in 0.22 ms
+ K   —   590311 cells in 0.2 ms
 ```
 
 ## 4. Memory discipline on laptop-scale machines
@@ -134,7 +142,7 @@ differ):
 ```julia
 println("Julia threads: ", Threads.nthreads())
 # compute-heavy workload: off-axis projection with the analytic :exact deposit kernel
-heavy(nt) = projection(gas, :sd; inclination=60, azimuth=30, res=1024,
+heavy(nt) = projection(gas, :sd; inclination=60, azimuth=30, pxsize=[0.05, :kpc],
                        binning=:exact, max_threads=nt, verbose=false, show_progress=false)
 heavy(1)                                             # compile once
 nts = [1, 2, 4, 8]
@@ -152,13 +160,14 @@ fig
 
 ```
 Julia threads: 8
-max_threads=1  33.92 s   speedup ×1.0
-max_threads=2  24.05 s   speedup ×1.41
-max_threads=4  16.42 s   speedup ×2.07
-max_threads=8  8.86 s   speedup ×3.83
+max_threads=1  109.57
+ s   speedup ×1.0
+max_threads=2  79.97 s   speedup ×1.37
+max_threads=4  53.7 s   speedup ×2.04
+max_threads=8  29.37 s   speedup ×3.73
 ```
 
-![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_3.png)
+![](julia_for_simulation_analysis_files/julia_for_simulation_analysis_8_4.png)
 
 The dashed line is ideal scaling; the gap to it is the serial fraction. Throttle
 individual calls (`max_threads=4`) when you run several analyses at once or share the machine.
