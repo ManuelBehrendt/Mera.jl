@@ -5,6 +5,12 @@
 
 *High-performance parallel computing with MERA.jl: leveraging multi-core processors for accelerated astrophysical data analysis*
 
+!!! tip "Just getting started?"
+    For a compact, measured introduction (thread-count scaling on a small fixture, the
+    `max_threads` throttle, laptop-scale guidance), see
+    [Julia for Simulation Analysis](../julia_for_simulation_analysis.md) — this page is the
+    full reference.
+
 **Main Takeaways**  
 - Julia's **composable threading** and **parallel GC** for multi-GB AMR loads, projections, and VTK exports 
 - Concurrent threading at multiple levels can saturate I/O and memory—use Mera's `max_threads` keyword to control internal concurrency  
