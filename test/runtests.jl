@@ -80,6 +80,9 @@ if isempty(_focus)
         include("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
         include("61_immersive_tests.jl")  # data-free: immersive volume ray-caster oracles (+ optional spiral_clumps render)
         include("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
+        include("64_datautils_coverage_tests.jl")  # data-free: viewdata/infodata/miscellaneous/mera_convert branches (synthetic snapshots + stdin-driven batch flows)
+        include("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
+        include("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
     end
 
     # ========================================================================
@@ -123,6 +126,7 @@ if isempty(_focus)
         include("52_pluto_reader_tests.jl")          # PLUTO code frontend (multi-code reader): data-free format parsers + 3D Sedov fixture; analysis layer runs unchanged
         include("53_overlay_absorption_tests.jl")    # gridoverlay (AMR cell boundaries)
         include("07_regions.jl")
+        include("63_region_coverage_tests.jl")       # RT/gravity/particle sub- & shellregion paths (cell modes, inverse partitions, uniform-grid branch)
     end
 
     # ------------------------------------------------------------------------
