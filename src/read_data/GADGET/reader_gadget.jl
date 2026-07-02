@@ -47,26 +47,56 @@ function _gadget_subcode(f)
     return "GADGET"
 end
 
-# resolve the GADGET snapshot file: a direct path, or `snap*_NNN.hdf5` in a directory
-function _gadget_file(output::Int, path::String)
-    (isfile(path) && endswith(lowercase(path), ".hdf5")) && return path
+# chunk index of a multi-file snapshot piece (`snap_099.K.hdf5` → K), -1 for single files
+function _gadget_chunknum(f::AbstractString)
+    m = match(r"\.(\d+)\.hdf5$", lowercase(f))
+    return m === nothing ? -1 : parse(Int, m.captures[1])
+end
+
+# ALL files of snapshot `output`, in chunk order. Large runs (IllustrisTNG, …) split one
+# snapshot into `snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, often inside a `snapdir_NNN/` directory;
+# reading only chunk 0 silently drops most of the box. Supports: a direct file (a chunk path
+# gathers its siblings), a `snapdir_NNN/` under `path`, chunked sets and single files in `path`.
+function _gadget_files(output::Int, path::String)
+    if isfile(path) && endswith(lowercase(path), ".hdf5")
+        m = match(r"^(.*\.)\d+\.hdf5$"i, basename(path))
+        m === nothing && return [path]                     # single-file snapshot
+        pre = m.captures[1]                                 # chunk given: gather all siblings
+        sibs = filter(f -> startswith(f, pre) && _gadget_chunknum(f) >= 0, readdir(dirname(path)))
+        return [joinpath(dirname(path), f) for f in sort(sibs, by=_gadget_chunknum)]
+    end
     isdir(path) || error("GADGET: $path is neither an .hdf5 file nor a directory.")
     tag = lpad(output, 3, '0')
+    snapdir = joinpath(path, "snapdir_$tag")                # TNG-style chunk directory
+    isdir(snapdir) && return _gadget_files(output, snapdir)
     cands = filter(f -> endswith(lowercase(f), ".hdf5") &&
                         (occursin("_$tag.", f) || occursin("_$tag", f)), readdir(path))
     isempty(cands) && (cands = filter(f -> endswith(lowercase(f), ".hdf5"), readdir(path)))
     isempty(cands) && error("GADGET: no .hdf5 snapshot in $path")
-    return joinpath(path, sort(cands)[1])
+    chunks = filter(f -> _gadget_chunknum(f) >= 0, cands)
+    files = isempty(chunks) ? [sort(cands)[1]] : sort(chunks, by=_gadget_chunknum)
+    return [joinpath(path, f) for f in files]
 end
 
+_gadget_file(output::Int, path::String) = first(_gadget_files(output, path))
+
 _gadget_attr(h, k, default) = haskey(h, k) ? read(h[k]) : default
+
+# 64-bit total particle counts: GADGET stores them as two 32-bit halves
+# (NumPart_Total + NumPart_Total_HighWord·2³²); >2³² particles overflow the low word.
+function _gadget_npart_total(h)
+    lo = Int64.(_gadget_attr(h, "NumPart_Total", zeros(Int64, 6)))
+    hi = Int64.(_gadget_attr(h, "NumPart_Total_HighWord", zeros(Int64, 6)))
+    return lo .+ hi .* Int64(2)^32
+end
 
 """
     getinfo_gadget(output::Int, path::String; unit_length=1.0, unit_density=1.0,
                    unit_velocity=1.0, verbose=true) -> InfoType
 
 Read GADGET HDF5 snapshot metadata for `output` in `path` (a directory holding the
-`snap…_NNN.hdf5` file, or the file itself) into a Mera `InfoType` (`simcode = "GADGET"`). GADGET is
+`snap…_NNN.hdf5` file — or its `snap…_NNN.K.hdf5` chunks / a `snapdir_NNN/` chunk directory —
+or a snapshot file itself) into a Mera `InfoType` (`simcode = "GADGET"`). GADGET is
 particle-based; feed the result to [`getparticles`](@ref).
 
 **Units.** GADGET data is in **code units** (commonly length kpc/h, mass 10¹⁰ M⊙/h, velocity km/s);
@@ -75,14 +105,18 @@ the defaults treat the run as dimensionless. Supply the run's CGS `unit_length`/
 """
 function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_density::Real=1.0,
                         unit_velocity::Real=1.0, verbose::Bool=true)
-    fn = _gadget_file(output, path)
+    fns = _gadget_files(output, path)
+    fn = first(fns)
     info = InfoType(); info.descriptor = _external_descriptor()
     h5open(fn, "r") do f
         h = attributes(f["Header"])
         boxlen = Float64(_gadget_attr(h, "BoxSize", 1.0))
-        npart  = Int.(_gadget_attr(h, "NumPart_Total", zeros(Int, 6)))
+        npart  = _gadget_npart_total(h)
         time   = Float64(_gadget_attr(h, "Time", 0.0))
         hub    = Float64(_gadget_attr(h, "HubbleParam", 1.0))
+        nfsp   = Int(_gadget_attr(h, "NumFilesPerSnapshot", 1))
+        nfsp > 1 && length(fns) != nfsp && @warn "GADGET: the header expects $nfsp snapshot " *
+            "chunks but $(length(fns)) file(s) were found — reading what is present."
         info.output = output; info.path = abspath(path); info.simcode = _gadget_subcode(f)
         info.Narraysize = 0; info.ndim = 3
         info.levelmin = 1; info.levelmax = 1               # particle code: no grid levels
@@ -90,8 +124,13 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         info.time = time
         # cosmological? — real cosmological runs carry ΩΛ > 0 and use Time as the scale factor a;
         # idealised/non-cosmological AREPO runs set Ω = 0 and use Time as a physical time (a = 1).
+        # ΩΛ = 0 cosmology (Einstein–de-Sitter) is caught by Time ≡ 1/(1+z) self-consistency.
         om = Float64(_gadget_attr(h, "Omega0", 0.0)); ol = Float64(_gadget_attr(h, "OmegaLambda", 0.0))
         cosmo = ol > 0.0
+        if !cosmo && om > 0.0 && haskey(h, "Redshift") && time > 0.0
+            zred = Float64(read(h["Redshift"]))
+            cosmo = zred > 0.0 && isapprox(time, 1.0 / (1.0 + zred); rtol=1e-3)
+        end
         a = cosmo ? (time == 0.0 ? 1.0 : time) : 1.0
         info.aexp = a
         info.H0 = hub * 100; info.omega_m = om; info.omega_l = ol
@@ -137,6 +176,7 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             println("output: ", output, "  time: ", round(time, sigdigits=5),
                     haskey(h, "Redshift") ? "  redshift: " * string(round(Float64(read(h["Redshift"])), sigdigits=4)) : "")
             println("boxlen = ", info.boxlen)
+            length(fns) > 1 && println("snapshot chunks: ", length(fns))
             present = [(p, npart[p+1]) for p in 0:5 if npart[p+1] > 0]
             println("particles: ", join(["$(n) $(_GADGET_FAMILY[p])" for (p, n) in present], ", "),
                     "  (total ", sum(npart), ")")
@@ -175,29 +215,46 @@ subset with `families` (e.g. `families=[4]` for stars, `[1,4]` for DM+stars).
 `xrange`/`yrange`/`zrange` (+ `center`, `range_unit`) select a spatial window at load time —
 particles outside it are dropped **per type as they are read**, so a sub-region of a large snapshot
 never accumulates in memory (the RAMSES/grid [`getparticles`](@ref) convention).
+
+Multi-file snapshots (`snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, optionally inside `snapdir_NNN/` —
+the IllustrisTNG layout) are read chunk by chunk with the window applied per chunk.
 """
 function getparticles_gadget(info::InfoType; families=:all,
                              xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                              center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
-    fn = _gadget_file(round(Int, info.output), info.path)
+    fns = _gadget_files(round(Int, info.output), info.path)
     want = families === :all ? collect(0:5) : collect(families)
     ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
     bl = info.boxlen
     x = Float64[]; y = Float64[]; z = Float64[]; vx = Float64[]; vy = Float64[]; vz = Float64[]
     mass = Float64[]; id = Int64[]; fam = Int32[]
     gas = Dict{Symbol,Vector{Float64}}()    # gas-cell columns; NaN for non-gas families, kept aligned
+    # which gas-cell fields to expose: gas is requested AND the dataset exists in the snapshot.
+    # A chunk with no gas simply lacks PartType0, so scan chunks until one carries it.
+    gascols = Tuple{String,Symbol}[]
+    has_bfield = false
+    if 0 in want
+        for fn in fns
+            found = h5open(fn, "r") do f
+                haskey(f, "PartType0") || return false
+                for (ds, sym) in _GADGET_GAS_FIELDS
+                    haskey(f["PartType0"], ds) && (push!(gascols, (ds, sym)); gas[sym] = Float64[])
+                end
+                # MagneticField (AREPO/TNG MHD) is a (3,N) vector → :bx,:by,:bz columns
+                if haskey(f["PartType0"], "MagneticField")
+                    has_bfield = true
+                    gas[:bx] = Float64[]; gas[:by] = Float64[]; gas[:bz] = Float64[]
+                end
+                return true
+            end
+            found && break
+        end
+    end
+    # chunk-by-chunk streaming: each file is read and windowed independently, so a spatial
+    # sub-selection of a large multi-file snapshot never holds more than one chunk in memory
+    for fn in fns
     h5open(fn, "r") do f
         masstable = Float64.(_gadget_attr(attributes(f["Header"]), "MassTable", zeros(6)))
-        # which gas-cell fields to expose: gas is requested AND the dataset is in this snapshot
-        gascols = Tuple{String,Symbol}[]
-        if (0 in want) && haskey(f, "PartType0")
-            for (ds, sym) in _GADGET_GAS_FIELDS
-                haskey(f["PartType0"], ds) && (push!(gascols, (ds, sym)); gas[sym] = Float64[])
-            end
-        end
-        # MagneticField (AREPO/TNG MHD) is a (3,N) vector → :bx,:by,:bz columns (NaN for non-gas).
-        has_bfield = (0 in want) && haskey(f, "PartType0") && haskey(f["PartType0"], "MagneticField")
-        if has_bfield; gas[:bx] = Float64[]; gas[:by] = Float64[]; gas[:bz] = Float64[]; end
         for pt in want
             grp = "PartType$pt"
             (haskey(f, grp) && haskey(f[grp], "Coordinates")) || continue
@@ -222,6 +279,7 @@ function getparticles_gadget(info::InfoType; families=:all,
                 end
             end
         end
+    end
     end
     # GADGET cosmological velocity convention: the stored value is v_peculiar/√a, so multiply by
     # √a to recover the physical peculiar velocity (no-op for non-cosmological runs, a = 1).
