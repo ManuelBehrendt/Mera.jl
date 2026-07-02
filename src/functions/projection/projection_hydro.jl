@@ -2292,6 +2292,15 @@ end
 #  needed here: the deposit acts on cell centres; coverage of cells larger than a pixel
 #  is handled by the caller via adaptive supersampling + `block_sum_reduce` (A3).
 # =====================================================================================
+"""
+    deposit_rotated_cells_to_grid!(grid, weight_grid, x_cam, y_cam, values, weights, extent, res; kwargs...)
+
+Centre-only deposit kernel for off-axis projections (`binning=:cic`/`:ngp`): each rotated
+cell centre lands on its nearest pixel (`:ngp`) or is spread bilinearly over the 4
+surrounding pixels (`:cic`). Fast preview quality — cells wider than a pixel leave
+speckle/moiré; the footprint-aware kernels below fix that. Exactly weight-conserving.
+Internal; see the "Off-axis Projection: How It Works Internally" docs page.
+"""
 function deposit_rotated_cells_to_grid!(grid::AbstractMatrix{Float64},
                                         weight_grid::AbstractMatrix{Float64},
                                         x_cam::AbstractVector, y_cam::AbstractVector,
@@ -2374,6 +2383,18 @@ end
 #  grid (no shared writes), then summed.  Cost ≈ Σ nᵢ³, bounded by `nmax`; raise `nmax`
 #  for more accuracy on very coarse cells, lower it for speed.
 # =====================================================================================
+"""
+    deposit_rotated_cells_overlap!(grid, weight_grid, x_cam, y_cam, cellsize, values, weights, cam_right, cam_up, extent, res; nmax=64, max_threads=...)
+
+Footprint deposit kernel for off-axis projections (`binning=:overlap`, the default): each
+cube is split into `ns³` sub-points (`ns = ⌈cellsize/pixel⌉`, capped at `nmax`), every
+sub-point rotated into the camera frame and CIC-deposited with weight `1/ns³`; cells
+coarser than the cap deposit each sub-cube as a footprint-sized top-hat, so the camera
+plane tiles without holes at any viewing angle. Converges to the `:exact` kernel.
+Per-cell contributions sum to exactly 1 — the kernel is weight-conserving by construction.
+Threaded over contiguous cell chunks into per-thread grids (summed at the end).
+Internal; see the "Off-axis Projection: How It Works Internally" docs page.
+"""
 function deposit_rotated_cells_overlap!(grid::Matrix{Float64}, weight_grid::Matrix{Float64},
         x_cam::AbstractVector, y_cam::AbstractVector, cellsize::AbstractVector,
         values::AbstractVector{Float64}, weights::AbstractVector{Float64},
@@ -2664,6 +2685,16 @@ function _oa_fallback(s::Int, cur::Int, active, qa, ra, pmina, pmaxa,
     return acc/(M*M)*(xmx-xmn)*(ymx-ymn)
 end
 
+"""
+    deposit_rotated_cells_exact!(grid, weight_grid, x_cam, y_cam, cellsize, values, weights, cam_right, cam_up, cam_w, extent, res; max_threads=...)
+
+Analytic deposit kernel for off-axis projections (`binning=:exact`): for every pixel a
+cell covers, the line-of-sight **chord length** through the rotated cube is integrated
+over the pixel area (polygon clipping against the six cube faces), i.e. the true column
+integral — the fidelity reference the other kernels are compared against. Sub-pixel
+cells fall back to a CIC 4-pixel stencil. Weight-conserving; threaded like `:overlap`.
+Internal; see the "Off-axis Projection: How It Works Internally" docs page.
+"""
 function deposit_rotated_cells_exact!(grid::Matrix{Float64}, weight_grid::Matrix{Float64},
         x_cam::AbstractVector, y_cam::AbstractVector, cellsize::AbstractVector,
         values::AbstractVector{Float64}, weights::AbstractVector{Float64},
