@@ -34,26 +34,14 @@ println(length(gas.data), " cells, levels ", gas.lmin, "-", gas.lmax,
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: wrong source (2), dep missing source (4), mismatched flags (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |       |    ___|   | || |  |_|  |
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 |       |   |___|   |_||_|       |
 |       |    ___|    __  |       |
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[ Info: Precompiling CairoMakie [13f3f980-e62b-5c42-98c6-ff1f3baf88f0] (cache misses: wrong dep version loaded (4))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling PolynomialsMakieExt [6a4b1961-d857-5aa3-b7f6-fc7c46de29bb] (cache misses: wrong dep version loaded (2))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (2))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
 threads = 4
 590311 cells, levels
 3-7, boxlen = 100.00000000006482 kpc
@@ -135,7 +123,7 @@ enters the projection leaves it on the map, to machine precision, at any viewing
 
 ```julia
 p60 = projection(gas, :sd, :Msol_pc2; inclination=60, azimuth=30,
-                 res=256, verbose=false, show_progress=false)
+                 pxsize=[0.2, :kpc], verbose=false, show_progress=false)
 pix_pc2  = (p60.pixsize * info.scale.pc)^2          # pixel area in pc²
 map_mass = sum(p60.maps[:sd]) * pix_pc2             # Σ surface density × area
 tot_mass = msum(gas, :Msol)
@@ -162,8 +150,8 @@ println("right   = ", round.(p60.cam_right, digits=4))
 ```
 
 ```
-extent  [code units] = [-69.473, 69.98, -77.557, 79.084]
-pixsize [kpc]        = 0.3906
+extent  [code units] = [-69.282, 69.84, -77.366, 78.922]
+pixsize [kpc]        = 0.1996
 los (w) = [0.75, 0.433, 0.5]
 up      = [-0.433, -0.25, 0.866]
 right   = [-0.5, 0.866, 0.0]
@@ -187,7 +175,7 @@ every mode. What differs is *where* the mass lands within the footprint:
 ```julia
 modes = (:ngp, :cic, :overlap, :exact)
 projs = Dict(m => projection(gas, :sd, :Msol_pc2; inclination=60, azimuth=30,
-                             res=256, binning=m, verbose=false, show_progress=false)
+                             pxsize=[0.2, :kpc], binning=m, verbose=false, show_progress=false)
              for m in modes)
 fig = Figure(size=(1200, 330))
 for (i, m) in enumerate(modes)
@@ -205,10 +193,10 @@ fig
 
 ```
 ngp       mass ratio - 1 =
-4.440892098500626e-16
-cic       mass ratio - 1 = 4.440892098500626e-16
+0.0
+cic       mass ratio - 1 = 2.220446049250313e-16
 overlap   mass ratio - 1 = 0.0
-exact     mass ratio - 1 = -1.7763568394002505e-15
+exact     mass ratio - 1 = 1.4432899320127035e-14
 ```
 
 ![](offaxis_internals_files/offaxis_internals_11_3.png)
@@ -230,9 +218,9 @@ Two normalisations, chosen per quantity:
   share a sightline:
 
 ```julia
-Tm = projection(gas, :T, :K; inclination=60, azimuth=30, res=256,
+Tm = projection(gas, :T, :K; inclination=60, azimuth=30, pxsize=[0.2, :kpc],
                 weighting=[:mass],   verbose=false, show_progress=false)
-Tv = projection(gas, :T, :K; inclination=60, azimuth=30, res=256,
+Tv = projection(gas, :T, :K; inclination=60, azimuth=30, pxsize=[0.2, :kpc],
                 weighting=[:volume], verbose=false, show_progress=false)
 fig = Figure(size=(700, 330))
 for (i, (ttl, mp)) in enumerate(("mass-weighted T" => Tm.maps[:T],
@@ -261,9 +249,9 @@ the vertical velocity dispersion:
 
 ```julia
 edge = projection(gas, :vlos, :km_s; direction=:edgeon, center=[:bc],
-                  res=256, verbose=false, show_progress=false)
+                  pxsize=[0.2, :kpc], verbose=false, show_progress=false)
 face = projection(gas, :σlos, :km_s; direction=:faceon, center=[:bc],
-                  res=256, verbose=false, show_progress=false)
+                  pxsize=[0.2, :kpc], verbose=false, show_progress=false)
 vmap = edge.maps[:vlos]
 vmax = maximum(abs, filter(isfinite, vmap))
 fig = Figure(size=(760, 330))
@@ -292,7 +280,7 @@ buffer, not an integral. Consequences to expect:
 
 ```julia
 sl = offaxis_slice(gas, :rho, :g_cm3; inclination=60, azimuth=30,
-                   center=[:bc], res=256, verbose=false)
+                   center=[:bc], pxsize=[0.2, :kpc], verbose=false)
 frac_nan = count(isnan, sl.map) / length(sl.map)
 println("NaN pixels (frame corners outside the plane∩box polygon): ",
         round(100 * frac_nan, digits=1), "%")
@@ -304,7 +292,7 @@ fig
 ```
 
 ```
-NaN pixels (frame corners outside the plane∩box polygon): 18.1
+NaN pixels (frame corners outside the plane∩box polygon): 18.3
 %
 ```
 

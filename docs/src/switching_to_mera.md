@@ -59,10 +59,11 @@ info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only �
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[Mera]: 2026-07-02T18:32:15.940
+[Mera]: 2026-07-02T19:40:09.763
 Code: RAMSES
 output [100] summary:
-mtime: 2023-05-12T22:47:36.638
+mtime:
+2023-05-12T22:47:36.638
 ctime: 2025-06-21T18:31:55.533
 =======================================================
 simulation time: 148.08 [Myr]
@@ -165,7 +166,7 @@ its radial profile:
 
 ```julia
 p = projection(cold, :sd, :Msol_pc2; direction=:faceon, center=[:bc],
-               res=256, verbose=false, show_progress=false)
+               pxsize=[0.2, :kpc], verbose=false, show_progress=false)
 fig = Figure(size=(460, 400))
 ax = Axis(fig[1, 1], title="cold gas Σ [Msol/pc²], face-on", aspect=DataAspect())
 hm = heatmap!(ax, log10.(max.(p.maps[:sd], 1e-2)), colormap=:inferno)
