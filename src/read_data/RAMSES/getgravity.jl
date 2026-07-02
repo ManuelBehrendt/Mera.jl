@@ -135,6 +135,9 @@ function getgravity(dataobject::InfoType;
                    myargs::ArgumentsType=ArgumentsType(),
                    max_threads::Int=Threads.nthreads())
 
+    # Multi-code: fail fast when the data comes from a reader without a gravity frontend.
+    _require_capability(dataobject, :gravity, "getgravity")
+
     # ═══════════════════════════════════════════════════════════════════════════
     # PARAMETER PROCESSING AND VALIDATION
     # ═══════════════════════════════════════════════════════════════════════════

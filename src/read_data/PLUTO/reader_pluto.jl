@@ -59,6 +59,11 @@ end
 # PLUTO static-grid: grid.out + dbl.out;  Chombo AMR (PLUTO/Orion): a *.hdf5 file;
 # RAMSES: output_*/info_*.txt (the default).
 function detect_simcode(path::String)
+    # registered detection hooks first (external/new readers; the built-in codes are
+    # recognised by the signature-file chain below and register no hook)
+    for rdr in _detect_hooks()
+        rdr.detect(path) && return rdr.code
+    end
     (isfile(path) && endswith(lowercase(path), ".athdf")) && return :athena
     (isfile(path) && _is_gadget_h5(path)) && return :gadget
     (isfile(path) && _is_flash_h5(path)) && return :flash

@@ -32,20 +32,12 @@ end
 function getinfo(; output::Real=1, path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true)
 
     # Multi-code front controller: detect (or honour code=) the simulation code, then
-    # delegate to the matching frontend. RAMSES is the built-in default below.
+    # delegate to the registered frontend. RAMSES is the built-in default below.
     resolved = code === :auto ? detect_simcode(path == "" ? pwd() : path) : code
-    if resolved === :pluto
-        return getinfo_pluto(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
-    elseif resolved === :chombo
-        return getinfo_chombo(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
-    elseif resolved === :athena
-        return getinfo_athena(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
-    elseif resolved === :flash
-        return getinfo_flash(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
-    elseif resolved === :gadget
-        return getinfo_gadget(round(Int, output), path == "" ? pwd() : path; verbose=verbose)
-    elseif resolved !== :ramses
-        error("getinfo: unknown code :$resolved (use :auto, :ramses, :pluto, :chombo, :athena, :flash, or :gadget).")
+    if resolved !== :ramses
+        rdr = _reader(resolved)
+        haskey(rdr.funcs, :info) || _capability_error(rdr, :info, "getinfo")
+        return rdr.funcs[:info](round(Int, output), path == "" ? pwd() : path; verbose=verbose)
     end
 
 
