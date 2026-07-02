@@ -126,3 +126,21 @@ MERA-file reading peaked at **8.0 GB vs 13.0 GB** for single-threaded RAMSES (~3
 
 > **Summary for choosing the MERA format:** a large win for **storage** (~62% / 2.6× here) and for **read speed** — ~30–40× faster than RAMSES even on a fast local NVMe SSD, growing further on servers/networked or slow storage with many files — plus ~35% lower peak memory. Reproduce the table above on your own target storage with the script in this guide.
 
+
+## Reference results — laptop (2026-07)
+
+Provenance: Apple M2 Pro (12 cores), Julia 1.12.3, Mera revamp/2026; the
+converted `mw_L10` output 300 (hydro+gravity+particles, LZ4-compressed JLD2) on
+an external Thunderbolt SSD; `run_merafile_benchmark(path, 300, 3)`.
+
+| Read | hydro | gravity | particles | total |
+|---|---:|---:|---:|---:|
+| 1st (cold file cache) | 7.8 s | 3.4 s | 0.4 s | 11.5 s |
+| 2nd (warm) | 0.75 s | 0.58 s | 0.06 s | 1.39 s |
+| 3rd (warm) | 0.70 s | 0.43 s | 0.03 s | 1.15 s |
+
+Reading the identical data from the raw RAMSES output takes ~49 s on the same
+machine (see the RAMSES reading page): the converted file is **~4× faster cold
+and ~35–40× faster warm**, single-threaded.
+
+Run it yourself: `run_merafile_benchmark("path/to/merafiles", OUTPUT, 3)`.
