@@ -507,6 +507,11 @@ benchmark files; tag `phase-9-benchmarks`.
 **Outcome.** `paper/paper.md` + `paper.bib` submission-ready and *true*:
 every claim matches shipped, tested functionality as of the end of Phase 6.
 
+> **Privacy (2026-07-02):** the maintainer wants the paper LOCAL/OFFLINE until
+> they decide to publish. `paper/` is gitignored — never commit it, never wire
+> it into CI, never mention its content in public-facing files (docs, README,
+> commit messages) before the maintainer flips the switch.
+
 **Work items.**
 1. Resolve the TODOs (ORCID, affiliation) — needs user input.
 2. Claims audit against the post-revamp reality: reader status table
@@ -516,17 +521,17 @@ every claim matches shipped, tested functionality as of the end of Phase 6.
 3. Bibliography completeness check (every `@cite` resolves; DOIs present);
    figure check (`quicklook_dashboard.png` reproducible from a script —
    `docs/dev/*_figure.jl` precedent exists).
-4. Add the JOSS `draft-pdf` GitHub Action (build-only, no deploy) so the
-   compiled PDF is checkable per push; verify `paper.md` compiles in the
-   JOSS/openjournals Docker toolchain locally once.
+4. Compile the PDF LOCALLY with the JOSS/openjournals Docker toolchain (no
+   GitHub Action while the paper is private); a `draft-pdf` workflow can be
+   added at submission time, when the maintainer publishes `paper/`.
 5. Align `CITATION.cff` (version, authors, DOI placeholder) with the paper.
 6. JOSS submission checklist pass: license, contributing guidelines,
    installation instructions, community guidelines, API docs, tests — fix
    any gaps found (most are covered by earlier phases).
 
-**Files touched.** `paper/paper.md`, `paper/paper.bib`, `CITATION.cff`,
-`.github/workflows/draft-pdf.yml` (new), possibly `CONTRIBUTING.md` (new, if
-missing from checklist).
+**Files touched.** `paper/paper.md`, `paper/paper.bib` (both local-only,
+gitignored), `CITATION.cff`, possibly `CONTRIBUTING.md` (new, if missing from
+checklist). No workflow file until the paper goes public.
 
 **Risks.** Low. Main risk is claim drift if code phases change scope — hence
 this phase is last and starts with the audit.
