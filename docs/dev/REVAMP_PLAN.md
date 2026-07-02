@@ -605,6 +605,15 @@ could extend Mera by defining methods.
 
 ### Recommendation
 
+> **DECISION (2026-07-02): Option B chosen and implemented** — registry
+> (`src/read_data/reader_interface.jl` + `register_readers.jl`), front
+> controllers rerouted, fail-fast guards on `getgravity`/`getrt`/`getclumps`,
+> `supports`/`capabilities` exported, `Mera.capability_matrix()` for the docs,
+> data-free tests in `test/62_reader_registry_tests.jl`. The docs capability
+> page (Phase 3 item 3) lands with Phase 6; Phases 1–2 remain open (executed
+> out of order by maintainer request — the Phase 2 GADGET-reader items were
+> found partially done already, see test 60's gas-field/a-h/volume blocks).
+
 **Option B**, landed in two steps: Phase 2 first ships Option A's capability
 *errors* (they're needed regardless and are throwaway-cheap), then Phase 3
 replaces the table with the registry so capabilities become derived instead
