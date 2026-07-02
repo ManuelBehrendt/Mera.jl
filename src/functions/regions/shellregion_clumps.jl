@@ -13,7 +13,9 @@ function shellregioncylinder(dataobject::ClumpDataType;
 
     radius_in  = radius[1]
     radius_out = radius[2]
-    if radius_in == 0. || radius_out == 0. || height == 0. || in(0., center)
+    # reject only an all-zero (unset) center — a single 0.0 component (e.g. a box
+    # face like [24., 24., 0.]) is a legitimate center
+    if radius_in == 0. || radius_out == 0. || height == 0. || all(==(0.), center)
         error("[Mera]: given radius, height or center should be != 0.")
     end
 
@@ -76,7 +78,8 @@ function shellregionsphere(dataobject::ClumpDataType;
 
     radius_in  = radius[1]
     radius_out = radius[2]
-    if radius_in == 0. || radius_out == 0. || in(0., center)
+    # reject only an all-zero (unset) center — a single 0.0 component is legitimate
+    if radius_in == 0. || radius_out == 0. || all(==(0.), center)
         error("[Mera]: given inner and outer radius or center should be != 0.")
     end
 

@@ -400,3 +400,26 @@ end
     end
 
 end  # @testset "I/O optimization layer coverage (65)"
+
+# --- regressions for the 2026-07-02 bug fixes -------------------------------------
+@testset "IO bug-fix regressions" begin
+    # runtime cache toggle: ENV["MERA_CACHE_ENABLED"]=false now actually disables
+    # caching (used to be a const frozen at package load — the toggle was inert)
+    d = mktempdir(); fn = joinpath(d, "reg.bin"); write(fn, "payload")
+    calls = Ref(0)
+    rdr = p -> (calls[] += 1; "data")
+    redirect_stdout(devnull) do; Mera.clear_mera_cache!(); end
+    withenv("MERA_CACHE_ENABLED" => "false") do
+        enhanced_fortran_read(fn, rdr); enhanced_fortran_read(fn, rdr)
+    end
+    @test calls[] == 2                                   # no caching: reader ran twice
+    withenv("MERA_CACHE_ENABLED" => "true") do
+        enhanced_fortran_read(fn, rdr); enhanced_fortran_read(fn, rdr)
+    end
+    @test calls[] == 3                                   # cached on the second read
+    redirect_stdout(devnull) do; Mera.clear_mera_cache!(); end
+
+    # ncpu-only characteristics now reach the tier table (used to need avg_file_size too)
+    rec = Mera.recommend_buffer_size(Dict("ncpu" => 30))
+    @test rec["buffer_size"] == 32768 && occursin("Small simulation", rec["reasoning"])
+end

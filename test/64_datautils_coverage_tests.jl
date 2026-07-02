@@ -554,3 +554,45 @@ _du64_quietly(f) = Base.CoreLogging.with_logger(f, Base.CoreLogging.NullLogger()
     showprogress(_du64_prev_progress)
 
 end  # outer testset
+
+# --- regressions for the 2026-07-02 bug fixes -------------------------------------
+@testset "data-utils bug-fix regressions" begin
+    # createscales(::PhysicalUnitsType001): the dead broken body is now a convert-delegate
+    c2 = Mera.createconstants()
+    c1 = Mera.PhysicalUnitsType001()
+    for f in fieldnames(Mera.PhysicalUnitsType001)
+        hasfield(Mera.PhysicalUnitsType002, f) && setfield!(c1, f, getfield(c2, f))
+    end
+    s1 = Mera.createscales(1.0e21, 1.0e-24, 1.0e14, 1.0e39, c1)
+    s2 = Mera.createscales(1.0e21, 1.0e-24, 1.0e14, 1.0e39, c2)
+    @test s1.kpc ≈ s2.kpc && s1.Myr ≈ s2.Myr && s1.g_cm3 ≈ s2.g_cm3
+
+    # skiplines rethrows non-EOF errors (used to swallow EVERYTHING via `catch EOFError`)
+    @test_throws MethodError Mera.skiplines(42, 1)
+
+    # viewdata verbose report survives a corrupt datatype (no versions/memory keys)
+    d = mktempdir()
+    Mera.JLD2.jldopen(joinpath(d, "output_00007.jld2"), "w") do f
+        f["hydro/data"] = [1, 2, 3]                       # data but no information group
+    end
+    ov = redirect_stdout(devnull) do
+        viewdata(7, path=d, verbose=true)                 # used to KeyError mid-report
+    end
+    @test ov isa Dict
+
+    # clump shell regions: a center with a single 0.0 COMPONENT is legitimate now
+    # (the old guard `in(0., center)` rejected e.g. box-face centers like [0.5, 0.5, 0.])
+    F = synthetic_clumps(lmax=6)
+    cl = Mera.ClumpDataType()
+    cl.data = IndexedTables.table([1], [0.7], [0.5], [0.05], [1.0];
+                                  names=[:index, :peak_x, :peak_y, :peak_z, :mass_cl],
+                                  pkey=[:index])
+    cl.info = F.info; cl.boxlen = 1.0; cl.ranges = [0., 1., 0., 1., 0., 1.]
+    cl.selected_clumpvars = [:index, :peak_x, :peak_y, :peak_z, :mass_cl]
+    cl.used_descriptors = Dict(); cl.scale = F.gas.scale
+    okc = shellregion(cl, :cylinder; radius=[0.1, 0.4], height=0.2,
+                      center=[0.5, 0.5, 0.], range_unit=:standard, verbose=false)
+    @test okc isa Mera.ClumpDataType && length(okc.data) == 1   # clump at r≈0.2, z=0.05
+    @test_throws ErrorException shellregion(cl, :cylinder; radius=[0.1, 0.4], height=0.2,
+                                            center=[0., 0., 0.], range_unit=:standard, verbose=false)
+end

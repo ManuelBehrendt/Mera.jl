@@ -95,7 +95,8 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
     end
     # subregion = wrapper over all subregion functions
     if shape == :cuboid
-        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
+        # RT is AMR cell data too — forward `cell` (was dropped, making cell=false unreachable)
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType
             return subregioncuboid(dataobject,
                         xrange=xrange, yrange=yrange, zrange=zrange,
                         center=center,
@@ -153,7 +154,8 @@ function subregion(dataobject::DataSetType, shape::Symbol=:cuboid;
         end
 
     elseif shape == :sphere
-        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
+        # RT is AMR cell data too — forward `cell` (was dropped, making cell=false unreachable)
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType
             return subregionsphere(dataobject,
                             radius=radius,
                             center=center,

@@ -74,7 +74,8 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
         # `direction` is not yet implemented for cylindrical shells (radial test always on x,y, height
         # on z). Reject :x/:y rather than silently returning a z-oriented shell.
         direction === :z || error("shellregion :cylinder currently supports only direction=:z; direction=:$(direction) is not implemented.")
-        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
+        # RT is AMR cell data too — forward `cell` (was dropped, making cell=false unreachable)
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType
             return shellregioncylinder(dataobject,
                                         radius=radius,
                                         height=height,
@@ -96,7 +97,8 @@ function shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
         end
 
     elseif shape == :sphere
-        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType
+        # RT is AMR cell data too — forward `cell` (was dropped, making cell=false unreachable)
+        if typeof(dataobject) == HydroDataType || typeof(dataobject) == GravDataType || typeof(dataobject) == RtDataType
             return shellregionsphere(  dataobject,
                                         radius=radius,
                                         center=center,

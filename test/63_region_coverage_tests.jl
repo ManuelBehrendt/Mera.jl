@@ -432,3 +432,33 @@ else
         @test_skip "spiral_ugrid data not available"
     end
 end
+
+# --- regression (2026-07-02): `cell` is now forwarded through the PUBLIC dispatchers
+# for RT data (it was silently dropped for cuboid/sphere subregions and all shells,
+# making cell=false unreachable except via the internal functions).
+if @isdefined(DATA_AVAILABLE) && DATA_AVAILABLE &&
+   haskey(DATASETS, :rt_stromgren) && isdir(DATASETS[:rt_stromgren].path)
+    @testset "RT cell= forwarded by public dispatchers" begin
+        ds   = DATASETS[:rt_stromgren]
+        info = getinfo(ds.output, ds.path, verbose=false)
+        rt   = getrt(info, verbose=false, show_progress=false)
+        # NOTE: in range_unit=:standard, radius/height are BOX FRACTIONS (prepranges
+        # keeps them as given and treats them as fractions of boxlen)
+        ctr  = [:bc, :bc, :bc]
+        pub = subregion(rt, :sphere; radius=0.2, center=ctr, range_unit=:standard,
+                        cell=false, verbose=false)
+        dir = Mera.subregionsphere(rt; radius=0.2, center=ctr, range_unit=:standard,
+                                   cell=false, verbose=false)
+        @test length(pub.data) == length(dir.data)      # public == direct (cell honoured)
+        @test 0 < length(pub.data) < length(rt.data)    # a real, non-trivial selection
+        pubt = subregion(rt, :sphere; radius=0.2, center=ctr, range_unit=:standard,
+                         verbose=false)                 # cell=true default
+        @test length(pub.data) < length(pubt.data)      # centre-only ⊂ intersecting
+        shp = shellregion(rt, :sphere; radius=[0.1, 0.3], center=ctr,
+                          range_unit=:standard, cell=false, verbose=false)
+        shd = Mera.shellregionsphere(rt; radius=[0.1, 0.3], center=ctr,
+                                     range_unit=:standard, cell=false, verbose=false)
+        @test length(shp.data) == length(shd.data)
+        @test 0 < length(shp.data) < length(rt.data)
+    end
+end

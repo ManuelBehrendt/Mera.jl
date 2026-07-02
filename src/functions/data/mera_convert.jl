@@ -600,7 +600,7 @@ Basic conversion with default safety settings:
 results = batch_convert_mera("/data/old", "/data/new", 100, 200)
 
 Conservative conversion for large files:
-results = batch_convert_era("/data/old", "/data/new", 100, 200;
+results = batch_convert_mera("/data/old", "/data/new", 100, 200;
 requested_threads=4, safety_margin=0.9)
 
 High-performance conversion with monitoring:
@@ -793,9 +793,15 @@ function batch_convert_mera(input_dir::String, output_dir::String,
     safe_println("Starting multithreaded conversion with safety margin monitoring...")
     start_time = time()  # Record start time for performance measurement
     
-    # @threads macro distributes loop iterations across available threads
-    # Each iteration processes one file independently
-    @threads for i in 1:length(target_files)
+    # Worker pool honouring `safe_threads`: exactly that many concurrent tasks consume
+    # the file queue. (The previous `@threads` always used ALL Julia threads — the
+    # requested/calculated thread cap only changed the REPORTED count, not the real
+    # concurrency, which defeated the safety-margin machinery on RAM-limited machines.)
+    work_queue = Channel{Int}(length(target_files))
+    foreach(i -> put!(work_queue, i), 1:length(target_files))
+    close(work_queue)
+    @sync for _ in 1:max(safe_threads, 1)
+        Threads.@spawn for i in work_queue
         filename = target_files[i]
         old_path = joinpath(input_dir, filename)
         new_path = joinpath(output_dir, filename)
@@ -838,8 +844,9 @@ function batch_convert_mera(input_dir::String, output_dir::String,
                 GC.gc()  # Force garbage collection to recover memory
             end
         end
+        end
     end
-    
+
     end_time = time()
     conversion_time = end_time - start_time
     
