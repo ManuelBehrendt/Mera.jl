@@ -75,6 +75,7 @@ makedocs(modules = [Mera],
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],
                           "Off-axis"             => Any[ "Guide"              => "06_offaxis_Projection.md",
+                                                         "Internals: How It Works" => "offaxis_internals.md",
                                                          "Conservation Proof" => "offaxis_conservation_proof.md",
                                                          "Notebooks"          => Any[
                                                              "Projection basics"       => "11_multi_OffAxisProjection.md",
