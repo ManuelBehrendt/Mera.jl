@@ -79,6 +79,7 @@ if isempty(_focus)
         include("59_multicode_contract_tests.jl")  # data-free: cross-reader contract (PLUTO/Athena++/FLASH satisfy the same invariants)
         include("60_gadget_reader_tests.jl")  # data-free: GADGET HDF5 particle reader contract (synthetic HDF5)
         include("61_immersive_tests.jl")  # data-free: immersive volume ray-caster oracles (+ optional spiral_clumps render)
+        include("62_reader_registry_tests.jl")  # data-free: multi-code reader registry (routing, capabilities, fail-fast guards)
     end
 
     # ========================================================================
