@@ -330,26 +330,17 @@ function gethydro(dataobject::InfoType;
                     myargs::ArgumentsType=ArgumentsType(),
                     max_threads::Int=Threads.nthreads())
 
-    # Multi-code: a non-RAMSES info delegates to its own frontend (the analysis stays blind).
-    # The spatial-window selection (xrange/yrange/zrange/center/range_unit) is honoured by the
-    # frontends; lmax/resolution is a leaf-data analysis-time choice and is not forwarded.
-    if dataobject.simcode in ("PLUTO", "CHOMBO", "Athena++", "FLASH")
+    # Multi-code: a non-RAMSES info delegates to its registered frontend (the analysis stays
+    # blind). The spatial-window selection (xrange/yrange/zrange/center/range_unit) is honoured
+    # by the frontends; lmax/resolution is a leaf-data analysis-time choice and is not forwarded.
+    rdr = _reader_by_simcode(dataobject.simcode)
+    if rdr !== nothing && rdr.code !== :ramses
+        haskey(rdr.funcs, :hydro) || _capability_error(rdr, :hydro, "gethydro")
         lmax < dataobject.levelmax && @warn "gethydro: `lmax` is not applied to the " *
             "$(dataobject.simcode) reader — external readers load all leaf cells; choose the " *
             "resolution at analysis time instead (e.g. `projection(…, lmax=, res=)`)." maxlog=1
-    end
-    if dataobject.simcode == "PLUTO"
-        return gethydro_pluto(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                              center=center, range_unit=range_unit, verbose=verbose)
-    elseif dataobject.simcode == "CHOMBO"
-        return gethydro_chombo(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                               center=center, range_unit=range_unit, verbose=verbose)
-    elseif dataobject.simcode == "Athena++"
-        return gethydro_athena(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                               center=center, range_unit=range_unit, verbose=verbose)
-    elseif dataobject.simcode == "FLASH"
-        return gethydro_flash(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                              center=center, range_unit=range_unit, verbose=verbose)
+        return rdr.funcs[:hydro](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                                 center=center, range_unit=range_unit, verbose=verbose)
     end
 
     # ═══════════════════════════════════════════════════════════════════════════

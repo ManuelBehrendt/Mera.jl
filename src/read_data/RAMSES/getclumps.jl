@@ -171,8 +171,8 @@ function getclumps(dataobject::InfoType;
                     verbose::Bool=true,
                     myargs::ArgumentsType=ArgumentsType() )
 
-
-
+    # Multi-code: fail fast when the data comes from a reader without a clumps frontend.
+    _require_capability(dataobject, :clumps, "getclumps")
 
     # take values from myargs if given
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end

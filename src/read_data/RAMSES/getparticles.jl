@@ -198,12 +198,12 @@ function getparticles( dataobject::InfoType;
                     subsample::Real=1.0,                     # read only ~this fraction of CPU files (1.0 = all); for very large runs
                     myargs::ArgumentsType=ArgumentsType() )
 
-    # Multi-code: a non-RAMSES info delegates to its own particle frontend.
-    if dataobject.simcode == "PLUTO"
-        return getparticles_pluto(dataobject; verbose=verbose)
-    elseif dataobject.simcode in ("GADGET", "AREPO", "SWIFT", "GIZMO")   # the GADGET-HDF5 family
-        return getparticles_gadget(dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                                   center=center, range_unit=range_unit, verbose=verbose)
+    # Multi-code: a non-RAMSES info delegates to its registered particle frontend.
+    rdr = _reader_by_simcode(dataobject.simcode)
+    if rdr !== nothing && rdr.code !== :ramses
+        haskey(rdr.funcs, :particles) || _capability_error(rdr, :particles, "getparticles")
+        return rdr.funcs[:particles](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
+                                     center=center, range_unit=range_unit, verbose=verbose)
     end
 
     # ===== ARGUMENT OVERRIDE SECTION =====

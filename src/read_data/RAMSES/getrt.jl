@@ -90,6 +90,9 @@ function getrt(dataobject::InfoType;
                myargs::ArgumentsType=ArgumentsType(),
                max_threads::Int=Threads.nthreads())
 
+    # Multi-code: fail fast when the data comes from a reader without an RT frontend.
+    _require_capability(dataobject, :rt, "getrt")
+
     # myargs overrides
     if !(myargs.lmax          === missing)          lmax = myargs.lmax end
     if !(myargs.xrange        === missing)        xrange = myargs.xrange end
