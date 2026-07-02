@@ -16,6 +16,10 @@ All notable changes to Mera.jl are documented here. The format is based on
   `getclumps` now fail fast with a clear "not available for <code> data" message on non-RAMSES
   input instead of walking into the RAMSES file reader. Adding a new simulation code is now one
   reader file plus one `register_reader!` call (with an optional auto-detection hook).
+  Code-specific keywords pass through the generic entry points — e.g.
+  `getparticles(info; families=[0])` and `getinfo(out, path; unit_length=…)` now reach the
+  GADGET frontend without calling `getparticles_gadget`/`getinfo_gadget` directly; the native
+  RAMSES path still rejects unknown keywords loudly.
   Public API and mera-file (JLD2) compatibility unchanged.
 
 - **Flux budgets (`fluxbudget`).** Conservation-correct mass / momentum / energy / metal flux through a

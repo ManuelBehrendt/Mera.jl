@@ -328,11 +328,14 @@ function gethydro(dataobject::InfoType;
                     verbose::Bool=true,
                     show_progress::Bool=true,
                     myargs::ArgumentsType=ArgumentsType(),
-                    max_threads::Int=Threads.nthreads())
+                    max_threads::Int=Threads.nthreads(),
+                    kwargs...)
 
     # Multi-code: a non-RAMSES info delegates to its registered frontend (the analysis stays
     # blind). The spatial-window selection (xrange/yrange/zrange/center/range_unit) is honoured
     # by the frontends; lmax/resolution is a leaf-data analysis-time choice and is not forwarded.
+    # Extra keyword arguments are passed through to the frontend; the native RAMSES path
+    # rejects leftovers so misspelled keywords still fail loudly.
     rdr = _reader_by_simcode(dataobject.simcode)
     if rdr !== nothing && rdr.code !== :ramses
         haskey(rdr.funcs, :hydro) || _capability_error(rdr, :hydro, "gethydro")
@@ -340,8 +343,10 @@ function gethydro(dataobject::InfoType;
             "$(dataobject.simcode) reader — external readers load all leaf cells; choose the " *
             "resolution at analysis time instead (e.g. `projection(…, lmax=, res=)`)." maxlog=1
         return rdr.funcs[:hydro](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                                 center=center, range_unit=range_unit, verbose=verbose)
+                                 center=center, range_unit=range_unit, verbose=verbose, kwargs...)
     end
+    isempty(kwargs) || error("[Mera]: gethydro: unsupported keyword argument(s) for RAMSES data: " *
+                             join(keys(kwargs), ", ") * ".")
 
     # ═══════════════════════════════════════════════════════════════════════════
     # PARAMETER PROCESSING AND VALIDATION

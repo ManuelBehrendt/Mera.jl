@@ -100,6 +100,18 @@ end
         @test Mera.detect_simcode(mktempdir()) === :ramses
     end
 
+    @testset "kwargs passthrough: native RAMSES path rejects leftovers" begin
+        ram = _registry_stub_info("RAMSES")
+        for f in (gethydro, getparticles)
+            err = try; f(ram; families=[0]); nothing; catch e; e; end
+            @test err isa ErrorException
+            @test occursin("unsupported keyword argument(s) for RAMSES data: families", err.msg)
+        end
+        err = try; getinfo(output=1, path=mktempdir(), families=[0]); nothing; catch e; e; end
+        @test err isa ErrorException
+        @test occursin("unsupported keyword argument(s) for RAMSES data: families", err.msg)
+    end
+
     @testset "unknown code / capability matrix" begin
         err = try; getinfo(output=1, path=".", code=:nosuchcode); nothing; catch e; e; end
         @test err isa ErrorException

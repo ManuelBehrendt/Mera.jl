@@ -22,7 +22,8 @@ function register_builtin_readers!()
         name = "PLUTO (static uniform grid)",
         info = getinfo_pluto,
         hydro = gethydro_pluto,
-        # the PLUTO particle stub takes no spatial-selection keywords yet
+        # the PLUTO particle stub takes no spatial-selection keywords yet; the wrapper
+        # deliberately swallows them (and any extra passthrough keywords)
         particles = (info; verbose::Bool=true, kwargs...) -> getparticles_pluto(info; verbose=verbose))
 
     register_reader!(:chombo;

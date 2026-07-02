@@ -17,28 +17,33 @@ fields like `descriptor`, `grid_info`, `part_info`, `scale`, and helper accessor
 """
 function getinfo end
 
-function getinfo(output::Real; path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, code=code, verbose=verbose)
+function getinfo(output::Real; path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true, kwargs...)
+    return getinfo(; output=output, path=path, namelist=namelist, code=code, verbose=verbose, kwargs...)
 end
 
-function getinfo(output::Real, path::String; namelist::String="", code::Symbol=:auto, verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, code=code, verbose=verbose)
+function getinfo(output::Real, path::String; namelist::String="", code::Symbol=:auto, verbose::Bool=true, kwargs...)
+    return getinfo(; output=output, path=path, namelist=namelist, code=code, verbose=verbose, kwargs...)
 end
 
-function getinfo(path::String; output::Real=1, namelist::String="", code::Symbol=:auto, verbose::Bool=true)
-    return getinfo(output=output, path=path, namelist=namelist, code=code, verbose=verbose)
+function getinfo(path::String; output::Real=1, namelist::String="", code::Symbol=:auto, verbose::Bool=true, kwargs...)
+    return getinfo(; output=output, path=path, namelist=namelist, code=code, verbose=verbose, kwargs...)
 end
 
-function getinfo(; output::Real=1, path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true)
+function getinfo(; output::Real=1, path::String="", namelist::String="", code::Symbol=:auto, verbose::Bool=true, kwargs...)
 
     # Multi-code front controller: detect (or honour code=) the simulation code, then
     # delegate to the registered frontend. RAMSES is the built-in default below.
+    # Extra keyword arguments (e.g. unit_length= for the GADGET/PLUTO frontends) are
+    # passed through to the frontend; the native RAMSES path rejects leftovers so
+    # misspelled keywords still fail loudly.
     resolved = code === :auto ? detect_simcode(path == "" ? pwd() : path) : code
     if resolved !== :ramses
         rdr = _reader(resolved)
         haskey(rdr.funcs, :info) || _capability_error(rdr, :info, "getinfo")
-        return rdr.funcs[:info](round(Int, output), path == "" ? pwd() : path; verbose=verbose)
+        return rdr.funcs[:info](round(Int, output), path == "" ? pwd() : path; verbose=verbose, kwargs...)
     end
+    isempty(kwargs) || error("[Mera]: getinfo: unsupported keyword argument(s) for RAMSES data: " *
+                             join(keys(kwargs), ", ") * ".")
 
 
     verbose = checkverbose(verbose)

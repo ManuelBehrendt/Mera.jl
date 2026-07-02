@@ -90,6 +90,11 @@ end
         info2 = getinfo(0, dir, verbose=false)
         @test info2.simcode == "GADGET"
         @test length(getparticles(info2, verbose=false).data) == 5
+
+        # code-specific keywords pass through the GENERIC entry points to the frontend
+        @test length(getparticles(info2; families=[4], verbose=false).data) == 3   # stars only
+        infoU = getinfo(0, dir; unit_length=2.0, verbose=false)                     # reaches getinfo_gadget
+        @test infoU.unit_l ≈ 2.0 / 0.7                                              # ul0 · a/h (a=1, h=0.7)
     end
 
     @testset "load-time spatial selection (xrange/yrange/zrange)" begin
