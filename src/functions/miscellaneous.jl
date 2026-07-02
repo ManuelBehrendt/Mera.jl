@@ -103,203 +103,12 @@ function createscales(dataobject::InfoType)
     return createscales(unit_l, unit_d, unit_t, unit_m, constants)
 end
 
+# Old serialized constants (PhysicalUnitsType001, from pre-002 mera-files): convert and
+# delegate. The former dedicated implementation here read fields the type never had
+# (eV, Lsol, k_B, ...), so ANY call threw - ~200 dead lines replaced by the existing
+# convert path (types.jl Base.convert PhysicalUnitsType001 -> 002).
 function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m::Float64, constants::PhysicalUnitsType001)
-    #Initialize scale-object
-    scale = ScalesType003() #zeros(Float64, 32)...)
-
-    # Conversion factors from user units to astronomical units
-    mH      =   constants.mH        # [g]   H-Atom mass -> from RAMSES
-    kB      =   constants.kB        # [cm2 g s-2 K-1] = [erg K-1] Boltzmann constant -> cooling_module.f90 RAMSES
-    #Mpc     =   constants.pc /1e6   # [cm] MegaParsec -> from IAU
-    #kpc     =   constants.pc /1e3   # [cm] KiloParsec -> from IAU
-    pc      =   constants.pc        # [cm] Parsec -> from IAU
-    #mpc     =   constants.pc *1e3   # [cm] MilliParsec -> from IAU
-    Au      =   constants.Au        # [cm] Astronomical unit -> from IAU
-    ly      =   constants.ly        # [cm] Light year -> from IAU
-    Msol    =   constants.Msol      # [g] Solar mass -> from IAU
-    Mearth  =   constants.Mearth    # [g]  Earth mass -> from IAU
-    Mjupiter=   constants.Mjupiter  # [g]  Jupiter -> from IAU
-    #Gyr     =   constants.yr /1e9   # [s]  GigaYear -> from IAU
-    #Myr     =   constants.yr /1e6   # [s]  MegaYear -> from IAU
-    yr      =   constants.yr        # [s]  Year -> from IAU
-    X_frac  =   0.76                # Hydrogen fraction by mass -> cooling_module.f90 RAMSES
-    μ       =   1/X_frac            # mean molecular weight
-
-    scale.Mpc       = unit_l / pc / 1e6
-    scale.kpc       = unit_l / pc / 1e3
-    scale.pc        = unit_l / pc
-    scale.mpc       = unit_l / pc * 1e3
-    scale.ly        = unit_l / ly
-    scale.Au        = unit_l / Au
-    scale.km        = unit_l / 1.0e5
-    scale.m         = unit_l / 1.0e2
-    scale.cm        = unit_l
-    scale.mm        = unit_l * 10.
-    scale.μm        = unit_l * 1e4
-
-    scale.Mpc3       = scale.Mpc^3
-    scale.kpc3       = scale.kpc^3
-    scale.pc3        = scale.pc^3
-    scale.mpc3       = scale.mpc^3
-    scale.ly3        = scale.ly^3
-    scale.Au3        = scale.Au^3
-    scale.km3        = scale.km^3
-    scale.m3         = scale.m^3
-    scale.cm3        = scale.cm^3
-    scale.mm3        = scale.mm^3
-    scale.μm3        = scale.μm^3
-
-    scale.Msol_pc3  = unit_d * pc^3 / Msol
-    scale.Msun_pc3  = scale.Msol_pc3
-    scale.g_cm3     = unit_d
-
-    scale.Msol_pc2  = unit_d * unit_l * pc^2 / Msol
-    scale.Msun_pc2  = scale.Msol_pc2
-
-    scale.Gyr       = unit_t / yr / 1e9
-    scale.Myr       = unit_t / yr / 1e6
-    scale.yr        = unit_t / yr
-    scale.s         = unit_t
-    scale.ms        = unit_t * 1e3
-
-    scale.Msol      = unit_d * unit_l^3 / Msol
-    scale.Msun      = scale.Msol
-    scale.Mearth    = unit_d * unit_l^3 / Mearth
-    scale.Mjupiter  = unit_d * unit_l^3 / Mjupiter
-    scale.g         = unit_d * unit_l^3
-    scale.km_s      = unit_l / unit_t / 1e5
-    scale.m_s       = unit_l / unit_t / 1e2
-    scale.cm_s      = unit_l / unit_t
-
-    scale.nH        = X_frac / mH * unit_d  # Hydrogen number density in [H/cc]
-    scale.erg       = unit_m * (unit_l / unit_t)^2 # [g (cm/s)^2]
-    scale.g_cms2    = unit_m / (unit_l * unit_t^2)
-
-    scale.T_mu      = mH / kB * (unit_l / unit_t)^2 # T/mu [Kelvin]
-    scale.K_mu      = scale.T_mu
-    scale.T         = scale.T_mu * μ # T [Kelvin]
-    scale.K         = scale.T
-    scale.Ba        = unit_m / unit_l / unit_t^2 # Barye (pressure) [cm-1 g s-2]
-    scale.g_cm_s2   = scale.Ba
-    scale.p_kB      = scale.g_cm_s2 / kB # [K cm-3]
-    scale.K_cm3     = scale.p_kB # p/kB
-
-    # Entropy-specific units for astrophysical applications
-    scale.erg_g_K   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / kB  # [erg/(g·K)] specific entropy
-    scale.keV_cm2   = scale.erg_g_K * unit_d * unit_l^2 / constants.eV * 1000.0  # [keV·cm²] entropy per particle (X-ray astro)
-    
-    # Additional entropy unit scales
-    scale.erg_K         = scale.erg_g_K * unit_d * unit_l^3                      # [erg/K] total entropy
-    scale.J_K           = scale.erg_K / 1e7                                      # [J/K] SI total entropy  
-    scale.erg_cm3_K     = scale.erg_g_K * unit_d                                 # [erg/(cm³·K)] entropy density
-    scale.J_m3_K        = scale.erg_cm3_K * 1e1                                  # [J/(m³·K)] SI entropy density
-    scale.kB_per_particle = constants.k_B                                        # [erg/K per particle] Boltzmann constant
-    
-    # Angular momentum units
-    scale.J_s           = unit_m * (unit_l^2 / unit_t)                          # [J·s] Angular momentum (SI)
-    scale.g_cm2_s       = unit_m * (unit_l^2 / unit_t)                          # [g·cm²/s] Angular momentum (cgs)
-    scale.kg_m2_s       = scale.g_cm2_s * 1e-3 * 1e4                           # [kg·m²/s] Angular momentum (SI)
-    
-    # Magnetic field units (corrected formulas)
-    scale.Gauss     = sqrt(4π * unit_m / (unit_l * unit_t^2))                   # [G] Magnetic field strength  
-    scale.muG       = scale.Gauss * 1e6                                          # [μG] Micro-Gauss
-    scale.microG    = scale.muG                                                  # Alternative notation
-    scale.nG        = scale.Gauss * 1e9                                          # [nG] Nano-Gauss (IGM/cosmological fields)
-    scale.Tesla     = scale.Gauss * 1e-4                                         # [T] Tesla (SI)
-    
-    # Energy and luminosity scales (corrected)
-    scale.eV        = (unit_m * (unit_l / unit_t)^2) / constants.eV             # [eV] Electron volt
-    scale.keV       = scale.eV / 1e3                                             # [keV] Kilo electron volt  
-    scale.MeV       = scale.eV / 1e6                                             # [MeV] Mega electron volt
-    scale.erg_s     = unit_m * (unit_l / unit_t)^2 / unit_t                     # [erg/s] Luminosity
-    scale.Lsol      = scale.erg_s / constants.Lsol                              # [L☉] Solar luminosity
-    scale.Lsun      = scale.Lsol                                                 # Alternative notation
-    
-    # Particle number densities (corrected)
-    scale.cm_3      = 1. / (unit_l^3)                                            # [cm⁻³] Number density
-    scale.pc_3      = scale.cm_3 / (pc^3)                                        # [pc⁻³] Number density  
-    scale.n_e       = scale.nH                                                   # [e⁻/cm³] Electron density (assuming full ionization)
-    
-    # Cooling and heating rates
-    scale.erg_g_s   = (unit_m * (unit_l / unit_t)^2) / (unit_d * unit_l^3) / unit_t  # [erg/(g·s)] Specific cooling rate
-    scale.erg_cm3_s = unit_m / (unit_l * unit_t^3)                              # [erg/(cm³·s)] Volumetric cooling rate
-    
-    # Flux and surface brightness (corrected)
-    scale.erg_cm2_s = unit_m / (unit_l * unit_t^3)                              # [erg/(cm²·s)] Energy flux
-    scale.Jy        = scale.erg_cm2_s / 1e-23                                    # [Jy] Jansky (radio astronomy)
-    scale.mJy       = scale.Jy * 1e3                                             # [mJy] Milli-Jansky
-    scale.microJy   = scale.Jy * 1e6                                             # [μJy] Micro-Jansky
-    
-    # Column density (corrected)
-    scale.atoms_cm2 = unit_d * unit_l / mH                                      # [atoms/cm²] Column density
-    scale.NH_cm2    = scale.atoms_cm2                                            # [H/cm²] Hydrogen column density
-    scale.g_cm2     = unit_d * unit_l                                            # [g/cm²] Surface density
-
-    # Gravitational and acceleration unit scales
-    scale.cm_s2     = unit_l / unit_t^2                                          # [cm/s²] Acceleration
-    scale.m_s2      = scale.cm_s2 / 100.0                                        # [m/s²] SI acceleration
-    scale.km_s2     = scale.cm_s2 / 1e5                                          # [km/s²] Acceleration
-    scale.pc_Myr2   = scale.cm_s2 * (scale.Myr^2 / scale.pc)                    # [pc/Myr²] Astronomical acceleration
-    
-    # Gravitational potential and energy unit scales
-    scale.erg_g     = (unit_l / unit_t)^2                                        # [erg/g] Specific energy/potential
-    scale.J_kg      = scale.erg_g / 1e7                                          # [J/kg] SI specific energy
-    scale.km2_s2    = scale.erg_g / 1e10                                         # [km²/s²] Velocity squared units
-    
-    # Gravitational energy analysis unit scales
-    scale.u_grav        = unit_d * scale.erg_g                                  # [erg/cm³] Gravitational energy density
-    scale.erg_cell      = unit_d * scale.erg_g * unit_l^3                       # [erg] Total energy per cell
-    scale.dyne          = unit_d * scale.cm_s2                                  # [dyne] Force
-    scale.s_2           = scale.cm_s2 / unit_l                                  # [s⁻²] Acceleration per length  
-    scale.lambda_J      = unit_l                                                # [cm] Jeans length scale
-    scale.M_J           = unit_d * unit_l^3                                     # [g] Jeans mass scale  
-    scale.t_ff          = unit_t                                                 # [s] Free-fall time scale
-    scale.alpha_vir     = 1.0                                                   # Dimensionless virial parameter
-    scale.delta_rho     = 1.0                                                   # Dimensionless density contrast
-    
-    # Missing gravity field unit scales
-    scale.a_mag         = scale.cm_s2                                           # [cm/s²] Acceleration magnitude
-    scale.v_esc         = scale.cm_s                                            # [cm/s] Escape velocity
-    scale.ax            = scale.cm_s2                                           # [cm/s²] x-acceleration component
-    scale.ay            = scale.cm_s2                                           # [cm/s²] y-acceleration component  
-    scale.az            = scale.cm_s2                                           # [cm/s²] z-acceleration component
-    scale.epot          = scale.erg_g                                           # [erg/g] Gravitational potential
-    
-    # Dimensionless ratios and angles
-    scale.dimensionless = 1.0                                                    # Dimensionless quantities
-    scale.rad           = 1.0                                                    # [rad] Radians
-    scale.deg           = 180.0 / π                                              # [deg] Degrees
-
-    # ===== DERIVED VARIABLE MAPPINGS TO PROPER UNIT NAMES =====
-    # These map derived variable names to their appropriate physical unit types
-    # Following the hydro pattern where getunit(obj, :variable_name, vars, units) works
-    
-    # Basic gravity components
-    scale.a_magnitude                  = scale.cm_s2                             # [cm/s²] Acceleration magnitude → acceleration unit
-    scale.escape_speed                 = scale.cm_s                              # [cm/s] Escape velocity → velocity unit
-    scale.gravitational_redshift       = scale.dimensionless                     # Dimensionless redshift → dimensionless
-    
-    # Gravitational energy analysis (map to proper physics units)
-    scale.specific_gravitational_energy = scale.erg_g                           # [erg/g] Specific energy → specific energy unit
-    scale.jeans_length_gravity         = scale.cm                               # [cm] Jeans length → length unit
-    scale.jeans_mass_gravity           = scale.g                                # [g] Jeans mass → mass unit
-    scale.jeansmass                    = scale.g                                # [g] Jeans mass (hydro) → mass unit
-    scale.freefall_time_gravity        = scale.s                                # [s] Free-fall time → time unit
-    scale.ekin                         = scale.erg                              # [erg] Kinetic energy → energy unit
-    scale.etherm                       = scale.erg                              # [erg] Thermal energy per cell → energy unit
-    scale.virial_parameter_local       = scale.dimensionless                    # Dimensionless virial param → dimensionless
-    
-    # Coordinate system components (map to proper units)
-    scale.ar_cylinder                  = scale.cm_s2                            # [cm/s²] Cylindrical radial acceleration → acceleration unit
-    scale.aϕ_cylinder                  = scale.cm_s2                            # [cm/s²] Cylindrical azimuthal acceleration → acceleration unit
-    scale.ar_sphere                    = scale.cm_s2                            # [cm/s²] Spherical radial acceleration → acceleration unit
-    scale.aθ_sphere                    = scale.cm_s2                            # [cm/s²] Spherical polar acceleration → acceleration unit
-    scale.aϕ_sphere                    = scale.cm_s2                            # [cm/s²] Spherical azimuthal acceleration → acceleration unit
-    scale.r_cylinder                   = scale.cm                               # [cm] Cylindrical radius → length unit
-    scale.r_sphere                     = scale.cm                               # [cm] Spherical radius → length unit
-    scale.ϕ                            = scale.rad                              # [rad] Azimuthal angle → angle unit
-
-    return scale
+    return createscales(unit_l, unit_d, unit_t, unit_m, convert(PhysicalUnitsType002, constants))
 end
 
 # Overload for PhysicalUnitsType002 (same implementation, just different type signature)
@@ -625,9 +434,11 @@ function skiplines(file, nlines::Int)
     for i=1:nlines
         try
             read(file)
-        catch EOFError
-            # EOF reached during skip - this can be normal for some RAMSES files
-            # Just break silently rather than crashing
+        catch err
+            # only EOF is expected here (normal for some RAMSES files); the old
+            # `catch EOFError` bound ANY exception to that name and silently
+            # swallowed real read errors
+            err isa EOFError || rethrow()
             break
         end
     end

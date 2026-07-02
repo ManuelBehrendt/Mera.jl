@@ -12,12 +12,18 @@ if !@isdefined(MERA_USE_LARGE_BUFFERS)
     const MERA_USE_LARGE_BUFFERS = get(ENV, "MERA_LARGE_BUFFERS", "true") == "true"
 end
 
+# Runtime cache switch: consulted per call so configure_mera_io(cache=false) /
+# ENV["MERA_CACHE_ENABLED"] take effect immediately (the load-time consts above
+# froze the ENV value at package load, which made the config toggles inert;
+# they are kept only for backward compatibility).
+_mera_cache_enabled() = get(ENV, "MERA_CACHE_ENABLED", "true") == "true"
+
 function enhanced_fortran_read(file_path::String, read_function::Function; use_cache=true)
     """
     Enhanced FORTRAN file reading with caching and buffer optimization
     """
     # Check cache first for repeated reads
-    if use_cache && MERA_CACHE_ENABLED && haskey(MERA_INFO_CACHE, file_path)
+    if use_cache && _mera_cache_enabled() && haskey(MERA_INFO_CACHE, file_path)
         cache_entry = MERA_INFO_CACHE[file_path]
         # Check if file hasn't been modified since caching
         if isfile(file_path) && stat(file_path).mtime <= cache_entry[:mtime]
@@ -34,7 +40,7 @@ function enhanced_fortran_read(file_path::String, read_function::Function; use_c
         result = read_function(file_path)
         
         # Cache result if enabled and successful
-        if use_cache && MERA_CACHE_ENABLED && result !== nothing
+        if use_cache && _mera_cache_enabled() && result !== nothing
             MERA_INFO_CACHE[file_path] = Dict(
                 :data => result,
                 :mtime => stat(file_path).mtime,

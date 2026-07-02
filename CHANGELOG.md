@@ -59,7 +59,21 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Fixed
 
-- **GADGET/AREPO reader — multi-file snapshots.** Chunked snapshots (`snap_NNN.0.hdf5 …
+- **Bug-fix pass driven by the coverage-test audit.** (a) `configure_mera_io(cache=false)` /
+  `ENV["MERA_CACHE_ENABLED"]` now actually disable the read cache — the switch used to be a
+  `const` frozen at package load, so the toggle only changed what status functions reported.
+  (b) `subregion`/`shellregion` now forward the `cell` keyword for RT data on every shape
+  (it was silently dropped for cuboid/sphere subregions and all shells, making
+  `cell=false` unreachable through the public API). (c) Clump shell regions accept centers
+  with a single 0.0 component (e.g. a box face) — only an all-zero center is rejected.
+  (d) `batch_convert_mera` honours its calculated safe thread count with a real worker
+  pool — the `@threads` loop used every Julia thread regardless, defeating the memory
+  safety margin on RAM-limited machines. (e) `skiplines` rethrows non-EOF errors instead
+  of silently swallowing everything. (f) `viewdata(verbose=true)` no longer KeyErrors on
+  a corrupt/partial datatype. (g) `recommend_buffer_size` uses the file-count tier when
+  only `ncpu` is known. (h) The broken-and-dead `createscales(::PhysicalUnitsType001)`
+  overload (~200 lines reading fields the type never had) is now a convert-and-delegate
+  to the current implementation, restoring scale creation for old serialized constants. Chunked snapshots (`snap_NNN.0.hdf5 …
   snap_NNN.K.hdf5`, incl. the IllustrisTNG `snapdir_NNN/` layout) are now read completely,
   chunk by chunk with the spatial window applied per chunk; previously only the first file
   was read, silently dropping most of the box. A header/found chunk-count mismatch warns.

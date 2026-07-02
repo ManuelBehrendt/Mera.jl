@@ -103,7 +103,9 @@ function recommend_buffer_size(characteristics::Dict)
     confidence = "medium"
     reasoning = "Default setting"
     
-    if haskey(characteristics, "ncpu") && haskey(characteristics, "avg_file_size")
+    # ncpu alone is enough for the tier choice; avg_file_size (when present) only
+    # refines it below — requiring BOTH silently fell through to the default before
+    if haskey(characteristics, "ncpu")
         ncpu = characteristics["ncpu"]
         avg_file_size = get(characteristics, "avg_file_size", 0)
         

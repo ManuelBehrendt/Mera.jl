@@ -131,16 +131,21 @@ function viewdata(output::Int;
         for i in keys(viewoutput)
             iroot = viewoutput[i]
             println("Datatype: ", i)
-            println("merafile_version: ", iroot["versions"]["merafile_version"])
-            println("Compression: ", iroot["compression"])
-            for v in keys(iroot["versions"])
-                iversions = iroot["versions"][v]
-
-                println(v, ": ", iversions)
+            # a corrupt/skipped datatype may lack versions/compression/memory —
+            # guard every lookup instead of KeyError-ing mid-report
+            vers = get(iroot, "versions", Dict{String,Any}())
+            haskey(vers, "merafile_version") &&
+                println("merafile_version: ", vers["merafile_version"])
+            haskey(iroot, "compression") &&
+                println("Compression: ", iroot["compression"])
+            for v in keys(vers)
+                println(v, ": ", vers[v])
             end
             println("-------------------------")
-            mem = iroot["memory"]
-            println("Memory: ", mem[1], " ", mem[2], " (uncompressed)")
+            if haskey(iroot, "memory")
+                mem = iroot["memory"]
+                println("Memory: ", mem[1], " ", mem[2], " (uncompressed)")
+            end
             println()
             println()
         end
