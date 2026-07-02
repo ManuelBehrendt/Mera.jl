@@ -41,6 +41,7 @@ jobs:
       - name: Smoke tests (no simulation data)
         env:
           MERA_SMOKE_ONLY: "1"
+          JULIA_NUM_THREADS: "4"   # exercise the threaded code paths (max_threads kwargs)
         run: julia --project -e 'using Pkg; Pkg.test("Mera")'
 
 # Docs are built + deployed by the dedicated `documentation.yml` workflow

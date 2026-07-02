@@ -20,6 +20,7 @@ All notable changes to Mera.jl are documented here. The format is based on
   `getparticles(info; families=[0])` and `getinfo(out, path; unit_length=…)` now reach the
   GADGET frontend without calling `getparticles_gadget`/`getinfo_gadget` directly; the native
   RAMSES path still rejects unknown keywords loudly.
+  `getinfo_chombo`/`gethydro_chombo` are now exported like every other per-code frontend.
   Public API and mera-file (JLD2) compatibility unchanged.
 
 - **Flux budgets (`fluxbudget`).** Conservation-correct mass / momentum / energy / metal flux through a

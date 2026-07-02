@@ -75,6 +75,8 @@ export
     getinfo_pluto,
     gethydro_pluto,
     getparticles_pluto,
+    getinfo_chombo,
+    gethydro_chombo,
     getinfo_athena,
     gethydro_athena,
     getinfo_flash,
