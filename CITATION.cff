@@ -1,12 +1,16 @@
 cff-version: 1.2.0
 message: "If you use Mera.jl in your research, please cite it as below."
-title: "Mera.jl: Fast, conservation-correct analysis of RAMSES adaptive-mesh-refinement simulations in Julia"
+title: "Mera.jl: Fast, conservation-correct, code-agnostic analysis of astrophysical simulations in Julia"
 abstract: >-
-  Mera.jl is a Julia package for reading and analysing RAMSES adaptive-mesh-refinement simulation
-  output (hydro, gravity, particles, clumps, radiative transfer). It provides spatial selection,
-  a derived-quantity registry with physical units, weighted profiles and phase diagrams,
-  mass-conserving projections and covering grids, a pluggable structure (clump/halo) finder, and
-  a conservation-correct inflow/outflow flux-budget tool, all checked by a data-free correctness oracle.
+  Mera.jl is a Julia package for reading and analysing astrophysical simulation output. RAMSES
+  adaptive-mesh-refinement data (hydro, gravity, particles, clumps, radiative transfer) is the
+  native format; self-registering readers also load PLUTO, Chombo, Athena++, FLASH and the
+  GADGET/GIZMO/AREPO/SWIFT HDF5 particle family (including gas-cell physics, cosmological unit
+  conversion and multi-file snapshots), and the code-agnostic analysis layer runs on all of them
+  unchanged. It provides spatial selection, a derived-quantity registry with physical units,
+  weighted profiles and phase diagrams, mass-conserving projections (axis-aligned and off-axis)
+  and covering grids, a pluggable structure (clump/halo) finder, and a conservation-correct
+  inflow/outflow flux-budget tool, all checked by a data-free correctness oracle.
 type: software
 authors:
   - family-names: Behrendt
