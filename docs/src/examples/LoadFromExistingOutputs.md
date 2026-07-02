@@ -1,5 +1,9 @@
 # Load Data from Existing Outputs
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `LoadFromExistingOutputs.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/examples/LoadFromExistingOutputs.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
+
 ```julia
 using Mera
 ```
@@ -90,12 +94,7 @@ The whole pattern above — discover the outputs, load each one, read its physic
 collect a quantity — is what [`timeseries`](@ref) automates into a single call. You give it
 a *reducer* (`data -> scalar | NamedTuple`); it loads one snapshot at a time (RAM-safe) and
 returns one table with an `output` column and a physical **`time` column in Myr** (the same
-`gettime(:Myr)` shown above), plus `redshift`/`aexp` columns for a cosmological run:
-
-```julia
-ts = timeseries(path, d -> (mass = msum(d, :Msol), rho_max = maximum(getvar(d, :rho))))
-# columns: output | time [Myr] | mass | rho_max   (one row per output)
-```
+`gettime(:Myr)` shown above), plus `redshift`/`aexp` columns for a cosmological run.
 
 Use the manual loop when you want full control per snapshot; reach for `timeseries` when
 you just want X(t) as a table. See **[Time Series](../timeseries.md)** for output selection,

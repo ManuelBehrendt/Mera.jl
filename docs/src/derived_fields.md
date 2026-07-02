@@ -3,18 +3,17 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Mera computes a large catalogue of **derived quantities** on demand through
 [`getvar`](@ref) — temperature, sound speed, Mach number, cylindrical/spherical velocities,
 specific angular momentum, Jeans length, kinetic/thermal energy, and many more. You ask for
 them by name and Mera builds them from the raw stored variables:
 
 ```julia
-gas = gethydro(getinfo(output, path))
-
-getvar(gas, :T,    :K)          # temperature
-getvar(gas, :mach)              # Mach number
-getvar(gas, :ekin, :erg)        # kinetic energy
-getvar(gas, [:vr_cylinder, :vϕ_cylinder], :km_s; center=[:bc])
+using Mera
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
+gas  = gethydro(info, verbose=false);
 ```
 
 These derived names also work everywhere `getvar` is used internally — in
@@ -50,9 +49,11 @@ A few derived quantities carry physical assumptions worth stating explicitly:
 Each derived quantity knows which **raw** variables it is built from. That graph is queryable:
 
 ```julia
-getvar_requirements(:hydro, :ekin)        # [:rho, :vx, :vy, :vz]
-getvar_requirements(:hydro, :jeanslength) # [:rho, :p]
-getvar_requirements(:hydro, [:sd, :T])    # [:rho, :p]
+println("T [K] range           : ", extrema(getvar(gas, :T, :K)))
+println("Mach range            : ", extrema(getvar(gas, :mach)))
+println("ekin [erg] (sum)      : ", sum(getvar(gas, :ekin, :erg)))
+println("requirements :ekin    : ", getvar_requirements(:hydro, :ekin))
+println("requirements [:sd,:T] : ", getvar_requirements(:hydro, [:sd, :T]))
 ```
 
 This is what lets the one-call verbs read **only what they need** instead of the whole hydro
@@ -67,15 +68,12 @@ Register a custom derived field once and it behaves like any built-in quantity �
 inside `projection` and `profile`. This is the equivalent of yt's `add_field`.
 
 ```julia
-using Mera
-
-# velocity magnitude squared, built from the velocity components
 add_field(:vmag2, (obj, deps) -> deps[:vx].^2 .+ deps[:vy].^2 .+ deps[:vz].^2;
           depends_on = [:vx, :vy, :vz])
 
-getvar(gas, :vmag2)             # works in getvar …
-projection(gas, :vmag2)         # … and in projection …
-profile(gas, :r_cylinder, :vmag2)   # … and in profile / phase
+println(":vmag2 via getvar     : ", extrema(getvar(gas, :vmag2)))
+m = projection(gas, :vmag2; verbose=false)         # works in projection too
+println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 ```
 
 ### The compute kernel
@@ -92,9 +90,9 @@ Dependencies may be raw variables, other built-in derived quantities, or even ot
 fields — they are resolved recursively:
 
 ```julia
-# a field built on top of a built-in derived quantity (:cs, the sound speed)
 add_field(:mach_custom, (o, d) -> sqrt.(d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2) ./ d[:cs];
           depends_on = [:vx, :vy, :vz, :cs])
+println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 ```
 
 A registered field is a first-class citizen: it flows through [`getvar`](@ref), [`projection`](@ref),

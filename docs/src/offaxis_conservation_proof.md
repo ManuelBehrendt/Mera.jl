@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `offaxis_conservation_proof.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/offaxis_conservation_proof.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 A projection only changes the **viewing geometry** of the data — it must not change the
 physical content. For an *extensive* quantity (one whose pixel values sum to a physical
 total, e.g. mass) the sum over the projected map must equal the geometry-independent ground
@@ -74,16 +75,22 @@ point sits at ~10⁻¹⁵. Both panels are decades below any level that would ma
 ![Off-axis conservation: relative error vs pixel size and vs viewing angle](assets/offaxis/offaxis_conservation.png)
 
 ```julia
-# the sweep behind the plot (abbreviated)
-using Mera
-gas  = gethydro(getinfo(100, "spiral_clumps"))
+using Mera, CairoMakie
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
+gas  = gethydro(info, verbose=false, show_progress=false)
+
 Mtot = sum(getvar(gas, :mass, :Msol))
-LOS  = [[0,0,1], [1,0,0], [0,1,0], [1,1,1], [1,-2,0.5], [-2,1,3], [0.3,0.4,0.866]]
-for res in (50, 75, 100, 137, 200, 256, 350), binning in (:cic, :overlap, :exact)
-    worst = maximum(abs(sum(projection(gas, :mass, :Msol, los=los, res=res, binning=binning,
-                                       verbose=false, show_progress=false).maps[:mass]) - Mtot) / Mtot
-                    for los in LOS)
-    @assert worst < 1e-9
+println("ground-truth total mass [Msol] = ", Mtot)
+println("number of cells                = ", length(gas.data))
+
+LOS = [[0,0,1], [1,0,0], [0,1,0], [1,1,1], [1,-2,0.5], [-2,1,3], [0.3,0.4,0.866]]
+println(rpad("los",22), rpad("binning",10), rpad("map sum [Msol]",24), "rel. error")
+for los in LOS, binning in (:cic, :overlap, :exact)
+    m = projection(gas, :mass, :Msol; los=los, res=128, binning=binning,
+                   center=[:bc], verbose=false, show_progress=false)
+    s = sum(m.maps[:mass]); relerr = abs(s - Mtot)/Mtot
+    println(rpad(string(los),22), rpad(":$(binning)",10), rpad(s,24), relerr)
 end
 ```
 
@@ -104,25 +111,39 @@ not merely flux-conserving.
 ## Reproduce it yourself
 
 ```julia
-using Mera
-info = getinfo(100, "spiral_clumps")
-gas  = gethydro(info)
-
-# geometry-independent ground truth
-Mtot = sum(getvar(gas, :mass, :Msol))
-
-# sweep angles and final-map pixel sizes; every total must equal Mtot
-for los in ([0,0,1], [1,0,0], [1,1,1], [1,-2,0.5], [-2,1,3])
-    for res in (50, 100, 137, 256)            # incl. non-power-of-two
-        for binning in (:cic, :overlap, :exact)
-            m = projection(gas, :mass, :Msol, los=los, res=res, binning=binning,
-                           verbose=false, show_progress=false)
-            relerr = abs(sum(m.maps[:mass]) - Mtot) / Mtot
-            @assert relerr < 1e-9
-        end
+worst_by_res = Tuple{Int,Float64}[]
+for res in (50, 75, 100, 137, 200, 256, 350)
+    worst = 0.0
+    for binning in (:cic, :overlap, :exact)
+        m = projection(gas, :mass, :Msol; los=[1,1,1], res=res, binning=binning,
+                       center=[:bc], verbose=false, show_progress=false)
+        worst = max(worst, abs(sum(m.maps[:mass]) - Mtot)/Mtot)
     end
+    push!(worst_by_res, (res, worst))
+    println("res = ", rpad(res,6), "worst rel. error = ", worst)
 end
-println("Off-axis mass conservation verified across all angles and pixel sizes.")
+
+worst_by_angle = Tuple{Vector{Float64},Float64}[]
+for los in LOS
+    m = projection(gas, :mass, :Msol; los=los, res=128, binning=:overlap,
+                   center=[:bc], verbose=false, show_progress=false)
+    relerr = abs(sum(m.maps[:mass]) - Mtot)/Mtot
+    push!(worst_by_angle, (Float64.(los), relerr))
+end
+worst = max(maximum(last.(worst_by_res)), maximum(last.(worst_by_angle)))
+println("\nworst relative error over the whole sweep = ", worst)
+@assert worst < 1e-9   # conserved to machine precision
+
+fig = Figure(size=(1050,430))
+ax1 = Axis(fig[1,1], title="conservation vs pixel count (los=[1,1,1])",
+           xlabel="res", ylabel="relative error", yscale=log10)
+scatterlines!(ax1, first.(worst_by_res), max.(last.(worst_by_res), 1e-18))
+hlines!(ax1, [eps(Float64)], color=:gray, linestyle=:dash, label="machine eps"); axislegend(ax1)
+ax2 = Axis(fig[1,2], title="conservation vs viewing angle (overlap)",
+           xlabel="angle index", ylabel="relative error", yscale=log10)
+scatter!(ax2, 1:length(worst_by_angle), max.(last.(worst_by_angle), 1e-18))
+hlines!(ax2, [eps(Float64)], color=:gray, linestyle=:dash)
+fig
 ```
 
 ## Relation to other tools

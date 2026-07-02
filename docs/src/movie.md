@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the
 maps into the frames of a movie; [`savemovie`](@ref) writes them to an animated GIF. It
 builds on the same machinery as [`timeseries`](@ref) (one snapshot resident at a time,
@@ -11,11 +12,21 @@ steady.
 
 ![A 3-D Sedov blast over its 13 outputs, each frame tagged with its output number (tags=:output): the column-density frames produced by getmovie, encoded to a GIF by savemovie.](assets/movie/sedov_density.gif)
 
+This notebook runs on the `timeseries_sedov3d` test run (a 3-D Sedov blast, 13 outputs). All
+file outputs are written to a temporary directory.
+
 ```julia
 using Mera
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+run  = joinpath(base, "RAMSES/timeseries_sedov3d")
+tmp  = mktempdir()
+println("temp output dir : ", tmp)
 
-m = getmovie("/data/Mera-Tests/timeseries_sedov3d", :sd)   # one frame per output
-savemovie(m, "density.gif"; tags=:output)                  # label each frame
+# one column-density frame per output (numeric maps, no files written)
+m = getmovie(run, :sd)
+println("frames          : ", length(m.frames))
+println("frame size      : ", size(m.frames[1]))
+println("output numbers  : ", m.outputs)
 ```
 
 ## How it works (no scratch images)
@@ -63,14 +74,29 @@ of each frame. `outputs` selects which snapshots (`:all`, a range, or a vector),
 `mera_files=true` reads `output_*.jld2` mera files instead of RAMSES outputs — exactly as in
 [`timeseries`](@ref).
 
+## Save to a GIF
+
+`savemovie` takes the numeric frames, applies the log/colormap/normalisation, and writes a
+single animated GIF. `tags=:output` burns the output number onto each frame.
+
+```julia
+gif = joinpath(tmp, "density.gif")
+savemovie(m, gif; tags=:output)
+println("wrote GIF       : ", gif, "  (", filesize(gif), " bytes)")
+```
+
 ## Saving: colormap, scaling, steady brightness
 
 ```julia
-savemovie(m, "density.gif";
-          colormap   = :fire,          # :fire (default), :gray, or a function t∈[0,1]->(r,g,b)
-          log        = true,           # map log10 of the (positive) values — good for density
-          colorrange = :global,        # one range across all frames → no brightness flicker
-          clip       = (0.0, 0.999))   # ignore the brightest 0.1% when auto-ranging
+gif2 = joinpath(tmp, "density_gray.gif")
+savemovie(m, gif2;
+          colormap   = :gray,
+          log        = true,
+          colorrange = :global,
+          clip       = (0.0, 0.999),
+          tags       = :time,        # "t = … Myr" on each frame
+          fps        = 8)
+println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
 ```
 
 - **`colorrange=:global`** (default) computes a single range over *all* frames, so the movie
@@ -84,12 +110,7 @@ savemovie(m, "density.gif";
 
 Pass `tags` to label every frame. The labels are **printed** as the movie is written and,
 with `annotate=true` (the default), **burned onto the frames** with a small built-in bitmap
-font (top-left, no font dependency):
-
-```julia
-savemovie(m, "density.gif"; tags=:time)      # "t=12.3 Myr", "t=24.6 Myr", …
-savemovie(m, "density.gif"; tags=:output)    # "output 00001", "output 00002", …
-```
+font (top-left, no font dependency).
 
 `tags` accepts:
 
@@ -107,13 +128,36 @@ Control how the labels look — all optional, with sensible defaults:
 | `tag_color` | `:white` | `:white`, `:yellow`, `:red`, `:cyan`, `:green`, `:black`, an `RGB`, or `(r,g,b)` |
 
 ```julia
-savemovie(m, "density.gif"; tags=(:output, :time),         # two lines …
-          tag_position=:bottomright, tag_color=:yellow, tag_scale=2)
+gif3 = joinpath(tmp, "density_tagged.gif")
+captions = ["frame $(k)/$(length(m.frames))" for k in 1:length(m.frames)]
+savemovie(m, gif3;
+          tags = (:output, :time),          # two stacked lines
+          tag_position = :bottomright,
+          tag_color    = :yellow)
+println("two-line tags  : ", basename(gif3))
 
-savemovie(m, "density.gif"; tags=["start", "mid", "end", …], fps=15)
+gif4 = joinpath(tmp, "density_custom.gif")
+savemovie(m, gif4; tags = captions)         # custom per-frame strings
+println("custom tags    : ", basename(gif4))
 ```
 
 Set `annotate=false` to print the labels without drawing them on the frames.
+
+## Save and reload the movie object
+
+Computing the frames (especially at high resolution over many outputs) is the expensive part.
+Persist the `MeraMovie` to a **JLD2** file — the same Julia-native way [`savemap`](@ref)
+stores a map — and reload it later with [`loadmovie`](@ref),
+without re-running [`getmovie`](@ref):
+
+```julia
+jld = joinpath(tmp, "density.jld2")
+savemovie(m, jld)                           # .jld2 ⇒ persists the object
+m2 = loadmovie(jld)
+println("reloaded frames: ", length(m2.frames), "  (identical: ", length(m2.frames) == length(m.frames), ")")
+```
+
+`savemovie` switches on the extension: `.gif` encodes a movie, `.jld2` persists the object.
 
 ## Scratch frames — keep the PNGs
 
@@ -140,32 +184,40 @@ them as PNGs, and turn them into a GIF, or feed them to `ffmpeg` for an MP4:
 
 ```julia
 using CairoMakie
-mkpath("frames")
-for (k, A) in enumerate(m.frames)             # m.frames[k] is a plain numeric array
-    fig = Figure(); ax = Axis(fig[1,1], aspect=DataAspect(),
-                              title="t = $(round(m.times[k], digits=3))")
-    heatmap!(ax, log10.(max.(A, 1e-30)); colormap=:inferno)
-    save("frames/frame_$(lpad(k,4,'0')).png", fig)
+framedir = joinpath(tmp, "frames"); mkpath(framedir)
+for (k, A) in enumerate(m.frames)
+    f = Figure(size = (320, 300))
+    ax = Axis(f[1,1]; aspect = DataAspect(),
+              title = "t = $(round(m.times[k], digits=3))")
+    hidedecorations!(ax)
+    heatmap!(ax, log10.(max.(A, 1e-30)); colormap = :inferno)
+    save(joinpath(framedir, "frame_$(lpad(k,4,'0')).png"), f)
 end
-moviefromframes("frames/", "movie.gif")       # …or:
-# ffmpeg -framerate 10 -i frames/frame_%04d.png -pix_fmt yuv420p movie.mp4
+out_gif = joinpath(tmp, "from_frames.gif")
+moviefromframes(framedir, out_gif; fps = 10)
+println("assembled      : ", out_gif, "  (", filesize(out_gif), " bytes)")
 ```
 
-## Save and reload the movie object
+…or feed the PNGs to `ffmpeg` for an MP4:
 
-Computing the frames (especially at high resolution over many outputs) is the expensive part.
-Persist the `MeraMovie` to a **JLD2** file — the same Julia-native way [`savemap`](@ref)
-stores a map — and reload it later with [`loadmovie`](@ref),
-without re-running [`getmovie`](@ref):
+```
+ffmpeg -framerate 10 -i frames/frame_%04d.png -pix_fmt yuv420p movie.mp4
+```
+
+## A single rendered frame
+
+For the notebook output we show the last frame (the strongest shock) as one CairoMakie figure.
 
 ```julia
-savemovie(m, "density.jld2")        # a .jld2 filename stores the object (not a GIF)
-m2 = loadmovie("density.jld2")      # → MeraMovie, identical frames + metadata
-
-savemovie(m2, "density.gif"; tags=:time)   # re-encode to a GIF with any tags/colormap, instantly
+A = m.frames[end]
+fig = Figure(size = (480, 440))
+ax  = Axis(fig[1,1]; aspect = DataAspect(),
+           title = "Sedov column density — output $(m.outputs[end])")
+hidedecorations!(ax)
+hm = heatmap!(ax, log10.(max.(A, 1e-30)); colormap = :fire)
+Colorbar(fig[1,2], hm; label = "log10 Sigma")
+fig
 ```
-
-`savemovie` switches on the extension: `.gif` encodes a movie, `.jld2` persists the object.
 
 ## See also
 

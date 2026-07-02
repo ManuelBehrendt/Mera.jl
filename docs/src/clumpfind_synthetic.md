@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `clumpfind_synthetic.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/clumpfind_synthetic.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 This page is a self-contained, **data-free** worked example for the structure finder
 ([`clumpfind`](@ref)). It builds a small Mera simulation *from scratch* — a real
 `HydroDataType` + `PartDataType` on a self-consistent unit system, no RAMSES files — whose
@@ -23,10 +24,16 @@ only `using Mera`.
 ```julia
 using Mera
 
-# Option A — regenerate the identical field locally (no download):
+# Regenerate the identical field locally (deterministic — no download):
 F = synthetic_clumps()
 gas, particles, truth = F.gas, F.particles, F.truth
 
+println("gas cells      : ", length(gas.data))
+println("particles      : ", length(particles.data))
+println("ground-truth clumps : ", length(truth))
+```
+
+```julia
 # Option B — download the prebuilt dataset once (cached in `dir`), then load it:
 D = load_synthetic_clumps(tempdir(); download=true)
 gas, particles, truth = D.gas, D.particles, D.truth
@@ -66,14 +73,23 @@ so they overlap in the x–y projection yet are distinct in 3-D:
 land on the same sky position. A 3-D finder separates them by depth; a 2-D connected-component
 search on the projection would merge them. `test/54` asserts exactly this.*
 
+```julia
+# inspect the injected ground truth
+for t in truth
+    println(rpad(string(t.id), 4), "  pos=", round.(t.pos, digits=3))
+end
+```
+
 ## Run every finder and score it
 
-`clump_recovery` compares a finder's per-cell labelling against the known truth labels:
+`clump_recovery` compares a finder's per-cell labelling against the known truth labels. We
+build the candidate points once, attach the true label of each, then label with each finder:
 
 ```julia
 ll, thr = 2.0/2^7, 5.0
 P    = Mera._make_points(gas, :rho; threshold=thr, threshold_unit=:standard)
 tlab = [F.true_label(P.x[i], P.y[i], P.z[i]) for i in eachindex(P.x)]
+println("candidate cells above threshold : ", length(P.x))
 
 for fdr in (ThresholdFoF(:rho;     threshold=thr, linking_length=ll),
             DensityWatershed(:rho; threshold=thr, linking_length=ll, persistence=30.0),
@@ -81,8 +97,9 @@ for fdr in (ThresholdFoF(:rho;     threshold=thr, linking_length=ll),
             PersistenceFinder(:rho;threshold=thr, linking_length=ll, persistence=30.0))
     flab, _ = Mera._label(fdr, P)
     r = clump_recovery(flab, tlab)
-    println(rpad(nameof(typeof(fdr)),18), "  ARI=", round(r.ari,digits=3),
-            "  completeness=", round(r.completeness,digits=3), "  purity=", round(r.purity,digits=3))
+    println(rpad(string(nameof(typeof(fdr))), 18), "  ARI=", round(r.ari, digits=3),
+            "  completeness=", round(r.completeness, digits=3),
+            "  purity=", round(r.purity, digits=3))
 end
 ```
 
@@ -106,12 +123,16 @@ finders split them along the saddle:
 
 ```julia
 near(c) = 0.40 < c.com[1] < 0.62 && 0.45 < c.com[2] < 0.60 && 0.68 < c.com[3] < 0.82
-count(near, clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll)).clumps)        # 1
-count(near, clumpfind(gas, DensityWatershed(:rho; threshold=thr, linking_length=ll, persistence=30.0)).clumps)  # 2
+n_fof = count(near, clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll)).clumps)
+n_ws  = count(near, clumpfind(gas, DensityWatershed(:rho; threshold=thr, linking_length=ll,
+                                                    persistence=30.0)).clumps)
+println("ThresholdFoF clumps near G1/G2     : ", n_fof, "   (merged)")
+println("DensityWatershed clumps near G1/G2 : ", n_ws,  "   (split)")
 
 # the same two cores appear as bound substructure of the single FoF clump:
 csub = clumpfind(gas, :rho; threshold=thr, linking_length=ll, substructure=true)
-any(get(c, :n_subclumps, 0) == 2 for c in csub.clumps)   # true
+println("a FoF clump with 2 bound subclumps : ",
+        any(get(c, :n_subclumps, 0) == 2 for c in csub.clumps))
 ```
 
 ## Accuracy, boundedness and the mass function
@@ -125,10 +146,12 @@ finder labels it `bound=false`. Right: the recovered cumulative clump mass funct
 ```julia
 cat = clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll);
                 boundedness=true, egrav=:tree)
-# the validator chain turns the virial state into a filter — drop the unbound clump:
+println("clumps (incl. unbound Fhot) : ", cat.nclumps)
+
 bound = clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll);
                   validators=[Bound(:tree), VirialBelow(2.0)])
-bound.nclumps == cat.nclumps - 1     # Fhot removed
+println("clumps after virial filter  : ", bound.nclumps)
+println("Fhot removed                : ", bound.nclumps == cat.nclumps - 1)
 ```
 
 ## Backgrounds & noise — telling clumps from the ISM floor
@@ -155,12 +178,19 @@ clumps are detected. Right: `DensityWatershed` (and `Dendrogram`/`PersistenceFin
 prominence/`min_delta` cut) reject the smooth floor by **density contrast** and recover all 8.*
 
 ```julia
-gasg = galaxy.gas; thr, ll = 4.0, 2.0/2^6
+galaxy = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)
+gasg = galaxy.gas
+thr2, ll2 = 4.0, 2.0/2^6
+
 peakpos(cat) = [c.peak_pos for c in cat.clumps]
 ndet(cat) = count(t -> any(p -> sum((p .- t.pos).^2) < 0.05^2, peakpos(cat)), galaxy.truth)
 
-ndet(clumpfind(gasg, ThresholdFoF(:rho; threshold=thr, linking_length=ll); min_members=20))       # 2/8 — disk fuses
-ndet(clumpfind(gasg, DensityWatershed(:rho; threshold=thr, linking_length=ll, persistence=20.0); min_members=20))  # 8/8
+n_fof = ndet(clumpfind(gasg, ThresholdFoF(:rho; threshold=thr2, linking_length=ll2);
+                       min_members=20))
+n_ws  = ndet(clumpfind(gasg, DensityWatershed(:rho; threshold=thr2, linking_length=ll2,
+                                              persistence=20.0); min_members=20))
+println("ThresholdFoF on ISM disk     : ", n_fof, "/8  (disk fuses)")
+println("DensityWatershed on ISM disk : ", n_ws,  "/8  (contrast wins)")
 ```
 
 The lesson: on a structured background, prefer a **density-contrast** finder
@@ -189,16 +219,30 @@ recovery respond as you turn each knob. Sweeping the three most important parame
   (detection falls). Lower to be complete, raise to be clean.
 
 ```julia
-# the linking-length plateau is wide and forgiving; the threshold trade-off is not:
-F = synthetic_clumps()
-for ll in (1, 2, 5) .* (1/128)
-    cat = clumpfind(F.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=ll))
-    println("ll=", round(ll, digits=4), "  → ", cat.nclumps, " clumps")   # all ≈ 7
+for ll3 in (1, 2, 5) .* (1/128)
+    cat = clumpfind(F.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=ll3))
+    println("ll=", round(ll3, digits=4), "  -> ", cat.nclumps, " clumps")   # all ~ 7
 end
 ```
 
 `test/54_clumpfind_synthetic_tests.jl` pins these trends (plateau, over-merge cliff, the
 persistence split point, and the threshold dropout).
+
+## One figure — the gas column density
+
+Collapse the box along `z` for display (the field and every finder are genuinely 3-D). Note
+the G1+G2 "peanut" near the centre.
+
+```julia
+using CairoMakie
+
+sd = projection(gas, :sd, :Msol_pc2; direction=:z)
+fig = Figure(size=(520, 460))
+ax = Axis(fig[1,1]; title="Synthetic clump field (Sigma)", aspect=DataAspect())
+hidedecorations!(ax)
+heatmap!(ax, log10.(sd.maps[:sd]'); colormap=:inferno)
+fig
+```
 
 ## When to use which finder
 

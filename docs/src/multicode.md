@@ -36,6 +36,18 @@ physics, cosmological a/h, projection deposition modes):
 
 ![Capability matrix: each supported code (RAMSES, PLUTO, Chombo, Athena++, FLASH, GADGET, AREPO/TNG) versus its capabilities — geometry, hydro/gravity/particles/MHD, particle gas-cell physics, comoving→physical cosmology, units returned, projection deposition, and lazy load-time windowing. RAMSES is native; grid/AMR codes return code units; GADGET/AREPO carry gas physics and AREPO adds mass/volume/SPH/Voronoi projection.](assets/MulticodeCapabilities.png)
 
+### Which entry point works on which code
+
+Every reader registers itself with the entry points it implements, so the table below is
+**generated from the reader registry at build time** — it cannot drift from the code. Query the
+same information programmatically with `supports(info, :gravity)` / `capabilities(info)`; an
+unsupported call fails fast with a message naming what IS available for that code.
+
+```@eval
+using Mera, Markdown
+Markdown.parse(Mera.capability_matrix())
+```
+
 Data is loaded **per type**, exactly as for RAMSES: [`gethydro`](@ref) always, and
 [`getparticles`](@ref) where the code wrote particles (PLUTO). Only what a code actually stored is
 available — e.g. an Athena++/FLASH plot file is hydro + cell-centred MHD only.

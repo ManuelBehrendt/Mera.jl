@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `statistics.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/statistics.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 [`pdf`](@ref) computes the **probability distribution function** of any [`getvar`](@ref)
 quantity over the cells (or particles) of a snapshot. The canonical use is the **density
 PDF** — the log-normal core (with a power-law high-density tail) that supersonic turbulence
@@ -12,13 +13,17 @@ and self-gravity imprint on the gas, and the starting point for many star-format
 
 ```julia
 using Mera
-gas = gethydro(getinfo(100, "/data/Mera-Tests/spiral_clumps"))
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
+gas  = gethydro(info, verbose=false);
+```
 
-P  = pdf(gas, :rho)                    # mass-weighted density PDF
-Pv = pdf(gas, :rho; weight=:volume)    # volume-weighted
-
-# plot, e.g.
-# lines(log10.(P.centers), P.pdf)
+```julia
+P  = pdf(gas, :rho)                    # mass-weighted (default)
+Pv = pdf(gas, :rho; weight=:volume)   # volume-weighted
+println("nbins                 : ", length(P.pdf))
+println("sum P dln(rho) (logbins) ≈ 1 : ", sum(P.pdf .* diff(log10.(P.edges))))
+println("rho range             : ", extrema(P.centers))
 ```
 
 ## What it returns
@@ -70,27 +75,41 @@ It works on any quantity, not just density — e.g. `pdf(gas, :T)` (temperature)
 
 `pdf` is generic over the data object, so it works on **hydro, particle, gravity, and RT**
 data — any quantity/weight [`getvar`](@ref) supports. For a **signed** field (the potential
-`:epot`, a velocity component) pass `logbins=false`, since log bins need positive values:
-
-```julia
-pdf(particles, :vx;   weight=:mass,   logbins=false)   # particle velocity PDF
-pdf(gravity,   :epot; weight=:volume, logbins=false)   # potential PDF
-pdf(rt,        :Np1;  weight=:volume)                  # photon-density PDF
-```
+`:epot`, a velocity component) pass `logbins=false`, since log bins need positive values.
 
 Pass a [`projection`](@ref) result and `pdf` takes the **PDF of the 2D map's pixels** — with
 `:sd` this is the **column-density PDF (N-PDF)**, a standard observational diagnostic. Weight
-by `:area` (default, every pixel equal), `:value`, or another map key; a raw matrix works too:
+by `:area` (default, every pixel equal), `:value`, or another map key; a raw matrix works too
+(`pdf(p.maps[:sd])`):
 
 ```julia
-p = projection(gas, :sd)
-N = pdf(p, :sd)                                              # area-weighted N-PDF
-M = pdf(p.maps[:sd])                                         # PDF of a raw 2-D map matrix
+parts = getparticles(info, verbose=false)
+Pp = pdf(parts, :vx; weight=:mass, logbins=false)        # particle velocity PDF
+println("particle vx PDF bins  : ", length(Pp.pdf))
+
+grav = getgravity(info, verbose=false)
+Pe = pdf(grav, :epot; weight=:volume, logbins=false)     # potential PDF
+println("epot PDF bins         : ", length(Pe.pdf))
+
+p = projection(gas, :sd; verbose=false)
+N = pdf(p, :sd)                                          # area-weighted N-PDF of the map
+println("map N-PDF bins        : ", length(N.pdf))
 ```
 
 !!! note "Name clash"
     `pdf` is also exported by `Distributions.jl`; if you `using` both packages, call
     `Mera.pdf`.
+
+## Plot the density PDF
+
+```julia
+using CairoMakie
+fig = Figure(size=(560,400))
+ax = Axis(fig[1,1], title="density PDF (mw_L10)", xlabel="log10 rho", ylabel="PDF")
+lines!(ax, log10.(P.centers), P.pdf, label="mass-weighted")
+lines!(ax, log10.(Pv.centers), Pv.pdf, label="volume-weighted")
+axislegend(ax); fig
+```
 
 ## Planned
 

@@ -3,6 +3,7 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `magnetic_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/magnetic_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
+
 Mera reads **RAMSES MHD** (ideal magnetohydrodynamics) outputs and exposes the magnetic field for
 analysis. RAMSES evolves **B** with a *constrained-transport* scheme, so the field is stored as the
 **six face-centred components** `B_{x,y,z}_left` and `B_{x,y,z}_right` in the ordinary hydro files
@@ -50,13 +51,21 @@ The yt project hosts a small RAMSES MHD test (a 3-D MHD tube). Download and extr
 
 ```julia
 using Mera
-info = getinfo(27, "ramses_mhd_128")          # prints the MHD-layout info note
-gas  = gethydro(info)
+base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 
-# canonical names: pressure is correct (index 11), B faces are present
-getvar(gas, :p)            # thermal pressure
-getvar(gas, :bx)           # cell-centred Bx = ½(bx_left + bx_right)
-getvar(gas, :T, :K)        # temperature, from the *correct* pressure
+# getinfo prints the MHD-layout note + the overview (note the magnetic-field line)
+info = getinfo(27, joinpath(base, "RAMSES/ramses_mhd_128"));
+```
+
+```julia
+gas = gethydro(info);
+
+println("cells loaded         : ", length(gas.data))
+println("thermal pressure   p : ", extrema(getvar(gas, :p)))
+println("cell-centred Bx      : ", extrema(getvar(gas, :bx)))
+println("cell-centred By      : ", extrema(getvar(gas, :by)))
+println("cell-centred Bz      : ", extrema(getvar(gas, :bz)))
+println("temperature  T [K]   : ", extrema(getvar(gas, :T, :K)))
 ```
 
 ## Derived magnetic quantities
@@ -65,22 +74,17 @@ All of these are **built-in `getvar` quantities** computed from the cell-centred
 arithmetic needed — and each takes the units shown:
 
 ```julia
-# field magnitude |B|  (field-strength units: :Gauss, :muG, :microG, :nG, :Tesla)
-Bmag    = getvar(gas, :bmag)          # code units
-Bmag_uG = getvar(gas, :bmag, :muG)    # μG
+Bmag_uG = getvar(gas, :bmag, :muG)      # |B| in micro-Gauss
+beta    = getvar(gas, :beta)            # plasma beta (dimensionless)
+vA      = getvar(gas, :v_alfven, :km_s) # Alfven speed
+mA      = getvar(gas, :mach_alfven)     # Alfvenic Mach number
+mf      = getvar(gas, :mach_fast)       # fast magnetosonic Mach number
 
-# magnetic pressure P_mag = B²/8π  and plasma β = P_thermal / P_mag
-Pmag = getvar(gas, :pmag, :Ba)        # magnetic pressure [barye = erg/cm³]  (also :g_cm_s2)
-beta = getvar(gas, :beta)             # plasma β (dimensionless)
-
-# Alfvén speed and magnetic energy per cell
-vA   = getvar(gas, :v_alfven, :km_s)  # v_A = |B|/√(4πρ)
-Emag = getvar(gas, :e_magnetic, :erg) # magnetic energy per cell = (B²/8π)·V_cell
-
-# magnetosonic Mach numbers
-mA = getvar(gas, :mach_alfven)   # M_A = |v| / v_A
-mf = getvar(gas, :mach_fast)     # fast:  v_f = √(c_s² + v_A²)
-ms = getvar(gas, :mach_slow)     # slow:  v_s = c_s·v_A/√(c_s² + v_A²)
+println("|B|   [muG]          : ", extrema(Bmag_uG))
+println("plasma beta          : ", extrema(beta))
+println("Alfven speed [km/s]  : ", extrema(vA))
+println("Mach_alfven          : ", extrema(mA))
+println("Mach_fast            : ", extrema(mf))
 ```
 
 Almost no new units were needed: `B` reuses the field-strength scales (`:Gauss`, `:muG`, `:microG`,
@@ -99,9 +103,16 @@ column-density map alongside it:
 
 ```julia
 using CairoMakie
+
 sd = projection(gas, :sd, :Msol_pc2; direction=:z)
-bx = projection(gas, :bx;            direction=:z)   # mass-weighted ⟨Bx⟩ map
-heatmap(bx.maps[:bx])
+bx = projection(gas, :bx;            direction=:z)   # mass-weighted <Bx>
+
+fig = Figure(size=(900, 380))
+ax1 = Axis(fig[1,1]; title="Sigma  [Msol/pc^2]", aspect=DataAspect()); hidedecorations!(ax1)
+ax2 = Axis(fig[1,2]; title="<Bx> (mass-weighted)", aspect=DataAspect()); hidedecorations!(ax2)
+heatmap!(ax1, log10.(sd.maps[:sd]'); colormap=:inferno)
+heatmap!(ax2, bx.maps[:bx]';         colormap=:balance)
+fig
 ```
 
 On an MHD run the [first-look dashboard](report.md) does this for you: `quicklook(output)` adds a
