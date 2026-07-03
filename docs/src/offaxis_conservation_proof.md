@@ -150,7 +150,7 @@ fig
 
 This combination is the distinguishing property of Mera's off-axis projection:
 
-* like ray-cast off-axis projections (e.g. yt) the accurate `:overlap`/`:exact` modes are
+* like ray-cast off-axis projections generally, the accurate `:overlap`/`:exact` modes are
   **footprint-correct** — coarse AMR cells cover the full area of their projected shadow;
 * the `:exact` mode goes further: it integrates the line-of-sight column (chord length through
   each cube) over every pixel **analytically** — a box-spline footprint that no mainstream tool

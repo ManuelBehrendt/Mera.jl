@@ -52,8 +52,8 @@ Resolution/level is chosen later at analysis time (`projection(…, res=)`), not
 cap would leave gaps, since no coarse data sits under a leaf.
 
 The window also **prunes I/O**: only the MeshBlocks whose bounding box intersects the box are read
-from the `.athdf` file (the cells are then exactly clipped), exactly as yt reads only the chunks a
-region touches. Loading the central 10 % of the AM06 sample reads 1554 of its 3424 MeshBlocks; a
+from the `.athdf` file (the cells are then exactly clipped), so a sub-region touches only the
+blocks it overlaps. Loading the central 10 % of the AM06 sample reads 1554 of its 3424 MeshBlocks; a
 smaller window reads proportionally fewer, so a sub-region costs a fraction of the full snapshot in
 both time and memory. A full-box load keeps the fast single-read-per-dataset path.
 

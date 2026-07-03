@@ -24,7 +24,7 @@ println("cells loaded : ", length(gas.data))
 ## AMR grid overlay
 
 `gridoverlay` returns the **cell-boundary line segments** of the AMR cells at a chosen `level`,
-viewed along an axis — the analogue of yt's `annotate_grids` / pyPLUTO's `oplotbox`. Overlay
+viewed along an axis. Overlay
 them on a `projection` to see where the mesh refines. It returns `(segments, extent, level)`;
 `segments` is a vector of `(x1,y1,x2,y2)` in plane coordinates.
 

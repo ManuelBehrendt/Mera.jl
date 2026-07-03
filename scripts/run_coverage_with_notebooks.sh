@@ -35,7 +35,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-NOTEBOOK_DIR="${NOTEBOOK_DIR:-/Users/mabe/Documents/codes/github/Notebooks/Mera-Docs/version_1}"
+NOTEBOOK_DIR="${NOTEBOOK_DIR:-/Volumes/FASTStorage/Simulations/Mera-Docs/version_2}"   # moved 2026-07-02 (was ~/Documents/codes/github/Notebooks/Mera-Docs/version_1)
 COV_KERNEL="${COV_KERNEL:-mera-docs-1.12-cov-1.12}"
 JULIA="${JULIA:-julia +1.12}"
 

@@ -108,13 +108,22 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 ```
 
 ```
-[Mera]: 2026-06-01T20:27:41.140
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+[Mera]: 2026-07-03T10:09:18.780
 Code: RAMSES
 output [400] summary:
 mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
-simulation time: 594.98 [Myr]
+simulation time: 594.98
+ [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
@@ -125,7 +134,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -149,9 +158,9 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-06-01T20:27:43.446
+[Mera]: Get hydro data: 2026-07-03T10:09:20.614
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -161,7 +170,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:30 (15.02 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:36 (17.79 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 18966620 cells, 7 variables
@@ -171,10 +180,9 @@ Creating Table from 18966620 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
- 26.152666 seconds (727.01 M allocations: 38.740 GiB, 8.64% gc time, 3.23% compilation time)
-✓ Table created in 26.423 seconds
-Memory used for data table :
-1.5544367535039783 GB
+✓ Table created in 24.057 seconds
+Memory used for data table :1.5544367535039783
+ GB
 -------------------------------------------------------
 ```
 
@@ -187,19 +195,19 @@ gas.data
 ```
 Table with 18966620 rows, 11 columns:
 Columns:
-#   colname  type
-────────────────────
-1   level    Int64
-2   cx       Int64
-3   cy       Int64
-4   cz       Int64
-5   rho      Float64
-6   vx       Float64
-7   vy       Float64
-8   vz       Float64
-9   p        Float64
-10  var6     Float64
-11  var7     Float64
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64
 ```
 
 ## Basic Projections
@@ -245,6 +253,19 @@ related to a given center:
 squared => :vr_cylinder2, :vϕ_cylinder2
 velocity dispersion => σr_cylinder, σϕ_cylinder
 2d maps (not projected) => :r_cylinder, :ϕ
+==============[off-axis views]:==================
+project along ANY line of sight (degrees by default):
+  inclination=, azimuth=, axis=(:z|:angmom|vector)
+  direction=:faceon / :edgeon   (disk from L)
+  los=[lx,ly,lz]   or   theta=, phi=
+  position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact
+  line-of-sight tools (same view kwargs):
+    :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)
+    slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions
+    rotation_sequence             -> shared-FOV angle sweep (orbit movies)
+    savemap/loadmap (JLD2)        -> store/restore a projection result
+    (PPV cubes, spectra, moments -> dev/loscubes ; column_integral, emission/absorption,
+     optical depth, FITS export   -> dev/offaxis_synthobs)
 ------------------------------------------------
 ```
 
@@ -280,7 +301,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 
 ```
-[Mera]: 2026-06-01T20:28:46.710
+[Mera]: 2026-07-03T10:10:31.520
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -317,7 +338,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:01.907
+[Mera]: 2026-07-03T10:10:46.577
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -348,7 +369,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:04.151
+[Mera]: 2026-07-03T10:10:48.917
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -375,7 +396,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:06.235
+[Mera]: 2026-07-03T10:10:50.447
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -406,7 +427,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:08.280
+[Mera]: 2026-07-03T10:10:52.676
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -448,7 +469,7 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:10.447
+[Mera]: 2026-07-03T10:10:54.296
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -483,7 +504,7 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:11.683
+[Mera]: 2026-07-03T10:10:55.654
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -517,7 +538,7 @@ proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:13.169
+[Mera]: 2026-07-03T10:10:57.430
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -551,7 +572,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:14.491
+[Mera]: 2026-07-03T10:10:58.932
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -585,7 +606,7 @@ propertynames(proj1_z)
 ```
 
 ```
-(:maps, :maps_unit, :maps_lmax, :maps_weight, :maps_mode, :lmax_projected, :lmin, :lmax, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :smallr, :smallc, :scale, :info)
+(:maps, :maps_unit, :maps_lmax, :maps_weight, :maps_mode, :lmax_projected, :lmin, :lmax, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :smallr, :smallc, :scale, :info, :los, :up, :cam_right, :center)
 ```
 
 #### Projection Maps Dictionary
@@ -599,7 +620,7 @@ proj1_z.maps
 
 ```
 DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 2 entries:
-  :sd => [2.41447 2.41447 … 3.05972 3.05972; 2.41447 2.41447 … 3.05972 3.05972;…
+  :sd => [10.8651 10.8651 … 13.7688 13.7688; 10.8651 10.8651 … 13.7688 13.7688;…
   :vx => [48.3311 48.3311 … 35.0161 35.0161; 48.3311 48.3311 … 35.0161 35.0161;…
 ```
 
@@ -611,32 +632,32 @@ proj1_z.maps[:sd]
 
 ```
 1708×342 Matrix{Float64}:
- 2.41447  2.41447  2.41447  2.41447  …  3.05972  3.05972  3.05972  3.05972
- 2.41447  2.41447  2.41447  2.41447     3.05972  3.05972  3.05972  3.05972
- 2.41447  2.41447  2.41447  2.41447     3.05972  3.05972  3.05972  3.05972
- 2.41447  2.41447  2.41447  2.41447     3.05972  3.05972  3.05972  3.05972
- 2.41447  2.41447  2.41447  2.41447     3.05972  3.05972  3.05972  3.05972
- 2.4225   2.4225   2.4225   2.4225   …  3.04624  3.04624  3.04624  3.04624
- 2.42659  2.42659  2.42659  2.42659     3.03937  3.03937  3.03937  3.03937
- 2.42659  2.42659  2.42659  2.42659     3.03937  3.03937  3.03937  3.03937
- 2.42659  2.42659  2.42659  2.42659     3.03937  3.03937  3.03937  3.03937
- 2.42659  2.42659  2.42659  2.42659     3.03937  3.03937  3.03937  3.03937
- 2.42659  2.42659  2.42659  2.42659  …  3.03937  3.03937  3.03937  3.03937
- 2.42659  2.42659  2.42659  2.42659     3.03937  3.03937  3.03937  3.03937
- 2.42659  2.42659  2.42659  2.42659     3.03937  3.03937  3.03937  3.03937
- ⋮                                   ⋱                    ⋮
- 5.42462  5.42462  5.42462  5.42462     2.45112  2.45112  2.45112  2.45112
- 5.42462  5.42462  5.42462  5.42462     2.45112  2.45112  2.45112  2.45112
- 5.42462  5.42462  5.42462  5.42462     2.45112  2.45112  2.45112  2.45112
- 5.42462  5.42462  5.42462  5.42462     2.45112  2.45112  2.45112  2.45112
- 5.42462  5.42462  5.42462  5.42462  …  2.45112  2.45112  2.45112  2.45112
- 5.42462  5.42462  5.42462  5.42462     2.45112  2.45112  2.45112  2.45112
- 5.50853  5.50853  5.50853  5.50853     2.44314  2.44314  2.44314  2.44314
- 5.67323  5.67323  5.67323  5.67323     2.42747  2.42747  2.42747  2.42747
- 5.67323  5.67323  5.67323  5.67323     2.42747  2.42747  2.42747  2.42747
- 5.67323  5.67323  5.67323  5.67323  …  2.42747  2.42747  2.42747  2.42747
- 5.67323  5.67323  5.67323  5.67323     2.42747  2.42747  2.42747  2.42747
- 5.67323  5.67323  5.67323  5.67323     2.42747  2.42747  2.42747  2.42747
+ 10.8651   10.8651   10.8651   10.8651   …  13.7688   13.7688   13.7688
+ 10.8651   10.8651   10.8651   10.8651      13.7688   13.7688   13.7688
+ 10.8651   10.8651   10.8651   10.8651      13.7688   13.7688   13.7688
+ 10.8651   10.8651   10.8651   10.8651      13.7688   13.7688   13.7688
+ 10.8651   10.8651   10.8651   10.8651      13.7688   13.7688   13.7688
+  7.37147   7.37147   7.37147   7.37147  …  11.6166   11.6166   11.6166
+  5.59169   5.59169   5.59169   5.59169     10.5203   10.5203   10.5203
+  5.59169   5.59169   5.59169   5.59169     10.5203   10.5203   10.5203
+  5.59169   5.59169   5.59169   5.59169     10.5203   10.5203   10.5203
+  5.59169   5.59169   5.59169   5.59169     10.5203   10.5203   10.5203
+  5.59169   5.59169   5.59169   5.59169  …  10.5203   10.5203   10.5203
+  5.59169   5.59169   5.59169   5.59169     10.5203   10.5203   10.5203
+  5.59169   5.59169   5.59169   5.59169     10.5203   10.5203   10.5203
+  ⋮                                      ⋱             ⋮
+ 10.2657   10.2657   10.2657   10.2657       9.14651   9.14651   9.14651
+ 10.2657   10.2657   10.2657   10.2657       9.14651   9.14651   9.14651
+ 10.2657   10.2657   10.2657   10.2657       9.14651   9.14651   9.14651
+ 10.2657   10.2657   10.2657   10.2657       9.14651   9.14651   9.14651
+ 10.2657   10.2657   10.2657   10.2657   …   9.14651   9.14651   9.14651
+ 10.2657   10.2657   10.2657   10.2657       9.14651   9.14651   9.14651
+ 15.4173   15.4173   15.4173   15.4173       9.74628   9.74628   9.74628
+ 25.5296   25.5296   25.5296   25.5296      10.9236   10.9236   10.9236
+ 25.5296   25.5296   25.5296   25.5296      10.9236   10.9236   10.9236
+ 25.5296   25.5296   25.5296   25.5296   …  10.9236   10.9236   10.9236
+ 25.5296   25.5296   25.5296   25.5296      10.9236   10.9236   10.9236
+ 25.5296   25.5296   25.5296   25.5296      10.9236   10.9236   10.9236
 ```
 
 The units of the maps are stored in:
@@ -695,10 +716,10 @@ proj1_z.cextent # ranges in code units relative to a given center (by default: b
 
 ```
 4-element Vector{Float64}:
- -10.007812500015556
-  10.007812499984444
-  -2.0039062500155556
-   2.0039062499844444
+ -10.007812499984446
+  10.007812500015554
+  -2.003906249984447
+   2.003906250015553
 ```
 
 #### Physical-unit axes with `getextent`
@@ -715,6 +736,13 @@ code-unit extent would mislabel the axes.
 println("kpc           : ", getextent(proj1_z, :kpc))
 println("pc            : ", getextent(proj1_z, :pc))                 # ×1000 — raw .extent (code units) is NOT physical in general
 println("kpc, centered : ", getextent(proj1_z, :kpc; center=true))  # like .cextent; pass straight to imshow(extent=…)
+```
+
+```
+kpc           :
+[13.992187500009068, 34.00781250002204, 21.996093750014257, 26.003906250016854]
+pc            : [13992.18750000907, 34007.812500022046, 21996.093750014257, 26003.90625001686]
+kpc, centered : [-10.007812499990933, 10.007812500022041, -2.003906249985746, 2.003906250016852]
 ```
 
 ```julia
@@ -809,7 +837,7 @@ cb = colorbar(im,
 ![](06_hydro_Projection_files/06_hydro_Projection_49_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x30dcc2830>
+PyObject <matplotlib.colorbar.Colorbar object at 0x32bfbb760>
 ```
 
 ```julia
@@ -844,7 +872,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 ![](06_hydro_Projection_files/06_hydro_Projection_51_1.png)
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x30de46620>
+PyObject <matplotlib.colorbar.Colorbar object at 0x32c22b2b0>
 ```
 
 Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
@@ -881,7 +909,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:36.151
+[Mera]: 2026-07-03T10:11:25.140
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -913,19 +941,19 @@ proj_z.maps
 
 ```
 DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 13 entries:
-  :sd  => [0.000524564 0.000524564 … 0.000462735 0.000462735; 0.000524564 0.000…
-  :v   => [87.2263 87.2263 … 74.2532 74.2532; 87.2263 87.2263 … 74.2532 74.2532…
-  :v2  => [1.96323 1.96323 … 1.55066 1.55066; 1.96323 1.96323 … 1.55066 1.55066…
-  :vx  => [0.956079 0.956079 … -0.560013 -0.560013; 0.956079 0.956079 … -0.5600…
-  :vx2 => [0.97878 0.97878 … 0.890713 0.890713; 0.97878 0.97878 … 0.890713 0.89…
-  :vy  => [0.356529 0.356529 … -0.0411814 -0.0411814; 0.356529 0.356529 … -0.04…
-  :vy2 => [0.264853 0.264853 … 0.152368 0.152368; 0.264853 0.264853 … 0.152368 …
-  :vz  => [-0.799307 -0.799307 … -0.296515 -0.296515; -0.799307 -0.799307 … -0.…
-  :vz2 => [0.719601 0.719601 … 0.50758 0.50758; 0.719601 0.719601 … 0.50758 0.5…
-  :σ   => [28.874 28.874 … 33.9777 33.9777; 28.874 28.874 … 33.9777 33.9777; … …
-  :σx  => [16.6789 16.6789 … 49.8155 49.8155; 16.6789 16.6789 … 49.8155 49.8155…
-  :σy  => [24.3371 24.3371 … 25.4541 25.4541; 24.3371 24.3371 … 25.4541 25.4541…
-  :σz  => [18.6295 18.6295 … 42.4804 42.4804; 18.6295 18.6295 … 42.4804 42.4804…
+  :sd  => [0.00356095 0.00356095 … 0.00263323 0.00263323; 0.00356095 0.00356095…
+  :v   => [88.4473 88.4473 … 75.9405 75.9405; 88.4473 88.4473 … 75.9405 75.9405…
+  :v2  => [1.97031 1.97031 … 1.61925 1.61925; 1.97031 1.97031 … 1.61925 1.61925…
+  :vx  => [0.95769 0.95769 … -0.581239 -0.581239; 0.95769 0.95769 … -0.581239 -…
+  :vx2 => [0.967715 0.967715 … 0.830687 0.830687; 0.967715 0.967715 … 0.830687 …
+  :vy  => [0.318338 0.318338 … 0.0583665 0.0583665; 0.318338 0.318338 … 0.05836…
+  :vy2 => [0.226201 0.226201 … 0.136131 0.136131; 0.226201 0.226201 … 0.136131 …
+  :vz  => [-0.846478 -0.846478 … -0.308257 -0.308257; -0.846478 -0.846478 … -0.…
+  :vz2 => [0.776394 0.776394 … 0.652433 0.652433; 0.776394 0.776394 … 0.652433 …
+  :σ   => [25.4882 25.4882 … 34.5833 34.5833; 25.4882 25.4882 … 34.5833 34.5833…
+  :σx  => [14.7426 14.7426 … 46.0359 46.0359; 14.7426 14.7426 … 46.0359 46.0359…
+  :σy  => [23.1716 23.1716 … 23.8899 23.8899; 23.1716 23.1716 … 23.8899 23.8899…
+  :σz  => [16.0451 16.0451 … 48.9585 48.9585; 16.0451 16.0451 … 48.9585 48.9585…
 ```
 
 ```julia
@@ -1013,7 +1041,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:42.376
+[Mera]: 2026-07-03T10:11:32.695
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1038,22 +1066,22 @@ proj_z.maps
 ```
 DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
   :r_cylinder   => [14.1256 14.1173 … 14.1366 14.1449; 14.1173 14.109 … 14.1283…
-  :sd           => [0.000524564 0.000524564 … 0.000462735 0.000462735; 0.000524…
-  :v            => [87.2263 87.2263 … 74.2532 74.2532; 87.2263 87.2263 … 74.253…
-  :v2           => [1.96323 1.96323 … 1.55066 1.55066; 1.96323 1.96323 … 1.5506…
-  :vr_cylinder  => [-60.864 -60.864 … 23.8666 23.8666; -60.864 -60.864 … 23.866…
-  :vr_cylinder2 => [1.05049 1.05049 … 0.620751 0.620751; 1.05049 1.05049 … 0.62…
-  :vx           => [0.956079 0.956079 … -0.560013 -0.560013; 0.956079 0.956079 …
-  :vx2          => [0.97878 0.97878 … 0.890713 0.890713; 0.97878 0.97878 … 0.89…
-  :vy           => [0.356529 0.356529 … -0.0411814 -0.0411814; 0.356529 0.35652…
-  :vy2          => [0.264853 0.264853 … 0.152368 0.152368; 0.264853 0.264853 … …
-  :vϕ_cylinder  => [27.8004 27.8004 … 27.9518 27.9518; 27.8004 27.8004 … 27.951…
-  :vϕ_cylinder2 => [0.193141 0.193141 … 0.42233 0.42233; 0.193141 0.193141 … 0.…
-  :σ            => [28.874 28.874 … 33.9777 33.9777; 28.874 28.874 … 33.9777 33…
-  :σr_cylinder  => [28.5099 28.5099 … 45.8223 45.8223; 28.5099 28.5099 … 45.822…
-  :σx           => [16.6789 16.6789 … 49.8155 49.8155; 16.6789 16.6789 … 49.815…
-  :σy           => [24.3371 24.3371 … 25.4541 25.4541; 24.3371 24.3371 … 25.454…
-  :σϕ_cylinder  => [7.59396 7.59396 … 32.1677 32.1677; 7.59396 7.59396 … 32.167…
+  :sd           => [0.00356095 0.00356095 … 0.00263323 0.00263323; 0.00356095 0…
+  :v            => [88.4473 88.4473 … 75.9405 75.9405; 88.4473 88.4473 … 75.940…
+  :v2           => [1.97031 1.97031 … 1.61925 1.61925; 1.97031 1.97031 … 1.6192…
+  :vr_cylinder  => [-59.1678 -59.1678 … 29.4577 29.4577; -59.1678 -59.1678 … 29…
+  :vr_cylinder2 => [0.975919 0.975919 … 0.602848 0.602848; 0.975919 0.975919 … …
+  :vx           => [0.95769 0.95769 … -0.581239 -0.581239; 0.95769 0.95769 … -0…
+  :vx2          => [0.967715 0.967715 … 0.830687 0.830687; 0.967715 0.967715 … …
+  :vy           => [0.318338 0.318338 … 0.0583665 0.0583665; 0.318338 0.318338 …
+  :vy2          => [0.226201 0.226201 … 0.136131 0.136131; 0.226201 0.226201 … …
+  :vϕ_cylinder  => [29.646 29.646 … 24.4624 24.4624; 29.646 29.646 … 24.4624 24…
+  :vϕ_cylinder2 => [0.217997 0.217997 … 0.36397 0.36397; 0.217997 0.217997 … 0.…
+  :σ            => [25.4882 25.4882 … 34.5833 34.5833; 25.4882 25.4882 … 34.583…
+  :σr_cylinder  => [26.3768 26.3768 … 41.5278 41.5278; 26.3768 26.3768 … 41.527…
+  :σx           => [14.7426 14.7426 … 46.0359 46.0359; 14.7426 14.7426 … 46.035…
+  :σy           => [23.1716 23.1716 … 23.8899 23.8899; 23.1716 23.1716 … 23.889…
+  :σϕ_cylinder  => [7.6504 7.6504 … 31.0919 31.0919; 7.6504 7.6504 … 31.0919 31…
   :ϕ            => [3.92699 3.9264 … 2.35541 2.35483; 3.92758 3.92699 … 2.35483…
 ```
 
@@ -1194,7 +1222,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-06-01T20:29:54.457
+[Mera]: 2026-07-03T10:11:45.790
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1283,11 +1311,11 @@ proj_z = projection(gas,
     :km_s,
     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
     center=[:boxcenter], range_unit=:kpc,
-    res=100);  # 100x100 pixel output grid
+    pxsize=[0.5, :kpc]);  # 0.5 kpc pixels (~96x96 over the 48 kpc box)
 ```
 
 ```
-[Mera]: 2026-06-01T20:30:02.447
+[Mera]: 2026-07-03T10:11:54.156
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1295,9 +1323,9 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 Selected var(s)=(:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder, :vx, :vx2, :vy, :vy2, :vz, :vz2, :v2, :vr_cylinder2, :vϕ_cylinder2, :sd)
 Weighting      = :mass
-Effective resolution: 100^2
-Map size: 42 x 42
-Pixel size: 480.0 [pc]
+Effective resolution: 97^2
+Map size: 41 x 41
+Pixel size: 494.845 [pc]
 Simulation min.: 11.719 [pc]
 Available threads: 4
 Requested max_threads: 4
@@ -1372,7 +1400,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-06-01T20:30:09.625
+[Mera]: 2026-07-03T10:12:00.896
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -1397,11 +1425,11 @@ Processing mode: Variable-based parallel (4 threads)
    Variables: 13 (sd, v, v2, vr_cylinder, vr_cylinder2, vx, vx2, vy, vy2, vz, vz2, vϕ_cylinder, vϕ_cylinder2)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
-✅ Variable-based parallel processing completed in 2.104s
+✅ Variable-based parallel processing completed in 2.26s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 114870465 cells/second
+      ├─ Processing rate: 106949924 cells/second
       ├─ Parallel efficiency: 100.0% (target: 85-95%)
       ├─ Threads utilized: 4 / 4 available
       └─ Memory benefit: Direct allocation (no intermediate combining buffers)
@@ -1486,7 +1514,7 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
 ```
 
 ```
-[Mera]: 2026-06-01T20:30:16.217
+[Mera]: 2026-07-03T10:12:07.669
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1501,7 +1529,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
-[Mera]: 2026-06-01T20:30:17.528
+[Mera]: 2026-07-03T10:12:09.166
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
 ymin::ymax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1610,7 +1638,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-06-01T20:30:20.116
+[Mera]: 2026-07-03T10:12:11.839
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1626,8 +1654,8 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:02
-[Mera]: 2026-06-01T20:30:23.784
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:03
+[Mera]: 2026-07-03T10:12:15.659
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1677,7 +1705,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-06-01T20:30:29.371
+[Mera]: 2026-07-03T10:12:21.308
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1692,7 +1720,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
 ```
 
 #### Custom Weighting with Units
@@ -1706,7 +1734,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-06-01T20:31:07.669
+[Mera]: 2026-07-03T10:12:59.911
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1721,7 +1749,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (cs)
 Processing mode: Sequential (single thread)
-Progress: 100%|█████████████████████████████████████████| Time: 0:00:16
+Progress: 100%|█████████████████████████████████████████| Time: 0:00:17
 ```
 
 ## Specialized Applications
@@ -1740,7 +1768,7 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 
 ```
-[Mera]: 2026-06-01T20:31:46.755
+[Mera]: 2026-07-03T10:13:39.883
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
