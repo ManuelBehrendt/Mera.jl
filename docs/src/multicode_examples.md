@@ -47,6 +47,16 @@ Mera v1.8.0
 "/Volumes/FASTStorage/Simulations/Mera-Tests"
 ```
 
+
+```@raw html
+<div class="mera-tabs" data-tab-group="simcode">
+```
+
+
+```@raw html
+<div class="mera-tab" data-code="PLUTO">
+```
+
 ## PLUTO (uniform grid)
 
 `getinfo` auto-detects the code from the directory's signature files and prints the same overview a
@@ -71,6 +81,16 @@ variables: (rho, vx, vy, vz, p)
 4.040484204505616
 ```
 
+
+```@raw html
+</div>
+```
+
+
+```@raw html
+<div class="mera-tab" data-code="Chombo">
+```
+
 ## Chombo (PLUTO-AMR)
 
 PLUTO's AMR output (the Chombo HDF5 format) loads as a Mera **AMR** object with a `:level` column.
@@ -84,6 +104,16 @@ sort(unique(getvar(gc, :level)))                # the refinement levels present
 2-element Vector{Float64}:
  6.0
  7.0
+```
+
+
+```@raw html
+</div>
+```
+
+
+```@raw html
+<div class="mera-tab" data-code="Athena++">
 ```
 
 ## Athena++ (AMR MHD) + a load-time sub-region
@@ -116,6 +146,16 @@ maximum(getvar(ga, :bmag)) = 1.1211309571451635
 (15625, 606208)
 ```
 
+
+```@raw html
+</div>
+```
+
+
+```@raw html
+<div class="mera-tab" data-code="FLASH">
+```
+
 ## FLASH
 
 FLASH plot files load as AMR hydro/MHD; a self-gravity potential (if present) appears as `:gpot`.
@@ -127,6 +167,16 @@ gf = gethydro(getinfo(150, joinpath(base, "FLASH/flash_gassloshing/GasSloshing")
 
 ```
 true
+```
+
+
+```@raw html
+</div>
+```
+
+
+```@raw html
+<div class="mera-tab" data-code="GADGET/AREPO">
 ```
 
 ## GADGET / GIZMO / AREPO / SWIFT / IllustrisTNG (particles)
@@ -310,6 +360,16 @@ fig2
 ```
 
 ![](multicode_examples_files/multicode_examples_22_1.png)
+
+
+```@raw html
+</div>
+```
+
+
+```@raw html
+</div>
+```
 
 ## Self-gravity, chemistry & radiative transfer
 
