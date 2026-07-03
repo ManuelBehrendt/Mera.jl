@@ -67,6 +67,89 @@ println("cells loaded : ", length(gas.data))
 println("box length   : ", gas.boxlen, " kpc")
 ```
 
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+[Mera]: 2026-07-03T10:15:22.930
+Code: RAMSES
+output [400] summary:
+mtime:
+2018-09-05T09:51:55
+ctime: 2025-06-29T20:06:45.267
+=======================================================
+simulation time: 594.98 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 2048
+ndim: 3
+cosmological:  false
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:
+7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Npart:    5.091500e+05
+- Nstars:   5.066030e+05
+- Ndm:      2.547000e+03
+particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
+-------------------------------------------------------
+rt:            false
+-------------------------------------------------------
+clumps:           true
+clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+-------------------------------------------------------
+namelist-file:    false
+timer-file:       false
+compilation-file: true
+makefile:         true
+patchfile:        true
+=======================================================
+[Mera]: Get hydro data: 2026-07-03T10:15:25.727
+Key vars=(:level, :cx, :cy, :cz)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+📊 Processing Configuration:
+   Total CPU files available: 2048
+   Files to be processed: 1939
+   Compute threads: 4
+   GC threads: 4
+   📍 Spatial filtering active: 109 files skipped
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (13.75 ms/it)
+✓ File processing complete! Combining results...
+✓ Data combination complete!
+Final data size: 1277874 cells, 7 variables
+Creating Table from 1277874 cells with max 4 threads...
+  Threading: 4 threads for 11 columns
+  Max threads requested: 4
+  Available threads: 4
+  Using parallel processing with 4 threads
+  Creating IndexedTable with 11 columns...
+✓ Table created in 2.303 seconds
+Memory used for data table :107.2445936203003
+ MB
+-------------------------------------------------------
+cells loaded : 1277874
+box length   : 48.0 kpc
+```
+
 Select cells above 100 cm⁻³, link within 0.2 kpc, and keep clumps with ≥ 5 cells:
 
 ```julia
@@ -80,6 +163,13 @@ println()
 println(cat)                       # ClumpCatalog summary
 ```
 
+```
+number of clumps : 34
+ClumpCatalog: 34 clumps  [3D, field=rho ≥ 100.0 nH]
+  mass Msol: total 6.712e9  max 2.034e9  median 4.058e7
+  largest: 487 members, mass 2.034e9
+```
+
 ```julia
 # the most massive clump is a NamedTuple
 c1 = cat[1]
@@ -90,6 +180,20 @@ println("largest clump:")
 @show c1.com
 @show c1.peak
 @show c1.radius
+```
+
+```
+largest clump:
+c1.id = 1
+c1.n_members = 487
+c1.mass = 2.0337645080962305e9
+c1.com = (22.084540387532176, 24.06218325949867, 24.07769340948422)
+c1.peak = 86745.10109055592
+c1.radius = 0.9229258020368852
+```
+
+```
+0.9229258020368852
 ```
 
 With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly — each clump's centre of
@@ -141,6 +245,11 @@ println("ThresholdFoF     : ", length(fof),   " clumps")
 println("DensityWatershed : ", length(cores), " clumps (saddle-split)")
 ```
 
+```
+ThresholdFoF     : 43 clumps
+DensityWatershed : 45 clumps (saddle-split)
+```
+
 ### Gravitational boundedness
 
 `boundedness=true` adds per-clump energetics (cgs) and keeps, optionally, only self-bound structures:
@@ -153,6 +262,16 @@ b1 = catb[1]
 @show b1.alpha_vir        # virial parameter 2*E_kin/|E_grav|
 @show b1.bound            # E_kin + E_therm < |E_grav| ?
 @show b1.e_grav
+```
+
+```
+b1.alpha_vir = 1.3732735951574746
+b1.bound = true
+b1.e_grav = 7.215441785528629e56
+```
+
+```
+7.215441785528629e56
 ```
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
@@ -185,6 +304,10 @@ big = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linki
 println("clumps passing the validator chain: ", length(big))
 ```
 
+```
+clumps passing the validator chain: 22
+```
+
 ```julia
 # ≥20 members, tree-gravity self-bound (iterative unbinding), and virially bound:
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
@@ -201,6 +324,29 @@ stars = getparticles(info; xrange=[-5,5], yrange=[-5,5], zrange=[-5,5],
 cats  = clumpfind(stars, :mass; threshold=0.0, linking_length=0.5, min_members=10)
 println("stellar groups found : ", length(cats))
 println(cats)
+```
+
+```
+[Mera]: Get particle data: 2026-07-03T10:16:10.070
+Using threaded processing with 4 threads
+Key vars=(:level, :x, :y, :z, :id)
+Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+Processing 1939 CPU files using 4 threads
+Mode: Threaded processing
+Combining results from 4 thread(s)...
+Found 2.624670e+05 particles
+Memory used for data table :
+18.02324104309082 MB
+-------------------------------------------------------
+stellar groups found : 1
+ClumpCatalog: 1 clumps  [3D, field=mass ≥ 0.0 standard]
+  mass Msol: total 2.986e9  max 2.986e9  median 2.986e9
+  largest: 262102 members, mass 2.986e9
 ```
 
 **Choosing parameters.** `linking_length` should be a few times the local resolution — comparable to
@@ -300,6 +446,14 @@ println("table columns     : ", keys(tbl))
 println("search meta       : ", cat.meta)
 ```
 
+```
+mass range [Msol] : (2.306207938000301e6, 2.0337645080962305e9)
+table columns     : (
+:id, :n_members, :mass, :com_x, :com_y, :com_z, :radius, :peak)
+search meta       : (
+dim = Symbol("3D"), field = :rho, threshold = 100.0, threshold_unit = :nH, linking_length = 0.2, pos_unit = :kpc, mass_unit = :Msol, n_selected = 1889, boundedness = false, deblend = false, substructure = false, unbinding = false, hierarchy = false, finder = :ThresholdFoF)
+```
+
 See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
 yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
 
@@ -309,6 +463,11 @@ yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to
 m, Ngt = clump_massfunction(cat; cumulative=true)
 println("cumulative mass-function bins : ", length(m))
 println("N(>= M_min)                   : ", first(Ngt))
+```
+
+```
+cumulative mass-function bins : 34
+N(>= M_min)                   : 34
 ```
 
 ```julia
@@ -331,6 +490,27 @@ scatterlines!(ax2, m, Ngt)
 fig
 ```
 
+```
+[Mera]: 2026-07-03T10:16:36.849
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+Selected var(s)=(:sd,)
+Weighting      = :mass
+Effective resolution: 1024^2
+Map size: 214 x 214
+Pixel size: 46.875 [pc]
+Simulation min.: 46.875 [pc]
+Available threads: 4
+Requested max_threads: 4
+Variables: 1 (sd)
+Processing mode: Sequential (single thread)
+```
+
+![](clumpfind_files/clumpfind_28_6.png)
+
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):
 
@@ -344,11 +524,33 @@ report(output; path, cards=[ ClumpCard(:hydro, :rho; threshold=1e2, threshold_un
 Run it on any [`projection`](@ref) result to segment a map above a threshold:
 
 ```julia
-sd2  = projection(gas, :sd, :Msol_pc2; res=512, center=[:bc])
+sd2  = projection(gas, :sd, :Msol_pc2; pxsize=[0.1, :kpc], center=[:bc])
 cat2 = clumpfind(sd2, :sd; threshold=50.0, connectivity=8)   # regions >= 50 Msol/pc^2
 println("2D regions found : ", length(cat2))
 length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, mass ",
                             round(cat2[1].mass, sigdigits=4))
+```
+
+```
+[Mera]: 2026-07-03T10:16:50.806
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+domain:
+xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+Selected var(s)=(:sd,)
+Weighting      = :mass
+Effective resolution: 481^2
+Map size: 101 x 101
+Pixel size: 99.792 [pc]
+Simulation min.: 46.875 [pc]
+Available threads: 4
+Requested max_threads: 4
+Variables: 1 (sd)
+Processing mode: Sequential (single thread)
+2D regions found :
+26
+largest region   : 1178 pixels, mass 5962.0
 ```
 
 `connectivity` is `8` (diagonals count) or `4`. For a surface-density map each region's `mass` is the
@@ -393,8 +595,7 @@ cat = clumpfind(gas, GraphSegFinder(:rho; threshold=1e2, threshold_unit=:nH,
 ### Finder composition
 
 `deblend` can be **any finder**: a cheap finder establishes connectivity, then the deblend finder
-splits each group — e.g. friends-of-friends connectivity refined per-group by HDBSCAN (something yt
-cannot do):
+splits each group — e.g. friends-of-friends connectivity refined per-group by HDBSCAN:
 
 ```julia
 cat = clumpfind(gas, ThresholdFoF(:rho; threshold=1e2, threshold_unit=:nH, linking_length=1.0);

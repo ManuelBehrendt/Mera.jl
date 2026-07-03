@@ -46,10 +46,11 @@ println("box length [kpc]     : ", round(info.boxlen * info.scale.kpc, digits=2)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[Mera]: 2026-06-27T17:50:34.824
+[Mera]: 2026-07-03T10:17:02.768
 Code: RAMSES
 output [100] summary:
-mtime: 2023-05-12T22:47:36.638
+mtime:
+2023-05-12T22:47:36.638
 ctime: 2025-06-21T18:31:55.533
 =======================================================
 simulation time: 148.08 [Myr]
@@ -79,10 +80,10 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 -------------------------------------------------------
 clumps:           true
-clump-variables: (
-:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
+clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&UNITS_PARAMS", "&RUN_PARAMS", "&CLUMPFIND_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&DICE_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: (
+"&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&UNITS_PARAMS", "&RUN_PARAMS", "&CLUMPFIND_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&DICE_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
@@ -328,12 +329,11 @@ fig
 ```
 
 ```
-:faceon  los =
-[-0.014, 0.022, -1.0]   up = [1.0, 0.0, -0.014]
+:faceon  los = [-0.014, 0.022, -1.0]   up = [1.0, 0.0, -0.014]
 :edgeon  los = [1.0, 0.0, -0.014]   up = [-0.014, 0.022, -1.0]
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_12_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_12_2.png)
 
 !!! warning "Center on the object for `:faceon`/`:edgeon`/`axis=:angmom`"
     These use the gas/particle angular momentum `L`, which is computed **about `center`**. They
@@ -639,11 +639,10 @@ showmap(pe.maps[:epot], getextent(pe, :kpc);
 ```
 
 ```
-epot map extrema    : (
--0.5326800611083272, 0.0)
+epot map extrema    : (-0.5326800611083272, 0.0)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_24_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_24_2.png)
 
 The off-axis gravitational potential of the same galaxy (mass-weighted `:epot`), face-on and
 edge-on — the central potential well is round seen face-on and flattened along the disk edge-on:
@@ -894,12 +893,12 @@ start Julia with several threads and the deposit scales automatically; `max_thre
 are used for a given call:
 
 **Strong scaling.** The figure below is produced by exactly the benchmark that follows — time one
-off-axis `:overlap` projection (`res=1536`) of the `gas` loaded above at increasing thread counts
+off-axis `:overlap` projection (`pxsize=[0.2, :kpc]`, a 500² map) of the `gas` loaded above at increasing thread counts
 (start Julia with `julia -t N`), taking the best of 3 runs per count:
 
 ```julia
 nts = collect(1:Threads.nthreads())
-proj1(nt) = projection(gas, :sd, :Msol_pc2; los=[1,1,1], center=[:bc], res=512,
+proj1(nt) = projection(gas, :sd, :Msol_pc2; los=[1,1,1], center=[:bc], pxsize=[0.2, :kpc],
                        binning=:overlap, max_threads=nt, verbose=false, show_progress=false)
 proj1(1)                                              # warm up (compile)
 times   = [ @elapsed proj1(nt) for nt in nts ]
@@ -931,7 +930,7 @@ threads is the fast path.
 `gridoverlay` returns the AMR cell-boundary line segments at a chosen refinement `level`, viewed
 through the **same off-axis camera** as the projection (it takes the identical `los`/`inclination`/
 `direction`/`center`/range keywords). Draw them over the map with the `gridoverlay!(ax, go)` Makie
-helper (or `linesegments!`) — the equivalent of yt's `annotate_grids` / pyPLUTO's `oplotbox`.
+helper (or `linesegments!`).
 `level=:max` shows the finest cells (densest), a coarser level or `:min` the base grid. Here we
 overlay the finest grid on a zoomed face-on map, so the net traces the refined disk.
 

@@ -65,7 +65,7 @@ stored in that output) the readers safely fall back to reading everything.
 ## Adding your own field: `add_field`
 
 Register a custom derived field once and it behaves like any built-in quantity — including
-inside `projection` and `profile`. This is the equivalent of yt's `add_field`.
+inside `projection` and `profile`.
 
 ```julia
 add_field(:vmag2, (obj, deps) -> deps[:vx].^2 .+ deps[:vy].^2 .+ deps[:vz].^2;

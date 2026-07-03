@@ -166,9 +166,8 @@ which is correct only for an already-isolated object.
 ```
 
 of the selected region about the centre, and use ``\hat{\mathbf{L}}`` as the spin axis (the
-face-on line of sight); edge-on looks along a direction in the disc plane. This is the same
-recipe the established simulation-analysis tools use — e.g. pynbody's
-`angmom.faceon`/`sideon` and yt's angular-momentum / off-axis projection.
+face-on line of sight); edge-on looks along a direction in the disc plane. This is the standard
+angular-momentum recipe for orienting disc galaxies.
 
 **Centring.** `:com` is the mass-weighted centre of mass; `:densest` is the density peak.
 With a seed centre plus an `aperture`, the frame re-centres on the *local* CoM inside the
