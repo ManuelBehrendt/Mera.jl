@@ -22,6 +22,57 @@ info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
+```
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+[Mera]: 2026-07-03T11:16:07.836
+Code: RAMSES
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2025-06-21T18:31:24.020
+=======================================================
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+cosmological:  false
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+=======================================================
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.65 ms/it)
+✓ File processing complete! Combining results...
+```
+
 ## Basic use
 
 ```julia
@@ -31,6 +82,18 @@ println("mass outflow  [Msol/yr] : ", fb.rates.mass.out)
 println("mass inflow   [Msol/yr] : ", fb.rates.mass.in)
 println("mass net      [Msol/yr] : ", fb.rates.mass.net)
 println("energy net    [erg/s]   : ", fb.rates.energy.net)
+```
+
+```
+FluxBudgetType [sphere @ R=30.0 kpc, Δr=2.0]  (cell size 0.75)
+  19528 shell cells, mass 210100.0 Msol
+  mass     : in -1.153e-5  out 0.003968  net 0.003956 ± 1.9e-5  [Msol_yr]
+  momentum : in 0.0001246  out 0.1727  net 0.1728 ± 0.0012  [Msol_km_s_yr]
+  energy   : in -2.178e34  out 1.2829999999999998e37  net 1.2809999999999998e37 ± 8.5e34  [erg_s]
+mass outflow  [Msol/yr] : 0.003968015747451279
+mass inflow   [Msol/yr] : -1.1526135090624682e-5
+mass net      [Msol/yr] : 0.003956489612360654
+energy net    [erg/s]   : 1.2811085860658779e37
 ```
 
 Units per quantity: **mass** and **metals** in `Msol/yr`, **momentum** in `Msol·km/s/yr`, **energy** in
@@ -119,6 +182,17 @@ println("cold outflow [Msol/yr] : ", fbp.components.cold.mass.out)
 println("hot  outflow [Msol/yr] : ", fbp.components.hot.mass.out)
 println("cold+hot              : ", fbp.components.cold.mass.out + fbp.components.hot.mass.out)
 println("total (fb.rates)      : ", fbp.rates.mass.out)
+```
+
+```
+FluxBudgetType [sphere @ R=30.0 kpc, Δr=2.0]  (cell size 0.75)
+  19528 shell cells, mass 210100.0 Msol
+  mass     : in -1.153e-5  out 0.003968  net 0.003956 ± 1.9e-5  [Msol_yr]
+  phases: [:cold, :hot]
+cold outflow [Msol/yr] : 0.0
+hot  outflow [Msol/yr] : 0.003968015747451279
+cold+hot              : 0.003968015747451279
+total (fb.rates)      : 0.003968015747451279
 ```
 
 ## Derived diagnostics: mass loading, phase velocities, weighting
@@ -230,6 +304,13 @@ println("radii [kpc]           : ", collect(fp.radius))
 println("net Mdot(R) [Msol/yr] : ", round.(fp.net, digits=3))
 ```
 
+```
+shell cells           : 19528
+fluxprofile [sphere, mass]: 10 shells over R=5.0–50.0 kpc, Δr=2.0
+radii [kpc]           : [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0]
+net Mdot(R) [Msol/yr] : [-0.868, 0.55, 0.01, -0.01, -0.006, 0.004, 0.001, 0.0, 0.0, 0.0]
+```
+
 ![`fluxshell` makes the measured surface explicit. *Left:* the full gas of a disk galaxy, edge-on.
 *Right:* the cells `fluxbudget` actually integrates over — the R = 10 kpc spherical shell (its edge-on
 projection is a disk of radius 10 kpc, brightest where the shell cuts the dense midplane). The budget is
@@ -257,6 +338,13 @@ ax = Axis(fig[1,1], title="flux sky-map: mean v_perp [km/s] (red=out, blue=in)",
 hm = heatmap!(ax, fm.map; colormap=:balance); Colorbar(fig[1,2], hm)
 fig
 ```
+
+```
+FluxMapType [sphere @ R=30.0, Δr=2.0]  quantity=vr [km_s]
+  (72, 36) grid  (φ_deg × cosθ)
+```
+
+![](fluxbudget_files/fluxbudget_10_2.png)
 
 `quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the
