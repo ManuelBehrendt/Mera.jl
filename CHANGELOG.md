@@ -83,7 +83,9 @@ All notable changes to Mera.jl are documented here. The format is based on
   a corrupt/partial datatype. (g) `recommend_buffer_size` uses the file-count tier when
   only `ncpu` is known. (h) The broken-and-dead `createscales(::PhysicalUnitsType001)`
   overload (~200 lines reading fields the type never had) is now a convert-and-delegate
-  to the current implementation, restoring scale creation for old serialized constants. Chunked snapshots (`snap_NNN.0.hdf5 …
+  to the current implementation, restoring scale creation for old serialized constants.
+
+- **GADGET/AREPO reader — multi-file snapshots.** Chunked snapshots (`snap_NNN.0.hdf5 …
   snap_NNN.K.hdf5`, incl. the IllustrisTNG `snapdir_NNN/` layout) are now read completely,
   chunk by chunk with the spatial window applied per chunk; previously only the first file
   was read, silently dropping most of the box. A header/found chunk-count mismatch warns.
