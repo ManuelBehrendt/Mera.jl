@@ -7,6 +7,16 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Added
 
+- **Geometric boundary refinement for value-type regions (`refine=k`).** `subregion(obj,
+  region; refine=k)` now optionally SUBDIVIDES boundary-straddling cells into their octree
+  children (up to `k` levels, rows at `level+n` carrying the parent's field values — exact
+  for piecewise-constant AMR data): children fully inside keep `fraction = 1`, outside
+  children vanish, still-straddling children recurse and keep their exact fraction.
+  Integrals were already exact via `:fraction`; `refine` localises the selection BOUNDARY
+  to `cellsize/2^k`, so projections of sub-regions render correspondingly sharper edges.
+  Works on AMR and uniform-grid cell data (the result's `lmax` is raised so downstream
+  `getvar`/`projection` take the per-row level path).
+
 - **Multi-code reader registry.** The per-code frontends (RAMSES, PLUTO, Chombo, Athena++, FLASH,
   GADGET/GIZMO/AREPO/SWIFT) now register themselves in an internal reader interface
   (`src/read_data/reader_interface.jl`); `getinfo`/`gethydro`/`getparticles` route through the
