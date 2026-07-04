@@ -217,4 +217,35 @@
         off_kpc = subregion(gas, :sphere; center=[0.6box, 0.6box, 0.6box], radius=0.15box, range_unit=:kpc,      verbose=false)
         @test length(off_kpc.data) == length(off_std.data) > 0
     end
+
+    @testset "geometric boundary refinement (refine=k)" begin
+        R = 0.3box
+        reg = Sphere(R; center=[:bc], range_unit=:kpc)
+        s0 = subregion(gas, reg; verbose=false)                 # fraction-weighted, whole cells
+        s2 = subregion(gas, reg; refine=2, verbose=false)       # boundary cells subdivided twice
+
+        # integrals agree at the boundary-sampling level (children RE-measure their
+        # fractions on 8x smaller cells, i.e. refine is MORE accurate, not identical;
+        # on this deliberately coarse 32^3 fixture that is a ~1% effect)
+        v0 = sum(getvar(s0, :volume, :kpc3)); v2 = sum(getvar(s2, :volume, :kpc3))
+        @test isapprox(v2, v0; rtol=2e-2)
+        @test isapprox(msum(s2, :Msol), msum(s0, :Msol); rtol=2e-2)
+
+        # children exist at level+refine, and straddling cells are 4x smaller than before
+        @test maximum(Mera.select(s2.data, :level)) == maximum(Mera.select(s0.data, :level)) + 2
+        @test s2.lmax == s0.lmax + 2                              # lmax raised for getvar
+        f0 = Mera.select(s0.data, :fraction); f2 = Mera.select(s2.data, :fraction)
+        cs0 = getvar(s0, :cellsize, :kpc);    cs2 = getvar(s2, :cellsize, :kpc)
+        b0 = 0.0 .< f0 .< 1.0; b2 = 0.0 .< f2 .< 1.0
+        @test any(b2) && maximum(cs2[b2]) <= maximum(cs0[b0]) / 4 + 1e-12
+        # interior cells were not touched (same maximum interior cell size)
+        @test maximum(cs2[.!b2]) == maximum(cs0[.!b0])
+
+        # inverse composes with refine: complement volumes still partition the box
+        s2i = subregion(gas, reg; refine=2, inverse=true, verbose=false)
+        @test isapprox(sum(getvar(s2i, :volume, :kpc3)) + v2, Vbox; rtol=1e-6)
+
+        # guards: refine needs split=true and AMR data
+        @test_logs (:warn, r"requires `split=true`") match_mode=:any subregion(gas, reg; split=false, refine=2, verbose=false)
+    end
 end

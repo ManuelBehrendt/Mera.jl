@@ -240,9 +240,19 @@ boundary cells for curved/composite regions (diminishing returns past ~8).
 
 For **particle** data the region is a point-membership test (particles are points — there is
 no fractional volume, so `split`/`nsub` do not apply). `inverse=true` selects the complement.
+
+`refine::Int=0` (AMR cell data, `split=true` only) **geometrically subdivides** the
+boundary-straddling cells up to `refine` levels: each straddling cell is replaced by its
+octree children (rows at `level+1` with the parent's field values — exact for the
+piecewise-constant AMR data), children fully inside keep `fraction = 1`, children fully
+outside are dropped, and still-straddling children recurse. Integrals (`msum`, volumes)
+are unchanged — they were already exact through `:fraction` — but the selection boundary
+becomes localised to `cellsize/2^refine`, so projections and maps of the sub-region render
+correspondingly sharper edges. Cost grows with the boundary area (≤ 8^refine per boundary
+cell; 2–3 is usually plenty).
 """
 function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
-                   inverse::Bool=false, nsub::Int=8, verbose::Bool=true)
+                   inverse::Bool=false, nsub::Int=8, refine::Int=0, verbose::Bool=true)
     verbose = checkverbose(verbose)
     cellfrac, contains = _prepare(region, obj; nsub=nsub)
     data = obj.data
@@ -250,6 +260,11 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     # AMR carries a per-cell :level; a uniform grid has none → every cell is at lmax
     isamr = :level in propertynames(IndexedTables.columns(data))
     lvl = isamr ? IndexedTables.select(data, :level) : nothing
+    if refine > 0 && !(split && isamr)
+        split || @warn "subregion: `refine` requires `split=true`; ignoring `refine`." maxlog=1
+        (split && !isamr) && @warn "subregion: `refine` requires AMR data (a :level column); ignoring `refine`." maxlog=1
+        refine = 0
+    end
     nrows = length(data); frac = Vector{Float64}(undef, nrows)
     @inbounds for idx in 1:nrows
         f = 1.0 / 2^(isamr ? lvl[idx] : obj.lmax)
@@ -259,14 +274,53 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     end
     keep = frac .> 1e-12
     cols = IndexedTables.columns(data)
-    keptcols = map(c -> c[keep], cols)
-    newcols = split ? merge(keptcols, (fraction = frac[keep],)) : keptcols
+    if refine == 0
+        keptcols = map(c -> c[keep], cols)
+        newcols = split ? merge(keptcols, (fraction = frac[keep],)) : keptcols
+        newdata = IndexedTables.table(newcols; pkey = collect(IndexedTables.pkeynames(data)))
+        if verbose
+            println("Region: ", nameof(typeof(region)), split ? "  (exact cell splitting)" : "  (whole cells)")
+            println("Selected cells: ", length(newdata), " / ", nrows)
+        end
+        return _copy_with_data(obj, newdata)
+    end
+    # geometric boundary refinement: replace straddling cells by their octree children,
+    # recursing up to `refine` levels; interior children stop, exterior children vanish
+    CT = eltype(cxv); LT = eltype(lvl)
+    idxmap = Int[]; cxn = CT[]; cyn = CT[]; czn = CT[]; lvln = LT[]; fracn = Float64[]
+    function emit!(i::Int, cx::Int, cy::Int, cz::Int, L::Int, fr::Float64, depth::Int)
+        fr <= 1e-12 && return
+        if fr >= 1.0 - 1e-12 || depth == 0
+            push!(idxmap, i); push!(cxn, CT(cx)); push!(cyn, CT(cy)); push!(czn, CT(cz))
+            push!(lvln, LT(L)); push!(fracn, fr)
+            return
+        end
+        Lc = L + 1; f = 1.0 / 2^Lc; halfc = 0.5f
+        for kk in 0:1, jj in 0:1, ii in 0:1
+            ccx = 2cx - 1 + ii; ccy = 2cy - 1 + jj; ccz = 2cz - 1 + kk
+            frc = cellfrac(ccx*f, ccy*f, ccz*f, halfc)
+            inverse && (frc = 1.0 - frc)
+            emit!(i, ccx, ccy, ccz, Lc, frc, depth - 1)
+        end
+    end
+    @inbounds for i in 1:nrows
+        keep[i] || continue
+        d = (frac[i] < 1.0 - 1e-12) ? refine : 0
+        emit!(i, Int(cxv[i]), Int(cyv[i]), Int(czv[i]), Int(lvl[i]), frac[i], d)
+    end
+    newcols = merge(map(c -> c[idxmap], cols),
+                    (level = lvln, cx = cxn, cy = cyn, cz = czn, fraction = fracn))
     newdata = IndexedTables.table(newcols; pkey = collect(IndexedTables.pkeynames(data)))
+    out = _copy_with_data(obj, newdata)
+    # children live at deeper levels: raise lmax so downstream getvar/projection take the
+    # per-row :level path (this also makes refine work on uniform-grid inputs, whose
+    # cellsize would otherwise be read as boxlen/2^lmax for every row)
+    isempty(lvln) || (out.lmax = max(out.lmax, Int(maximum(lvln))))
     if verbose
-        println("Region: ", nameof(typeof(region)), split ? "  (exact cell splitting)" : "  (whole cells)")
+        println("Region: ", nameof(typeof(region)), "  (exact cell splitting, refine=", refine, ")")
         println("Selected cells: ", length(newdata), " / ", nrows)
     end
-    return _copy_with_data(obj, newdata)
+    return out
 end
 
 function subregion(obj::PartDataType, region::AbstractRegion; inverse::Bool=false, verbose::Bool=true)
