@@ -268,7 +268,10 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     nrows = length(data); frac = Vector{Float64}(undef, nrows)
     @inbounds for idx in 1:nrows
         f = 1.0 / 2^(isamr ? lvl[idx] : obj.lmax)
-        nx = cxv[idx]*f; ny = cyv[idx]*f; nz = czv[idx]*f; half = 0.5f
+        # the physical cell centre is (cx-0.5)·Δ (1-based level-lattice index; a cell spans
+        # [(cx-1)Δ, cx·Δ]) — the same convention the projection kernels use. Testing regions
+        # at cx·Δ instead is off by half a cell PER LEVEL and breaks Σ fraction·volume.
+        nx = (cxv[idx]-0.5)*f; ny = (cyv[idx]-0.5)*f; nz = (czv[idx]-0.5)*f; half = 0.5f
         fr = split ? cellfrac(nx,ny,nz,half) : (contains(nx,ny,nz) ? 1.0 : 0.0)
         frac[idx] = inverse ? 1.0 - fr : fr
     end
@@ -298,7 +301,7 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
         Lc = L + 1; f = 1.0 / 2^Lc; halfc = 0.5f
         for kk in 0:1, jj in 0:1, ii in 0:1
             ccx = 2cx - 1 + ii; ccy = 2cy - 1 + jj; ccz = 2cz - 1 + kk
-            frc = cellfrac(ccx*f, ccy*f, ccz*f, halfc)
+            frc = cellfrac((ccx-0.5)*f, (ccy-0.5)*f, (ccz-0.5)*f, halfc)
             inverse && (frc = 1.0 - frc)
             emit!(i, ccx, ccy, ccz, Lc, frc, depth - 1)
         end

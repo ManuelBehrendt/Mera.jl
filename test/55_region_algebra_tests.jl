@@ -36,10 +36,14 @@
         end
     end
 
-    @testset "whole-cell over-counts a convex region" begin
+    @testset "centre test (split=false) vs split" begin
         s = subregion(gas, Sphere(R; range_unit=:kpc); split=true,  verbose=false)
         w = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
-        @test vol(w) > vol(s)                                   # whole boundary cells inflate the volume
+        # the centre test keeps whole cells, so its volume misses the analytic value by more
+        # than the split does — but its SIGN is not guaranteed (kept straddlers over-count,
+        # discarded ones under-count, and the two nearly cancel); assert only what holds:
+        @test abs(vol(w)/((4/3)*pi*R^3) - 1) >= abs(vol(s)/((4/3)*pi*R^3) - 1)
+        @test length(w.data) <= length(s.data)                  # centre-inside cells ⊆ touched cells
         @test !in(:fraction, propertynames(Mera.columns(w.data)))   # split=false attaches no :fraction
         @test in(:fraction, propertynames(Mera.columns(s.data)))
     end
@@ -51,9 +55,11 @@
         @test getvar(s, :volume, :kpc3) ≈ getvar(s, :cellsize, :kpc).^3 .* fr
         # :mass == ρ · cellsize³ · fraction
         @test getvar(s, :mass, :Msol) ≈ getvar(s, :rho, :Msol_pc3) .* getvar(s, :cellsize, :pc).^3 .* fr
-        # msum trims the boundary mass relative to whole cells
+        # the centre test carries whole-cell masses, so it disagrees with the split value
+        # at the boundary-cell level (sign not guaranteed — see the centre-test testset)
         w = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
-        @test msum(s, :Msol) < msum(w, :Msol)
+        @test !isapprox(msum(s, :Msol), msum(w, :Msol); rtol=1e-6)
+        @test isapprox(msum(s, :Msol), msum(w, :Msol); rtol=5e-2)
     end
 
     @testset "inverse selects the complement (split volumes are partitioned exactly)" begin
@@ -128,7 +134,7 @@
         sph = subregion(gas, Sphere(R; range_unit=:kpc); split=true,  verbose=false)
         whl = subregion(gas, Sphere(R; range_unit=:kpc); split=false, verbose=false)
         @test isapprox(pixmass(sph), msum(sph, :Msol); rtol=1e-3)   # map integrates to exact in-region mass
-        @test pixmass(sph) < pixmass(whl)                           # whole cells over-count the boundary
+        @test isapprox(pixmass(whl), msum(whl, :Msol); rtol=1e-3)   # centre-test map carries ITS mass too
         # a composite region projects too (sphere with a cylinder drilled out)
         comp = subregion(gas, Sphere(R; range_unit=:kpc) \ Cylinder(0.1box, 0.5box; range_unit=:kpc); verbose=false)
         @test isapprox(pixmass(comp), msum(comp, :Msol); rtol=1e-3)
@@ -247,5 +253,45 @@
 
         # guards: refine needs split=true and AMR data
         @test_logs (:warn, r"requires `split=true`") match_mode=:any subregion(gas, reg; split=false, refine=2, verbose=false)
+    end
+
+    @testset "mixed AMR levels: physical cell-centre convention (half-cell regression)" begin
+        # Refine the x > 0.5 half of the uniform level-5 grid to level 6 (each cell
+        # replaced by its 8 octree children carrying the parent's fields). A
+        # single-level grid CANNOT detect a half-cell convention error — there it
+        # acts as a pure translation of the region, which preserves volumes. On
+        # mixed levels the per-level shifts differ, so Σ fraction·volume misses
+        # the analytic truth. The cuboid case is decisive: its fractions are
+        # analytic (no sub-sampling), so the volume must match to float accuracy.
+        cols   = Mera.columns(gas.data)
+        names  = propertynames(cols)
+        refm   = cols.cx .> 16                       # the half to refine
+        nref   = count(refm)
+        ii = repeat([0, 1, 0, 1, 0, 1, 0, 1], outer=nref)
+        jj = repeat([0, 0, 1, 1, 0, 0, 1, 1], outer=nref)
+        kk = repeat([0, 0, 0, 0, 1, 1, 1, 1], outer=nref)
+        newcols = Dict{Symbol,Any}()
+        for nm in names
+            v = cols[nm]
+            newcols[nm] = vcat(v[.!refm], repeat(v[refm], inner=8))
+        end
+        CT = eltype(cols.cx)
+        newcols[:cx] = vcat(cols.cx[.!refm], CT.(2 .* repeat(Int.(cols.cx[refm]), inner=8) .- 1 .+ ii))
+        newcols[:cy] = vcat(cols.cy[.!refm], CT.(2 .* repeat(Int.(cols.cy[refm]), inner=8) .- 1 .+ jj))
+        newcols[:cz] = vcat(cols.cz[.!refm], CT.(2 .* repeat(Int.(cols.cz[refm]), inner=8) .- 1 .+ kk))
+        LT = eltype(cols.level)
+        newcols[:level] = vcat(cols.level[.!refm], fill(LT(6), 8nref))
+        tbl = Mera.IndexedTables.table((; (nm => newcols[nm] for nm in names)...);
+                                       pkey=collect(Mera.IndexedTables.pkeynames(gas.data)))
+        g2 = construct_datatype(tbl, gas)
+        g2.lmax = 6
+        @test sum(getvar(g2, :volume, :kpc3)) ≈ Vbox            # fixture still tiles the box
+
+        cub = Cuboid(xrange=[-0.2box, 0.2box], yrange=[-0.2box, 0.2box],
+                     zrange=[-0.2box, 0.2box], range_unit=:kpc)
+        @test isapprox(vol(subregion(g2, cub; verbose=false)), (0.4box)^3; rtol=1e-10)
+        sph2 = Sphere(0.3box; range_unit=:kpc)
+        @test isapprox(vol(subregion(g2, sph2; nsub=16, verbose=false)),
+                       (4/3)*pi*(0.3box)^3; rtol=5e-3)          # sampling-limited only
     end
 end
