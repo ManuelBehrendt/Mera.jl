@@ -69,6 +69,20 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Fixed
 
+- **Value-type regions: half-cell coordinate offset on mixed AMR levels.** The region
+  algebra tested every cell at `cx·Δ` instead of the physical cell centre `(cx-0.5)·Δ`
+  (the convention the projection kernels use), i.e. half a *local* cell off, differently
+  per AMR level. On a single-level grid this is a harmless translation, but on real AMR
+  data it biased fraction-weighted integrals (a 10-kpc test sphere's volume came out
+  +1.3% off its analytic value, independent of `nsub`) and made split-region projection
+  edges look frayed where refinement levels meet (the region machinery and the renderer
+  disagreed about where each coarse cell sits). Fraction-weighted volumes now close on
+  analytic truth to the `nsub` sampling accuracy — exactly, for axis-aligned cuboids —
+  and split edges render level-consistently. A mixed-level regression test (uniform grid
+  with one octree-refined half) pins the convention. Note: `getvar(:x/:y/:z)` and the
+  classic symbol-form `subregion`/`shellregion` still use the historic `cx·Δ` upper-edge
+  convention — aligning those is a separate, behaviour-visible decision.
+
 - **Bug-fix pass driven by the coverage-test audit.** (a) `configure_mera_io(cache=false)` /
   `ENV["MERA_CACHE_ENABLED"]` now actually disable the read cache — the switch used to be a
   `const` frozen at package load, so the toggle only changed what status functions reported.
