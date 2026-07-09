@@ -471,6 +471,13 @@ return AMRMapsType
   - Automatically matches finest AMR level resolution
 - **`pxsize::Array`**: Physical pixel size `[value, unit]` (overrides res/lmax)
   - Direct control over spatial resolution
+  - The effective pixel is `boxlen/ceil(boxlen/pxsize)` — exactly the requested size only
+    when it divides the box length (both the axis-aligned and off-axis paths share this)
+  - Pixel COUNTS still differ between paths at the same `pxsize`: axis-aligned maps frame
+    the requested window (or the object's stored ranges) on the box-anchored lattice,
+    while off-axis maps auto-fit the rotated data's bounding box plus an AMR-aware border
+    (one pixel + half the coarsest selected cell per side) — pin the frame explicitly if
+    you need comparable map dimensions
 
 #### Spatial Range Control:
 - **`xrange/yrange/zrange::Array`**: Spatial bounds [min, max] relative to center
