@@ -479,7 +479,7 @@ It supports both cell-based and point-based selection modes for precise boundary
 - `height::Real=0.`: Total cylinder height (extends ±height/2 from center plane)
 - `center::Array{<:Any,1}=[0., 0., 0.]`: Cylinder center position
 - `range_unit::Symbol=:standard`: Units (:standard, :kpc, :Mpc, etc.)
-- `direction::Symbol=:z`: Cylinder axis orientation (:x, :y, or :z)
+- `direction::Symbol=:z`: Cylinder axis orientation — only `:z` is implemented (`:x`/`:y` raise an error); for arbitrary orientations use the value-type `Cylinder(r, h; axis=…)` region
 - `cell::Bool=true`: Cell-based (true) vs point-based (false) selection mode
 - `inverse::Bool=false`: Select outside the region instead of inside
 - `smooth_boundary::Bool=false`: Enable smooth boundary transitions (eliminates grid artifacts)
