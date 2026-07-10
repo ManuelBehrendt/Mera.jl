@@ -81,6 +81,9 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (8))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -451,11 +454,9 @@ proportional to cell size.
 
 ```julia
 cs = getvar(sph, :cellsize, :kpc)
-# cell centres relative to the sphere centre (x = 13, y = z = 24 kpc); the stored
-# :x/:y/:z address the upper cell edge on the level lattice, so shift by half a cell
-xr = getvar(sph, :x, :kpc) .- 0.5 .* cs .- 13.
-yr = getvar(sph, :y, :kpc) .- 0.5 .* cs .- 24.
-zr = getvar(sph, :z, :kpc) .- 0.5 .* cs .- 24.
+xr = getvar(sph, :x, :kpc) .- 13.   # cell centres relative to the sphere centre
+yr = getvar(sph, :y, :kpc) .- 24.   #  (x = 13, y = z = 24 kpc)
+zr = getvar(sph, :z, :kpc) .- 24.
 f  = Mera.select(sph.data, :fraction)
 
 sel = (f .< 1.0) .& (abs.(zr) .< 1.)   # boundary cells in a thin mid-plane slab
@@ -952,11 +953,12 @@ largest boundary cell in the cut     : 0.375
  kpc
 rendered fringe beyond |z| = 2 kpc   :
   refine=0 : 0.265 kpc   (bound: cell + pixel = 0.395 kpc)
-  refine=2 : 0.064 kpc
-mass invariance, refine=2 / refine=0 : 0.99971
+  refine=2 : 0.064
+ kpc
+mass invariance, refine=2 / refine=0 : 0.99966
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_44_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_44_4.png)
 
 The printed fringe sits inside its bound, and `refine=2` cuts it by the
 promised factor of four while the enclosed mass stays put at the sampling
@@ -1096,8 +1098,8 @@ println("cut spans x ∈ ", round.(xr_c .* (gas.boxlen * kpc), sigdigits=4), " k
 ```
 
 ```
-classic cylinder (whole cells) : 2.29049e10
- Msol   +0.31 % vs split disc — whole boundary cells, as in §3
+classic cylinder (whole cells) : 2.29023e10
+ Msol   +0.3 % vs split disc — whole boundary cells, as in §3
 cut spans x ∈
 [12.0, 36.0] kpc (absolute)
 ```
