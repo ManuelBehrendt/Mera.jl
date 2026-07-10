@@ -114,23 +114,23 @@ function get_data(dataobject::GravDataType,
         elseif i == :x
             selected_unit = getunit(dataobject, :x, vars, units)
             if isamr
-                vars_dict[:x] =  (select(masked_data, apos) .* boxlen ./ 2 .^select(masked_data, :level) .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  ((select(masked_data, apos) .- 0.5) .* boxlen ./ 2 .^select(masked_data, :level) .-  boxlen * center[1] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:x] =  (select(masked_data, apos) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  ((select(masked_data, apos) .- 0.5) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
             end
         elseif i == :y
             selected_unit = getunit(dataobject, :y, vars, units)
             if isamr
-                vars_dict[:y] =  (select(masked_data, bpos) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  ((select(masked_data, bpos) .- 0.5) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[2] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:y] =  (select(masked_data, bpos) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  ((select(masked_data, bpos) .- 0.5) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
             end
         elseif i == :z
             selected_unit = getunit(dataobject, :z, vars, units)
             if isamr
-                vars_dict[:z] =  (select(masked_data, cpos) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  ((select(masked_data, cpos) .- 0.5) .* boxlen ./ 2 .^select(masked_data, :level) .- boxlen * center[3] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:z] =  (getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  ((getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
         # Gravitational acceleration magnitude - code units by default

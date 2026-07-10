@@ -55,7 +55,7 @@ end
         @test all(getvar(gas, :vx) .== 10.0)
         @test sort(unique(cx)) == [1,2,3,4]                            # full level-2 lattice covered
         # the analysis layer works unchanged
-        @test extrema(getvar(gas, :x)) == (0.25, 1.0)                  # cx/2^level (Mera convention)
+        @test extrema(getvar(gas, :x)) == (0.125, 0.875)            # cell centres (cx-0.5)/2^level
         @test maximum(projection(gas, :sd, res=8, center=[:bc], verbose=false, show_progress=false).maps[:sd]) > 0
         @test msum(gas) > 0
 

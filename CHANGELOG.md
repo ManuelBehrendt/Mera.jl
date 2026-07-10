@@ -69,6 +69,22 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Fixed
 
+- **Cell-centre convention unified: `cx`+`level` now yields the physical cell CENTRE
+  everywhere.** A cell with 1-based index `cx` at `level` spans `[(cx−1), cx]·Δ`
+  (`Δ = boxlen/2^level`), so its centre is `(cx−0.5)·Δ` — the convention the projection
+  kernels always used. The rest of the package treated `cx·Δ` (the upper cell edge) as
+  the position, i.e. everything was half a *local* cell off, differently per AMR level:
+  `getvar(:x/:y/:z)` (and every derived position/radius/angle and `center_of_mass` built
+  on them), the classic symbol `subregion`/`shellregion` selections (hydro/gravity/RT),
+  the external readers' load-time window (`_external_keep`), the immersive ray-caster's
+  point→leaf lookup, and the off-axis projection camera coordinates (which therefore
+  disagreed with axis-aligned projections by half a cell). All now use cell centres; the
+  multicode reader contract (test 59) asserts `getvar(:x) == (cx−0.5)·boxlen/2^level`.
+  Consequences: positions/profiles shift by half the local cell size (level-dependent —
+  up to half the coarsest cell), classic region cuts select the geometrically correct
+  cell set, load-time windows match post-load `getvar(:x)` filters exactly, and
+  axis-aligned, off-axis, and region-algebra geometry all agree.
+
 - **Value-type regions: half-cell coordinate offset on mixed AMR levels.** The region
   algebra tested every cell at `cx·Δ` instead of the physical cell centre `(cx-0.5)·Δ`
   (the convention the projection kernels use), i.e. half a *local* cell off, differently

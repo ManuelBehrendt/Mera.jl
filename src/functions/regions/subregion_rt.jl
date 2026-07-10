@@ -79,16 +79,17 @@ function subregioncuboid(dataobject::RtDataType;
             if isamr
                 if cell == true
                     # Cell-based selection: include cells that overlap with the range
-                    # A cell at index (cx, cy, cz) spans from (cx-0.5, cy-0.5, cz-0.5) to (cx+0.5, cy+0.5, cz+0.5) in grid units
+                    # A cell at index (cx, cy, cz) spans from (cx-1, cy-1, cz-1) to (cx, cy, cz) in grid units;
+                    # its centre is (cx-0.5, cy-0.5, cz-0.5) — the projection-kernel convention
                     sub_data = filter(p->begin
                         level_factor = 2^p.level
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 0.5) / level_factor
-                        cell_xmax = (p.cx + 0.5) / level_factor
-                        cell_ymin = (p.cy - 0.5) / level_factor
-                        cell_ymax = (p.cy + 0.5) / level_factor
-                        cell_zmin = (p.cz - 0.5) / level_factor
-                        cell_zmax = (p.cz + 0.5) / level_factor
+                        cell_xmin = (p.cx - 1.0) / level_factor
+                        cell_xmax = p.cx / level_factor
+                        cell_ymin = (p.cy - 1.0) / level_factor
+                        cell_ymax = p.cy / level_factor
+                        cell_zmin = (p.cz - 1.0) / level_factor
+                        cell_zmax = p.cz / level_factor
                         
                         # Check for overlap: cell overlaps if its max > range_min AND its min < range_max
                         (cell_xmax > xmin && cell_xmin < xmax) &&
@@ -99,9 +100,9 @@ function subregioncuboid(dataobject::RtDataType;
                     # Point-based selection: include cells whose centers lie within the range
                     sub_data = filter(p->begin
                         level_factor = 2^p.level
-                        cell_x = p.cx / level_factor
-                        cell_y = p.cy / level_factor
-                        cell_z = p.cz / level_factor
+                        cell_x = (p.cx - 0.5) / level_factor
+                        cell_y = (p.cy - 0.5) / level_factor
+                        cell_z = (p.cz - 0.5) / level_factor
                         
                         cell_x >= xmin && cell_x <= xmax &&
                         cell_y >= ymin && cell_y <= ymax &&
@@ -114,12 +115,12 @@ function subregioncuboid(dataobject::RtDataType;
                     sub_data = filter(p->begin
                         level_factor = 2^lmax
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 0.5) / level_factor
-                        cell_xmax = (p.cx + 0.5) / level_factor
-                        cell_ymin = (p.cy - 0.5) / level_factor
-                        cell_ymax = (p.cy + 0.5) / level_factor
-                        cell_zmin = (p.cz - 0.5) / level_factor
-                        cell_zmax = (p.cz + 0.5) / level_factor
+                        cell_xmin = (p.cx - 1.0) / level_factor
+                        cell_xmax = p.cx / level_factor
+                        cell_ymin = (p.cy - 1.0) / level_factor
+                        cell_ymax = p.cy / level_factor
+                        cell_zmin = (p.cz - 1.0) / level_factor
+                        cell_zmax = p.cz / level_factor
                         
                         # Check for overlap
                         (cell_xmax > xmin && cell_xmin < xmax) &&
@@ -130,9 +131,9 @@ function subregioncuboid(dataobject::RtDataType;
                     # Point-based selection for uniform grid
                     sub_data = filter(p->begin
                         level_factor = 2^lmax
-                        cell_x = p.cx / level_factor
-                        cell_y = p.cy / level_factor
-                        cell_z = p.cz / level_factor
+                        cell_x = (p.cx - 0.5) / level_factor
+                        cell_y = (p.cy - 0.5) / level_factor
+                        cell_z = (p.cz - 0.5) / level_factor
                         
                         cell_x >= xmin && cell_x <= xmax &&
                         cell_y >= ymin && cell_y <= ymax &&
@@ -149,12 +150,12 @@ function subregioncuboid(dataobject::RtDataType;
                     sub_data = filter(p->begin
                         level_factor = 2^p.level
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 0.5) / level_factor
-                        cell_xmax = (p.cx + 0.5) / level_factor
-                        cell_ymin = (p.cy - 0.5) / level_factor
-                        cell_ymax = (p.cy + 0.5) / level_factor
-                        cell_zmin = (p.cz - 0.5) / level_factor
-                        cell_zmax = (p.cz + 0.5) / level_factor
+                        cell_xmin = (p.cx - 1.0) / level_factor
+                        cell_xmax = p.cx / level_factor
+                        cell_ymin = (p.cy - 1.0) / level_factor
+                        cell_ymax = p.cy / level_factor
+                        cell_zmin = (p.cz - 1.0) / level_factor
+                        cell_zmax = p.cz / level_factor
                         
                         # No overlap: cell_max <= range_min OR cell_min >= range_max
                         (cell_xmax <= xmin || cell_xmin >= xmax) ||
@@ -165,9 +166,9 @@ function subregioncuboid(dataobject::RtDataType;
                     # Inverse point-based selection: include cells whose centers lie outside the range
                     sub_data = filter(p->begin
                         level_factor = 2^p.level
-                        cell_x = p.cx / level_factor
-                        cell_y = p.cy / level_factor
-                        cell_z = p.cz / level_factor
+                        cell_x = (p.cx - 0.5) / level_factor
+                        cell_y = (p.cy - 0.5) / level_factor
+                        cell_z = (p.cz - 0.5) / level_factor
                         
                         cell_x < xmin || cell_x > xmax ||
                         cell_y < ymin || cell_y > ymax ||
@@ -180,12 +181,12 @@ function subregioncuboid(dataobject::RtDataType;
                     sub_data = filter(p->begin
                         level_factor = 2^lmax
                         # Cell boundaries in physical coordinates
-                        cell_xmin = (p.cx - 0.5) / level_factor
-                        cell_xmax = (p.cx + 0.5) / level_factor
-                        cell_ymin = (p.cy - 0.5) / level_factor
-                        cell_ymax = (p.cy + 0.5) / level_factor
-                        cell_zmin = (p.cz - 0.5) / level_factor
-                        cell_zmax = (p.cz + 0.5) / level_factor
+                        cell_xmin = (p.cx - 1.0) / level_factor
+                        cell_xmax = p.cx / level_factor
+                        cell_ymin = (p.cy - 1.0) / level_factor
+                        cell_ymax = p.cy / level_factor
+                        cell_zmin = (p.cz - 1.0) / level_factor
+                        cell_zmax = p.cz / level_factor
                         
                         # No overlap condition
                         (cell_xmax <= xmin || cell_xmin >= xmax) ||
@@ -196,9 +197,9 @@ function subregioncuboid(dataobject::RtDataType;
                     # Inverse point-based selection for uniform grid
                     sub_data = filter(p->begin
                         level_factor = 2^lmax
-                        cell_x = p.cx / level_factor
-                        cell_y = p.cy / level_factor
-                        cell_z = p.cz / level_factor
+                        cell_x = (p.cx - 0.5) / level_factor
+                        cell_y = (p.cy - 0.5) / level_factor
+                        cell_z = (p.cz - 0.5) / level_factor
                         
                         cell_x < xmin || cell_x > xmax ||
                         cell_y < ymin || cell_y > ymax ||
