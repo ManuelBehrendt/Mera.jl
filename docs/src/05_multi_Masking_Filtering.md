@@ -94,11 +94,18 @@ clumps    = getclumps(info);
 ```
 
 ```
-[Mera]: 2026-06-01T20:26:26.408
+*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+[Mera]: 2026-07-10T17:08:13.566
 Code: RAMSES
 output [400] summary:
-mtime:
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -112,7 +119,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -136,9 +143,9 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: Get hydro data: 2026-06-01T20:26:28.613
+[Mera]: Get hydro data: 2026-07-10T17:08:15.412
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -148,7 +155,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
    Files to be processed: 2048
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 ( 8.79 ms/it)
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 ( 8.57 ms/it)
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
 Final data size: 849332 cells, 7 variables
@@ -158,12 +165,11 @@ Creating Table from 849332 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-  1.947429 seconds (32.35 M allocations: 1.861 GiB, 8.44% gc time, 46.06% compilation time)
-✓ Table created in 2.218 seconds
-Memory used for data table :
-71.27991771697998 MB
+✓ Table created in 1.866 seconds
+Memory used for data table :71.27991771697998
+ MB
 -------------------------------------------------------
-[Mera]: Get particle data: 2026-06-01T20:26:52.545
+[Mera]: Get particle data: 2026-07-10T17:08:38.983
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
@@ -178,7 +184,7 @@ Found 5.089390e+05 particles
 Memory used for data table :
 34.94713020324707 MB
 -------------------------------------------------------
-[Mera]: Get clump data: 2026-06-01T20:26:54.009
+[Mera]: Get clump data: 2026-07-10T17:08:40.906
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -197,7 +203,21 @@ hot = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)
 ```
 
 ```
-489608
+HydroDataType(Table with 489608 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ```julia
@@ -205,7 +225,33 @@ m = getmask(gas, Above(:T, 1e6, unit=:K))
 ```
 
 ```
-2.145e9
+849332-element BitVector:
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ ⋮
+ 0
+ 0
+ 0
+ 0
+ 1
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
 ```
 
 ## Data Selection from Tables
@@ -479,19 +525,19 @@ filtered_db = filter(p->p.level==6, gas.data ) # IndexedTables
 ```
 Table with 240956 rows, 11 columns:
 Columns:
-#   colname  type
-────────────────────
-1   level    Int64
-2   cx       Int64
-3   cy       Int64
-4   cz       Int64
-5   rho      Float64
-6   vx       Float64
-7   vy       Float64
-8   vz       Float64
-9   p        Float64
-10  var6     Float64
-11  var7     Float64
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64
 ```
 
 ### With IndexedTables (example B)
@@ -506,19 +552,19 @@ filtered_db = filter(p->p.rho>= density, gas.data ) # IndexedTables
 ```
 Table with 210 rows, 11 columns:
 Columns:
-#   colname  type
-────────────────────
-1   level    Int64
-2   cx       Int64
-3   cy       Int64
-4   cz       Int64
-5   rho      Float64
-6   vx       Float64
-7   vy       Float64
-8   vz       Float64
-9   p        Float64
-10  var6     Float64
-11  var7     Float64
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64
 ```
 
 ### Unit Conversion in Filtering
@@ -649,16 +695,16 @@ height  = 2. /gas.scale.kpc
 filtered_db = filter(p->p.rho >= density, gas.data )
 
 # filter cells/rows lower equal the defined radius and height
-# (convert the cell number to a position according to its cellsize and relative to the box center)
-filtered_db = filter(row-> sqrt( (row.cx * boxlen /2^row.level - cv)^2 + (row.cy * boxlen /2^row.level - cv)^2) <= radius &&
-                              abs(row.cz * boxlen /2^row.level - cv) <= height, filtered_db)
+# (a cell's CENTRE is (cx - 0.5) * boxlen / 2^level — cx is the 1-based index on the level grid)
+filtered_db = filter(row-> sqrt( ((row.cx - 0.5) * boxlen /2^row.level - cv)^2 + ((row.cy - 0.5) * boxlen /2^row.level - cv)^2) <= radius &&
+                              abs((row.cz - 0.5) * boxlen /2^row.level - cv) <= height, filtered_db)
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
 sum(var_filtered) # [Msol]
 ```
 
 ```
-2.7506324500621886e9
+2.8123367512291036e9
 ```
 
 ### Use Pipeline Macros
@@ -673,8 +719,8 @@ height  = 2. /gas.scale.kpc
 
 filtered_db = @apply gas.data begin
      @where :rho >= density
-     @where sqrt( (:cx * boxlen/2^:level - cv)^2 + (:cy * boxlen/2^:level - cv)^2 ) <= radius
-     @where abs(:cz * boxlen/2^:level -cv) <= height
+     @where sqrt( ((:cx - 0.5) * boxlen/2^:level - cv)^2 + ((:cy - 0.5) * boxlen/2^:level - cv)^2 ) <= radius
+     @where abs((:cz - 0.5) * boxlen/2^:level -cv) <= height
 end
 
 var_filtered = getvar(gas, :mass, filtered_db=filtered_db, unit=:Msol)
@@ -682,7 +728,7 @@ sum(var_filtered) # [Msol]
 ```
 
 ```
-2.7506324500621886e9
+2.8123367512291036e9
 ```
 
 ### External Functions With IndexedTables
@@ -690,11 +736,11 @@ sum(var_filtered) # [Msol]
 ```julia
 boxlen = info.boxlen
 function r(x,y,level,boxlen)
-    return sqrt((x * boxlen /2^level - boxlen/2.)^2 + (y * boxlen /2^level - boxlen/2.)^2)
+    return sqrt(((x - 0.5) * boxlen /2^level - boxlen/2.)^2 + ((y - 0.5) * boxlen /2^level - boxlen/2.)^2)
 end
 
 function h(z,level,boxlen)
-    return abs(z  * boxlen /2^level - boxlen/2.)
+    return abs((z - 0.5)  * boxlen /2^level - boxlen/2.)
 end
 
 density = 3. /gas.scale.Msol_pc3
@@ -710,7 +756,7 @@ sum(var_filtered) # [Msol]
 ```
 
 ```
-2.7506324500621886e9
+2.8123367512291036e9
 ```
 
 **Result Verification**: All methods produce identical filtered datasets (~2.75e9 Msol total mass), confirming implementation consistency.
@@ -731,7 +777,7 @@ sum(var_filtered) # [Msol]
 ```
 
 ```
-2.9388306102361355e9
+3.058897291918452e9
 ```
 
 By setting the keyword `cell=false`, only the cell-centres within the defined region are taken into account (as in the calculations in the previous section).
@@ -747,7 +793,7 @@ sum(var_filtered)
 ```
 
 ```
-2.7506324500621886e9
+2.8123367512291036e9
 ```
 
 ## Value-Space Filtering: `filterdata` and `getmask`
@@ -758,7 +804,21 @@ hot = filterdata(gas, Above(:T, 1e6, unit=:K), verbose=false)
 ```
 
 ```
-489608
+HydroDataType(Table with 489608 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ```julia
@@ -767,7 +827,21 @@ cold_dense = filterdata(gas, Above(:rho, 1, unit=:nH) & Below(:T, 1e5, unit=:K),
 ```
 
 ```
-10080
+HydroDataType(Table with 10080 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ```julia
@@ -776,7 +850,21 @@ disc = filterdata(gas, InRange(:r_cylinder, 0, 15, unit=:kpc), Below(:vz, 50, un
 ```
 
 ```
-17432
+HydroDataType(Table with 18585 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ```julia
@@ -785,7 +873,33 @@ m = getmask(gas, Above(:T, 1e6, unit=:K))
 ```
 
 ```
-2.145e9
+849332-element BitVector:
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ ⋮
+ 0
+ 0
+ 0
+ 0
+ 1
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
+ 0
 ```
 
 ### Adaptive and discrete selectors
@@ -795,7 +909,21 @@ dense10 = filterdata(gas, AbovePercentile(:rho, 90), verbose=false)   # densest 
 ```
 
 ```
-84934
+HydroDataType(Table with 84934 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ```julia
@@ -804,13 +932,45 @@ core = filterdata(gas, Equals(:level, gas.lmax) & AbovePercentile(:rho, 99), ver
 ```
 
 ```
-8494
+HydroDataType(Table with 8494 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 The `@filter` macro is also routed through this engine: on a Mera object it filters by a single comparison and returns a same-type object (in **code units** — use `filterdata` for unit-aware thresholds and compound conditions); on a raw table it keeps the classic per-row behaviour.
 
 ```julia
 finest = @filter gas :level == gas.lmax    # Mera object → HydroDataType of the finest-level cells
+```
+
+```
+HydroDataType(Table with 501568 rows, 11 columns:
+Columns:
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64, InfoType(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", FileNamesType("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/amr_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/hydro_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/grav_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/part_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/rt_file_descriptor.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/info_rt_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/clump_00400.", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/timer_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/header_00400.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/namelist.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/compilation.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/makefile.txt", "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14/output_00400/patches.txt"), "RAMSES", Dates.DateTime("2018-09-05T09:51:55"), Dates.DateTime("2025-06-29T20:06:45.267"), 2048, 3, 6, 14, 48.0, 39.9019537349027, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 3.085677581282e21, 6.76838218451376e-23, 1.9885499720830952e42, 6.557528732282063e6, 4.70554946422349e14, 1.6667, true, 7, 5, 0, [:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2], [:epot, :ax, :ay, :az], [:vx, :vy, :vz, :mass, :birth], Symbol[], [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], Symbol[], DescriptorType(0, [:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2], String[], false, true, 0, [:vx, :vy, :vz, :mass, :birth], String[], false, false, [:epot, :ax, :ay, :az], false, false, 0, Dict{Any, Any}(), Dict{Any, Any}(), false, false, [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance], false, false, Symbol[], false, false), true, true, true, false, true, false, false, Dict{Any, Any}(), true, true, Mera.FilesContentType(["#############################################################################", "# If you have problems with this makefile, contact Romain.Teyssier@gmail.com", "#############################################################################", "# Compilation time parameters", "NVECTOR = 64", "NDIM = 3", "NPRE = 8", "NVAR = 7", "NENER = 0", "SOLVER = hydro"  …  "write_patch.o: FORCE", "\t../utils/scripts/cr_write_patch.sh \$(PATCH)", "\t\$(F90) \$(FFLAGS) -c write_patch.f90 -o \$@", "%.o:%.f90", "\t\$(F90) \$(FFLAGS) -c \$^ -o \$@", "FORCE:", "#############################################################################", "clean :", "\trm *.o *.\$(MOD)", "#############################################################################"], [""], ["/hydra/u/manb/projects/new/sf_sim/patch/clfind_commons.f90", "module clfind_commons", "  use amr_commons, ONLY: qdp,dp", "  use sparse_matrix", "", "  integer::ntest,itest                                    !number of cells above threshold per CPU", "  integer::ivar_clump=1", "  integer::levelmax_clfind", "  integer::npeaks,npeaks_tot,npeaks_max", "  integer,allocatable,dimension(:)::npeaks_per_cpu"  …  "  !-----------------------------------------------------------------------", "  ! scale_T2 converts (P/rho) in user unit into (T/mu) in Kelvin", "    scale_T2 = mH/kB * scale_v**2", "", "  !-----------------------------------------------------------------------", "  ! scale_nH converts rho in user units into nH in H/cc", "    scale_nH = X/mH * scale_d", "", "  !-----------------------------------------------------------------------", "end subroutine units"]), false, true, true, 0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232), GridInfoType(1200000, 7630, 3, 3, 3, 14, 6, 13473, [0.0, 2.740022042216e12, 2.740022853184e12, 2.740036534312e12, 2.740037550776e12, 2.740037814264e12, 2.740110406912e12, 2.76075984576e12, 2.760793759232e12, 2.761840095808e12  …  3.2409825432832e13, 3.2418279623792e13, 3.2418279963392e13, 3.24182803258e13, 3.2418282766336e13, 3.2418286777096e13, 3.2428088131584e13, 3.243956719072e13, 3.2439568283848e13, 3.5184372088832e13], Bool[0, 0, 0, 0, 0, 0, 0, 0, 0, 0  …  0, 0, 0, 0, 0, 0, 0, 0, 0, 0]), PartInfoType(0.0, 0.6706464407596582, 0.0, 509150, 2547, 506603, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), CompilationInfoType(" 09/07/16-23:52:44", " /hydra/u/manb/projects/new/sf_sim/patch", " ", " ", " "), PhysicalUnitsType002(0.01495978707, 3.08567758128e24, 3.08567758128e21, 3.08567758128e18, 3.08567758128e15, 9.4607304725808e17, 1.9891e33, 1.9891e33, 5.9722e27, 1.89813e30, 6.96e10, 6.96e10, 9.1093837015e-28, 1.67262192369e-24, 1.67492749804e-24, 1.66e-24, 1.6605390666e-24, 6.02214076e23, 2.99792458e10, 6.6743e-8, 1.380649e-16, 1.380649e-16, 6.62607015e-27, 1.0545718176461565e-27, 5.670374419e-5, 6.6524587321e-25, 0.0072973525693, 8.314462618e7, 1.602176634e-12, 1.602176634e-9, 1.602176634e-6, 0.001602176634, 3.828e33, 3.828e33, 1.6605390666e-24, 86400.0, 3600.0, 60.0, 3.15576e16, 3.15576e13, 3.15576e7)), 6, 8, 48.0, [0.0, 1.0, 0.0, 1.0, 0.0, 1.0], [1, 2, 3, 4, 5, 6, 7], Dict{Any, Any}(5 => :p, 4 => :vz, 6 => :passive_scalar_1, 7 => :passive_scalar_2, 2 => :vx, 3 => :vy, 1 => :rho), 1.0e-5, 0.0, ScalesType003(0.0010000000000006482, 1.0000000000006481, 1000.0000000006482, 1.0000000000006482e6, 3261.5637769461323, 2.0626480623310105e23, 3.0856775812820004e16, 3.085677581282e19, 3.085677581282e21, 3.085677581282e22, 3.085677581282e25, 1.0000000000019446e-9, 1.0000000000019444, 1.0000000000019448e9, 1.0000000000019446e18, 3.469585750743794e10, 8.775571306099254e69, 2.9379989454983075e49, 2.9379989454983063e58, 2.9379989454983065e64, 2.937998945498306e67, 2.937998945498306e76, 0.9997234790001649, 0.9997234790001649, 6.76838218451376e-23, 999.7234790008131, 999.7234790008131, 0.20885045168302602, 0.014910986463557083, 14.910986463557084, 1.4910986463557083e7, 4.70554946422349e14, 4.70554946422349e17, 9.99723479002109e8, 9.99723479002109e8, 3.329677459032007e14, 1.0476363431814971e12, 1.9885499720830952e42, 65.57528732282063, 65575.28732282063, 6.557528732282063e6, 30.987773856809987, 8.551000140274429e55, 2.9104844143584656e-9, 517017.45993377, 517017.45993377, 680286.1314918026, 680286.1314918026, 2.910484414358466e-9, 2.910484414358466e-9, 2.1080552800592083e7, 2.1080552800592083e7, 3.114563011649217e29, 1.252773885965637e65, 6.193464189866091e71, 6.193464189866091e64, 2.1080552800592083e7, 2.1080552800592083e8, 1.380649e-16, 4.023715412864333e70, 4.023715412864333e70, 4.023715412864333e71, 0.00019124389093025845, 191.24389093025846, 191.24389093025846, 191243.89093025847, 1.9124389093025845e-8, 5.3371144971238105e67, 5.33711449712381e64, 5.33711449712381e61, 1.8172160775884043e41, 4.747168436751317e7, 4.747168436751317e7, 3.4036771916893676e-65, 1.158501842524895e-120, 30.987773856809987, 0.09138397843151959, 6.185216915658869e-24, 6.185216915658869e-24, 0.6185216915658869, 618.5216915658868, 618521.6915658868, 1.2581352511025663e23, 1.2581352511025663e23, 1.3935734353956443e-8, 1.3935734353956443e-10, 1.3935734353956443e-13, 3.09843657823729e-9, 4.30011830747048e13, 4.30011830747048e6, 4300.1183074704795, 2.910484414358466e-9, 8.55100014027443e55, 9.432237612943517e-31, 4.516263928056473e-30, 3.085677581282e21, 1.9885499720830952e42, 4.70554946422349e14, 1.0, 2.1942019308456e-311, 8.2894255e-317, 3.2593858277257e-311, 5.0e-324, 2.40729403e-314, 2.0e-323, 2.7585361036e-314, 2.755134442e-314, 0.0, 0.0, 0.0, 2.7585216137e-314, 2.4072939586e-314, 4.30011830747048e13, 2.758536135e-314, 3.085677581282e21, 1.9885499720830952e42, 1.9885499720830952e42, 4.70554946422349e14, 8.551000140274429e55, 8.551000140274429e55, 1.0, 2.758536167e-314, 2.755134347e-314, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 1.3935734353956443e-8, 3.085677581282e21, 3.085677581282e21, 1.0, 1.0, 1.0, 57.29577951308232))
 ```
 
 ## Extend the Data Table
@@ -854,20 +1014,20 @@ gas.data = transform(gas.data, :mach => mach) # IndexedTables
 ```
 Table with 849332 rows, 12 columns:
 Columns:
-#   colname  type
-────────────────────
-1   level    Int64
-2   cx       Int64
-3   cy       Int64
-4   cz       Int64
-5   rho      Float64
-6   vx       Float64
-7   vy       Float64
-8   vz       Float64
-9   p        Float64
-10  var6     Float64
-11  var7     Float64
-12  mach     Float64
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64
+12  mach              Float64
 ```
 
 ```julia
@@ -875,7 +1035,7 @@ proj_z = projection(gas, :mach, xrange=[-8.,8.], yrange=[-8.,8.], zrange=[-2.,2.
 ```
 
 ```
-[Mera]: 2026-06-01T20:27:08.477
+[Mera]: 2026-07-10T17:09:01.684
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 domain:
 xmin::xmax: 0.3333333 :: 0.6666667  	==> 16.0 [kpc] :: 32.0 [kpc]
@@ -911,19 +1071,19 @@ gas.data = select(gas.data, Not(:mach)) # select all columns, not :mach
 ```
 Table with 849332 rows, 11 columns:
 Columns:
-#   colname  type
-────────────────────
-1   level    Int64
-2   cx       Int64
-3   cy       Int64
-4   cz       Int64
-5   rho      Float64
-6   vx       Float64
-7   vy       Float64
-8   vz       Float64
-9   p        Float64
-10  var6     Float64
-11  var7     Float64
+#   colname           type
+─────────────────────────────
+1   level             Int64
+2   cx                Int64
+3   cy                Int64
+4   cz                Int64
+5   rho               Float64
+6   vx                Float64
+7   vy                Float64
+8   vz                Float64
+9   p                 Float64
+10  passive_scalar_1  Float64
+11  passive_scalar_2  Float64
 ```
 
 ## Data Table Extension and Modification
@@ -1231,8 +1391,8 @@ println()
 
 ```
 Gas COM masked:
-(23.632781376611643, 24.01793518773094, 24.078280687627124) kpc
-Gas COM:        (23.472214016322592, 23.939318698656532, 24.084836371167793) kpc
+(23.505448977165702, 23.89060278828501, 23.950948288181195) kpc
+Gas COM:        (23.360663421304555, 23.827768103638498, 23.973285776149755) kpc
 ```
 
 ```julia
@@ -1246,8 +1406,7 @@ println()
 ```
 
 ```
-Particles COM masked:
-(22.766374936557934, 24.817294529838456, 24.02006559565021) kpc
+Particles COM masked: (22.766374936557934, 24.817294529838456, 24.02006559565021) kpc
 Particles COM:        (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 ```
 
@@ -1262,9 +1421,9 @@ println( "Joint COM (Gas + Particles):        ", center_of_mass([gas,particles],
 
 ```
 Joint COM (Gas + Particles) masked: (
-23.63201475313947, 24.018642485836217, 24.078229177093796) kpc
+23.504795021378197, 23.89142275407681, 23.951009445335) kpc
 Joint COM (Gas + Particles):        (
-23.380528865091303, 23.97638498224044, 24.071951357132512) kpc
+23.286585862681243, 23.882441979830155, 23.978008354723023) kpc
 ```
 
 ```julia
@@ -1311,8 +1470,7 @@ println()
 ```
 
 ```
-Particles bulk velocity masked:
-(-27.70225411383651, -7.532075727552787, -1.3273993940211153) km/s
+Particles bulk velocity masked: (-27.70225411383651, -7.532075727552787, -1.3273993940211153) km/s
 Particles bulk velocity:        (-11.623422700314567, -18.440572802490294, -0.32919277314175355) km/s
 ```
 
