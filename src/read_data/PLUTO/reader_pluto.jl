@@ -231,7 +231,7 @@ end
 # `athdf(x1_min=…, x1_max=…)` reads a sub-volume. The same `xrange`/`yrange`/`zrange` +
 # `center` + `range_unit` arguments the RAMSES `gethydro` takes are honoured here. We work on
 # the **leaf-cell** list, so a spatial window is an exact, hole-free filter: a cell is kept
-# when its Mera position `cx/2^level` (= `getvar(:x)/boxlen`, so the selection matches
+# when its Mera cell centre `(cx-0.5)/2^level` (= `getvar(:x)/boxlen`, so the selection matches
 # [`subregion`](@ref)) lies inside the prepranges-normalised box. Returns `(keep, ranges)`.
 # Fill any UNDEFINED fields of a mutable struct with type-appropriate empties (recursing into
 # nested structs). The external readers don't populate the RAMSES-only InfoType fields (`fnames`,
@@ -273,14 +273,15 @@ function _external_ranges(info::InfoType, xrange, yrange, zrange, center, range_
     return ranges, fullbox
 end
 
-# per-cell keep mask: a leaf cell is kept when its position `cx/2^level` lies in the box
+# per-cell keep mask: a leaf cell is kept when its centre `(cx-0.5)/2^level` lies in the box
+# (matches getvar(:x)/boxlen, so a load-time window equals the post-load position filter)
 function _external_keep(ranges, lvl::AbstractVector, cx::AbstractVector, cy::AbstractVector, cz::AbstractVector)
     keep = BitVector(undef, length(cx))
     @inbounds for k in eachindex(cx)
-        s = 1.0 / 2.0^Int(lvl[k])                       # cell position fraction = cx/2^level
-        keep[k] = (ranges[1] <= cx[k]*s <= ranges[2]) &
-                  (ranges[3] <= cy[k]*s <= ranges[4]) &
-                  (ranges[5] <= cz[k]*s <= ranges[6])
+        s = 1.0 / 2.0^Int(lvl[k])                       # cell centre fraction = (cx-0.5)/2^level
+        keep[k] = (ranges[1] <= (cx[k]-0.5)*s <= ranges[2]) &
+                  (ranges[3] <= (cy[k]-0.5)*s <= ranges[4]) &
+                  (ranges[5] <= (cz[k]-0.5)*s <= ranges[6])
     end
     return keep
 end

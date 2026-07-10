@@ -601,23 +601,23 @@ function get_data(  dataobject::HydroDataType,
         elseif i == :x
             selected_unit = getunit(dataobject, :x, vars, units)
             if isamr
-                vars_dict[:x] =  (getvar(filtered_dataobject, apos, mask=use_mask_in_recursion) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  ((getvar(filtered_dataobject, apos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .-  boxlen * center[1] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:x] =  (getvar(filtered_dataobject, apos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
+                vars_dict[:x] =  ((getvar(filtered_dataobject, apos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2^lmax .-  boxlen * center[1] )  .* selected_unit
             end
         elseif i == :y
             selected_unit = getunit(dataobject, :y, vars, units)
             if isamr
-                vars_dict[:y] =  (getvar(filtered_dataobject, bpos, mask=use_mask_in_recursion) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  ((getvar(filtered_dataobject, bpos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .- boxlen * center[2] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:y] =  (getvar(filtered_dataobject, bpos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
+                vars_dict[:y] =  ((getvar(filtered_dataobject, bpos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2^lmax .- boxlen * center[2] )  .* selected_unit
             end
         elseif i == :z
             selected_unit = getunit(dataobject, :z, vars, units)
             if isamr
-                vars_dict[:z] =  (getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  ((getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2 .^getvar(filtered_dataobject, :level, mask=use_mask_in_recursion) .- boxlen * center[3] )  .* selected_unit
             else # if uniform grid
-                vars_dict[:z] =  (getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
+                vars_dict[:z] =  ((getvar(filtered_dataobject, cpos, mask=use_mask_in_recursion) .- 0.5) .* boxlen ./ 2^lmax .- boxlen * center[3] )  .* selected_unit
             end
 
         elseif i == :hx # specific angular momentum

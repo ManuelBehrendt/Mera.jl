@@ -46,9 +46,10 @@ end
 # point's coarse-cell max-level is ≥ the leaf level at that point (correct across coarse-cell boundaries).
 @inline function _mark_occ!(occ, Nc, cx, cy, cz, L)
     iL = 1 << L; L8 = UInt8(L > 255 ? 255 : L)
-    ax0=clamp(round(Int,(cx-0.5)*Nc/iL),1,Nc); ax1=clamp(round(Int,(cx+0.5)*Nc/iL),1,Nc)
-    ay0=clamp(round(Int,(cy-0.5)*Nc/iL),1,Nc); ay1=clamp(round(Int,(cy+0.5)*Nc/iL),1,Nc)
-    az0=clamp(round(Int,(cz-0.5)*Nc/iL),1,Nc); az1=clamp(round(Int,(cz+0.5)*Nc/iL),1,Nc)
+    # a leaf spans [(cx-1)/iL, cx/iL] in box fractions (centre (cx-0.5)/iL)
+    ax0=clamp(floor(Int,(cx-1)*Nc/iL)+1,1,Nc); ax1=clamp(ceil(Int,cx*Nc/iL),1,Nc)
+    ay0=clamp(floor(Int,(cy-1)*Nc/iL)+1,1,Nc); ay1=clamp(ceil(Int,cy*Nc/iL),1,Nc)
+    az0=clamp(floor(Int,(cz-1)*Nc/iL)+1,1,Nc); az1=clamp(ceil(Int,cz*Nc/iL),1,Nc)
     @inbounds for az in az0:az1, ay in ay0:ay1, ax in ax0:ax1
         occ[ax,ay,az] < L8 && (occ[ax,ay,az] = L8)
     end
@@ -176,14 +177,15 @@ function _resolve_res(v::AmrVolume, cam, res::Int, pxsize)   # cam is a Camera (
 end
 
 # point→leaf lookup. x,y,z in CODE units [0,boxlen]. Returns (value, local cell size).
-# Convention (verified against Mera): cell centre is at cx·boxlen/2^L, so cx = round(frac·2^L).
+# Convention: a leaf spans [(cx-1), cx]·boxlen/2^L (centre (cx-0.5)·boxlen/2^L),
+# so the index containing a fraction is cx = floor(frac·2^L) + 1.
 @inline function _leaf(v::AmrVolume, x, y, z)
     bl = v.boxlen; fx = x/bl; fy = y/bl; fz = z/bl
     (fx < 0 || fx > 1 || fy < 0 || fy > 1 || fz < 0 || fz > 1) && return (0.0, bl/(1<<v.lmax))
     startL = v.lmax
     if v.occ !== nothing                         # occupancy accel: start at the finest level present here
         Nc = 1 << v.occL
-        cix = clamp(round(Int, fx*Nc),1,Nc); ciy = clamp(round(Int, fy*Nc),1,Nc); ciz = clamp(round(Int, fz*Nc),1,Nc)
+        cix = clamp(floor(Int, fx*Nc)+1,1,Nc); ciy = clamp(floor(Int, fy*Nc)+1,1,Nc); ciz = clamp(floor(Int, fz*Nc)+1,1,Nc)
         m = @inbounds v.occ[cix,ciy,ciz]
         m == 0 && return (0.0, bl/(1<<v.lmin))   # no leaf in this coarse cell → empty space
         startL = Int(m) < v.lmax ? Int(m) : v.lmax
@@ -191,7 +193,7 @@ end
     @inbounds for L in startL:-1:v.lmin
         d = v.dicts[L]; isempty(d) && continue
         N = 1 << L
-        ix = clamp(round(Int, fx*N), 1, N); iy = clamp(round(Int, fy*N), 1, N); iz = clamp(round(Int, fz*N), 1, N)
+        ix = clamp(floor(Int, fx*N)+1, 1, N); iy = clamp(floor(Int, fy*N)+1, 1, N); iz = clamp(floor(Int, fz*N)+1, 1, N)
         val = get(d, (Int32(ix), Int32(iy), Int32(iz)), NaN)
         isnan(val) || return (val, bl/N)
     end
@@ -201,17 +203,17 @@ end
 @inline _valat(v::AmrVolume, x, y, z) = _leaf(v, x, y, z)[1]
 
 # CROSS-LEVEL TRILINEAR sample: reconstruct a continuous field by interpolating the 8 leaf values
-# around the point at the LOCAL cell spacing `h` (centres at integer multiples of h). Each corner is
-# looked up finest→coarsest, so coarser neighbours contribute their value — blends within a level and
-# across refinement boundaries, removing the piecewise-constant "blocky" look while staying AMR-native.
+# around the point at the LOCAL cell spacing `h` (centres at (i-0.5)·h on the local lattice). Each
+# corner is looked up finest→coarsest, so coarser neighbours contribute their value — blends within a
+# level and across refinement boundaries, removing the piecewise-constant look while staying AMR-native.
 @inline function _trilin(v::AmrVolume, x, y, z, h)
     bl = v.boxlen
-    ux = x/h; uy = y/h; uz = z/h
+    ux = x/h - 0.5; uy = y/h - 0.5; uz = z/h - 0.5
     c0x = floor(Int, ux); c0y = floor(Int, uy); c0z = floor(Int, uz)
     tx = ux-c0x; ty = uy-c0y; tz = uz-c0z
-    x0 = clamp(c0x*h, 0.0, bl); x1 = clamp((c0x+1)*h, 0.0, bl)
-    y0 = clamp(c0y*h, 0.0, bl); y1 = clamp((c0y+1)*h, 0.0, bl)
-    z0 = clamp(c0z*h, 0.0, bl); z1 = clamp((c0z+1)*h, 0.0, bl)
+    x0 = clamp((c0x+0.5)*h, 0.0, bl); x1 = clamp((c0x+1.5)*h, 0.0, bl)
+    y0 = clamp((c0y+0.5)*h, 0.0, bl); y1 = clamp((c0y+1.5)*h, 0.0, bl)
+    z0 = clamp((c0z+0.5)*h, 0.0, bl); z1 = clamp((c0z+1.5)*h, 0.0, bl)
     v000=_valat(v,x0,y0,z0); v100=_valat(v,x1,y0,z0); v010=_valat(v,x0,y1,z0); v110=_valat(v,x1,y1,z0)
     v001=_valat(v,x0,y0,z1); v101=_valat(v,x1,y0,z1); v011=_valat(v,x0,y1,z1); v111=_valat(v,x1,y1,z1)
     a00=v000*(1-tx)+v100*tx; a10=v010*(1-tx)+v110*tx; a01=v001*(1-tx)+v101*tx; a11=v011*(1-tx)+v111*tx
@@ -230,16 +232,17 @@ end
 # at the local cell spacing. Softer than trilinear (no facet creases) but NON-CONSERVATIVE — it spreads a
 # coarse cell's value beyond its volume, so it is for beauty frames, not quantitative emission/column work.
 @inline function _kernel(v::AmrVolume, x, y, z, h)
-    bl=v.boxlen; ux=x/h; uy=y/h; uz=z/h
+    # taps sit on CELL CENTRES, (i-0.5)·h on the local lattice
+    bl=v.boxlen; ux=x/h-0.5; uy=y/h-0.5; uz=z/h-0.5
     ix=floor(Int,ux); iy=floor(Int,uy); iz=floor(Int,uz)
     wx=_bspline4(ux-ix); wy=_bspline4(uy-iy); wz=_bspline4(uz-iz)
     acc=0.0
     @inbounds for oz in 0:3
-        z0=clamp((iz-1+oz)*h, 0.0, bl); wzz=wz[oz+1]
+        z0=clamp((iz-0.5+oz)*h, 0.0, bl); wzz=wz[oz+1]
         for oy in 0:3
-            y0=clamp((iy-1+oy)*h, 0.0, bl); wyz=wzz*wy[oy+1]
+            y0=clamp((iy-0.5+oy)*h, 0.0, bl); wyz=wzz*wy[oy+1]
             for ox in 0:3
-                x0=clamp((ix-1+ox)*h, 0.0, bl)
+                x0=clamp((ix-0.5+ox)*h, 0.0, bl)
                 acc += wyz*wx[ox+1]*_valat(v,x0,y0,z0)
             end
         end

@@ -173,7 +173,8 @@ projection(gas, :xCII)                       # ionized carbon, at the UV-exposed
 Whatever the source code, a loaded object obeys the same rules — this is what makes the analysis
 code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl`) checks:
 
-- **Cell convention.** A cell at `level` with integer index `cx` sits at `getvar(:x) = cx·boxlen/2^level`
+- **Cell convention.** A cell at `level` with 1-based integer index `cx` spans
+  `[(cx−1), cx]·boxlen/2^level`, so its **centre** is `getvar(:x) = (cx−0.5)·boxlen/2^level`
   (likewise `cy`, `cz`); its size is `boxlen/2^level`. AMR readers carry a `:level` column; uniform
   readers have a single level.
 - **Exact tiling.** The leaf cells cover the box with no gaps or overlaps — `Σ getvar(:volume) = boxlen³`.

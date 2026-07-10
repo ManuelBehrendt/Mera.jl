@@ -72,8 +72,9 @@ function _assert_contract(name, info; uniform::Bool)
         bl = gas.boxlen
         cx = Mera.select(gas.data, :cx)
         lvl = uniform ? fill(info.levelmin, length(cx)) : getvar(gas, :level)
-        # cell convention: getvar(:x) == cx·boxlen/2^level  (shared by every reader)
-        @test getvar(gas, :x) ≈ cx .* bl ./ 2.0 .^ lvl
+        # cell convention: getvar(:x) == (cx-0.5)·boxlen/2^level — the CELL CENTRE on the
+        # 1-based level lattice (a cell spans [(cx-1), cx]·boxlen/2^level; shared by every reader)
+        @test getvar(gas, :x) ≈ (cx .- 0.5) .* bl ./ 2.0 .^ lvl
         @test getvar(gas, :cellsize)[1] ≈ bl / 2.0^Int(lvl[1])
         # exact tiling: leaf cells cover the box with no gaps/overlaps
         @test sum(getvar(gas, :volume)) ≈ bl^3 rtol=1e-10

@@ -26,7 +26,9 @@ end
     dc = Dict((Int32(i),Int32(j),Int32(k))=>1.0 for i in 1:4, j in 1:4, k in 1:4)   # level 2
     df = Dict((Int32(4),Int32(4),Int32(4))=>9.0)                                     # level 3 at centre
     v2 = Mera.AmrVolume([Dict{NTuple{3,Int32},Float64}(), dc, df], 2, 3, 1.0, :standard, 65, nothing, nothing, 0)
-    @test Mera._leaf(v2, 0.5, 0.5, 0.5)[1] == 9.0             # level-3 leaf at the centre wins
+    # the level-3 leaf (4,4,4) spans [3/8, 4/8]³ (half-open); probe strictly inside it —
+    # 0.5 itself is the shared face and belongs to the next cell under the centre convention
+    @test Mera._leaf(v2, 0.45, 0.45, 0.45)[1] == 9.0          # level-3 leaf wins inside its span
     @test Mera._leaf(v2, 0.1, 0.1, 0.1)[1] == 1.0            # elsewhere the level-2 leaf
     # occupancy acceleration must change NOTHING — identical leaf everywhere, only fewer level lookups
     occ, occL = Mera._build_occ(v2)
@@ -57,8 +59,9 @@ end
     cst = _imm_uniform(4, (i,j,k)->7.0)                       # constant field
     @test Mera._trilin(cst, 0.4, 0.6, 0.5, 1/16) ≈ 7.0       # interpolation of a constant = constant
     ramp = _imm_uniform(4, (i,j,k)->Float64(i))              # value = x-index → linear in x
-    @test Mera._trilin(ramp, 0.5, 0.5, 0.5, 1/16) ≈ 8.0 atol=1e-9   # x/h = 0.5*16
-    @test Mera._trilin(ramp, 0.25, 0.5, 0.5, 1/16) ≈ 4.0 atol=1e-9
+    # cell i's centre is (i-0.5)·h, so the reconstructed ramp is value(x) = x/h + 0.5
+    @test Mera._trilin(ramp, 0.5, 0.5, 0.5, 1/16) ≈ 8.5 atol=1e-9   # 0.5·16 + 0.5
+    @test Mera._trilin(ramp, 0.25, 0.5, 0.5, 1/16) ≈ 4.5 atol=1e-9  # 0.25·16 + 0.5
     # smoothing selector + cosmetic cubic B-spline kernel (smooth=:kernel)
     @test (Mera._smode(false), Mera._smode(true), Mera._smode(:kernel), Mera._smode(:nearest), Mera._smode(:trilinear)) == (0,1,2,0,1)
     @test Mera._kernel(cst, 0.4, 0.6, 0.5, 1/16) ≈ 7.0 atol=1e-9    # B-spline blur of a constant = constant
@@ -121,8 +124,10 @@ end
     ptc = render_scene([rc], cam2; res=24, stepfrac=2.0, preintegrate=false)
     @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, pic)  # in gamut
     @test !isequal(pic, ptc)                                                  # PI changes the coarse-step result
-    # gradient shading (ParaView-style "Shade"): lights the gas via its gradient → differs from flat, in gamut
-    shd = render_scene([rc], cam2; res=24, shade=1.0, light=(1.,0.,0.))
+    # gradient shading (ParaView-style "Shade"): lights the gas via its gradient → differs from flat, in gamut.
+    # NB: the ramp's normal is (1,0,0) everywhere, and _shade clamps at fully-lit — a light ALONG ±x
+    # saturates every sample to lit=1 (shading correct but invisible). Light ⟂ the gradient instead.
+    shd = render_scene([rc], cam2; res=24, shade=1.0, light=(0.,0.,1.))
     @test all(x -> 0≤Mera.red(x)≤1 && 0≤Mera.green(x)≤1 && 0≤Mera.blue(x)≤1, shd)
     @test !isequal(shd, render_scene([rc], cam2; res=24, shade=0.0))
 end
