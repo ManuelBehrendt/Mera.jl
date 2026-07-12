@@ -255,6 +255,24 @@ m = getmask(gas, Above(:T, 1e6, unit=:K))
  0
 ```
 
+!!! tip "Which selection tool, when?"
+    Mera has two orthogonal axes of selection, and this page covers the second:
+
+    - **By place** — `subregion`/`shellregion` and the value-type regions
+      ([sub-regions tutorial](03_hydro_Get_Subregions.md)): geometry, with
+      fraction-split boundaries. Use for structural questions (disc, bulge,
+      shells, composite carves).
+    - **By state** — the filters and masks on this page: any stored *or
+      derived* quantity (`:rho`, `:T`, Mach number, `:level`, percentiles, …),
+      on the full box or on any object — **no region required**. Use for
+      physical questions (phases, shocks, outflows, refinement census).
+
+    They compose freely in either order — "cold gas inside the disc" is one
+    `subregion` and one `filterdata` (see *Exact Geometric Regions × Value
+    Filters* below). Within this page: `filterdata` returns a chainable object
+    for repeated use; the `mask=` keyword applies a one-off boolean mask to a
+    single computation without building anything.
+
 ## Data Selection from Tables
 
 ### Overview
@@ -1121,7 +1139,7 @@ imshow( ( permutedims(proj_z.maps[:mach]) ), origin="lower", extent=proj_z.cexte
 colorbar();
 ```
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_77_1.png)
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_78_1.png)
 
 Remove the column :mach from the table:
 
