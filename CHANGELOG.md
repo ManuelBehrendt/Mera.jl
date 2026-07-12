@@ -15,7 +15,10 @@ All notable changes to Mera.jl are documented here. The format is based on
   Integrals were already exact via `:fraction`; `refine` localises the selection BOUNDARY
   to `cellsize/2^k`, so projections of sub-regions render correspondingly sharper edges.
   Works on AMR and uniform-grid cell data (the result's `lmax` is raised so downstream
-  `getvar`/`projection` take the per-row level path).
+  `getvar`/`projection` take the per-row level path). **`refine_to=[length, unit]`** is the
+  target-size variant: each straddling cell picks its own depth so its children are no
+  larger than the given length — match it to a projection's `pxsize` and the rendered
+  boundary of a split sub-region becomes pixel-sharp regardless of the local AMR level.
 
 - **Multi-code reader registry.** The per-code frontends (RAMSES, PLUTO, Chombo, Athena++, FLASH,
   GADGET/GIZMO/AREPO/SWIFT) now register themselves in an internal reader interface
