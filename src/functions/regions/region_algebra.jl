@@ -250,20 +250,36 @@ are unchanged — they were already exact through `:fraction` — but the select
 becomes localised to `cellsize/2^refine`, so projections and maps of the sub-region render
 correspondingly sharper edges. Cost grows with the boundary area (≤ 8^refine per boundary
 cell; 2–3 is usually plenty).
+
+`refine_to = [length, unit]` (e.g. `[0.05, :kpc]`; a plain number means code units) is the
+target-size variant: each straddling cell picks its OWN depth so its children are no larger
+than the given length — match it to a projection's `pxsize` and the rendered boundary
+becomes pixel-sharp regardless of the local AMR level. Mutually exclusive with `refine`;
+per-cell depth is capped at 10. Cost grows as (cellsize/target)³ per boundary cell, so
+scope the call to the area you will actually render.
 """
 function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
-                   inverse::Bool=false, nsub::Int=8, refine::Int=0, verbose::Bool=true)
+                   inverse::Bool=false, nsub::Int=8, refine::Int=0,
+                   refine_to::Union{Nothing,Real,AbstractVector}=nothing, verbose::Bool=true)
     verbose = checkverbose(verbose)
+    refine > 0 && refine_to !== nothing &&
+        error("subregion: give either `refine` (fixed depth) or `refine_to` (target size), not both.")
+    # target child size in the normalised [0,1] frame (same frame as cellsize = 1/2^level)
+    tnorm = refine_to === nothing ? nothing :
+            refine_to isa AbstractVector ?
+                Float64(refine_to[1]) * getunit(obj.info, Symbol(refine_to[2])) / obj.boxlen :
+                Float64(refine_to) / obj.boxlen
+    tnorm !== nothing && tnorm <= 0 && error("subregion: `refine_to` must be a positive length.")
     cellfrac, contains = _prepare(region, obj; nsub=nsub)
     data = obj.data
     cxv = IndexedTables.select(data, :cx); cyv = IndexedTables.select(data, :cy); czv = IndexedTables.select(data, :cz)
     # AMR carries a per-cell :level; a uniform grid has none → every cell is at lmax
     isamr = :level in propertynames(IndexedTables.columns(data))
     lvl = isamr ? IndexedTables.select(data, :level) : nothing
-    if refine > 0 && !(split && isamr)
-        split || @warn "subregion: `refine` requires `split=true`; ignoring `refine`." maxlog=1
-        (split && !isamr) && @warn "subregion: `refine` requires AMR data (a :level column); ignoring `refine`." maxlog=1
-        refine = 0
+    if (refine > 0 || tnorm !== nothing) && !(split && isamr)
+        split || @warn "subregion: `refine`/`refine_to` require `split=true`; ignoring them." maxlog=1
+        (split && !isamr) && @warn "subregion: `refine`/`refine_to` require AMR data (a :level column); ignoring them." maxlog=1
+        refine = 0; tnorm = nothing
     end
     nrows = length(data); frac = Vector{Float64}(undef, nrows)
     @inbounds for idx in 1:nrows
@@ -277,7 +293,7 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     end
     keep = frac .> 1e-12
     cols = IndexedTables.columns(data)
-    if refine == 0
+    if refine == 0 && tnorm === nothing
         keptcols = map(c -> c[keep], cols)
         newcols = split ? merge(keptcols, (fraction = frac[keep],)) : keptcols
         newdata = IndexedTables.table(newcols; pkey = collect(IndexedTables.pkeynames(data)))
@@ -308,7 +324,12 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     end
     @inbounds for i in 1:nrows
         keep[i] || continue
-        d = (frac[i] < 1.0 - 1e-12) ? refine : 0
+        d = 0
+        if frac[i] < 1.0 - 1e-12
+            # fixed depth, or per-cell depth so children reach the requested target size
+            d = tnorm === nothing ? refine :
+                clamp(ceil(Int, log2(1.0 / (tnorm * 2^Int(lvl[i])))), 0, 10)
+        end
         emit!(i, Int(cxv[i]), Int(cyv[i]), Int(czv[i]), Int(lvl[i]), frac[i], d)
     end
     newcols = merge(map(c -> c[idxmap], cols),
@@ -320,7 +341,8 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     # cellsize would otherwise be read as boxlen/2^lmax for every row)
     isempty(lvln) || (out.lmax = max(out.lmax, Int(maximum(lvln))))
     if verbose
-        println("Region: ", nameof(typeof(region)), "  (exact cell splitting, refine=", refine, ")")
+        println("Region: ", nameof(typeof(region)), "  (exact cell splitting, ",
+                tnorm === nothing ? "refine=$(refine)" : "refine_to=$(refine_to)", ")")
         println("Selected cells: ", length(newdata), " / ", nrows)
     end
     return out

@@ -252,7 +252,7 @@
         @test isapprox(sum(getvar(s2i, :volume, :kpc3)) + v2, Vbox; rtol=1e-6)
 
         # guards: refine needs split=true and AMR data
-        @test_logs (:warn, r"requires `split=true`") match_mode=:any subregion(gas, reg; split=false, refine=2, verbose=false)
+        @test_logs (:warn, r"require `split=true`") match_mode=:any subregion(gas, reg; split=false, refine=2, verbose=false)
     end
 
     @testset "mixed AMR levels: physical cell-centre convention (half-cell regression)" begin
@@ -293,5 +293,22 @@
         sph2 = Sphere(0.3box; range_unit=:kpc)
         @test isapprox(vol(subregion(g2, sph2; nsub=16, verbose=false)),
                        (4/3)*pi*(0.3box)^3; rtol=5e-3)          # sampling-limited only
+    end
+
+    @testset "refine_to: subdivide the boundary to a target size" begin
+        reg = Sphere(R; center=[:bc], range_unit=:kpc)
+        tgt = box / 2^7                                    # two levels below the level-5 grid
+        st = subregion(gas, reg; refine_to=[tgt, :kpc], verbose=false)
+        s2 = subregion(gas, reg; refine=2, verbose=false)
+        @test length(st.data) == length(s2.data)           # uniform grid: identical to refine=2
+        f  = Mera.select(st.data, :fraction); cs = getvar(st, :cellsize, :kpc)
+        b  = 0.0 .< f .< 1.0
+        @test any(b) && maximum(cs[b]) <= tgt + 1e-12      # every straddler reached the target
+        s0 = subregion(gas, reg; verbose=false)
+        @test isapprox(msum(st, :Msol), msum(s0, :Msol); rtol=2e-2)  # integrals invariant (re-measured)
+        # already-fine-enough boundaries are left alone (target ≥ local cell size → depth 0)
+        st0 = subregion(gas, reg; refine_to=[box, :kpc], verbose=false)
+        @test length(st0.data) == length(s0.data)
+        @test_throws ErrorException subregion(gas, reg; refine=1, refine_to=[tgt, :kpc], verbose=false)
     end
 end
