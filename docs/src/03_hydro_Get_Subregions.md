@@ -958,6 +958,14 @@ answered the first: **integrals** (mass, volume, anything summed via
 `:fraction`) are exact to the boundary-sampling accuracy of §3 — sub-percent
 by default, purchasable to better with `nsub`.
 
+And no amount of *boundary refinement* could improve those integrals: a
+straddling cell's children inherit their parent's (piecewise-constant)
+field values, and their fraction-weighted volumes telescope back to the
+parent's — the sum of v·f over the children equals V·f of the parent by
+construction. The `:fraction` column already *is* the sub-cell geometry,
+integrated. That is why the mass-invariance prints below sit at 1, and why
+`refine`/`refine_to` are rendering tools, not accuracy tools.
+
 **Rendered boundaries** are a different matter. A projection deposits each
 straddling cell's fraction-weighted mass over the cell's *full* footprint —
 the mass is right, but it is spread at the local cell scale, so a split edge
