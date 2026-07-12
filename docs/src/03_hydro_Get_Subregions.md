@@ -78,6 +78,8 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (4), mismatched flags (10))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -86,6 +88,9 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (8))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -972,7 +977,6 @@ slab  = subregion(gas, :cuboid; xrange=[6., 14.], yrange=[-2., 2.], zrange=[-4.,
                   center=[:bc], range_unit=:kpc, verbose=false)   # a light working slab
 d_s0  = subregion(slab, disc_region, verbose=false)               # split, refine=0
 d_ref = subregion(slab, disc_region; refine=2, verbose=false)     # boundary subdivided 2×
-slab  = nothing
 
 pe_s0 = projection(d_s0, :sd, :Msol_pc2; direction=:y, center=[:bc], range_unit=:kpc,
                    xrange=[6., 14.], zrange=[-4., 4.], pxsize=[0.02, :kpc],
@@ -1016,7 +1020,7 @@ rendered fringe beyond |z| = 2 kpc   :
 mass invariance, refine=2 / refine=0 : 0.99966
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_46_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_46_4.png)
 
 The printed fringe sits inside its bound, and `refine=2` cuts it by the
 promised factor of four while the enclosed mass stays put at the sampling
@@ -1024,6 +1028,37 @@ level — the children re-measure their fractions, so tiny corrections at the
 fourth decimal place are expected, not alarming. Use `refine` when a
 *rendered* boundary must be sharp (figures, mock observations); plain `split`
 already gives you the correct numbers.
+
+**Matching the boundary to the map.** Guessing the right depth is
+unnecessary: `refine_to=[length, unit]` lets every straddling cell pick its
+*own* depth so its children are no larger than the given length. Set it to
+your projection's `pxsize` and the selection boundary is subdivided at the
+scale of the projected grid — the rendered edge becomes pixel-sharp
+regardless of the local AMR level, and the picture now *illustrates* the
+exact-split scheme at exactly the resolution you are looking at:
+
+```julia
+d_px = subregion(slab, disc_region; refine_to=[0.05, :kpc], verbose=false)   # ≈ the map scale
+slab = nothing
+
+pe_px = projection(d_px, :sd, :Msol_pc2; direction=:y, center=[:bc], range_unit=:kpc,
+                   xrange=[6., 14.], zrange=[-4., 4.], pxsize=[0.02, :kpc],
+                   verbose=false, show_progress=false)
+frx = Mera.select(d_px.data, :fraction)
+csx = getvar(d_px, :cellsize, :kpc)[0.0 .< frx .< 1.0]
+println("largest straddling cell after refine_to : ", round(maximum(csx), digits=3),
+        " kpc   (was ", round(maximum(csb), digits=3), " kpc)")
+println("rendered fringe beyond |z| = 2 kpc      : ", round(fringe(pe_px), digits=3), " kpc")
+println("mass invariance vs refine=0             : ",
+        round(msum(d_px, :Msol) / msum(d_s0, :Msol), digits=5))
+```
+
+```
+largest straddling cell after refine_to : 0.047
+ kpc   (was 0.375 kpc)
+rendered fringe beyond |z| = 2 kpc      : 0.024 kpc
+mass invariance vs refine=0             : 0.99944
+```
 
 **And the honest cosmetic alternative.** For a publication figure the
 feather can also simply be *clipped at the geometric surface* — legitimate as
@@ -1059,7 +1094,7 @@ map mass removed by the display clip : 0.45
  %  (cosmetic only — msum is untouched)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_48_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_50_3.png)
 
 ## 8. Tilted Regions
 
@@ -1098,7 +1133,7 @@ text!(ax, Point3f(0, 0, 6.5); text="disc normal (z)", color=:black, fontsize=11)
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_50_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_52_1.png)
 
 Now the extraction: `Cylinder(10., 1.; axis=[1., 0., 2.])`, a thin disc-like
 slab tilted toward +x. Two checks that the tilt costs nothing: the volume
@@ -1140,7 +1175,7 @@ tilted-cylinder gas mass : 5.43585e9
 volume                   : 628.848 kpc³   vs  πR²·2h = 628.319 kpc³   (0.084 %)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_52_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_54_3.png)
 
 The volume lands on the analytic value to the usual sampling accuracy —
 tilting a region moves no goalposts. And the two views are the depth lesson of
@@ -1200,7 +1235,7 @@ in-plane bar volume : 120.595
  kpc³   analytic πR²·2h = 120.637 kpc³
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_54_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_56_4.png)
 
 The along-axis panel is the payoff: the dashed analytic circles at 6 and
 10 kpc land on the rendered rims, because selecting along a vector and viewing
@@ -1250,7 +1285,7 @@ identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10
    vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_57_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_59_4.png)
 
 The identity closes, and the edge-on view explains the face-on one: the
 blister only *adds* gas above the +z face (invisible face-on, where the disc
@@ -1296,7 +1331,7 @@ chimneys: 2.2548e10
  Msol   crescent: 2.1784e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_59_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_3.png)
 
 **Swiss cheese, seeded by the data.** Composites become genuinely powerful
 when the geometry comes from the *data* — here we carve a hole around each of
@@ -1352,7 +1387,7 @@ swiss-cheese disc:
 1.5925e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_5.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_5.png)
 
 The crosses mark the sites the *particles* chose; the holes are where the
 *gas* was carved — and the ledger delivers the punchline: the three spheres
@@ -1400,7 +1435,7 @@ bows: 1.0791e10
  Msol   filament tube: 2.3211e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_65_3.png)
 
 Every construct here remains a *measurement*: `msum` on any of them is
 fraction-exact, additive against its complement, and reusable — which the next
@@ -1465,7 +1500,7 @@ sum             2.28346e10      5.14581e9
 disc direct     2.28346e10      5.14581e9
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_66_7.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_68_7.png)
 
 The stellar column tiles exactly like the gas column — particles are
 points, so zone membership is unambiguous and the four zones sum to the disc
@@ -1578,8 +1613,9 @@ cut spans x ∈
   `split=true` — the `:fraction` column makes `msum`, `getvar(:mass)`,
   `getvar(:volume)`, and projections boundary-aware, and adjacent regions
   additive.
-- *Publishing a figure of a cut?* Consider `refine=k` (§7) for the rendered
-  edge — scoped to the area you render, not to the whole boundary.
+- *Publishing a figure of a cut?* Consider `refine=k` — or
+  `refine_to=[pxsize…]` to match the boundary to your map's pixel grid (§7)
+  — scoped to the area you render, not to the whole boundary.
 
 **Cost.** Splitting adds one fraction evaluation per boundary cell; interior
 cells are untouched. Fractions of curved surfaces are sub-sampled (`nsub`,
@@ -1602,7 +1638,8 @@ insurance a mass budget can buy.
 - Fractions of curved boundaries are sub-sampled (`nsub`): integrals are exact
   to that sampling, and §3 measured it against an analytic volume. Rendered
   edges feather at the local cell size, bounded by one cell + one pixel;
-  `refine=k` localises them to cellsize/2ᵏ (§7).
+  `refine=k` localises them to cellsize/2ᵏ, and `refine_to=[length, unit]`
+  matches the boundary to your map's pixel size (§7).
 - Value-type regions (`Sphere`, `Cuboid`, `Cylinder`, `SphericalShell`,
   `CylindricalShell`) are applied with `subregion(gas, region)`, compose with
   `∩ ∪ \ !`, tilt via `axis`, invert with `inverse=true` — and adjacent split
