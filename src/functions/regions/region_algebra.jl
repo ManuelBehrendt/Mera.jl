@@ -213,6 +213,85 @@ Base.:|(a::AbstractRegion, b::AbstractRegion)        = RegionUnion(a, b)
     return cnt / (n^3)
 end
 
+
+# ---- axis-aligned bounding boxes (normalised [0,1] frame) --------------------------
+# Conservative AABB per region, used to SKIP the membership/fraction evaluation for
+# cells that cannot intersect the region. Results are bit-identical with and without
+# the prune: a cell outside the box has fraction exactly 0 (and its complement exactly
+# 1 under `inverse=true`). Boxes compose: union → hull, intersection → overlap,
+# difference → the minuend's box, complement → everything.
+function _bbox(r::Sphere, obj)
+    c, tonorm = _norm_frame(obj, r.center, r.range_unit); R = tonorm(r.radius)
+    return (c[1]-R, c[2]-R, c[3]-R), (c[1]+R, c[2]+R, c[3]+R)
+end
+function _bbox(r::Cylinder, obj)
+    c, tonorm = _norm_frame(obj, r.center, r.range_unit)
+    R = tonorm(r.radius); H = tonorm(r.height)
+    w = r.axis ./ sqrt(sum(abs2, r.axis))
+    # support function of an oriented cylinder along each coordinate axis
+    e1 = abs(w[1])*H + R*sqrt(max(0.0, 1 - w[1]^2))
+    e2 = abs(w[2])*H + R*sqrt(max(0.0, 1 - w[2]^2))
+    e3 = abs(w[3])*H + R*sqrt(max(0.0, 1 - w[3]^2))
+    return (c[1]-e1, c[2]-e2, c[3]-e3), (c[1]+e1, c[2]+e2, c[3]+e3)
+end
+function _bbox(r::Cuboid, obj)
+    c, tonorm = _norm_frame(obj, r.center, r.range_unit)
+    return (c[1]+tonorm(r.xrange[1]), c[2]+tonorm(r.yrange[1]), c[3]+tonorm(r.zrange[1])),
+           (c[1]+tonorm(r.xrange[2]), c[2]+tonorm(r.yrange[2]), c[3]+tonorm(r.zrange[2]))
+end
+_bbox(r::SphericalShell, obj) =
+    _bbox(Sphere(r.r_out; center=r.center, range_unit=r.range_unit), obj)
+_bbox(r::CylindricalShell, obj) =
+    _bbox(Cylinder(r.r_out, r.height; axis=r.axis, center=r.center, range_unit=r.range_unit), obj)
+function _bbox(r::RegionUnion, obj)
+    a = _bbox(r.a, obj); b = _bbox(r.b, obj)
+    return min.(a[1], b[1]), max.(a[2], b[2])
+end
+function _bbox(r::RegionIntersection, obj)
+    a = _bbox(r.a, obj); b = _bbox(r.b, obj)
+    return max.(a[1], b[1]), min.(a[2], b[2])
+end
+_bbox(r::RegionDifference, obj) = _bbox(r.a, obj)
+_bbox(r::RegionComplement, obj) = (-Inf, -Inf, -Inf), (Inf, Inf, Inf)
+
+
+
+# point-membership hot loop (particles / clumps), specialized on the predicate type
+function _keeploop!(keep::Vector{Bool}, contains::C, xs, ys, zs, bl::Float64, inverse::Bool,
+                    blo1::Float64, blo2::Float64, blo3::Float64,
+                    bhi1::Float64, bhi2::Float64, bhi3::Float64) where {C}
+    @inbounds for i in eachindex(keep)
+        px = xs[i]/bl; py = ys[i]/bl; pz = zs[i]/bl
+        ins = blo1 <= px <= bhi1 && blo2 <= py <= bhi2 && blo3 <= pz <= bhi3 &&
+              contains(px, py, pz)
+        keep[i] = inverse ? !ins : ins
+    end
+    return keep
+end
+
+# Hot loop behind a FUNCTION BARRIER: `cellfrac`/`contains` come out of `_prepare` as
+# non-concrete closures; passing them as parametric arguments lets Julia compile one
+# specialized loop per region type (≈10× over the dynamic-dispatch loop).
+function _fracloop!(frac::Vector{Float64}, cellfrac::F, contains::C,
+                    cxv, cyv, czv, lvl, isamr::Bool, lmax::Int, split::Bool, inverse::Bool,
+                    blo1::Float64, blo2::Float64, blo3::Float64,
+                    bhi1::Float64, bhi2::Float64, bhi3::Float64) where {F, C}
+    @inbounds for idx in eachindex(frac)
+        f = 1.0 / 2^(isamr ? Int(lvl[idx]) : lmax)
+        # the physical cell centre is (cx-0.5)·Δ (1-based level-lattice index; a cell spans
+        # [(cx-1)Δ, cx·Δ]) — the same convention the projection kernels use
+        nx = (cxv[idx]-0.5)*f; ny = (cyv[idx]-0.5)*f; nz = (czv[idx]-0.5)*f; half = 0.5f
+        fr = 0.0
+        if nx+half >= blo1 && nx-half <= bhi1 &&
+           ny+half >= blo2 && ny-half <= bhi2 &&
+           nz+half >= blo3 && nz-half <= bhi3
+            fr = split ? cellfrac(nx,ny,nz,half) : (contains(nx,ny,nz) ? 1.0 : 0.0)
+        end
+        frac[idx] = inverse ? 1.0 - fr : fr
+    end
+    return frac
+end
+
 # rebuild a data object of the same type with new data, copying every other (defined) field
 function _copy_with_data(obj::T, newdata) where {T}
     out = T()
@@ -281,16 +360,14 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
         (split && !isamr) && @warn "subregion: `refine`/`refine_to` require AMR data (a :level column); ignoring them." maxlog=1
         refine = 0; tnorm = nothing
     end
+    # cells outside this box have fraction exactly 0; hoist into typed scalars so the
+    # hot loop compares Float64s (the _bbox call itself is dynamic on the region type)
+    _blo, _bhi = _bbox(region, obj)
+    blo1 = Float64(_blo[1]); blo2 = Float64(_blo[2]); blo3 = Float64(_blo[3])
+    bhi1 = Float64(_bhi[1]); bhi2 = Float64(_bhi[2]); bhi3 = Float64(_bhi[3])
     nrows = length(data); frac = Vector{Float64}(undef, nrows)
-    @inbounds for idx in 1:nrows
-        f = 1.0 / 2^(isamr ? lvl[idx] : obj.lmax)
-        # the physical cell centre is (cx-0.5)·Δ (1-based level-lattice index; a cell spans
-        # [(cx-1)Δ, cx·Δ]) — the same convention the projection kernels use. Testing regions
-        # at cx·Δ instead is off by half a cell PER LEVEL and breaks Σ fraction·volume.
-        nx = (cxv[idx]-0.5)*f; ny = (cyv[idx]-0.5)*f; nz = (czv[idx]-0.5)*f; half = 0.5f
-        fr = split ? cellfrac(nx,ny,nz,half) : (contains(nx,ny,nz) ? 1.0 : 0.0)
-        frac[idx] = inverse ? 1.0 - fr : fr
-    end
+    _fracloop!(frac, cellfrac, contains, cxv, cyv, czv, lvl, isamr, Int(obj.lmax),
+               split, inverse, blo1, blo2, blo3, bhi1, bhi2, bhi3)
     keep = frac .> 1e-12
     cols = IndexedTables.columns(data)
     if refine == 0 && tnorm === nothing
@@ -353,11 +430,12 @@ function subregion(obj::PartDataType, region::AbstractRegion; inverse::Bool=fals
     _, contains = _prepare(region, obj)
     data = obj.data; bl = obj.boxlen
     xs = IndexedTables.select(data, :x); ys = IndexedTables.select(data, :y); zs = IndexedTables.select(data, :z)
+    _blo, _bhi = _bbox(region, obj)
+    blo1 = Float64(_blo[1]); blo2 = Float64(_blo[2]); blo3 = Float64(_blo[3])
+    bhi1 = Float64(_bhi[1]); bhi2 = Float64(_bhi[2]); bhi3 = Float64(_bhi[3])
     nrows = length(data); keep = Vector{Bool}(undef, nrows)
-    @inbounds for i in 1:nrows
-        ins = contains(xs[i]/bl, ys[i]/bl, zs[i]/bl)
-        keep[i] = inverse ? !ins : ins
-    end
+    _keeploop!(keep, contains, xs, ys, zs, Float64(bl), inverse,
+               blo1, blo2, blo3, bhi1, bhi2, bhi3)
     cols = IndexedTables.columns(data)
     newdata = IndexedTables.table(map(c -> c[keep], cols); pkey = collect(IndexedTables.pkeynames(data)))
     if verbose
@@ -372,11 +450,12 @@ function subregion(obj::ClumpDataType, region::AbstractRegion; inverse::Bool=fal
     _, contains = _prepare(region, obj)
     data = obj.data; bl = obj.boxlen          # clumps are points at their peak position (code units)
     xs = IndexedTables.select(data, :peak_x); ys = IndexedTables.select(data, :peak_y); zs = IndexedTables.select(data, :peak_z)
+    _blo, _bhi = _bbox(region, obj)
+    blo1 = Float64(_blo[1]); blo2 = Float64(_blo[2]); blo3 = Float64(_blo[3])
+    bhi1 = Float64(_bhi[1]); bhi2 = Float64(_bhi[2]); bhi3 = Float64(_bhi[3])
     nrows = length(data); keep = Vector{Bool}(undef, nrows)
-    @inbounds for i in 1:nrows
-        ins = contains(xs[i]/bl, ys[i]/bl, zs[i]/bl)
-        keep[i] = inverse ? !ins : ins
-    end
+    _keeploop!(keep, contains, xs, ys, zs, Float64(bl), inverse,
+               blo1, blo2, blo3, bhi1, bhi2, bhi3)
     cols = IndexedTables.columns(data)
     newdata = IndexedTables.table(map(c -> c[keep], cols); pkey = collect(IndexedTables.pkeynames(data)))
     if verbose
@@ -384,4 +463,82 @@ function subregion(obj::ClumpDataType, region::AbstractRegion; inverse::Bool=fal
         println("Selected clumps: ", count(keep), " / ", nrows)
     end
     return _copy_with_data(obj, newdata)
+end
+
+
+# ---- @region: readability sugar for composite definitions --------------------------
+const _REGION_CTORS = Set([:Sphere, :Cuboid, :Cylinder, :SphericalShell, :CylindricalShell])
+
+_region_ctor_name(f) = f isa Symbol ? f :
+    (f isa Expr && f.head === :. && f.args[2] isa QuoteNode ? f.args[2].value : nothing)
+
+function _region_inject!(ex, unit, centr)
+    ex isa Expr || return ex
+    if ex.head === :call && _region_ctor_name(ex.args[1]) in _REGION_CTORS
+        # collect kwarg names already present (both `f(x; k=v)` and `f(x, k=v)` forms)
+        present = Set{Symbol}()
+        params = nothing
+        for a in ex.args[2:end]
+            if a isa Expr && a.head === :parameters
+                params = a
+                for kw in a.args
+                    kw isa Expr && kw.head === :kw && push!(present, kw.args[1])
+                end
+            elseif a isa Expr && a.head === :kw
+                push!(present, a.args[1])
+            end
+        end
+        if params === nothing
+            params = Expr(:parameters)
+            insert!(ex.args, 2, params)
+        end
+        unit  !== nothing && !(:range_unit in present) &&
+            push!(params.args, Expr(:kw, :range_unit, unit))
+        centr !== nothing && !(:center in present) &&
+            push!(params.args, Expr(:kw, :center, centr))
+    end
+    for a in ex.args
+        _region_inject!(a, unit, centr)
+    end
+    return ex
+end
+
+"""
+    @region [unit=…] [center=…] begin … end
+
+Build a (composite) region with shared constructor defaults and named parts. Inside the
+block, every `Sphere`/`Cuboid`/`Cylinder`/`SphericalShell`/`CylindricalShell` call that
+does not set `range_unit`/`center` itself receives the block's `unit`/`center`; explicit
+keywords always win. Assignments name intermediate parts; the block's last expression is
+the returned region — an ordinary [`AbstractRegion`](@ref) value, identical to writing
+the constructors out by hand.
+
+```julia
+capstone = @region unit=:kpc center=[:bc] begin
+    disc    = Cylinder(12, 2)
+    blister = Sphere(2.5; center=[30, :bc, 26])   # explicit center wins
+    chimney = Cylinder(1.2, 5; center=[19, :bc, :bc])
+    (disc ∪ blister) \\ chimney
+end
+subregion(gas, capstone)
+```
+"""
+macro region(args...)
+    isempty(args) && error("@region needs a begin…end block")
+    block = args[end]
+    block isa Expr && block.head === :block || error("@region: the last argument must be a begin…end block")
+    unit = nothing; centr = nothing
+    for a in args[1:end-1]
+        (a isa Expr && a.head === :(=) && a.args[1] isa Symbol) ||
+            error("@region options must be `unit=…` or `center=…`")
+        if a.args[1] === :unit
+            unit = a.args[2]
+        elseif a.args[1] === :center
+            centr = a.args[2]
+        else
+            error("@region: unknown option `$(a.args[1])` (use `unit=` / `center=`)")
+        end
+    end
+    walked = _region_inject!(copy(block), unit, centr)
+    return esc(Expr(:let, Expr(:block), walked))
 end

@@ -20,6 +20,19 @@ All notable changes to Mera.jl are documented here. The format is based on
   larger than the given length — match it to a projection's `pxsize` and the rendered
   boundary of a split sub-region becomes pixel-sharp regardless of the local AMR level.
 
+- **Region selection: ~30× faster, plus a `@region` block macro.** The value-type
+  `subregion` evaluator gained (a) an analytic axis-aligned bounding box per region
+  (boxes compose across `∩ ∪ \ !`; oriented cylinders via their support function) that
+  skips the membership/fraction evaluation for cells that cannot intersect the region —
+  bit-identical results, also under `inverse=true` — and (b) a function barrier that
+  specializes the hot loop on the concrete predicate closures. Measured on a 16.7M-cell
+  grid: small off-centre sphere 4.6 s → 0.12 s, three-part composite 5.4 s → 0.20 s.
+  Particle and clump point-membership selection got the same treatment. The new exported
+  **`@region [unit=…] [center=…] begin … end`** macro is readability sugar for composite
+  definitions: constructor calls inside the block inherit the shared `range_unit`/`center`
+  (explicit keywords win), assignments name intermediate parts, and the result is an
+  ordinary region value.
+
 - **Multi-code reader registry.** The per-code frontends (RAMSES, PLUTO, Chombo, Athena++, FLASH,
   GADGET/GIZMO/AREPO/SWIFT) now register themselves in an internal reader interface
   (`src/read_data/reader_interface.jl`); `getinfo`/`gethydro`/`getparticles` route through the
