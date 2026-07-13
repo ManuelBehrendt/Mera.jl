@@ -99,7 +99,17 @@ surface-density panel in kpc relative to the projection centre; `sd_bar!` adds
 the colorbar; `proj` wraps `projection` with the settings we reuse everywhere
 (note `pxsize=[0.25, :kpc]` — pixel size in physical units).
 
+One reading convention for the whole page: inside each code cell, a comment
+banner — `# ── figure code from here …` — marks where the Mera concepts end
+and pure plot furniture (panels, overlays, colorbars) begins. **Read above
+the banner; skim below it.**
+
 ```julia
+# ─────────────────────────────────────────────────────────────────────
+# FIGURE INFRASTRUCTURE for the whole page — skim freely on first read.
+# The one Mera-relevant definition is `proj` at the bottom: the projection
+# defaults every panel reuses (direction, centre, pxsize in physical units).
+# ─────────────────────────────────────────────────────────────────────
 const SDLIM = (-3.0, 3.0)   # log10 Σ [Msol/pc²] — one colour scale for every map on this page
 
 function show_sd!(ax, p; flo=1e-3, decorate=false)
@@ -155,6 +165,7 @@ the title and shares the colour scale defined above.
 p_face = proj(gas)                 # full box, face-on (z)
 p_edge = proj(gas; direction=:x)   # full box, edge-on
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(1000, 480))
 axf = Axis(fig[1, 1], title="face-on — the dissection plan",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]")
@@ -205,6 +216,7 @@ println("gas mass, r < 10 kpc: ", round(msum(hello, :Msol), sigdigits=5), " Msol
 
 ph = proj(hello; xrange=[-11, 11], yrange=[-11, 11], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(600, 470))
 ax  = Axis(fig[1, 1], title="first cut — Sphere(10), boundary cells split")
 show_sd!(ax, ph, (-11, 11, -11, 11))
@@ -247,6 +259,9 @@ including a refined patch in the upper-right quadrant, because on an AMR mesh
 the same circle crosses cells of different sizes.
 
 ```julia
+# ── ILLUSTRATION ONLY: this cell just DRAWS the split-cell schematic — no
+# ── simulation data. Skim it if you trust the picture; the concepts resume
+# ── in the next cell.
 # a drawn 12×12 patch of an AMR grid (coarse 1-unit cells, one 2× refined
 # quadrant) and one circular region — which cells does each treatment keep?
 cells = Tuple{Float64,Float64,Float64}[]          # (x0, y0, cell size)
@@ -271,6 +286,7 @@ end
 F = [insidefrac(c...) for c in cells]
 θ = range(0, 2π; length=181)
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(1080, 400))
 titles = ("whole cells — every touched cell, entire",
           "centre test — is the cell centre inside?",
@@ -463,6 +479,7 @@ f  = Mera.select(sph.data, :fraction)
 
 sel = (f .< 1.0) .& (abs.(zr) .< 1.)   # boundary cells in a thin mid-plane slab
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(640, 520))
 ax  = Axis(fig[1, 1], title="boundary cells, |z| < 1 kpc — marker size ∝ cell size",
            xlabel="x − x꜀ [kpc]", ylabel="y − y꜀ [kpc]", aspect=DataAspect())
@@ -567,6 +584,7 @@ the centre-tested face ends in a hard edge stepped by whole cells.
 p3 = proj(disc;       direction=:x, yrange=[-14, 14], zrange=[-4, 4], pxsize=[0.1, :kpc])
 p4 = proj(disc_whole; direction=:x, yrange=[-14, 14], zrange=[-4, 4], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(760, 500))
 Le  = (-14, 14, -4, 4)
 ax1 = Axis(fig[1, 1], title="disc edge-on, split — the face feathers past z = ±2")
@@ -611,6 +629,7 @@ println("relative imbalance    : ", round((m_nuc + m_anti)/m_tot - 1, sigdigits=
 pn = proj(nucleus; xrange=[-13, 13], yrange=[-13, 13], zrange=[-2, 2], pxsize=[0.1, :kpc])
 pa = proj(anti;    xrange=[-13, 13], yrange=[-13, 13], zrange=[-2, 2], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(880, 440))
 Ln  = (-13, 13, -13, 13)
 ax1 = Axis(fig[1, 1], title="nucleus zone   (±2 kpc slab)")
@@ -673,6 +692,7 @@ println("ring + inverse = box?  ",
 pr  = proj(ring;     xrange=[-11, 11], yrange=[-11, 11], pxsize=[0.1, :kpc])
 pri = proj(ring_inv; xrange=[-11, 11], yrange=[-11, 11], zrange=[-2, 2], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(1180, 420))
 ax1 = Axis(fig[1, 1], title="ring, split — two boundary surfaces")
 show_sd!(ax1, pr, (-11, 11, -11, 11))
@@ -720,6 +740,7 @@ sph20 = nothing
 pe1 = proj(env;   direction=:x, yrange=[-22, 22], zrange=[-22, 22], pxsize=[0.15, :kpc])
 pe2 = proj(hello; direction=:x, yrange=[-22, 22], zrange=[-22, 22], pxsize=[0.15, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(880, 440))
 Lv  = (-22, 22, -22, 22)
 ax1 = Axis(fig[1, 1], title="envelope shell, edge-on")
@@ -791,6 +812,7 @@ pc1 = proj(clean_disc; xrange=[-13, 13], yrange=[-13, 13], pxsize=[0.1, :kpc])
 pc2 = proj(clean_disc; direction=:x, xrange=[-3, 3], yrange=[-13, 13], zrange=[-4, 4],
            pxsize=[0.1, :kpc])                    # depth-restricted: the bite is visible
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(760, 560))
 ax1 = Axis(fig[1, 1], title="disc \\ sphere, face-on")
 show_sd!(ax1, pc1, (-13, 13, -13, 13))
@@ -835,6 +857,7 @@ println("sculpture gas mass: ", round(msum(carve, :Msol), sigdigits=6), " Msol")
 
 ps = proj(carve; xrange=[-16, 16], yrange=[-16, 16], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(640, 520))
 ax  = Axis(fig[1, 1], title="(disc ∪ companion) \\ two holes")
 show_sd!(ax, ps, (-16, 16, -16, 16))
@@ -1025,6 +1048,7 @@ println("  refine=2 : ", round(fringe(pe_r),  digits=3), " kpc")
 println("mass invariance, refine=2 / refine=0 : ",
         round(msum(d_ref, :Msol) / msum(d_s0, :Msol), digits=5))
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(920, 440))
 Lf  = (6, 14, -4, 4)
 ax1 = Axis(fig[1, 1], title="split, refine=0 — fringe at the local cell size")
@@ -1100,6 +1124,7 @@ frac_clipped = sum(pe_s0.maps[:sd][:, zmask]) / sum(pe_s0.maps[:sd])
 println("map mass removed by the display clip : ",
         round(100*frac_clipped, sigdigits=2), " %  (cosmetic only — msum is untouched)")
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(920, 440))
 ax1 = Axis(fig[1, 1], title="split edge — as rendered")
 show_sd!(ax1, pe_s0, (6, 14, -4, 4))
@@ -1138,6 +1163,7 @@ e1 = normalize(cross([0., 0., 1.], a))   # ⊥ a
 e2 = normalize(cross(a, e1))             # completes the orthonormal basis
 θ3 = range(0, 2π; length=121)
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(700, 560))
 ax  = Axis3(fig[1, 1]; aspect=:data, azimuth=0.9, elevation=0.25,
             title="a tilted cylinder through the disc — the geometry")
@@ -1183,6 +1209,7 @@ println("volume                   : ", round(v_tilt, sigdigits=6), " kpc³   vs 
 pt1 = proj(tilted; xrange=[-13, 13], yrange=[-13, 13], pxsize=[0.1, :kpc])
 pt2 = proj(tilted; direction=:y, xrange=[-13, 13], zrange=[-7, 7], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(920, 440))
 ax1 = Axis(fig[1, 1], title="seen along z — an ellipse with softened rims")
 show_sd!(ax1, pt1, (-13, 13, -13, 13))
@@ -1238,6 +1265,7 @@ pt_a = projection(tshell, :sd, :Msol_pc2; los=[1., 0., 2.], center=[:bc], range_
 pt_e = proj(tshell; direction=:y, xrange=[-12, 12], zrange=[-8, 8], pxsize=[0.1, :kpc])
 pb   = proj(bar; xrange=[-6, 6], yrange=[-6, 6], pxsize=[0.05, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(1180, 760))
 ax1 = Axis(fig[1, 1], title="tilted ring along z — an elliptical annulus")
 show_sd!(ax1, pt_f, (-12, 12, -12, 12))
@@ -1295,6 +1323,7 @@ println("identity  m(A∪B) − m((A∪B)∩C) = ", round(mAB - mC, sigdigits=8)
 pcf = proj(cap; xrange=[-14, 14], yrange=[-14, 14], zrange=[-2, 2], pxsize=[0.1, :kpc])
 pce = proj(cap; direction=:y, yrange=[-1, 1], xrange=[-14, 14], zrange=[-4, 6], pxsize=[0.1, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(880, 440))
 ax1 = Axis(fig[1, 1], title="face-on  (±2 kpc slab) — chimney pierces, blister hides")
 show_sd!(ax1, pcf, (-14, 14, -14, 14))
@@ -1307,11 +1336,10 @@ fig
 ```
 (disc ∪ blister) \ chimney : 2.27205e10
  Msol
-identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10
-   vs  2.2720464e10
+identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_3.png)
 
 The identity closes, and the edge-on view explains the face-on one: the
 blister only *adds* gas above the +z face (invisible face-on, where the disc
@@ -1339,6 +1367,7 @@ pch_e = proj(chim; direction=:y, yrange=[-0.9, 0.9], xrange=[-13, 13], zrange=[-
 pcr_f = proj(cres; xrange=[-1, 10], yrange=[-6, 6], pxsize=[0.05, :kpc])
 pcr_e = proj(cres; direction=:y, xrange=[-1, 10], zrange=[-3, 3], pxsize=[0.05, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(920, 800))
 ax1 = Axis(fig[1, 1], title="chimneys, face-on — three drilled flow channels")
 show_sd!(ax1, pch_f, (-13, 13, -13, 13))
@@ -1394,6 +1423,8 @@ cheese = subregion(gas, disc_region \ holes, verbose=false)
 println("swiss-cheese disc: ", round(msum(cheese, :Msol), sigdigits=5), " Msol")
 
 pw = proj(cheese; xrange=[-13, 13], yrange=[-13, 13], zrange=[-1.3, 1.3], pxsize=[0.1, :kpc])
+
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(640, 520))
 ax = Axis(fig[1, 1], title="disc \\ three cluster-site spheres   (±1.3 kpc slab)")
 show_sd!(ax, pw, (-13, 13, -13, 13))
@@ -1445,6 +1476,7 @@ println("bows: ", round(msum(bows, :Msol), sigdigits=5), " Msol   filament tube:
 pbw = proj(bows; xrange=[-8, 8], yrange=[-8, 8], pxsize=[0.05, :kpc])
 pfl = proj(fil;  xrange=[-11, 9], yrange=[-6, 8], pxsize=[0.05, :kpc])
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(920, 440))
 ax1 = Axis(fig[1, 1], title="plate \\ four corner spheres — bows")
 show_sd!(ax1, pbw, (-8, 8, -8, 8))
@@ -1501,6 +1533,7 @@ p_gasd = proj(disc; xrange=[-13, 13], yrange=[-13, 13], pxsize=[0.1, :kpc])
 stars_d = subregion(part, disc_region, verbose=false)
 sx = getvar(stars_d, :x, :kpc) .- 24.; sy = getvar(stars_d, :y, :kpc) .- 24.
 
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 fig = Figure(size=(640, 520))
 ax = Axis(fig[1, 1], title="disc gas + its star particles — one region, two datatypes")
 show_sd!(ax, p_gasd, (-13, 13, -13, 13))
@@ -1561,7 +1594,8 @@ println("mass, reloaded: ", round(msum(back, :Msol), sigdigits=8), " Msol")
 working file  : 147.5 MB   (17957496 cells)
 mass, window  : 2.7966433e10
  Msol
-mass, reloaded: 2.7966433e10 Msol
+mass, reloaded: 2.7966433e10
+ Msol
 ```
 
 The round-trip is lossless, and every technique on this page — regions,
