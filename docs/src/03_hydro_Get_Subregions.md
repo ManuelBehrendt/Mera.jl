@@ -78,8 +78,6 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (4), mismatched flags (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -88,9 +86,6 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (8))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
 cells loaded : 18966620
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
@@ -867,6 +862,29 @@ line of sight, so companion gas survives in front of and behind the hole.
 Reading a projection of a 3-D carve means reasoning about depth — the two
 holes are that lesson in one figure.
 
+**The same carve, as a readable block.** Once a composite grows past two or
+three parts, the repeated keywords become noise. The `@region` macro removes
+them: constructor calls inside the block inherit the shared `unit`/`center`
+(explicitly given ones win), assignments name the parts, and the value that
+comes out is an ordinary region — identical to the operator form:
+
+```julia
+sculpture2 = @region unit=:kpc center=[:bc] begin
+    disc      = Cylinder(12., 2.)
+    companion = Sphere(5.; center=[33., :bc, :bc])
+    holeL     = Sphere(2.5; center=[18., :bc, :bc])
+    holeR     = Sphere(2.5; center=[30., :bc, :bc])
+    (disc ∪ companion) \ (holeL ∪ holeR)
+end
+
+carve2 = subregion(gas, sculpture2, verbose=false)
+println("identical to the operator form : ", msum(carve2, :Msol) == msum(carve, :Msol))
+```
+
+```
+identical to the operator form : true
+```
+
 Because the fractions are carried through every operator, set identities hold
 *numerically*, not just formally. Inclusion–exclusion for the disc A and the
 companion sphere B:
@@ -1028,7 +1046,7 @@ rendered fringe beyond |z| = 2 kpc   :
 mass invariance, refine=2 / refine=0 : 0.99966
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_46_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_48_3.png)
 
 The printed fringe sits inside its bound, and `refine=2` cuts it by the
 promised factor of four while the enclosed mass stays put at the sampling
@@ -1102,7 +1120,7 @@ map mass removed by the display clip : 0.45
  %  (cosmetic only — msum is untouched)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_50_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_52_3.png)
 
 ## 8. Tilted Regions
 
@@ -1141,7 +1159,7 @@ text!(ax, Point3f(0, 0, 6.5); text="disc normal (z)", color=:black, fontsize=11)
 fig
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_52_1.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_54_1.png)
 
 Now the extraction: `Cylinder(10., 1.; axis=[1., 0., 2.])`, a thin disc-like
 slab tilted toward +x. Two checks that the tilt costs nothing: the volume
@@ -1183,7 +1201,7 @@ tilted-cylinder gas mass : 5.43585e9
 volume                   : 628.848 kpc³   vs  πR²·2h = 628.319 kpc³   (0.084 %)
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_54_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_56_3.png)
 
 The volume lands on the analytic value to the usual sampling accuracy —
 tilting a region moves no goalposts. And the two views are the depth lesson of
@@ -1243,7 +1261,7 @@ in-plane bar volume : 120.595
  kpc³   analytic πR²·2h = 120.637 kpc³
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_56_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_58_4.png)
 
 The along-axis panel is the payoff: the dashed analytic circles at 6 and
 10 kpc land on the rendered rims, because selecting along a vector and viewing
@@ -1293,7 +1311,7 @@ identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10
    vs  2.2720464e10
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_59_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_4.png)
 
 The identity closes, and the edge-on view explains the face-on one: the
 blister only *adds* gas above the +z face (invisible face-on, where the disc
@@ -1339,7 +1357,7 @@ chimneys: 2.2548e10
  Msol   crescent: 2.1784e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_61_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_3.png)
 
 **Swiss cheese, seeded by the data.** Composites become genuinely powerful
 when the geometry comes from the *data* — here we carve a hole around each of
@@ -1395,7 +1413,7 @@ swiss-cheese disc:
 1.5925e10 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_63_5.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_65_5.png)
 
 The crosses mark the sites the *particles* chose; the holes are where the
 *gas* was carved — and the ledger delivers the punchline: the three spheres
@@ -1443,7 +1461,7 @@ bows: 1.0791e10
  Msol   filament tube: 2.3211e9 Msol
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_65_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_67_3.png)
 
 Every construct here remains a *measurement*: `msum` on any of them is
 fraction-exact, additive against its complement, and reusable — which the next
@@ -1497,18 +1515,15 @@ disc zone       gas [Msol]   stars [Msol]
 -----------------------------------------
 nucleus            5.937e9
         1.873e9
-inner               3.95e9
-        1.153e9
-ring               8.032e9
-        1.661e9
-rim                4.915e9
-        4.586e8
+inner               3.95e9        1.153e9
+ring               8.032e9        1.661e9
+rim                4.915e9        4.586e8
 -----------------------------------------
 sum             2.28346e10      5.14581e9
 disc direct     2.28346e10      5.14581e9
 ```
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_68_7.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_70_3.png)
 
 The stellar column tiles exactly like the gas column — particles are
 points, so zone membership is unambiguous and the four zones sum to the disc
@@ -1546,8 +1561,7 @@ println("mass, reloaded: ", round(msum(back, :Msol), sigdigits=8), " Msol")
 working file  : 147.5 MB   (17957496 cells)
 mass, window  : 2.7966433e10
  Msol
-mass, reloaded: 2.7966433e10
- Msol
+mass, reloaded: 2.7966433e10 Msol
 ```
 
 The round-trip is lossless, and every technique on this page — regions,
@@ -1625,8 +1639,10 @@ cut spans x ∈
   `refine_to=[pxsize…]` to match the boundary to your map's pixel grid (§7)
   — scoped to the area you render, not to the whole boundary.
 
-**Cost.** Splitting adds one fraction evaluation per boundary cell; interior
-cells are untouched. Fractions of curved surfaces are sub-sampled (`nsub`,
+**Cost.** Region selection is bounding-box pruned: cells that cannot touch
+the region are skipped outright, so a small or composite cut costs roughly
+its bounding volume, not the whole dataset. Splitting adds one fraction
+evaluation per boundary cell; interior cells are untouched. Fractions of curved surfaces are sub-sampled (`nsub`,
 default 8 per axis — §3 measured what that buys); raise it only when coarse
 boundary cells meet a tight accuracy requirement. `refine=k` multiplies only
 the boundary-cell rows (up to 8ᵏ children each) — cheap on a slab, expensive
