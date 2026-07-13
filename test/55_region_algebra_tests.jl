@@ -311,4 +311,47 @@
         @test length(st0.data) == length(s0.data)
         @test_throws ErrorException subregion(gas, reg; refine=1, refine_to=[tgt, :kpc], verbose=false)
     end
+
+    @testset "AABB pruning is invisible (off-centre / tilted / inverse)" begin
+        # analytic fractions + off-centre box: any bbox error surfaces as a volume error
+        cub = Cuboid(xrange=[-0.15box, 0.05box], yrange=[-0.05box, 0.2box],
+                     zrange=[-0.1box, 0.1box], center=[0.3box, 0.6box, 0.5box], range_unit=:kpc)
+        @test isapprox(vol(subregion(gas, cub; verbose=false)),
+                       0.2box * 0.25box * 0.2box; rtol=1e-10)
+        # tilted, off-centre shell: exercises the oriented-cylinder support-function box
+        tsh = CylindricalShell(0.08box, 0.2box, 0.1box; axis=[1., 2., 0.5],
+                               center=[0.55box, 0.45box, 0.5box], range_unit=:kpc)
+        @test isapprox(vol(subregion(gas, tsh; verbose=false)),
+                       pi*((0.2box)^2 - (0.08box)^2)*(2*0.1box); rtol=0.03)
+        # inverse of a small off-corner sphere: pruned-to-zero cells must flip to fraction 1
+        s_off = Sphere(0.08box; center=[0.25box, 0.25box, 0.7box], range_unit=:kpc)
+        v_in  = vol(subregion(gas, s_off; verbose=false))
+        v_out = vol(subregion(gas, s_off; inverse=true, verbose=false))
+        @test isapprox(v_in + v_out, Vbox; rtol=1e-6)
+        @test isapprox(v_in, (4/3)*pi*(0.08box)^3; rtol=0.05)
+    end
+
+    @testset "@region block macro" begin
+        man = (Cylinder(0.3box, 0.1box; center=[:bc], range_unit=:kpc) ∪
+               Sphere(0.1box; center=[0.7box, 0.5box, 0.5box], range_unit=:kpc)) \
+              Sphere(0.05box; center=[:bc], range_unit=:kpc)
+        mac = @region unit=:kpc center=[:bc] begin
+            disc = Cylinder(0.3box, 0.1box)
+            blob = Sphere(0.1box; center=[0.7box, 0.5box, 0.5box])   # explicit center wins
+            hole = Sphere(0.05box)
+            (disc ∪ blob) \ hole
+        end
+        a = subregion(gas, man; verbose=false)
+        b = subregion(gas, mac; verbose=false)
+        @test length(a.data) == length(b.data)
+        @test msum(a, :Msol) == msum(b, :Msol)
+        @test Mera.select(a.data, :fraction) == Mera.select(b.data, :fraction)
+        # a block without options is plain let-sugar (constructor defaults apply)
+        r0 = @region begin
+            Sphere(0.2box; range_unit=:kpc)
+        end
+        @test length(subregion(gas, r0; verbose=false).data) ==
+              length(subregion(gas, Sphere(0.2box; range_unit=:kpc); verbose=false).data)
+        @test_throws LoadError @eval @region wrong=1 begin; Sphere(1.) end
+    end
 end

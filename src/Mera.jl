@@ -308,6 +308,7 @@ export
     shellregion,
     AbstractRegion,
     Sphere,
+    @region,
     Cylinder,
     Cuboid,
     SphericalShell,
