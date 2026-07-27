@@ -1621,9 +1621,12 @@ scripts working unchanged.
 Shared keywords: `center`, `range_unit`, `inverse=true` for the complement,
 and `cell=true/false` for the whole-cell or centre-inside test — the same two
 alternatives §3 derived from the split extraction, in symbol form. The
-comparison below duly lands *above* the split disc mass. Two guards to know: radii and heights must be nonzero,
-and a sphere or cylinder centre may not contain a literal `0.0` coordinate in
-these calls — give the coordinate explicitly or use the `:bc` forms. The hydro
+comparison below duly lands *above* the split disc mass. One guard to know:
+radii and heights must be nonzero — a zero-sized region is an error. The
+`center` is never refused, but it defaults to the box **corner**, so omitting
+it on a sphere or cylinder places the region there and keeps only the octant
+inside the box; Mera notes that once per shape. A *single* zero component is
+perfectly good (a sphere on the `x = 0` face is a legitimate region). The hydro
 cylinder additionally offers `smooth_boundary=true`, an intermediate edge
 softening predating fraction splitting. `get_filtered_ranges` recovers the
 bounding ranges of any cut, ready to pass to `projection`.
