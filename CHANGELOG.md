@@ -161,6 +161,15 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Documentation
 
+- **Sub-region tutorials for gravity, particles and clumps rewritten** around what each data
+  type changes about a region cut, instead of repeating the hydro walk-through. Gravity: a
+  region's payload is its *volume* (no `msum`), volume-weighting vs cell-averaging, the two
+  different `center` keywords, and Gauss's-law enclosed mass compared with the gas + star
+  ledger over the same `Sphere(r)`. Particles: membership is exact by construction, so the
+  limit is `1/√N` per bin; region ∘ filter composition; asymmetric drift and the
+  age–scale-height relation from stacks of annuli. Clumps: peaks stand in for extended
+  objects, so a boundary through them yields a *bracket* — measurable from `:mass_cl`/`:rho_av`,
+  negligible for kpc-scale regions and total at clump scale.
 - New **"How Quantities Are Computed"** reference page with the exact derived-quantity and
   aggregate-statistic formulas. (#102)
 - **README overhaul** — `quicklook` first-look, source-verified quickstart, honest roadmap. (#100)
