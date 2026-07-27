@@ -7,6 +7,17 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Added
 
+- **`getvar` now says when a frame-relative quantity is being measured about the box corner.**
+  `getvar`'s `center` is the ORIGIN of the derived coordinate frame — a different argument
+  from the `center` that places a region — and it defaults to `[0.,0.,0.]`, the box corner.
+  For absolute positions (`:x/:y/:z`) that is the correct default; for `:r_sphere`,
+  `:r_cylinder`, `:ϕ`, and the `v*`/`a*`/`l*`/`mach_*` sphere- and cylinder-frame families it
+  is well defined but almost never intended, and it fails silently — a plausible number, no
+  error. Those 33 quantities now emit a one-off `@warn` (once per quantity per session)
+  naming the quantity and how to set an origin. **Nothing is forbidden and no default
+  changed**: existing results are bit-identical, and `verbose(false)` silences the reminder
+  along with every other Mera message.
+
 - **Geometric boundary refinement for value-type regions (`refine=k`).** `subregion(obj,
   region; refine=k)` now optionally SUBDIVIDES boundary-straddling cells into their octree
   children (up to `k` levels, rows at `level+n` carrying the parent's field values — exact

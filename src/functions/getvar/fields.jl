@@ -299,6 +299,7 @@ _call_get_data(obj, vars, units, dir, center, mask, ref_time, hydro_data) =
 
 function get_data_userfields(dataobject, vars::Array{Symbol,1}, units::Array{Symbol,1},
                              direction::Symbol, center, mask, ref_time; hydro_data=nothing)
+    _center_hint(vars, center)   # frame-relative quantity about the box corner? say so once
     kind = _field_kind(dataobject)
     reg  = get(USER_FIELDS, kind, nothing)
 
