@@ -88,6 +88,61 @@ function getvar()
 end
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Centre reminder for frame-relative quantities
+#
+# `center` in `getvar` is the ORIGIN of the derived coordinate frame. It is a
+# DIFFERENT argument from the `center` that places a region (`Sphere(10; center=…)`),
+# and it defaults to `[0.,0.,0.]` — the box CORNER.
+#
+# For absolute positions (`:x/:y/:z`) the corner is the right default: it returns
+# coordinates in the simulation's own frame. For a quantity measured about a point
+# or an axis — a spherical radius, an azimuthal velocity, an angular momentum — the
+# corner is well defined but almost never what was meant, and the wrong origin
+# produces a plausible number rather than an error.
+#
+# So: nothing is forbidden and no default changes; each such quantity just says so
+# once per session the first time it is computed about the corner. `verbose(false)`
+# silences it with every other Mera message.
+# ─────────────────────────────────────────────────────────────────────────────
+const _CENTER_RELATIVE_VARS = Set{Symbol}([
+    :r_sphere, :r_cylinder, :ϕ,
+    :vr_sphere, :vθ_sphere, :vϕ_sphere, :vr_cylinder, :vϕ_cylinder,
+    :vr_cylinder2, :vϕ_cylinder2,
+    :ar_sphere, :aθ_sphere, :aϕ_sphere, :ar_cylinder, :aϕ_cylinder,
+    :lr_sphere, :lθ_sphere, :lϕ_sphere, :lr_cylinder, :lϕ_cylinder,
+    :lx, :ly, :lz, :l, :hx, :hy, :hz, :h,
+    :mach_r_sphere, :mach_theta_sphere, :mach_phi_sphere,
+    :mach_r_cylinder, :mach_phi_cylinder,
+])
+
+const _CENTER_HINT_SHOWN = Set{Symbol}()
+const _CENTER_HINT_LOCK  = ReentrantLock()   # getvar is reachable from threaded code
+
+# Reset the "already mentioned" set — mainly for tests and long-running sessions.
+reset_center_hint() = (lock(_CENTER_HINT_LOCK) do; empty!(_CENTER_HINT_SHOWN); end; nothing)
+
+function _center_hint(vars, center)
+    # Two cheap guards first: in the common (correct) case an origin was given and this
+    # returns before touching the shared set, so the lock below is rarely reached.
+    checkverbose(true) || return nothing          # verbose(false) silences it
+    all(iszero, center) || return nothing          # an origin was given: nothing to say
+    for v in vars
+        v in _CENTER_RELATIVE_VARS || continue
+        fresh = lock(_CENTER_HINT_LOCK) do
+            v in _CENTER_HINT_SHOWN ? false : (push!(_CENTER_HINT_SHOWN, v); true)
+        end
+        fresh || continue
+        @warn "getvar(:$v): no `center` given — this quantity is measured about the box CORNER.\n" *
+              "Pass center=[:bc] for the box centre, or center=[x,y,z] with center_unit=:kpc for\n" *
+              "another origin. (Absolute positions :x/:y/:z are unaffected; this `center` is a\n" *
+              "separate argument from the one that places a region. Shown once per quantity —\n" *
+              "verbose(false) silences it.)"
+    end
+    return nothing
+end
+
+
 """
 #### Get variables or derived quantities from the dataset:
 - overview the list of predefined quantities with: getinfo()
@@ -96,6 +151,26 @@ end
 - relate the coordinates to a direction (x,y,z)
 - pass a modified database
 - pass a mask to exclude elements (cells/particles/...) from the calculation
+
+!!! note "`center` here is the coordinate origin — and it defaults to the box corner"
+    `getvar`'s `center` sets the ORIGIN about which frame-relative quantities are
+    measured: `:r_sphere`, `:r_cylinder`, `:ϕ`, the `v*_sphere`/`v*_cylinder`,
+    `a*_sphere`/`a*_cylinder`, `mach_*` and angular-momentum families. It is a
+    **different argument** from the `center` that places a region
+    (`Sphere(10; center=[:bc])`) and it defaults to `[0.,0.,0.]`, the box **corner**.
+
+    For absolute positions (`:x`, `:y`, `:z`) the corner is the right default — those
+    are the simulation's own coordinates. For the frame-relative quantities it is
+    almost never intended, and the wrong origin returns a plausible number rather than
+    an error, so Mera mentions it once per quantity per session. Pass `center=[:bc]`
+    for the box centre, or `center=[x,y,z]` with `center_unit=:kpc` for another point;
+    pass the same origin you gave the region. `verbose(false)` silences the reminder.
+
+    ```julia
+    getvar(gas, :r_sphere, :kpc)                  # about the box CORNER (reminder shown)
+    getvar(gas, :r_sphere, :kpc, center=[:bc])    # about the box centre
+    getvar(gas, :x, :kpc)                         # absolute coordinates — no reminder
+    ```
 
 
 ```julia
