@@ -76,6 +76,8 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), wrong dep version loaded (2), dep missing source (6), mismatched flags (6))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -84,12 +86,14 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (10))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
 gravity cells  : 4879946
    columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
 gas cells      : 4879946
 star particles : 508939
-box            : 48.0
- kpc, centre [:bc] at (24, 24, 24) kpc
+box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
 
 `:cx, :cy, :cz, :level` are the cell's address on the AMR lattice; `:epot` and
@@ -240,8 +244,7 @@ split        (split=true)   2504682
 analytic 4/3 π R³                     4188.7902
 partial cells (0 < fraction < 1) : 31813  =  1.27 % of the selected rows
 their mean size, per cell        : 0.155 kpc
-             ... per unit volume : 0.644
- kpc  ← the coarse ones dominate
+             ... per unit volume : 0.644 kpc  ← the coarse ones dominate
 volume they would add if counted whole : 471.8 kpc³
 measured whole-cell excess            : 504.2 kpc³
 ```
@@ -306,9 +309,9 @@ println("centre test vs split, volume mean: ",
 ```
 
 ```
-mean over cells,  split region   : -1907.2 (km/s)²
-mean over volume, centre test    : -1632.52
+mean over cells,  split region   : -1907.2
  (km/s)²
+mean over volume, centre test    : -1632.52 (km/s)²
 mean over volume, split region   : -1632.64 (km/s)²
 cell mean vs volume mean         : 16.8 %
 centre test vs split, volume mean: -0.00738 %
@@ -341,8 +344,13 @@ Both default, and they default differently:
 | `center` in `Sphere(10.; center=[:bc])` | the **region** — where the shape sits | `[:bc]`, the box centre |
 | `center` in `getvar(obj, :ar_sphere, center=[:bc])` | the **coordinate origin** for derived quantities | `[0., 0., 0.]`, the box **corner** |
 
-Leaving the second one out does not raise an error. It quietly measures the
-radial acceleration about the corner of the box.
+Leaving the second one out does not raise an error — the corner is a
+perfectly well-defined origin, so the call succeeds and hands back a plausible
+number. Mera does now say something about it: the first time a frame-relative
+quantity is computed about the corner in a session it prints a one-off
+reminder naming that quantity. The cell below triggers it. Treat it as a
+nudge, not a guard: nothing is blocked, the default has not changed, and
+`verbose(false)` silences it along with every other Mera message.
 
 ```julia
 w = getvar(g_split, :volume)     # volume weights, used for every mean below
@@ -357,16 +365,23 @@ println("ratio                       : ",
 ```
 
 ```
-⟨a_r⟩ about the box corner  : -1.99e-9
- cm/s²
+┌ Warning: getvar(:ar_sphere): no `center` given — this quantity is measured about the box CORNER.
+│ Pass center=[:bc] for the box centre, or center=[x,y,z] with center_unit=:kpc for
+│ another origin. (Absolute positions :x/:y/:z are unaffected; this `center` is a
+│ separate argument from the one that places a region. Shown once per quantity —
+│ verbose(false) silences it.)
+└ @ Mera ~/code-github/Mera.jl/src/functions/getvar/getvar.jl:136
+⟨a_r⟩ about the box corner  : -1.99e-9 cm/s²
 ⟨a_r⟩ about the box centre  : -1.526e-8 cm/s²
 ratio                       : 0.13
 ```
 
-Nearly an order of magnitude, from a keyword that was never wrong enough to
-complain. Whenever a quantity's *name* contains a geometry — `:ar_sphere`,
-`:ar_cylinder`, `:aϕ_sphere`, `:r_cylinder`, `:vϕ_cylinder` — pass `center`
-explicitly, and pass the same one you gave the region.
+Nearly an order of magnitude apart, and both numbers are real measurements —
+of different things. Whenever a quantity's *name* contains a geometry —
+`:ar_sphere`, `:ar_cylinder`, `:aϕ_sphere`, `:r_cylinder`, `:vϕ_cylinder` —
+pass `center` explicitly, and pass the same one you gave the region. Absolute
+positions (`:x`, `:y`, `:z`) are the exception: for those the box corner *is*
+the right default, because it returns the simulation's own coordinates.
 
 ## 5. Shells: the Rotation Curve the Force Field Implies
 
@@ -477,8 +492,7 @@ end
 r [kpc]  M_dyn
 M_gas       M_star      M_baryon    M_dyn / M_baryon
 -------------------------------------------------------------------------
-2.0      5.411e9     1.858e9
-4.984e8     2.356e9     2.3
+2.0      5.411e9     1.858e9     4.984e8     2.356e9     2.3
 4.0      2.328e10    5.918e9     1.853e9     7.77e9      3.0
 6.0      4.453e10    9.955e9     3.054e9     1.301e10    3.42
 8.0      6.694e10    1.486e10    4.148e9     1.901e10    3.52
@@ -758,7 +772,8 @@ want, and it is fraction-aware on a split region.
 **Pass `center` twice.** Once to the region, to place it; once to `getvar`, for
 any quantity whose name contains a geometry. They are different arguments with
 different defaults, and getting the second one wrong produces a plausible
-number rather than an error (§4).
+number rather than an error (§4) — Mera will remind you once per quantity, but
+the reminder cannot know which origin you *meant*.
 
 **Split when the boundary is the signal.** For a big sphere the fractions moved
 the mean potential by parts in $10^5$ (§3); for a thin shell, a narrow slab, or
@@ -784,8 +799,8 @@ the simulation was run at.
 - Split volumes match analytic volumes to the sub-sampling limit; whole-cell
   cuts over-count and centre tests have no guaranteed sign (§2).
 - Average fields **by volume**, never by cell count (§3), and give `getvar` the
-  same `center` you gave the region (§4) — both mistakes return numbers, not
-  errors.
+  same `center` you gave the region (§4) — both mistakes return numbers rather
+  than errors, though the second one now announces itself once per quantity.
 - Shells of regions make radial profiles: the volume-weighted $a_r$ gives a
   rotation curve that flattens near 190 km/s (§5) and, through Gauss's law, an
   enclosed mass three to four times the gas and stars found in the same
