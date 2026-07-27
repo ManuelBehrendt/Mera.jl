@@ -64,6 +64,81 @@
         @test sum(r_centre) < sum(r_corner_1)
     end
 
+    @testset "classic region API: only an ALL-zero centre counts as unset" begin
+        # The guard used to be `in(0., center)` — any single zero component was rejected, so a
+        # sphere sitting on the x = 0 face could not be expressed at all. Only a centre that is
+        # zero in every component means "none was given".
+        part = F.particles
+        bl = gas.boxlen
+        face = [0., 0.5bl, 0.5bl]      # legitimate: on the x = 0 face, one zero component
+
+        s_face = subregion(gas, :sphere; radius=0.3bl, center=face,
+                           range_unit=:standard, verbose=false)
+        s_mid  = subregion(gas, :sphere; radius=0.3bl, center=[:bc],
+                           range_unit=:standard, verbose=false)
+        @test length(s_face.data) > 0
+        # the box clips exactly half of the face-centred sphere
+        @test isapprox(length(s_face.data) / length(s_mid.data), 0.5; rtol=0.05)
+
+        @test length(subregion(gas, :cylinder; radius=0.3bl, height=0.1bl, center=face,
+                               range_unit=:standard, verbose=false).data) > 0
+        @test length(shellregion(gas, :sphere; radius=[0.1bl, 0.3bl], center=face,
+                                 range_unit=:standard, verbose=false).data) > 0
+        @test length(subregion(part, :sphere; radius=0.3bl, center=face,
+                               range_unit=:standard, verbose=false).data) > 0
+
+        # a zero radius is still refused, and named
+        err2 = try
+            subregion(gas, :sphere; radius=0., center=[:bc], verbose=false); nothing
+        catch e; sprint(showerror, e); end
+        @test err2 !== nothing && occursin("nonzero `radius`", err2)
+    end
+
+    @testset "classic region API: an unset centre is allowed, and mentioned once" begin
+        bl = gas.boxlen
+        Mera.reset_center_hint()
+        # no error: the region is placed at the corner and only the in-box part is kept
+        s = @test_logs (:warn, r"placed at the box CORNER") match_mode=:any begin
+            subregion(gas, :sphere; radius=0.3bl, range_unit=:standard, verbose=false)
+        end
+        @test length(s.data) > 0
+        # a corner-placed sphere keeps one octant of the equivalent centred one
+        s_mid = subregion(gas, :sphere; radius=0.3bl, center=[:bc],
+                          range_unit=:standard, verbose=false)
+        @test isapprox(length(s.data) / length(s_mid.data), 1/8; rtol=0.1)
+
+        # once per shape: the second sphere is quiet, a cylinder gets its own note
+        @test_logs min_level=Base.CoreLogging.Warn subregion(gas, :sphere; radius=0.2bl,
+                                                             range_unit=:standard, verbose=false)
+        @test_logs (:warn, r"subregion\(:cylinder\)") match_mode=:any begin
+            subregion(gas, :cylinder; radius=0.2bl, height=0.1bl,
+                      range_unit=:standard, verbose=false)
+        end
+        # shells are tracked separately from the solid shapes
+        @test_logs (:warn, r"shellregion\(:sphere\)") match_mode=:any begin
+            shellregion(gas, :sphere; radius=[0.1bl, 0.3bl], range_unit=:standard, verbose=false)
+        end
+
+        # a centre that WAS given never triggers it, and verbose(false) silences it
+        Mera.reset_center_hint()
+        @test_logs min_level=Base.CoreLogging.Warn subregion(gas, :sphere; radius=0.3bl,
+                                                             center=[:bc], range_unit=:standard,
+                                                             verbose=false)
+        Mera.reset_center_hint()
+        verbose(false)
+        @test_logs min_level=Base.CoreLogging.Warn subregion(gas, :sphere; radius=0.3bl,
+                                                             range_unit=:standard, verbose=false)
+        verbose(nothing)
+
+        # :cuboid is exempt — its ranges are absolute box coordinates
+        Mera.reset_center_hint()
+        @test_logs min_level=Base.CoreLogging.Warn subregion(gas, :cuboid;
+                                                             xrange=[0.2bl, 0.4bl],
+                                                             yrange=[0.2bl, 0.4bl],
+                                                             zrange=[0.2bl, 0.4bl],
+                                                             range_unit=:standard, verbose=false)
+    end
+
     @testset "the warn list covers every frame-relative quantity name" begin
         # every :*_sphere / :*_cylinder quantity plus the angular-momentum family should be
         # listed; a new derived quantity added later without listing it would slip through

@@ -7,6 +7,19 @@ All notable changes to Mera.jl are documented here. The format is based on
 
 ### Added
 
+- **The classic region API no longer refuses a centre — it places the region and says so.**
+  `subregion`/`shellregion` with a `:sphere`/`:cylinder`/shell shape guarded their centre with
+  `in(0., center)` and raised `[Mera]: given radius or center should be != 0.` Two things were
+  wrong with that. *Any* single zero component was rejected, so a sphere sitting on the `x = 0`
+  face — or a halo at exactly `z = 0` in a centred frame — could not be expressed at all without
+  nudging the coordinate. And an omitted centre, which is what the guard was really aimed at,
+  produced a message that named neither the cause nor the fix. Now: a centre is never rejected,
+  an omitted one places the region at the box **corner** (a valid region — only the in-box part
+  is kept) and emits a one-off `@warn` per shape naming the corner and how to place the region
+  instead. `:cuboid` is exempt, its ranges being absolute box coordinates. The remaining errors
+  cover only genuinely empty regions (zero radius or height) and now print the offending values.
+  Applies across hydro, gravity, RT, particles and clumps.
+
 - **`getvar` now says when a frame-relative quantity is being measured about the box corner.**
   `getvar`'s `center` is the ORIGIN of the derived coordinate frame — a different argument
   from the `center` that places a region — and it defaults to `[0.,0.,0.]`, the box corner.
