@@ -16,6 +16,32 @@
 #  to that frame with `prepboxcenter` + the `·getunit/boxlen` rule (identical to `prepranges`).
 # =====================================================================================
 
+# Is `center` the (default) box corner — i.e. was one never given? A SINGLE zero component is
+# legitimate (a sphere sitting on the x = 0 face), so only an all-zero centre counts as unset.
+_center_is_corner(center) = all(c -> c isa Real && iszero(c), center)
+
+# One-off reminder when a distance-based region (sphere, cylinder, either shell) is placed at
+# the box CORNER because no `center` was given. Nothing is refused — a corner-placed sphere is
+# a well-defined region, it just keeps only the octant that lies inside the box — but it is
+# almost never what was meant, so each shape says so once per session. Cuboid is exempt: its
+# ranges are absolute box coordinates, for which the corner is the right origin.
+function _region_corner_hint(shape::Symbol, center; shell::Bool=false)
+    _center_is_corner(center) || return nothing
+    checkverbose(true) || return nothing
+    key = Symbol(shell ? "shellregion_" : "subregion_", shape)
+    fresh = lock(_CENTER_HINT_LOCK) do
+        key in _CENTER_HINT_SHOWN ? false : (push!(_CENTER_HINT_SHOWN, key); true)
+    end
+    fresh || return nothing
+    call = shell ? "shellregion(:$(shape))" : "subregion(:$(shape))"
+    @warn "$(call): no `center` given — the region is placed at the box CORNER.\n" *
+          "That is a valid region, but only the part of it inside the box is kept (an octant of\n" *
+          "a sphere), which is rarely the intent. Pass center=[:bc] for the box centre, or\n" *
+          "center=[x, y, z] together with range_unit. (Shown once per shape — verbose(false)\n" *
+          "silences it. A single 0.0 component is fine; only an all-zero centre triggers this.)"
+    return nothing
+end
+
 # One-shot discoverability hint: when the legacy symbol API (subregion/shellregion with a
 # :sphere/:cuboid/:cylinder Symbol) is used on hydro, point the user at the value-type form,
 # which adds EXACT edge-cell splitting. Shown once per session, only when verbose.

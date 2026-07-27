@@ -36,7 +36,13 @@ shellregion(dataobject::DataSetType, shape::Symbol=:cylinder;
 
 **Keywords related to all region shapes**
 - **`range_unit`:** the units of the given ranges: :standard (code units), :Mpc, :kpc, :pc, :mpc, :ly, :au , :km, :cm (of typye Symbol) ..etc. ; see for defined length-scales viewfields(info.scale)
-- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.]; the box-center can be selected by e.g. [:bc], [:boxcenter], [value, :bc, :bc], etc..
+- **`center`:** in units given by argument `range_unit`; by default [0., 0., 0.] — the box
+  CORNER. That is the right origin for `:cuboid`, whose ranges are absolute box
+  coordinates. For the distance-based shapes (`:sphere`, `:cylinder`, the shell forms) it
+  places the region at the corner, so only the part inside the box is kept; that is a valid
+  region but rarely the intent, and Mera says so once per shape. Give the box centre as
+  [:bc] or [:boxcenter], a point as [x, y, z], or mix them: [value, :bc, :bc]. A single 0.0
+  component is fine (a sphere on the x = 0 face); only an all-zero centre triggers the note.
 - **`inverse`:** inverse the region selection = get the data outside of the region
 - **`cell`:** take intersecting cells of the region boarder into account (true) or only the cells-centers within the selected region (false)
 - **`verbose`:** print timestamp, selected vars and ranges on screen; default: true
