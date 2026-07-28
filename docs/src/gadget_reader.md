@@ -4,7 +4,7 @@
     The GADGET particle load **and** the AREPO/IllustrisTNG gas-cell analysis below (physical
     `getvar(:rho/:T/:metallicity)`, PDFs/profiles, point and SPH-kernel maps on a real TNG halo) are
     exercised end-to-end in the runnable
-    [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/16_multi_OtherCodes.ipynb)
+    [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/16_multi_OtherCodes.ipynb)
     notebook, which also drives Mera's coverage.
 
 Mera's analysis layer is **code-blind**, so a reader only has to fill the standard structs. This

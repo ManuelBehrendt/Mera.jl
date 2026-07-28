@@ -3,7 +3,7 @@
 !!! tip "Run it yourself"
     The AREPO/IllustrisTNG gas workflow below — physical `getvar(:rho/:T/:metallicity)`, PDFs/profiles,
     and point / SPH-kernel / Voronoi maps on real snapshots — runs end-to-end in
-    [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/16_multi_OtherCodes.ipynb),
+    [`16_multi_OtherCodes.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/16_multi_OtherCodes.ipynb),
     rendered as [Other Simulation Codes — Worked Examples](multicode_examples.md).
 
 [AREPO](https://arepo-code.org) is a **moving-mesh** code: gas lives in the cells of a Voronoi
