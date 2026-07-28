@@ -886,7 +886,8 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     # as straight edges across the image. `fov` asks for a fixed camera-plane window instead, via
     # the rotation-invariant sphere selection `rotation_sequence` already uses.
     if fov !== nothing
-        src, win, fov_code = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        src, win, fov_code, _rsel = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        gsrc = _fov_companion(gravity_data, _rsel, fov_unit, center)
         m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=mask,
                        direction=direction, los=los, up=up, theta=theta, phi=phi,
                        inclination=inclination, azimuth=azimuth, position_angle=position_angle,
@@ -895,7 +896,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                        center=center, range_unit=fov_unit, data_center=data_center,
                        data_center_unit=data_center_unit, verbose=verbose,
                        show_progress=show_progress, max_threads=max_threads,
-                       verbose_threads=verbose_threads, gravity_data=gravity_data)
+                       verbose_threads=verbose_threads, gravity_data=gsrc)
         aperture === :square && _rotseq_crop_square!(m, fov_code)
         return m
     end

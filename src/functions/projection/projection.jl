@@ -560,8 +560,15 @@ function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, cen
     rsel = aperture === :square ? rfov * sqrt(2) : rfov
     src  = subregion(dataobject, :sphere, radius=rsel, center=center,
                      range_unit=fov_unit, verbose=false)
-    return src, [-rsel, rsel], fov_code
+    return src, [-rsel, rsel], fov_code, rsel
 end
+
+# Apply the SAME sphere to a companion object (gravity data projected on the hydro grid). Both
+# carry the same cells in the same order, so selecting both keeps the two row-aligned — without
+# this the hydro object is cut and the companion is not, and the deposit indexes past its end.
+_fov_companion(obj, rsel, fov_unit, center) =
+    obj === nothing ? nothing :
+    subregion(obj, :sphere, radius=rsel, center=center, range_unit=fov_unit, verbose=false)
 
 # an IDENTICAL square window — used by aperture=:square to turn the larger √2·FOV sphere projection
 # into a full rectangular frame with no circular aperture.
