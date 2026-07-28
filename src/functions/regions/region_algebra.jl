@@ -25,31 +25,24 @@ _center_is_corner(center) = all(c -> c isa Real && iszero(c), center)
 # a well-defined region, it just keeps only the octant that lies inside the box — but it is
 # almost never what was meant, so each shape says so once per session. Cuboid is exempt: its
 # ranges are absolute box coordinates, for which the corner is the right origin.
-function _region_corner_hint(shape::Symbol, center; shell::Bool=false)
+function _region_corner_hint(shape::Symbol, center; shell::Bool=false, verbose::Bool=true)
     _center_is_corner(center) || return nothing
-    checkverbose(true) || return nothing
-    key = Symbol(shell ? "shellregion_" : "subregion_", shape)
-    fresh = lock(_CENTER_HINT_LOCK) do
-        key in _CENTER_HINT_SHOWN ? false : (push!(_CENTER_HINT_SHOWN, key); true)
-    end
-    fresh || return nothing
     call = shell ? "shellregion(:$(shape))" : "subregion(:$(shape))"
-    @warn "$(call): no `center` given — the region is placed at the box CORNER.\n" *
-          "That is a valid region, but only the part of it inside the box is kept (an octant of\n" *
-          "a sphere), which is rarely the intent. Pass center=[:bc] for the box centre, or\n" *
-          "center=[x, y, z] together with range_unit. (Shown once per shape — verbose(false)\n" *
-          "silences it. A single 0.0 component is fine; only an all-zero centre triggers this.)"
+    hint(Symbol(shell ? "shellregion_" : "subregion_", shape),
+         "$(call) has no `center` — the region is placed at the box CORNER.",
+         "That is a valid region, but only the part inside the box is kept — a corner-placed",
+         "sphere keeps an octant — which is rarely the intent. Pass center=[:bc] for the box",
+         "centre, or center=[x, y, z] together with range_unit. A single 0.0 component is",
+         "fine; only an all-zero centre means \"none given\".";
+         verbose=verbose)
     return nothing
 end
 
 # One-shot discoverability hint: when the legacy symbol API (subregion/shellregion with a
 # :sphere/:cuboid/:cylinder Symbol) is used on hydro, point the user at the value-type form,
 # which adds EXACT edge-cell splitting. Shown once per session, only when verbose.
-const _REGION_HINT_SHOWN = Ref(false)
 function _region_value_type_hint(shape::Symbol; radius=0., height=0., xrange=[0.,0.], yrange=[0.,0.],
                                  zrange=[0.,0.], center=[:bc], range_unit::Symbol=:standard, shell::Bool=false)
-    _REGION_HINT_SHOWN[] && return
-    _REGION_HINT_SHOWN[] = true
     eq = if shell
         shape === :sphere ? "SphericalShell($(radius[1]), $(radius[2]); center=$(center), range_unit=:$(range_unit))" :
                             "Cylinder(r_out, $(height); …) \\ Cylinder(r_in, $(height); …)"
@@ -60,11 +53,11 @@ function _region_value_type_hint(shape::Symbol; radius=0., height=0., xrange=[0.
     else
         "Cuboid(xrange=$(xrange), yrange=$(yrange), zrange=$(zrange), center=$(center), range_unit=:$(range_unit))"
     end
-    printstyled("[Mera] Tip: regions also work as value types with EXACT edge-cell splitting " *
-                "(exact getvar :mass/:volume/msum), composable with ∩ ∪ \\ !:\n"; color=:light_black)
-    printstyled("           subregion(data, $eq)\n"; color=:light_black)
-    printstyled("           (the symbol form above still works; pass split=false for classic whole cells. " *
-                "Shown once per session — see ?subregion.)\n"; color=:light_black)
+    hint(:region_value_type_tip,
+         "regions also work as value types, with EXACT edge-cell splitting.",
+         "subregion(data, $eq)",
+         "gives exact getvar :mass/:volume/msum and composes with ∩ ∪ \\ !. The symbol form",
+         "above still works; pass split=false for classic whole cells. See ?subregion.")
     return
 end
 

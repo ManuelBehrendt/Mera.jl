@@ -116,28 +116,17 @@ const _CENTER_RELATIVE_VARS = Set{Symbol}([
     :mach_r_cylinder, :mach_phi_cylinder,
 ])
 
-const _CENTER_HINT_SHOWN = Set{Symbol}()
-const _CENTER_HINT_LOCK  = ReentrantLock()   # getvar is reachable from threaded code
-
-# Reset the "already mentioned" set — mainly for tests and long-running sessions.
-reset_center_hint() = (lock(_CENTER_HINT_LOCK) do; empty!(_CENTER_HINT_SHOWN); end; nothing)
-
 function _center_hint(vars, center)
-    # Two cheap guards first: in the common (correct) case an origin was given and this
-    # returns before touching the shared set, so the lock below is rarely reached.
-    checkverbose(true) || return nothing          # verbose(false) silences it
+    # Cheap guard first: in the common (correct) case an origin was given, and this returns
+    # before `hint_once` is ever reached. Bookkeeping is shared — see checks.jl.
     all(iszero, center) || return nothing          # an origin was given: nothing to say
     for v in vars
         v in _CENTER_RELATIVE_VARS || continue
-        fresh = lock(_CENTER_HINT_LOCK) do
-            v in _CENTER_HINT_SHOWN ? false : (push!(_CENTER_HINT_SHOWN, v); true)
-        end
-        fresh || continue
-        @warn "getvar(:$v): no `center` given — this quantity is measured about the box CORNER.\n" *
-              "Pass center=[:bc] for the box centre, or center=[x,y,z] with center_unit=:kpc for\n" *
-              "another origin. (Absolute positions :x/:y/:z are unaffected; this `center` is a\n" *
-              "separate argument from the one that places a region. Shown once per quantity —\n" *
-              "verbose(false) silences it.)"
+        hint(v,
+             "getvar(:$v) has no `center` — it is measured about the box CORNER.",
+             "Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.",
+             "This is a different argument from the `center` that places a region; give it",
+             "the same origin. Absolute positions :x/:y/:z are unaffected.")
     end
     return nothing
 end
