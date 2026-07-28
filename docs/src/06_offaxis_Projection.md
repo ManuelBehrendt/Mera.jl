@@ -4,10 +4,23 @@
     This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
-!!! tip "New to off-axis projection?"
-    Start with the runnable walk-through — [Projection basics](11_multi_OffAxisProjection.md) —
-    then come back here for the reference details. The notebook series is: basics →
-    [validation](13_multi_OffAxis_Validation.md) → [advanced features](14_multi_OffAxis_Features.md).
+!!! tip "The one choice that matters: `binning`"
+    Everything below is one `projection` call with a viewing direction. The only decision that
+    changes your *numbers* is how a rotated cell is shared among pixels — and **the default
+    `:overlap` is already the accurate one**:
+
+    | `binning` | | |
+    |---|---|---|
+    | `:overlap` | **default** | footprint supersampling — AMR-aligned, no moiré, converges to `:exact` |
+    | `:exact` | reference | analytic box-spline footprint; the fidelity yardstick |
+    | `:cic` | preview | bilinear deposit of the cell centre; speckles on coarse cells |
+    | `:ngp` | fastest | nearest-pixel deposit of the cell centre |
+
+    All four conserve the total mass; they differ in *where* they put it. Reach for `:cic`/`:ngp`
+    only for a quick look. [Full comparison below](#Binning-modes:-fast-preview-vs.-accurate).
+    Why conservation alone is not enough is measured in
+    [Accuracy & Conservation](offaxis_conservation_proof.md); the pipeline that produces all this
+    is taken apart in [Internals](offaxis_internals.md).
 
 Mera can project hydro, RT, gravity and particle data along **any line of sight**, not
 just the coordinate axes `:x` / `:y` / `:z`. The same `projection` function is used — you
@@ -171,6 +184,11 @@ line-of-sight depth used for slab selection. As a convention check, `los=[0,0,1]
 axis-aligned `direction=:z` mapping (image x → simulation x, image y → simulation y). The basis
 travels on the result as `m.cam_right`, `m.up`, `m.los` (see *Camera metadata on the result*
 below).
+
+!!! note "Derivation lives in Internals"
+    This section *shows* the basis and what `position_angle` does to it. The step-by-step
+    construction — and why clipping happens in world space, which is what makes the projection
+    conservative — is in [Internals: How It Works](offaxis_internals.md#2.-The-camera-basis).
 
 ```julia
 cam = projection(gas, :sd, :Msol_pc2; los=[0,0,1], center=[:bc],
@@ -712,6 +730,14 @@ planes, and orbit movies.
 **Line-of-sight velocity and dispersion** — `:vlos = v·ŵ` (mass-weighted), and `:σlos` =
 √(⟨v²⟩−⟨v⟩²) along the same direction. Unlike the axis-tied `:σx`/`:σy`/`:σz`, these are defined
 for *any* line of sight:
+
+![What v_LOS and σ_LOS mean: the velocity component along the viewing direction ŵ, and the spread of that component among the cells contributing to one pixel. Unlike σx/σy/σz, which are tied to the box axes, σ_LOS follows the camera.](assets/offaxis/offaxis_vlos.png)
+
+The left panel is the definition: `v·ŵ` is the shadow of the velocity vector on the viewing
+direction, so it changes when you change the camera — a disc that shows a clean rotation pattern
+edge-on shows almost none face-on. The right panel is why the dispersion is a *map* and not a
+per-cell quantity: every cell along a sight line lands in the same pixel with its own `v_LOS`, and
+`σ_LOS` is the mass-weighted width of that distribution.
 
 ```julia
 win = (center=[:bc], xrange=[-15,15], yrange=[-15,15], range_unit=:kpc, pxsize=[0.15,:kpc])
