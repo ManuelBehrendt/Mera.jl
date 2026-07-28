@@ -14,7 +14,17 @@ makedocs(modules = [Mera],
 		prettyurls = get(ENV, "CI", nothing) == "true", 
 		sidebar_sitename = false,  # Keep false - custom sidebar replaces default
 		edit_link = nothing,
-		size_threshold = 1_000_000,  # API autodocs page is large; allow up to ~1 MiB
+		# Page-size limits. Documenter's defaults (warn 100 KiB, error ~976 KiB) are tuned for
+		# typical docs; several pages here are legitimately large — the API page autodocs the
+		# whole package (~600 KiB), and the tutorials are continuous narratives that would lose
+		# their argument if chopped up to satisfy a byte count. Raised so the build is quiet for
+		# the sizes this project actually produces, while a page that suddenly BALLOONS still
+		# trips the warning well before the hard error stops the build.
+		size_threshold        = 3_000_000,   # hard error  (~2.9 MiB); was 1 MiB, api page ~0.6
+		size_threshold_warn   = 1_000_000,   # warn        (~976 KiB); default was 100 KiB
+		# The search index scales with TOTAL content, not per-page size, so splitting pages
+		# would not shrink it; currently ~2.3 MiB.
+		search_size_threshold_warn = 5_000_000,   # ~4.8 MiB; default was 500 KiB
 		assets = ["assets/custom.css", "assets/custom.js", "assets/music_player.js"],
 		canonical = "https://manuelbehrendt.github.io/Mera.jl/",
 		footer = "© $(_YEAR) Manuel Behrendt. Built with [Documenter.jl](https://github.com/JuliaDocs/Documenter.jl) and [Julia](https://julialang.org). ",
