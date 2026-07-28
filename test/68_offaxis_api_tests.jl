@@ -74,6 +74,23 @@
                                                   fov_unit=:kpc, aperture=:bogus, base...)
         end
 
+        @testset "fov also cuts the companion object (gravity combo)" begin
+            # The fov branch subregions the hydro object; the gravity data passed alongside must
+            # be cut by the SAME sphere or the deposit indexes past its end (BoundsError).
+            # both objects must carry the SAME cells in the same order — load_test_hydro caps
+            # the level range for speed, so load the pair explicitly at one lmax
+            info = load_test_info(:spiral_clumps)
+            gas  = gethydro(info;  lmax=6, verbose=false, show_progress=false)
+            grav = getgravity(info; lmax=6, verbose=false, show_progress=false)
+            @test length(gas.data) == length(grav.data)   # the pairing precondition
+            w = (center=[:bc], pxsize=[0.5, :kpc], inclination=30, axis=:angmom,
+                 verbose=false, show_progress=false)
+            p = projection(gas, grav, :epot, :standard; fov=22, fov_unit=:kpc,
+                           aperture=:square, w...)
+            @test size(p.maps[:epot], 1) == size(p.maps[:epot], 2)      # square aperture
+            @test count(isfinite, p.maps[:epot]) == length(p.maps[:epot])
+        end
+
         @testset "the unbounded-depth hint fires exactly when it applies" begin
             gas = load_test_hydro(:spiral_clumps)
             w = (center=[:bc], range_unit=:kpc, res=48, show_progress=false)
