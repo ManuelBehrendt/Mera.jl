@@ -107,6 +107,18 @@ All notable changes to Mera.jl are documented here. The format is based on
 - **`list_fields(...; builtin=true)`** lists the built-in *and* user-registered (`add_field`) derived
   fields together. (#89)
 
+### Added
+
+- **`fov` / `fov_unit` / `aperture` on `projection`.** `xrange`/`yrange`/`zrange` are *world-space*
+  bounds, so a cubic window is not rotation-invariant: tilting grows the camera frame (a ±22 kpc
+  window came out ±45 kpc at i = 30° and ±55 kpc at i = 60° on a 100 kpc box) and the window's own
+  faces appear as straight edges across the map. `fov` asks for a **camera-plane** frame instead,
+  through the rotation-invariant sphere selection `rotation_sequence` already used internally.
+  `aperture=:square` yields a **pixel-identical frame at every viewing angle** — what a gallery or
+  an orbit sequence needs; `aperture=:circle` (default) frames the sphere itself. Mass conservation
+  is unaffected. Mera also points the situation out once per session when it sees an off-axis view
+  with a windowed `xrange`/`yrange` and no `zrange`.
+
 ### Fixed
 
 - **Cell-centre convention unified: `cx`+`level` now yields the physical cell CENTRE

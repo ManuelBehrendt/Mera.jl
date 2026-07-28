@@ -74,6 +74,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                         angle_unit::Symbol=:deg,
                         binning::Symbol=:overlap,
+                        fov=nothing,
+                        fov_unit::Symbol=:standard,
+                        aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -108,6 +111,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -143,6 +147,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                         axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                         angle_unit::Symbol=:deg,
                         binning::Symbol=:overlap,
+                        fov=nothing,
+                        fov_unit::Symbol=:standard,
+                        aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -177,6 +184,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, var::Symbol
                             axis=axis,
                             angle_unit=angle_unit,
                             binning=binning, nmax=nmax,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                             #plane_orientation=plane_orientation,
                             weighting=weighting,
                             mode=mode,
@@ -212,6 +220,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                         angle_unit::Symbol=:deg,
                         binning::Symbol=:overlap,
+                        fov=nothing,
+                        fov_unit::Symbol=:standard,
+                        aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -245,6 +256,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -282,6 +294,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                         angle_unit::Symbol=:deg,
                         binning::Symbol=:overlap,
+                        fov=nothing,
+                        fov_unit::Symbol=:standard,
+                        aperture::Symbol=:circle,
                         nmax::Int=64,
                         #plane_orientation::Symbol=:perpendicular,
                         weighting::Array{<:Any,1}=[:mass, missing],
@@ -315,6 +330,7 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                                                 axis=axis,
                                                 angle_unit=angle_unit,
                                                 binning=binning, nmax=nmax,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                                 #plane_orientation=plane_orientation,
                                                 weighting=weighting,
                                                 mode=mode,
@@ -739,6 +755,32 @@ each on its own object (analogous to gravity vs. hydro). Use `getvar(rt, …)` /
 
 Off-axis projections:
 
+!!! note "`xrange`/`yrange`/`zrange` are WORLD-space; `fov` is camera-space"
+    The ranges select a **box in simulation coordinates**, and the off-axis frame is the bounding
+    box of that region *after rotation*. Two consequences that surprise people:
+
+    * omit `zrange` and the **full box depth** folds into the image height as you tilt — a
+      ±22 kpc window came out ±45 kpc at i=30° and ±55 kpc at i=60° on a 100 kpc box;
+    * the window's own **faces are visible** as straight edges across the map, because a sight
+      line just outside the box clips only a corner of it.
+
+    Neither is an error — it is what a world-space selection looks like from an angle — but if
+    you want a *fixed camera-plane frame*, use `fov` instead:
+
+    ```julia
+    # world-space box: frame grows with tilt, window faces visible
+    projection(gas, :sd; inclination=60, xrange=[-22,22], yrange=[-22,22], range_unit=:kpc)
+
+    # camera-plane frame: identical at every angle (rotation-invariant sphere selection)
+    projection(gas, :sd; inclination=60, fov=22, fov_unit=:kpc, aperture=:square)
+    ```
+
+    `aperture=:circle` (default) frames a sphere of radius `fov`, so the frame's corners are
+    empty; `aperture=:square` selects radius `√2·fov` and crops to the ±`fov` square, giving a
+    full rectangular frame that is **pixel-identical at every viewing angle** — what a gallery or
+    an orbit sequence needs. Mera points this out once per session when it sees an off-axis view
+    with a windowed `xrange`/`yrange` and no `zrange`.
+
 `binning` chooses how a rotated cell is shared among pixels. **The default `:overlap` is already
 the accurate one** — reach for `:cic`/`:ngp` only when you want a fast preview. All four conserve
 the total; they differ in *where* they put it:
@@ -791,6 +833,9 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                         axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                         angle_unit::Symbol=:deg,
                         binning::Symbol=:overlap,
+                        fov=nothing,
+                        fov_unit::Symbol=:standard,
+                        aperture::Symbol=:circle,
                         nmax::Int=64,
                         weighting::Array{<:Any,1}=[:mass, missing],
                         mode::Symbol=:standard,
@@ -812,6 +857,49 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
     # ===============================================================
     # MAIN PROJECTION PROCESSING PIPELINE
     # ===============================================================
+
+    # An off-axis view with a windowed x/y but an UNBOUNDED depth is the classic surprise: the
+    # frame is the bounding box of the rotated world region, so the full box depth folds into the
+    # image height (at i=60 a +/-22 kpc window came out +/-55 kpc), and the window's own faces
+    # appear as straight edges across the map. Say so once — nothing is wrong with the result.
+    if fov === nothing
+        _offaxis = los !== nothing || theta !== nothing || phi !== nothing ||
+                   inclination !== nothing || azimuth !== nothing ||
+                   (direction === :faceon || direction === :edgeon)
+        _windowed = !(xrange[1] === missing && xrange[2] === missing) ||
+                    !(yrange[1] === missing && yrange[2] === missing)
+        _deep     =   zrange[1] === missing && zrange[2] === missing
+        if _offaxis && _windowed && _deep
+            hint(:offaxis_unbounded_depth,
+                 "off-axis view with `xrange`/`yrange` but no `zrange`.",
+                 "These are WORLD-space bounds, so the camera frame is the bounding box of that",
+                 "region AFTER rotation: the full box depth folds into the image height, and the",
+                 "window's own faces show up as straight edges across the map. Pass `zrange` to",
+                 "bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane",
+                 "frame (add aperture=:square for an identical frame at every angle).";
+                 verbose=verbose)
+        end
+    end
+
+    # Camera-plane field of view. `xrange`/`yrange`/`zrange` are WORLD-space bounds, so a cubic
+    # window is not rotation-invariant: tilting grows the frame and the window's own faces appear
+    # as straight edges across the image. `fov` asks for a fixed camera-plane window instead, via
+    # the rotation-invariant sphere selection `rotation_sequence` already uses.
+    if fov !== nothing
+        src, win, fov_code = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        m = projection(src, vars; units=units, lmax=lmax, res=res, pxsize=pxsize, mask=mask,
+                       direction=direction, los=los, up=up, theta=theta, phi=phi,
+                       inclination=inclination, azimuth=azimuth, position_angle=position_angle,
+                       axis=axis, angle_unit=angle_unit, binning=binning, nmax=nmax,
+                       weighting=weighting, mode=mode, xrange=win, yrange=win, zrange=win,
+                       center=center, range_unit=fov_unit, data_center=data_center,
+                       data_center_unit=data_center_unit, verbose=verbose,
+                       show_progress=show_progress, max_threads=max_threads,
+                       verbose_threads=verbose_threads, gravity_data=gravity_data)
+        aperture === :square && _rotseq_crop_square!(m, fov_code)
+        return m
+    end
+
     
     # Override parameters with myargs struct if provided
     if !(myargs.pxsize        === missing)        pxsize = myargs.pxsize end
