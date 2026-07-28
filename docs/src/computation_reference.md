@@ -362,6 +362,29 @@ M_\mathrm{total} = \sum_i m_i .
     The one assumption: ``f_i \rho_i V_i`` treats the density as uniform within the cell, which is
     exactly the piecewise-constant data model of the AMR grid.
 
+!!! note "How accurate is each boundary treatment?"
+    The numbers below are measured against **analytic** volumes (a cuboid and a sphere), so they
+    are absolute accuracies rather than comparisons between methods.
+
+    | Treatment | How the boundary is handled | Measured error |
+    |---|---|---|
+    | **split, axis-aligned `Cuboid`** | analytic per-axis overlap — no sampling | ``\sim\!10^{-14}`` % (floating point) |
+    | **split, curved boundary** (`Sphere`, `Cylinder`, shells, composites) | sub-sampled, `nsub` per axis (default 8) | ``-0.0015`` % on a 10 kpc sphere |
+    | **centre test** (`split=false`, or classic `cell=false`) | keep a cell if its centre is inside | ``+0.18`` % on the same sphere — **no guaranteed sign** |
+    | **whole cells** (classic API default) | keep every cell the region touches | ``+12`` % on the same sphere — a strict **upper** bound |
+
+    So the split path is not "a bit better" — it is accurate to the sub-sampling, and for an
+    axis-aligned box to machine precision. That is what makes adjacent regions add up and a mass
+    budget balance.
+
+    **What the whole-cell error depends on.** Not the size of the region, but the size of the cells
+    *at its boundary*, roughly as ``\Delta_\mathrm{edge}/R``. The same sphere measured on a
+    deliberately coarse ``32^3`` grid costs ``+36`` % instead of ``+12`` %. On AMR the edge cells can
+    be far coarser than the average cell — that 10 kpc sphere has millions of small cells inside the
+    refined disc, but its rim sits out in the coarse envelope, which is why it still costs 12 %.
+    Raising `nsub` sharpens the split path; nothing sharpens the whole-cell path except a finer grid
+    where the boundary happens to fall.
+
 ### Centre of mass — `center_of_mass` / `com`
 Mass-weighted mean position (returned as a 3-tuple):
 ```math

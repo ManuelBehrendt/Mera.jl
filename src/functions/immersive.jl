@@ -741,6 +741,8 @@ as_image(rgb::AbstractMatrix{<:Colorant}) = rgb   # render_scene already returns
 
 "Inline-display alias of [`as_image`](@ref) (kept for convenience)."
 view_figure(img; kw...) = as_image(img; kw...)
+
+"Inline-display alias of [`as_image`](@ref) for a rendered scene (kept for convenience)."
 scene_figure(img) = as_image(img)
 
 """
@@ -1195,7 +1197,16 @@ function flythrough_montage(vol::AmrVolume, kind::Symbol, keyframes; nframes::In
     return canvas
 end
 
-# `flythrough` records an mp4 and needs a Makie backend → real method in MeraMakieExt.
+"""
+    flythrough(vol, kind, keyframes; nframes=120, filename="flythrough.mp4", res=480, mode=:max,
+               smooth=true, aa=1, power=1.0, kappa=0.1, fov_deg=60, up=(0,0,1), framerate=24,
+               colormap=:inferno, logscale=true) -> filename
+
+Record a moving-camera movie. `keyframes` is a vector of `(position, target)` tuples; the camera is
+interpolated (Catmull–Rom) across `nframes`. `kind` ∈ `:perspective` / `:equirect` / `:fisheye`. Writes
+an mp4 (or .gif by extension). Available once a Makie backend is loaded (`using CairoMakie`); the
+Makie-free still summary is `flythrough_montage`.
+"""
 function flythrough end
 flythrough(args...; kwargs...) = error(
     "`flythrough` records an mp4 and needs a Makie backend — run `using CairoMakie` (loads MeraMakieExt). " *
