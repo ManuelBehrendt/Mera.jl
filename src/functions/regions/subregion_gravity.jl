@@ -327,7 +327,7 @@ function subregioncylinder(dataobject::GravDataType;
     printtime("", verbose)
 
     # a centre was never given -> the region lands at the box corner: say so once
-    _region_corner_hint(:cylinder, center; shell=false)
+    _region_corner_hint(:cylinder, center; shell=false, verbose=verbose)
     if radius == 0. || height == 0.
         error("[Mera]: subregion(:cylinder) needs a nonzero `radius` and `height` — got " *
               "radius = $(radius), height = $(height).")
@@ -443,7 +443,7 @@ function subregionsphere(dataobject::GravDataType;
     printtime("", verbose)
 
     # a centre was never given -> the region lands at the box corner: say so once
-    _region_corner_hint(:sphere, center; shell=false)
+    _region_corner_hint(:sphere, center; shell=false, verbose=verbose)
     if radius == 0.
         error("[Mera]: subregion(:sphere) needs a nonzero `radius` — got radius = $(radius).")
     end

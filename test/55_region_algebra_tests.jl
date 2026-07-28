@@ -190,7 +190,7 @@
     end
 
     @testset "legacy symbol API prints a one-shot value-type hint" begin
-        Mera._REGION_HINT_SHOWN[] = false
+        Mera.reset_hints()
         out = capture_stdout() do
             Mera._region_value_type_hint(:sphere; radius=10.0, center=[:bc], range_unit=:kpc)
         end
@@ -200,7 +200,7 @@
             Mera._region_value_type_hint(:sphere; radius=10.0, center=[:bc], range_unit=:kpc)
         end
         @test isempty(out2)
-        Mera._REGION_HINT_SHOWN[] = false                   # reset so other tests/sessions can see it
+        Mera.reset_hints()                                  # reset so other tests/sessions can see it
     end
 
     @testset "symbol-form subregion: physical units match :standard" begin

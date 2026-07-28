@@ -43,6 +43,67 @@ function checkuniformgrid(dataobject::DataSetType, lmax::Real)
 end
 
 
+# one-off hints =================================
+# Mera occasionally points something out that is NOT an error: a call that will succeed but
+# probably does not mean what was intended (a quantity measured about the box corner, a region
+# placed there), or a newer API worth knowing about. Those are shown ONCE per session, keyed by
+# what they are about — per quantity, per region shape, per tip — so a session says each thing
+# exactly once and then stays out of the way.
+#
+# The presentation deliberately differs by severity: a likely mistake is an `@warn`, a mere
+# suggestion is dimmed text. Only the once-per-session bookkeeping is shared, and it lives here
+# next to `checkverbose` because `verbose(false)` silences all of it.
+const _HINT_SHOWN = Set{Symbol}()
+const _HINT_LOCK  = ReentrantLock()   # reachable from threaded code (getvar, projection)
+
+"""
+    hint_once(key::Symbol; verbose=true) -> Bool
+
+Internal. `true` the first time `key` is offered in this session, `false` afterwards — and
+always `false` when output is off, either for this call (`verbose=false`) or globally
+(`verbose(false)`). Callers emit their message only when it returns true.
+"""
+function hint_once(key::Symbol; verbose::Bool=true)
+    checkverbose(verbose) || return false
+    return lock(_HINT_LOCK) do
+        key in _HINT_SHOWN ? false : (push!(_HINT_SHOWN, key); true)
+    end
+end
+
+"""
+    hint(key::Symbol, headline, body...; verbose=true)
+
+Internal. Render one of Mera's one-off hints, in the single house format every hint uses:
+
+    [Mera] Hint: <headline>
+                 <body line>
+                 (shown once per session; verbose(false) silences Mera's messages)
+
+Does nothing if `key` has already been shown this session or output is off. `headline` says what
+happened in one line; `body` lines say what to do about it.
+"""
+function hint(key::Symbol, headline::AbstractString, body::AbstractString...; verbose::Bool=true)
+    hint_once(key; verbose=verbose) || return nothing
+    pad = " "^13
+    printstyled("[Mera] Hint: "; color=:yellow, bold=true)
+    printstyled(headline, "\n"; color=:yellow)
+    for line in body
+        printstyled(pad, line, "\n"; color=:light_black)
+    end
+    printstyled(pad, "(shown once per session; verbose(false) silences Mera's messages)\n";
+                color=:light_black)
+    return nothing
+end
+
+"""
+    reset_hints()
+
+Internal. Forget which one-off hints have been shown, so they can appear again. Used by the
+tests and useful in a long-lived session.
+"""
+reset_hints() = (lock(_HINT_LOCK) do; empty!(_HINT_SHOWN); end; nothing)
+
+
 # global verbose mode ===========================
 function checkverbose(verbose::Bool)
     if verbose_mode != nothing

@@ -84,11 +84,51 @@ With ``k_B`` Boltzmann's constant, ``m_u`` the atomic mass unit and ``\gamma`` t
 | Entropy per particle `:entropy_per_particle` | ``s_p = s\, m_u`` |
 | Total entropy `:entropy_total` | ``S = s\, m`` |
 
+## The two `center` arguments
+
+Everything with a radius, an azimuth or an axis in it is measured **about an origin**, and Mera
+has two separate `center` keywords that are easy to confuse.
+
+| | what it does | where it appears |
+|---|---|---|
+| **Region `center`** | *places a shape* — where the sphere sits, where the cylinder's axis runs | `Sphere(10; center=…)`, `subregion(gas, :sphere; center=…)`, `shellregion` |
+| **`getvar` `center`** | *sets the coordinate origin* the derived quantity is measured about | `getvar(gas, :vϕ_cylinder; center=…)`, and `projection`, which passes its own `center` through to `getvar` |
+
+They are independent arguments — a region placed at one point can perfectly well be asked for
+quantities measured about another — and **they default differently**, for historical reasons:
+
+| Default `center` | Functions |
+|---|---|
+| **box corner**, `[0., 0., 0.]` | `getvar`, `projection`, the classic symbol `subregion`/`shellregion`, `covering_grid` |
+| **box centre**, `[:bc]` | the value-type regions (`Sphere`, `Cuboid`, `Cylinder`, the shells), `profile` and its family, `flux` and its family, `gridoverlay`, `movie` |
+
+The rule of thumb: **pass `center` explicitly whenever a quantity's name contains a geometry**,
+and pass the same origin you gave the region.
+
+**Why the corner default is kept.** For absolute positions — `:x`, `:y`, `:z` — the corner is the
+*right* origin: it returns the simulation's own coordinates. Changing that default would silently
+shift every existing script's positions by half a box. The same argument applies to `:cuboid`,
+whose ranges are absolute box coordinates.
+
+**What happens if you forget.** Nothing is refused, because every origin is a well-defined one —
+you get a plausible number rather than an error. Mera therefore *says so*, once per session:
+
+- asking for a frame-relative quantity (`:r_sphere`, `:r_cylinder`, `:ϕ`, and the
+  `v*`/`a*`/`l*`/`mach_*` sphere- and cylinder-frame families) about the corner prints a
+  `[Mera] Hint:` once per quantity;
+- placing a distance-based region (`:sphere`, `:cylinder`, either shell) at the corner prints one
+  once per shape — that region is valid, but only the part inside the box is kept, so a
+  corner-placed sphere keeps an octant.
+
+Absolute positions and `:cuboid` never trigger it. `verbose(false)` silences the reminders along with
+every other Mera message.
+
 ## Velocities & geometry
 
 *Data: **hydro** or **particles** (velocities); the geometry names `:r_cylinder`, `:r_sphere`, `:ϕ`, `:x/:y/:z` also work on gravity, RT and clumps.*
 
-Positions ``x,y,z`` are **relative to `center`** (pass `center=[:bc]` for the box centre).
+Positions ``x,y,z`` are **relative to `center`** (pass `center=[:bc]` for the box centre; see
+[The two `center` arguments](#The-two-center-arguments) above for why the default is the corner).
 Components that divide by a radius are set to **0** where that radius is zero (on axis / at the
 centre), rather than returning `NaN`.
 

@@ -183,8 +183,33 @@ All notable changes to Mera.jl are documented here. The format is based on
 - **`fluxbudget`** — `:metals`/`:energy` guards, a cosmological-run warning, and conversion-factor
   correctness. (#83)
 
+### Changed
+
+- **One policy *and* one look for Mera's one-off hints.** The value-type migration tip, the
+  `getvar` centre reminder and the region-placement reminder each had their own bookkeeping
+  (once per session globally vs. per quantity vs. per shape) and their own presentation (dimmed
+  text vs. `@warn`). All three now go through `hint_once(key)` / `hint(key, headline, body…)`
+  in `checks.jl` — next to `checkverbose`, since `verbose(false)` silences all of them — and
+  render in one house format:
+
+  ```
+  [Mera] Hint: getvar(:r_sphere) has no `center` — it is measured about the box CORNER.
+               Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
+               …
+               (shown once per session; verbose(false) silences Mera's messages)
+  ```
+
+  Every hint is now once per key per session, cleared together by `reset_hints()`, on stdout
+  rather than split across stdout and the warning channel. The region reminder additionally
+  respects a **per-call** `verbose=false`, which it previously ignored.
+
 ### Documentation
 
+- **`center` explained in one place.** [How Quantities Are Computed](computation_reference.md)
+  gained a section on the two `center` arguments — the one that *places a region* and the one
+  that *sets `getvar`'s coordinate origin* — with the table of which function families default
+  to the box corner and which to `[:bc]`, why the corner default is kept for absolute positions
+  and `:cuboid`, and what the two reminders do.
 - **Sub-region tutorials for gravity, particles and clumps rewritten** around what each data
   type changes about a region cut, instead of repeating the hydro walk-through. Gravity: a
   region's payload is its *volume* (no `msum`), volume-weighting vs cell-averaging, the two
