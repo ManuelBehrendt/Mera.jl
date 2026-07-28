@@ -339,6 +339,13 @@ boundary cells for curved/composite regions (diminishing returns past ~8).
 For **particle** data the region is a point-membership test (particles are points — there is
 no fractional volume, so `split`/`nsub` do not apply). `inverse=true` selects the complement.
 
+**Accuracy.** With `split=true` an axis-aligned `Cuboid` is analytic (per-axis overlap product) and
+matches the exact volume to floating point; curved boundaries are sub-sampled `nsub` per axis and
+measure ``-0.0015`` % on a 10 kpc sphere. For comparison, on the same sphere the centre test lands
+``+0.18`` % off with no guaranteed sign, and whole cells ``+12`` % over — an upper bound whose size
+is set by the cell size *at the boundary*, not by the region. The "How Quantities Are Computed"
+page carries the full accuracy table.
+
 `refine::Int=0` (AMR cell data, `split=true` only) **geometrically subdivides** the
 boundary-straddling cells up to `refine` levels: each straddling cell is replaced by its
 octree children (rows at `level+1` with the parent's field values — exact for the

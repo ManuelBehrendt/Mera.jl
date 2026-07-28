@@ -474,16 +474,8 @@ Mera._plot_overview(d::Mera.DataSetType; kwargs...) =
 #  The Makie-free core (ray-caster, stills, PNG, montage) lives in src/functions/immersive.jl;
 #  only the movie recorder is here.
 # -------------------------------------------------------------------------------------
-"""
-    flythrough(vol, kind, keyframes; nframes=120, filename="flythrough.mp4", res=480, mode=:max,
-               smooth=true, aa=1, power=1.0, kappa=0.1, fov_deg=60, up=(0,0,1), framerate=24,
-               colormap=:inferno, logscale=true) -> filename
-
-Record a moving-camera movie. `keyframes` is a vector of `(position, target)` tuples; the camera is
-interpolated (Catmull–Rom) across `nframes`. `kind` ∈ `:perspective` / `:equirect` / `:fisheye`. Writes
-an mp4 (or .gif by extension). Available once a Makie backend is loaded (`using CairoMakie`); the
-Makie-free still summary is `flythrough_montage`.
-"""
+# Docstring lives on the `flythrough` stub in src/functions/immersive.jl, so the name has an
+# entry in the Mera module (this extension method is only reachable with a Makie backend).
 function Mera.flythrough(vol::Mera.AmrVolume, kind::Symbol, keyframes;
         nframes::Int=120, filename::AbstractString="flythrough.mp4", res::Int=480, pxsize=nothing, mode::Symbol=:max,
         smooth=true, aa::Int=1, power::Real=1.0, kappa::Real=0.1, level=1.0, iso_alpha::Real=1.0,
