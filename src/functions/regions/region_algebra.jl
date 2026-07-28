@@ -394,11 +394,29 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     nrows = length(data); frac = Vector{Float64}(undef, nrows)
     _fracloop!(frac, cellfrac, contains, cxv, cyv, czv, lvl, isamr, Int(obj.lmax),
                split, inverse, blo1, blo2, blo3, bhi1, bhi2, bhi3)
-    keep = frac .> 1e-12
     cols = IndexedTables.columns(data)
+    # The object may ALREADY carry a `:fraction` from an earlier split cut. Combine with it
+    # rather than replacing it — otherwise a cell half inside the first region but fully inside
+    # this one comes back as 1.0 and is counted whole. `f₁·f₂` is exact whenever either region
+    # contains the cell outright (the common case) and approximates a doubly-straddled cell, so
+    # the hint below points at `region₁ ∩ region₂`, which evaluates the true joint fraction.
+    prior = (split && :fraction in propertynames(cols)) ?
+            IndexedTables.select(data, :fraction) : nothing
+    if prior !== nothing
+        hint(:chained_split_region,
+             "this object was already split by a region — fractions are being combined.",
+             "f = f_previous * f_this is exact unless a cell straddles BOTH boundaries, where it",
+             "approximates the overlap. For the exact joint cut, compose the regions instead:",
+             "subregion(obj, region1 ∩ region2).";
+             verbose=verbose)
+    end
+    # `frac` stays the PURE fraction w.r.t. this region — the refine branch below needs it for its
+    # geometry and stop tests. The combined value is what gets stored / decides what is kept.
+    fcomb = prior === nothing ? frac : frac .* prior
+    keep = fcomb .> 1e-12
     if refine == 0 && tnorm === nothing
         keptcols = map(c -> c[keep], cols)
-        newcols = split ? merge(keptcols, (fraction = frac[keep],)) : keptcols
+        newcols = split ? merge(keptcols, (fraction = fcomb[keep],)) : keptcols
         newdata = IndexedTables.table(newcols; pkey = collect(IndexedTables.pkeynames(data)))
         if verbose
             println("Region: ", nameof(typeof(region)), split ? "  (exact cell splitting)" : "  (whole cells)")
@@ -410,11 +428,15 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     # recursing up to `refine` levels; interior children stop, exterior children vanish
     CT = eltype(cxv); LT = eltype(lvl)
     idxmap = Int[]; cxn = CT[]; cyn = CT[]; czn = CT[]; lvln = LT[]; fracn = Float64[]
-    function emit!(i::Int, cx::Int, cy::Int, cz::Int, L::Int, fr::Float64, depth::Int)
+    # `pscale` carries any fraction the parent cell already had from an earlier split cut; the
+    # refinement itself is computed against THIS region only (so the stop tests stay meaningful)
+    # and the prior is applied to the fraction that is finally stored.
+    function emit!(i::Int, cx::Int, cy::Int, cz::Int, L::Int, fr::Float64, depth::Int,
+                   pscale::Float64)
         fr <= 1e-12 && return
         if fr >= 1.0 - 1e-12 || depth == 0
             push!(idxmap, i); push!(cxn, CT(cx)); push!(cyn, CT(cy)); push!(czn, CT(cz))
-            push!(lvln, LT(L)); push!(fracn, fr)
+            push!(lvln, LT(L)); push!(fracn, fr * pscale)
             return
         end
         Lc = L + 1; f = 1.0 / 2^Lc; halfc = 0.5f
@@ -422,7 +444,7 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
             ccx = 2cx - 1 + ii; ccy = 2cy - 1 + jj; ccz = 2cz - 1 + kk
             frc = cellfrac((ccx-0.5)*f, (ccy-0.5)*f, (ccz-0.5)*f, halfc)
             inverse && (frc = 1.0 - frc)
-            emit!(i, ccx, ccy, ccz, Lc, frc, depth - 1)
+            emit!(i, ccx, ccy, ccz, Lc, frc, depth - 1, pscale)
         end
     end
     @inbounds for i in 1:nrows
@@ -433,7 +455,8 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
             d = tnorm === nothing ? refine :
                 clamp(ceil(Int, log2(1.0 / (tnorm * 2^Int(lvl[i])))), 0, 10)
         end
-        emit!(i, Int(cxv[i]), Int(cyv[i]), Int(czv[i]), Int(lvl[i]), frac[i], d)
+        emit!(i, Int(cxv[i]), Int(cyv[i]), Int(czv[i]), Int(lvl[i]), frac[i], d,
+              prior === nothing ? 1.0 : prior[i])
     end
     newcols = merge(map(c -> c[idxmap], cols),
                     (level = lvln, cx = cxn, cy = cyn, cz = czn, fraction = fracn))
