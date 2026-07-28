@@ -339,6 +339,29 @@ These operate over a whole data object (with optional `mask`), and live in `basi
 M_\mathrm{total} = \sum_i m_i .
 ```
 
+!!! note "On a split sub-region, `mᵢ` is the mass *inside the region*"
+    `msum` sums whatever `getvar(obj, :mass)` returns, and that is boundary-aware. A sub-region
+    built from a **value-type region** (`subregion(gas, Sphere(10))`, `split=true` by default)
+    carries a per-cell `:fraction ∈ (0,1]` — the volume fraction of that cell lying inside the
+    region — and `getvar` applies it:
+
+    ```math
+    m_i = f_i\,\rho_i V_i, \qquad V_i^{(\mathrm{eff})} = f_i V_i .
+    ```
+
+    So `msum` over a split region is the mass **inside the boundary**, not the mass of every cell
+    the boundary touches, and adjacent regions add up exactly. Interior cells have ``f_i = 1``, so
+    nothing changes away from the edge.
+
+    This propagates to everything built on those two quantities: `center_of_mass`/`com`,
+    `bulk_velocity`, `wstat`, and `projection` (which weights by mass). It does **not** apply to
+    cuts made any other way — the loaders' `xrange/yrange/zrange`, the classic symbol
+    `subregion`/`shellregion`, or `covering_grid` attach no `:fraction`, so there `mᵢ` is the whole
+    cell. Particles and clumps are points and have no fraction by construction.
+
+    The one assumption: ``f_i \rho_i V_i`` treats the density as uniform within the cell, which is
+    exactly the piecewise-constant data model of the AMR grid.
+
 ### Centre of mass — `center_of_mass` / `com`
 Mass-weighted mean position (returned as a 3-tuple):
 ```math

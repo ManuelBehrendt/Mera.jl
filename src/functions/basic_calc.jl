@@ -48,6 +48,17 @@ return Float64
 - **`unit`:** the unit of the result (can be used w/o keyword): :standard (code units)  :Msol, :Mearth, :Mjupiter, :g, :kg  (of typye Symbol) ..etc. ; see for defined mass-scales viewfields(info.scale)
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 
+#### Sub-regions: the sum is boundary-aware
+`msum` sums `getvar(obj, :mass)`, which honours the per-cell `:fraction` attached by a
+**value-type** sub-region (`subregion(gas, Sphere(10))`, `split=true` by default): a boundary cell
+contributes `fraction * rho * volume`, i.e. only the part of it inside the region. So the result is
+the mass **inside the boundary**, and adjacent regions add up exactly. Interior cells carry
+`fraction = 1` and are unaffected.
+
+Cuts made any other way carry no `:fraction` and therefore count whole boundary cells: the loaders'
+`xrange/yrange/zrange`, the classic symbol `subregion`/`shellregion`, `covering_grid`. Particles and
+clumps are points and have no fraction at all. See [`subregion`](@ref).
+
 """
 function msum(dataobject::ContainMassDataSetType, unit::Symbol; mask::MaskType=[false])
     return msum(dataobject, unit=unit, mask=mask)

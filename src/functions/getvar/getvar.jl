@@ -161,6 +161,19 @@ end
     getvar(gas, :x, :kpc)                         # absolute coordinates — no reminder
     ```
 
+!!! note "`:mass` and `:volume` are boundary-aware on a split sub-region"
+    A sub-region built from a **value-type** region (`subregion(gas, Sphere(10))`, `split=true` by
+    default) carries a per-cell `:fraction ∈ (0,1]` — how much of that cell lies inside the region.
+    `getvar(:volume)` returns `fraction * cellsize^3` and `getvar(:mass)` returns
+    `fraction * rho * volume`, so totals are the amount **inside the boundary** rather than the sum
+    over every cell the boundary touches, and adjacent regions add exactly. Interior cells have
+    `fraction = 1` and are unaffected.
+
+    Cuts made any other way attach no `:fraction` and so count whole boundary cells — the loaders'
+    `xrange/yrange/zrange`, the classic symbol `subregion`/`shellregion`, `covering_grid` — and
+    particles/clumps are points, with no fraction by construction. See [`subregion`](@ref) and
+    [`msum`](@ref).
+
 
 ```julia
 getvar(   dataobject::DataSetType, var::Symbol;
