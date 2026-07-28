@@ -183,6 +183,24 @@ All notable changes to Mera.jl are documented here. The format is based on
 - **`fluxbudget`** — `:metals`/`:energy` guards, a cosmological-run warning, and conversion-factor
   correctness. (#83)
 
+### Fixed
+
+- **Chaining two split sub-regions no longer discards the first cut's fractions.**
+  `subregion(subregion(gas, Sphere(10)), Cuboid(…))` wrote the second cut's `:fraction` over the
+  first (`merge` on a NamedTuple replaces the key), so a cell half inside the sphere but wholly
+  inside the cuboid came back as `fraction = 1.0` and was counted **whole** — silently inflating
+  every mass and volume derived from a chained cut. Measured on a sphere clipped by a slab: the
+  chained result reported **+9 %** more volume than the identical composite cut, from exactly the
+  same cells. The fractions are now combined, `f = f_previous · f_this`, in both the plain and the
+  `refine`/`refine_to` paths, and the result is order-independent.
+
+  `f₁·f₂` is exact whenever a cell lies wholly inside one of the two regions (the common case, and
+  bit-exact — a covering box chained with a sphere reproduces the sphere), and approximates a cell
+  that straddles **both** boundaries. A one-off hint therefore points at the exact route:
+  `subregion(obj, region1 ∩ region2)`, which evaluates the true joint fraction. `split=false` on an
+  already-split object is unchanged: the parent's fractions are kept, since they remain true
+  statements about the first region.
+
 ### Changed
 
 - **One policy *and* one look for Mera's one-off hints.** The value-type migration tip, the

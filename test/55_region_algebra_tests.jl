@@ -183,6 +183,50 @@
         @test isapprox(sum(getvar(gs, :volume, :kpc3)), (4/3)*pi*R^3; rtol=0.02)   # getvar :volume honours :fraction
     end
 
+    @testset "chained split cuts COMBINE fractions (do not overwrite)" begin
+        # A second split cut used to replace the first cut's :fraction, so a cell half inside the
+        # sphere but wholly inside the slab came back as 1.0 and was counted whole — a silent
+        # over-count (measured +9 % here before the fix).
+        bl = gas.boxlen
+        sph  = Mera.Sphere(0.3bl; center=[:bc], range_unit=:standard)
+        slab = Mera.Cuboid(xrange=[-0.3bl, 0.3bl], yrange=[-0.3bl, 0.3bl],
+                           zrange=[-0.05bl, 0.05bl], center=[:bc], range_unit=:standard)
+
+        a    = subregion(gas, sph, verbose=false)
+        ab   = subregion(a, slab, verbose=false)
+        both = subregion(gas, sph ∩ slab, verbose=false)
+        V(o) = sum(getvar(o, :volume))
+
+        @test length(ab.data) == length(both.data)          # same cells either way
+        @test V(ab) < V(a)                                   # the second cut can only remove volume
+        @test V(ab) <= V(both) * 1.02                        # no longer over-counts (was 1.09x)
+        # every combined fraction is bounded by each factor
+        fab = Mera.select(ab.data, :fraction)
+        @test all(0 .< fab .<= 1 .+ 1e-12)
+
+        # order cannot matter: f1*f2 == f2*f1
+        ba = subregion(subregion(gas, slab, verbose=false), sph, verbose=false)
+        @test isapprox(V(ba), V(ab); rtol=1e-12)
+
+        # EXACT when one region contains the cells outright: a box covering everything leaves
+        # fraction 1, so chaining it with the sphere must reproduce the sphere bit for bit
+        allbox = Mera.Cuboid(xrange=[-bl, bl], yrange=[-bl, bl], zrange=[-bl, bl],
+                             center=[:bc], range_unit=:standard)
+        chained_trivial = subregion(subregion(gas, allbox, verbose=false), sph, verbose=false)
+        @test length(chained_trivial.data) == length(a.data)
+        @test Mera.select(chained_trivial.data, :fraction) == Mera.select(a.data, :fraction)
+        @test V(chained_trivial) == V(a)
+
+        # the refine path carries the prior fraction too
+        ar = subregion(a, slab; refine=1, verbose=false)
+        @test isapprox(V(ar), V(ab); rtol=1e-6)
+
+        # split=false keeps the parent's fractions untouched (they describe the FIRST region)
+        ac = subregion(a, slab; split=false, verbose=false)
+        @test in(:fraction, propertynames(Mera.columns(ac.data)))
+        @test maximum(Mera.select(ac.data, :fraction)) <= 1.0
+    end
+
     @testset "symbol API still works (backward compatible)" begin
         old = subregion(gas, :sphere; radius=R, center=[:bc], range_unit=:kpc, verbose=false)
         @test old isa Mera.HydroDataType && length(old.data) > 0
