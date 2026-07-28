@@ -1194,7 +1194,7 @@ complementary views — along z the tilt reads only as a softened ellipse, along
 y it reads as what it is, an inclined bar. To *view along* the tilted axis
 rather than merely select along it, see the off-axis projection tutorials
 ([Projections: Off-Axis](06_offaxis_Projection.md),
-[Off-Axis Applications](11_multi_OffAxisProjection.md)).
+[Off-axis Projection](06_offaxis_Projection.md)).
 
 ```julia
 tilt_region = Cylinder(10., 1.; axis=[1., 0., 2.], center=[:bc], range_unit=:kpc)
@@ -1718,6 +1718,5 @@ insurance a mass budget can buy.
   [particles](03_particles_Get_Subregions.md),
   [gravity](03_gravity_Get_Subregions.md), and
   [clumps](03_clumps_Get_Subregions.md).
-- [Projections: Off-Axis](06_offaxis_Projection.md) and
-  [Off-Axis Applications](11_multi_OffAxisProjection.md) — view along a tilted
+- [Projections: Off-Axis](06_offaxis_Projection.md) — view along a tilted
   region's axis.

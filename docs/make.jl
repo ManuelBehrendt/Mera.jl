@@ -87,13 +87,14 @@ makedocs(modules = [Mera],
                           "Auto-Frame (center & orient)" => "galaxyframe.md",
                           "Axis-aligned (x/y/z)" => Any[ "Hydro"     => "06_hydro_Projection.md",
                                                          "Particles" => "06_particles_Projection.md"],
-                          "Off-axis"             => Any[ "Guide"              => "06_offaxis_Projection.md",
+                          # Three pages, three questions: how to use it, how it works, why to
+                          # trust it. The former "Projection basics" notebook was fully contained
+                          # in the guide; "Advanced LOS features" duplicated its slice/orbit
+                          # sections; "Validation & accuracy" became the measurement half of the
+                          # accuracy page.
+                          "Off-axis"             => Any[ "Guide"                   => "06_offaxis_Projection.md",
                                                          "Internals: How It Works" => "offaxis_internals.md",
-                                                         "Conservation Proof" => "offaxis_conservation_proof.md",
-                                                         "Notebooks"          => Any[
-                                                             "Projection basics"       => "11_multi_OffAxisProjection.md",
-                                                             "Validation & accuracy"   => "13_multi_OffAxis_Validation.md",
-                                                             "Advanced LOS features"   => "14_multi_OffAxis_Features.md"]],
+                                                         "Accuracy & Conservation" => "offaxis_conservation_proof.md"],
                           "Grid Overlay"                 => "overlay_absorption.md"],
 
                       "Data & Visualization" => Any[
