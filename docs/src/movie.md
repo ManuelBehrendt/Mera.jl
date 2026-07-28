@@ -1,7 +1,7 @@
 # Movies (`getmovie` / `savemovie`)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `movie.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/movie.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 [`getmovie`](@ref) projects a quantity for **every output** of a simulation and collects the

@@ -1,7 +1,7 @@
 # Covering Grid / Fixed-Resolution Buffer
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `covering_grid.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/covering_grid.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `covering_grid.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/covering_grid.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `covering_grid` resamples the sparse AMR leaf cells onto a **dense, uniform `Nx×Ny×Nz`

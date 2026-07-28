@@ -1,7 +1,7 @@
 # 10. Radiative Transfer (RT)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `10_multi_RadiativeTransfer.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/10_multi_RadiativeTransfer.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `10_multi_RadiativeTransfer.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/10_multi_RadiativeTransfer.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 RAMSES can run with **radiative transfer** (`RT=1`): on top of the gas it transports, per

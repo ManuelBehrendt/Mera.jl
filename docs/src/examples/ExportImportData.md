@@ -1,7 +1,7 @@
 # Export/Import Data (ASCII/Binary)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `ExportImportData.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/examples/ExportImportData.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `ExportImportData.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/examples/ExportImportData.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 This notebook presents several ways to export your data.
 

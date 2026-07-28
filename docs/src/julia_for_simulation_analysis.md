@@ -1,7 +1,7 @@
 # Julia for Simulation Analysis
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `julia_for_simulation_analysis.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/julia_for_simulation_analysis.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `julia_for_simulation_analysis.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/julia_for_simulation_analysis.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Practical Julia habits for post-processing work: reproducible environments, what compile-time

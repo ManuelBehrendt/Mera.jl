@@ -1,7 +1,7 @@
 # 3. Clumps: Regions Applied to a Catalogue
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 A clump catalogue is not a grid and not a particle list. It is a table of

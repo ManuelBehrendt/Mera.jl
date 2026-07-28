@@ -1,7 +1,7 @@
 # Auto-Frame: centering & orientation
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `galaxyframe.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/galaxyframe.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `galaxyframe.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/galaxyframe.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 "Find the centre, then rotate to face-on / edge-on" is a ritual every disk-galaxy analysis
