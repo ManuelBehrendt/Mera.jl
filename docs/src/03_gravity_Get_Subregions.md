@@ -76,7 +76,7 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), wrong dep version loaded (2), dep missing source (6), mismatched flags (6))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (6), mismatched flags (10))
 SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
@@ -365,13 +365,13 @@ println("ratio                       : ",
 ```
 
 ```
-┌ Warning: getvar(:ar_sphere): no `center` given — this quantity is measured about the box CORNER.
-│ Pass center=[:bc] for the box centre, or center=[x,y,z] with center_unit=:kpc for
-│ another origin. (Absolute positions :x/:y/:z are unaffected; this `center` is a
-│ separate argument from the one that places a region. Shown once per quantity —
-│ verbose(false) silences it.)
-└ @ Mera ~/code-github/Mera.jl/src/functions/getvar/getvar.jl:136
-⟨a_r⟩ about the box corner  : -1.99e-9 cm/s²
+[Mera] Hint: getvar(:ar_sphere) has no `center` — it is measured about the box CORNER.
+             Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
+             This is a different argument from the `center` that places a region; give it
+             the same origin. Absolute positions :x/:y/:z are unaffected.
+             (shown once per session; verbose(false) silences Mera's messages)
+⟨a_r⟩ about the box corner  : -1.99e-9
+ cm/s²
 ⟨a_r⟩ about the box centre  : -1.526e-8 cm/s²
 ratio                       : 0.13
 ```
