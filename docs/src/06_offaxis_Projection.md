@@ -1,7 +1,7 @@
 # Off-axis Projection
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 !!! tip "The one choice that matters: `binning`"

@@ -1,7 +1,7 @@
 # 3. Particles: Sub-Regions of a Point Population
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `03_particles_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_particles_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_particles_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/03_particles_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 On an AMR grid a region boundary is a *choice*. A cell straddling the edge can

@@ -1,7 +1,7 @@
 # Off-Axis Projection: How It Works Internally
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `offaxis_internals.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/offaxis_internals.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `offaxis_internals.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/offaxis_internals.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 The [off-axis guide](06_offaxis_Projection.md) shows **how to use** arbitrary-viewing-angle

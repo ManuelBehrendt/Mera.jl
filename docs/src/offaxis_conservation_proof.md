@@ -1,7 +1,7 @@
 # Off-axis Projection: Accuracy & Conservation
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `offaxis_conservation_proof.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/offaxis_conservation_proof.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `offaxis_conservation_proof.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/offaxis_conservation_proof.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Two questions every projection must answer: **does it conserve** (nothing lost), and **is it

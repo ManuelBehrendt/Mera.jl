@@ -1,7 +1,7 @@
 # 3. Hydro: Sub-Regions — One Galaxy, One Mass Budget
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `03_hydro_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_hydro_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_hydro_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/03_hydro_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 In this tutorial we dissect one simulated disc galaxy into structural

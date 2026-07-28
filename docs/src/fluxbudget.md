@@ -1,7 +1,7 @@
 # Flux Budgets (inflow / outflow)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `fluxbudget.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/fluxbudget.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `fluxbudget.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/fluxbudget.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 [`fluxbudget`](@ref) measures the **flux of mass, momentum, energy and metals through a surface**
