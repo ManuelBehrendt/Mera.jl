@@ -1,7 +1,7 @@
 # Immersive 3-D visualisation of AMR data
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `immersive.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/immersive.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `immersive.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/immersive.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `projection` is **orthographic** (parallel rays). **Immersive** rendering puts a camera *at a point* and

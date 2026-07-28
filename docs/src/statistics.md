@@ -1,7 +1,7 @@
 # Statistics: PDFs
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `statistics.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/statistics.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `statistics.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/statistics.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 [`pdf`](@ref) computes the **probability distribution function** of any [`getvar`](@ref)

@@ -1,7 +1,7 @@
 # 5. Masking & Filtering: Selection by Value
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 The [sub-region pages](03_hydro_Get_Subregions.md) select by **place** — a sphere,

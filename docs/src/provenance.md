@@ -1,7 +1,7 @@
 # Provenance (reproducibility)
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `provenance.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/provenance.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `provenance.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/provenance.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Six months after you make a figure, the question is always the same: *which snapshot, which

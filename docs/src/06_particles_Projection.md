@@ -1,7 +1,7 @@
 # Particle Data Projections
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_particles_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/06_particles_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `06_particles_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_particles_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 This tutorial demonstrates advanced projection techniques for stellar and dark matter particle data using MERA.jl. Learn how to create 2D projections from N-body simulations, analyze stellar populations, and investigate galactic structure through particle-based analysis.

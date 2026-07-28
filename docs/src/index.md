@@ -149,7 +149,7 @@ projection(particles, :age) # → Stellar age distribution
 
 ### 💡 **Quick Help**
 - **REPL Help**: `?getinfo` for function docs, `methods(getinfo)` for available methods  
-- **Tutorials**: [Jupyter notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_2) and [RUM2023 materials](https://github.com/ManuelBehrendt/RUM2023)
+- **Tutorials**: [Jupyter notebooks](https://github.com/ManuelBehrendt/Notebooks/tree/master/Mera-Docs/version_1.1) and [RUM2023 materials](https://github.com/ManuelBehrendt/RUM2023)
 - **Julia Ecosystem**: [Official docs](https://docs.julialang.org/) | [JuliaAstro](https://juliaastro.org/) | [Performance tips](https://docs.julialang.org/en/v1/manual/performance-tips/)
 
 ## Production Ready
