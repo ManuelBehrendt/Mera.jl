@@ -1,7 +1,7 @@
 # Derived Fields & `add_field`
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Mera computes a large catalogue of **derived quantities** on demand through

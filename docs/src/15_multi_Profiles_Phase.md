@@ -1,7 +1,7 @@
 # Profiles & phase diagrams — a step-by-step guide
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 `profile`, `phase`, `profile3d`, `rotationcurve` and `profiletimeseries` are **general, weighted

@@ -1,7 +1,7 @@
 # Star-Formation Rate
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `sfr.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/sfr.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `sfr.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/sfr.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 Mera measures star formation directly from the **star particles**, in two complementary ways:

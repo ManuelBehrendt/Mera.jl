@@ -1,7 +1,7 @@
 # 9. Cosmological Simulations
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 RAMSES writes the *same* info-file fields for every run, so Mera reads them for

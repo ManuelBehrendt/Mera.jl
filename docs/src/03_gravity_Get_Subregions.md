@@ -1,7 +1,7 @@
 # 3. Gravity: Sub-Regions of the Force Field
 
 !!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `03_gravity_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_2/03_gravity_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+    This page is also an executable **Jupyter notebook** — [open / download `03_gravity_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_gravity_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
 
 The [hydro sub-region page](03_hydro_Get_Subregions.md) built a mass budget:
