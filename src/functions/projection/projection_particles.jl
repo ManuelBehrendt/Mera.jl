@@ -213,6 +213,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
+                            fov=nothing,
+                            fov_unit::Symbol=:standard,
+                            aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -244,6 +247,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                                 axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -278,6 +282,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
+                            fov=nothing,
+                            fov_unit::Symbol=:standard,
+                            aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -309,6 +316,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1},
                                 axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -343,6 +351,9 @@ function projection(   dataobject::PartDataType, var::Symbol;
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
+                            fov=nothing,
+                            fov_unit::Symbol=:standard,
+                            aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -374,6 +385,7 @@ function projection(   dataobject::PartDataType, var::Symbol;
                                 axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -408,6 +420,9 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
+                            fov=nothing,
+                            fov_unit::Symbol=:standard,
+                            aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -439,6 +454,7 @@ function projection(   dataobject::PartDataType, var::Symbol, unit::Symbol,;
                                 axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -472,6 +488,9 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
+                            fov=nothing,
+                            fov_unit::Symbol=:standard,
+                            aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -503,6 +522,7 @@ function projection(   dataobject::PartDataType, vars::Array{Symbol,1}, unit::Sy
                                 axis=axis,
                                 angle_unit=angle_unit,
                                 binning=binning,
+                            fov=fov, fov_unit=fov_unit, aperture=aperture,
                                 #plane_orientation=plane_orientation,
                                 weighting=weighting,
                                 xrange=xrange,
@@ -537,6 +557,9 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                             axis::Union{Symbol, Array{<:Real,1}, Nothing}=nothing,
                             angle_unit::Symbol=:deg,
                             binning::Symbol=:cic,
+                            fov=nothing,
+                            fov_unit::Symbol=:standard,
+                            aperture::Symbol=:circle,
                             #plane_orientation::Symbol=:perpendicular,
                             weighting::Symbol=:mass,
                             xrange::Array{<:Any,1}=[missing, missing],
@@ -580,6 +603,24 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
 
     verbose = Mera.checkverbose(verbose)
     show_progress = Mera.checkprogress(show_progress)
+
+    # Camera-plane field of view, exactly as for the grid projection: a cubic world-space window
+    # is not rotation-invariant, so `fov` selects a SPHERE instead and the frame is fixed at every
+    # viewing angle. Points carry no footprint, so only the framing differs here — not the deposit.
+    if fov !== nothing
+        src, win, fov_code, _ = _fov_selection(dataobject, fov, fov_unit, aperture, center)
+        m = create_projection(src, vars; parttypes=parttypes, units=units, lmax=lmax, res=res,
+                              pxsize=pxsize, mask=mask, direction=direction, los=los, up=up,
+                              theta=theta, phi=phi, inclination=inclination, azimuth=azimuth,
+                              position_angle=position_angle, axis=axis, angle_unit=angle_unit,
+                              binning=binning, weighting=weighting, xrange=win, yrange=win,
+                              zrange=win, center=center, range_unit=fov_unit,
+                              data_center=data_center, data_center_unit=data_center_unit,
+                              ref_time=ref_time, verbose=verbose, show_progress=show_progress)
+        aperture === :square && _rotseq_crop_square!(m, fov_code)
+        return m
+    end
+
     printtime("", verbose)
     boxlen = dataobject.boxlen
     selected_vars = deepcopy(vars)

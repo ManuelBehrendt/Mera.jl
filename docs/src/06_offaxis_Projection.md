@@ -274,7 +274,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-28T23:00:29.248
+[Mera]: 2026-07-28T23:51:42.559
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -365,8 +365,7 @@ println("Σ(map) / msum(gas) − 1  =  ", sum(mtot.maps[:mass]) / msum(gas, :Mso
 maps returned : Any
 [:
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass
- => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
 ```
 
@@ -416,35 +415,50 @@ level 5.0
 :  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
-cic      empty pixels: 27.8  %    Σ = 1.522361882e6
+cic      empty pixels:
+27.8  %    Σ = 1.522361882e6
 overlap  empty pixels: 0.0   %    Σ = 1.524710911e6
 ```
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
-cr = sharedrange([p_cic, p_ovl], :sd)
-maprow([p_cic, p_ovl], :sd,
-       ["binning=:cic  (preview)", "binning=:overlap  (default)"]; crange=cr)
+# Show the REGIME, not one strawman: :cic where you would actually use it, :cic pushed past
+# the cell size, and :overlap at those same fine pixels.
+pc_ok  = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:cic,
+                    center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
+                    pxsize=[0.8,:kpc], verbose=false, show_progress=false)
+allv = reduce(vcat, [log10.(filter(>(0), vec(Float64.(p.maps[:sd]))))
+                     for p in (pc_ok, p_cic, p_ovl)])
+cr = (quantile(allv, 0.02), maximum(allv))
+maprow([pc_ok, p_cic, p_ovl], :sd,
+       [":cic @ 0.8 kpc pixels
+1 pixel per cell — a fine preview",
+        ":cic @ 0.1 kpc pixels
+8 pixels per cell — falls apart",
+        ":overlap @ 0.1 kpc pixels
+same pixels, footprint deposit"]; crange=cr)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_22_1.png)
 
-The totals agree and the pictures do not — which is the whole point of this chapter, and the
-reason "is it conservative?" is the wrong question to stop at.
+The totals agree and the pictures do not — which is the point, and the reason "is it
+conservative?" is the wrong question to stop at.
 
-`:cic` left **27.8 %** of the pixels empty; `:overlap` left none. Both deposited the same mass. A
-point deposit puts each cell's entire contribution at its centre, so where pixels are finer than
-cells the gaps between centres simply receive nothing, and the map acquires a texture that belongs
-to the grid rather than to the galaxy. The footprint methods spread each cell over the area its
-shadow actually covers, so the map stays continuous.
+Read the three panels as one statement: **it is the pixel-to-cell ratio that decides, not the
+kernel.** At 0.8 kpc pixels — about one pixel per cell here — `:cic` is a perfectly good preview
+and leaves **0 %** of pixels empty. Push to 0.1 kpc, eight pixels across every cell, and the same
+kernel leaves **27.8 %** of them empty: a point deposit puts each cell's whole contribution at its
+centre, so the gaps between centres receive nothing and the map acquires a texture that belongs to
+the grid rather than to the galaxy. `:overlap` spreads each cell over the area its shadow actually
+covers, so it stays continuous at any pixel size.
 
-The table above tells you when you are in that regime: divide the local cell size by your `pxsize`.
-At 0.1 kpc pixels the coarsest cells here span **31 pixels**, and no point deposit can fill that
-honestly.
+The table above tells you which regime you are in: divide the local cell size by your `pxsize`.
+Below about one pixel per cell, any kernel will do; well above it, only the footprint methods are
+honest.
 
-Practical rule: the default `:overlap` is already the accurate one — reach for `:cic`/`:ngp` only
-for a quick look, and use `:exact` when you want the analytic reference rather than a sampled
-approximation to it.
+Practical rule: the default `:overlap` is already the accurate one — reach for `:cic`/`:ngp` when
+you want a fast look at a sensible pixel size, and `:exact` when you want the analytic reference
+rather than a sampled approximation to it.
 
 ## 7. Line-of-sight kinematics
 
@@ -460,37 +474,56 @@ approximation to it.
 
 ```julia
 kin = (center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
-       pxsize=[0.15,:kpc], verbose=false, show_progress=false)
+       pxsize=[0.8, :kpc], verbose=false, show_progress=false)
 
-keo = projection(gas, [:vlos, :σlos], [:km_s, :km_s]; direction=:edgeon, kin...)
-kfo = projection(gas, [:vlos, :σlos], [:km_s, :km_s]; direction=:faceon, kin...)
+# ask for :sd alongside, so the kinematics can be shown where there is gas to speak of
+keo = projection(gas, [:vlos, :σlos, :sd], [:km_s, :km_s, :Msol_pc2]; direction=:edgeon, kin...)
+kfo = projection(gas, [:vlos, :σlos, :sd], [:km_s, :km_s, :Msol_pc2]; direction=:faceon, kin...)
 
 finite(A) = filter(isfinite, vec(Float64.(A)))
 println("edge-on   max |v_LOS| = ", round(maximum(abs, finite(keo.maps[:vlos])), digits=1), " km/s")
 println("face-on   max |v_LOS| = ", round(maximum(abs, finite(kfo.maps[:vlos])), digits=1), " km/s")
+println("median σ_LOS edge-on  = ", round(median(finite(keo.maps[:σlos])), digits=1), " km/s")
 ```
 
 ```
-edge-on   max |v_LOS| = 650.9
- km/s
-face-on   max |v_LOS| = 138.4 km/s
+edge-on   max |v_LOS| = 516.1 km/s
+face-on   max |v_LOS| = 124.6 km/s
+median σ_LOS edge-on  = 95.1 km/s
 ```
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
-vmax  = maximum(abs, finite(keo.maps[:vlos]))
-sr    = sharedrange([keo, kfo], :σlos; logscale=false)
+# A mass-weighted MEAN is only as good as the mass in the pixel: out in the diffuse halo one
+# coarse cell can own a whole pixel and the map turns blocky. Show the kinematics where there
+# is gas — exactly what an observer does with a surface-brightness cut.
+const SDCUT = 1.0     # Msol/pc^2
+maskbysd(m, key) = [m.maps[:sd][i] >= SDCUT ? Float64(m.maps[key][i]) : NaN
+                    for i in CartesianIndices(m.maps[key])]
 
-fig = Figure(size=(1100, 400))
+function kinpanel!(ax, m, key, cmap, crange; logscale=false)
+    A = maskbysd(m, key); A = logscale ? log10.(A) : A
+    e = getextent(m, :kpc)
+    hm = heatmap!(ax, range(e[1],e[2],length=size(A,1)), range(e[3],e[4],length=size(A,2)), A;
+                  colormap=cmap, nan_color=:black, interpolate=false, colorrange=crange)
+    ax.aspect = DataAspect(); hm
+end
+
+vmax = quantile(abs.(filter(isfinite, vec(maskbysd(keo, :vlos)))), 0.98)
+sl   = filter(isfinite, vcat(vec(maskbysd(keo, :σlos)), vec(maskbysd(kfo, :σlos))))
+srng = (log10(quantile(sl, 0.02)), log10(quantile(sl, 0.98)))   # σ spans a decade → log scale
+
+fig = Figure(size=(1180, 400))
 ax1 = Axis(fig[1,1], title="edge-on  v_LOS", xlabel="x' [kpc]", ylabel="y' [kpc]")
-h1  = showmap!(ax1, keo, :vlos; logscale=false, cmap=:balance, crange=(-vmax, vmax))
+h1  = kinpanel!(ax1, keo, :vlos, :balance, (-vmax, vmax))
 Colorbar(fig[1,2], h1, label="v_LOS [km/s]")
-ax2 = Axis(fig[1,3], title="edge-on  σ_LOS", xlabel="x' [kpc]")
-h2  = showmap!(ax2, keo, :σlos; logscale=false, cmap=:viridis, crange=sr)
-ax3 = Axis(fig[1,4], title="face-on  σ_LOS", xlabel="x' [kpc]")
-showmap!(ax3, kfo, :σlos; logscale=false, cmap=:viridis, crange=sr)
+ax2 = Axis(fig[1,4], title="edge-on  σ_LOS", xlabel="x' [kpc]")
+h2  = kinpanel!(ax2, keo, :σlos, :viridis, srng; logscale=true)
+ax3 = Axis(fig[1,5], title="face-on  σ_LOS", xlabel="x' [kpc]")
+kinpanel!(ax3, kfo, :σlos, :viridis, srng; logscale=true)
 hideydecorations!(ax2, grid=false); hideydecorations!(ax3, grid=false)
-Colorbar(fig[1,5], h2, label="σ_LOS [km/s]")
+Colorbar(fig[1,6], h2, label="log10 σ_LOS [km/s]")
+colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from reading as panel 2's ylabel
 fig
 ```
 
@@ -608,6 +641,23 @@ azimuth 180°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.86
 azimuth 270°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
 ```
 
+```julia
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# The frames are already computed above; showing them is the visual half of the same claim.
+cr = sharedrange(frames, :sd)
+maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
+```
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_35_1.png)
+
+Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
+numbers say the same thing from opposite directions. That invariance is what makes the sequence
+usable as a movie: nothing breathes, so the eye reads rotation rather than zoom.
+
+Write the frames to disk with any Makie/`FileIO` recorder, or hand the vector straight to
+`Makie.record`. For a long sweep, `parallel_frames=true` renders the frames concurrently (each
+projection single-threaded) — typically 1.5–2× faster once you have more frames than threads.
+
 Every frame is the same array, the same physical extent and the same pixel scale. To turn that into a movie, animate with a **fixed colour range across all frames** (otherwise the animation flickers and destroys the very stability it is demonstrating), then encode:
 
 ```julia
@@ -704,9 +754,77 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 stars   : frame (
 107, 109)   los = [0.999, -0.002, -0.037]
 gravity : maps Any[:epot, :sd]
-          epot over filled pixels (-0.5327, -0.03714)
-   (530 of 11448 pixels empty)
+          epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
 ```
+
+```julia
+# The same camera, pointed at a different data type. `fov` frames both identically, so the two
+# panels can be compared pixel for pixel.
+# 0.6 kpc pixels: fine enough to show both discs, coarse enough that the STAR map is not
+# dominated by Poisson noise (453 200 particles — the outskirts get very few per pixel)
+shot = (direction=:edgeon, center=[:bc], fov=20, fov_unit=:kpc, aperture=:square,
+        pxsize=[0.6, :kpc], verbose=false, show_progress=false)
+gas_eo  = projection(gas,  :sd, :Msol_pc2; shot...)
+star_eo = projection(part, :sd, :Msol_pc2; shot...)
+# gravity rides on the hydro grid: the two-object form, same camera, same framing
+pot_eo  = projection(gas, grav, :epot, :km2_s2; shot...)
+println("gas   frame ", size(gas_eo.maps[:sd]),
+        "   stars ", size(star_eo.maps[:sd]),
+        "   potential ", size(pot_eo.maps[:epot]))
+println("φ along the line of sight: ", round.(extrema(pot_eo.maps[:epot]), sigdigits=4), " km²/s²")
+
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+# separate colour ranges: gas and stars differ by orders of magnitude in surface density,
+# and forcing one scale would flatten whichever loses
+lo(m) = quantile(log10.(filter(>(0), vec(Float64.(m.maps[:sd])))), 0.25)  # clip the empty rim
+hi(m) = maximum(log10.(filter(>(0), vec(Float64.(m.maps[:sd])))))
+
+fig = Figure(size=(1420, 400))
+ax1 = Axis(fig[1,1], title="gas  Σ", xlabel="x' [kpc]", ylabel="y' [kpc]")
+h1 = showmap!(ax1, gas_eo, :sd; crange=(lo(gas_eo), hi(gas_eo)))
+Colorbar(fig[1,2], h1, label="log10 Σ_gas [M⊙/pc²]")
+
+ax2 = Axis(fig[1,4], title="stars  Σ", xlabel="x' [kpc]")
+h2 = showmap!(ax2, star_eo, :sd; crange=(lo(star_eo), hi(star_eo)))
+Colorbar(fig[1,5], h2, label="log10 Σ_★ [M⊙/pc²]")
+
+# the potential is negative everywhere and spans a small range — a linear scale on the raw
+# value, no log, and a sequential map so "deeper" reads as one direction
+ax3 = Axis(fig[1,7], title="gravitational potential φ", xlabel="x' [kpc]")
+h3 = showmap!(ax3, pot_eo, :epot; logscale=false, cmap=:magma)
+Colorbar(fig[1,8], h3, label="φ [km²/s²]")
+
+hideydecorations!(ax2, grid=false); hideydecorations!(ax3, grid=false)
+colsize!(fig.layout, 3, Fixed(14)); colsize!(fig.layout, 6, Fixed(14))
+fig
+```
+
+```
+gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
+φ along the line of sight: (-1976.0, -175.5) km²/s²
+```
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_43_2.png)
+
+Same keywords, same camera, three different kinds of data — and each one says something the
+others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
+comparison that motivates making both maps in one orientation. The potential is smoother than
+either: it is an integral over all the mass, so it does not care about the clumps that dominate
+the gas map, and its contours are rounder than the disc that produced them.
+
+Gravity comes through the **two-object form**, `projection(hydro, gravity, var)`: the hydro object
+supplies the weights and the gravity object the field, so both must describe the same cells —
+load them from the same `info` at the same `lmax`. `fov` cuts both together, so the three panels
+above are framed identically and can be compared pixel for pixel.
+
+`fov` works for particles as it does for the grid — the framing is a selection, so it does not care
+what is being deposited. What *does* differ is the deposit itself: points have no footprint, so
+particle projections use `:cic` and the footprint kernels fall back to it.
+
+That difference is visible if you push the pixels: a grid map degrades smoothly, while a particle
+map becomes **grainy**, because each pixel is counting a finite number of objects and inherits a
+√N uncertainty. The cure is the same as in any counting experiment — coarsen the pixels until each
+one holds enough particles to mean something.
 
 Nothing above is hydro-specific. The camera keywords, the framing keywords and the binning
 keywords mean the same thing for every projectable data type:
