@@ -537,6 +537,32 @@ end
 
 
 # crop a frame's maps to the central `nt×nt` pixels (nt = fixed FOV pixel count) so every angle gets
+"""
+    _fov_selection(dataobject, fov, fov_unit, aperture, center) -> (src, win, fov_code)
+
+Internal. Turn a camera-plane field of view into a ROTATION-INVARIANT selection, the same way
+[`rotation_sequence`](@ref) does: a cubic `xrange`/`yrange`/`zrange` window is a world-space box,
+so its projected outline — and the auto-fitted frame around it — changes with viewing angle, and
+its faces show up as straight edges across the image. A **sphere** projects to the same disc at
+every orientation, so the frame is fixed.
+
+`aperture=:circle` selects a sphere of radius `fov` (the frame's corners are empty);
+`aperture=:square` selects radius `√2·fov`, which encloses the ±`fov` square at any angle, and the
+caller crops to that square for a full rectangular frame.
+"""
+function _fov_selection(dataobject, fov, fov_unit::Symbol, aperture::Symbol, center)
+    aperture in (:circle, :square) ||
+        throw(ArgumentError("aperture must be :circle or :square, got :$aperture"))
+    cuw = fov_unit === :standard ? 1.0/dataobject.boxlen : getunit(dataobject.info, fov_unit)
+    fov_code = float(fov) / cuw
+    fov_code = min(fov_code, (aperture === :square ? 0.49/sqrt(2) : 0.49) * dataobject.boxlen)
+    rfov = fov_code * cuw
+    rsel = aperture === :square ? rfov * sqrt(2) : rfov
+    src  = subregion(dataobject, :sphere, radius=rsel, center=center,
+                     range_unit=fov_unit, verbose=false)
+    return src, [-rsel, rsel], fov_code
+end
+
 # an IDENTICAL square window — used by aperture=:square to turn the larger √2·FOV sphere projection
 # into a full rectangular frame with no circular aperture.
 function _rotseq_crop_square!(m, fov_code)

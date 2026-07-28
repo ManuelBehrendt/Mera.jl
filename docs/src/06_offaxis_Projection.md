@@ -51,6 +51,8 @@ println("box length [kpc]     : ", round(info.boxlen * info.scale.kpc, digits=2)
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), dep missing source (8), mismatched flags (8))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -59,11 +61,13 @@ println("box length [kpc]     : ", round(info.boxlen * info.scale.kpc, digits=2)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[Mera]: 2026-07-03T10:17:02.768
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (4), dep missing source (8))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+[Mera]: 2026-07-28T14:51:35.354
 Code: RAMSES
 output [100] summary:
-mtime:
-2023-05-12T22:47:36.638
+mtime: 2023-05-12T22:47:36.638
 ctime: 2025-06-21T18:31:55.533
 =======================================================
 simulation time: 148.08 [Myr]
@@ -73,7 +77,8 @@ ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-level(s): 3 - 7 --> cellsize(s): 12.5 [kpc] - 781.25 [pc]
+level(s):
+3 - 7 --> cellsize(s): 12.5 [kpc] - 781.25 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:
@@ -88,7 +93,8 @@ particles:     true
 - Nstars:   4.138950e+05
 - Ndm:      3.997000e+04
 particle-variables: 8  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals)
-particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity)
+particle-descriptor: (
+:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity)
 -------------------------------------------------------
 rt:            false
 -------------------------------------------------------
@@ -260,19 +266,27 @@ showmap(m.maps[:sd], getextent(m, :kpc); title="inclination 60 deg, azimuth 30 d
 ```
 
 ```
-map size             : (
-473, 533)
-line of sight w      : [0.743, -0.422, -0.52]
+map size             : (471, 530)
+line of sight w      : [0.744, -0.42, -0.519]
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_8_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_8_2.png)
 
 ## Gallery: inclination & azimuth
 
 **One galaxy** (`spiral_clumps`), surface density `:sd` with the accurate `binning=:overlap`,
 oriented entirely through `inclination`/`azimuth` measured from the disk's own spin axis
-(`axis=:angmom`). Every panel uses the same square field of view and pixel count, so they are
-directly comparable — only the camera changes, the data do not.
+(`axis=:angmom`).
+
+The panels use **`fov=22, fov_unit=:kpc, aperture=:square`**, which frames the *camera plane*: the
+selection is a sphere, which projects to the same disc at every orientation, so all four panels are
+pixel-identical and directly comparable — only the camera changes, the data do not.
+
+That is worth doing deliberately, because the obvious alternative does something else.
+`xrange`/`yrange`/`zrange` are **world-space** bounds, so their projected box grows as you tilt
+(a ±22 kpc window becomes ±45 kpc at `i = 30°` and ±55 kpc at `i = 60°`) and the window's own faces
+appear as straight edges cutting across the map. Neither is wrong — it is what a box looks like
+from an angle — but it is not a fixed field of view.
 
 ![Off-axis surface density of one galaxy set by inclination (top) and azimuth (bottom)](assets/offaxis/offaxis_views.png)
 
@@ -285,8 +299,10 @@ spiral flattens into a thin disk:
 ```julia
 fig = Figure(size=(1500, 420))
 for (k, i) in enumerate((0, 30, 60, 90))
+    # `fov` frames the CAMERA plane, so every panel is pixel-identical; a world-space
+    # xrange/yrange window would grow with tilt and show its own faces as straight edges
     p = projection(gas, :sd, :Msol_pc2; inclination=i, axis=:angmom, binning=:overlap,
-                   center=[:bc], xrange=[-22,22], yrange=[-22,22], range_unit=:kpc,
+                   center=[:bc], fov=22, fov_unit=:kpc, aperture=:square,
                    pxsize=[0.3, :kpc], verbose=false, show_progress=false)
     # :sd is a surface density; multiply by pixel area to recover a mass total per panel
     A = log10.(replace(p.maps[:sd], 0.0 => NaN)); e = getextent(p, :kpc)
@@ -347,8 +363,8 @@ fig
 ```
 
 ```
-:faceon  los = [-0.014, 0.022, -1.0]   up = [1.0, 0.0, -0.014]
-:edgeon  los = [1.0, 0.0, -0.014]   up = [-0.014, 0.022, -1.0]
+:faceon  los = [-0.012, 0.025, -1.0]   up = [1.0, 0.0, -0.012]
+:edgeon  los = [1.0, 0.0, -0.012]   up = [-0.012, 0.025, -1.0]
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_12_2.png)
@@ -526,9 +542,9 @@ end
 ground truth  sum(getvar mass)  [Msol] = 2.1129541669444336e10
 binning=:ngp
 map sum = 2.1129541669444336e10   relerr = 0.0
-binning=:cic      map sum = 2.1129541669444336e10   relerr = 0.0
-binning=:overlap  map sum = 2.112954166944434e10   relerr = 1.8053857131891677e-16
-binning=:exact    map sum = 2.112954166944429e10   relerr = 2.166462855827001e-15
+binning=:cic      map sum = 2.112954166944434e10   relerr = 1.8053857131891677e-16
+binning=:overlap  map sum = 2.1129541669444336e10   relerr = 0.0
+binning=:exact    map sum = 2.1129541669444077e10   relerr = 1.2276622849686341e-14
 ```
 
 ## Accuracy of off-axis projection
@@ -599,9 +615,9 @@ fig
 ```
 maps returned : Any
 [:T, :sd, :vx]
-sd   extrema = (0.0, 2827.7041211772107)
-vx   extrema = (-2399.6880068444048, 608.7106924361965)
-T    extrema = (0.0, 6.859898060886285e7)
+sd   extrema = (0.0, 2780.6827741355028)
+vx   extrema = (-2394.6389949889494, 681.3463553767201)
+T    extrema = (0.0, 7.034205270190597e7)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_20_3.png)
@@ -657,7 +673,7 @@ showmap(pe.maps[:epot], getextent(pe, :kpc);
 ```
 
 ```
-epot map extrema    : (-0.5326800611083272, 0.0)
+epot map extrema    : (-0.5326976749031073, 0.0)
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_24_2.png)
@@ -701,8 +717,8 @@ fig
 ```
 
 ```
-map array size      : (351, 347)
-physical extent kpc : [-52.19, 52.9, -51.3, 52.59]
+map array size      : (351, 345)
+physical extent kpc : [-52.72, 52.37, -51.69, 51.61]
 ```
 
 ![](06_offaxis_Projection_files/06_offaxis_Projection_27_2.png)
@@ -989,9 +1005,9 @@ println("center     : ", round.(m.center,    digits=4))
 
 ```
 direction  : offaxis
-los   (w)  : [-0.0144, 0.0222, -0.9997]
-up         : [0.9999, 0.0003, -0.0143]
-cam_right  : [0.0, 0.9998, 0.0222]
+los   (w)  : [-0.0117, 0.0246, -0.9996]
+up         : [0.9999, 0.0003, -0.0117]
+cam_right  : [0.0, 0.9997, 0.0246]
 center     : [0.5, 0.5, 0.5]
 ```
 

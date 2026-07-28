@@ -32,6 +32,68 @@
         @test occursin("offaxis_slice", d)      # the alias is discoverable from it
     end
 
+    @testset "world-space ranges vs camera-plane fov: the docstring says both" begin
+        d = join(string.(values(Base.Docs.meta(Mera)[Base.Docs.Binding(Mera, :projection)].docs)), "\n")
+        @test occursin("WORLD-space", d)          # what xrange/yrange/zrange actually are
+        @test occursin("fov", d) && occursin("aperture", d)
+        @test occursin("aperture=:square", d)
+    end
+
+    if DATA_AVAILABLE
+        @testset "fov frames the CAMERA plane, invariant under rotation" begin
+            gas = load_test_hydro(:spiral_clumps)
+            base = (axis=:angmom, binning=:overlap, center=[:bc], pxsize=[0.5, :kpc],
+                    verbose=false, show_progress=false)
+
+            # aperture=:square must give a pixel-IDENTICAL frame at every inclination — this is
+            # what a gallery or an orbit sequence needs, and what a cubic window cannot do.
+            sizes = [size(projection(gas, :sd, :Msol_pc2; inclination=i, fov=22, fov_unit=:kpc,
+                                     aperture=:square, base...).maps[:sd]) for i in (0, 30, 60, 90)]
+            @test length(unique(sizes)) == 1
+
+            # the world-space window, for contrast: the frame GROWS with tilt when the depth is
+            # unbounded (the artefact that sent us looking: +/-22 kpc came out far larger)
+            hs = Float64[]
+            for i in (0, 60)
+                p = projection(gas, :sd, :Msol_pc2; inclination=i, xrange=[-22,22],
+                               yrange=[-22,22], range_unit=:kpc, base...)
+                e = getextent(p, :kpc); push!(hs, (e[4]-e[3])/2)
+            end
+            @test hs[2] > 2 * hs[1]                       # ~55 kpc vs ~23 kpc
+
+            # and fov still conserves mass over the selected sphere
+            sph = subregion(gas, :sphere, radius=22., center=[:bc], range_unit=:kpc, verbose=false)
+            Msph = sum(getvar(sph, :mass, :Msol))
+            p = projection(gas, :sd, :Msol_pc2; inclination=60, fov=22, fov_unit=:kpc,
+                           aperture=:circle, base...)
+            e = getextent(p, :pc)
+            px = (e[2]-e[1])/size(p.maps[:sd], 1); py = (e[4]-e[3])/size(p.maps[:sd], 2)
+            @test isapprox(sum(p.maps[:sd])*px*py / Msph, 1.0; rtol=1e-6)
+
+            @test_throws ArgumentError projection(gas, :sd, :Msol_pc2; inclination=30, fov=22,
+                                                  fov_unit=:kpc, aperture=:bogus, base...)
+        end
+
+        @testset "the unbounded-depth hint fires exactly when it applies" begin
+            gas = load_test_hydro(:spiral_clumps)
+            w = (center=[:bc], range_unit=:kpc, res=48, show_progress=false)
+            Mera.reset_hints()
+            out = capture_stdout() do
+                projection(gas, :sd, :Msol_pc2; inclination=30, axis=:angmom,
+                           xrange=[-22,22], yrange=[-22,22], w...)
+            end
+            @test occursin("no `zrange`", out)
+            # bounded depth, axis-aligned, and fov must all stay silent
+            for kw in ((inclination=30, axis=:angmom, xrange=[-22,22], yrange=[-22,22],
+                        zrange=[-22,22]),
+                       (direction=:z, xrange=[-22,22], yrange=[-22,22]))
+                Mera.reset_hints()
+                o2 = capture_stdout() do; projection(gas, :sd, :Msol_pc2; kw..., w...); end
+                @test !occursin("no `zrange`", o2)
+            end
+        end
+    end
+
     @testset "binning: the docstring's claim matches the code" begin
         # The docstring used to label the no-`binning` example a "fast CIC preview" while the
         # default is the ACCURATE :overlap. Pin the claim so it cannot drift again.
