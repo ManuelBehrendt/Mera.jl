@@ -232,9 +232,12 @@ function _check_view_specifiers(los, direction, inclination, azimuth, theta, phi
     (theta !== nothing || phi !== nothing)                       && push!(given, "theta/phi")
     (direction isa Symbol && direction in (:x,:y,:faceon,:edgeon)) && push!(given, "direction=:$direction")
     length(given) > 1 && throw(ArgumentError(
-        "ambiguous off-axis view — more than one line-of-sight specifier given (" *
-        join(given, ", ") * "). Give exactly ONE of: `los`; `inclination`/`azimuth`; " *
-        "`theta`/`phi`; or `direction=:faceon`/`:edgeon`."))
+        "ambiguous off-axis view — $(length(given)) line-of-sight specifiers given: " *
+        join(given, ", ") * ".\nGive exactly ONE of:\n" *
+        "  los=[1, 0, 0.5]                            explicit viewing direction (any length)\n" *
+        "  inclination=60, azimuth=30, axis=:angmom   tilt off a reference axis (degrees)\n" *
+        "  theta=60, phi=30                           spherical angles about the box axes\n" *
+        "  direction=:faceon   (or :edgeon)           presets using the object's angular momentum"))
     if (direction === :faceon || direction === :edgeon) && axis !== nothing
         throw(ArgumentError("`axis` is not used with `direction=:$direction` — these presets " *
             "already use the object's angular momentum L. Use `inclination`/`azimuth` together " *
@@ -440,25 +443,15 @@ end
 
 """
     offaxis_slice(dataobject, var [, unit]; <view & range kwargs>, res=256, pxsize=nothing)
-        -> (map, x, y, extent, los, up, cam_right, center, pixsize, range_unit, scale)
 
-The explicit off-axis name for [`slice`](@ref); `slice(obj, var; los=…/inclination=…/…)` dispatches
-here whenever an off-axis view keyword is given, so the two are interchangeable.
+**Alias of [`slice`](@ref)** — kept so existing scripts keep working, and for when you want the
+off-axis intent spelled out at the call site. `slice(obj, var; los=…/inclination=…/…)` dispatches
+here automatically whenever an off-axis view keyword is given, so the two are interchangeable and
+return the same `NamedTuple`.
 
-Off-axis **slice** (cutting plane): the value of `var` on the camera plane through the projection
-`center`, for an arbitrary line of sight (same view keywords as [`projection`](@ref):
-`los`/`inclination`/`azimuth`/`axis`/`theta`/`phi`/`:faceon`/`:edgeon`/`position_angle`/`up`).
-Unlike a projection it does **not** integrate along the line of sight — each pixel is assigned the
-value of the cell that the plane passes through there (the cell nearest the plane wins; a coarse
-cell fills its footprint). This is a **nearest-cell sample**, hence resolution-dependent and
-*not* mass-conserving (unlike `projection`). Grid data only (hydro/gravity/RT).
-
-**Empty (NaN) pixels are expected** where the cutting plane carries no cell. Two cases: (1) without
-`xrange`/`yrange` the frame is the axis-aligned bounding box of the rotated view, and the
-plane∩box *polygon* cannot fill that rectangle, so the corners/border are NaN — pass a window
-inside the box (`xrange=…, yrange=…`) and the frame fills (0% empty on a uniform grid). (2) at fine
-`pxsize` over coarse AMR cells, nearest-cell sampling leaves sub-percent pixel-scale gaps at
-refinement boundaries — for a gap-free, mass-conserving map use [`projection`](@ref) instead.
+**Prefer `slice`**: it is the one name for a cutting plane, axis-aligned or off-axis, and it is
+what the documentation uses. See [`slice`](@ref) for the full description, the view keywords, and
+why empty (NaN) pixels are expected.
 """
 function offaxis_slice(dataobject, var::Symbol, unit::Symbol=:standard;
         los=nothing, theta=nothing, phi=nothing, inclination=nothing, azimuth=nothing,
