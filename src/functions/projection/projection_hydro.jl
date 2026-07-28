@@ -738,14 +738,26 @@ each on its own object (analogous to gravity vs. hydro). Use `getvar(rt, …)` /
 `getvar(gas, …)` for the per-cell quantities documented under `getvar`.
 
 Off-axis projections:
+
+`binning` chooses how a rotated cell is shared among pixels. **The default `:overlap` is already
+the accurate one** — reach for `:cic`/`:ngp` only when you want a fast preview. All four conserve
+the total; they differ in *where* they put it:
+
+| `binning` | | |
+|---|---|---|
+| `:overlap` | **default** | footprint supersampling — AMR-aligned, no moiré, converges to `:exact` |
+| `:exact` | reference | analytic box-spline footprint; the fidelity yardstick |
+| `:cic` | preview | bilinear deposit of the cell centre; speckles/moiré on coarse cells |
+| `:ngp` | fastest | nearest-pixel deposit of the cell centre |
+
 ```julia
 gas = gethydro(info)
 
-# Look along an arbitrary line of sight (fast CIC preview)
+# Look along an arbitrary line of sight (accurate `:overlap` deposit, by default)
 m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], center=[:bc], range_unit=:kpc)
 
-# Same view, accurate footprint-correct deposit (parallel; for final figures)
-m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], binning=:overlap, center=[:bc])
+# Explicitly ask for a fast preview instead
+m = projection(gas, :sd, :Msol_pc2, los=[1,1,1], binning=:cic, center=[:bc])
 
 # Spherical angles instead of a vector (degrees)
 m = projection(gas, :sd, theta=60, phi=30, angle_unit=:deg, center=[:bc])
@@ -2292,7 +2304,7 @@ end
 #  grid fold the outside fraction onto the edge pixel (the axis binner clamps likewise),
 #  so global conservation holds regardless of placement.
 #
-#  binning = :cic  bilinear 4-pixel stencil (fast preview; :exact is the public default)
+#  binning = :cic  bilinear 4-pixel stencil (fast preview; :overlap is the public default)
 #          = :ngp  nearest pixel (sharp, 1-pixel)
 #
 #  Pixel ix (1-based) is centred at x_min + (ix-0.5)*pixel_size.  No level/cell-size is

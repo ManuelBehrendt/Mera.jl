@@ -84,6 +84,7 @@ if isempty(_focus)
         include("65_io_coverage_tests.jl")  # data-free: adaptive/enhanced/auto IO layer (buffer heuristics, cache, config/status reports)
         include("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
         include("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
+        include("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
     end
 
     # ========================================================================

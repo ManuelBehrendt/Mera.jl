@@ -236,6 +236,16 @@ sample**, not an integral — resolution-dependent and not mass-conserving. Retu
 cell; pass `xrange`/`yrange` to fill the frame, or use [`projection`](@ref) for a conserved map. One
 variable at a time.
 
+**Empty (NaN) pixels are expected** in off-axis mode, for two distinct reasons. (1) Without
+`xrange`/`yrange` the frame is the axis-aligned bounding box of the rotated view, and the
+plane∩box *polygon* cannot fill that rectangle — the corners and border are NaN. Pass a window
+inside the box (`xrange=…, yrange=…`) and the frame fills (0 % empty on a uniform grid).
+(2) At fine `pxsize` over coarse AMR cells, nearest-cell sampling leaves sub-percent pixel-scale
+gaps at refinement boundaries. For a gap-free, mass-conserving map use [`projection`](@ref).
+
+`offaxis_slice` is an alias of this function for the off-axis mode; `slice` is the name the
+documentation uses.
+
 ```julia
 sl = slice(gas, :rho, :nH; slice_axis=:z, slice_pos=0.5)          # axis-aligned mid-plane n_H map
 sl[:rho]                                                          # 2-D array

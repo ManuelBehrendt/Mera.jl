@@ -9,12 +9,14 @@ selected through the same [`projection`](@ref) call documented in the
 
 ## Line-of-sight maps
 
-[`slice`](@ref) is the single cutting-plane function: with axis-aligned keywords it returns the
-covering-grid cut, and with any off-axis view keyword (`los`/`inclination`/`azimuth`/…) it returns the
-camera-plane cut along that line of sight. `offaxis_slice` remains as the equivalent explicit off-axis name.
+[`slice`](@ref) is **the** cutting-plane function and the name the documentation uses: with
+axis-aligned keywords it returns the covering-grid cut, and with any off-axis view keyword
+(`los`/`inclination`/`azimuth`/…) it returns the camera-plane cut along that line of sight.
+[`offaxis_slice`](@ref) is an alias of it, kept so existing scripts keep working.
 
 ```@docs
 slice
+offaxis_slice
 ```
 
 ## Sequences, storage & export
@@ -22,9 +24,8 @@ slice
 ```@docs
 rotation_sequence
 savemap
+loadmap
 ```
-
-(`loadmap` is documented together with [`savemap`](@ref) above.)
 
 !!! note
     The off-axis column integral (`∫ q dl`), the emission+absorption mock image, and FITS export
