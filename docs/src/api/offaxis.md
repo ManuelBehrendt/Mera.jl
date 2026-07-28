@@ -1,9 +1,8 @@
 # Off-axis Projection & LOS API Reference
 
 Docstrings for the off-axis projection and line-of-sight tools. The
-narrative guide is in [Off-axis Projection](../06_offaxis_Projection.md); the internal
-pipeline (camera basis, deposit kernels, kinematics) is explained step by step in
-[Internals: How It Works](../offaxis_internals.md); off-axis views are
+narrative guide is in [Off-axis Projection](../06_offaxis_Projection.md); the pipeline
+(camera basis, deposit kernels, kinematics) is described in the docstrings below; off-axis views are
 selected through the same [`projection`](@ref) call documented in the
 [Projections API](projections.md).
 
@@ -55,7 +54,7 @@ Mera.resolve_los
 
 The three engines behind `binning=:cic`/`:ngp`, `:overlap` and `:exact` — how a rotated
 AMR cell becomes pixel values. The trade-offs are demonstrated visually in
-[Internals: How It Works](../offaxis_internals.md).
+[Off-axis Projection](../06_offaxis_Projection.md).
 
 ```@docs
 Mera.deposit_rotated_cells_to_grid!
