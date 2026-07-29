@@ -781,6 +781,15 @@ Off-axis projections:
     an orbit sequence needs. Mera points this out once per session when it sees an off-axis view
     with a windowed `xrange`/`yrange` and no `zrange`.
 
+    !!! note "`fov` integrates a chord, not a slab"
+        Because the selection is a sphere of radius `R` (`fov`, or `√2·fov` for `:square`), a ray
+        at in-plane distance `d` from the centre integrates `depth(d) = 2√(R² − d²)`. The column
+        is deepest on axis and falls to **zero at the frame boundary** — for `:square` that is the
+        four corners, which sit exactly on the sphere. On a 100 kpc box, `fov=15, :square` gives
+        42.4 kpc of depth at the centre, 30.0 kpc at the middle of an edge and 0 at the corners.
+        Harmless for an object centred in frame, but make `fov` comfortably larger than any
+        diffuse column, profile or scale height you intend to measure.
+
 `binning` chooses how a rotated cell is shared among pixels. **The default `:overlap` is already
 the accurate one** — reach for `:cic`/`:ngp` only when you want a fast preview. All four conserve
 the total; they differ in *where* they put it:
