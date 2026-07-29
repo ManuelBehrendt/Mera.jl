@@ -39,11 +39,20 @@ end
 
 # The GADGET HDF5 layout is shared by several codes; name the actual producer from header/group
 # markers so getinfo reports the real code (AREPO ≠ plain GADGET). AREPO (incl. IllustrisTNG) writes
-# a `Config` group (yt's discriminator); SWIFT sets a `Header/Code` attribute. Falls back to GADGET.
+# a compile-time-flags group; SWIFT sets a `Header/Code` attribute. Falls back to GADGET.
+#
+# BOTH SPELLINGS OCCUR IN THE WILD and must be accepted: the yt AREPO samples (TNGHalo cutout,
+# ArepoBullet) carry `Config`, while the IllustrisTNG snapshot specification names the group
+# `Configuration` ("Every HDF5 snapshot contains several groups: 'Header', 'Parameters',
+# 'Configuration', and five 'PartTypeX' groups"). Matching only `Config` silently mislabels every
+# full TNG snapshot as plain GADGET — it still loads, because the particle router dispatches on the
+# whole family, but `info.simcode` and everything keyed off it would be wrong.
+const _AREPO_CONFIG_GROUPS = ("Config", "Configuration")
+
 function _gadget_subcode(f)
     h = attributes(f["Header"])
-    haskey(h, "Code")   && return uppercase(strip(string(read(h["Code"]))))   # SWIFT (and any code that sets it)
-    haskey(f, "Config") && return "AREPO"                                      # AREPO / IllustrisTNG
+    haskey(h, "Code") && return uppercase(strip(string(read(h["Code"]))))   # SWIFT (and any code that sets it)
+    any(g -> haskey(f, g), _AREPO_CONFIG_GROUPS) && return "AREPO"          # AREPO / IllustrisTNG
     return "GADGET"
 end
 

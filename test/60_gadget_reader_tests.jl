@@ -122,6 +122,23 @@ end
         @test arepo.simcode == "AREPO"                                         # Config ⇒ AREPO, not GADGET
         @test length(getparticles(arepo, verbose=false).data) == 1            # AREPO still routes to the gadget frontend
         @test getinfo_gadget(0, dir, verbose=false).simcode == "GADGET"        # the no-Config file stays plain GADGET
+
+        # The IllustrisTNG snapshot spec names that group `Configuration`, not `Config` — the yt
+        # sample cutouts we test against use `Config`, so matching only the short spelling would
+        # mislabel every full TNG snapshot as plain GADGET. Both must be accepted.
+        fn2 = joinpath(dir, "snap_010.hdf5")
+        h5open(fn2, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 10.0; hg["NumPart_Total"] = UInt32[1, 0, 0, 0, 0, 0]; hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            create_group(f, "Configuration")                                   # ⇐ the TNG-spec spelling
+            create_group(f, "Parameters")                                      # present in full TNG snapshots too
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = reshape(Float64[5, 5, 5], 3, 1); g0["Velocities"] = reshape(Float32[0, 0, 0], 3, 1)
+            g0["Masses"] = Float32[1.0]; g0["ParticleIDs"] = UInt32[1]
+        end
+        tng = getinfo_gadget(10, dir, verbose=false)
+        @test tng.simcode == "AREPO"                                           # `Configuration` ⇒ AREPO as well
+        @test length(getparticles(tng, verbose=false).data) == 1               # and it still routes to the gadget frontend
     end
 
     @testset "gas-cell fields → :rho/:u/:ne/:volume/:T (+ Header units)" begin
