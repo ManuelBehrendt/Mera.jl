@@ -158,8 +158,12 @@ follows: it is why a projection conserves mass, why `zrange` matters as much as 
 a slice — which samples one plane instead of integrating through the volume (Chapter 8) — answers
 a different question.
 
-`position_angle` is a **roll**: it rotates `(r̂, û)` together about `ŵ`. It changes how the image
-sits on the page, never what is in front of the camera.
+`position_angle` is a **roll**: it rotates `(r̂, û)` together about `ŵ`. The line of sight does
+not move, so the *scene* is unchanged — but whether the **frame** sees the same gas depends on
+the aperture, and it is worth measuring rather than assuming. Rolling by 30° here leaves
+`Σ` identical to the last digit with `aperture=:circle` (a disc is roll-invariant) and changes it
+by **2.3 %** with `aperture=:square`, because the square crop rotates inside the selection sphere
+and its corners sweep across different material.
 
 One consequence deserves to be stated on its own, because the next chapter is built on it: since
 the projection is orthographic, **moving the camera away from the galaxy changes nothing**. There
@@ -200,9 +204,22 @@ lad0  = projection(gas, :sd, :Msol_pc2; inclination=0,  axis=:angmom, win...)
 lad30 = projection(gas, :sd, :Msol_pc2; inclination=30, axis=:angmom, win...)
 lad60 = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, win...)
 
-# `direction=:faceon` is exactly `inclination=0, axis=:angmom` — not approximately:
-println("max |faceon − inclination=0|  =  ",
-        maximum(abs, lad0.maps[:sd] .- fo.maps[:sd]))
+# Is `direction=:faceon` the same as `inclination=0, axis=:angmom`? Separate the two halves of
+# that question — the LINE OF SIGHT and the ROLL — because the answer differs for each.
+println("max |ŵ_faceon − ŵ_inc0|     = ", maximum(abs, fo.los .- lad0.los))
+println("angle(û_faceon, û_inc0)     = ",
+        round(rad2deg(acos(clamp(sum(fo.up .* lad0.up), -1, 1))), digits=2), "°")
+println("max |Σ_faceon − Σ_inc0|     = ", round(maximum(abs, lad0.maps[:sd] .- fo.maps[:sd]), digits=1))
+# ... and the roll is recoverable exactly:
+lad0_pa = projection(gas, :sd, :Msol_pc2; inclination=0, axis=:angmom, position_angle=-90, win...)
+println("max |Σ_faceon − Σ_inc0,PA=-90| = ", maximum(abs, lad0_pa.maps[:sd] .- fo.maps[:sd]))
+
+# "Exactly one view specifier" and "direction implies :angmom" are promises about behaviour:
+for (lbl, kw) in (("inclination + los", (inclination=35, los=[1,1,1])),
+                  ("direction=:faceon + axis", (direction=:faceon, axis=:angmom)))
+    e = try (projection(gas, :sd; kw..., win...); "NO ERROR") catch e; typeof(e).name.name end
+    println(rpad(lbl, 26), "→ ", e)
+end
 
 ladder = [lad0, lad30, lad60, eo]      # i = 90 is the edge-on map from Chapter 1
 cr = sharedrange(ladder, :sd)
@@ -210,10 +227,28 @@ maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
 ```
 
 ```
-max |faceon − inclination=0|  =  2407.0505467836883
+max |ŵ_faceon − ŵ_inc0|     = 0.0
+angle(û_faceon, û_inc0)     = 90.0°
+max |Σ_faceon − Σ_inc0|     = 2407.1
+max |Σ_faceon − Σ_inc0,PA=-90| = 4.433786671143025e-11
+inclination + los
+→ ArgumentError
+direction=:faceon + axis
+→ ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_10_3.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_10_6.png)
+
+`direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
+vectors agree to the last bit — but they are *not* the same image. A face-on view leaves the roll
+about `ŵ` undetermined, and the two code paths break that tie differently: the `û` vectors come out
+exactly **90° apart**, which is why the naive map-to-map difference above is large rather than zero.
+`position_angle=-90` recovers `:faceon` to floating-point round-off (the residual printed
+above is ~4e-11 M⊙/pc² — summation order across threads, not a real difference).
+
+The lesson generalises past this one preset: whenever a view leaves a degree of freedom free,
+compare the **camera vectors**, not the pixels. Two correct maps of the same scene can differ by a
+roll.
 
 **So:** pick `direction=:faceon/:edgeon` when you want the disc's own frame, `inclination`+`axis=:angmom` when you want a specific *i*, and `los=` when you already know the vector — for example when you want the same orientation across many snapshots (Appendix C).
 
@@ -272,7 +307,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-29T09:09:42.319
+[Mera]: 2026-07-29T14:24:23.417
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -301,7 +336,7 @@ lines!(contents(fig[1,1])[1], [-22,22,22,-22,-22], [-22,-22,22,22,-22],
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_15_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_16_1.png)
 
 Read the frame sizes above, not just the pictures.
 
@@ -405,6 +440,19 @@ println("units         : ", mv.maps_unit)
 mtot = projection(gas, :mass, :Msol; los=[1,1,1], center=[:bc],
                   pxsize=[0.5,:kpc], verbose=false, show_progress=false)
 println("Σ(map) / msum(gas) − 1  =  ", sum(mtot.maps[:mass]) / msum(gas, :Msol) - 1)
+
+# "Rejected with a clear error" is a promise about behaviour — check it rather than trust it.
+for v in (:σx, :σy, :σz, :σ, :r_cylinder, :r_sphere, :ϕ)
+    msg = try
+        projection(gas, v; inclination=35, axis=:angmom, center=[:bc], xrange=[-15,15],
+                   yrange=[-15,15], zrange=[-15,15], range_unit=:kpc, pxsize=[1.0,:kpc],
+                   verbose=false, show_progress=false)
+        "NO ERROR — the page is wrong"
+    catch e
+        first(replace(sprint(showerror, e), "\n" => " "), 62) * "…"
+    end
+    println(rpad(v, 14), msg)
+end
 ```
 
 ```
@@ -413,6 +461,14 @@ maps returned : Any
 T, :mass, :sd]
 units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
+σx
+projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+σy            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+σz            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+σ             projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+r_cylinder    projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+r_sphere      projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+ϕ             projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ```
 
 That relative error is at the floating-point floor, and it stays there at **any** viewing angle, **any** pixel size and **any** `binning` — the deposit is a partition of unity, so every cell's weight is fully accounted for somewhere on the map. Appendix B says where the systematic sweep that establishes this lives.
@@ -492,10 +548,10 @@ level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       64.4 %
-0.016     1.3004
-cic       27.8 %     0.007     1.2898
-overlap   0.0 %      0.036     0.0005
-exact     0.0 %      0.096     0.0
+0.006     1.3004
+cic       27.8 %     0.006     1.2898
+overlap   0.0 %      0.027     0.0005
+exact     0.0 %      0.095     0.0
 ```
 
 ```julia
@@ -520,7 +576,7 @@ all weight at cell centres",
 same pixels, footprint deposit"]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_23_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_24_1.png)
 
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
@@ -630,7 +686,7 @@ colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from readin
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_28_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_29_1.png)
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -647,7 +703,8 @@ end
 
 ```
 pxsize [kpc]   median σ_LOS    mean σ_LOS
-0.15           93.8            274.1
+0.15           93.8
+274.1
 0.6            94.3            275.4
 2.4            102.6           274.8
 ```
@@ -723,7 +780,7 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_33_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_34_1.png)
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -776,7 +833,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_37_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_38_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -852,7 +909,7 @@ The view keywords are the same everywhere. What differs is a short list of defau
 |---|---|---|
 | `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` silently fall back to `:cic` (points have no footprint) |
 | `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass` — and `:sph`/`:voronoi` are accepted but silently give a mass-weighted map off-axis |
-| `fov` / `fov_unit` / `aperture` | yes | **absent** — passing them is a `MethodError`; use world ranges with an explicit `zrange` |
+| `fov` / `fov_unit` / `aperture` | yes | **yes** — same rotation-invariant sphere selection; the framing is a selection, so it does not care what is deposited |
 | `mode`, `nmax`, `max_threads`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** on the off-axis hydro path | honoured |
 | `slice` | yes | no — `slice(part, …)` is a `MethodError` |
@@ -932,7 +989,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_45_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_46_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
@@ -953,6 +1010,56 @@ That difference is visible if you push the pixels: a grid map degrades smoothly,
 map becomes **grainy**, because each pixel is counting a finite number of objects and inherits a
 √N uncertainty. The cure is the same as in any counting experiment — coarsen the pixels until each
 one holds enough particles to mean something.
+
+```julia
+# The table above is a set of claims. Run them — a compatibility table that is never executed
+# is exactly the kind of thing that goes stale when the code moves on.
+W = (center=[:bc], xrange=[-15,15], yrange=[-15,15], zrange=[-15,15], range_unit=:kpc,
+     pxsize=[1.0,:kpc], verbose=false, show_progress=false)
+same(a, b) = maximum(abs, a.maps[:sd] .- b.maps[:sd]) == 0
+raises(f)  = try (f(); "NO ERROR") catch e; string(typeof(e).name.name) end
+
+pc = projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:cic, W...)
+println("particle binning=:overlap falls back to :cic : ",
+        same(projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:overlap, W...), pc))
+println("particle binning=:exact   falls back to :cic : ",
+        same(projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:exact, W...), pc))
+pm = projection(part, :sd, :Msol_pc2; direction=:edgeon, weighting=:mass, W...)
+for w in (:sph, :voronoi)
+    println(rpad("particle weighting=:$w == :mass", 45), ": ",
+            same(projection(part, :sd, :Msol_pc2; direction=:edgeon, weighting=w, W...), pm))
+end
+println("fov works on particles                       : ",
+        size(projection(part, :sd, :Msol_pc2; direction=:edgeon, center=[:bc], fov=15,
+                        fov_unit=:kpc, aperture=:square, pxsize=[1.0,:kpc],
+                        verbose=false, show_progress=false).maps[:sd]))
+println("slice(part, …)                               : ",
+        raises(() -> slice(part, :sd; direction=:edgeon, center=[:bc], xrange=[-15,15],
+                           yrange=[-15,15], range_unit=:kpc, pxsize=[1.0,:kpc], verbose=false)))
+for kw in (:nmax, :max_threads)
+    println(rpad(string("particle ", kw), 45), ": ",
+            raises(() -> projection(part, :sd, :Msol_pc2; direction=:edgeon, (; kw => 8)..., W...)))
+end
+println("data_center ignored on off-axis hydro        : ",
+        same(projection(gas, :sd, :Msol_pc2; inclination=35, axis=:angmom, W...),
+             projection(gas, :sd, :Msol_pc2; inclination=35, axis=:angmom,
+                        data_center=[0.4,0.4,0.4], data_center_unit=:standard, W...)))
+```
+
+```
+particle binning=:overlap falls back to :cic : true
+particle binning=:exact   falls back to :cic : true
+particle weighting=:sph == :mass             :
+true
+particle weighting=:voronoi == :mass         : true
+fov works on particles                       : (
+30, 30)
+slice(part, …)                               : MethodError
+particle nmax
+: MethodError
+particle max_threads                         : MethodError
+data_center ignored on off-axis hydro        : true
+```
 
 Nothing above is hydro-specific. The camera keywords, the framing keywords and the binning
 keywords mean the same thing for every projectable data type:
