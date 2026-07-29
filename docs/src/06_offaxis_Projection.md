@@ -228,7 +228,7 @@ This is the surprise that catches everyone, so take the problem first.
 
 There is **no line-of-sight depth slab in `projection`.** `zrange` clips world *z*; it coincides with depth only when the line of sight is near ±z — precisely the face-on case where you need it least. (Also: an axis whose requested range already covers the loaded data's range is not clipped at all, so `zrange` on already-subregioned data can silently do nothing.)
 
-**The fix: `fov`.** Because the camera is orthographic (Chapter 2), the only framing control is the width of the frame. `fov` selects a **sphere** of radius `fov` about `center` — and a sphere projects to the same disc at every orientation, so the frame is fixed by construction.
+**The fix: `fov`.** Because the camera is orthographic (Chapter 2), the only framing control is the width of the frame. `fov` selects a **sphere** about `center` (radius `fov`, or `√2·fov` for `aperture=:square`) — and a sphere projects to the same disc at every orientation, so the frame is fixed by construction.
 
 | `aperture` | selection | frame |
 |---|---|---|
@@ -272,7 +272,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-29T05:28:13.737
+[Mera]: 2026-07-29T05:38:27.927
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -327,6 +327,54 @@ projects to the same disc at every orientation, so the frame cannot breathe:
 Mera prints a one-off note when it sees an off-axis view with a windowed `xrange`/`yrange` and no
 `zrange`, because the result is easy to mistake for a bug in the data.
 
+### Choosing `fov`
+
+`fov` is a **half-width**: the frame spans ±`fov`, so `fov=15, fov_unit=:kpc` gives a 30 kpc image.
+
+It is worth being explicit about what `fov` does *not* do, because the name invites the wrong
+picture. The camera is orthographic at every setting (Chapter 2) — there is no perspective to
+tune, no camera distance, no vanishing point. Changing `fov` does not move a camera nearer or
+further; it widens or narrows the frame, and with it the sphere of data that is selected.
+
+**What a given `fov` costs you in depth.** The selection is a sphere of radius `R` — `fov` for
+`aperture=:circle`, `√2·fov` for `:square`. A ray at in-plane distance `d` from the centre
+therefore integrates a **chord**, not a slab:
+
+`depth(d) = 2·√(R² − d²)`
+
+For `fov=15, aperture=:square` on this fixture (`R` = 21.2 kpc):
+
+| where in the frame | offset from centre | column depth |
+|---|---|---|
+| centre | 0 kpc | 42.4 kpc |
+| middle of an edge | 15 kpc | 30.0 kpc |
+| **corner** | 21.2 kpc | **0 kpc** |
+
+The corners of a `:square` frame sit exactly on the selection sphere, so they integrate nothing.
+That is the soft darkening you can see creeping into the corners of any `fov` projection of a
+diffuse field — it is the selection boundary, not the gas. `:circle` tapers the same way, just at
+its own frame edge instead of in the corners.
+
+The practical rule is the one Chapter 5 already gave for edge pixels: **make `fov` comfortably
+larger than the structure you are measuring.** For a galaxy centred in frame this costs nothing —
+the disc sits where the depth is flattest — but never read a diffuse column, a profile, or a scale
+height out to the frame boundary.
+
+**So what is a natural `fov`?** One that (a) puts the object inside the flat-depth part of the
+frame and (b) keeps the selection sphere inside the box. Here the gas disc is ~10 kpc across, so
+15–25 kpc is the natural range: at `fov=15` the disc lives in the innermost third of the frame
+where depth varies by under 10 %. The upper bound is enforced for you — `fov` is capped at
+0.49·boxlen for `:circle` and 0.49/√2·boxlen for `:square` (≈ 34.6 kpc here), which is what keeps
+the sphere from reaching outside the box and dragging the box faces back into the image.
+
+**Why you would deliberately change it.** A *smaller* `fov` is not just a tighter crop: it is a
+**shallower column**, so it removes foreground and background that a wider frame would integrate
+into your disc — the closest thing `projection` has to a depth cut, since there is no line-of-sight
+slab. It also buys resolution, since the same pixel budget covers less sky. A *larger* `fov` buys
+context and a deeper column, at the price of more unrelated material along every ray. And whatever
+value you pick, `fov` is the only framing control that is rotation-invariant, so any set of frames
+meant to be compared — angles, snapshots, movie frames — has to be framed this way.
+
 ## 5. What you can ask for, and what the number means
 
 One call returns as many maps as you ask for. But the maps are not all the same *kind* of number, and this is where wrong values actually get published.
@@ -363,7 +411,8 @@ println("Σ(map) / msum(gas) − 1  =  ", sum(mtot.maps[:mass]) / msum(gas, :Mso
 maps returned : Any
 [:
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
+ => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
 ```
 
@@ -435,7 +484,7 @@ maprow([pc_ok, p_cic, p_ovl], :sd,
 same pixels, footprint deposit"]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_22_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_23_1.png)
 
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
@@ -538,7 +587,7 @@ colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from readin
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_27_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_28_1.png)
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -588,13 +637,16 @@ And one API trap that is the *opposite* of Chapter 4: on `slice`, `xrange`/`yran
 ```julia
 view = (inclination=60, azimuth=30, axis=:angmom, center=[:bc])
 
-# slice: xrange/yrange ARE the camera window here
+# pxsize is 0.25 kpc, not finer: cells here are 0.78 kpc (1.56 kpc further out), and a column
+# integral sampled well below the local cell size resolves the SHADOW OF EACH CELL — flat,
+# straight-edged plateaus that overlap and read as stacked slabs. That is the AMR grid being
+# displayed, not structure. Chapter 6 is where pixel-vs-cell size is treated properly.
 sl = slice(gas, :rho, :nH; view..., xrange=[-15,15], yrange=[-15,15],
-           range_unit=:kpc, pxsize=[0.12,:kpc], verbose=false)
+           range_unit=:kpc, pxsize=[0.25,:kpc], verbose=false)
 
 # projection: same view, and `fov` is how you get the SAME ±15 kpc camera frame
 pr = projection(gas, :rho, :nH; view..., fov=15, fov_unit=:kpc, aperture=:square,
-                pxsize=[0.12,:kpc], verbose=false, show_progress=false)
+                pxsize=[0.25,:kpc], verbose=false, show_progress=false)
 
 println("slice frame      ", size(sl.map), "   ", round(100*count(isnan, sl.map)/length(sl.map), digits=1), " % NaN")
 println("projection frame ", size(pr.maps[:rho]))
@@ -602,10 +654,10 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 ```
 
 ```
-slice frame      (
-250, 250)   0.0 % NaN
-projection frame (250, 250)
-slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
+slice frame      (120, 120)   0.0 % NaN
+projection frame (120, 120)
+slice extent [kpc] =
+[-15.0, 15.0, -15.0, 15.0]
 ```
 
 ```julia
@@ -628,7 +680,20 @@ Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_32_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_33_1.png)
+
+Two things in the left panel are the *selection* rather than the gas, and both are worth
+recognising because they show up in every `fov` projection:
+
+- the soft darkening into the **corners** is the selection sphere — at `fov=15, aperture=:square`
+  the corners sit on the sphere and integrate zero depth (see "Choosing `fov`" in Chapter 4);
+- any **flat, straight-edged plateau** in the outskirts is a single AMR cell's projected shadow.
+  Sample a column integral much finer than the local cell and you resolve individual cell
+  footprints, which tile the map and read as overlapping slabs. At 0.25 kpc pixels against
+  0.78 kpc cells that is mostly gone; at 0.12 kpc it dominates the outer frame.
+
+Neither is a projection error — mass is conserved either way (Chapter 5). They are what you get
+for asking the map a question finer than the data can answer.
 
 ## 9. Turning the camera: orbit movies
 
@@ -668,7 +733,7 @@ cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_35_1.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_37_1.png)
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -824,7 +889,7 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_43_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_45_2.png)
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
