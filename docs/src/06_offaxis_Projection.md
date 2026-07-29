@@ -215,7 +215,7 @@ maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
 max |faceon − inclination=0|  =  2407.0505467836883
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_10_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_10_3.png)
 
 **So:** pick `direction=:faceon/:edgeon` when you want the disc's own frame, `inclination`+`axis=:angmom` when you want a specific *i*, and `los=` when you already know the vector — for example when you want the same orientation across many snapshots (Appendix C).
 
@@ -274,7 +274,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-28T23:51:42.559
+[Mera]: 2026-07-29T05:06:23.545
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -365,7 +365,8 @@ println("Σ(map) / msum(gas) − 1  =  ", sum(mtot.maps[:mass]) / msum(gas, :Mso
 maps returned : Any
 [:
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
+ => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
 ```
 
@@ -411,12 +412,10 @@ end
 ```
 
 ```
-level 5.0
-:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
+level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
-cic      empty pixels:
-27.8  %    Σ = 1.522361882e6
+cic      empty pixels: 27.8  %    Σ = 1.522361882e6
 overlap  empty pixels: 0.0   %    Σ = 1.524710911e6
 ```
 
@@ -462,12 +461,22 @@ rather than a sampled approximation to it.
 
 ## 7. Line-of-sight kinematics
 
-`:vlos` is `v·ŵ`, the component of the velocity along the line of sight — defined for **any** camera. That is what makes it different from `:σx`/`:σy`/`:σz`, which only exist along the box axes and are rejected off-axis.
+`:vlos` is `v·ŵ`, the component of the velocity along the line of sight — defined for **any**
+camera. That is what makes it different from `:σx`/`:σy`/`:σz`, which only exist along the box axes
+and are rejected off-axis.
 
-`:σlos` is `√(⟨v_LOS²⟩ − ⟨v_LOS⟩²)` over the mass in a pixel. It is a **width of a distribution inside one pixel**, not a per-cell quantity — many cells along the ray land in the same pixel, each with its own `v·ŵ`, and σ is how spread out they are. Two things follow immediately, and the code cells below measure both:
+`:σlos` is `√(⟨v_LOS²⟩ − ⟨v_LOS⟩²)` over the mass in a pixel. It is a **width of a distribution
+inside one pixel**, not a per-cell quantity — many cells along the ray land in the same pixel, each
+with its own `v·ŵ`, and σ is how spread out they are. Edge-on, that spread is dominated by *ordered
+rotation along the sightline*, not by turbulence — do not call it a turbulent dispersion.
 
-- it depends on `pxsize` (bigger pixels beam-smear the velocity gradient into extra σ), and
-- edge-on, it is dominated by *ordered rotation along the sightline*, not by turbulence. Do not call it a turbulent dispersion.
+In the map below that shows up as the **brightest σ_LOS off the disc plane, not in it**: a sightline
+through the disc samples gas that is nearly co-rotating, while one passing above it crosses infalling
+and outflowing material with a far wider velocity spread. σ_LOS runs 15 → 1071 km/s here, so the
+panels are on a log scale.
+
+The obvious next worry is that σ_LOS is then an artefact of how finely you pixelate. The code below
+measures whether it is.
 
 !!! warning "Sign convention"
     `ŵ` points **into** the image, away from the observer, so `v·ŵ > 0` is **receding** (redshifted). A sign flip inverts a rotation curve and nothing else in the figure changes, so check it: on an edge-on map, `:vlos` must be **antisymmetric about the minor axis**. If it is not, your `center` is off the object (Chapter 1).
@@ -476,7 +485,8 @@ rather than a sampled approximation to it.
 kin = (center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
        pxsize=[0.8, :kpc], verbose=false, show_progress=false)
 
-# ask for :sd alongside, so the kinematics can be shown where there is gas to speak of
+# ask for :sd alongside — used below only to SET THE COLOUR RANGE from where the mass is;
+# every pixel is still plotted
 keo = projection(gas, [:vlos, :σlos, :sd], [:km_s, :km_s, :Msol_pc2]; direction=:edgeon, kin...)
 kfo = projection(gas, [:vlos, :σlos, :sd], [:km_s, :km_s, :Msol_pc2]; direction=:faceon, kin...)
 
@@ -494,24 +504,28 @@ median σ_LOS edge-on  = 95.1 km/s
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
-# A mass-weighted MEAN is only as good as the mass in the pixel: out in the diffuse halo one
-# coarse cell can own a whole pixel and the map turns blocky. Show the kinematics where there
-# is gas — exactly what an observer does with a surface-brightness cut.
-const SDCUT = 1.0     # Msol/pc^2
-maskbysd(m, key) = [m.maps[:sd][i] >= SDCUT ? Float64(m.maps[key][i]) : NaN
-                    for i in CartesianIndices(m.maps[key])]
+# Every pixel is shown. The colour range is set from the bright pixels (98th percentile), so the
+# disc's rotation is legible and the faint outskirts SATURATE rather than being hidden — a reader
+# can see there is signal there and that it is off the end of the scale, which a black mask would
+# have concealed.
+kinvals(m, key) = Float64.(m.maps[key])
 
 function kinpanel!(ax, m, key, cmap, crange; logscale=false)
-    A = maskbysd(m, key); A = logscale ? log10.(A) : A
+    A = kinvals(m, key); A = logscale ? log10.(replace(A, 0.0 => NaN)) : A
     e = getextent(m, :kpc)
     hm = heatmap!(ax, range(e[1],e[2],length=size(A,1)), range(e[3],e[4],length=size(A,2)), A;
                   colormap=cmap, nan_color=:black, interpolate=false, colorrange=crange)
     ax.aspect = DataAspect(); hm
 end
 
-vmax = quantile(abs.(filter(isfinite, vec(maskbysd(keo, :vlos)))), 0.98)
-sl   = filter(isfinite, vcat(vec(maskbysd(keo, :σlos)), vec(maskbysd(kfo, :σlos))))
-srng = (log10(quantile(sl, 0.02)), log10(quantile(sl, 0.98)))   # σ spans a decade → log scale
+# Colour range from the 2nd–98th percentile of ALL pixels, not just the bright ones. Scaling to
+# the disc alone drives the halo off the end of the scale, and a saturated slab hides structure
+# just as effectively as a mask does. σ_LOS here runs 15 → 1071 km/s (the disc is only 27–145),
+# so it needs a log scale to show both at once.
+pix(m, key) = filter(isfinite, vec(Float64.(m.maps[key])))
+vmax = quantile(abs.(pix(keo, :vlos)), 0.98)
+sl   = filter(>(0), vcat(pix(keo, :σlos), pix(kfo, :σlos)))
+srng = (log10(quantile(sl, 0.02)), log10(quantile(sl, 0.98)))
 
 fig = Figure(size=(1180, 400))
 ax1 = Axis(fig[1,1], title="edge-on  v_LOS", xlabel="x' [kpc]", ylabel="y' [kpc]")
@@ -549,10 +563,18 @@ pxsize [kpc]   median σ_LOS    mean σ_LOS
 2.4            102.6           274.8
 ```
 
-Those two numbers are the same physics at two pixel sizes. Always quote `pxsize` next to a σ_LOS number.
+Now the result, and it is not the one the "width inside a pixel" picture suggests: a **16× change
+in `pxsize` moves the median σ_LOS by a few km/s**, and the mean barely at all. σ_LOS is set by the
+spread of velocities **along the ray**, and the ray is the same ray whatever the pixel width. Making
+pixels smaller sub-divides the sky, not the sightline.
+
+That is a useful licence: choose `pxsize` for the *image* you want, and σ_LOS will not move under
+you. Quote it anyway, so a reader can check.
 
 !!! note "Shipped separately"
-    Position–position–velocity cubes, emission and absorption forward modelling, mock observations and FITS export are **in development in a separate module** and are not part of the released package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
+    Position–position–velocity cubes, emission and absorption forward modelling, mock observations
+    and FITS export are **in development in a separate module** and are not part of the released
+    package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
 
 ## 8. Cutting planes: a sample, not an integral
 
