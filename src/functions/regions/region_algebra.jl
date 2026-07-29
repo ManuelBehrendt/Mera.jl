@@ -121,10 +121,16 @@ end
 Cuboid(; xrange, yrange, zrange, center=[:bc], range_unit::Symbol=:kpc) =
     Cuboid(Float64.(xrange), Float64.(yrange), Float64.(zrange), Vector{Any}(center), range_unit)
 
-# physical center (handles :bc) + a length→normalised factor, exactly as prepranges does
+# physical center (handles :bc) + a length→normalised factor, exactly as prepranges does.
+# NB "as prepranges does" means the CORRECTED form: divide by boxlen·selected_unit. The inverted
+# `v * selected_unit / boxlen` (which this originally used, copied from prepranges before that
+# function was fixed) is wrong by selected_unit² and collapses every region to a near-zero volume
+# at the wrong place — zero cells, no error. Invisible only when one code length happens to equal
+# one `range_unit` (selected_unit == 1), which is true of every RAMSES fixture in the test suite.
 function _norm_frame(obj, center, range_unit)
     c = prepboxcenter(obj.info, range_unit, center)
-    tonorm(v) = range_unit === :standard ? Float64(v) : Float64(v) * getunit(obj.info, range_unit) / obj.boxlen
+    tonorm(v) = range_unit === :standard ? Float64(v) :
+                Float64(v) / (obj.boxlen * getunit(obj.info, range_unit))
     return Float64[tonorm(c[1]), tonorm(c[2]), tonorm(c[3])], tonorm
 end
 

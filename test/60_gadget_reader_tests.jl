@@ -184,6 +184,20 @@ end
         # the :standard (box-fraction) path was always correct — it must stay unchanged
         @test length(shellregion(p, :sphere, radius=[0.075, 0.15], center=[:bc],
                                  verbose=false).data) == 1
+
+        # `_norm_frame` (region_algebra.jl) carried the SAME inverted conversion — it was copied
+        # from prepranges before prepranges was fixed, comment included. That silently zeroed the
+        # whole value-type region API (Sphere/Cuboid/Cylinder, the shells, the combinators,
+        # @region) for any object whose length unit is not 1 code length. On point particles the
+        # value-type and symbol APIs agree exactly, so they are compared directly here. (On CELL
+        # data they differ by the half-cell centre convention, which is a separate open question.)
+        for R in (15.0, 30.0, 45.0)
+            @test length(subregion(p, Sphere(R; center=[:bc], range_unit=:kpc), verbose=false).data) ==
+                  length(subregion(p, :sphere, radius=R, center=[:bc], range_unit=:kpc, verbose=false).data)
+        end
+        @test length(subregion(p, Sphere(25.0; center=[:bc], range_unit=:kpc), verbose=false).data) == 3
+        @test length(subregion(p, Cuboid(xrange=[-25,25], yrange=[-25,25], zrange=[-25,25],
+                                         center=[:bc], range_unit=:kpc), verbose=false).data) == 3
     end
 
     @testset "gas-cell fields → :rho/:u/:ne/:volume/:T (+ Header units)" begin
