@@ -96,15 +96,23 @@ function get_data(dataobject::PartDataType,
 
         # --- gas-cell thermodynamics (AREPO/GADGET PartType0), from specific internal energy :u ---
         elseif i == :T || i == :Temp || i == :Temperature
-            # T = (γ-1)·u·μ·m_H/k_B [K]. scale.T_mu maps code (p/ρ)=(γ-1)u → T/μ; μ from the
+            # T = (γ-1)·u·μ·m_H/k_B. scale.T_mu maps code (p/ρ)=(γ-1)u → T/μ in KELVIN; μ from the
             # electron abundance :ne when present, else a neutral-primordial fallback (μ ≈ 1.22).
+            #
+            # Return CODE units and let `selected_unit` scale them, exactly as :p, :cs and RAMSES
+            # hydro :T do. This branch used to return Kelvin outright and ignore its unit argument,
+            # which made `getvar(:T)` == `getvar(:T,:K)` and — because `projection`'s intensive
+            # branch assumes code units and multiplies by the unit itself — produced projected
+            # temperature maps a factor `scale.K` (158.2 on IllustrisTNG) too hot, silently.
+            selected_unit = getunit(dataobject, i, vars, units)
             γ = 5/3; XH = 0.76
-            T_over_mu = (γ - 1) .* select(masked_data, :u) .* dataobject.info.scale.T_mu
+            T_over_mu = (γ - 1) .* select(masked_data, :u) .*
+                        (dataobject.info.scale.T_mu / dataobject.info.scale.K)
             if in(:ne, column_names)
                 ne = select(masked_data, :ne)
-                vars_dict[i] = @. T_over_mu * 4 / (1 + 3XH + 4XH * ne)         # [K]
+                vars_dict[i] = @. T_over_mu * 4 / (1 + 3XH + 4XH * ne) * selected_unit
             else
-                vars_dict[i] = T_over_mu .* (4 / (1 + 3XH))                     # [K]
+                vars_dict[i] = T_over_mu .* (4 / (1 + 3XH)) .* selected_unit
             end
 
         elseif i == :p || i == :pressure

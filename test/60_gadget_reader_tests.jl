@@ -217,7 +217,9 @@ end
         @test getvar(gas, :volume) == [2.0, 2.0, 2.0]                  # m/ρ
         # T = (γ-1)·u·T_mu·μ, μ = 4/(1+3·X_H+4·X_H·ne)  — compare to the closed form
         γ = 5/3; XH = 0.76; ne = 1.0; μ = 4 / (1 + 3XH + 4XH*ne)
-        @test getvar(gas, :T) ≈ (γ-1) .* [100.0, 200.0, 400.0] .* info.scale.T_mu .* μ
+        # :T follows the standard convention — bare getvar is CODE units, the unit argument scales.
+        @test getvar(gas, :T, :K) ≈ (γ-1) .* [100.0, 200.0, 400.0] .* info.scale.T_mu .* μ
+        @test getvar(gas, :T) ≈ getvar(gas, :T, :K) ./ info.scale.K
         @test all(getvar(gas, :T) .> 0)
 
         # loading only DM ⇒ no gas columns at all
@@ -527,10 +529,19 @@ end
             gas = getparticles_gadget(info; families=[0], verbose=false)        # 4.0M gas cells
             cn = Mera.IndexedTables.colnames(gas.data)
             @test all(c -> c in cn, (:rho, :u, :ne, :metallicity, :sfr, :volume))
-            rho = getvar(gas, :rho); vol = getvar(gas, :volume); T = getvar(gas, :T)
+            rho = getvar(gas, :rho); vol = getvar(gas, :volume); T = getvar(gas, :T, :K)
             @test all(rho .> 0) && all(vol .> 0) && all(isfinite, T)
             @test minimum(T) > 1.0 && maximum(T) < 1e10                         # physical gas temperatures
             @test 1e3 < sort(T)[length(T) ÷ 2] < 1e9                            # median in the warm/hot range
+            # a projected mass-weighted mean must lie INSIDE the cell-value range, in any unit —
+            # the invariant that catches double-scaling (this map was 158x too hot)
+            for u in (:K, :standard)
+                Tc = getvar(gas, :T, u)
+                pT = projection(gas, :T, u; weighting=:mass, center=[:bc], res=16,
+                                verbose=false, show_progress=false)
+                A = filter(isfinite, pT.maps[:T])
+                @test minimum(Tc) <= minimum(A) && maximum(A) <= maximum(Tc)
+            end
             @test msum(gas) > 0
             # Phase 2: MagneticField (MHD) → :bx/:by/:bz, Potential → :gpot, bonus :nh/:mach
             @test all(s -> s in info.particles_variable_list, (:bx, :by, :bz, :gpot, :nh, :mach))
