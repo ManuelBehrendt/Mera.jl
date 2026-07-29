@@ -43,6 +43,8 @@ println("threads      : ", Threads.nthreads())
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (6), mismatched flags (8))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -51,6 +53,9 @@ println("threads      : ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), dep missing source (6))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -229,7 +234,8 @@ maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
 ```
 max |ŵ_faceon − ŵ_inc0|     = 0.0
 angle(û_faceon, û_inc0)     = 90.0°
-max |Σ_faceon − Σ_inc0|     = 2407.1
+max |Σ_faceon − Σ_inc0|     =
+2407.1
 max |Σ_faceon − Σ_inc0,PA=-90| = 4.433786671143025e-11
 inclination + los
 → ArgumentError
@@ -237,7 +243,7 @@ direction=:faceon + axis
 → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_10_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_10_7.png)
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
 vectors agree to the last bit — but they are *not* the same image. A face-on view leaves the roll
@@ -307,7 +313,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-29T14:24:23.417
+[Mera]: 2026-07-29T23:31:44.363
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -550,8 +556,8 @@ binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       64.4 %
 0.006     1.3004
 cic       27.8 %     0.006     1.2898
-overlap   0.0 %      0.027     0.0005
-exact     0.0 %      0.095     0.0
+overlap   0.0 %      0.026     0.0005
+exact     0.0 %      0.103     0.0
 ```
 
 ```julia
@@ -703,8 +709,7 @@ end
 
 ```
 pxsize [kpc]   median σ_LOS    mean σ_LOS
-0.15           93.8
-274.1
+0.15           93.8            274.1
 0.6            94.3            275.4
 2.4            102.6           274.8
 ```
@@ -756,8 +761,7 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 ```
 slice frame      (120, 120)   0.0 % NaN
 projection frame (120, 120)
-slice extent [kpc] =
-[-15.0, 15.0, -15.0, 15.0]
+slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
 
 ```julia
@@ -908,7 +912,7 @@ The view keywords are the same everywhere. What differs is a short list of defau
 | | hydro / RT | particles |
 |---|---|---|
 | `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` silently fall back to `:cic` (points have no footprint) |
-| `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass` — and `:sph`/`:voronoi` are accepted but silently give a mass-weighted map off-axis |
+| `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`; `:volume` works. `:sph`/`:voronoi` **refuse off-axis** — the footprint deposit is axis-aligned only, and used to be silently ignored here |
 | `fov` / `fov_unit` / `aperture` | yes | **yes** — same rotation-invariant sphere selection; the framing is a selection, so it does not care what is deposited |
 | `mode`, `nmax`, `max_threads`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** on the off-axis hydro path | honoured |
@@ -1024,10 +1028,12 @@ println("particle binning=:overlap falls back to :cic : ",
         same(projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:overlap, W...), pc))
 println("particle binning=:exact   falls back to :cic : ",
         same(projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:exact, W...), pc))
-pm = projection(part, :sd, :Msol_pc2; direction=:edgeon, weighting=:mass, W...)
+# :sph/:voronoi are axis-aligned only. They USED to be silently ignored off-axis, returning
+# a map bit-identical to :mass; now they refuse. (On a real TNG halo, axis-aligned they
+# differ from :mass by 13 % and 36 %; off-axis the difference was exactly 0.)
 for w in (:sph, :voronoi)
-    println(rpad("particle weighting=:$w == :mass", 45), ": ",
-            same(projection(part, :sd, :Msol_pc2; direction=:edgeon, weighting=w, W...), pm))
+    println(rpad("weighting=:$w refused off-axis", 45), ": ",
+            raises(() -> projection(part, :sd, :Msol_pc2; direction=:edgeon, weighting=w, W...)))
 end
 println("fov works on particles                       : ",
         size(projection(part, :sd, :Msol_pc2; direction=:edgeon, center=[:bc], fov=15,
@@ -1049,14 +1055,13 @@ println("data_center ignored on off-axis hydro        : ",
 ```
 particle binning=:overlap falls back to :cic : true
 particle binning=:exact   falls back to :cic : true
-particle weighting=:sph == :mass             :
-true
-particle weighting=:voronoi == :mass         : true
+weighting=:sph refused off-axis              :
+ArgumentError
+weighting=:voronoi refused off-axis          : ArgumentError
 fov works on particles                       : (
 30, 30)
 slice(part, …)                               : MethodError
-particle nmax
-: MethodError
+particle nmax                                : MethodError
 particle max_threads                         : MethodError
 data_center ignored on off-axis hydro        : true
 ```

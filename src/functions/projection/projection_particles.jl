@@ -720,6 +720,16 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
 
     if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
+        # The footprint kernels are implemented on the axis-aligned path only. Off-axis they were
+        # silently discarded and you got a plain point deposit — measured bit-identical to
+        # weighting=:mass, while axis-aligned the same call differs by 13 % (:sph) and 36 %
+        # (:voronoi). Refuse instead: a wrong map that looks right is worse than an error. This
+        # matches how the off-axis path already rejects :σx/:r_cylinder and friends.
+        weighting in (:sph, :voronoi) && throw(ArgumentError(
+            "projection (particles): weighting=:$(weighting) is not available off-axis — the " *
+            "footprint deposit is implemented for the axis-aligned path only, and would be " *
+            "silently ignored here (you would get weighting=:mass). Use direction=:x/:y/:z for " *
+            "a footprint map, or weighting=:mass/:volume for this off-axis view."))
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
