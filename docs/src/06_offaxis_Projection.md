@@ -161,8 +161,6 @@ a different question.
 `position_angle` is a **roll**: it rotates `(r̂, û)` together about `ŵ`. It changes how the image
 sits on the page, never what is in front of the camera.
 
-![Off-axis projection geometry: parallel rays from the observer through the simulation box onto the image plane](assets/offaxis/offaxis_geometry.png)
-
 One consequence deserves to be stated on its own, because the next chapter is built on it: since
 the projection is orthographic, **moving the camera away from the galaxy changes nothing**. There
 is no camera distance to set. The only control over what lands in frame is the *width of the
@@ -173,7 +171,7 @@ completion, the roll matrix) lives in `?projection`; you do not need it to use a
 
 ![Off-axis camera geometry](assets/offaxis/offaxis_geometry_v2.svg)
 
-*Parallel rays, the image plane, and the camera basis `(r̂, û, ŵ)` planted at `center`. Left inset: `inclination` is measured from a **reference axis** — either the box `z` or the object's own angular-momentum axis `L`. They are not the same axis, and choosing the wrong one is the most common way to get a picture that looks right but is not.*
+*Parallel rays, the image plane, and the camera basis `(r̂, û, ŵ)` planted at `center`. Right inset: `inclination` is measured from a **reference axis** — either the box `z` or the object's own angular-momentum axis `L`. They are not the same axis, and choosing the wrong one is the most common way to get a picture that looks right but is not.*
 
 ## 3. Choosing the view
 
@@ -274,7 +272,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-29T05:06:23.545
+[Mera]: 2026-07-29T05:28:13.737
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -365,8 +363,7 @@ println("Σ(map) / msum(gas) − 1  =  ", sum(mtot.maps[:mass]) / msum(gas, :Mso
 maps returned : Any
 [:
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
- => :K, :mass => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
 ```
 
@@ -380,7 +377,7 @@ Chapter 5 settled the total. This chapter is about the **other** question: *wher
 
 A rotated cube's shadow on the image plane is a hexagon that generally straddles several pixels. The four `binning` kernels are four answers to "how is that shadow shared out" — they all share it out completely (hence one total), but they place it differently.
 
-![Four kernels, one footprint](assets/offaxis/offaxis_cell_treatment_v2.svg)
+![Four kernels, one footprint](assets/offaxis/offaxis_cell_treatment.svg)
 
 | `binning` | what it does | use it for |
 |---|---|---|
@@ -605,7 +602,8 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 ```
 
 ```
-slice frame      (250, 250)   0.0 % NaN
+slice frame      (
+250, 250)   0.0 % NaN
 projection frame (250, 250)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
