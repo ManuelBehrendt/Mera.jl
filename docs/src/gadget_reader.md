@@ -104,7 +104,8 @@ info = getinfo(59, "/data/TNG/halo_59")          # IllustrisTNG cutout (AREPO)
 gas  = getparticles(info; families=[0])           # PartType0 → :rho,:u,:ne,:metallicity,:sfr,:volume
 
 getvar(gas, :rho, :g_cm3)                          # physical density (a/h applied for cosmological runs)
-getvar(gas, :T)                                    # temperature [K] from :u (+ :ne when present)
+getvar(gas, :T, :K)                                # temperature [K] from :u (+ :ne when present)
+                                                   # (omit the unit and you get code units)
 getvar(gas, :metallicity)                          # mass-fraction metallicity
 
 pdf(gas, :rho); profile(gas, :r_sphere, :T)        # PDFs / radial profiles on the gas

@@ -33,6 +33,8 @@ base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 ```
 
 ```
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (6), mismatched flags (10))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -69,7 +71,7 @@ maximum(getvar(gas, :rho))                           # the usual analysis, uncha
 ```
 
 ```
-[Mera]: 2026-07-02T19:26:17.505
+[Mera]: 2026-07-29T21:32:44.427
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -133,7 +135,7 @@ length(gsub.data), length(ga.data)                   # sub-region ≪ full snaps
 ```
 
 ```
-[Mera]: 2026-07-02T19:26:29.346
+[Mera]: 2026-07-29T21:32:55.750
 Code: Athena++
 output: 5  time: 0.50111 [code units]
 root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
@@ -143,7 +145,7 @@ maximum(getvar(ga, :bmag)) = 1.1211309571451635
 ```
 
 ```
-(15625, 606208)
+(17576, 606208)
 ```
 
 
@@ -191,11 +193,10 @@ length(stars.data), msum(stars) > 0
 ```
 
 ```
-[Mera]: 2026-07-02T19:26:52.923
+[Mera]: 2026-07-29T21:33:19.653
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
-boxlen =
-64000.0
+boxlen = 64000.0
 particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
 -------------------------------------------------------
 [Mera]: GADGET particles = 450921, families 4
@@ -217,12 +218,12 @@ it  = getinfo(59, joinpath(base, "AREPO/TNGHalo/TNGHalo/halo_59.hdf5"))   # Illu
 gas = getparticles_gadget(it; families=[0])      # PartType0 gas → :rho,:u,:ne,:metallicity,:sfr,:volume + :T
 println("gas cells   : ", length(gas.data))
 println("rho [g/cm³] : ", extrema(getvar(gas, :rho, :g_cm3)))
-println("T   [K]     : ", extrema(getvar(gas, :T)))
+println("T   [K]     : ", extrema(getvar(gas, :T, :K)))
 println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
 ```
-[Mera]: 2026-07-02T19:26:56.367
+[Mera]: 2026-07-29T21:33:22.678
 Code: AREPO
 output: 59  time: 1.0  redshift: 0.0
 boxlen = 205000.0
@@ -233,15 +234,15 @@ particles: 4006794 gas, 5567314 halo/DM, 533034 stars  (total 10107142)
 gas cells   : 4006794
 rho [g/cm³] :
 (1.3854807197342735e-30, 1.17827292777639e-22)
-T   [K]     : (17.965557996942835, 1.2925814640761332e8)
-metallicity :
-(8.100937520794105e-8, 0.04447760060429573)
+T   [K]     :
+(17.965557996942838, 1.2925814640761332e8)
+metallicity : (8.100937520794105e-8, 0.04447760060429573)
 ```
 
 ```julia
 # the usual reductions run unchanged on AREPO gas, in physical units
 n = length(gas.data)
-println("median T [K]   : ", sort(getvar(gas, :T))[n ÷ 2])
+println("median T [K]   : ", sort(getvar(gas, :T, :K))[n ÷ 2])
 println("median Z       : ", sort(getvar(gas, :metallicity))[n ÷ 2])
 println("gas mass [Msol]: ", msum(gas, :Msol))
 ```
@@ -281,7 +282,7 @@ v_Alfvén [km/s] : median 43.0
 
 ```julia
 using CairoMakie, Statistics
-ρ = getvar(gas, :rho, :g_cm3);  Bμ = getvar(gas, :bmag, :muG);  T = getvar(gas, :T)
+ρ = getvar(gas, :rho, :g_cm3);  Bμ = getvar(gas, :bmag, :muG);  T = getvar(gas, :T, :K)
 ok = (ρ .> 0) .& (Bμ .> 0) .& (T .> 0)
 figB = Figure(size=(900, 400))
 a1 = Axis(figB[1,1]; title="B–ρ relation (flux freezing)", xlabel="log ρ [g cm⁻³]", ylabel="log |B| [μG]")
@@ -291,7 +292,13 @@ hexbin!(a2, log10.(T[ok]), log10.(Bμ[ok]); bins=70, colormap=:viridis)
 figB
 ```
 
-![](multicode_examples_files/multicode_examples_18_1.png)
+```
+[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), dep missing source (6))
+SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+[ Info: Mera v1.8.0
+```
+
+![](multicode_examples_files/multicode_examples_18_3.png)
 
 ### Box-filling maps — a full AREPO volume
 
@@ -314,7 +321,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-02T19:27:16.054
+[Mera]: 2026-07-29T21:33:51.654
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -322,7 +329,7 @@ particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
 -------------------------------------------------------
 [Mera]: GADGET particles = 12865831, families 0
   (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
-[Mera]: 2026-07-02T19:27:20.014
+[Mera]: 2026-07-29T21:33:55.797
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -331,7 +338,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 Effective resolution: 256^2
 Pixel size: 156.246 [kpc]
 Simulation min.: 19.999 [Mpc]
-[Mera]: 2026-07-02T19:28:08.595
+[Mera]: 2026-07-29T21:34:43.271
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
