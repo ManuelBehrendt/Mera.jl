@@ -178,6 +178,13 @@ return PartMapsType
   `los=[lx,ly,lz]`, or `theta`/`phi`; `position_angle` rolls the image; `angle_unit=:deg` (default)
   or `:rad`. See the hydro `projection` docstring for the full description; for point particles
   `binning=:overlap` falls back to `:cic`.
+- **`fov` / `fov_unit` / `aperture`:** camera-plane framing, identical to the hydro path — `fov` is
+  the frame **half-width** and selects a sphere about `center` (radius `fov`, or `√2·fov` for
+  `aperture=:square`, which crops to a full rectangle that is pixel-identical at every viewing
+  angle). Use it instead of `xrange`/`yrange` whenever frames must be comparable across angles or
+  snapshots, and give `fov_unit` explicitly — it defaults to `:standard`, a box fraction. Note the
+  sphere means a summed quantity integrates a chord that shrinks to zero at the frame boundary; see
+  the hydro `projection` docstring.
 - **`mask`:** needs to be of type MaskType which is a supertype of Array{Bool,1} or BitArray{1} with the length of the database (rows)
 - **`ref_time`:** the age quantity relative to a given time (code_units); default relative to the loaded snapshot time
 - **`show_progress`:** print progress bar on screen
