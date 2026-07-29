@@ -294,21 +294,28 @@ function prep_cylindrical_shellranges(    dataobject::InfoType,
 
     else
         selected_unit = getunit(dataobject, range_unit)
-        xmin = (-radius_out + center[1]) * selected_unit /dataobject.boxlen
-        xmax = ( radius_out + center[1]) * selected_unit /dataobject.boxlen
-        ymin = (-radius_out + center[2]) * selected_unit /dataobject.boxlen
-        ymax = ( radius_out + center[2]) * selected_unit /dataobject.boxlen
-        zmin = ( -height + center[3]) * selected_unit /dataobject.boxlen
-        zmax = (  height + center[3]) * selected_unit /dataobject.boxlen
+        # Same inverted-conversion bug that `prepranges` documents above: multiplying by
+        # selected_unit/boxlen instead of dividing by boxlen·selected_unit is wrong by
+        # selected_unit², which puts the shell centre in the wrong place and rescales its radii —
+        # giving 0 cells. It hid because the RAMSES test fixture has boxlen = 100 code = 100 kpc,
+        # so selected_unit == 1 and multiply ≡ divide. Any box where one code length is not one
+        # `range_unit` (e.g. an IllustrisTNG snapshot, scale.kpc ≈ 1.476) exposes it.
+        conv = dataobject.boxlen * selected_unit
+        xmin = (-radius_out + center[1]) / conv
+        xmax = ( radius_out + center[1]) / conv
+        ymin = (-radius_out + center[2]) / conv
+        ymax = ( radius_out + center[2]) / conv
+        zmin = ( -height + center[3]) / conv
+        zmax = (  height + center[3]) / conv
 
         # given center relative to the data range in units: cell centers
-        cx_shift = center[1] * selected_unit /dataobject.boxlen
-        cy_shift = center[2] * selected_unit /dataobject.boxlen
-        cz_shift = center[3] * selected_unit /dataobject.boxlen
-        radius_in_shift = radius_in * selected_unit /dataobject.boxlen
-        radius_out_shift = radius_out * selected_unit /dataobject.boxlen
-        height_shift = height * selected_unit /dataobject.boxlen
-        center  =  center / (dataobject.boxlen * selected_unit )
+        cx_shift = center[1] / conv
+        cy_shift = center[2] / conv
+        cz_shift = center[3] / conv
+        radius_in_shift = radius_in / conv
+        radius_out_shift = radius_out / conv
+        height_shift = height / conv
+        center  =  center / conv
     end
 
     if verbose
@@ -404,21 +411,25 @@ function prep_spherical_shellranges(    dataobject::InfoType,
 
     else
         selected_unit = getunit(dataobject, range_unit)
-        xmin = (-radius_out + center[1]) * selected_unit /dataobject.boxlen
-        xmax = ( radius_out + center[1]) * selected_unit /dataobject.boxlen
-        ymin = (-radius_out + center[2]) * selected_unit /dataobject.boxlen
-        ymax = ( radius_out + center[2]) * selected_unit /dataobject.boxlen
-        zmin = ( -radius_out + center[3]) * selected_unit /dataobject.boxlen
-        zmax = (  radius_out + center[3]) * selected_unit /dataobject.boxlen
+        # See the note in prep_cylindrical_shellranges: divide by boxlen·selected_unit, do not
+        # multiply by selected_unit/boxlen — the inverted form is wrong by selected_unit² and
+        # selects 0 cells on any box where one code length is not one `range_unit`.
+        conv = dataobject.boxlen * selected_unit
+        xmin = (-radius_out + center[1]) / conv
+        xmax = ( radius_out + center[1]) / conv
+        ymin = (-radius_out + center[2]) / conv
+        ymax = ( radius_out + center[2]) / conv
+        zmin = ( -radius_out + center[3]) / conv
+        zmax = (  radius_out + center[3]) / conv
 
         # given center relative to the data range in units: cell centers
-        cx_shift = center[1] * selected_unit /dataobject.boxlen
-        cy_shift = center[2] * selected_unit /dataobject.boxlen
-        cz_shift = center[3] * selected_unit /dataobject.boxlen
-        radius_in_shift = radius_in * selected_unit /dataobject.boxlen
-        radius_out_shift = radius_out * selected_unit /dataobject.boxlen
+        cx_shift = center[1] / conv
+        cy_shift = center[2] / conv
+        cz_shift = center[3] / conv
+        radius_in_shift = radius_in / conv
+        radius_out_shift = radius_out / conv
 
-        center  =  center / (dataobject.boxlen * selected_unit )
+        center  =  center / conv
     end
 
     if verbose

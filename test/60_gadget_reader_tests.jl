@@ -141,6 +141,51 @@ end
         @test length(getparticles(tng, verbose=false).data) == 1               # and it still routes to the gadget frontend
     end
 
+    # REGRESSION (found via AREPO/TNG, but the bug is NOT AREPO-specific): the spherical and
+    # cylindrical SHELL range preps inverted the physical→fraction conversion — multiplying by
+    # selected_unit/boxlen instead of dividing by boxlen·selected_unit, wrong by selected_unit².
+    # `prepranges` (used by `subregion`) had the same bug and was fixed; the two shell variants
+    # were missed. It is invisible whenever one code length equals one `range_unit` (selected_unit
+    # == 1) — which is true of every RAMSES fixture here, so nothing caught it. This file writes a
+    # box where one code length is TWO kpc, so multiply ≢ divide.
+    @testset "shellregion honours range_unit when 1 code length ≠ 1 unit" begin
+        fn = joinpath(dir, "snap_012.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 100.0                                              # code units
+            hg["NumPart_Total"] = UInt32[4, 0, 0, 0, 0, 0]
+            hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            hg["UnitLength_in_cm"] = 2 * 3.085678e21                           # ⇐ 1 code length = 2 kpc
+            hg["UnitMass_in_g"] = 1.989e43
+            hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            # offsets along x from the box centre (50): 0, 5, 10, 20 code = 0, 10, 20, 40 kpc
+            g0["Coordinates"] = Float64[50 55 60 70; 50 50 50 50; 50 50 50 50]
+            g0["Velocities"]  = Float32[0 0 0 0; 0 0 0 0; 0 0 0 0]
+            g0["Masses"]      = Float32[1, 1, 1, 1]
+            g0["ParticleIDs"] = UInt32[1, 2, 3, 4]
+        end
+        info = getinfo_gadget(12, dir, verbose=false)
+        # precondition this test depends on (rtol is loose: the 3.085678e21 literal is a rounded kpc)
+        @test isapprox(info.scale.kpc, 2.0, rtol=1e-5)
+        p = getparticles(info, verbose=false)
+
+        # a 15–30 kpc shell contains exactly the particle at 20 kpc; the inverted form gave 0
+        sh = shellregion(p, :sphere, radius=[15., 30.], center=[:bc], range_unit=:kpc, verbose=false)
+        @test length(sh.data) == 1
+        @test getvar(sh, :id) == [3]
+        # 5–45 kpc keeps the 10, 20 and 40 kpc particles but drops the one at the centre
+        @test length(shellregion(p, :sphere, radius=[5., 45.], center=[:bc],
+                                 range_unit=:kpc, verbose=false).data) == 3
+        # cylindrical shells share the prep and were equally broken
+        shc = shellregion(p, :cylinder, radius=[15., 30.], height=10., center=[:bc],
+                          range_unit=:kpc, verbose=false)
+        @test length(shc.data) == 1 && getvar(shc, :id) == [3]
+        # the :standard (box-fraction) path was always correct — it must stay unchanged
+        @test length(shellregion(p, :sphere, radius=[0.075, 0.15], center=[:bc],
+                                 verbose=false).data) == 1
+    end
+
     @testset "gas-cell fields → :rho/:u/:ne/:volume/:T (+ Header units)" begin
         fn = joinpath(dir, "snap_010.hdf5"); _write_gadget_gas(fn)
         info = getinfo_gadget(10, dir, verbose=false)
