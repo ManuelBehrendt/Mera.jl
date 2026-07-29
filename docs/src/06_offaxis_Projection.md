@@ -15,7 +15,7 @@ Off-axis adds exactly one thing to the [axis-aligned page](06_hydro_Projection.m
 | placement | `binning` (the default is already the accurate one) | 6 |
 | output | `m.maps`, `getextent`, camera metadata | 1, 10 |
 
-**Contract line, stated up front and honestly:** one dataset (`RAMSES/spiral_clumps` output 100, ~590 k cells, levels 5–7, 100 kpc box), 13 code cells, 20 hydro `projection` calls, 9 figures. Measured end-to-end wall clock at `julia -t 8`: ****≈ 100 s** end-to-end at `julia -t 8` (17 code cells, 20 hydro `projection` calls)**.
+**Contract line, stated up front and honestly:** one dataset (`RAMSES/spiral_clumps` output 100, ~590 k cells, levels 5–7, 100 kpc box), 13 code cells, 20 hydro `projection` calls, 9 figures. Measured end-to-end wall clock at `julia -t 8`: ****≈ 90 s** end-to-end at `julia -t 8` (19 code cells, ~30 hydro `projection` calls)**.
 
 Pointer: full limitations table is Appendix A; nothing on this page is a forward reference to it.
 
@@ -272,7 +272,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-29T05:38:27.927
+[Mera]: 2026-07-29T09:09:42.319
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -411,8 +411,7 @@ println("Σ(map) / msum(gas) − 1  =  ", sum(mtot.maps[:mass]) / msum(gas, :Mso
 maps returned : Any
 [:
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
- => :K, :mass => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
 ```
 
@@ -424,7 +423,21 @@ One consequence worth knowing: cells whose deposit stencil crosses the map edge 
 
 Chapter 5 settled the total. This chapter is about the **other** question: *where* the mass lands.
 
-A rotated cube's shadow on the image plane is a hexagon that generally straddles several pixels. The four `binning` kernels are four answers to "how is that shadow shared out" — they all share it out completely (hence one total), but they place it differently.
+**Why the shadow is a hexagon.** Look at a cube from a general direction and you see three of its
+six faces — the three meeting at the corner nearest you. The outline of those three faces is a
+closed circuit of **six** cube edges, so the silhouette cast on the image plane has six sides. It
+collapses to a rectangle in exactly one situation: when the line of sight lies in a coordinate
+plane, i.e. when any component of `ŵ` is zero. Then only two faces front-face, and you get the
+familiar square — `direction=:x/:y/:z`, face-on and edge-on are all that case. Off-axis you are
+generically in the hexagonal regime.
+
+One more thing follows, and it is why a single footprint rule can serve a whole AMR hierarchy:
+every cell is an **axis-aligned** cube, so for a given camera every cell casts the *same* hexagon,
+differing only in scale.
+
+That hexagon generally straddles several pixels. The four `binning` kernels are four answers to
+"how is it shared out" — they all share it out completely (hence one total), but they place it
+differently.
 
 ![Four kernels, one footprint](assets/offaxis/offaxis_cell_treatment.svg)
 
@@ -435,7 +448,12 @@ A rotated cube's shadow on the image plane is a hexagon that generally straddles
 | `:overlap` **(default)** | the cube is supersampled over its true footprint — `n³` sub-points with `n = ⌈cellsize/pixel⌉`, capped at `nmax=64`; cells past the cap deposit a footprint-sized top-hat, which is what keeps coarse cells hole-free | **everything you publish** |
 | `:exact` | the analytic footprint integral (a box-spline chord field over the hexagon) | the reference the others are checked against; no cap, slower |
 
-`:overlap` and `:exact` are threaded; `:ngp` and `:cic` run serially. `:exact` follows from the box-spline representation of a projected cube (de Boor, *Box Splines*); nothing about choosing a `binning` depends on that derivation, so it is not reproduced here.
+`:overlap` and `:exact` are threaded; `:ngp` and `:cic` run serially. `:exact` follows from the
+box-spline representation of a projected cube (de Boor, *Box Splines*); nothing about choosing a
+`binning` depends on that derivation, so it is not reproduced here.
+
+The table is a claim. The cell below measures it — all four kernels on the same data, against
+`:exact` as the reference.
 
 ```julia
 # Which regime are you in? Binning only matters when PIXELS ARE FINER THAN CELLS.
@@ -447,13 +465,24 @@ end
 
 zoom = (center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
         pxsize=[0.1,:kpc], verbose=false, show_progress=false)
-p_cic = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:cic,     zoom...)
-p_ovl = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:overlap, zoom...)
 
-for (nm, p) in (("cic", p_cic), ("overlap", p_ovl))
-    A = p.maps[:sd]
-    println(rpad(nm, 9), "empty pixels: ", rpad(round(100*count(iszero, A)/length(A), digits=1), 5),
-            " %    Σ = ", round(sum(A), sigdigits=10))
+kern = Dict{Symbol,Any}(); secs = Dict{Symbol,Float64}()
+for k in (:ngp, :cic, :overlap, :exact)
+    projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=k, zoom...)   # warm-up
+    secs[k] = @elapsed kern[k] = projection(gas, :sd, :Msol_pc2; inclination=60,
+                                            axis=:angmom, binning=k, zoom...)
+end
+k_ngp, k_cic, k_ovl = kern[:ngp], kern[:cic], kern[:overlap]
+
+# :exact is the analytic reference — measure the others against it rather than asserting.
+E = Float64.(kern[:exact].maps[:sd])
+println()
+println(rpad("binning", 10), rpad("empty px", 11), rpad("time [s]", 10), "median |Δ| vs :exact [dex]")
+for k in (:ngp, :cic, :overlap, :exact)
+    A = Float64.(kern[k].maps[:sd]); both = (A .> 0) .& (E .> 0)
+    d = k === :exact ? 0.0 : median(abs.(log10.(A[both]) .- log10.(E[both])))
+    println(rpad(k, 10), rpad(string(round(100*count(iszero, A)/length(A), digits=1), " %"), 11),
+            rpad(round(secs[k], digits=3), 10), round(d, digits=4))
 end
 ```
 
@@ -461,25 +490,32 @@ end
 level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
-cic      empty pixels: 27.8  %    Σ = 1.522361882e6
-overlap  empty pixels: 0.0   %    Σ = 1.524710911e6
+binning   empty px   time [s]  median |Δ| vs :exact [dex]
+ngp       64.4 %
+0.016     1.3004
+cic       27.8 %     0.007     1.2898
+overlap   0.0 %      0.036     0.0005
+exact     0.0 %      0.096     0.0
 ```
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
-# Show the REGIME, not one strawman: :cic where you would actually use it, :cic pushed past
-# the cell size, and :overlap at those same fine pixels.
-pc_ok  = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:cic,
-                    center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
-                    pxsize=[0.8,:kpc], verbose=false, show_progress=false)
+# Show the REGIME, not one strawman: :cic where you would actually use it, then the three
+# sampled kernels at pixels 8x finer than the cell. :exact gets no panel on purpose — it is
+# visually indistinguishable from :overlap, and the cell above gives the number instead.
+pc_ok = projection(gas, :sd, :Msol_pc2; inclination=60, axis=:angmom, binning=:cic,
+                   center=[:bc], fov=8, fov_unit=:kpc, aperture=:square,
+                   pxsize=[0.8,:kpc], verbose=false, show_progress=false)
 allv = reduce(vcat, [log10.(filter(>(0), vec(Float64.(p.maps[:sd]))))
-                     for p in (pc_ok, p_cic, p_ovl)])
+                     for p in (pc_ok, k_ngp, k_cic, k_ovl)])
 cr = (quantile(allv, 0.02), maximum(allv))
-maprow([pc_ok, p_cic, p_ovl], :sd,
+maprow([pc_ok, k_ngp, k_cic, k_ovl], :sd,
        [":cic @ 0.8 kpc pixels
 1 pixel per cell — a fine preview",
+        ":ngp @ 0.1 kpc pixels
+all weight at cell centres",
         ":cic @ 0.1 kpc pixels
-8 pixels per cell — falls apart",
+2x2 split — still no footprint",
         ":overlap @ 0.1 kpc pixels
 same pixels, footprint deposit"]; crange=cr)
 ```
@@ -489,15 +525,22 @@ same pixels, footprint deposit"]; crange=cr)
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
 
-Read the three panels as one statement: **it is the pixel-to-cell ratio that decides, not the
-kernel.** At 0.8 kpc pixels — about one pixel per cell here — `:cic` is a perfectly good preview
-and leaves **0 %** of pixels empty. Push to 0.1 kpc, eight pixels across every cell, and the same
-kernel leaves **27.8 %** of them empty: a point deposit puts each cell's whole contribution at its
-centre, so the gaps between centres receive nothing and the map acquires a texture that belongs to
-the grid rather than to the galaxy. `:overlap` spreads each cell over the area its shadow actually
-covers, so it stays continuous at any pixel size.
+Read the panels as one statement: **it is the pixel-to-cell ratio that decides, not the kernel.**
+At 0.8 kpc pixels — about one pixel per cell here — `:cic` is a perfectly good preview and leaves
+**0 %** of pixels empty. Push to 0.1 kpc, eight pixels across every cell, and the point-deposit
+kernels fall apart: `:cic` leaves **27.8 %** of pixels empty and `:ngp` **64.4 %**. Each puts a
+cell's whole contribution at a single point, so the gaps between cell centres receive nothing and
+the map acquires a texture that belongs to the grid rather than to the galaxy. `:overlap` spreads
+each cell over the area its shadow actually covers and leaves **no** pixel empty at any pixel size.
 
-The table above tells you which regime you are in: divide the local cell size by your `pxsize`.
+**And the number that justifies the default.** Against `:exact`, the analytic footprint integral,
+`:overlap` agrees to a **median 0.0005 dex** per pixel (99th percentile 0.005, worst pixel 0.033;
+mass-weighted mean 0.0009 dex) — a 0.1 % effect, for roughly a third of the cost. The point-deposit
+kernels differ from the same reference by a **median 1.3 dex**, a factor of 20, on the pixels they
+do fill. That is the whole case for the default in two numbers, and it is why `:exact` gets no
+panel above: it would be indistinguishable from `:overlap` by eye.
+
+The level table tells you which regime you are in: divide the local cell size by your `pxsize`.
 Below about one pixel per cell, any kernel will do; well above it, only the footprint methods are
 honest.
 
