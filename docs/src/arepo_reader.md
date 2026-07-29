@@ -27,7 +27,7 @@ using Mera
 info = getinfo(59, "/data/TNG/halo_59")     # prints "Code: AREPO" + redshift/H0/Ω for a cosmological run
 gas  = getparticles(info; families=[0])      # PartType0 gas → :x,:y,:z,:vx,:vy,:vz,:mass,:id,:family + cell fields
 
-msum(gas, :Msol); getvar(gas, :T)            # the usual particle analysis, unchanged
+msum(gas, :Msol); getvar(gas, :T, :K)        # the usual particle analysis, unchanged
 ```
 
 `:family` is the particle type (0 gas, 1 DM, 4 stars, 5 BH); `families=` restricts the load.
@@ -56,7 +56,8 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 
 ```julia
 getvar(gas, :rho, :g_cm3)        # physical density
-getvar(gas, :T)                  # temperature [K] — matches the official TNG formula
+getvar(gas, :T, :K)              # temperature [K] — matches the official TNG formula
+                                 # (bare `getvar(gas, :T)` is code units, as for :p/:cs)
 getvar(gas, :metallicity)        # metal mass fraction
 getvar(gas, :bmag, :muG)         # |B| [μG]; also :pmag (:Ba), :beta, :v_alfven (:km_s), :mach_alfven/fast/slow
 pdf(gas, :rho); profile(gas, :r_sphere, :T)   # PDFs / radial profiles on the gas
