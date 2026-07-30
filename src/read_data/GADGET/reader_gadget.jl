@@ -228,11 +228,31 @@ never accumulates in memory (the RAMSES/grid [`getparticles`](@ref) convention).
 Multi-file snapshots (`snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, optionally inside `snapdir_NNN/` —
 the IllustrisTNG layout) are read chunk by chunk with the window applied per chunk.
 """
-function getparticles_gadget(info::InfoType; families=:all,
+function getparticles_gadget(info::InfoType; families=:all, vars=:all,
                              xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                              center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
     fns = _gadget_files(round(Int, info.output), info.path)
     want = families === :all ? collect(0:5) : collect(families)
+    # `vars` restricts which STORED gas-cell columns are read. The base columns
+    # (:x,:y,:z,:vx,:vy,:vz,:mass,:id,:family) always load — they define the object. Reading every
+    # gas field of a large snapshot is the dominant memory cost: 17.8 M CAMELS cells × 21 columns
+    # is 2.8 GB, versus 0.5 GB for positions and mass alone. Derived quantities need their inputs:
+    # :volume needs :rho, and getvar(:T)/(:p)/(:cs) need :u (plus :ne for the μ correction).
+    keepvar = if vars === :all
+        nothing
+    else
+        req = Set{Symbol}(vars)
+        known = Set{Symbol}((sym for (_, sym) in _GADGET_GAS_FIELDS))
+        union!(known, (:bx, :by, :bz, :volume))
+        bad = setdiff(req, known)
+        isempty(bad) || throw(ArgumentError(
+            "getparticles_gadget: unknown vars $(sort(collect(bad))). Selectable gas columns are " *
+            "$(sort(collect(known))); the base columns (:x,:y,:z,:vx,:vy,:vz,:mass,:id,:family) " *
+            "always load. Derived quantities need their inputs — :T/:p/:cs need :u (and :ne for μ)."))
+        :volume in req && push!(req, :rho)   # :volume is derived as mass/ρ, so :rho must be read
+        req
+    end
+    _wanted(sym) = keepvar === nothing || sym in keepvar
     ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
     bl = info.boxlen
     x = Float64[]; y = Float64[]; z = Float64[]; vx = Float64[]; vy = Float64[]; vz = Float64[]
@@ -247,10 +267,11 @@ function getparticles_gadget(info::InfoType; families=:all,
             found = h5open(fn, "r") do f
                 haskey(f, "PartType0") || return false
                 for (ds, sym) in _GADGET_GAS_FIELDS
-                    haskey(f["PartType0"], ds) && (push!(gascols, (ds, sym)); gas[sym] = Float64[])
+                    haskey(f["PartType0"], ds) && _wanted(sym) &&
+                        (push!(gascols, (ds, sym)); gas[sym] = Float64[])
                 end
                 # MagneticField (AREPO/TNG MHD) is a (3,N) vector → :bx,:by,:bz columns
-                if haskey(f["PartType0"], "MagneticField")
+                if haskey(f["PartType0"], "MagneticField") && any(_wanted, (:bx, :by, :bz))
                     has_bfield = true
                     gas[:bx] = Float64[]; gas[:by] = Float64[]; gas[:bz] = Float64[]
                 end
