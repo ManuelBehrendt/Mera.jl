@@ -753,11 +753,16 @@ function _make_points(obj::HydroPartType, field::Symbol; threshold::Real,
                       threshold_unit::Symbol=:standard, pos_unit::Symbol=:kpc, mass_unit::Symbol=:Msol,
                       mask=[false], need_energy::Bool=false, egrav::Symbol=:approx, direct_max::Int=2000,
                       softening::Real=0.0, need_velocity::Bool=false)
-    # particles have no gas density: the default field=:rho is meaningless for them — fail with a clear
-    # hint rather than a cryptic getvar error deep in the read.
+    # Collisionless particles have no gas density, so the default field=:rho is meaningless for them
+    # — fail with a clear hint rather than a cryptic getvar error deep in the read. Gate on whether
+    # the column is actually THERE, not on the type: AREPO/GADGET gas cells are a PartDataType and do
+    # carry a real :rho, and density-threshold clump finding is the primary use of clumpfind.
     obj isa PartDataType && field === :rho &&
-        throw(ArgumentError("clumpfind on particles: field=:rho is a gas quantity; use field=:mass " *
-                            "(or another particle field) and a matching threshold."))
+        !(:rho in propertynames(getfield(obj, :data).columns)) &&
+        throw(ArgumentError("clumpfind on particles: field=:rho is a gas quantity and this object " *
+                            "has no :rho column; use field=:mass (or another particle field) with a " *
+                            "matching threshold. Gas cells from AREPO/GADGET do carry :rho — load " *
+                            "them with getparticles(info; families=[0]) (and vars including :rho)."))
     f = getvar(obj, field, threshold_unit)
     pos = getvar(obj, [:x, :y, :z], pos_unit)
     m = getvar(obj, :mass, mass_unit)

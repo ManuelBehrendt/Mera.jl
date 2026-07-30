@@ -160,7 +160,9 @@ return PartMapsType
 ##### Predefined/Optional Keywords:
 - **`unit(s)`:** return the variable in given units
 - **`pxsize``:** creates maps with the given pixel size in physical/code units (dominates over: res, lmax) : pxsize=[physical size (Number), physical unit (Symbol)]
-- **`res`** create maps with the given pixel number for each deminsion; if res not given by user -> lmax is selected; (pixel number is related to the full boxsize)
+- **`res`**: pixel count per dimension **across the whole box** (so the pixel size is
+  `boxlen/res`); if not given, `lmax` selects it as `2^lmax`. A *windowed* projection therefore
+  returns only the pixels the window covers — use `pxsize=[size, unit]` for a window-sized map.
 - **`lmax`:** create maps with 2^lmax pixels for each dimension
 - **`xrange`:** the range between [xmin, xmax] in units given by argument `range_unit` and relative to the given `center`; zero length for xmin=xmax=0. is converted to maximum possible length
 - **`yrange`:** the range between [ymin, ymax] in units given by argument `range_unit` and relative to the given `center`; zero length for ymin=ymax=0. is converted to maximum possible length

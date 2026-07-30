@@ -8,6 +8,7 @@
 # ==============================================================================
 
 import Mera.HDF5: h5open, create_group, attributes
+using Statistics: quantile
 
 # write a minimal GADGET HDF5: 2 DM (PartType1, mass via MassTable) + 3 stars (PartType4, per-mass)
 function _write_gadget(fn)
@@ -712,6 +713,17 @@ end
             for q in (:level, :cellsize)
                 @test_throws KeyError getvar(g, q)
             end
+
+            # (6b) density-threshold clumpfind must WORK on AREPO gas. The guard used to refuse
+            # field=:rho for any PartDataType, on the assumption that particles are collisionless;
+            # gas cells are a PartDataType that does carry a real :rho, and a density threshold is
+            # the primary use of clumpfind. Collisionless data with no :rho is still refused.
+            let thr = quantile(getvar(g, :rho), 0.995)
+                cat = clumpfind(g, :rho; threshold=thr, linking_length=2.0, pos_unit=:kpc)
+                @test cat isa Mera.ClumpCatalog && length(cat) > 0
+            end
+            @test_throws ArgumentError clumpfind(getparticles_gadget(info; families=[1], verbose=false),
+                                                :rho; threshold=1.0, linking_length=1.0)
 
             # (7) THE Voronoi tiling invariant: sum of cell volumes == box volume, the moving-mesh
             # analogue of test/59's octree check. Needs the FULL box (17.8 M cells, ~2.7 GB peak),
