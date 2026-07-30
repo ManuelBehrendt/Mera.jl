@@ -69,6 +69,60 @@ part = getparticles(info; xrange=[-0.1, 0.1], yrange=[-0.1, 0.1], zrange=[-0.1, 
 The result equals a full load filtered by `getvar(:x)`, and the window is recorded in `part.ranges`.
 Combine with `families=` (on the frontend) to load, say, only the stars in a region.
 
+### Selecting which columns are read
+
+Gas cells carry many fields, and reading all of them is usually the dominant memory cost. `vars=`
+limits the load to the ones you need:
+
+```julia
+gas = getparticles_gadget(info; families=[0], vars=[:rho, :u, :ne])   # + the base columns
+```
+
+The nine **base columns** (`:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family`) always load — they
+define the object. `vars` selects among the *stored* gas fields (`:rho, :u, :ne, :metallicity,
+:sfr, :nh, :mach, :gpot, :bx, :by, :bz`) plus `:volume`, which is derived from `:rho` and pulls it
+in automatically. Omit `vars` (or pass `:all`) for everything present.
+
+Measured on a 16-chunk CAMELS snapshot, same rows each time:
+
+| load | columns | memory | time |
+|---|---|---|---|
+| `vars=:all` (default) | 21 | 120.2 MB | 5.7 s |
+| `vars=[:rho]` | 11 | 60.6 MB | 2.4 s |
+| `vars=Symbol[]` | 9 | 50.6 MB | 1.5 s |
+
+Derived quantities need their inputs: `getvar(:T)`, `:p` and `:cs` are computed from `:u` (and
+`:T` uses `:ne` for the μ correction), so a load without `:u` raises a clear error naming what is
+missing rather than failing later. An unknown symbol in `vars` is rejected immediately, listing
+the valid ones.
+
+### Multi-file (chunked) snapshots
+
+Large runs split one snapshot across `snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, usually inside a
+`snapdir_NNN/` directory. Mera resolves the whole set and streams it **chunk by chunk**, so a
+windowed load never holds more than one chunk at a time. Nothing extra is required — point
+`getinfo` at the run directory, the `snapdir_NNN/`, or any single chunk (its siblings are gathered
+automatically):
+
+```julia
+info = getinfo(24, "/path/to/run")                    # finds snapdir_024/, all 16 chunks
+gas  = getparticles_gadget(info; families=[0])        # every chunk, one table
+```
+
+Two properties of real snapshots that this has to get right, and which single-file fixtures cannot
+exercise:
+
+- **A particle type may be absent from chunk 0.** Field discovery therefore scans forward until it
+  finds a chunk that carries the type, rather than assuming chunk 0 is representative. (The
+  reference reader `illustris_python` does the same.) Verified on a CAMELS snapshot whose
+  `PartType1/4/5` appear only in later chunks — all load with their full counts.
+- **Counts above 2³² are split across two header fields.** `NumPart_Total` is combined with
+  `NumPart_Total_HighWord`, so a snapshot with 9.5 × 10⁹ gas cells reports that rather than the
+  truncated low word.
+
+The total is taken from the header, so for a full-box load the columns are sized once up front
+instead of grown per chunk.
+
 ## Worked example: the yt GadgetDiskGalaxy sample
 
 The [yt GadgetDiskGalaxy sample](https://yt-project.org/data/) is a `z ≈ 1.9` galaxy with ~11.9M
