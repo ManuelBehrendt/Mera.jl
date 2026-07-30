@@ -162,6 +162,7 @@ export
     redshift,
     cosmology,
     stellar_age,
+    age_from_aform,
     formation_redshift,
     formation_time,
     mean_matter_density,

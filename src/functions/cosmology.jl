@@ -243,6 +243,45 @@ function _time_unit_factor(info::InfoType, unit::Symbol)
     error("stellar_age: unsupported time unit :$unit (use :Gyr, :Myr, :yr, :s).")
 end
 
+# Physical age(s) in SECONDS for stars whose formation time is given as the SCALE FACTOR
+# a_form — the AREPO/IllustrisTNG convention (`GFM_StellarFormationTime`), as opposed to the
+# RAMSES super-conformal `:birth` handled above. Here a_form indexes the Friedmann table
+# directly, so no conformal-time step is needed. TNG marks WIND particles with a_form < 0;
+# those, and anything that would sit at or after the snapshot, return NaN rather than 0 so a
+# non-star cannot be mistaken for a star formed exactly now.
+function _age_from_aform_seconds(info::InfoType, aform::AbstractArray)
+    a, _, t = _friedman_tables(info.omega_m, info.omega_l, info.omega_k)
+    H0_cgs  = info.H0 * 1.0e5 / info.constants.Mpc          # 1/s
+    t_snap  = _interp_sorted(a, t, Float64(info.aexp))      # proper time at the snapshot [1/H0]
+    return [(!isfinite(af) || af <= 0.0) ? NaN :
+            max(0.0, (t_snap - _interp_sorted(a, t, Float64(af))) / H0_cgs) for af in aform]
+end
+
+"""
+    age_from_aform(info::InfoType, aform; unit::Symbol=:Gyr)
+
+Stellar age(s) for data whose formation time is stored as the **scale factor** `a_form`
+(AREPO / IllustrisTNG `GFM_StellarFormationTime`, exposed by Mera as `:aform`), rather than as
+the RAMSES super-conformal `:birth` used by [`stellar_age`](@ref).
+
+Wind particles — which TNG marks with `a_form < 0` — return `NaN`, as does any non-finite entry.
+
+!!! warning "`getvar(:age)` shows 0, not NaN, for wind particles"
+    `getvar` ends with a global NaN→0 sweep (it exists for `r = 0` singularities), so
+    `getvar(stars, :age)` reports **0** for wind particles rather than `NaN`, which reads as
+    "formed just now". Select real stars on the raw column — `getvar(stars, :aform) .> 0` — before
+    building ages or a star-formation history. Calling `age_from_aform` directly preserves the `NaN`.
+`unit` accepts `:Gyr` (default), `:Myr`, `:yr`, `:s`.
+
+```julia
+stars = getparticles(info; families=[4])
+ages  = age_from_aform(info, getvar(stars, :aform))          # [Gyr]
+```
+"""
+age_from_aform(info::InfoType, aform; unit::Symbol=:Gyr) =
+    _age_from_aform_seconds(info, aform isa AbstractArray ? aform : [Float64(aform)]) .*
+    _time_unit_factor(info, unit)
+
 """
     stellar_age(info::InfoType, birth; unit::Symbol=:Gyr)
 

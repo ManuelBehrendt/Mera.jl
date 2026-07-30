@@ -71,7 +71,7 @@ maximum(getvar(gas, :rho))                           # the usual analysis, uncha
 ```
 
 ```
-[Mera]: 2026-07-30T15:19:55.973
+[Mera]: 2026-07-30T16:38:01.152
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -135,7 +135,7 @@ length(gsub.data), length(ga.data)                   # sub-region ≪ full snaps
 ```
 
 ```
-[Mera]: 2026-07-30T15:20:13.215
+[Mera]: 2026-07-30T16:38:15.147
 Code: Athena++
 output: 5  time: 0.50111 [code units]
 root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
@@ -193,12 +193,11 @@ length(stars.data), msum(stars) > 0
 ```
 
 ```
-[Mera]: 2026-07-30T15:20:46.024
+[Mera]: 2026-07-30T16:38:42.654
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
-particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH
-  (total 11907080)
+particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
 -------------------------------------------------------
 [Mera]: GADGET particles = 450921, families 4
   (x,y,z,vx,vy,vz,mass,id,family)
@@ -224,7 +223,7 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
 ```
-[Mera]: 2026-07-30T15:20:52.092
+[Mera]: 2026-07-30T16:38:46.685
 Code: AREPO
 output: 59  time: 1.0  redshift: 0.0
 boxlen = 205000.0
@@ -250,8 +249,7 @@ println("gas mass [Msol]: ", msum(gas, :Msol))
 
 ```
 median T [K]   : 1.436872560859919e7
-median Z       :
-0.001993876649066806
+median Z       : 0.001993876649066806
 gas mass [Msol]: 4.6930995577059625e13
 ```
 
@@ -323,7 +321,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-30T15:21:32.769
+[Mera]: 2026-07-30T16:39:20.698
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -331,7 +329,7 @@ particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
 -------------------------------------------------------
 [Mera]: GADGET particles = 12865831, families 0
   (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
-[Mera]: 2026-07-30T15:21:39.775
+[Mera]: 2026-07-30T16:39:25.045
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -340,7 +338,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 Effective resolution: 256^2
 Pixel size: 156.246 [kpc]
 Simulation min.: 19.999 [Mpc]
-[Mera]: 2026-07-30T15:22:46.256
+[Mera]: 2026-07-30T16:40:14.055
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -422,7 +420,7 @@ end
 ```
 
 ```
-[Mera]: 2026-07-30T15:26:22.207
+[Mera]: 2026-07-30T16:42:44.810
 Code: AREPO
 output: 24  time: 0.20016  redshift: 3.996
 boxlen = 200000.0
@@ -434,11 +432,76 @@ z = 3.996   h = 0.5001
 vars=:all
 21 columns  120.2 MB
 vars=[:rho,:u,:ne]  13 columns  72.5 MB
-stars (absent from chunk 0): 136 particles
+stars (absent from chunk 0):
+136 particles
 gas cells    :
 17755754
 Σ V / boxlen³ = 1.0
 clumps above the 99.5th density percentile: 1416
+```
+
+### Stellar ages — step by step
+
+TNG records when a star formed as `GFM_StellarFormationTime`, which is the **scale factor** *a* at
+formation, not a time. Mera exposes it as `:aform` — deliberately *not* as the RAMSES `:birth`,
+which is super-conformal time. They play the same role but are different quantities, so
+`getvar(:birth)` on AREPO data raises rather than silently reinterpreting the number.
+
+From `:aform` two things follow directly:
+
+| quantity | meaning |
+|---|---|
+| `getvar(stars, :aform)` | the scale factor at formation (raw; **negative marks a wind particle**) |
+| `getvar(stars, :zform)` | formation redshift, `1/a − 1` |
+| `getvar(stars, :age, :Gyr)` | `t(a_snap) − t(a_form)` from the Friedmann table |
+
+**One caveat worth knowing before you plot anything.** TNG flags wind particles with `a_form < 0`.
+`getvar` finishes with a global NaN→0 pass (it exists for `r = 0` singularities), so those show up
+as `age = 0` — which looks like "formed just now" and would distort a star-formation history.
+Always select real stars on the raw column first: `getvar(stars, :aform) .> 0`.
+
+```julia
+tngpath = joinpath(base, "AREPO/TNGHalo/TNGHalo/halo_59.hdf5")
+if isfile(tngpath)
+    ti    = getinfo(59, tngpath, verbose=false)
+    stars = getparticles(ti; families=[4], verbose=false)
+
+    # 1. the raw formation scale factor — and the wind marker
+    aform = getvar(stars, :aform)
+    real  = aform .> 0                                    # wind particles have a_form < 0
+    println("stars ", length(aform), "   wind ", count(!, real), "   real ", count(real))
+
+    # 2. formation redshift and age follow from it
+    zform = getvar(stars, :zform)[real]
+    age   = getvar(stars, :age, :Gyr)[real]
+    println("z_form : median ", round(median(zform), digits=2), "   max ", round(maximum(zform), digits=2))
+    println("age    : median ", round(median(age), digits=2), " Gyr   oldest ", round(maximum(age), digits=2), " Gyr")
+
+    # 3. two independent checks that the conversion is right
+    println("z_form == 1/a - 1 : ", all(zform .≈ (1 ./ aform[real] .- 1)))
+    ord = sortperm(aform[real])
+    println("age decreases with a_form : ", issorted(age[ord], rev=true))
+
+    # 4. a star-formation history — the reason to want any of this
+    edges = 0:0.5:ceil(maximum(age))
+    mass  = getvar(stars, :mass, :Msol)[real]
+    sfh   = [sum(mass[(age .>= edges[k]) .& (age .< edges[k+1])]) for k in 1:length(edges)-1]
+    println("stellar mass formed in the last 1 Gyr: ", round(sum(sfh[1:2]), sigdigits=4), " Msol")
+else
+    println("TNGHalo fixture not present — skipping")
+end
+```
+
+```
+stars 533034
+   wind 96   real 532938
+z_form : median
+2.02   max 13.54
+age    : median 10.54 Gyr   oldest 13.49 Gyr
+z_form == 1/a - 1 : true
+age decreases with a_form :
+true
+stellar mass formed in the last 1 Gyr: 2.431e10 Msol
 ```
 
 

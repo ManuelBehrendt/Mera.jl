@@ -23,6 +23,12 @@ const _GADGET_FAMILY = Dict(0=>"gas", 1=>"halo/DM", 2=>"disk", 3=>"bulge", 4=>"s
 # 1-D gas-cell fields (AREPO/TNG PartType0) exposed as columns: HDF5 dataset => Mera symbol.
 # Only those actually present in a given snapshot are read (illustris_python-style field selection).
 # :gpot carries an a⁻¹ comoving→physical factor (applied after read); :nh/:mach are dimensionless.
+# Star (PartType4) fields. GFM_StellarFormationTime is the SCALE FACTOR at which the star formed
+# (not a time), so it is exposed under its own name :aform rather than reusing the RAMSES :birth,
+# which is super-conformal time — see getvar(:age)/:zform and `age_from_aform`. TNG marks WIND
+# particles with a_form < 0; the value is stored raw so that marker stays visible.
+const _GADGET_STAR_FIELDS = (("GFM_StellarFormationTime", :aform),)
+
 const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
                             ("GFM_Metallicity", :metallicity), ("StarFormationRate", :sfr),
                             ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach),
@@ -176,6 +182,13 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             haskey(g0, "Density")        && push!(info.particles_variable_list, :volume)
             haskey(g0, "InternalEnergy") && push!(info.particles_variable_list, :T)
         end
+        if haskey(f, "PartType4")                       # stars: formation scale factor + derived
+            g4 = f["PartType4"]
+            for (ds, sym) in _GADGET_STAR_FIELDS
+                haskey(g4, ds) && push!(info.particles_variable_list, sym)
+            end
+            haskey(g4, "GFM_StellarFormationTime") && append!(info.particles_variable_list, [:age, :zform])
+        end
         info.rt_variable_list = Symbol[]; info.clumps_variable_list = Symbol[]; info.sinks_variable_list = Symbol[]
         info.ncpu = 1
         info.mtime = Dates.unix2datetime(round(Int, mtime(fn))); info.ctime = info.mtime
@@ -273,6 +286,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
     else
         req = Set{Symbol}(vars)
         known = Set{Symbol}((sym for (_, sym) in _GADGET_GAS_FIELDS))
+        union!(known, (sym for (_, sym) in _GADGET_STAR_FIELDS))
         union!(known, (:bx, :by, :bz, :volume))
         bad = setdiff(req, known)
         isempty(bad) || throw(ArgumentError(
@@ -325,6 +339,21 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
             for v in values(gas); sizehint!(v, ntot); end
         end
     end
+    # star-cell fields (PartType4). Same forward-scan as the gas block: a chunk may not carry stars.
+    starcols = Tuple{String,Symbol}[]
+    if 4 in want
+        for fn in fns
+            found = h5open(fn, "r") do f
+                haskey(f, "PartType4") || return false
+                for (ds, sym) in _GADGET_STAR_FIELDS
+                    haskey(f["PartType4"], ds) && _wanted(sym) &&
+                        (push!(starcols, (ds, sym)); gas[sym] = Float64[])
+                end
+                return true
+            end
+            found && break
+        end
+    end
     # chunk-by-chunk streaming: each file is read and windowed independently, so a spatial
     # sub-selection of a large multi-file snapshot never holds more than one chunk in memory
     for fn in fns
@@ -353,6 +382,14 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
             end
             _fill_ids!(id, off, read(f[grp]["ParticleIDs"]), keep)
             _fill_const!(fam, off, Int32(pt), nkeep)
+            # star fields: real values on PartType4 rows, NaN elsewhere (columns stay aligned)
+            for (ds, sym) in starcols
+                if pt == 4 && haskey(f[grp], ds)
+                    _fill_col!(gas[sym], off, read(f[grp][ds]), keep)
+                else
+                    _fill_const!(gas[sym], off, NaN, nkeep)
+                end
+            end
             # gas-cell fields: real values for gas, NaN for every other family (columns stay aligned)
             for (ds, sym) in gascols
                 if pt == 0 && haskey(f[grp], ds)
@@ -399,6 +436,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
     # deterministic column order: base columns, then gas fields in catalogue order, then :volume
     gasnames = Symbol[]
     for (_, sym) in _GADGET_GAS_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
+    for (_, sym) in _GADGET_STAR_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
     for s in (:bx, :by, :bz); haskey(gas, s) && push!(gasnames, s); end
     haskey(gas, :volume) && push!(gasnames, :volume)
     cols  = Any[x, y, z, vx, vy, vz, mass, id, fam]; append!(cols, (gas[s] for s in gasnames))
