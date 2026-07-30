@@ -480,7 +480,11 @@ return AMRMapsType
   - Single variables use optimized sequential processing
 
 #### Grid Resolution Control:
-- **`res::Union{Real, Missing}`**: Pixel count per dimension (e.g., res=512 → 512×512 grid)
+- **`res::Union{Real, Missing}`**: pixel count per dimension **across the whole box**, so the
+  pixel size is `boxlen/res` and a *windowed* projection returns only the pixels the window
+  covers (a ±5 kpc window in a 100 kpc box at `res=64` gives an 8×8 map, not 64×64). This is
+  why `res` pairs with `lmax` (`res = 2^lmax`). Use `pxsize=[size, unit]` to set the pixel
+  size directly and get a window-sized map.
   - Higher values increase precision but require more memory
   - Recommended: 256-1024 for most applications
 - **`lmax::Real`**: Use 2^lmax pixels when res not specified (default: dataobject.lmax)
