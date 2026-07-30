@@ -233,8 +233,8 @@ function _gadget_keep(coords::AbstractArray{<:Real,2}, bl::Float64, ranges)
 end
 
 """
-    getparticles_gadget(info::InfoType; families=:all, xrange, yrange, zrange, center,
-                        range_unit, verbose=true) -> PartDataType
+    getparticles_gadget(info::InfoType; families=:all, vars=:all, xrange, yrange, zrange,
+                        center, range_unit, verbose=true) -> PartDataType
 
 Read the particles of a GADGET HDF5 snapshot described by `info` (from [`getinfo_gadget`](@ref))
 into a `PartDataType` with columns `(:x,:y,:z, :vx,:vy,:vz, :mass, :id, :family)`. `:family` is the
@@ -245,8 +245,18 @@ subset with `families` (e.g. `families=[4]` for stars, `[1,4]` for DM+stars).
 particles outside it are dropped **per type as they are read**, so a sub-region of a large snapshot
 never accumulates in memory (the RAMSES/grid [`getparticles`](@ref) convention).
 
+`vars` limits which **stored gas columns** are read — the usual dominant memory cost on a large
+snapshot. The nine base columns above always load; `vars` selects among `:rho, :u, :ne,
+:metallicity, :sfr, :nh, :mach, :gpot, :bx, :by, :bz` and `:volume` (derived from `:rho`, which it
+pulls in automatically). On a 16-chunk CAMELS snapshot: 21 columns 120 MB, `vars=[:rho]` 61 MB,
+`vars=Symbol[]` 51 MB. Derived quantities need their inputs — `getvar(:T)`, `:p` and `:cs` come
+from `:u` — and say so clearly if it was not loaded. An unknown symbol is rejected immediately.
+
 Multi-file snapshots (`snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, optionally inside `snapdir_NNN/` —
-the IllustrisTNG layout) are read chunk by chunk with the window applied per chunk.
+the IllustrisTNG layout) are read chunk by chunk with the window applied per chunk. A particle
+type may be **absent from chunk 0**, so field discovery scans forward for a chunk that carries it;
+counts above 2³² are combined from `NumPart_Total` and `NumPart_Total_HighWord`. Without a spatial
+window the columns are sized from the header once, rather than grown per chunk.
 """
 function getparticles_gadget(info::InfoType; families=:all, vars=:all,
                              xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
