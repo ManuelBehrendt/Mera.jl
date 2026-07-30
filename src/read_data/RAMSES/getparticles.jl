@@ -205,8 +205,12 @@ function getparticles( dataobject::InfoType;
     rdr = _reader_by_simcode(dataobject.simcode)
     if rdr !== nothing && rdr.code !== :ramses
         haskey(rdr.funcs, :particles) || _capability_error(rdr, :particles, "getparticles")
+        # `vars` is a NAMED parameter here, so it never reaches `kwargs...` — forwarding only
+        # `kwargs` would silently drop it and hand back every column. Translate the RAMSES spelling
+        # (`[:all]`, a vector) to the frontend's (`:all`, a symbol) on the way through.
         return rdr.funcs[:particles](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
-                                     center=center, range_unit=range_unit, verbose=verbose, kwargs...)
+                                     center=center, range_unit=range_unit, verbose=verbose,
+                                     vars=(vars == [:all] ? :all : vars), kwargs...)
     end
     isempty(kwargs) || error("[Mera]: getparticles: unsupported keyword argument(s) for RAMSES data: " *
                              join(keys(kwargs), ", ") * ".")
