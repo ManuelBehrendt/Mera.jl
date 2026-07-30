@@ -653,6 +653,47 @@ end
             @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/AREPO/ArepoBullet/)"
         end
     end
+    # Stellar formation time. TNG stores GFM_StellarFormationTime = the SCALE FACTOR a_form, not a
+    # time, so it is exposed as :aform rather than reusing the RAMSES :birth (super-conformal time)
+    # — different quantities that must not be interchanged. :age and :zform derive from it.
+    @testset "stellar :aform → :age / :zform (AREPO convention)" begin
+        tng = joinpath(SIMULATION_PATH, "AREPO", "TNGHalo", "TNGHalo", "halo_59.hdf5")
+        if isfile(tng)
+            info = getinfo_gadget(59, tng, verbose=false)
+            @test :aform in info.particles_variable_list
+            @test all(q -> q in info.particles_variable_list, (:age, :zform))
+            st = getparticles_gadget(info; families=[4], verbose=false)
+            @test :aform in st.selected_partvars
+
+            af = getvar(st, :aform)
+            real = af .> 0
+            @test count(real) > 0 && count(!, real) > 0      # both stars and wind present
+
+            zf = getvar(st, :zform)
+            @test all(zf[real] .≈ (1 ./ af[real] .- 1))       # z = 1/a − 1, exactly
+
+            ag = getvar(st, :age, :Gyr)
+            @test all(isfinite, ag[real]) && all(ag[real] .>= 0)
+            @test maximum(ag[real]) < 14.0                    # younger than the universe
+            # older stars formed earlier: age must decrease monotonically with a_form
+            o = sortperm(af[real])
+            @test issorted(ag[real][o], rev=true)
+            # the public helper agrees with the getvar path
+            @test age_from_aform(info, af[real][1:5]; unit=:Gyr) ≈ ag[real][1:5]
+            # …and it preserves NaN for wind, which getvar's global NaN→0 sweep turns into 0
+            @test all(isnan, age_from_aform(info, af[.!real][1:3]))
+
+            # :birth must be REFUSED, not silently reinterpreted as conformal time
+            @test_throws ArgumentError getvar(st, :birth)
+
+            # vars= reaches the star column too
+            sel = getparticles_gadget(info; families=[4], vars=[:aform], verbose=false)
+            @test :aform in sel.selected_partvars && getvar(sel, :aform) == af
+        else
+            @test_skip "TNGHalo fixture not present"
+        end
+    end
+
     # PART D (data-backed): the AREPO/Voronoi DATA MODEL and general Mera functions on it, checked
     # on a real 16-chunk CAMELS zoom. Gas here is a Voronoi tessellation carried as a PartDataType
     # with a stored :volume — not an AMR octree — so the invariants differ from test/59's grid

@@ -94,6 +94,33 @@ function get_data(dataobject::PartDataType,
                                   select(masked_data, :vy).^2 .+
                                   select(masked_data, :vz).^2 ) .* selected_unit .^2
 
+        # --- stellar formation (AREPO/GADGET PartType4), from the formation SCALE FACTOR :aform ---
+        # TNG stores GFM_StellarFormationTime = a_form, not a time, so it is exposed as :aform and
+        # NOT as the RAMSES :birth (super-conformal time). Feeding one into the other's converter
+        # silently produces a wrong age, so :birth is refused here with a pointer rather than
+        # quietly reinterpreted.
+        #
+        # WIND PARTICLES: TNG marks them with a_form < 0. The helper returns NaN for them, but
+        # get_data ends with a global NaN→0 sweep (for r=0 singularities), so what a caller
+        # actually sees here is age = 0 — which reads as "formed just now" and would bias a star
+        # formation history. The reliable test is the raw column: keep only getvar(:aform) .> 0.
+        # `age_from_aform` called directly does preserve the NaN.
+        elseif (i in (:age, :zform, :formation_redshift)) && (:aform in column_names)
+            af = select(masked_data, :aform)
+            if i === :zform || i === :formation_redshift
+                vars_dict[i] = [(!isfinite(a) || a <= 0) ? NaN : 1/a - 1 for a in af]
+            else
+                _, unit_symbol = getunit(dataobject, :age, vars, units, uname=true)
+                vars_dict[i] = age_from_aform(dataobject.info, af; unit=unit_symbol)
+            end
+
+        elseif i === :birth && (:aform in column_names) && !(:birth in column_names)
+            throw(ArgumentError(
+                "getvar: this data stores the stellar formation SCALE FACTOR as :aform " *
+                "(GFM_StellarFormationTime), not the RAMSES super-conformal :birth — they are " *
+                "different quantities and must not be interchanged. Use getvar(:aform), or the " *
+                "derived getvar(:age, :Gyr) / getvar(:zform)."))
+
         # --- gas-cell thermodynamics (AREPO/GADGET PartType0), from specific internal energy :u ---
         # These are DERIVED from stored columns, so say plainly which column is missing rather than
         # letting the table throw `FieldError: type NamedTuple has no field u`. A load that narrowed
