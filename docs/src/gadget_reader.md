@@ -96,6 +96,21 @@ Derived quantities need their inputs: `getvar(:T)`, `:p` and `:cs` are computed 
 missing rather than failing later. An unknown symbol in `vars` is rejected immediately, listing
 the valid ones.
 
+!!! warning "`:T` is code units unless you ask for Kelvin"
+    Like `:p`, `:cs` and RAMSES hydro `:T`, `getvar(gas, :T)` returns **code units** and the unit
+    argument scales it: `getvar(gas, :T, :K)` for Kelvin. This matters most in filters, where the
+    default is also code units:
+
+    ```julia
+    filterdata(gas, Above(:T, 1e5))              # 1e5 in CODE units — probably not what you meant
+    filterdata(gas, Above(:T, 1e5; unit=:K))     # 1e5 K
+    ```
+
+    Earlier versions returned Kelvin from a bare `getvar(gas, :T)` on GADGET/AREPO gas and ignored
+    the unit argument, which also made projected temperature maps a factor `scale.K` too hot. The
+    convention is now consistent across data types, but a filter written against the old behaviour
+    will silently select a different set of cells rather than fail.
+
 ### Multi-file (chunked) snapshots
 
 Large runs split one snapshot across `snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, usually inside a

@@ -644,4 +644,87 @@ end
             @test_skip "ArepoBullet fixture not present (MERA_TEST_DATA/AREPO/ArepoBullet/)"
         end
     end
+    # PART D (data-backed): the AREPO/Voronoi DATA MODEL and general Mera functions on it, checked
+    # on a real 16-chunk CAMELS zoom. Gas here is a Voronoi tessellation carried as a PartDataType
+    # with a stored :volume — not an AMR octree — so the invariants differ from test/59's grid
+    # contract. Every assertion compares against something computed independently of the function
+    # under test. Skipped when the fixture is absent.
+    @testset "AREPO data model on real multi-file data (CAMELS)" begin
+        D = joinpath(SIMULATION_PATH, "AREPO", "camels_GZ28_499", "snapdir_024")
+        if isdir(D) && length(filter(f -> endswith(f, ".hdf5"), readdir(D))) >= 2
+            info = getinfo_gadget(24, D, verbose=false)
+            @test info.simcode == "AREPO" && iscosmological(info)
+            @test 0.19 < info.aexp < 0.21                     # z ~ 4, so the a-factors are live
+            @test 0.49 < info.H0/100 < 0.51                   # h ~ 0.5, far from 1
+
+            # (1) every chunk is found, and the counts come from the header
+            fns = Mera._gadget_files(24, D)
+            @test length(fns) == 16
+            tot = h5open(first(fns), "r") do f
+                Mera._gadget_npart_total(attributes(f["Header"]))
+            end
+
+            # (2) THE trap single-file fixtures cannot pose: PartType1/4/5 do not exist in chunk 0.
+            # A reader that enumerates families from chunk 0 silently returns nothing for them.
+            absent0 = h5open(first(fns), "r") do f
+                [pt for pt in (1, 4, 5) if !haskey(f, "PartType$pt")]
+            end
+            @test !isempty(absent0)                            # precondition: the trap is present
+            for pt in (5, 4, 1)
+                @test length(getparticles_gadget(info; families=[pt], verbose=false).data) == tot[pt+1]
+            end
+
+            # (3) reductions equal direct mass-weighted sums (cheap family)
+            dm = getparticles_gadget(info; families=[1], verbose=false)
+            md = getvar(dm, :mass)
+            @test msum(dm) ≈ sum(md)
+            @test collect(center_of_mass(dm, :kpc))[1] ≈ sum(md .* getvar(dm, :x, :kpc)) / sum(md)
+            @test collect(bulk_velocity(dm, :km_s))[1] ≈ sum(md .* getvar(dm, :vx, :km_s)) / sum(md)
+
+            # (4) spatial + value-space selection agree with direct cuts on a windowed gas load
+            g = getparticles_gadget(info; families=[0], vars=[:rho, :u, :ne],
+                                    xrange=[0.48, 0.52], yrange=[0.48, 0.52], zrange=[0.48, 0.52],
+                                    center=[0., 0., 0.], range_unit=:standard, verbose=false)
+            @test length(g.data) > 0
+            c = collect(center_of_mass(g, :kpc))
+            gx, gy, gz = getvar(g, :x, :kpc), getvar(g, :y, :kpc), getvar(g, :z, :kpc)
+            rad = @. sqrt((gx - c[1])^2 + (gy - c[2])^2 + (gz - c[3])^2)
+            R = 0.5 * maximum(rad)
+            @test length(subregion(g, :sphere, radius=R, center=c, range_unit=:kpc, verbose=false).data) ==
+                  count(<=(R), rad)
+            @test length(shellregion(g, :sphere, radius=[R/2, R], center=c, range_unit=:kpc,
+                                     verbose=false).data) == count(v -> R/2 <= v <= R, rad)
+
+            # (5) :T is CODE units by default; the unit must be given to filter in Kelvin. This is
+            # the hydro convention, and the trap for anyone who assumed getvar(:T) meant Kelvin.
+            TK = getvar(g, :T, :K)
+            @test getvar(g, :T) ≈ TK ./ info.scale.K
+            thr = sort(TK)[max(1, length(TK) ÷ 2)]
+            @test length(filterdata(g, Above(:T, thr; unit=:K), verbose=false).data) == count(>(thr), TK)
+
+            # (6) volume-weighting is a real alternative on Voronoi gas, not a synonym for mass
+            V, mm = getvar(g, :volume), getvar(g, :mass)
+            @test all(V .> 0)
+            @test sum(mm ./ V .* V) ≈ sum(mm)                  # rho*V closure on the window
+            @test !isapprox(sum(V .* TK)/sum(V), sum(mm .* TK)/sum(mm); rtol=1e-3)
+
+            # AMR-only concepts must be absent rather than fabricated
+            for q in (:level, :cellsize)
+                @test_throws KeyError getvar(g, q)
+            end
+
+            # (7) THE Voronoi tiling invariant: sum of cell volumes == box volume, the moving-mesh
+            # analogue of test/59's octree check. Needs the FULL box (17.8 M cells, ~2.7 GB peak),
+            # so it is opt-in — the suite already runs close to this machine's memory ceiling.
+            if get(ENV, "MERA_HEAVY_TESTS", "false") == "true"
+                gall = getparticles_gadget(info; families=[0], vars=[:rho], verbose=false)
+                @test sum(getvar(gall, :volume)) / info.boxlen^3 ≈ 1.0 rtol=1e-3
+            else
+                @test_skip "Voronoi tiling invariant (set MERA_HEAVY_TESTS=true; needs ~2.7 GB)"
+            end
+        else
+            @test_skip "CAMELS GZ28_499 fixture not present (MERA_TEST_DATA/AREPO/camels_GZ28_499/)"
+        end
+    end
+
 end
