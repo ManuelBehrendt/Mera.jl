@@ -95,6 +95,17 @@ function get_data(dataobject::PartDataType,
                                   select(masked_data, :vz).^2 ) .* selected_unit .^2
 
         # --- gas-cell thermodynamics (AREPO/GADGET PartType0), from specific internal energy :u ---
+        # These are DERIVED from stored columns, so say plainly which column is missing rather than
+        # letting the table throw `FieldError: type NamedTuple has no field u`. A load that narrowed
+        # the columns (`getparticles(...; vars=[...])`) is the usual reason it is absent.
+        elseif (i in (:T, :Temp, :Temperature, :p, :pressure, :cs, :sound_speed)) &&
+               !(:u in column_names)
+            throw(ArgumentError(
+                "getvar: :$i is derived from the specific internal energy :u, which this object " *
+                "does not carry. Reload including it — e.g. getparticles(info; vars=[:rho, :u, :ne]) " *
+                "— or omit `vars` to load every gas column. (:T also uses :ne for the μ correction; " *
+                "without it a neutral-primordial μ ≈ 1.22 is assumed.)"))
+
         elseif i == :T || i == :Temp || i == :Temperature
             # T = (γ-1)·u·μ·m_H/k_B. scale.T_mu maps code (p/ρ)=(γ-1)u → T/μ in KELVIN; μ from the
             # electron abundance :ne when present, else a neutral-primordial fallback (μ ≈ 1.22).

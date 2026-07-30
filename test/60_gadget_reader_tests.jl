@@ -231,6 +231,41 @@ end
         @test all(.!isnan.(rho[fam .== 0])) && all(isnan.(rho[fam .== 1]))
     end
 
+    # `vars=` narrows which STORED gas columns are read. Reading every field of a large snapshot is
+    # the dominant memory cost (17.8 M CAMELS cells x 21 columns = 2.8 GB vs 1.2 GB for the 9 base
+    # columns), and it is what illustris_python's `fields=` argument exists for.
+    @testset "vars= selects which gas columns are read" begin
+        fn = joinpath(dir, "snap_010.hdf5"); _write_gadget_gas(fn)
+        info = getinfo_gadget(10, dir, verbose=false)
+        base = (:x, :y, :z, :vx, :vy, :vz, :mass, :id, :family)
+
+        allv = getparticles_gadget(info; families=[0], verbose=false)
+        @test all(c -> c in allv.selected_partvars, (:rho, :u, :ne, :volume))
+
+        # base columns always load; no gas column does
+        none = getparticles_gadget(info; families=[0], vars=Symbol[], verbose=false)
+        @test Tuple(none.selected_partvars) == base
+        @test length(none.data) == length(allv.data)              # same rows, fewer columns
+
+        one = getparticles_gadget(info; families=[0], vars=[:rho], verbose=false)
+        @test Tuple(one.selected_partvars) == (base..., :rho, :volume)   # :volume derives from :rho
+        @test getvar(one, :rho) == getvar(allv, :rho)                    # identical values
+
+        # :volume is derived, so asking for it must pull :rho in
+        vol = getparticles_gadget(info; families=[0], vars=[:volume], verbose=false)
+        @test :rho in vol.selected_partvars && getvar(vol, :volume) == getvar(allv, :volume)
+
+        # a typo names the valid options instead of failing obscurely later
+        @test_throws ArgumentError getparticles_gadget(info; families=[0], vars=[:nope], verbose=false)
+
+        # derived thermodynamics say WHICH column is missing rather than throwing a table FieldError
+        for q in (:T, :p, :cs)
+            @test_throws ArgumentError getvar(one, q)
+        end
+        withu = getparticles_gadget(info; families=[0], vars=[:rho, :u, :ne], verbose=false)
+        @test getvar(withu, :T, :K) == getvar(allv, :T, :K)
+    end
+
     @testset "comoving→physical a/h conversion (cosmological run)" begin
         # cosmological gas snapshot: ΩΛ>0, Time = scale factor a, h<1
         fn = joinpath(dir, "snap_005.hdf5")
