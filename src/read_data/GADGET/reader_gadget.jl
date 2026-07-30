@@ -202,6 +202,26 @@ _gadget_row(a::AbstractArray{<:Real,2}, r::Int, keep) = Float64.(@view a[r, keep
 # read selected entries of a 1-D dataset (function barrier, as above)
 _gadget_col(a::AbstractVector{<:Real}, keep) = Float64.(@view a[keep])
 
+# ── in-place chunk writers ───────────────────────────────────────────────────────────────────
+# The loop below writes each chunk straight into its slice of the destination column. The earlier
+# form built one temporary Float64 column per field per chunk and `append!`ed it, which allocated
+# 2.75x the finished table. These take the typed source array as an argument, so the element loop
+# is a function barrier over concrete types (HDF5 `read` returns Any) — the same discipline the
+# Athena++ reader needed for its 15x speed-up.
+@inline function _fill_row!(dest::Vector{Float64}, off::Int, src::AbstractArray{<:Real,2}, r::Int, keep)
+    @inbounds for (i, k) in enumerate(keep); dest[off + i] = Float64(src[r, k]); end
+end
+@inline function _fill_col!(dest::Vector{Float64}, off::Int, src::AbstractVector{<:Real}, keep)
+    @inbounds for (i, k) in enumerate(keep); dest[off + i] = Float64(src[k]); end
+end
+@inline function _fill_const!(dest::Vector{T}, off::Int, v, n::Int) where {T}
+    val = convert(T, v)
+    @inbounds for i in 1:n; dest[off + i] = val; end
+end
+@inline function _fill_ids!(dest::Vector{Int64}, off::Int, src::AbstractVector{<:Integer}, keep)
+    @inbounds for (i, k) in enumerate(keep); dest[off + i] = Int64(src[k]); end
+end
+
 # indices of particles whose position lies in the (box-normalised) `ranges`
 function _gadget_keep(coords::AbstractArray{<:Real,2}, bl::Float64, ranges)
     idx = Int[]
@@ -307,20 +327,36 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
             keep = fullbox ? (1:size(coords, 2)) : _gadget_keep(coords, bl, ranges)    # spatial window
             isempty(keep) && continue
             nkeep = length(keep)
-            append!(x, _gadget_row(coords, 1, keep)); append!(y, _gadget_row(coords, 2, keep)); append!(z, _gadget_row(coords, 3, keep))
-            append!(vx, _gadget_row(vels, 1, keep)); append!(vy, _gadget_row(vels, 2, keep)); append!(vz, _gadget_row(vels, 3, keep))
-            m = haskey(f[grp], "Masses") ? Float64.(@view read(f[grp]["Masses"])[keep]) : fill(masstable[pt+1], nkeep)
-            append!(mass, m); append!(id, Int64.(@view read(f[grp]["ParticleIDs"])[keep])); append!(fam, fill(Int32(pt), nkeep))
+            # grow every column once, then write this chunk straight into [off+1 : off+nkeep].
+            # With `fullbox` the capacity is already exact (sizehint! above), so no reallocation.
+            off = length(x); newlen = off + nkeep
+            for c in (x, y, z, vx, vy, vz, mass); resize!(c, newlen); end
+            resize!(id, newlen); resize!(fam, newlen)
+            for c in values(gas); resize!(c, newlen); end
+
+            _fill_row!(x, off, coords, 1, keep); _fill_row!(y, off, coords, 2, keep); _fill_row!(z, off, coords, 3, keep)
+            _fill_row!(vx, off, vels, 1, keep);  _fill_row!(vy, off, vels, 2, keep);  _fill_row!(vz, off, vels, 3, keep)
+            if haskey(f[grp], "Masses")
+                _fill_col!(mass, off, read(f[grp]["Masses"]), keep)
+            else
+                _fill_const!(mass, off, masstable[pt+1], nkeep)          # per-type mass from the header
+            end
+            _fill_ids!(id, off, read(f[grp]["ParticleIDs"]), keep)
+            _fill_const!(fam, off, Int32(pt), nkeep)
             # gas-cell fields: real values for gas, NaN for every other family (columns stay aligned)
             for (ds, sym) in gascols
-                append!(gas[sym], (pt == 0 && haskey(f[grp], ds)) ? _gadget_col(read(f[grp][ds]), keep) : fill(NaN, nkeep))
+                if pt == 0 && haskey(f[grp], ds)
+                    _fill_col!(gas[sym], off, read(f[grp][ds]), keep)
+                else
+                    _fill_const!(gas[sym], off, NaN, nkeep)
+                end
             end
             if has_bfield
                 if pt == 0 && haskey(f[grp], "MagneticField")
                     B = read(f[grp]["MagneticField"])   # (3, N)
-                    append!(gas[:bx], _gadget_row(B, 1, keep)); append!(gas[:by], _gadget_row(B, 2, keep)); append!(gas[:bz], _gadget_row(B, 3, keep))
+                    _fill_row!(gas[:bx], off, B, 1, keep); _fill_row!(gas[:by], off, B, 2, keep); _fill_row!(gas[:bz], off, B, 3, keep)
                 else
-                    append!(gas[:bx], fill(NaN, nkeep)); append!(gas[:by], fill(NaN, nkeep)); append!(gas[:bz], fill(NaN, nkeep))
+                    for s in (:bx, :by, :bz); _fill_const!(gas[s], off, NaN, nkeep); end
                 end
             end
         end
