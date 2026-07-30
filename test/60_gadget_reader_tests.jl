@@ -256,6 +256,14 @@ end
         vol = getparticles_gadget(info; families=[0], vars=[:volume], verbose=false)
         @test :rho in vol.selected_partvars && getvar(vol, :volume) == getvar(allv, :volume)
 
+        # the GENERIC router must forward vars too: `vars` is a named parameter of the RAMSES
+        # getparticles, so it never reaches kwargs... and was silently dropped when delegating —
+        # getparticles(info; vars=[...]) handed back every column while the frontend honoured it.
+        gen = getparticles(info; families=[0], vars=[:rho], verbose=false)
+        @test Tuple(gen.selected_partvars) == Tuple(one.selected_partvars)
+        @test Tuple(getparticles(info; families=[0], verbose=false).selected_partvars) ==
+              Tuple(allv.selected_partvars)
+
         # a typo names the valid options instead of failing obscurely later
         @test_throws ArgumentError getparticles_gadget(info; families=[0], vars=[:nope], verbose=false)
 

@@ -33,7 +33,7 @@ base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (6), mismatched flags (10))
+[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (4), mismatched flags (10))
 SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
@@ -71,7 +71,7 @@ maximum(getvar(gas, :rho))                           # the usual analysis, uncha
 ```
 
 ```
-[Mera]: 2026-07-29T21:32:44.427
+[Mera]: 2026-07-30T15:19:55.973
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -135,7 +135,7 @@ length(gsub.data), length(ga.data)                   # sub-region ≪ full snaps
 ```
 
 ```
-[Mera]: 2026-07-29T21:32:55.750
+[Mera]: 2026-07-30T15:20:13.215
 Code: Athena++
 output: 5  time: 0.50111 [code units]
 root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
@@ -193,11 +193,12 @@ length(stars.data), msum(stars) > 0
 ```
 
 ```
-[Mera]: 2026-07-29T21:33:19.653
+[Mera]: 2026-07-30T15:20:46.024
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
-particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
+particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH
+  (total 11907080)
 -------------------------------------------------------
 [Mera]: GADGET particles = 450921, families 4
   (x,y,z,vx,vy,vz,mass,id,family)
@@ -223,7 +224,7 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
 ```
-[Mera]: 2026-07-29T21:33:22.678
+[Mera]: 2026-07-30T15:20:52.092
 Code: AREPO
 output: 59  time: 1.0  redshift: 0.0
 boxlen = 205000.0
@@ -277,7 +278,8 @@ println("v_Alfvén [km/s] : median ", round(sort(getvar(gas, :v_alfven, :km_s))[
 median |B| [μG] : 0.243
 plasma β        : median
 201.0  (≫1 ⇒ thermal-dominated)
-v_Alfvén [km/s] : median 43.0
+v_Alfvén [km/s] : median
+43.0
 ```
 
 ```julia
@@ -321,7 +323,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-29T21:33:51.654
+[Mera]: 2026-07-30T15:21:32.769
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -329,7 +331,7 @@ particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
 -------------------------------------------------------
 [Mera]: GADGET particles = 12865831, families 0
   (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
-[Mera]: 2026-07-29T21:33:55.797
+[Mera]: 2026-07-30T15:21:39.775
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -338,7 +340,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 Effective resolution: 256^2
 Pixel size: 156.246 [kpc]
 Simulation min.: 19.999 [Mpc]
-[Mera]: 2026-07-29T21:34:43.271
+[Mera]: 2026-07-30T15:22:46.256
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -367,6 +369,77 @@ fig2
 ```
 
 ![](multicode_examples_files/multicode_examples_22_1.png)
+
+### Multi-file snapshots, column selection, and the Voronoi tessellation
+
+Production AREPO runs split one snapshot across many files (`snapdir_NNN/snap_NNN.0.hdf5 …`). Mera
+resolves the set and streams it chunk by chunk — nothing extra to pass. Two properties of real
+chunked data matter, and neither can be reproduced by a single-file sample:
+
+- a particle type may be **absent from chunk 0**, so field discovery scans forward for a chunk that
+  carries it (the same thing `illustris_python` does);
+- particle counts above 2³² are split across `NumPart_Total` and `NumPart_Total_HighWord`.
+
+Below, a 16-chunk CAMELS zoom at *z* = 4. It also shows `vars=` — which limits *which* gas columns
+are read, usually the dominant memory cost — and the invariant that makes a moving mesh different
+from an AMR grid: **the Voronoi cells tile space exactly**, so their volumes sum to the box volume.
+
+```julia
+capath = joinpath(base, "AREPO/camels_GZ28_499/snapdir_024")
+if isdir(capath)
+    ci = getinfo(24, capath)                       # 16 chunks, resolved automatically
+    println("chunks found : ", length(Mera._gadget_files(24, capath)))
+    println("z = ", round(1/ci.aexp - 1, digits=3), "   h = ", round(ci.H0/100, digits=4))
+
+    # `vars=` selects which STORED gas columns are read; the 9 base columns always load
+    win = (families=[0], xrange=[0.48,0.52], yrange=[0.48,0.52], zrange=[0.48,0.52],
+           center=[0.,0.,0.], range_unit=:standard)
+    gall = getparticles(ci; win..., verbose=false)
+    gsel = getparticles(ci; win..., vars=[:rho, :u, :ne], verbose=false)
+    for (lbl, g) in (("vars=:all", gall), ("vars=[:rho,:u,:ne]", gsel))
+        println(rpad(lbl, 20), length(g.selected_partvars), " columns  ",
+                round(Base.summarysize(g.data)/2^20, digits=1), " MB")
+    end
+
+    # a type ABSENT from chunk 0 still loads with its full count (stars here)
+    st = getparticles(ci; families=[4], verbose=false)
+    println("stars (absent from chunk 0): ", length(st.data), " particles")
+
+    # the Voronoi tessellation TILES SPACE — the moving-mesh analogue of the AMR volume check.
+    # This needs every cell, so free it again straight away.
+    gfull = getparticles(ci; families=[0], vars=[:rho], verbose=false)
+    println("gas cells    : ", length(gfull.data))
+    println("Σ V / boxlen³ = ", round(sum(getvar(gfull, :volume))/ci.boxlen^3, digits=8))
+    gfull = nothing; GC.gc()
+
+    # density-threshold clump finding works on AREPO gas (:rho is a real stored column)
+    thr = quantile(getvar(gsel, :rho), 0.995)
+    cat = clumpfind(gsel, :rho; threshold=thr, linking_length=2.0, pos_unit=:kpc)
+    println("clumps above the 99.5th density percentile: ", length(cat))
+else
+    println("CAMELS fixture not present — skipping (see docs/src/gadget_reader.md)")
+end
+```
+
+```
+[Mera]: 2026-07-30T15:26:22.207
+Code: AREPO
+output: 24  time: 0.20016  redshift: 3.996
+boxlen = 200000.0
+snapshot chunks: 16
+particles: 17755754 gas, 692224 halo/DM, 17052784 disk, 17745008 bulge, 136 stars, 5 bndry/BH  (total 53245911)
+-------------------------------------------------------
+chunks found : 16
+z = 3.996   h = 0.5001
+vars=:all
+21 columns  120.2 MB
+vars=[:rho,:u,:ne]  13 columns  72.5 MB
+stars (absent from chunk 0): 136 particles
+gas cells    :
+17755754
+Σ V / boxlen³ = 1.0
+clumps above the 99.5th density percentile: 1416
+```
 
 
 ```@raw html
