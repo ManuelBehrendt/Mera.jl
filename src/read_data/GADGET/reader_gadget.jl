@@ -31,8 +31,14 @@ const _GADGET_STAR_FIELDS = (("GFM_StellarFormationTime", :aform),)
 
 const _GADGET_GAS_FIELDS = (("Density", :rho), ("InternalEnergy", :u), ("ElectronAbundance", :ne),
                             ("GFM_Metallicity", :metallicity), ("StarFormationRate", :sfr),
-                            ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach),
-                            ("Potential", :gpot))
+                            ("NeutralHydrogenAbundance", :nh), ("Machnumber", :mach))
+
+# Fields AREPO/GADGET write for EVERY particle type, not only gas. `Potential` used to sit in
+# _GADGET_GAS_FIELDS, which had two consequences: it was discovered only when gas was requested,
+# so `getparticles(info; families=[4])` had no :gpot column at all; and it was filled only for
+# pt == 0, so a mixed load gave stars and dark matter an all-NaN :gpot. AREPO/TNG write
+# `Potential` in every PartTypeN, so the data was there and silently discarded.
+const _GADGET_ANY_FIELDS = (("Potential", :gpot),)
 
 # does this HDF5 file look like GADGET? (a Header group carrying NumPart_Total)
 function _is_gadget_h5(fn::String)
@@ -189,6 +195,11 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
             end
             haskey(g4, "GFM_StellarFormationTime") && append!(info.particles_variable_list, [:age, :zform])
         end
+        # fields written for every family: advertise if ANY PartTypeN carries them
+        for (ds, sym) in _GADGET_ANY_FIELDS
+            any(pt -> haskey(f, "PartType$pt") && haskey(f["PartType$pt"], ds), 0:5) &&
+                push!(info.particles_variable_list, sym)
+        end
         info.rt_variable_list = Symbol[]; info.clumps_variable_list = Symbol[]; info.sinks_variable_list = Symbol[]
         info.ncpu = 1
         info.mtime = Dates.unix2datetime(round(Int, mtime(fn))); info.ctime = info.mtime
@@ -300,6 +311,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
         req = Set{Symbol}(vars)
         known = Set{Symbol}((sym for (_, sym) in _GADGET_GAS_FIELDS))
         union!(known, (sym for (_, sym) in _GADGET_STAR_FIELDS))
+        union!(known, (sym for (_, sym) in _GADGET_ANY_FIELDS))
         union!(known, (:bx, :by, :bz, :volume))
         bad = setdiff(req, known)
         isempty(bad) || throw(ArgumentError(
@@ -367,6 +379,21 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
             found && break
         end
     end
+    # all-family fields (e.g. Potential). Not gated on which families were asked for: the column
+    # is created if ANY requested family carries the dataset, and filled per-family below.
+    anycols = Tuple{String,Symbol}[]
+    for fn in fns
+        found = h5open(fn, "r") do f
+            hit = false
+            for (ds, sym) in _GADGET_ANY_FIELDS
+                any(pt -> pt in want && haskey(f, "PartType$pt") && haskey(f["PartType$pt"], ds), 0:5) || continue
+                _wanted(sym) || continue
+                push!(anycols, (ds, sym)); gas[sym] = Float64[]; hit = true
+            end
+            return hit
+        end
+        found && break
+    end
     # chunk-by-chunk streaming: each file is read and windowed independently, so a spatial
     # sub-selection of a large multi-file snapshot never holds more than one chunk in memory
     seen = zeros(Int64, 6)                 # particles of each type passed so far (global ordering)
@@ -424,6 +451,15 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
                     _fill_const!(gas[sym], off, NaN, nkeep)
                 end
             end
+            # all-family fields: real values wherever THIS family carries the dataset. No pt test —
+            # that is the whole point, and its absence is what made :gpot all-NaN off the gas.
+            for (ds, sym) in anycols
+                if haskey(f[grp], ds)
+                    _fill_col!(gas[sym], off, read(f[grp][ds]), keep)
+                else
+                    _fill_const!(gas[sym], off, NaN, nkeep)
+                end
+            end
             if has_bfield
                 if pt == 0 && haskey(f[grp], "MagneticField")
                     B = read(f[grp]["MagneticField"])   # (3, N)
@@ -464,6 +500,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     gasnames = Symbol[]
     for (_, sym) in _GADGET_GAS_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
     for (_, sym) in _GADGET_STAR_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
+    for (_, sym) in _GADGET_ANY_FIELDS; haskey(gas, sym) && push!(gasnames, sym); end
     for s in (:bx, :by, :bz); haskey(gas, s) && push!(gasnames, s); end
     haskey(gas, :volume) && push!(gasnames, :volume)
     cols  = Any[x, y, z, vx, vy, vz, mass, id, fam]; append!(cols, (gas[s] for s in gasnames))
