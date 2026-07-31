@@ -5,6 +5,7 @@
 **Analyze RAMSES simulations at scale — in pure Julia.**
 
 [![Version](https://img.shields.io/github/v/release/ManuelBehrendt/Mera.jl)](https://github.com/ManuelBehrendt/Mera.jl/releases)
+[![CI](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/ManuelBehrendt/Mera.jl/actions/workflows/CI.yml)
 [![Documentation](https://img.shields.io/badge/docs-stable%20release-blue.svg)](https://manuelbehrendt.github.io/Mera.jl/stable/)
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
@@ -131,7 +132,13 @@ using Pkg
 Pkg.add("Mera")
 ```
 
-**Requirements**: Julia 1.10+ (1.11+ recommended). **Platforms**: macOS (incl. Apple Silicon), Linux.
+**Requirements**: Julia 1.10 or newer — **1.12+ recommended**, for the faster compiler and the
+current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
+
+**Tested on every push**: Julia 1.10 (the minimum supported), 1.11 and 1.12 on Linux and macOS,
+plus 1.11 on Windows. CI runners have no access to simulation data, so they run the data-free
+tiers — the synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file
+round-trips. The full suite runs against real snapshots locally.
 
 ## One name, many types — multiple dispatch
 
