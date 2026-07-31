@@ -28,7 +28,8 @@ end
         @test capabilities(_registry_stub_info("RAMSES")) ==
               [:info, :hydro, :particles, :gravity, :rt, :clumps]
         @test capabilities(_registry_stub_info("PLUTO")) == [:info, :hydro, :particles]
-        @test capabilities(_registry_stub_info("AREPO")) == [:info, :particles]
+        # the GADGET-HDF5 family gained :groups (SUBFIND/FoF catalogue) — getgroups(info)
+        @test capabilities(_registry_stub_info("AREPO")) == [:info, :particles, :groups]
         @test capabilities(_registry_stub_info("Athena++")) == [:info, :hydro]
         # unknown simcode (e.g. from an old mera-file) falls back to RAMSES-native
         @test capabilities(_registry_stub_info("UNKNOWN_LEGACY")) ==
