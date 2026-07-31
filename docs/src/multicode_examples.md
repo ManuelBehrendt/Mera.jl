@@ -626,6 +626,125 @@ save/load round-trip: 984133
 ```
 
 
+### Masks, weighted statistics, and radial profiles
+
+Three more general functions, and the one place each of them can mislead you on this data.
+
+**`getmask` selects without copying.** `filterdata` returns a new Mera object — convenient, and a
+second copy of every column. `getmask` takes the same selector language and returns a plain
+`BitVector`, which `getvar`, `projection`, `wstat` and `profile` all accept as `mask=`. At a
+million cells that distinction is worth having; the check below confirms both routes select
+exactly the same cells.
+
+**`wstat` gives the whole distribution, not just a mean.** Mean, median, standard deviation,
+skewness and kurtosis come out of a single weighted pass. Note it reproduces the hand-rolled
+`sum(m.*T)/sum(m)` from the cell above — and that mass- and volume-weighting still answer
+different questions.
+
+**`profile` is only as good as its centre.** It bins any `getvar` quantity against any other, but
+on a zoom simulation the centre of mass of the loaded box is *not* the halo — here it sits 2.4 Mpc
+away, in the intergalactic medium. Profiled about the density peak the gas falls off over three
+decades; profiled about the centre of mass the inner bins are **empty** and the curve rises
+outward, which is a plot of the halo's surroundings rather than the halo. Both curves below come
+from the same `profile` call with one argument changed.
+
+
+```julia
+# --- getmask: the same selection as a BitVector, with no second copy of the data -------
+hotmask = getmask(gas, Above(:T, 1e5; unit=:K))
+println("getmask  -> ", typeof(hotmask), "  ", count(hotmask), " of ", length(hotmask), " cells")
+println("same cells as filterdata: ", count(hotmask) == length(hot.data))
+
+# --- wstat: mean, median, spread and shape in one weighted pass -----------------------
+T = getvar(gas, :T, :K); m = getvar(gas, :mass, :Msol); V = getvar(gas, :volume)
+sm = wstat(T, m)                    # mass-weighted
+sv = wstat(T, V)                    # volume-weighted
+sh = wstat(T, m, mask=hotmask)      # mass-weighted, hot gas only
+println("⟨T⟩ mass-wtd   ", round(sm.mean, sigdigits=5), " K   median ",
+        round(sm.median, sigdigits=5), " K   std ", round(sm.std, sigdigits=5))
+println("⟨T⟩ volume-wtd ", round(sv.mean, sigdigits=5), " K")
+println("⟨T⟩ hot only   ", round(sh.mean, sigdigits=5), " K")
+
+# --- profile: the centre you choose decides the answer --------------------------------
+rho  = getvar(gas, :rho, :g_cm3); ix = argmax(rho)
+peak = [getvar(gas,:x,:kpc)[ix], getvar(gas,:y,:kpc)[ix], getvar(gas,:z,:kpc)[ix]]
+println("density peak   [kpc] ", round.(peak, digits=1))
+println("centre of mass [kpc] ", round.(c, digits=1), "  → ",
+        round(sqrt(sum((peak .- c).^2)), digits=0), " kpc apart")
+
+pk = profile(gas, :r_sphere, :rho; center=peak, center_unit=:kpc,
+             xunit=:kpc, unit=:g_cm3, xrange=[5.,500.], nbins=10, scale=:log)
+cm = profile(gas, :r_sphere, :rho; center=c,    center_unit=:kpc,
+             xunit=:kpc, unit=:g_cm3, xrange=[5.,500.], nbins=10, scale=:log)
+println("about the peak: inner bin holds ", pk.count[1], " cells")
+println("about the COM : inner bin holds ", cm.count[1], " cells")
+
+fig = Figure(size=(600,400))
+ax  = Axis(fig[1,1], xscale=log10, yscale=log10, xlabel="r  [kpc]", ylabel="ρ  [g cm⁻³]",
+           title="Same profile call, two centres", xticks=([10,30,100,300],["10","30","100","300"]))
+band!(ax, pk.x, pk.quantiles[:,1], pk.quantiles[:,3], color=(:steelblue,0.20))
+lines!(ax, pk.x, pk.mean, color=:steelblue, linewidth=2.5, label="about the density peak")
+scatter!(ax, pk.x, pk.mean, color=:steelblue, markersize=8)
+lines!(ax, cm.x, cm.mean, color=:firebrick, linewidth=2.5, linestyle=:dash,
+       label="about the centre of mass")
+scatter!(ax, cm.x, cm.mean, color=:firebrick, markersize=8)
+axislegend(ax, position=:lb, framevisible=false)
+fig
+```
+
+```
+getmask  -> BitVector  13969 of 984133 cells
+same cells as filterdata: true
+⟨T⟩ mass-wtd   14557.0 K   median 11767.0 K   std 28303.0
+⟨T⟩ volume-wtd 11059.0 K
+⟨T⟩ hot only   404960.0 K
+density peak   [kpc] [39328.9, 38447.4, 41746.5]
+centre of mass [kpc] [40042.8, 39878.8, 39974.9]  → 2387.0 kpc apart
+about the peak: inner bin holds 33 cells
+about the COM : inner bin holds 0 cells
+```
+
+
+![](multicode_examples_files/multicode_examples_31_1.png)
+
+
+### What does not carry over
+
+`slice` and `covering_grid` are grid operations: they need a mesh with a level or index structure
+to cut along or sample onto. A Voronoi tessellation has neither — its cells are polyhedra of
+arbitrary shape and position — so these raise a `MethodError` rather than a Mera-level refusal.
+For a plane through AREPO gas, project a thin slab instead (`zrange` a few cell sizes deep).
+
+`timeseries` needs to enumerate a run's outputs, and it recognises RAMSES, PLUTO, Athena++, FLASH
+and Chombo numbering — not AREPO `snapdir_NNN`. That is a discovery gap, not a data-model one, so
+the way around it is a one-time conversion: `savedata` each snapshot to a mera file and the whole
+series machinery (`timeseries`, `getmovie`, `profiletimeseries`) applies unchanged. A cosmological
+run also picks up `redshift` and `aexp` columns automatically.
+
+> **Makie name clashes.** `Sphere` above and `timeseries` here are both exported by Makie as well
+> as Mera, so once `CairoMakie` is loaded the bare names are ambiguous. Qualify them
+> (`Mera.Sphere`, `Mera.timeseries`) — the error names the conflict, but it is easier to avoid.
+
+
+```julia
+# `timeseries` discovers RAMSES / PLUTO / Athena / FLASH / Chombo output numbering — not
+# AREPO snapdirs. Convert once, and the whole series machinery applies unchanged.
+# NB Mera.timeseries: like `Sphere`, this name is also exported by Makie.
+tsdir = mktempdir()
+savedata(gas, tsdir, :write, verbose=false)
+ts = Mera.timeseries(tsdir, d -> (mass = msum(d, :Msol),);
+                     datatype=:particles, mera_files=true, verbose=false)
+show(stdout, ts)
+```
+
+```
+Table with 1 rows, 5 columns:
+output  time     redshift  aexp      mass
+───────────────────────────────────────────────
+24      2056.82  3.99609   0.200156  3.34648e14
+```
+
+
 ```@raw html
 </div>
 ```
