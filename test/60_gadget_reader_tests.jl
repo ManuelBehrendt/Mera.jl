@@ -791,6 +791,15 @@ end
                 @test isapprox(mst,  gc.GroupMassType[gid+1, 5]; rtol=1e-6)
             end
             @test_throws ArgumentError getparticles_gadget(info; families=[0], halo=gc.n, verbose=false)
+
+            # the GENERIC entry points must reach all of this: a TNG user should never have to
+            # know that one frontend serves the whole GADGET-HDF5 family, and `getinfo` already
+            # reports the real producer.
+            gi = getinfo(33, S, verbose=false)
+            @test gi.simcode == "AREPO"
+            @test getgroups(gi, verbose=false).n == gc.n
+            @test length(getparticles(gi; families=[0], vars=Symbol[], halo=0, verbose=false).data) ==
+                  Int(gc.GroupLenType[1, 1])
         else
             @test_skip "TNG50-4 snapshot+groupcat fixture not present"
         end
