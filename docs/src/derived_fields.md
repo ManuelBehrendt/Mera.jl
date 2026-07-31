@@ -3,11 +3,11 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `derived_fields.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/derived_fields.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 Mera computes a large catalogue of **derived quantities** on demand through
 [`getvar`](@ref) — temperature, sound speed, Mach number, cylindrical/spherical velocities,
 specific angular momentum, Jeans length, kinetic/thermal energy, and many more. You ask for
 them by name and Mera builds them from the raw stored variables:
+
 
 ```julia
 using Mera
@@ -16,14 +16,479 @@ info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
+
+```
+*__   __ _______ ______   _______ 
+```
+
+
+```
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+```
+
+
+```
+[0m[1m[Mera]: 2026-07-31T22:01:37.733[22m
+```
+
+
+```
+Code: RAMSES
+```
+
+
+```
+output [300] summary:
+mtime: 2023-04-09T05:34:09
+ctime: 2025-06-21T18:31:24.020
+[0m[1m=======================================================[22m
+simulation time: 445.89 [Myr]
+boxlen: 48.0 [kpc]
+ncpu: 640
+ndim: 3
+cosmological:  false
+-------------------------------------------------------
+amr:           true
+level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+-------------------------------------------------------
+hydro:         true
+hydro-variables:  
+```
+
+
+```
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
+γ: 1.6667
+-------------------------------------------------------
+gravity:       true
+gravity-variables: (:epot, :ax, :ay, :az)
+-------------------------------------------------------
+particles:     true
+- Nstars:   5.445150e+05 
+particle-variables: 
+```
+
+
+```
+7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
+-------------------------------------------------------
+rt:            false
+clumps:           false
+-------------------------------------------------------
+namelist-file: 
+```
+
+
+```
+("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+-------------------------------------------------------
+timer-file:       true
+compilation-file: false
+makefile:         true
+patchfile:        true
+[0m[1m=======================================================[22m
+```
+
+
+[32mProcessing files:   0%|▏                                                 |  ETA: 0:02:43 ( 0.26  s/it)[39m
+
+
+[32mProcessing files:   2%|▉                                                 |  ETA: 0:01:02 (98.69 ms/it)[39m
+
+
+[32mProcessing files:   3%|█▌                                                |  ETA: 0:00:43 (69.23 ms/it)[39m
+
+
+[32mProcessing files:   4%|█▊                                                |  ETA: 0:00:40 (64.79 ms/it)[39m
+
+
+[32mProcessing files:   4%|██                                                |  ETA: 0:00:39 (64.20 ms/it)[39m
+
+
+[32mProcessing files:   6%|██▊                                               |  ETA: 0:00:33 (54.62 ms/it)[39m
+
+
+[32mProcessing files:   6%|███                                               |  ETA: 0:00:33 (54.17 ms/it)[39m
+
+
+[32mProcessing files:   7%|███▋                                              |  ETA: 0:00:29 (48.75 ms/it)[39m
+
+
+[32mProcessing files:   8%|████                                              |  ETA: 0:00:28 (47.05 ms/it)[39m
+
+
+[32mProcessing files:   9%|████▊                                             |  ETA: 0:00:25 (43.10 ms/it)[39m
+
+
+[32mProcessing files:  10%|█████▏                                            |  ETA: 0:00:24 (41.53 ms/it)[39m
+
+
+[32mProcessing files:  11%|█████▍                                            |  ETA: 0:00:24 (41.58 ms/it)[39m
+
+
+[32mProcessing files:  12%|█████▉                                            |  ETA: 0:00:23 (40.27 ms/it)[39m
+
+
+[32mProcessing files:  12%|██████▎                                           |  ETA: 0:00:22 (39.12 ms/it)[39m
+
+
+[32mProcessing files:  14%|██████▊                                           |  ETA: 0:00:21 (37.65 ms/it)[39m
+
+
+[32mProcessing files:  15%|███████▎                                          |  ETA: 0:00:20 (36.64 ms/it)[39m
+
+
+[32mProcessing files:  15%|███████▋                                          |  ETA: 0:00:20 (36.58 ms/it)[39m
+
+
+[32mProcessing files:  16%|████████                                          |  ETA: 0:00:19 (35.83 ms/it)[39m
+
+
+[32mProcessing files:  17%|████████▋                                         |  ETA: 0:00:18 (34.84 ms/it)[39m
+
+
+[32mProcessing files:  18%|█████████                                         |  ETA: 0:00:18 (34.37 ms/it)[39m
+
+
+[32mProcessing files:  19%|█████████▎                                        |  ETA: 0:00:18 (34.21 ms/it)[39m
+
+
+[32mProcessing files:  20%|█████████▉                                        |  ETA: 0:00:17 (33.79 ms/it)[39m
+
+
+[32mProcessing files:  20%|██████████▎                                       |  ETA: 0:00:17 (33.44 ms/it)[39m
+
+
+[32mProcessing files:  22%|██████████▊                                       |  ETA: 0:00:16 (32.47 ms/it)[39m
+
+
+[32mProcessing files:  22%|███████████▎                                      |  ETA: 0:00:16 (32.12 ms/it)[39m
+
+
+[32mProcessing files:  23%|███████████▊                                      |  ETA: 0:00:15 (31.57 ms/it)[39m
+
+
+[32mProcessing files:  24%|████████████▏                                     |  ETA: 0:00:15 (31.33 ms/it)[39m
+
+
+[32mProcessing files:  25%|████████████▋                                     |  ETA: 0:00:15 (30.63 ms/it)[39m
+
+
+[32mProcessing files:  26%|█████████████▎                                    |  ETA: 0:00:14 (30.45 ms/it)[39m
+
+
+[32mProcessing files:  27%|█████████████▋                                    |  ETA: 0:00:14 (30.17 ms/it)[39m
+
+
+[32mProcessing files:  28%|██████████████▎                                   |  ETA: 0:00:14 (29.79 ms/it)[39m
+
+
+[32mProcessing files:  29%|██████████████▊                                   |  ETA: 0:00:13 (29.38 ms/it)[39m
+
+
+[32mProcessing files:  30%|███████████████▏                                  |  ETA: 0:00:13 (29.29 ms/it)[39m
+
+
+[32mProcessing files:  32%|████████████████                                  |  ETA: 0:00:13 (28.67 ms/it)[39m
+
+
+[32mProcessing files:  33%|████████████████▍                                 |  ETA: 0:00:12 (28.61 ms/it)[39m
+
+
+[32mProcessing files:  33%|████████████████▊                                 |  ETA: 0:00:12 (28.57 ms/it)[39m
+
+
+[32mProcessing files:  34%|█████████████████▏                                |  ETA: 0:00:12 (28.41 ms/it)[39m
+
+
+[32mProcessing files:  35%|█████████████████▍                                |  ETA: 0:00:12 (28.62 ms/it)[39m
+
+
+[32mProcessing files:  36%|█████████████████▉                                |  ETA: 0:00:12 (28.47 ms/it)[39m
+
+
+[32mProcessing files:  36%|██████████████████▎                               |  ETA: 0:00:12 (28.43 ms/it)[39m
+
+
+[32mProcessing files:  37%|██████████████████▌                               |  ETA: 0:00:11 (28.47 ms/it)[39m
+
+
+[32mProcessing files:  38%|███████████████████                               |  ETA: 0:00:11 (28.28 ms/it)[39m
+
+
+[32mProcessing files:  39%|███████████████████▌                              |  ETA: 0:00:11 (28.19 ms/it)[39m
+
+
+[32mProcessing files:  40%|███████████████████▊                              |  ETA: 0:00:11 (28.19 ms/it)[39m
+
+
+[32mProcessing files:  40%|████████████████████▏                             |  ETA: 0:00:11 (28.21 ms/it)[39m
+
+
+[32mProcessing files:  41%|████████████████████▍                             |  ETA: 0:00:11 (28.17 ms/it)[39m
+
+
+[32mProcessing files:  41%|████████████████████▊                             |  ETA: 0:00:11 (28.38 ms/it)[39m
+
+
+[32mProcessing files:  42%|█████████████████████▏                            |  ETA: 0:00:10 (28.28 ms/it)[39m
+
+
+[32mProcessing files:  43%|█████████████████████▍                            |  ETA: 0:00:10 (28.28 ms/it)[39m
+
+
+[32mProcessing files:  43%|█████████████████████▊                            |  ETA: 0:00:10 (28.35 ms/it)[39m
+
+
+[32mProcessing files:  44%|██████████████████████                            |  ETA: 0:00:10 (28.35 ms/it)[39m
+
+
+[32mProcessing files:  45%|██████████████████████▎                           |  ETA: 0:00:10 (28.41 ms/it)[39m
+
+
+[32mProcessing files:  45%|██████████████████████▌                           |  ETA: 0:00:10 (28.53 ms/it)[39m
+
+
+[32mProcessing files:  45%|██████████████████████▊                           |  ETA: 0:00:10 (28.63 ms/it)[39m
+
+
+[32mProcessing files:  46%|███████████████████████                           |  ETA: 0:00:10 (28.73 ms/it)[39m
+
+
+[32mProcessing files:  46%|███████████████████████▎                          |  ETA: 0:00:10 (28.91 ms/it)[39m
+
+
+[32mProcessing files:  47%|███████████████████████▌                          |  ETA: 0:00:10 (28.98 ms/it)[39m
+
+
+[32mProcessing files:  47%|███████████████████████▋                          |  ETA: 0:00:10 (29.30 ms/it)[39m
+
+
+[32mProcessing files:  48%|███████████████████████▉                          |  ETA: 0:00:10 (29.55 ms/it)[39m
+
+
+[32mProcessing files:  49%|████████████████████████▍                         |  ETA: 0:00:10 (29.52 ms/it)[39m
+
+
+[32mProcessing files:  49%|████████████████████████▊                         |  ETA: 0:00:10 (29.70 ms/it)[39m
+
+
+[32mProcessing files:  50%|████████████████████████▉                         |  ETA: 0:00:10 (29.78 ms/it)[39m
+
+
+[32mProcessing files:  50%|█████████████████████████▏                        |  ETA: 0:00:09 (29.87 ms/it)[39m
+
+
+[32mProcessing files:  51%|█████████████████████████▍                        |  ETA: 0:00:09 (30.04 ms/it)[39m
+
+
+[32mProcessing files:  52%|██████████████████████████▏                       |  ETA: 0:00:09 (30.16 ms/it)[39m
+
+
+[32mProcessing files:  53%|██████████████████████████▍                       |  ETA: 0:00:09 (30.27 ms/it)[39m
+
+
+[32mProcessing files:  54%|██████████████████████████▊                       |  ETA: 0:00:09 (30.55 ms/it)[39m
+
+
+[32mProcessing files:  54%|███████████████████████████                       |  ETA: 0:00:09 (30.68 ms/it)[39m
+
+
+[32mProcessing files:  55%|███████████████████████████▍                      |  ETA: 0:00:09 (30.74 ms/it)[39m
+
+
+[32mProcessing files:  56%|████████████████████████████                      |  ETA: 0:00:09 (30.57 ms/it)[39m
+
+
+[32mProcessing files:  57%|████████████████████████████▍                     |  ETA: 0:00:09 (30.72 ms/it)[39m
+
+
+[32mProcessing files:  57%|████████████████████████████▋                     |  ETA: 0:00:08 (30.70 ms/it)[39m
+
+
+[32mProcessing files:  58%|█████████████████████████████                     |  ETA: 0:00:08 (30.66 ms/it)[39m
+
+
+[32mProcessing files:  59%|█████████████████████████████▎                    |  ETA: 0:00:08 (30.63 ms/it)[39m
+
+
+[32mProcessing files:  59%|█████████████████████████████▊                    |  ETA: 0:00:08 (30.53 ms/it)[39m
+
+
+[32mProcessing files:  60%|██████████████████████████████                    |  ETA: 0:00:08 (30.48 ms/it)[39m
+
+
+[32mProcessing files:  61%|██████████████████████████████▍                   |  ETA: 0:00:08 (30.45 ms/it)[39m
+
+
+[32mProcessing files:  62%|██████████████████████████████▊                   |  ETA: 0:00:07 (30.33 ms/it)[39m
+
+
+[32mProcessing files:  62%|███████████████████████████████▏                  |  ETA: 0:00:07 (30.25 ms/it)[39m
+
+
+[32mProcessing files:  63%|███████████████████████████████▌                  |  ETA: 0:00:07 (30.26 ms/it)[39m
+
+
+[32mProcessing files:  63%|███████████████████████████████▊                  |  ETA: 0:00:07 (30.41 ms/it)[39m
+
+
+[32mProcessing files:  64%|████████████████████████████████▎                 |  ETA: 0:00:07 (30.32 ms/it)[39m
+
+
+[32mProcessing files:  65%|████████████████████████████████▋                 |  ETA: 0:00:07 (30.15 ms/it)[39m
+
+
+[32mProcessing files:  66%|█████████████████████████████████                 |  ETA: 0:00:07 (30.18 ms/it)[39m
+
+
+[32mProcessing files:  67%|█████████████████████████████████▌                |  ETA: 0:00:06 (30.07 ms/it)[39m
+
+
+[32mProcessing files:  68%|█████████████████████████████████▉                |  ETA: 0:00:06 (29.96 ms/it)[39m
+
+
+[32mProcessing files:  69%|██████████████████████████████████▍               |  ETA: 0:00:06 (29.78 ms/it)[39m
+
+
+[32mProcessing files:  70%|██████████████████████████████████▉               |  ETA: 0:00:06 (29.70 ms/it)[39m
+
+
+[32mProcessing files:  71%|███████████████████████████████████▎              |  ETA: 0:00:06 (29.53 ms/it)[39m
+
+
+[32mProcessing files:  72%|███████████████████████████████████▊              |  ETA: 0:00:05 (29.47 ms/it)[39m
+
+
+[32mProcessing files:  73%|████████████████████████████████████▍             |  ETA: 0:00:05 (29.33 ms/it)[39m
+
+
+[32mProcessing files:  74%|█████████████████████████████████████             |  ETA: 0:00:05 (29.21 ms/it)[39m
+
+
+[32mProcessing files:  75%|█████████████████████████████████████▍            |  ETA: 0:00:05 (29.13 ms/it)[39m
+
+
+[32mProcessing files:  76%|█████████████████████████████████████▉            |  ETA: 0:00:05 (29.04 ms/it)[39m
+
+
+[32mProcessing files:  77%|██████████████████████████████████████▍           |  ETA: 0:00:04 (28.90 ms/it)[39m
+
+
+[32mProcessing files:  78%|██████████████████████████████████████▉           |  ETA: 0:00:04 (28.83 ms/it)[39m
+
+
+[32mProcessing files:  79%|███████████████████████████████████████▍          |  ETA: 0:00:04 (28.67 ms/it)[39m
+
+
+[32mProcessing files:  80%|███████████████████████████████████████▉          |  ETA: 0:00:04 (28.58 ms/it)[39m
+
+
+[32mProcessing files:  81%|████████████████████████████████████████▎         |  ETA: 0:00:04 (28.50 ms/it)[39m
+
+
+[32mProcessing files:  82%|████████████████████████████████████████▊         |  ETA: 0:00:03 (28.39 ms/it)[39m
+
+
+[32mProcessing files:  82%|█████████████████████████████████████████▏        |  ETA: 0:00:03 (28.38 ms/it)[39m
+
+
+[32mProcessing files:  83%|█████████████████████████████████████████▋        |  ETA: 0:00:03 (28.26 ms/it)[39m
+
+
+[32mProcessing files:  84%|██████████████████████████████████████████        |  ETA: 0:00:03 (28.29 ms/it)[39m
+
+
+[32mProcessing files:  85%|██████████████████████████████████████████▊       |  ETA: 0:00:03 (28.17 ms/it)[39m
+
+
+[32mProcessing files:  86%|███████████████████████████████████████████▎      |  ETA: 0:00:02 (28.07 ms/it)[39m
+
+
+[32mProcessing files:  87%|███████████████████████████████████████████▋      |  ETA: 0:00:02 (28.07 ms/it)[39m
+
+
+[32mProcessing files:  88%|████████████████████████████████████████████▏     |  ETA: 0:00:02 (27.95 ms/it)[39m
+
+
+[32mProcessing files:  89%|████████████████████████████████████████████▌     |  ETA: 0:00:02 (28.05 ms/it)[39m
+
+
+[32mProcessing files:  90%|█████████████████████████████████████████████▏    |  ETA: 0:00:02 (27.97 ms/it)[39m
+
+
+[32mProcessing files:  91%|█████████████████████████████████████████████▌    |  ETA: 0:00:02 (27.93 ms/it)[39m
+
+
+[32mProcessing files:  92%|█████████████████████████████████████████████▉    |  ETA: 0:00:01 (27.89 ms/it)[39m
+
+
+[32mProcessing files:  93%|██████████████████████████████████████████████▍   |  ETA: 0:00:01 (27.81 ms/it)[39m
+
+
+[32mProcessing files:  93%|██████████████████████████████████████████████▋   |  ETA: 0:00:01 (27.83 ms/it)[39m
+
+
+[32mProcessing files:  94%|███████████████████████████████████████████████▎  |  ETA: 0:00:01 (27.77 ms/it)[39m
+
+
+[32mProcessing files:  95%|███████████████████████████████████████████████▌  |  ETA: 0:00:01 (27.79 ms/it)[39m
+
+
+[32mProcessing files:  95%|███████████████████████████████████████████████▊  |  ETA: 0:00:01 (27.85 ms/it)[39m
+
+
+[32mProcessing files:  96%|████████████████████████████████████████████████  |  ETA: 0:00:01 (27.88 ms/it)[39m
+
+
+[32mProcessing files:  97%|████████████████████████████████████████████████▌ |  ETA: 0:00:01 (27.90 ms/it)[39m
+
+
+[32mProcessing files:  97%|████████████████████████████████████████████████▋ |  ETA: 0:00:00 (27.93 ms/it)[39m
+
+
+[32mProcessing files:  98%|█████████████████████████████████████████████████ |  ETA: 0:00:00 (27.98 ms/it)[39m
+
+
+[32mProcessing files:  99%|█████████████████████████████████████████████████▎|  ETA: 0:00:00 (28.05 ms/it)[39m
+
+
+[32mProcessing files:  99%|█████████████████████████████████████████████████▌|  ETA: 0:00:00 (28.08 ms/it)[39m
+
+
+[32mProcessing files:  99%|█████████████████████████████████████████████████▊|  ETA: 0:00:00 (28.20 ms/it)[39m
+
+
+[32mProcessing files:  99%|█████████████████████████████████████████████████▉|  ETA: 0:00:00 (28.29 ms/it)[39m
+
+
+[32mProcessing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.25 ms/it)[39m
+
+
+```
+✓ File processing complete! Combining results...
+```
+
+
 These derived names also work everywhere `getvar` is used internally — in
 [`projection`](@ref), [`profile`](@ref), [`phase`](@ref), and friends.
 
 !!! tip "Exact formulas"
-    For the full set of formulas behind every derived quantity (thermodynamics, velocities,
-    angular momentum, Mach numbers, Jeans/collapse, gravity) and the aggregate statistics
-    (`msum`, `center_of_mass`, `bulk_velocity`, `wstat`), see
-    [How Quantities Are Computed](computation_reference.md).
+```
+For the full set of formulas behind every derived quantity (thermodynamics, velocities,
+angular momentum, Mach numbers, Jeans/collapse, gravity) and the aggregate statistics
+(`msum`, `center_of_mass`, `bulk_velocity`, `wstat`), see
+[How Quantities Are Computed](computation_reference.md).
+```
+
 
 ## Conventions for selected quantities
 
@@ -48,6 +513,7 @@ A few derived quantities carry physical assumptions worth stating explicitly:
 
 Each derived quantity knows which **raw** variables it is built from. That graph is queryable:
 
+
 ```julia
 println("T [K] range           : ", extrema(getvar(gas, :T, :K)))
 println("Mach range            : ", extrema(getvar(gas, :mach)))
@@ -55,6 +521,34 @@ println("ekin [erg] (sum)      : ", sum(getvar(gas, :ekin, :erg)))
 println("requirements :ekin    : ", getvar_requirements(:hydro, :ekin))
 println("requirements [:sd,:T] : ", getvar_requirements(:hydro, [:sd, :T]))
 ```
+
+```
+T [K] range           : (
+```
+
+
+```
+10.195354771220304, 2.3032126579487386e8)
+Mach range            : (
+```
+
+
+```
+0.0015019848658968961, 790.5001832586903)
+ekin [erg] (sum)      : 3.445146674042365e57
+```
+
+
+```
+requirements :ekin    : 
+```
+
+
+```
+[:rho, :vx, :vy, :vz]
+requirements [:sd,:T] : [:p, :rho]
+```
+
 
 This is what lets the one-call verbs read **only what they need** instead of the whole hydro
 state. `project(info, :sd)` reads just `:rho`; `project(info, :sd; direction=:edgeon)` also
@@ -67,6 +561,7 @@ stored in that output) the readers safely fall back to reading everything.
 Register a custom derived field once and it behaves like any built-in quantity — including
 inside `projection` and `profile`.
 
+
 ```julia
 add_field(:vmag2, (obj, deps) -> deps[:vx].^2 .+ deps[:vy].^2 .+ deps[:vz].^2;
           depends_on = [:vx, :vy, :vz])
@@ -75,6 +570,26 @@ println(":vmag2 via getvar     : ", extrema(getvar(gas, :vmag2)))
 m = projection(gas, :vmag2; verbose=false)         # works in projection too
 println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 ```
+
+```
+:vmag2 via getvar     : (
+```
+
+
+```
+9.736562820569741e-6, 371.6168616499286)
+```
+
+
+```
+:vmag2 projection map : (
+```
+
+
+```
+1024, 1024)
+```
+
 
 ### The compute kernel
 
@@ -89,11 +604,22 @@ println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 Dependencies may be raw variables, other built-in derived quantities, or even other user
 fields — they are resolved recursively:
 
+
 ```julia
 add_field(:mach_custom, (o, d) -> sqrt.(d[:vx].^2 .+ d[:vy].^2 .+ d[:vz].^2) ./ d[:cs];
           depends_on = [:vx, :vy, :vz, :cs])
 println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 ```
+
+```
+:mach_custom range    : (
+```
+
+
+```
+0.0015019848658968961, 790.5001832586903)
+```
+
 
 A registered field is a first-class citizen: it flows through [`getvar`](@ref), [`projection`](@ref),
 [`profile`](@ref) and the rest, with its dependencies read and resolved automatically. For example,
@@ -181,9 +707,12 @@ list_fields(:particle; builtin=true)
 ```
 
 !!! note "Registry scope"
-    Registered fields live for the current Julia session (they are not persisted to disk).
-    Put your `add_field` calls in a startup script or at the top of your analysis to make them
-    available every run.
+```
+Registered fields live for the current Julia session (they are not persisted to disk).
+Put your `add_field` calls in a startup script or at the top of your analysis to make them
+available every run.
+```
+
 
 Registered fields also work as quantities in [First-Look Reports](report.md) cards — the report reads
 only the dependencies your field declares.
