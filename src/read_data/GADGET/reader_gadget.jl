@@ -271,10 +271,23 @@ type may be **absent from chunk 0**, so field discovery scans forward for a chun
 counts above 2³² are combined from `NumPart_Total` and `NumPart_Total_HighWord`. Without a spatial
 window the columns are sized from the header once, rather than grown per chunk.
 """
-function getparticles_gadget(info::InfoType; families=:all, vars=:all,
+function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=nothing,
                              xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                              center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)
     fns = _gadget_files(round(Int, info.output), info.path)
+    # `halo=i` selects one FoF group by MEMBERSHIP rather than geometry — the idiom the TNG
+    # workflow uses (illustris_python has no spatial selection at all). Membership comes from the
+    # group catalogue's GroupLenType plus the running-sum offsets; see groupcat_gadget.jl.
+    halo_range = nothing
+    if halo !== nothing
+        gc = getgroups_gadget(info; fields=["GroupLenType"], verbose=false)
+        gid = Int(halo) + 1                                    # 0-based in the catalogue
+        (1 <= gid <= gc.n) || throw(ArgumentError(
+            "getparticles: halo=$(halo) is out of range — the catalogue has $(gc.n) FoF groups (0…$(gc.n-1))."))
+        L = gc.GroupLenType
+        halo_range = (_group_offsets(L)[gid, :], L[gid, :])     # (offset, length) per type
+        verbose && println("[Mera]: FoF group $(halo): lenType = ", Int.(L[gid, :]))
+    end
     want = families === :all ? collect(0:5) : collect(families)
     # `vars` restricts which STORED gas-cell columns are read. The base columns
     # (:x,:y,:z,:vx,:vy,:vz,:mass,:id,:family) always load — they define the object. Reading every
@@ -356,16 +369,29 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
     end
     # chunk-by-chunk streaming: each file is read and windowed independently, so a spatial
     # sub-selection of a large multi-file snapshot never holds more than one chunk in memory
+    seen = zeros(Int64, 6)                 # particles of each type passed so far (global ordering)
     for fn in fns
     h5open(fn, "r") do f
         masstable = Float64.(_gadget_attr(attributes(f["Header"]), "MassTable", zeros(6)))
+        nthis = Int64.(_gadget_attr(attributes(f["Header"]), "NumPart_ThisFile", zeros(Int64, 6)))
         for pt in want
             grp = "PartType$pt"
             (haskey(f, grp) && haskey(f[grp], "Coordinates")) || continue
             coords = read(f[grp]["Coordinates"]); vels = read(f[grp]["Velocities"])   # (3, N)
             keep = fullbox ? (1:size(coords, 2)) : _gadget_keep(coords, bl, ranges)    # spatial window
+            if halo_range !== nothing
+                # this chunk holds global indices seen[pt+1] .. seen[pt+1]+nlocal-1 of this type
+                o = halo_range[1][pt+1]; l = halo_range[2][pt+1]
+                lo_g = o; hi_g = o + l - 1                       # global, 0-based, inclusive
+                base = seen[pt+1]; nlocal = size(coords, 2)
+                i0 = max(lo_g - base, 0) + 1                     # local, 1-based
+                i1 = min(hi_g - base, nlocal - 1) + 1
+                keep = i0 <= i1 ? intersect(keep, i0:i1) : Int[]
+            end
             isempty(keep) && continue
             nkeep = length(keep)
+            # (the global counter is advanced after the loop over types, from NumPart_ThisFile,
+            #  so chunks that contribute nothing still move the window along)
             # grow every column once, then write this chunk straight into [off+1 : off+nkeep].
             # With `fullbox` the capacity is already exact (sizehint! above), so no reallocation.
             off = length(x); newlen = off + nkeep
@@ -407,6 +433,7 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all,
                 end
             end
         end
+        seen .+= nthis                      # every chunk advances the global per-type position
     end
     end
     # GADGET cosmological velocity convention: the stored value is v_peculiar/√a, so multiply by

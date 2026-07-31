@@ -755,6 +755,47 @@ end
                                              split=true, verbose=false)
     end
 
+    # SUBFIND group catalogue + halo-scoped loading, checked against TNG's OWN published masses.
+    # This is the only validation class in this file that compares against numbers Mera had no
+    # hand in producing — everything else is internal consistency or a published convention.
+    @testset "SUBFIND catalogue + halo= membership (data-backed)" begin
+        S = joinpath(SIMULATION_PATH, "AREPO", "TNG50-4", "snapdir_033")
+        G = joinpath(SIMULATION_PATH, "AREPO", "TNG50-4", "groups_033")
+        if isdir(S) && isdir(G) && length(filter(f -> endswith(f, ".hdf5"), readdir(G))) >= 2
+            info = getinfo_gadget(33, S, verbose=false)
+            gc = getgroups_gadget(info, verbose=false)          # catalogue found BESIDE snapdir
+            @test gc.n > 0
+            @test haskey(gc, :GroupLenType) && haskey(gc, :GroupMassType)
+            @test size(gc.GroupLenType, 2) == 6                  # (ngroups, 6), C-order undone
+
+            h = info.H0 / 100
+            k = (info.constants.Msol / (1.989e43 / 1e10)) * h / 1e10   # Msol → 1e10 Msol_TNG/h
+            for gid in (0, 1)
+                dm = getparticles_gadget(info; families=[1], vars=Symbol[], halo=gid, verbose=false)
+                g  = getparticles_gadget(info; families=[0], vars=Symbol[], halo=gid, verbose=false)
+                st = getparticles_gadget(info; families=[4], vars=[:aform],  halo=gid, verbose=false)
+                # membership is by COUNT first: exactly GroupLenType particles of each type
+                @test length(dm.data) == Int(gc.GroupLenType[gid+1, 2])
+                @test length(g.data)  == Int(gc.GroupLenType[gid+1, 1])
+                @test length(st.data) == Int(gc.GroupLenType[gid+1, 5])
+
+                # …and by MASS against the published catalogue. Wind particles sit in PartType4 but
+                # count as GAS (a_form < 0) — attributing them so reconciles BOTH types at once;
+                # counting them as stars leaves gas short and stars over by the same amount.
+                af = getvar(st, :aform); w = af .< 0
+                mdm  = msum(dm, :Msol) * k
+                mgas = (msum(g, :Msol) + sum(getvar(st, :mass, :Msol)[w])) * k
+                mst  = sum(getvar(st, :mass, :Msol)[.!w]) * k
+                @test isapprox(mdm,  gc.GroupMassType[gid+1, 2]; rtol=1e-6)
+                @test isapprox(mgas, gc.GroupMassType[gid+1, 1]; rtol=1e-6)
+                @test isapprox(mst,  gc.GroupMassType[gid+1, 5]; rtol=1e-6)
+            end
+            @test_throws ArgumentError getparticles_gadget(info; families=[0], halo=gc.n, verbose=false)
+        else
+            @test_skip "TNG50-4 snapshot+groupcat fixture not present"
+        end
+    end
+
     # PART D (data-backed): the AREPO/Voronoi DATA MODEL and general Mera functions on it, checked
     # on a real 16-chunk CAMELS zoom. Gas here is a Voronoi tessellation carried as a PartDataType
     # with a stored :volume — not an AMR octree — so the invariants differ from test/59's grid
