@@ -111,6 +111,50 @@ the valid ones.
     convention is now consistent across data types, but a filter written against the old behaviour
     will silently select a different set of cells rather than fail.
 
+### Halo membership: the group catalogue
+
+A snapshot says where the gas is; the **group catalogue** says which halo it belongs to. In the
+IllustrisTNG workflow membership comes from the halo finder, not from geometry — the reference
+reader `illustris_python` has no spatial selection at all, only `loadHalo(id)`. Mera offers the
+same idiom:
+
+```julia
+info = getinfo(33, "/path/to/TNG50-4")   # simcode = "AREPO"
+gc   = getgroups(info)                    # the FoF catalogue, all chunks
+gc.n                                      # number of groups
+gc.GroupMassType[1, 1]                    # group 1, gas mass  [1e10 M⊙/h]
+
+gas   = getparticles(info; families=[0], halo=0)   # exactly that group's cells
+stars = getparticles(info; families=[4], halo=0)
+```
+
+The catalogue is found beside the snapshot (`basePath/groups_NNN/` next to `basePath/snapdir_NNN/`),
+so pointing `getinfo` at the snapshot is enough. A **partial** catalogue is an error, not a short
+answer: `getgroups` compares the groups it read against the header's `Ngroups_Total` and refuses if
+they disagree — an incomplete download otherwise yields a perfectly plausible-looking mass function.
+
+!!! note "Two conventions worth knowing"
+    **No offsets file is needed.** `illustris_python` reads a separate
+    `postprocessing/offsets/offsets_NNN.hdf5`, which the public API does not serve. It is
+    unnecessary for FoF groups: the snapshot stores particles *ordered by group*, so a group's
+    offset is the running sum of `GroupLenType`.
+
+    **Wind particles are gas.** TNG stores them in `PartType4`, but the catalogue counts their mass
+    as gas; they carry `GFM_StellarFormationTime < 0` (Mera's `:aform`). Counting them as stars
+    leaves gas short and stars over *by the same amount*.
+
+Both conventions are checked against the catalogue's own published masses. Recomputing
+`GroupMassType` from the particles of TNG50-4 snapshot 33:
+
+| halo | dark matter | gas | stars |
+|---|---|---|---|
+| 0 | 1.00000000 | 1.00000004 | 0.99999999 |
+| 1 | 0.99999997 | 1.00000002 | 1.00000004 |
+| 2 | 1.00000000 | 0.99999997 | 0.99999998 |
+
+i.e. exact to float32 round-off. (Masses are in `1e10 M⊙/h`; convert with
+`info.constants.Msol` and `info.H0/100`.)
+
 ### Mass-conserving maps: pick the pixel to suit the window
 
 A projection deposits each cell over a stencil, so cells near the frame edge put part of that

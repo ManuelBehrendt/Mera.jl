@@ -69,7 +69,7 @@ maximum(getvar(gas, :rho))                           # the usual analysis, uncha
 ```
 
 ```
-[Mera]: 2026-07-31T10:34:48.141
+[Mera]: 2026-07-31T14:04:35.002
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -133,7 +133,7 @@ length(gsub.data), length(ga.data)                   # sub-region ≪ full snaps
 ```
 
 ```
-[Mera]: 2026-07-31T10:35:02.572
+[Mera]: 2026-07-31T14:04:46.864
 Code: Athena++
 output: 5  time: 0.50111 [code units]
 root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
@@ -191,15 +191,14 @@ length(stars.data), msum(stars) > 0
 ```
 
 ```
-[Mera]: 2026-07-31T10:35:32.376
+[Mera]: 2026-07-31T14:05:10.620
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
-particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH
-  (total 11907080)
+particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
 -------------------------------------------------------
-[Mera]: GADGET particles = 450921, families 4
-  (x,y,z,vx,vy,vz,mass,id,family)
+[Mera]: GADGET
+ particles = 450921, families 4  (x,y,z,vx,vy,vz,mass,id,family)
 ```
 
 ```
@@ -222,14 +221,14 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
 ```
-[Mera]: 2026-07-31T10:35:37.021
+[Mera]: 2026-07-31T14:05:14.153
 Code: AREPO
 output: 59  time: 1.0  redshift: 0.0
 boxlen = 205000.0
 particles: 4006794 gas, 5567314 halo/DM, 533034 stars  (total 10107142)
 -------------------------------------------------------
-[Mera]: GADGET particles = 4006794, families 0
-  (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,metallicity,sfr,nh,mach,gpot,bx,by,bz,volume)
+[Mera]: AREPO
+ gas cells = 4006794, families 0  (x,y,z,vx,vy,vz,mass,id,family,rho,u,ne,metallicity,sfr,nh,mach,gpot,bx,by,bz,volume)
 gas cells   : 4006794
 rho [g/cm³] :
 (1.3854807197342735e-30, 1.17827292777639e-22)
@@ -276,8 +275,7 @@ println("v_Alfvén [km/s] : median ", round(sort(getvar(gas, :v_alfven, :km_s))[
 median |B| [μG] : 0.243
 plasma β        : median
 201.0  (≫1 ⇒ thermal-dominated)
-v_Alfvén [km/s] : median
-43.0
+v_Alfvén [km/s] : median 43.0
 ```
 
 ```julia
@@ -315,25 +313,24 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-31T10:36:01.912
+[Mera]: 2026-07-31T14:05:33.277
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
 particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
 -------------------------------------------------------
-[Mera]: GADGET particles = 12865831, families 0
-  (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
-[Mera]: 2026-07-31T10:36:06.590
+[Mera]: AREPO
+ gas cells = 12865831, families 0  (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
+[Mera]: 2026-07-31T14:05:37.407
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
-ymin::ymax: 0.0 :: 1.0
-==> 0.0 [Mpc] :: 39.999 [Mpc]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 Effective resolution: 256^2
 Pixel size: 156.246 [kpc]
 Simulation min.: 19.999 [Mpc]
-[Mera]: 2026-07-31T10:37:06.177
+[Mera]: 2026-07-31T14:06:24.379
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -415,7 +412,7 @@ end
 ```
 
 ```
-[Mera]: 2026-07-31T10:40:18.786
+[Mera]: 2026-07-31T14:08:58.674
 Code: AREPO
 output: 24  time: 0.20016  redshift: 3.996
 boxlen = 200000.0
@@ -497,6 +494,58 @@ z_form == 1/a - 1 : true
 age decreases with a_form : true
 stellar mass formed in the last 1 Gyr: 2.431e10
  Msol
+```
+
+### Halo membership — the group catalogue
+
+Everything above selects gas by **geometry**. The IllustrisTNG workflow does it by **membership**:
+a cell belongs to a halo because SUBFIND says so, not because its centre falls inside a sphere.
+`getgroups` reads the FoF catalogue and `halo=` loads exactly one group's particles.
+
+The check below is the strongest in this page — it recomputes the catalogue's *published*
+`GroupMassType` from the particles themselves, so it compares against numbers Mera had no part in
+producing. Two conventions have to be right for it to work: the per-group offsets (the running sum
+of `GroupLenType`, since the snapshot is ordered by group), and the fact that **wind particles sit
+in `PartType4` but count as gas** (`a_form < 0`).
+
+```julia
+tngdir = joinpath(base, "AREPO/TNG50-4/snapdir_033")
+if isdir(tngdir)
+    ti = getinfo(33, tngdir, verbose=false)
+    gc = getgroups(ti, verbose=false)                 # catalogue found beside the snapshot
+    println("code = ", ti.simcode, "   FoF groups = ", gc.n)
+
+    h = ti.H0/100
+    k = (ti.constants.Msol / (1.989e43/1e10)) * h / 1e10    # Msol -> catalogue units
+
+    for gid in 0:2
+        dm = getparticles(ti; families=[1], vars=Symbol[], halo=gid, verbose=false)
+        g  = getparticles(ti; families=[0], vars=Symbol[], halo=gid, verbose=false)
+        st = getparticles(ti; families=[4], vars=[:aform],  halo=gid, verbose=false)
+        wind = getvar(st, :aform) .< 0                       # wind lives in PartType4, counts as gas
+        mdm  = msum(dm, :Msol)*k
+        mgas = (msum(g, :Msol) + sum(getvar(st,:mass,:Msol)[wind]))*k
+        mst  = sum(getvar(st,:mass,:Msol)[.!wind])*k
+        println("halo ", gid,
+                "  DM ",    round(mdm /gc.GroupMassType[gid+1,2], digits=8),
+                "  gas ",   round(mgas/gc.GroupMassType[gid+1,1], digits=8),
+                "  stars ", round(mst /gc.GroupMassType[gid+1,5], digits=8),
+                "   (recomputed / published)")
+    end
+else
+    println("TNG50-4 fixture not present — skipping")
+end
+```
+
+```
+code = AREPO
+   FoF groups = 31122
+halo
+0  DM 1.0  gas 1.00000004  stars 0.99999999   (recomputed / published)
+halo
+1  DM 0.99999997  gas 1.00000002  stars 1.00000004   (recomputed / published)
+halo
+2  DM 1.0  gas 0.99999997  stars 0.99999998   (recomputed / published)
 ```
 
 
