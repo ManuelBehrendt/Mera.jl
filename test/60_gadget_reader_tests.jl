@@ -899,4 +899,61 @@ end
         end
     end
 
+    # ------------------------------------------------------------------------------------
+    # Potential is written for EVERY particle type, not just gas
+    # ------------------------------------------------------------------------------------
+    # It used to live in _GADGET_GAS_FIELDS, so it was discovered only when gas was requested
+    # and filled only for pt == 0. `getparticles(info; families=[4])` therefore had no :gpot
+    # column at all, and in a mixed load stars and dark matter came back all-NaN — while
+    # arepo_reader.md advertised ":gpot present on all particle types". The data was in the
+    # file the whole time.
+    @testset "Potential reads on every family, not only gas" begin
+        mktempdir() do dir
+            fn = joinpath(dir, "snap_010.hdf5")
+            h5open(fn, "w") do f
+                hg = create_group(f, "Header")
+                attributes(hg)["BoxSize"] = 100.0
+                attributes(hg)["NumPart_Total"] = UInt32[2, 2, 0, 0, 2, 0]   # gas + DM + stars
+                attributes(hg)["MassTable"] = [0.0, 2.0, 0.0, 0.0, 0.0, 0.0]
+                attributes(hg)["Time"] = 1.0
+                create_group(f, "Config")                                     # mark it AREPO
+                for (pt, ids, phi) in ((0, UInt32[1,2], Float32[-10, -20]),
+                                       (1, UInt32[3,4], Float32[-30, -40]),
+                                       (4, UInt32[5,6], Float32[-50, -60]))
+                    g = create_group(f, "PartType$pt")
+                    g["Coordinates"] = Float64[10 90; 10 90; 10 90]
+                    g["Velocities"]  = Float32[0 0; 0 0; 0 0]
+                    g["ParticleIDs"] = ids
+                    g["Potential"]   = phi                                    # on EVERY type
+                    pt == 0 && (g["Density"] = Float32[1.0, 1.0];
+                                g["InternalEnergy"] = Float32[100.0, 100.0];
+                                g["Masses"] = Float32[1.0, 1.0])
+                    pt == 4 && (g["Masses"] = Float32[1.0, 1.0])
+                end
+            end
+            info = getinfo(10, dir, verbose=false)
+            @test :gpot in info.particles_variable_list          # advertised even though not gas-only
+
+            # stars alone: the column must exist and be finite (previously absent entirely)
+            st = getparticles(info; families=[4], verbose=false)
+            @test :gpot in propertynames(getfield(st, :data).columns)
+            @test getvar(st, :gpot) == [-50.0, -60.0]
+
+            # dark matter alone: previously all-NaN
+            dm = getparticles(info; families=[1], verbose=false)
+            @test getvar(dm, :gpot) == [-30.0, -40.0]
+
+            # mixed load: every row finite, values follow their own family
+            mx = getparticles(info; families=[0, 1, 4], verbose=false)
+            g = getvar(mx, :gpot)
+            @test length(g) == 6
+            @test !any(isnan, g)
+            @test sort(g) == [-60.0, -50.0, -40.0, -30.0, -20.0, -10.0]
+
+            # and it is selectable by name
+            sel = getparticles(info; families=[4], vars=[:gpot], verbose=false)
+            @test getvar(sel, :gpot) == [-50.0, -60.0]
+        end
+    end
+
 end

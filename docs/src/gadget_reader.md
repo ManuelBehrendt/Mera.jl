@@ -24,9 +24,13 @@ unchanged.
     (`PartType0`, e.g. AREPO/TNG) the cell fields present in the file are read as columns —
     `Density→:rho`, `InternalEnergy→:u`, `ElectronAbundance→:ne`, `GFM_Metallicity→:metallicity`,
     `StarFormationRate→:sfr`, `NeutralHydrogenAbundance→:nh`, `Machnumber→:mach`, the `MagneticField`
-    vector→`:bx,:by,:bz` (MHD, physical Gauss), `Potential→:gpot` — and `:volume = mass/ρ` is derived;
+    vector→`:bx,:by,:bz` (MHD, physical Gauss) — and `:volume = mass/ρ` is derived;
     [`getvar`](@ref) adds `:T`, `:p`, `:cs` (temperature from `:u`+`:ne`, with a neutral-primordial μ
     fallback when `:ne` is absent).
+    `Potential→:gpot` is read for **every** family that carries it, not just gas — AREPO and
+    IllustrisTNG write it in each `PartTypeN`, so `getparticles(info; families=[4])` returns a
+    populated `:gpot` for the stars.
+
     Base CGS units are read from the snapshot `Header`, and for cosmological runs the
     comoving→physical `a`/`h` factors are applied automatically. 3-D.
 
