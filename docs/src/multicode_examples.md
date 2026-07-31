@@ -69,7 +69,7 @@ maximum(getvar(gas, :rho))                           # the usual analysis, uncha
 ```
 
 ```
-[Mera]: 2026-07-31T14:04:35.002
+[Mera]: 2026-07-31T14:30:59.279
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -133,7 +133,7 @@ length(gsub.data), length(ga.data)                   # sub-region ≪ full snaps
 ```
 
 ```
-[Mera]: 2026-07-31T14:04:46.864
+[Mera]: 2026-07-31T14:31:11.610
 Code: Athena++
 output: 5  time: 0.50111 [code units]
 root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
@@ -191,7 +191,7 @@ length(stars.data), msum(stars) > 0
 ```
 
 ```
-[Mera]: 2026-07-31T14:05:10.620
+[Mera]: 2026-07-31T14:31:35.870
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
@@ -221,7 +221,7 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
 ```
-[Mera]: 2026-07-31T14:05:14.153
+[Mera]: 2026-07-31T14:31:39.439
 Code: AREPO
 output: 59  time: 1.0  redshift: 0.0
 boxlen = 205000.0
@@ -313,7 +313,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-31T14:05:33.277
+[Mera]: 2026-07-31T14:31:58.940
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -321,7 +321,7 @@ particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
 -------------------------------------------------------
 [Mera]: AREPO
  gas cells = 12865831, families 0  (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
-[Mera]: 2026-07-31T14:05:37.407
+[Mera]: 2026-07-31T14:32:03.127
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -330,7 +330,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 Effective resolution: 256^2
 Pixel size: 156.246 [kpc]
 Simulation min.: 19.999 [Mpc]
-[Mera]: 2026-07-31T14:06:24.379
+[Mera]: 2026-07-31T14:32:50.124
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -412,7 +412,7 @@ end
 ```
 
 ```
-[Mera]: 2026-07-31T14:08:58.674
+[Mera]: 2026-07-31T14:35:24.295
 Code: AREPO
 output: 24  time: 0.20016  redshift: 3.996
 boxlen = 200000.0
@@ -491,7 +491,8 @@ z_form : median
 2.02   max 13.54
 age    : median 10.54 Gyr   oldest 13.49 Gyr
 z_form == 1/a - 1 : true
-age decreases with a_form : true
+age decreases with a_form :
+true
 stellar mass formed in the last 1 Gyr: 2.431e10
  Msol
 ```
@@ -546,6 +547,82 @@ halo
 1  DM 0.99999997  gas 1.00000002  stars 1.00000004   (recomputed / published)
 halo
 2  DM 1.0  gas 0.99999997  stars 0.99999998   (recomputed / published)
+```
+
+### The rest of Mera on AREPO gas
+
+Nothing above is special to the reader: once the gas is loaded, the general analysis functions work
+on it as they do on a RAMSES grid. What differs is the *data model* — Voronoi cells carry a stored
+`:volume` instead of a refinement level — and that shows up in two places worth knowing.
+
+**Regions can split cells.** A Voronoi cell is a polyhedron the snapshot never gives us, so
+`split=true` approximates it by the sphere of equal volume and returns a per-cell `:fraction`. That
+matters here far more than on an AMR grid: cell sizes span a huge range, so a modest sphere can be
+cut by cells comparable to itself, and a plain in/out test on the cell centre becomes arbitrary.
+
+**Weighting is a real choice.** With a volume in hand, `⟨T⟩` mass-weighted and volume-weighted are
+different physical questions — the first follows the dense gas, the second the diffuse.
+
+```julia
+capath = joinpath(base, "AREPO/camels_GZ28_499/snapdir_024")
+if isdir(capath)
+    ci  = getinfo(24, capath, verbose=false)
+    gas = getparticles(ci; families=[0], vars=[:rho, :u, :ne],
+                       xrange=[0.45,0.55], yrange=[0.45,0.55], zrange=[0.45,0.55],
+                       center=[0.,0.,0.], range_unit=:standard, verbose=false)
+    c = collect(center_of_mass(gas, :kpc))
+    println("cells ", length(gas.data), "   centre of mass [kpc] ", round.(c, digits=1))
+    println("bulk velocity [km/s] ", round.(collect(bulk_velocity(gas, :km_s)), digits=2))
+
+    # --- regions: whole cells vs split cells -------------------------------------------
+    R = 300.0
+    # NB Mera.Sphere: CairoMakie (via GeometryBasics) also exports `Sphere`, so once both
+    # are loaded the bare name is ambiguous — qualify it.
+    whole = subregion(gas, Mera.Sphere(R; center=c, range_unit=:kpc), verbose=false)
+    split = subregion(gas, Mera.Sphere(R; center=c, range_unit=:kpc), split=true, verbose=false)
+    m_whole = msum(whole, :Msol)
+    m_split = sum(getvar(split, :mass, :Msol) .* getvar(split, :fraction))
+    println("sphere R=", R, " kpc:  whole-cell ", round(m_whole, sigdigits=6),
+            "   split ", round(m_split, sigdigits=6), " Msol")
+
+    shell = shellregion(gas, :sphere, radius=[R/2, R], center=c, range_unit=:kpc, verbose=false)
+    println("shell ", R/2, "–", R, " kpc: ", length(shell.data), " cells")
+
+    # --- value-space selection: pick gas by physics, not position -----------------------
+    hot = filterdata(gas, Above(:T, 1e5; unit=:K), verbose=false)   # NB the unit: :T is code units
+    println("hot gas (T > 1e5 K): ", length(hot.data), " cells, ",
+            round(100*msum(hot,:Msol)/msum(gas,:Msol), digits=2), " % of the mass")
+
+    # --- weighting is a physical choice on Voronoi data ---------------------------------
+    T = getvar(gas, :T, :K); m = getvar(gas, :mass); V = getvar(gas, :volume)
+    println("⟨T⟩ mass-weighted   ", round(sum(m.*T)/sum(m), sigdigits=4), " K")
+    println("⟨T⟩ volume-weighted ", round(sum(V.*T)/sum(V), sigdigits=4), " K")
+
+    # --- save / load round-trip ---------------------------------------------------------
+    tmp = mktempdir()
+    savedata(gas, tmp, :write, verbose=false)
+    back = loaddata(24, tmp, :particles, verbose=false)
+    println("save/load round-trip: ", length(back.data), " cells, mass preserved ",
+            isapprox(msum(back,:Msol), msum(gas,:Msol); rtol=1e-12))
+else
+    println("CAMELS fixture not present — skipping")
+end
+```
+
+```
+cells 984133
+   centre of mass [kpc] [40042.8, 39878.8, 39974.9]
+bulk velocity [km/s] [172.21, -82.24, 32.44]
+sphere R=300.0
+ kpc:  whole-cell 1.39826e11   split 1.39571e11 Msol
+shell 150.0
+–300.0 kpc: 3392 cells
+hot gas (T > 1e5 K): 13969
+ cells, 0.21 % of the mass
+⟨T⟩ mass-weighted   14560.0 K
+⟨T⟩ volume-weighted 11060.0 K
+save/load round-trip: 984133
+ cells, mass preserved true
 ```
 
 
