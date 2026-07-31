@@ -730,16 +730,6 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
     end
 
     if is_offaxis(los=los, theta=theta, phi=phi, inclination=inclination, azimuth=azimuth, position_angle=position_angle, direction=direction)
-        # The footprint kernels are implemented on the axis-aligned path only. Off-axis they were
-        # silently discarded and you got a plain point deposit — measured bit-identical to
-        # weighting=:mass, while axis-aligned the same call differs by 13 % (:sph) and 36 %
-        # (:voronoi). Refuse instead: a wrong map that looks right is worse than an error. This
-        # matches how the off-axis path already rejects :σx/:r_cylinder and friends.
-        weighting in (:sph, :voronoi) && throw(ArgumentError(
-            "projection (particles): weighting=:$(weighting) is not available off-axis — the " *
-            "footprint deposit is implemented for the axis-aligned path only, and would be " *
-            "silently ignored here (you would get weighting=:mass). Use direction=:x/:y/:z for " *
-            "a footprint map, or weighting=:mass/:volume for this off-axis view."))
         return projection_offaxis_particles(dataobject, selected_vars, units, res, weighting,
                                             ranges, data_centerm, range_unit, mask,
                                             los, up, theta, phi, inclination, azimuth, position_angle, axis, angle_unit, binning, direction,
@@ -1363,6 +1353,64 @@ function projection_offaxis_particles(dataobject, selected_vars, units, res, wei
         g = zeros(Float64, nx, ny); w = zeros(Float64, nx, ny)
         deposit_rotated_cells_to_grid!(g, w, xc, yc, vals, wts, grid_extent, grid_resolution; binning=bin)
         return g, w
+    end
+
+    # ── footprint kernels off-axis ──────────────────────────────────────────────────────────
+    # Both are ROTATION-INVARIANT, which is why the axis-aligned samplers work unchanged on the
+    # camera-frame coordinates: the M4 kernel is spherically symmetric (its projection is the same
+    # on any plane), and a nearest-neighbour query is unaffected by rotation because a rotation
+    # preserves distances. So there is no separate off-axis algorithm — only the rotated inputs.
+    e1 = range(x0, x1, length = nx + 1)
+    e2 = range(y0, y1, length = ny + 1)
+    if weighting === :sph || weighting === :voronoi
+        cols = propertynames(dataobject.data.columns)
+        :volume in cols || throw(ArgumentError(
+            "projection (particles): weighting=:$(weighting) needs a :volume column " *
+            "(AREPO/GADGET gas); use :mass for particles without one."))
+        Vc = Float64.(getvar(dataobject, :volume)[sel])
+        if weighting === :sph
+            hs = max.(1.5 .* (3.0 .* Vc ./ (4 * pi)) .^ (1/3), pixsize)   # same α as the axis path
+            for ivar in selected_vars
+                su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
+                if ivar in sd_names
+                    m = _sph_deposit(xc, yc, massv, hs, e1, e2) ./ pixel_area
+                else
+                    q   = Float64.(getvar(dataobject, ivar, center=data_centerm, ref_time=ref_time)[sel])
+                    num = _sph_deposit(xc, yc, q .* massv, hs, e1, e2)
+                    den = _sph_deposit(xc, yc, massv,      hs, e1, e2)
+                    m   = num ./ den
+                end
+                maps[ivar] = su != 1. ? m .* su : m
+                maps_unit[ivar] = un; maps_mode[ivar] = :sph
+            end
+        else
+            zc   = Float64.(z_cam[sel])
+            dens = Float64.(getvar(dataobject, :rho)[sel])
+            reff = (sqrt(3)/2) .* Vc .^ (1/3)          # centre-to-corner, as on the axis path
+            lo   = minimum(zc) - pixsize; hi = maximum(zc) + pixsize
+            # Step along the ray at the scale of the STRUCTURE it crosses, not the pixel. With
+            # dl = pixsize the ray steps over whole cells whenever the cells are smaller than a
+            # pixel, and how often it does depends on how the ray aligns with the mesh — which
+            # made the total vary by ~8 % with viewing angle. Half the median cell size keeps the
+            # integral sampling every cell it passes through.
+            dl_cell = 0.5 * median(Vc) ^ (1/3)
+            nlos = clamp(round(Int, (hi - lo) / min(pixsize, dl_cell)), 1, 4096)
+            for ivar in selected_vars
+                su, un = getunit(dataobject, ivar, selected_vars, units, uname=true)
+                isstd = ivar in sd_names
+                vals  = isstd ? dens :
+                        Float64.(getvar(dataobject, ivar, center=data_centerm, ref_time=ref_time)[sel])
+                colρ, colρv = _voronoi_los(xc, yc, zc, dens, vals, reff, e1, e2, lo, hi, nlos)
+                m = isstd ? colρ : (colρv ./ colρ)
+                maps[ivar] = su != 1. ? m .* su : m
+                maps_unit[ivar] = un; maps_mode[ivar] = :voronoi
+            end
+        end
+        ratio = (extent[2]-extent[1]) / (extent[4]-extent[3])
+        return PartMapsType(maps, maps_unit, SortedDict(), maps_mode, lmax, lmin, lmax, ref_time,
+                            ranges, extent, copy(extent), ratio, res, pixsize, boxlen, scale,
+                            dataobject.info,
+                            collect(cam_w), collect(cam_up), collect(cam_right), collect(float.(pivot)))
     end
 
     for ivar in selected_vars

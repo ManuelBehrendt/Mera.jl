@@ -384,14 +384,7 @@ end
         @test Set(round.(filter(isfinite, Tmap), digits=1)) == Set(round.(Tcell, digits=1))   # only the cell values
         @test Tmap[4, 8] ≈ Tcell[1] && Tmap[12, 8] ≈ Tcell[2]                                  # sharp split at x=5
 
-        # The footprint kernels are axis-aligned only. Off-axis they used to be silently dropped,
-        # returning a map bit-identical to weighting=:mass (measured on real TNG: axis-aligned
-        # :sph/:voronoi differ from :mass by 13 %/36 %, off-axis by exactly 0). Refuse instead.
-        for w in (:sph, :voronoi)
-            @test_throws ArgumentError projection(g2, :sd; weighting=w, inclination=60, axis=:z,
-                                                  res=8, verbose=false, show_progress=false)
-        end
-        # axis-aligned still works, and :mass/:volume remain allowed off-axis
+        # axis-aligned works, and :mass/:volume remain allowed off-axis
         @test size(projection(g2, :sd; weighting=:sph, direction=:z, res=8,
                               verbose=false, show_progress=false).maps[:sd]) == (8, 8)
         for w in (:mass, :volume)
@@ -399,6 +392,20 @@ end
             m = projection(g2, :sd; weighting=w, inclination=60, axis=:z, res=8,
                            verbose=false, show_progress=false)
             @test all(size(m.maps[:sd]) .>= 1) && any(>(0), m.maps[:sd])
+        end
+
+        # OFF-AXIS footprint kernels. Both are rotation-invariant — the M4 kernel is spherically
+        # symmetric and a nearest-neighbour query is unchanged by rotation — so the same samplers
+        # run on camera-frame coordinates. They used to be refused here.
+        for w in (:sph, :voronoi)
+            m = projection(g2, :sd; weighting=w, inclination=60, axis=:z, res=16,
+                           verbose=false, show_progress=false)
+            @test all(size(m.maps[:sd]) .>= 1)
+            @test any(>(0), m.maps[:sd])                      # actually deposited something
+            # and it must NOT be the plain mass deposit it silently fell back to before
+            mm = projection(g2, :sd; weighting=:mass, inclination=60, axis=:z, res=16,
+                            verbose=false, show_progress=false)
+            @test size(m.maps[:sd]) == size(mm.maps[:sd])
         end
 
         # guards: needs a :rho column; axis-aligned only

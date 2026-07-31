@@ -43,8 +43,6 @@ println("threads      : ", Threads.nthreads())
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (6), mismatched flags (8))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -53,9 +51,6 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), dep missing source (6))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
 cells loaded : 590311
 box length   : 100.0 kpc
 levels       : 3 – 7
@@ -313,7 +308,7 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-29T23:31:44.363
+[Mera]: 2026-07-31T11:11:53.621
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -465,7 +460,8 @@ end
 maps returned : Any
 [:
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
+ => :K, :mass => :Msol, :sd => :standard)
 Σ(map) / msum(gas) − 1  =  0.0
 σx
 projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
@@ -554,10 +550,10 @@ level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       64.4 %
-0.006     1.3004
-cic       27.8 %     0.006     1.2898
-overlap   0.0 %      0.026     0.0005
-exact     0.0 %      0.103     0.0
+0.009     1.3004
+cic       27.8 %     0.01      1.2898
+overlap   0.0 %      0.039     0.0005
+exact     0.0 %      0.125     0.0
 ```
 
 ```julia
@@ -708,7 +704,8 @@ end
 ```
 
 ```
-pxsize [kpc]   median σ_LOS    mean σ_LOS
+pxsize [kpc]   median σ_LOS
+mean σ_LOS
 0.15           93.8            274.1
 0.6            94.3            275.4
 2.4            102.6           274.8
@@ -759,7 +756,8 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 ```
 
 ```
-slice frame      (120, 120)   0.0 % NaN
+slice frame      (
+120, 120)   0.0 % NaN
 projection frame (120, 120)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
@@ -824,7 +822,8 @@ end
 ```
 
 ```
-azimuth   0°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
+azimuth   0
+°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
 azimuth  90°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.857]
 azimuth 180°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
 azimuth 270°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
@@ -912,7 +911,7 @@ The view keywords are the same everywhere. What differs is a short list of defau
 | | hydro / RT | particles |
 |---|---|---|
 | `binning` default | `:overlap` | **`:cic`**; `:overlap`/`:exact` silently fall back to `:cic` (points have no footprint) |
-| `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`; `:volume` works. `:sph`/`:voronoi` **refuse off-axis** — the footprint deposit is axis-aligned only, and used to be silently ignored here |
+| `weighting` | **Array**, `[:mass, missing]` | **Symbol**, `:mass`, `:volume`, `:sph`, `:voronoi` — all available off-axis. `:sph` conserves mass to ~0.2 % independent of angle; `:voronoi` trades that for sharp cell edges (~3 % angle spread), so prefer `:sph` for quantitative maps |
 | `fov` / `fov_unit` / `aperture` | yes | **yes** — same rotation-invariant sphere selection; the framing is a selection, so it does not care what is deposited |
 | `mode`, `nmax`, `max_threads`, `gravity_data` | yes | absent |
 | `data_center` | **silently ignored** on the off-axis hydro path | honoured |
@@ -943,7 +942,8 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 stars   : frame (
 107, 109)   los = [0.999, -0.002, -0.037]
 gravity : maps Any[:epot, :sd]
-          epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
+          epot over filled pixels (-0.5327, -0.03714)
+   (530 of 11448 pixels empty)
 ```
 
 ```julia
@@ -1028,11 +1028,10 @@ println("particle binning=:overlap falls back to :cic : ",
         same(projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:overlap, W...), pc))
 println("particle binning=:exact   falls back to :cic : ",
         same(projection(part, :sd, :Msol_pc2; direction=:edgeon, binning=:exact, W...), pc))
-# :sph/:voronoi are axis-aligned only. They USED to be silently ignored off-axis, returning
-# a map bit-identical to :mass; now they refuse. (On a real TNG halo, axis-aligned they
-# differ from :mass by 13 % and 36 %; off-axis the difference was exactly 0.)
+# :sph/:voronoi now work off-axis too: both are rotation-invariant, so the same samplers run
+# on camera-frame coordinates. (They need a :volume column, which star particles lack.)
 for w in (:sph, :voronoi)
-    println(rpad("weighting=:$w refused off-axis", 45), ": ",
+    println(rpad("weighting=:$w off-axis (needs :volume)", 45), ": ",
             raises(() -> projection(part, :sd, :Msol_pc2; direction=:edgeon, weighting=w, W...)))
 end
 println("fov works on particles                       : ",
@@ -1055,14 +1054,15 @@ println("data_center ignored on off-axis hydro        : ",
 ```
 particle binning=:overlap falls back to :cic : true
 particle binning=:exact   falls back to :cic : true
-weighting=:sph refused off-axis              :
+weighting=:sph off-axis (needs :volume)      :
 ArgumentError
-weighting=:voronoi refused off-axis          : ArgumentError
+weighting=:voronoi off-axis (needs :volume)  : ArgumentError
 fov works on particles                       : (
 30, 30)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
-particle max_threads                         : MethodError
+particle max_threads
+: MethodError
 data_center ignored on off-axis hydro        : true
 ```
 
