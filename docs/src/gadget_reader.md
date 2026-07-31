@@ -111,6 +111,23 @@ the valid ones.
     convention is now consistent across data types, but a filter written against the old behaviour
     will silently select a different set of cells rather than fail.
 
+### Mass-conserving maps: pick the pixel to suit the window
+
+A projection deposits each cell over a stencil, so cells near the frame edge put part of that
+stencil outside the map and the share is not deposited. The loss is a **boundary** effect and
+shrinks as the pixel does — on a ±300 kpc window of the TNG halo:
+
+| pixel | map | Σ(map)·pixarea / M(window) |
+|---|---|---|
+| 20 kpc | 31 × 31 | 0.9735 |
+| 10 kpc | 61 × 61 | 0.9928 |
+| 5 kpc | 121 × 121 | 0.9959 |
+
+Nothing is wrong at 20 kpc — the missing 2.7 % is genuinely outside the frame — but if you need the
+map to account for the window's mass, either use a pixel small compared with the window, or project
+a frame **larger** than the region you care about and measure inside it. That is the same advice the
+off-axis page gives for edge pixels, and it applies to every deposit mode.
+
 ### Multi-file (chunked) snapshots
 
 Large runs split one snapshot across `snap_NNN.0.hdf5 … snap_NNN.K.hdf5`, usually inside a
