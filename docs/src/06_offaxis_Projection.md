@@ -1,5 +1,8 @@
 ## 0. Off-axis projection — what this page gives you
 
+!!! tip "Run it yourself"
+    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
+
 Title + scope card. Prose:
 
 "Every map on this page comes out of **one function call**:
@@ -59,10 +62,6 @@ threads      : 4
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
-
-!!! tip "Run it yourself"
-    This page is also an executable **Jupyter notebook** — [open / download `06_offaxis_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_offaxis_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
 # ONE helper, used by every figure in this notebook. It encodes the rules that make a
 # comparison honest: physical axes in kpc, DataAspect, no interpolation, an explicit
 # NaN colour, and an optional SHARED colour range.
