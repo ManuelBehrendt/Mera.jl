@@ -383,14 +383,26 @@ end
     # ========================================================================
     @testset "Virial Parameter: α = 5cs²R/(GM)" begin
         vp = getvar(hydro, :virial_parameter_local)
-        cs = getvar(hydro, :cs)
-        mass = getvar(hydro, :mass)
-        cellsize = getvar(hydro, :cellsize)
-        G = hydro.info.constants.G
-
-        expected = @. (5 * cs^2 * cellsize) / (G * mass)
+        G  = hydro.info.constants.G          # CGS
         @test all(vp .> 0)
+
+        # Independent check. The previous version of this test recomputed the implementation's
+        # own expression from the same inputs and asserted isapprox — a transcription of the
+        # source line, which cannot fail and did not catch a 1.5e7 unit error.
+        #
+        # Substituting M = ρ·Δx³ eliminates mass: α_vir = 5c_s²/(G·ρ·Δx²). That is algebraically
+        # distinct from the implementation (it never calls :mass) and forces every input through
+        # an explicit CGS conversion, so a code-unit/CGS mixup cannot cancel.
+        rho_cgs = getvar(hydro, :rho, :g_cm3)
+        dx_cgs  = getvar(hydro, :cellsize, :cm)
+        cs_cgs  = getvar(hydro, :cs, :cm_s)
+        expected = @. 5 * cs_cgs^2 / (G * rho_cgs * dx_cgs^2)
         @test isapprox(vp, expected, rtol=RTOL_PHYSICS)
+
+        # Explicit regression guard: the bug inflated α_vir by exactly unit_d·unit_t². α_vir is
+        # dimensionless, so nothing about the code's unit system may appear in the answer.
+        bad = hydro.info.unit_d * hydro.info.unit_t^2
+        @test !isapprox(median(vp), median(expected) * bad, rtol=1e-6)
     end
 
     # ========================================================================
