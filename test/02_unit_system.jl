@@ -3,27 +3,26 @@
 # Tests for physical constants, unit conversions, and scale factor formulas.
 # Validates that scale factors are computed correctly from RAMSES base units.
 
-# NOTE: a bare `return` at file scope is a no-op when this file is `include`d
-# (see runtests.jl), so the data-dependent testset below must be wrapped in an
-# explicit `if/else` rather than guarded by an early `return`.
-if !DATA_AVAILABLE
-    @warn "Skipping Unit System tests - simulation data not available"
-    @test_skip "Simulation data not available"
-else
-
 @testset "Unit System" begin
 
-    # Load test data to access scales and constants
-    info = load_test_info(:spiral_clumps)
-    scale = info.scale
-    constants = info.constants
-
-    # Extract base RAMSES units for formula validation
-    unit_l = info.unit_l  # Length unit [cm]
-    unit_d = info.unit_d  # Density unit [g/cm³]
-    unit_t = info.unit_t  # Time unit [s]
-    unit_v = unit_l / unit_t  # Velocity unit [cm/s]
-    unit_m = unit_d * unit_l^3  # Mass unit [g]
+    # NO SIMULATION DATA REQUIRED. Scale factors are pure arithmetic on (unit_l, unit_d, unit_t)
+    # and `constants` is a package table, so this file only ever needed three numbers — yet it
+    # used to load a RAMSES fixture and was therefore wrapped in `if !DATA_AVAILABLE … skip`.
+    # In CI (MERA_SMOKE_ONLY=1) all 326 lines collapsed to a single @test_skip, leaving the suite
+    # with NO absolute unit anchor there: every other unit test is a self-consistency check that
+    # cancels a wrong unit_v or unit_l exactly.
+    #
+    # The values below are deliberately NOT a fixture's. Every RAMSES fixture in this repo has
+    # boxlen = 100 code = 100 kpc, so scale.kpc == 1 — and a scale of 1 cannot detect a wrong
+    # conversion, which is precisely how several silent unit bugs survived. These are chosen so
+    # that no scale factor lands on 1.
+    constants = Mera.createconstants()
+    unit_l = 3.085677581282e21 * 3.5      # 3.5 kpc in cm  → scale.kpc = 3.5, not 1
+    unit_d = 1.66e-24 * 2.7               # 2.7 H-masses per cm³
+    unit_t = 3.1556952e13 * 1.3           # 1.3 Myr in s
+    unit_v = unit_l / unit_t              # Velocity unit [cm/s]
+    unit_m = unit_d * unit_l^3            # Mass unit [g]
+    scale  = Mera.createscales(unit_l, unit_d, unit_t, unit_m, constants)
 
     # Mera's assumed hydrogen mass fraction (primordial-like, X = 0.76).
     # Used by the number-density and temperature scale formulas.  If a
@@ -89,8 +88,13 @@ else
 
     @testset "Reference values (external cross-check)" begin
         @testset "Length: anchor + external pc/kpc/Mpc" begin
-            # Anchor — spiral_clumps has unit_l = 1 kpc by construction.
-            @test isapprox(scale.kpc, 1.0, rtol=1e-6)
+            # Anchor: scale.kpc is unit_l expressed in kpc, checked against an EXTERNAL
+            # kpc-in-cm. This used to read `isapprox(scale.kpc, 1.0)` — true only because
+            # every RAMSES fixture here has unit_l = 1 kpc. 1.0 is the single value that
+            # cannot detect a wrong conversion (x·1 == x/1), which is the degeneracy that
+            # let several silent unit bugs through. Derived from unit_l, it now holds for
+            # any simulation and actually constrains the factor.
+            @test isapprox(scale.kpc, unit_l / CODATA[:kpc], rtol=1e-6)
             # Round-trip scale.cm through EXTERNAL kpc-in-cm should give back
             # the same scale.kpc.  A wrong factor inside createscales (e.g.
             # /1e2 instead of /1e3) would break this — the formula test would
@@ -323,4 +327,3 @@ else
     end
 
 end  # @testset "Unit System"
-end  # if !DATA_AVAILABLE / else
