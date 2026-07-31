@@ -11,10 +11,11 @@ env:
 
 # CI runners do not have access to the RAMSES simulation data on the
 # maintainer's external drive, so the full test suite cannot run here.
-# We run a "smoke" subset (Aqua quality checks + unit-system tests) that
-# verifies the package builds, loads, and that data-independent invariants
-# hold. Full coverage is collected locally and uploaded to Codecov by
-# scripts/run_local_coverage.sh.
+# We run the "smoke" subset: every data-free tier of runtests.jl — Aqua and the
+# unit systems, but also the synthetic-HDF5 reader contracts (GADGET/AREPO,
+# Chombo), the reader registry, the IO layer and the mera-file round-trips. That
+# is real file I/O on synthetic fixtures, not a load-only check. Full coverage is
+# collected locally and uploaded to Codecov by scripts/run_local_coverage.sh.
 
 jobs:
   smoke:
@@ -30,6 +31,16 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
+        # Windows gets ONE job rather than a third column: the failures it is
+        # likely to catch — HDF5/JLD2/LZ4 binaries, path separators, and the
+        # rule that an open file cannot be deleted — do not vary with the Julia
+        # version, so 3x the runners would buy 1x the signal. The data-free
+        # tiers exercise this properly (36 mktempdir, 23 h5open, savedata
+        # round-trips), including the group-catalogue lookup that walks to a
+        # snapshot's PARENT directory.
+        include:
+          - version: '1.11'
+            os: windows-latest
     steps:
       - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
