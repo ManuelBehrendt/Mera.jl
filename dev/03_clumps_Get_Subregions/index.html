@@ -1,743 +1,315 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Clumps · Mera.jl</title><meta name="title" content="Clumps · Mera.jl"/><meta property="og:title" content="Clumps · Mera.jl"/><meta property="twitter:title" content="Clumps · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/03_clumps_Get_Subregions/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/03_clumps_Get_Subregions/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/03_clumps_Get_Subregions/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../report/">First Look</a></li><li><a class="tocitem" href="../00_multi_FirstSteps/">Getting Started</a></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox" checked/><label class="tocitem" for="menuitem-4"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox" checked/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li class="is-active"><a class="tocitem" href>Clumps</a><ul class="internal"><li><a class="tocitem" href="#Learning-Objectives"><span>Learning Objectives</span></a></li><li><a class="tocitem" href="#Technical-Foundation"><span>Technical Foundation</span></a></li><li><a class="tocitem" href="#Data-Setup-and-Initialization"><span>Data Setup and Initialization</span></a></li><li><a class="tocitem" href="#Cuboid-Region-Selection"><span>Cuboid Region Selection</span></a></li><li><a class="tocitem" href="#Cylindrical-Region-Selection"><span>Cylindrical Region Selection</span></a></li><li><a class="tocitem" href="#Spherical-Region-Selection"><span>Spherical Region Selection</span></a></li><li><a class="tocitem" href="#Advanced-Selection-Techniques"><span>Advanced Selection Techniques</span></a></li><li><a class="tocitem" href="#Cylindrical-Shell-Selection"><span>Cylindrical Shell Selection</span></a></li><li><a class="tocitem" href="#Spherical-Shell"><span>Spherical Shell</span></a></li><li><a class="tocitem" href="#Value-Type-Regions"><span>Value-Type Regions</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding — Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-4" type="checkbox"/><label class="tocitem" for="menuitem-5-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../fluxbudget/">Flux Budgets</a></li><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-6-3" type="checkbox"/><label class="tocitem" for="menuitem-6-3"><span class="docs-label">Off-axis</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_offaxis_Projection/">Guide</a></li><li><a class="tocitem" href="../offaxis_conservation_proof/">Conservation Proof</a></li><li><input class="collapse-toggle" id="menuitem-6-3-3" type="checkbox"/><label class="tocitem" for="menuitem-6-3-3"><span class="docs-label">Notebooks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../11_multi_OffAxisProjection/">Projection basics</a></li><li><a class="tocitem" href="../13_multi_OffAxis_Validation/">Validation &amp; accuracy</a></li><li><a class="tocitem" href="../14_multi_OffAxis_Features/">Advanced LOS features</a></li></ul></li></ul></li><li><a class="tocitem" href="../overlay_absorption/">Grid Overlay</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox"/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../immersive/">Immersive (360°/dome/fly-through)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Other Simulation Codes</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multicode/">Overview</a></li><li><a class="tocitem" href="../multicode_examples/">Worked Examples</a></li><li><a class="tocitem" href="../pluto_reader/">PLUTO</a></li><li><a class="tocitem" href="../athena_reader/">Athena++</a></li><li><a class="tocitem" href="../flash_reader/">FLASH</a></li><li><a class="tocitem" href="../gadget_reader/">GADGET</a></li><li><a class="tocitem" href="../arepo_reader/">AREPO</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox"/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera Function Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox"/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../Miscellaneous/">Miscellaneous</a></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Core Workflows</a></li><li><a class="is-disabled">Get Subregions</a></li><li class="is-active"><a href>Clumps</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Clumps</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="3.-Clumps:-Get-Sub-Regions-of-The-Loaded-Data"><a class="docs-heading-anchor" href="#3.-Clumps:-Get-Sub-Regions-of-The-Loaded-Data">3. Clumps: Get Sub-Regions of The Loaded Data</a><a id="3.-Clumps:-Get-Sub-Regions-of-The-Loaded-Data-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Clumps:-Get-Sub-Regions-of-The-Loaded-Data" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-c56cabbaacbf8db5"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-c56cabbaacbf8db5" title="Permalink"></a></header><div class="admonition-body"><p>This tutorial is also an executable <strong>Jupyter notebook</strong> — <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1/03_clumps_Get_Subregions.ipynb">open / download <code>03_clumps_Get_Subregions.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><h2 id="Learning-Objectives"><a class="docs-heading-anchor" href="#Learning-Objectives">Learning Objectives</a><a id="Learning-Objectives-1"></a><a class="docs-heading-anchor-permalink" href="#Learning-Objectives" title="Permalink"></a></h2><p>By the end of this tutorial, you will be able to:</p><ul><li><strong>Extract spatial sub-regions</strong> from clump simulation data using geometric selections</li><li><strong>Apply cuboid, cylindrical, and spherical filtering</strong> to isolate specific regions of interest</li><li><strong>Utilize shell regions</strong> for hollow geometric selections with inner and outer boundaries</li><li><strong>Combine multiple selection criteria</strong> for complex spatial filtering operations</li><li><strong>Perform inverse selections</strong> to analyze data outside specified regions</li><li><strong>Visualize selected regions</strong> with comprehensive scatter plots and extent analysis</li></ul><h2 id="Technical-Foundation"><a class="docs-heading-anchor" href="#Technical-Foundation">Technical Foundation</a><a id="Technical-Foundation-1"></a><a class="docs-heading-anchor-permalink" href="#Technical-Foundation" title="Permalink"></a></h2><h3 id="Clump-Data-Structure"><a class="docs-heading-anchor" href="#Clump-Data-Structure">Clump Data Structure</a><a id="Clump-Data-Structure-1"></a><a class="docs-heading-anchor-permalink" href="#Clump-Data-Structure" title="Permalink"></a></h3><p>Clumps in MERA represent identified overdense regions in simulations, containing:</p><ul><li><strong>Spatial coordinates</strong> (x, y, z positions)</li><li><strong>Physical properties</strong> (mass, size, density characteristics)</li><li><strong>Hierarchical relationships</strong> (parent-child clump associations)</li><li><strong>Temporal evolution</strong> (formation and merger histories)</li></ul><h3 id="Spatial-Selection-Functions"><a class="docs-heading-anchor" href="#Spatial-Selection-Functions">Spatial Selection Functions</a><a id="Spatial-Selection-Functions-1"></a><a class="docs-heading-anchor-permalink" href="#Spatial-Selection-Functions" title="Permalink"></a></h3><p><strong>Core Functions:</strong></p><ul><li><code>subregion()</code> - Primary function for geometric sub-region extraction</li><li><code>shellregion()</code> - Specialized function for hollow region selections</li><li><code>getpositions()</code> - Extract position coordinates with unit conversion</li><li><code>getextent()</code> - Calculate spatial bounds and ranges</li></ul><p><strong>Geometric Types:</strong></p><ul><li><code>:cuboid</code> - Rectangular box selections with xrange, yrange, zrange</li><li><code>:cylinder</code> - Cylindrical selections with radius, height, and orientation</li><li><code>:sphere</code> - Spherical selections with radius from center point</li><li><code>:shell</code> - Hollow versions of geometric shapes with inner/outer boundaries</li></ul><p><strong>Coordinate Systems:</strong></p><ul><li><strong>Standard notation</strong> [0:1] - Normalized box coordinates (default)</li><li><strong>Physical units</strong> - Real length units (kpc, Mpc, pc, etc.)</li><li><strong>Center references</strong> - <code>:boxcenter</code>, or custom coordinates</li><li><strong>Relative positioning</strong> - Offsets from specified reference points</li></ul><h3 id="Quick-Reference"><a class="docs-heading-anchor" href="#Quick-Reference">Quick Reference</a><a id="Quick-Reference-1"></a><a class="docs-heading-anchor-permalink" href="#Quick-Reference" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Basic subregion extraction
-subregion(clumps, :cuboid, xrange=[x1,x2], yrange=[y1,y2], zrange=[z1,z2])
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Clumps · Mera.jl</title><meta name="title" content="Clumps · Mera.jl"/><meta property="og:title" content="Clumps · Mera.jl"/><meta property="twitter:title" content="Clumps · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/03_clumps_Get_Subregions/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/03_clumps_Get_Subregions/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/03_clumps_Get_Subregions/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../report/">First Look</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox" checked/><label class="tocitem" for="menuitem-4"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox" checked/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li class="is-active"><a class="tocitem" href>Clumps</a><ul class="internal"><li><a class="tocitem" href="#1.-What-a-Clump-Row-Is"><span>1. What a Clump Row Is</span></a></li><li><a class="tocitem" href="#2.-One-Sphere,-and-an-Exact-Selection"><span>2. One Sphere, and an Exact Selection</span></a></li><li><a class="tocitem" href="#3.-The-Peak-Is-a-Proxy:-from-a-Number-to-a-Bracket"><span>3. The Peak Is a Proxy: from a Number to a Bracket</span></a></li><li><a class="tocitem" href="#4.-The-Geometry-Gallery"><span>4. The Geometry Gallery</span></a></li><li><a class="tocitem" href="#5.-Composites-and-the-@region-Block"><span>5. Composites and the <code>@region</code> Block</span></a></li><li><a class="tocitem" href="#6.-Place-*and*-Property:-Regions-Meet-Filters"><span>6. Place <em>and</em> Property: Regions Meet Filters</span></a></li><li><a class="tocitem" href="#7.-Profiles,-and-Why-the-Counts-Are-the-Limit"><span>7. Profiles, and Why the Counts Are the Limit</span></a></li><li><a class="tocitem" href="#8.-Reference:-the-Classic-Symbol-API"><span>8. Reference: the Classic Symbol API</span></a></li><li><a class="tocitem" href="#9.-Practical-Guidance"><span>9. Practical Guidance</span></a></li><li><a class="tocitem" href="#Summary"><span>Summary</span></a></li></ul></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding — Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-4" type="checkbox"/><label class="tocitem" for="menuitem-5-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../fluxbudget/">Flux Budgets</a></li><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../06_offaxis_Projection/">Off-axis</a></li><li><a class="tocitem" href="../overlay_absorption/">Grid Overlay</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox"/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li><li><a class="tocitem" href="../immersive/">Immersive (360°/dome/fly-through)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Other Simulation Codes</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multicode/">Overview</a></li><li><a class="tocitem" href="../multicode_examples/">Worked Examples</a></li><li><a class="tocitem" href="../pluto_reader/">PLUTO</a></li><li><a class="tocitem" href="../athena_reader/">Athena++</a></li><li><a class="tocitem" href="../flash_reader/">FLASH</a></li><li><a class="tocitem" href="../gadget_reader/">GADGET</a></li><li><a class="tocitem" href="../arepo_reader/">AREPO</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox"/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li><li><a class="tocitem" href="../quickreference/Mera_Quick_Reference/">Mera Function Reference</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox"/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li><a class="tocitem" href="../Miscellaneous/">Miscellaneous</a></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Core Workflows</a></li><li><a class="is-disabled">Get Subregions</a></li><li class="is-active"><a href>Clumps</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Clumps</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="3.-Clumps:-Regions-Applied-to-a-Catalogue"><a class="docs-heading-anchor" href="#3.-Clumps:-Regions-Applied-to-a-Catalogue">3. Clumps: Regions Applied to a Catalogue</a><a id="3.-Clumps:-Regions-Applied-to-a-Catalogue-1"></a><a class="docs-heading-anchor-permalink" href="#3.-Clumps:-Regions-Applied-to-a-Catalogue" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-2518687b408b9eec"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-2518687b408b9eec" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong> — <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_clumps_Get_Subregions.ipynb">open / download <code>03_clumps_Get_Subregions.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><p>A clump catalogue is not a grid and not a particle list. It is a table of <em>objects</em> — each row one clump, summarised by the position of its density peak and a handful of scalars. <code>subregion</code> applies to it the same way it applies to everything else, and the mechanics are the simplest on any of these pages: the peak is a point, the region is a predicate, a clump is in or out.</p><p>The interesting part is what that simplicity hides.</p><p>A clump is an extended thing. Its mass is spread over many cells, but the catalogue records only where its peak is — so when a region boundary cuts through a clump, the selection has no way to split it. The whole object is assigned by its peak, all of its mass or none of it. The boundary problem the <a href="../03_hydro_Get_Subregions/">hydro page</a> solved with volume fractions does not disappear here; it moves up a level, from cells to objects, and gets <em>harder</em>, because the catalogue no longer knows where the mass is.</p><p>This page shows how to work with that honestly: the same regions, the same algebra, plus a two-line check that tells you whether the objects your boundary cuts through matter. In this galaxy, at the scales one normally works at, they do not — but that is a measurement, not an assumption, and §3 shows where the answer flips.</p><p><strong>Reading convention.</strong> Longer code cells are cut in two by a banner line:</p><pre><code class="nohighlight hljs"># ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──</code></pre><p>Everything above the banner is the Mera part; everything below is Makie decoration.</p><p><strong>On this page</strong></p><ol><li>what a clump row is</li><li>one sphere, and an exact selection</li><li>the peak is a proxy: from a number to a bracket</li><li>the geometry gallery</li><li>composites and the <code>@region</code> block</li><li>place <em>and</em> property: regions meet filters</li><li>profiles, and why the counts are the limit</li><li>reference: the classic symbol API</li><li>practical guidance</li></ol><h2 id="1.-What-a-Clump-Row-Is"><a class="docs-heading-anchor" href="#1.-What-a-Clump-Row-Is">1. What a Clump Row Is</a><a id="1.-What-a-Clump-Row-Is-1"></a><a class="docs-heading-anchor-permalink" href="#1.-What-a-Clump-Row-Is" title="Permalink"></a></h2><p>The same galaxy as the other sub-region pages, now through the clump finder&#39;s eyes. The gas is loaded too — not for the selection, but as a backdrop and, in §3, as the thing the clumps are made of.</p><pre><code class="language-julia hljs">using Mera, CairoMakie
+# Makie also exports geometric names (Sphere, Cylinder, ...) — state explicitly
+# that we mean Mera&#39;s region types:
+import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
+CairoMakie.activate!()
 
-# Physical units with custom center
-subregion(clumps, :sphere, radius=10.0, center=[5.0, 5.0, 5.0],
-          range_unit=:kpc, center_unit=:kpc)
+path = &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14&quot;
+info = getinfo(400, path, verbose=false)
 
-# Cylindrical selection
-subregion(clumps, :cylinder, radius=5.0, height=20.0,
-          direction=:z, center=[:boxcenter])
+clumps = getclumps(info, verbose=false)
+gas    = gethydro(info, :rho, lmax=10, smallr=1e-11, verbose=false, show_progress=false)
 
-# Shell regions (hollow selections)
-shellregion(clumps, :sphere, radius=[5.0, 15.0], center=[:boxcenter])
+kpc = info.scale.kpc
 
-# Position extraction and analysis
-x, y, z = getpositions(clumps, :kpc, center=[:boxcenter])
+println(&quot;clumps         : &quot;, length(clumps.data))
+println(&quot;columns        : &quot;, keys(clumps.data[1]))
+println(&quot;total clump mass: &quot;, round(msum(clumps, :Msol), sigdigits=5), &quot; Msol&quot;)
+println(&quot;     gas mass   : &quot;, round(msum(gas, :Msol), sigdigits=5), &quot; Msol   (whole box)&quot;)
+println(&quot;clump masses   : &quot;, round(minimum(getvar(clumps, :mass, :Msol)), sigdigits=3), &quot; – &quot;,
+        round(maximum(getvar(clumps, :mass, :Msol)), sigdigits=3), &quot; Msol&quot;)</code></pre><pre><code class="nohighlight hljs">*__   __ _______ ______   _______
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+clumps         : 644
+columns        :
+(:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
+total clump mass:
+1.3743e10 Msol
+     gas mass   :
+3.0401e10 Msol   (whole box)
+clump masses   : 312000.0 – 8.61e8 Msol</code></pre><p>Twelve columns, 644 rows. <code>:peak_x, :peak_y, :peak_z</code> are the position of the density maximum — and the only geometry in the table. <code>:mass_cl</code> is the clump&#39;s mass (<code>getvar(..., :mass)</code> reads it), <code>:rho_av</code> its mean density, <code>:ncell</code> how many cells it covers, <code>:relevance</code> the clump finder&#39;s significance measure, and <code>:index</code>/<code>:parent</code>/<code>:lev</code> place it in the finder&#39;s merger hierarchy.</p><p>Note what is <em>not</em> there: any description of the clump&#39;s shape or extent. That absence is the subject of §3.</p><pre><code class="language-julia hljs"># ─────────────────────────────────────────────────────────────────────
+# FIGURE INFRASTRUCTURE for the whole page — skim freely on first read.
+# The Mera-relevant lines are `gproj` (the gas backdrop) and `peaks`
+# (clump peak positions in kpc relative to the box centre).
+# ─────────────────────────────────────────────────────────────────────
+const SDLIM = (-1.5, 2.5)   # log10 Σ [Msol/pc²]
+
+gproj(o; kwargs...) = projection(o, :sd, :Msol_pc2; direction=:z, center=[:bc],
+                                 pxsize=[0.2, :kpc], verbose=false, show_progress=false,
+                                 kwargs...)
+
+function show_sd!(ax, p; flo=1e-2, decorate=false)
+    m  = p.maps[:sd]
+    xs = range(p.cextent[1]*kpc, p.cextent[2]*kpc; length=size(m, 1))
+    ys = range(p.cextent[3]*kpc, p.cextent[4]*kpc; length=size(m, 2))
+    heatmap!(ax, xs, ys, log10.(max.(m, flo)); colormap=:bone, colorrange=SDLIM)
+    ax.aspect = DataAspect()
+    ax.backgroundcolor = :black
+    decorate || hidedecorations!(ax)
+    return ax
+end
+
+peaks(c) = (getvar(c, :x, :kpc, center=[:bc]),
+            getvar(c, :y, :kpc, center=[:bc]),
+            getvar(c, :z, :kpc, center=[:bc]))
+
+# marker area ∝ clump mass, clipped so the smallest stay visible
+msize(c) = clamp.(1.6 .* (getvar(c, :mass, :Msol) ./ 1e5).^(1/3), 1.5, 9.0)</code></pre><pre><code class="nohighlight hljs">msize (generic function with 1 method)</code></pre><pre><code class="language-julia hljs">p_face = gproj(gas)
+cx, cy, cz = peaks(clumps)
+
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+fig = Figure(size=(1000, 470))
+ax1 = Axis(fig[1, 1], title=&quot;clump peaks over the gas they were found in&quot;,
+           xlabel=&quot;x − x꜀ [kpc]&quot;, ylabel=&quot;y − y꜀ [kpc]&quot;)
+show_sd!(ax1, p_face; decorate=true)
+scatter!(ax1, cx, cy; markersize=msize(clumps), color=(:orangered, 0.75),
+         strokewidth=0.3, strokecolor=:white)
+arc!(ax1, Point2f(0, 0), 10., 0, 2π; color=:cyan, linewidth=1.5, linestyle=:dash)
+text!(ax1, -15.2, 15.2; text=&quot;Sphere(10)&quot;, color=:cyan, fontsize=11,
+      align=(:left, :top))
+limits!(ax1, -16, 16, -16, 16)
+
+ax2 = Axis(fig[1, 2], title=&quot;edge-on — clumps live in the disc&quot;,
+           xlabel=&quot;x − x꜀ [kpc]&quot;, ylabel=&quot;z − z꜀ [kpc]&quot;)
+scatter!(ax2, cx, cz; markersize=msize(clumps), color=(:orangered, 0.75),
+         strokewidth=0.3, strokecolor=:black)
+lines!(ax2, [-12., 12., 12., -12., -12.], [-2., -2., 2., 2., -2.];
+       color=:royalblue, linewidth=1.5)
+text!(ax2, -11.5, 2.4; text=&quot;Cylinder(12, 2)&quot;, color=:royalblue, fontsize=11)
+limits!(ax2, -16, 16, -8, 8)
+Colorbar(fig[1, 3]; colormap=:bone, colorrange=SDLIM, label=&quot;log₁₀ Σ_gas  [Msol pc⁻²]&quot;)
+fig</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_6_1.png" alt/></p><p>Marker area scales with clump mass. They trace the dense gas, they are confined to the disc, and — the point of the next two sections — they are <em>objects</em>, not samples: a few hundred of them stand in for the entire population of dense structures in this galaxy.</p><h2 id="2.-One-Sphere,-and-an-Exact-Selection"><a class="docs-heading-anchor" href="#2.-One-Sphere,-and-an-Exact-Selection">2. One Sphere, and an Exact Selection</a><a id="2.-One-Sphere,-and-an-Exact-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#2.-One-Sphere,-and-an-Exact-Selection" title="Permalink"></a></h2><p>Mechanically this is the particle case. <code>subregion</code> tests each peak against the region and keeps whole rows; there is no <code>:fraction</code>, no <code>split</code>, and a region together with its complement partitions the catalogue exactly.</p><pre><code class="language-julia hljs">sph   = Sphere(10.)                     # center=[:bc], range_unit=:kpc by default
+c_in  = subregion(clumps, sph, verbose=false)
+c_out = subregion(clumps, sph, inverse=true, verbose=false)
+
+println(&quot;all clumps        : &quot;, rpad(length(clumps.data), 7), round(msum(clumps, :Msol), sigdigits=7), &quot; Msol&quot;)
+println(&quot;peak inside  r&lt;10 : &quot;, rpad(length(c_in.data), 7),  round(msum(c_in, :Msol),  sigdigits=7))
+println(&quot;peak outside r&gt;10 : &quot;, rpad(length(c_out.data), 7), round(msum(c_out, :Msol), sigdigits=7))
+println()
+println(&quot;count residual : &quot;, length(c_in.data) + length(c_out.data) - length(clumps.data))
+println(&quot;clump mass as a share of the gas inside r &lt; 10 kpc : &quot;,
+        round(100 * msum(c_in, :Msol) / msum(subregion(gas, sph, verbose=false), :Msol), digits=2), &quot; %&quot;)</code></pre><pre><code class="nohighlight hljs">all clumps        : 644
+1.374328e10 Msol
+peak inside  r&lt;10 : 400    9.640827e9
+peak outside r&gt;10 : 244    4.102454e9
+count residual : 0
+clump mass as a share of the gas inside r &lt; 10 kpc :
+52.94 %</code></pre><p>The counts close exactly, as they must for a membership test.</p><p>The last line is more interesting than it looks. The clumps in this sphere hold <strong>53 %</strong> of its gas mass — this finder&#39;s density threshold is low enough that the catalogue is not a sprinkling of rare peaks but half the inner galaxy&#39;s gas, gathered into 400 objects. That is worth knowing before quoting any clump statistic as &quot;the dense gas&quot;.</p><p>It is still not a decomposition. The other 47 % is diffuse material that belongs to no clump, so summing clump masses gives a <em>lower bound</em> on the gas in a region, never an estimate of it — and no region operation changes that. Ratios of the two (this one, or its radial profile) are the meaningful statistic.</p><h2 id="3.-The-Peak-Is-a-Proxy:-from-a-Number-to-a-Bracket"><a class="docs-heading-anchor" href="#3.-The-Peak-Is-a-Proxy:-from-a-Number-to-a-Bracket">3. The Peak Is a Proxy: from a Number to a Bracket</a><a id="3.-The-Peak-Is-a-Proxy:-from-a-Number-to-a-Bracket-1"></a><a class="docs-heading-anchor-permalink" href="#3.-The-Peak-Is-a-Proxy:-from-a-Number-to-a-Bracket" title="Permalink"></a></h2><p>Here is where a catalogue differs from a particle list.</p><p>A star particle <em>is</em> a point; putting it inside or outside a region is not an approximation. A clump is not a point. It has an extent, and the catalogue gives us enough to estimate it: mass and mean density imply a volume, and a volume implies an effective radius,</p><p class="math-container">\[r_\mathrm{eff} = \left(\frac{3}{4\pi}\frac{M_\mathrm{cl}}{\rho_\mathrm{av}}\right)^{1/3}.\]</p><p>That is a crude sphere-equivalent radius — real clumps are filamentary — but it is enough to answer the question that matters: <em>how many of these objects does a given boundary cut through?</em></p><pre><code class="language-julia hljs">m_code = getvar(clumps, :mass)        # code units — only the ratio matters here
+rho_av = getvar(clumps, :rho_av)
+r_eff  = (3 .* (m_code ./ rho_av) ./ (4π)).^(1/3) .* kpc      # kpc
+
+mass = getvar(clumps, :mass, :Msol)
+d    = sqrt.(cx.^2 .+ cy.^2 .+ cz.^2)     # peak distance from the box centre, kpc
+r_med = sort(r_eff)[cld(length(r_eff), 2)]
+
+println(&quot;cells per clump : &quot;, Int(minimum(getvar(clumps, :ncell))), &quot; – &quot;,
+        Int(maximum(getvar(clumps, :ncell))))
+println(&quot;effective radii : &quot;, round(minimum(r_eff)*1e3, digits=1), &quot; – &quot;,
+        round(maximum(r_eff)*1e3, digits=1), &quot; pc   (median &quot;,
+        round(r_med*1e3, digits=1), &quot; pc)&quot;)
+
+# the Sphere(10) of §2: how many clumps does that boundary actually cut?
+R = 10.0
+straddling = count(abs.(d .- R) .&lt; r_eff)
+peak  = sum(mass[d .&lt; R])
+upper = sum(mass[d .- r_eff .&lt; R])        # every clump that overlaps at all
+lower = sum(mass[d .+ r_eff .&lt; R])        # only clumps entirely inside
+println()
+println(&quot;clumps cut by the r = 10 kpc surface : &quot;, straddling, &quot; of &quot;, length(d))
+println(&quot;mass inside — lower / peak / upper   : &quot;, round(lower, sigdigits=6), &quot; / &quot;,
+        round(peak, sigdigits=6), &quot; / &quot;, round(upper, sigdigits=6), &quot; Msol&quot;)
+println(&quot;bracket width                        : &quot;,
+        round(100*(upper - lower)/peak, digits=4), &quot; %&quot;)</code></pre><pre><code class="nohighlight hljs">cells per clump : 87
+ – 12250
+effective radii : 8.1 – 41.9 pc   (median 16.5 pc)
+clumps cut by the r = 10 kpc surface : 1 of 644
+mass inside — lower / peak / upper   : 9.59732e9 / 9.64083e9 / 9.64083e9 Msol
+bracket width                        : 0.4512 %</code></pre><p>For a 10 kpc sphere the answer is: one clump out of 644, and half a percent. The clumps in this galaxy are tens of parsecs across, the region is ten kiloparsecs, and its boundary passes almost entirely through space between objects three orders of magnitude smaller than itself. The peak proxy is exact for every practical purpose here, and this page is not an argument against using it.</p><p>Note where even that half a percent comes from: a <em>single</em> object. With 644 rows in the catalogue and a mass function spanning three decades, one massive clump on the boundary is worth more than the counting noise of a whole annulus. Small catalogues are lumpy.</p><p>But the ambiguity is not a property of the catalogue alone — it is the ratio of object size to <em>region</em> size. Shrink the region and it grows. The cleanest way to see that is to keep one shape and sweep its scale: a midplane slab, from a couple of kpc thick down to the size of a single clump.</p><pre><code class="language-julia hljs">zc = cz                                    # peak height above the midplane, kpc
+
+function slab_bracket(h)                   # |z| &lt; h, three boundary conventions
+    pk = sum(mass[abs.(zc) .&lt; h])
+    up = sum(mass[abs.(zc) .- r_eff .&lt; h])
+    lo = sum(mass[abs.(zc) .+ r_eff .&lt; h])
+    return pk &gt; 0 ? 100 * (up - lo) / pk : NaN
+end
+
+hs = 10 .^ range(log10(0.004), log10(2.0); length=45)
+br = slab_bracket.(hs)
+
+for h in (2.0, 0.5, 0.1, 0.02, 0.005)
+    println(&quot;slab |z| &lt; &quot;, rpad(h, 7), &quot; kpc :  bracket = &quot;,
+            round(slab_bracket(h), digits=2), &quot; %&quot;)
+end
+
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+fig = Figure(size=(980, 400))
+ax1 = Axis(fig[1, 1], xlabel=&quot;effective radius [pc]&quot;, ylabel=&quot;number of clumps&quot;,
+           title=&quot;how big the unsplittable units are&quot;)
+hist!(ax1, r_eff .* 1e3; bins=30, color=(:steelblue, 0.8))
+vlines!(ax1, [r_med * 1e3]; color=:black, linestyle=:dash)
+text!(ax1, r_med*1e3, 2; text=&quot;  median&quot;, align=(:left, :bottom), fontsize=10)
+
+ax2 = Axis(fig[1, 2], xlabel=&quot;slab half-thickness h [kpc]&quot;, ylabel=&quot;bracket width [%]&quot;,
+           xscale=log10, yscale=log10, title=&quot;the ambiguity is a ratio, not a constant&quot;)
+lines!(ax2, hs, max.(br, 1e-3); color=:orangered, linewidth=2.5)
+hlines!(ax2, [100.]; color=:grey, linestyle=:dot)
+text!(ax2, 1.8, 130; text=&quot;wider than the estimate itself&quot;, color=:grey, fontsize=9,
+      align=(:right, :bottom))
+vlines!(ax2, [r_med]; color=:grey, linestyle=:dash)
+text!(ax2, r_med*1.15, 2e-3; text=&quot;median clump radius&quot;, color=:grey, fontsize=10,
+      align=(:left, :bottom))
+fig</code></pre><pre><code class="nohighlight hljs">slab |z| &lt; 2.0
+ kpc :  bracket = 0.0 %
+slab |z| &lt; 0.5     kpc :  bracket = 0.45 %
+slab |z| &lt; 0.1     kpc :  bracket = 51.39 %
+slab |z| &lt; 0.02    kpc :  bracket = 153.13 %
+slab |z| &lt; 0.005   kpc :  bracket = 234.42 %</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_14_3.png" alt/></p><p>At the slab thicknesses this galaxy is normally sliced with the bracket is negligible: 0 % at |z| &lt; 2 kpc — no clump reaches that high — and 0.45 % at |z| &lt; 0.5 kpc. Follow the curve leftward and it climbs fast: 51 % at 100 pc, and past 100 % below about 20 pc, where the bracket is wider than the estimate it brackets. By the time the slab is as thin as a clump is wide, &quot;the clump mass in this slab&quot; has stopped being a well-defined quantity at all.</p><p>Two things are worth taking from that.</p><p>First, the check is cheap. Two extra sums against <code>d ± r_eff</code> tell you whether the region you are about to use is in the safe regime, and the answer is not always obvious — a <em>thin</em> region can be geometrically large and still be dominated by boundary effects.</p><p>Second, this ambiguity is a different kind of thing from the hydro page&#39;s whole-cell excess. There, refinement shrinks it and fraction splitting removes it outright. Here nothing in the catalogue can remove it, because the information needed to split a clump — where inside it the mass sits — was discarded when the finder wrote one row per object. The only ways out are to keep the regions large compared with the clumps, or to go back to the gas and do the measurement on cells.</p><p>A practical corollary: do not place a region boundary so that it deliberately runs through the structures you are studying. If one has to fall there, quote the bracket.</p><h2 id="4.-The-Geometry-Gallery"><a class="docs-heading-anchor" href="#4.-The-Geometry-Gallery">4. The Geometry Gallery</a><a id="4.-The-Geometry-Gallery-1"></a><a class="docs-heading-anchor-permalink" href="#4.-The-Geometry-Gallery" title="Permalink"></a></h2><p>Every region value type applies to a clump catalogue, with the usual keywords: <code>center</code>, <code>range_unit</code>, <code>inverse=true</code>, and <code>axis</code> to tilt a cylinder. The grid-boundary keywords — <code>split</code>, <code>nsub</code>, <code>refine</code>, <code>refine_to</code> — have nothing to act on and are absent.</p><pre><code class="language-julia hljs">gallery = [
+    (&quot;Cuboid — a slab&quot;,            Cuboid(xrange=[-12, 12], yrange=[-12, 12], zrange=[-1, 1])),
+    (&quot;Cylinder(8, 2)&quot;,             Cylinder(8., 2.)),
+    (&quot;Sphere(6)&quot;,                  Sphere(6.)),
+    (&quot;SphericalShell(6, 10)&quot;,      SphericalShell(6., 10.)),
+    (&quot;CylindricalShell(6, 10, 2)&quot;, CylindricalShell(6., 10., 2.)),
+    (&quot;Cylinder(8, 2) tilted 40°&quot;,  Cylinder(8., 2.; axis=[0, sind(40), cosd(40)])),
+]
+for (name, reg) in gallery
+    s = subregion(clumps, reg, verbose=false)
+    println(rpad(name, 30), rpad(length(s.data), 7),
+            round(100*msum(s, :Msol)/msum(clumps, :Msol), digits=1), &quot; % of the clump mass&quot;)
+end
+
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+fig = Figure(size=(1020, 470))
+for (k, (name, reg)) in enumerate(gallery)
+    s = subregion(clumps, reg, verbose=false)
+    sx, sy, sz = peaks(s)
+    row, col = fld(k-1, 3)+1, mod(k-1, 3)+1
+    ax = Axis(fig[row, col], title=name, titlesize=12,
+              xlabel=(row == 2 ? &quot;x [kpc]&quot; : &quot;&quot;), ylabel=(col == 1 ? &quot;z [kpc]&quot; : &quot;&quot;))
+    scatter!(ax, cx, cz; markersize=3, color=(:grey, 0.45))
+    scatter!(ax, sx, sz; markersize=msize(s), color=(:orangered, 0.8))
+    limits!(ax, -16, 16, -8, 8); ax.aspect = DataAspect()
+    row == 2 || hidexdecorations!(ax; grid=false)
+    col == 1 || hideydecorations!(ax; grid=false)
+end
+rowgap!(fig.layout, 4); colgap!(fig.layout, 8)
+fig</code></pre><pre><code class="nohighlight hljs">Cuboid — a slab               603
+95.4 % of the clump mass
+Cylinder(8, 2)                352    57.9 % of the clump mass
+Sphere(6)                     249    37.8 % of the clump mass
+SphericalShell(6, 10)
+151    32.3 % of the clump mass
+CylindricalShell(6, 10, 2)    151    32.3 % of the clump mass
+Cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_17_4.png" alt/></p><p>Grey is the whole catalogue, orange what the region kept, seen edge-on. With a few hundred objects the panels double as a sanity check you cannot get from a grid: you can <em>see</em> every selected item, and a region that has gone wrong is obvious immediately.</p><p>The two shells are worth a second look — they select exactly the same clumps. A spherical shell and a cylindrical shell of the same radii differ only off the midplane, and this population is thin enough that there is nothing out there to differ about. On the gas, the same two regions would enclose very different volumes.</p><h2 id="5.-Composites-and-the-@region-Block"><a class="docs-heading-anchor" href="#5.-Composites-and-the-@region-Block">5. Composites and the <code>@region</code> Block</a><a id="5.-Composites-and-the-@region-Block-1"></a><a class="docs-heading-anchor-permalink" href="#5.-Composites-and-the-@region-Block" title="Permalink"></a></h2><p>Boolean composition works as everywhere else — <code>∩</code> <code>∪</code> <code>\</code> <code>!</code>, or <code>intersect</code> / <code>union</code> / <code>setdiff</code> — and <code>@region</code> keeps a composite readable by hoisting the shared keywords out of the constructors.</p><p>(<code>∩</code> is typed <code>\cap</code>+TAB, <code>∪</code> is <code>\cup</code>+TAB; the named functions are always available if you prefer.)</p><pre><code class="language-julia hljs">outer_disc = @region unit=:kpc center=[:bc] begin
+    disc = Cylinder(12, 2)
+    core = Cylinder(4, 2)
+    disc \ core             # the star-forming annulus, nucleus excluded
+end
+
+c_ring = subregion(clumps, outer_disc, verbose=false)
+c_disc = subregion(clumps, Cylinder(12., 2.), verbose=false)
+c_core = subregion(clumps, Cylinder(4., 2.), verbose=false)
+
+println(&quot;disc slab            : &quot;, rpad(length(c_disc.data), 7), round(msum(c_disc, :Msol), sigdigits=6), &quot; Msol&quot;)
+println(&quot;  nucleus  r &lt; 4     : &quot;, rpad(length(c_core.data), 7), round(msum(c_core, :Msol), sigdigits=6))
+println(&quot;  annulus 4 &lt; r &lt; 12 : &quot;, rpad(length(c_ring.data), 7), round(msum(c_ring, :Msol), sigdigits=6))
+println()
+println(&quot;counts partition : &quot;, length(c_core.data) + length(c_ring.data) == length(c_disc.data))
+println(&quot;masses add       : &quot;, msum(c_core, :Msol) + msum(c_ring, :Msol) ≈ msum(c_disc, :Msol))</code></pre><pre><code class="nohighlight hljs">disc slab            : 519
+1.14995e10 Msol
+  nucleus  r &lt; 4     : 169    3.16131e9
+  annulus 4 &lt; r &lt; 12 : 350    8.33822e9
+counts partition : true
+masses add       : true</code></pre><p>Both checks pass exactly, and for the same reason as on the particle page: each clump is assigned to one side or the other, so a partition of the region is a partition of the catalogue. This is the cheapest possible test that a composite means what you think, and it costs one line.</p><h2 id="6.-Place-*and*-Property:-Regions-Meet-Filters"><a class="docs-heading-anchor" href="#6.-Place-*and*-Property:-Regions-Meet-Filters">6. Place <em>and</em> Property: Regions Meet Filters</a><a id="6.-Place-*and*-Property:-Regions-Meet-Filters-1"></a><a class="docs-heading-anchor-permalink" href="#6.-Place-*and*-Property:-Regions-Meet-Filters" title="Permalink"></a></h2><p>A clump table is unusually rich in per-object properties, and <code>filterdata</code> selects on any of them by value — mass, mean density, cell count, or the clump finder&#39;s own <code>:relevance</code>. Geometric and property cuts compose in either order.</p><p><code>:relevance</code> is the clump finder&#39;s own significance measure — a peak-to-saddle density contrast, large when a clump is clearly separated from its neighbours and close to 1 when it is barely a distinct object. This run kept nothing below 2, so filtering on it means asking for clumps <em>more</em> clearly separated than the finder&#39;s own floor.</p><p><code>AbovePercentile</code> is worth knowing about here: it thresholds at a percentile of the data rather than at an absolute value, which is the right tool when you want &quot;the most massive tenth&quot; of a catalogue whose mass scale you have not looked at yet.</p><pre><code class="language-julia hljs">disc = subregion(clumps, Cylinder(12., 2.), verbose=false)
+
+solid   = filterdata(disc, Above(:relevance, 3.0), verbose=false)   # well-separated peaks
+massive = filterdata(disc, AbovePercentile(:mass, 90), verbose=false)  # top 10 % by mass
+both    = filterdata(disc, Above(:relevance, 3.0),
+                           AbovePercentile(:mass, 90), verbose=false)
+
+println(&quot;disc slab               : &quot;, rpad(length(disc.data), 7),
+        round(msum(disc, :Msol), sigdigits=6), &quot; Msol&quot;)
+println(&quot;  relevance &gt; 3         : &quot;, rpad(length(solid.data), 7),
+        round(msum(solid, :Msol), sigdigits=6))
+println(&quot;  most massive 10 %     : &quot;, rpad(length(massive.data), 7),
+        round(msum(massive, :Msol), sigdigits=6))
+println(&quot;  both conditions       : &quot;, rpad(length(both.data), 7),
+        round(msum(both, :Msol), sigdigits=6))
+println()
+# order does not matter
+alt = subregion(filterdata(clumps, Above(:relevance, 3.0), verbose=false),
+                Cylinder(12., 2.), verbose=false)
+println(&quot;region∘filter == filter∘region : &quot;, length(alt.data) == length(solid.data))</code></pre><pre><code class="nohighlight hljs">disc slab               : 519
+1.14995e10 Msol
+  relevance &gt; 3         : 439    1.08897e10
+  most massive 10 %     : 52     6.81601e9
+  both conditions       : 50     6.69392e9
+region∘filter == filter∘region : true</code></pre><p>Multiple conditions passed to one <code>filterdata</code> call are ANDed; <code>&amp;</code>, <code>|</code>, and <code>!</code> compose them explicitly, and the <a href="../05_multi_Masking_Filtering/">Masking &amp; Filtering page</a> covers the full vocabulary. The important structural point is the last line: geometry and property are independent, so the order you apply them in cannot change the answer.</p><h2 id="7.-Profiles,-and-Why-the-Counts-Are-the-Limit"><a class="docs-heading-anchor" href="#7.-Profiles,-and-Why-the-Counts-Are-the-Limit">7. Profiles, and Why the Counts Are the Limit</a><a id="7.-Profiles,-and-Why-the-Counts-Are-the-Limit-1"></a><a class="docs-heading-anchor-permalink" href="#7.-Profiles,-and-Why-the-Counts-Are-the-Limit" title="Permalink"></a></h2><p>A stack of <code>CylindricalShell</code> annuli turns the catalogue into a radial profile. With a few hundred objects in total, though, the honest constraint is not the geometry — it is how many clumps land in each ring.</p><pre><code class="language-julia hljs">r_ann = collect(1.0:1.0:15.0)
+n_cl, m_cl, area = Int[], Float64[], Float64[]
+for r in r_ann
+    a = subregion(clumps, CylindricalShell(r-0.5, r+0.5, 2.), verbose=false)
+    push!(n_cl, length(a.data))
+    push!(m_cl, length(a.data) == 0 ? 0.0 : msum(a, :Msol))
+    push!(area, π*((r+0.5)^2 - (r-0.5)^2))          # kpc²
+end
+
+println(rpad(&quot;annulus [kpc]&quot;, 16), rpad(&quot;N&quot;, 6), rpad(&quot;M [Msol]&quot;, 12), &quot;1/√N&quot;)
+println(&quot;-&quot;^44)
+for (r, n, m) in zip(r_ann, n_cl, m_cl)
+    println(rpad(string(r-0.5, &quot; – &quot;, r+0.5), 16), rpad(n, 6),
+            rpad(round(m, sigdigits=4), 12),
+            n == 0 ? &quot;—&quot; : string(round(100/sqrt(n), digits=0), &quot; %&quot;))
+end
+
+# ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
+fig = Figure(size=(960, 400))
+ax1 = Axis(fig[1, 1], xlabel=&quot;r [kpc]&quot;, ylabel=&quot;clumps per kpc²&quot;,
+           title=&quot;surface number density of clumps&quot;)
+lines!(ax1, r_ann, n_cl ./ area; color=:steelblue, linewidth=2.5)
+errorbars!(ax1, r_ann, n_cl ./ area, sqrt.(max.(n_cl, 1)) ./ area;
+           whiskerwidth=8, color=:grey30)
+scatter!(ax1, r_ann, n_cl ./ area; color=:steelblue, markersize=8)
+
+ax2 = Axis(fig[1, 2], xlabel=&quot;r [kpc]&quot;, ylabel=&quot;clumps in annulus&quot;,
+           title=&quot;the count behind every point on the left&quot;)
+barplot!(ax2, r_ann, n_cl; color=(:steelblue, 0.6))
+hlines!(ax2, [25.]; color=:grey, linestyle=:dash)
+text!(ax2, 14.5, 27; text=&quot;N = 25 → 20 % uncertainty&quot;, color=:grey, fontsize=10,
+      align=(:right, :bottom))
+fig</code></pre><pre><code class="nohighlight hljs">annulus [kpc]   N     M [Msol]    1/√N
+--------------------------------------------
+0.5 – 1.5       16    1.907e8     25.0 %
+1.5 – 2.5       84    2.176e9     11.0 %
+2.5 – 3.5       48    6.661e8     14.0 %
+3.5 – 4.5       58    1.257e9     13.0 %
+4.5 – 5.5       20    4.817e8     22.0 %
+5.5 – 6.5       54    1.288e9     14.0 %
+6.5 – 7.5       70    1.888e9     12.0 %
+7.5 – 8.5       4     1.685e7     50.0 %
+8.5 – 9.5       26    1.355e9     20.0 %
+9.5 – 10.5      36    4.822e8     17.0 %
+10.5 – 11.5     53    8.519e8     14.0 %
+11.5 – 12.5     94    1.878e9     10.0 %
+12.5 – 13.5     61    9.12e8      13.0 %
+13.5 – 14.5     20    3.004e8     22.0 %
+14.5 – 15.5     0     0.0         —</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_2.png" alt/></p><p>The left panel looks like a measured profile. The right panel is what it is made of: a dozen or two objects per ring, sometimes fewer. The error bars are <span>$\sqrt{N}$</span>, and outside the star-forming disc they are the entire story.</p><p>This is the same lesson as the <a href="../03_particles_Get_Subregions/">particle page&#39;s</a> §3, arriving sooner. A clump catalogue is a small sample by construction — the finder returns hundreds of objects where the grid has millions of cells — so it reaches the counting limit at radii where a particle or cell profile is still perfectly smooth. Bin wide, quote <span>$N$</span>, and resist reading structure into rings holding five objects.</p><h2 id="8.-Reference:-the-Classic-Symbol-API"><a class="docs-heading-anchor" href="#8.-Reference:-the-Classic-Symbol-API">8. Reference: the Classic Symbol API</a><a id="8.-Reference:-the-Classic-Symbol-API-1"></a><a class="docs-heading-anchor-permalink" href="#8.-Reference:-the-Classic-Symbol-API" title="Permalink"></a></h2><p>The symbol interface works on clump data unchanged, testing the same peak positions.</p><table><tr><th style="text-align: left">Value type</th><th style="text-align: left">Classic call</th></tr><tr><td style="text-align: left"><code>Cuboid(xrange=…, yrange=…, zrange=…)</code></td><td style="text-align: left"><code>subregion(clumps, :cuboid; xrange=…, …)</code></td></tr><tr><td style="text-align: left"><code>Sphere(R)</code></td><td style="text-align: left"><code>subregion(clumps, :sphere; radius=R)</code></td></tr><tr><td style="text-align: left"><code>Cylinder(R, H)</code></td><td style="text-align: left"><code>subregion(clumps, :cylinder; radius=R, height=H)</code> (z-axis only)</td></tr><tr><td style="text-align: left"><code>SphericalShell(rin, rout)</code></td><td style="text-align: left"><code>shellregion(clumps, :sphere; radius=[rin, rout])</code></td></tr><tr><td style="text-align: left"><code>CylindricalShell(rin, rout, H)</code></td><td style="text-align: left"><code>shellregion(clumps, :cylinder; radius=[rin, rout], height=H)</code></td></tr></table><p>Shared keywords: <code>center</code>, <code>range_unit</code>, <code>inverse=true</code>. As on the particle side, <code>cell</code> and <code>split</code> have no meaning for point-like rows, so the classic and value-type selections agree exactly.</p><p><code>getpositions(clumps, :kpc, center=[:boxcenter])</code> returns the three peak coordinate arrays in one call, and <code>getextent(clumps, :kpc, center=[:boxcenter])</code> the coordinate ranges of the loaded object — for a catalogue read from the whole box, that is the box itself. Both are convenience accessors, handy for setting plot limits.</p><pre><code class="language-julia hljs">classic = subregion(clumps, :sphere; radius=10., center=[:bc], range_unit=:kpc, verbose=false)
+value_t = subregion(clumps, Sphere(10.), verbose=false)
+
+println(&quot;classic :sphere   : &quot;, rpad(length(classic.data), 7), round(msum(classic, :Msol), sigdigits=8))
+println(&quot;value-type Sphere : &quot;, rpad(length(value_t.data), 7), round(msum(value_t, :Msol), sigdigits=8))
+println(&quot;identical         : &quot;, length(classic.data) == length(value_t.data) &amp;&amp;
+                                msum(classic, :Msol) == msum(value_t, :Msol))
+
 rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter])
-
-# Inverse selection (data outside region)
-subregion(clumps, :cuboid, xrange=[x1,x2], inverse=true)</code></pre><h2 id="Data-Setup-and-Initialization"><a class="docs-heading-anchor" href="#Data-Setup-and-Initialization">Data Setup and Initialization</a><a id="Data-Setup-and-Initialization-1"></a><a class="docs-heading-anchor-permalink" href="#Data-Setup-and-Initialization" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera, PyPlot
-rc(&quot;figure&quot;, dpi=300); rc(&quot;savefig&quot;, dpi=300)
-info = getinfo(400, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14&quot;)
-clumps = getclumps(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:13:56.577
-Code: RAMSES
-output [400] summary:
-mtime: 2018-09-05T09:51:55
-ctime: 2025-06-29T20:06:45.267
-=======================================================
-simulation time: 594.98 [Myr]
-boxlen: 48.0 [kpc]
-ncpu: 2048
-ndim: 3
-cosmological:  false
--------------------------------------------------------
-amr:           true
-level(s): 6 - 14 --&gt; cellsize(s): 750.0 [pc] - 2.93 [pc]
--------------------------------------------------------
-hydro:         true
-hydro-variables:
-7  --&gt; (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
-hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
-γ: 1.6667
--------------------------------------------------------
-gravity:       true
-gravity-variables: (:epot, :ax, :ay, :az)
--------------------------------------------------------
-particles:     true
-- Npart:    5.091500e+05
-- Nstars:   5.066030e+05
-- Ndm:      2.547000e+03
-particle-variables: 5  --&gt; (:vx, :vy, :vz, :mass, :birth)
--------------------------------------------------------
-rt:            false
--------------------------------------------------------
-clumps:           true
-clump-variables: (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance)
--------------------------------------------------------
-namelist-file:    false
-timer-file:       false
-compilation-file: true
-makefile:         true
-patchfile:        true
-=======================================================
-[Mera]: Get clump data: 2026-06-01T20:14:00.516
-domain:
-xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Read 12 colums:
-[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-61.58203125 KB
--------------------------------------------------------</code></pre><h2 id="Cuboid-Region-Selection"><a class="docs-heading-anchor" href="#Cuboid-Region-Selection">Cuboid Region Selection</a><a id="Cuboid-Region-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region-Selection" title="Permalink"></a></h2><p>Cuboid (rectangular box) selections are the most fundamental geometric filtering method, allowing precise control over data extraction in Cartesian coordinates. This approach is ideal for analyzing specific spatial volumes or comparing different regions within the simulation domain.</p><h3 id="Key-Features:"><a class="docs-heading-anchor" href="#Key-Features:">Key Features:</a><a id="Key-Features:-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Features:" title="Permalink"></a></h3><ul><li><strong>Independent axis control</strong> - Separate range specification for x, y, z dimensions</li><li><strong>Flexible coordinate systems</strong> - Standard [0:1] or physical units (kpc, Mpc, etc.)</li><li><strong>Custom center references</strong> - <code>:boxcenter</code>, or user-defined coordinates</li><li><strong>Inverse selection capability</strong> - Extract data outside the specified region</li></ul><h3 id="Full-Domain-Visualization"><a class="docs-heading-anchor" href="#Full-Domain-Visualization">Full Domain Visualization</a><a id="Full-Domain-Visualization-1"></a><a class="docs-heading-anchor-permalink" href="#Full-Domain-Visualization" title="Permalink"></a></h3><p>Create scatter plots of the complete simulation box to understand the spatial distribution before applying regional selections.</p><p>Use the <code>getvar</code> function to extract the positions of the clumps relative to the box center. It returns a dictionary of arrays:</p><pre><code class="language-julia hljs">positions = getvar(clumps, [:x, :y, :z], :kpc, center=[:boxcenter], center_unit=:kpc) # units=[:kpc, :kpc, :kpc]
-x, y, z = positions[:x], positions[:y], positions[:z]; # assign the three components of the dictionary to three arrays</code></pre><p>Alternatively, use the <code>getposition</code> function to extract the positions of the clumps. It returns a tuple of the three components:</p><pre><code class="language-julia hljs">x, y, z = getpositions(clumps, :kpc, center=[:boxcenter], center_unit=:kpc); # assign the three components of the tuple to three arrays</code></pre><p>Get the extent of the processed domain with respect to a given center. The returned tuple is useful declare the specific range of the plots.</p><pre><code class="language-julia hljs">rx, ry, rz = getextent(clumps, :kpc,  center=[:boxcenter]);</code></pre><h3 id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:">Cuboid Region: The red lines show the region that we want to cut-out as a sub-region from the full data:</a><a id="Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h3><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-subplot(1,3,1)
-scatter(x,y)
-plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_11_1.png" alt/></p><h3 id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-clumps"><a class="docs-heading-anchor" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-clumps">Cuboid Region: Cutout the data assigned to the object <code>clumps</code></a><a id="Cuboid-Region:-Cutout-the-data-assigned-to-the-object-clumps-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Cutout-the-data-assigned-to-the-object-clumps" title="Permalink"></a></h3><p>Note: The selected regions can be given relative to a user given center or to the box corner [0., 0., 0.] by default. The user can choose between standard notation <a href="default">0:1</a> or physical length-units, defined in e.g. info.scale :</p><pre><code class="language-julia hljs">clumps_subregion = subregion( clumps, :cuboid,
-                                    xrange=[-4., 0.],
-                                    yrange=[-15. ,15.],
-                                    zrange=[-2. ,2.],
-                                    center=[:boxcenter],
-                                    range_unit=:kpc);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:05.661
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
-ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Memory used for data table :29.33203125
- KB
--------------------------------------------------------</code></pre><p>The function <code>subregion</code> creates a new object with the same type as the object created by the function <code>getclumps</code> :</p><pre><code class="language-julia hljs">typeof(clumps_subregion)</code></pre><pre><code class="nohighlight hljs">ClumpDataType</code></pre><h3 id="Cuboid-Region:-Scatter-Plots-of-the-sub-region."><a class="docs-heading-anchor" href="#Cuboid-Region:-Scatter-Plots-of-the-sub-region.">Cuboid Region: Scatter-Plots of the sub-region.</a><a id="Cuboid-Region:-Scatter-Plots-of-the-sub-region.-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Scatter-Plots-of-the-sub-region." title="Permalink"></a></h3><p>The coordinates center is the center of the box by default:</p><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]); # clump positions of the subregion
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter] ); # extent of the box</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-subplot(1,3,1)
-scatter(x,y)
-plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_19_1.png" alt/></p><h3 id="Cuboid-Region:-Get-the-extent-of-the-subregion-data-ranges"><a class="docs-heading-anchor" href="#Cuboid-Region:-Get-the-extent-of-the-subregion-data-ranges">Cuboid Region: Get the extent of the subregion data ranges</a><a id="Cuboid-Region:-Get-the-extent-of-the-subregion-data-ranges-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Get-the-extent-of-the-subregion-data-ranges" title="Permalink"></a></h3><pre><code class="language-julia hljs">rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc, center=[:boxcenter]); # extent of the subregion</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-subplot(1,3,1)
-scatter(x,y)
-xlim(rx_sub)
-ylim(ry_sub)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-xlim(rx_sub)
-ylim(rz_sub)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-xlim(ry_sub)
-ylim(rz_sub)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_22_1.png" alt/></p><h3 id="Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):">Cuboid Region: Get the data outside of the selected region (inverse selection):</a><a id="Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Cuboid-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps_subregion = subregion( clumps, :cuboid,
-                                    xrange=[-4., 0.],
-                                    yrange=[-15. ,15.],
-                                    zrange=[-2. ,2.],
-                                    center=[:boxcenter],
-                                    range_unit=:kpc,
-                                    inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:06.556
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.4166667 :: 0.5  	==&gt; 20.0 [kpc] :: 24.0 [kpc]
-ymin::ymax: 0.1875 :: 0.8125  	==&gt; 9.0 [kpc] :: 39.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Memory used for data table :33.45703125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]);
-rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc, center=[:boxcenter]);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-subplot(1,3,1)
-scatter(x,y)
-plot([-4.,0.,0.,-4.,-4.],[-15.,-15.,15.,15.,-15.], color=&quot;red&quot;)
-xlim(rx_sub)
-ylim(ry_sub)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-4.,0.,0.,-4.,-4.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(rx_sub)
-ylim(rz_sub)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-15.,15.,15.,-15.,-15.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(ry_sub)
-ylim(rz_sub)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_1.png" alt/></p><h2 id="Cylindrical-Region-Selection"><a class="docs-heading-anchor" href="#Cylindrical-Region-Selection">Cylindrical Region Selection</a><a id="Cylindrical-Region-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region-Selection" title="Permalink"></a></h2><p>Cylindrical selections provide powerful tools for analyzing axially symmetric structures, rotating systems, or jet-like features in simulations. This geometric filter is particularly useful for studying disk galaxies, stellar jets, or any phenomena with preferred directional orientations.</p><h3 id="Key-Features:-2"><a class="docs-heading-anchor" href="#Key-Features:-2">Key Features:</a><a class="docs-heading-anchor-permalink" href="#Key-Features:-2" title="Permalink"></a></h3><ul><li><strong>Axial symmetry</strong> - Perfect for analyzing rotating or streaming systems</li><li><strong>Directional control</strong> - Specify cylinder axis orientation (x, y, z directions)</li><li><strong>Height and radius control</strong> - Independent specification of cylindrical dimensions</li><li><strong>Offset positioning</strong> - Center cylinder anywhere in the simulation domain</li><li><strong>Physical unit compatibility</strong> - Work directly with kpc, Mpc, or other length scales</li></ul><p>Extract the the clump positions and the extent of the full box:</p><pre><code class="language-julia hljs">clumps  = getclumps(info);
-x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2026-06-01T20:14:06.819
-domain:
-xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Read 12 colums:
-[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-61.58203125 KB
--------------------------------------------------------</code></pre><h3 id="Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:">Cylindrical Region: The red lines show the region that we want to cut-out as a sub-region from the full data:</a><a id="Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h3><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_31_1.png" alt/></p><h3 id="Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-clumps"><a class="docs-heading-anchor" href="#Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-clumps">Cylindrical Region: Cutout the data assigned to the object <code>clumps</code></a><a id="Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-clumps-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Cutout-the-data-assigned-to-the-object-clumps" title="Permalink"></a></h3><p>Select the ranges of the cylinder in the unit &quot;kpc&quot;, relative to the given center [13., 24., 24.]. The height refers to both z-directions from the plane.</p><pre><code class="language-julia hljs">clumps_subregion = subregion( clumps, :cylinder,
-                                radius=3.,
-                                height=2.,
-                                range_unit=:kpc,
-                                center=[(24. -11.), :bc, :bc]); # direction=:z, by default</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:07.602
-center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.2083333 :: 0.3333333  	==&gt; 10.0 [kpc] :: 16.0 [kpc]
-ymin::ymax: 0.4375 :: 0.5625  	==&gt; 21.0 [kpc] :: 27.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Radius: 3.0 [kpc]
-Height: 2.0 [kpc]
-Memory used for data table :5.05078125 KB
--------------------------------------------------------</code></pre><p>Extract the the clump positions of the subregion and the extent of the full box:</p><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter])
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_36_1.png" alt/></p><h3 id="Cylindrical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:"><a class="docs-heading-anchor" href="#Cylindrical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:">Cylindrical Region: Scatter-Plot of the selected data range with respect to the center of the sub-region:</a><a id="Cylindrical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:" title="Permalink"></a></h3><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc,
-                            center=[ (24. -11.), :bc, :bc],
-                            center_unit=:kpc);
-rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc,
-                                    center=[ (24. -11.), :bc, :bc],
-                                    center_unit=:kpc);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 3. .* sin.(theta), 3 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx_sub)
-ylim(ry_sub)
-xlabel(&quot;kpc&quot;)
-ylabel(&quot;kpc&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-xlim(rx_sub)
-ylim(rz_sub)
-xlabel(&quot;kpc&quot;)
-ylabel(&quot;kpc&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-xlim(ry_sub)
-ylim(rz_sub)
-xlabel(&quot;kpc&quot;)
-ylabel(&quot;kpc&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_39_1.png" alt/></p><h3 id="Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):">Cylindrical Region: Get the data outside of the selected region (inverse selection):</a><a id="Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps_subregion = subregion( clumps, :cylinder,
-                            radius=3.,
-                            height=2.,
-                            range_unit=:kpc,
-                            center=[ (24. -11.),:bc,:bc],
-                            inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:08.928
-center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.2083333 :: 0.3333333  	==&gt; 10.0 [kpc] :: 16.0 [kpc]
-ymin::ymax: 0.4375 :: 0.5625  	==&gt; 21.0 [kpc] :: 27.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Radius: 3.0 [kpc]
-Height: 2.0 [kpc]
-Memory used for data table :57.73828125
- KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]);
-rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc, center=[:boxcenter]);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 3. .* sin.(theta) .-11, 3 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-3.,3.,3.,-3.,-3.] .-11.,[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-3.,3.,3.,-3.,-3.],[-2.,-2.,2.,2.,-2.], color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_43_1.png" alt/></p><h2 id="Spherical-Region-Selection"><a class="docs-heading-anchor" href="#Spherical-Region-Selection">Spherical Region Selection</a><a id="Spherical-Region-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region-Selection" title="Permalink"></a></h2><p>Spherical selections excel at analyzing centrally concentrated structures, bound systems, or radially distributed phenomena. This isotropic geometric filter is ideal for studying galaxy halos, star-forming regions, or any system with spherical symmetry around a central point.</p><h3 id="Key-Features:-3"><a class="docs-heading-anchor" href="#Key-Features:-3">Key Features:</a><a class="docs-heading-anchor-permalink" href="#Key-Features:-3" title="Permalink"></a></h3><ul><li><strong>Radial symmetry</strong> - Perfect for centrally concentrated or bound systems</li><li><strong>Single parameter control</strong> - Specify only radius for complete region definition</li><li><strong>Flexible center positioning</strong> - Place sphere anywhere in simulation domain</li><li><strong>Natural for bound objects</strong> - Ideal for analyzing gravitationally bound structures</li><li><strong>Scalable analysis</strong> - Easy to vary radius for multi-scale investigations</li></ul><p>Extract the the clump positions and the extent of the full box:</p><pre><code class="language-julia hljs">clumps  = getclumps(info);
-x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2026-06-01T20:14:09.488
-domain:
-xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Read 12 colums:
-[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-61.58203125 KB
--------------------------------------------------------</code></pre><h3 id="The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:">The red lines show the region that we want to cut-out as a sub-region from the full data:</a><a id="The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#The-red-lines-show-the-region-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h3><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_48_1.png" alt/></p><pre><code class="nohighlight hljs">PyObject Text(2615.8235294117653, 0.5, &#39;z [kpc]&#39;)</code></pre><h3 id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-clumps"><a class="docs-heading-anchor" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-clumps">Spherical Region: Cutout the data assigned to the object <code>clumps</code></a><a id="Spherical-Region:-Cutout-the-data-assigned-to-the-object-clumps-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Cutout-the-data-assigned-to-the-object-clumps" title="Permalink"></a></h3><p>Select the radius of the sphere in the unit &quot;kpc&quot;, relative to the given center [13., 24., 24.]:</p><pre><code class="language-julia hljs">clumps_subregion = subregion( clumps, :sphere,
-                                     radius=10.,
-                                     range_unit=:kpc,
-                                     center=[ (24. -11.),:bc, :bc]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:09.937
-center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.0625 :: 0.4791667  	==&gt; 3.0 [kpc] :: 23.0 [kpc]
-ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-Radius: 10.0 [kpc]
-Memory used for data table :28.48828125
- KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]); # subregion
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]); # full box</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_52_1.png" alt/></p><h3 id="Spherical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:"><a class="docs-heading-anchor" href="#Spherical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:">Spherical Region: Scatter-Plot of the selected data range with respect to the center of the sub-region:</a><a id="Spherical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Scatter-Plot-of-the-selected-data-range-with-respect-to-the-center-of-the-sub-region:" title="Permalink"></a></h3><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc,
-                            center=[ (24. -11.), :bc, :bc],
-                            center_unit=:kpc); # subregion
-rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc,
-                            center=[(24. -11.), :bc, :bc],
-                            center_unit=:kpc); # subregion</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta), 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx_sub)
-ylim(ry_sub)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta), 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx_sub)
-ylim(rz_sub)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta), 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(ry_sub)
-ylim(rz_sub)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_55_1.png" alt/></p><h3 id="Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):">Spherical Region: Get the data outside of the selected region (inverse selection):</a><a id="Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Region:-Get-the-data-outside-of-the-selected-region-(inverse-selection):" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps_subregion = subregion( clumps, :sphere,
-                                     radius=10.,
-                                     range_unit=:kpc,
-                                     center=[ (24. -11.),:bc,:bc],
-                                     inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:10.469
-center: [0.2708333, 0.5, 0.5] ==&gt; [13.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.0625 :: 0.4791667  	==&gt; 3.0 [kpc] :: 23.0 [kpc]
-ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-Radius: 10.0 [kpc]
-Memory used for data table :34.30078125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]);
-rx_sub, ry_sub, rz_sub = getextent(clumps_subregion, :kpc, center=[:boxcenter]);</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta) .-11., 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_59_1.png" alt/></p><pre><code class="nohighlight hljs">PyObject Text(2615.8235294117653, 0.5, &#39;z [kpc]&#39;)</code></pre><h2 id="Advanced-Selection-Techniques"><a class="docs-heading-anchor" href="#Advanced-Selection-Techniques">Advanced Selection Techniques</a><a id="Advanced-Selection-Techniques-1"></a><a class="docs-heading-anchor-permalink" href="#Advanced-Selection-Techniques" title="Permalink"></a></h2><h3 id="Combined-and-Nested-Regions"><a class="docs-heading-anchor" href="#Combined-and-Nested-Regions">Combined and Nested Regions</a><a id="Combined-and-Nested-Regions-1"></a><a class="docs-heading-anchor-permalink" href="#Combined-and-Nested-Regions" title="Permalink"></a></h3><p>The spatial selection functions in MERA offer powerful composition capabilities, allowing you to create complex selection criteria by combining multiple geometric filters. This enables sophisticated analysis of irregular structures or multi-component systems.</p><h3 id="Key-Composition-Features:"><a class="docs-heading-anchor" href="#Key-Composition-Features:">Key Composition Features:</a><a id="Key-Composition-Features:-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Composition-Features:" title="Permalink"></a></h3><ul><li><strong>Sequential application</strong> - Apply multiple filters in sequence for intersection operations</li><li><strong>Nested selections</strong> - Create hierarchical spatial selections with different scales</li><li><strong>Overlapping regions</strong> - Analyze overlapping spatial domains simultaneously</li><li><strong>Boolean operations</strong> - Combine regions with AND/OR logic through successive filtering</li></ul><h3 id="Practical-Applications:"><a class="docs-heading-anchor" href="#Practical-Applications:">Practical Applications:</a><a id="Practical-Applications:-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Applications:" title="Permalink"></a></h3><ul><li><strong>Multi-scale analysis</strong> - Study structures at different resolution scales</li><li><strong>Complex geometries</strong> - Approximate irregular shapes with geometric combinations</li><li><strong>Comparative studies</strong> - Analyze multiple regions with consistent methodologies</li><li><strong>Hierarchical systems</strong> - Study parent-child relationships in clump hierarchies</li></ul><h3 id="The-sub-region-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)"><a class="docs-heading-anchor" href="#The-sub-region-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)">The sub-region functions can be used in any combination with each other! (Combined with overlapping ranges or nested)</a><a id="The-sub-region-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)-1"></a><a class="docs-heading-anchor-permalink" href="#The-sub-region-functions-can-be-used-in-any-combination-with-each-other!-(Combined-with-overlapping-ranges-or-nested)" title="Permalink"></a></h3><h2 id="Cylindrical-Shell-Selection"><a class="docs-heading-anchor" href="#Cylindrical-Shell-Selection">Cylindrical Shell Selection</a><a id="Cylindrical-Shell-Selection-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell-Selection" title="Permalink"></a></h2><p>Cylindrical shells provide specialized tools for analyzing hollow cylindrical structures, disk-like systems with central cavities, or annular regions in rotating systems. This geometry is particularly valuable for studying galactic disks, accretion disk structures, or jet boundaries.</p><h3 id="Key-Features:-4"><a class="docs-heading-anchor" href="#Key-Features:-4">Key Features:</a><a class="docs-heading-anchor-permalink" href="#Key-Features:-4" title="Permalink"></a></h3><ul><li><strong>Hollow geometry</strong> - Excludes central cylindrical region for annular analysis</li><li><strong>Inner/outer radius control</strong> - Precise specification of shell thickness</li><li><strong>Height specification</strong> - Define cylindrical extent along rotation axis</li><li><strong>Directional flexibility</strong> - Orient cylinder axis along any coordinate direction</li><li><strong>Perfect for disk systems</strong> - Ideal for analyzing galactic disk structures or rotating media</li></ul><h3 id="Shell-Region-Applications:"><a class="docs-heading-anchor" href="#Shell-Region-Applications:">Shell Region Applications:</a><a id="Shell-Region-Applications:-1"></a><a class="docs-heading-anchor-permalink" href="#Shell-Region-Applications:" title="Permalink"></a></h3><ul><li><strong>Disk galaxy analysis</strong> - Study stellar disk structure excluding central bulge</li><li><strong>Accretion disk features</strong> - Analyze disk material while avoiding central object</li><li><strong>Jet boundary studies</strong> - Examine material around jet axes</li><li><strong>Ring structure analysis</strong> - Investigate annular features in rotating systems</li></ul><p>Extract the the clump positions and the extent of the full box:</p><pre><code class="language-julia hljs">clumps = getclumps(info);
-x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2026-06-01T20:14:10.732
-domain:
-xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Read 12 colums:
-[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
--------------------------------------------------------</code></pre><h3 id="The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:"><a class="docs-heading-anchor" href="#The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:">The red lines show the shell that we want to cut-out as a sub-region from the full data:</a><a id="The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-1"></a><a class="docs-heading-anchor-permalink" href="#The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:" title="Permalink"></a></h3><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
-plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
-plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;,ls = &quot;--&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_66_1.png" alt/></p><h3 id="Cylindrical-Shell:"><a class="docs-heading-anchor" href="#Cylindrical-Shell:">Cylindrical Shell:</a><a id="Cylindrical-Shell:-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell:" title="Permalink"></a></h3><p>Pass the height of the cylinder and the inner/outer radius of the shell in the unit &quot;kpc&quot;, relative to the box center [24., 24., 24.]:</p><pre><code class="language-julia hljs">clumps_subregion = shellregion( clumps, :cylinder,
-                                         radius=[5.,10.],
-                                         height=2.,
-                                         range_unit=:kpc,
-                                         center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:11.250
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Inner radius: 5.0 [kpc]
-Outer radius: 10.0 [kpc]
-Radius diff: 5.0 [kpc]
-Height: 2.0 [kpc]
-Memory used for data table :18.36328125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]); # shellregion
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]); # full box</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
-plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
-plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_70_1.png" alt/></p><h3 id="Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):">Cylindrical Shell: Get the data outside of the selected shell-region (inverse selection):</a><a id="Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Cylindrical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps_subregion = shellregion( clumps, :cylinder,
-                                         radius=[5.,10.],
-                                         height=2.,
-                                         range_unit=:kpc,
-                                         center=[:boxcenter],
-                                         inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:11.544
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Inner radius: 5.0 [kpc]
-Outer radius: 10.0 [kpc]
-Radius diff: 5.0 [kpc]
-Height: 2.0 [kpc]
-Memory used for data table :44.42578125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]); # shellregion
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]); # full box</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
-plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot([-10.,-10.,10.,10.,-10.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;)
-plot([-5.,-5,5.,5.,-5.], [-2.,2.,2.,-2.,-2.], color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_74_1.png" alt/></p><h2 id="Spherical-Shell"><a class="docs-heading-anchor" href="#Spherical-Shell">Spherical Shell</a><a id="Spherical-Shell-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell" title="Permalink"></a></h2><p>Extract the the clump positions and the extent of the full box:</p><pre><code class="language-julia hljs">clumps  = getclumps(info);
-x, y, z = getpositions(clumps, :kpc, center=[:boxcenter]);
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get clump data: 2026-06-01T20:14:11.878
-domain:
-xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
-Read 12 colums:
-[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol(&quot;rho-&quot;), Symbol(&quot;rho+&quot;), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-61.58203125 KB
--------------------------------------------------------</code></pre><h3 id="The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-2"><a class="docs-heading-anchor" href="#The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-2">The red lines show the shell that we want to cut-out as a sub-region from the full data:</a><a class="docs-heading-anchor-permalink" href="#The-red-lines-show-the-shell-that-we-want-to-cut-out-as-a-sub-region-from-the-full-data:-2" title="Permalink"></a></h3><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_79_1.png" alt/></p><h3 id="Spherical-Shell:"><a class="docs-heading-anchor" href="#Spherical-Shell:">Spherical Shell:</a><a id="Spherical-Shell:-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:" title="Permalink"></a></h3><p>Select the inner and outer radius of the spherical shell in unit &quot;kpc&quot;, relative to the box center [24., 24., 24.]:</p><pre><code class="language-julia hljs">clumps_subregion = shellregion( clumps, :sphere,
-                                radius=[5.,10.],
-                                range_unit=:kpc,
-                                center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:12.986
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-Inner radius: 5.0 [kpc]
-Outer radius: 10.0 [kpc]
-Radius diff: 5.0 [kpc]
-Memory used for data table :18.36328125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]); # shellregion
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter]); # full box</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;,  ls=&quot;--&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_83_1.png" alt/></p><h3 id="Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):"><a class="docs-heading-anchor" href="#Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):">Spherical Shell: Get the data outside of the selected shell-region (inverse selection):</a><a id="Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):-1"></a><a class="docs-heading-anchor-permalink" href="#Spherical-Shell:-Get-the-data-outside-of-the-selected-shell-region-(inverse-selection):" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps_subregion = shellregion( clumps, :sphere,
-                                radius=[5.,10.],
-                                range_unit=:kpc,
-                                center=[:boxcenter],
-                                inverse=true);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T20:14:13.344
-center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-domain:
-xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-zmin::zmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
-Inner radius: 5.0 [kpc]
-Outer radius: 10.0 [kpc]
-Radius diff: 5.0 [kpc]
-Memory used for data table :44.42578125 KB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">x, y, z    = getpositions(clumps_subregion, :kpc, center=[:boxcenter]); # shellregion
-rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter] ); # full box</code></pre><pre><code class="language-julia hljs">figure(figsize=(15.5, 3.5))
-theta = range(-pi, stop=pi, length=100)
-
-subplot(1,3,1)
-scatter(x,y)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(ry)
-xlabel(&quot;x k[pc]&quot;)
-ylabel(&quot;y [kpc]&quot;)
-
-subplot(1,3,2)
-scatter(x,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(rx)
-ylim(rz)
-xlabel(&quot;x [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;)
-
-subplot(1,3,3)
-scatter(y,z)
-plot( 10. .* sin.(theta) , 10 .* cos.(theta), color=&quot;red&quot;)
-plot( 5. .* sin.(theta) , 5. .* cos.(theta), color=&quot;red&quot;, ls=&quot;--&quot;)
-xlim(ry)
-ylim(rz)
-xlabel(&quot;y [kpc]&quot;)
-ylabel(&quot;z [kpc]&quot;);</code></pre><p><img src="../03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_87_1.png" alt/></p><h2 id="Value-Type-Regions"><a class="docs-heading-anchor" href="#Value-Type-Regions">Value-Type Regions</a><a id="Value-Type-Regions-1"></a><a class="docs-heading-anchor-permalink" href="#Value-Type-Regions" title="Permalink"></a></h2><p><code>subregion</code> also accepts composable <strong>region value types</strong> — <code>Sphere</code>, <code>Cuboid</code>, <code>Cylinder</code>, <code>SphericalShell</code> — that compose with the boolean operators <code>∩</code> <code>∪</code> <code>\</code> <code>!</code>. Clumps are points (their peak position), so the region is a <strong>point-membership</strong> test; <code>inverse=true</code> selects the complement.</p><pre><code class="language-julia hljs"># clumps inside a ball about the box centre, and the complement
-clumps_in  = subregion(clumps, Sphere(20.0; center=[:bc], range_unit=:kpc))
-clumps_out = subregion(clumps, Sphere(20.0; center=[:bc], range_unit=:kpc), inverse=true)
-println(&quot;inside: &quot;, length(clumps_in.data), &quot;   outside: &quot;, length(clumps_out.data),
-        &quot;   total: &quot;, length(clumps.data))
-x, y, z = getpositions(clumps_in, :kpc, center=[:boxcenter]);</code></pre><pre><code class="nohighlight hljs">inside: 644   outside: 0   total: 644</code></pre><h3 id="Boolean-Combinations"><a class="docs-heading-anchor" href="#Boolean-Combinations">Boolean Combinations</a><a id="Boolean-Combinations-1"></a><a class="docs-heading-anchor-permalink" href="#Boolean-Combinations" title="Permalink"></a></h3><p>Build composite selections — e.g. a ball with a central cylinder removed:</p><pre><code class="language-julia hljs">clumps_sel = subregion(clumps, Sphere(30.0; range_unit=:kpc) \ Cylinder(8.0, 30.0; range_unit=:kpc))
-println(&quot;type: &quot;, typeof(clumps_sel), &quot;   selected clumps: &quot;, length(clumps_sel.data))</code></pre><pre><code class="nohighlight hljs">type: ClumpDataType   selected clumps: 292</code></pre><h3 id="Shell-Regions"><a class="docs-heading-anchor" href="#Shell-Regions">Shell Regions</a><a id="Shell-Regions-1"></a><a class="docs-heading-anchor-permalink" href="#Shell-Regions" title="Permalink"></a></h3><pre><code class="language-julia hljs">clumps_shell = subregion(clumps, SphericalShell(5.0, 20.0; range_unit=:kpc))
-println(&quot;clumps in spherical shell [5,20] kpc: &quot;, length(clumps_shell.data), &quot; / &quot;, length(clumps.data))</code></pre><pre><code class="nohighlight hljs">clumps in spherical shell [5,20] kpc: 427 / 644</code></pre><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><h3 id="Key-Techniques-Mastered"><a class="docs-heading-anchor" href="#Key-Techniques-Mastered">Key Techniques Mastered</a><a id="Key-Techniques-Mastered-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Techniques-Mastered" title="Permalink"></a></h3><p>Through this comprehensive tutorial, you have gained expertise in advanced spatial selection techniques for clump analysis:</p><p><strong>Geometric Selection Methods:</strong></p><ul><li><strong>Cuboid regions</strong> - Rectangular box selections with independent axis control</li><li><strong>Cylindrical regions</strong> - Axially symmetric selections for rotating systems</li><li><strong>Spherical regions</strong> - Radially symmetric selections for bound structures</li><li><strong>Shell regions</strong> - Hollow geometric selections with inner/outer boundaries</li></ul><p><strong>Advanced Capabilities:</strong></p><ul><li><strong>Inverse selections</strong> - Extract data outside specified regions</li><li><strong>Combined filters</strong> - Sequential application for complex geometries</li><li><strong>Unit conversion</strong> - Seamless work with physical units (kpc, Mpc, etc.)</li><li><strong>Center references</strong> - Flexible coordinate system positioning</li></ul><p><strong>Coordinate System Flexibility:</strong></p><ul><li><strong>Standard notation</strong> [0:1] - Normalized simulation coordinates</li><li><strong>Physical units</strong> - Real astronomical distances with automatic conversion</li><li><strong>Custom centers</strong> - User-defined reference points for analysis</li><li><strong>Box-centered shortcuts</strong> - Convenient <code>:boxcenter</code> positioning</li></ul><h3 id="Practical-Applications"><a class="docs-heading-anchor" href="#Practical-Applications">Practical Applications</a><a id="Practical-Applications-1"></a><a class="docs-heading-anchor-permalink" href="#Practical-Applications" title="Permalink"></a></h3><p>These spatial selection techniques enable sophisticated clump analysis workflows:</p><p><strong>Scientific Use Cases:</strong></p><ul><li><strong>Hierarchical analysis</strong> - Study clump structures at multiple scales</li><li><strong>Environmental studies</strong> - Analyze clump properties in different regions</li><li><strong>Evolutionary tracking</strong> - Follow clump development in specific volumes</li><li><strong>Comparative analysis</strong> - Contrast clump populations across regions</li></ul><p><strong>Analysis Workflows:</strong></p><ul><li><strong>Multi-scale investigations</strong> - Combine different geometric selections</li><li><strong>Statistical studies</strong> - Generate clean samples for population analysis</li><li><strong>Visualization preparation</strong> - Extract regions for focused plotting</li><li><strong>Data reduction</strong> - Manage memory by selecting relevant subsets</li></ul><h3 id="Performance-Considerations"><a class="docs-heading-anchor" href="#Performance-Considerations">Performance Considerations</a><a id="Performance-Considerations-1"></a><a class="docs-heading-anchor-permalink" href="#Performance-Considerations" title="Permalink"></a></h3><p><strong>Memory Management:</strong></p><ul><li>Use spatial selections to reduce memory footprint for large simulations</li><li>Apply filters early in analysis pipeline to optimize performance</li><li>Combine geometric selections efficiently to minimize data processing</li></ul><p><strong>Computational Efficiency:</strong></p><ul><li>Leverage inverse selections for excluding large regions</li><li>Use appropriate coordinate systems for your analysis scale</li><li>Consider shell regions for hollow structures to reduce data volume</li></ul><h3 id="Integration-with-MERA-Ecosystem"><a class="docs-heading-anchor" href="#Integration-with-MERA-Ecosystem">Integration with MERA Ecosystem</a><a id="Integration-with-MERA-Ecosystem-1"></a><a class="docs-heading-anchor-permalink" href="#Integration-with-MERA-Ecosystem" title="Permalink"></a></h3><p>These spatial selection techniques integrate seamlessly with other MERA analysis functions:</p><p><strong>Compatible Functions:</strong></p><ul><li><code>getpositions()</code> - Extract coordinates with unit conversion</li><li><code>getextent()</code> - Calculate spatial bounds and ranges</li><li><code>dataoverview()</code> - Statistical analysis of selected regions</li><li><code>msum()</code>, <code>mmean()</code> - Statistical calculations on spatial subsets</li></ul><p><strong>Workflow Integration:</strong></p><ul><li>Combine with loading functions for targeted data acquisition</li><li>Chain with analysis functions for comprehensive studies</li><li>Link with visualization tools for publication-quality figures</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../03_particles_Get_Subregions/">« Particles</a><a class="docs-footer-nextpage" href="../covering_grid/">Uniform Grid / Resampling »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Tuesday 30 June 2026 09:41">Tuesday 30 June 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+println()
+println(&quot;catalogue extent  : x &quot;, round.(rx, digits=2), &quot;  y &quot;, round.(ry, digits=2),
+        &quot;  z &quot;, round.(rz, digits=2), &quot; kpc&quot;)</code></pre><pre><code class="nohighlight hljs">classic :sphere   : 400
+9.6408271e9
+value-type Sphere : 400    9.6408271e9
+identical         : true
+catalogue extent  : x (-24.0, 24.0)  y (-24.0, 24.0)  z (-24.0, 24.0) kpc</code></pre><h2 id="9.-Practical-Guidance"><a class="docs-heading-anchor" href="#9.-Practical-Guidance">9. Practical Guidance</a><a id="9.-Practical-Guidance-1"></a><a class="docs-heading-anchor-permalink" href="#9.-Practical-Guidance" title="Permalink"></a></h2><p><strong>The selection is exact; the interpretation is not.</strong> <code>subregion</code> on a catalogue is a clean membership test on peak positions. &quot;The clump mass inside this region&quot; is a different claim, and it carries the bracket of §3 whenever the boundary passes through clump-sized structures.</p><p><strong>Keep boundaries away from the objects.</strong> Regions much larger than the typical clump make the bracket negligible. Regions comparable to a clump make it dominant — and at that point the question probably belongs on the gas, not on the catalogue.</p><p><strong>Clumps are peaks, not a decomposition.</strong> Their masses do not sum to the gas mass of a region (§2). A ratio of the two is a meaningful statistic; treating the catalogue as a partition of the gas is not.</p><p><strong>Counts run out fast.</strong> Hundreds of rows, not millions. Every profile point needs its <span>$N$</span> quoted, and <span>$\sqrt{N}$</span> is usually the largest error in the figure (§7).</p><p><strong>Filter on the finder&#39;s own quality measures.</strong> <code>:relevance</code> and <code>:ncell</code> exist to let you discard marginal detections; applying a region to an unfiltered catalogue silently includes them (§6).</p><h2 id="Summary"><a class="docs-heading-anchor" href="#Summary">Summary</a><a id="Summary-1"></a><a class="docs-heading-anchor-permalink" href="#Summary" title="Permalink"></a></h2><ul><li>A clump catalogue is a table of objects located by their density peaks; <code>subregion</code> is a membership test on those peaks, with no fractions and no <code>split</code> — partitions close exactly (§2, §5).</li><li>Because a clump is extended but recorded as a point, a boundary through clumps turns a mass into a <em>bracket</em>. Mass and mean density give an effective radius (tens of pc here) that makes the bracket measurable: at kpc-scale regions it is a fraction of a percent, at clump-scale regions it is everything, and nothing in the catalogue can narrow it (§3).</li><li>All region value types, boolean composition, <code>@region</code>, tilted axes and <code>inverse=true</code> behave as on every other page (§4, §5), and property filters compose with regions in either order (§6).</li><li>With a few hundred objects, counting noise arrives early: profiles are limited by <span>$N$</span> per bin, not by the geometry (§7).</li></ul><p><strong>Continue with:</strong></p><ul><li><a href="../03_hydro_Get_Subregions/">Hydro sub-regions</a> — where the boundary ambiguity <em>can</em> be removed, by splitting cells on volume fraction.</li><li><a href="../03_particles_Get_Subregions/">Particle sub-regions</a> — genuinely point-like data, and what limits it instead.</li><li><a href="../03_gravity_Get_Subregions/">Gravity sub-regions</a> — the same regions on the force field.</li><li><a href="../05_multi_Masking_Filtering/">Masking &amp; Filtering</a> — the value-space counterpart of these selections.</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../03_particles_Get_Subregions/">« Particles</a><a class="docs-footer-nextpage" href="../covering_grid/">Uniform Grid / Resampling »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Friday 31 July 2026 13:23">Friday 31 July 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
