@@ -33,8 +33,6 @@ base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
 ```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (4), mismatched flags (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
 *__   __ _______ ______   _______
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
@@ -71,7 +69,7 @@ maximum(getvar(gas, :rho))                           # the usual analysis, uncha
 ```
 
 ```
-[Mera]: 2026-07-30T16:38:01.152
+[Mera]: 2026-07-31T10:34:48.141
 Code: PLUTO
 output: 5  time: 0.5 [code units]
 grid: 64³ uniform Cartesian, level 6, boxlen = 1.0
@@ -135,7 +133,7 @@ length(gsub.data), length(ga.data)                   # sub-region ≪ full snaps
 ```
 
 ```
-[Mera]: 2026-07-30T16:38:15.147
+[Mera]: 2026-07-31T10:35:02.572
 Code: Athena++
 output: 5  time: 0.50111 [code units]
 root grid: 32³ (level 5), MaxLevel 2 ⇒ levels 5:7, boxlen = 2.0
@@ -193,11 +191,12 @@ length(stars.data), msum(stars) > 0
 ```
 
 ```
-[Mera]: 2026-07-30T16:38:42.654
+[Mera]: 2026-07-31T10:35:32.376
 Code: GADGET
 output: 200  time: 0.34483  redshift: 1.9
 boxlen = 64000.0
-particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH  (total 11907080)
+particles: 4334546 gas, 4786616 halo/DM, 2333848 disk, 450921 stars, 1149 bndry/BH
+  (total 11907080)
 -------------------------------------------------------
 [Mera]: GADGET particles = 450921, families 4
   (x,y,z,vx,vy,vz,mass,id,family)
@@ -223,7 +222,7 @@ println("metallicity : ", extrema(getvar(gas, :metallicity)))
 ```
 
 ```
-[Mera]: 2026-07-30T16:38:46.685
+[Mera]: 2026-07-31T10:35:37.021
 Code: AREPO
 output: 59  time: 1.0  redshift: 0.0
 boxlen = 205000.0
@@ -249,7 +248,8 @@ println("gas mass [Msol]: ", msum(gas, :Msol))
 
 ```
 median T [K]   : 1.436872560859919e7
-median Z       : 0.001993876649066806
+median Z       :
+0.001993876649066806
 gas mass [Msol]: 4.6930995577059625e13
 ```
 
@@ -292,13 +292,7 @@ hexbin!(a2, log10.(T[ok]), log10.(Bμ[ok]); bins=70, colormap=:viridis)
 figB
 ```
 
-```
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (6), dep missing source (6))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-[ Info: Mera v1.8.0
-```
-
-![](multicode_examples_files/multicode_examples_18_3.png)
+![](multicode_examples_files/multicode_examples_18_1.png)
 
 ### Box-filling maps — a full AREPO volume
 
@@ -321,7 +315,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-30T16:39:20.698
+[Mera]: 2026-07-31T10:36:01.912
 Code: AREPO
 output: 150  time: 1.5381  redshift: 0.0
 boxlen = 40000.0
@@ -329,16 +323,17 @@ particles: 12865831 gas, 13368238 halo/DM, 295531 stars  (total 26529600)
 -------------------------------------------------------
 [Mera]: GADGET particles = 12865831, families 0
   (x,y,z,vx,vy,vz,mass,id,family,rho,u,gpot,volume)
-[Mera]: 2026-07-30T16:39:25.045
+[Mera]: 2026-07-31T10:36:06.590
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
-ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
+ymin::ymax: 0.0 :: 1.0
+==> 0.0 [Mpc] :: 39.999 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
 Effective resolution: 256^2
 Pixel size: 156.246 [kpc]
 Simulation min.: 19.999 [Mpc]
-[Mera]: 2026-07-30T16:40:14.055
+[Mera]: 2026-07-31T10:37:06.177
 center: [0.5, 0.5, 0.5] ==> [19.999 [Mpc] :: 19.999 [Mpc] :: 19.999 [Mpc]]
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 39.999 [Mpc]
@@ -420,7 +415,7 @@ end
 ```
 
 ```
-[Mera]: 2026-07-30T16:42:44.810
+[Mera]: 2026-07-31T10:40:18.786
 Code: AREPO
 output: 24  time: 0.20016  redshift: 3.996
 boxlen = 200000.0
@@ -499,9 +494,9 @@ z_form : median
 2.02   max 13.54
 age    : median 10.54 Gyr   oldest 13.49 Gyr
 z_form == 1/a - 1 : true
-age decreases with a_form :
-true
-stellar mass formed in the last 1 Gyr: 2.431e10 Msol
+age decreases with a_form : true
+stellar mass formed in the last 1 Gyr: 2.431e10
+ Msol
 ```
 
 
