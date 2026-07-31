@@ -706,6 +706,55 @@ end
         end
     end
 
+    # Cell splitting for Voronoi/particle gas. An AMR cell is a cube whose overlap with a region
+    # integrates analytically; a Voronoi cell is a polyhedron the snapshot never gives us, so the
+    # cell is approximated by the sphere of equal volume and sampled against the region's own
+    # predicate. The point is not exactness but WELL-POSEDNESS: a binary in/out test on the
+    # generator jumps by a whole cell as the boundary moves, which is first-order wrong when cells
+    # are comparable to the region.
+    @testset "subregion(particles; split=true) — equal-volume-sphere fractions" begin
+        # a uniform lattice of gas cells: total mass and geometry are known exactly
+        N = 12; box = 100.0; vg = (box/N)^3
+        xs = Float64[(i + 0.5) * box / N for i in 0:N-1]
+        coords = Matrix{Float64}(undef, 3, N^3); c = 0
+        for i in xs, j in xs, k in xs; c += 1; coords[:, c] = [i, j, k]; end
+        fn = joinpath(dir, "snap_013.hdf5")
+        h5open(fn, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = box; hg["NumPart_Total"] = UInt32[N^3, 0, 0, 0, 0, 0]
+            hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+            hg["UnitLength_in_cm"] = 3.0e21; hg["UnitMass_in_g"] = 2.0e43; hg["UnitVelocity_in_cm_per_s"] = 1.0e5
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = coords; g0["Velocities"] = zeros(Float32, 3, N^3)
+            g0["Masses"] = fill(Float32(vg), N^3); g0["Density"] = fill(1.0f0, N^3)
+            g0["InternalEnergy"] = fill(100.0f0, N^3); g0["ParticleIDs"] = UInt32.(1:N^3)
+        end
+        gas = getparticles_gadget(getinfo_gadget(13, dir, verbose=false); families=[0], verbose=false)
+
+        R = 30.0                                   # kpc == code units here (scale.kpc == 1 by construction)
+        sph = Sphere(R; center=[:bc], range_unit=:standard)
+        b = subregion(gas, Sphere(R/box; center=[:bc], range_unit=:standard), verbose=false)
+        sp = subregion(gas, Sphere(R/box; center=[:bc], range_unit=:standard), split=true, verbose=false)
+
+        fr = Mera.select(sp.data, :fraction)
+        @test all(0 .< fr .<= 1)                                   # a fraction is a fraction
+        @test any(fr .> 1 - 1e-9)                                  # interior cells are whole
+        @test any(fr .< 1 - 1e-9)                                  # boundary cells are partial
+        @test length(sp.data) >= length(b.data)                    # split also keeps clipped cells
+
+        # density is uniform, so the enclosed mass has a closed form: ρ·(4/3)πR³
+        ρ = 1.0; exact = ρ * (4/3) * π * R^3
+        mb = sum(getvar(b, :mass))
+        ms = sum(getvar(sp, :mass) .* fr)
+        @test abs(ms - exact) < abs(mb - exact)                    # split is closer to the truth
+        @test isapprox(ms, exact; rtol=0.05)
+
+        # point particles have no extent, so split is meaningless and must say so
+        st = getparticles_gadget(getinfo_gadget(0, dir, verbose=false); families=[4], verbose=false)
+        @test_throws ArgumentError subregion(st, Sphere(0.2; center=[:bc], range_unit=:standard),
+                                             split=true, verbose=false)
+    end
+
     # PART D (data-backed): the AREPO/Voronoi DATA MODEL and general Mera functions on it, checked
     # on a real 16-chunk CAMELS zoom. Gas here is a Voronoi tessellation carried as a PartDataType
     # with a stored :volume — not an AMR octree — so the invariants differ from test/59's grid

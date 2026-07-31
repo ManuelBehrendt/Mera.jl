@@ -223,6 +223,31 @@ Base.:|(a::AbstractRegion, b::AbstractRegion)        = RegionUnion(a, b)
 # an 8-corner + centre fast-path (fully in → 1, fully out → 0) then an n³ sub-sample of the
 # boundary cells. Exact in the limit; assumes region features are resolved by the cell size
 # (true of any cell-based method). Works for any predicate, so combinators reuse it directly.
+# Fraction of a PARTICLE/Voronoi cell inside the region. An AMR cell is an axis-aligned cube, so
+# _sample_fraction below samples a cube; a Voronoi cell is an irregular polyhedron we never receive
+# — the snapshot gives only a generating point and a volume — so the cell is approximated by the
+# SPHERE of the same volume, r_eff = (3V/4π)^(1/3), and sampled the same way. That is an
+# approximation, but the alternative (a binary in/out test on the generator) is first-order wrong:
+# on a CAMELS zoom, cell radii span 0.5–293 kpc, and for a 100 kpc sphere the mass in cells the
+# boundary cuts through is 167 % of the mass enclosed. Sampling reuses the region's own `inside`
+# predicate, so it works for every region type and every combinator.
+@inline function _sphere_fraction(inside, cx, cy, cz, r; n::Int=8)
+    allin = inside(cx, cy, cz); allout = !allin
+    @inbounds for (dx, dy, dz) in ((r,0.0,0.0), (-r,0.0,0.0), (0.0,r,0.0),
+                                   (0.0,-r,0.0), (0.0,0.0,r), (0.0,0.0,-r))
+        if inside(cx+dx, cy+dy, cz+dz); allout = false; else; allin = false; end
+    end
+    allin  && return 1.0
+    allout && return 0.0
+    cnt = 0; tot = 0; step = 2r/n; r2 = r*r
+    @inbounds for i in 0:n-1, j in 0:n-1, k in 0:n-1
+        px = cx - r + (i+0.5)*step; py = cy - r + (j+0.5)*step; pz = cz - r + (k+0.5)*step
+        ((px-cx)^2 + (py-cy)^2 + (pz-cz)^2) <= r2 || continue      # keep the ball, not the cube
+        tot += 1; inside(px, py, pz) && (cnt += 1)
+    end
+    return tot == 0 ? 0.0 : cnt / tot
+end
+
 @inline function _sample_fraction(inside, nx, ny, nz, half; n::Int=8)
     allin = true; allout = true
     @inbounds for dz in (-half,half), dy in (-half,half), dx in (-half,half)
@@ -480,15 +505,45 @@ function subregion(obj::_CellData, region::AbstractRegion; split::Bool=true,
     return out
 end
 
-function subregion(obj::PartDataType, region::AbstractRegion; inverse::Bool=false, verbose::Bool=true)
+function subregion(obj::PartDataType, region::AbstractRegion; split::Bool=false,
+                   inverse::Bool=false, nsub::Int=8, verbose::Bool=true)
     verbose = checkverbose(verbose)
     _, contains = _prepare(region, obj)
+    # `split` needs a cell size: only gas cells carry :volume. Point particles (DM, stars) have no
+    # extent, so the in/out test on their position is already exact and split is meaningless.
+    if split && !(:volume in propertynames(IndexedTables.columns(obj.data)))
+        throw(ArgumentError("subregion(particles; split=true) needs a :volume column to size each " *
+                            "cell (AREPO/GADGET gas). Point particles have no extent — use split=false."))
+    end
     data = obj.data; bl = obj.boxlen
     xs = IndexedTables.select(data, :x); ys = IndexedTables.select(data, :y); zs = IndexedTables.select(data, :z)
     _blo, _bhi = _bbox(region, obj)
     blo1 = Float64(_blo[1]); blo2 = Float64(_blo[2]); blo3 = Float64(_blo[3])
     bhi1 = Float64(_bhi[1]); bhi2 = Float64(_bhi[2]); bhi3 = Float64(_bhi[3])
-    nrows = length(data); keep = Vector{Bool}(undef, nrows)
+    nrows = length(data)
+    if split
+        Vc = IndexedTables.select(data, :volume)
+        frac = Vector{Float64}(undef, nrows)
+        blf = Float64(bl)
+        @inbounds for i in 1:nrows
+            px = xs[i]/blf; py = ys[i]/blf; pz = zs[i]/blf
+            rr = (3.0 * Float64(Vc[i]) / (4π)) ^ (1/3) / blf        # r_eff, normalised
+            f = _sphere_fraction(contains, px, py, pz, rr; n=nsub)
+            frac[i] = inverse ? 1.0 - f : f
+        end
+        keep = frac .> 1e-12
+        cols = IndexedTables.columns(data)
+        kept = map(c -> c[keep], cols)
+        newdata = IndexedTables.table(merge(kept, (fraction = frac[keep],));
+                                      pkey = collect(IndexedTables.pkeynames(data)))
+        if verbose
+            println("Region: ", nameof(typeof(region)), "  (particles, split)")
+            println("Selected particles: ", count(keep), " / ", nrows,
+                    "   partial cells: ", count(f -> 1e-12 < f < 1 - 1e-12, frac))
+        end
+        return _copy_with_data(obj, newdata)
+    end
+    keep = Vector{Bool}(undef, nrows)
     _keeploop!(keep, contains, xs, ys, zs, Float64(bl), inverse,
                blo1, blo2, blo3, bhi1, bhi2, bhi3)
     cols = IndexedTables.columns(data)
