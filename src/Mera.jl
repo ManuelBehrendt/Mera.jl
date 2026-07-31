@@ -84,6 +84,7 @@ export
     getinfo_gadget,
     getparticles_gadget,
     getgroups_gadget,
+    getgroups,
     createpath,
     gethydro,
     getgravity,

@@ -100,3 +100,28 @@ function _group_offsets(lenType::AbstractMatrix)
     end
     return off
 end
+
+"""
+    getgroups(info::InfoType; kwargs...)
+
+Read the halo/group catalogue that accompanies `info`'s snapshot, dispatching to the frontend
+registered for its `simcode` — for the GADGET-HDF5 family (AREPO, IllustrisTNG, …) that is
+[`getgroups_gadget`](@ref).
+
+Prefer this over the frontend-specific name: it is the generic entry point, matching
+[`getinfo`](@ref) / [`getparticles`](@ref), and it does not ask you to know which reader serves
+your data. `getinfo` already reports the real producer (`simcode == "AREPO"` for IllustrisTNG),
+even though one frontend covers the whole shared format.
+
+```julia
+info = getinfo(33, "/path/to/TNG50-4")     # simcode = "AREPO"
+gc   = getgroups(info)                      # FoF catalogue
+gas  = getparticles(info; halo=0)           # that group's cells
+```
+"""
+function getgroups(info::InfoType; kwargs...)
+    rdr = _reader_by_simcode(info.simcode)
+    rdr === nothing && error("getgroups: no reader registered for simcode \"$(info.simcode)\".")
+    haskey(rdr.funcs, :groups) || _capability_error(rdr, :groups, "getgroups")
+    return rdr.funcs[:groups](info; kwargs...)
+end
