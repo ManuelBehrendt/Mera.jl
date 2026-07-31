@@ -135,8 +135,9 @@ Pkg.add("Mera")
 **Requirements**: Julia 1.10 or newer — **1.12+ recommended**, for the faster compiler and the
 current GC. **Platforms**: macOS (incl. Apple Silicon), Linux, Windows.
 
-**Tested on every push**: Julia 1.10 (the minimum supported), 1.11 and 1.12 on Linux and macOS,
-plus 1.11 on Windows. CI runners have no access to simulation data, so they run the data-free
+**Tested on every push**: Julia 1.10 (the minimum supported), 1.11 and 1.12 on Linux, macOS **and
+Windows** — every supported version on every supported platform, nine jobs. CI runners have no
+access to simulation data, so they run the data-free
 tiers — the synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file
 round-trips. The full suite runs against real snapshots locally.
 
