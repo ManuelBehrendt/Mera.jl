@@ -70,8 +70,16 @@ function _voronoi_los(pa, pb, plos, dens, vals, reff, ea::AbstractVector, eb::Ab
         c = 0
         for j in 1:n2, i in 1:n1
             c += 1; ix = idxs[c]
-            # cap the cell's reach at its effective radius so empty space stays empty and each cell
-            # contributes ~its own volume (else a cutout/zoom assigns far samples to inflate mass).
+            # By definition the nearest generator OWNS this point, so on a space-filling
+            # tessellation no cap is correct. The cap exists only for data that does NOT fill its
+            # region (a cutout or zoom), where an unbounded nearest-neighbour would paint empty
+            # space and inflate the mass — measured ~6x on a real TNG cutout.
+            #
+            # It must not be applied to space-filling data: reff = (3V/4π)^(1/3) is the radius of a
+            # sphere of the cell's volume, but a cell is not a sphere. For a cube of side s,
+            # reff ≈ 0.620·s while the half-diagonal is 0.866·s, so capping discards each cell's own
+            # CORNERS. On a quasi-regular mesh those line up into a lattice of holes — 3.3 % of
+            # pixels on ArepoBullet, which is exactly space-filling (ΣV/boxlen³ = 1.0000).
             dists[c] <= Float64(reff[ix]) || continue
             ρ = Float64(dens[ix])
             colρ[i,j]  += ρ*dl
@@ -1066,7 +1074,18 @@ function create_projection(   dataobject::PartDataType, vars::Array{Symbol,1};
                     nlos = clamp(round(Int, (hi - lo) / pixsize), 1, 512)        # sample the LOS at ~pixel depth
                     pa = select(filtered_data, var_a); pb = select(filtered_data, var_b)
                     plos = select(filtered_data, direction); dens = select(filtered_data, :rho)
-                    reff = (3.0 .* select(filtered_data, :volume) ./ (4 * pi)) .^ (1/3)   # cell effective radius
+                    # How far a cell may legitimately reach from its generator. NOT the
+                    # equal-volume sphere radius (3V/4π)^(1/3) = 0.620·V^(1/3): a Voronoi cell is not
+                    # a sphere, and capping there discards the cell's own CORNERS. √3/2·V^(1/3) is the
+                    # centre-to-corner distance of a cube of the same volume — the furthest a point
+                    # inside a cube-like cell can be from its generator. Measured over a reach sweep
+                    # on both a space-filling box (ArepoBullet) and a cutout (TNGHalo), this is the
+                    # value that simultaneously removes the holes and best conserves mass:
+                    #   reach ×V^(1/3)   ArepoBullet holes / Σm     TNGHalo Σm
+                    #     0.620 (r_eff)      3.3 %   / 0.733          0.802
+                    #     0.866 (√3/2)       0.0 %   / 0.993          1.039   ← both best
+                    #     ∞     (no cap)     0.0 %   / 1.018          1.057
+                    reff = (sqrt(3)/2) .* (select(filtered_data, :volume) .^ (1/3))
                     isstd = in(i_var, sd_names)
                     vals = isstd ? dens : getvar(dataobject, i_var, filtered_db=filtered_data, center=data_centerm, direction=direction, ref_time=ref_time)
                     if length(mask) != 1                                          # honour the particle mask

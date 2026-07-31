@@ -359,7 +359,12 @@ end
         gas = getparticles_gadget(getinfo_gadget(11, dir, verbose=false); families=[0], verbose=false)
         sd = projection(gas, :sd, res=24, weighting=:voronoi, verbose=false, show_progress=false)
         frac = sum(sd.maps[:sd]) * (gas.boxlen / 24)^2 / msum(gas)
-        @test 0.6 < frac < 1.1          # nearest-cell capped at r_eff ⇒ approximately conserving (no gross over/under-count)
+        # This grid FILLS the box, so every pixel has a rightful owner: holes are a bug, not noise.
+        # They appeared when the reach was capped at the equal-volume sphere radius 0.620·V^(1/3),
+        # which discards each cell's corners (a cube reaches 0.866·V^(1/3)). The band below used to
+        # be 0.6–1.1, wide enough to pass with 3.3 % of the map missing.
+        @test count(iszero, sd.maps[:sd]) == 0
+        @test 0.95 < frac < 1.05
 
         # (b) sharpness: two cells filling half the box each ⇒ piecewise-constant T (exactly the two
         #     cell values, no smoothing). V = half-box so r_eff covers the cell.
