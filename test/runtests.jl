@@ -85,6 +85,15 @@ if isempty(_focus)
         include("66_chombo_reader_tests.jl")  # data-free: Chombo/PLUTO-AMR reader contract (synthetic 2-level HDF5; leaf extraction + Orion mapping)
         include("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
         include("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
+
+        # The analytic correctness oracles. These were included in the data-dependent tier below,
+        # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
+        # paper/paper.md both claim they run "on every release". They were WRITTEN to be data-free:
+        # 40 has no DATA_AVAILABLE gate at all, and 41/43 gate only their later AMR-backed blocks,
+        # which skip cleanly when no data is present. Nothing about them needed changing.
+        include("40_clumpfind_validation_tests.jl") # analytic: Hill radius, invariance, golden master
+        include("41_covering_grid_tests.jl")        # analytic: paint + mass conservation
+        include("43_fluxbudget_tests.jl")           # analytic: the surface integral ∮ρv·dA
     end
 
     # ========================================================================
@@ -116,9 +125,8 @@ if isempty(_focus)
         include("37_derived_fields_tests.jl")      # derived-field registry: getvar_requirements, add_field, project auto-read
         include("38_report_tests.jl")              # composable report system (Phase 1): cards, engine, ascii/jld2
         include("39_clumpfind_tests.jl")           # density-threshold clumpfinder (FoF 3D + connected-components 2D)
-        include("40_clumpfind_validation_tests.jl") # structure-finder framework (v2 Phase 1): backend/oracle/invariance, data-free
-        include("41_covering_grid_tests.jl")        # covering_grid / slice (fixed-resolution buffer): paint/conservation data-free + AMR-backed
-        include("43_fluxbudget_tests.jl")           # fluxbudget / fluxtimeseries (surface flux in/out): kernel+analytic data-free + AMR-backed
+        # 40 / 41 / 43 moved to the data-free tier above — their analytic oracles are the
+        # package's correctness anchors and must run in CI; their AMR-backed blocks self-gate.
         include("45_sfr_tests.jl")                  # sfr / sfr_snapshot (SFH + current SFR): data-free kernel + version-robust (neg-birth & cosmological) AMR-backed
         include("46_timeseries_tests.jl")           # timeseries (multi-snapshot reducer→table): data-free discovery/assembly + 3D Sedov RAMSES & mera-file fixtures
         include("47_galaxyframe_tests.jl")           # auto-frame (center_of/face_on/edge_on): vector helpers data-free + spiral_clumps angular-momentum orientation
