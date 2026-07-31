@@ -31,16 +31,15 @@ jobs:
         os:
           - ubuntu-latest
           - macos-latest
-        # Windows gets ONE job rather than a third column: the failures it is
-        # likely to catch — HDF5/JLD2/LZ4 binaries, path separators, and the
-        # rule that an open file cannot be deleted — do not vary with the Julia
-        # version, so 3x the runners would buy 1x the signal. The data-free
-        # tiers exercise this properly (36 mktempdir, 23 h5open, savedata
-        # round-trips), including the group-catalogue lookup that walks to a
-        # snapshot's PARENT directory.
-        include:
-          - version: '1.11'
-            os: windows-latest
+          # Every supported version is tested on every claimed platform. 1.10 is
+          # the declared floor (Project.toml) and 1.12 is what the README
+          # recommends — both are public promises, so neither may go untested on
+          # a platform we advertise. Windows is where this pays: HDF5/JLD2/LZ4
+          # binaries, path separators, and the rule that an open file cannot be
+          # deleted. The data-free tiers exercise all of it (36 mktempdir, 23
+          # h5open, savedata round-trips), including the group-catalogue lookup
+          # that walks to a snapshot's PARENT directory.
+          - windows-latest
     steps:
       - uses: actions/checkout@v5
       - uses: julia-actions/setup-julia@v2
