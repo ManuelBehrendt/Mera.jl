@@ -208,12 +208,17 @@ function get_data(  dataobject::HydroDataType,
 
         elseif i == :virial_parameter_local
             selected_unit = getunit(dataobject, :virial_parameter_local, vars, units)
-            # Virial parameter: α_vir = 5σ²R/(GM) where σ = cs (sound speed), R = cellsize
-            cs = getvar(filtered_dataobject, :cs, mask=use_mask_in_recursion)
-            mass = getvar(filtered_dataobject, :mass, mask=use_mask_in_recursion)
-            cellsize = getvar(filtered_dataobject, :cellsize, mask=use_mask_in_recursion)
+            # Virial parameter: α_vir = 5σ²R/(GM) where σ = cs (sound speed), R = cellsize.
+            #
+            # α_vir is DIMENSIONLESS, so every input must be in the same system as `G`, which
+            # `constants.G` gives in CGS. Ask for CGS explicitly — exactly as :jeanslength and
+            # :freefall_time above do. Taking :cs/:mass/:cellsize in CODE units and dividing by a
+            # CGS G (as this line did until now) inflates the result by unit_d·unit_t² — 1.5e7 on
+            # the spiral_clumps fixture — with no error and a plausible-looking number.
+            cs = getvar(filtered_dataobject, :cs, unit=:cm_s, mask=use_mask_in_recursion)
+            mass = getvar(filtered_dataobject, :mass, unit=:g, mask=use_mask_in_recursion)
+            cellsize = getvar(filtered_dataobject, :cellsize, unit=:cm, mask=use_mask_in_recursion)
             G = dataobject.info.constants.G
-            # α_vir ≈ 5c_s²R/(GM) where R ≈ cellsize
             vars_dict[:virial_parameter_local] = @. (5 * cs^2 * cellsize) / (G * mass) * selected_unit
 
         elseif i == :mass
