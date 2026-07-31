@@ -11,11 +11,16 @@
 [![codecov](https://codecov.io/gh/ManuelBehrendt/Mera.jl/branch/master/graph/badge.svg?token=17HiKD4N30)](https://codecov.io/gh/ManuelBehrendt/Mera.jl)
 [![Aqua QA](https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg)](https://github.com/JuliaTesting/Aqua.jl)
 
-**MERA** reads and analyzes [RAMSES](https://github.com/ramses-organisation/ramses) astrophysical
-simulation output natively in Julia. It loads multi-resolution AMR grids, particles, gravity, clumps
-and radiative-transfer fields into memory-efficient tables, computes 100+ physics-derived quantities
-on demand, and provides conservation-correct projections, profiles, flux budgets and structure
-finding — all through one unified, multiple-dispatch API.
+**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for
+[RAMSES](https://github.com/ramses-organisation/ramses) — multi-resolution AMR grids, particles,
+gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading
+**AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 140+
+physics-derived quantities on demand and provides conservation-correct projections, profiles, flux
+budgets and structure finding — all through one unified, multiple-dispatch API.
+
+Coverage is deepest for RAMSES, which is the only code with gravity, radiative-transfer and clump
+support. The others provide gas; AREPO and GADGET additionally provide particles and SUBFIND halo
+catalogues.
 
 *Coverage is measured by the maintainer on a local run (the RAMSES test datasets are too large for
 GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see **Testing** below.*

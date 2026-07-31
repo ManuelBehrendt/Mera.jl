@@ -1,10 +1,12 @@
 # MERA.jl
 
-*High-performance RAMSES AMR + particle + gravity analysis in pure Julia with a unified, extensible API*
+*High-performance analysis of astrophysical simulations in pure Julia — RAMSES natively and in full, plus AREPO, GADGET, PLUTO, Athena++, FLASH and Chombo through one unified API*
 
 [![DOI](https://zenodo.org/badge/229728152.svg)](https://zenodo.org/badge/latestdoi/229728152)
 
-**MERA** is a Julia package for high-performance analysis of large-scale astrophysical simulation data from RAMSES hydrodynamic code. Built entirely in Julia, it provides a unified API for AMR grids, N-body particles, and gravity data with native performance and extensive scientific functionality.
+**MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES** — multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 140+ physics-derived quantities on demand and provides conservation-correct projections, profiles, flux budgets and structure finding — all through one unified, multiple-dispatch API.
+
+Coverage is deepest for RAMSES, which is the only code with gravity, radiative-transfer and clump support. The others provide gas; AREPO and GADGET additionally provide particles and SUBFIND halo catalogues.
 
 ![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
 
