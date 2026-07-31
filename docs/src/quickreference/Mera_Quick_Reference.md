@@ -169,9 +169,6 @@ viewmodule()
 #### `construct_datatype(data, ::Symbol)`
 Low-level helper to (re)construct internal dataset structs (advanced).
 
-#### `creatscales(info)` / `createscales(info)` (spelling depends on version)
-Generate scaling factors structure.
-
 #### `createconstants(info)` / `createconstants!(info)`
 Build or mutate constants table (functions with ! mutate state).
 
@@ -545,42 +542,14 @@ extent = getextent(gas, :kpc)
 
 ### Variable Operations
 
-#### `insertcolsafter(data, new_columns, after_column)`
-**Purpose:** Add new columns to data tables
-```julia
 # Add computed kinetic energy
 ke = 0.5 * gas.data.mass .* (gas.data.vx.^2 + gas.data.vy.^2 + gas.data.vz.^2)
 gas_new = insertcolsafter(gas, (:kinetic_energy => ke,), :mass)
 ```
 
-#### `dropbelow(data, column, threshold)`
-**Purpose:** Filter data below threshold value
-```julia
 # Remove low-density cells
 gas_filtered = dropbelow(gas, :rho, 1e-5)
 ```
-
-### Coordinate Transformations
-
-#### `cartesian(data; options...)`
-**Purpose:** Convert to/verify Cartesian coordinates
-```julia
-data_cart = cartesian(gas, center=[:boxcenter])
-```
-
-#### `cylindrical(data; options...)`
-**Purpose:** Convert to cylindrical coordinates
-```julia
-data_cyl = cylindrical(gas, center=[0.,0.,0.], direction=:z)
-```
-
-#### `spherical(data; options...)`
-**Purpose:** Convert to spherical coordinates
-```julia
-data_sph = spherical(gas, center=[:center_of_mass])
-```
-
----
 
 ## Utilities & Helpers
 
@@ -599,9 +568,6 @@ viewfields(part)   # Show particle data columns
 mem = usedmemory(gas, :GB)
 ```
 
-#### `dataobject(output, path, datatype; options...)`
-**Purpose:** Create data objects without loading data
-```julia
 # Create data object for later use
 obj = dataobject(400, "/path/to/sim", :hydro, lmax=8)
 ```
@@ -641,9 +607,6 @@ obj = dataobject(400, "/path/to/sim", :hydro, lmax=8)
 
 ### Clump Analysis
 
-#### `clump_properties(clumps, property; options...)`
-**Purpose:** Analyze properties of identified clumps
-```julia
 # Get clump masses
 masses = clump_properties(clumps, :mass, :Msol)
 
@@ -653,9 +616,6 @@ peak_rho = clump_properties(clumps, :peak_rho, :g_cm3)
 
 ### Custom Analysis Functions
 
-#### `select(data, condition)`
-**Purpose:** Select data based on conditions
-```julia
 # Select high-density gas
 dense_gas = select(gas, gas.data.rho .> 1e-3)
 
