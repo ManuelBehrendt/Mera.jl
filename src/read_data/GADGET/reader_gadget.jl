@@ -474,7 +474,22 @@ function getparticles_gadget(info::InfoType; families=:all, vars=:all, halo=noth
     p.ranges = ranges
     p.selected_partvars = collect(names)
     p.used_descriptors = Dict{Any,Any}(); p.scale = info.scale
-    verbose && println("[Mera]: GADGET particles = $(length(x)), families ",
-                       join(sort(unique(fam)), ","), "  (", join(names, ","), ")")
+    # Name the rows for what they are. PartType0 in the AREPO family is a VORONOI CELL — it has a
+    # finite volume and the tessellation tiles space (ΣV == boxlen³) — so calling it a "particle"
+    # misdescribes the very property everything here relies on (:volume, :sph, :voronoi, cell
+    # splitting). The container is a PartDataType because a Voronoi mesh cannot be mapped onto the
+    # power-of-two octree HydroDataType, not because the gas is point-like.
+    if verbose
+        fams = sort(unique(fam))
+        kind = if :volume in names && fams == Int32[0]
+            "gas cells"                                   # gas only, and they carry a volume
+        elseif :volume in names && 0 in fams
+            "rows (gas cells + particles)"                # mixed load
+        else
+            "particles"                                   # DM / stars / BHs: genuinely point-like
+        end
+        println("[Mera]: ", info.simcode, " ", kind, " = ", length(x), ", families ",
+                join(fams, ","), "  (", join(names, ","), ")")
+    end
     return p
 end
