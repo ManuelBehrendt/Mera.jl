@@ -60,8 +60,16 @@ Pkg.add("Mera")
 using Mera
 ```
 
-**Requirements**: Julia 1.10+, 8GB+ RAM recommended  
-**Platforms**: macOS (including Apple Silicon), Linux, Windows
+**Requirements**: Julia 1.10 or newer — **1.12+ recommended** — and 8GB+ RAM  
+**Platforms**: macOS (including Apple Silicon), Linux, Windows  
+**Tested on every push**: Julia 1.10 / 1.11 / 1.12 on Linux and macOS, plus 1.11 on Windows
+
+Julia 1.10 is the minimum the package supports (`julia = "1.10"` in `Project.toml`) and stays in
+CI so it keeps working. 1.12 is what we recommend running: the compiler is faster and the garbage
+collector handles the large allocations of AMR and particle analysis better, which is most of what
+Mera does. CI runners have no simulation data, so they exercise the data-free tiers — the
+synthetic-HDF5 reader contracts, the reader registry, the IO layer and the mera-file round-trips —
+while the full suite runs against real snapshots locally.
 
 ### Your First MERA Analysis
 ```julia
