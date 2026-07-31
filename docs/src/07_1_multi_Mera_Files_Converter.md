@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `07_1_multi_Mera_Files_Converter.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/07_1_multi_Mera_Files_Converter.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 ## Overview
 
 `batch_convert_mera` is a safe, multithreaded tool to **re-save older Mera.jl data files in the
@@ -11,11 +10,14 @@ current format**. It features active safety-margin monitoring, intelligent threa
 robust error handling for batch conversion of large datasets.
 
 !!! note "You usually don't need to convert just to read"
-    Current Mera (JLD2 0.6, with the bundled `JLD2Lz4`) **reads older LZ4-compressed Mera files
-    directly** — `loaddata`/`viewdata` work on files written by earlier Mera versions with no extra
-    steps (see [Loading older Mera files](07_multi_Mera_Files.md)). Convert when you want to **remove
-    reconstruction warnings**, standardise a large archive on the current format, or speed up repeated
-    loads of very old files.
+```
+Current Mera (JLD2 0.6, with the bundled `JLD2Lz4`) **reads older LZ4-compressed Mera files
+directly** — `loaddata`/`viewdata` work on files written by earlier Mera versions with no extra
+steps (see [Loading older Mera files](07_multi_Mera_Files.md)). Convert when you want to **remove
+reconstruction warnings**, standardise a large archive on the current format, or speed up repeated
+loads of very old files.
+```
+
 
 ## Problem Description
 
@@ -64,6 +66,7 @@ the repo or fills the disk.
 
 ### Required Packages
 
+
 ```julia
 using Mera
 base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
@@ -74,10 +77,38 @@ println("RAMSES source : ", run)
 println("JLD2 target   : ", jld_dir)
 ```
 
+
+```
+*__   __ _______ ______   _______ 
+```
+
+
+```
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+```
+
+
+```
+RAMSES source : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d
+```
+
+
+```
+JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
+```
+
+
 ## Step 1 — convert a RAMSES output to a Mera file
 
 `convertdata(output; datatypes, path, fpath)` reads RAMSES output `output` from `path` and
 writes `output_<n>.jld2` into `fpath`. The Sedov run is hydro-only, so we request `[:hydro]`.
+
 
 ```julia
 convertdata(1, datatypes=[:hydro], path=run, fpath=jld_dir)
@@ -87,8 +118,85 @@ println("wrote          : ", jld_file)
 println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 ```
 
+```
+[0m[1m[Mera]: 2026-07-31T21:35:29.043[22m
+```
+
+
+```
+Requested datatypes: 
+```
+
+
+```
+[:hydro]
+Max threads: 4 of 4 available
+Threading applied to: hydro, gravity, particles
+Threading NOT applied to: clumps (single-threaded by design)
+```
+
+
+```
+domain:
+```
+
+
+```
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+```
+
+
+```
+reading/writing lmax: 6 of 6
+-----------------------------------
+Compression: 
+```
+
+
+```
+JLD2Lz4.Lz4Filter(0x40000000)
+-----------------------------------
+- hydro (threaded: max_threads=4)
+```
+
+
+[32mProcessing files:   0%|                                                  |  ETA: N/A (  N/A  s/it)[39m
+
+
+[32mProcessing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.45  s/it)[39m
+
+
+```
+✓ File processing complete! Combining results...
+```
+
+
+```
+Final Statistics:
+================
+- total folder size: 2.158 MB
+- selected data size: 2.147 MB
+- peak memory used: 2.276 MB
+- compressed file size: 129.514 KB
+- compression ratio: 0.059
+- data reduction: 94.1%
+- total processing time: 8.5 seconds
+- effective threads: 4
+wrote          : 
+```
+
+
+```
+/var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL/output_00001.jld2
+size           : 0.15 MB
+```
+
+
 Inspect the written file with `viewdata` and read it back with `loaddata` — the round-trip
 gives back an ordinary Mera hydro object.
+
 
 ```julia
 viewdata(1, jld_dir)
@@ -98,10 +206,100 @@ println("cells loaded   : ", length(gas.data))
 println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
 ```
 
+```
+[0m[1m[Mera]: 2026-07-31T21:35:39.089[22m
+```
+
+
+```
+Mera-file output_00001.jld2 contains:
+```
+
+
+```
+Datatype: 
+```
+
+
+```
+hydro
+merafile_version: 1.0
+Compression: JLD2Lz4.Lz4Filter(0x40000000)
+CodecZlib: 
+```
+
+
+```
+VersionNumber[v"0.7.8"]
+merafile_version: 1.0
+JLD2: VersionNumber[v"0.6.4"]
+CodecBzip2: VersionNumber[v"0.8.5"]
+JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
+CodecLz4: VersionNumber[v"0.4.6"]
+Mera: VersionNumber[v"1.8.0"]
+-------------------------
+Memory: 2.2761077880859375 MB (uncompressed)
+```
+
+
+```
+-----------------------------------
+convert stat: true
+-----------------------------------
+Total file size: 155.944 KB
+-----------------------------------
+```
+
+
+```
+[0m[1m[Mera]: 2026-07-31T21:35:39.668[22m
+```
+
+
+```
+Open Mera-file output_00001.jld2:
+```
+
+
+```
+domain:
+```
+
+
+```
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+```
+
+
+```
+Memory used for data table :
+```
+
+
+```
+2.2739639282226562 MB
+-------------------------------------------------------
+```
+
+
+```
+cells loaded   : 32768
+total mass     : 6.284e-35
+```
+
+
+```
+ Msol
+```
+
+
 ### Convert a few outputs (a small loop)
 
 `convertdata` is per-output; loop over a handful of output numbers to build a small archive
 of Mera files. We keep it to three outputs to stay tiny on disk.
+
 
 ```julia
 for n in 1:3
@@ -110,6 +308,27 @@ end
 made = sort(filter(f -> endswith(f, ".jld2"), readdir(jld_dir)))
 println("mera files     : ", made)
 ```
+
+
+```
+✓ File processing complete! Combining results...
+```
+
+
+```
+✓ File processing complete! Combining results...
+```
+
+
+```
+✓ File processing complete! Combining results...
+```
+
+
+```
+mera files     : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
+```
+
 
 ## Step 2 — `batch_convert_mera`: re-save an archive in the current format
 
@@ -165,6 +384,7 @@ User-guided conversion with prompts:
 We point it at the Mera files we just wrote and send the clean copies to a second temp dir.
 `show_confirmation=false` makes it non-interactive (no `y/n` prompt).
 
+
 ```julia
 converted_dir = mktempdir()
 
@@ -183,9 +403,139 @@ println("return dict    : ", results)
 println("converted dir  : ", sort(readdir(converted_dir)))
 ```
 
+```
+================================================================================
+```
+
+
+```
+Safe Multithreaded JLD2 Batch Converter with Safety Margin Monitoring
+================================================================================
+Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
+Output directory: /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_SfmXW8
+Output range:     1 to 3
+System Memory Information:
+  Total memory: 32.0 GB
+  Available memory: 0.3 GB
+  Current usage: 99.1%
+  Safety limit: 80.0%
+  ⚠️  WARNING: Current memory usage exceeds safety margin!
+      Consider closing other applications before proceeding.
+Requested threads: 1
+```
+
+
+```
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mCurrent memory usage (99.1%) exceeds safety margin (80.0%).
+[33m[1m│ [22m[39mConsider closing other applications or reducing thread count.
+[33m[1m│ [22m[39mSystem may become unstable during conversion with high memory usage.
+[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:144[39m
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mLimited memory available within safety margin. Reducing recommended thread count by 50%.
+[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:163[39m
+```
+
+
+```
+Recommended thread count (with safety margin): 1
+```
+
+
+```
+Files to be converted (3 total):
+  - output_00001.jld2 (output 1)
+  - output_00002.jld2 (output 2)
+  - output_00003.jld2 (output 3)
+```
+
+
+```
+Starting multithreaded conversion with safety margin monitoring...
+```
+
+
+```
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin exceeded (98.9% > 80.0%) while processing output_00001.jld2
+[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:357[39m
+```
+
+
+```
+  ⚠️  Safety margin exceeded during load of output_00001.jld2 (99.3%)
+```
+
+
+[32m[2/3] Processing: output_00002.jld2  67%|██████████████       |  ETA: 0:00:00 ( 0.47  s/it)[39m
+
+```
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin exceeded (99.3% > 80.0%) while processing output_00002.jld2
+[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:357[39m
+```
+
+
+```
+  ⚠️  Safety margin exceeded during load of output_00002.jld2 (99.3%)
+```
+
+
+[32m[3/3] Processing: output_00003.jld2 100%|█████████████████████| Time: 0:00:01 ( 0.41  s/it)[39m
+
+
+```
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin exceeded (99.4% > 80.0%) while processing output_00003.jld2
+[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:357[39m
+```
+
+
+```
+  ⚠️  Safety margin exceeded during load of output_00003.jld2 (99.6%)
+```
+
+
+```
+[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin violation detected (99.6% > 80.0%) - file 3/3
+[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:843[39m
+```
+
+
+```
+================================================================================
+Conversion Summary with Safety Margin Report
+================================================================================
+Files processed:          3
+Successfully converted:   3
+Failed conversions:       0
+Skipped files:            0
+Safety margin violations: 1
+Total conversion time:    1.6 seconds
+Average time per file:    0.53 seconds
+Threads used:             1
+Final memory usage:       99.6%
+```
+
+
+```
+⚠️  SAFETY MARGIN VIOLATIONS DETECTED!
+Consider using fewer threads or processing smaller batches for future conversions.
+Recommendation: Reduce thread count by 50% and increase safety margin to 0.9
+Conversion complete!
+```
+
+
+```
+return dict    : 
+```
+
+
+```
+Dict{String, Real}("conversion_time" => 1.6048290729522705, "success" => 3, "threads_used" => 1, "final_memory_usage_percent" => 99.6185302734375, "failed" => 0, "skipped" => 0, "safety_violations" => 1)
+converted dir  : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
+```
+
+
 The returned `Dict` summarises the run — keys include `"success"`, `"failed"`,
 `"skipped"`, `"safety_violations"`, `"conversion_time"`, `"threads_used"`, and
 `"final_memory_usage_percent"`.
+
 
 ```julia
 for k in ("success", "failed", "skipped", "safety_violations", "threads_used")
@@ -193,7 +543,17 @@ for k in ("success", "failed", "skipped", "safety_violations", "threads_used")
 end
 ```
 
+```
+success              => 3
+failed               => 0
+skipped              => 0
+safety_violations    => 1
+threads_used         => 1
+```
+
+
 Confirm the re-saved files load identically to the originals.
+
 
 ```julia
 g0 = loaddata(1, jld_dir,        :hydro)
@@ -203,6 +563,60 @@ println("mass   (orig / converted) : ",
         round(msum(g0, :Msol), sigdigits=6), " / ",
         round(msum(g1, :Msol), sigdigits=6))
 ```
+
+```
+[0m[1m[Mera]: 2026-07-31T21:35:50.568[22m
+```
+
+
+```
+Open Mera-file output_00001.jld2:
+```
+
+
+```
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+```
+
+
+```
+Memory used for data table :2.2739639282226562 MB
+-------------------------------------------------------
+```
+
+
+```
+[0m[1m[Mera]: 2026-07-31T21:35:50.575[22m
+```
+
+
+```
+Open Mera-file output_00001.jld2:
+```
+
+
+```
+domain:
+xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
+```
+
+
+```
+Memory used for data table :2.2739639282226562 MB
+-------------------------------------------------------
+```
+
+
+```
+cells  (orig / converted) : 32768 / 32768
+mass   (orig / converted) : 6.28425e-35 / 6.28425e-35
+```
+
 
 That is the full converter workflow — `convertdata` to turn RAMSES outputs into compact
 Mera files, and `batch_convert_mera` to re-save an archive of older Mera files cleanly in the
@@ -275,21 +689,33 @@ For each file:
 ### Common Error Scenarios
 
 1. **Out of Memory Errors**
-    - Detection: Catch `OutOfMemoryError` exceptions
-    - Response: Immediate error logging and thread termination
-    - Recovery: User advised to reduce thread count
+```
+- Detection: Catch `OutOfMemoryError` exceptions
+- Response: Immediate error logging and thread termination
+- Recovery: User advised to reduce thread count
+```
+
 2. **File Access Errors**
-    - Detection: File permission or corruption issues
-    - Response: Log error and continue with next file
-    - Recovery: Manual file verification recommended
+```
+- Detection: File permission or corruption issues
+- Response: Log error and continue with next file
+- Recovery: Manual file verification recommended
+```
+
 3. **Safety Margin Violations**
-    - Detection: Memory usage exceeds threshold
-    - Response: Warning generation and garbage collection
-    - Recovery: Automatic with violation tracking
+```
+- Detection: Memory usage exceeds threshold
+- Response: Warning generation and garbage collection
+- Recovery: Automatic with violation tracking
+```
+
 4. **Type Conversion Failures**
-    - Detection: JLD2 reconstruction errors
-    - Response: Fallback to default compressor objects
-    - Recovery: Automatic with warning log
+```
+- Detection: JLD2 reconstruction errors
+- Response: Fallback to default compressor objects
+- Recovery: Automatic with warning log
+```
+
 
 ### Recovery Strategies
 
