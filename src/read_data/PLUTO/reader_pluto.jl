@@ -362,14 +362,32 @@ function gethydro_pluto(info::InfoType;
 end
 
 """
-    getparticles_pluto(info::InfoType; verbose=true) -> PartDataType
+    getparticles_pluto(info::InfoType; xrange, yrange, zrange, center, range_unit, verbose=true) -> PartDataType
 
 Read a PLUTO Lagrangian-particle snapshot (`particles.NNNN.dbl`, single binary file with an
 ASCII `#` header) described by `info` into a Mera `PartDataType` — columns `:x,:y,:z, :id,
 :vx,:vy,:vz` (+ any extra PLUTO particle fields by name), so the particle analysis runs
 unchanged. Positions are in code length (= `info` units).
+
+`xrange`/`yrange`/`zrange` with `center` and `range_unit` select a sub-box, with the same
+semantics as [`gethydro_pluto`](@ref): a particle is kept when its position lies inside the
+box-normalised range. `vars` is not supported — every field in the file is returned.
+
+Note this reader provides no `:mass` column, because PLUTO particle files do not carry one;
+mass-weighted reductions (`msum`, `center_of_mass`, default projection weighting) therefore
+have no input on PLUTO particles.
 """
-function getparticles_pluto(info::InfoType; verbose::Bool=true)
+function getparticles_pluto(info::InfoType;
+                            xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
+                            center=[0., 0., 0.], range_unit::Symbol=:standard,
+                            vars=:all, verbose::Bool=true)
+    # `vars` arrives from the generic getparticles router. Column selection is not implemented
+    # for PLUTO particle files (they are small and single-file), so refuse rather than accept
+    # and ignore it — silently swallowing keywords is what this reader used to do with the
+    # spatial ranges, and it hid the fact that a sub-box request returned the whole domain.
+    (vars === :all || vars == [:all]) || throw(ArgumentError(
+        "getparticles_pluto: column selection (vars=$vars) is not supported for PLUTO particle " *
+        "files; every field in the file is returned. Drop `vars` or select columns after loading."))
     output = round(Int, info.output)
     fn = joinpath(info.path, "particles.$(lpad(output, 4, '0')).dbl")
     isfile(fn) || error("getparticles_pluto: $fn not found (no PLUTO particle output).")
@@ -391,12 +409,36 @@ function getparticles_pluto(info::InfoType; verbose::Bool=true)
         push!(cols, vec(mat[fcol, :])); push!(outnames, sym)
         fcol += dims[fi]
     end
+    # spatial selection, same semantics as gethydro_pluto: ranges are box-normalised by
+    # _external_ranges, and a particle is kept when its position/boxlen falls inside. These
+    # keywords used to be swallowed by the registry wrapper, so a caller asking for a sub-box
+    # silently got the whole domain.
+    ranges, fullbox = _external_ranges(info, xrange, yrange, zrange, center, range_unit)
+    ix = findfirst(==(:x), outnames); iy = findfirst(==(:y), outnames); iz = findfirst(==(:z), outnames)
+    if !fullbox && ix !== nothing && iy !== nothing && iz !== nothing
+        bl = info.boxlen
+        px, py, pz = cols[ix], cols[iy], cols[iz]
+        keep = BitVector(undef, length(px))
+        @inbounds for k in eachindex(px)
+            keep[k] = (ranges[1] <= px[k]/bl <= ranges[2]) &
+                      (ranges[3] <= py[k]/bl <= ranges[4]) &
+                      (ranges[5] <= pz[k]/bl <= ranges[6])
+        end
+        verbose && println("[Mera]: load-time range selection (box-normalised) ",
+            "x=", round.((ranges[1], ranges[2]), digits=4), " y=", round.((ranges[3], ranges[4]), digits=4),
+            " z=", round.((ranges[5], ranges[6]), digits=4), " → ", count(keep), "/", length(px), " particles")
+        cols = _select_cols(cols, keep)
+    elseif !fullbox
+        @warn "getparticles_pluto: a spatial range was requested but this particle file has no " *
+              ":x/:y/:z columns; the full domain is returned."
+    end
+
     data = table(cols...; names=Tuple(outnames), presorted=false, copy=false)
 
     p = PartDataType()
     p.data = data; p.info = info
     p.lmin = info.levelmin; p.lmax = info.levelmax; p.boxlen = info.boxlen
-    p.ranges = [0., 1., 0., 1., 0., 1.]
+    p.ranges = collect(ranges)
     p.selected_partvars = outnames
     p.used_descriptors = Dict{Any,Any}(); p.scale = info.scale
     verbose && println("[Mera]: PLUTO particles = $npart, fields ", join(string.(outnames), ", "))

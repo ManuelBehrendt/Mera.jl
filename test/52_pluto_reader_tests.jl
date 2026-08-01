@@ -83,6 +83,20 @@ end
         @test getvar(p, :id) == collect(1.0:50.0)                         # particle-major parse
         @test getvar(p, :x) ≈ (1:50) ./ 50
         @test all(getvar(p, :vx) .== 2.0)
+
+        # spatial selection. The registry wrapper used to swallow these keywords, so a caller
+        # asking for a sub-box silently received the whole domain.
+        # x = i/50 on a unit box, so [0.4, 0.6] keeps i = 20…30 → 11 particles.
+        s = getparticles(info; xrange=[0.4, 0.6], center=[0., 0., 0.],
+                         range_unit=:standard, verbose=false)
+        @test length(s.data) == 11
+        @test getvar(s, :x) ≈ (20:30) ./ 50
+        @test s.ranges[1] ≈ 0.4 && s.ranges[2] ≈ 0.6
+
+        # a full-box request is unchanged, and the ranges say so
+        f = getparticles(info; xrange=[0.0, 1.0], center=[0., 0., 0.],
+                         range_unit=:standard, verbose=false)
+        @test length(f.data) == 50
     end
 end
 
