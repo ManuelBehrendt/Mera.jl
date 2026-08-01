@@ -92,8 +92,7 @@ makedocs(modules = [Mera],
                           # other two derived, so the material is now a single step-by-step
                           # notebook with the pipeline detail in ?projection and the guarantees in
                           # the test suite (Appendix B).
-                          "Off-axis"                     => "06_offaxis_Projection.md",
-                          "Grid Overlay"                 => "overlay_absorption.md"],
+                          "Off-axis"                     => "06_offaxis_Projection.md"],
 
                       "Data & Visualization" => Any[
                           "MERA-Files"          => Any[ "Mera-Files" => "07_multi_Mera_Files.md",

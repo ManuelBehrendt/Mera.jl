@@ -26,11 +26,6 @@ savemap
 loadmap
 ```
 
-!!! note
-    The off-axis column integral (`∫ q dl`), the emission+absorption mock image, and FITS export
-    now live in an in-development module (`MeraOffAxisSynthObs` / `MeraFITS`,
-    `dev/offaxis_synthobs/`) that ships separately from the released Mera package.
-
 Save a projection result the Julia-native, JLD2 way:
 
 ```julia
