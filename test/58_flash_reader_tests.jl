@@ -20,7 +20,9 @@ function _write_flash(fn)
     nb = 2; octs = [(oi, oj, ok) for ok in 0:1, oj in 0:1, oi in 0:1] |> vec   # 8 octants
     nblk = 1 + length(octs)                                                     # root + 8 children
     bbox = zeros(Float64, 2, 3, nblk); rlev = zeros(Int32, nblk); ntyp = zeros(Int32, nblk)
-    vnames = ["dens", "pres", "velx", "vely", "velz"]
+    # magx/magy/magz and gpot exercise the MHD and gravity entries of _FLASH_VARMAP, which had
+    # no fixture at all while multicode.md advertised FLASH as "hydro · MHD".
+    vnames = ["dens", "pres", "velx", "vely", "velz", "magx", "magy", "magz", "gpot"]
     vars = Dict(v => zeros(Float64, nb, nb, nb, nblk) for v in vnames)
     bbox[1, :, 1] .= 0.0; bbox[2, :, 1] .= 1.0; rlev[1] = 1; ntyp[1] = 2          # root: non-leaf
     vars["dens"][:, :, :, 1] .= -1.0                                             # must be excluded
@@ -32,6 +34,8 @@ function _write_flash(fn)
             vars["dens"][a, b, c, m] = gcx + 100*gcy + 10000*gcz
             vars["pres"][a, b, c, m] = 1.0; vars["velx"][a, b, c, m] = 10.0
             vars["vely"][a, b, c, m] = 20.0; vars["velz"][a, b, c, m] = 30.0
+            vars["magx"][a, b, c, m] = 1.5; vars["magy"][a, b, c, m] = 2.5
+            vars["magz"][a, b, c, m] = 3.5; vars["gpot"][a, b, c, m] = -7.25
         end
     end
     h5open(fn, "w") do f
@@ -56,8 +60,9 @@ end
         info = getinfo_flash(0, dir, verbose=false)
         @test info.simcode == "FLASH"
         @test info.levelmin == 1 && info.levelmax == 2          # base log2(1·2)=1; lrefine 1:2
-        @test info.boxlen == 1.0 && info.nvarh == 5
-        @test info.variable_list == [:rho, :p, :vx, :vy, :vz]   # FLASH names → Mera symbols
+        @test info.boxlen == 1.0 && info.nvarh == 9
+        # FLASH names → Mera symbols, including the MHD and gravity entries of _FLASH_VARMAP
+        @test info.variable_list == [:rho, :p, :vx, :vy, :vz, :bx, :by, :bz, :gpot]
 
         gas = gethydro_flash(info, verbose=false)
         @test gas isa Mera.HydroDataType
@@ -69,6 +74,15 @@ end
         @test sort(unique(cx)) == [1, 2, 3, 4]                  # full level-2 lattice covered
         @test sum(getvar(gas, :volume)) ≈ gas.boxlen^3          # leaf cells tile the box exactly
         @test extrema(getvar(gas, :x)) == (0.125, 0.875)     # cell centres (cx-0.5)/2^level
+
+        # MHD: magx/magy/magz reach :bx/:by/:bz, and getvar derives |B| from them
+        @test all(getvar(gas, :bx) .== 1.5)
+        @test all(getvar(gas, :by) .== 2.5)
+        @test all(getvar(gas, :bz) .== 3.5)
+        @test all(getvar(gas, :bmag) .≈ sqrt(1.5^2 + 2.5^2 + 3.5^2))
+        # gravity: gpot reaches :gpot as an ordinary hydro column (FLASH has no separate
+        # gravity file, so there is no getgravity for it)
+        @test all(getvar(gas, :gpot) .== -7.25)
 
         # generic getinfo/gethydro auto-detect FLASH from the *_hdf5_plt_cnt_* file
         info2 = getinfo(0, dir, verbose=false)
