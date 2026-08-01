@@ -214,7 +214,7 @@ MERA_TEST_DATA=/path/to/Mera-Tests julia --project -e 'using Pkg; Pkg.test("Mera
 
 ## License
 
-MIT — see [LICENSE.md](LICENSE.md).
+MIT — see [LICENSE](LICENSE).
 
 ---
 
