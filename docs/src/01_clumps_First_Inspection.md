@@ -121,8 +121,12 @@ massive_clumps = filter(c -> c.mass_cl > 1e5, clumps.data)
 Let's start by importing Mera.jl and loading simulation information for output 300:
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14");
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 ```
 
 ```

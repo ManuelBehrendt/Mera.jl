@@ -52,8 +52,12 @@ The yt project hosts a small RAMSES MHD test (a 3-D MHD tube). Download and extr
 ```
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 
 # getinfo prints the MHD-layout note + the overview (note the magnetic-field line)
 info = getinfo(27, joinpath(base, "RAMSES/ramses_mhd_128"));

@@ -69,11 +69,15 @@ MERA.jl provides comprehensive projection capabilities for particle-based simula
 Load particle data from N-body simulations including stellar particles, dark matter, and other particle types.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
 
 # Load simulation metadata
 # Replace with your simulation path and output number
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10")
+info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10")
 
 # Load particle data (stellar particles, dark matter, etc.)
 # Includes position, velocity, mass, and stellar population properties

@@ -63,13 +63,17 @@ only the density field (`:rho`) up to level 12 — everything in this tutorial
 The box centre `[:bc]` sits at (24, 24, 24) kpc.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...) — state explicitly
 # that we mean Mera's region types:
 import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", verbose=false)
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14", verbose=false)
 gas  = gethydro(info, :rho, lmax=12, smallr=1e-11, verbose=false, show_progress=false);
 
 kpc = info.scale.kpc   # code length -> kpc

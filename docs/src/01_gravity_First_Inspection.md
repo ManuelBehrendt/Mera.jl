@@ -113,8 +113,12 @@ field_dist = select(data_overview, (:level, :epot_tot)) # Potential distribution
 Let's start by importing Mera.jl and loading simulation information for output 300:
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
+info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
 ```
@@ -281,7 +285,7 @@ The `getgravity()` function is the primary tool for loading gravitational field 
 First, let's reload the simulation information to reset any changes we made to the descriptor:
 
 ```julia
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10", verbose=false); # here, used to overwrite the previous changes
+info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10", verbose=false); # here, used to overwrite the previous changes
 ```
 
 ### Loading Complete Gravity Dataset

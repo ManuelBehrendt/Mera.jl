@@ -18,9 +18,13 @@ Load hydro, gravity and clumps from one snapshot, plus a companion run that carr
 (dark matter + stars). Define a reusable physical **center**; profiles take a `center` in any length unit.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, CairoMakie
 CairoMakie.activate!()
-BASE = "/Volumes/FASTStorage/Simulations/Mera-Tests"   # <-- change me
+BASE = MERA_EXAMPLES   # <-- change me
 info  = getinfo(100, joinpath(BASE,"RAMSES/spiral_clumps"), verbose=false)
 gas   = gethydro(info,  verbose=false, show_progress=false)
 grav  = getgravity(info, lmax=gas.lmax, verbose=false, show_progress=false)

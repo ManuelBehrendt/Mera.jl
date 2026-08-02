@@ -72,9 +72,13 @@ project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
 ```
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
 # use compressed Mera file
-path = "/Volumes/FASTStorage/Simulations/Mera-Tests/AV5CDhr/";
+path = "$MERA_EXAMPLES/AV5CDhr/";
 info = infodata(600, path)
 particles = loaddata(600, path, :particles); # load full box
 ```

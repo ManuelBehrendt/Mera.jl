@@ -126,8 +126,12 @@ viewfields(info.scale)              # Available unit conversions
 Load multi-physics simulation data for comprehensive analysis demonstrations:
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14");
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8);
 particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
@@ -678,7 +682,7 @@ methods( average_mweighted )
 Here, we only show the examples with the hydro-data:
 
 ```julia
-info = getinfo(1, "/Volumes/FASTStorage/Simulations/Mera-Tests//manu_stable_2019", verbose=false);
+info = getinfo(1, "$MERA_EXAMPLES//manu_stable_2019", verbose=false);
 gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
 ```
 
@@ -1225,7 +1229,7 @@ println("Range: ", stats.min, " to ", stats.max)
 ```
 
 ```julia
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14", verbose=false);
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14", verbose=false);
 gas       = gethydro(info, [:rho, :vx, :vy, :vz], lmax=8, smallr=1e-5, verbose=false);
 particles = getparticles(info, [:mass, :vx, :vy, :vz], verbose=false)
 clumps    = getclumps(info, verbose=false);

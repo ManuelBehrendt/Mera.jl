@@ -51,13 +51,17 @@ scales far larger than the finest cells, so nothing in this page needs the
 deepest levels, and the page stays runnable on a laptop.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, CairoMakie
 # Makie also exports geometric names (Sphere, Cylinder, ...) — state explicitly
 # that we mean Mera's region types:
 import Mera: Sphere, Cuboid, Cylinder, SphericalShell, CylindricalShell
 CairoMakie.activate!()
 
-path = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14"
+path = "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14"
 info = getinfo(400, path, verbose=false)
 
 grav  = getgravity(info, lmax=10, verbose=false, show_progress=false)

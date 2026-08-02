@@ -11,8 +11,12 @@ and self-gravity imprint on the gas, and the starting point for many star-format
 ![Density PDF of a simulated disc, mass- vs volume-weighted: most of the volume is diffuse gas (volume-weighting peaks at low density) while most of the mass is dense (mass-weighting peaks high).](assets/statistics/density_pdf.png)
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```

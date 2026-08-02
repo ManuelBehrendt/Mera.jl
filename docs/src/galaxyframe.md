@@ -14,8 +14,12 @@ This notebook runs on the `mw_L10` disk-galaxy snapshot (output 300) — an isol
 the bare `face_on(gas)` call is correct. Each cell prints the real frame it computed.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 
 info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
 gas  = gethydro(info);
