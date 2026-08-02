@@ -156,3 +156,7 @@ CLAUDE.md
 .claude/
 AREPO_ROADMAP.md
 docs/immersive_roadmap.md
+
+# Local docs tooling — notebook->markdown converter, kept off GitHub
+scripts/convert_notebook.py
+scripts/.convert_notebook.py.bak

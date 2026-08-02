@@ -20,7 +20,6 @@ The generator is deterministic, so you can either **regenerate** the identical f
 locally or **download** the prebuilt dataset (≈1.8 MB, LZ4-compressed Mera/JLD2). Both need
 only `using Mera`.
 
-
 ```julia
 using Mera
 
@@ -101,7 +100,6 @@ so they overlap in the x–y projection yet are distinct in 3-D:
 land on the same sky position. A 3-D finder separates them by depth; a 2-D connected-component
 search on the projection would merge them. `test/54` asserts exactly this.*
 
-
 ```julia
 # inspect the injected ground truth
 for t in truth
@@ -130,7 +128,6 @@ end
 
 `clump_recovery` compares a finder's per-cell labelling against the known truth labels. We
 build the candidate points once, attach the true label of each, then label with each finder:
-
 
 ```julia
 ll, thr = 2.0/2^7, 5.0
@@ -219,7 +216,6 @@ finders split them along the saddle:
 
 ![Finder comparison](assets/clumpfind/finders_compare.png)
 
-
 ```julia
 near(c) = 0.40 < c.com[1] < 0.62 && 0.45 < c.com[2] < 0.60 && 0.68 < c.com[3] < 0.82
 n_fof = count(near, clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll)).clumps)
@@ -253,7 +249,6 @@ a FoF clump with 2 bound subclumps : true
 *Left: recovery metrics per finder. Centre: with `boundedness=true` the six cold clumps
 land at `α_vir ≪ 1` (bound) while the hot clump Fhot sits at `α_vir ≈ 18` (unbound) — the
 finder labels it `bound=false`. Right: the recovered cumulative clump mass function.*
-
 
 ```julia
 cat = clumpfind(gas, ThresholdFoF(:rho; threshold=thr, linking_length=ll);
@@ -305,7 +300,6 @@ galaxy = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)   # clumps insi
 clumps are detected. Right: `DensityWatershed` (and `Dendrogram`/`PersistenceFinder` with a
 prominence/`min_delta` cut) reject the smooth floor by **density contrast** and recover all 8.*
 
-
 ```julia
 galaxy = synthetic_clumps(background=:galaxy, noise=0.2, lmax=6)
 gasg = galaxy.gas
@@ -353,7 +347,6 @@ recovery respond as you turn each knob. Sweeping the three most important parame
   purity (clumps shed their diffuse envelopes) but **drops the low-mass clumps** entirely
   (detection falls). Lower to be complete, raise to be clean.
 
-
 ```julia
 for ll3 in (1, 2, 5) .* (1/128)
     cat = clumpfind(F.gas, ThresholdFoF(:rho; threshold=5.0, linking_length=ll3))
@@ -386,7 +379,6 @@ persistence split point, and the threshold dropout).
 Collapse the box along `z` for display (the field and every finder are genuinely 3-D). Note
 the G1+G2 "peanut" near the centre.
 
-
 ```julia
 using CairoMakie
 
@@ -399,7 +391,7 @@ fig
 ```
 
 ```
-[0m[1m[Mera]: 2026-08-02T20:42:37.852[22m
+[Mera]: 2026-08-02T20:42:37.852
 ```
 
 

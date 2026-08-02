@@ -26,7 +26,6 @@ stack with `] instantiate`. Start Julia with `julia --project=.` to use it.
 Julia compiles functions the first time they run with a given argument type. The first
 projection of a session takes seconds of compilation; the second is pure runtime:
 
-
 ```julia
 using Mera, CairoMakie
 CairoMakie.activate!()
@@ -37,10 +36,6 @@ proj() = projection(gas, :sd; pxsize=[0.4, :kpc], verbose=false, show_progress=f
 t1 = @elapsed proj()      # includes compilation
 t2 = @elapsed proj()      # pure runtime
 println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, digits=3), " s")
-```
-
-```
-[36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (2), dep missing source (6), mismatched flags (10))
 ```
 
 
@@ -61,12 +56,7 @@ Mera v1.8.0
 
 
 ```
-[36m[1m[ [22m[39m[36m[1mInfo: [22m[39mPrecompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (2), dep missing source (2))
-```
-
-
-```
-[36m[1m[ [22m[39m[36m[1mInfo: [22m[39mMera v1.8.0
+[ Info: Mera v1.8.0
 ```
 
 
@@ -87,7 +77,6 @@ Keep one session alive while you work (REPL, Jupyter, VS Code) instead of re-lau
 
 Custom per-cell analysis needs no vectorisation gymnastics. A plain loop over columns compiles
 to native code; the one rule is to keep it in a **function** (globals are slow):
-
 
 ```julia
 rho = getvar(gas, :rho, :g_cm3); T = getvar(gas, :T, :K); vol = getvar(gas, :volume, :cm3)
@@ -129,7 +118,6 @@ The levers, in the order to reach for them:
    loading the next (the `timeseries` helper does this for you, with `GC.gc()` between
    snapshots).
 4. **Watch it**: `usedmemory(gas)` for objects, `storageoverview(info)` before loading.
-
 
 ```julia
 small = gethydro(info; lmax=6, xrange=[-8., 8.], yrange=[-8., 8.], zrange=[-2., 2.],
@@ -175,7 +163,6 @@ throttle a single call. Three rules of thumb:
 
 Measured on this machine (8 Julia threads; **illustrative, not a benchmark** — your times will
 differ):
-
 
 ```julia
 println("Julia threads: ", Threads.nthreads())
