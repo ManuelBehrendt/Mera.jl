@@ -286,6 +286,20 @@ end
             @test opt == false
         end
     end
+
+    # Re-encoding is not always a win: downscaled noise compresses worse than the
+    # original PNG, and the optimiser used to return that LARGER file (measured
+    # 0.88 MB -> 0.92 MB). Whichever is smaller must win.
+    @testset "_keep_smaller never returns the larger file" begin
+        mktempdir() do dir
+            a = joinpath(dir, "a.bin"); write(a, rand(UInt8, 4000))
+            b = joinpath(dir, "b.bin"); write(b, rand(UInt8, 1000))
+            @test Mera._keep_smaller(a, b) == (b, true)     # candidate smaller -> take it
+            @test Mera._keep_smaller(b, a) == (b, false)    # candidate larger  -> keep original
+            c = joinpath(dir, "c.bin"); write(c, rand(UInt8, 1000))
+            @test Mera._keep_smaller(b, c) == (b, false)    # equal size -> no change
+        end
+    end
 end
 
 # ----------------------------------------------------------------------------

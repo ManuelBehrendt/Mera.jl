@@ -57,6 +57,42 @@ If only `[email]` is filled in, `notifyme` sends email only; only `[zulip]`,
 Zulip only; both, both; neither, it is a harmless no-op. The same script is
 therefore portable across machines.
 
+### Creating the Zulip bot
+
+The three `[zulip]` values come from a **bot** in your Zulip organization. A bot rather
+than your own account, so automated messages are clearly machine-generated and the
+credential can be revoked on its own.
+
+1. **Have an organization.** Join your group's (e.g. `yourlab.zulipchat.com`) or create
+   one at [zulip.com](https://zulip.com). The mobile app then delivers alerts anywhere.
+2. **Open bot settings.** Profile picture (top right) → **Personal settings** → **Bots**.
+3. **Add a new bot.**
+   - Bot type: **Generic bot**
+   - Full name: e.g. `MERA Computation Bot`
+   - Username: e.g. `mera-bot` → becomes `mera-bot@yourlab.zulipchat.com`
+4. **Copy the credentials** shown after creation:
+
+| Zulip calls it | goes into |
+|---|---|
+| Bot email | `bot_email` |
+| API key (click 👁 to reveal) | `api_key` |
+| Your organization URL | `server` |
+
+```toml
+[zulip]
+bot_email = "mera-bot@yourlab.zulipchat.com"
+api_key   = "abcd1234…"
+server    = "https://yourlab.zulipchat.com"
+```
+
+!!! warning "Include the scheme"
+    `server` must start with **`https://`**. A bare domain like
+    `yourlab.zulipchat.com` fails to connect.
+
+5. **Subscribe the bot** to the channels you will post to — a bot cannot post to a
+   channel it is not a member of, and this is the most common reason a message silently
+   fails to appear.
+
 ### Keeping the API key off disk
 
 Any value can come from an environment variable instead, which takes precedence
@@ -74,6 +110,13 @@ over the file — useful on shared machines and in CI:
 
 So a shared machine can keep everything but the secret in `~/.mera.toml` and
 export `MERA_ZULIP_API_KEY` from a private shell profile.
+
+Two further variables control *behaviour* rather than credentials:
+
+| Variable | Default | Effect |
+|---|---|---|
+| `MERA_ZULIP_DRY_RUN` | `false` | `true` prints what would be posted instead of posting — rehearse a pipeline without spamming a team channel |
+| `MERA_ZULIP_TIMEOUT` | `10` | connect/read timeout in seconds; raise it on a slow link so a large attachment is not cut off |
 
 !!! note "Upgrading from the old files"
     Earlier versions read `~/email.txt`, `~/zulip.txt` and `~/bell.txt`. **Those
@@ -179,11 +222,18 @@ notifyme("Analysis finished!", include_timing=true, timing_details=true)
 `timed_notify` wraps this pattern — it runs a block, times it, and notifies:
 
 ```julia
-timed_notify("Hydro projection", zulip_channel="timing", zulip_topic="Execution Times") do
-    gas  = gethydro(getinfo(300, "/path/to/sim"), verbose=false)
-    projection(gas, :sd, verbose=false)
-end
+timed_notify("Hydro projection",
+             () -> begin
+                 gas = gethydro(getinfo(300, "/path/to/sim"), verbose=false)
+                 projection(gas, :sd, verbose=false)
+             end;
+             zulip_channel="timing", zulip_topic="Execution Times")
 ```
+
+!!! warning "No `do` blocks"
+    `timed_notify` and `safe_execute` take the block as their **second** argument, so
+    `timed_notify("name") do … end` raises a `MethodError` — Julia's `do` syntax passes
+    the function *first*. Use `() -> …` as above.
 
 ## Exception handling
 

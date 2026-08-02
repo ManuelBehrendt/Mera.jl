@@ -101,6 +101,12 @@ end
 
 
 
+# Re-encoding can make a file LARGER — downscaled noise compresses worse than the original
+# PNG. Returning the bigger file defeats the purpose, so keep whichever is smaller.
+function _keep_smaller(original::String, candidate::String)
+    return filesize(candidate) < filesize(original) ? (candidate, true) : (original, false)
+end
+
 # Image optimization function for Zulip uploads using existing Mera dependencies
 function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_file_size=1_000_000)
     try
@@ -131,8 +137,8 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
                 file_ext = lowercase(splitext(image_path)[2])
                 optimized_path = joinpath(temp_dir, "resized" * file_ext)
                 save(optimized_path, resized_img)
-                
-                return optimized_path, true
+
+                return _keep_smaller(image_path, optimized_path)
                 
             catch e
                 # If image processing fails, use original
@@ -165,8 +171,8 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
             file_ext = lowercase(splitext(image_path)[2])
             optimized_path = joinpath(temp_dir, "optimized" * file_ext)
             save(optimized_path, resized_img)
-            
-            return optimized_path, true
+
+            return _keep_smaller(image_path, optimized_path)
         else
             return image_path, false
         end
