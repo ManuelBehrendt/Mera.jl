@@ -14,6 +14,7 @@ By the end of this guide, you should be able to:
 
 > **Legend:**
 > - **[base]** = Julia Base / stdlib (no install needed)
+> - **[mera]** = Already a Mera dependency — available after `using Mera`, no install needed
 > - **[extra]** = Needs installation (`Pkg.add("...")`)
 
 ## Essential Packages (Start Here) - 10 minutes
@@ -39,7 +40,7 @@ These 10 packages form the foundation of scientific Julia. Learn these first:
 | Random | Random number generation | [base] | Simulations, sampling, reproducible research |
 | FFTW | Fast Fourier Transform | [extra] | Signal processing, frequency analysis |
 | Optim | Optimization algorithms | [extra] | Parameter fitting, minimization problems |
-| BenchmarkTools | Accurate performance timing | [extra] | Essential for Julia performance development |
+| BenchmarkTools | Accurate performance timing | [mera] | Essential for Julia performance development |
 
 ### ✅ Try This (8-12 minutes)
 **Exercise**: Complete "Working with Data" from Julia Academy  
@@ -93,7 +94,7 @@ These packages solve common problems in scientific computing. Add them as your p
 | :-- | :-- | :-- |
 | Revise | Live code reloading | Faster development workflow |
 | Debugger | Interactive debugging | Finding bugs in complex code |
-| ProgressMeter | Progress bars | Long-running computations |
+| ProgressMeter | Progress bars *(already a Mera dependency)* | Long-running computations |
 | Logging | Advanced logging | Production code, debugging |
 
 ### ✅ Try This (12-15 minutes)
@@ -125,7 +126,7 @@ This comprehensive reference covers the full Julia ecosystem. Use it as a lookup
 ### File Formats & Data Exchange
 | **Package** | **Format** | **Use Case** |
 | :-- | :-- | :-- |
-| JLD2 | Julia native binary | Fast Julia data serialization |
+| JLD2 | Julia native binary *(already a Mera dependency)* | Fast Julia data serialization |
 | HDF5 | HDF5 scientific data | Cross-platform scientific data |
 | MAT | MATLAB .mat files | MATLAB interoperability |
 | FITSIO | FITS (astronomy) | Astronomical image/table data |

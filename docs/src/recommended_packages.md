@@ -1,6 +1,9 @@
 # Recommended Julia Packages for Mera Workflows
 
-This page expands the short list on the home page with categorized packages that commonly pair well with Mera for astrophysical AMR / N-body analysis.
+Packages that commonly pair well with Mera for astrophysical AMR / N-body analysis. None is
+required — Mera works on its own. For the wider Julia ecosystem beyond Mera workflows, see
+[Essential Packages](quickreference/03_packages.md), which also marks which packages Mera
+already depends on.
 
 ## Core Visualization
 - **PyPlot.jl** – Matplotlib style publication plots

@@ -6,7 +6,7 @@
 
 **MERA** reads and analyzes astrophysical simulation output natively in Julia. Built for **RAMSES** — multi-resolution AMR grids, particles, gravity, clumps and radiative-transfer fields loaded into memory-efficient tables — and now reading **AREPO, GADGET, PLUTO, Athena++, FLASH** and **Chombo** through the same API. It computes 140+ physics-derived quantities on demand and provides conservation-correct projections, profiles, flux budgets and structure finding — all through one unified, multiple-dispatch API.
 
-Coverage is deepest for RAMSES, which is the only code with gravity, radiative-transfer and clump support. The others provide gas; AREPO and GADGET additionally provide particles and SUBFIND halo catalogues.
+Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`, `getrt` and `getclumps` readers, because it writes those to separate files. Where another code stores the same physics inside its snapshot — Athena++ `phi`, FLASH `gpot`, Chombo `gravitational-potential`, Athena++ six-ray radiation — the reader maps it to the canonical field, so `getvar(gas, :gpot)` works there too. AREPO and GADGET add particles and FoF group catalogues (`getgroups`; subhalos are not read).
 
 ![MERA.jl Computational Astrophysics Workflow](assets/representative_mera_60.png)
 
@@ -39,13 +39,15 @@ Coverage is deepest for RAMSES, which is the only code with gravity, radiative-t
     
     **[→ Scientific Workflows](01_hydro_First_Inspection.md)**
 
-!!! info "For Programmers" 
-    **Python/MATLAB user learning Julia?**
-    - Migration guides
-    - Performance comparisons
-    - Ecosystem integration
-    
-    **[→ Migration Guide](quickreference/02_migrators.md)**
+!!! info "Coming from another analysis tool"
+    **Already analyse simulations elsewhere?**
+    - Concept-to-verb mapping
+    - One complete worked workflow
+    - Differences to expect, stated honestly
+
+    **[→ Coming from Other Tools](switching_to_mera.md)**
+
+    New to Julia itself? **[→ Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md)**
 
 !!! tip "Quick Navigation"
     **Want to:** Make a density plot → [Projections](06_hydro_Projection.md) • Calculate stellar masses → [Basic Calculations](04_multi_Basic_Calculations.md) • Load specific regions → [Selections](02_hydro_Load_Selections.md) • Optimize performance → [Multi-Threading](multi-threading/multi-threading_intro.md)
@@ -145,9 +147,10 @@ projection(particles, :age) # → Stellar age distribution
 
 ### 📚 **Reference Materials**
 - **[Complete API](api.md)** - All functions and types
-- **[Julia Migration](quickreference/02_migrators.md)** - From Python/MATLAB/IDL
+- **[Coming from Other Tools](switching_to_mera.md)** - Concept mapping and a worked workflow
+- **[Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md)** - Learning Julia the language
 - **[Examples](examples.md)** - Real-world workflows
-- **[Troubleshooting](Miscellaneous.md)** - Common issues and solutions
+- **[Miscellaneous](Miscellaneous.md)** - Bundled arguments, verbose switches, misc features
 
 
 ## Community & Support
