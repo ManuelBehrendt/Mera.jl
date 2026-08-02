@@ -353,7 +353,7 @@ rep.provenance          # mera/julia version, timestamp, the plan
     [`QuickLookResult`](@ref)) and the card recipe types are documented in the
     [Complete API Reference](api.md).
 
-```@docs
+```@docs; canonical=false
 report
 preview
 estimate

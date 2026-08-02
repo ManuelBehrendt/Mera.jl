@@ -757,7 +757,7 @@ analysis.
 
 ## API
 
-```@docs
+```@docs; canonical=false
 add_field
 delete_field
 list_fields

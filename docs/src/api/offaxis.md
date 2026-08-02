@@ -13,14 +13,14 @@ axis-aligned keywords it returns the covering-grid cut, and with any off-axis vi
 (`los`/`inclination`/`azimuth`/…) it returns the camera-plane cut along that line of sight.
 [`offaxis_slice`](@ref) is an alias of it, kept so existing scripts keep working.
 
-```@docs
+```@docs; canonical=false
 slice
 offaxis_slice
 ```
 
 ## Sequences, storage & export
 
-```@docs
+```@docs; canonical=false
 rotation_sequence
 savemap
 loadmap
@@ -40,7 +40,7 @@ JLD2 is a subset of the HDF5 format, so these files also open in `h5py` / other 
 
 These are not exported but underlie every off-axis call; documented for reference.
 
-```@docs
+```@docs; canonical=false
 Mera.build_camera_basis
 Mera.resolve_los
 ```
@@ -51,7 +51,7 @@ The three engines behind `binning=:cic`/`:ngp`, `:overlap` and `:exact` — how 
 AMR cell becomes pixel values. The trade-offs are demonstrated visually in
 [Off-axis Projection](../06_offaxis_Projection.md).
 
-```@docs
+```@docs; canonical=false
 Mera.deposit_rotated_cells_to_grid!
 Mera.deposit_rotated_cells_overlap!
 Mera.deposit_rotated_cells_exact!

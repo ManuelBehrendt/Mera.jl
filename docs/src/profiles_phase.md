@@ -171,7 +171,7 @@ spectra, velocity cubes) see the [Off-axis Projection](06_offaxis_Projection.md)
 
 ## API
 
-```@docs
+```@docs; canonical=false
 profile
 phase
 profile3d

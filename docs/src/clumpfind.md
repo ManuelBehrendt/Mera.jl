@@ -779,7 +779,7 @@ The finder/hierarchy types ([`AbstractFinder`](@ref), [`ThresholdFoF`](@ref),
 [`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref), [`StructureTree`](@ref), [`StructureNode`](@ref))
 are documented in the [API reference](api.md#Types).
 
-```@docs
+```@docs; canonical=false
 clumpfind
 clump_massfunction
 clump_recovery
