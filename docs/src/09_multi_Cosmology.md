@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `09_multi_Cosmology.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/09_multi_Cosmology.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 RAMSES writes the *same* info-file fields for every run, so Mera reads them for
 both idealised and cosmological simulations. A **non-cosmological** run carries
 sentinel values (`aexp = 1`, `H0 = 1`, `omega_m = 1`, `omega_l = 0`); a
@@ -58,8 +57,12 @@ info = getinfo(80, "$MERA_EXAMPLES/RAMSES/yt_cosmo");
 
 ```
 [Mera]: 2026-06-01T19:55:47.873
+
+
 Code: RAMSES
 output [80] summary:
+
+
 mtime: 2012-08-13T16:51:06
 ctime: 2026-06-01T07:42:48.561
 =======================================================
@@ -71,6 +74,7 @@ ndim: 3
 cosmological:  true
 redshift z:    0.1426   (aexp = 0.8752)
 H0: 70.30 km/s/Mpc   Ωm: 0.276   ΩΛ: 0.724   Ωk: 0.000   Ωb: 0.045
+
 age: 11.925 Gyr   lookback: 1.798 Gyr   Hubble time: 13.909 Gyr
 -------------------------------------------------------
 amr:           true
@@ -78,13 +82,14 @@ level(s): 6 - 16 --> cellsize(s): 970.86 [kpc] - 948.11 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  6
+
   --> (:rho, :vx, :vy, :vz, :p, :var6)
 γ: 1.4
 -------------------------------------------------------
 gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
-particles:     true  (no particle header file)
+particles:     true  (no particle header file) 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
 rt:            false
@@ -96,6 +101,7 @@ makefile:         false
 patchfile:        false
 =======================================================
 ```
+
 
 ## Detecting a cosmological run
 
@@ -109,6 +115,7 @@ iscosmological(info), redshift(info)
 ```
 (true, 0.14255728632206321)
 ```
+
 
 ## Full cosmological state: `cosmology`
 
@@ -125,6 +132,7 @@ c = cosmology(info)
 (iscosmological = true, redshift = 0.14255728632206321, aexp = 0.875229637910795, H0 = 70.3000030517578, omega_m = 0.276000022888184, omega_l = 0.723999977111816, omega_k = 0.0, omega_b = 0.0450000017881393, hubble_time_Gyr = 13.9088503437748, age_Gyr = 11.92526533595642, lookback_Gyr = 1.7984823184196177, rho_crit_cgs = 1.0542295486333991e-29)
 ```
 
+
 ## Cosmic time with `gettime`
 
 In a cosmological run `info.time` is **conformal** time (negative), so the naive
@@ -139,6 +147,7 @@ gettime(info, :Gyr)    # age of the universe at this snapshot [Gyr]
 11.92526533595642
 ```
 
+
 ## Mean and critical densities
 
 `mean_matter_density` and `mean_baryon_density` give the mean (proper) densities
@@ -152,6 +161,7 @@ mean_matter_density(info), mean_baryon_density(info), c.rho_crit_cgs   # [g/cm³
 ```
 (3.821451389512857e-30, 6.230626996398271e-31, 1.0542295486333991e-29)
 ```
+
 
 ## Stellar ages
 
@@ -176,25 +186,34 @@ ages  = getvar(particles, :age, :Gyr)
 
 ```
 [Mera]: Get particle data: 2026-06-01T19:55:52.461
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
-Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
+
+
 domain:
+
+
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
+
 Processing 16 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 1.090895e+06 particles
 Memory used for data table :
+
 74.9068775177002 MB
 -------------------------------------------------------
-```
 
-```
+
 (n_stars = 31990, age_min = 5.0186259167604e-15, age_max = 11.225102965242586)
 ```
+
 
 ```julia
 using PyPlot
@@ -203,9 +222,12 @@ figure(figsize=(6,4))
 hist(ages[stars], bins=40, color="steelblue")
 xlabel("stellar age  [Gyr]"); ylabel("number of star particles")
 title("Stellar ages (cosmological run)"); tight_layout();
+
 ```
 
-![](09_multi_Cosmology_files/09_multi_Cosmology_15_1.png)
+
+![](09_multi_Cosmology_files/09_multi_Cosmology_14_0.png)
+
 
 ## Formation redshift and formation time
 
@@ -228,14 +250,18 @@ ftime = getvar(particles, :formation_time, :Gyr)
 (zform_max = 7.593387894486433, ftime_min = 0.7001634695003264, ftime_max = 11.925247959877392)
 ```
 
+
 ```julia
 figure(figsize=(6,4))
 hist(zform[stars], bins=40, color="darkorange")
 xlabel("formation redshift  z_form"); ylabel("number of star particles")
 title("Star formation vs. redshift"); tight_layout();
+
 ```
 
-![](09_multi_Cosmology_files/09_multi_Cosmology_18_1.png)
+
+![](09_multi_Cosmology_files/09_multi_Cosmology_17_0.png)
+
 
 ## Gas overdensity
 
@@ -251,45 +277,60 @@ delta = getvar(gas, :overdensity)
 
 ```
 [Mera]: Get hydro data: 2026-06-01T19:56:00.568
+
+
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6)
+
+Using var(s)=(1, 2, 3, 4, 5, 6) = (:rho, :vx, :vy, :vz, :p, :var6) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [Mpc] :: 62.135 [Mpc]
+
 📊 Processing Configuration:
+
    Total CPU files available: 16
    Files to be processed: 16
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 (75.31 ms/it)
+
+
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
+
 Final data size: 1749455 cells, 6 variables
 Creating Table from 1749455 cells with max 4 threads...
+
   Threading: 4 threads for 10 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 10 columns...
   0.846090 seconds (3.28 M allocations: 478.784 MiB, 0.80% gc time, 88.93% compilation time: 1% of which was recompilation)
 ✓ Table created in 1.142 seconds
+
+
 Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------
-```
 
-```
+
 (delta_min = -0.9852022034691776, delta_max = 1.2811226613578297e7)
 ```
+
 
 ```julia
 figure(figsize=(6,4))
 hist(log10.(1.0 .+ delta), bins=60, color="seagreen")
 xlabel("log10(1 + δ)"); ylabel("number of cells")
 title("Gas overdensity distribution"); tight_layout();
+
 ```
 
-![](09_multi_Cosmology_files/09_multi_Cosmology_21_1.png)
+
+![](09_multi_Cosmology_files/09_multi_Cosmology_20_0.png)
+
 
 ## Comoving ↔ proper
 
@@ -309,6 +350,7 @@ l_comoving = proper_to_comoving_length(info, 1.0)    # proper → comoving  (÷ 
 ```
 (0.875229637910795, 1.1425572863220632, 1.4915367304559788)
 ```
+
 
 ## Backward compatibility
 

@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `switching_to_mera.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/switching_to_mera.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 If you already post-process simulations — with a Python analysis package, your group's own
 scripts, or the simulation code's tools — this page maps the concepts you know onto Mera and
 walks one complete workflow end to end. For line-by-line language syntax (Python/MATLAB/IDL →
@@ -31,10 +30,13 @@ control RAM at load time (level cap, spatial window), not through deferred evalu
 Two conventions worth internalising on day one:
 
 !!! warning "Ranges and radii in `range_unit=:standard` are box fractions"
-    The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
-    `xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
-    `boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
-    physical units — the examples below do.
+```
+The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
+`xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
+`boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
+physical units — the examples below do.
+```
+
 
 - **Loading is eager, selection is cheap.** Load once (possibly windowed), then slice, filter,
   and project the in-memory table as often as you like — each step returns a normal Mera object.
@@ -54,8 +56,11 @@ BASE = MERA_EXAMPLES   # <-- change me
 info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only — instant
 ```
 
+
 ```
-*__   __ _______ ______   _______
+*__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -63,10 +68,14 @@ info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only �
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
 [Mera]: 2026-07-02T19:40:09.763
+
+
 Code: RAMSES
 output [100] summary:
-mtime:
+mtime: 
+
 2023-05-12T22:47:36.638
 ctime: 2025-06-21T18:31:55.533
 =======================================================
@@ -80,7 +89,8 @@ amr:           true
 level(s): 3 - 7 --> cellsize(s): 12.5 [kpc] - 781.25 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:
+hydro-variables:  
+
 6  --> (:rho, :vx, :vy, :vz, :p, :metallicity)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :metallicity)
 γ: 1.6667
@@ -89,8 +99,9 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   4.138950e+05
-- Ndm:      3.997000e+04
+- Nstars:   4.138950e+05 
+- Ndm:      3.997000e+04 
+
 particle-variables: 8  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth, :metals)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time, :metallicity)
 -------------------------------------------------------
@@ -98,6 +109,7 @@ rt:            false
 -------------------------------------------------------
 clumps:           true
 clump-variables: (
+
 :index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&UNITS_PARAMS", "&RUN_PARAMS", "&CLUMPFIND_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&DICE_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
@@ -108,6 +120,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
+
 
 `info` already knows everything about the snapshot (levels, box size, which files exist,
 the unit system) without touching the heavy data. Loading is the explicit step — and the place
@@ -121,15 +134,16 @@ usedmemory(gas)
 ```
 
 ```
-590311 cells in memory, levels
+590311 cells in memory, levels 
+
 3-7
 Memory used: 45.486
- MB
-```
 
-```
+ MB
+
 (45.485774993896484, "MB")
 ```
+
 
 Derived quantities are computed on demand from the loaded columns — with units as
 symbols (every available scale is listed by `viewfields(info.scale)`):
@@ -143,9 +157,11 @@ println("cs range: ", round.(extrema(cs), sigdigits=3), " km/s")
 
 ```
 T  range: (
+
 2.04, 5.82e8) K
 cs range: (0.147, 2480.0) km/s
 ```
+
 
 Geometric and value-based selection compose, and each result is again a full Mera
 object — `getvar`, `projection`, `profile` all work on it unchanged:
@@ -160,10 +176,13 @@ println("cold gas mass: ", round(msum(cold, :Msol), sigdigits=4), " Msol")
 
 ```
 disk: 2611
+
  cells;  cold disk: 1199 cells
 cold gas mass: 2.192e9
+
  Msol
 ```
+
 
 Maps and profiles close the loop — a face-on surface-density map of the cold disk and
 its radial profile:
@@ -179,7 +198,9 @@ hidedecorations!(ax)
 fig
 ```
 
-![](switching_to_mera_files/switching_to_mera_10_1.png)
+
+![](switching_to_mera_files/switching_to_mera_9_0.png)
+
 
 ```julia
 out = mktempdir()                                   # any existing folder
@@ -192,6 +213,7 @@ println("round-trip ok: ", length(back.data) == length(cold.data), "  (",
 ```
 round-trip ok: true  (1.3 MB on disk)
 ```
+
 
 ## Differences to expect, honestly
 

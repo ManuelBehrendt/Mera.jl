@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `03_clumps_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_clumps_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 A clump catalogue is not a grid and not a particle list. It is a table of
 *objects* — each row one clump, summarised by the position of its density
 peak and a handful of scalars. `subregion` applies to it the same way it
@@ -78,10 +77,14 @@ println("total clump mass: ", round(msum(clumps, :Msol), sigdigits=5), " Msol")
 println("     gas mass   : ", round(msum(gas, :Msol), sigdigits=5), " Msol   (whole box)")
 println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdigits=3), " – ",
         round(maximum(getvar(clumps, :mass, :Msol)), sigdigits=3), " Msol")
-```
 
 ```
-*__   __ _______ ______   _______
+
+
+```
+*__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -89,15 +92,23 @@ println("clump masses   : ", round(minimum(getvar(clumps, :mass, :Msol)), sigdig
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
+
 clumps         : 644
-columns        :
+
+
+columns        : 
+
 (:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance)
-total clump mass:
+total clump mass: 
+
 1.3743e10 Msol
-     gas mass   :
+     gas mass   : 
+
 3.0401e10 Msol   (whole box)
 clump masses   : 312000.0 – 8.61e8 Msol
 ```
+
 
 Twelve columns, 644 rows. `:peak_x, :peak_y, :peak_z` are the
 position of the density maximum — and the only geometry in the table.
@@ -138,11 +149,13 @@ peaks(c) = (getvar(c, :x, :kpc, center=[:bc]),
 
 # marker area ∝ clump mass, clipped so the smallest stay visible
 msize(c) = clamp.(1.6 .* (getvar(c, :mass, :Msol) ./ 1e5).^(1/3), 1.5, 9.0)
+
 ```
 
 ```
 msize (generic function with 1 method)
 ```
+
 
 ```julia
 p_face = gproj(gas)
@@ -170,9 +183,12 @@ text!(ax2, -11.5, 2.4; text="Cylinder(12, 2)", color=:royalblue, fontsize=11)
 limits!(ax2, -16, 16, -8, 8)
 Colorbar(fig[1, 3]; colormap=:bone, colorrange=SDLIM, label="log₁₀ Σ_gas  [Msol pc⁻²]")
 fig
+
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_6_1.png)
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_5_0.png)
+
 
 Marker area scales with clump mass. They trace the dense gas, they are
 confined to the disc, and — the point of the next two sections — they are
@@ -197,17 +213,22 @@ println()
 println("count residual : ", length(c_in.data) + length(c_out.data) - length(clumps.data))
 println("clump mass as a share of the gas inside r < 10 kpc : ",
         round(100 * msum(c_in, :Msol) / msum(subregion(gas, sph, verbose=false), :Msol), digits=2), " %")
+
 ```
 
 ```
-all clumps        : 644
+all clumps        : 644    
+
 1.374328e10 Msol
 peak inside  r<10 : 400    9.640827e9
 peak outside r>10 : 244    4.102454e9
+
 count residual : 0
-clump mass as a share of the gas inside r < 10 kpc :
+clump mass as a share of the gas inside r < 10 kpc : 
+
 52.94 %
 ```
+
 
 The counts close exactly, as they must for a membership test.
 
@@ -265,16 +286,21 @@ println("mass inside — lower / peak / upper   : ", round(lower, sigdigits=6), 
         round(peak, sigdigits=6), " / ", round(upper, sigdigits=6), " Msol")
 println("bracket width                        : ",
         round(100*(upper - lower)/peak, digits=4), " %")
+
 ```
 
 ```
 cells per clump : 87
+
  – 12250
 effective radii : 8.1 – 41.9 pc   (median 16.5 pc)
+
+
 clumps cut by the r = 10 kpc surface : 1 of 644
 mass inside — lower / peak / upper   : 9.59732e9 / 9.64083e9 / 9.64083e9 Msol
 bracket width                        : 0.4512 %
 ```
+
 
 For a 10 kpc sphere the answer is: one clump out of 644, and half a percent.
 The clumps in this galaxy are tens of parsecs across, the region is ten
@@ -329,10 +355,12 @@ vlines!(ax2, [r_med]; color=:grey, linestyle=:dash)
 text!(ax2, r_med*1.15, 2e-3; text="median clump radius", color=:grey, fontsize=10,
       align=(:left, :bottom))
 fig
+
 ```
 
 ```
-slab |z| < 2.0
+slab |z| < 2.0    
+
  kpc :  bracket = 0.0 %
 slab |z| < 0.5     kpc :  bracket = 0.45 %
 slab |z| < 0.1     kpc :  bracket = 51.39 %
@@ -340,7 +368,9 @@ slab |z| < 0.02    kpc :  bracket = 153.13 %
 slab |z| < 0.005   kpc :  bracket = 234.42 %
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_14_3.png)
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_13_2.png)
+
 
 At the slab thicknesses this galaxy is normally sliced with the bracket is
 negligible: 0 % at |z| < 2 kpc — no clump reaches that high — and 0.45 % at
@@ -406,20 +436,25 @@ for (k, (name, reg)) in enumerate(gallery)
 end
 rowgap!(fig.layout, 4); colgap!(fig.layout, 8)
 fig
+
 ```
 
 ```
-Cuboid — a slab               603
+Cuboid — a slab               603    
+
 95.4 % of the clump mass
 Cylinder(8, 2)                352    57.9 % of the clump mass
 Sphere(6)                     249    37.8 % of the clump mass
-SphericalShell(6, 10)
+SphericalShell(6, 10)         
+
 151    32.3 % of the clump mass
 CylindricalShell(6, 10, 2)    151    32.3 % of the clump mass
 Cylinder(8, 2) tilted 40°     196    28.5 % of the clump mass
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_17_4.png)
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_16_3.png)
+
 
 Grey is the whole catalogue, orange what the region kept, seen edge-on. With a
 few hundred objects the panels double as a sanity check you cannot get from a
@@ -458,16 +493,20 @@ println("  annulus 4 < r < 12 : ", rpad(length(c_ring.data), 7), round(msum(c_ri
 println()
 println("counts partition : ", length(c_core.data) + length(c_ring.data) == length(c_disc.data))
 println("masses add       : ", msum(c_core, :Msol) + msum(c_ring, :Msol) ≈ msum(c_disc, :Msol))
+
 ```
 
 ```
-disc slab            : 519
+disc slab            : 519    
+
 1.14995e10 Msol
   nucleus  r < 4     : 169    3.16131e9
   annulus 4 < r < 12 : 350    8.33822e9
+
 counts partition : true
 masses add       : true
 ```
+
 
 Both checks pass exactly, and for the same reason as on the particle page:
 each clump is assigned to one side or the other, so a partition of the region
@@ -513,16 +552,20 @@ println()
 alt = subregion(filterdata(clumps, Above(:relevance, 3.0), verbose=false),
                 Cylinder(12., 2.), verbose=false)
 println("region∘filter == filter∘region : ", length(alt.data) == length(solid.data))
+
 ```
 
 ```
-disc slab               : 519
+disc slab               : 519    
+
 1.14995e10 Msol
   relevance > 3         : 439    1.08897e10
   most massive 10 %     : 52     6.81601e9
   both conditions       : 50     6.69392e9
+
 region∘filter == filter∘region : true
 ```
+
 
 Multiple conditions passed to one `filterdata` call are ANDed; `&`, `|`, and
 `!` compose them explicitly, and the
@@ -571,6 +614,7 @@ hlines!(ax2, [25.]; color=:grey, linestyle=:dash)
 text!(ax2, 14.5, 27; text="N = 25 → 20 % uncertainty", color=:grey, fontsize=10,
       align=(:right, :bottom))
 fig
+
 ```
 
 ```
@@ -593,7 +637,9 @@ annulus [kpc]   N     M [Msol]    1/√N
 14.5 – 15.5     0     0.0         —
 ```
 
-![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_26_2.png)
+
+![](03_clumps_Get_Subregions_files/03_clumps_Get_Subregions_25_1.png)
+
 
 The left panel looks like a measured profile. The right panel is what it is
 made of: a dozen or two objects per ring, sometimes fewer. The error bars are
@@ -642,15 +688,19 @@ rx, ry, rz = getextent(clumps, :kpc, center=[:boxcenter])
 println()
 println("catalogue extent  : x ", round.(rx, digits=2), "  y ", round.(ry, digits=2),
         "  z ", round.(rz, digits=2), " kpc")
+
 ```
 
 ```
-classic :sphere   : 400
+classic :sphere   : 400    
+
 9.6408271e9
 value-type Sphere : 400    9.6408271e9
 identical         : true
+
 catalogue extent  : x (-24.0, 24.0)  y (-24.0, 24.0)  z (-24.0, 24.0) kpc
 ```
+
 
 ## 9. Practical Guidance
 

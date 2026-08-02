@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `clumpfind.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/clumpfind.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 `clumpfind` locates **connected over-dense structures** and returns a per-clump catalog. It works
 two ways:
 
@@ -13,9 +12,12 @@ two ways:
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
 !!! tip "Try it on known ground truth"
-    The [synthetic, data-free example](clumpfind_synthetic.md) builds a Mera object whose
-    clumps are known exactly and scores every finder and feature against it (downloadable
-    dataset included) — the quickest way to see the behaviour and accuracy of each algorithm.
+```
+The [synthetic, data-free example](clumpfind_synthetic.md) builds a Mera object whose
+clumps are known exactly and scores every finder and feature against it (downloadable
+dataset included) — the quickest way to see the behaviour and accuracy of each algorithm.
+```
+
 
 The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value (one of seven —
 [`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
@@ -71,8 +73,11 @@ println("cells loaded : ", length(gas.data))
 println("box length   : ", gas.boxlen, " kpc")
 ```
 
+
 ```
-*__   __ _______ ______   _______
+*__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -80,10 +85,14 @@ println("box length   : ", gas.boxlen, " kpc")
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
 [Mera]: 2026-07-03T10:15:22.930
+
+
 Code: RAMSES
 output [400] summary:
-mtime:
+mtime: 
+
 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
@@ -97,7 +106,8 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:
+hydro-variables:  
+
 7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
@@ -106,9 +116,10 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Npart:    5.091500e+05
-- Nstars:   5.066030e+05
-- Ndm:      2.547000e+03
+- Npart:    5.091500e+05 
+- Nstars:   5.066030e+05 
+
+- Ndm:      2.547000e+03 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
 rt:            false
@@ -122,37 +133,54 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
+
 [Mera]: Get hydro data: 2026-07-03T10:15:25.727
+
+
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+
 📊 Processing Configuration:
+
+
    Total CPU files available: 2048
    Files to be processed: 1939
    Compute threads: 4
    GC threads: 4
    📍 Spatial filtering active: 109 files skipped
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:26 (13.75 ms/it)
+
+
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
+
 Final data size: 1277874 cells, 7 variables
 Creating Table from 1277874 cells with max 4 threads...
+
   Threading: 4 threads for 11 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
+
   Creating IndexedTable with 11 columns...
 ✓ Table created in 2.303 seconds
+
 Memory used for data table :107.2445936203003
+
  MB
 -------------------------------------------------------
+
 cells loaded : 1277874
 box length   : 48.0 kpc
 ```
+
 
 Select cells above 100 cm⁻³, link within 0.2 kpc, and keep clumps with ≥ 5 cells:
 
@@ -169,10 +197,13 @@ println(cat)                       # ClumpCatalog summary
 
 ```
 number of clumps : 34
+
 ClumpCatalog: 34 clumps  [3D, field=rho ≥ 100.0 nH]
+
   mass Msol: total 6.712e9  max 2.034e9  median 4.058e7
   largest: 487 members, mass 2.034e9
 ```
+
 
 ```julia
 # the most massive clump is a NamedTuple
@@ -189,16 +220,17 @@ println("largest clump:")
 ```
 largest clump:
 c1.id = 1
+
+
 c1.n_members = 487
 c1.mass = 2.0337645080962305e9
 c1.com = (22.084540387532176, 24.06218325949867, 24.07769340948422)
 c1.peak = 86745.10109055592
 c1.radius = 0.9229258020368852
-```
 
-```
 0.9229258020368852
 ```
+
 
 With a Makie backend loaded, [`clumpplot`](@ref) draws the catalog directly — each clump's centre of
 mass as a marker sized by mass (and coloured by log mass), optionally over a projection background:
@@ -215,22 +247,28 @@ arm and inter-arm gas *below* the threshold is intentionally not flagged — clu
 threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
 
 !!! note "Not every visible peak is a clump — by design"
-    A clump is what the finder + threshold define. Two effects are worth knowing:
+```
+A clump is what the finder + threshold define. Two effects are worth knowing:
 
-    * **Threshold selection.** Peaks fainter than `threshold` are not selected at all, and a single
-      friends-of-friends threshold can *merge* a whole connected over-dense region (e.g. the dense disk)
-      into one clump while leaving fainter arms out. To separate touching peaks, use
-      [`DensityWatershed`](@ref) (split at saddles, with `persistence` to prune shallow basins) rather
-      than a higher [`ThresholdFoF`](@ref) threshold.
-    * **Boundedness.** Detected over-densities are not necessarily self-gravitating. Add
-      `boundedness=true` to get each clump's virial ratio `alpha_vir = 2·e_kin/|e_grav|` and a `bound`
-      flag, and `bound_only=true` to keep only self-bound clumps. (On a coarse box, many "clumps" are
-      turbulence-supported, `alpha_vir ≫ 1`, and would be dropped by `bound_only`.)
+* **Threshold selection.** Peaks fainter than `threshold` are not selected at all, and a single
+  friends-of-friends threshold can *merge* a whole connected over-dense region (e.g. the dense disk)
+  into one clump while leaving fainter arms out. To separate touching peaks, use
+  [`DensityWatershed`](@ref) (split at saddles, with `persistence` to prune shallow basins) rather
+  than a higher [`ThresholdFoF`](@ref) threshold.
+* **Boundedness.** Detected over-densities are not necessarily self-gravitating. Add
+  `boundedness=true` to get each clump's virial ratio `alpha_vir = 2·e_kin/|e_grav|` and a `bound`
+  flag, and `bound_only=true` to keep only self-bound clumps. (On a coarse box, many "clumps" are
+  turbulence-supported, `alpha_vir ≫ 1`, and would be dropped by `bound_only`.)
+```
+
 
 !!! warning "`Dendrogram` name clash with Makie"
-    `Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
-    `Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
-    other six finders have unique names.
+```
+`Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
+`Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
+other six finders have unique names.
+```
+
 
 ## Choosing a finder explicitly
 
@@ -254,6 +292,7 @@ ThresholdFoF     : 43 clumps
 DensityWatershed : 45 clumps (saddle-split)
 ```
 
+
 ### Gravitational boundedness
 
 `boundedness=true` adds per-clump energetics (cgs) and keeps, optionally, only self-bound structures:
@@ -272,11 +311,10 @@ b1 = catb[1]
 b1.alpha_vir = 1.3732735951574746
 b1.bound = true
 b1.e_grav = 7.215441785528629e56
-```
 
-```
 7.215441785528629e56
 ```
+
 
 Each clump gains `e_kin` (COM-frame kinetic), `e_therm` (thermal, gas), `e_grav` (binding energy),
 `alpha_vir`, and `bound`. The potential is chosen with `egrav`: `:approx` (⅗·GM²/R, fast but biased)
@@ -312,6 +350,7 @@ println("clumps passing the validator chain: ", length(big))
 clumps passing the validator chain: 22
 ```
 
+
 ```julia
 # ≥20 members, tree-gravity self-bound (iterative unbinding), and virially bound:
 cores = clumpfind(gas, DensityWatershed(:rho; threshold=1e2, threshold_unit=:nH, linking_length=0.4);
@@ -332,26 +371,36 @@ println(cats)
 
 ```
 [Mera]: Get particle data: 2026-07-03T10:16:10.070
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
-Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
+
 Processing 1939 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 2.624670e+05 particles
 Memory used for data table :
+
 18.02324104309082 MB
 -------------------------------------------------------
+
+
 stellar groups found : 1
 ClumpCatalog: 1 clumps  [3D, field=mass ≥ 0.0 standard]
   mass Msol: total 2.986e9  max 2.986e9  median 2.986e9
   largest: 262102 members, mass 2.986e9
 ```
+
 
 **Choosing parameters.** `linking_length` should be a few times the local resolution — comparable to
 or larger than the finest cell size (3D AMR) or the mean interparticle separation (particles);
@@ -453,10 +502,13 @@ println("search meta       : ", cat.meta)
 ```
 mass range [Msol] : (2.306207938000301e6, 2.0337645080962305e9)
 table columns     : (
+
 :id, :n_members, :mass, :com_x, :com_y, :com_z, :radius, :peak)
 search meta       : (
+
 dim = Symbol("3D"), field = :rho, threshold = 100.0, threshold_unit = :nH, linking_length = 0.2, pos_unit = :kpc, mass_unit = :Msol, n_selected = 1889, boundedness = false, deblend = false, substructure = false, unbinding = false, hierarchy = false, finder = :ThresholdFoF)
 ```
+
 
 See also [`getclumps`](@ref) to load a RAMSES-produced clump catalog instead of finding clumps
 yourself, and [Off-axis Projection](06_offaxis_Projection.md) for tilted maps to segment in 2D.
@@ -471,8 +523,11 @@ println("N(>= M_min)                   : ", first(Ngt))
 
 ```
 cumulative mass-function bins : 34
+
+
 N(>= M_min)                   : 34
 ```
+
 
 ```julia
 using CairoMakie
@@ -496,24 +551,36 @@ fig
 
 ```
 [Mera]: 2026-07-03T10:16:36.849
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
-Selected var(s)=(:sd,)
+
+Selected var(s)=(:sd,) 
+
 Weighting      = :mass
+
 Effective resolution: 1024^2
+
 Map size: 214 x 214
 Pixel size: 46.875 [pc]
 Simulation min.: 46.875 [pc]
+
 Available threads: 4
+
+
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
-![](clumpfind_files/clumpfind_28_6.png)
+
+![](clumpfind_files/clumpfind_27_5.png)
+
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
 kept in the card's `data.catalog`):
@@ -537,25 +604,33 @@ length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, 
 
 ```
 [Mera]: 2026-07-03T10:16:50.806
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
-Selected var(s)=(:sd,)
+
+Selected var(s)=(:sd,) 
 Weighting      = :mass
+
 Effective resolution: 481^2
 Map size: 101 x 101
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
+
 Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-2D regions found :
+2D regions found : 
+
 26
 largest region   : 1178 pixels, mass 5962.0
 ```
+
 
 `connectivity` is `8` (diagonals count) or `4`. For a surface-density map each region's `mass` is the
 exact area-integral `Σ value · pixel_area`; positions are in the map's extent units.
@@ -669,19 +744,22 @@ hierarchy from the surrounding driver:
    hierarchy identically for every finder.
 
 !!! note "Works on AMR, uniform grids, particles and Voronoi alike"
-    The finders never look at the grid — `clumpfind` first flattens the object into a **point set**:
-    every cell (any AMR level) becomes one point at its centre (`getvar(:x,:y,:z)`) carrying its field
-    value and its **level-dependent mass and volume** (`getvar(:mass)`/`getvar(:volume)` =
-    `ρ·(boxlen/2^level)³`). So a clump's mass, centre of mass, radius and energy budget sum per-cell
-    masses that already encode each cell's level — no uniform-cell-size assumption. The neighbour index
-    finds *all* pairs within the linking length `b` regardless of how cell sizes or point density vary
-    across refinement levels (the 27-cell stencil is exact, not a uniform-grid approximation), so the
-    same finder runs unchanged on RAMSES AMR, a uniform grid, SPH/N-body particles, and AREPO Voronoi
-    cells. The one thing to set relative to resolution is `b` itself: it is a metric distance, so pick
-    a small multiple of the cell size *in the region of interest* (clumps sit at high density → maximum
-    refinement, hence internally uniform resolution; e.g. `linking_length ≈ 2·boxlen/2^lmax`). The only
-    edge case is a sharp refinement jump *inside* a structure, where a lone coarse cell's centre may lie
-    beyond `b` from its fine neighbours — rarely an issue, since clumps are fully refined.
+```
+The finders never look at the grid — `clumpfind` first flattens the object into a **point set**:
+every cell (any AMR level) becomes one point at its centre (`getvar(:x,:y,:z)`) carrying its field
+value and its **level-dependent mass and volume** (`getvar(:mass)`/`getvar(:volume)` =
+`ρ·(boxlen/2^level)³`). So a clump's mass, centre of mass, radius and energy budget sum per-cell
+masses that already encode each cell's level — no uniform-cell-size assumption. The neighbour index
+finds *all* pairs within the linking length `b` regardless of how cell sizes or point density vary
+across refinement levels (the 27-cell stencil is exact, not a uniform-grid approximation), so the
+same finder runs unchanged on RAMSES AMR, a uniform grid, SPH/N-body particles, and AREPO Voronoi
+cells. The one thing to set relative to resolution is `b` itself: it is a metric distance, so pick
+a small multiple of the cell size *in the region of interest* (clumps sit at high density → maximum
+refinement, hence internally uniform resolution; e.g. `linking_length ≈ 2·boxlen/2^lmax`). The only
+edge case is a sharp refinement jump *inside* a structure, where a lone coarse cell's centre may lie
+beyond `b` from its fine neighbours — rarely an issue, since clumps are fully refined.
+```
+
 
 ### The finders
 
@@ -783,7 +861,7 @@ The finder/hierarchy types ([`AbstractFinder`](@ref), [`ThresholdFoF`](@ref),
 [`PhaseSpaceFoF`](@ref), [`PersistenceFinder`](@ref), [`StructureTree`](@ref), [`StructureNode`](@ref))
 are documented in the [API reference](api.md#Types).
 
-```@docs; canonical=false
+```@docs
 clumpfind
 clump_massfunction
 clump_recovery

@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `02_particles_Load_Selections.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/02_particles_Load_Selections.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 This notebook provides a comprehensive guide to selective particle data loading and spatial filtering in Mera.jl. You'll learn advanced techniques for efficiently loading only the particle data you need from large N-body simulations.
 
 ## Learning Objectives
@@ -51,7 +50,7 @@ particles = getparticles(info, :vx)                       # Single variable
 ```julia
 # RAMSES standard notation (domain: [0:1]³)
 particles = getparticles(info, xrange=[0.2, 0.8],        # X-range filter
-                              yrange=[0.2, 0.8],        # Y-range filter
+                              yrange=[0.2, 0.8],        # Y-range filter  
                               zrange=[0.4, 0.6])        # Z-range filter
 
 # Center-relative coordinates (RAMSES units)
@@ -114,8 +113,12 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 
 ```
 [Mera]: 2026-06-01T14:16:24.675
+
+
 Code: RAMSES
 output [300] summary:
+
+
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
@@ -129,7 +132,8 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:
+hydro-variables:  
+
 7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
@@ -138,8 +142,9 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05
-particle-variables:
+- Nstars:   5.445150e+05 
+particle-variables: 
+
 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -154,6 +159,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 ```
+
 
 ## Variable Selection Techniques
 
@@ -194,7 +200,7 @@ Mera provides flexible ways to reference particle properties with support for di
 
 **Key Features:**
 - Version-dependent variable naming conventions
-- Both symbolic and numeric formats supported
+- Both symbolic and numeric formats supported  
 - Future support for descriptor file variable names
 - Consistent API across RAMSES versions
 
@@ -208,21 +214,31 @@ particles = getparticles(info);
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:28.733
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
+
 domain:
+
+
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 38.428720474243164 MB
 -------------------------------------------------------
 ```
+
 
 ```julia
 particles.data
@@ -247,79 +263,95 @@ Columns:
 12  birth    Float64
 ```
 
+
 ### Selecting Multiple Variables
 
 Mera provides multiple ways to select specific particle properties. You can use keyword arguments or positional arguments with flexible syntax.
 
 ```julia
-particles_a = getparticles(info, vars=[:mass, :birth]);
+particles_a = getparticles(info, vars=[:mass, :birth]); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:32.778
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(4, 7) = (:mass, :birth)
+Using var(s)=(4, 7) = (:mass, :birth) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 25.965506553649902 MB
 -------------------------------------------------------
 ```
+
 
 **Alternative:** Use variable numbers instead of symbolic names. This approach provides identical functionality with numeric references:
 
 ```julia
-particles_a = getparticles(info, vars=[:var4, :var7]);
+particles_a = getparticles(info, vars=[:var4, :var7]); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:33.074
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(4, 7) = (:mass, :birth)
+Using var(s)=(4, 7) = (:mass, :birth) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 25.965506553649902 MB
 -------------------------------------------------------
 ```
+
 
 **Keyword-free syntax:** When following the specific order (InfoType object, then variables), keyword arguments are optional:
 
 ```julia
-particles_a = getparticles(info, [:mass, :birth]);
+particles_a = getparticles(info, [:mass, :birth]); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:33.236
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(4, 7) = (:mass, :birth)
+Using var(s)=(4, 7) = (:mass, :birth) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 25.965506553649902 MB
 -------------------------------------------------------
 ```
+
 
 ```julia
 particles_a.data
@@ -355,31 +387,37 @@ level  x        y        z        id      family  tag  mass        birth
 10     38.0953  22.8757  24.0231  133214  2       0    8.00221e-7  9.20251
 ```
 
+
 ### Selecting Single Variables
 
 For single variable selection, arrays and keywords are unnecessary. Maintain the order: InfoType object, then variable symbol:
 
 ```julia
-particles_c = getparticles(info, :vx );
+particles_c = getparticles(info, :vx ); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:33.550
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1,) = (:vx,)
+Using var(s)=(1,) = (:vx,) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 21.81110191345215 MB
 -------------------------------------------------------
 ```
+
 
 ```julia
 particles_c.data
@@ -415,12 +453,13 @@ level  x        y        z        id      family  tag  vx
 10     38.0953  22.8757  24.0231  133214  2       0    -0.0510545
 ```
 
+
 ## Spatial Range Selection Techniques
 
 Spatial filtering is essential for focusing analysis on specific particle populations within regions of interest. Mera offers multiple coordinate systems and reference methods to accommodate different particle analysis needs.
 
 **Available Coordinate Systems:**
-- **RAMSES Standard:** Normalized domain [0:1]³
+- **RAMSES Standard:** Normalized domain [0:1]³ 
 - **Center-Relative:** Coordinates relative to specified points
 - **Physical Units:** Real astronomical units (kpc, pc, etc.)
 - **Box-Centered:** Convenient shortcuts for simulation center
@@ -440,29 +479,36 @@ The RAMSES standard provides a normalized coordinate system that simplifies nume
 **Particle-Specific Advantage:** This notation is particularly effective for comparing particle distributions with grid-based hydro data, enabling multi-physics analysis.
 
 ```julia
-particles = getparticles(  info,
-                            xrange=[0.2,0.8],
-                            yrange=[0.2,0.8],
-                            zrange=[0.4,0.6]);
+particles = getparticles(  info, 
+                            xrange=[0.2,0.8], 
+                            yrange=[0.2,0.8], 
+                            zrange=[0.4,0.6]); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:34.177
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.444850e+05 particles
 Memory used for data table :
+
 38.42660331726074 MB
 -------------------------------------------------------
 ```
+
 
 **Range Verification:** The loaded particle data ranges are stored in the `ranges` field using RAMSES standard notation (domain: [0:1]³):
 
@@ -480,36 +526,43 @@ particles.ranges
  0.6
 ```
 
+
 ### Center-Relative Coordinate Selection
 
 Define spatial ranges relative to a specified center point. This approach is particularly useful for analyzing particle populations around specific features, galaxies, or objects of interest:
 
 ```julia
-particles = getparticles(  info,
-                            xrange=[-0.3, 0.3],
-                            yrange=[-0.3, 0.3],
-                            zrange=[-0.1, 0.1],
+particles = getparticles(  info, 
+                            xrange=[-0.3, 0.3], 
+                            yrange=[-0.3, 0.3], 
+                            zrange=[-0.1, 0.1], 
                             center=[0.5, 0.5, 0.5]);
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:35.553
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 ymin::ymax: 0.2 :: 0.8  	==> 9.6 [kpc] :: 38.4 [kpc]
 zmin::zmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.444850e+05 particles
 Memory used for data table :
+
 38.42660331726074 MB
 -------------------------------------------------------
 ```
+
 
 ### Physical Unit Coordinate System
 
@@ -524,36 +577,42 @@ Working with physical units provides intuitive scale references for astronomical
 The following example demonstrates kiloparsec (kpc) coordinate selection for particle populations:
 
 ```julia
-particles = getparticles(  info,
-                            xrange=[2.,22.],
-                            yrange=[2.,22.],
-                            zrange=[22.,26.],
-                            range_unit=:kpc);
+particles = getparticles(  info, 
+                            xrange=[2.,22.], 
+                            yrange=[2.,22.], 
+                            zrange=[22.,26.], 
+                            range_unit=:kpc); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:36.615
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 3.091600e+04 particles
 Memory used for data table :
+
 2.183063507080078 MB
 -------------------------------------------------------
 ```
+
 
 **Available Physical Units:** The `range_unit` keyword accepts various length units defined in the simulation's `scale` field:
 
 ```julia
 viewfields(info.scale)  # or e.g.: gas.info.scale
 ```
+
 
 ```
 [Mera]: Fields to scale from user/code units to selected units
@@ -693,6 +752,7 @@ rad	= 1.0
 deg	= 57.29577951308232
 ```
 
+
 **Center-Relative with Physical Units:** Combine center-relative positioning with physical unit specifications for precise particle population analysis:
 
 ```julia
@@ -722,12 +782,13 @@ Memory used for data table :8.18 MB
 -------------------------------------------------------
 ```
 
+
 ### Box Center Coordinate Shortcuts
 
 Mera provides convenient shortcuts for box-centered coordinate systems, simplifying particle analysis focused on the simulation center.
 
 **Available Shortcuts:**
-- `:bc` or `:boxcenter` - Center coordinate for all dimensions
+- `:bc` or `:boxcenter` - Center coordinate for all dimensions  
 - Can be applied to individual dimensions selectively
 - Combines seamlessly with physical units and range specifications
 - Ideal for symmetric particle analysis around simulation center
@@ -740,90 +801,111 @@ Mera provides convenient shortcuts for box-centered coordinate systems, simplify
 - Reduces coordinate specification errors in particle filtering
 
 ```julia
-particles = getparticles(  info,
-                            xrange=[-16.,16.],
-                            yrange=[-16.,16.],
-                            zrange=[-2.,2.],
-                            center=[:boxcenter],
-                            range_unit=:kpc);
+particles = getparticles(  info, 
+                            xrange=[-16.,16.], 
+                            yrange=[-16.,16.], 
+                            zrange=[-2.,2.], 
+                            center=[:boxcenter], 
+                            range_unit=:kpc); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:37.021
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 38.428720474243164 MB
 -------------------------------------------------------
 ```
 
+
 ```julia
-particles = getparticles(  info,
-                            xrange=[-16.,16.],
-                            yrange=[-16.,16.],
-                            zrange=[-2.,2.],
-                            center=[:bc],
-                            range_unit=:kpc);
+particles = getparticles(  info, 
+                            xrange=[-16.,16.], 
+                            yrange=[-16.,16.], 
+                            zrange=[-2.,2.], 
+                            center=[:bc], 
+                            range_unit=:kpc); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:38.145
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 38.428720474243164 MB
 -------------------------------------------------------
 ```
 
+
 **Selective Dimension Centering:** Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 50 kpc:
 
 ```julia
-particles = getparticles(  info,
-                            xrange=[-16.,16.],
-                            yrange=[-16.,16.],
-                            zrange=[-2.,2.],
-                            center=[:bc, 50., :bc],
-                            range_unit=:kpc);
+particles = getparticles(  info, 
+                            xrange=[-16.,16.], 
+                            yrange=[-16.,16.], 
+                            zrange=[-2.,2.], 
+                            center=[:bc, 50., :bc], 
+                            range_unit=:kpc); 
 ```
 
 ```
 [Mera]: Get particle data: 2026-06-01T14:16:39.390
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 center: [0.5, 1.0416667, 0.5] ==> [24.0 [kpc] :: 50.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
 ymin::ymax: 0.7083333 :: 1.0  	==> 34.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
 Combining results from 4 thread(s)...
 Found 2.078000e+03 particles
 Memory used for data table :
+
 151.4609375 KB
 -------------------------------------------------------
 ```
+
 
 ## Summary
 
@@ -832,11 +914,11 @@ This notebook demonstrated comprehensive particle data selection techniques in M
 ### Variable Selection Mastery
 - **Flexible Reference Systems:** Using both symbolic (`:mass`) and numeric (`:var4`) variable references
 - **Version Compatibility:** Handling RAMSES 2017/2018+ variable naming differences
-- **Selective Loading:** Choosing specific particle properties to optimize memory usage
+- **Selective Loading:** Choosing specific particle properties to optimize memory usage  
 - **Syntax Variations:** Keyword and positional argument approaches for different coding styles
 - **Single vs. Multiple Variables:** Appropriate syntax for different selection scenarios
 
-### Spatial Filtering Expertise
+### Spatial Filtering Expertise  
 - **Coordinate Systems:** RAMSES standard, physical units, center-relative, and box-centered approaches
 - **Particle-Specific Applications:** Galaxy-centered analysis and particle population filtering
 - **Performance Optimization:** Using spatial bounds and targeted particle selections

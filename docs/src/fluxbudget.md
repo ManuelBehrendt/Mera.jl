@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `fluxbudget.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/fluxbudget.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 [`fluxbudget`](@ref) measures the **flux of mass, momentum, energy and metals through a surface**
 (a sphere at radius R, or a cylinder wall), with the surface-normal velocity split into separate
 **inflow** and **outflow** rates — the thin-shell estimator that galactic-feedback and gas-cycle
@@ -26,8 +25,9 @@ info = getinfo(300, joinpath(base, "RAMSES/mw_L10"))
 gas  = gethydro(info, verbose=false);
 ```
 
+
 ```
-*__   __ _______ ______   _______
+*__   __ _______ ______   _______ 
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -35,7 +35,9 @@ gas  = gethydro(info, verbose=false);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
 [Mera]: 2026-07-03T11:16:07.836
+
 Code: RAMSES
 output [300] summary:
 mtime: 2023-04-09T05:34:09
@@ -59,7 +61,7 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05
+- Nstars:   5.445150e+05 
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -73,9 +75,11 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (29.65 ms/it)
+
+
 ✓ File processing complete! Combining results...
 ```
+
 
 ## Basic use
 
@@ -100,24 +104,31 @@ mass net      [Msol/yr] : 0.003956489612360654
 energy net    [erg/s]   : 1.2811085860658779e37
 ```
 
+
 Units per quantity: **mass** and **metals** in `Msol/yr`, **momentum** in `Msol·km/s/yr`, **energy** in
 `erg/s`. `in` sums cells moving inward (`v⊥ < 0`), `out` those moving outward; `net = in + out`. For
 mass/metals/energy `in ≤ 0` and `out ≥ 0`; for **momentum** the carried quantity already contains `v⊥`
 (radial momentum), so both `in` and `out` are ≥ 0 — the ram-pressure flux from in- and out-moving gas.
 
 !!! note "`:metals` needs a `:metallicity` column"
-    The `:metals` flux multiplies cell mass by the gas metallicity, read from a column literally named
-    `:metallicity`. Mera names hydro columns from the `hydro_file_descriptor.txt`, so a `:metallicity`
-    column appears only when the descriptor labels a field `metallicity`; a generically named scalar
-    (e.g. `:scalar_00`) or a positional `:var6` is **not** treated as metallicity. On a run without a
-    `:metallicity` column `:metals` raises a clear error rather than silently returning zero — alias
-    your metal scalar to `:metallicity` before the call if needed. Likewise `:energy` needs the thermal
-    energy (pressure `:p`) and errors clearly on an isothermal/pressureless output.
+```
+The `:metals` flux multiplies cell mass by the gas metallicity, read from a column literally named
+`:metallicity`. Mera names hydro columns from the `hydro_file_descriptor.txt`, so a `:metallicity`
+column appears only when the descriptor labels a field `metallicity`; a generically named scalar
+(e.g. `:scalar_00`) or a positional `:var6` is **not** treated as metallicity. On a run without a
+`:metallicity` column `:metals` raises a clear error rather than silently returning zero — alias
+your metal scalar to `:metallicity` before the call if needed. Likewise `:energy` needs the thermal
+energy (pressure `:p`) and errors clearly on an isothermal/pressureless output.
+```
+
 
 !!! warning "Cosmological runs: no Hubble flow"
-    `v⊥` is the **peculiar** gas velocity; the Hubble flow `H(a)·r` is not added. At large radius the
-    Hubble term can dominate and even flip the inflow/outflow sign, so the in/out split near turnaround
-    is unreliable on cosmological/zoom runs (a `@warn` fires). The non-cosmological case is unaffected.
+```
+`v⊥` is the **peculiar** gas velocity; the Hubble flow `H(a)·r` is not added. At large radius the
+Hubble term can dominate and even flip the inflow/outflow sign, so the in/out split near turnaround
+is unreliable on cosmological/zoom runs (a `@warn` fires). The non-cosmological case is unaffected.
+```
+
 
 Use `surface=:cylinder` for the flux through a cylindrical wall (e.g. the edge of a disk):
 
@@ -199,6 +210,7 @@ cold+hot              : 0.003968015747451279
 total (fb.rates)      : 0.003968015747451279
 ```
 
+
 ## Derived diagnostics: mass loading, phase velocities, weighting
 
 The raw rates combine into the diagnostics outflow studies actually quote:
@@ -250,13 +262,16 @@ momentum `L = Σ m·h`, e.g. a galaxy's spin) — and a **`:plane`** surface mea
 plane normal to `axis` (disk in-/outflow):
 
 !!! note "What `radius`/`shell_width` mean per surface"
-    `radius` is the **location of the surface** and `shell_width` its thickness, but "location" depends
-    on the geometry: for `:sphere` it is the spherical radius `R` (shell `|r|∈[R±Δr/2]`); for `:cylinder`
-    the cylindrical radius (wall at `R_cyl∈[R±Δr/2]`); and for **`:plane` it is the signed along-axis
-    offset** — the plane sits at `axis·r = R` (slab `∈[R±Δr/2]`), so `radius=5, axis=[0,0,1]` is a plane
-    5 kpc *above* the midplane (use a negative `radius` for below, `radius=0` for the midplane). In each
-    case `v⊥` is the velocity component along the surface normal (radial for sphere/cylinder, along
-    `axis` for the plane).
+```
+`radius` is the **location of the surface** and `shell_width` its thickness, but "location" depends
+on the geometry: for `:sphere` it is the spherical radius `R` (shell `|r|∈[R±Δr/2]`); for `:cylinder`
+the cylindrical radius (wall at `R_cyl∈[R±Δr/2]`); and for **`:plane` it is the signed along-axis
+offset** — the plane sits at `axis·r = R` (slab `∈[R±Δr/2]`), so `radius=5, axis=[0,0,1]` is a plane
+5 kpc *above* the midplane (use a negative `radius` for below, `radius=0` for the midplane). In each
+case `v⊥` is the velocity component along the surface normal (radial for sphere/cylinder, along
+`axis` for the plane).
+```
+
 
 ```julia
 # disk-edge flux in the angular-momentum frame
@@ -315,6 +330,7 @@ radii [kpc]           : [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50
 net Mdot(R) [Msol/yr] : [-0.868, 0.55, 0.01, -0.01, -0.006, 0.004, 0.001, 0.0, 0.0, 0.0]
 ```
 
+
 ![`fluxshell` makes the measured surface explicit. *Left:* the full gas of a disk galaxy, edge-on.
 *Right:* the cells `fluxbudget` actually integrates over — the R = 10 kpc spherical shell (its edge-on
 projection is a disk of radius 10 kpc, brightest where the shell cuts the dense midplane). The budget is
@@ -348,7 +364,9 @@ FluxMapType [sphere @ R=30.0, Δr=2.0]  quantity=vr [km_s]
   (72, 36) grid  (φ_deg × cosθ)
 ```
 
-![](fluxbudget_files/fluxbudget_10_2.png)
+
+![](fluxbudget_files/fluxbudget_9_1.png)
+
 
 `quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`
 maps each bin's mass-flux contribution (Msol/yr), and its sum equals the net flux. `fluxmap` returns the

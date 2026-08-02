@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `15_multi_Profiles_Phase.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/15_multi_Profiles_Phase.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 `profile`, `phase`, `profile3d`, `rotationcurve` and `profiletimeseries` are **general, weighted
 reductions** over any Mera field — a *profile* bins by one quantity (often a **radius**) and reports
 per-bin **statistics** of another; a *phase diagram* is a 2-D weighted histogram. They work on
@@ -37,6 +36,7 @@ println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 gas cells = 590311   particles = 45470
 ```
 
+
 ## 1. The simplest profile — binning a quantity
 
 With only a bin field, `profile` returns the **summed weight** per bin — e.g. the radial **mass
@@ -66,10 +66,13 @@ axislegend(ax2, position=:rt); fig
 
 ```
 binsize=(500,:pc) → bin width [kpc] = 0.5
+
   (48 bins)
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_5_3.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_4_2.png)
+
 
 ## 2. Per-bin statistics — a binned statistic is not a histogram
 
@@ -100,7 +103,9 @@ errorbars!(ax, x[se], mu[se], sem[se], color=:dodgerblue, whiskerwidth=6)
 axislegend(ax, position=:rt, framevisible=false); fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_7_1.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_6_0.png)
+
 
 ## 3. Density, enclosed mass & normalization (density PDF)
 
@@ -130,7 +135,9 @@ lines!(ax3, dv.x[ov], dv.pdf[ov], color=:teal,    linewidth=2.5, label="volume-w
 axislegend(ax3, position=:lt); fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_9_1.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_8_0.png)
+
 
 ## 4. Weighting & components — mass vs volume vs none
 
@@ -154,7 +161,9 @@ ax2 = Axis(fig[1,2], xlabel="r [kpc]", ylabel="⟨Φ⟩ [code]", title="gravity 
 og=isfinite.(pep.mean); lines!(ax2, pep.x[og], pep.mean[og], color=:slateblue, linewidth=2.5); fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_11_1.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_10_0.png)
+
 
 ## 5. Rotation curve — who contributes how much
 
@@ -202,7 +211,9 @@ lines!(ax3, pa.x, vexact, color=:crimson, linewidth=2.5, label="√(R·|a_R|)  (
 axislegend(ax3, position=:rb); fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_13_1.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_12_0.png)
+
 
 ## 6. Phase diagrams — colour is a knob
 
@@ -229,7 +240,9 @@ end
 fig
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_15_1.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_14_0.png)
+
 
 ## 7. Distribution shape & uncertainties — moments, equal-count bins, bootstrap CIs
 
@@ -264,10 +277,13 @@ axislegend(ax2, position=:rt, framevisible=false); fig
 
 ```
 equal-count points/bin (min..max): (
+
 32300, 33260)  → nearly equal
 ```
 
-![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_17_3.png)
+
+![](15_multi_Profiles_Phase_files/15_multi_Profiles_Phase_16_2.png)
+
 
 ## More features (same API, no separate plot here)
 

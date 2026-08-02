@@ -45,10 +45,8 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 
 ```
 *__   __ _______ ______   _______ 
-```
 
 
-```
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -56,20 +54,13 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-```
 
 
-```
 [ Info: Mera v1.8.0
-```
 
 
-```
 first call: 10.67
-```
 
-
-```
  s   second call: 0.044 s
 ```
 
@@ -102,10 +93,7 @@ println("mass-weighted T (ρ>1e-24 g/cm³): ", round(mwT(rho, T, vol), sigdigits
 
 ```
 mass-weighted T (ρ>1e-24 g/cm³): 67870.0
-```
 
-
-```
  K   —   590311 cells in 0.2 ms
 ```
 
@@ -133,21 +121,12 @@ usedmemory(small)
 
 ```
 576 cells (windowed, lmax=6, :rho only)  vs  
-```
 
-
-```
 590311 full (lmax=7)
 Memory used: 
-```
 
-
-```
 481.366 KB
-```
 
-
-```
 (481.3662109375, "KB")
 ```
 
@@ -189,15 +168,9 @@ fig
 
 ```
 Julia threads: 8
-```
 
-
-```
 max_threads=1  109.57
-```
 
-
-```
  s   speedup ×1.0
 max_threads=2  79.97 s   speedup ×1.37
 max_threads=4  53.7 s   speedup ×2.04

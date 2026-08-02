@@ -22,10 +22,8 @@ gas  = gethydro(info, verbose=false);
 
 ```
 *__   __ _______ ______   _______ 
-```
 
 
-```
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -33,20 +31,13 @@ gas  = gethydro(info, verbose=false);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-```
 
-
-```
 [Mera]: 2026-07-31T22:01:37.733
-```
 
 
-```
 Code: RAMSES
-```
 
 
-```
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -62,10 +53,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  
-```
 
-
-```
 7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
@@ -76,10 +64,7 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Nstars:   5.445150e+05 
 particle-variables: 
-```
 
-
-```
 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -87,10 +72,7 @@ rt:            false
 clumps:           false
 -------------------------------------------------------
 namelist-file: 
-```
 
-
-```
 ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
@@ -98,385 +80,8 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-```
 
 
-Processing files:   0%|▏                                                 |  ETA: 0:02:43 ( 0.26  s/it)
-
-
-Processing files:   2%|▉                                                 |  ETA: 0:01:02 (98.69 ms/it)
-
-
-Processing files:   3%|█▌                                                |  ETA: 0:00:43 (69.23 ms/it)
-
-
-Processing files:   4%|█▊                                                |  ETA: 0:00:40 (64.79 ms/it)
-
-
-Processing files:   4%|██                                                |  ETA: 0:00:39 (64.20 ms/it)
-
-
-Processing files:   6%|██▊                                               |  ETA: 0:00:33 (54.62 ms/it)
-
-
-Processing files:   6%|███                                               |  ETA: 0:00:33 (54.17 ms/it)
-
-
-Processing files:   7%|███▋                                              |  ETA: 0:00:29 (48.75 ms/it)
-
-
-Processing files:   8%|████                                              |  ETA: 0:00:28 (47.05 ms/it)
-
-
-Processing files:   9%|████▊                                             |  ETA: 0:00:25 (43.10 ms/it)
-
-
-Processing files:  10%|█████▏                                            |  ETA: 0:00:24 (41.53 ms/it)
-
-
-Processing files:  11%|█████▍                                            |  ETA: 0:00:24 (41.58 ms/it)
-
-
-Processing files:  12%|█████▉                                            |  ETA: 0:00:23 (40.27 ms/it)
-
-
-Processing files:  12%|██████▎                                           |  ETA: 0:00:22 (39.12 ms/it)
-
-
-Processing files:  14%|██████▊                                           |  ETA: 0:00:21 (37.65 ms/it)
-
-
-Processing files:  15%|███████▎                                          |  ETA: 0:00:20 (36.64 ms/it)
-
-
-Processing files:  15%|███████▋                                          |  ETA: 0:00:20 (36.58 ms/it)
-
-
-Processing files:  16%|████████                                          |  ETA: 0:00:19 (35.83 ms/it)
-
-
-Processing files:  17%|████████▋                                         |  ETA: 0:00:18 (34.84 ms/it)
-
-
-Processing files:  18%|█████████                                         |  ETA: 0:00:18 (34.37 ms/it)
-
-
-Processing files:  19%|█████████▎                                        |  ETA: 0:00:18 (34.21 ms/it)
-
-
-Processing files:  20%|█████████▉                                        |  ETA: 0:00:17 (33.79 ms/it)
-
-
-Processing files:  20%|██████████▎                                       |  ETA: 0:00:17 (33.44 ms/it)
-
-
-Processing files:  22%|██████████▊                                       |  ETA: 0:00:16 (32.47 ms/it)
-
-
-Processing files:  22%|███████████▎                                      |  ETA: 0:00:16 (32.12 ms/it)
-
-
-Processing files:  23%|███████████▊                                      |  ETA: 0:00:15 (31.57 ms/it)
-
-
-Processing files:  24%|████████████▏                                     |  ETA: 0:00:15 (31.33 ms/it)
-
-
-Processing files:  25%|████████████▋                                     |  ETA: 0:00:15 (30.63 ms/it)
-
-
-Processing files:  26%|█████████████▎                                    |  ETA: 0:00:14 (30.45 ms/it)
-
-
-Processing files:  27%|█████████████▋                                    |  ETA: 0:00:14 (30.17 ms/it)
-
-
-Processing files:  28%|██████████████▎                                   |  ETA: 0:00:14 (29.79 ms/it)
-
-
-Processing files:  29%|██████████████▊                                   |  ETA: 0:00:13 (29.38 ms/it)
-
-
-Processing files:  30%|███████████████▏                                  |  ETA: 0:00:13 (29.29 ms/it)
-
-
-Processing files:  32%|████████████████                                  |  ETA: 0:00:13 (28.67 ms/it)
-
-
-Processing files:  33%|████████████████▍                                 |  ETA: 0:00:12 (28.61 ms/it)
-
-
-Processing files:  33%|████████████████▊                                 |  ETA: 0:00:12 (28.57 ms/it)
-
-
-Processing files:  34%|█████████████████▏                                |  ETA: 0:00:12 (28.41 ms/it)
-
-
-Processing files:  35%|█████████████████▍                                |  ETA: 0:00:12 (28.62 ms/it)
-
-
-Processing files:  36%|█████████████████▉                                |  ETA: 0:00:12 (28.47 ms/it)
-
-
-Processing files:  36%|██████████████████▎                               |  ETA: 0:00:12 (28.43 ms/it)
-
-
-Processing files:  37%|██████████████████▌                               |  ETA: 0:00:11 (28.47 ms/it)
-
-
-Processing files:  38%|███████████████████                               |  ETA: 0:00:11 (28.28 ms/it)
-
-
-Processing files:  39%|███████████████████▌                              |  ETA: 0:00:11 (28.19 ms/it)
-
-
-Processing files:  40%|███████████████████▊                              |  ETA: 0:00:11 (28.19 ms/it)
-
-
-Processing files:  40%|████████████████████▏                             |  ETA: 0:00:11 (28.21 ms/it)
-
-
-Processing files:  41%|████████████████████▍                             |  ETA: 0:00:11 (28.17 ms/it)
-
-
-Processing files:  41%|████████████████████▊                             |  ETA: 0:00:11 (28.38 ms/it)
-
-
-Processing files:  42%|█████████████████████▏                            |  ETA: 0:00:10 (28.28 ms/it)
-
-
-Processing files:  43%|█████████████████████▍                            |  ETA: 0:00:10 (28.28 ms/it)
-
-
-Processing files:  43%|█████████████████████▊                            |  ETA: 0:00:10 (28.35 ms/it)
-
-
-Processing files:  44%|██████████████████████                            |  ETA: 0:00:10 (28.35 ms/it)
-
-
-Processing files:  45%|██████████████████████▎                           |  ETA: 0:00:10 (28.41 ms/it)
-
-
-Processing files:  45%|██████████████████████▌                           |  ETA: 0:00:10 (28.53 ms/it)
-
-
-Processing files:  45%|██████████████████████▊                           |  ETA: 0:00:10 (28.63 ms/it)
-
-
-Processing files:  46%|███████████████████████                           |  ETA: 0:00:10 (28.73 ms/it)
-
-
-Processing files:  46%|███████████████████████▎                          |  ETA: 0:00:10 (28.91 ms/it)
-
-
-Processing files:  47%|███████████████████████▌                          |  ETA: 0:00:10 (28.98 ms/it)
-
-
-Processing files:  47%|███████████████████████▋                          |  ETA: 0:00:10 (29.30 ms/it)
-
-
-Processing files:  48%|███████████████████████▉                          |  ETA: 0:00:10 (29.55 ms/it)
-
-
-Processing files:  49%|████████████████████████▍                         |  ETA: 0:00:10 (29.52 ms/it)
-
-
-Processing files:  49%|████████████████████████▊                         |  ETA: 0:00:10 (29.70 ms/it)
-
-
-Processing files:  50%|████████████████████████▉                         |  ETA: 0:00:10 (29.78 ms/it)
-
-
-Processing files:  50%|█████████████████████████▏                        |  ETA: 0:00:09 (29.87 ms/it)
-
-
-Processing files:  51%|█████████████████████████▍                        |  ETA: 0:00:09 (30.04 ms/it)
-
-
-Processing files:  52%|██████████████████████████▏                       |  ETA: 0:00:09 (30.16 ms/it)
-
-
-Processing files:  53%|██████████████████████████▍                       |  ETA: 0:00:09 (30.27 ms/it)
-
-
-Processing files:  54%|██████████████████████████▊                       |  ETA: 0:00:09 (30.55 ms/it)
-
-
-Processing files:  54%|███████████████████████████                       |  ETA: 0:00:09 (30.68 ms/it)
-
-
-Processing files:  55%|███████████████████████████▍                      |  ETA: 0:00:09 (30.74 ms/it)
-
-
-Processing files:  56%|████████████████████████████                      |  ETA: 0:00:09 (30.57 ms/it)
-
-
-Processing files:  57%|████████████████████████████▍                     |  ETA: 0:00:09 (30.72 ms/it)
-
-
-Processing files:  57%|████████████████████████████▋                     |  ETA: 0:00:08 (30.70 ms/it)
-
-
-Processing files:  58%|█████████████████████████████                     |  ETA: 0:00:08 (30.66 ms/it)
-
-
-Processing files:  59%|█████████████████████████████▎                    |  ETA: 0:00:08 (30.63 ms/it)
-
-
-Processing files:  59%|█████████████████████████████▊                    |  ETA: 0:00:08 (30.53 ms/it)
-
-
-Processing files:  60%|██████████████████████████████                    |  ETA: 0:00:08 (30.48 ms/it)
-
-
-Processing files:  61%|██████████████████████████████▍                   |  ETA: 0:00:08 (30.45 ms/it)
-
-
-Processing files:  62%|██████████████████████████████▊                   |  ETA: 0:00:07 (30.33 ms/it)
-
-
-Processing files:  62%|███████████████████████████████▏                  |  ETA: 0:00:07 (30.25 ms/it)
-
-
-Processing files:  63%|███████████████████████████████▌                  |  ETA: 0:00:07 (30.26 ms/it)
-
-
-Processing files:  63%|███████████████████████████████▊                  |  ETA: 0:00:07 (30.41 ms/it)
-
-
-Processing files:  64%|████████████████████████████████▎                 |  ETA: 0:00:07 (30.32 ms/it)
-
-
-Processing files:  65%|████████████████████████████████▋                 |  ETA: 0:00:07 (30.15 ms/it)
-
-
-Processing files:  66%|█████████████████████████████████                 |  ETA: 0:00:07 (30.18 ms/it)
-
-
-Processing files:  67%|█████████████████████████████████▌                |  ETA: 0:00:06 (30.07 ms/it)
-
-
-Processing files:  68%|█████████████████████████████████▉                |  ETA: 0:00:06 (29.96 ms/it)
-
-
-Processing files:  69%|██████████████████████████████████▍               |  ETA: 0:00:06 (29.78 ms/it)
-
-
-Processing files:  70%|██████████████████████████████████▉               |  ETA: 0:00:06 (29.70 ms/it)
-
-
-Processing files:  71%|███████████████████████████████████▎              |  ETA: 0:00:06 (29.53 ms/it)
-
-
-Processing files:  72%|███████████████████████████████████▊              |  ETA: 0:00:05 (29.47 ms/it)
-
-
-Processing files:  73%|████████████████████████████████████▍             |  ETA: 0:00:05 (29.33 ms/it)
-
-
-Processing files:  74%|█████████████████████████████████████             |  ETA: 0:00:05 (29.21 ms/it)
-
-
-Processing files:  75%|█████████████████████████████████████▍            |  ETA: 0:00:05 (29.13 ms/it)
-
-
-Processing files:  76%|█████████████████████████████████████▉            |  ETA: 0:00:05 (29.04 ms/it)
-
-
-Processing files:  77%|██████████████████████████████████████▍           |  ETA: 0:00:04 (28.90 ms/it)
-
-
-Processing files:  78%|██████████████████████████████████████▉           |  ETA: 0:00:04 (28.83 ms/it)
-
-
-Processing files:  79%|███████████████████████████████████████▍          |  ETA: 0:00:04 (28.67 ms/it)
-
-
-Processing files:  80%|███████████████████████████████████████▉          |  ETA: 0:00:04 (28.58 ms/it)
-
-
-Processing files:  81%|████████████████████████████████████████▎         |  ETA: 0:00:04 (28.50 ms/it)
-
-
-Processing files:  82%|████████████████████████████████████████▊         |  ETA: 0:00:03 (28.39 ms/it)
-
-
-Processing files:  82%|█████████████████████████████████████████▏        |  ETA: 0:00:03 (28.38 ms/it)
-
-
-Processing files:  83%|█████████████████████████████████████████▋        |  ETA: 0:00:03 (28.26 ms/it)
-
-
-Processing files:  84%|██████████████████████████████████████████        |  ETA: 0:00:03 (28.29 ms/it)
-
-
-Processing files:  85%|██████████████████████████████████████████▊       |  ETA: 0:00:03 (28.17 ms/it)
-
-
-Processing files:  86%|███████████████████████████████████████████▎      |  ETA: 0:00:02 (28.07 ms/it)
-
-
-Processing files:  87%|███████████████████████████████████████████▋      |  ETA: 0:00:02 (28.07 ms/it)
-
-
-Processing files:  88%|████████████████████████████████████████████▏     |  ETA: 0:00:02 (27.95 ms/it)
-
-
-Processing files:  89%|████████████████████████████████████████████▌     |  ETA: 0:00:02 (28.05 ms/it)
-
-
-Processing files:  90%|█████████████████████████████████████████████▏    |  ETA: 0:00:02 (27.97 ms/it)
-
-
-Processing files:  91%|█████████████████████████████████████████████▌    |  ETA: 0:00:02 (27.93 ms/it)
-
-
-Processing files:  92%|█████████████████████████████████████████████▉    |  ETA: 0:00:01 (27.89 ms/it)
-
-
-Processing files:  93%|██████████████████████████████████████████████▍   |  ETA: 0:00:01 (27.81 ms/it)
-
-
-Processing files:  93%|██████████████████████████████████████████████▋   |  ETA: 0:00:01 (27.83 ms/it)
-
-
-Processing files:  94%|███████████████████████████████████████████████▎  |  ETA: 0:00:01 (27.77 ms/it)
-
-
-Processing files:  95%|███████████████████████████████████████████████▌  |  ETA: 0:00:01 (27.79 ms/it)
-
-
-Processing files:  95%|███████████████████████████████████████████████▊  |  ETA: 0:00:01 (27.85 ms/it)
-
-
-Processing files:  96%|████████████████████████████████████████████████  |  ETA: 0:00:01 (27.88 ms/it)
-
-
-Processing files:  97%|████████████████████████████████████████████████▌ |  ETA: 0:00:01 (27.90 ms/it)
-
-
-Processing files:  97%|████████████████████████████████████████████████▋ |  ETA: 0:00:00 (27.93 ms/it)
-
-
-Processing files:  98%|█████████████████████████████████████████████████ |  ETA: 0:00:00 (27.98 ms/it)
-
-
-Processing files:  99%|█████████████████████████████████████████████████▎|  ETA: 0:00:00 (28.05 ms/it)
-
-
-Processing files:  99%|█████████████████████████████████████████████████▌|  ETA: 0:00:00 (28.08 ms/it)
-
-
-Processing files:  99%|█████████████████████████████████████████████████▊|  ETA: 0:00:00 (28.20 ms/it)
-
-
-Processing files:  99%|█████████████████████████████████████████████████▉|  ETA: 0:00:00 (28.29 ms/it)
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.25 ms/it)
-
-
-```
 ✓ File processing complete! Combining results...
 ```
 
@@ -526,27 +131,16 @@ println("requirements [:sd,:T] : ", getvar_requirements(:hydro, [:sd, :T]))
 
 ```
 T [K] range           : (
-```
 
-
-```
 10.195354771220304, 2.3032126579487386e8)
 Mach range            : (
-```
 
-
-```
 0.0015019848658968961, 790.5001832586903)
 ekin [erg] (sum)      : 3.445146674042365e57
-```
 
 
-```
 requirements :ekin    : 
-```
 
-
-```
 [:rho, :vx, :vy, :vz]
 requirements [:sd,:T] : [:p, :rho]
 ```
@@ -574,20 +168,11 @@ println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 
 ```
 :vmag2 via getvar     : (
-```
 
-
-```
 9.736562820569741e-6, 371.6168616499286)
-```
 
-
-```
 :vmag2 projection map : (
-```
 
-
-```
 1024, 1024)
 ```
 
@@ -613,10 +198,7 @@ println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 
 ```
 :mach_custom range    : (
-```
 
-
-```
 0.0015019848658968961, 790.5001832586903)
 ```
 

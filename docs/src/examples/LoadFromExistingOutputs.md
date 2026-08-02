@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `LoadFromExistingOutputs.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/examples/LoadFromExistingOutputs.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 ```julia
 using Mera
 ```
@@ -37,6 +36,7 @@ readdir(path)
  "output_00301"
 ```
 
+
 Get the relevant simulation output-numbers:
 
 ```julia
@@ -47,6 +47,7 @@ N = checkoutputs(path);
 Outputs - existing: 1 betw. 300:300 - missing: 1
 ```
 
+
 ```julia
 N.outputs
 ```
@@ -55,6 +56,7 @@ N.outputs
 1-element Vector{Int64}:
  300
 ```
+
 
 List of empty simulation folders:
 
@@ -66,6 +68,7 @@ N.miss
 1-element Vector{Int64}:
  301
 ```
+
 
 Load the data:
 
@@ -81,6 +84,7 @@ end
 Output: 300
 ```
 
+
 Get the physical time of all existing outputs:
 
 ```julia
@@ -92,6 +96,7 @@ gettime.(N.outputs, path, :Myr)
  445.8861174695
 ```
 
+
 ## One call: `timeseries`
 
 The whole pattern above — discover the outputs, load each one, read its physical time,
@@ -99,6 +104,10 @@ collect a quantity — is what [`timeseries`](@ref) automates into a single call
 a *reducer* (`data -> scalar | NamedTuple`); it loads one snapshot at a time (RAM-safe) and
 returns one table with an `output` column and a physical **`time` column in Myr** (the same
 `gettime(:Myr)` shown above), plus `redshift`/`aexp` columns for a cosmological run.
+
+```julia
+
+```
 
 Use the manual loop when you want full control per snapshot; reach for `timeseries` when
 you just want X(t) as a table. See **[Time Series](../timeseries.md)** for output selection,
