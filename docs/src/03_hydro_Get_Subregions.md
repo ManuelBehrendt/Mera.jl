@@ -345,7 +345,7 @@ whole-cell answer needs no third machinery at all: take the split result and
 **drop its `:fraction` column** — every touched cell then counts in full,
 which is exactly what "keep every intersecting cell whole" means. (The classic
 symbol API offers the same two alternatives as `cell=true` / `cell=false`
-switches — see §9.)
+switches — see §12.)
 
 ```julia
 ctr = [13., :bc, :bc]   # x = 13 kpc; box centre in y and z
