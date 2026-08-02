@@ -35,8 +35,12 @@ Mera reads 3-D RAMSES data; the examples below use a small 3-D Sedov blast.
 5. **Analyse** the resulting table — plot, fit, compare.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 run  = joinpath(base, "RAMSES/timeseries_sedov3d")
 
 # discover the outputs available in the run

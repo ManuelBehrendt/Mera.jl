@@ -116,8 +116,12 @@ family_dist = select(data_overview, (:level, :mass)) # Mass distribution by leve
 Let's start by importing Mera.jl and loading simulation information for output 300:
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
+info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
 ```

@@ -140,7 +140,11 @@ Here are some common issues and how to resolve them:
 These tips will help you work efficiently with RAMSES data in Mera.
 
 ```julia
-info = getinfo(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10"); # output=300 in given path
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
+info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
@@ -1266,7 +1270,7 @@ This information helps you understand:
 - Potential issues with specific outputs
 
 ```julia
-co = checkoutputs("/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10/");
+co = checkoutputs("$MERA_EXAMPLES/RAMSES/mw_L10/");
 ```
 
 ```

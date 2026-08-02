@@ -44,9 +44,13 @@ Two conventions worth internalising on day one:
 The same five steps you would do anywhere: inspect → load → select → measure → map.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, CairoMakie
 CairoMakie.activate!()
-BASE = "/Volumes/FASTStorage/Simulations/Mera-Tests"   # <-- change me
+BASE = MERA_EXAMPLES   # <-- change me
 info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only — instant
 ```
 

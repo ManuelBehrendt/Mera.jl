@@ -32,10 +32,14 @@ Then, BEFORE the code, the first of the three admitted inline caveats:
     `:faceon`/`:edgeon` (and `axis=:angmom`) derive the orientation from the **angular momentum of the loaded data about `center`**. `center` defaults to `[0.,0.,0.]` — the box **corner** — and L about a corner is dominated by the lever arm of the whole box. You get a plausible-looking tilted galaxy, no error and no warning. Always pass `center=[:bc]` (or the object's own centre). Detection: edge-on, `:vlos` must be antisymmetric about the minor axis (Chapter 7).
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, CairoMakie, Statistics
 CairoMakie.activate!(type="png")
 
-info = getinfo(100, joinpath(get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests"),
+info = getinfo(100, joinpath(get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES),
                 "RAMSES/spiral_clumps"), verbose=false)
 gas  = gethydro(info, verbose=false, show_progress=false)
 

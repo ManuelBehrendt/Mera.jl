@@ -97,8 +97,12 @@ viewfields(info.scale)
 Before exploring clump data selection techniques, let's load our simulation and examine its properties. This establishes the foundation for all subsequent clump data loading operations.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14");
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 ```
 
 ```

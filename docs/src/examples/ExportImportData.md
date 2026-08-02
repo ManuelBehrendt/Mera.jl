@@ -25,7 +25,11 @@ using Mera
 ```
 
 ```julia
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/manu_sim_sf_L14", verbose=false)
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
+info = getinfo(400, "$MERA_EXAMPLES/manu_sim_sf_L14", verbose=false)
 hydro = gethydro(info, :rho, smallr=1e-5, lmax=10)
 particles = getparticles(info, :mass);
 ```

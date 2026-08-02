@@ -67,8 +67,12 @@ the repo or fills the disk.
 ### Required Packages
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 run  = joinpath(base, "RAMSES/timeseries_sedov3d")   # RAMSES outputs output_00001 … output_00013
 
 jld_dir = mktempdir()                          # all .jld2 output goes here

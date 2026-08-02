@@ -48,8 +48,12 @@ Hubble time). The reported *simulation time* is the **age of the universe** at
 the snapshot, not the raw conformal `info.time`.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-info = getinfo(80, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/yt_cosmo");
+info = getinfo(80, "$MERA_EXAMPLES/RAMSES/yt_cosmo");
 ```
 
 ```

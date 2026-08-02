@@ -11,9 +11,13 @@ using Mera
 ## Load data from a sequence of snapshots
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 # mw_L10 has one complete output (300); 301 is an incomplete output
 for i in [300]
-    info = getinfo(output=i, "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10", verbose=false)
+    info = getinfo(output=i, "$MERA_EXAMPLES/mw_L10", verbose=false)
     #...gethydro(info)...getparticles(info)... etc.
 end
 ```
@@ -22,7 +26,7 @@ end
 List the content of a given folder:
 
 ```julia
-path = "/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10"
+path = "$MERA_EXAMPLES/mw_L10"
 readdir(path)
 ```
 

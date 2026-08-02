@@ -18,8 +18,12 @@ This notebook runs on the `manu_sim_sf_L14` AMR snapshot (output 400), which spa
 several refinement levels. Each cell prints real values.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
-base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
+base = get(ENV, "MERA_TEST_DATA", MERA_EXAMPLES)
 
 info = getinfo(400, joinpath(base, "RAMSES/manu_sim_sf_L14"))
 # lmax=10 keeps the load ~1-2 GB instead of ~10 GB. Nothing below needs more:

@@ -49,7 +49,11 @@ using Mera
 ## Load the Data From Ramses
 
 ```julia
-info = getinfo(300,  "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10");
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
+info = getinfo(300,  "$MERA_EXAMPLES/RAMSES/mw_L10");
 gas  = gethydro(info, verbose=false, show_progress=false);
 part = getparticles(info, verbose=false, show_progress=false);
 grav = getgravity(info, verbose=false, show_progress=false);
@@ -106,7 +110,7 @@ patchfile:        true
 The running number is taken from the original RAMSES outputs.
 
 ```julia
-savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/");
+savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
@@ -131,7 +135,7 @@ Memory size:
 The following argument is mandatory: **fmode=:write** </div>
 
 ```julia
-savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", fmode=:write);
+savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", fmode=:write);
 ```
 
 ```
@@ -161,8 +165,8 @@ Total file size: 1.276 GB
 Add/Append further datatypes:
 
 ```julia
-savedata(part, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", fmode=:append);
-savedata(grav, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", fmode=:append);
+savedata(part, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", fmode=:append);
+savedata(grav, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", fmode=:append);
 ```
 
 ```
@@ -211,7 +215,7 @@ Total file size: 2.159 GB
 ## Overview of Stored Data
 
 ```julia
-vd = viewdata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/")
+vd = viewdata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/")
 ```
 
 ```
@@ -275,7 +279,7 @@ Information about the content, etc. is returned in a dictionary.
 Get a detailed tree-view of the data-file:
 
 ```julia
-vd = viewdata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", showfull=true)
+vd = viewdata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", showfull=true)
 ```
 
 ```
@@ -384,7 +388,7 @@ Dict{Any, Any} with 4 entries:
 The following function **infodata** is comparable to **getinfo()** used for the RAMSES files and loads detailed information about the simulation output:
 
 ```julia
-info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/");
+info = infodata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
@@ -433,7 +437,7 @@ patchfile:        true
 In this case, it loaded the **InfoDataType** from the **hydro** data. Choose a different stored **datatype** to get the info from:
 
 ```julia
-info = infodata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", :particles);
+info = infodata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :particles);
 ```
 
 ```
@@ -483,7 +487,7 @@ patchfile:        true
 ### Full Data
 
 ```julia
-gas = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", :hydro);
+gas = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :hydro);
 ```
 
 ```
@@ -507,7 +511,7 @@ HydroDataType
 ```
 
 ```julia
-part = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", :particles);
+part = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :particles);
 ```
 
 ```
@@ -534,7 +538,7 @@ PartDataType
 Complete data is loaded, and the selected subregion is returned:
 
 ```julia
-gas = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", :hydro,
+gas = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :hydro,
                     xrange=[-10,10],
                     yrange=[-10,10], zrange=[-2,2],
                     center=[:boxcenter],
@@ -561,8 +565,8 @@ Existing AMR, hydro, gravity, particle, and clump data is sequentially stored in
 ### Full Data
 
 ```julia
-cvd = convertdata(300, path="/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10",
-                  fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/");
+cvd = convertdata(300, path="$MERA_EXAMPLES/RAMSES/mw_L10",
+                  fpath="$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
@@ -664,8 +668,8 @@ to = TimerOutput();
 
 ```julia
 @timeit to "MERA" begin
-    @timeit to "hydro"     gas = loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", :hydro, )
-    @timeit to "particles" part= loaddata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", :particles)
+    @timeit to "hydro"     gas = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :hydro, )
+    @timeit to "particles" part= loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :particles)
 end;
 ```
 
@@ -743,8 +747,8 @@ In this example, the disk space is reduced by a factor of 2.631810169098424 !!
 
 ```julia
 cvd = convertdata(300, [:hydro, :particles],
-                  path="/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10",
-                  fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/");
+                  path="$MERA_EXAMPLES/RAMSES/mw_L10",
+                  fpath="$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
@@ -792,8 +796,8 @@ To use any of these, replace the compress = true argument with an instance of th
 ```julia
 using Mera.CodecZlib
 cvd = convertdata(300, [:hydro, :particles], compress=ZlibCompressor(),
-                  path="/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10",
-                  fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/");
+                  path="$MERA_EXAMPLES/RAMSES/mw_L10",
+                  fpath="$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
@@ -828,7 +832,7 @@ Final Statistics:
 ```
 
 ```julia
-savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/",
+savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/",
             fmode=:write, compress=ZlibCompressor());
 ```
 
@@ -891,8 +895,8 @@ Add a description to the files:
 ```julia
 comment = "The simulation is...."
 cvd = convertdata(300, [:hydro, :particles], comments=comment,
-                  path="/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/mw_L10",
-                  fpath="/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/");
+                  path="$MERA_EXAMPLES/RAMSES/mw_L10",
+                  fpath="$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
@@ -928,7 +932,7 @@ Final Statistics:
 
 ```julia
 comment = "The simulation is...."
-savedata(gas, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", comments=comment, fmode=:write);
+savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", comments=comment, fmode=:write);
 ```
 
 ```
@@ -956,7 +960,7 @@ Total file size: 1.276 GB
 Load the comment (hydro) from JLD2 file:
 
 ```julia
-vd = viewdata(300, "/Volumes/FASTStorage/Simulations/Mera-Tests/MERA-FILES/JLD2_files/", verbose=false);
+vd = viewdata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", verbose=false);
 ```
 
 ```julia

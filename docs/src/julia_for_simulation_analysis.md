@@ -27,9 +27,13 @@ Julia compiles functions the first time they run with a given argument type. The
 projection of a session takes seconds of compilation; the second is pure runtime:
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, CairoMakie
 CairoMakie.activate!()
-BASE = "/Volumes/FASTStorage/Simulations/Mera-Tests"   # <-- change me
+BASE = MERA_EXAMPLES   # <-- change me
 info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"), verbose=false)
 gas  = gethydro(info, verbose=false, show_progress=false)
 proj() = projection(gas, :sd; pxsize=[0.4, :kpc], verbose=false, show_progress=false)

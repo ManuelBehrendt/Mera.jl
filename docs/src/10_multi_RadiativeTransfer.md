@@ -42,6 +42,10 @@ the modes are defined once below). `:Np_total` is the sum over all groups — it
 or descriptor knowledge, so it is the perfect first look.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera, PyPlot, Statistics
 rc("figure", dpi=300); rc("savefig", dpi=300)
 
@@ -54,7 +58,7 @@ function show_map(M; logscale=false, cmap="inferno", clabel="", ttl="")
     xlabel("x [pixel]"); ylabel("y [pixel]"); tight_layout()
 end
 
-path = "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/rt_stromgren"
+path = "$MERA_EXAMPLES/RAMSES/rt_stromgren"
 info = getinfo(3, path)                 # prints the simulation overview incl. the RT block
 rt   = getrt(info, verbose=false)       # → RtDataType, like gethydro
 p    = projection(rt, :Np_total, verbose=false, show_progress=false)

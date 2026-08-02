@@ -96,11 +96,15 @@ projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area
 First, we configure the development environment and load the required packages for this tutorial.
 
 ```julia
+# Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera-Tests");
+
 using Mera
 
 # Load simulation metadata
 # Replace with your simulation path and output number
-info = getinfo(400, "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/manu_sim_sf_L14")
+info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14")
 
 # Load hydrodynamical data with specified constraints
 # smallr: sets minimum density value in loaded data, lmax: maximum level to load
