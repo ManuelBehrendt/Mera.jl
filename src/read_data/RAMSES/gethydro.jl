@@ -339,9 +339,30 @@ function gethydro(dataobject::InfoType;
     rdr = _reader_by_simcode(dataobject.simcode)
     if rdr !== nothing && rdr.code !== :ramses
         haskey(rdr.funcs, :hydro) || _capability_error(rdr, :hydro, "gethydro")
+        # `myargs` must be applied BEFORE delegating. The block that folds it into the plain
+        # keywords sits further down, on the RAMSES-only path, so forwarding here without it
+        # silently sent the DEFAULTS to the frontend: a caller asking for a sub-box via
+        # `myargs=ArgumentsType(xrange=…)` received the whole domain, and every reduction that
+        # followed answered for the whole domain. Same shape as the bug already fixed in
+        # getparticles (see its delegation comment).
+        if !(myargs.lmax       === missing)       lmax = myargs.lmax end
+        if !(myargs.xrange     === missing)     xrange = myargs.xrange end
+        if !(myargs.yrange     === missing)     yrange = myargs.yrange end
+        if !(myargs.zrange     === missing)     zrange = myargs.zrange end
+        if !(myargs.center     === missing)     center = myargs.center end
+        if !(myargs.range_unit === missing) range_unit = myargs.range_unit end
+        if !(myargs.verbose    === missing)    verbose = myargs.verbose end
+
         lmax < dataobject.levelmax && @warn "gethydro: `lmax` is not applied to the " *
             "$(dataobject.simcode) reader — external readers load all leaf cells; choose the " *
             "resolution at analysis time instead (e.g. `projection(…, lmax=, res=)`)." maxlog=1
+        # `vars` is a NAMED parameter, so it never reaches `kwargs...` and used to be dropped in
+        # silence — a column selection returned every variable instead. None of the external
+        # hydro frontends implements column selection, so refuse rather than pretend.
+        vars == [:all] || throw(ArgumentError(
+            "gethydro: column selection (vars=$vars) is not implemented for the " *
+            "$(dataobject.simcode) reader — every variable in the file is returned. " *
+            "Drop `vars`, or select columns after loading."))
         return rdr.funcs[:hydro](dataobject; xrange=xrange, yrange=yrange, zrange=zrange,
                                  center=center, range_unit=range_unit, verbose=verbose, kwargs...)
     end

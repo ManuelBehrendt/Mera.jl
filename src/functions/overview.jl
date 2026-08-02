@@ -927,6 +927,22 @@ function checkoutputs(path::String="./"; verbose::Bool=true)
     end
     return CheckOutputNumberType(existing_outputs, missing_outputs, path)
 end
+"""
+    checksimulations(path="."; verbose=true, filternames=String[]) -> Dict
+
+Scan `path` for simulation folders and report which outputs each one holds.
+
+Where [`checkoutputs`](@ref) inspects a single simulation, this walks a directory of them — the
+view you want when a project directory holds many runs and you need to know what is on disk
+before loading anything. `filternames` restricts the scan to named subfolders.
+
+```julia
+checksimulations("/data/simulations")               # every run under the folder
+checksimulations("/data", filternames=["mw_L10"])   # just one
+```
+
+See also [`checkoutputs`](@ref), [`storageoverview`](@ref).
+"""
 function checksimulations(path::String="./"; verbose::Bool=true, filternames=String[])
 
     verbose = checkverbose(verbose)

@@ -1242,39 +1242,11 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                             values_level = data_dict[var][mask_level]
                             weights_level = weightval[mask_level] * weight_scale
                             
-                            # Apply geometric center alignment corrections if available
-                            if isdefined(Main, :get_center_correction)
-                                try
-                                    # Initialize geometric correction system if needed
-                                    if isdefined(Main, :initialize_geometric_correction)
-                                        available_levels = sort(unique(leveldata))
-                                        spatial_ranges = [ranges[1]*boxlen, ranges[2]*boxlen, ranges[3]*boxlen, 
-                                                        ranges[4]*boxlen, ranges[5]*boxlen, ranges[6]*boxlen]
-                                        Main.initialize_geometric_correction((length1, length2), spatial_ranges, dataobject.boxlen, available_levels)
-                                    end
-                                    
-                                    # Apply level-specific corrections
-                                    correction = Main.get_center_correction(level:level)
-                                    
-                                    if length(correction) >= 2 && all(isfinite.(correction)) && (correction[1] != 0.0 || correction[2] != 0.0)
-                                        dx_phys = correction[1] * dataobject.boxlen
-                                        dy_phys = correction[2] * dataobject.boxlen
-                                        
-                                        if isfinite(dx_phys) && isfinite(dy_phys)
-                                            x_level = x_level .+ dx_phys
-                                            y_level = y_level .+ dy_phys
-                                            
-                                            if verbose && verbose_threads && thread_id == 1
-                                                println("Applied geometric center correction for level $level: dx=$(round(correction[1], digits=6)), dy=$(round(correction[2], digits=6))")
-                                            end
-                                        end
-                                    end
-                                catch e
-                                    if verbose && verbose_threads && thread_id == 1
-                                        println("Warning: Could not apply geometric correction for level $level: $e")
-                                    end
-                                end
-                            end
+                            # NOTE: a geometric-centre-correction hook into Main was removed here. It called
+                            # Main.get_center_correction / Main.initialize_geometric_correction — functions that
+                            # exist nowhere in this package. Dead by default, but any user or notebook global
+                            # of that name silently shifted every projected cell, with failures swallowed into a
+                            # verbose-only message. A debug scaffold does not belong in the production path.
                             
                             # Project this level directly to variable's final grid.
                             #
@@ -1369,52 +1341,11 @@ function projection(   dataobject::Union{HydroDataType, RtDataType}, vars::Array
                     y_level = yval[mask_level]
                     weights_level = weightval[mask_level] * weight_scale  # Apply weight unit scaling
                     
-                    # Apply geometric center alignment corrections if available
-                    if isdefined(Main, :get_center_correction)
-                        try
-                            # Always try to initialize geometric correction system first
-                            # This is safe - if already initialized, it will be skipped
-                            if isdefined(Main, :initialize_geometric_correction)
-                                # Extract projection parameters - use leveldata which is already computed
-                                available_levels = sort(unique(leveldata))
-                                # Convert ranges to physical coordinates: [xmin, xmax, ymin, ymax, zmin, zmax]
-                                spatial_ranges = [ranges[1]*boxlen, ranges[2]*boxlen, ranges[3]*boxlen, ranges[4]*boxlen, ranges[5]*boxlen, ranges[6]*boxlen]
-                                # Use length1, length2 for resolution (these are the actual Mera.jl resolution variables)
-                                Main.initialize_geometric_correction((length1, length2), spatial_ranges, dataobject.boxlen, available_levels)
-                            end
-                            
-                            # CRITICAL FIX: Apply level-specific corrections, not range-averaged corrections
-                            # Each AMR level needs its own geometric correction for proper alignment
-                            correction = Main.get_center_correction(level:level)  # Use current level only
-                            
-                            # SAFETY CHECK: Ensure corrections are finite (prevent NaN crashes)
-                            if length(correction) >= 2 && all(isfinite.(correction)) && (correction[1] != 0.0 || correction[2] != 0.0)
-                                # Convert corrections from fractional to physical coordinates
-                                # Corrections are in boxlen-relative units, convert to coordinate units
-                                dx_phys = correction[1] * dataobject.boxlen
-                                dy_phys = correction[2] * dataobject.boxlen
-                                
-                                # Additional safety check for physical corrections
-                                if isfinite(dx_phys) && isfinite(dy_phys)
-                                    x_level = x_level .+ dx_phys
-                                    y_level = y_level .+ dy_phys
-                                    
-                                    if verbose
-                                        println("Applied geometric center correction for level $level: dx=$(round(correction[1], digits=6)), dy=$(round(correction[2], digits=6))")
-                                    end
-                                elseif verbose
-                                    println("Skipping geometric correction for level $level: non-finite physical corrections")
-                                end
-                            elseif verbose && !all(isfinite.(correction))
-                                println("Skipping geometric correction for level $level: non-finite correction values (thin slice projection)")
-                            end
-                        catch ex
-                            # Silently continue if center alignment correction fails
-                            if verbose
-                                println("Warning: Geometric center correction failed: $ex")
-                            end
-                        end
-                    end
+                    # NOTE: a geometric-centre-correction hook into Main was removed here. It called
+                    # Main.get_center_correction / Main.initialize_geometric_correction — functions that
+                    # exist nowhere in this package. Dead by default, but any user or notebook global
+                    # of that name silently shifted every projected cell, with failures swallowed into a
+                    # verbose-only message. A debug scaffold does not belong in the production path.
                     
                     # Process each variable for this level
                     for var in keys(data_dict)
