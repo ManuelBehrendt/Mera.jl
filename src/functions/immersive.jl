@@ -1212,16 +1212,40 @@ flythrough(args...; kwargs...) = error(
     "`flythrough` records an mp4 and needs a Makie backend — run `using CairoMakie` (loads MeraMakieExt). " *
     "For a Makie-free still summary of the path use `flythrough_montage`.")
 
-# `interactive_view` opens a live window that re-ray-casts the AMR data on orbit/zoom → real method in
-# MeraMakieExt (needs an INTERACTIVE backend, GLMakie). It marches the pure AMR octree per frame — no
-# uniform grid — at a low resolution while dragging and a crisp one on release.
+"""
+    interactive_view(vol; target=boxcenter(vol), distance=0.6·boxlen, azimuth=0.6, elevation=0.5,
+                     fov_deg=55, mode=:max, level=1.0, res=420, drag_res=170, smooth=true,
+                     colormap=:inferno, logscale=true) -> Figure
+
+Open a live window that **ray-casts the pure AMR data directly** (no uniform grid) and re-renders as
+you orbit (left-drag) and zoom (scroll) — low resolution while dragging, crisp on release. `mode` is
+any [`render_view`](@ref) mode (`:max`/`:emission`/`:rt`/`:iso`…).
+
+Requires an **interactive** Makie backend: `using GLMakie`. CairoMakie cannot open interactive
+windows, so with it loaded this raises an informative error instead. For static output use
+[`render_view`](@ref) / [`view_figure`](@ref).
+
+The method lives in the `MeraMakieExt` package extension; this docstring is attached to the
+generic function so it reaches `?interactive_view` and the API reference whether or not a Makie
+backend is loaded.
+"""
 function interactive_view end
 interactive_view(args...; kwargs...) = error(
     "`interactive_view` opens a live, mouse-controlled window and needs an INTERACTIVE Makie backend — " *
     "run `using GLMakie` (CairoMakie cannot show interactive windows). It re-renders the AMR data directly.")
 
-# `view_colorbar` shows a SCALAR render_view map (column_map / moment / single field) with a labelled,
-# aligned colorbar so you can read values off it → real method in MeraMakieExt (needs a Makie backend).
+"""
+    view_colorbar(img; colormap=:inferno, logscale=true, …) -> Figure
+
+Draw a **scalar** map — a `column_map`, a moment, or a single rendered field — with a labelled,
+aligned colorbar, so values can be read off the image rather than judged by eye.
+
+Requires a Makie backend (`using CairoMakie`). For a bare image with no axes or colorbar use
+[`view_figure`](@ref) / [`as_image`](@ref).
+
+The method lives in the `MeraMakieExt` package extension; this docstring is attached to the
+generic function so it reaches `?view_colorbar` and the API reference regardless.
+"""
 function view_colorbar end
 view_colorbar(args...; kwargs...) = error(
     "`view_colorbar` draws a scalar map with a value colorbar and needs a Makie backend — run " *
