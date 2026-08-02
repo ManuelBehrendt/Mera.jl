@@ -27,7 +27,7 @@
 #   UPLOAD=1 ./scripts/run_coverage_with_notebooks.sh     # ... and upload
 #
 # Env overrides:
-#   NOTEBOOK_DIR   default: /Volumes/FASTStorage/Simulations/Mera-Docs/version_1.1
+#   NOTEBOOK_DIR   default: /Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1
 #   COV_KERNEL     default: mera-docs-1.12-cov-1.12
 #   JULIA          default: julia +1.12
 set -euo pipefail
@@ -35,7 +35,7 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-NOTEBOOK_DIR="${NOTEBOOK_DIR:-/Volumes/FASTStorage/Simulations/Mera-Docs/version_1.1}"  # moved 2026-07-02 to the drive; renamed version_2 -> version_1.1 on 2026-07-28
+NOTEBOOK_DIR="${NOTEBOOK_DIR:-/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1}"  # moved 2026-07-02 to the drive; renamed version_2 -> version_1.1 on 2026-07-28
 COV_KERNEL="${COV_KERNEL:-mera-docs-1.12-cov-1.12}"
 JULIA="${JULIA:-julia +1.12}"
 
