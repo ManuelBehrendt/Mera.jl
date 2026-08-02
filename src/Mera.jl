@@ -61,7 +61,32 @@ using TimerOutputs
 using WAV
 using WriteVTK
 
+"""
+Global switch controlling whether Mera functions print their status output.
+
+`nothing` (the default) leaves each function on its own `verbose` keyword; setting `true` or
+`false` overrides them all. Prefer [`verbose`](@ref) to change it, which also reports the
+new state.
+
+```julia
+verbose(false)     # silence every function
+verbose(nothing)   # hand control back to the per-call keywords
+```
+"""
 global verbose_mode = nothing
+
+"""
+Global switch controlling whether Mera functions show progress bars.
+
+`nothing` (the default) leaves each function on its own `show_progress` keyword; setting
+`true` or `false` overrides them all. Prefer [`showprogress`](@ref) to change it, which also
+reports the new state.
+
+```julia
+showprogress(false)     # hide every progress bar
+showprogress(nothing)   # hand control back to the per-call keywords
+```
+"""
 global showprogress_mode = nothing
 
 export

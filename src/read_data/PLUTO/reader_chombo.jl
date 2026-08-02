@@ -78,6 +78,15 @@ function _covered(coarse::_Level, fine::_Level, ref::Int)
     return cov
 end
 
+"""
+    getinfo_chombo(output, path; verbose=true)
+
+Read the metadata of a Chombo HDF5 output: component names, level count and grid layout,
+returned as an `InfoType`.
+
+The Chombo-specific entry point behind [`getinfo`](@ref), which dispatches here when it
+detects a Chombo file. Prefer `getinfo`, which keeps your script code-agnostic.
+"""
 function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
     fn = _chombo_file(output, path)
     h5open(fn, "r") do f
@@ -125,6 +134,15 @@ function getinfo_chombo(output::Int, path::String; verbose::Bool=true)
     end
 end
 
+"""
+    gethydro_chombo(info; xrange, yrange, zrange, center, range_unit=:standard, verbose=true)
+
+Read cell data from a Chombo HDF5 output into a `HydroDataType`, optionally restricted to a
+spatial range.
+
+The Chombo-specific entry point behind [`gethydro`](@ref), which dispatches here for Chombo
+data. Prefer `gethydro`, which keeps your script code-agnostic.
+"""
 function gethydro_chombo(info::InfoType;
                          xrange=[missing, missing], yrange=[missing, missing], zrange=[missing, missing],
                          center=[0., 0., 0.], range_unit::Symbol=:standard, verbose::Bool=true)

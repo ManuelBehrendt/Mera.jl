@@ -9,6 +9,18 @@
 #  wall-time target (the budget mode behind `report(...; budget_s=…)`).
 # =====================================================================================
 
+"""
+Mutable Struct: The runtime cost model behind [`report`](@ref)'s dry-run and budget modes
+
+Holds the per-unit coefficients of the work a report does — per read, per cell, per
+projection pixel, per deposited cell, per histogram bin, per particle — together with
+multiplicative corrections learned per cost class, so estimates track this machine rather
+than a generic one. Corrections are updated passively from every real `report` run, or
+actively via `calibrate!`.
+
+`preview` prints the resulting dry-run; `downsample` shrinks a plan to a wall-time target,
+which is the mechanism behind `report(...; budget_s=…)`.
+"""
 mutable struct CostModel
     β_open::Float64    # per-read fixed (× ncpu)
     β_io::Float64      # per cell × variable read

@@ -108,6 +108,15 @@ function _keep_smaller(original::String, candidate::String)
 end
 
 # Image optimization function for Zulip uploads using existing Mera dependencies
+"""
+    optimize_image_for_zulip(image_path; max_dimension=1024, max_file_size=1_000_000)
+
+Shrink an image so it uploads comfortably to Zulip, returning a path to use.
+
+Downscales past `max_dimension` and re-encodes to approach `max_file_size`. Re-encoding can
+make an already-small PNG *larger*, so the result is whichever file is genuinely smaller —
+the original is returned unchanged when optimisation would not help.
+"""
 function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_file_size=1_000_000)
     try
         # Check file size first
@@ -185,6 +194,14 @@ function optimize_image_for_zulip(image_path::String; max_dimension=1024, max_fi
 end
 
 # Simple base64 encoding function for Zulip authentication
+"""
+    simple_base64encode(s)
+
+Base64-encode a string.
+
+A dependency-free helper used to build the HTTP Basic auth header for Zulip; it exists so
+notifications need no extra package. Not intended as a general-purpose codec.
+"""
 function simple_base64encode(s::String)
     # Base64 encoding table
     table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
