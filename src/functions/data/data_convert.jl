@@ -136,9 +136,7 @@ println("Compression ratio: ", stats["benchmark"]["compression_ratio"])
 println("Threads used: ", stats["threading"]["effective_threads"])
 
 """
-
-# Method 1: Vector{Symbol} datatypes specification
-function convertdata(output::Int, datatypes::Array{Symbol, 1};
+function convertdata(output::Int, datatypes::Array{Symbol, 1};   # Method 1: Vector{Symbol} datatypes
                     path::String="./", fpath::String="./",
                     fname = "output_",
                     compress::Any=nothing,

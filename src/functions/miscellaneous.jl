@@ -10,11 +10,39 @@ const MERA_INFO_CACHE = Dict{String, Any}()
 const MERA_CACHE_ENABLED = get(ENV, "MERA_CACHE_ENABLED", "true") == "true"
 
 
+"""
+    createconstants!(info::InfoType) -> InfoType
+
+Fill `info.constants` with Mera's CGS constant table and return `info`. The in-place companion of
+[`createconstants`](@ref); `getinfo` calls it for you, so you need this only when building an
+`InfoType` by hand.
+"""
 function createconstants!(dataobject::InfoType)
     dataobject.constants = createconstants()
     return dataobject
 end
 
+"""
+    createconstants() -> PhysicalUnitsType
+
+Return Mera's table of physical constants in **CGS** units — `G`, `c`, `kB`, `mH`, `Msol`, `pc`,
+`yr` and the rest. This is what `info.constants` holds, and what every derived quantity is built
+from.
+
+Use it to get the constants without an `InfoType` in hand; [`createconstants!`](@ref) fills the
+field on an existing `info` instead.
+
+```julia
+c = createconstants()
+c.G       # 6.6743e-8  cm³ g⁻¹ s⁻²
+c.Msol    # 1.9891e33  g
+```
+
+Mixing these CGS constants with code-unit quantities is the classic source of silently wrong
+answers — convert first, e.g. `getvar(gas, :rho, :g_cm3)`.
+
+See also [`createconstants!`](@ref), [`createscales`](@ref), [`getunit`](@ref).
+"""
 function createconstants()
 
     #---------------------------------------------------
@@ -94,6 +122,22 @@ function createscales!(dataobject::InfoType)
 end
 
 # create scales-field from existing InfoType
+"""
+    createscales(info::InfoType) -> ScalesType
+    createscales(unit_l, unit_d, unit_t, unit_m, constants) -> ScalesType
+
+Build the unit-conversion table — the object behind `info.scale`. Every entry is the factor that
+takes a code-unit quantity into that unit, so `getvar(gas, :rho) .* info.scale.g_cm3` and
+`getvar(gas, :rho, :g_cm3)` agree.
+
+The four-number form builds scales without an `InfoType`, which is how the unit tests check the
+conversions against CODATA without reading a snapshot.
+
+Note a scale of exactly `1.0` cannot detect an inverted conversion (`x*1 == x/1`) — a fixture whose
+`scale.kpc` is 1 will not catch a reciprocal bug.
+
+See also [`createscales!`](@ref), [`createconstants`](@ref), [`getunit`](@ref).
+"""
 function createscales(dataobject::InfoType)
     unit_l = dataobject.unit_l
     unit_d = dataobject.unit_d
@@ -447,6 +491,30 @@ end
 
 
 
+"""
+    getunit(dataobject, quantity::Symbol, vars, units; uname=false) -> Real
+    getunit(info::InfoType, unit::Symbol; uname=false) -> Real
+
+Return the numerical factor that converts `quantity` from Mera's internal **code units** into the
+requested unit, or `1.0` when `:standard` (code units) is asked for.
+
+This is the conversion every `getvar(gas, :rho, :g_cm3)`-style call performs internally. Reach for
+it directly when you hold raw arrays and need the same factor Mera would apply — multiplying by it
+is exactly what the unit argument does.
+
+```julia
+getunit(info, :Msol)                       # grams-per-code-mass -> Msol factor
+rho_cgs = getvar(gas, :rho) .* getunit(info, :g_cm3)   # equivalent to getvar(gas, :rho, :g_cm3)
+```
+
+With `uname=true` the unit's name is returned alongside the factor, which is what the plotting
+helpers use to label axes.
+
+Mixing a code-unit array with a CGS constant is the classic source of silently wrong answers —
+this function is how you avoid it.
+
+See also [`createscales`](@ref), [`createconstants`](@ref), [`getvar`](@ref).
+"""
 function getunit(dataobject, quantity::Symbol, vars::Array{Symbol,1}, units::Array{Symbol,1}; uname::Bool=false)
     idx = findall(x->x==quantity, vars)
     if length(idx) >= 1

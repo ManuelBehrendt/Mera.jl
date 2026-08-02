@@ -296,6 +296,23 @@ Fuses mass and variable data access for optimal performance.
     end
 end
 
+"""
+    average_mweighted(dataobject, var::Symbol; mask=[false]) -> Float64
+
+Mass-weighted mean of `var` over the cells or particles in `dataobject`:
+``\\langle q \\rangle_m = \\sum m_i q_i / \\sum m_i``.
+
+The mass weight is the natural one for intensive quantities — it follows the dense gas, whereas
+a volume weight follows the diffuse. Use [`wstat`](@ref) when you also want the median, spread or
+higher moments, or to weight by something other than mass.
+
+```julia
+average_mweighted(gas, :T)              # mass-weighted mean temperature, code units
+average_mweighted(gas, :T, mask=hot)    # over a subset only
+```
+
+See also [`wstat`](@ref), [`center_of_mass`](@ref), [`bulk_velocity`](@ref).
+"""
 function average_mweighted(dataobject::ContainMassDataSetType, var::Symbol; mask::MaskType=[false])
     # Use metaprogramming for compile-time optimization
     return average_mweighted_metaprog(dataobject, Val(var), mask)
