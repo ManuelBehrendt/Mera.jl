@@ -25,6 +25,13 @@ _finite_extrema(a) = (v = filter(isfinite, vec(a)); isempty(v) ? (NaN, NaN) : ex
 # =====================================================================================
 #  Recipe cards (what the user composes). The card TYPE selects the Mera function.
 # =====================================================================================
+"""
+Abstract supertype of the recipe cards you compose into a [`report`](@ref).
+
+A card describes one panel — what to compute and how to draw it — and its concrete type
+selects which Mera function runs. `ProjectionCard` is the most common; others cover phase
+diagrams, profiles and scalars. Build a list of cards and hand it to `report`.
+"""
 abstract type ReportCard end
 
 struct ProjectionCard <: ReportCard

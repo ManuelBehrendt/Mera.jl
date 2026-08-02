@@ -207,9 +207,16 @@ mutable struct ScalesType002
    ScalesType002() = new()
 end
 
-# Current scale type. Identical to ScalesType002 plus the :nG (nanogauss) magnetic unit. Versioned
-# (rather than adding a field to ScalesType002) so pre-existing mera/JLD2 files — which store the
-# 133-field ScalesType002 layout — still reconstruct; the JLD2 typemap upgrades them to ScalesType003.
+"""
+Mutable Struct: Contains the unit scales of the loaded simulation
+
+The current scale type, reachable as `info.scale` and as the `scale` field of every data
+object. Each field converts a code-unit value into that physical unit, e.g. `scale.kpc`.
+
+Identical to `ScalesType002` plus the `:nG` (nanogauss) magnetic unit. Versioned rather than
+extended in place so pre-existing mera/JLD2 files — which store the 133-field
+`ScalesType002` layout — still reconstruct; the JLD2 typemap upgrades them on load.
+"""
 mutable struct ScalesType003
 # exported
 
@@ -405,7 +412,13 @@ mutable struct ScalesType003
    ScalesType003() = new()
 end
 
-# needed for loading older JLD2 files
+"""
+Mutable Struct: Legacy unit-scale layout, retained so older mera/JLD2 files still load
+
+Superseded by [`ScalesType003`](@ref), which is what new data carries. This type exists only
+so files written by earlier Mera versions can be reconstructed and upgraded on load; it is
+not what you get from a current [`getinfo`](@ref).
+"""
 mutable struct ScalesType001
 # exported
 
@@ -546,7 +559,13 @@ Mutable Struct: Contains the physical constants in cgs units
      PhysicalUnitsType002() = new()
 end
 
-# needed for loading older JLD2 files
+"""
+Mutable Struct: Legacy physical-constants layout, retained so older mera/JLD2 files still load
+
+Superseded by `PhysicalUnitsType002`, which is what `info.constants` carries today. This type
+exists only so files written by earlier Mera versions can be reconstructed and upgraded on
+load. Values are in cgs units.
+"""
 mutable struct PhysicalUnitsType001
 # exported
     # in cgs units
@@ -582,6 +601,12 @@ mutable struct PhysicalUnitsType001
      PhysicalUnitsType001() = new()
 end
 
+"""
+Mutable Struct: Contains the full paths of the files belonging to one simulation output
+
+Reachable as `info.fnames`. Each field is the resolved path Mera reads for that component,
+e.g. `info.fnames.hydro`, which is useful when checking what a reader actually opened.
+"""
 mutable struct FileNamesType
     output::String
     info::String
@@ -830,8 +855,14 @@ end
 
 
 
-# exported
-mutable struct GravDataType <: DataSetType
+"""
+Mutable Struct: Contains gravity data and information about the selected simulation
+
+Returned by [`getgravity`](@ref). Holds the selected leaf cells in `data`, the originating
+[`InfoType`](@ref) in `info`, and the unit scales in `scale`.
+> GravDataType <: DataSetType
+"""
+mutable struct GravDataType <: DataSetType # exported
     data::IndexedTables.AbstractIndexedTable
     info::InfoType
     lmin::Int
@@ -844,11 +875,15 @@ mutable struct GravDataType <: DataSetType
     GravDataType() = new()
 end
 
-# exported
-# RAMSES radiative-transfer (RT) leaf-cell data — same AMR cell structure as hydro,
-# with nvarrt variables (per photon group g: Np = photon number density, plus the
-# flux components Fx/Fy/Fz). Mirrors GravDataType.
-mutable struct RtDataType <: DataSetType
+"""
+Mutable Struct: Contains radiative-transfer (RT) data and information about the selected simulation
+
+Returned by [`getrt`](@ref). Same AMR leaf-cell structure as hydro, carrying the `nvarrt`
+RT variables: per photon group `g`, the photon number density `Np` plus the flux components
+`Fx`/`Fy`/`Fz`. Mirrors [`GravDataType`](@ref).
+> RtDataType <: DataSetType
+"""
+mutable struct RtDataType <: DataSetType # exported
     data::IndexedTables.AbstractIndexedTable
     info::InfoType
     lmin::Int
@@ -902,8 +937,23 @@ MaskType = Union{Array{Bool,1},BitArray{1}}
 """
 MaskType = Union{Array{Bool,1},BitArray{1}} # exported
 
+"""
+Union Type: A vector of masks, one per data object
 MaskArrayType = Union{ Array{Array{Bool,1},1}, Array{BitArray{1},1} }
-MaskArrayAbstractType = Union{ MaskArrayType, Array{AbstractArray{Bool,1},1} } # used for the combined center_of_mass function
+
+Used where several data objects are processed together and each needs its own mask, as
+opposed to [`MaskType`](@ref), which is a single mask.
+"""
+MaskArrayType = Union{ Array{Array{Bool,1},1}, Array{BitArray{1},1} } # exported
+
+"""
+Union Type: [`MaskArrayType`](@ref) widened to accept any `AbstractArray{Bool,1}` element
+MaskArrayAbstractType = Union{ MaskArrayType, Array{AbstractArray{Bool,1},1} }
+
+The looser form accepted by functions that take masks for several objects at once, such as
+the combined `center_of_mass` method.
+"""
+MaskArrayAbstractType = Union{ MaskArrayType, Array{AbstractArray{Bool,1},1} } # exported
 #HydroPartType = Union{HydroDataType, PartDataType}
 
 """

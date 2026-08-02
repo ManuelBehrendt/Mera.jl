@@ -18,10 +18,16 @@ end
 # they are kept only for backward compatibility).
 _mera_cache_enabled() = get(ENV, "MERA_CACHE_ENABLED", "true") == "true"
 
+"""
+    enhanced_fortran_read(file_path, read_function; use_cache=true)
+
+Read a Fortran record file through Mera's buffered, optionally cached IO path, applying
+`read_function` to the opened stream.
+
+An internal helper behind the RAMSES readers rather than something to call directly; caching
+is additionally gated by `configure_mera_io(cache=…)` and `ENV["MERA_CACHE_ENABLED"]`.
+"""
 function enhanced_fortran_read(file_path::String, read_function::Function; use_cache=true)
-    """
-    Enhanced FORTRAN file reading with caching and buffer optimization
-    """
     # Check cache first for repeated reads
     if use_cache && _mera_cache_enabled() && haskey(MERA_INFO_CACHE, file_path)
         cache_entry = MERA_INFO_CACHE[file_path]
@@ -62,8 +68,17 @@ function enhanced_fortran_read(file_path::String, read_function::Function; use_c
     end
 end
 
+"""
+    clear_mera_cache!()
+
+Empty the cache of simulation metadata that Mera keeps between [`getinfo`](@ref) calls, and
+report how many entries were dropped.
+
+Useful when a simulation folder changed on disk during a session and you want the next
+`getinfo` to re-read it rather than reuse what it saw earlier. See
+[`show_mera_cache_stats`](@ref) to inspect the cache first.
+"""
 function clear_mera_cache!()
-    """Clear the MERA file metadata cache"""
     if @isdefined(MERA_INFO_CACHE)
         cache_size = length(MERA_INFO_CACHE)
         empty!(MERA_INFO_CACHE)
@@ -73,8 +88,16 @@ function clear_mera_cache!()
     end
 end
 
+"""
+    show_mera_cache_stats()
+
+Print what the simulation-metadata cache currently holds: the number of entries and the path
+behind each one.
+
+Use it to check whether a [`getinfo`](@ref) call was served from cache before reaching for
+[`clear_mera_cache!`](@ref).
+"""
 function show_mera_cache_stats()
-    """Show statistics about the MERA file cache"""
     if !@isdefined(MERA_INFO_CACHE) || isempty(MERA_INFO_CACHE)
         println("MERA cache: empty")
     else

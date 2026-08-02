@@ -165,6 +165,14 @@ function save_thread_statistics(results::Dict, filename::String)
 end
 
 # Main function to run a single-thread configuration benchmark and save results
+"""
+    run_reading_benchmark(output_number, path)
+
+Time reading one RAMSES output under the current thread configuration and save the result.
+
+Used to produce the parallel RAMSES-reading benchmark in the documentation; run it once per
+thread setting to build the scaling curve.
+"""
 function run_reading_benchmark(output_number, path)
     # Gather thread configuration info
     thread_info = get_startup_thread_info()

@@ -1,4 +1,12 @@
 
+"""
+    run_merafile_benchmark(path, output, num_repeats=10)
+
+Time repeated reads of a compressed mera/JLD2 file and print the resulting statistics.
+
+Used to produce the Mera-Files reading benchmark in the documentation. It reads the same
+output `num_repeats` times, so point it at a small dataset.
+"""
 function run_merafile_benchmark(path::String, output::Int, num_repeats::Int=10)
     println("Starting Benchmark: Reading compressed MERA files from $path (output $output)")
     println("Number of repetitions: $num_repeats")

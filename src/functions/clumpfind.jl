@@ -65,16 +65,40 @@ end
 #  Both index an arbitrary `ids` subset of the coordinate arrays (the FoF pass uses `1:n`; a
 #  per-group watershed indexes just that group's members), so the same code serves both.
 # =====================================================================================
+"""
+Abstract supertype of the spatial indices used to find neighbours during clump finding.
+
+Concrete subtypes are [`HashGrid`](@ref) and [`CellLinkedList`](@ref); [`clumpfind`](@ref)
+picks one automatically from the particle count and density. Both index an arbitrary `ids`
+subset of the coordinate arrays, so the same code serves the FoF pass and the per-group
+watershed.
+"""
 abstract type AbstractNeighborIndex end
 
 @inline _cellkey(inv_b, x, y, z, i) =
     (floor(Int, x[i] * inv_b), floor(Int, y[i] * inv_b), floor(Int, z[i] * inv_b))
 
+"""
+Neighbour index storing occupied cells in a `Dict`, so memory scales with the number of
+occupied cells rather than the bounding box.
+
+The choice for sparse or widely spread point sets. See [`CellLinkedList`](@ref) for the
+dense counterpart and [`AbstractNeighborIndex`](@ref) for how one is selected.
+> HashGrid <: AbstractNeighborIndex
+"""
 struct HashGrid <: AbstractNeighborIndex
     x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
     b2::Float64; inv_b::Float64
     buckets::Dict{NTuple{3,Int},Vector{Int}}
 end
+"""
+Neighbour index storing cell occupancy in flat arrays covering the whole bounding box, which
+avoids hashing at the cost of memory proportional to that box.
+
+The choice for dense, compact point sets. See [`HashGrid`](@ref) for the sparse counterpart
+and [`AbstractNeighborIndex`](@ref) for how one is selected.
+> CellLinkedList <: AbstractNeighborIndex
+"""
 struct CellLinkedList <: AbstractNeighborIndex
     x::Vector{Float64}; y::Vector{Float64}; z::Vector{Float64}
     b2::Float64; inv_b::Float64
@@ -1013,6 +1037,14 @@ end
 #  meaningful order — membership (unbinding) is applied during the analysis, predicates
 #  after — is enforced regardless of the order they are listed in.
 # =====================================================================================
+"""
+Abstract supertype of the criteria a candidate clump must satisfy to be kept.
+
+Validators passed to [`clumpfind`](@ref) combine as an AND: a clump survives only if it
+passes every one. Concrete subtypes include `MinMembers`, and membership tests such as
+unbinding are applied during the analysis while predicates are applied after — that order is
+enforced regardless of the order you list them in.
+"""
 abstract type AbstractValidator end
 
 """    MinMembers(n)
