@@ -65,7 +65,7 @@ others handle docs, dependency maintenance, and releases.
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `CI.yml` | push / PR to `master` | Runs the **smoke** subset (`MERA_SMOKE_ONLY=1`) on a matrix of Julia `1.10`, `1.11`, and `1.12`, across Ubuntu and macOS, plus a documentation build job. This is the only workflow that runs tests — the full data-backed suite cannot run here because the RAMSES datasets are too large to ship to CI runners. |
+| `CI.yml` | push / PR to `master` | Runs the **smoke** subset (`MERA_SMOKE_ONLY=1`) on a matrix of Julia `1.10`, `1.11`, and `1.12`, across Ubuntu, macOS and Windows (nine jobs), plus a documentation build job. This is the only workflow that runs tests — the full data-backed suite cannot run here because the RAMSES datasets are too large to ship to CI runners. |
 | `documentation.yml` | push / PR / tags | Builds the Documenter site (`docs/make.jl`) and deploys it to the `gh-pages` branch served at <https://manuelbehrendt.github.io/Mera.jl>. |
 | `CompatHelper.yml` | daily cron | Opens PRs to bump `[compat]` bounds in `Project.toml` when dependencies publish new versions. |
 | `TagBot.yml` | Julia registry comment | Creates the GitHub release and git tag automatically once a new version is registered in the Julia General registry. |

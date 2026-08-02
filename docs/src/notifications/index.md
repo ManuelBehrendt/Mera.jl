@@ -32,5 +32,7 @@ Mera workflows and troubleshooting.
 
 !!! note "Platform"
     `bell()` plays a bundled sound via your audio device. Email requires the
-    command-line `mail` client to be installed. Notifications are developed and
-    used on Linux and macOS; Windows is not tested.
+    command-line `mail` client to be installed, which is uncommon on Windows.
+    The package itself is tested on Windows (see the CI matrix on the home page);
+    the notification channels are developed and used on Linux and macOS, and the
+    email path in particular is untested there.
