@@ -39,7 +39,23 @@ GitHub Actions) and uploaded to Codecov via `scripts/run_local_coverage.sh`; see
   Jeans length/mass, virial parameter, cylindrical/spherical velocities, specific angular momentum,
   kinetic/thermal energy and more — all via one `getvar()` interface, extensible with `add_field()`.
 
+## Try it without any data
+
+`synthetic_clumps()` builds real Mera objects in memory, so this runs on a fresh install:
+
+```julia
+using Mera
+F   = synthetic_clumps()          # 51,514 gas cells + 2,438 particles, 8 known clumps
+gas = F.gas
+projection(gas, :sd, :Msol_pc2)   # a 128x128 surface-density map
+```
+
+Every verb in this README works on `gas` exactly as it does on a real snapshot. First call
+takes ~10 s while Julia compiles; later calls are instant.
+
 ## First look: a one-call dashboard
+
+With a simulation on disk, one call gives you the overview:
 
 ```julia
 using Mera

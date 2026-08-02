@@ -21,15 +21,38 @@ Coverage is deepest for RAMSES: it is the only code with dedicated `getgravity`,
 
 ## Quick Start: Choose Your Path
 
-!!! note "5-Minute Demo"
-    **See MERA in action immediately**
+!!! note "Run something now — no data needed"
+    `synthetic_clumps()` builds real Mera objects in memory, so this works on a fresh
+    install with nothing downloaded:
+
     ```julia
     using Mera
-    info = getinfo(1, "path/sim")
-    gas = gethydro(info)
-    projection(gas, :rho)
+    F   = synthetic_clumps()              # 51,514 gas cells + 2,438 particles, 8 known clumps
+    gas = F.gas
+    projection(gas, :sd, :Msol_pc2)       # a 128×128 surface-density map
     ```
-    **[→ Get Started](00_multi_FirstSteps.md)**
+
+    Everything else in these docs — `getvar`, `subregion`, `filterdata`, `profile`,
+    `savedata` — works on `gas` exactly as it does on a real snapshot. Because the clump
+    positions are known, this is also how [clump finding](clumpfind_synthetic.md) is scored
+    against ground truth.
+
+    Expect ~10 s on the first call: Julia compiles as it goes, and later calls are instant.
+
+    **[→ Get Started](00_multi_FirstSteps.md)** · **[→ Coming from Other Tools](switching_to_mera.md)**
+
+!!! tip "Working with your own simulation"
+    Point `getinfo` at an output folder and continue exactly as above:
+
+    ```julia
+    info = getinfo(300, "/path/to/simulation")   # reads output_00300
+    gas  = gethydro(info)
+    ```
+
+    The tutorials use fixtures under `MERA_TEST_DATA` that are not distributed; where a page
+    hardcodes such a path, substitute your own run. Public RAMSES samples suitable for the
+    cosmology and MHD pages are linked from [Cosmological Runs](09_multi_Cosmology.md) and
+    [Magnetic Fields](magnetic_fields.md).
 
 !!! tip "For Scientists"
     **RAMSES expert, new to Julia?**
