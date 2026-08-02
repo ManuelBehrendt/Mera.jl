@@ -137,16 +137,22 @@ ll, thr = 2.0/2^7, 5.0
 P    = Mera._make_points(gas, :rho; threshold=thr, threshold_unit=:standard)
 tlab = [F.true_label(P.x[i], P.y[i], P.z[i]) for i in eachindex(P.x)]
 println("candidate cells above threshold : ", length(P.x))
+println("ground-truth clumps             : ", length(unique(filter(>(0), tlab))))
+println()
+println(rpad("finder", 18), rpad("clumps", 8), rpad("ARI", 8), rpad("completeness", 14), "purity")
 
 for fdr in (ThresholdFoF(:rho;     threshold=thr, linking_length=ll),
             DensityWatershed(:rho; threshold=thr, linking_length=ll, persistence=30.0),
             Dendrogram(:rho;       threshold=thr, linking_length=ll, min_delta=30.0),
-            PersistenceFinder(:rho;threshold=thr, linking_length=ll, persistence=30.0))
+            PersistenceFinder(:rho;threshold=thr, linking_length=ll, persistence=30.0),
+            HDBSCANFinder(:rho;    threshold=thr, linking_length=ll))
     flab, _ = Mera._label(fdr, P)
     r = clump_recovery(flab, tlab)
-    println(rpad(string(nameof(typeof(fdr))), 18), "  ARI=", round(r.ari, digits=3),
-            "  completeness=", round(r.completeness, digits=3),
-            "  purity=", round(r.purity, digits=3))
+    println(rpad(string(nameof(typeof(fdr))), 18),
+            rpad(length(unique(filter(>(0), flab))), 8),
+            rpad(round(r.ari, digits=3), 8),
+            rpad(round(r.completeness, digits=3), 14),
+            round(r.purity, digits=3))
 end
 ```
 
@@ -156,40 +162,52 @@ candidate cells above threshold : 51514
 
 
 ```
+ground-truth clumps             : 8
+```
+
+
+```
+finder            clumps  ARI     completeness  purity
 ThresholdFoF      
 ```
 
 
 ```
-  ARI=0.953  completeness=1.0  purity=0.927
+7       0.953   1.0           0.927
 DensityWatershed  
 ```
 
 
 ```
-  ARI=0.998  completeness=1.0  purity=0.994
+8       0.998   1.0           0.994
 Dendrogram        
 ```
 
 
 ```
-  ARI=0.998  completeness=1.0  purity=0.995
+8       0.998   1.0           0.995
 PersistenceFinder 
 ```
 
 
 ```
-  ARI=0.998  completeness=1.0  purity=0.995
+8       0.998   1.0           0.995
+HDBSCANFinder     
+```
+
+
+```
+7       0.953   1.0           0.927
 ```
 
 
 | Finder             | clumps | ARI   | completeness | purity | notes |
 |--------------------|:------:|:-----:|:------------:|:------:|-------|
-| `ThresholdFoF`     |   7    | 0.892 |    1.00      | 0.859  | merges the G1+G2 pair |
-| `DensityWatershed` |   8    | 0.936 |    1.00      | 0.925  | splits the pair along the saddle |
-| `Dendrogram`       |   8    | 0.936 |    1.00      | 0.926  | + full merge tree (`hierarchy=true`) |
-| `PersistenceFinder`|   8    | 0.936 |    1.00      | 0.926  | prominence-pruned peaks |
-| `HDBSCANFinder`    |   7    | 0.892 |    1.00      | 0.859  | density-adaptive, no threshold tuning |
+| `ThresholdFoF`     |   7    | 0.953 |    1.00      | 0.927  | merges the G1+G2 pair |
+| `DensityWatershed` |   8    | 0.998 |    1.00      | 0.994  | splits the pair along the saddle |
+| `Dendrogram`       |   8    | 0.998 |    1.00      | 0.995  | + full merge tree (`hierarchy=true`) |
+| `PersistenceFinder`|   8    | 0.998 |    1.00      | 0.995  | prominence-pruned peaks |
+| `HDBSCANFinder`    |   7    | 0.953 |    1.00      | 0.927  | density-adaptive, no threshold tuning |
 
 All finders recover the isolated clumps with completeness 1.0; the deblending finders
 additionally resolve the touching pair, which is the only difference in their score.
@@ -345,7 +363,12 @@ end
 
 ```
 ll=0.0078  -> 7 clumps
-ll=0.0156  -> 7 clumps
+ll=0.0156
+```
+
+
+```
+  -> 7 clumps
 ll=0.0391
 ```
 
@@ -376,7 +399,7 @@ fig
 ```
 
 ```
-[0m[1m[Mera]: 2026-07-31T21:44:03.272[22m
+[0m[1m[Mera]: 2026-08-02T20:42:37.852[22m
 ```
 
 
@@ -435,7 +458,7 @@ What this synthetic bench shows about each algorithm, and the situation it's the
 
 | Finder | Use it when… | On this bench |
 |---|---|---|
-| [`ThresholdFoF`](@ref) | clumps are **isolated islands** over a clear, flat background; you want the fastest, most robust connectivity finder | recovers the isolated clumps (ARI 0.89); **merges** the touching pair and **fuses** the ISM disk |
+| [`ThresholdFoF`](@ref) | clumps are **isolated islands** over a clear, flat background; you want the fastest, most robust connectivity finder | recovers the isolated clumps (ARI 0.95); **merges** the touching pair and **fuses** the ISM disk |
 | [`DensityWatershed`](@ref) | touching clumps must be **split along their saddle**; you can set a `persistence` contrast | splits G1/G2; recovers 8/8 on the ISM disk |
 | [`Dendrogram`](@ref) | you want the **multi-scale merge tree** (`hierarchy=true`), or leaves above a `min_delta` contrast | 8 leaves + tree; rejects the smooth floor |
 | [`PersistenceFinder`](@ref) | you want **topologically robust** peaks, pruning low-prominence noise bumps | 8/8, prominence-pruned |
