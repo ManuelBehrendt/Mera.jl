@@ -529,15 +529,8 @@ function Mera.flythrough(channels::AbstractVector, kind::Symbol, keyframes;
 end
 Mera.flythrough(ch::Mera.ImmersiveChannel, kind::Symbol, keyframes; kw...) = Mera.flythrough([ch], kind, keyframes; kw...)
 
-"""
-    interactive_view(vol; target=boxcenter(vol), distance=0.6·boxlen, azimuth=0.6, elevation=0.5,
-                     fov_deg=55, mode=:max, level=1.0, res=420, drag_res=170, smooth=true,
-                     colormap=:inferno, logscale=true) -> Figure
-
-Open a live window that **ray-casts the pure AMR data directly** (no uniform grid) and re-renders as you
-orbit (left-drag) and zoom (scroll) — low resolution while dragging, crisp on release. Needs an
-interactive backend (`using GLMakie`). `mode` is any `render_view` mode (`:max`/`:emission`/`:rt`/`:iso`…).
-"""
+# docstring lives on the generic function in src/functions/immersive.jl, so it reaches
+# ?interactive_view and the API reference without a Makie backend loaded.
 function Mera.interactive_view(vol::Mera.AmrVolume; target=Mera.boxcenter(vol),
         distance::Real=0.6*vol.boxlen, azimuth::Real=0.6, elevation::Real=0.5, fov_deg=55,
         mode::Symbol=:max, level::Real=1.0, res::Int=420, drag_res::Int=170, smooth=true,
