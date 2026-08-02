@@ -140,6 +140,60 @@ end
         tng = getinfo_gadget(10, dir, verbose=false)
         @test tng.simcode == "AREPO"                                           # `Configuration` ⇒ AREPO as well
         @test length(getparticles(tng, verbose=false).data) == 1               # and it still routes to the gadget frontend
+
+        # SWIFT and GIZMO are registered simcodes, but the ONLY way either name can arise is a
+        # `Header/Code` attribute — there is no code-specific marker. That path had no test at
+        # all, so the two entries in the registry rested on nothing. This pins the contract:
+        # whatever `Header/Code` says becomes the simcode, and the file still routes to the
+        # GADGET-HDF5 frontend because the layout is shared.
+        for (out, code) in ((11, "SWIFT"), (12, "GIZMO"))
+            fn3 = joinpath(dir, "snap_$(lpad(out,3,'0')).hdf5")
+            h5open(fn3, "w") do f
+                hg = attributes(create_group(f, "Header"))
+                hg["BoxSize"] = 10.0; hg["NumPart_Total"] = UInt32[1, 0, 0, 0, 0, 0]
+                hg["MassTable"] = zeros(6); hg["Time"] = 1.0
+                hg["Code"] = code                                              # ⇐ the only SWIFT/GIZMO marker
+                g0 = create_group(f, "PartType0")
+                g0["Coordinates"] = reshape(Float64[5, 5, 5], 3, 1)
+                g0["Velocities"] = reshape(Float32[0, 0, 0], 3, 1)
+                g0["Masses"] = Float32[1.0]; g0["ParticleIDs"] = UInt32[1]
+            end
+            i3 = getinfo_gadget(out, dir, verbose=false)
+            @test i3.simcode == uppercase(code)                                # verbatim, upcased
+            @test length(getparticles(i3, verbose=false).data) == 1            # routes to the gadget frontend
+        end
+
+        # `Header/Code` wins over the AREPO group marker — a SWIFT file that happens to carry a
+        # Config group is still reported as SWIFT.
+        fn4 = joinpath(dir, "snap_014.hdf5")
+        h5open(fn4, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 10.0; hg["NumPart_Total"] = UInt32[1, 0, 0, 0, 0, 0]
+            hg["MassTable"] = zeros(6); hg["Time"] = 1.0; hg["Code"] = "SWIFT"
+            create_group(f, "Config")
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = reshape(Float64[5, 5, 5], 3, 1)
+            g0["Velocities"] = reshape(Float32[0, 0, 0], 3, 1)
+            g0["Masses"] = Float32[1.0]; g0["ParticleIDs"] = UInt32[1]
+        end
+        @test getinfo_gadget(14, dir, verbose=false).simcode == "SWIFT"
+
+        # An UNRECOGNISED producer must still be readable. Returning `Header/Code` verbatim gave
+        # an unregistered simcode, which fell through to the RAMSES reader and raised a
+        # BoundsError on a file that is plainly GADGET-HDF5. It is labelled GADGET instead.
+        fn5 = joinpath(dir, "snap_015.hdf5")
+        h5open(fn5, "w") do f
+            hg = attributes(create_group(f, "Header"))
+            hg["BoxSize"] = 10.0; hg["NumPart_Total"] = UInt32[1, 0, 0, 0, 0, 0]
+            hg["MassTable"] = zeros(6); hg["Time"] = 1.0; hg["Code"] = "some-future-code"
+            g0 = create_group(f, "PartType0")
+            g0["Coordinates"] = reshape(Float64[5, 5, 5], 3, 1)
+            g0["Velocities"] = reshape(Float32[0, 0, 0], 3, 1)
+            g0["Masses"] = Float32[1.0]; g0["ParticleIDs"] = UInt32[1]
+        end
+        unknown = getinfo_gadget(15, dir, verbose=false)
+        @test unknown.simcode == "GADGET"
+        @test length(getparticles(unknown, verbose=false).data) == 1
     end
 
     # REGRESSION (found via AREPO/TNG, but the bug is NOT AREPO-specific): the spherical and

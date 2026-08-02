@@ -61,9 +61,19 @@ end
 # whole family, but `info.simcode` and everything keyed off it would be wrong.
 const _AREPO_CONFIG_GROUPS = ("Config", "Configuration")
 
+# Codes that may name themselves in `Header/Code` AND are registered simcodes for this frontend.
+# Anything else is labelled plain GADGET: the subcode is only a LABEL, and returning it verbatim
+# produced an UNREGISTERED simcode, which fell through to the RAMSES reader and died with a
+# BoundsError on a file that is plainly GADGET-HDF5.
+const _GADGET_KNOWN_SUBCODES = ("GADGET", "AREPO", "SWIFT", "GIZMO")
+
 function _gadget_subcode(f)
     h = attributes(f["Header"])
-    haskey(h, "Code") && return uppercase(strip(string(read(h["Code"]))))   # SWIFT (and any code that sets it)
+    if haskey(h, "Code")
+        code = uppercase(strip(string(read(h["Code"]))))
+        code in _GADGET_KNOWN_SUBCODES && return code
+        return "GADGET"                       # unknown producer: still GADGET-HDF5, still readable
+    end
     any(g -> haskey(f, g), _AREPO_CONFIG_GROUPS) && return "AREPO"          # AREPO / IllustrisTNG
     return "GADGET"
 end
