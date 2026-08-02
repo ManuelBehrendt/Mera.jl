@@ -70,22 +70,100 @@ notifyme(msg="Disk usage of the output folder:",
 
 ---
 
+## Report progress through a long loop
+
+For work that runs for hours, `notifyme` at the end is too late to be useful. A progress
+tracker sends periodic updates instead — throttled both by elapsed time and by percentage,
+so a fast loop does not flood the channel:
+
+```julia
+tracker = create_progress_tracker(1000;
+                                  task_name="Galaxy analysis",
+                                  time_interval=300,      # at most every 5 minutes
+                                  progress_interval=10)   # …and every 10 %
+
+for i in 1:1000
+    analyse_galaxy(i)
+    update_progress!(tracker, i)
+    i == 500 && update_progress!(tracker, i, "halfway — results look sane")
+end
+
+complete_progress!(tracker, "all galaxies processed")
+```
+
+`update_progress!` takes an optional message for milestones. `complete_progress!` sends a
+final summary including total wall-clock time. The tracker is a plain `Dict`, so
+`tracker[:current]` and `tracker[:total]` are readable at any point.
+
+## Keep going when a step fails
+
+`safe_execute` runs a block, and on an exception sends a report — with context and stack
+trace — before rethrowing:
+
+```julia
+result = safe_execute("Load snapshot 300", () -> gethydro(getinfo(300, path)))
+```
+
+!!! warning "Argument order"
+    The function is the **second** argument, so `do`-block syntax does **not** work here —
+    `safe_execute("desc") do … end` raises a `MethodError`, because `do` passes the block
+    as the *first* argument. Use `() -> …` as shown. Note also that `safe_execute`
+    **rethrows** after notifying: it reports failures, it does not swallow them.
+
+## Organising a Zulip channel
+
+Email has no routing — every message lands in one inbox with the subject `MERA`. Zulip
+does, and using it well is what makes team notifications readable rather than noise. A
+structure that works:
+
+| Channel | Topic | For |
+|---|---|---|
+| `alerts` | `Run Status` | start/finish of production runs |
+| `progress` | task name | periodic updates from long loops |
+| `plots` | figure name | projections and diagnostics |
+| `errors` | `Exception Reports` | failures from `safe_execute` |
+| `timing` | `Execution Times` | benchmark and profiling output |
+
+```julia
+notifyme(msg="Projection done", zulip_channel="plots", zulip_topic="Σ maps",
+         image_path="sd.png")
+```
+
+`create_progress_tracker` defaults to channel `progress` and `safe_execute` to `errors`,
+so the split above is the one the API already assumes.
+
 ## Troubleshooting
 
 **Nothing is sent.**
-Check that at least one config file exists: `~/email.txt` (email) or
-`~/zulip.txt` (Zulip). With neither, `notifyme` is intentionally a no-op.
+Print what Mera actually resolved — this answers most questions at once:
+
+```julia
+mera_config()        # the merged configuration in effect
+mera_config_path()   # which file it came from, or `nothing`
+```
+
+With neither `[email] to` nor the three `[zulip]` keys present, `notifyme` is
+intentionally a no-op. `mera_config_example()` prints a template to fill in.
 
 **Email doesn't arrive.**
 - The command-line `mail` client must be installed and able to send on your
   system (try `echo test | mail -s test you@example.com` in a shell).
-- `~/email.txt` must contain your address on the first line.
+- `mera_config()["email"]["to"]` must show your address.
 - Check spam folders; the subject is always `MERA`.
 
 **Zulip message doesn't appear.**
-- `~/zulip.txt` must have exactly three lines: bot email, API key, server URL.
+- All three of `bot_email`, `api_key` and `server` must be set — Zulip is skipped
+  if any is missing. Check with `mera_config()["zulip"]`.
 - The bot must be allowed to post to `zulip_channel`; the channel must exist.
 - Verify the server URL is reachable from the machine running Mera.
+
+**I edited `~/.mera.toml` but nothing changed.**
+The configuration is cached for the session. Reload it with
+`mera_config(reload=true)`, or restart Julia.
+
+**Mera warns that my config is readable by others.**
+It holds an API key. `chmod 600 ~/.mera.toml`. To avoid the secret on disk
+entirely, drop `api_key` from the file and export `MERA_ZULIP_API_KEY` instead.
 
 **An attachment is missing.**
 - Non-image files larger than `max_file_size` (default ≈25 MB) are skipped with

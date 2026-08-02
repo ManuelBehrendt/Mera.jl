@@ -24,6 +24,7 @@ using Dates
 using Statistics
 using Random
 using Downloads
+using TOML
 using PrecompileTools
 using Pkg
 using Base.Threads
@@ -295,6 +296,9 @@ export
     humanize,
     bell,
     notifyme,
+    mera_config,
+    mera_config_path,
+    mera_config_example,
     send_results,
     timed_notify,
     create_progress_tracker,
@@ -380,6 +384,7 @@ export
 include("types.jl")
 
 include("functions/miscellaneous.jl")
+include("functions/config.jl")
 include("functions/notifications.jl")
 include("functions/io/enhanced_io.jl")
 include("functions/io/adaptive_io.jl")

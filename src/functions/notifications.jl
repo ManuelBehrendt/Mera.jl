@@ -17,11 +17,12 @@ Pick the sound in any of these ways (first match wins):
 1. **by name** — `bell(:chime)` (a `Symbol` or `String`);
 2. **by number** — `bell(2)` (the position shown by `bell(:list)`, also a numeric
    string like `bell("2")`);
-3. **a default file** — put a sound name *or* number on the first line of `~/bell.txt`
-   (the same home-folder pattern `notifyme` uses with `email.txt` / `zulip.txt`);
+3. **a configured default** — `[bell] sound = "gong"` in `~/.mera.toml`, the
+   `MERA_BELL_SOUND` environment variable, or the legacy `~/bell.txt`
+   (see [`mera_config`](@ref));
 4. **the built-in fallback** — `:strum` (the original Mera sound).
 
-List the bundled sounds (with their numbers) using `bell(:list)`:
+**19 sounds ship with Mera.** List them with their numbers using `bell(:list)`:
 `arpeggio`, `bell`, `bird`, `bloop`, `bongo`, `chime`, `coin`, `coindrop`,
 `cosmic`, `ding`, `done`, `door`, `frog`, `gong`, `knock`, `oscillations`,
 `owl`, `strum`, `whistle`.
@@ -30,7 +31,7 @@ You can also drop your own `*.wav` into the package's `src/sounds/` folder and
 select it by its file name or number.
 
 ```julia
-bell()            # default sound (from ~/bell.txt if present, else :strum)
+bell()            # the configured default, else :strum
 bell(:gong)       # a deep blooming gong
 bell("chime")     # a glassy three-note chime
 bell(4)           # the 4th sound in bell(:list)
@@ -48,8 +49,7 @@ function bell(sound = nothing)
         end
         println("Select by name or number, e.g. bell(:gong) or bell(",
                 findfirst(==("gong"), available), ").")
-        println("Or set a default in ", joinpath(homedir(), "bell.txt"),
-                " (first line = sound name or number).")
+        println("Or set a default in ~/.mera.toml:  [bell]  sound = \"gong\"  (name or number).")
         return
     end
 
@@ -84,16 +84,16 @@ function _bell_resolve(spec, available)
     return s in available ? s : nothing
 end
 
-# Resolve the default sound: the first line of ~/bell.txt (same idea as email.txt /
-# zulip.txt) — a sound name or its number — falling back to :ding (or the first available
-# file). `cfg` is a keyword so the resolution can be unit-tested without touching $HOME.
-function _bell_default_sound(available; cfg = joinpath(homedir(), "bell.txt"))
-    if isfile(cfg)
-        raw = strip(first(split(read(cfg, String), '\n')))
-        if !isempty(raw)
-            name = _bell_resolve(raw, available)
+# Resolve the default sound: `[bell] sound` from ~/.mera.toml, MERA_BELL_SOUND, or the
+# legacy ~/bell.txt (see mera_config) — a sound name or its number — falling back to
+# "strum". `raw` is a keyword so the resolution can be unit-tested without touching $HOME.
+function _bell_default_sound(available; raw = config_get("bell", "sound", nothing))
+    if raw !== nothing
+        s = strip(String(raw))
+        if !isempty(s)
+            name = _bell_resolve(s, available)
             name === nothing || return name
-            @warn "bell: $(cfg) names unknown sound \"$raw\"; using fallback."
+            @warn "bell: configured sound \"$s\" is unknown; using fallback. Run bell(:list)."
         end
     end
     return "strum" in available ? "strum" : (isempty(available) ? "ding" : first(available))
@@ -217,15 +217,32 @@ end
 """
 ### Get an email and/or Zulip notification, e.g., when your calculations are finished.
 
-Email notification:
-- Requires the email client "mail" to be installed
-- Put a file with the name "email.txt" in your home folder that contains your email address in the first line 
+Both channels are configured in **`~/.mera.toml`**. Print a template with
+[`mera_config_example`](@ref), fill in the parts you want, then `chmod 600 ~/.mera.toml` —
+it holds an API key. Configure either channel, or both; each is used only if present.
 
-Zulip notification (optional):
-- Put a file with the name "zulip.txt" in your home folder with three lines:
-  - Line 1: Your Zulip bot email (e.g., mybot@zulip.yourdomain.com)
-  - Line 2: Your Zulip API key
-  - Line 3: Your Zulip server URL (e.g., https://zulip.yourdomain.com)
+```toml
+[email]
+to = "you@example.com"
+
+[zulip]
+bot_email = "mybot@zulip.example.com"
+api_key   = "..."                        # or set MERA_ZULIP_API_KEY instead
+server    = "https://zulip.example.com"
+```
+
+**Email** additionally needs the command-line `mail` client installed; Mera pipes the
+message to it. Nothing is sent if `[email] to` is unset.
+
+**Zulip** needs all three keys. It is the richer channel: it carries image and file
+attachments, and posts to a channel/topic (`zulip_channel=`, `zulip_topic=`), which email
+does not.
+
+Every value can also come from an environment variable — `MERA_EMAIL_TO`,
+`MERA_ZULIP_BOT_EMAIL`, `MERA_ZULIP_API_KEY`, `MERA_ZULIP_SERVER`, `MERA_ZULIP_CHANNEL` —
+which take precedence over the file and keep secrets off disk. The legacy `email.txt`,
+`zulip.txt` and `bell.txt` in `\$HOME` still work; `~/.mera.toml` wins where both exist.
+See [`mera_config`](@ref).
 
 Output Capture (optional):
 - capture_output: Can be a Cmd, Function, or String to capture terminal/function output
@@ -392,14 +409,11 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
         msg = msg * exception_info
     end
 
-    # Email notification (existing)
-    if isfile(homedir() * "/email.txt")
-        f = open(homedir() * "/email.txt")
-        email = read(f, String)
-        close(f)
-        email = strip(email, '\n')
-        email = filter(x -> !isspace(x), email)
-        run(pipeline(`echo "$msg"`, `mail -s "MERA" $email`));
+    # Email notification. Address comes from ~/.mera.toml [email] to, MERA_EMAIL_TO, or the
+    # legacy ~/email.txt — see mera_config().
+    email = config_get("email", "to", nothing)
+    if email !== nothing && !isempty(email)
+        run(pipeline(`echo "$msg"`, `mail -s "MERA" $(filter(!isspace, String(email)))`))
     end
 
     # Handle output capturing if requested
@@ -562,9 +576,12 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
     end
     files_to_attach = unique_files
 
-    # Zulip notification
-    zulip_config_path = homedir() * "/zulip.txt"
-    if isfile(zulip_config_path)
+    # Zulip notification. Credentials come from ~/.mera.toml [zulip], the MERA_ZULIP_*
+    # environment variables, or the legacy ~/zulip.txt — see mera_config().
+    zulip_email   = config_get("zulip", "bot_email", nothing)
+    zulip_api_key = config_get("zulip", "api_key",   nothing)
+    zulip_server  = config_get("zulip", "server",    nothing)
+    if all(!isnothing, (zulip_email, zulip_api_key, zulip_server))
         try
             # Configuration / behavior controls
             zulip_timeout = try
@@ -578,11 +595,6 @@ function notifyme(;msg="done!", zulip_channel="alerts", zulip_topic="MERA Notifi
                 println("[Zulip dry-run] Would send message to channel='$(zulip_channel)' topic='$(zulip_topic)' (attachments=$(length(files_to_attach)))")
                 return
             end
-
-            zulip_config = split(read(zulip_config_path, String), '\n')
-            zulip_email = strip(zulip_config[1])
-            zulip_api_key = strip(zulip_config[2])
-            zulip_server = strip(zulip_config[3])
 
             # Send initial message (with timeouts)
             url = zulip_server * "/api/v1/messages"
