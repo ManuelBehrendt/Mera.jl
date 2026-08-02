@@ -6,34 +6,80 @@ workflows and troubleshooting.
 
 ## Configuration
 
-Configuration is **file-based** — Mera reads small text files from your home
-folder. There are no environment variables or SMTP settings to configure.
+Everything lives in **one file: `~/.mera.toml`**. Print a template, save it, and
+lock it down — it holds an API key:
 
-### Email (`~/email.txt`)
-
-1. Ensure the command-line `mail` client is installed (e.g. `mailutils` /
-   `mailx` on Linux, available by default on many macOS setups).
-2. Create `~/email.txt` with your email address on the **first line**:
-
-```
-you@example.com
+```julia
+using Mera
+mera_config_example()          # prints the template below
 ```
 
-The email subject is fixed (`MERA`); the message body is the text you pass to
-`notifyme` (plus any captured output / timing).
+```toml
+# ~/.mera.toml
+[email]
+to = "you@example.com"
 
-### Zulip (`~/zulip.txt`)
+[zulip]
+bot_email = "mybot@zulip.example.com"
+api_key   = "your-bot-api-key"
+server    = "https://zulip.example.com"
+channel   = "alerts"                    # default channel
 
-Create `~/zulip.txt` with **three lines**:
-
+[bell]
+sound = "gong"                          # any name from bell(:list)
 ```
-mybot@zulip.yourdomain.com     # line 1: Zulip bot email
-your-bot-api-key               # line 2: bot API key
-https://zulip.yourdomain.com   # line 3: Zulip server URL
+
+```bash
+chmod 600 ~/.mera.toml                  # it contains a secret
 ```
 
-(Create a bot in your Zulip organization settings to obtain the email and API
-key.) Once present, `notifyme` posts to the given channel/topic.
+Mera warns if the file is readable by other users. Check what is in effect with
+`mera_config()`, and where it was read from with `mera_config_path()`.
+
+### Which channel should I use?
+
+Both are optional and independent — configure either, or both.
+
+| | **Email** | **Zulip** |
+|---|---|---|
+| Needs | the command-line `mail` client installed | a bot in your Zulip organization |
+| Config | `[email] to` | `[zulip] bot_email`, `api_key`, `server` |
+| Attachments | ✗ | ✓ images and files |
+| Channel/topic routing | ✗ (fixed subject `MERA`) | ✓ `zulip_channel=`, `zulip_topic=` |
+| Good for | a personal ping when a run ends | team visibility, plots, logs |
+
+**Email** pipes your message to the local `mail` command, so it works wherever
+that is configured and needs no credentials in the file. **Zulip** is the richer
+channel: it is the only one that carries the images and captured output shown
+below.
+
+If only `[email]` is filled in, `notifyme` sends email only; only `[zulip]`,
+Zulip only; both, both; neither, it is a harmless no-op. The same script is
+therefore portable across machines.
+
+### Keeping the API key off disk
+
+Any value can come from an environment variable instead, which takes precedence
+over the file — useful on shared machines and in CI:
+
+| Variable | Replaces |
+|---|---|
+| `MERA_EMAIL_TO` | `[email] to` |
+| `MERA_ZULIP_BOT_EMAIL` | `[zulip] bot_email` |
+| `MERA_ZULIP_API_KEY` | `[zulip] api_key` |
+| `MERA_ZULIP_SERVER` | `[zulip] server` |
+| `MERA_ZULIP_CHANNEL` | `[zulip] channel` |
+| `MERA_BELL_SOUND` | `[bell] sound` |
+| `MERA_CONFIG` | the location of the file itself |
+
+So a shared machine can keep everything but the secret in `~/.mera.toml` and
+export `MERA_ZULIP_API_KEY` from a private shell profile.
+
+!!! note "Upgrading from the old files"
+    Earlier versions read `~/email.txt`, `~/zulip.txt` and `~/bell.txt`. **Those
+    still work** — nothing breaks if you keep them. When both exist,
+    `~/.mera.toml` wins. Mera also looks in `~/.config/mera/config.toml` if you
+    prefer to keep `$HOME` tidy.
 
 ### Bell
 
@@ -53,11 +99,11 @@ bell(:list)       # print the numbered catalogue of bundled sounds
 1. **by name** — `bell(:gong)` (a `Symbol` or `String`);
 2. **by number** — `bell(14)` (the position printed by `bell(:list)`; a numeric
    string like `bell("14")` works too);
-3. **a default file** — put a sound name *or* number on the first line of
-   `~/bell.txt`, the same home-folder pattern `notifyme` uses with `email.txt` /
-   `zulip.txt`:
-   ```
-   gong
+3. **a configured default** — `[bell] sound` in `~/.mera.toml`, or the
+   `MERA_BELL_SOUND` environment variable:
+   ```toml
+   [bell]
+   sound = "gong"     # a name, or a number as shown by bell(:list)
    ```
 4. **the built-in fallback** — `:strum`, the original Mera sound.
 
@@ -74,11 +120,6 @@ The **19 bundled sounds** (`bell(:list)`):
 You can also drop your own `*.wav` into the package's `src/sounds/` folder and
 select it by its file name or number. On a headless machine (no audio device)
 `bell()` simply warns instead of erroring.
-
-!!! note "Both channels are optional"
-    If only `~/email.txt` exists, `notifyme` sends email only; if only
-    `~/zulip.txt` exists, Zulip only; if both exist, both; if neither, it is a
-    no-op. This makes the same script portable across machines.
 
 ## Basic usage
 

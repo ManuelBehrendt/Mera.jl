@@ -155,18 +155,17 @@ end
     @test Mera._bell_resolve(0, avail)      === nothing           # out of range
     @test Mera._bell_resolve(99, avail)     === nothing
     @test Mera._bell_resolve("nope", avail) === nothing           # unknown name
-    # default resolution from a (temp) bell.txt — first line is a name OR a number
-    mktempdir() do d
-        cfg = joinpath(d, "bell.txt")
-        write(cfg, "chime\n");        @test Mera._bell_default_sound(avail; cfg=cfg) == "chime"
-        write(cfg, "  gong \n");      @test Mera._bell_default_sound(avail; cfg=cfg) == "gong"    # whitespace-tolerant
-        write(cfg, "2\n");            @test Mera._bell_default_sound(avail; cfg=cfg) == avail[2]   # by number
-        write(cfg, "nonsense\n");     @test Mera._bell_default_sound(avail; cfg=cfg) == "strum"    # unknown -> fallback
-        @test Mera._bell_default_sound(avail; cfg=joinpath(d, "missing.txt")) == "strum"           # no file -> strum default
-    end
-    # bell(:list) prints the numbered catalogue and the bell.txt hint (no audio played)
+    # default resolution from the configured `[bell] sound` — a name OR a number
+    @test Mera._bell_default_sound(avail; raw="chime")    == "chime"
+    @test Mera._bell_default_sound(avail; raw="  gong ")  == "gong"      # whitespace-tolerant
+    @test Mera._bell_default_sound(avail; raw="2")        == avail[2]    # by number
+    @test Mera._bell_default_sound(avail; raw="nonsense") == "strum"     # unknown -> fallback
+    @test Mera._bell_default_sound(avail; raw=nothing)    == "strum"     # unset  -> strum default
+    @test Mera._bell_default_sound(avail; raw="")         == "strum"     # empty  -> strum default
+    # bell(:list) prints the numbered catalogue and the config hint (no audio played)
     out = capture_stdout(() -> bell(:list))
-    @test occursin("gong", out) && occursin("knock", out) && occursin("bell.txt", out)
+    @test occursin("gong", out) && occursin("knock", out) && occursin(".mera.toml", out)
+    @test count(r"^\s+\d+\. "m, out) == 19        # all 19 shipped sounds are listed
 end
 
 # ----------------------------------------------------------------------------
