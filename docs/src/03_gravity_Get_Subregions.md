@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `03_gravity_Get_Subregions.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/03_gravity_Get_Subregions.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 The [hydro sub-region page](03_hydro_Get_Subregions.md) built a mass budget:
 regions carve the grid, boundary cells are split by volume fraction, and the
 pieces add up. This page applies the *same* region machinery to the gravity
@@ -73,12 +72,16 @@ println("gas cells      : ", length(gas.data))
 println("star particles : ", length(stars.data))
 println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
         " kpc, centre [:bc] at (24, 24, 24) kpc")
-```
 
 ```
-[ Info: Precompiling Mera [02f895e8-fdb1-4346-8fe6-c721699f5126] (cache misses: include_dependency fsize change (4), dep missing source (6), mismatched flags (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
-*__   __ _______ ______   _______
+
+
+```
+*__   __ _______ ______   _______ 
+```
+
+
+```
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -86,15 +89,26 @@ SYSTEM: caught exception of type :MethodError while trying to print a failed Tas
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-[ Info: Precompiling MeraMakieExt [defab1b5-6ec5-5409-a2f4-69ec619b2a0e] (cache misses: wrong dep version loaded (10))
-SYSTEM: caught exception of type :MethodError while trying to print a failed Task notice; giving up
+```
+
+
+```
 [ Info: Mera v1.8.0
+```
+
+
+```
 gravity cells  : 4879946
+```
+
+
+```
    columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
 gas cells      : 4879946
 star particles : 508939
 box            : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
+
 
 `:cx, :cy, :cz, :level` are the cell's address on the AMR lattice; `:epot` and
 `:ax, :ay, :az` are the field it carries. No density, no mass — so the two
@@ -149,11 +163,13 @@ end
 aproj(h, g; kwargs...) = projection(h, g, :a_magnitude, :cm_s2; direction=:z,
                                     center=[:bc], pxsize=[0.2, :kpc],
                                     verbose=false, show_progress=false, kwargs...)
+
 ```
 
 ```
 aproj (generic function with 1 method)
 ```
+
 
 ```julia
 pa_face = aproj(gas, grav)                  # face-on
@@ -173,9 +189,12 @@ show_a!(axe, pa_edge; decorate=true)
 arc!(axe, Point2f(0, 0), 10., 0, 2π; color=:cyan, linewidth=1.5, linestyle=:dash)
 a_bar!(fig[1, 3])
 fig
+
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_6_1.png)
+
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_5_0.png)
+
 
 The gas lives in a thin disc; the acceleration it feels does not fall away
 nearly as quickly off the plane. Read that panel carefully rather than
@@ -232,22 +251,40 @@ println("volume they would add if counted whole : ",
         round(sum((1 .- fr[edge]) .* cs[edge].^3), sigdigits=4), " kpc³")
 println("measured whole-cell excess            : ",
         round(V["whole cells (classic API)"] - V["split        (split=true)"], sigdigits=4), " kpc³")
+
 ```
 
 ```
-whole cells (classic API)   2506705
+whole cells (classic API)   2506705   
+```
+
+
+```
 4692.9682     dev = 12.0 %
-centre test  (split=false)
+centre test  (split=false)  
+```
+
+
+```
 2488588   4196.3146     dev = 0.18 %
-split        (split=true)   2504682
+split        (split=true)   2504682   
+```
+
+
+```
 4188.7277     dev = -0.00149 %
 analytic 4/3 π R³                     4188.7902
+```
+
+
+```
 partial cells (0 < fraction < 1) : 31813  =  1.27 % of the selected rows
 their mean size, per cell        : 0.155 kpc
              ... per unit volume : 0.644 kpc  ← the coarse ones dominate
 volume they would add if counted whole : 471.8 kpc³
 measured whole-cell excess            : 504.2 kpc³
 ```
+
 
 The split volume lands on the analytic sphere to about one part in $10^5$ —
 the residual is the sub-sampling of curved boundary cells (`nsub`, 8 per axis
@@ -306,16 +343,26 @@ println("cell mean vs volume mean         : ",
         round(100*((sum(ep)/length(ep)) / (sum(ep .* vol)/sum(vol)) - 1), sigdigits=3), " %")
 println("centre test vs split, volume mean: ",
         round(100*((sum(ep_c .* vol_c)/sum(vol_c)) / (sum(ep .* vol)/sum(vol)) - 1), sigdigits=3), " %")
+
 ```
 
 ```
 mean over cells,  split region   : -1907.2
+```
+
+
+```
  (km/s)²
 mean over volume, centre test    : -1632.52 (km/s)²
 mean over volume, split region   : -1632.64 (km/s)²
+```
+
+
+```
 cell mean vs volume mean         : 16.8 %
 centre test vs split, volume mean: -0.00738 %
 ```
+
 
 Two errors of very different size, and it is worth being clear about which one
 matters. Ignoring the volume weight moves the answer by about **seventeen
@@ -362,19 +409,29 @@ println("⟨a_r⟩ about the box corner  : ", round(sum(ar_corner .* w)/sum(w), 
 println("⟨a_r⟩ about the box centre  : ", round(sum(ar_galaxy .* w)/sum(w), sigdigits=4), " cm/s²")
 println("ratio                       : ",
         round((sum(ar_corner .* w)/sum(w)) / (sum(ar_galaxy .* w)/sum(w)), sigdigits=3))
+
 ```
 
 ```
 [Mera] Hint: getvar(:ar_sphere) has no `center` — it is measured about the box CORNER.
+```
+
+
+```
              Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
              This is a different argument from the `center` that places a region; give it
              the same origin. Absolute positions :x/:y/:z are unaffected.
              (shown once per session; verbose(false) silences Mera's messages)
 ⟨a_r⟩ about the box corner  : -1.99e-9
+```
+
+
+```
  cm/s²
 ⟨a_r⟩ about the box centre  : -1.526e-8 cm/s²
 ratio                       : 0.13
 ```
+
 
 Nearly an order of magnitude apart, and both numbers are real measurements —
 of different things. Whenever a quantity's *name* contains a geometry —
@@ -431,15 +488,22 @@ scatter!(ax, radii, vc_corner; color=:crimson, markersize=6)
 axislegend(ax; position=:rb, framevisible=false)
 ylims!(ax, 0, nothing)
 fig
+
 ```
 
 ```
 v_c at 8 kpc, origin = galaxy centre : 189.1
+```
+
+
+```
  km/s
 v_c at 8 kpc, origin = box corner    : 65.8 km/s
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_18_3.png)
+
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_17_2.png)
+
 
 The blue curve rises through the inner few kpc and then flattens near 190 km/s
 — a textbook galactic rotation curve, obtained without touching a single mass.
@@ -486,10 +550,15 @@ for t in rows
             rpad(round(t.Mgas, sigdigits=4), 12), rpad(round(t.Mstar, sigdigits=4), 12),
             rpad(round(Mb, sigdigits=4), 12), round(t.Mdyn/Mb, digits=2))
 end
+
 ```
 
 ```
-r [kpc]  M_dyn
+r [kpc]  M_dyn       
+```
+
+
+```
 M_gas       M_star      M_baryon    M_dyn / M_baryon
 -------------------------------------------------------------------------
 2.0      5.411e9     1.858e9     4.984e8     2.356e9     2.3
@@ -500,6 +569,7 @@ M_gas       M_star      M_baryon    M_dyn / M_baryon
 12.0     1.063e11    2.329e10    5.27e9      2.856e10    3.72
 16.0     1.377e11    2.946e10    5.754e9     3.521e10    3.91
 ```
+
 
 ```julia
 rr    = [t.r for t in rows]
@@ -525,9 +595,12 @@ lines!(ax2, rr, (Mdyn[end]-Mbary[end]) .* rr ./ rr[end]; color=:grey, linewidth=
        linestyle=:dot, label="∝ r  (flat rotation curve)")
 axislegend(ax2; position=:lt, framevisible=false)
 fig
+
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_22_1.png)
+
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_21_0.png)
+
 
 The field consistently reports more mass than the gas and stars in the same
 sphere contain — a factor 2.3 at 2 kpc, rising to nearly 4 by 16 kpc. Over
@@ -583,15 +656,22 @@ text!(ax, 14.7, 55; text="beyond here the annulus\nholds too little gas\nto aver
 axislegend(ax; position=:lt, framevisible=false)
 ylims!(ax, 0, 250)
 fig
+
 ```
 
 ```
 annulus at 7.5 kpc : v_φ(gas) = 190.3
+```
+
+
+```
  km/s   vs   v_c(field) = 189.1 km/s
 outermost annulus  : 13942 cells — the gas disc has ended, the mean is meaningless
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_25_3.png)
+
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_24_2.png)
+
 
 Out to the edge of the gas disc the two curves track each other within about
 ten percent, and at 7.5 kpc they agree to better than one — good enough to
@@ -647,16 +727,30 @@ println("identical to the operator form : ",
 wr = getvar(g_ring, :volume)
 println("⟨epot⟩ over the ring   : ",
         round(sum(getvar(g_ring, :epot, :km2_s2) .* wr)/sum(wr), sigdigits=6), " (km/s)²")
+
 ```
 
 ```
 ring volume            : 1712.947
+```
+
+
+```
  kpc³
 analytic slab − band   : 1713.215 kpc³   dev = -0.0157 %
 identical to the operator form : true
-⟨epot⟩ over the ring   :
+```
+
+
+```
+⟨epot⟩ over the ring   : 
+```
+
+
+```
 -1600.32 (km/s)²
 ```
+
 
 `@region` is only shorthand: it walks the block and injects `range_unit` and
 `center` into every region constructor that does not already set them, then
@@ -705,9 +799,12 @@ arc!(ax2, Point2f(0, 0),  3., 0, 2π; color=:cyan, linewidth=1, linestyle=:dash)
 scalebar!(ax2, -12, -12.5, 5)
 a_bar!(fig[1, 3])
 fig
+
 ```
 
-![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_31_1.png)
+
+![](03_gravity_Get_Subregions_files/03_gravity_Get_Subregions_30_0.png)
+
 
 The hole is round, not staircased, and the outer rim ends where the cylinder
 does. For a figure at a chosen pixel size, `refine_to=[0.15, :kpc]` on the
@@ -747,16 +844,30 @@ V_slab_split = sum(getvar(subregion(grav, Cuboid(xrange=[-12, 12], yrange=[-12, 
 println()
 println("value-type slab : ", round(V_slab_split, sigdigits=10), " kpc³ (split)")
 println("analytic 24×24×4: ", 24*24*4, " kpc³   dev = ", V_slab_split/2304 - 1)
+
 ```
 
 ```
 classic cuboid  : 3825112
+```
+
+
+```
  cells, V = 2457.87 kpc³ (whole cells)
 classic shell   : 2197457 cells
-value-type slab :
+```
+
+
+```
+value-type slab : 
+```
+
+
+```
 2304.0 kpc³ (split)
 analytic 24×24×4: 2304 kpc³   dev = 3.887778987632373e-12
 ```
+
 
 The axis-aligned `Cuboid` is the one shape whose fractions are computed
 analytically rather than sampled — a per-axis overlap product — so its split

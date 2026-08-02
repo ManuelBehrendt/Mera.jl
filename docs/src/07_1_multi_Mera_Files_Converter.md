@@ -66,7 +66,6 @@ the repo or fills the disk.
 
 ### Required Packages
 
-
 ```julia
 using Mera
 base = get(ENV, "MERA_TEST_DATA", "/Volumes/FASTStorage/Simulations/Mera-Tests")
@@ -109,7 +108,6 @@ JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
 `convertdata(output; datatypes, path, fpath)` reads RAMSES output `output` from `path` and
 writes `output_<n>.jld2` into `fpath`. The Sedov run is hydro-only, so we request `[:hydro]`.
 
-
 ```julia
 convertdata(1, datatypes=[:hydro], path=run, fpath=jld_dir)
 
@@ -119,7 +117,7 @@ println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 ```
 
 ```
-[0m[1m[Mera]: 2026-07-31T21:35:29.043[22m
+[Mera]: 2026-07-31T21:35:29.043
 ```
 
 
@@ -162,10 +160,10 @@ JLD2Lz4.Lz4Filter(0x40000000)
 ```
 
 
-[32mProcessing files:   0%|                                                  |  ETA: N/A (  N/A  s/it)[39m
+Processing files:   0%|                                                  |  ETA: N/A (  N/A  s/it)
 
 
-[32mProcessing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.45  s/it)[39m
+Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.45  s/it)
 
 
 ```
@@ -197,7 +195,6 @@ size           : 0.15 MB
 Inspect the written file with `viewdata` and read it back with `loaddata` — the round-trip
 gives back an ordinary Mera hydro object.
 
-
 ```julia
 viewdata(1, jld_dir)
 
@@ -207,7 +204,7 @@ println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
 ```
 
 ```
-[0m[1m[Mera]: 2026-07-31T21:35:39.089[22m
+[Mera]: 2026-07-31T21:35:39.089
 ```
 
 
@@ -252,7 +249,7 @@ Total file size: 155.944 KB
 
 
 ```
-[0m[1m[Mera]: 2026-07-31T21:35:39.668[22m
+[Mera]: 2026-07-31T21:35:39.668
 ```
 
 
@@ -299,7 +296,6 @@ total mass     : 6.284e-35
 
 `convertdata` is per-output; loop over a handful of output numbers to build a small archive
 of Mera files. We keep it to three outputs to stay tiny on disk.
-
 
 ```julia
 for n in 1:3
@@ -384,7 +380,6 @@ User-guided conversion with prompts:
 We point it at the Mera files we just wrote and send the clean copies to a second temp dir.
 `show_confirmation=false` makes it non-interactive (no `y/n` prompt).
 
-
 ```julia
 converted_dir = mktempdir()
 
@@ -426,12 +421,10 @@ Requested threads: 1
 
 
 ```
-[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mCurrent memory usage (99.1%) exceeds safety margin (80.0%).
-[33m[1m│ [22m[39mConsider closing other applications or reducing thread count.
-[33m[1m│ [22m[39mSystem may become unstable during conversion with high memory usage.
-[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:144[39m
-[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mLimited memory available within safety margin. Reducing recommended thread count by 50%.
-[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:163[39m
+┌ Warning: Current memory usage (99.1%) exceeds safety margin (80.0%).
+│ Consider closing other applications or reducing thread count.
+│ System may become unstable during conversion with high memory usage.
+┌ Warning: Limited memory available within safety margin. Reducing recommended thread count by 50%.
 ```
 
 
@@ -454,8 +447,7 @@ Starting multithreaded conversion with safety margin monitoring...
 
 
 ```
-[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin exceeded (98.9% > 80.0%) while processing output_00001.jld2
-[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:357[39m
+┌ Warning: Safety margin exceeded (98.9% > 80.0%) while processing output_00001.jld2
 ```
 
 
@@ -464,11 +456,10 @@ Starting multithreaded conversion with safety margin monitoring...
 ```
 
 
-[32m[2/3] Processing: output_00002.jld2  67%|██████████████       |  ETA: 0:00:00 ( 0.47  s/it)[39m
+[2/3] Processing: output_00002.jld2  67%|██████████████       |  ETA: 0:00:00 ( 0.47  s/it)
 
 ```
-[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin exceeded (99.3% > 80.0%) while processing output_00002.jld2
-[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:357[39m
+┌ Warning: Safety margin exceeded (99.3% > 80.0%) while processing output_00002.jld2
 ```
 
 
@@ -477,12 +468,10 @@ Starting multithreaded conversion with safety margin monitoring...
 ```
 
 
-[32m[3/3] Processing: output_00003.jld2 100%|█████████████████████| Time: 0:00:01 ( 0.41  s/it)[39m
-
+[3/3] Processing: output_00003.jld2 100%|█████████████████████| Time: 0:00:01 ( 0.41  s/it)
 
 ```
-[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin exceeded (99.4% > 80.0%) while processing output_00003.jld2
-[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:357[39m
+┌ Warning: Safety margin exceeded (99.4% > 80.0%) while processing output_00003.jld2
 ```
 
 
@@ -492,8 +481,7 @@ Starting multithreaded conversion with safety margin monitoring...
 
 
 ```
-[33m[1m┌ [22m[39m[33m[1mWarning: [22m[39mSafety margin violation detected (99.6% > 80.0%) - file 3/3
-[33m[1m└ [22m[39m[90m@ Mera ~/code-github/Mera.jl/src/functions/data/mera_convert.jl:843[39m
+┌ Warning: Safety margin violation detected (99.6% > 80.0%) - file 3/3
 ```
 
 
@@ -536,7 +524,6 @@ The returned `Dict` summarises the run — keys include `"success"`, `"failed"`,
 `"skipped"`, `"safety_violations"`, `"conversion_time"`, `"threads_used"`, and
 `"final_memory_usage_percent"`.
 
-
 ```julia
 for k in ("success", "failed", "skipped", "safety_violations", "threads_used")
     haskey(results, k) && println(rpad(k, 20), " => ", results[k])
@@ -554,7 +541,6 @@ threads_used         => 1
 
 Confirm the re-saved files load identically to the originals.
 
-
 ```julia
 g0 = loaddata(1, jld_dir,        :hydro)
 g1 = loaddata(1, converted_dir,  :hydro)
@@ -565,7 +551,7 @@ println("mass   (orig / converted) : ",
 ```
 
 ```
-[0m[1m[Mera]: 2026-07-31T21:35:50.568[22m
+[Mera]: 2026-07-31T21:35:50.568
 ```
 
 
@@ -589,7 +575,7 @@ Memory used for data table :2.2739639282226562 MB
 
 
 ```
-[0m[1m[Mera]: 2026-07-31T21:35:50.575[22m
+[Mera]: 2026-07-31T21:35:50.575
 ```
 
 
