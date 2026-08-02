@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `05_multi_Masking_Filtering.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/05_multi_Masking_Filtering.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 The [sub-region pages](03_hydro_Get_Subregions.md) select by **place** — a sphere,
 a cylinder, a slab. This page selects by **state**: temperature, density, age,
 speed, or any quantity Mera can derive. The two are independent, they compose in
@@ -63,10 +62,14 @@ clumps    = getclumps(info, verbose=false)
 println("gas cells      : ", length(gas.data))
 println("star particles : ", length(particles.data))
 println("clumps         : ", length(clumps.data))
-```
 
 ```
-*__   __ _______ ______   _______
+
+
+```
+*__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -74,10 +77,15 @@ println("clumps         : ", length(clumps.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
+
 gas cells      : 849332
+
+
 star particles : 508939
 clumps         : 644
 ```
+
 
 ```julia
 # the two verbs, on the same condition
@@ -90,19 +98,26 @@ println()
 println("mass of hot gas, via the object : ", round(msum(hot, :Msol), sigdigits=6), " Msol")
 println("            ... via the mask    : ", round(msum(gas, :Msol, mask=mask), sigdigits=6), " Msol")
 println("identical                       : ", msum(hot, :Msol) == msum(gas, :Msol, mask=mask))
+
 ```
 
 ```
 filterdata → HydroDataType
+
 , 489608 cells
 getmask    → BitVector
+
 , 489608 true of 849332
+
 mass of hot gas, via the object : 2.14499e9
+
  Msol
             ... via the mask    : 2.14499e9
+
  Msol
 identical                       : true
 ```
+
 
 Same selection, same answer, two shapes. Which one you want depends on what comes
 next — §4 makes that concrete.
@@ -132,27 +147,34 @@ for (name, c) in conds
     println(rpad(name, 34), rpad(length(s.data), 10),
             round(100 * msum(s, :Msol) / m_all, digits=1), " %")
 end
+
 ```
 
 ```
-condition                         cells
+condition                         cells     
+
 mass share
 ------------------------------------------------------------
 Above(:rho, 1, :nH)               10126     79.8 %
 Below(:T, 2e4, :K)                33569     37.0 %
-Above(:cs, 20, :km_s)             652583
+Above(:cs, 20, :km_s)             652583    
+
 44.6 %
-Above(:mach, 1)
+Above(:mach, 1)                   
+
 520858    94.5 %
 [Mera] Hint: getvar(:r_cylinder) has no `center` — it is measured about the box CORNER.
+
              Pass center=[:bc] for the box centre, or center=[x, y, z] with center_unit.
              This is a different argument from the `center` that places a region; give it
              the same origin. Absolute positions :x/:y/:z are unaffected.
              (shown once per session; verbose(false) silences Mera's messages)
-InRange(:r_cylinder, 0,10,:kpc)   8896
+InRange(:r_cylinder, 0,10,:kpc)   8896      
+
 0.1 %
 Equals(:level, gas.lmax)          501568    92.6 %
 ```
+
 
 Note `:r_cylinder` in that list. A *geometric* quantity used as a value
 condition selects a cylinder — but by testing each cell's centre, with no
@@ -192,18 +214,22 @@ println("cold + not-cold cells : ", length(cold.data) + length(not_cold.data),
         "   of ", length(gas.data))
 println("cold + not-cold mass  : ", round(msum(cold, :Msol) + msum(not_cold, :Msol), sigdigits=10))
 println("whole box mass        : ", round(m_all, sigdigits=10))
+
 ```
 
 ```
-rho > 1 nH  AND  T < 1e5 K    10080
+rho > 1 nH  AND  T < 1e5 K    10080    
+
 1.6812e10 Msol
 T > 1e6 K   OR   rho > 10 nH  490701   2.1381e10 Msol
 NOT (T < 2e4 K)               815763   1.9503e10 Msol
 r < 15 kpc  AND  T < 2e4 K    516      2.1893e6 Msol
+
 cold + not-cold cells : 849332   of 849332
 cold + not-cold mass  : 3.096875415e10
 whole box mass        : 3.096875415e10
 ```
+
 
 The partition is exact because `!` is a strict negation of the same test — no
 cell is counted twice and none is dropped. That check costs one line and catches
@@ -224,14 +250,17 @@ println("faintest 10 %         : ", rpad(length(faint.data), 9),
         round(100*msum(faint, :Msol)/m_all, digits=3), " %")
 println("finest level & top 1 %: ", rpad(length(core.data), 9),
         round(100*msum(core, :Msol)/m_all, digits=1), " %")
+
 ```
 
 ```
-densest 10 % of cells : 84934
+densest 10 % of cells : 84934    
+
 91.1 % of the mass
 faintest 10 %         : 0        0.0 %
 finest level & top 1 %: 8494     78.6 %
 ```
+
 
 `AbovePercentile(:rho, 90)` is *the densest tenth of the cells*, whatever the
 density scale of this simulation happens to be — the right tool when you have not
@@ -271,17 +300,23 @@ println()
 println("cells satisfying both : ", count(m .& m2))
 println("... same as one combined condition : ",
         count(m .& m2) == length(filterdata(gas, cond & Above(:T, 1e4, unit=:K), verbose=false).data))
+
 ```
 
 ```
 object route : 848882
+
  cells, map max Σ = 161.6 Msol/pc²
 mask route   : 848882
+
  cells, mass = 1.33692e10 Msol
 same mass    : true
+
+
 cells satisfying both : 848882
 ... same as one combined condition : true
 ```
+
 
 ## 5. Masks Inside Mera's Own Functions
 
@@ -313,23 +348,32 @@ s_msk = wstat(getvar(gas, :vx, :km_s), weight=getvar(gas, :mass), mask=mg)
 println()
 println("gas ⟨vx⟩ mass-weighted [km/s] : all ", round(s_all.mean, digits=3),
         "   masked ", round(s_msk.mean, digits=3))
+
 ```
 
 ```
-statistic                         all
+statistic                         all                 
+
 masked
 ----------------------------------------------------------------------
-gas  msum [Msol]                  3.09688e10
+gas  msum [Msol]                  3.09688e10          
+
 1.33692e10
-gas  centre of mass x [kpc]       23.3607
+gas  centre of mass x [kpc]       23.3607             
+
 23.6093
-gas  bulk velocity x [km/s]       -1.2
+gas  bulk velocity x [km/s]       -1.2                
+
 -3.094
-part msum [Msol]                  5.80443e9
+part msum [Msol]                  5.80443e9           
+
 1.81123e9
-gas ⟨vx⟩ mass-weighted [km/s] : all
+
+gas ⟨vx⟩ mass-weighted [km/s] : all 
+
 -1.2   masked -3.094
 ```
+
 
 The mask must be as long as the object's row count, which is why it belongs to
 the object it came from — `getmask(gas, …)` cannot be passed to a particle
@@ -361,11 +405,13 @@ end
 prj(d; kw...) = projection(d, :sd, :Msol_pc2; direction=:z, center=[:bc], range_unit=:kpc,
                            xrange=[-16, 16], yrange=[-16, 16], pxsize=[0.1, :kpc],
                            verbose=false, show_progress=false, kw...)
+
 ```
 
 ```
 prj (generic function with 1 method)
 ```
+
 
 ```julia
 cold_g = filterdata(gas, Below(:T, 2e4, unit=:K), verbose=false)     # state only — full box
@@ -384,16 +430,20 @@ sdpanel!(Axis(fig[1, 2], title="hot gas  T > 10⁶ K — smooth and volume-filli
 sdpanel!(Axis(fig[1, 3], title="densest 1 % of cells (AbovePercentile)"), prj(dense1))
 Colorbar(fig[1, 4]; colormap=:inferno, colorrange=SDLIM5, label="log₁₀ Σ  [Msol pc⁻²]")
 fig
+
 ```
 
 ```
-cold  T<2e4 K :
+cold  T<2e4 K : 
+
 33569    1.147e10 Msol  = 37.0 % of the box
 hot   T>1e6 K : 489608   2.145e9 Msol  = 6.9 % of the box
 densest 1%    : 8494     2.433e10 Msol  = 78.6 % of the box
 ```
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_21_3.png)
+
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_20_2.png)
+
 
 Three views of one simulation, on one colour scale. The cold phase is
 filamentary and carries 37 % of the mass in 4 % of the cells; the hot phase is
@@ -429,15 +479,19 @@ println()
 # the other order gives the same rows
 other = subregion(filterdata(gas, Below(:T, 2e4, unit=:K), verbose=false), disc_reg, verbose=false)
 println("filter→region == region→filter cells : ", length(other.data) == length(cold_d.data))
+
 ```
 
 ```
 cold (< 2e4 K) in the disc : 8.9066e9
+
  Msol
 rest (≥ 2e4 K) in the disc : 1.3963e10 Msol
 cold + rest  vs  disc      : 2.28691723e10  vs  2.28691723e10 Msol
+
 filter→region == region→filter cells : true
 ```
+
 
 The partition still closes exactly *inside a split region* — `filterdata`
 preserves the `:fraction` column, so a half-inside boundary cell contributes its
@@ -460,9 +514,12 @@ sdpanel!(ax, p_cd)
 arc!(ax, Point2f(0, 0), 12., 0, 2π; color=:white, linewidth=1.2, linestyle=:dash)
 Colorbar(fig[1, 2]; colormap=:inferno, colorrange=SDLIM5, label="log₁₀ Σ  [Msol pc⁻²]")
 fig
+
 ```
 
-![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_26_1.png)
+
+![](05_multi_Masking_Filtering_files/05_multi_Masking_Filtering_25_0.png)
+
 
 ```julia
 # match the geometric edge to the map's pixel size, so the rim is sharp where it is rendered
@@ -474,13 +531,16 @@ cs = getvar(cold_px, :cellsize, :kpc)
 println("largest straddling cell on the rim : ",
         round(maximum(cs[0.0 .< fr .< 1.0]), digits=3), " kpc   (map-ready)")
 println("cold mass, refine_to vs plain      : ", round(msum(cold_px, :Msol) / m_c, digits=5))
+
 ```
 
 ```
 largest straddling cell on the rim : 0.094
+
  kpc   (map-ready)
 cold mass, refine_to vs plain      : 1.0
 ```
+
 
 `refine_to` changes how sharply the boundary is *drawn*, not how much mass is
 inside it — the ratio above is 1 to five digits. See §7 of the
@@ -506,16 +566,21 @@ println("supersonic cells : ", length(supersonic.data), "  = ",
 
 gas.data = select(gas.data, Not(:mach))         # and take it away again
 println("columns after removal: ", propertynames(Mera.columns(gas.data)))
+
 ```
 
 ```
 columns now: (
+
 :level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2, :mach)
 supersonic cells : 520858
+
   = 61.3 % of the box
 columns after removal: (
+
 :level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 ```
+
 
 Mera already derives `:mach` on demand, so this is not the way to *get* a Mach
 number — it is the way to attach something Mera cannot know about: a tracer, a
@@ -554,14 +619,17 @@ m_b = sum(getvar(gas_new, :mass, :Msol))
 m_c2 = msum(filterdata(gas, Above(:rho, 3, unit=:Msol_pc3), verbose=false), :Msol)
 println("mass via filtered_db / construct_datatype / filterdata : ",
         round(m_a, sigdigits=8), "  ", round(m_b, sigdigits=8), "  ", round(m_c2, sigdigits=8))
+
 ```
 
 ```
 select == getvar : true   columns() gives (:rho, :level)
 rows kept: 210
+
  of 849332
 mass via filtered_db / construct_datatype / filterdata : 1.4862768e10  1.4862768e10  1.4862768e10
 ```
+
 
 ```julia
 # ---- multi-criteria on the raw table: geometry must be rebuilt by hand -----------------
@@ -583,13 +651,16 @@ reg = Cylinder(3., 2.; center=[:bc], range_unit=:kpc)
 sel = filterdata(subregion(gas, reg, verbose=false), Above(:rho, 3, unit=:Msol_pc3), verbose=false)
 println("region × condition            : ", length(sel.data), " rows, ",
         round(msum(sel, :Msol), sigdigits=6), " Msol   (split boundary)")
+
 ```
 
 ```
 hand-built cylinder + density : 33
+
  rows, 2.81234e9 Msol
 region × condition            : 37 rows, 2.83126e9 Msol   (split boundary)
 ```
+
 
 The two numbers differ, and the difference is the point of the sub-region pages:
 the hand-built version keeps whole cells whose centres pass the test, the region
@@ -613,15 +684,19 @@ filtered_db = @apply gas.data begin
     @where abs((:cz - 0.5) * boxlen/2^:level - cv) <= height
 end
 println("@apply pipeline       : ", length(filtered_db), " rows")
+
 ```
 
 ```
 @filter on the object : HydroDataType
+
 , 501568 cells
 @filter on the table  : IndexedTable, 210 rows
 @apply pipeline       : 210
+
  rows
 ```
+
 
 ```julia
 # ---- hand-built masks, for comparison with getmask -------------------------------------
@@ -632,13 +707,16 @@ mask_c = getmask(gas, Below(:rho, 4, unit=:Msol_pc3))    # the value-space verb
 
 println("all three agree : ", mask_a == mask_b == mask_c, "   (", count(mask_c), " cells)")
 println("type            : ", typeof(mask_c))
+
 ```
 
 ```
 all three agree : true
+
    (849177 cells)
 type            : BitVector
 ```
+
 
 All three produce the same `Vector{Bool}`. `getmask` is the one that states the
 unit, works on derived quantities, and composes with `&` `|` `!` — the others are

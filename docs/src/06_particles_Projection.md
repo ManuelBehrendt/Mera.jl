@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `06_particles_Projection.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/06_particles_Projection.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 This tutorial demonstrates advanced projection techniques for stellar and dark matter particle data using MERA.jl. Learn how to create 2D projections from N-body simulations, analyze stellar populations, and investigate galactic structure through particle-based analysis.
 
 ## Quick Reference
@@ -13,11 +12,11 @@ This tutorial demonstrates advanced projection techniques for stellar and dark m
 # Basic particle projection
 projection(particles, :variable, :unit)
 
-# Multi-quantity projection
+# Multi-quantity projection  
 projection(particles, [:var1, :var2], units=[:unit1, :unit2])
 
 # Spatial selection
-projection(particles, :sd, :Msol_pc2,
+projection(particles, :sd, :Msol_pc2, 
           xrange=[-10,10], center=[:boxcenter], range_unit=:kpc)
 
 # Direction control
@@ -25,7 +24,7 @@ projection(particles, :sd, :Msol_pc2, direction=:x)  # x, y, z directions
 
 # Resolution control
 projection(particles, :sd, :Msol_pc2, lmax=9)       # AMR level
-projection(particles, :sd, :Msol_pc2, res=256)      # Effective grid resolution
+projection(particles, :sd, :Msol_pc2, res=256)      # Effective grid resolution  
 projection(particles, :sd, :Msol_pc2, pxsize=[100.,:pc])  # Physical pixel size
 
 # Stellar population analysis
@@ -34,7 +33,7 @@ projection(particles, :birth, :Myr, ref_time=0.)
 ```
 
 ### Key Particle Quantities
-- **`:sd`** - Surface density (Σ)
+- **`:sd`** - Surface density (Σ) 
 - **`:vx, :vy, :vz`** - Velocity components
 - **`:v`** - Total velocity magnitude
 - **`:σ, :σx, :σy, :σz`** - Velocity dispersions
@@ -84,8 +83,11 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10")
 particles = getparticles(info);
 ```
 
+
 ```
-*__   __ _______ ______   _______
+*__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -93,10 +95,14 @@ particles = getparticles(info);
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
 [Mera]: 2026-07-03T10:13:53.414
+
+
 Code: RAMSES
 output [300] summary:
-mtime:
+mtime: 
+
 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
@@ -110,7 +116,8 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:
+hydro-variables:  
+
 7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
@@ -119,8 +126,9 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   5.445150e+05
-particle-variables:
+- Nstars:   5.445150e+05 
+particle-variables: 
+
 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -128,6 +136,7 @@ rt:            false
 clumps:           false
 -------------------------------------------------------
 namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS"
+
 )
 -------------------------------------------------------
 timer-file:       true
@@ -135,26 +144,36 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
+
 [Mera]: Get particle data: 2026-07-03T10:13:58.116
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 domain:
+
+
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
+
 38.428720474243164 MB
 -------------------------------------------------------
 ```
 
+
 ```julia
 # Inspect the loaded particle data structure
-# Shows available fields
+# Shows available fields 
 particles.data
 ```
 
@@ -176,6 +195,7 @@ Columns:
 11  mass     Float64
 12  birth    Float64
 ```
+
 
 ## Projection of Predefined Quantities
 
@@ -200,29 +220,36 @@ further possibilities: :rho, :density, :ρ
 :mass, :cellsize, :freefall_time
 :cs, :mach, :machx, :machy, :machz, :jeanslength, :jeansnumber
 :t, :Temp, :Temperature with p/rho
+
 ==================[particles]:==================
         all the non derived  vars:
-:cpu, :level, :id, :family, :tag
+:cpu, :level, :id, :family, :tag 
 :x, :y, :z, :vx, :vy, :vz, :mass, :birth, :metal....
+
               -derived particle vars-
 :age
+
 ==============[gas or particles]:===============
 :v, :ekin
 squared => :vx2, :vy2, :vz2
 velocity dispersion => σx, σy, σz, σ
+
 related to a given center:
 ---------------------------
 :vr_cylinder, vr_sphere (radial components)
 :vϕ_cylinder, :vθ
 squared => :vr_cylinder2, :vϕ_cylinder2
-velocity dispersion => σr_cylinder, σϕ_cylinder
+velocity dispersion => σr_cylinder, σϕ_cylinder 
+
 2d maps (not projected) => :r_cylinder, :ϕ
+
 ==============[off-axis views]:==================
 project along ANY line of sight (degrees by default):
   inclination=, azimuth=, axis=(:z|:angmom|vector)
   direction=:faceon / :edgeon   (disk from L)
   los=[lx,ly,lz]   or   theta=, phi=
   position_angle= (image roll),  binning=:cic|:ngp|:overlap|:exact
+
   line-of-sight tools (same view kwargs):
     :vlos / :σlos                 -> LOS velocity & dispersion maps (projection quantities)
     slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions
@@ -230,8 +257,10 @@ project along ANY line of sight (degrees by default):
     savemap/loadmap (JLD2)        -> store/restore a projection result
     (PPV cubes, spectra, moments -> dev/loscubes ; column_integral, emission/absorption,
      optical depth, FITS export   -> dev/offaxis_synthobs)
+
 ------------------------------------------------
 ```
+
 
 ## Projection of a Single Quantity in Different Directions (z,y,x)
 
@@ -241,7 +270,7 @@ Here we project the surface density in the z-direction of the data within a part
 # Basic surface density projection in z-direction
 # Projects stellar particles onto xy-plane with specified resolution
 # Z-direction: projects particles onto xy-plane (face-on view)
-# X-direction: projects particles onto yz-plane (edge-on view)
+# X-direction: projects particles onto yz-plane (edge-on view) 
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, zrange=[0.45,0.55], verbose=false)
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9, direction=:x, zrange=[0.45,0.55], verbose=false);
 ```
@@ -254,82 +283,103 @@ See also in the documentation for: load data by selection
 # Calculate box center coordinates for spatial selection
 cv = (particles.boxlen / 2.) * particles.scale.kpc # provide the box-center in kpc
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[cv,cv,cv], range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:09.758
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 Use the short notation for the box center `:bc` or `:boxcenter` for all dimensions (x,y,z):
 
 ```julia
 # Use convenient box center notation for spatial selection
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[:boxcenter], range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:11.938
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
+
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
 
+
 ```julia
 # Alternative short notation using :bc
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[:bc], range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:13.677
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 Use the box center notation for individual dimensions, here x,z:
 
 ```julia
 # Mix explicit coordinates with box center notation
-proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[:bc, 24., :bc], range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:15.796
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
+
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 ### Get Multiple Quantities
 
@@ -338,25 +388,29 @@ Get several quantities with one function call by passing an array containing the
 ```julia
 # Project multiple quantities simultaneously
 proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
-                     direction=:x,
-                     xrange=[-10.,10.],
-                     yrange=[-10.,10.],
-                     zrange=[-2.,2.],
-                     center=[24.,24.,24.],
+                     direction=:x, 
+                     xrange=[-10.,10.], 
+                     yrange=[-10.,10.], 
+                     zrange=[-2.,2.], 
+                     center=[24.,24.,24.], 
                      range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:17.626
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 Pass an array containing several quantities to process and their corresponding units:
 
@@ -364,24 +418,28 @@ Pass an array containing several quantities to process and their corresponding u
 # Project surface density and x-velocity component together
 proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
                      direction=:x,
-                     xrange=[-10.,10.],
-                     yrange=[-10.,10.],
-                     zrange=[-2.,2.],
-                     center=[24.,24.,24.],
+                     xrange=[-10.,10.], 
+                     yrange=[-10.,10.], 
+                     zrange=[-2.,2.], 
+                     center=[24.,24.,24.], 
                      range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:19.201
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 The function can be called without any keywords by preserving the following order: dataobject, variables, units
 
@@ -389,48 +447,56 @@ The function can be called without any keywords by preserving the following orde
 # Simplified syntax without explicit keywords
 proj1_z = projection(particles, [:sd, :vx], [:Msol_pc2, :km_s], lmax=9,
                      direction=:x,
-                     xrange=[-10.,10.],
-                     yrange=[-10.,10.],
-                     zrange=[-2.,2.],
-                     center=[24.,24.,24.],
+                     xrange=[-10.,10.], 
+                     yrange=[-10.,10.], 
+                     zrange=[-2.,2.], 
+                     center=[24.,24.,24.], 
                      range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:21.305
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 If all selected variables should be of the same unit use the following arguments: dataobject, array of quantities, unit (no array needed)
 
 ```julia
 # Project multiple velocity components with unified units
 projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
-                       xrange=[-10.,10.],
-                       yrange=[-10.,10.],
-                       zrange=[-2.,2.],
-                       center=[24.,24.,24.],
+                       xrange=[-10.,10.], 
+                       yrange=[-10.,10.], 
+                       zrange=[-2.,2.], 
+                       center=[24.,24.,24.], 
                        range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:22.932
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 ## Function Output
 
@@ -444,6 +510,7 @@ propertynames(projvel_z)
 ```
 (:maps, :maps_unit, :maps_lmax, :maps_mode, :lmax_projected, :lmin, :lmax, :ref_time, :ranges, :extent, :cextent, :ratio, :effres, :pixsize, :boxlen, :scale, :info, :los, :up, :cam_right, :center)
 ```
+
 
 The projected 2D maps are stored in a dictionary:
 
@@ -459,6 +526,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 4 entries:
   :vy => [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN NaN …
   :vz => [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN NaN …
 ```
+
 
 The maps can be accessed by giving the name of the dictionary:
 
@@ -482,7 +550,7 @@ proj1_z.maps[:sd]
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0  …  0.0  0.0  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
- ⋮                        ⋮              ⋱                 ⋮
+ ⋮                        ⋮              ⋱                 ⋮              
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
@@ -496,6 +564,7 @@ proj1_z.maps[:sd]
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
  0.0  0.0  0.0  0.0  0.0  0.0  0.0  0.0     0.0  0.0  0.0  0.0  0.0  0.0  0.0
 ```
+
 
 The units of the maps are stored in:
 
@@ -511,6 +580,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 4 entries:
   :vy => :km_s
   :vz => :km_s
 ```
+
 
 The following fields are helpful for further calculations or plots.
 
@@ -529,6 +599,7 @@ projvel_z.ranges
  0.5416666666663156
 ```
 
+
 ```julia
 # Get coordinate ranges in code units
 projvel_z.extent
@@ -541,6 +612,7 @@ projvel_z.extent
  13.96875
  34.03125
 ```
+
 
 ```julia
 # Get coordinate ranges relative to center (code units)
@@ -555,6 +627,7 @@ projvel_z.cextent
   10.031250000015554
 ```
 
+
 ```julia
 # Get aspect ratio between coordinate ranges
 projvel_z.ratio  # the ratio between the two ranges
@@ -564,15 +637,16 @@ projvel_z.ratio  # the ratio between the two ranges
 1.0
 ```
 
+
 ## Plot Maps with PyPlot
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                     zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false)
+                    verbose=false) 
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
                     zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false,
+                    verbose=false, 
                     direction = :x);
 ```
 
@@ -590,6 +664,7 @@ cmap2 = ColorMap(reverse(ColorSchemes.roma.colors))
 ColorMap "cm_9039267583110145682"
 ```
 
+
 ```julia
 figure(figsize=(10, 3.5))
 subplot(1,2,1)
@@ -606,19 +681,21 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientat
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_41_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_40_0.png)
+
 
 Project a specific spatial range and plot the axes of the map relative to the box-center (given by keyword: data_center):
 
 ```julia
-proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
+proj_z = projection(particles, :sd, :Msol_pc2, lmax=9, 
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false,
-                    data_center=[24.,24.,24.], data_center_unit=:kpc)
+                    verbose=false, 
+                    data_center=[24.,24.,24.], data_center_unit=:kpc) 
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false,
-                    data_center=[24.,24.,24.], data_center_unit=:kpc,
+                    verbose=false, 
+                    data_center=[24.,24.,24.], data_center_unit=:kpc, 
                     direction = :x);
 ```
 
@@ -637,19 +714,21 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_44_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_43_0.png)
+
 
 Plot the axes of the map relative to the map-center (given by keyword: data_center):
 
 ```julia
 proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false,
-                    data_center=[19.,19.,24.], data_center_unit=:kpc)
+                    verbose=false, 
+                    data_center=[19.,19.,24.], data_center_unit=:kpc) 
 proj_x = projection(particles, :sd, :Msol_pc2, lmax=9,
                     xrange=[-10.,0.], yrange=[-10.,0.], zrange=[-2.,2.], center=[:boxcenter], range_unit=:kpc,
-                    verbose=false,
-                    data_center=[19.,19.,24.], data_center_unit=:kpc,
+                    verbose=false, 
+                    data_center=[19.,19.,24.], data_center_unit=:kpc, 
                     direction = :x);
 ```
 
@@ -668,7 +747,9 @@ ylabel("z [kpc]")
 cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}",orientation="horizontal", pad=0.2);
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_47_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_46_0.png)
+
 
 ## Projections of Derived Kinematic Data
 
@@ -680,24 +761,29 @@ Project the following derived data
 ```julia
 # σ: Total 3D velocity dispersion = √(σx² + σy² + σz²)
 # σx, σy, σz: Velocity dispersions along coordinate axes
-proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
-                    units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg],
+proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin], 
+                    units=[:km_s,:km_s,:km_s,:km_s,:km_s,:erg], 
                     lmax=9,
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[24.,24.,24.], range_unit=:kpc);
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:39.915
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 512^2
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 For the velocity dispersion additional maps are created that lead to the mass-weighted quantity:
 E. g.: σx = sqrt( <vx^2> - < vx >^2 )
@@ -724,6 +810,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 14 entries:
   :σz   => [NaN NaN … NaN NaN; NaN NaN … NaN NaN; … ; NaN NaN … NaN NaN; NaN Na…
 ```
 
+
 ```julia
 proj_z.maps_unit
 ```
@@ -746,14 +833,17 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 14 entries:
   :σz   => :km_s
 ```
 
+
 ```julia
 usedmemory(proj_z);
 ```
 
 ```
 Memory used: 4.918
+
  MB
 ```
+
 
 ```julia
 figure(figsize=(10, 5.5))
@@ -787,9 +877,12 @@ subplot(2, 3, 6)
 title("σz [km/s]")
 imshow( (permutedims(proj_z.maps[:σz])  ), cmap=cmap2, origin="lower", extent=getextent(proj_z, :kpc; center=true))
 colorbar();
+
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_56_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_55_0.png)
+
 
 #### Use quantities in cylindrical coordinates:
 #### Face-on disc (z-direction)
@@ -798,24 +891,28 @@ For the cylindrical or spherical components of a quantity, the center of the coo
 ```julia
 # σr_cylinder: Radial velocity dispersion in cylindrical coordinates
 # σϕ_cylinder: Azimuthal velocity dispersion (tangential motions)
-proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
-                    units=[:km_s,:km_s,:km_s, :km_s, :standard, :kpc, :km_s, :km_s, :km_s, :km_s],
-                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
+proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],                    
+                    units=[:km_s,:km_s,:km_s, :km_s, :standard, :kpc, :km_s, :km_s, :km_s, :km_s], 
+                    xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.], 
                     center=[:boxcenter], range_unit=:kpc,
-                    data_center=[24.,24.,24.], data_center_unit=:kpc);
+                    data_center=[24.,24.,24.], data_center_unit=:kpc); 
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:43.586
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 1024^2
 Pixel size: 46.875 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 ```julia
 proj_z.maps
@@ -843,6 +940,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
   :ϕ            => [3.92699 3.92463 … 2.35306 2.35073; 3.92935 3.92699 … 2.3507…
 ```
 
+
 ```julia
 proj_z.maps_unit
 ```
@@ -868,6 +966,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
   :σϕ_cylinder  => :km_s
   :ϕ            => :radian
 ```
+
 
 ```julia
 figure(figsize=(10, 8.5))
@@ -918,7 +1017,9 @@ imshow( permutedims(proj_z.maps[:σy] ), cmap=cmap2, origin="lower", extent=gete
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_61_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_60_0.png)
+
 
 ## Project on a Coarser Grid
 
@@ -927,25 +1028,30 @@ The default is the projection on the maximum loaded grid level (always provided 
 
 ```julia
 # lmax=6: Uses AMR level 6 → 2^6 = 64x64 effective grid cells
-proj_z = projection(particles,
-                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
-                    :km_s,
+proj_z = projection(particles, 
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
+                    :km_s, 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:boxcenter], range_unit=:kpc,
-                    lmax=6);
+                    lmax=6); 
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:47.472
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 64^2
 Pixel size: 750.0 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 The projection onto the maximum loaded grid is always provided:
 
@@ -976,6 +1082,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 19 entries:
   :σϕ_cylinder  => [6.7421 5.02267 … 3.52611 2.97303; 6.19423 4.23835 … 3.69795…
 ```
 
+
 ```julia
 proj_z.maps_unit
 ```
@@ -1002,6 +1109,7 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 19 entries:
   :σz           => :km_s
   :σϕ_cylinder  => :km_s
 ```
+
 
 ```julia
 figure(figsize=(10, 8.5))
@@ -1052,57 +1160,68 @@ imshow( (permutedims(proj_z.maps[:σy] )), cmap=cmap2, origin="lower", extent=ge
 colorbar();
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_67_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_66_0.png)
+
 
 ### res
 Choose the effective resolution (related to the full box) of the projected grid:
 
 ```julia
-# pxsize=[0.5, :kpc]: 0.5 kpc pixels (~96x96 over the 48 kpc box)
-proj_z = projection(particles,
-                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
-                    :km_s,
+# pxsize=[0.5, :kpc]: 0.5 kpc pixels (~96x96 over the 48 kpc box) 
+proj_z = projection(particles, 
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
+                    :km_s, 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:boxcenter], range_unit=:kpc,
-                    pxsize=[0.5, :kpc]);
+                    pxsize=[0.5, :kpc]); 
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:50.615
+
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 97^2
 Pixel size: 494.845 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 ### pxsize
 Choose the pixel size in a physical unit, e.g. pixel-size=100 pc. The data is projected to a grid with a pixel-size that is closest to the given number, but not larger:
 
 ```julia
 # pxsize=[100.,:pc]: Each pixel represents ~100 pc physical size
-proj_z = projection(particles,
-                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder],
-                    :km_s,
+proj_z = projection(particles, 
+                    [:v, :σ, :σx, :σy, :σz, :vr_cylinder, :vϕ_cylinder, :σr_cylinder, :σϕ_cylinder], 
+                    :km_s, 
                     xrange=[-10.,10.], yrange=[-10.,10.], zrange=[-2.,2.],
                     center=[:boxcenter], range_unit=:kpc,
-                    pxsize=[100., :pc]);
+                    pxsize=[100., :pc]); 
 ```
 
 ```
 [Mera]: 2026-07-03T10:14:52.607
+
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
 Effective resolution: 481^2
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
 ```
+
 
 ## Projection of the Birth/Age-Time
 
@@ -1111,9 +1230,9 @@ Project the average birth-time of the particles to the grid:
 ```julia
 # :birth - Absolute formation time in simulation units (when star formed)
 proj_z = projection(particles, :birth, :Myr,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
 proj_x = projection(particles, :birth, :Myr,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false); 
 ```
 
 ```julia
@@ -1132,16 +1251,18 @@ cb = colorbar(im, label=L"\mathrm{log10(Birth) \ [Myr]}",orientation="horizontal
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_75_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_74_0.png)
+
 
 Project the average age of the particles to the grid. The age is taken relative to the loaded snapshot time by default.
 
 ```julia
 # :age - Relative age = snapshot_time - birth_time (how old star is now)
 proj_z = projection(particles, :age, :Myr,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
 proj_x = projection(particles, :age, :Myr,
-                    lmax=8,  zrange=[0.45,0.55], direction=:x,  center=[0.,0.,0.], verbose=false);
+                    lmax=8,  zrange=[0.45,0.55], direction=:x,  center=[0.,0.,0.], verbose=false); 
 ```
 
 The reference time (code units) for the age calculation:
@@ -1153,6 +1274,7 @@ proj_z.ref_time
 ```
 29.9031937665063
 ```
+
 
 ```julia
 figure(figsize=(10, 3.5))
@@ -1170,15 +1292,17 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_80_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_79_0.png)
+
 
 Project the average age of the particles relative to a given reference time:
 
 ```julia
 proj_z = projection(particles, :age, :Myr, ref_time=0.,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], verbose=false); 
 proj_x = projection(particles, :age, :Myr, ref_time = 0.,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x, verbose=false); 
 ```
 
 The reference time (code units) for the age calculation:
@@ -1190,6 +1314,7 @@ proj_z.ref_time
 ```
 0.0
 ```
+
 
 ```julia
 figure(figsize=(10, 3.5))
@@ -1207,7 +1332,9 @@ cb = colorbar(im, label=L"\mathrm{Age \ [Myr]}",orientation="horizontal", pad=0.
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_85_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_84_0.png)
+
 
 ## Projection of Masked Data
 
@@ -1219,31 +1346,42 @@ mask = getvar(particles, :age, :Myr) .> 400. ;
 
 ```julia
 proj_z = projection(particles, :age, :Myr, mask=mask,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.]);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.]); 
 proj_x = projection(particles, :age, :Myr, mask=mask,
-                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x);
+                    lmax=8,  zrange=[0.45,0.55], center=[0.,0.,0.], direction=:x); 
 ```
 
 ```
 [Mera]: 2026-07-03T10:15:06.514
+
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
+
 Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
+
 :mask provided by function
+
+
 [Mera]: 2026-07-03T10:15:09.507
+
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.45 :: 0.55  	==> 21.6 [kpc] :: 26.4 [kpc]
+
 Effective resolution: 256^2
 Pixel size: 187.5 [pc]
 Simulation min.: 46.875 [pc]
+
 :mask provided by function
 ```
+
 
 ```julia
 figure(figsize=(10, 3.5))
@@ -1261,7 +1399,9 @@ cb = colorbar(im, label=L"\mathrm{log10(Age) \ [Myr]}",orientation="horizontal",
 tight_layout()
 ```
 
-![](06_particles_Projection_files/06_particles_Projection_90_1.png)
+
+![](06_particles_Projection_files/06_particles_Projection_89_0.png)
+
 
 ## Summary
 
@@ -1275,7 +1415,7 @@ In this tutorial, you have learned to:
 
 ### Particle Projection Capabilities
 - **Stellar Properties**: Mass, age, metallicity, birth time projections
-- **Kinematic Analysis**: Velocity component projections
+- **Kinematic Analysis**: Velocity component projections  
 - **Population Studies**: Age gradients and stellar distribution analysis
 - **Multi-component**: Separate star and dark matter projections
 - **Custom Weighting**: Mass-weighted or number-weighted projections

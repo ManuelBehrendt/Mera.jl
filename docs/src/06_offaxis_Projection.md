@@ -29,7 +29,10 @@ Pointer: full limitations table is Appendix A; nothing on this page is a forward
 Then, BEFORE the code, the first of the three admitted inline caveats:
 
 !!! warning "`direction=:faceon` needs `center` on the object"
-    `:faceon`/`:edgeon` (and `axis=:angmom`) derive the orientation from the **angular momentum of the loaded data about `center`**. `center` defaults to `[0.,0.,0.]` — the box **corner** — and L about a corner is dominated by the lever arm of the whole box. You get a plausible-looking tilted galaxy, no error and no warning. Always pass `center=[:bc]` (or the object's own centre). Detection: edge-on, `:vlos` must be antisymmetric about the minor axis (Chapter 7).
+```
+`:faceon`/`:edgeon` (and `axis=:angmom`) derive the orientation from the **angular momentum of the loaded data about `center`**. `center` defaults to `[0.,0.,0.]` — the box **corner** — and L about a corner is dominated by the lever arm of the whole box. You get a plausible-looking tilted galaxy, no error and no warning. Always pass `center=[:bc]` (or the object's own centre). Detection: edge-on, `:vlos` must be antisymmetric about the minor axis (Chapter 7).
+```
+
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -47,10 +50,14 @@ println("cells loaded : ", length(gas.data))
 println("box length   : ", info.boxlen, " kpc")
 println("levels       : ", gas.lmin, " – ", gas.lmax)
 println("threads      : ", Threads.nthreads())
-```
 
 ```
-*__   __ _______ ______   _______
+
+
+```
+*__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -58,11 +65,16 @@ println("threads      : ", Threads.nthreads())
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
+
+
 cells loaded : 590311
+
+
 box length   : 100.0 kpc
 levels       : 3 – 7
 threads      : 4
 ```
+
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -100,11 +112,13 @@ function maprow(ms, key, titles; clabel="log10 Σ  [M⊙/pc²]", cmap=:inferno,
     Colorbar(fig[1, n+1], hm, label=clabel)
     fig
 end
+
 ```
 
 ```
 maprow (generic function with 1 method)
 ```
+
 
 ```julia
 # ONE window, reused by every chapter — so the only thing that changes between cells
@@ -122,17 +136,21 @@ println("frame: ", size(fo.maps[:sd]), "  and  ", size(eo.maps[:sd]))
 
 cr = sharedrange([fo, eo], :sd)
 maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
+
 ```
 
 ```
-line of sight  ŵ =
+line of sight  ŵ = 
+
 [0.011, 0.02, -1.0]
 image up       û = [1.0, -0.0, 0.011]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_5_3.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_4_2.png)
+
 
 Read the output back:
 
@@ -227,21 +245,30 @@ end
 ladder = [lad0, lad30, lad60, eo]      # i = 90 is the edge-on map from Chapter 1
 cr = sharedrange(ladder, :sd)
 maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
+
 ```
 
 ```
 max |ŵ_faceon − ŵ_inc0|     = 0.0
+
+
 angle(û_faceon, û_inc0)     = 90.0°
-max |Σ_faceon − Σ_inc0|     =
+max |Σ_faceon − Σ_inc0|     = 
+
 2407.1
+
 max |Σ_faceon − Σ_inc0,PA=-90| = 4.433786671143025e-11
-inclination + los
+inclination + los         
+
 → ArgumentError
-direction=:faceon + axis
+direction=:faceon + axis  
+
 → ArgumentError
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_10_7.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_9_6.png)
+
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
 vectors agree to the last bit — but they are *not* the same image. A face-on view leaves the roll
@@ -277,11 +304,14 @@ There is **no line-of-sight depth slab in `projection`.** `zrange` clips world *
 Use `:square` whenever you will compare or animate frames.
 
 !!! warning "`fov` always needs `fov_unit`"
-    `fov_unit` defaults to `:standard`, which is a **box fraction**. `fov=22` alone means 22 box lengths, silently clamped to 0.49·boxlen. Always write `fov=22, fov_unit=:kpc`.
+```
+`fov_unit` defaults to `:standard`, which is a **box fraction**. `fov=22` alone means 22 box lengths, silently clamped to 0.49·boxlen. Always write `fov=22, fov_unit=:kpc`.
 
-    Three more things `fov` does: it **replaces** any `xrange`/`yrange`/`zrange` you pass; it makes `center` be read in `fov_unit` (your `range_unit` is discarded); and it **cannot be combined with a per-cell `mask`** (the sphere selection changes the cell count, so the mask no longer matches).
+Three more things `fov` does: it **replaces** any `xrange`/`yrange`/`zrange` you pass; it makes `center` be read in `fov_unit` (your `range_unit` is discarded); and it **cannot be combined with a per-cell `mask`** (the sphere selection changes the cell count, so the mask no longer matches).
 
-    Caps: `:circle` at 0.49·boxlen, `:square` at 0.49/√2·boxlen (≈ 34.6 kpc on this fixture).
+Caps: `:circle` at 0.49·boxlen, `:square` at 0.49/√2·boxlen (≈ 34.6 kpc on this fixture).
+```
+
 
 ```julia
 # WORLD-space window — verbose=true so Mera's own hint about this is on the page.
@@ -301,10 +331,12 @@ for (nm, m) in (("xrange/yrange ±22 kpc", world), ("fov=22 :square", sq), ("fov
     println(rpad(nm, 24), " frame ", lpad(string(size(m.maps[:sd])), 12),
             "   extent [kpc] = ", round.(getextent(m, :kpc), digits=1))
 end
+
 ```
 
 ```
 [Mera] Hint: off-axis view with `xrange`/`yrange` but no `zrange`.
+
              These are WORLD-space bounds, so the camera frame is the bounding box of that
              region AFTER rotation: the full box depth folds into the image height, and the
              window's own faces show up as straight edges across the map. Pass `zrange` to
@@ -312,20 +344,30 @@ end
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
 [Mera]: 2026-07-31T11:11:53.621
+
+
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
+
+
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
 ymin::ymax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
-Selected var(s)=(:sd,)
+
+Selected var(s)=(:sd,) 
+
 Weighting      = :mass
 Off-axis LOS   = [0.8601, 0.0126, -0.51]  (binning=:overlap)
 Effective resolution: 334^2  →  map size: 162 x 371
-xrange/yrange ±22 kpc    frame
+
+
+xrange/yrange ±22 kpc    frame 
+
   (162, 371)   extent [kpc] = [-24.0, 24.5, -54.9, 56.2]
 fov=22 :square           frame   (147, 147)   extent [kpc] = [-22.0, 22.0, -21.9, 22.1]
 fov=22 :circle           frame   (156, 162)   extent [kpc] = [-23.4, 23.3, -24.2, 24.3]
 ```
+
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -338,9 +380,12 @@ fig = maprow([world, sq, ci], :sd, ttl; crange=cr)
 lines!(contents(fig[1,1])[1], [-22,22,22,-22,-22], [-22,-22,22,22,-22],
        color=:cyan, linestyle=:dash, linewidth=2)
 fig
+
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_16_1.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_15_0.png)
+
 
 Read the frame sizes above, not just the pictures.
 
@@ -457,16 +502,24 @@ for v in (:σx, :σy, :σz, :σ, :r_cylinder, :r_sphere, :ϕ)
     end
     println(rpad(v, 14), msg)
 end
+
 ```
 
 ```
 maps returned : Any
+
 [:
+
 T, :mass, :sd]
 units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
+
  => :K, :mass => :Msol, :sd => :standard)
+
 Σ(map) / msum(gas) − 1  =  0.0
-σx
+
+
+σx            
+
 projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σy            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σz            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
@@ -475,6 +528,7 @@ r_cylinder    projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 r_sphere      projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ϕ             projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 ```
+
 
 That relative error is at the floating-point floor, and it stays there at **any** viewing angle, **any** pixel size and **any** `binning` — the deposit is a partition of unity, so every cell's weight is fully accounted for somewhere on the map. Appendix B says where the systematic sweep that establishes this lives.
 
@@ -545,19 +599,24 @@ for k in (:ngp, :cic, :overlap, :exact)
     println(rpad(k, 10), rpad(string(round(100*count(iszero, A)/length(A), digits=1), " %"), 11),
             rpad(round(secs[k], digits=3), 10), round(d, digits=4))
 end
+
 ```
 
 ```
 level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
+
+
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       64.4 %
+ngp       64.4 %     
+
 0.009     1.3004
 cic       27.8 %     0.01      1.2898
 overlap   0.0 %      0.039     0.0005
 exact     0.0 %      0.125     0.0
 ```
+
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -579,9 +638,12 @@ all weight at cell centres",
 2x2 split — still no footprint",
         ":overlap @ 0.1 kpc pixels
 same pixels, footprint deposit"]; crange=cr)
+
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_24_1.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_23_0.png)
+
 
 The totals agree and the pictures do not — which is the point, and the reason "is it
 conservative?" is the wrong question to stop at.
@@ -629,7 +691,10 @@ The obvious next worry is that σ_LOS is then an artefact of how finely you pixe
 measures whether it is.
 
 !!! warning "Sign convention"
-    `ŵ` points **into** the image, away from the observer, so `v·ŵ > 0` is **receding** (redshifted). A sign flip inverts a rotation curve and nothing else in the figure changes, so check it: on an edge-on map, `:vlos` must be **antisymmetric about the minor axis**. If it is not, your `center` is off the object (Chapter 1).
+```
+`ŵ` points **into** the image, away from the observer, so `v·ŵ > 0` is **receding** (redshifted). A sign flip inverts a rotation curve and nothing else in the figure changes, so check it: on an edge-on map, `:vlos` must be **antisymmetric about the minor axis**. If it is not, your `center` is off the object (Chapter 1).
+```
+
 
 ```julia
 kin = (center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
@@ -644,6 +709,7 @@ finite(A) = filter(isfinite, vec(Float64.(A)))
 println("edge-on   max |v_LOS| = ", round(maximum(abs, finite(keo.maps[:vlos])), digits=1), " km/s")
 println("face-on   max |v_LOS| = ", round(maximum(abs, finite(kfo.maps[:vlos])), digits=1), " km/s")
 println("median σ_LOS edge-on  = ", round(median(finite(keo.maps[:σlos])), digits=1), " km/s")
+
 ```
 
 ```
@@ -651,6 +717,7 @@ edge-on   max |v_LOS| = 516.1 km/s
 face-on   max |v_LOS| = 124.6 km/s
 median σ_LOS edge-on  = 95.1 km/s
 ```
+
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -689,9 +756,12 @@ hideydecorations!(ax2, grid=false); hideydecorations!(ax3, grid=false)
 Colorbar(fig[1,6], h2, label="log10 σ_LOS [km/s]")
 colsize!(fig.layout, 3, Fixed(14))    # spacer: keeps the v colorbar from reading as panel 2's ylabel
 fig
+
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_29_1.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_28_0.png)
+
 
 ```julia
 # Does σ_LOS depend on how finely you pixelate? Measure it rather than assume.
@@ -704,15 +774,20 @@ for px in (0.15, 0.6, 2.4)
     v = filter(x -> isfinite(x) && x > 0, vec(Float64.(p.maps[:σlos])))
     println(rpad(px, 15), rpad(round(median(v), digits=1), 16), round(mean(v), digits=1))
 end
+
 ```
 
 ```
-pxsize [kpc]   median σ_LOS
+pxsize [kpc]   median σ_LOS    
+
 mean σ_LOS
+
 0.15           93.8            274.1
 0.6            94.3            275.4
+
 2.4            102.6           274.8
 ```
+
 
 Now the result, and it is not the one the "width inside a pixel" picture suggests: a **16× change
 in `pxsize` moves the median σ_LOS by a few km/s**, and the mean barely at all. σ_LOS is set by the
@@ -723,9 +798,12 @@ That is a useful licence: choose `pxsize` for the *image* you want, and σ_LOS w
 you. Quote it anyway, so a reader can check.
 
 !!! note "Shipped separately"
-    Position–position–velocity cubes, emission and absorption forward modelling, mock observations
-    and FITS export are **in development in a separate module** and are not part of the released
-    package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
+```
+Position–position–velocity cubes, emission and absorption forward modelling, mock observations
+and FITS export are **in development in a separate module** and are not part of the released
+package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
+```
+
 
 ## 8. Cutting planes: a sample, not an integral
 
@@ -756,14 +834,17 @@ pr = projection(gas, :rho, :nH; view..., fov=15, fov_unit=:kpc, aperture=:square
 println("slice frame      ", size(sl.map), "   ", round(100*count(isnan, sl.map)/length(sl.map), digits=1), " % NaN")
 println("projection frame ", size(pr.maps[:rho]))
 println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
+
 ```
 
 ```
 slice frame      (
+
 120, 120)   0.0 % NaN
 projection frame (120, 120)
 slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
+
 
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
@@ -783,9 +864,12 @@ heatmap!(ax2, range(es[1],es[2],length=size(As,1)), range(es[3],es[4],length=siz
 hideydecorations!(ax2, grid=false)
 Colorbar(fig[1,3], h, label="log10 n_H [cm⁻³]")
 fig
+
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_34_1.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_33_0.png)
+
 
 Two things in the left panel are the *selection* rather than the gas, and both are worth
 recognising because they show up in every `fov` projection:
@@ -807,7 +891,10 @@ for asking the map a question finer than the data can answer.
 It uses **the same framing rule as Chapter 4, swept**: a rotation-invariant sphere selection, `aperture=:circle` or `:square`. That is the whole reason it exists — a cubic window's rotated bounding box changes size frame by frame, so the movie breathes.
 
 !!! note "One difference from `projection`"
-    Omit `fov` on `rotation_sequence` and it **auto-fits** to the 99 % enclosed-mass radius, so the frame follows the object rather than the sparse outermost cells. `projection` has **no** auto-fit — omit `fov` there and you are back on world ranges. If you learned `fov=22` in Chapter 4 and drop it here, your framing rule silently changes. Pass `fov` explicitly whenever it matters.
+```
+Omit `fov` on `rotation_sequence` and it **auto-fits** to the 99 % enclosed-mass radius, so the frame follows the object rather than the sparse outermost cells. `projection` has **no** auto-fit — omit `fov` there and you are back on world ranges. If you learned `fov=22` in Chapter 4 and drop it here, your framing rule silently changes. Pass `fov` explicitly whenever it matters.
+```
+
 
 `parallel_frames=true` runs the frames concurrently with single-threaded projections instead of the reverse; it is typically ~1.5–2× faster when there are at least as many frames as threads, at proportionally more transient memory. Keep the total at or below 8 threads on a laptop.
 
@@ -822,24 +909,30 @@ for (a, f) in zip(0:90:270, frames)
     println("azimuth ", lpad(a,3), "°   frame ", size(f.maps[:sd]),
             "   extent [kpc] = ", round.(getextent(f, :kpc), digits=3))
 end
+
 ```
 
 ```
 azimuth   0
+
 °   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
 azimuth  90°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.857]
 azimuth 180°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
 azimuth 270°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
 ```
 
+
 ```julia
 # ── figure code from here: panels, overlays, colorbars — no new Mera concepts ──
 # The frames are already computed above; showing them is the visual half of the same claim.
 cr = sharedrange(frames, :sd)
 maprow(collect(frames), :sd, ["azimuth $(a)°" for a in 0:90:270]; crange=cr)
+
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_38_1.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_37_0.png)
+
 
 Four frames, four azimuths, one frame size and one extent to three decimals — the montage and the
 numbers say the same thing from opposite directions. That invariance is what makes the sequence
@@ -884,14 +977,18 @@ println("camera survives the round trip : ", fo2.los == fo.los && fo2.up == fo.u
 println(".center (box fraction)         : ", round.(fo.center, digits=3))
 println(".maps_lmax off-axis            : ", isempty(fo.maps_lmax) ? "empty (by design)" : "populated")
 println(".direction                     : ", fo.direction)
+
 ```
 
 ```
 camera survives the round trip : true
+
+
 .center (box fraction)         : [0.5, 0.5, 0.5]
 .maps_lmax off-axis            : empty (by design)
 .direction                     : offaxis
 ```
+
 
 **Troubleshooting** — six symptoms, six causes:
 
@@ -939,15 +1036,20 @@ epot = pe.maps[:epot]; filled = filter(<(0), epot)
 println("gravity : maps ", collect(keys(pe.maps)))
 println("          epot over filled pixels ", round.(extrema(filled), sigdigits=4),
         "   (", count(iszero, epot), " of ", length(epot), " pixels empty)")
+
 ```
 
 ```
 stars   : frame (
+
 107, 109)   los = [0.999, -0.002, -0.037]
+
 gravity : maps Any[:epot, :sd]
           epot over filled pixels (-0.5327, -0.03714)
+
    (530 of 11448 pixels empty)
 ```
+
 
 ```julia
 # The same camera, pointed at a different data type. `fov` frames both identically, so the two
@@ -989,6 +1091,7 @@ Colorbar(fig[1,8], h3, label="φ [km²/s²]")
 hideydecorations!(ax2, grid=false); hideydecorations!(ax3, grid=false)
 colsize!(fig.layout, 3, Fixed(14)); colsize!(fig.layout, 6, Fixed(14))
 fig
+
 ```
 
 ```
@@ -996,7 +1099,9 @@ gas   frame (67, 67)   stars (67, 67)   potential (67, 67)
 φ along the line of sight: (-1976.0, -175.5) km²/s²
 ```
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_46_2.png)
+
+![](06_offaxis_Projection_files/06_offaxis_Projection_45_1.png)
+
 
 Same keywords, same camera, three different kinds of data — and each one says something the
 others cannot. The stars form a **thinner, smoother disc** than the gas, which is exactly the
@@ -1052,22 +1157,30 @@ println("data_center ignored on off-axis hydro        : ",
         same(projection(gas, :sd, :Msol_pc2; inclination=35, axis=:angmom, W...),
              projection(gas, :sd, :Msol_pc2; inclination=35, axis=:angmom,
                         data_center=[0.4,0.4,0.4], data_center_unit=:standard, W...)))
+
 ```
 
 ```
 particle binning=:overlap falls back to :cic : true
+
+
 particle binning=:exact   falls back to :cic : true
-weighting=:sph off-axis (needs :volume)      :
+weighting=:sph off-axis (needs :volume)      : 
+
 ArgumentError
 weighting=:voronoi off-axis (needs :volume)  : ArgumentError
 fov works on particles                       : (
+
 30, 30)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
-particle max_threads
+particle max_threads                         
+
 : MethodError
+
 data_center ignored on off-axis hydro        : true
 ```
+
 
 Nothing above is hydro-specific. The camera keywords, the framing keywords and the binning
 keywords mean the same thing for every projectable data type:

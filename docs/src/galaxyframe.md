@@ -30,10 +30,8 @@ println("cells loaded : ", length(gas.data))
 
 ```
 *__   __ _______ ______   _______ 
-```
 
 
-```
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -41,20 +39,13 @@ println("cells loaded : ", length(gas.data))
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-```
 
-
-```
 [Mera]: 2026-07-31T21:57:58.040
-```
 
 
-```
 Code: RAMSES
-```
 
 
-```
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -70,10 +61,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  
-```
 
-
-```
 7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
@@ -84,10 +72,7 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Nstars:   5.445150e+05 
 particle-variables: 
-```
 
-
-```
 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -95,10 +80,7 @@ rt:            false
 clumps:           false
 -------------------------------------------------------
 namelist-file: 
-```
 
-
-```
 ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
@@ -106,417 +88,49 @@ compilation-file: false
 makefile:         true
 patchfile:        true
 =======================================================
-```
 
-
-```
 [Mera]: Get hydro data: 2026-07-31T21:58:00.054
-```
 
 
-```
 Key vars=(:level, :cx, :cy, :cz)
-```
 
-
-```
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
-```
 
-
-```
 domain:
-```
 
 
-```
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-```
 
-
-```
 📊 Processing Configuration:
-```
 
-
-```
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-```
 
 
-Processing files:   0%|                                                  |  ETA: N/A (  N/A  s/it)
-
-
-Processing files:   2%|▉                                                 |  ETA: 0:01:02 (97.91 ms/it)
-
-
-Processing files:   3%|█▍                                                |  ETA: 0:00:47 (76.16 ms/it)
-
-
-Processing files:   4%|██                                                |  ETA: 0:00:38 (61.11 ms/it)
-
-
-```
-Processing files:   4%|██▎                                               |  ETA: 0:00:37 (60.78 ms/it)
-```
-
-
-Processing files:   8%|███▊                                              |  ETA: 0:00:28 (47.77 ms/it)
-
-
-Processing files:   8%|████▎                                             |  ETA: 0:00:27 (46.25 ms/it)
-
-
-Processing files:  10%|█████▏                                            |  ETA: 0:00:24 (41.67 ms/it)
-
-
-Processing files:  11%|█████▌                                            |  ETA: 0:00:23 (40.76 ms/it)
-
-
-Processing files:  12%|██████                                            |  ETA: 0:00:22 (38.82 ms/it)
-
-
-Processing files:  13%|██████▍                                           |  ETA: 0:00:22 (38.82 ms/it)
-
-
-Processing files:  15%|███████▌                                          |  ETA: 0:00:20 (35.95 ms/it)
-
-
-Processing files:  16%|███████▉                                          |  ETA: 0:00:19 (35.36 ms/it)
-
-
-Processing files:  17%|████████▎                                         |  ETA: 0:00:19 (34.84 ms/it)
-
-
-Processing files:  17%|████████▋                                         |  ETA: 0:00:18 (34.22 ms/it)
-
-
-Processing files:  18%|████████▉                                         |  ETA: 0:00:18 (34.65 ms/it)
-
-
-Processing files:  21%|██████████▌                                       |  ETA: 0:00:17 (32.85 ms/it)
-
-
-Processing files:  22%|███████████                                       |  ETA: 0:00:16 (32.27 ms/it)
-
-
-Processing files:  23%|███████████▍                                      |  ETA: 0:00:16 (31.84 ms/it)
-
-
-Processing files:  24%|████████████                                      |  ETA: 0:00:15 (31.15 ms/it)
-
-
-Processing files:  25%|████████████▍                                     |  ETA: 0:00:15 (30.80 ms/it)
-
-
-Processing files:  26%|█████████████                                     |  ETA: 0:00:14 (30.27 ms/it)
-
-
-Processing files:  27%|█████████████▌                                    |  ETA: 0:00:14 (30.07 ms/it)
-
-
-Processing files:  28%|█████████████▉                                    |  ETA: 0:00:14 (29.79 ms/it)
-
-
-Processing files:  29%|██████████████▌                                   |  ETA: 0:00:13 (29.47 ms/it)
-
-
-Processing files:  30%|██████████████▉                                   |  ETA: 0:00:13 (29.10 ms/it)
-
-
-Processing files:  31%|███████████████▍                                  |  ETA: 0:00:13 (28.88 ms/it)
-
-
-Processing files:  32%|███████████████▉                                  |  ETA: 0:00:12 (28.54 ms/it)
-
-
-Processing files:  32%|████████████████▎                                 |  ETA: 0:00:12 (28.45 ms/it)
-
-
-Processing files:  33%|████████████████▌                                 |  ETA: 0:00:12 (28.39 ms/it)
-
-
-Processing files:  34%|████████████████▉                                 |  ETA: 0:00:12 (28.35 ms/it)
-
-
-Processing files:  34%|█████████████████▎                                |  ETA: 0:00:12 (28.36 ms/it)
-
-
-Processing files:  36%|██████████████████                                |  ETA: 0:00:12 (28.20 ms/it)
-
-
-Processing files:  37%|██████████████████▌                               |  ETA: 0:00:11 (28.28 ms/it)
-
-
-Processing files:  38%|███████████████████                               |  ETA: 0:00:11 (28.15 ms/it)
-
-
-Processing files:  39%|███████████████████▍                              |  ETA: 0:00:11 (28.10 ms/it)
-
-
-Processing files:  40%|███████████████████▉                              |  ETA: 0:00:11 (28.18 ms/it)
-
-
-Processing files:  42%|█████████████████████▏                            |  ETA: 0:00:10 (28.20 ms/it)
-
-
-Processing files:  43%|█████████████████████▌                            |  ETA: 0:00:10 (28.19 ms/it)
-
-
-Processing files:  44%|█████████████████████▊                            |  ETA: 0:00:10 (28.18 ms/it)
-
-
-Processing files:  44%|██████████████████████▏                           |  ETA: 0:00:10 (28.32 ms/it)
-
-
-Processing files:  45%|██████████████████████▋                           |  ETA: 0:00:10 (28.51 ms/it)
-
-
-Processing files:  46%|███████████████████████                           |  ETA: 0:00:10 (28.63 ms/it)
-
-
-Processing files:  47%|███████████████████████▎                          |  ETA: 0:00:10 (28.88 ms/it)
-
-
-Processing files:  49%|████████████████████████▌                         |  ETA: 0:00:10 (29.46 ms/it)
-
-
-Processing files:  50%|████████████████████████▊                         |  ETA: 0:00:10 (29.69 ms/it)
-
-
-Processing files:  50%|█████████████████████████▏                        |  ETA: 0:00:09 (29.84 ms/it)
-
-
-Processing files:  51%|█████████████████████████▋                        |  ETA: 0:00:09 (29.82 ms/it)
-
-
-Processing files:  52%|██████████████████████████                        |  ETA: 0:00:09 (29.95 ms/it)
-
-
-Processing files:  52%|██████████████████████████▎                       |  ETA: 0:00:09 (30.10 ms/it)
-
-
-Processing files:  53%|██████████████████████████▋                       |  ETA: 0:00:09 (30.22 ms/it)
-
-
-Processing files:  54%|███████████████████████████                       |  ETA: 0:00:09 (30.52 ms/it)
-
-
-Processing files:  55%|███████████████████████████▍                      |  ETA: 0:00:09 (30.45 ms/it)
-
-
-Processing files:  55%|███████████████████████████▊                      |  ETA: 0:00:09 (30.50 ms/it)
-
-
-Processing files:  56%|████████████████████████████                      |  ETA: 0:00:09 (30.68 ms/it)
-
-
-Processing files:  57%|████████████████████████████▌                     |  ETA: 0:00:08 (30.61 ms/it)
-
-
-Processing files:  58%|████████████████████████████▊                     |  ETA: 0:00:08 (30.58 ms/it)
-
-
-Processing files:  58%|█████████████████████████████                     |  ETA: 0:00:08 (30.54 ms/it)
-
-
-Processing files:  59%|█████████████████████████████▌                    |  ETA: 0:00:08 (30.46 ms/it)
-
-
-Processing files:  60%|█████████████████████████████▊                    |  ETA: 0:00:08 (30.44 ms/it)
-
-
-Processing files:  60%|██████████████████████████████▏                   |  ETA: 0:00:08 (30.32 ms/it)
-
-
-Processing files:  61%|██████████████████████████████▌                   |  ETA: 0:00:08 (30.26 ms/it)
-
-
-Processing files:  62%|███████████████████████████████                   |  ETA: 0:00:07 (30.17 ms/it)
-
-
-Processing files:  63%|███████████████████████████████▍                  |  ETA: 0:00:07 (30.13 ms/it)
-
-
-Processing files:  63%|███████████████████████████████▊                  |  ETA: 0:00:07 (30.05 ms/it)
-
-
-Processing files:  64%|████████████████████████████████                  |  ETA: 0:00:07 (30.22 ms/it)
-
-
-Processing files:  65%|████████████████████████████████▍                 |  ETA: 0:00:07 (30.12 ms/it)
-
-
-Processing files:  66%|████████████████████████████████▉                 |  ETA: 0:00:07 (29.99 ms/it)
-
-
-Processing files:  67%|█████████████████████████████████▎                |  ETA: 0:00:06 (29.95 ms/it)
-
-
-Processing files:  68%|█████████████████████████████████▉                |  ETA: 0:00:06 (29.78 ms/it)
-
-
-Processing files:  68%|██████████████████████████████████▎               |  ETA: 0:00:06 (29.69 ms/it)
-
-
-Processing files:  69%|██████████████████████████████████▋               |  ETA: 0:00:06 (29.59 ms/it)
-
-
-Processing files:  70%|███████████████████████████████████▏              |  ETA: 0:00:06 (29.52 ms/it)
-
-
-Processing files:  72%|███████████████████████████████████▊              |  ETA: 0:00:05 (29.33 ms/it)
-
-
-Processing files:  73%|████████████████████████████████████▍             |  ETA: 0:00:05 (29.19 ms/it)
-
-
-Processing files:  73%|████████████████████████████████████▋             |  ETA: 0:00:05 (29.17 ms/it)
-
-
-Processing files:  75%|█████████████████████████████████████▎            |  ETA: 0:00:05 (28.96 ms/it)
-
-
-Processing files:  75%|█████████████████████████████████████▊            |  ETA: 0:00:05 (28.90 ms/it)
-
-
-Processing files:  76%|██████████████████████████████████████▏           |  ETA: 0:00:04 (28.93 ms/it)
-
-
-Processing files:  78%|██████████████████████████████████████▉           |  ETA: 0:00:04 (28.72 ms/it)
-
-
-Processing files:  79%|███████████████████████████████████████▎          |  ETA: 0:00:04 (28.68 ms/it)
-
-
-Processing files:  80%|███████████████████████████████████████▉          |  ETA: 0:00:04 (28.56 ms/it)
-
-
-Processing files:  81%|████████████████████████████████████████▍         |  ETA: 0:00:03 (28.39 ms/it)
-
-
-Processing files:  82%|████████████████████████████████████████▊         |  ETA: 0:00:03 (28.38 ms/it)
-
-
-Processing files:  82%|█████████████████████████████████████████▎        |  ETA: 0:00:03 (28.25 ms/it)
-
-
-Processing files:  83%|█████████████████████████████████████████▋        |  ETA: 0:00:03 (28.26 ms/it)
-
-
-Processing files:  85%|██████████████████████████████████████████▎       |  ETA: 0:00:03 (28.18 ms/it)
-
-
-Processing files:  85%|██████████████████████████████████████████▋       |  ETA: 0:00:03 (28.12 ms/it)
-
-
-Processing files:  86%|███████████████████████████████████████████▏      |  ETA: 0:00:02 (28.03 ms/it)
-
-
-Processing files:  87%|███████████████████████████████████████████▌      |  ETA: 0:00:02 (28.02 ms/it)
-
-
-Processing files:  88%|████████████████████████████████████████████      |  ETA: 0:00:02 (27.92 ms/it)
-
-
-Processing files:  89%|████████████████████████████████████████████▍     |  ETA: 0:00:02 (27.88 ms/it)
-
-
-Processing files:  89%|████████████████████████████████████████████▊     |  ETA: 0:00:02 (27.94 ms/it)
-
-
-Processing files:  90%|█████████████████████████████████████████████▏    |  ETA: 0:00:02 (27.88 ms/it)
-
-
-Processing files:  91%|█████████████████████████████████████████████▋    |  ETA: 0:00:02 (27.83 ms/it)
-
-
-Processing files:  92%|██████████████████████████████████████████████▏   |  ETA: 0:00:01 (27.73 ms/it)
-
-
-Processing files:  93%|██████████████████████████████████████████████▌   |  ETA: 0:00:01 (27.71 ms/it)
-
-
-Processing files:  94%|██████████████████████████████████████████████▊   |  ETA: 0:00:01 (27.69 ms/it)
-
-
-Processing files:  94%|███████████████████████████████████████████████▏  |  ETA: 0:00:01 (27.72 ms/it)
-
-
-Processing files:  95%|███████████████████████████████████████████████▍  |  ETA: 0:00:01 (27.74 ms/it)
-
-
-Processing files:  95%|███████████████████████████████████████████████▊  |  ETA: 0:00:01 (27.75 ms/it)
-
-
-Processing files:  96%|████████████████████████████████████████████████  |  ETA: 0:00:01 (27.83 ms/it)
-
-
-Processing files:  97%|████████████████████████████████████████████████▌ |  ETA: 0:00:01 (27.81 ms/it)
-
-
-Processing files:  98%|████████████████████████████████████████████████▉ |  ETA: 0:00:00 (27.90 ms/it)
-
-
-Processing files:  98%|█████████████████████████████████████████████████ |  ETA: 0:00:00 (27.96 ms/it)
-
-
-Processing files:  99%|█████████████████████████████████████████████████▎|  ETA: 0:00:00 (28.00 ms/it)
-
-
-Processing files:  99%|█████████████████████████████████████████████████▌|  ETA: 0:00:00 (28.18 ms/it)
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:18 (28.16 ms/it)
-
-
-```
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-```
 
-
-```
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
-```
 
-
-```
   Threading: 4 threads for 11 columns
-```
 
-
-```
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-```
 
-
-```
   Creating IndexedTable with 11 columns...
 ✓ Table created in 39.377 seconds
-```
 
-
-```
 Memory used for data table :2.321086215786636
-```
 
-
-```
  GB
 -------------------------------------------------------
-```
 
-
-```
 cells loaded : 28320979
 ```
 
@@ -537,10 +151,7 @@ println("center_of (:com,  kpc)      : ", round.(c_kpc,     digits=4))
 
 ```
 center_of (:com,  fraction) : 
-```
 
-
-```
 [0.50001, 0.50046, 0.50044]
 center_of (:densest)        : [0.49658, 0.50244, 0.50146]
 center_of (:com,  kpc)      : [24.0003, 24.022, 24.0212]
@@ -572,18 +183,12 @@ println("angmom : ", round.(fr.angmom, sigdigits=4))
 
 ```
 GalaxyFrame:
-```
 
-
-```
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0004, -0.0002, 1.0]
   up   = [-1.0, 0.0, -0.0004]
   |angmom| = 160.2
-```
 
-
-```
 los    : [-0.0004, -0.0002, 1.0]
 up     : [-1.0, 0.0, -0.0004]
 center : [0.50001, 0.50046, 0.50044]  [standard]
@@ -604,18 +209,12 @@ println("los_faceon · los_edgeon = ", round(sum(fr.los .* eo.los), digits=6))
 
 ```
 GalaxyFrame:
-```
 
-
-```
   center (standard) = [0.5, 0.5005, 0.5004]
   los  = [-0.0, 1.0, 0.0002]
   up   = [-0.0004, -0.0002, 1.0]
   |angmom| = 160.2
-```
 
-
-```
 edge-on los : [-0.0, 1.0, 0.0002]
 edge-on up  : [-0.0004, -0.0002, 1.0]
 los_faceon · los_edgeon = -0.0
@@ -653,70 +252,41 @@ fig
 
 ```
 [Mera]: 2026-07-31T21:59:27.538
-```
 
 
-```
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
-```
 
-
-```
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-```
 
-
-```
 Selected var(s)=(:sd,) 
-```
 
-
-```
 Weighting      = :mass
 Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-```
 
 
-```
 [Mera]: 2026-07-31T21:59:37.930
-```
 
 
-```
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
-```
 
-
-```
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
-```
 
-
-```
 Selected var(s)=(:sd,) 
-```
 
-
-```
 Weighting      = :mass
 Off-axis LOS   = [-0.0, 1.0, 0.0002]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
-```
 
 
-```
 face-on Sigma extrema : (
-```
 
-
-```
 0.0, 200.81405317206742)
 edge-on Sigma extrema : (0.0, 6539.3160386012305)
 ```
@@ -773,10 +343,7 @@ println("aperture-framed center [kpc] : ", round.(fr_ap.center, digits=4))
 
 ```
 GalaxyFrame:
-```
 
-
-```
   center (kpc) = [24.0003, 24.022, 24.0212]
   los  = [-0.0004, -0.0002, 1.0]
   up   = [-1.0, 0.0, -0.0004]

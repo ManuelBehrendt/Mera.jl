@@ -3,7 +3,6 @@
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `paraview_intro.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/paraview/paraview_intro.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
 
-
 This section guides the export of simulation data in the VTK (Visualization Toolkit) format, a widely recognized standard for 3D visualization in scientific computing. The exported files are compatible with visualization tools like ParaView (an open-source software), allowing for detailed analysis and rendering of complex datasets. Both the exported hydro cells and particle data can be opened together in ParaView. For certain functions, multi-threading is used (this feature is experimental). To utilize this, load Julia or your Jupyter Notebook with multiple threads, and the multi-threading will be applied automatically. Paraview can also be used remotely running on a server with MPI.
 
 You can download the necessary files here: https://www.paraview.org.
@@ -17,11 +16,11 @@ using Mera
 ```
 
 ```
-search:
-export_vtk export exponent
-```
+search: 
 
-```
+export_vtk export exponent
+
+
   Export hydro data to VTK format for visualization in tools like ParaView.
   -------------------------------------------------------------------------
 
@@ -175,4 +174,9 @@ export_vtk export exponent
        if exceeded), (default: 100000000)
     •  verbose: If true (default), print detailed progress and diagnostic
        messages.
+```
+
+
+```julia
+
 ```

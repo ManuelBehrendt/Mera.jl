@@ -1,8 +1,7 @@
-# Particles: Export Selected Variables to VTK
+# Particles: Export Selected Variables to VTK 
 
 !!! tip "Run it yourself"
     This page is also an executable **Jupyter notebook** — [open / download `08_particles_VTK_export.ipynb`](https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/paraview/08_particles_VTK_export.ipynb). The notebooks run end-to-end and double as part of Mera's test suite.
-
 
 Export particle simulation data to VTK format for advanced 3D visualization in ParaView. This tutorial demonstrates how to convert MERA particle data (stellar particles, dark matter) into VTK point cloud format with customizable variables, units, and coordinate systems.
 
@@ -35,7 +34,7 @@ export_vtk(particles, "particles_kpc",
 
 ### Key Parameters
 - **`scalars`** - Array of particle property symbols: `[:age, :mass, :metallicity]`
-- **`scalars_unit`** - Corresponding units: `[:Myr, :Msol, :standard]`
+- **`scalars_unit`** - Corresponding units: `[:Myr, :Msol, :standard]` 
 - **`vector`** - Vector components: `[:vx, :vy, :vz]`
 - **`vector_unit`** - Vector units: `:km_s, :m_s, :pc_Myr`
 - **`vector_name`** - ParaView vector name: `"velocity", "magnetic_field"`
@@ -67,9 +66,11 @@ import Pkg; Pkg.activate("../.")
 ```
 
 ```
-  Activating
+  Activating 
+
 project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
 ```
+
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -85,8 +86,13 @@ particles = loaddata(600, path, :particles); # load full box
 
 ```
 [Mera]: 2026-05-30T19:37:42.920
+
+
 Use datatype: hydro
-Code:
+
+
+Code: 
+
 RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
@@ -102,6 +108,7 @@ level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  7
+
   --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
@@ -110,7 +117,8 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   1.353087e+06
+- Nstars:   1.353087e+06 
+
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -118,6 +126,7 @@ rt:            false
 clumps:           false
 -------------------------------------------------------
 namelist-file: (
+
 "&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
@@ -125,16 +134,23 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
+
 [Mera]: 2026-05-30T19:37:49.721
+
 Open Mera-file output_00600.jld2:
+
 domain:
+
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
+
 Memory used for data table :
+
 95.81425380706787 MB
 -------------------------------------------------------
 ```
+
 
 ## Export Scalars
 
@@ -145,29 +161,36 @@ Memory used for data table :
 
 export_vtk(
     particles,                      # loaded data
-    "output_part01/0600_galaxy";    # prefix for outputfiles; creates folder output_part01 (if not existing)
+    "output_part01/0600_galaxy";    # prefix for outputfiles; creates folder output_part01 (if not existing) 
     scalars=[:mass, :age],          # load mass data in Msun and particle age data in Myr
     scalars_unit=[:Msun, :Myr],
     scalars_log10=true,             # apply log10 on the scalars
-    positions_unit=:kpc,            # particle positions in kpc (useful in Paraview for region selection)
+    positions_unit=:kpc,            # particle positions in kpc (useful in Paraview for region selection)                   
 );
 ```
 
 ```
 [Mera]: 2026-05-30T19:37:52.044
+
+
 Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
+
 Extracting scalar data...
 Writing particle VTU file...
+
   wrote 0600_galaxy.vtu
+
  (Size: 73.55 MB)
 Memory cleaned
+
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: mass, age
 ```
+
 
 ```julia
 readdir("output_part01")
@@ -178,8 +201,13 @@ readdir("output_part01")
  "0600_galaxy.vtu"
 ```
 
+
 ```julia
 # => in Paraview open the vtu file to load all level data
+```
+
+```julia
+
 ```
 
 ### Export Maximum Number of Particles
@@ -190,7 +218,7 @@ readdir("output_part01")
 
 export_vtk(
     particles,                      # loaded data
-    "output_part03/0600_galaxy";    # prefix for outputfiles; creates folder output_part03 (if not existing)
+    "output_part03/0600_galaxy";    # prefix for outputfiles; creates folder output_part03 (if not existing) 
     scalars=[:age],                 # load age data in Myra
     scalars_unit=[:Myr],
     scalars_log10=true,             # apply log10 on the scalars
@@ -202,6 +230,7 @@ export_vtk(
 
 ```
 [Mera]: 2026-05-30T19:37:54.914
+
 Available Threads: 4
 Total particles in dataset: 1353087
 Limiting export to 1000 particles (from 1353087)
@@ -210,11 +239,13 @@ Extracting scalar data...
 Writing particle VTU file...
   wrote 0600_galaxy.vtu (Size: 0.05 MB)
 Memory cleaned
+
 === Export Summary ===
 Particles exported: 1000
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: age
 ```
+
 
 ```julia
 readdir("output_part03")
@@ -224,6 +255,7 @@ readdir("output_part03")
 1-element Vector{String}:
  "0600_galaxy.vtu"
 ```
+
 
 ```julia
 # => in Paraview open the vtu file to load all level data
@@ -236,7 +268,7 @@ readdir("output_part03")
 
 export_vtk(
     particles,                      # loaded data
-    "output_part04/0600_galaxy";    # prefix for outputfiles; creates folder output_part04 (if not existing)
+    "output_part04/0600_galaxy";    # prefix for outputfiles; creates folder output_part04 (if not existing) 
     scalars=[:age],                 # load age data in Myr
     scalars_unit=[:Msun],
     scalars_log10=true,             # apply log10 on the scalars
@@ -250,22 +282,29 @@ export_vtk(
 
 ```
 [Mera]: 2026-05-30T19:37:55.140
+
+
 Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
+
 Extracting scalar data...
 Extracting vector data...
+
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
   wrote 0600_galaxy.vtu
+
  (Size: 94.2 MB)
 Memory cleaned
+
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: age
 Available vector: velocity
 ```
+
 
 ```julia
 readdir("output_part04")
@@ -275,6 +314,7 @@ readdir("output_part04")
 1-element Vector{String}:
  "0600_galaxy.vtu"
 ```
+
 
 ```julia
 # => in Paraview open
@@ -290,8 +330,8 @@ readdir("output_part04")
 
 export_vtk(
     particles,                      # loaded data
-    "output_part05/0600_galaxy";    # prefix for outputfiles; creates folder output05 (if not existing)
-    scalars=[:id, :age],            # load density data in cm^-3
+    "output_part05/0600_galaxy";    # prefix for outputfiles; creates folder output05 (if not existing) 
+    scalars=[:id, :age],            # load density data in cm^-3 
     scalars_unit=[:standard, :Myr],
     positions_unit=:kpc,            # particle positions in kpc (useful in Paraview for region selection)
 
@@ -303,22 +343,28 @@ export_vtk(
 
 ```
 [Mera]: 2026-05-30T19:37:56.681
+
 Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
+
 Extracting scalar data...
 Extracting vector data...
+
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
   wrote 0600_galaxy.vtu
+
  (Size: 104.52 MB)
 Memory cleaned
+
 === Export Summary ===
 Particles exported: 1353087
 Particle VTU file: 0600_galaxy.vtu
 Available scalars: id, age
 Available vector: velocity
 ```
+
 
 ```julia
 readdir("output_part05")
@@ -329,9 +375,14 @@ readdir("output_part05")
  "0600_galaxy.vtu"
 ```
 
+
 **Load Data-File**
 
 ![](images/01_particles.jpg)
+
+```julia
+
+```
 
 **Select age information**
 

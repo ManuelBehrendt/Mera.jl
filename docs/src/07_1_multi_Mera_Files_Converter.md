@@ -83,10 +83,8 @@ println("JLD2 target   : ", jld_dir)
 
 ```
 *__   __ _______ ______   _______ 
-```
 
 
-```
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -94,15 +92,10 @@ println("JLD2 target   : ", jld_dir)
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-```
 
-
-```
 RAMSES source : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d
-```
 
 
-```
 JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
 ```
 
@@ -122,60 +115,34 @@ println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 
 ```
 [Mera]: 2026-07-31T21:35:29.043
-```
 
 
-```
 Requested datatypes: 
-```
 
-
-```
 [:hydro]
 Max threads: 4 of 4 available
 Threading applied to: hydro, gravity, particles
 Threading NOT applied to: clumps (single-threaded by design)
-```
 
-
-```
 domain:
-```
 
-
-```
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-```
 
 
-```
 reading/writing lmax: 6 of 6
 -----------------------------------
 Compression: 
-```
 
-
-```
 JLD2Lz4.Lz4Filter(0x40000000)
 -----------------------------------
 - hydro (threaded: max_threads=4)
-```
 
 
-Processing files:   0%|                                                  |  ETA: N/A (  N/A  s/it)
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:00 ( 0.45  s/it)
-
-
-```
 ✓ File processing complete! Combining results...
-```
 
 
-```
 Final Statistics:
 ================
 - total folder size: 2.158 MB
@@ -187,10 +154,7 @@ Final Statistics:
 - total processing time: 8.5 seconds
 - effective threads: 4
 wrote          : 
-```
 
-
-```
 /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL/output_00001.jld2
 size           : 0.15 MB
 ```
@@ -209,28 +173,16 @@ println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
 
 ```
 [Mera]: 2026-07-31T21:35:39.089
-```
 
-
-```
 Mera-file output_00001.jld2 contains:
-```
 
-
-```
 Datatype: 
-```
 
-
-```
 hydro
 merafile_version: 1.0
 Compression: JLD2Lz4.Lz4Filter(0x40000000)
 CodecZlib: 
-```
 
-
-```
 VersionNumber[v"0.7.8"]
 merafile_version: 1.0
 JLD2: VersionNumber[v"0.6.4"]
@@ -240,58 +192,33 @@ CodecLz4: VersionNumber[v"0.4.6"]
 Mera: VersionNumber[v"1.8.0"]
 -------------------------
 Memory: 2.2761077880859375 MB (uncompressed)
-```
 
 
-```
 -----------------------------------
 convert stat: true
 -----------------------------------
 Total file size: 155.944 KB
 -----------------------------------
-```
 
-
-```
 [Mera]: 2026-07-31T21:35:39.668
-```
 
 
-```
 Open Mera-file output_00001.jld2:
-```
 
-
-```
 domain:
-```
 
-
-```
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-```
 
-
-```
 Memory used for data table :
-```
 
-
-```
 2.2739639282226562 MB
 -------------------------------------------------------
-```
 
-
-```
 cells loaded   : 32768
 total mass     : 6.284e-35
-```
 
-
-```
  Msol
 ```
 
@@ -312,20 +239,13 @@ println("mera files     : ", made)
 
 ```
 ✓ File processing complete! Combining results...
-```
 
 
-```
 ✓ File processing complete! Combining results...
-```
 
 
-```
 ✓ File processing complete! Combining results...
-```
 
-
-```
 mera files     : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
 ```
 
@@ -404,10 +324,7 @@ println("converted dir  : ", sort(readdir(converted_dir)))
 
 ```
 ================================================================================
-```
 
-
-```
 Safe Multithreaded JLD2 Batch Converter with Safety Margin Monitoring
 ================================================================================
 Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
@@ -421,75 +338,38 @@ System Memory Information:
   ⚠️  WARNING: Current memory usage exceeds safety margin!
       Consider closing other applications before proceeding.
 Requested threads: 1
-```
 
-
-```
 ┌ Warning: Current memory usage (99.1%) exceeds safety margin (80.0%).
 │ Consider closing other applications or reducing thread count.
 │ System may become unstable during conversion with high memory usage.
 ┌ Warning: Limited memory available within safety margin. Reducing recommended thread count by 50%.
-```
 
-
-```
 Recommended thread count (with safety margin): 1
-```
 
-
-```
 Files to be converted (3 total):
   - output_00001.jld2 (output 1)
   - output_00002.jld2 (output 2)
   - output_00003.jld2 (output 3)
-```
 
-
-```
 Starting multithreaded conversion with safety margin monitoring...
-```
 
-
-```
 ┌ Warning: Safety margin exceeded (98.9% > 80.0%) while processing output_00001.jld2
-```
 
-
-```
   ⚠️  Safety margin exceeded during load of output_00001.jld2 (99.3%)
-```
 
 
-[2/3] Processing: output_00002.jld2  67%|██████████████       |  ETA: 0:00:00 ( 0.47  s/it)
-
-```
 ┌ Warning: Safety margin exceeded (99.3% > 80.0%) while processing output_00002.jld2
-```
 
-
-```
   ⚠️  Safety margin exceeded during load of output_00002.jld2 (99.3%)
-```
 
 
-[3/3] Processing: output_00003.jld2 100%|█████████████████████| Time: 0:00:01 ( 0.41  s/it)
-
-```
 ┌ Warning: Safety margin exceeded (99.4% > 80.0%) while processing output_00003.jld2
-```
 
-
-```
   ⚠️  Safety margin exceeded during load of output_00003.jld2 (99.6%)
-```
 
-
-```
 ┌ Warning: Safety margin violation detected (99.6% > 80.0%) - file 3/3
-```
 
 
-```
 ================================================================================
 Conversion Summary with Safety Margin Report
 ================================================================================
@@ -502,23 +382,14 @@ Total conversion time:    1.6 seconds
 Average time per file:    0.53 seconds
 Threads used:             1
 Final memory usage:       99.6%
-```
 
-
-```
 ⚠️  SAFETY MARGIN VIOLATIONS DETECTED!
 Consider using fewer threads or processing smaller batches for future conversions.
 Recommendation: Reduce thread count by 50% and increase safety margin to 0.9
 Conversion complete!
-```
 
-
-```
 return dict    : 
-```
 
-
-```
 Dict{String, Real}("conversion_time" => 1.6048290729522705, "success" => 3, "threads_used" => 1, "final_memory_usage_percent" => 99.6185302734375, "failed" => 0, "skipped" => 0, "safety_violations" => 1)
 converted dir  : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
 ```
@@ -556,53 +427,29 @@ println("mass   (orig / converted) : ",
 
 ```
 [Mera]: 2026-07-31T21:35:50.568
-```
 
-
-```
 Open Mera-file output_00001.jld2:
-```
 
-
-```
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-```
 
-
-```
 Memory used for data table :2.2739639282226562 MB
 -------------------------------------------------------
-```
 
-
-```
 [Mera]: 2026-07-31T21:35:50.575
-```
 
-
-```
 Open Mera-file output_00001.jld2:
-```
 
-
-```
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
-```
 
-
-```
 Memory used for data table :2.2739639282226562 MB
 -------------------------------------------------------
-```
 
-
-```
 cells  (orig / converted) : 32768 / 32768
 mass   (orig / converted) : 6.28425e-35 / 6.28425e-35
 ```

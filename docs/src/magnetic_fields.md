@@ -66,10 +66,8 @@ info = getinfo(27, joinpath(base, "RAMSES/ramses_mhd_128"));
 
 ```
 *__   __ _______ ______   _______ 
-```
 
 
-```
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -77,20 +75,12 @@ info = getinfo(27, joinpath(base, "RAMSES/ramses_mhd_128"));
 | ||_|| |   |___|   |  | |   _   |
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
-```
 
-
-```
 [Mera]: 2026-07-31T21:33:05.882
-```
 
 
-```
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
-```
 
-
-```
 Code: RAMSES
 output [27] summary:
 mtime: 2026-06-17T09:26:06.094
@@ -107,10 +97,7 @@ level of uniform grid: 7 --> cellsize(s): 156.25 [μm]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  11
-```
 
-
-```
   --> (:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p)
 magnetic field:   true (MHD, constrained transport) --> cell-centred :bx, :by, :bz = ½(left+right)
 γ: 1.6666667
@@ -140,102 +127,54 @@ println("temperature  T [K]   : ", extrema(getvar(gas, :T, :K)))
 
 ```
 [Mera]: Get hydro data: 2026-07-31T21:33:08.879
-```
 
 
-```
 Key vars=(:cx, :cy, :cz)
-```
 
-
-```
 Using var(s)=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) = (:rho, :vx, :vy, :vz, :bx_left, :by_left, :bz_left, :bx_right, :by_right, :bz_right, :p) 
-```
 
-
-```
 domain:
-```
 
 
-```
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
-```
 
-
-```
 📊 Processing Configuration:
-```
 
-
-```
    Total CPU files available: 4
    Files to be processed: 4
    Compute threads: 4
    GC threads: 4
-```
 
 
-Processing files:   0%|                                                  |  ETA: N/A (  N/A  s/it)
-
-
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:01 ( 0.41  s/it)
-
-
-```
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-```
 
-
-```
 Final data size: 2097152 cells, 11 variables
 Creating Table from 2097152 cells with max 4 threads...
-```
 
-
-```
   Threading: 4 threads for 14 columns
-```
 
-
-```
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 14 columns...
 ✓ Table created in 4.351 seconds
-```
 
-
-```
 Memory used for data table :224.00138664245605
-```
 
-
-```
  MB
 -------------------------------------------------------
-```
 
-
-```
 cells loaded         : 2097152
 thermal pressure   p : 
-```
 
-
-```
 (0.13653329586664678, 1.9999999999999998)
 cell-centred Bx      : (1.0, 1.0)
 cell-centred By      : (9.971840159730391e-27, 1.6525454539866162)
 cell-centred Bz      : 
-```
 
-
-```
 (0.0, 0.0)
 temperature  T [K]   : (1.0812393953743894e-8, 3.1640344885858596e-8)
 ```
@@ -262,10 +201,7 @@ println("Mach_fast            : ", extrema(mf))
 
 ```
 |B|   [muG]          : (
-```
 
-
-```
 3.544907701811032e6, 6.84718581051191e6)
 plasma beta          : (0.07401400537131442, 3.9999999999999996)
 Alfven speed [km/s]  : (1.0e-5, 5.603087067452776e-5)
@@ -305,76 +241,46 @@ fig
 
 ```
 [ Info: Mera v1.8.0
-```
 
-
-```
 [Mera]: 2026-07-31T21:33:46.285
-```
 
 
-```
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
-```
 
-
-```
 Selected var(s)=(:sd,) 
 Weighting      = :mass
-```
 
-
-```
 Effective resolution: 128^2
-```
 
 
-```
 Map size: 128 x 128
 Pixel size: 156.25 [μm]
 Simulation min.: 156.25 [μm]
-```
 
-
-```
 Available threads: 4
-```
 
-
-```
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 [Mera]: 2026-07-31T21:33:47.546
-```
 
 
-```
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 2.0 [cm]
-```
 
-
-```
 Selected var(s)=(:bx, :sd) 
 Weighting      = :mass
-```
 
-
-```
 Effective resolution: 128^2
 Map size: 128 x 128
 Pixel size: 156.25 [μm]
 Simulation min.: 156.25 [μm]
-```
 
-
-```
 Available threads: 4
 Requested max_threads: 4
 Variables: 2 (bx, sd)
