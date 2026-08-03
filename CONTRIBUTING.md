@@ -2,6 +2,8 @@
 
 Thank you for your interest in contributing to Mera.jl! This document provides guidelines for contributing to the project.
 
+Participation in this project is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
+
 ## Getting Started
 
 1. Fork the repository on GitHub
