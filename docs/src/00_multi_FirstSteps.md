@@ -161,7 +161,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
-[Mera]: 2026-08-03T09:42:30.385
+[Mera]: 2026-08-03T10:08:33.067
 
 
 Code: RAMSES
@@ -452,21 +452,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.4119619146e-314
-a_mag	= 2.4119619146e-314
-v_esc	= 2.4119619146e-314
-ax	= 2.4119619146e-314
-ay	= 2.4119619146e-314
-az	= 2.4119619146e-314
-epot	= 2.4119619146e-314
-a_magnitude	= 2.4119619146e-314
-escape_speed	= 2.4119619146e-314
-gravitational_redshift	= 2.4119619146e-314
-gravitational_energy_density	= 2.4119619146e-314
-gravitational_binding_energy	= 2.4119619146e-314
-total_binding_energy	= 2.4119619146e-314
+delta_rho	= 1.14e-322
+a_mag	= 2.2e-322
+v_esc	= 2.2e-322
+ax	= 1.8e-322
+ay	= 1.8e-322
+az	= 1.6e-322
+epot	= 1.6e-322
+a_magnitude	= 1.24e-322
+escape_speed	= 1.24e-322
+gravitational_redshift	= 1.04e-322
+gravitational_energy_density	= 1.04e-322
+gravitational_binding_energy	= 1.0e-322
+total_binding_energy	= 1.0e-322
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.4119619146e-314
+gravitational_work	= 5.4e-323
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -474,8 +474,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.4119619146e-314
-poisson_source	= 2.4119619146e-314
+Fg	= 4.0e-323
+poisson_source	= 3.5e-323
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -948,6 +948,8 @@ Object type: InfoType
 This InfoType object contains:
 - Simulation metadata and parameters
 - Scaling factors for unit conversion
+
+
 - Physical constants
 - File organization information
 - AMR grid structure details
@@ -1102,7 +1104,6 @@ info.constants.G:    6.6743e-8
 constants.G:         6.6743e-8
 consts.G:            6.6743e-8
 All identical:       true
-
 
 === Key Physical Constants for Astrophysics ===
 - Gravitational constant: 6.6743e-8 cm³ g⁻¹ s⁻²
