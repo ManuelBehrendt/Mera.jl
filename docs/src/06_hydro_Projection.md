@@ -126,17 +126,17 @@ gas = gethydro(info, smallr=1e-11, lmax=12);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-03T10:09:18.780
+[Mera]: 2026-08-03T10:57:50.947
 
 
 Code: RAMSES
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime: 
+
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
-simulation time: 594.98
-
- [Myr]
+simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
 ndim: 3
@@ -174,7 +174,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-07-03T10:09:20.614
+[Mera]: Get hydro data: 2026-08-03T10:57:53.342
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -203,12 +203,13 @@ Final data size: 18966620 cells, 7 variables
 Creating Table from 18966620 cells with max 4 threads...
 
   Threading: 4 threads for 11 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 24.057 seconds
+✓ Table created in 26.08 seconds
 
 Memory used for data table :1.5544367535039783
 
@@ -303,8 +304,6 @@ project along ANY line of sight (degrees by default):
     slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions
     rotation_sequence             -> shared-FOV angle sweep (orbit movies)
     savemap/loadmap (JLD2)        -> store/restore a projection result
-    (PPV cubes, spectra, moments -> dev/loscubes ; column_integral, emission/absorption,
-     optical depth, FITS export   -> dev/offaxis_synthobs)
 
 ------------------------------------------------
 ```
@@ -342,7 +341,7 @@ proj_x = projection(gas, :sd, :Msol_pc2, direction=:x, zrange=[0.45,0.55], verbo
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:31.520
+[Mera]: 2026-08-03T10:58:55.267
 
 
 domain:
@@ -389,7 +388,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:46.577
+[Mera]: 2026-08-03T10:59:10.973
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -429,7 +428,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:48.917
+[Mera]: 2026-08-03T10:59:13.243
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -466,7 +465,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:50.447
+[Mera]: 2026-08-03T10:59:14.925
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -505,7 +504,7 @@ proj_z = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:52.676
+[Mera]: 2026-08-03T10:59:17.176
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -557,7 +556,7 @@ proj1_x = projection(gas, [:sd],                # Single variable in array
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:54.296
+[Mera]: 2026-08-03T10:59:18.919
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -600,7 +599,7 @@ proj1_z = projection(gas, [:sd, :vx],           # Surface density + x-velocity
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:55.654
+[Mera]: 2026-08-03T10:59:20.359
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -642,8 +641,7 @@ proj1_z = projection(gas, [:sd, :vx], [:Msol_pc2, :km_s],  # Required positional
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:57.430
-
+[Mera]: 2026-08-03T10:59:22.050
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -685,7 +683,7 @@ projvel_z = projection(gas, [:vx, :vy, :vz],    # Velocity components
 ```
 
 ```
-[Mera]: 2026-07-03T10:10:58.932
+[Mera]: 2026-08-03T10:59:23.561
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -695,6 +693,7 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Selected var(s)=(:vx, :vy, :vz, :sd) 
+
 Weighting      = :mass
 
 Effective resolution: 4096^2
@@ -969,7 +968,7 @@ cb = colorbar(im,
 
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x32bfbb760>
+PyObject <matplotlib.colorbar.Colorbar object at 0x3300748e0>
 ```
 
 
@@ -1008,7 +1007,7 @@ cb = colorbar(im, label=L"\mathrm{log10(\Sigma) \ [M_{\odot} pc^{-2}]}")
 
 
 ```
-PyObject <matplotlib.colorbar.Colorbar object at 0x32c22b2b0>
+PyObject <matplotlib.colorbar.Colorbar object at 0x331662080>
 ```
 
 
@@ -1046,7 +1045,7 @@ proj_z = projection(gas, [:v, :σ, :σx, :σy, :σz],  # Velocity magnitude and 
 ```
 
 ```
-[Mera]: 2026-07-03T10:11:25.140
+[Mera]: 2026-08-03T10:59:50.534
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -1194,7 +1193,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-07-03T10:11:32.695
+[Mera]: 2026-08-03T10:59:57.808
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -1231,19 +1230,19 @@ DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering} with 18 entries:
   :sd           => [0.00356095 0.00356095 … 0.00263323 0.00263323; 0.00356095 0…
   :v            => [88.4473 88.4473 … 75.9405 75.9405; 88.4473 88.4473 … 75.940…
   :v2           => [1.97031 1.97031 … 1.61925 1.61925; 1.97031 1.97031 … 1.6192…
-  :vr_cylinder  => [-59.1678 -59.1678 … 29.4577 29.4577; -59.1678 -59.1678 … 29…
-  :vr_cylinder2 => [0.975919 0.975919 … 0.602848 0.602848; 0.975919 0.975919 … …
+  :vr_cylinder  => [-59.1678 -59.1678 … 29.6577 29.6577; -59.1678 -59.1678 … 29…
+  :vr_cylinder2 => [0.975919 0.975919 … 0.608635 0.608635; 0.975919 0.975919 … …
   :vx           => [0.95769 0.95769 … -0.581239 -0.581239; 0.95769 0.95769 … -0…
   :vx2          => [0.967715 0.967715 … 0.830687 0.830687; 0.967715 0.967715 … …
   :vy           => [0.318338 0.318338 … 0.0583665 0.0583665; 0.318338 0.318338 …
   :vy2          => [0.226201 0.226201 … 0.136131 0.136131; 0.226201 0.226201 … …
-  :vϕ_cylinder  => [29.646 29.646 … 24.4624 24.4624; 29.646 29.646 … 24.4624 24…
-  :vϕ_cylinder2 => [0.217997 0.217997 … 0.36397 0.36397; 0.217997 0.217997 … 0.…
+  :vϕ_cylinder  => [29.646 29.646 … 24.2449 24.2449; 29.646 29.646 … 24.2449 24…
+  :vϕ_cylinder2 => [0.217997 0.217997 … 0.358183 0.358183; 0.217997 0.217997 … …
   :σ            => [25.4882 25.4882 … 34.5833 34.5833; 25.4882 25.4882 … 34.583…
-  :σr_cylinder  => [26.3768 26.3768 … 41.5278 41.5278; 26.3768 26.3768 … 41.527…
+  :σr_cylinder  => [26.3768 26.3768 … 41.6848 41.6848; 26.3768 26.3768 … 41.684…
   :σx           => [14.7426 14.7426 … 46.0359 46.0359; 14.7426 14.7426 … 46.035…
   :σy           => [23.1716 23.1716 … 23.8899 23.8899; 23.1716 23.1716 … 23.889…
-  :σϕ_cylinder  => [7.6504 7.6504 … 31.0919 31.0919; 7.6504 7.6504 … 31.0919 31…
+  :σϕ_cylinder  => [7.6504 7.6504 … 30.8612 30.8612; 7.6504 7.6504 … 30.8612 30…
   :ϕ            => [3.92699 3.9264 … 2.35541 2.35483; 3.92758 3.92699 … 2.35483…
 ```
 
@@ -1388,7 +1387,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-07-03T10:11:45.790
+[Mera]: 2026-08-03T11:00:10.568
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -1493,7 +1492,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-07-03T10:11:54.156
+[Mera]: 2026-08-03T11:00:18.208
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -1589,7 +1588,7 @@ proj_z = projection(gas,
 ```
 
 ```
-[Mera]: 2026-07-03T10:12:00.896
+[Mera]: 2026-08-03T11:00:25.243
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1622,11 +1621,11 @@ Processing mode: Variable-based parallel (4 threads)
    Processing levels 6 to 12
    🧵 Thread allocation: sd→T1, v→T2, v2→T3, vr_cylinder→T4
 
-✅ Variable-based parallel processing completed in 2.26s
+✅ Variable-based parallel processing completed in 2.178s
    ⚡ No combining phase needed - direct variable assignment eliminates overhead!
    📊 Performance Metrics:
       ├─ Total operations: 241678294 (18590638 cells × 13 vars)
-      ├─ Processing rate: 106949924 cells/second
+      ├─ Processing rate: 110943440 cells/second
       ├─ Parallel efficiency: 100.0% (target: 85-95%)
       ├─ Threads utilized: 4 / 4 available
       └─ Memory benefit: Direct allocation (no intermediate combining buffers)
@@ -1714,7 +1713,7 @@ proj_x = projection(gas, :cs, :km_s,           # X-direction sound speed
 ```
 
 ```
-[Mera]: 2026-07-03T10:12:07.669
+[Mera]: 2026-08-03T11:00:32.247
 
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1735,7 +1734,7 @@ Requested max_threads: 4
 Variables: 2 (cs, sd)
 Processing mode: Variable-based parallel (2 threads)
 
-[Mera]: 2026-07-03T10:12:09.166
+[Mera]: 2026-08-03T11:00:33.648
 
 domain:
 xmin::xmax: 0.4 :: 0.6  	==> 19.2 [kpc] :: 28.8 [kpc]
@@ -1853,7 +1852,7 @@ proj_x = projection(gas, :sd, :Msol_pc2,
 ```
 
 ```
-[Mera]: 2026-07-03T10:12:11.839
+[Mera]: 2026-08-03T11:00:36.133
 
 
 domain:
@@ -1879,7 +1878,7 @@ Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 
 
-[Mera]: 2026-07-03T10:12:15.659
+[Mera]: 2026-08-03T11:00:40.252
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -1938,7 +1937,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-07-03T10:12:21.308
+[Mera]: 2026-08-03T11:00:45.898
 
 
 domain:
@@ -1973,7 +1972,7 @@ proj_z = projection(gas, :cs, :km_s,
 ```
 
 ```
-[Mera]: 2026-07-03T10:12:59.911
+[Mera]: 2026-08-03T11:01:27.660
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -2012,7 +2011,7 @@ proj_y = projection(gas, [:sd, :v], [:Msol_pc2, :km_s],
 ```
 
 ```
-[Mera]: 2026-07-03T10:13:39.883
+[Mera]: 2026-08-03T11:02:10.300
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]

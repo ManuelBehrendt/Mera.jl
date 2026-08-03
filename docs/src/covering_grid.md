@@ -47,14 +47,14 @@ println("AMR cells loaded: ", length(gas.data))
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-01T15:02:20.602
+[Mera]: 2026-08-03T11:34:24.093
 
 
 Code: RAMSES
-output [400] summary:
-mtime: 
 
-2018-09-05T09:51:55
+
+output [400] summary:
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -95,7 +95,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-08-01T15:02:22.479
+[Mera]: Get hydro data: 2026-08-03T11:34:26.561
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -124,12 +124,12 @@ Final data size: 4879946 cells, 7 variables
 Creating Table from 4879946 cells with max 4 threads...
 
   Threading: 4 threads for 11 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
-✓ Table created in 6.847 seconds
+✓ Table created in 7.492 seconds
 
 Memory used for data table :409.54250621795654
 
@@ -170,9 +170,7 @@ covering_grid memory estimate:
   peak build: 402.7 MB
   AMR cells : 4879946   blow-up ×3.438
 target level : 8
-dims         : 
-
-(256, 256, 256)
+dims         : (256, 256, 256)
 ncells       : 16777216
 per array    : 134.22 MB
 result bytes : 268.44 MB
@@ -214,9 +212,7 @@ extent         :
 n_H  extrema   : 
 
 (-0.008466240027971665, 3045.6332385438423)
-T    extrema   : 
-
-(-6.486657006516816e10, 8.403483574667937e10)
+T    extrema   : (-6.486657006516816e10, 8.403483574667937e10)
 ```
 
 
@@ -291,12 +287,7 @@ fig
 ```
 
 
-```
-[ Info: Mera v1.8.0
-```
-
-
-![](covering_grid_files/covering_grid_11_3.png)
+![](covering_grid_files/covering_grid_11_0.png)
 
 
 That is the whole covering-grid workflow: size it, build the dense 3-D array (whole box or a

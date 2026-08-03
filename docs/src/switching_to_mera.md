@@ -69,14 +69,14 @@ info = getinfo(100, joinpath(BASE, "RAMSES/spiral_clumps"));   # metadata only â
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-02T19:40:09.763
+[Mera]: 2026-08-03T12:23:46.025
 
 
 Code: RAMSES
-output [100] summary:
-mtime: 
 
-2023-05-12T22:47:36.638
+
+output [100] summary:
+mtime: 2023-05-12T22:47:36.638
 ctime: 2025-06-21T18:31:55.533
 =======================================================
 simulation time: 148.08 [Myr]
@@ -175,10 +175,10 @@ println("cold gas mass: ", round(msum(cold, :Msol), sigdigits=4), " Msol")
 ```
 
 ```
-disk: 2611
+disk: 2256
 
- cells;  cold disk: 1199 cells
-cold gas mass: 2.192e9
+ cells;  cold disk: 1181 cells
+cold gas mass: 2.209e9
 
  Msol
 ```

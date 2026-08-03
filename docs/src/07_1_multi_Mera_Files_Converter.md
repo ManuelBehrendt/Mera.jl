@@ -96,7 +96,7 @@ Mera v1.8.0
 RAMSES source : /Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d
 
 
-JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
+JLD2 target   : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz
 ```
 
 
@@ -114,7 +114,7 @@ println("size           : ", round(filesize(jld_file)/1024^2, digits=2), " MB")
 ```
 
 ```
-[Mera]: 2026-07-31T21:35:29.043
+[Mera]: 2026-08-03T10:21:55.913
 
 
 Requested datatypes: 
@@ -148,14 +148,14 @@ Final Statistics:
 - total folder size: 2.158 MB
 - selected data size: 2.147 MB
 - peak memory used: 2.276 MB
-- compressed file size: 129.514 KB
-- compression ratio: 0.059
-- data reduction: 94.1%
-- total processing time: 8.5 seconds
+- compressed file size: 128.318 KB
+- compression ratio: 0.058
+- data reduction: 94.2%
+- total processing time: 8.43 seconds
 - effective threads: 4
 wrote          : 
 
-/var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL/output_00001.jld2
+/var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz/output_00001.jld2
 size           : 0.15 MB
 ```
 
@@ -172,7 +172,7 @@ println("total mass     : ", round(msum(gas, :Msol), sigdigits=4), " Msol")
 ```
 
 ```
-[Mera]: 2026-07-31T21:35:39.089
+[Mera]: 2026-08-03T10:22:05.679
 
 Mera-file output_00001.jld2 contains:
 
@@ -185,7 +185,7 @@ CodecZlib:
 
 VersionNumber[v"0.7.8"]
 merafile_version: 1.0
-JLD2: VersionNumber[v"0.6.4"]
+JLD2: VersionNumber[v"0.6.5"]
 CodecBzip2: VersionNumber[v"0.8.5"]
 JLD2compatible_versions: (lower = v"0.1.0", upper = v"0.3.0")
 CodecLz4: VersionNumber[v"0.4.6"]
@@ -197,10 +197,10 @@ Memory: 2.2761077880859375 MB (uncompressed)
 -----------------------------------
 convert stat: true
 -----------------------------------
-Total file size: 155.944 KB
+Total file size: 154.741 KB
 -----------------------------------
 
-[Mera]: 2026-07-31T21:35:39.668
+[Mera]: 2026-08-03T10:22:06.215
 
 
 Open Mera-file output_00001.jld2:
@@ -327,19 +327,19 @@ println("converted dir  : ", sort(readdir(converted_dir)))
 
 Safe Multithreaded JLD2 Batch Converter with Safety Margin Monitoring
 ================================================================================
-Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_LwMXrL
-Output directory: /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_SfmXW8
+Input directory:  /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_nasKQz
+Output directory: /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_yPmrIy
 Output range:     1 to 3
 System Memory Information:
   Total memory: 32.0 GB
-  Available memory: 0.3 GB
-  Current usage: 99.1%
+  Available memory: 0.1 GB
+  Current usage: 99.8%
   Safety limit: 80.0%
   ⚠️  WARNING: Current memory usage exceeds safety margin!
       Consider closing other applications before proceeding.
 Requested threads: 1
 
-┌ Warning: Current memory usage (99.1%) exceeds safety margin (80.0%).
+┌ Warning: Current memory usage (99.8%) exceeds safety margin (80.0%).
 │ Consider closing other applications or reducing thread count.
 │ System may become unstable during conversion with high memory usage.
 ┌ Warning: Limited memory available within safety margin. Reducing recommended thread count by 50%.
@@ -353,21 +353,19 @@ Files to be converted (3 total):
 
 Starting multithreaded conversion with safety margin monitoring...
 
-┌ Warning: Safety margin exceeded (98.9% > 80.0%) while processing output_00001.jld2
+┌ Warning: Safety margin exceeded (99.7% > 80.0%) while processing output_00001.jld2
 
-  ⚠️  Safety margin exceeded during load of output_00001.jld2 (99.3%)
-
-
-┌ Warning: Safety margin exceeded (99.3% > 80.0%) while processing output_00002.jld2
-
-  ⚠️  Safety margin exceeded during load of output_00002.jld2 (99.3%)
+  ⚠️  Safety margin exceeded during load of output_00001.jld2 (99.8%)
 
 
-┌ Warning: Safety margin exceeded (99.4% > 80.0%) while processing output_00003.jld2
+┌ Warning: Safety margin exceeded (99.8% > 80.0%) while processing output_00002.jld2
 
-  ⚠️  Safety margin exceeded during load of output_00003.jld2 (99.6%)
+  ⚠️  Safety margin exceeded during load of output_00002.jld2 (99.8%)
 
-┌ Warning: Safety margin violation detected (99.6% > 80.0%) - file 3/3
+
+┌ Warning: Safety margin exceeded (99.8% > 80.0%) while processing output_00003.jld2
+
+  ⚠️  Safety margin exceeded during load of output_00003.jld2 (99.8%)
 
 
 ================================================================================
@@ -378,10 +376,10 @@ Successfully converted:   3
 Failed conversions:       0
 Skipped files:            0
 Safety margin violations: 1
-Total conversion time:    1.6 seconds
-Average time per file:    0.53 seconds
+Total conversion time:    1.5 seconds
+Average time per file:    0.49 seconds
 Threads used:             1
-Final memory usage:       99.6%
+Final memory usage:       99.8%
 
 ⚠️  SAFETY MARGIN VIOLATIONS DETECTED!
 Consider using fewer threads or processing smaller batches for future conversions.
@@ -390,7 +388,9 @@ Conversion complete!
 
 return dict    : 
 
-Dict{String, Real}("conversion_time" => 1.6048290729522705, "success" => 3, "threads_used" => 1, "final_memory_usage_percent" => 99.6185302734375, "failed" => 0, "skipped" => 0, "safety_violations" => 1)
+┌ Warning: Safety margin violation detected (99.8% > 80.0%) - file 3/3
+
+Dict{String, Real}("conversion_time" => 1.4685049057006836, "success" => 3, "threads_used" => 1, "final_memory_usage_percent" => 99.75752830505371, "failed" => 0, "skipped" => 0, "safety_violations" => 1)
 converted dir  : ["output_00001.jld2", "output_00002.jld2", "output_00003.jld2"]
 ```
 
@@ -426,7 +426,7 @@ println("mass   (orig / converted) : ",
 ```
 
 ```
-[Mera]: 2026-07-31T21:35:50.568
+[Mera]: 2026-08-03T10:22:16.583
 
 Open Mera-file output_00001.jld2:
 
@@ -438,7 +438,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [cm] :: 0.5 [cm]
 Memory used for data table :2.2739639282226562 MB
 -------------------------------------------------------
 
-[Mera]: 2026-07-31T21:35:50.575
+[Mera]: 2026-08-03T10:22:16.589
 
 Open Mera-file output_00001.jld2:
 

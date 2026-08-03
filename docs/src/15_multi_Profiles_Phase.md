@@ -32,8 +32,23 @@ ctr = [:bc]                         # box centre; e.g. [24.,24.,24.] with range_
 println("gas cells = ", length(gas.data), "   particles = ", length(parts.data))
 ```
 
+
 ```
-gas cells = 590311   particles = 45470
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+
+gas cells = 590311
+
+   particles = 45470
 ```
 
 
@@ -278,7 +293,7 @@ axislegend(ax2, position=:rt, framevisible=false); fig
 ```
 equal-count points/bin (min..max): (
 
-32300, 33260)  → nearly equal
+32096, 33456)  → nearly equal
 ```
 
 

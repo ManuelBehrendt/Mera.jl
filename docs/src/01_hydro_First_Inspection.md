@@ -142,14 +142,26 @@ using Mera
 info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 ```
 
+
 ```
-[Mera]: 2026-06-01T14:05:20.493
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+[Mera]: 2026-08-03T10:24:05.227
 
 
 Code: RAMSES
+
+
 output [300] summary:
-
-
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
@@ -165,7 +177,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 hydro:         true
 hydro-variables:  
 
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -182,7 +194,9 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: 
+
+("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -266,7 +280,9 @@ hversion	= 1
 hydro
 
 	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
-htypes	= ["d", "d", "d", "d", "d", "d", "d"]
+htypes	= ["d", "d", "d", "d", "d", "d",
+
+ "d"]
 usehydro	= false
 hydrofile	= true
 pversion	= 1
@@ -337,12 +353,12 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T14:05:24.175
+[Mera]: Get hydro data: 2026-08-03T10:24:09.410
 
 
 Key vars=(:level, :cx, :cy, :cz)
 
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
 
@@ -372,13 +388,11 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
- 37.986176 seconds (962.40 M allocations: 55.577 GiB, 7.22% gc time, 2.40% compilation time)
-✓ Table created in 38.266 seconds
+✓ Table created in 41.67 seconds
 
+Memory used for data table :2.321086215786636
 
-Memory used for data table :
-
-2.321086215786636 GB
+ GB
 -------------------------------------------------------
 ```
 
@@ -454,7 +468,7 @@ viewfields(gas)
 
 
 ```
-data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :var6, :var7)
+data ==> IndexedTables: (:level, :cx, :cy, :cz, :rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 
 
 info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :ndim, :levelmin, :levelmax, :boxlen, :time, :aexp, :H0, :omega_m, :omega_l, :omega_k, :omega_b, :unit_l, :unit_d, :unit_m, :unit_v, :unit_t, :gamma, :hydro, :nvarh, :nvarp, :nvarrt, :variable_list, :gravity_variable_list, :particles_variable_list, :rt_variable_list, :clumps_variable_list, :sinks_variable_list, :descriptor, :amr, :gravity, :particles, :rt, :clumps, :sinks, :namelist, :namelist_content, :headerfile, :makefile, :files_content, :timerfile, :compilationfile, :patchfile, :Narraysize, :scale, :grid_info, :part_info, :compilation, :constants)
@@ -462,16 +476,14 @@ info ==> subfields: (:output, :path, :fnames, :simcode, :mtime, :ctime, :ncpu, :
 lmin	= 6
 lmax	= 10
 boxlen	= 48.0
-ranges	= 
+ranges
 
-[0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
+	= [0.0, 1.0, 0.0, 1.0, 0.0, 1.0]
 selected_hydrovars	= [1, 2, 3, 4, 5, 6, 7]
 smallr	= 0.0
 smallc	= 0.0
 
-scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV
-
-, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
+scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :nG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 ```
 
 
@@ -500,10 +512,10 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T14:06:24.574
+[Mera]: Get hydro data: 2026-08-03T10:25:14.320
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -524,17 +536,16 @@ Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
 
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
- 36.943728 seconds (958.14 M allocations: 55.369 GiB, 7.84% gc time)
-✓ Table created in 37.202 seconds
+✓ Table created in 42.273 seconds
 
+Memory used for data table :2.321086215786636
 
-Memory used for data table :2.321086215786636 GB
+ GB
 -------------------------------------------------------
 ```
 
@@ -601,6 +612,10 @@ using CairoMakie
 overviewplot(gas)
 ```
 
+
+![](01_hydro_First_Inspection_files/01_hydro_First_Inspection_40_0.png)
+
+
 ### Statistical Data Analysis
 
 The `dataoverview()` function computes comprehensive statistics for all hydro variables in our dataset. This analysis provides:
@@ -619,24 +634,24 @@ Calculating...
 
 Table with 5 rows, 16 columns:
 Columns:
-#   colname   type
-──────────────────
-1   level     Any
-2   mass      Any
-3   rho_min   Any
-4   rho_max   Any
-5   vx_min    Any
-6   vx_max    Any
-7   vy_min    Any
-8   vy_max    Any
-9   vz_min    Any
-10  vz_max    Any
-11  p_min     Any
-12  p_max     Any
-13  var6_min  Any
-14  var6_max  Any
-15  var7_min  Any
-16  var7_max  Any
+#   colname        type
+───────────────────────
+1   level          Any
+2   mass           Any
+3   rho_min        Any
+4   rho_max        Any
+5   vx_min         Any
+6   vx_max         Any
+7   vy_min         Any
+8   vy_max         Any
+9   vz_min         Any
+10  vz_max         Any
+11  p_min          Any
+12  p_max          Any
+13  scalar_00_min  Any
+14  scalar_00_max  Any
+15  scalar_01_min  Any
+16  scalar_01_max  Any
 ```
 
 
@@ -757,19 +772,19 @@ gas.data
 ```
 Table with 28320979 rows, 11 columns:
 Columns:
-#   colname  type
-────────────────────
-1   level    Int64
-2   cx       Int64
-3   cy       Int64
-4   cz       Int64
-5   rho      Float64
-6   vx       Float64
-7   vy       Float64
-8   vz       Float64
-9   p        Float64
-10  var6     Float64
-11  var7     Float64
+#   colname    type
+──────────────────────
+1   level      Int64
+2   cx         Int64
+3   cy         Int64
+4   cz         Int64
+5   rho        Float64
+6   vx         Float64
+7   vy         Float64
+8   vz         Float64
+9   p          Float64
+10  scalar_00  Float64
+11  scalar_01  Float64
 ```
 
 

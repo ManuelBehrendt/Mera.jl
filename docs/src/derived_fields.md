@@ -32,7 +32,7 @@ gas  = gethydro(info, verbose=false);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-31T22:01:37.733
+[Mera]: 2026-08-03T11:35:24.684
 
 
 Code: RAMSES
@@ -42,7 +42,9 @@ output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
-simulation time: 445.89 [Myr]
+simulation time: 445.89
+
+ [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
 ndim: 3

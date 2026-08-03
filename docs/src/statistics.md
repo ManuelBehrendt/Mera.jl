@@ -34,7 +34,7 @@ gas  = gethydro(info, verbose=false);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-31T21:44:34.750
+[Mera]: 2026-08-03T12:20:55.608
 
 
 Code: RAMSES

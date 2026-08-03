@@ -68,7 +68,7 @@ import Pkg; Pkg.activate("../.")
 ```
   Activating 
 
-project at `~/Documents/codes/github/Notebooks/Mera-Docs/version_1`
+project at `/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1`
 ```
 
 
@@ -84,13 +84,23 @@ info = infodata(600, path)
 particles = loaddata(600, path, :particles); # load full box
 ```
 
+
 ```
-[Mera]: 2026-05-30T19:37:42.920
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+[Mera]: 2026-08-03T14:08:58.257
 
 
 Use datatype: hydro
-
-
 Code: 
 
 RAMSES
@@ -102,6 +112,7 @@ simulation time: 891.71 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 5120
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
@@ -135,7 +146,8 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: 2026-05-30T19:37:49.721
+[Mera]: 2026-08-03T14:09:01.709
+
 
 Open Mera-file output_00600.jld2:
 
@@ -147,7 +159,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Memory used for data table :
 
-95.81425380706787 MB
+95.8142614364624 MB
 -------------------------------------------------------
 ```
 
@@ -170,7 +182,7 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T19:37:52.044
+[Mera]: 2026-08-03T14:09:05.542
 
 
 Available Threads: 4
@@ -229,7 +241,7 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T19:37:54.914
+[Mera]: 2026-08-03T14:09:08.491
 
 Available Threads: 4
 Total particles in dataset: 1353087
@@ -281,7 +293,7 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T19:37:55.140
+[Mera]: 2026-08-03T14:09:08.706
 
 
 Available Threads: 4
@@ -342,7 +354,7 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T19:37:56.681
+[Mera]: 2026-08-03T14:09:10.146
 
 Available Threads: 4
 Total particles in dataset: 1353087

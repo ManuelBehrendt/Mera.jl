@@ -136,15 +136,27 @@ particles = getparticles(info, [:mass, :vx, :vy, :vz])
 clumps    = getclumps(info);
 ```
 
+
 ```
-[Mera]: 2026-06-01T14:28:00.404
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+[Mera]: 2026-08-03T10:54:24.829
 
 
 Code: RAMSES
-output [400] summary:
-mtime: 
 
-2018-09-05T09:51:55
+
+output [400] summary:
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -159,7 +171,7 @@ level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 hydro:         true
 hydro-variables:  
 
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -185,13 +197,12 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-06-01T14:28:02.551
+[Mera]: Get hydro data: 2026-08-03T10:54:27.276
 
 
 Key vars=(:level, :cx, :cy, :cz)
 
 Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz) 
-
 
 domain:
 
@@ -220,16 +231,14 @@ Creating Table from 849332 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 8 columns...
-  0.836888 seconds (3.91 M allocations: 320.878 MiB, 0.92% gc time, 100.08% compilation time)
-✓ Table created in 1.105 seconds
+✓ Table created in 0.927 seconds
 
+Memory used for data table :51.839996337890625
 
-Memory used for data table :
-
-51.839996337890625 MB
+ MB
 -------------------------------------------------------
 
-[Mera]: Get particle data: 2026-06-01T14:28:25.052
+[Mera]: Get particle data: 2026-08-03T10:54:51.043
 
 
 Using threaded processing with 4 threads
@@ -251,7 +260,7 @@ Memory used for data table :
 31.064148902893066 MB
 -------------------------------------------------------
 
-[Mera]: Get clump data: 2026-06-01T14:28:26.874
+[Mera]: Get clump data: 2026-08-03T10:54:52.493
 
 
 domain:
@@ -355,6 +364,7 @@ kg_m2_s	= 4.023715412864333e71
 Gauss	= 0.00019124389093025845
 muG	= 191.24389093025846
 microG	= 191.24389093025846
+nG	= 191243.89093025847
 Tesla	= 1.9124389093025845e-8
 eV	= 5.3371144971238105e67
 keV	= 5.33711449712381e64
@@ -388,21 +398,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.354771247e-314
-a_mag	= 2.4261285316e-314
-v_esc	= 2.354771247e-314
-ax	= 2.4261285316e-314
-ay	= 2.354771247e-314
-az	= 2.4261285316e-314
-epot	= 2.354771247e-314
-a_magnitude	= 2.4261285316e-314
-escape_speed	= 2.354771247e-314
-gravitational_redshift	= 2.4261285316e-314
-gravitational_energy_density	= 2.354771247e-314
-gravitational_binding_energy	= 2.4261285316e-314
-total_binding_energy	= 2.354771247e-314
+delta_rho	= 0.0
+a_mag	= 0.0
+v_esc	= 0.0
+ax	= 2.765046284e-314
+ay	= 2.4098252427e-314
+az	= 1.6e-322
+epot	= 2.7652617837e-314
+a_magnitude	= 0.0
+escape_speed	= 0.0
+gravitational_redshift	= 1.265e-321
+gravitational_energy_density	= 0.0
+gravitational_binding_energy	= 2.76504611e-314
+total_binding_energy	= 2.409825314e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.354771247e-314
+gravitational_work	= 2.7652618153e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -410,8 +420,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.354771247e-314
-poisson_source	= 2.4261285316e-314
+Fg	= 2.765261847e-314
+poisson_source	= 0.0
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -461,7 +471,9 @@ Gas Mtot:       2.6703951073850353e10
 Particles Mtot: 5.804426008528429e9
 
  Msol
-Clumps Mtot:    1.3743280681841675e10 Msol
+Clumps Mtot:    1.3743280681841675e10
+
+ Msol
 ```
 
 
@@ -492,9 +504,9 @@ methods(msum)
 ```
 # 2 methods for generic function "msum" from Mera:
  [1] msum(dataobject::ContainMassDataSetType, unit::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:52
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:63
  [2] msum(dataobject::ContainMassDataSetType; unit, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:56
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:67
 ```
 
 
@@ -510,7 +522,7 @@ println( "Clumps COM:    ", center_of_mass(clumps)    .* info.scale.kpc, " kpc" 
 ```
 Gas COM:       (
 
-23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
+23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -525,10 +537,10 @@ println( "Clumps COM:    ", center_of_mass(clumps, :kpc)    , " kpc" );
 ```
 
 ```
-Gas COM:       (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
-Particles COM: (
+Gas COM:       (
 
-22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
+23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
 
@@ -542,7 +554,9 @@ println( "Clumps COM:    ", com(clumps, :kpc)    , " kpc" );
 ```
 
 ```
-Gas COM:       (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
+Gas COM:       (
+
+23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -561,10 +575,8 @@ println("Single vars: ", x_pos, "  ", y_pos, "  ", z_pos, "  kpc")
 ```
 
 ```
-Tuple:      (23.32748735447764, 23.835419919525915, 24.04172014803584) kpc
-Single vars: 23.32748735447764
-
-  23.835419919525915  24.04172014803584  kpc
+Tuple:      (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Single vars: 23.258011243936238  23.76594380898452  23.972244037494438  kpc
 ```
 
 
@@ -578,10 +590,10 @@ println( "Joint COM (Particles + Gas): ", center_of_mass([particles,gas], :kpc) 
 ```
 Joint COM (Gas + Particles): (
 
-23.249615138763833, 23.895900266693467, 24.034843213428744) kpc
+23.192544105902943, 23.83882923383144, 23.9777721805675) kpc
 Joint COM (Particles + Gas): (
 
-23.249615138306556, 23.895900266223183, 24.03484321295532) kpc
+23.19254410544675, 23.838829233362418, 23.977772180095187) kpc
 ```
 
 
@@ -595,10 +607,10 @@ println( "Joint COM (Particles + Gas): ", com([particles,gas], :kpc) , " kpc" )
 ```
 Joint COM (Gas + Particles): (
 
-23.249615138763833, 23.895900266693467, 24.034843213428744) kpc
+23.192544105902943, 23.83882923383144, 23.9777721805675) kpc
 Joint COM (Particles + Gas): (
 
-23.249615138306556, 23.895900266223183, 24.03484321295532) kpc
+23.19254410544675, 23.838829233362418, 23.977772180095187) kpc
 ```
 
 
@@ -609,13 +621,13 @@ methods(center_of_mass)
 ```
 # 4 methods for generic function "center_of_mass" from Mera:
  [1] center_of_mass(dataobject::Vector{HydroPartType}, unit::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:240
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:242
  [2] center_of_mass(dataobject::Vector{HydroPartType}; unit, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:244
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:246
  [3] center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:117
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:124
  [4] center_of_mass(dataobject::ContainMassDataSetType; unit, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:121
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:128
 ```
 
 
@@ -626,13 +638,13 @@ methods(com)
 ```
 # 4 methods for generic function "com" from Mera:
  [1] com(dataobject::Vector{HydroPartType}, unit::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:307
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:274
  [2] com(dataobject::Vector{HydroPartType}; unit, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:311
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:278
  [3] com(dataobject::ContainMassDataSetType, unit::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:156
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:157
  [4] com(dataobject::ContainMassDataSetType; unit, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:160
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:161
 ```
 
 
@@ -697,9 +709,9 @@ methods(bulk_velocity)
 ```
 # 2 methods for generic function "bulk_velocity" from Mera:
  [1] bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:429
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:415
  [2] bulk_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:434
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:420
 ```
 
 
@@ -710,9 +722,9 @@ methods(average_velocity)
 ```
 # 2 methods for generic function "average_velocity" from Mera:
  [1] average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:481
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:447
  [2] average_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:485
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:451
 ```
 
 
@@ -726,7 +738,7 @@ methods( average_mweighted )
 ```
 # 1 method for generic function "average_mweighted" from Mera:
  [1] average_mweighted(dataobject::ContainMassDataSetType, var::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:332
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:316
 ```
 
 
@@ -743,8 +755,6 @@ gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false);
 
 ```
 ✓ File processing complete! Combining results...
-
-  4.199472 seconds (399.98 k allocations: 5.435 GiB, 5.44% gc time)
 ```
 
 
@@ -903,9 +913,9 @@ methods(msum)
 ```
 # 2 methods for generic function "msum" from Mera:
  [1] msum(dataobject::ContainMassDataSetType, unit::Symbol; mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:52
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:63
  [2] msum(dataobject::ContainMassDataSetType; unit, mask)
-     @ ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:56
+     @ ~/code-github/Mera.jl/src/functions/basic_calc.jl:67
 ```
 
 
@@ -927,10 +937,10 @@ Available methods for center_of_mass:
 ─────────────────────────────────────
 • center_of_mass
 
-(dataobject::Vector{HydroPartType}, unit::Symbol; mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:240
-• center_of_mass(dataobject::Vector{HydroPartType}; unit, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:244
-• center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:117
-• center_of_mass(dataobject::ContainMassDataSetType; unit, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:121
+(dataobject::Vector{HydroPartType}, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:242
+• center_of_mass(dataobject::Vector{HydroPartType}; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:246
+• center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:124
+• center_of_mass(dataobject::ContainMassDataSetType; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:128
 ```
 
 
@@ -948,10 +958,10 @@ end
 ```
 Available methods for com:
 ──────────────────────────
-• com(dataobject::Vector{HydroPartType}, unit::Symbol; mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:307
-• com(dataobject::Vector{HydroPartType}; unit, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:311
-• com(dataobject::ContainMassDataSetType, unit::Symbol; mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:156
-• com(dataobject::ContainMassDataSetType; unit, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:160
+• com(dataobject::Vector{HydroPartType}, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:274
+• com(dataobject::Vector{HydroPartType}; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:278
+• com(dataobject::ContainMassDataSetType, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:157
+• com(dataobject::ContainMassDataSetType; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:161
 ```
 
 
@@ -982,8 +992,8 @@ end
 ```
 Available methods for bulk_velocity:
 ────────────────────────────────────
-• bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:429
-• bulk_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:434
+• bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:415
+• bulk_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:420
 ```
 
 
@@ -1001,8 +1011,8 @@ end
 ```
 Available methods for average_velocity:
 ───────────────────────────────────────
-• average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:481
-• average_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask) @ Mera ~/Documents/codes/github/Mera.jl/src/functions/basic_calc.jl:485
+• average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:447
+• average_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:451
 ```
 
 
@@ -1112,7 +1122,7 @@ quantities = getvar(gas, [:mass, :r_cylinder], center=[cv, cv, cv], center_unit=
 
 ```
 Dict{Any, Any} with 2 entries:
-  :r_cylinder => [70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583…
+  :r_cylinder => [70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345…
   :mass       => [8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407…
 ```
 
@@ -1125,7 +1135,7 @@ quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], c
 
 ```
 Dict{Any, Any} with 3 entries:
-  :r_cylinder => [70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583…
+  :r_cylinder => [70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345…
   :v          => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  100.513,…
   :mass       => [894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.0…
 ```
@@ -1139,7 +1149,7 @@ quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], c
 
 ```
 Dict{Any, Any} with 3 entries:
-  :r_cylinder => [70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583…
+  :r_cylinder => [70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345…
   :v          => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  100.513,…
   :mass       => [894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.0…
 ```
@@ -1151,7 +1161,7 @@ quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], c
 
 ```
 Dict{Any, Any} with 3 entries:
-  :r_cylinder => [70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583, 70.1583…
+  :r_cylinder => [70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345, 70.4345…
   :v          => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  100.513,…
   :mass       => [894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.0…
 ```
@@ -1165,7 +1175,7 @@ quantities = getvar(gas, [:mass, :r_cylinder, :v], units=[:Msol, :kpc, :km_s], c
 
 ```
 Dict{Any, Any} with 3 entries:
-  :r_cylinder => [54.9408, 54.9408, 54.9408, 54.9408, 54.9408, 54.9408, 54.9408…
+  :r_cylinder => [55.2012, 55.2012, 55.2012, 55.2012, 55.2012, 55.2012, 55.2012…
   :v          => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  100.513,…
   :mass       => [894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.0…
 ```
@@ -1198,32 +1208,32 @@ radius = sqrt.(x.^2 .+ y.^2) .* info.scale.kpc
 
 ```
 37898393-element Vector{Float64}:
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
- 70.15825094589823
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
+ 70.4344645322994
   ⋮
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
- 20.08587520654808
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
+ 20.049876962806174
 ```
 
 
@@ -1345,8 +1355,6 @@ clumps    = getclumps(info, verbose=false);
 
 ```
 ✓ File processing complete! Combining results...
-
-  0.041985 seconds (52.32 k allocations: 125.634 MiB)
 ```
 
 
@@ -1491,32 +1499,32 @@ x,y,z = getpositions(gas, :kpc, center=[:boxcenter]);
 
 ```
 849332×3 Matrix{Float64}:
- -23.25   -23.25    -23.25
- -23.25   -23.25    -22.5
- -23.25   -23.25    -21.75
- -23.25   -23.25    -21.0
- -23.25   -23.25    -20.25
- -23.25   -23.25    -19.5
- -23.25   -23.25    -18.75
- -23.25   -23.25    -18.0
- -23.25   -23.25    -17.25
- -23.25   -23.25    -16.5
- -23.25   -23.25    -15.75
- -23.25   -23.25    -15.0
- -23.25   -23.25    -14.25
-   ⋮                
-  16.125    3.9375    0.1875
-  16.125    3.9375    0.375
-  16.125    3.9375    0.5625
-  16.125    3.9375    0.75
-  16.125    4.125    -0.5625
-  16.125    4.125    -0.375
-  16.125    4.125    -0.1875
-  16.125    4.125     0.0
-  16.125    4.125     0.1875
-  16.125    4.125     0.375
-  16.125    4.125     0.5625
-  16.125    4.125     0.75
+ -23.625   -23.625    -23.625
+ -23.625   -23.625    -22.875
+ -23.625   -23.625    -22.125
+ -23.625   -23.625    -21.375
+ -23.625   -23.625    -20.625
+ -23.625   -23.625    -19.875
+ -23.625   -23.625    -19.125
+ -23.625   -23.625    -18.375
+ -23.625   -23.625    -17.625
+ -23.625   -23.625    -16.875
+ -23.625   -23.625    -16.125
+ -23.625   -23.625    -15.375
+ -23.625   -23.625    -14.625
+   ⋮                  
+  16.0313    3.84375    0.09375
+  16.0313    3.84375    0.28125
+  16.0313    3.84375    0.46875
+  16.0313    3.84375    0.65625
+  16.0313    4.03125   -0.65625
+  16.0313    4.03125   -0.46875
+  16.0313    4.03125   -0.28125
+  16.0313    4.03125   -0.09375
+  16.0313    4.03125    0.09375
+  16.0313    4.03125    0.28125
+  16.0313    4.03125    0.46875
+  16.0313    4.03125    0.65625
 ```
 
 

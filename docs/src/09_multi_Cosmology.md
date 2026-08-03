@@ -55,14 +55,26 @@ using Mera
 info = getinfo(80, "$MERA_EXAMPLES/RAMSES/yt_cosmo");
 ```
 
+
 ```
-[Mera]: 2026-06-01T19:55:47.873
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+[Mera]: 2026-08-03T11:13:33.151
 
 
 Code: RAMSES
+
+
 output [80] summary:
-
-
 mtime: 2012-08-13T16:51:06
 ctime: 2026-06-01T07:42:48.561
 =======================================================
@@ -185,13 +197,12 @@ ages  = getvar(particles, :age, :Gyr)
 ```
 
 ```
-[Mera]: Get particle data: 2026-06-01T19:55:52.461
+[Mera]: Get particle data: 2026-08-03T11:13:39.085
 
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
-
 
 domain:
 
@@ -276,7 +287,7 @@ delta = getvar(gas, :overdensity)
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T19:56:00.568
+[Mera]: Get hydro data: 2026-08-03T11:13:50.660
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -307,10 +318,9 @@ Creating Table from 1749455 cells with max 4 threads...
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-  Creating IndexedTable with 10 columns...
-  0.846090 seconds (3.28 M allocations: 478.784 MiB, 0.80% gc time, 88.93% compilation time: 1% of which was recompilation)
-✓ Table created in 1.142 seconds
 
+  Creating IndexedTable with 10 columns...
+✓ Table created in 0.87 seconds
 
 Memory used for data table :133.47387886047363 MB
 -------------------------------------------------------

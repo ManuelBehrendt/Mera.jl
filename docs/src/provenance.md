@@ -35,7 +35,7 @@ gas  = gethydro(info);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-31T21:47:24.212
+[Mera]: 2026-08-03T12:16:13.653
 
 
 Code: RAMSES
@@ -84,7 +84,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-07-31T21:47:26.189
+[Mera]: Get hydro data: 2026-08-03T12:16:16.152
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -119,7 +119,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 41.137 seconds
+✓ Table created in 41.052 seconds
 
 Memory used for data table :2.321086215786636
 
@@ -238,7 +238,7 @@ println("from a map    : ", provenance_string(sd))
 
 ```
 from InfoType : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
-[Mera]: 2026-07-31T21:48:37.357
+[Mera]: 2026-08-03T12:17:27.193
 
 
 center: [0.5, 0.5, 0.5] 
@@ -280,7 +280,7 @@ println("gravity   : ", provenance_string(grav))
 ```
 
 ```
-[Mera]: Get particle data: 2026-07-31T21:48:42.453
+[Mera]: Get particle data: 2026-08-03T12:17:32.182
 
 
 Using threaded processing with 4 threads
@@ -302,7 +302,7 @@ Memory used for data table :
 38.428720474243164 MB
 -------------------------------------------------------
 
-[Mera]: Get gravity data: 2026-07-31T21:48:45.467
+[Mera]: Get gravity data: 2026-08-03T12:17:35.077
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -333,15 +333,15 @@ Creating Table from 28320979 cells with max 4 threads...
    Using parallel processing with 4 threads
 
    Creating IndexedTable with 8 columns...
-✓ Table created in 3.016 seconds
+✓ Table created in 3.146 seconds
 
 Memory used for data table :1.6880627572536469 GB
 -------------------------------------------------------
 
 particles : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+gravity   : 
 
-
-gravity   : Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
+Mera v1.8.0 | mw_L10/output_00300 | 445.89 Myr | L=48.0 ndim=3 lmin=6 lmax=10 | ScalesType003
 ```
 
 
@@ -356,7 +356,7 @@ println("identical to first read : ", provenance_string(p2) == provenance_string
 ```
 
 ```
-[Mera]: Get hydro data: 2026-07-31T21:49:03.357
+[Mera]: Get hydro data: 2026-08-03T12:17:53.769
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -384,7 +384,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 50.71 seconds
+✓ Table created in 43.363 seconds
 
 Memory used for data table :2.321086215786636
 

@@ -28,6 +28,8 @@ gas  = gethydro(info, verbose=false);
 
 ```
 *__   __ _______ ______   _______ 
+
+
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -36,9 +38,12 @@ gas  = gethydro(info, verbose=false);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-03T11:16:07.836
+[Mera]: 2026-08-03T11:42:41.099
+
 
 Code: RAMSES
+
+
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
@@ -53,7 +58,9 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-variables:  
+
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -62,7 +69,9 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05 
-particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables: 
+
+7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
@@ -73,7 +82,9 @@ namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAM
 timer-file:       true
 compilation-file: false
 makefile:         true
-patchfile:        true
+patchfile:        
+
+true
 =======================================================
 
 
@@ -94,14 +105,15 @@ println("energy net    [erg/s]   : ", fb.rates.energy.net)
 
 ```
 FluxBudgetType [sphere @ R=30.0 kpc, Δr=2.0]  (cell size 0.75)
-  19528 shell cells, mass 210100.0 Msol
-  mass     : in -1.153e-5  out 0.003968  net 0.003956 ± 1.9e-5  [Msol_yr]
-  momentum : in 0.0001246  out 0.1727  net 0.1728 ± 0.0012  [Msol_km_s_yr]
-  energy   : in -2.178e34  out 1.2829999999999998e37  net 1.2809999999999998e37 ± 8.5e34  [erg_s]
-mass outflow  [Msol/yr] : 0.003968015747451279
-mass inflow   [Msol/yr] : -1.1526135090624682e-5
-mass net      [Msol/yr] : 0.003956489612360654
-energy net    [erg/s]   : 1.2811085860658779e37
+
+  19712 shell cells, mass 209400.0 Msol
+  mass     : in -8.301e-6  out 0.004031  net 0.004023 ± 1.9e-5  [Msol_yr]
+  momentum : in 8.774e-5  out 0.1754  net 0.1755 ± 0.0012  [Msol_km_s_yr]
+  energy   : in -1.755e34  out 1.3009999999999998e37  net 1.2989999999999998e37 ± 8.6e34  [erg_s]
+mass outflow  [Msol/yr] : 0.0040312084962625125
+mass inflow   [Msol/yr] : -8.30065486215337e-6
+mass net      [Msol/yr] : 0.004022907841400359
+energy net    [erg/s]   : 1.2991643114304465e37
 ```
 
 
@@ -201,13 +213,14 @@ println("total (fb.rates)      : ", fbp.rates.mass.out)
 
 ```
 FluxBudgetType [sphere @ R=30.0 kpc, Δr=2.0]  (cell size 0.75)
-  19528 shell cells, mass 210100.0 Msol
-  mass     : in -1.153e-5  out 0.003968  net 0.003956 ± 1.9e-5  [Msol_yr]
+
+  19712 shell cells, mass 209400.0 Msol
+  mass     : in -8.301e-6  out 0.004031  net 0.004023 ± 1.9e-5  [Msol_yr]
   phases: [:cold, :hot]
 cold outflow [Msol/yr] : 0.0
-hot  outflow [Msol/yr] : 0.003968015747451279
-cold+hot              : 0.003968015747451279
-total (fb.rates)      : 0.003968015747451279
+hot  outflow [Msol/yr] : 0.0040312084962625125
+cold+hot              : 0.0040312084962625125
+total (fb.rates)      : 0.0040312084962625125
 ```
 
 
@@ -324,10 +337,16 @@ println("net Mdot(R) [Msol/yr] : ", round.(fp.net, digits=3))
 ```
 
 ```
-shell cells           : 19528
+shell cells           : 19712
+
+
 fluxprofile [sphere, mass]: 10 shells over R=5.0–50.0 kpc, Δr=2.0
-radii [kpc]           : [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0]
-net Mdot(R) [Msol/yr] : [-0.868, 0.55, 0.01, -0.01, -0.006, 0.004, 0.001, 0.0, 0.0, 0.0]
+
+
+radii [kpc]           : 
+
+[5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0]
+net Mdot(R) [Msol/yr] : [-0.892, 0.55, 0.009, -0.01, -0.006, 0.004, 0.001, 0.0, 0.0, 0.0]
 ```
 
 
@@ -361,11 +380,12 @@ fig
 
 ```
 FluxMapType [sphere @ R=30.0, Δr=2.0]  quantity=vr [km_s]
+
   (72, 36) grid  (φ_deg × cosθ)
 ```
 
 
-![](fluxbudget_files/fluxbudget_9_1.png)
+![](fluxbudget_files/fluxbudget_9_2.png)
 
 
 `quantity=:vr` maps the mass-weighted mean normal velocity (inflow < 0, outflow > 0); `quantity=:mdot`

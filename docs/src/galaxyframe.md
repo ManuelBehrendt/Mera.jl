@@ -40,7 +40,7 @@ println("cells loaded : ", length(gas.data))
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-31T21:57:58.040
+[Mera]: 2026-08-03T11:52:25.491
 
 
 Code: RAMSES
@@ -89,7 +89,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-07-31T21:58:00.054
+[Mera]: Get hydro data: 2026-08-03T11:52:28.149
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -124,7 +124,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 39.377 seconds
+✓ Table created in 42.044 seconds
 
 Memory used for data table :2.321086215786636
 
@@ -251,7 +251,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-31T21:59:27.538
+[Mera]: 2026-08-03T11:53:58.646
 
 
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]
@@ -268,7 +268,7 @@ Off-axis LOS   = [-0.0004, -0.0002, 1.0]  (binning=:overlap)
 Effective resolution: 1024^2  →  map size: 1038 x 1038
 
 
-[Mera]: 2026-07-31T21:59:37.930
+[Mera]: 2026-08-03T11:54:09.266
 
 
 center: [0.5000061, 0.5004579, 0.5004408] ==> [24.0 [kpc] :: 24.022 [kpc] :: 24.021 [kpc]]

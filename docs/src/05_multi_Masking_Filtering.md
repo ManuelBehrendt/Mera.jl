@@ -172,7 +172,9 @@ Above(:mach, 1)
 InRange(:r_cylinder, 0,10,:kpc)   8896      
 
 0.1 %
-Equals(:level, gas.lmax)          501568    92.6 %
+Equals(:level, gas.lmax)          
+
+501568    92.6 %
 ```
 
 

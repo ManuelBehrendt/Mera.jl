@@ -96,14 +96,14 @@ particles = getparticles(info);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-03T10:13:53.414
+[Mera]: 2026-08-03T11:03:34.121
 
 
 Code: RAMSES
-output [300] summary:
-mtime: 
 
-2023-04-09T05:34:09
+
+output [300] summary:
+mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
 simulation time: 445.89 [Myr]
@@ -113,7 +113,9 @@ ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+level(s): 
+
+6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  
@@ -135,9 +137,9 @@ particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :veloc
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS"
+namelist-file: 
 
-)
+("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -145,7 +147,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get particle data: 2026-07-03T10:13:58.116
+[Mera]: Get particle data: 2026-08-03T11:03:39.167
 
 
 Using threaded processing with 4 threads
@@ -255,8 +257,6 @@ project along ANY line of sight (degrees by default):
     slice (off-axis kwargs)       -> cutting plane ;  profile / phase -> 1D/2D reductions
     rotation_sequence             -> shared-FOV angle sweep (orbit movies)
     savemap/loadmap (JLD2)        -> store/restore a projection result
-    (PPV cubes, spectra, moments -> dev/loscubes ; column_integral, emission/absorption,
-     optical depth, FITS export   -> dev/offaxis_synthobs)
 
 ------------------------------------------------
 ```
@@ -288,7 +288,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:09.758
+[Mera]: 2026-08-03T11:03:51.758
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -314,10 +314,11 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:11.938
+[Mera]: 2026-08-03T11:03:54.137
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
@@ -325,7 +326,6 @@ ymin::ymax: 0.2916667 :: 0.7083333  	==> 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Effective resolution: 512^2
-
 Pixel size: 93.75 [pc]
 Simulation min.: 46.875 [pc]
 ```
@@ -339,7 +339,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:13.677
+[Mera]: 2026-08-03T11:03:55.924
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -364,7 +364,7 @@ proj_z = projection(particles, :sd, :Msol_pc2, lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:15.796
+[Mera]: 2026-08-03T11:03:58.133
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -397,7 +397,7 @@ proj1_x = projection(particles, [:sd], units=[:Msol_pc2], lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:17.626
+[Mera]: 2026-08-03T11:03:59.956
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -426,7 +426,7 @@ proj1_z = projection(particles, [:sd, :vx], units=[:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:19.201
+[Mera]: 2026-08-03T11:04:01.660
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -455,7 +455,7 @@ proj1_z = projection(particles, [:sd, :vx], [:Msol_pc2, :km_s], lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:21.305
+[Mera]: 2026-08-03T11:04:03.811
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -483,7 +483,7 @@ projvel_z = projection(particles, [:vx, :vy, :vz], :km_s, lmax=9,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:22.932
+[Mera]: 2026-08-03T11:04:05.527
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -769,7 +769,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :σz, :ekin],
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:39.915
+[Mera]: 2026-08-03T11:04:23.505
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -899,7 +899,7 @@ proj_z = projection(particles, [:v, :σ, :σx, :σy, :ϕ, :r_cylinder, :vr_cylin
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:43.586
+[Mera]: 2026-08-03T11:04:27.293
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1037,7 +1037,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:47.472
+[Mera]: 2026-08-03T11:04:31.367
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -1178,7 +1178,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:50.615
+[Mera]: 2026-08-03T11:04:34.616
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -1208,7 +1208,7 @@ proj_z = projection(particles,
 ```
 
 ```
-[Mera]: 2026-07-03T10:14:52.607
+[Mera]: 2026-08-03T11:04:36.736
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -1352,7 +1352,7 @@ proj_x = projection(particles, :age, :Myr, mask=mask,
 ```
 
 ```
-[Mera]: 2026-07-03T10:15:06.514
+[Mera]: 2026-08-03T11:04:51.127
 
 
 domain:
@@ -1367,7 +1367,7 @@ Simulation min.: 46.875 [pc]
 :mask provided by function
 
 
-[Mera]: 2026-07-03T10:15:09.507
+[Mera]: 2026-08-03T11:04:54.399
 
 
 domain:
