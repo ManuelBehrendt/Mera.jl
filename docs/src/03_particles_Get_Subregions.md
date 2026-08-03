@@ -386,7 +386,9 @@ Cuboid — a slab               413099
 Cylinder(8, 2)                
 
 358054   70.3 % of the stellar mass
-Sphere(6)                     268097   52.6 % of the stellar mass
+Sphere(6)                     268097   
+
+52.6 % of the stellar mass
 SphericalShell(6, 10)         151432   29.8 % of the stellar mass
 CylindricalShell(6, 10, 2)    145216   
 
@@ -395,7 +397,7 @@ Cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
 ```
 
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_13_4.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_13_5.png)
 
 
 Every panel is the same edge-on view of the same population; grey is

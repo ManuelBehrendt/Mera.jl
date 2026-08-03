@@ -56,10 +56,7 @@ println("first call: ", round(t1, digits=2), " s   second call: ", round(t2, dig
 Mera v1.8.0
 
 
-[ Info: Mera v1.8.0
-
-
-first call: 10.67
+first call: 11.49
 
  s   second call: 0.044 s
 ```
@@ -167,14 +164,14 @@ fig
 ```
 
 ```
-Julia threads: 8
+Julia threads: 4
 
-max_threads=1  109.57
+max_threads=1  106.59
 
  s   speedup ×1.0
-max_threads=2  79.97 s   speedup ×1.37
-max_threads=4  53.7 s   speedup ×2.04
-max_threads=8  29.37 s   speedup ×3.73
+max_threads=2  77.18 s   speedup ×1.38
+max_threads=4  53.12 s   speedup ×2.01
+max_threads=8  53.53 s   speedup ×1.99
 ```
 
 

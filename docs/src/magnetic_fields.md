@@ -76,7 +76,7 @@ info = getinfo(27, joinpath(base, "RAMSES/ramses_mhd_128"));
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-31T21:33:05.882
+[Mera]: 2026-08-03T12:09:04.380
 
 
 [ Info: Mera: no hydro descriptor and nvarh=11 (≥11) on a 3D run — assuming a RAMSES MHD layout (B faces at 5–10, pressure at 11). If this is hydro with ≥6 passive scalars instead, the names are positional (:var6…).
@@ -126,7 +126,7 @@ println("temperature  T [K]   : ", extrema(getvar(gas, :T, :K)))
 ```
 
 ```
-[Mera]: Get hydro data: 2026-07-31T21:33:08.879
+[Mera]: Get hydro data: 2026-08-03T12:09:07.782
 
 
 Key vars=(:cx, :cy, :cz)
@@ -159,8 +159,9 @@ Creating Table from 2097152 cells with max 4 threads...
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
+
   Creating IndexedTable with 14 columns...
-✓ Table created in 4.351 seconds
+✓ Table created in 4.328 seconds
 
 Memory used for data table :224.00138664245605
 
@@ -173,10 +174,10 @@ thermal pressure   p :
 (0.13653329586664678, 1.9999999999999998)
 cell-centred Bx      : (1.0, 1.0)
 cell-centred By      : (9.971840159730391e-27, 1.6525454539866162)
-cell-centred Bz      : 
+cell-centred Bz      : (0.0, 0.0)
+temperature  T [K]   : 
 
-(0.0, 0.0)
-temperature  T [K]   : (1.0812393953743894e-8, 3.1640344885858596e-8)
+(1.0812393953743894e-8, 3.1640344885858596e-8)
 ```
 
 
@@ -238,11 +239,8 @@ heatmap!(ax2, bx.maps[:bx]';         colormap=:balance)
 fig
 ```
 
-
 ```
-[ Info: Mera v1.8.0
-
-[Mera]: 2026-07-31T21:33:46.285
+[Mera]: 2026-08-03T12:09:32.078
 
 
 domain:
@@ -265,7 +263,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-[Mera]: 2026-07-31T21:33:47.546
+[Mera]: 2026-08-03T12:09:33.265
 
 
 domain:
@@ -282,13 +280,14 @@ Pixel size: 156.25 [μm]
 Simulation min.: 156.25 [μm]
 
 Available threads: 4
+
 Requested max_threads: 4
 Variables: 2 (bx, sd)
 Processing mode: Sequential (single thread)
 ```
 
 
-![](magnetic_fields_files/magnetic_fields_6_8.png)
+![](magnetic_fields_files/magnetic_fields_6_6.png)
 
 
 On an MHD run the [first-look dashboard](report.md) does this for you: `quicklook(output)` adds a

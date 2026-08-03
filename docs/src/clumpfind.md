@@ -86,7 +86,7 @@ println("box length   : ", gas.boxlen, " kpc")
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-03T10:15:22.930
+[Mera]: 2026-08-03T11:31:57.365
 
 
 Code: RAMSES
@@ -134,14 +134,16 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-07-03T10:15:25.727
+[Mera]: Get hydro data: 2026-08-03T11:31:59.803
 
 
 Key vars=(:level, :cx, :cy, :cz)
 
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
 
-center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+center: [0.5, 0.5, 0.5] 
+
+==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
@@ -165,12 +167,12 @@ Final data size: 1277874 cells, 7 variables
 Creating Table from 1277874 cells with max 4 threads...
 
   Threading: 4 threads for 11 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 11 columns...
-✓ Table created in 2.303 seconds
+✓ Table created in 2.605 seconds
 
 Memory used for data table :107.2445936203003
 
@@ -224,11 +226,11 @@ c1.id = 1
 
 c1.n_members = 487
 c1.mass = 2.0337645080962305e9
-c1.com = (22.084540387532176, 24.06218325949867, 24.07769340948422)
+c1.com = (22.061102887532154, 24.038745759498653, 24.05425590948421)
 c1.peak = 86745.10109055592
-c1.radius = 0.9229258020368852
+c1.radius = 0.9229258020368907
 
-0.9229258020368852
+0.9229258020368907
 ```
 
 
@@ -308,11 +310,13 @@ b1 = catb[1]
 ```
 
 ```
-b1.alpha_vir = 1.3732735951574746
-b1.bound = true
-b1.e_grav = 7.215441785528629e56
+b1.alpha_vir = 1.373366071452284
 
-7.215441785528629e56
+
+b1.bound = true
+b1.e_grav = 7.214955930128814e56
+
+7.214955930128814e56
 ```
 
 
@@ -370,7 +374,7 @@ println(cats)
 ```
 
 ```
-[Mera]: Get particle data: 2026-07-03T10:16:10.070
+[Mera]: Get particle data: 2026-08-03T11:32:44.285
 
 
 Using threaded processing with 4 threads
@@ -550,7 +554,7 @@ fig
 ```
 
 ```
-[Mera]: 2026-07-03T10:16:36.849
+[Mera]: 2026-08-03T11:33:11.854
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -603,7 +607,7 @@ length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, 
 ```
 
 ```
-[Mera]: 2026-07-03T10:16:50.806
+[Mera]: 2026-08-03T11:33:28.425
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]

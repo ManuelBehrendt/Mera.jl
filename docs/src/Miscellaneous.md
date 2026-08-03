@@ -12,6 +12,21 @@ using Mera
 info=getinfo(300, "$MERA_EXAMPLES/mw_L10/", verbose=false);
 ```
 
+
+```
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+```
+
+
 ## MyArguments
 
 Pass several arguments at once to a function for better readability!
@@ -22,7 +37,7 @@ myargs = ArgumentsType()
 ```
 
 ```
-ArgumentsType(missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing)
+ArgumentsType(missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing)
 ```
 
 
@@ -33,10 +48,9 @@ viewfields(myargs)
 
 ```
 [Mera]: Fields to use as arguments in functions
-=======================================================================
-pxsize
 
-	= missing
+=======================================================================
+pxsize	= missing
 res	= missing
 lmax	= missing
 xrange	= missing
@@ -49,6 +63,17 @@ plane	= missing
 plane_ranges	= missing
 thickness	= missing
 position	= missing
+los	= missing
+up	= missing
+theta	= missing
+phi	= missing
+angle_unit	= missing
+binning	= missing
+nmax	= missing
+inclination	= missing
+azimuth	= missing
+position_angle	= missing
+axis	= missing
 center	= missing
 range_unit	= missing
 data_center	= missing
@@ -76,13 +101,12 @@ gas = gethydro(info, myargs=myargs);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T18:51:26.187
+[Mera]: Get hydro data: 2026-08-03T11:38:24.326
 
 
 Key vars=(:level, :cx, :cy, :cz)
 
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
-
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 center: [0.5, 0.5, 0.5] 
 
@@ -115,13 +139,11 @@ Creating Table from 6914359 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-  9.477106 seconds (250.23 M allocations: 14.027 GiB, 8.35% gc time, 9.43% compilation time)
-✓ Table created in 9.741 seconds
+✓ Table created in 9.684 seconds
 
+Memory used for data table :580.2772397994995
 
-Memory used for data table :
-
-580.2772397994995 MB
+ MB
 -------------------------------------------------------
 ```
 
@@ -131,7 +153,7 @@ part = getparticles(info, myargs=myargs);
 ```
 
 ```
-[Mera]: Get particle data: 2026-06-01T18:51:57.580
+[Mera]: Get particle data: 2026-08-03T11:38:57.004
 
 
 Using threaded processing with 4 threads
@@ -162,7 +184,7 @@ p = projection(gas, :sd, :Msun_pc2, myargs=myargs);
 ```
 
 ```
-[Mera]: 2026-06-01T18:52:02.766
+[Mera]: 2026-08-03T11:39:06.827
 
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
@@ -199,11 +221,6 @@ myargs.show_progress=false;
 ```julia
 gas = gethydro(info, myargs=myargs);
 ```
-
-```
-  8.941163 seconds (245.97 M allocations: 13.829 GiB, 10.35% gc time)
-```
-
 
 ```julia
 part = getparticles(info, myargs=myargs);
@@ -250,8 +267,6 @@ gas = gethydro(info);
 
 ```
 ✓ File processing complete! Combining results...
-
- 39.691495 seconds (958.14 M allocations: 55.370 GiB, 8.84% gc time)
 ```
 
 
@@ -272,10 +287,10 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T18:53:32.408
+[Mera]: Get hydro data: 2026-08-03T11:40:32.648
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -294,18 +309,17 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
- 39.385238 seconds (958.14 M allocations: 55.369 GiB, 8.70% gc time)
-✓ Table created in 39.743 seconds
+✓ Table created in 39.647 seconds
 
+Memory used for data table :2.321086215786636
 
-Memory used for data table :2.321086215786636 GB
+ GB
 -------------------------------------------------------
 ```
 
@@ -351,10 +365,10 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-06-01T18:54:30.579
+[Mera]: Get hydro data: 2026-08-03T11:41:31.204
 
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7) 
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -372,17 +386,13 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
- 38.284447 seconds (958.14 M allocations: 55.420 GiB, 9.07% gc time)
-✓ Table created in 38.556 seconds
-
+✓ Table created in 39.553 seconds
 
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
@@ -443,16 +453,35 @@ showprogress_mode: nothing
 ```
 search: 
 
-bell ceil all Real real fill kill help
+bell real ceil Real fill help all kill
 
 
-  No documentation found for public binding Mera.bell.
+  bell(sound = nothing)
 
-  Mera.bell is a Function.
+  Play a short notification sound — e.g. when a long calculation finishes.
 
-  # 1 method for generic function "bell" from Mera:
-   [1] bell()
-       @ ~/Documents/codes/github/Mera.jl/src/functions/notifications.jl:11
+  Pick the sound in any of these ways (first match wins):
+
+    1. by name — bell(:chime) (a Symbol or String);
+    2. by number — bell(2) (the position shown by bell(:list), also a
+       numeric string like bell("2"));
+    3. a configured default — [bell] sound = "gong" in ~/.mera.toml, the
+       MERA_BELL_SOUND environment variable, or the legacy ~/bell.txt
+       (see mera_config);
+    4. the built-in fallback — :strum (the original Mera sound).
+
+  19 sounds ship with Mera. List them with their numbers using bell(:list):
+  arpeggio, bell, bird, bloop, bongo, chime, coin, coindrop, cosmic, ding,
+  done, door, frog, gong, knock, oscillations, owl, strum, whistle.
+
+  You can also drop your own *.wav into the package's src/sounds/ folder and
+  select it by its file name or number.
+
+  bell()            # the configured default, else :strum
+  bell(:gong)       # a deep blooming gong
+  bell("chime")     # a glassy three-note chime
+  bell(4)           # the 4th sound in bell(:list)
+  bell(:list)       # print the numbered catalogue of available sounds
 ```
 
 
@@ -463,29 +492,38 @@ bell ceil all Real real fill kill help
 ```
 
 ```
-search: notifyme notify time ctime @time mtime
+search: notifyme notify mtime time @time ctime
 
 
   Get an email and/or Zulip notification, e.g., when your calculations are
   finished.
   ––––––––––––––––––––––––––––
 
-  Email notification:
+  Both channels are configured in ~/.mera.toml. Print a template with
+  mera_config_example, fill in the parts you want, then chmod 600 ~/.mera.toml
+  — it holds an API key. Configure either channel, or both; each is used only
+  if present.
 
-    •  Requires the email client "mail" to be installed
-    •  Put a file with the name "email.txt" in your home folder that
-       contains your email address in the first line
+  [email]
+  to = "you@example.com"
 
-  Zulip notification (optional):
+  [zulip]
+  bot_email = "mybot@zulip.example.com"
+  api_key   = "..."                        # or set MERA_ZULIP_API_KEY instead
+  server    = "https://zulip.example.com"
 
-    •  Put a file with the name "zulip.txt" in your home folder with
-       three lines:
+  Email additionally needs the command-line mail client installed; Mera pipes
+  the message to it. Nothing is sent if [email] to is unset.
 
-       •  Line 1: Your Zulip bot email (e.g.,
-       mybot@zulip.yourdomain.com)
-       •  Line 2: Your Zulip API key
-       •  Line 3: Your Zulip server URL (e.g.,
-       https://zulip.yourdomain.com)
+  Zulip needs all three keys. It is the richer channel: it carries image and
+  file attachments, and posts to a channel/topic (zulip_channel=,
+  zulip_topic=), which email does not.
+
+  Every value can also come from an environment variable — MERA_EMAIL_TO,
+  MERA_ZULIP_BOT_EMAIL, MERA_ZULIP_API_KEY, MERA_ZULIP_SERVER,
+  MERA_ZULIP_CHANNEL — which take precedence over the file and keep secrets
+  off disk. The legacy email.txt, zulip.txt and bell.txt in $HOME still work;
+  ~/.mera.toml wins where both exist. See mera_config.
 
   Output Capture (optional):
 

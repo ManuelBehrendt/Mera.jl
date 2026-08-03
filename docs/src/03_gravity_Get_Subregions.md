@@ -93,8 +93,6 @@ println("box            : ", round(grav.boxlen * kpc, sigdigits=4),
 Mera v1.8.0
 
 
-[ Info: Mera v1.8.0
-
 gravity cells  : 4879946
 
    columns: (:level, :cx, :cy, :cz, :epot, :ax, :ay, :az)
@@ -810,7 +808,7 @@ classic shell   : 2197457 cells
 value-type slab : 
 
 2304.0 kpc³ (split)
-analytic 24×24×4: 2304 kpc³   dev = 3.887778987632373e-12
+analytic 24×24×4: 2304 kpc³   dev = -1.9984014443252818e-15
 ```
 
 

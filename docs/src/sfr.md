@@ -45,7 +45,7 @@ println("hydro cells      : ", length(gas.data))
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-07-31T21:50:26.657
+[Mera]: 2026-08-03T12:19:09.624
 
 
 Code: RAMSES
@@ -62,9 +62,7 @@ ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-level(s): 
-
-6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  
@@ -96,13 +94,12 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get particle data: 2026-07-31T21:50:33.959
+[Mera]: Get particle data: 2026-08-03T12:19:15.216
 
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
 Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
-
 
 domain:
 
@@ -121,7 +118,7 @@ Memory used for data table :
 38.428720474243164 MB
 -------------------------------------------------------
 
-[Mera]: Get hydro data: 2026-07-31T21:50:39.070
+[Mera]: Get hydro data: 2026-08-03T12:19:19.051
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -154,7 +151,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 48.935 seconds
+✓ Table created in 40.708 seconds
 
 Memory used for data table :2.321086215786636
 

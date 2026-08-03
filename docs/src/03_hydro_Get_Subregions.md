@@ -1213,13 +1213,11 @@ fig
 ```
 
 ```
-map mass removed by the display clip : 0.45
-
- %  (cosmetic only — msum is untouched)
+map mass removed by the display clip : 0.45 %  (cosmetic only — msum is untouched)
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_51_1.png)
 
 
 ## 8. Tilted Regions
@@ -1650,14 +1648,16 @@ nucleus            5.937e9
         1.873e9
 inner               3.95e9        1.153e9
 ring               8.032e9        1.661e9
-rim                4.915e9        4.586e8
+rim                4.915e9
+
+        4.586e8
 -----------------------------------------
 sum             2.28346e10      5.14581e9
 disc direct     2.28346e10      5.14581e9
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_69_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_69_3.png)
 
 
 The stellar column tiles exactly like the gas column — particles are

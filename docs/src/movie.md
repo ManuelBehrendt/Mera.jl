@@ -45,7 +45,7 @@ println("output numbers  : ", m.outputs)
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo
+temp output dir : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp
 
 
 getmovie: 13 frame(s) of :sd from "/Volumes/FASTStorage/Simulations/Mera-Tests/RAMSES/timeseries_sedov3d"
@@ -157,10 +157,10 @@ println("wrote GIF       : ", gif, "  (", filesize(gif), " bytes)")
   frame 11: output 00011
   frame 12: output 00012
   frame 13: output 00013
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.gif
 
 
-wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density.gif  (41062 bytes)
+wrote GIF       : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.gif  (41062 bytes)
 ```
 
 
@@ -180,8 +180,6 @@ println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
 
 ```
   frame 1: t=0.0 Myr
-
-
   frame 2: t=5.332e-16 Myr
   frame 3: t=1.061e-15 Myr
   frame 4: t=1.591e-15 Myr
@@ -194,8 +192,8 @@ println("wrote          : ", gif2, "  (", filesize(gif2), " bytes)")
   frame 11: t=5.302e-15 Myr
   frame 12: t=5.822e-15 Myr
   frame 13: t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density_gray.gif
-wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density_gray.gif  (42812 bytes)
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_gray.gif
+wrote          : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_gray.gif  (42812 bytes)
 ```
 
 
@@ -257,7 +255,7 @@ println("custom tags    : ", basename(gif4))
   frame 11: output 00011 | t=5.302e-15 Myr
   frame 12: output 00012 | t=5.822e-15 Myr
   frame 13: output 00013 | t=6.352e-15 Myr
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density_tagged.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_tagged.gif
 two-line tags  : density_tagged.gif
   frame 1: frame 1/13
   frame 2: frame 2/13
@@ -272,7 +270,7 @@ two-line tags  : density_tagged.gif
   frame 11: frame 11/13
   frame 12: frame 12/13
   frame 13: frame 13/13
-savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density_custom.gif
+savemovie: wrote 13 frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density_custom.gif
 custom tags    : density_custom.gif
 ```
 
@@ -294,12 +292,12 @@ println("reloaded frames: ", length(m2.frames), "  (identical: ", length(m2.fram
 ```
 
 ```
-Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density.jld2
+Saved MeraMovie (13 frames) → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.jld2
 
 
 Loaded MeraMovie (13 frames) ← 
 
-/var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/density.jld2
+/var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/density.jld2
 reloaded frames: 13  (identical: true)
 ```
 
@@ -346,9 +344,9 @@ println("assembled      : ", out_gif, "  (", filesize(out_gif), " bytes)")
 ```
 
 ```
-moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/from_frames.gif
+moviefromframes: 13 image(s) from /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/frames → /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/from_frames.gif
 
-assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_OKQfFo/from_frames.gif  (556105 bytes)
+assembled      : /var/folders/k5/gw4hqgwj5_qf8sljz0091x1m0000gp/T/jl_eZIOfp/from_frames.gif  (556105 bytes)
 ```
 
 

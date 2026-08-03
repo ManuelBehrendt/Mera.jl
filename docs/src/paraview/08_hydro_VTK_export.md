@@ -80,8 +80,20 @@ info = infodata(600, path)
 gas = loaddata(600, path, :hydro); # load full box
 ```
 
+
 ```
-[Mera]: 2026-05-30T13:21:41.394
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+[Mera]: 2026-08-03T12:27:51.641
 
 
 Use datatype: hydro
@@ -96,6 +108,7 @@ simulation time: 891.71 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 5120
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
@@ -129,7 +142,8 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: 2026-05-30T13:21:44.862
+[Mera]: 2026-08-03T12:27:55.435
+
 
 Open Mera-file output_00600.jld2:
 
@@ -141,7 +155,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Memory used for data table :
 
-8.637885391712189 GB
+8.63788539916277 GB
 -------------------------------------------------------
 ```
 
@@ -166,11 +180,10 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T13:22:07.800
+[Mera]: 2026-08-03T12:28:25.383
 
 
 Available Threads: 4
-Created directory: output01
 Processing levels: [6, 7, 8, 9]
 
 
@@ -181,12 +194,14 @@ Level 6
 
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
+
 Level 7
 
   wrote 0600_galaxy_L7.vtu
 
  (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
+
 Level 8
 
   wrote 0600_galaxy_L8.vtu
@@ -269,10 +284,9 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T13:42:22.562
+[Mera]: 2026-08-03T12:51:12.364
 
 Available Threads: 4
-Created directory: output03
 Processing levels: [6, 7, 8, 9, 10]
 
 
@@ -283,9 +297,12 @@ Level 6
 
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
+
 Level 7
 
-  wrote 0600_galaxy_L7.vtu (Size: 0.02 GB)
+  wrote 0600_galaxy_L7.vtu
+
+ (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
 
 Level 8
@@ -324,6 +341,8 @@ Level 10
   Added block 'Level_9' to scalar VTM for 0600_galaxy_L9.vtu
   Added block 'Level_10' to scalar VTM for 0600_galaxy_L10.vtu
 Created scalar multiblock: 0600_galaxy_scalar.vtm
+
+
   Updating scalar VTM file to reference scalar VTU files...
     - Added reference to 0600_galaxy_L6.vtu in block 'Level_6' of scalar VTM
     - Added reference to 0600_galaxy_L7.vtu in block 'Level_7' of scalar VTM
@@ -381,11 +400,10 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T14:02:15.625
+[Mera]: 2026-08-03T13:12:11.569
 
 
 Available Threads: 4
-Created directory: output04
 Processing levels: [6, 7, 8, 9]
 
 
@@ -399,7 +417,6 @@ Level 6
 
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
-
 Level 7
 
   wrote 0600_galaxy_L7.vtu
@@ -417,7 +434,7 @@ Level 8
  (Size: 0.28 GB)
   wrote 0600_galaxy_vec_L8.vtu
 
- (Size: 0.41 GB)
+ (Size: 0.39 GB)
   ✓ Level 8 completed, memory cleaned
 
 Level 9
@@ -434,7 +451,7 @@ Level 9
  (Size: 0.55 GB)
   wrote 0600_galaxy_vec_L9.vtu
 
- (Size: 0.77 GB)
+ (Size: 0.75 GB)
   ✓ Level 9 completed, memory cleaned
 
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
@@ -531,10 +548,9 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T14:31:40.068
+[Mera]: 2026-08-03T13:40:08.028
 
 Available Threads: 4
-Created directory: output05
 Processing levels: [6, 7, 8]
 
 
@@ -572,7 +588,7 @@ Level 8
  (Size: 0.39 GB)
   wrote 0600_galaxy_vec_L8.vtu
 
- (Size: 0.55 GB)
+ (Size: 0.53 GB)
   ✓ Level 8 completed, memory cleaned
 
   Added block 'Level_6' to scalar VTM for 0600_galaxy_L6.vtu
@@ -669,7 +685,13 @@ gassub = subregion(gas, :cylinder, radius=1., height=1., range_unit=:kpc, center
 ```
 
 ```
-[Mera]: 2026-05-30T14:56:57.883
+[Mera] Hint: regions also work as value types, with EXACT edge-cell splitting.
+
+             subregion(data, Cylinder(1.0, 1.0; center=Any[23.0, 23.0, :bc], range_unit=:kpc))
+             gives exact getvar :mass/:volume/msum and composes with ∩ ∪ \ !. The symbol form
+             above still works; pass split=false for classic whole cells. See ?subregion.
+             (shown once per session; verbose(false) silences Mera's messages)
+[Mera]: 2026-08-03T14:05:36.362
 
 
 center: [0.4791667, 0.4791667, 0.5] ==> [23.0 [kpc] :: 23.0 [kpc] :: 24.0 [kpc]]
@@ -679,9 +701,9 @@ xmin::xmax: 0.4583333 :: 0.5  	==> 22.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.4583333 :: 0.5  	==> 22.0 [kpc] :: 24.0 [kpc]
 zmin::zmax: 0.4791667 :: 0.5208333  	==> 23.0 [kpc] :: 25.0 [kpc]
 
-Radius: 1.0 [kpc]
-Height: 1.0 [kpc]
-Memory used for data table :148.63642406463623
+Radius: 1000.0 [pc]
+Height: 1000.0 [pc]
+Memory used for data table :148.6678113937378
 
  MB
 -------------------------------------------------------
@@ -707,10 +729,9 @@ export_vtk(
 ```
 
 ```
-[Mera]: 2026-05-30T14:59:06.290
+[Mera]: 2026-08-03T14:07:54.323
 
 Available Threads: 4
-Created directory: output06
 Processing levels: [10, 11, 12, 13]
 Level 10
 
@@ -728,6 +749,7 @@ Level 11
 
  (Size: 0.02 GB)
   ✓ Level 11 completed, memory cleaned
+
 Level 12
 
   wrote 0600_galaxy_L12.vtu
@@ -737,6 +759,7 @@ Level 12
 
  (Size: 0.03 GB)
   ✓ Level 12 completed, memory cleaned
+
 Level 13
 
   wrote 0600_galaxy_L13.vtu

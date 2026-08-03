@@ -140,16 +140,14 @@ maprow([fo, eo], :sd, ["direction=:faceon", "direction=:edgeon"]; crange=cr)
 ```
 
 ```
-line of sight  ŵ = 
-
-[0.011, 0.02, -1.0]
+line of sight  ŵ = [0.011, 0.02, -1.0]
 image up       û = [1.0, -0.0, 0.011]
 projection centre (box fraction) = [0.5, 0.5, 0.5]
 frame: (147, 147)  and  (147, 147)
 ```
 
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_4_2.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_4_1.png)
 
 
 Read the output back:
@@ -250,12 +248,10 @@ maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
 
 ```
 max |ŵ_faceon − ŵ_inc0|     = 0.0
+angle(û_faceon, û_inc0)     = 
 
-
-angle(û_faceon, û_inc0)     = 90.0°
-max |Σ_faceon − Σ_inc0|     = 
-
-2407.1
+90.0°
+max |Σ_faceon − Σ_inc0|     = 2407.1
 
 max |Σ_faceon − Σ_inc0,PA=-90| = 4.433786671143025e-11
 inclination + los         
@@ -267,7 +263,7 @@ direction=:faceon + axis
 ```
 
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_9_6.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_9_5.png)
 
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
@@ -343,11 +339,10 @@ end
              bound the depth, or `fov=<half-width>, fov_unit=…` for a fixed camera-plane
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
-[Mera]: 2026-07-31T11:11:53.621
+[Mera]: 2026-08-03T11:02:56.904
 
 
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
-
 
 domain:
 xmin::xmax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
@@ -511,9 +506,7 @@ maps returned : Any
 [:
 
 T, :mass, :sd]
-units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T
-
- => :K, :mass => :Msol, :sd => :standard)
+units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
 
 Σ(map) / msum(gas) − 1  =  0.0
 
@@ -611,10 +604,10 @@ level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
 ngp       64.4 %     
 
-0.009     1.3004
-cic       27.8 %     0.01      1.2898
-overlap   0.0 %      0.039     0.0005
-exact     0.0 %      0.125     0.0
+0.007     1.3004
+cic       27.8 %     0.006     1.2898
+overlap   0.0 %      0.026     0.0005
+exact     0.0 %      0.094     0.0
 ```
 
 
@@ -778,9 +771,7 @@ end
 ```
 
 ```
-pxsize [kpc]   median σ_LOS    
-
-mean σ_LOS
+pxsize [kpc]   median σ_LOS    mean σ_LOS
 
 0.15           93.8            274.1
 0.6            94.3            275.4
@@ -838,11 +829,11 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 ```
 
 ```
-slice frame      (
-
-120, 120)   0.0 % NaN
+slice frame      (120, 120)   0.0 % NaN
 projection frame (120, 120)
-slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
+slice extent [kpc] = 
+
+[-15.0, 15.0, -15.0, 15.0]
 ```
 
 
@@ -913,9 +904,7 @@ end
 ```
 
 ```
-azimuth   0
-
-°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
+azimuth   0°   frame (88, 88)   extent [kpc] = [-21.817, 21.964, -21.837, 21.944]
 azimuth  90°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.925, 21.857]
 azimuth 180°   frame (88, 88)   extent [kpc] = [-21.786, 21.995, -21.917, 21.864]
 azimuth 270°   frame (88, 88)   extent [kpc] = [-21.772, 22.009, -21.781, 22.0]
@@ -1045,9 +1034,7 @@ stars   : frame (
 107, 109)   los = [0.999, -0.002, -0.037]
 
 gravity : maps Any[:epot, :sd]
-          epot over filled pixels (-0.5327, -0.03714)
-
-   (530 of 11448 pixels empty)
+          epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
 ```
 
 
@@ -1174,9 +1161,7 @@ fov works on particles                       : (
 30, 30)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
-particle max_threads                         
-
-: MethodError
+particle max_threads                         : MethodError
 
 data_center ignored on off-axis hydro        : true
 ```
