@@ -1523,14 +1523,14 @@ end
 **AMR Data Analysis Patterns (Similar to IDL Array Processing):**
 ```julia
 # Mera.jl provides AMR data similar to IDL's multi-dimensional arrays
-using Mera
+using Mera, Statistics
 
 # Load simulation data (analogous to reading FITS cubes)
-info = getinfo(datadir, "output_00100")
+info = getinfo(100, datadir)                # output number, then path
 gas_data = gethydro(info)
 
 # Process AMR data with IDL-like operations
-density = gas_data.data[:rho]              # Extract density field
+density = getvar(gas_data, :rho)            # Extract density field
 log_density = log10.(density)               # Logarithmic scaling (IDL: alog10)
 high_density_mask = log_density .> -2.0     # Boolean mask (IDL: where)
 high_density_cells = findall(high_density_mask)  # Find indices
@@ -1538,10 +1538,11 @@ high_density_cells = findall(high_density_mask)  # Find indices
 # Statistical analysis (IDL astronomy library patterns)
 mean_density = mean(density)
 median_density = median(density)
-density_moments = [mean(density), var(density), skewness(density)]
+density_spread = (mean(density), var(density))
 
-# Spatial filtering (similar to IDL image processing)
-smoothed_density = smooth_data(gas_data, :rho, method="gaussian", radius=2)
+# Spatial filtering: Mera has no built-in smoother. Project to a regular grid
+# first, then smooth the 2-D map with ImageFiltering.jl or your own kernel.
+Σ = projection(gas_data, :sd, :Msol_pc2, pxsize=[100., :pc]).maps[:sd]
 ```
 
 **N-body Particle Analysis (Catalog Processing Patterns):**

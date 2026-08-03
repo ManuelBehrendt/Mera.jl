@@ -23,7 +23,20 @@ using Mera
 pkgversion(Mera)
 ```
 
+
 ```
+*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+
 v"1.8.0"
 ```
 
@@ -148,7 +161,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10"); # output=300 in given path
 ```
 
 ```
-[Mera]: 2026-06-01T14:04:14.119
+[Mera]: 2026-08-03T09:42:30.385
 
 
 Code: RAMSES
@@ -170,7 +183,7 @@ level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 hydro:         true
 hydro-variables:  
 
-7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -298,7 +311,7 @@ nvarp	= 7
 nvarrt	= 0
 variable_list	= 
 
-[:rho, :vx, :vy, :vz, :p, :var6, :var7]
+[:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01]
 gravity_variable_list	= [:epot, :ax, :ay, :az]
 particles_variable_list	= [:vx, :vy, :vz, :mass, :family, :tag, :birth]
 rt_variable_list	= Symbol[]
@@ -324,9 +337,8 @@ compilationfile	= false
 patchfile	= true
 Narraysize	= 0
 
-scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_grav
+scale ==> subfields: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm, :μm, :Mpc3, :kpc3, :pc3, :mpc3, :ly3, :Au3, :km3, :m3, :cm3, :mm3, :μm3, :Msol_pc3, :Msun_pc3, :g_cm3, :Msol_pc2, :Msun_pc2, :g_cm2, :Gyr, :Myr, :yr, :s, :ms, :Msol, :Msun, :Mearth, :Mjupiter, :g, :km_s, :m_s, :cm_s, :nH, :erg, :g_cms2, :T_mu, :K_mu, :T, :K, :Ba, :g_cm_s2, :p_kB, :K_cm3, :erg_g_K, :keV_cm2, :erg_K, :J_K, :erg_cm3_K, :J_m3_K, :kB_per_particle, :J_s, :g_cm2_s, :kg_m2_s, :Gauss, :muG, :microG, :nG, :Tesla, :eV, :keV, :MeV, :erg_s, :Lsol, :Lsun, :cm_3, :pc_3, :n_e, :erg_g_s, :erg_cm3_s, :erg_cm2_s, :Jy, :mJy, :microJy, :atoms_cm2, :NH_cm2, :cm_s2, :m_s2, :km_s2, :pc_Myr2, :erg_g, :J_kg, :km2_s2, :u_grav, :erg_cell, :dyne, :s_2, :lambda_J, :M_J, :t_ff, :alpha_vir, :delta_rho, :a_mag, :v_esc, :ax, :ay, :az, :epot, :a_magnitude, :escape_speed, :gravitational_redshift, :gravitational_energy_density, :gravitational_binding_energy, :total_binding_energy, :specific_gravitational_energy, :gravitational_work, :jeans_length_gravity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 
-ity, :jeans_mass_gravity, :jeansmass, :freefall_time_gravity, :ekin, :etherm, :virial_parameter_local, :Fg, :poisson_source, :ar_cylinder, :aϕ_cylinder, :ar_sphere, :aθ_sphere, :aϕ_sphere, :r_cylinder, :r_sphere, :ϕ, :dimensionless, :rad, :deg)
 
 grid_info ==> subfields: (:ngridmax, :nstep_coarse, :nx, :ny, :nz, :nlevelmax, :nboundary, :ngrid_current, :bound_key, :cpu_read)
 
@@ -406,6 +418,7 @@ kg_m2_s	= 4.023715412864333e71
 Gauss	= 0.00019124389093025845
 muG	= 191.24389093025846
 microG	= 191.24389093025846
+nG	= 191243.89093025847
 Tesla	= 1.9124389093025845e-8
 eV	= 5.3371144971238105e67
 keV	= 5.33711449712381e64
@@ -439,21 +452,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.761719159e-314
-a_mag	= 2.761719183e-314
-v_esc	= 2.7617192065e-314
-ax	= 2.76171923e-314
-ay	= 2.761719254e-314
-az	= 2.7617193014e-314
-epot	= 2.761719325e-314
-a_magnitude	= 2.761719349e-314
-escape_speed	= 2.7617193725e-314
-gravitational_redshift	= 2.761719396e-314
-gravitational_energy_density	= 2.76171942e-314
-gravitational_binding_energy	= 2.7617194437e-314
-total_binding_energy	= 2.7617194674e-314
+delta_rho	= 2.4119619146e-314
+a_mag	= 2.4119619146e-314
+v_esc	= 2.4119619146e-314
+ax	= 2.4119619146e-314
+ay	= 2.4119619146e-314
+az	= 2.4119619146e-314
+epot	= 2.4119619146e-314
+a_magnitude	= 2.4119619146e-314
+escape_speed	= 2.4119619146e-314
+gravitational_redshift	= 2.4119619146e-314
+gravitational_energy_density	= 2.4119619146e-314
+gravitational_binding_energy	= 2.4119619146e-314
+total_binding_energy	= 2.4119619146e-314
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.761719515e-314
+gravitational_work	= 2.4119619146e-314
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -461,8 +474,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.7617197045e-314
-poisson_source	= 2.761719728e-314
+Fg	= 2.4119619146e-314
+poisson_source	= 2.4119619146e-314
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -524,7 +537,7 @@ yr	= 3.15576e7
 
 
 === Programmatic Field Access ===
-Number of scaling factors: 133
+Number of scaling factors: 134
 Number of physical constants: 41
 First 5 scaling factors: (:Mpc, :kpc, :pc, :mpc, :ly)
 First 5 constants: (:Au, :Mpc, :kpc, :pc, :mpc)
@@ -639,7 +652,7 @@ println("  viewfields(info.scale)      # Hierarchical view")
 ```
 
 ```
-Available scaling factors (total: 133):
+Available scaling factors (total: 134):
 First 10 examples: (:Mpc, :kpc, :pc, :mpc, :ly, :Au, :km, :m, :cm, :mm)
 
 To see all scaling factors, use:
@@ -893,7 +906,7 @@ println("✓ Enables memory optimization in large workflows")
 
 ```
 === Independent Objects Created ===
-Type of scales object: ScalesType002
+Type of scales object: ScalesType003
 Type of constants object: PhysicalUnitsType002
 
 === Comparison: Different Access Methods ===
@@ -1126,9 +1139,6 @@ try
     make_info = makefile(info)
     println("Compilation information available: ", !isnothing(make_info))
 
-    compilation_info = compilationfile(info)  
-    println("Detailed compilation data available: ", !isnothing(compilation_info))
-
     timer_info = timerfile(info)
     println("Performance timing data available: ", !isnothing(timer_info))
 
@@ -1147,7 +1157,37 @@ end
 !content deleted on purpose
 
 Compilation information available: false
-Some compilation/build information files may not be available
+
+[Mera]: Timer-file content
+=================================
+ --------------------------------------------------------------------
+
+     minimum       average       maximum  standard dev        std/av       %   rmn   rmx  TIMER
+     426.559       428.960       431.540         1.216         0.003     0.5   562 606    coarse levels           
+    2086.863      2285.294      2620.028       109.814         0.048     2.9   639   1    refine                  
+     518.746       519.356       520.299         0.572         0.001     0.7   608  21    load balance            
+     173.017       565.169      1799.729       385.862         0.683     0.7   602   1    particles               
+    5897.562      5897.616      5897.791         0.018         0.000     7.5   244   1    io                      
+    5176.808      9619.415     26606.857      5416.924         0.563    12.3   568   1    feedback                
+   25022.898     25410.890     25585.446       143.363         0.006    32.4     1 602    poisson                 
+    1131.397      2241.256      2547.320       322.916         0.144     2.9     1 345    rho                     
+     521.635       678.056      1076.044       151.775         0.224     0.9   601   1    courant                 
+      82.818       115.742       135.415        10.926         0.094     0.1   398 125    hydro - set unew        
+    7009.921      9876.180     12208.171      1176.765         0.119    12.6   481 343    hydro - godunov         
+     948.967     16679.099     23569.950      4760.658         0.285    21.3   640 340    hydro - rev ghostzones  
+     189.513       208.576       229.883         7.902         0.038     0.3   398 581    hydro - set uold        
+    1757.246      1795.542      1860.788        11.757         0.007     2.3   524 180    cooling                 
+      84.519       300.570       375.587        67.032         0.223     0.4     1 593    hydro - ghostzones      
+     933.143      1662.855      1788.316       119.084         0.072     2.1     1 639    flag                    
+   78327.986     100.0    TOTAL
+
+Performance timing data available: false
+
+[Mera]: Patch-file content
+=================================
+!content deleted on purpose
+
+AMR patch information available: false
 ```
 
 
