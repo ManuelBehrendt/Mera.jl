@@ -185,6 +185,57 @@ code-blind, and what the cross-reader test (`test/59_multicode_contract_tests.jl
   load argument — on a leaf-cell list a level cap would leave holes — it is chosen at analysis time
   (`projection(…, res=)`).
 
+## How mature is each reader?
+
+Mera was built for RAMSES and grew outward, so the readers are **not equally mature**, and it is
+worth being plain about that before you plan work around one.
+
+| Code | What is implemented | How it is tested | Use it for |
+|---|---|---|---|
+| **RAMSES** | `getinfo`, `gethydro`, `getparticles`, `getgravity`, `getrt`, `getclumps` | real simulation outputs, the great majority of the suite's ~6100 assertions | production work; this is the path everything else is measured against |
+| **GADGET** family (GADGET, AREPO, SWIFT, GIZMO, TNG) | `getinfo`, `getparticles`, `getgroups` | ~230 assertions against synthetic HDF5 fixtures | particle and gas-cell analysis; the widest non-RAMSES coverage |
+| **PLUTO** | `getinfo`, `gethydro`, `getparticles` | ~80 assertions against synthetic fixtures | uniform-grid and Chombo-AMR runs |
+| **Athena++** | `getinfo`, `gethydro` | ~66 assertions against synthetic fixtures | grid/MHD analysis |
+| **Chombo** | `getinfo`, `gethydro` | ~26 assertions against synthetic fixtures | AMR hydro analysis |
+| **FLASH** | `getinfo`, `gethydro` | ~40 assertions against synthetic fixtures | grid/MHD analysis |
+
+Two honest caveats:
+
+**Only RAMSES has dedicated `getgravity`, `getrt` and `getclumps`**, because RAMSES writes those to
+separate files. Where another code stores the same physics inside its snapshot, the reader maps it
+to the canonical field — but there is no separate entry point, and no equivalent of the clump finder's
+RAMSES-specific catalogue reader.
+
+**The non-RAMSES readers are exercised against synthetic fixtures**, which pin down the format
+contract — geometry, units, cell conventions, the [shared contract](#The-shared-contract) below —
+rather than behaviour across the full variety of real runs. They are correct on what they are tested
+for. If you point one at a production simulation with an unusual configuration, you are in less
+well-trodden territory than a RAMSES user is.
+
+None of this is a reason to avoid them. It is a reason to check your first result against something
+you trust, and to tell us when it disagrees.
+
+## Help us widen this
+
+The analysis layer is code-blind by design, so **broadening code support is mostly reader work, not
+core work** — which makes it unusually good ground for contributions.
+
+The most useful things you can do, roughly in order of value to other users:
+
+- **Report a mismatch.** If a reader disagrees with the code's own tools, or with yt, on the same
+  snapshot, that is the highest-value bug report we can get. Open an issue with the code, the
+  configuration, and what differed.
+- **Share a small real snapshot.** The synthetic fixtures are what limit confidence above. A
+  compact, redistributable output from a real run — especially with an unusual setup — lets us turn
+  a contract test into a behaviour test.
+- **Extend a reader.** Adding particles to a grid code, or gravity where the snapshot carries it, is
+  self-contained work; see [Adding a reader](#Adding-a-reader).
+- **Write a new reader.** The contract is small and the downstream analysis comes free.
+
+Questions and work-in-progress are welcome in
+[issues and discussions](https://github.com/ManuelBehrendt/Mera.jl/issues) — including "is this
+supposed to work?", which is often the fastest way to find a gap in the docs.
+
 ## Reference readers
 
 Each frontend is built to agree with the upstream tools that define its format — yt's per-code
