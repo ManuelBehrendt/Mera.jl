@@ -334,6 +334,29 @@ function createscales(unit_l::Float64, unit_d::Float64, unit_t::Float64, unit_m:
     scale.r_sphere                     = scale.cm                               # [cm] Spherical radius → length unit
     scale.ϕ                            = scale.rad                              # [rad] Azimuthal angle → angle unit
 
+    # Gravity quantity names. These were declared in ScalesType00x but never assigned, so
+    # they held whatever memory was there — subnormals around 1e-314 that differed between
+    # processes. Nothing inside Mera reads them, but `getunit` resolves a unit by
+    # `getfield(scale, unit)`, so an unknown unit raises FieldError while these returned
+    # garbage SILENTLY, defeating exactly the check that catches typos. Each is assigned to
+    # the unit its own declaration in types.jl specifies.
+    scale.ax                           = scale.cm_s2                            # [cm/s²] x-acceleration → acceleration unit
+    scale.ay                           = scale.cm_s2                            # [cm/s²] y-acceleration → acceleration unit
+    scale.az                           = scale.cm_s2                            # [cm/s²] z-acceleration → acceleration unit
+    scale.a_mag                        = scale.cm_s2                            # [cm/s²] Acceleration magnitude → acceleration unit
+    scale.a_magnitude                  = scale.cm_s2                            # [cm/s²] Acceleration magnitude → acceleration unit
+    scale.v_esc                        = scale.cm_s                             # [cm/s] Escape velocity → velocity unit
+    scale.escape_speed                 = scale.cm_s                             # [cm/s] Escape velocity → velocity unit
+    scale.epot                         = scale.erg_g                            # [erg/g] Gravitational potential → specific energy
+    scale.Fg                           = scale.dyne                             # [dyne] Gravitational force → force unit
+    scale.gravitational_energy_density = scale.u_grav                           # [erg/cm³] Energy density → gravitational energy density
+    scale.gravitational_binding_energy = scale.u_grav                           # [erg/cm³] Binding energy density → gravitational energy density
+    scale.total_binding_energy         = scale.erg_cell                         # [erg] Total energy per cell → per-cell energy
+    scale.gravitational_work           = scale.erg                              # [erg] Work/energy → energy unit
+    scale.delta_rho                    = scale.dimensionless                    # Dimensionless density contrast
+    scale.gravitational_redshift       = scale.dimensionless                    # Dimensionless redshift
+    scale.poisson_source               = 1.0 / unit_t^2                         # [s⁻²] Poisson source term → inverse time squared
+
     return scale
 end
 
@@ -536,6 +559,7 @@ function getunit(dataobject, quantity::Symbol, vars::Array{Symbol,1}, units::Arr
         end
     else
         factor = haskey(USER_UNITS, unit) ? USER_UNITS[unit] : getfield(dataobject.info.scale, unit)
+        _check_unit_factor(factor, unit)
         return uname == false ? factor : (factor, unit)
     end
 
@@ -550,8 +574,31 @@ function getunit(dataobject::InfoType, unit::Symbol; uname::Bool=false)
         end
     else
         factor = haskey(USER_UNITS, unit) ? USER_UNITS[unit] : getfield(dataobject.scale, unit)
+        _check_unit_factor(factor, unit)
         return uname == false ? factor : (factor, unit)
     end
+end
+
+"""
+    _check_unit_factor(factor, unit)
+
+Reject a conversion factor that cannot be real.
+
+A unit is resolved with `getfield(scale, unit)`, so an unknown name raises `FieldError`
+immediately — but a field that exists and was never assigned returns whatever memory held,
+typically a subnormal near 1e-314, and does so SILENTLY. That is the dangerous case: results
+come out as plausible-looking numbers rather than an error, and they differ between processes.
+This turns that back into a loud failure.
+"""
+@inline function _check_unit_factor(factor, unit::Symbol)
+    if !isfinite(factor) || (factor != 0 && abs(factor) < 1e-300)
+        error("getunit: the conversion factor for `:$unit` is $factor, which cannot be a " *
+              "real unit — the field exists on the scale struct but was never assigned a " *
+              "value. This is a bug in Mera, please report it with the simulation code and " *
+              "output number. Meanwhile, pass the quantity's physical unit instead " *
+              "(e.g. :cm_s2 for accelerations, :erg_g for the potential).")
+    end
+    return nothing
 end
 
 
