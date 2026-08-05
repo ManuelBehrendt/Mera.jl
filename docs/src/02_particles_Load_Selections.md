@@ -124,7 +124,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:36:50.673
+[Mera]: 2026-08-05T16:01:38.869
 
 
 Code: RAMSES
@@ -141,9 +141,9 @@ ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
+level(s): 
 
-
-level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
+6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  
@@ -229,7 +229,7 @@ particles = getparticles(info);
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:36:57.081
+[Mera]: Get particle data: 2026-08-05T16:01:45.201
 
 
 Using threaded processing with 4 threads
@@ -288,7 +288,7 @@ particles_a = getparticles(info, vars=[:mass, :birth]);
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:00.823
+[Mera]: Get particle data: 2026-08-05T16:01:49.077
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -318,7 +318,7 @@ particles_a = getparticles(info, vars=[:var4, :var7]);
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:01.197
+[Mera]: Get particle data: 2026-08-05T16:01:49.488
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -347,7 +347,7 @@ particles_a = getparticles(info, [:mass, :birth]);
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:01.368
+[Mera]: Get particle data: 2026-08-05T16:01:49.677
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -360,11 +360,10 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
-Memory used for data table :
-
-25.965506553649902 MB
+Memory used for data table :25.965506553649902 MB
 -------------------------------------------------------
 ```
 
@@ -413,7 +412,7 @@ particles_c = getparticles(info, :vx );
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:01.704
+[Mera]: Get particle data: 2026-08-05T16:01:50.041
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -426,7 +425,6 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
@@ -503,7 +501,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:02.542
+[Mera]: Get particle data: 2026-08-05T16:01:50.927
 
 
 Using threaded processing with 4 threads
@@ -557,7 +555,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:04.064
+[Mera]: Get particle data: 2026-08-05T16:01:52.447
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -602,7 +600,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:05.256
+[Mera]: Get particle data: 2026-08-05T16:01:53.683
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -733,21 +731,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.4226960006e-314
-a_mag	= 6.97e-322
-v_esc	= 2.7789813305e-314
-ax	= 2.1969640394e-314
-ay	= 2.1969642607e-314
-az	= 2.196964482e-314
-epot	= 2.1969647034e-314
-a_magnitude	= 2.1969649247e-314
-escape_speed	= 2.196965146e-314
-gravitational_redshift	= 2.1969653674e-314
-gravitational_energy_density	= 2.1969655887e-314
-gravitational_binding_energy	= 2.19696581e-314
-total_binding_energy	= 2.1969660314e-314
+delta_rho	= 1.0
+a_mag	= 1.3935734353956443e-8
+v_esc	= 6.557528732282063e6
+ax	= 1.3935734353956443e-8
+ay	= 1.3935734353956443e-8
+az	= 1.3935734353956443e-8
+epot	= 4.30011830747048e13
+a_magnitude	= 1.3935734353956443e-8
+escape_speed	= 6.557528732282063e6
+gravitational_redshift	= 1.0
+gravitational_energy_density	= 2.910484414358466e-9
+gravitational_binding_energy	= 2.910484414358466e-9
+total_binding_energy	= 8.55100014027443e55
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.779416401e-314
+gravitational_work	= 8.551000140274429e55
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -755,8 +753,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.196967802e-314
-poisson_source	= 2.1969680235e-314
+Fg	= 9.432237612943517e-31
+poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -783,7 +781,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:05.424
+[Mera]: Get particle data: 2026-08-05T16:01:53.859
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -798,6 +796,7 @@ zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.445150e+05 particles
 Memory used for data table :
@@ -834,7 +833,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:06.935
+[Mera]: Get particle data: 2026-08-05T16:01:55.418
 
 
 Using threaded processing with 4 threads
@@ -870,7 +869,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:08.244
+[Mera]: Get particle data: 2026-08-05T16:01:56.726
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
@@ -906,7 +905,7 @@ particles = getparticles(  info,
 ```
 
 ```
-[Mera]: Get particle data: 2026-08-03T10:37:09.735
+[Mera]: Get particle data: 2026-08-05T16:01:58.186
 
 
 Using threaded processing with 4 threads
