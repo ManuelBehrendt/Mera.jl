@@ -157,6 +157,11 @@ CLAUDE.md
 AREPO_ROADMAP.md
 docs/immersive_roadmap.md
 
-# Local docs tooling — notebook->markdown converter, kept off GitHub
+# Local docs tooling, kept off GitHub: the notebook->markdown converter and the
+# one-shot migrations that introduced MERA_EXAMPLES across notebooks and pages.
 scripts/convert_notebook.py
-scripts/.convert_notebook.py.bak
+scripts/parameterize_paths.py
+scripts/mirror_paths_to_pages.py
+scripts/run_notebooks.sh
+scripts/check_doc_examples.py
+scripts/__pycache__/
