@@ -34,12 +34,9 @@ automatically across RAMSES versions:
 Either way you get canonical names and the cell-centred field `:bx`, `:by`, `:bz`.
 
 !!! note "Ambiguous no-descriptor case"
-```
-Without a descriptor, a *hydro* run that happens to carry exactly six passive scalars also has
-`nvar = 11` and would be read as MHD. Modern RAMSES writes the descriptor, which removes the
-ambiguity; if you hit this, the columns are still available positionally (`:var6…`).
-```
-
+    Without a descriptor, a *hydro* run that happens to carry exactly six passive scalars also has
+    `nvar = 11` and would be read as MHD. Modern RAMSES writes the descriptor, which removes the
+    ambiguity; if you hit this, the columns are still available positionally (`:var6…`).
 
 ## A reproducible example (yt sample dataset)
 

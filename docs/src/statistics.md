@@ -189,11 +189,8 @@ map N-PDF bins        : 60
 
 
 !!! note "Name clash"
-```
-`pdf` is also exported by `Distributions.jl`; if you `using` both packages, call
-`Mera.pdf`.
-```
-
+    `pdf` is also exported by `Distributions.jl`; if you `using` both packages, call
+    `Mera.pdf`.
 
 ## Plot the density PDF
 
