@@ -38,7 +38,6 @@ projection(dataobject::HydroDataType, vars::Array{Symbol,1}, unit::Symbol)
 - AMR-aware grid mapping with conservative mass preservation
 - Variable-based parallel processing (8+ threads)
 - Mass-weighted averaging for intensive quantities
-- Surface density calculations with proper weighting
 
 **Common variables**: `:rho`, `:T`, `:sd`, `:v`, `:p`, `:cs`, velocity dispersion (`:σx`, `:σy`, `:σz`)
 
@@ -63,9 +62,7 @@ projection(dataobject::PartDataType, vars::Array{Symbol,1}, unit::Symbol)
 
 **Key features**: 
 - Mass-weighted binning for discrete particles
-- Stellar population analysis and age calculations
-- Age calculations relative to snapshot time
-- Support for stellar formation history
+- [`getvar`](@ref) with `:age` returns stellar ages relative to the snapshot time
 
 **Common variables**: `:mass`, `:age`, `:sd`, `:v`, `:birth`, `:metal`, `:id`, `:family`
 

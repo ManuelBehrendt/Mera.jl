@@ -1,30 +1,49 @@
 # Masking & Filtering API Reference
 
-Functions for data masking, filtering, and metadata operations.
+Docstrings for selecting a subset of cells or particles by value. The narrative guide is
+[Mask/Filter/Meta](../05_multi_Masking_Filtering.md).
 
-## Variable Access
+Two routes exist. [`getmask`](@ref) returns a boolean array you pass to other functions;
+[`filterdata`](@ref) returns a new data object you can keep chaining. Conditions are built
+from [`FilterCondition`](@ref) values such as [`Above`](@ref) and [`InRange`](@ref), and
+combine with `&`, `|` and `!`.
 
-- [`getvar`](@ref) - Extract variables with conditions
-- Data selection and filtering
-- Conditional data access
+## Value-space selection
 
-## Spatial Operations
+```@docs; canonical=false
+filterdata
+getmask
+```
 
-- [`getextent`](@ref) - Spatial extent information
-- [`getpositions`](@ref) - Position-based filtering
-- [`getvelocities`](@ref) - Velocity-based selection
+## Conditions
 
-## Masking Functions
+```@docs; canonical=false
+FilterCondition
+Above
+Below
+InRange
+AbovePercentile
+BelowPercentile
+Satisfies
+```
 
-- Boolean masking operations
-- Conditional data selection
-- Range-based filtering
+## Table macros
 
-## Macro Functions
+These operate on the underlying table rather than on Mera quantities, so they see stored
+columns only — use [`filterdata`](@ref) when you need a derived quantity such as `:T` or `:v`.
 
-- [`@filter`](@ref) - Filter data with conditions
-- [`@apply`](@ref) - Apply operations to data
-- [`@where`](@ref) - Conditional data selection
+```@docs; canonical=false
+@filter
+@apply
+@where
+```
+
+## Related
+
+Spatial selection is a different mechanism, documented in the
+[Subregions API](subregions.md): [`subregion`](@ref) and [`shellregion`](@ref) cut by
+geometry, not by value. Extracting a quantity is [`getvar`](@ref), in the
+[Calculations API](calculations.md).
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+*Every docstring in the package is also on the [Complete API Reference](../api.md).*
