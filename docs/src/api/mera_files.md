@@ -23,11 +23,14 @@ Functions for saving, loading, and converting MERA data files.
 - [`benchmark_mera_io`](@ref) - Benchmark I/O performance
 - [`mera_io_status`](@ref) - Check I/O status
 
-## Conversion Functions
+## Conversion
 
-- Data format conversion
-- Export capabilities
-- Import from other formats
+```@docs; canonical=false
+convertdata
+```
+
+To write a plain-text or binary export instead of Mera's own format, see
+[Export/Import data](../examples/ExportImportData.md).
 
 ---
 *For complete function documentation, see the [Complete API Reference](../api.md).*

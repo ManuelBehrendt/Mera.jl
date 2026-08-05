@@ -1,27 +1,49 @@
-# Basic Calculations API Reference
+# Calculations API Reference
 
-Functions for performing calculations on simulation data.
+Docstrings for computing quantities from loaded data. The narrative guide is
+[Basic Calculations](../04_multi_Basic_Calculations.md), and
+[How Quantities Are Computed](../computation_reference.md) gives the formulas.
 
-## Statistical Functions
+[`getvar`](@ref) is the main entry point: it returns any stored or derived quantity, in code
+units by default or converted if you name a unit. The reductions below are conveniences built
+on it.
 
-- [`msum`](@ref) - Calculate total mass
-- [`getmass`](@ref) - Get mass information
-- [`center_of_mass`](@ref) / [`com`](@ref) - Center of mass calculations
-- [`bulk_velocity`](@ref) - Calculate bulk velocity
-- [`average_velocity`](@ref) - Average velocity calculations
+## Quantities
 
-## Physical Quantities
+```@docs; canonical=false
+getvar
+getmass
+add_field
+```
 
-- Density calculations
-- Temperature derivations
-- Pressure computations
-- Energy calculations
+## Reductions
 
-## Time & Units
+```@docs; canonical=false
+msum
+center_of_mass
+com
+bulk_velocity
+average_velocity
+average_mweighted
+```
 
-- [`gettime`](@ref) - Get simulation time
-- [`printtime`](@ref) - Display timing information
-- Unit conversions
+## Statistics
+
+```@docs; canonical=false
+wstat
+```
+
+## Time
+
+```@docs; canonical=false
+gettime
+printtime
+```
+
+## Related
+
+Units are resolved by [`getunit`](@ref); [`createscales`](@ref) builds the conversion factors
+from a simulation's own unit system.
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+*Every docstring in the package is also on the [Complete API Reference](../api.md).*

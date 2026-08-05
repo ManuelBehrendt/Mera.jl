@@ -1,25 +1,22 @@
-# Volume Rendering API Reference
+# VTK Export API Reference
 
-Functions for 3D visualization and VTK export.
+Mera does not render volumes itself. It writes VTK files, and you open those in ParaView —
+the narrative guides are [Intro](../paraview/paraview_intro.md),
+[Hydro](../paraview/08_hydro_VTK_export.md) and
+[Particles](../paraview/08_particles_VTK_export.md), which cover the ParaView side:
+colormaps, lighting and camera work all happen there, not in Julia.
 
-## VTK Export
+## Export
 
-- [`export_vtk`](@ref) - Export data to VTK format
-- VTK file generation
-- ParaView compatibility
-- 3D data export
+```@docs; canonical=false
+export_vtk
+```
 
-## Rendering Functions
+## Related
 
-- Volume rendering setup
-- 3D visualization tools
-- Data preparation for rendering
-
-## Visualization Tools
-
-- Colormap configuration
-- Lighting setup
-- Camera positioning
+For maps you can display directly in Julia, see the [Projections API](projections.md) and
+[Off-axis Projection API](offaxis.md). Mera's Makie support activates automatically once a
+Makie backend such as CairoMakie is loaded.
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+*Every docstring in the package is also on the [Complete API Reference](../api.md).*

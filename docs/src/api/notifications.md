@@ -6,7 +6,7 @@ Functions for notifications and progress tracking.
 
 ## Notification Functions
 
-- `bell` - Audio notifications
+- [`bell`](@ref) - Audio notifications
 - [`notifyme`](@ref) - General notification system
 - [`send_results`](@ref) - Send computation results
 - [`timed_notify`](@ref) - Time-based notifications
@@ -20,8 +20,7 @@ Functions for notifications and progress tracking.
 ## Utility Functions
 
 - [`safe_execute`](@ref) - Safe function execution
-- Image optimization for notifications
-- Base64 encoding utilities
+- [`optimize_image_for_zulip`](@ref) - shrink an image before upload
 
 ## Notification Types
 
