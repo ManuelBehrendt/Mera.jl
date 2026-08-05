@@ -149,7 +149,7 @@ clumps    = getclumps(info);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-05T16:02:07.225
+[Mera]: 2026-08-05T22:24:53.502
 
 
 Code: RAMSES
@@ -197,7 +197,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-08-05T16:02:09.738
+[Mera]: Get hydro data: 2026-08-05T22:24:55.829
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -226,19 +226,19 @@ Final data size: 849332 cells, 4 variables
 Creating Table from 849332 cells with max 4 threads...
 
   Threading: 4 threads for 8 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
+
   Creating IndexedTable with 8 columns...
-✓ Table created in 0.872 seconds
+✓ Table created in 0.928 seconds
 
 Memory used for data table :51.839996337890625
 
  MB
 -------------------------------------------------------
 
-[Mera]: Get particle data: 2026-08-05T16:02:32.578
+[Mera]: Get particle data: 2026-08-05T22:25:20.169
 
 
 Using threaded processing with 4 threads
@@ -260,7 +260,7 @@ Memory used for data table :
 31.064148902893066 MB
 -------------------------------------------------------
 
-[Mera]: Get clump data: 2026-08-05T16:02:34.543
+[Mera]: Get clump data: 2026-08-05T22:25:22.156
 
 
 domain:
@@ -576,9 +576,7 @@ println("Single vars: ", x_pos, "  ", y_pos, "  ", z_pos, "  kpc")
 
 ```
 Tuple:      (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
-Single vars: 23.258011243936238
-
-  23.76594380898452  23.972244037494438  kpc
+Single vars: 23.258011243936238  23.76594380898452  23.972244037494438  kpc
 ```
 
 
@@ -699,9 +697,7 @@ println( "Particles: ", average_velocity(particles, :km_s, weighting=:no) , " km
 ```
 
 ```
-Gas:       (
-
-1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
+Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
 Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 ```
 
@@ -906,6 +902,11 @@ mass_overview = [mass1 mass2 mass3 mass4]
 
 Furthermore, we provide a simple function to get the mass of each cell in code units:
 
+```julia
+mass_cells = getmass(gas); # [code units]
+
+```
+
 ### Available Methods
 
 To see all available methods for the `msum` function, we can use Julia's introspection:
@@ -928,44 +929,30 @@ Get several quantities with one function call by passing an array containing the
 `getvar` returns a dictionary containing 1dim arrays for each quantity in code units:
 
 ```julia
-# Display methods in a Documenter.jl friendly format
-println("Available methods for center_of_mass:")
-println("─────────────────────────────────────")
-for m in methods(center_of_mass)
-    println("• ", m)
-end
+# array of variables -> Dict of 1-dim arrays, in code units
+quantities = getvar(gas, [:mass, :ekin])
+
 ```
 
 ```
-Available methods for center_of_mass:
-─────────────────────────────────────
-• center_of_mass
-
-(dataobject::Vector{HydroPartType}, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:242
-• center_of_mass(dataobject::Vector{HydroPartType}; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:246
-• center_of_mass(dataobject::ContainMassDataSetType, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:124
-• center_of_mass(dataobject::ContainMassDataSetType; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:128
+Dict{Any, Any} with 2 entries:
+  :mass => [8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8.9407e-7, 8…
+  :ekin => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  2.28274e-7, 2.…
 ```
 
 
 The units for each quantity can by passed as an array to the keyword argument "units" (plural, compare with single quantitiy call above) by preserving the order of the vars argument:
 
 ```julia
-# Display methods in a Documenter.jl friendly format  
-println("Available methods for com:")
-println("──────────────────────────")
-for m in methods(com)
-    println("• ", m)
-end
+# units (plural) takes one unit per requested quantity
+quantities = getvar(gas, [:mass, :ekin], units=[:Msol, :erg])
+
 ```
 
 ```
-Available methods for com:
-──────────────────────────
-• com(dataobject::Vector{HydroPartType}, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:274
-• com(dataobject::Vector{HydroPartType}; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:278
-• com(dataobject::ContainMassDataSetType, unit::Symbol; mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:157
-• com(dataobject::ContainMassDataSetType; unit, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:161
+Dict{Any, Any} with 2 entries:
+  :mass => [894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894.07, 894…
+  :ekin => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  1.95354e49, 1.…
 ```
 
 
@@ -985,38 +972,55 @@ Dict{Any, Any} with 2 entries:
 The arrays of the single quantities can be accessed from the dictionary:
 
 ```julia
-# Display methods in a Documenter.jl friendly format
-println("Available methods for bulk_velocity:")
-println("────────────────────────────────────")
-for m in methods(bulk_velocity)
-    println("• ", m)
-end
+# each quantity is one entry of the returned dictionary
+quantities[:mass]
+
 ```
 
 ```
-Available methods for bulk_velocity:
-────────────────────────────────────
-• bulk_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:415
-• bulk_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:420
+37898393-element Vector{Float64}:
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+ 894.0696716308591
+   ⋮
+ 102.88910576564386
+ 102.88910576564386
+ 194.42336261293337
+ 194.42336261293337
+  89.04538915743468
+  89.04538915743468
+  22.764121923068824
+  22.764121923068824
+   8.421571563820482
+   8.421571563820482
+  36.50851622718897
+  36.50851622718897
 ```
 
 
 If all selected variables should be of the same unit use the following arguments: dataobject, array of quantities, unit (no array needed):
 
 ```julia
-# Display methods in a Documenter.jl friendly format
-println("Available methods for average_velocity:")
-println("───────────────────────────────────────")
-for m in methods(average_velocity)
-    println("• ", m)
-end
+# one unit for every quantity: dataobject, variables, unit
+velocities = getvar(gas, [:vx, :vy, :vz], :km_s)
+
 ```
 
 ```
-Available methods for average_velocity:
-───────────────────────────────────────
-• average_velocity(dataobject::ContainMassDataSetType, unit::Symbol; weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:447
-• average_velocity(dataobject::ContainMassDataSetType; unit, weighting, mask) @ Mera ~/code-github/Mera.jl/src/functions/basic_calc.jl:451
+Dict{Any, Any} with 3 entries:
+  :vy => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -97.5301, -97.53…
+  :vz => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  0.0, 0.0, 0.0, 0…
+  :vx => [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0  …  -24.307, -24.307…
 ```
 
 
