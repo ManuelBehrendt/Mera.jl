@@ -55,10 +55,16 @@ rather than core work, because the analysis layer is code-blind, so
     gas  = gethydro(info)
     ```
 
-    The tutorials use fixtures under `MERA_TEST_DATA` that are not distributed; where a page
-    hardcodes such a path, substitute your own run. Public RAMSES samples suitable for the
-    cosmology and MHD pages are linked from [Cosmological Runs](09_multi_Cosmology.md) and
-    [Magnetic Fields](magnetic_fields.md).
+    Every tutorial builds its paths from one variable, so you do not have to edit the cells.
+    Point it at your own simulations and the examples run against them:
+
+    ```julia
+    ENV["MERA_EXAMPLES"] = "/path/to/your/simulations"   # before `using Mera`
+    ```
+
+    The fixtures that produced the outputs shown in the tutorials are not redistributed. For a
+    public snapshot to follow along with, see the downloadable RAMSES samples linked from
+    [Cosmological Runs](09_multi_Cosmology.md) and [Magnetic Fields](magnetic_fields.md).
 
 !!! tip "For Scientists"
     **RAMSES expert, new to Julia?**
