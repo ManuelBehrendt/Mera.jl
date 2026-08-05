@@ -28,14 +28,18 @@ same `info` (`getinfo`) and call `getvar` on it:
 
 **Multi-type names.** Geometry (`:x/:y/:z`, `:r_cylinder`, `:r_sphere`, `:ϕ`), velocities
 (`:v`, `:vr_cylinder`, …), angular momentum (`:hx`, `:lz`, …) and `:ekin` share one name across
-**hydro, particles and clumps** (Julia dispatches on the object). `:cellsize`/`:volume` exist for the
-**AMR cell** types (hydro/gravity/RT), not particles/clumps. The **RT ionization** quantities
+**hydro, particles and clumps** (Julia dispatches on the object). `:cellsize` is AMR-only
+(hydro/gravity/RT). `:volume` is defined for those too, and additionally on **GADGET/AREPO gas
+particles**, where the reader stores ``V = m/\rho`` per particle — so volume weighting works on
+that family as well. The **RT ionization** quantities
 (`:xHII`, `:mu`, `:T_rt`, `:n_*`, …) are passive **hydro** scalars — request them on `gethydro` of an
 RT run — whereas the photon-group fields live on the `getrt` object.
 
 ## Thermodynamics
 
-*Data: **hydro** (`gethydro`) — needs `:rho`, `:p`. (`:ekin`/`:mass` are also defined on particles and clumps.)*
+*Data: **hydro** (`gethydro`) — needs `:rho`, `:p`. (`:ekin`/`:mass` are also defined on particles
+and clumps. GADGET/AREPO gas particles carry their own thermodynamics from `:u` — see
+[below](#Gas-particle-thermodynamics-(GADGET/AREPO-family)).)*
 
 
 | Quantity | Symbol | Formula |
@@ -83,6 +87,31 @@ With ``k_B`` Boltzmann's constant, ``m_u`` the atomic mass unit and ``\gamma`` t
 | Entropy density `:entropy_density` | ``s_V = \rho\, s`` |
 | Entropy per particle `:entropy_per_particle` | ``s_p = s\, m_u`` |
 | Total entropy `:entropy_total` | ``S = s\, m`` |
+
+### Gas particle thermodynamics (GADGET/AREPO family)
+
+*Data: **particles** (`getparticles`) on a GADGET/AREPO/SWIFT/GIZMO gas snapshot — needs the
+specific internal energy `:u`. Requesting these without `:u` raises an `ArgumentError`.*
+
+These codes store gas as particles rather than AMR cells, so the thermodynamics is computed
+from ``u`` instead of ``p/\rho``, with ``\gamma = 5/3``. The formulas differ from the hydro
+table above — in particular ``\mu`` is **not** the constant 1.32 used for RAMSES:
+
+| Quantity | Symbol | Formula |
+|---|---|---|
+| Temperature | `:T` | ``T = (\gamma-1)\,u\,\mu\,m_H/k_B``, with ``\mu = \dfrac{4}{1+3X_H+4X_H\,n_e}`` |
+| Pressure | `:p` | ``p = (\gamma-1)\,\rho\,u`` |
+| Sound speed | `:cs` | ``c_s = \sqrt{\gamma(\gamma-1)\,u}`` |
+| Volume | `:volume` | ``V = m/\rho`` (stored per particle by the reader) |
+
+``X_H = 0.76``. The electron abundance ``n_e`` comes from the `:ne` column when the snapshot
+carries one; without it Mera falls back to neutral primordial gas, ``\mu = 4/(1+3X_H) \approx
+1.22``. **If you are writing a methods section for an AREPO or IllustrisTNG analysis, cite
+this ``\mu``, not the RAMSES constant above.**
+
+The magnetic quantities in [Magnetic quantities](#Magnetic-quantities) apply unchanged to
+these gas particles when the snapshot carries `:bx`/`:by`/`:bz` (AREPO/TNG MHD): the columns
+follow the same code convention as RAMSES-MHD, so the formulas carry over verbatim.
 
 ## The two `center` arguments
 
@@ -319,7 +348,8 @@ the ``\alpha_B`` power law) and pairs with the RT photoionization rate for ioniz
 
 ## Cell size & volume
 
-*Data: any **AMR cell** type — hydro, gravity or RT (not particles/clumps).*
+*Data: any **AMR cell** type — hydro, gravity or RT. `:cellsize` is AMR-only; `:volume` is
+also available on GADGET/AREPO gas particles, by a different route (below).*
 
 For an AMR cell at refinement `level` (uniform-grid runs use `lmax`), with box length
 ``L_\mathrm{box}``:
@@ -327,6 +357,16 @@ For an AMR cell at refinement `level` (uniform-grid runs use `lmax`), with box l
 ```math
 \Delta x = \frac{L_\mathrm{box}}{2^{\text{level}}}, \qquad V = (\Delta x)^3 .
 ```
+
+For **GADGET/AREPO gas particles** there is no refinement level, so the reader stores a
+per-particle volume from the density instead:
+
+```math
+V = m/\rho .
+```
+
+It is `NaN` where ``\rho`` is absent or zero — non-gas particle types, and empty cells — so
+mask those out before using it as a projection weight.
 
 ## Aggregate statistics
 
