@@ -704,7 +704,7 @@ savemap(p, "maps.jld2")
 p2 = loadmap("maps.jld2")        # AMRMapsType, identical to p
 ```
 
-JLD2 is a subset of the HDF5 format, so these files also open in `h5py` and other HDF5 readers.
+The file uses the HDF5 container but stores the Julia object and is LZ4-compressed by default, so `h5py` cannot reconstruct the map from it. Reload with Mera; to hand a map to Python, write the array out yourself or use `export_vtk`. Older HDF5 readers.
 """
 function savemap(p::DataMapsType, filename::AbstractString; verbose::Bool=true)
     fn = endswith(filename, ".jld2") ? filename : filename * ".jld2"

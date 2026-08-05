@@ -25,7 +25,7 @@ control RAM at load time (level cap, spatial window), not through deferred evalu
 | projections | `projection(gas, :sd, :Msol_pc2; direction=:z or any line of sight)` |
 | profiles / phase diagrams | `profile(…)`, `phase(…)` |
 | unit handling | a `scale` factor table: multiply, or pass the unit symbol (`:g_cm3`, `:km_s`, `:Msol_pc2`) |
-| saving processed data | `savedata`/`loaddata` — compressed JLD2 (an HDF5 subset, opens in h5py too) |
+| saving processed data | `savedata`/`loaddata` — LZ4-compressed JLD2, the fast Mera-native round-trip. Julia-side only: it stores the Mera object, so h5py cannot reconstruct the table — use `export_vtk`, write columns out yourself, or call Mera from Python via JuliaCall |
 
 Two conventions worth internalising on day one:
 
