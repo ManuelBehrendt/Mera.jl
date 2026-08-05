@@ -123,24 +123,18 @@ mass/metals/energy `in ≤ 0` and `out ≥ 0`; for **momentum** the carried quan
 (radial momentum), so both `in` and `out` are ≥ 0 — the ram-pressure flux from in- and out-moving gas.
 
 !!! note "`:metals` needs a `:metallicity` column"
-```
-The `:metals` flux multiplies cell mass by the gas metallicity, read from a column literally named
-`:metallicity`. Mera names hydro columns from the `hydro_file_descriptor.txt`, so a `:metallicity`
-column appears only when the descriptor labels a field `metallicity`; a generically named scalar
-(e.g. `:scalar_00`) or a positional `:var6` is **not** treated as metallicity. On a run without a
-`:metallicity` column `:metals` raises a clear error rather than silently returning zero — alias
-your metal scalar to `:metallicity` before the call if needed. Likewise `:energy` needs the thermal
-energy (pressure `:p`) and errors clearly on an isothermal/pressureless output.
-```
-
+    The `:metals` flux multiplies cell mass by the gas metallicity, read from a column literally named
+    `:metallicity`. Mera names hydro columns from the `hydro_file_descriptor.txt`, so a `:metallicity`
+    column appears only when the descriptor labels a field `metallicity`; a generically named scalar
+    (e.g. `:scalar_00`) or a positional `:var6` is **not** treated as metallicity. On a run without a
+    `:metallicity` column `:metals` raises a clear error rather than silently returning zero — alias
+    your metal scalar to `:metallicity` before the call if needed. Likewise `:energy` needs the thermal
+    energy (pressure `:p`) and errors clearly on an isothermal/pressureless output.
 
 !!! warning "Cosmological runs: no Hubble flow"
-```
-`v⊥` is the **peculiar** gas velocity; the Hubble flow `H(a)·r` is not added. At large radius the
-Hubble term can dominate and even flip the inflow/outflow sign, so the in/out split near turnaround
-is unreliable on cosmological/zoom runs (a `@warn` fires). The non-cosmological case is unaffected.
-```
-
+    `v⊥` is the **peculiar** gas velocity; the Hubble flow `H(a)·r` is not added. At large radius the
+    Hubble term can dominate and even flip the inflow/outflow sign, so the in/out split near turnaround
+    is unreliable on cosmological/zoom runs (a `@warn` fires). The non-cosmological case is unaffected.
 
 Use `surface=:cylinder` for the flux through a cylindrical wall (e.g. the edge of a disk):
 
@@ -275,16 +269,13 @@ momentum `L = Σ m·h`, e.g. a galaxy's spin) — and a **`:plane`** surface mea
 plane normal to `axis` (disk in-/outflow):
 
 !!! note "What `radius`/`shell_width` mean per surface"
-```
-`radius` is the **location of the surface** and `shell_width` its thickness, but "location" depends
-on the geometry: for `:sphere` it is the spherical radius `R` (shell `|r|∈[R±Δr/2]`); for `:cylinder`
-the cylindrical radius (wall at `R_cyl∈[R±Δr/2]`); and for **`:plane` it is the signed along-axis
-offset** — the plane sits at `axis·r = R` (slab `∈[R±Δr/2]`), so `radius=5, axis=[0,0,1]` is a plane
-5 kpc *above* the midplane (use a negative `radius` for below, `radius=0` for the midplane). In each
-case `v⊥` is the velocity component along the surface normal (radial for sphere/cylinder, along
-`axis` for the plane).
-```
-
+    `radius` is the **location of the surface** and `shell_width` its thickness, but "location" depends
+    on the geometry: for `:sphere` it is the spherical radius `R` (shell `|r|∈[R±Δr/2]`); for `:cylinder`
+    the cylindrical radius (wall at `R_cyl∈[R±Δr/2]`); and for **`:plane` it is the signed along-axis
+    offset** — the plane sits at `axis·r = R` (slab `∈[R±Δr/2]`), so `radius=5, axis=[0,0,1]` is a plane
+    5 kpc *above* the midplane (use a negative `radius` for below, `radius=0` for the midplane). In each
+    case `v⊥` is the velocity component along the surface normal (radial for sphere/cylinder, along
+    `axis` for the plane).
 
 ```julia
 # disk-edge flux in the angular-momentum frame

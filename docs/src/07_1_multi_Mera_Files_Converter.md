@@ -10,14 +10,11 @@ current format**. It features active safety-margin monitoring, intelligent threa
 robust error handling for batch conversion of large datasets.
 
 !!! note "You usually don't need to convert just to read"
-```
-Current Mera (JLD2 0.6, with the bundled `JLD2Lz4`) **reads older LZ4-compressed Mera files
-directly** — `loaddata`/`viewdata` work on files written by earlier Mera versions with no extra
-steps (see [Loading older Mera files](07_multi_Mera_Files.md)). Convert when you want to **remove
-reconstruction warnings**, standardise a large archive on the current format, or speed up repeated
-loads of very old files.
-```
-
+    Current Mera (JLD2 0.6, with the bundled `JLD2Lz4`) **reads older LZ4-compressed Mera files
+    directly** — `loaddata`/`viewdata` work on files written by earlier Mera versions with no extra
+    steps (see [Loading older Mera files](07_multi_Mera_Files.md)). Convert when you want to **remove
+    reconstruction warnings**, standardise a large archive on the current format, or speed up repeated
+    loads of very old files.
 
 ## Problem Description
 

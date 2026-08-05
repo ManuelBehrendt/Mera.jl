@@ -19,10 +19,7 @@ It works identically on **raw RAMSES outputs** and on **mera (`.jld2`) files**, 
 memory stays bounded on a laptop.
 
 !!! note "3-D data"
-```
-Mera reads 3-D RAMSES data; the examples below use a small 3-D Sedov blast.
-```
-
+    Mera reads 3-D RAMSES data; the examples below use a small 3-D Sedov blast.
 
 ## The idea, step by step
 

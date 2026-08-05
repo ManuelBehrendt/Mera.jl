@@ -30,13 +30,10 @@ control RAM at load time (level cap, spatial window), not through deferred evalu
 Two conventions worth internalising on day one:
 
 !!! warning "Ranges and radii in `range_unit=:standard` are box fractions"
-```
-The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
-`xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
-`boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
-physical units — the examples below do.
-```
-
+    The default `:standard` unit means *fractions of the box* (0…1), not physical lengths.
+    `xrange=[0.4, 0.6]` is the central 20% of the box; a sphere `radius=0.2` spans 20% of
+    `boxlen`. Pass `range_unit=:kpc` (or `:pc`, `:Mpc`, …) with `center=[…]` to work in
+    physical units — the examples below do.
 
 - **Loading is eager, selection is cheap.** Load once (possibly windowed), then slice, filter,
   and project the in-memory table as often as you like — each step returns a normal Mera object.

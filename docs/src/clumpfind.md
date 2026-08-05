@@ -12,12 +12,9 @@ two ways:
 Both return a [`ClumpCatalog`](@ref) sorted most-massive-first.
 
 !!! tip "Try it on known ground truth"
-```
-The [synthetic, data-free example](clumpfind_synthetic.md) builds a Mera object whose
-clumps are known exactly and scores every finder and feature against it (downloadable
-dataset included) — the quickest way to see the behaviour and accuracy of each algorithm.
-```
-
+    The [synthetic, data-free example](clumpfind_synthetic.md) builds a Mera object whose
+    clumps are known exactly and scores every finder and feature against it (downloadable
+    dataset included) — the quickest way to see the behaviour and accuracy of each algorithm.
 
 The 3D finder runs on a pluggable framework: an [`AbstractFinder`](@ref) value (one of seven —
 [`ThresholdFoF`](@ref), [`DensityWatershed`](@ref), [`Dendrogram`](@ref), [`GraphSegFinder`](@ref),
@@ -249,28 +246,22 @@ arm and inter-arm gas *below* the threshold is intentionally not flagged — clu
 threshold- (and finder-) dependent.](assets/features/clump_catalog.png)
 
 !!! note "Not every visible peak is a clump — by design"
-```
-A clump is what the finder + threshold define. Two effects are worth knowing:
+    A clump is what the finder + threshold define. Two effects are worth knowing:
 
-* **Threshold selection.** Peaks fainter than `threshold` are not selected at all, and a single
-  friends-of-friends threshold can *merge* a whole connected over-dense region (e.g. the dense disk)
-  into one clump while leaving fainter arms out. To separate touching peaks, use
-  [`DensityWatershed`](@ref) (split at saddles, with `persistence` to prune shallow basins) rather
-  than a higher [`ThresholdFoF`](@ref) threshold.
-* **Boundedness.** Detected over-densities are not necessarily self-gravitating. Add
-  `boundedness=true` to get each clump's virial ratio `alpha_vir = 2·e_kin/|e_grav|` and a `bound`
-  flag, and `bound_only=true` to keep only self-bound clumps. (On a coarse box, many "clumps" are
-  turbulence-supported, `alpha_vir ≫ 1`, and would be dropped by `bound_only`.)
-```
-
+    * **Threshold selection.** Peaks fainter than `threshold` are not selected at all, and a single
+      friends-of-friends threshold can *merge* a whole connected over-dense region (e.g. the dense disk)
+      into one clump while leaving fainter arms out. To separate touching peaks, use
+      [`DensityWatershed`](@ref) (split at saddles, with `persistence` to prune shallow basins) rather
+      than a higher [`ThresholdFoF`](@ref) threshold.
+    * **Boundedness.** Detected over-densities are not necessarily self-gravitating. Add
+      `boundedness=true` to get each clump's virial ratio `alpha_vir = 2·e_kin/|e_grav|` and a `bound`
+      flag, and `bound_only=true` to keep only self-bound clumps. (On a coarse box, many "clumps" are
+      turbulence-supported, `alpha_vir ≫ 1`, and would be dropped by `bound_only`.)
 
 !!! warning "`Dendrogram` name clash with Makie"
-```
-`Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
-`Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
-other six finders have unique names.
-```
-
+    `Makie` also exports a `Dendrogram` type, so when both are loaded (`using Mera, CairoMakie`) a bare
+    `Dendrogram(...)` is ambiguous — qualify Mera's finder as `Mera.Dendrogram(...)` in that case. The
+    other six finders have unique names.
 
 ## Choosing a finder explicitly
 
@@ -748,22 +739,19 @@ hierarchy from the surrounding driver:
    hierarchy identically for every finder.
 
 !!! note "Works on AMR, uniform grids, particles and Voronoi alike"
-```
-The finders never look at the grid — `clumpfind` first flattens the object into a **point set**:
-every cell (any AMR level) becomes one point at its centre (`getvar(:x,:y,:z)`) carrying its field
-value and its **level-dependent mass and volume** (`getvar(:mass)`/`getvar(:volume)` =
-`ρ·(boxlen/2^level)³`). So a clump's mass, centre of mass, radius and energy budget sum per-cell
-masses that already encode each cell's level — no uniform-cell-size assumption. The neighbour index
-finds *all* pairs within the linking length `b` regardless of how cell sizes or point density vary
-across refinement levels (the 27-cell stencil is exact, not a uniform-grid approximation), so the
-same finder runs unchanged on RAMSES AMR, a uniform grid, SPH/N-body particles, and AREPO Voronoi
-cells. The one thing to set relative to resolution is `b` itself: it is a metric distance, so pick
-a small multiple of the cell size *in the region of interest* (clumps sit at high density → maximum
-refinement, hence internally uniform resolution; e.g. `linking_length ≈ 2·boxlen/2^lmax`). The only
-edge case is a sharp refinement jump *inside* a structure, where a lone coarse cell's centre may lie
-beyond `b` from its fine neighbours — rarely an issue, since clumps are fully refined.
-```
-
+    The finders never look at the grid — `clumpfind` first flattens the object into a **point set**:
+    every cell (any AMR level) becomes one point at its centre (`getvar(:x,:y,:z)`) carrying its field
+    value and its **level-dependent mass and volume** (`getvar(:mass)`/`getvar(:volume)` =
+    `ρ·(boxlen/2^level)³`). So a clump's mass, centre of mass, radius and energy budget sum per-cell
+    masses that already encode each cell's level — no uniform-cell-size assumption. The neighbour index
+    finds *all* pairs within the linking length `b` regardless of how cell sizes or point density vary
+    across refinement levels (the 27-cell stencil is exact, not a uniform-grid approximation), so the
+    same finder runs unchanged on RAMSES AMR, a uniform grid, SPH/N-body particles, and AREPO Voronoi
+    cells. The one thing to set relative to resolution is `b` itself: it is a metric distance, so pick
+    a small multiple of the cell size *in the region of interest* (clumps sit at high density → maximum
+    refinement, hence internally uniform resolution; e.g. `linking_length ≈ 2·boxlen/2^lmax`). The only
+    edge case is a sharp refinement jump *inside* a structure, where a lone coarse cell's centre may lie
+    beyond `b` from its fine neighbours — rarely an issue, since clumps are fully refined.
 
 ### The finders
 

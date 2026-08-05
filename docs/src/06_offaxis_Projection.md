@@ -29,10 +29,7 @@ Pointer: full limitations table is Appendix A; nothing on this page is a forward
 Then, BEFORE the code, the first of the three admitted inline caveats:
 
 !!! warning "`direction=:faceon` needs `center` on the object"
-```
-`:faceon`/`:edgeon` (and `axis=:angmom`) derive the orientation from the **angular momentum of the loaded data about `center`**. `center` defaults to `[0.,0.,0.]` — the box **corner** — and L about a corner is dominated by the lever arm of the whole box. You get a plausible-looking tilted galaxy, no error and no warning. Always pass `center=[:bc]` (or the object's own centre). Detection: edge-on, `:vlos` must be antisymmetric about the minor axis (Chapter 7).
-```
-
+    `:faceon`/`:edgeon` (and `axis=:angmom`) derive the orientation from the **angular momentum of the loaded data about `center`**. `center` defaults to `[0.,0.,0.]` — the box **corner** — and L about a corner is dominated by the lever arm of the whole box. You get a plausible-looking tilted galaxy, no error and no warning. Always pass `center=[:bc]` (or the object's own centre). Detection: edge-on, `:vlos` must be antisymmetric about the minor axis (Chapter 7).
 
 ```julia
 # Example-data root. Point this at your own simulation folder, or set the
@@ -300,14 +297,11 @@ There is **no line-of-sight depth slab in `projection`.** `zrange` clips world *
 Use `:square` whenever you will compare or animate frames.
 
 !!! warning "`fov` always needs `fov_unit`"
-```
-`fov_unit` defaults to `:standard`, which is a **box fraction**. `fov=22` alone means 22 box lengths, silently clamped to 0.49·boxlen. Always write `fov=22, fov_unit=:kpc`.
+    `fov_unit` defaults to `:standard`, which is a **box fraction**. `fov=22` alone means 22 box lengths, silently clamped to 0.49·boxlen. Always write `fov=22, fov_unit=:kpc`.
 
-Three more things `fov` does: it **replaces** any `xrange`/`yrange`/`zrange` you pass; it makes `center` be read in `fov_unit` (your `range_unit` is discarded); and it **cannot be combined with a per-cell `mask`** (the sphere selection changes the cell count, so the mask no longer matches).
+    Three more things `fov` does: it **replaces** any `xrange`/`yrange`/`zrange` you pass; it makes `center` be read in `fov_unit` (your `range_unit` is discarded); and it **cannot be combined with a per-cell `mask`** (the sphere selection changes the cell count, so the mask no longer matches).
 
-Caps: `:circle` at 0.49·boxlen, `:square` at 0.49/√2·boxlen (≈ 34.6 kpc on this fixture).
-```
-
+    Caps: `:circle` at 0.49·boxlen, `:square` at 0.49/√2·boxlen (≈ 34.6 kpc on this fixture).
 
 ```julia
 # WORLD-space window — verbose=true so Mera's own hint about this is on the page.
@@ -684,10 +678,7 @@ The obvious next worry is that σ_LOS is then an artefact of how finely you pixe
 measures whether it is.
 
 !!! warning "Sign convention"
-```
-`ŵ` points **into** the image, away from the observer, so `v·ŵ > 0` is **receding** (redshifted). A sign flip inverts a rotation curve and nothing else in the figure changes, so check it: on an edge-on map, `:vlos` must be **antisymmetric about the minor axis**. If it is not, your `center` is off the object (Chapter 1).
-```
-
+    `ŵ` points **into** the image, away from the observer, so `v·ŵ > 0` is **receding** (redshifted). A sign flip inverts a rotation curve and nothing else in the figure changes, so check it: on an edge-on map, `:vlos` must be **antisymmetric about the minor axis**. If it is not, your `center` is off the object (Chapter 1).
 
 ```julia
 kin = (center=[:bc], fov=15, fov_unit=:kpc, aperture=:square,
@@ -789,12 +780,9 @@ That is a useful licence: choose `pxsize` for the *image* you want, and σ_LOS w
 you. Quote it anyway, so a reader can check.
 
 !!! note "Shipped separately"
-```
-Position–position–velocity cubes, emission and absorption forward modelling, mock observations
-and FITS export are **in development in a separate module** and are not part of the released
-package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
-```
-
+    Position–position–velocity cubes, emission and absorption forward modelling, mock observations
+    and FITS export are **in development in a separate module** and are not part of the released
+    package. This page covers only the moment maps `:vlos` and `:σlos`. (Stated once, here.)
 
 ## 8. Cutting planes: a sample, not an integral
 
@@ -882,10 +870,7 @@ for asking the map a question finer than the data can answer.
 It uses **the same framing rule as Chapter 4, swept**: a rotation-invariant sphere selection, `aperture=:circle` or `:square`. That is the whole reason it exists — a cubic window's rotated bounding box changes size frame by frame, so the movie breathes.
 
 !!! note "One difference from `projection`"
-```
-Omit `fov` on `rotation_sequence` and it **auto-fits** to the 99 % enclosed-mass radius, so the frame follows the object rather than the sparse outermost cells. `projection` has **no** auto-fit — omit `fov` there and you are back on world ranges. If you learned `fov=22` in Chapter 4 and drop it here, your framing rule silently changes. Pass `fov` explicitly whenever it matters.
-```
-
+    Omit `fov` on `rotation_sequence` and it **auto-fits** to the 99 % enclosed-mass radius, so the frame follows the object rather than the sparse outermost cells. `projection` has **no** auto-fit — omit `fov` there and you are back on world ranges. If you learned `fov=22` in Chapter 4 and drop it here, your framing rule silently changes. Pass `fov` explicitly whenever it matters.
 
 `parallel_frames=true` runs the frames concurrently with single-threaded projections instead of the reverse; it is typically ~1.5–2× faster when there are at least as many frames as threads, at proportionally more transient memory. Keep the total at or below 8 threads on a laptop.
 

@@ -92,13 +92,10 @@ These derived names also work everywhere `getvar` is used internally — in
 [`projection`](@ref), [`profile`](@ref), [`phase`](@ref), and friends.
 
 !!! tip "Exact formulas"
-```
-For the full set of formulas behind every derived quantity (thermodynamics, velocities,
-angular momentum, Mach numbers, Jeans/collapse, gravity) and the aggregate statistics
-(`msum`, `center_of_mass`, `bulk_velocity`, `wstat`), see
-[How Quantities Are Computed](computation_reference.md).
-```
-
+    For the full set of formulas behind every derived quantity (thermodynamics, velocities,
+    angular momentum, Mach numbers, Jeans/collapse, gravity) and the aggregate statistics
+    (`msum`, `center_of_mass`, `bulk_velocity`, `wstat`), see
+    [How Quantities Are Computed](computation_reference.md).
 
 ## Conventions for selected quantities
 
@@ -291,12 +288,9 @@ list_fields(:particle; builtin=true)
 ```
 
 !!! note "Registry scope"
-```
-Registered fields live for the current Julia session (they are not persisted to disk).
-Put your `add_field` calls in a startup script or at the top of your analysis to make them
-available every run.
-```
-
+    Registered fields live for the current Julia session (they are not persisted to disk).
+    Put your `add_field` calls in a startup script or at the top of your analysis to make them
+    available every run.
 
 Registered fields also work as quantities in [First-Look Reports](report.md) cards — the report reads
 only the dependencies your field declares.

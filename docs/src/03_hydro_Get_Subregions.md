@@ -36,14 +36,11 @@ load whole (§11). A reference to the classic API (§12) and practical guidance
 (§13) round the page off.
 
 !!! warning "range_unit = :standard means box fractions"
-```
-All spatial selection functions accept `range_unit=:standard`, in which
-coordinates and radii are **fractions of the box length** (0…1), *not*
-physical lengths. Forgetting this is the classic way to select an empty or
-absurdly large region. This tutorial uses `range_unit=:kpc` with explicit
-centres throughout.
-```
-
+    All spatial selection functions accept `range_unit=:standard`, in which
+    coordinates and radii are **fractions of the box length** (0…1), *not*
+    physical lengths. Forgetting this is the classic way to select an empty or
+    absurdly large region. This tutorial uses `range_unit=:kpc` with explicit
+    centres throughout.
 
 **What tool for what job?**
 
@@ -263,13 +260,10 @@ sphere — the rendered gas ends on it because straddling cells contribute only
 their inside fraction.
 
 !!! tip "Try it"
-```
-Change the radius to `Sphere(5.)` and re-run the cell. The selected cell
-count drops far more steeply than the radius — you are cutting into the
-refined, gas-rich disc — while the mass falls only moderately: most of this
-galaxy's gas lives well inside 10 kpc.
-```
-
+    Change the radius to `Sphere(5.)` and re-run the cell. The selected cell
+    count drops far more steeply than the radius — you are cutting into the
+    refined, gas-rich disc — while the mass falls only moderately: most of this
+    galaxy's gas lives well inside 10 kpc.
 
 ## 3. One Sphere, Three Masses
 
@@ -829,16 +823,13 @@ cells are still fraction-weighted (curved composite surfaces are sub-sampled
 per cell; `nsub` from §3 controls how finely).
 
 !!! tip "Typing the operators"
-```
-`∪` and `∩` are the mathematical set-union and set-intersection symbols.
-In the Julia REPL, Jupyter, and VS Code you get them by LaTeX-style tab
-completion: type `\cup` then press TAB for `∪`, and `\cap` TAB for `∩`
-(`\` difference and `!` complement are plain ASCII already). If you
-prefer to avoid Unicode entirely, every operator has an ASCII equivalent:
-`A ∪ B` == `A | B` == `union(A, B)`, `A ∩ B` == `A & B` ==
-`intersect(A, B)`, and `A \ B` == `setdiff(A, B)`.
-```
-
+    `∪` and `∩` are the mathematical set-union and set-intersection symbols.
+    In the Julia REPL, Jupyter, and VS Code you get them by LaTeX-style tab
+    completion: type `\cup` then press TAB for `∪`, and `\cap` TAB for `∩`
+    (`\` difference and `!` complement are plain ASCII already). If you
+    prefer to avoid Unicode entirely, every operator has an ASCII equivalent:
+    `A ∪ B` == `A | B` == `union(A, B)`, `A ∩ B` == `A & B` ==
+    `intersect(A, B)`, and `A \ B` == `setdiff(A, B)`.
 
 The classic use case: a "disc without the bulge". Subtracting a 4-kpc
 **sphere** from the disc cylinder has one subtlety that makes it a good
@@ -991,14 +982,11 @@ vol(A ∪ B)                   = 2082.22 kpc³
 
 
 !!! tip "Try it"
-```
-A cylindrical shell is itself expressible in the algebra:
-`Cylinder(10., 2.) \ Cylinder(6., 2.)` describes the same annulus as
-`CylindricalShell(6., 10., 2.)`. Extract both and compare `msum` — the
-dedicated shell type computes its fractions in one pass, but the two
-volumes should agree to the sampling accuracy of §3.
-```
-
+    A cylindrical shell is itself expressible in the algebra:
+    `Cylinder(10., 2.) \ Cylinder(6., 2.)` describes the same annulus as
+    `CylindricalShell(6., 10., 2.)`. Extract both and compare `msum` — the
+    dedicated shell type computes its fractions in one pass, but the two
+    volumes should agree to the sampling accuracy of §3.
 
 ## 6. The Ledger: Does It Balance?
 

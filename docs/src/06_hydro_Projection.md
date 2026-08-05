@@ -80,16 +80,13 @@ projection(gas, :sd, :Msol_pc2)          # extensive: summed mass per pixel area
 ```
 
 !!! note "`mode=:standard` vs `mode=:sum`"
-```
-The default `mode=:standard` produces the **physically normalized** map described above
-(extensive ⇒ per-area column; intensive ⇒ weight-average). `mode=:sum` instead returns the
-**raw per-pixel weighted sum** with no area/normalization division — useful when you want to
-accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and
-will apply your own normalization. For standard surface-density and weighted-average maps, keep
-`mode=:standard`. (Particle projections support `weighting=:mass`/`:volume`; `mode` applies to
-the hydro/gravity grid path.)
-```
-
+    The default `mode=:standard` produces the **physically normalized** map described above
+    (extensive ⇒ per-area column; intensive ⇒ weight-average). `mode=:sum` instead returns the
+    **raw per-pixel weighted sum** with no area/normalization division — useful when you want to
+    accumulate a conserved total yourself (e.g. summing energy or a custom budget across pixels) and
+    will apply your own normalization. For standard surface-density and weighted-average maps, keep
+    `mode=:standard`. (Particle projections support `weighting=:mass`/`:volume`; `mode` applies to
+    the hydro/gravity grid path.)
 
 ## Environment Setup and Data Loading
 

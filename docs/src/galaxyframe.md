@@ -298,14 +298,11 @@ edge-on Sigma extrema : (0.0, 6539.3160386012305)
 ## Several galaxies, mergers, cosmological boxes
 
 !!! warning "The bare call assumes one object"
-```
-`face_on(gas)` / `center_of(gas)` use the **global** CoM and the **summed** angular
-momentum. In a box with many galaxies that is meaningless — the CoM lands between them
-and unrelated spins cancel. **Point the tool at the object** with a seed `center` plus
-an `aperture`; it then re-centres on the *local* CoM inside that sphere and measures
-only that object's spin:
-```
-
+    `face_on(gas)` / `center_of(gas)` use the **global** CoM and the **summed** angular
+    momentum. In a box with many galaxies that is meaningless — the CoM lands between them
+    and unrelated spins cancel. **Point the tool at the object** with a seed `center` plus
+    an `aperture`; it then re-centres on the *local* CoM inside that sphere and measures
+    only that object's spin:
 
     ```julia
     # the densest galaxy in the box (good first guess in a cosmological run)
@@ -315,22 +312,16 @@ only that object's spin:
     fr = face_on(gas; center=[x, y, z], aperture=30, range_unit=:kpc)
     ```
 
-```
-Equivalently, cut the object out first and frame that:
-```
-
+    Equivalently, cut the object out first and frame that:
 
     ```julia
     gal = subregion(gas, :sphere; center=[x,y,z], radius=30, range_unit=:kpc)
     fr  = face_on(gal)
     ```
 
-```
-Because the spin is then taken about the **local** CoM, this is also the correct recipe
-for a merger progenitor and for any galaxy moving through a cosmological box. Choosing
-the `aperture` to enclose the disk (but not the neighbours) is the one judgement call.
-```
-
+    Because the spin is then taken about the **local** CoM, this is also the correct recipe
+    for a merger progenitor and for any galaxy moving through a cosmological box. Choosing
+    the `aperture` to enclose the disk (but not the neighbours) is the one judgement call.
 
 `mw_L10` is isolated, so here we just demonstrate the aperture form locks onto the disk.
 
