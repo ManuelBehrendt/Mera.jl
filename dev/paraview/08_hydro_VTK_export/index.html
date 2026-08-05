@@ -5,7 +5,7 @@ export_vtk(data, &quot;output_prefix&quot;,
 
 # Scalar export with logarithmic scaling
 export_vtk(data, &quot;output_prefix&quot;,
-           scalars=[:rho], scalars_unit=[:nH],
+           scalars=[:rho], scalars_unit=[:nH], 
            scalars_log10=true)
 
 # Vector export
@@ -23,13 +23,31 @@ export_vtk(data, &quot;output_prefix&quot;,
            scalars=[:rho], scalars_unit=[:nH],
            lmax=9,                    # Maximum AMR level
            max_cells=100_000,         # Cell count limit
-           positions_unit=:kpc)       # Coordinate units</code></pre><h3 id="Key-Parameters"><a class="docs-heading-anchor" href="#Key-Parameters">Key Parameters</a><a id="Key-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Parameters" title="Permalink"></a></h3><ul><li><strong><code>scalars</code></strong> - Array of scalar field symbols: <code>[:rho, :T, :P]</code></li><li><strong><code>scalars_unit</code></strong> - Corresponding units: <code>[:nH, :K, :Pa]</code></li><li><strong><code>scalars_log10</code></strong> - Apply log₁₀ transformation: <code>true/false</code></li><li><strong><code>vector</code></strong> - Vector components: <code>[:vx, :vy, :vz]</code></li><li><strong><code>vector_unit</code></strong> - Vector units: <code>:km_s, :m_s, :pc_Myr</code></li><li><strong><code>vector_name</code></strong> - ParaView vector name: <code>&quot;velocity&quot;, &quot;magnetic_field&quot;</code></li><li><strong><code>lmax</code></strong> - Maximum AMR level for export</li><li><strong><code>max_cells</code></strong> - Cell count limit (prioritizes high-density regions)</li><li><strong><code>positions_unit</code></strong> - Coordinate system units: <code>:kpc, :pc, :au</code></li></ul><h3 id="File-Output-Types"><a class="docs-heading-anchor" href="#File-Output-Types">File Output Types</a><a id="File-Output-Types-1"></a><a class="docs-heading-anchor-permalink" href="#File-Output-Types" title="Permalink"></a></h3><ul><li><strong><code>.vtu</code></strong> - Single-level unstructured grid (one file per AMR level)</li><li><strong><code>.vtm</code></strong> - Multi-block dataset (combines all levels, ParaView master file)</li><li><strong>Separate files</strong> - Scalars and vectors exported to different file sets</li></ul><h3 id="Common-Scalar-Variables"><a class="docs-heading-anchor" href="#Common-Scalar-Variables">Common Scalar Variables</a><a id="Common-Scalar-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Scalar-Variables" title="Permalink"></a></h3><ul><li><strong><code>:rho</code></strong> - Gas density (use with <code>:nH</code> for number density)</li><li><strong><code>:T</code></strong> - Temperature (use with <code>:K</code> for Kelvin)</li><li><strong><code>:P</code></strong> - Gas pressure</li><li><strong><code>:cs</code></strong> - Sound speed</li><li><strong><code>:metallicity</code></strong> - Metal abundance</li></ul><h3 id="ParaView-Workflow"><a class="docs-heading-anchor" href="#ParaView-Workflow">ParaView Workflow</a><a id="ParaView-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#ParaView-Workflow" title="Permalink"></a></h3><ol><li><strong>Load Data</strong>: Open <code>.vtm</code> files in ParaView for multi-level datasets</li><li><strong>Volume Rendering</strong>: Apply volume rendering for 3D density visualization</li><li><strong>Vector Visualization</strong>: Use 3D Glyphs or Streamlines for velocity fields</li><li><strong>Color Mapping</strong>: Choose scientific colormaps and adjust value ranges</li><li><strong>Save State</strong>: Preserve visualization settings for reproducibility</li></ol><h2 id="Simulation-Overview-and-Load-Hydro-Data"><a class="docs-heading-anchor" href="#Simulation-Overview-and-Load-Hydro-Data">Simulation Overview &amp; Load Hydro Data</a><a id="Simulation-Overview-and-Load-Hydro-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-and-Load-Hydro-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs">using Mera
+           positions_unit=:kpc)       # Coordinate units</code></pre><h3 id="Key-Parameters"><a class="docs-heading-anchor" href="#Key-Parameters">Key Parameters</a><a id="Key-Parameters-1"></a><a class="docs-heading-anchor-permalink" href="#Key-Parameters" title="Permalink"></a></h3><ul><li><strong><code>scalars</code></strong> - Array of scalar field symbols: <code>[:rho, :T, :P]</code></li><li><strong><code>scalars_unit</code></strong> - Corresponding units: <code>[:nH, :K, :Pa]</code> </li><li><strong><code>scalars_log10</code></strong> - Apply log₁₀ transformation: <code>true/false</code></li><li><strong><code>vector</code></strong> - Vector components: <code>[:vx, :vy, :vz]</code></li><li><strong><code>vector_unit</code></strong> - Vector units: <code>:km_s, :m_s, :pc_Myr</code></li><li><strong><code>vector_name</code></strong> - ParaView vector name: <code>&quot;velocity&quot;, &quot;magnetic_field&quot;</code></li><li><strong><code>lmax</code></strong> - Maximum AMR level for export</li><li><strong><code>max_cells</code></strong> - Cell count limit (prioritizes high-density regions)</li><li><strong><code>positions_unit</code></strong> - Coordinate system units: <code>:kpc, :pc, :au</code></li></ul><h3 id="File-Output-Types"><a class="docs-heading-anchor" href="#File-Output-Types">File Output Types</a><a id="File-Output-Types-1"></a><a class="docs-heading-anchor-permalink" href="#File-Output-Types" title="Permalink"></a></h3><ul><li><strong><code>.vtu</code></strong> - Single-level unstructured grid (one file per AMR level)</li><li><strong><code>.vtm</code></strong> - Multi-block dataset (combines all levels, ParaView master file)</li><li><strong>Separate files</strong> - Scalars and vectors exported to different file sets</li></ul><h3 id="Common-Scalar-Variables"><a class="docs-heading-anchor" href="#Common-Scalar-Variables">Common Scalar Variables</a><a id="Common-Scalar-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Common-Scalar-Variables" title="Permalink"></a></h3><ul><li><strong><code>:rho</code></strong> - Gas density (use with <code>:nH</code> for number density)</li><li><strong><code>:T</code></strong> - Temperature (use with <code>:K</code> for Kelvin)</li><li><strong><code>:P</code></strong> - Gas pressure </li><li><strong><code>:cs</code></strong> - Sound speed</li><li><strong><code>:metallicity</code></strong> - Metal abundance</li></ul><h3 id="ParaView-Workflow"><a class="docs-heading-anchor" href="#ParaView-Workflow">ParaView Workflow</a><a id="ParaView-Workflow-1"></a><a class="docs-heading-anchor-permalink" href="#ParaView-Workflow" title="Permalink"></a></h3><ol><li><strong>Load Data</strong>: Open <code>.vtm</code> files in ParaView for multi-level datasets</li><li><strong>Volume Rendering</strong>: Apply volume rendering for 3D density visualization</li><li><strong>Vector Visualization</strong>: Use 3D Glyphs or Streamlines for velocity fields</li><li><strong>Color Mapping</strong>: Choose scientific colormaps and adjust value ranges</li><li><strong>Save State</strong>: Preserve visualization settings for reproducibility</li></ol><h2 id="Simulation-Overview-and-Load-Hydro-Data"><a class="docs-heading-anchor" href="#Simulation-Overview-and-Load-Hydro-Data">Simulation Overview &amp; Load Hydro Data</a><a id="Simulation-Overview-and-Load-Hydro-Data-1"></a><a class="docs-heading-anchor-permalink" href="#Simulation-Overview-and-Load-Hydro-Data" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, &quot;MERA_EXAMPLES&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;);
+
+using Mera
 # use compressed Mera file
-path = &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/AV5CDhr/&quot;;
+path = &quot;$MERA_EXAMPLES/AV5CDhr/&quot;;
 info = infodata(600, path)
-gas = loaddata(600, path, :hydro); # load full box</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T13:21:41.394
+gas = loaddata(600, path, :hydro); # load full box</code></pre><pre><code class="nohighlight hljs">*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0
+
+[Mera]: 2026-08-03T12:27:51.641
+
+
 Use datatype: hydro
-Code:
+Code: 
+
 RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
@@ -39,12 +57,14 @@ simulation time: 891.71 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 5120
 ndim: 3
+cosmological:  false
 -------------------------------------------------------
 amr:           true
 level(s): 6 - 13 --&gt; cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
 hydro-variables:  7
+
   --&gt; (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
@@ -53,7 +73,8 @@ gravity:       true
 gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
-- Nstars:   1.353087e+06
+- Nstars:   1.353087e+06 
+
 particle-variables: 7  --&gt; (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
@@ -61,6 +82,7 @@ rt:            false
 clumps:           false
 -------------------------------------------------------
 namelist-file: (
+
 &quot;&amp;COOLING_PARAMS&quot;, &quot;&amp;HYDRO_PARAMS&quot;, &quot;&amp;SF_PARAMS&quot;, &quot;&amp;AMR_PARAMS&quot;, &quot;&amp;BOUNDARY_PARAMS&quot;, &quot;&amp;OUTPUT_PARAMS&quot;, &quot;&amp;POISSON_PARAMS&quot;, &quot;&amp;INIT_PARAMS&quot;, &quot;&amp;RUN_PARAMS&quot;, &quot;&amp;FEEDBACK_PARAMS&quot;, &quot;&amp;REFINE_PARAMS&quot;)
 -------------------------------------------------------
 timer-file:       true
@@ -68,50 +90,75 @@ compilation-file: true
 makefile:         true
 patchfile:        true
 =======================================================
-[Mera]: 2026-05-30T13:21:44.862
+
+[Mera]: 2026-08-03T12:27:55.435
+
+
 Open Mera-file output_00600.jld2:
+
 domain:
+
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
 Memory used for data table :
-8.637885391712189 GB
--------------------------------------------------------</code></pre><h2 id="Export-Scalars"><a class="docs-heading-anchor" href="#Export-Scalars">Export Scalars</a><a id="Export-Scalars-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars" title="Permalink"></a></h2><h3 id="Standard-Export"><a class="docs-heading-anchor" href="#Standard-Export">Standard Export</a><a id="Standard-Export-1"></a><a class="docs-heading-anchor-permalink" href="#Standard-Export" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box with lmax = 9
+
+8.63788539916277 GB
+-------------------------------------------------------</code></pre><h2 id="Export-Scalars"><a class="docs-heading-anchor" href="#Export-Scalars">Export Scalars</a><a id="Export-Scalars-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars" title="Permalink"></a></h2><h3 id="Standard-Export"><a class="docs-heading-anchor" href="#Standard-Export">Standard Export</a><a id="Standard-Export-1"></a><a class="docs-heading-anchor-permalink" href="#Standard-Export" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box with lmax = 9 
 # -&gt; interpolating levels 13,12,11,10, down to 9
 
 export_vtk(
     gas,                       # loaded data
-    &quot;output01/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output01 (if not existing)
-    scalars=[:rho, :T],        # load density data in cm^-3 and temperature data in Kelvin
+    &quot;output01/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output01 (if not existing) 
+    scalars=[:rho, :T],        # load density data in cm^-3 and temperature data in Kelvin 
     scalars_unit=[:nH, :K],
     scalars_log10=true,        # apply log10 on the scalars
     positions_unit=:kpc,       # cell positions in kpc (useful in Paraview for region selection)
-    lmax=9
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T13:22:07.800
+    lmax=9                     
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T12:28:25.383
+
+
 Available Threads: 4
-Created directory: output01
 Processing levels: [6, 7, 8, 9]
+
+
 Will interpolate levels [10, 11, 12, 13] down to 9
 Level 6
+
   wrote 0600_galaxy_L6.vtu
+
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
+
 Level 7
+
   wrote 0600_galaxy_L7.vtu
+
  (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
+
 Level 8
+
   wrote 0600_galaxy_L8.vtu
+
  (Size: 0.33 GB)
   ✓ Level 8 completed, memory cleaned
+
 Level 9
   Including higher levels for interpolation
+
   Interpolating down to level 9
+
   Unique coarse cells at level 9: 13663000 (out of max 134217728) [safe_size: 97141255]
+
   → 13663000 coarse cells after interpolation
+
   wrote 0600_galaxy_L9.vtu
+
  (Size: 0.64 GB)
   ✓ Level 9 completed, memory cleaned
+
   Added block &#39;Level_6&#39; to scalar VTM for 0600_galaxy_L6.vtu
   Added block &#39;Level_7&#39; to scalar VTM for 0600_galaxy_L7.vtu
   Added block &#39;Level_8&#39; to scalar VTM for 0600_galaxy_L8.vtu
@@ -123,6 +170,7 @@ Created scalar multiblock: 0600_galaxy_scalar.vtm
     - Added reference to 0600_galaxy_L8.vtu in block &#39;Level_8&#39; of scalar VTM
     - Added reference to 0600_galaxy_L9.vtu in block &#39;Level_9&#39; of scalar VTM
   Updated scalar VTM file with references to scalar VTU files at: 0600_galaxy_scalar.vtm
+
 === Export Summary ===
 VTU files (scalars): 4
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -131,54 +179,78 @@ Available scalars: rho, T, AMR_Level</code></pre><pre><code class="language-juli
  &quot;0600_galaxy_L7.vtu&quot;
  &quot;0600_galaxy_L8.vtu&quot;
  &quot;0600_galaxy_L9.vtu&quot;
- &quot;0600_galaxy_scalar.vtm&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open the vtu file to load all level data</code></pre><h3 id="Export-Maximum-Number-of-Cells"><a class="docs-heading-anchor" href="#Export-Maximum-Number-of-Cells">Export Maximum Number of Cells</a><a id="Export-Maximum-Number-of-Cells-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Maximum-Number-of-Cells" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box
+ &quot;0600_galaxy_scalar.vtm&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open the vtu file to load all level data</code></pre><pre><code class="language-julia hljs"></code></pre><h3 id="Export-Maximum-Number-of-Cells"><a class="docs-heading-anchor" href="#Export-Maximum-Number-of-Cells">Export Maximum Number of Cells</a><a id="Export-Maximum-Number-of-Cells-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Maximum-Number-of-Cells" title="Permalink"></a></h3><pre><code class="language-julia hljs"># Export full box 
 # -&gt; limit the number of cells
 # here: not reaching levels 11,12,13
 export_vtk(
     gas,                       # loaded data
-    &quot;output03/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output03 (if not existing)
-    scalars=[:rho, :T],        # load density data in cm^-3 and temperature data in Kelvin
+    &quot;output03/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output03 (if not existing) 
+    scalars=[:rho, :T],        # load density data in cm^-3 and temperature data in Kelvin 
     scalars_unit=[:nH, :K],
     scalars_log10=true,        # apply log10 on the scalars
     positions_unit=:kpc,       # cell positions in kpc (useful in Paraview for region selection)
 
     lmax=10,
     max_cells=100_000          # (caps output if exceeded, prioritizing denser regions)
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T13:42:22.562
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T12:51:12.364
+
 Available Threads: 4
-Created directory: output03
 Processing levels: [6, 7, 8, 9, 10]
+
+
 Will interpolate levels [11, 12, 13] down to 10
 Level 6
+
   wrote 0600_galaxy_L6.vtu
+
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
+
 Level 7
-  wrote 0600_galaxy_L7.vtu (Size: 0.02 GB)
+
+  wrote 0600_galaxy_L7.vtu
+
+ (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
+
 Level 8
+
   wrote 0600_galaxy_L8.vtu
+
  (Size: 0.33 GB)
   ✓ Level 8 completed, memory cleaned
+
 Level 9
+
   wrote 0600_galaxy_L9.vtu
+
  (Size: 0.54 GB)
   ✓ Level 9 completed, memory cleaned
+
 Level 10
   Including higher levels for interpolation
+
   Interpolating down to level 10
+
   Unique coarse cells at level 10: 6968288 (out of max 1073741824) [safe_size: 84349291]
+
   Capping output cells to 100000 (from 6968288)
+
   → 100000 coarse cells after interpolation
+
   wrote 0600_galaxy_L10.vtu
+
  (Size: 0.0 GB)
   ✓ Level 10 completed, memory cleaned
+
   Added block &#39;Level_6&#39; to scalar VTM for 0600_galaxy_L6.vtu
   Added block &#39;Level_7&#39; to scalar VTM for 0600_galaxy_L7.vtu
   Added block &#39;Level_8&#39; to scalar VTM for 0600_galaxy_L8.vtu
   Added block &#39;Level_9&#39; to scalar VTM for 0600_galaxy_L9.vtu
   Added block &#39;Level_10&#39; to scalar VTM for 0600_galaxy_L10.vtu
 Created scalar multiblock: 0600_galaxy_scalar.vtm
+
+
   Updating scalar VTM file to reference scalar VTU files...
     - Added reference to 0600_galaxy_L6.vtu in block &#39;Level_6&#39; of scalar VTM
     - Added reference to 0600_galaxy_L7.vtu in block &#39;Level_7&#39; of scalar VTM
@@ -186,6 +258,7 @@ Created scalar multiblock: 0600_galaxy_scalar.vtm
     - Added reference to 0600_galaxy_L9.vtu in block &#39;Level_9&#39; of scalar VTM
     - Added reference to 0600_galaxy_L10.vtu in block &#39;Level_10&#39; of scalar VTM
   Updated scalar VTM file with references to scalar VTU files at: 0600_galaxy_scalar.vtm
+
 === Export Summary ===
 VTU files (scalars): 5
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -195,14 +268,14 @@ Available scalars: rho, T, AMR_Level</code></pre><pre><code class="language-juli
  &quot;0600_galaxy_L7.vtu&quot;
  &quot;0600_galaxy_L8.vtu&quot;
  &quot;0600_galaxy_L9.vtu&quot;
- &quot;0600_galaxy_scalar.vtm&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open the vtm file to load all level data</code></pre><h2 id="Export-Scalars-and-Vector"><a class="docs-heading-anchor" href="#Export-Scalars-and-Vector">Export Scalars and Vector</a><a id="Export-Scalars-and-Vector-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars-and-Vector" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Export full box with lmax = 9
+ &quot;0600_galaxy_scalar.vtm&quot;</code></pre><pre><code class="language-julia hljs"># =&gt; in Paraview open the vtm file to load all level data</code></pre><h2 id="Export-Scalars-and-Vector"><a class="docs-heading-anchor" href="#Export-Scalars-and-Vector">Export Scalars and Vector</a><a id="Export-Scalars-and-Vector-1"></a><a class="docs-heading-anchor-permalink" href="#Export-Scalars-and-Vector" title="Permalink"></a></h2><pre><code class="language-julia hljs"># Export full box with lmax = 9 
 # scalar and vector in separate files
 # -&gt; interpolating levels 13,12,11,10, down to 9
 
 export_vtk(
     gas,                       # loaded data
-    &quot;output04/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output04 (if not existing)
-    scalars=[:rho],            # load density data in cm^-3
+    &quot;output04/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output04 (if not existing) 
+    scalars=[:rho],            # load density data in cm^-3 
     scalars_unit=[:nH],
     scalars_log10=true,        # apply log10 on the scalars
     positions_unit=:kpc,       # cell positions in kpc (useful in Paraview for region selection)
@@ -211,39 +284,60 @@ export_vtk(
     vector=[:vx, :vy, :vz],    # velocity components and its units
     vector_unit=:km_s,
     vector_name=&quot;velocity&quot;     # vector name recognized by Paraview
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T14:02:15.625
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T13:12:11.569
+
+
 Available Threads: 4
-Created directory: output04
 Processing levels: [6, 7, 8, 9]
+
+
 Will interpolate levels [10, 11, 12, 13] down to 9
 Level 6
+
   wrote 0600_galaxy_L6.vtu
+
  (Size: 0.0 GB)
   wrote 0600_galaxy_vec_L6.vtu
+
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
+
   wrote 0600_galaxy_L7.vtu
+
  (Size: 0.01 GB)
   wrote 0600_galaxy_vec_L7.vtu
+
  (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
+
 Level 8
+
   wrote 0600_galaxy_L8.vtu
+
  (Size: 0.28 GB)
   wrote 0600_galaxy_vec_L8.vtu
- (Size: 0.41 GB)
+
+ (Size: 0.39 GB)
   ✓ Level 8 completed, memory cleaned
+
 Level 9
   Including higher levels for interpolation
+
   Interpolating down to level 9
+
   Unique coarse cells at level 9: 13663000 (out of max 134217728) [safe_size: 97141255]
+
   → 13663000 coarse cells after interpolation
+
   wrote 0600_galaxy_L9.vtu
+
  (Size: 0.55 GB)
   wrote 0600_galaxy_vec_L9.vtu
- (Size: 0.77 GB)
+
+ (Size: 0.75 GB)
   ✓ Level 9 completed, memory cleaned
+
   Added block &#39;Level_6&#39; to scalar VTM for 0600_galaxy_L6.vtu
   Added block &#39;Level_7&#39; to scalar VTM for 0600_galaxy_L7.vtu
   Added block &#39;Level_8&#39; to scalar VTM for 0600_galaxy_L8.vtu
@@ -266,6 +360,7 @@ Created vector multiblock: 0600_galaxy_vector.vtm
     - Added reference to 0600_galaxy_vec_L8.vtu in block &#39;vec_Level_8&#39; of vector VTM
     - Added reference to 0600_galaxy_vec_L9.vtu in block &#39;vec_Level_9&#39; of vector VTM
   Updated vector VTM file with references to vector VTU files at: 0600_galaxy_vector.vtm
+
 === Export Summary ===
 VTU files (scalars): 4
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -287,14 +382,14 @@ Available vector, named: velocity</code></pre><pre><code class="language-julia h
 # - open &quot;0350_galaxy_scalar.vtm&quot; to load multi-level scalar data
 # - open  &quot;0350_galaxy_vector.vtm&quot;to load mjulti-level vector data
 # - or open both vtm files together</code></pre><h2 id="Visualisation-in-Paraview"><a class="docs-heading-anchor" href="#Visualisation-in-Paraview">Visualisation in Paraview</a><a id="Visualisation-in-Paraview-1"></a><a class="docs-heading-anchor-permalink" href="#Visualisation-in-Paraview" title="Permalink"></a></h2><h3 id="Volume-Rendering-Density"><a class="docs-heading-anchor" href="#Volume-Rendering-Density">Volume Rendering Density</a><a id="Volume-Rendering-Density-1"></a><a class="docs-heading-anchor-permalink" href="#Volume-Rendering-Density" title="Permalink"></a></h3><pre><code class="language-julia hljs"># for a test on my laptop I use lmax=8 for the full box
-# and lmax=9 for the galaxy region</code></pre><pre><code class="language-julia hljs"># Export full box with lmax = 8
+# and lmax=9 for the galaxy region</code></pre><pre><code class="language-julia hljs"></code></pre><pre><code class="language-julia hljs"># Export full box with lmax = 8 
 # scalar and vector in separate files
 # -&gt; interpolating levels 13,12,11,10, 9 down to 8
 
 export_vtk(
     gas,                       # loaded data
-    &quot;output05/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output05 (if not existing)
-    scalars=[:rho],            # load density data in cm^-3
+    &quot;output05/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output05 (if not existing) 
+    scalars=[:rho],            # load density data in cm^-3 
     scalars_unit=[:nH],
     scalars_log10=true,        # apply log10 on the scalars
     positions_unit=:kpc,       # cell positions in kpc (useful in Paraview for region selection)
@@ -303,33 +398,49 @@ export_vtk(
     vector=[:vx, :vy, :vz],    # velocity components and its units
     vector_unit=:km_s,
     vector_name=&quot;velocity&quot;     # vector name recognized by Paraview
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T14:31:40.068
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T13:40:08.028
+
 Available Threads: 4
-Created directory: output05
 Processing levels: [6, 7, 8]
+
+
 Will interpolate levels [9, 10, 11, 12, 13] down to 8
 Level 6
+
   wrote 0600_galaxy_L6.vtu
+
  (Size: 0.0 GB)
   wrote 0600_galaxy_vec_L6.vtu
+
  (Size: 0.0 GB)
   ✓ Level 6 completed, memory cleaned
 Level 7
+
   wrote 0600_galaxy_L7.vtu
+
  (Size: 0.01 GB)
   wrote 0600_galaxy_vec_L7.vtu
+
  (Size: 0.02 GB)
   ✓ Level 7 completed, memory cleaned
+
 Level 8
   Including higher levels for interpolation
+
   Interpolating down to level 8
+
   Unique coarse cells at level 8: 9517504 (out of max 16777216) [safe_size: 104950884]
+
   → 9517504 coarse cells after interpolation
+
   wrote 0600_galaxy_L8.vtu
+
  (Size: 0.39 GB)
   wrote 0600_galaxy_vec_L8.vtu
- (Size: 0.55 GB)
+
+ (Size: 0.53 GB)
   ✓ Level 8 completed, memory cleaned
+
   Added block &#39;Level_6&#39; to scalar VTM for 0600_galaxy_L6.vtu
   Added block &#39;Level_7&#39; to scalar VTM for 0600_galaxy_L7.vtu
   Added block &#39;Level_8&#39; to scalar VTM for 0600_galaxy_L8.vtu
@@ -348,6 +459,7 @@ Created vector multiblock: 0600_galaxy_vector.vtm
     - Added reference to 0600_galaxy_vec_L7.vtu in block &#39;vec_Level_7&#39; of vector VTM
     - Added reference to 0600_galaxy_vec_L8.vtu in block &#39;vec_Level_8&#39; of vector VTM
   Updated vector VTM file with references to vector VTU files at: 0600_galaxy_vector.vtm
+
 === Export Summary ===
 VTU files (scalars): 3
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -362,24 +474,35 @@ Available vector, named: velocity</code></pre><pre><code class="language-julia h
  &quot;0600_galaxy_vec_L6.vtu&quot;
  &quot;0600_galaxy_vec_L7.vtu&quot;
  &quot;0600_galaxy_vec_L8.vtu&quot;
- &quot;0600_galaxy_vector.vtm&quot;</code></pre><p><strong>Open Scalar vtm File</strong></p><p><img src="../images/01_hydro.jpg" alt/></p><p><strong>Select rho array, volume rendering and apply</strong></p><p><img src="../images/02_hydro.jpg" alt/></p><p><strong>Choose a suitable colormap</strong></p><p><img src="../images/03_hydro.jpg" alt/></p><p><strong>Select value range, opazity and visualize data histogram</strong></p><p><img src="../images/04_hydro.jpg" alt/></p><p><strong>Change orientation, value range</strong></p><p><img src="../images/05_hydro.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre><h3 id="Visualize-Density-and-Vector"><a class="docs-heading-anchor" href="#Visualize-Density-and-Vector">Visualize Density &amp; Vector</a><a id="Visualize-Density-and-Vector-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-Density-and-Vector" title="Permalink"></a></h3><pre><code class="language-julia hljs"># extract a small region of the galaxy
-gassub = subregion(gas, :cylinder, radius=1., height=1., range_unit=:kpc, center=[23.,23.,:bc]);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T14:56:57.883
+ &quot;0600_galaxy_vector.vtm&quot;</code></pre><p><strong>Open Scalar vtm File</strong></p><p><img src="../images/01_hydro.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Select rho array, volume rendering and apply</strong></p><p><img src="../images/02_hydro.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Choose a suitable colormap</strong></p><p><img src="../images/03_hydro.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Select value range, opazity and visualize data histogram</strong></p><p><img src="../images/04_hydro.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Change orientation, value range</strong></p><p><img src="../images/05_hydro.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre><h3 id="Visualize-Density-and-Vector"><a class="docs-heading-anchor" href="#Visualize-Density-and-Vector">Visualize Density &amp; Vector</a><a id="Visualize-Density-and-Vector-1"></a><a class="docs-heading-anchor-permalink" href="#Visualize-Density-and-Vector" title="Permalink"></a></h3><pre><code class="language-julia hljs"># extract a small region of the galaxy
+gassub = subregion(gas, :cylinder, radius=1., height=1., range_unit=:kpc, center=[23.,23.,:bc]);</code></pre><pre><code class="nohighlight hljs">[Mera] Hint: regions also work as value types, with EXACT edge-cell splitting.
+
+             subregion(data, Cylinder(1.0, 1.0; center=Any[23.0, 23.0, :bc], range_unit=:kpc))
+             gives exact getvar :mass/:volume/msum and composes with ∩ ∪ \ !. The symbol form
+             above still works; pass split=false for classic whole cells. See ?subregion.
+             (shown once per session; verbose(false) silences Mera&#39;s messages)
+[Mera]: 2026-08-03T14:05:36.362
+
+
 center: [0.4791667, 0.4791667, 0.5] ==&gt; [23.0 [kpc] :: 23.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.4583333 :: 0.5  	==&gt; 22.0 [kpc] :: 24.0 [kpc]
 ymin::ymax: 0.4583333 :: 0.5  	==&gt; 22.0 [kpc] :: 24.0 [kpc]
 zmin::zmax: 0.4791667 :: 0.5208333  	==&gt; 23.0 [kpc] :: 25.0 [kpc]
-Radius: 1.0 [kpc]
-Height: 1.0 [kpc]
-Memory used for data table :148.63642406463623
+
+Radius: 1000.0 [pc]
+Height: 1000.0 [pc]
+Memory used for data table :148.6678113937378
+
  MB
 -------------------------------------------------------</code></pre><pre><code class="language-julia hljs"># Export small region with all available AMR levels
 # scalar and vector in separate files
 
 export_vtk(
     gassub,                    # loaded data
-    &quot;output06/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output06 (if not existing)
-    scalars=[:rho],            # load density data in cm^-3
+    &quot;output06/0600_galaxy&quot;;    # prefix for outputfiles; creates folder output06 (if not existing) 
+    scalars=[:rho],            # load density data in cm^-3 
     scalars_unit=[:nH],
     scalars_log10=true,        # apply log10 on the scalars
     positions_unit=:kpc,       # cell positions in kpc (useful in Paraview for region selection)
@@ -387,33 +510,47 @@ export_vtk(
     vector=[:vx, :vy, :vz],    # velocity components and its units
     vector_unit=:km_s,
     vector_name=&quot;velocity&quot;     # vector name recognized by Paraview
-);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-05-30T14:59:06.290
+);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T14:07:54.323
+
 Available Threads: 4
-Created directory: output06
 Processing levels: [10, 11, 12, 13]
 Level 10
+
   wrote 0600_galaxy_L10.vtu (Size: 0.0 GB)
   wrote 0600_galaxy_vec_L10.vtu
+
  (Size: 0.0 GB)
   ✓ Level 10 completed, memory cleaned
 Level 11
+
   wrote 0600_galaxy_L11.vtu
+
  (Size: 0.01 GB)
   wrote 0600_galaxy_vec_L11.vtu
+
  (Size: 0.02 GB)
   ✓ Level 11 completed, memory cleaned
+
 Level 12
+
   wrote 0600_galaxy_L12.vtu
+
  (Size: 0.02 GB)
   wrote 0600_galaxy_vec_L12.vtu
+
  (Size: 0.03 GB)
   ✓ Level 12 completed, memory cleaned
+
 Level 13
+
   wrote 0600_galaxy_L13.vtu
+
  (Size: 0.03 GB)
   wrote 0600_galaxy_vec_L13.vtu
+
  (Size: 0.04 GB)
   ✓ Level 13 completed, memory cleaned
+
   Added block &#39;Level_10&#39; to scalar VTM for 0600_galaxy_L10.vtu
   Added block &#39;Level_11&#39; to scalar VTM for 0600_galaxy_L11.vtu
   Added block &#39;Level_12&#39; to scalar VTM for 0600_galaxy_L12.vtu
@@ -436,6 +573,7 @@ Created vector multiblock: 0600_galaxy_vector.vtm
     - Added reference to 0600_galaxy_vec_L12.vtu in block &#39;vec_Level_12&#39; of vector VTM
     - Added reference to 0600_galaxy_vec_L13.vtu in block &#39;vec_Level_13&#39; of vector VTM
   Updated vector VTM file with references to vector VTU files at: 0600_galaxy_vector.vtm
+
 === Export Summary ===
 VTU files (scalars): 4
 Scalar VTM: 0600_galaxy_scalar.vtm
@@ -452,4 +590,4 @@ Available vector, named: velocity</code></pre><pre><code class="language-julia h
  &quot;0600_galaxy_vec_L11.vtu&quot;
  &quot;0600_galaxy_vec_L12.vtu&quot;
  &quot;0600_galaxy_vec_L13.vtu&quot;
- &quot;0600_galaxy_vector.vtm&quot;</code></pre><p><strong>Load Scalar</strong></p><p><img src="../images/01_hydro2.jpg" alt/></p><p><strong>Select rho data, volume rendering, color map, choose value range</strong></p><p><img src="../images/02_hydro2.jpg" alt/></p><p><strong>Load Vector data</strong></p><p><img src="../images/03_hydro2.jpg" alt/></p><p><strong>Select velocity data, magnitude volume rendering</strong></p><p><img src="../images/04_hydro2.jpg" alt/></p><p><strong>Edge-on view, apply 3D Glyphs on vector data, choose array and number of sample points</strong></p><p><img src="../images/05_hydro2.jpg" alt/></p><p><strong>Apply streamline tracer, point cloud and its size, number of points</strong></p><p><img src="../images/06_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../paraview_intro/">« Intro</a><a class="docs-footer-nextpage" href="../08_particles_VTK_export/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 2 August 2026 19:22">Sunday 2 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+ &quot;0600_galaxy_vector.vtm&quot;</code></pre><p><strong>Load Scalar</strong></p><p><img src="../images/01_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Select rho data, volume rendering, color map, choose value range</strong></p><p><img src="../images/02_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Load Vector data</strong></p><p><img src="../images/03_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Select velocity data, magnitude volume rendering</strong></p><p><img src="../images/04_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Edge-on view, apply 3D Glyphs on vector data, choose array and number of sample points</strong></p><p><img src="../images/05_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"></code></pre><p><strong>Apply streamline tracer, point cloud and its size, number of points</strong></p><p><img src="../images/06_hydro2.jpg" alt/></p><pre><code class="language-julia hljs"># =&gt; save state</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../paraview_intro/">« Intro</a><a class="docs-footer-nextpage" href="../08_particles_VTK_export/">Particles »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 5 August 2026 15:12">Wednesday 5 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

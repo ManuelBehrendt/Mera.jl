@@ -1,10 +1,23 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Miscellaneous · Mera.jl</title><meta name="title" content="Miscellaneous · Mera.jl"/><meta property="og:title" content="Miscellaneous · Mera.jl"/><meta property="twitter:title" content="Miscellaneous · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/Miscellaneous/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/Miscellaneous/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/Miscellaneous/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../report/">First Look</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding — Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-4" type="checkbox"/><label class="tocitem" for="menuitem-5-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../fluxbudget/">Flux Budgets</a></li><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../06_offaxis_Projection/">Off-axis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox"/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Other Simulation Codes</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multicode/">Overview</a></li><li><a class="tocitem" href="../multicode_examples/">Worked Examples</a></li><li><a class="tocitem" href="../pluto_reader/">PLUTO</a></li><li><a class="tocitem" href="../athena_reader/">Athena++</a></li><li><a class="tocitem" href="../flash_reader/">FLASH</a></li><li><a class="tocitem" href="../gadget_reader/">GADGET</a></li><li><a class="tocitem" href="../arepo_reader/">AREPO</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox" checked/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox" checked/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li class="is-active"><a class="tocitem" href>Miscellaneous</a><ul class="internal"><li><a class="tocitem" href="#MyArguments"><span>MyArguments</span></a></li><li><a class="tocitem" href="#Verbose-and-Progressbar-Switch"><span>Verbose &amp; Progressbar Switch</span></a></li><li><a class="tocitem" href="#Notification-Bell"><span>Notification Bell</span></a></li><li><a class="tocitem" href="#Notification-E-Mail"><span>Notification E-Mail</span></a></li></ul></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">More</a></li><li><a class="is-disabled">Examples &amp; Misc</a></li><li class="is-active"><a href>Miscellaneous</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Miscellaneous</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Miscellaneous"><a class="docs-heading-anchor" href="#Miscellaneous">Miscellaneous</a><a id="Miscellaneous-1"></a><a class="docs-heading-anchor-permalink" href="#Miscellaneous" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-d43c71a3b557f3c9"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-d43c71a3b557f3c9" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong> — <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/examples/Miscellaneous.ipynb">open / download <code>Miscellaneous.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><pre><code class="language-julia hljs">using Mera
-info=getinfo(300, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests/mw_L10/&quot;, verbose=false);</code></pre><h2 id="MyArguments"><a class="docs-heading-anchor" href="#MyArguments">MyArguments</a><a id="MyArguments-1"></a><a class="docs-heading-anchor-permalink" href="#MyArguments" title="Permalink"></a></h2><p>Pass several arguments at once to a function for better readability!</p><pre><code class="language-julia hljs"># create an empty struct for arguments:
-myargs = ArgumentsType()</code></pre><pre><code class="nohighlight hljs">ArgumentsType(missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing)</code></pre><pre><code class="language-julia hljs">viewfields(myargs)</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to use as arguments in functions
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Miscellaneous · Mera.jl</title><meta name="title" content="Miscellaneous · Mera.jl"/><meta property="og:title" content="Miscellaneous · Mera.jl"/><meta property="twitter:title" content="Miscellaneous · Mera.jl"/><meta name="description" content="Documentation for Mera.jl."/><meta property="og:description" content="Documentation for Mera.jl."/><meta property="twitter:description" content="Documentation for Mera.jl."/><meta property="og:url" content="https://manuelbehrendt.github.io/Mera.jl/Miscellaneous/"/><meta property="twitter:url" content="https://manuelbehrendt.github.io/Mera.jl/Miscellaneous/"/><link rel="canonical" href="https://manuelbehrendt.github.io/Mera.jl/Miscellaneous/"/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script><link href="../assets/custom.css" rel="stylesheet" type="text/css"/><script src="../assets/custom.js"></script><script src="../assets/music_player.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.png" alt="Mera.jl logo"/></a><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li><a class="tocitem" href="../report/">First Look</a></li><li><input class="collapse-toggle" id="menuitem-3" type="checkbox"/><label class="tocitem" for="menuitem-3"><span class="docs-label">Getting Started</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../00_multi_FirstSteps/">First Steps</a></li><li><a class="tocitem" href="../switching_to_mera/">Coming from Other Tools</a></li><li><a class="tocitem" href="../julia_for_simulation_analysis/">Julia for Simulation Analysis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4" type="checkbox"/><label class="tocitem" for="menuitem-4"><span class="docs-label">Core Workflows</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-4-1" type="checkbox"/><label class="tocitem" for="menuitem-4-1"><span class="docs-label">Data Inspection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../01_hydro_First_Inspection/">Hydro</a></li><li><a class="tocitem" href="../01_gravity_First_Inspection/">Gravity</a></li><li><a class="tocitem" href="../01_particles_First_Inspection/">Particles</a></li><li><a class="tocitem" href="../01_clumps_First_Inspection/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-2" type="checkbox"/><label class="tocitem" for="menuitem-4-2"><span class="docs-label">Load by Selection</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../02_hydro_Load_Selections/">Hydro</a></li><li><a class="tocitem" href="../02_gravity_Load_Selections/">Gravity</a></li><li><a class="tocitem" href="../02_particles_Load_Selections/">Particles</a></li><li><a class="tocitem" href="../02_clumps_Load_Selections/">Clumps</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-4-3" type="checkbox"/><label class="tocitem" for="menuitem-4-3"><span class="docs-label">Get Subregions</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../03_hydro_Get_Subregions/">Hydro</a></li><li><a class="tocitem" href="../03_gravity_Get_Subregions/">Gravity</a></li><li><a class="tocitem" href="../03_particles_Get_Subregions/">Particles</a></li><li><a class="tocitem" href="../03_clumps_Get_Subregions/">Clumps</a></li></ul></li><li><a class="tocitem" href="../covering_grid/">Uniform Grid / Resampling</a></li><li><a class="tocitem" href="../09_multi_Cosmology/">Cosmological Runs</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5" type="checkbox"/><label class="tocitem" for="menuitem-5"><span class="docs-label">Analysis &amp; Calculations</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-5-1" type="checkbox"/><label class="tocitem" for="menuitem-5-1"><span class="docs-label">Quantities &amp; Fields</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../04_multi_Basic_Calculations/">Basic Calculations</a></li><li><a class="tocitem" href="../computation_reference/">How Quantities Are Computed</a></li><li><a class="tocitem" href="../derived_fields/">Derived Fields &amp; add_field</a></li><li><a class="tocitem" href="../magnetic_fields/">Magnetic Fields (MHD)</a></li><li><a class="tocitem" href="../10_multi_RadiativeTransfer/">Radiative Transfer</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-2" type="checkbox"/><label class="tocitem" for="menuitem-5-2"><span class="docs-label">Selection, Statistics &amp; Metadata</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../05_multi_Masking_Filtering/">Mask/Filter/Meta</a></li><li><a class="tocitem" href="../statistics/">Statistics (PDFs)</a></li><li><a class="tocitem" href="../15_multi_Profiles_Phase/">Profiles &amp; Phase Diagrams</a></li><li><a class="tocitem" href="../provenance/">Provenance</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-3" type="checkbox"/><label class="tocitem" for="menuitem-5-3"><span class="docs-label">Structure Finding</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../clumpfind/">Clump Finding</a></li><li><a class="tocitem" href="../clumpfind_synthetic/">Clump Finding — Synthetic Example</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-4" type="checkbox"/><label class="tocitem" for="menuitem-5-4"><span class="docs-label">Gas Flows &amp; Star Formation</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../fluxbudget/">Flux Budgets</a></li><li><a class="tocitem" href="../sfr/">Star-Formation Rate</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-5-5" type="checkbox"/><label class="tocitem" for="menuitem-5-5"><span class="docs-label">Time Series &amp; Movies</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../timeseries/">Time Series (multi-snapshot)</a></li><li><a class="tocitem" href="../movie/">Movies (getmovie)</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-6" type="checkbox"/><label class="tocitem" for="menuitem-6"><span class="docs-label">Projection &amp; Maps</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../galaxyframe/">Auto-Frame (center &amp; orient)</a></li><li><input class="collapse-toggle" id="menuitem-6-2" type="checkbox"/><label class="tocitem" for="menuitem-6-2"><span class="docs-label">Axis-aligned (x/y/z)</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../06_hydro_Projection/">Hydro</a></li><li><a class="tocitem" href="../06_particles_Projection/">Particles</a></li></ul></li><li><a class="tocitem" href="../06_offaxis_Projection/">Off-axis</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7" type="checkbox"/><label class="tocitem" for="menuitem-7"><span class="docs-label">Data &amp; Visualization</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-7-1" type="checkbox"/><label class="tocitem" for="menuitem-7-1"><span class="docs-label">MERA-Files</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../07_multi_Mera_Files/">Mera-Files</a></li><li><a class="tocitem" href="../07_1_multi_Mera_Files_Converter/">Converter</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-7-2" type="checkbox"/><label class="tocitem" for="menuitem-7-2"><span class="docs-label">Volume Rendering</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../paraview/paraview_intro/">Intro</a></li><li><a class="tocitem" href="../paraview/08_hydro_VTK_export/">Hydro</a></li><li><a class="tocitem" href="../paraview/08_particles_VTK_export/">Particles</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-8" type="checkbox"/><label class="tocitem" for="menuitem-8"><span class="docs-label">Other Simulation Codes</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../multicode/">Overview</a></li><li><a class="tocitem" href="../multicode_examples/">Worked Examples</a></li><li><a class="tocitem" href="../pluto_reader/">PLUTO</a></li><li><a class="tocitem" href="../athena_reader/">Athena++</a></li><li><a class="tocitem" href="../flash_reader/">FLASH</a></li><li><a class="tocitem" href="../gadget_reader/">GADGET</a></li><li><a class="tocitem" href="../arepo_reader/">AREPO</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-9" type="checkbox"/><label class="tocitem" for="menuitem-9"><span class="docs-label">API Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../api/data_inspection/">Data Inspection</a></li><li><a class="tocitem" href="../api/data_loading/">Data Loading</a></li><li><a class="tocitem" href="../api/subregions/">Subregions</a></li><li><a class="tocitem" href="../api/calculations/">Calculations</a></li><li><a class="tocitem" href="../api/masking_filtering/">Masking &amp; Filtering</a></li><li><a class="tocitem" href="../profiles_phase/">Profiles &amp; Phase</a></li><li><a class="tocitem" href="../api/projections/">Projections</a></li><li><a class="tocitem" href="../api/offaxis/">Off-axis Projection</a></li><li><a class="tocitem" href="../api/mera_files/">Mera-Files</a></li><li><a class="tocitem" href="../api/volume_rendering/">Volume Rendering</a></li><li><a class="tocitem" href="../api/multithreading/">Multi-Threading</a></li><li><a class="tocitem" href="../api/notifications/">Notifications</a></li><li><a class="tocitem" href="../api/">Complete API</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10" type="checkbox" checked/><label class="tocitem" for="menuitem-10"><span class="docs-label">More</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><input class="collapse-toggle" id="menuitem-10-1" type="checkbox"/><label class="tocitem" for="menuitem-10-1"><span class="docs-label">Advanced Features</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../bundled_arguments/">Bundling Arguments (myargs)</a></li><li><a class="tocitem" href="../verbose_progress_switches/">Verbose &amp; Progress Switches</a></li><li><a class="tocitem" href="../multi-threading/multi-threading_intro/">Multi-Threading</a></li><li><a class="tocitem" href="../advanced_features/testing_guide/">Testing Framework</a></li><li><input class="collapse-toggle" id="menuitem-10-1-5" type="checkbox"/><label class="tocitem" for="menuitem-10-1-5"><span class="docs-label">Notifications</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../notifications/">Overview</a></li><li><a class="tocitem" href="../notifications/setup_and_usage/">Setup &amp; Usage</a></li><li><a class="tocitem" href="../notifications/examples/">Examples</a></li></ul></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-2" type="checkbox"/><label class="tocitem" for="menuitem-10-2"><span class="docs-label">Benchmarks</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../benchmarks/IO/IOperformance/">Server IO</a></li><li><a class="tocitem" href="../benchmarks/RAMSES_reading/ramses_reading/">Parallel RAMSES-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/JLD2_reading/Mera_files_reading/">Mera-Files Reading</a></li><li><a class="tocitem" href="../benchmarks/Projection/multi_projections/">Projections</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-3" type="checkbox"/><label class="tocitem" for="menuitem-10-3"><span class="docs-label">Quick Reference</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../quickreference/01_getting_started/">Getting Started</a></li><li><a class="tocitem" href="../quickreference/02_migrators/">From Other Languages</a></li><li><a class="tocitem" href="../quickreference/03_packages/">Essential Packages</a></li><li><a class="tocitem" href="../quickreference/04_mera_patterns/">Julia Fundamentals</a></li><li><a class="tocitem" href="../quickreference/05_performance/">Performance &amp; Debugging</a></li><li><a class="tocitem" href="../quickreference/06_resources/">Resources &amp; Community</a></li><li><a class="tocitem" href="../quickreference/Julia_Quick_Reference/">Julia Cheat Sheet (all-in-one)</a></li></ul></li><li><input class="collapse-toggle" id="menuitem-10-4" type="checkbox" checked/><label class="tocitem" for="menuitem-10-4"><span class="docs-label">Examples &amp; Misc</span><i class="docs-chevron"></i></label><ul class="collapsed"><li><a class="tocitem" href="../examples/">Examples</a></li><li class="is-active"><a class="tocitem" href>Miscellaneous</a><ul class="internal"><li><a class="tocitem" href="#MyArguments"><span>MyArguments</span></a></li><li><a class="tocitem" href="#Verbose-and-Progressbar-Switch"><span>Verbose &amp; Progressbar Switch</span></a></li><li><a class="tocitem" href="#Notification-Bell"><span>Notification Bell</span></a></li><li><a class="tocitem" href="#Notification-E-Mail"><span>Notification E-Mail</span></a></li></ul></li><li><a class="tocitem" href="../recommended_packages/">Recommended Packages</a></li></ul></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">More</a></li><li><a class="is-disabled">Examples &amp; Misc</a></li><li class="is-active"><a href>Miscellaneous</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Miscellaneous</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ManuelBehrendt/Mera.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Miscellaneous"><a class="docs-heading-anchor" href="#Miscellaneous">Miscellaneous</a><a id="Miscellaneous-1"></a><a class="docs-heading-anchor-permalink" href="#Miscellaneous" title="Permalink"></a></h1><div class="admonition is-success" id="Run-it-yourself-d43c71a3b557f3c9"><header class="admonition-header">Run it yourself<a class="admonition-anchor" href="#Run-it-yourself-d43c71a3b557f3c9" title="Permalink"></a></header><div class="admonition-body"><p>This page is also an executable <strong>Jupyter notebook</strong> — <a href="https://github.com/ManuelBehrendt/Notebooks/blob/master/Mera-Docs/version_1.1/examples/Miscellaneous.ipynb">open / download <code>Miscellaneous.ipynb</code></a>. The notebooks run end-to-end and double as part of Mera&#39;s test suite.</p></div></div><pre><code class="language-julia hljs"># Example-data root. Point this at your own simulation folder, or set the
+# MERA_EXAMPLES environment variable; every path below is built from it.
+MERA_EXAMPLES = get(ENV, &quot;MERA_EXAMPLES&quot;, &quot;/Volumes/FASTStorage/Simulations/Mera-Tests&quot;);
+
+using Mera
+info=getinfo(300, &quot;$MERA_EXAMPLES/mw_L10/&quot;, verbose=false);</code></pre><pre><code class="nohighlight hljs">*__   __ _______ ______   _______ 
+
+
+|  |_|  |       |    _ | |   _   |
+|       |    ___|   | || |  |_|  |
+|       |   |___|   |_||_|       |
+|       |    ___|    __  |       |
+| ||_|| |   |___|   |  | |   _   |
+|_|   |_|_______|___|  |_|__| |__|
+Mera v1.8.0</code></pre><h2 id="MyArguments"><a class="docs-heading-anchor" href="#MyArguments">MyArguments</a><a id="MyArguments-1"></a><a class="docs-heading-anchor-permalink" href="#MyArguments" title="Permalink"></a></h2><p>Pass several arguments at once to a function for better readability!</p><pre><code class="language-julia hljs"># create an empty struct for arguments:
+myargs = ArgumentsType()</code></pre><pre><code class="nohighlight hljs">ArgumentsType(missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing, missing)</code></pre><pre><code class="language-julia hljs">viewfields(myargs)</code></pre><pre><code class="nohighlight hljs">[Mera]: Fields to use as arguments in functions
+
 =======================================================================
-pxsize
-	= missing
+pxsize	= missing
 res	= missing
 lmax	= missing
 xrange	= missing
@@ -17,6 +30,17 @@ plane	= missing
 plane_ranges	= missing
 thickness	= missing
 position	= missing
+los	= missing
+up	= missing
+theta	= missing
+phi	= missing
+angle_unit	= missing
+binning	= missing
+nmax	= missing
+inclination	= missing
+azimuth	= missing
+position_angle	= missing
+axis	= missing
 center	= missing
 range_unit	= missing
 data_center	= missing
@@ -29,162 +53,241 @@ myargs.xrange=[-10.,10.]
 myargs.yrange=[-10.,10.]
 myargs.zrange=[-2.,2.]
 myargs.center=[:boxcenter]
-myargs.range_unit=:kpc;</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; All functions that hold the upper listed arguments can handle the ArgumentsType struct! &lt;/div&gt;</p><pre><code class="language-julia hljs">gas = gethydro(info, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-06-01T18:51:26.187
+myargs.range_unit=:kpc;</code></pre><p>&lt;div class=&quot;alert alert-block alert-info&quot;&gt; &lt;b&gt;NOTE&lt;/b&gt; All functions that hold the upper listed arguments can handle the ArgumentsType struct! &lt;/div&gt;</p><pre><code class="language-julia hljs">gas = gethydro(info, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-08-03T11:38:24.326
+
+
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
-center: [0.5, 0.5, 0.5]
+
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
+
+center: [0.5, 0.5, 0.5] 
+
 ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
 📊 Processing Configuration:
+
+
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.37 ms/it)
+
+
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
+
 Final data size: 6914359 cells, 7 variables
 Creating Table from 6914359 cells with max 4 threads...
+
   Threading: 4 threads for 11 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
+
   Creating IndexedTable with 11 columns...
-  9.477106 seconds (250.23 M allocations: 14.027 GiB, 8.35% gc time, 9.43% compilation time)
-✓ Table created in 9.741 seconds
-Memory used for data table :
-580.2772397994995 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">part = getparticles(info, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2026-06-01T18:51:57.580
+✓ Table created in 9.684 seconds
+
+Memory used for data table :580.2772397994995
+
+ MB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">part = getparticles(info, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get particle data: 2026-08-03T11:38:57.004
+
+
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id, :family, :tag)
-Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth)
+Using var(s)=(1, 2, 3, 4, 7) = (:vx, :vy, :vz, :mass, :birth) 
+
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
+
 Processing 640 CPU files using 4 threads
 Mode: Threaded processing
+
 Combining results from 4 thread(s)...
 Found 5.368130e+05 particles
 Memory used for data table :
+
 37.885175704956055 MB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs">p = projection(gas, :sd, :Msun_pc2, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-06-01T18:52:02.766
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs">p = projection(gas, :sd, :Msun_pc2, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">[Mera]: 2026-08-03T11:39:06.827
+
+
 center: [0.5, 0.5, 0.5] ==&gt; [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
 domain:
 xmin::xmax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 ymin::ymax: 0.2916667 :: 0.7083333  	==&gt; 14.0 [kpc] :: 34.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==&gt; 22.0 [kpc] :: 26.0 [kpc]
-Selected var(s)=(:sd,)
+
+Selected var(s)=(:sd,) 
 Weighting      = :mass
+
 Effective resolution: 481^2
+
 Map size: 201 x 201
 Pixel size: 99.792 [pc]
 Simulation min.: 46.875 [pc]
+
 Available threads: 4
+
+
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)</code></pre><pre><code class="language-julia hljs"># add more args for silent screen:
 myargs.verbose=false
-myargs.show_progress=false;</code></pre><pre><code class="language-julia hljs">gas = gethydro(info, myargs=myargs);</code></pre><pre><code class="nohighlight hljs">  8.941163 seconds (245.97 M allocations: 13.829 GiB, 10.35% gc time)</code></pre><pre><code class="language-julia hljs">part = getparticles(info, myargs=myargs);</code></pre><pre><code class="language-julia hljs">p = projection(gas, :sd, :Msun_pc2, myargs=myargs);</code></pre><h2 id="Verbose-and-Progressbar-Switch"><a class="docs-heading-anchor" href="#Verbose-and-Progressbar-Switch">Verbose &amp; Progressbar Switch</a><a id="Verbose-and-Progressbar-Switch-1"></a><a class="docs-heading-anchor-permalink" href="#Verbose-and-Progressbar-Switch" title="Permalink"></a></h2><p>Master switch to toggle the verbose mode and progress bar for all functions:</p><pre><code class="language-julia hljs"># current status
-# &quot;nothing&quot; allows the functions to use the passed argument:
+myargs.show_progress=false;</code></pre><pre><code class="language-julia hljs">gas = gethydro(info, myargs=myargs);</code></pre><pre><code class="language-julia hljs">part = getparticles(info, myargs=myargs);</code></pre><pre><code class="language-julia hljs">p = projection(gas, :sd, :Msun_pc2, myargs=myargs);</code></pre><pre><code class="language-julia hljs"></code></pre><h2 id="Verbose-and-Progressbar-Switch"><a class="docs-heading-anchor" href="#Verbose-and-Progressbar-Switch">Verbose &amp; Progressbar Switch</a><a id="Verbose-and-Progressbar-Switch-1"></a><a class="docs-heading-anchor-permalink" href="#Verbose-and-Progressbar-Switch" title="Permalink"></a></h2><p>Master switch to toggle the verbose mode and progress bar for all functions:</p><pre><code class="language-julia hljs"># current status
+# &quot;nothing&quot; allows the functions to use the passed argument: 
 # verbose=false/true
 verbose()</code></pre><pre><code class="nohighlight hljs">verbose_mode: nothing</code></pre><pre><code class="language-julia hljs"># switch off verbose mode globally:
 verbose(false)</code></pre><pre><code class="nohighlight hljs">false</code></pre><pre><code class="language-julia hljs"># check
-gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.70 ms/it)
-✓ File processing complete! Combining results...
- 39.691495 seconds (958.14 M allocations: 55.370 GiB, 8.84% gc time)</code></pre><pre><code class="language-julia hljs"># switch on verbose mode globally:
+gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">✓ File processing complete! Combining results...</code></pre><pre><code class="language-julia hljs"># switch on verbose mode globally:
 # the passed argument verbose=false/true to the individual
 # functions is ignored.
-verbose(true)</code></pre><pre><code class="nohighlight hljs">true</code></pre><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-06-01T18:53:32.408
+verbose(true)</code></pre><pre><code class="nohighlight hljs">true</code></pre><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-08-03T11:40:32.648
+
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
-Processing files: 100%|██████████████████████████████████████████████████| Time: 0:00:17 (27.33 ms/it)
+
+
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
+
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 11 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
+
   Creating IndexedTable with 11 columns...
- 39.385238 seconds (958.14 M allocations: 55.369 GiB, 8.70% gc time)
-✓ Table created in 39.743 seconds
-Memory used for data table :2.321086215786636 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs"># current status
-# &quot;nothing&quot; allows the functions to use the passed argument:
+✓ Table created in 39.647 seconds
+
+Memory used for data table :2.321086215786636
+
+ GB
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs"></code></pre><pre><code class="language-julia hljs"># current status
+# &quot;nothing&quot; allows the functions to use the passed argument: 
 # show_progress=false/true
 showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: nothing</code></pre><pre><code class="language-julia hljs"># switch off the progressbar globally:
 showprogress(false)</code></pre><pre><code class="nohighlight hljs">false</code></pre><pre><code class="language-julia hljs"># check
-showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: false</code></pre><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-06-01T18:54:30.579
+showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: false</code></pre><pre><code class="language-julia hljs">gas = gethydro(info);</code></pre><pre><code class="nohighlight hljs">[Mera]: Get hydro data: 2026-08-03T11:41:31.204
+
 Key vars=(:level, :cx, :cy, :cz)
-Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
+
 domain:
 xmin::xmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==&gt; 0.0 [kpc] :: 48.0 [kpc]
+
 📊 Processing Configuration:
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
    GC threads: 4
+
+
 ✓ Data combination complete!
+
 Final data size: 28320979 cells, 7 variables
 Creating Table from 28320979 cells with max 4 threads...
   Threading: 4 threads for 11 columns
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
+
   Creating IndexedTable with 11 columns...
- 38.284447 seconds (958.14 M allocations: 55.420 GiB, 9.07% gc time)
-✓ Table created in 38.556 seconds
+✓ Table created in 39.553 seconds
+
 Memory used for data table :2.321086215786636 GB
--------------------------------------------------------</code></pre><pre><code class="language-julia hljs"># switch on the progressbar globally:
+-------------------------------------------------------</code></pre><pre><code class="language-julia hljs"></code></pre><pre><code class="language-julia hljs"># switch on the progressbar globally:
 # the passed argument show_progress=false/true to the individual
 # functions is ignored.
 showprogress(true)</code></pre><pre><code class="nohighlight hljs">true</code></pre><pre><code class="language-julia hljs"># check
 showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: true</code></pre><pre><code class="language-julia hljs"># return to neutral mode
 showprogress(nothing)</code></pre><pre><code class="language-julia hljs"># check
-showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: nothing</code></pre><h2 id="Notification-Bell"><a class="docs-heading-anchor" href="#Notification-Bell">Notification Bell</a><a id="Notification-Bell-1"></a><a class="docs-heading-anchor-permalink" href="#Notification-Bell" title="Permalink"></a></h2><pre><code class="language-julia hljs">?bell</code></pre><pre><code class="nohighlight hljs">search:
-bell ceil all Real real fill kill help</code></pre><pre><code class="nohighlight hljs">  No documentation found for public binding Mera.bell.
+showprogress()</code></pre><pre><code class="nohighlight hljs">showprogress_mode: nothing</code></pre><pre><code class="language-julia hljs"></code></pre><h2 id="Notification-Bell"><a class="docs-heading-anchor" href="#Notification-Bell">Notification Bell</a><a id="Notification-Bell-1"></a><a class="docs-heading-anchor-permalink" href="#Notification-Bell" title="Permalink"></a></h2><pre><code class="language-julia hljs">?bell</code></pre><pre><code class="nohighlight hljs">search: 
 
-  Mera.bell is a Function.
+bell real ceil Real fill help all kill
 
-  # 1 method for generic function &quot;bell&quot; from Mera:
-   [1] bell()
-       @ ~/Documents/codes/github/Mera.jl/src/functions/notifications.jl:11</code></pre><h2 id="Notification-E-Mail"><a class="docs-heading-anchor" href="#Notification-E-Mail">Notification E-Mail</a><a id="Notification-E-Mail-1"></a><a class="docs-heading-anchor-permalink" href="#Notification-E-Mail" title="Permalink"></a></h2><pre><code class="language-julia hljs">?notifyme</code></pre><pre><code class="nohighlight hljs">search: notifyme notify time ctime @time mtime</code></pre><pre><code class="nohighlight hljs">  Get an email and/or Zulip notification, e.g., when your calculations are
+
+  bell(sound = nothing)
+
+  Play a short notification sound — e.g. when a long calculation finishes.
+
+  Pick the sound in any of these ways (first match wins):
+
+    1. by name — bell(:chime) (a Symbol or String);
+    2. by number — bell(2) (the position shown by bell(:list), also a
+       numeric string like bell(&quot;2&quot;));
+    3. a configured default — [bell] sound = &quot;gong&quot; in ~/.mera.toml, the
+       MERA_BELL_SOUND environment variable, or the legacy ~/bell.txt
+       (see mera_config);
+    4. the built-in fallback — :strum (the original Mera sound).
+
+  19 sounds ship with Mera. List them with their numbers using bell(:list):
+  arpeggio, bell, bird, bloop, bongo, chime, coin, coindrop, cosmic, ding,
+  done, door, frog, gong, knock, oscillations, owl, strum, whistle.
+
+  You can also drop your own *.wav into the package&#39;s src/sounds/ folder and
+  select it by its file name or number.
+
+  bell()            # the configured default, else :strum
+  bell(:gong)       # a deep blooming gong
+  bell(&quot;chime&quot;)     # a glassy three-note chime
+  bell(4)           # the 4th sound in bell(:list)
+  bell(:list)       # print the numbered catalogue of available sounds</code></pre><h2 id="Notification-E-Mail"><a class="docs-heading-anchor" href="#Notification-E-Mail">Notification E-Mail</a><a id="Notification-E-Mail-1"></a><a class="docs-heading-anchor-permalink" href="#Notification-E-Mail" title="Permalink"></a></h2><pre><code class="language-julia hljs">?notifyme</code></pre><pre><code class="nohighlight hljs">search: notifyme notify mtime time @time ctime
+
+
+  Get an email and/or Zulip notification, e.g., when your calculations are
   finished.
   ––––––––––––––––––––––––––––
 
-  Email notification:
+  Both channels are configured in ~/.mera.toml. Print a template with
+  mera_config_example, fill in the parts you want, then chmod 600 ~/.mera.toml
+  — it holds an API key. Configure either channel, or both; each is used only
+  if present.
 
-    •  Requires the email client &quot;mail&quot; to be installed
-    •  Put a file with the name &quot;email.txt&quot; in your home folder that
-       contains your email address in the first line
+  [email]
+  to = &quot;you@example.com&quot;
 
-  Zulip notification (optional):
+  [zulip]
+  bot_email = &quot;mybot@zulip.example.com&quot;
+  api_key   = &quot;...&quot;                        # or set MERA_ZULIP_API_KEY instead
+  server    = &quot;https://zulip.example.com&quot;
 
-    •  Put a file with the name &quot;zulip.txt&quot; in your home folder with
-       three lines:
+  Email additionally needs the command-line mail client installed; Mera pipes
+  the message to it. Nothing is sent if [email] to is unset.
 
-       •  Line 1: Your Zulip bot email (e.g.,
-       mybot@zulip.yourdomain.com)
-       •  Line 2: Your Zulip API key
-       •  Line 3: Your Zulip server URL (e.g.,
-       https://zulip.yourdomain.com)
+  Zulip needs all three keys. It is the richer channel: it carries image and
+  file attachments, and posts to a channel/topic (zulip_channel=,
+  zulip_topic=), which email does not.
+
+  Every value can also come from an environment variable — MERA_EMAIL_TO,
+  MERA_ZULIP_BOT_EMAIL, MERA_ZULIP_API_KEY, MERA_ZULIP_SERVER,
+  MERA_ZULIP_CHANNEL — which take precedence over the file and keep secrets
+  off disk. The legacy email.txt, zulip.txt and bell.txt in $HOME still work;
+  ~/.mera.toml wins where both exist. See mera_config.
 
   Output Capture (optional):
 
@@ -247,7 +350,7 @@ bell ceil all Real real fill kill help</code></pre><pre><code class="nohighlight
 
   julia&gt; notifyme(&quot;Analysis finished!&quot;, include_timing=true, timing_details=true)
 
-  # Exception handling examples
+  # Exception handling examples  
   julia&gt; try
              risky_computation()
          catch e
@@ -256,4 +359,4 @@ bell ceil all Real real fill kill help</code></pre><pre><code class="nohighlight
 
   julia&gt; notifyme(msg=&quot;Directory listing:&quot;, capture_output=`ls`)
 
-  julia&gt; notifyme(msg=&quot;Function output:&quot;, capture_output=() -&gt; sum(rand(100)))</code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../examples/">« Examples</a><a class="docs-footer-nextpage" href="../recommended_packages/">Recommended Packages »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Sunday 2 August 2026 19:22">Sunday 2 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+  julia&gt; notifyme(msg=&quot;Function output:&quot;, capture_output=() -&gt; sum(rand(100)))</code></pre><pre><code class="language-julia hljs"></code></pre></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../examples/">« Examples</a><a class="docs-footer-nextpage" href="../recommended_packages/">Recommended Packages »</a><div class="flexbox-break"></div><p class="footer-message">© 2026 Manuel Behrendt. Built with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and <a href="https://julialang.org">Julia</a>. </p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Wednesday 5 August 2026 15:12">Wednesday 5 August 2026</span>. Using Julia version 1.11.9.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
