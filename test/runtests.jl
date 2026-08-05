@@ -85,6 +85,7 @@ if isempty(_focus)
         include("67_center_hint_tests.jl")  # data-free: the getvar `center` reminder for frame-relative quantities
         include("68_offaxis_api_tests.jl")  # data-free: off-axis API surface (slice alias, view-specifier error)
         include("69_config_tests.jl")  # data-free: ~/.mera.toml resolution, env precedence, legacy fallback
+        include("70_scales_complete_tests.jl")  # data-free: every scale field is assigned; getunit rejects impossible factors
 
         # The analytic correctness oracles. These were included in the data-dependent tier below,
         # so CI — which sets MERA_SMOKE_ONLY=1 — never ran them, even though README.md and
