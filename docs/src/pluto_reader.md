@@ -151,8 +151,14 @@ unchanged:
 ```julia
 info = getinfo(5, "/data/pluto_run")      # info.particles == true if a particle file is present
 part = getparticles(info)                  # → PartDataType (:x,:y,:z, :id, :vx,:vy,:vz, …)
-getvar(part, :vx); msum(part)              # the usual particle analysis
+getvar(part, :vx); length(part.data)       # velocities, and how many particles were read
 ```
+
+!!! warning "PLUTO particles carry no mass"
+    PLUTO particle files store no mass field, so Mera's PLUTO `PartDataType` has no `:mass`
+    column. Anything mass-weighted has no input here: [`msum`](@ref), [`center_of_mass`](@ref),
+    [`bulk_velocity`](@ref) and the default `projection(part, :sd)` weighting. Work with counts
+    instead, or attach a mass column yourself if your run uses a constant particle mass.
 
 The format (an ASCII `#` header — `field_names`/`field_dim`/`nparticles`/`endianity` — followed by
 particle-major binary) is read directly; field names map to Mera symbols (`x1→:x`, `vx1→:vx`, …),
