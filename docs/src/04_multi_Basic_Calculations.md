@@ -149,14 +149,14 @@ clumps    = getclumps(info);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:54:24.829
+[Mera]: 2026-08-05T16:02:07.225
 
 
 Code: RAMSES
-
-
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime: 
+
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -197,7 +197,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-08-03T10:54:27.276
+[Mera]: Get hydro data: 2026-08-05T16:02:09.738
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -231,14 +231,14 @@ Creating Table from 849332 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 8 columns...
-✓ Table created in 0.927 seconds
+✓ Table created in 0.872 seconds
 
 Memory used for data table :51.839996337890625
 
  MB
 -------------------------------------------------------
 
-[Mera]: Get particle data: 2026-08-03T10:54:51.043
+[Mera]: Get particle data: 2026-08-05T16:02:32.578
 
 
 Using threaded processing with 4 threads
@@ -260,7 +260,7 @@ Memory used for data table :
 31.064148902893066 MB
 -------------------------------------------------------
 
-[Mera]: Get clump data: 2026-08-03T10:54:52.493
+[Mera]: Get clump data: 2026-08-05T16:02:34.543
 
 
 domain:
@@ -398,21 +398,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 0.0
-a_mag	= 0.0
-v_esc	= 0.0
-ax	= 2.765046284e-314
-ay	= 2.4098252427e-314
-az	= 1.6e-322
-epot	= 2.7652617837e-314
-a_magnitude	= 0.0
-escape_speed	= 0.0
-gravitational_redshift	= 1.265e-321
-gravitational_energy_density	= 0.0
-gravitational_binding_energy	= 2.76504611e-314
-total_binding_energy	= 2.409825314e-314
+delta_rho	= 1.0
+a_mag	= 1.3935734353956443e-8
+v_esc	= 6.557528732282063e6
+ax	= 1.3935734353956443e-8
+ay	= 1.3935734353956443e-8
+az	= 1.3935734353956443e-8
+epot	= 4.30011830747048e13
+a_magnitude	= 1.3935734353956443e-8
+escape_speed	= 6.557528732282063e6
+gravitational_redshift	= 1.0
+gravitational_energy_density	= 2.910484414358466e-9
+gravitational_binding_energy	= 2.910484414358466e-9
+total_binding_energy	= 8.55100014027443e55
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.7652618153e-314
+gravitational_work	= 8.551000140274429e55
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -420,8 +420,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.765261847e-314
-poisson_source	= 0.0
+Fg	= 9.432237612943517e-31
+poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -524,7 +524,9 @@ Gas COM:       (
 
 23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
-Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
+Clumps COM:    (
+
+23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
 
 
@@ -537,9 +539,7 @@ println( "Clumps COM:    ", center_of_mass(clumps, :kpc)    , " kpc" );
 ```
 
 ```
-Gas COM:       (
-
-23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Gas COM:       (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -576,7 +576,9 @@ println("Single vars: ", x_pos, "  ", y_pos, "  ", z_pos, "  kpc")
 
 ```
 Tuple:      (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
-Single vars: 23.258011243936238  23.76594380898452  23.972244037494438  kpc
+Single vars: 23.258011243936238
+
+  23.76594380898452  23.972244037494438  kpc
 ```
 
 
@@ -697,7 +699,9 @@ println( "Particles: ", average_velocity(particles, :km_s, weighting=:no) , " km
 ```
 
 ```
-Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
+Gas:       (
+
+1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
 Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 ```
 

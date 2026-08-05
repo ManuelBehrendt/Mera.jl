@@ -120,14 +120,14 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:31:09.517
+[Mera]: 2026-08-05T15:55:54.492
 
 
 Code: RAMSES
-output [300] summary:
-mtime: 
 
-2023-04-09T05:34:09
+
+output [300] summary:
+mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
 simulation time: 445.89 [Myr]
@@ -137,8 +137,6 @@ ndim: 3
 cosmological:  false
 -------------------------------------------------------
 amr:           true
-
-
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
@@ -207,7 +205,7 @@ grav = getgravity(info);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:31:12.293
+[Mera]: Get gravity data: 2026-08-05T15:55:57.071
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -241,7 +239,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Using parallel processing with 4 threads
 
    Creating IndexedTable with 8 columns...
-✓ Table created in 3.895 seconds
+✓ Table created in 5.356 seconds
 
 Memory used for data table :1.6880627572536469
 
@@ -294,7 +292,7 @@ grav_a = getgravity(info, vars=[:epot, :ax]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:31:34.565
+[Mera]: Get gravity data: 2026-08-05T15:56:21.230
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2) = (:epot, :ax) 
@@ -322,7 +320,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Using parallel processing with 4 threads
 
    Creating IndexedTable with 6 columns...
-✓ Table created in 1.753 seconds
+✓ Table created in 2.381 seconds
 
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
@@ -336,7 +334,7 @@ grav_a = getgravity(info, vars=[:var1, :var2]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:31:51.631
+[Mera]: Get gravity data: 2026-08-05T15:56:38.547
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2) = (:epot, :ax) 
@@ -364,7 +362,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Using parallel processing with 4 threads
 
    Creating IndexedTable with 6 columns...
-✓ Table created in 1.986 seconds
+✓ Table created in 1.529 seconds
 
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
@@ -378,7 +376,7 @@ grav_a = getgravity(info, [:epot, :ax]);
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:08.936
+[Mera]: Get gravity data: 2026-08-05T15:56:54.463
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2) = (:epot, :ax) 
@@ -406,7 +404,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Using parallel processing with 4 threads
 
    Creating IndexedTable with 6 columns...
-✓ Table created in 1.487 seconds
+✓ Table created in 1.423 seconds
 
 Memory used for data table :1.2660471182316542 GB
 -------------------------------------------------------
@@ -457,7 +455,7 @@ grav_c = getgravity(info, :ax );
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:25.469
+[Mera]: Get gravity data: 2026-08-05T15:57:09.875
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(2,) = (:ax,) 
@@ -485,7 +483,7 @@ Creating Table from 28320979 cells with max 4 threads...
    Using parallel processing with 4 threads
 
    Creating IndexedTable with 5 columns...
-✓ Table created in 1.679 seconds
+✓ Table created in 1.674 seconds
 
 Memory used for data table :1.0550392987206578 GB
 -------------------------------------------------------
@@ -559,7 +557,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:42.736
+[Mera]: Get gravity data: 2026-08-05T15:57:26.233
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -587,7 +585,7 @@ Creating Table from 1233232 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.053 seconds
+✓ Table created in 0.046 seconds
 Memory used for data table :75.27139282226562
 
  MB
@@ -625,7 +623,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:50.298
+[Mera]: Get gravity data: 2026-08-05T15:57:33.657
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -653,9 +651,10 @@ Creating Table from 1233232 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.049 seconds
+✓ Table created in 0.047 seconds
+Memory used for data table :75.27139282226562
 
-Memory used for data table :75.27139282226562 MB
+ MB
 -------------------------------------------------------
 ```
 
@@ -681,7 +680,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:52.137
+[Mera]: Get gravity data: 2026-08-05T15:57:35.792
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -692,7 +691,6 @@ ymin::ymax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
 zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 640
    Files to be processed: 640
    Compute threads: 4
@@ -825,21 +823,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 2.783724155e-314
-a_mag	= 0.0
-v_esc	= 0.0
-ax	= 1.6e-322
-ay	= 2.422210243e-314
-az	= 1.6e-322
-epot	= 2.801219834e-314
-a_magnitude	= 0.0
-escape_speed	= 1.265e-321
-gravitational_redshift	= 0.0
-gravitational_energy_density	= 1.6578092e-316
-gravitational_binding_energy	= 2.4204014496e-314
-total_binding_energy	= 2.4222103143e-314
+delta_rho	= 1.0
+a_mag	= 1.3935734353956443e-8
+v_esc	= 6.557528732282063e6
+ax	= 1.3935734353956443e-8
+ay	= 1.3935734353956443e-8
+az	= 1.3935734353956443e-8
+epot	= 4.30011830747048e13
+a_magnitude	= 1.3935734353956443e-8
+escape_speed	= 6.557528732282063e6
+gravitational_redshift	= 1.0
+gravitational_energy_density	= 2.910484414358466e-9
+gravitational_binding_energy	= 2.910484414358466e-9
+total_binding_energy	= 8.55100014027443e55
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.8012198656e-314
+gravitational_work	= 8.551000140274429e55
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -847,8 +845,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.801219897e-314
-poisson_source	= 0.0
+Fg	= 9.432237612943517e-31
+poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -875,7 +873,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:53.924
+[Mera]: Get gravity data: 2026-08-05T15:57:37.763
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -903,8 +901,10 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.026 seconds
-Memory used for data table :39.725494384765625 MB
+✓ Table created in 0.024 seconds
+Memory used for data table :39.725494384765625
+
+ MB
 -------------------------------------------------------
 ```
 
@@ -936,7 +936,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:55.747
+[Mera]: Get gravity data: 2026-08-05T15:57:39.597
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -966,7 +966,7 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.022 seconds
+✓ Table created in 0.021 seconds
 Memory used for data table :39.725494384765625
 
  MB
@@ -984,7 +984,7 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:57.637
+[Mera]: Get gravity data: 2026-08-05T15:57:41.564
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
@@ -1012,9 +1012,10 @@ Creating Table from 650848 cells with max 4 threads...
    Available threads: 4
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
-✓ Table created in 0.023 seconds
+✓ Table created in 0.026 seconds
+Memory used for data table :39.725494384765625
 
-Memory used for data table :39.725494384765625 MB
+ MB
 -------------------------------------------------------
 ```
 
@@ -1031,13 +1032,14 @@ grav = getgravity(info, lmax=8,
 ```
 
 ```
-[Mera]: Get gravity data: 2026-08-03T10:32:59.523
-
+[Mera]: Get gravity data: 2026-08-05T15:57:43.464
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4) = (:epot, :ax, :ay, :az) 
 
-center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+center: [0.5, 0.5, 0.5] 
+
+==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
 xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
@@ -1061,8 +1063,9 @@ Creating Table from 650848 cells with max 4 threads...
    Using parallel processing with 4 threads
    Creating IndexedTable with 8 columns...
 ✓ Table created in 0.023 seconds
+Memory used for data table :39.725494384765625
 
-Memory used for data table :39.725494384765625 MB
+ MB
 -------------------------------------------------------
 ```
 

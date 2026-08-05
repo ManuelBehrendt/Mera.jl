@@ -117,21 +117,19 @@ info = getinfo(400, "$MERA_EXAMPLES/RAMSES/manu_sim_sf_L14");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:30:54.983
+[Mera]: 2026-08-05T15:58:06.355
 
 
 Code: RAMSES
-
-
 output [400] summary:
-mtime: 2018-09-05T09:51:55
+mtime: 
+
+2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 2048
-
-
 ndim: 3
 cosmological:  false
 -------------------------------------------------------
@@ -203,7 +201,7 @@ clumps = getclumps(info);
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:30:57.444
+[Mera]: Get clump data: 2026-08-05T15:58:08.661
 
 
 domain:
@@ -259,7 +257,7 @@ clumps = getclumps(info, vars=[ :index, :lev, :parent, :ncell, :peak_x, :peak_y,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:30:58.929
+[Mera]: Get clump data: 2026-08-05T15:58:10.270
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -282,7 +280,7 @@ clumps = getclumps(info, [ :index, :lev, :parent, :ncell, :peak_x, :peak_y, :pea
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:30:59.110
+[Mera]: Get clump data: 2026-08-05T15:58:10.464
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -291,7 +289,9 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Read 7 colums: 
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z]
-Memory used for data table :35.9912109375 KB
+Memory used for data table :
+
+35.9912109375 KB
 -------------------------------------------------------
 ```
 
@@ -338,7 +338,7 @@ clumps = getclumps(info, vars=[  :index, :lev, :parent, :ncell, :peak_x, :peak_y
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:30:59.318
+[Mera]: Get clump data: 2026-08-05T15:58:10.724
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -413,7 +413,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:30:59.743
+[Mera]: Get clump data: 2026-08-05T15:58:11.129
 
 domain:
 
@@ -460,7 +460,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:31:00.464
+[Mera]: Get clump data: 2026-08-05T15:58:11.784
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -497,7 +497,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:31:00.531
+[Mera]: Get clump data: 2026-08-05T15:58:11.849
 
 domain:
 xmin::xmax: 0.0416667 :: 0.4583333  	==> 2.0 [kpc] :: 22.0 [kpc]
@@ -622,21 +622,21 @@ lambda_J	= 3.085677581282e21
 M_J	= 1.9885499720830952e42
 t_ff	= 4.70554946422349e14
 alpha_vir	= 1.0
-delta_rho	= 0.0
-a_mag	= 0.0
-v_esc	= 0.0
-ax	= 2.1639186167e-314
-ay	= 2.389515461e-314
-az	= 1.6e-322
-epot	= 2.251284802e-314
-a_magnitude	= 8.289046e-317
-escape_speed	= 0.0
-gravitational_redshift	= 0.0
-gravitational_energy_density	= 0.0
-gravitational_binding_energy	= 2.767054594e-314
-total_binding_energy	= 2.389515532e-314
+delta_rho	= 1.0
+a_mag	= 1.3935734353956443e-8
+v_esc	= 6.557528732282063e6
+ax	= 1.3935734353956443e-8
+ay	= 1.3935734353956443e-8
+az	= 1.3935734353956443e-8
+epot	= 4.30011830747048e13
+a_magnitude	= 1.3935734353956443e-8
+escape_speed	= 6.557528732282063e6
+gravitational_redshift	= 1.0
+gravitational_energy_density	= 2.910484414358466e-9
+gravitational_binding_energy	= 2.910484414358466e-9
+total_binding_energy	= 8.55100014027443e55
 specific_gravitational_energy	= 4.30011830747048e13
-gravitational_work	= 2.251284834e-314
+gravitational_work	= 8.551000140274429e55
 jeans_length_gravity	= 3.085677581282e21
 jeans_mass_gravity	= 1.9885499720830952e42
 jeansmass	= 1.9885499720830952e42
@@ -644,8 +644,8 @@ freefall_time_gravity	= 4.70554946422349e14
 ekin	= 8.551000140274429e55
 etherm	= 8.551000140274429e55
 virial_parameter_local	= 1.0
-Fg	= 2.2512848654e-314
-poisson_source	= 0.0
+Fg	= 9.432237612943517e-31
+poisson_source	= 4.5162639280564735e-30
 ar_cylinder	= 1.3935734353956443e-8
 aϕ_cylinder	= 1.3935734353956443e-8
 ar_sphere	= 1.3935734353956443e-8
@@ -672,7 +672,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:31:00.623
+[Mera]: Get clump data: 2026-08-05T15:58:11.948
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -715,34 +715,8 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:31:00.706
+[Mera]: Get clump data: 2026-08-05T15:58:12.026
 
-center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
-
-
-domain:
-xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
-zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
-
-Read 12 colums: 
-[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :61.58203125 KB
--------------------------------------------------------
-```
-
-
-```julia
-clumps = getclumps(info, 
-                    xrange=[-16.,16.], 
-                    yrange=[-16.,16.], 
-                    zrange=[-2.,2.], 
-                    center=[:bc], 
-                    range_unit=:kpc); 
-```
-
-```
-[Mera]: Get clump data: 2026-08-03T10:31:00.861
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
@@ -760,6 +734,32 @@ Memory used for data table :
 ```
 
 
+```julia
+clumps = getclumps(info, 
+                    xrange=[-16.,16.], 
+                    yrange=[-16.,16.], 
+                    zrange=[-2.,2.], 
+                    center=[:bc], 
+                    range_unit=:kpc); 
+```
+
+```
+[Mera]: Get clump data: 2026-08-05T15:58:12.178
+
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+
+domain:
+xmin::xmax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+ymin::ymax: 0.1666667 :: 0.8333333  	==> 8.0 [kpc] :: 40.0 [kpc]
+zmin::zmax: 0.4583333 :: 0.5416667  	==> 22.0 [kpc] :: 26.0 [kpc]
+
+Read 12 colums: 
+[:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
+Memory used for data table :61.58203125 KB
+-------------------------------------------------------
+```
+
+
 **Selective Dimension Centering:** Apply box center notation to specific dimensions while maintaining explicit coordinates for others. This example centers x and z dimensions while fixing y at 24 kpc:
 
 ```julia
@@ -772,7 +772,7 @@ clumps = getclumps(info,
 ```
 
 ```
-[Mera]: Get clump data: 2026-08-03T10:31:00.939
+[Mera]: Get clump data: 2026-08-05T15:58:12.256
 
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
