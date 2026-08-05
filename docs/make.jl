@@ -38,7 +38,9 @@ makedocs(modules = [Mera],
 		              "Getting Started"        => Any[
 		                  "First Steps"                    => "00_multi_FirstSteps.md",
 		                  "Coming from Other Tools"        => "switching_to_mera.md",
-		                  "Julia for Simulation Analysis"  => "julia_for_simulation_analysis.md" ],
+		                  "Julia for Simulation Analysis"  => "julia_for_simulation_analysis.md",
+		                  # first-hour errors, with the message Mera actually prints
+		                  "Troubleshooting"                => "troubleshooting.md" ],
 
                       # --- Tutorials (API moved to its own top-level section, below) ---
                       "Core Workflows" => Any[

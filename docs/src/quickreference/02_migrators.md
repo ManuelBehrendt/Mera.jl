@@ -1547,20 +1547,25 @@ density_spread = (mean(density), var(density))
 
 **N-body Particle Analysis (Catalog Processing Patterns):**
 ```julia
-# Load particle data (similar to reading star catalogs)
-particles = getparticles(info, [:mass, :pos, :vel])
+using Statistics
 
-# Coordinate transformations (IDL astronomy patterns)
-positions = particles.data[[:x, :y, :z]]     # Extract positions
-radial_distance = sqrt.(sum(positions.^2, dims=2))  # Distance from center
+# Load particle data (similar to reading star catalogs).
+# Ask for the stored columns you need — :mass, :vx, :vy, :vz, :birth, :family, …
+parts = getparticles(info, [:mass, :vx, :vy, :vz])
 
-# Particle selection (IDL where() patterns)  
-massive_particles = findall(particles.data.mass .> 1e10)  # High-mass selection
-central_particles = findall(radial_distance .< 50.0)      # Spatial selection
+# Quantities come from getvar, in whatever unit you name — no manual arithmetic on
+# the table. Derived quantities such as radii and speeds are computed on request.
+m = getvar(parts, :mass, :Msol)                            # masses in M_sun
+r = getvar(parts, :r_cylinder, :kpc, center=[:bc])         # cylindrical radius in kpc
+v = getvar(parts, :v, :km_s)                               # speed in km/s
 
-# Analysis workflows (IDL statistical routines)
-mass_function = fit(Histogram, log10.(particles.data.mass), nbins=50)
-velocity_dispersion = std(particles.data[central_particles, :vel])
+# Selection is a plain boolean array (the IDL `where` pattern)
+central = r .< 10.0
+massive = m .> 1e3
+
+# Analysis on the selection
+velocity_dispersion = std(v[central])                      # km/s
+total_central_mass  = sum(m[central])                      # M_sun
 ```
 
 #### Performance Considerations for Large Datasets
