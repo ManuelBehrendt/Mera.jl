@@ -45,7 +45,14 @@ rather than core work, because the analysis layer is code-blind, so
 
     Expect ~10 s on the first call: Julia compiles as it goes, and later calls are instant.
 
-    **[→ Get Started](00_multi_FirstSteps.md)** · **[→ Coming from Other Tools](switching_to_mera.md)**
+    **Keep going without a snapshot:** [Clump Finding](clumpfind_synthetic.md) scores a real
+    analysis against known ground truth, and [Statistics](statistics.md) and
+    [Uniform Grid](covering_grid.md) also run on synthetic data.
+
+    **With a snapshot of your own:** [Get Started](00_multi_FirstSteps.md) ·
+    [Coming from Other Tools](switching_to_mera.md). Both load a simulation output — set
+    `ENV["MERA_EXAMPLES"]` to your simulation folder first, or grab one of the public RAMSES
+    samples linked from [Cosmological Runs](09_multi_Cosmology.md).
 
 !!! tip "Working with your own simulation"
     Point `getinfo` at an output folder and continue exactly as above:
@@ -98,6 +105,18 @@ using Pkg
 Pkg.add("Mera")
 using Mera
 ```
+
+Mera itself draws nothing. The tutorials plot with **CairoMakie**, and a few of the older
+projection pages use **PyPlot**; neither is a Mera dependency, so add whichever you want
+before running a page that plots:
+
+```julia
+Pkg.add("CairoMakie")   # what most tutorial figures use
+Pkg.add("PyPlot")       # only the projection pages that import it
+```
+
+Mera's Makie support ships as a package extension: it activates by itself once a Makie
+backend such as CairoMakie is loaded, with nothing further to install.
 
 **Requirements**: Julia 1.10 or newer — **1.12+ recommended** — and 8GB+ RAM  
 **Platforms**: macOS (including Apple Silicon), Linux, Windows  
