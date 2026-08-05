@@ -153,6 +153,12 @@ function getinfo_gadget(output::Int, path::String; unit_length::Real=1.0, unit_d
         info.levelmin = 1; info.levelmax = 1               # particle code: no grid levels
         info.boxlen = boxlen == 0 ? 1.0 : boxlen
         info.time = time
+        # GADGET/AREPO HDF5 headers carry no adiabatic index, so supply the monatomic ideal-gas
+        # value these codes assume — the same default the PLUTO, Chombo and Athena++ readers use.
+        # Without this the field stays uninitialised: it held subnormals near 1e-314 that differed
+        # between processes, and `getvar_hydro` uses info.gamma for :cs, so it was one routing
+        # change away from silently wrong sound speeds.
+        info.gamma = 5/3
         # cosmological? — real cosmological runs carry ΩΛ > 0 and use Time as the scale factor a;
         # idealised/non-cosmological AREPO runs set Ω = 0 and use Time as a physical time (a = 1).
         # ΩΛ = 0 cosmology (Einstein–de-Sitter) is caught by Time ≡ 1/(1+z) self-consistency.
