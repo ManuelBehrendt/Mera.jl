@@ -34,7 +34,7 @@ savemap(p, "maps.jld2")     # all maps + units + geometry + provenance
 p2 = loadmap("maps.jld2")   # → AMRMapsType, ready to plot/re-project
 ```
 
-JLD2 is a subset of the HDF5 format, so these files also open in `h5py` / other HDF5 readers.
+JLD2 files use the HDF5 container, but they store the Julia object rather than plain arrays and are LZ4-compressed by default, so `h5py` cannot reconstruct a map from one. Reload with Mera; to hand a map to Python, write the array out yourself or use `export_vtk`.
 
 ## Camera kinematics (internal helpers)
 

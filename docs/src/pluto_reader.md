@@ -83,7 +83,7 @@ mv = getmovie(path, :rho; time_unit = :standard)           # 5. movie of the bla
 savemovie(mv, "pluto_blast.gif"; tags = :output)
 
 P = pdf(gas, :rho)                                         # 6. density PDF
-savemap(p, "pluto_rho.jld2")                               # 7. persist a map (opens in h5py too)
+savemap(p, "pluto_rho.jld2")                               # 7. persist a map (Mera-native, reload with loadmap)
 ```
 
 ![The PLUTO Sedov blast evolving over its 6 outputs — getmovie/savemovie work on PLUTO data exactly as on RAMSES.](assets/pluto/pluto_blast.gif)

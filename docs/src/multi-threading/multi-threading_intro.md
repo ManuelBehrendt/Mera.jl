@@ -269,7 +269,8 @@ Total:     [████████████──]  Total:       [███
 Use `@time` to monitor GC impact:
 ```julia
 @time result = analyze_large_dataset(data)
-# Output: 2.345 seconds (1.23 M allocations: 456.7 MiB, 15.2% gc time)
+# illustrative shape of the output, not a measurement:
+# 2.345 seconds (1.23 M allocations: 456.7 MiB, 15.2% gc time)
 ```
 
 The **15.2% gc time** indicates that over 15% of execution time was spent in garbage collection. Values above 10-20% suggest optimization opportunities.
@@ -1223,21 +1224,21 @@ benchmark_projection(gas)
 benchmark_export_vtk(gas, "./benchmark_temp")
 ```
 
-**Example Output:**
-```
-Benchmarking gethydro with different max_threads:
-  max_threads=1 → 3.245 seconds
-  max_threads=2 → 1.823 seconds
-  max_threads=4 → 1.156 seconds
-  max_threads=8 → 1.089 seconds
-  max_threads=16 → 1.092 seconds
+**What the measurement actually looks like.** These are real numbers from
+[Projection benchmarks](../benchmarks/Projection/multi_projections.md) — Apple M2 Pro
+(12 cores), Julia 1.12.3, `mw_L10` output 300 hydro (28.3M cells):
 
-Benchmarking projection with different max_threads:
-  max_threads=1 → 2.134 seconds
-  max_threads=2 → 1.087 seconds
-  max_threads=4 → 0.589 seconds  ← Sweet spot
-  max_threads=8 → 0.591 seconds
-```
+| Threads | single-var `:sd` (median) | multi-var, 10 vars (median) |
+|---:|---:|---:|
+| 1 | 1.56 s | 21.0 s |
+| 2 | 1.62 s | 13.3 s |
+| 4 | 1.58 s | 13.3 s |
+| 8 | 1.62 s | 12.9 s |
+
+Note what this does **not** show: a single light projection is serial-fraction dominated and
+stays flat at every thread count. Threads pay off when there is enough independent work —
+here the ten-variable projection gains about 1.6× and then saturates. Expect that shape
+rather than linear scaling, and measure your own case before provisioning threads.
 
 ### 10.2 Memory Usage Monitoring
 
