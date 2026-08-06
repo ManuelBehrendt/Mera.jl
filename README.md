@@ -53,18 +53,24 @@ projection(gas, :sd, :Msol_pc2)   # a 128x128 surface-density map
 Every verb in this README works on `gas` exactly as it does on a real snapshot. First call
 takes ~10 s while Julia compiles; later calls are instant.
 
-## First look: a one-call dashboard
+## First look
 
-With a simulation on disk, one call gives you the overview:
+With a simulation on disk, one call summarises it — box and refinement levels, time and
+redshift, particle and cell counts, component masses, SFR, and the density and temperature
+ranges — as a text census:
 
 ```julia
 using Mera
-quicklook(80; path="/path/to/simulation")
+q = quicklook(80; path="/path/to/simulation")
 ```
 
-*One call produces a first-look dashboard: mass-weighted gas Σ (face-on + two edge-on views), stellar
-and dark-matter surface density, the ρ–T phase diagram, and a census of cell/particle counts,
-component masses and SFR.*
+Add a Makie backend to turn that into the dashboard: mass-weighted gas Σ (face-on plus two
+edge-on views), stellar and dark-matter surface density, and the ρ–T phase diagram.
+
+```julia
+using CairoMakie
+fig = quicklookplot(q)
+```
 
 ## 30-second quickstart
 
