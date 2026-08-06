@@ -8,7 +8,7 @@ This guide shows how to benchmark the reading speed of compressed MERA files usi
 
 **Two robust benefits (measured, fair comparison — same data both sides):**
 
-- **Much faster reads.** Loading hydro + particles + gravity of one output: **~2 s from the MERA file vs ~86 s from RAMSES (single thread) — roughly 30–40× faster** — even on a local NVMe SSD, and even versus multi-threaded RAMSES reading (~71 s, still ~30×). See the table below.
+- **Much faster reads.** Loading hydro + particles + gravity of one output: **~1.2–1.4 s from the MERA file vs ~49 s from RAMSES (single thread) — roughly 30–40× faster** — even on a local NVMe SSD, and even versus multi-threaded RAMSES reading (~71 s, still ~30×). See the table below.
 - **Smaller on disk.** A complete MERA file is **~62% smaller / ~2.6×** than the RAMSES output it was made from.
 - **Lower peak memory.** MERA-file reading peaked **~35% below** single-threaded RAMSES in the reference run (8.0 vs 13.0 GB), avoiding the per-file parse buffers.
 
@@ -99,13 +99,12 @@ All numbers below are a **fair, like-for-like** comparison: the MERA file and th
 
 ### Read speed
 
-| Source / threads        | Warm read | First read (cold + JIT) | Peak RSS |
-|-------------------------|-----------|-------------------------|----------|
-| **MERA `.jld2`, 1 thread** | **~2.4 s** | ~17 s | 8.0 GB  |
-| RAMSES, 1 thread        | ~86 s     | ~96 s                   | 13.0 GB |
-| RAMSES, 8 threads       | ~71 s     | ~75 s                   | 11.1 GB |
+Timings live in one place — [Reference results — laptop (2026-07)](#Reference-results-laptop-(2026-07))
+below — measured over 10 repetitions with the machine, thread count and storage stated.
+Summarising it: the converted file re-loads **warm in ~1.2–1.4 s** against **49.2 s** for the
+same snapshot read from the raw RAMSES output, and **~11.5 s cold** against the same 49.2 s.
 
-**Reading the MERA file is ~30–40× faster than RAMSES** (warm: ~2.4 s vs ~86 s single-thread ≈ 36×; vs ~71 s with 8 threads ≈ 30×) — on a fast local SSD (run-to-run variance ~30–43×). The gap is intrinsic: `loaddata` deserializes a ready-made table, whereas RAMSES reading re-parses ~1,900 Fortran files and rebuilds the AMR tree every time. On networked/parallel server filesystems the gap widens further (per-file open latency adds to the RAMSES side — see [Server IO](../IO/IOperformance.md) and [Parallel RAMSES reading](../RAMSES_reading/ramses_reading.md)).
+**Reading the MERA file is ~35–40× faster warm and ~4× faster cold** (warm: ~1.2–1.4 s vs 49.2 s ≈ 35–40×; cold: ~11.5 s vs the same 49.2 s ≈ 4×), measured on an external Thunderbolt SSD. The gap is intrinsic: `loaddata` deserializes a ready-made table, whereas RAMSES reading re-parses ~1,900 Fortran files and rebuilds the AMR tree every time. On networked/parallel server filesystems the gap widens further (per-file open latency adds to the RAMSES side — see [Server IO](../IO/IOperformance.md) and [Parallel RAMSES reading](../RAMSES_reading/ramses_reading.md)).
 
 ### Storage reduction
 
@@ -119,12 +118,12 @@ Reduction `= 100 × (1 − MERA/RAMSES)` (LZ4-compressed). Holds independently o
 
 ### Peak memory
 
-MERA-file reading peaked at **8.0 GB vs 13.0 GB** for single-threaded RAMSES (~35% lower) for the same in-memory result — RAMSES reading needs additional intermediate per-file parse buffers.
+MERA-file reading peaked at **8.0 GB vs 13.0 GB** for single-threaded RAMSES (~35% lower) for the same in-memory result — RAMSES reading needs additional intermediate per-file parse buffers. (Peak-RSS figures from an earlier single-threaded run; the timing reference below was measured separately, so treat these as indicative of the ratio rather than paired with those times.)
 
 !!! note "Reproducing these numbers"
     Produced by `read_benchmark.jl` + `run_read_benchmark.sh` (in this guide's `downloads/` folder). The script does `REPEATS` full reads and reports the **first** read (cold + first-call JIT compilation) and the **median warm** read separately, measures process peak RSS via `Sys.maxrss()`, and runs each scenario in a fresh process. A **complete** MERA file (hydro + particles + gravity) is required for a fair comparison — generate one with `savedata` if you only have a partial file. Runs are warm-cache by default; pass `COLD=1` for cold-cache reads.
 
-> **Summary for choosing the MERA format:** a large win for **storage** (~62% / 2.6× here) and for **read speed** — ~30–40× faster than RAMSES even on a fast local NVMe SSD, growing further on servers/networked or slow storage with many files — plus ~35% lower peak memory. Reproduce the table above on your own target storage with the script in this guide.
+> **Summary for choosing the MERA format:** a large win for **storage** (~62% / 2.6× here) and for **read speed** — ~35–40× faster warm than reading the raw RAMSES output, growing further on servers/networked or slow storage with many files — plus ~35% lower peak memory. Reproduce the table above on your own target storage with the script in this guide.
 
 
 ## Reference results — laptop (2026-07)

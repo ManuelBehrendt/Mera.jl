@@ -25,19 +25,23 @@ q = quicklook(80; path="/sim/cosmo")   # the cosmological zoom shown below
 
 ```text
 ┌─ Mera quicklook ── output 80 (RAMSES) ───────────────
-│ box        : 62140.0 kpc     levels 6–16  (finest 948.1 pc)
+│ box        : 62140.0 kpc      levels 6–16  (finest 948.1 pc)
 │ grid       : ndim 3 · ncpu 16 · nvarh 6
-│ time       : -1574.0 Myr   z = 0.1426
+│ time       : 11930.0 Myr   z = 0.1426
 │ particles  : 1090895 total  —  stars 31990 · DM 1058905
-│ read       : 1058982 cells  ⚠ APPROXIMATE (coarse levels ≤ 9 of 16)
-│ gas mass   : 2.21e15 M⊙  (approx.)
+│ read       : 1749455 cells  (full resolution)
+│ gas mass   : 2.21e15 M⊙
+│ nH range   : 4.221e-9 … 3.655 cm⁻³
+│ T  range   : 45.13 … 3.933e7 K
 │ star mass  : 1.22e11 M⊙        DM mass : 1.134e16 M⊙
 │ current SFR: 7.254 (10 Myr) · 4.381 (100 Myr) M⊙/yr
-│ nH range   : 4.221e-9 … 5.798e-4 cm⁻³
-│ T  range   : 45.13 … 3.933e7 K
-│ figures    : .maps (Σ x,y,z + stars,dm)  ·  .phase (ρ–T)  ·  .budget (mass + SFR)
-└─ 17.4 s ──────────────────────────────────
+└─ 25.93 s ──────────────────────────────────
 ```
+
+For a cosmological run the reported time is the **age of the universe** at the snapshot —
+11.93 Gyr at ``z = 0.1426`` here — not RAMSES' raw conformal `info.time`, which is negative
+and not an age. See [Cosmological Runs](09_multi_Cosmology.md) for the conversion and for
+working in comoving units.
 
 ![The quicklook dashboard for a **cosmological zoom**: gas surface density along z (face-on) and x, y
 (edge-on); face-on stellar and dark-matter surface density; the ρ–T phase diagram; and a text census of
