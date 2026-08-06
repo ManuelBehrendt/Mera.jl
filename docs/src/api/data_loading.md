@@ -33,6 +33,7 @@ gethydro_pluto
 getparticles_pluto
 getinfo_chombo
 gethydro_chombo
+getgroups_gadget
 ```
 
 ## Related

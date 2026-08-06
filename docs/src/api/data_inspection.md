@@ -1,29 +1,61 @@
 # Data Inspection API Reference
 
-Functions for inspecting and exploring simulation data.
+Docstrings for finding out what a simulation contains before you load it, and what a loaded
+object contains afterwards. The narrative guide is
+[Data Inspection](../01_hydro_First_Inspection.md).
 
-## Core Inspection Functions
+## Before loading
 
-- [`getinfo`](@ref) - Get basic simulation information and metadata
-- [`viewfields`](@ref) - Display available data fields and variables
-- [`getvar`](@ref) - Extract specific variables from datasets
-- [`infodata`](@ref) - Show detailed information about loaded data
+[`checksimulations`](@ref) answers "what runs are on this disk?" and
+[`checkoutputs`](@ref) answers "which outputs does this run have?" — both worth reaching for
+before a path error rather than after one.
 
-## Data Overview Functions
+```@docs; canonical=false
+getinfo
+checksimulations
+checkoutputs
+```
 
-- [`viewallfields`](@ref) - View all available fields across data types
-- [`dataoverview`](@ref) - Get comprehensive data overview
-- [`amroverview`](@ref) - Overview of AMR structure
-- [`overviewplot`](@ref) - Visual statistics overview (hydro/gravity AMR + particles); needs a Makie backend
-- [`storageoverview`](@ref) - Storage and memory information
-- [`checkoutputs`](@ref) - Check available simulation outputs
+## Inspecting an object
 
-## Data Types
+`viewfields` works on any Mera object and is the quickest way to see what you actually have —
+including [`InfoType`](@ref) sub-structures such as `info.scale` and `info.fnames`.
 
-- [`InfoType`](@ref) - Basic simulation information structure
-- [`HydroDataType`](@ref) - Hydrodynamic data container
-- [`PartDataType`](@ref) - Particle data container  
-- [`ClumpDataType`](@ref) - Clump/halo data container
+```@docs; canonical=false
+viewfields
+viewallfields
+namelist
+```
+
+## Overviews
+
+```@docs; canonical=false
+dataoverview
+amroverview
+storageoverview
+overviewplot
+```
+
+`overviewplot` needs a Makie backend loaded (`Pkg.add("CairoMakie")`); the others print.
+
+## Utilities
+
+```@docs; canonical=false
+viewmodule
+humanize
+usedmemory
+createpath
+```
+
+## Data types
+
+[`InfoType`](@ref) · [`HydroDataType`](@ref) · [`PartDataType`](@ref) ·
+[`GravDataType`](@ref) · [`ClumpDataType`](@ref) · [`RtDataType`](@ref)
+
+## Related
+
+Provenance — which Mera version, output and simulation code produced a result — is
+[`provenance`](@ref), documented on the [Provenance](../provenance.md) page.
 
 ---
-*For complete function documentation, see the [Complete API Reference](../api.md).*
+*Every docstring in the package is also on the [Complete API Reference](../api.md).*

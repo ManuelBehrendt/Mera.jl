@@ -51,6 +51,13 @@ derived; [`getvar`](@ref) adds the thermodynamic quantities. All returned in **p
 | `MagneticField` | `:bx`, `:by`, `:bz` | MHD field; comoving→physical `a⁻²` and cgs→Gauss baked in — `getvar(:bx, :muG)` / `:Gauss` / `:nG` |
 | `Potential` | `:gpot` | gravitational potential (peculiar, `a⁻¹`); present on all particle types |
 | `NeutralHydrogenAbundance` | `:nh` | neutral-hydrogen fraction (dimensionless) |
+
+!!! tip "Stellar ages"
+    Star particles carry `GFM_StellarFormationTime` as a scale factor, not an age.
+    [`age_from_aform`](@ref) converts it: `age_from_aform(info, aform; unit=:Gyr)`. It returns
+    `NaN` for the negative `aform` values that mark **wind particles** in IllustrisTNG, so
+    they drop out of statistics instead of becoming spurious ages. (The RAMSES equivalent,
+    starting from a `:birth` time, is [`stellar_age`](@ref).)
 | `Machnumber` | `:mach` | cell Mach number (dimensionless) |
 | *(derived)* | `:T`, `:p`, `:cs` | `T = (γ-1)·u·μ·m_H/k_B`; μ from `:ne` (neutral-primordial fallback if absent) |
 

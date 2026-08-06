@@ -33,11 +33,21 @@ average_mweighted
 wstat
 ```
 
-## Time
+## Time & stellar ages
 
 ```@docs; canonical=false
 gettime
 printtime
+```
+
+For star particles, [`stellar_age`](@ref) converts a RAMSES `:birth` time and
+[`age_from_aform`](@ref) converts a GADGET/AREPO/TNG `GFM_StellarFormationTime`. The latter
+preserves the negative `aform` that marks TNG wind particles as `NaN` rather than silently
+turning them into ages.
+
+```@docs; canonical=false
+stellar_age
+age_from_aform
 ```
 
 ## Related
