@@ -18,17 +18,6 @@ massfunctionplot
 
 `massfunctionplot` needs a Makie backend loaded (`Pkg.add("CairoMakie")`).
 
-## Bubbles
-
-A superbubble grown from a seed position, and the same measurement followed across a series
-of outputs.
-
-```@docs; canonical=false
-bubble
-bubbletimeseries
-BubbleResult
-```
-
 ## Validators
 
 A candidate clump is kept only if it passes every validator — they combine as an AND, and
