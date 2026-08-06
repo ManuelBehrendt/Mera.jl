@@ -139,8 +139,6 @@ clumps    = getclumps(info);
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -151,12 +149,9 @@ Mera v1.8.0
 
 [Mera]: 2026-08-06T10:34:42.146
 
-
 Code: RAMSES
 output [400] summary:
-mtime: 
-
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -169,9 +164,7 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -181,7 +174,6 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
-
 - Ndm:      2.547000e+03 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
@@ -199,20 +191,15 @@ patchfile:        true
 
 [Mera]: Get hydro data: 2026-08-06T10:34:44.690
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4) = (:rho, :vx, :vy, :vz) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
@@ -221,25 +208,18 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 849332 cells, 4 variables
 Creating Table from 849332 cells with max 4 threads...
-
   Threading: 4 threads for 8 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 8 columns...
 ✓ Table created in 0.974 seconds
-
-Memory used for data table :51.839996337890625
-
- MB
+Memory used for data table :51.839996337890625 MB
 -------------------------------------------------------
 
 [Mera]: Get particle data: 2026-08-06T10:35:08.090
-
 
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
@@ -252,16 +232,12 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Processing 2048 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 5.089390e+05 particles
-Memory used for data table :
-
-31.064148902893066 MB
+Memory used for data table :31.064148902893066 MB
 -------------------------------------------------------
 
 [Mera]: Get clump data: 2026-08-06T10:35:10.082
-
 
 domain:
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
@@ -269,11 +245,8 @@ ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 Read 12 colums: 
-
 [:index, :lev, :parent, :ncell, :peak_x, :peak_y, :peak_z, Symbol("rho-"), Symbol("rho+"), :rho_av, :mass_cl, :relevance]
-Memory used for data table :
-
-61.58203125 KB
+Memory used for data table :61.58203125 KB
 -------------------------------------------------------
 ```
 
@@ -297,7 +270,6 @@ viewfields(info.scale)
 
 ```
 [Mera]: Fields to scale from user/code units to selected units
-
 =======================================================================
 Mpc	= 0.0010000000000006482
 kpc	= 1.0000000000006481
@@ -465,15 +437,9 @@ println( "Clumps Mtot:    ", msum(clumps)    * info.scale.Msol, " Msol" )
 ```
 
 ```
-Gas Mtot:       2.6703951073850353e10
-
- Msol
-Particles Mtot: 5.804426008528429e9
-
- Msol
-Clumps Mtot:    1.3743280681841675e10
-
- Msol
+Gas Mtot:       2.6703951073850353e10 Msol
+Particles Mtot: 5.804426008528429e9 Msol
+Clumps Mtot:    1.3743280681841675e10 Msol
 ```
 
 
@@ -520,9 +486,7 @@ println( "Clumps COM:    ", center_of_mass(clumps)    .* info.scale.kpc, " kpc" 
 ```
 
 ```
-Gas COM:       (
-
-23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Gas COM:       (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -537,9 +501,7 @@ println( "Clumps COM:    ", center_of_mass(clumps, :kpc)    , " kpc" );
 ```
 
 ```
-Gas COM:       (
-
-23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Gas COM:       (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -554,9 +516,7 @@ println( "Clumps COM:    ", com(clumps, :kpc)    , " kpc" );
 ```
 
 ```
-Gas COM:       (
-
-23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Gas COM:       (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -588,12 +548,8 @@ println( "Joint COM (Particles + Gas): ", center_of_mass([particles,gas], :kpc) 
 ```
 
 ```
-Joint COM (Gas + Particles): (
-
-23.192544105902943, 23.83882923383144, 23.9777721805675) kpc
-Joint COM (Particles + Gas): (
-
-23.19254410544675, 23.838829233362418, 23.977772180095187) kpc
+Joint COM (Gas + Particles): (23.192544105902943, 23.83882923383144, 23.9777721805675) kpc
+Joint COM (Particles + Gas): (23.19254410544675, 23.838829233362418, 23.977772180095187) kpc
 ```
 
 
@@ -605,12 +561,8 @@ println( "Joint COM (Particles + Gas): ", com([particles,gas], :kpc) , " kpc" )
 ```
 
 ```
-Joint COM (Gas + Particles): (
-
-23.192544105902943, 23.83882923383144, 23.9777721805675) kpc
-Joint COM (Particles + Gas): (
-
-23.19254410544675, 23.838829233362418, 23.977772180095187) kpc
+Joint COM (Gas + Particles): (23.192544105902943, 23.83882923383144, 23.9777721805675) kpc
+Joint COM (Particles + Gas): (23.19254410544675, 23.838829233362418, 23.977772180095187) kpc
 ```
 
 
@@ -684,9 +636,7 @@ println( "Particles: ", bulk_velocity(particles, :km_s, weighting=:no) , " km/s"
 ```
 
 ```
-Gas:       (
-
-1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
+Gas:       (1.5248458901822848, -8.770913864354457, -0.5037635305158429) km/s
 Particles: (-11.594477384589647, -18.38859118719373, -0.3097746295267971) km/s
 ```
 
@@ -1105,7 +1055,6 @@ related to a given center:
      -specific angular momentum-
 :h, :hx, :hy, :hz
 
-
      -angular momentum-
 :l, :lx, :ly, :lz (Cartesian components)
 :lr_cylinder, :lϕ_cylinder (cylindrical components)
@@ -1385,9 +1334,7 @@ propertynames(stats_gas)
 ```
 
 ```
-Mera.
-
-WStatType
+Mera.WStatType
 Mera.WStatType
 Mera.WStatType
 

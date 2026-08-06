@@ -66,9 +66,7 @@ import Pkg; Pkg.activate("../.")
 ```
 
 ```
-  Activating 
-
-project at `/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1`
+  Activating project at `/Volumes/FASTStorage/Simulations/Notebooks/Mera-Docs/version_1.1`
 ```
 
 
@@ -87,8 +85,6 @@ particles = loaddata(600, path, :particles); # load full box
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -99,11 +95,8 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T14:08:58.257
 
-
 Use datatype: hydro
-Code: 
-
-RAMSES
+Code: RAMSES
 output [600] summary:
 mtime: 2024-09-08T15:29:04
 ctime: 2024-09-10T11:23:16.230
@@ -118,9 +111,7 @@ amr:           true
 level(s): 6 - 13 --> cellsize(s): 750.0 [pc] - 5.86 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  7
-
-  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :var6, :var7)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -129,16 +120,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   1.353087e+06 
-
 particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: (
-
-"&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&HYDRO_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&INIT_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: true
@@ -148,18 +136,14 @@ patchfile:        true
 
 [Mera]: 2026-08-03T14:09:01.709
 
-
 Open Mera-file output_00600.jld2:
 
 domain:
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
-Memory used for data table :
-
-95.8142614364624 MB
+Memory used for data table :95.8142614364624 MB
 -------------------------------------------------------
 ```
 
@@ -184,17 +168,12 @@ export_vtk(
 ```
 [Mera]: 2026-08-03T14:09:05.542
 
-
 Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
-
 Extracting scalar data...
 Writing particle VTU file...
-
-  wrote 0600_galaxy.vtu
-
- (Size: 73.55 MB)
+  wrote 0600_galaxy.vtu (Size: 73.55 MB)
 Memory cleaned
 
 === Export Summary ===
@@ -295,19 +274,14 @@ export_vtk(
 ```
 [Mera]: 2026-08-03T14:09:08.706
 
-
 Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
-
 Extracting scalar data...
 Extracting vector data...
-
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu
-
- (Size: 94.2 MB)
+  wrote 0600_galaxy.vtu (Size: 94.2 MB)
 Memory cleaned
 
 === Export Summary ===
@@ -359,15 +333,11 @@ export_vtk(
 Available Threads: 4
 Total particles in dataset: 1353087
 Extracting particle positions...
-
 Extracting scalar data...
 Extracting vector data...
-
 Vector matrix dimensions: (3, 1353087) (should be 3×1353087)
 Writing particle VTU file...
-  wrote 0600_galaxy.vtu
-
- (Size: 104.52 MB)
+  wrote 0600_galaxy.vtu (Size: 104.52 MB)
 Memory cleaned
 
 === Export Summary ===

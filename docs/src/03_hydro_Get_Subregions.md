@@ -83,8 +83,6 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -93,10 +91,7 @@ println("box size     : ", round(gas.boxlen * kpc, sigdigits=4), " kpc, centre [
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
 cells loaded : 18966620
-
-
 box size     : 48.0 kpc, centre [:bc] at (24, 24, 24) kpc
 ```
 
@@ -241,17 +236,13 @@ fig
 ```
 
 ```
-returned type       : HydroDataType
-
-  (same as gas — fully chainable)
+returned type       : HydroDataType  (same as gas — fully chainable)
 cells selected      : 11079571  of 18966620
-gas mass, r < 10 kpc: 
-
-1.821e10 Msol
+gas mass, r < 10 kpc: 1.821e10 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_8_1.png)
 
 
 The three printed lines are the anatomy of every extraction on this page: a
@@ -392,7 +383,6 @@ println("  split        (:fraction)    : ", round(m_exact, sigdigits=6), " Msol 
 
 ```
 gas mass inside r = 10 kpc:
-
   whole cells  (no :fraction) : 1.19933e10 Msol   +0.332 % vs split
   centre test  (split=false)  : 1.19536e10 Msol   -0.00125 % vs split
   split        (:fraction)    : 1.19537e10 Msol   reference
@@ -434,9 +424,7 @@ println("split-cell volume, nsub = 32  : ", round(v32, sigdigits=6), " kpc³   (
 ```
 
 ```
-(4/3) π R³                    : 4188.79
-
- kpc³
+(4/3) π R³                    : 4188.79 kpc³
 split-cell volume, nsub = 8   : 4188.6 kpc³   (-0.0046 %)
 split-cell volume, nsub = 32  : 4188.77 kpc³   (-0.00036 %)
 ```
@@ -553,7 +541,6 @@ println("  split       : ", round(mc_e, sigdigits=5), " Msol   reference   (",
 
 ```
 gas mass inside r = 1.5 kpc, 8 kpc above the plane:
-
   whole cells : +93.3 % vs split
   centre test : 19.1 % vs split
   split       : 560090.0 Msol   reference   (66 cells, largest 0.75 kpc)
@@ -598,7 +585,6 @@ println("  split=false : ", round(m_discw, sigdigits=6), " Msol   (",
 
 ```
 disc gas mass (r < 12 kpc, |z| < 2 kpc):
-
   split       : 2.28346e10 Msol
   split=false : 2.28475e10 Msol   (0.0563 %)
 ```
@@ -677,16 +663,14 @@ fig
 ```
 
 ```
-nucleus zone          : 5.93727e9
-
- Msol
+nucleus zone          : 5.93727e9 Msol
 nucleus + inverse     : 3.0400672e10 Msol
 whole box             : 3.0400672e10 Msol
 relative imbalance    : 0.0
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_28_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_28_1.png)
 
 
 The two panels are literal complements: the gas missing from one is exactly
@@ -747,14 +731,13 @@ fig
 
 ```
 ring gas mass (6 < r < 10 kpc, |z| < 2 kpc):
-
   split       : 8.03224e9 Msol
   split=false : 8.02745e9 Msol   (-0.0596 % — net of two rims' cancelling errors)
 ring + inverse = box?  1.0
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_30_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_30_1.png)
 
 
 **The envelope — sharing a surface without double counting.** Outside the
@@ -794,16 +777,14 @@ fig
 ```
 
 ```
-envelope (10–20 kpc)      : 1.18046e10
-
- Msol
+envelope (10–20 kpc)      : 1.18046e10 Msol
 enclosed sphere (< 10)    : 1.82103e10 Msol
 sum                       : 3.0014956e10 Msol
 plain Sphere(20) directly : 3.0014956e10 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_32_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_32_1.png)
 
 
 Both panels share one frame (±22 kpc) and the page's one colour scale, so the
@@ -871,15 +852,13 @@ fig
 ```
 
 ```
-disc \ sphere : 1.69318e10
-
- Msol
+disc \ sphere : 1.69318e10 Msol
 disc ∩ sphere : 5.90283e9 Msol
 sum           : 2.2834624e10   vs disc: 2.2834625e10 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_35_1.png)
 
 
 The printed sum closes on the disc mass — difference and intersection
@@ -918,13 +897,11 @@ fig
 ```
 
 ```
-sculpture gas mass: 2.25759e10
-
- Msol
+sculpture gas mass: 2.25759e10 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_37_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_37_1.png)
 
 
 The left hole is black: its 2.5-kpc drill radius exceeds the disc's 2-kpc
@@ -974,9 +951,7 @@ println("vol(A ∪ B)                   = ", round(vAuB, sigdigits=6), " kpc³")
 ```
 
 ```
-vol(A) + vol(B) − vol(A ∩ B) = 2082.22
-
- kpc³
+vol(A) + vol(B) − vol(A ∩ B) = 2082.22 kpc³
 vol(A ∪ B)                   = 2082.22 kpc³
 ```
 
@@ -1025,8 +1000,6 @@ println(rpad("relative residual", 44), round(m_sum/m_disc - 1, sigdigits=2))
 
 ```
 disc zone                                   gas mass [Msol]
-
-
 ------------------------------------------------------------
 nucleus — Cylinder(4, ±2 kpc)               5.9373e9
 inner   — CylindricalShell(4–6, ±2 kpc)     3.9504e9
@@ -1117,9 +1090,7 @@ fig
 ```
 
 ```
-largest boundary cell in the cut     : 0.375
-
- kpc
+largest boundary cell in the cut     : 0.375 kpc
 rendered fringe beyond |z| = 2 kpc   :
   refine=0 : 0.265 kpc   (bound: cell + pixel = 0.395 kpc)
   refine=2 : 0.064 kpc
@@ -1127,7 +1098,7 @@ mass invariance, refine=2 / refine=0 : 0.99966
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_47_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_47_1.png)
 
 
 The printed fringe sits inside its bound, and `refine=2` cuts it by the
@@ -1162,9 +1133,7 @@ println("mass invariance vs refine=0             : ",
 ```
 
 ```
-largest straddling cell after refine_to : 0.047
-
- kpc   (was 0.375 kpc)
+largest straddling cell after refine_to : 0.047 kpc   (was 0.375 kpc)
 rendered fringe beyond |z| = 2 kpc      : 0.024 kpc
 mass invariance vs refine=0             : 0.99944
 ```
@@ -1286,14 +1255,12 @@ fig
 ```
 
 ```
-tilted-cylinder gas mass : 5.43585e9
-
- Msol
+tilted-cylinder gas mass : 5.43585e9 Msol
 volume                   : 628.848 kpc³   vs  πR²·2h = 628.319 kpc³   (0.084 %)
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_55_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_55_1.png)
 
 
 The volume lands on the analytic value to the usual sampling accuracy —
@@ -1349,16 +1316,12 @@ fig
 ```
 
 ```
-tilted shell volume : 402.739
-
- kpc³   upright: 403.265 kpc³   analytic π(R²−r²)·2h = 402.124 kpc³
-in-plane bar volume : 120.595
-
- kpc³   analytic πR²·2h = 120.637 kpc³
+tilted shell volume : 402.739 kpc³   upright: 403.265 kpc³   analytic π(R²−r²)·2h = 402.124 kpc³
+in-plane bar volume : 120.595 kpc³   analytic πR²·2h = 120.637 kpc³
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_57_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_57_1.png)
 
 
 The along-axis panel is the payoff: the dashed analytic circles at 6 and
@@ -1404,14 +1367,12 @@ fig
 ```
 
 ```
-(disc ∪ blister) \ chimney : 2.27205e10
-
- Msol
+(disc ∪ blister) \ chimney : 2.27205e10 Msol
 identity  m(A∪B) − m((A∪B)∩C) = 2.2720464e10   vs  2.2720464e10
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_60_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_60_1.png)
 
 
 The identity closes, and the edge-on view explains the face-on one: the
@@ -1455,13 +1416,11 @@ fig
 ```
 
 ```
-chimneys: 2.2548e10
-
- Msol   crescent: 2.1784e9 Msol
+chimneys: 2.2548e10 Msol   crescent: 2.1784e9 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_62_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_62_1.png)
 
 
 **Swiss cheese, seeded by the data.** Composites become genuinely powerful
@@ -1514,18 +1473,12 @@ fig
 
 ```
 star particles: 508939
-
-
-cluster sites [kpc, centre-relative]: 
-
-[(-3.2, 8.8), (-3.2, -5.8), (-2.2, 3.8)]
-swiss-cheese disc: 
-
-1.5925e10 Msol
+cluster sites [kpc, centre-relative]: [(-3.2, 8.8), (-3.2, -5.8), (-2.2, 3.8)]
+swiss-cheese disc: 1.5925e10 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_64_4.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_64_1.png)
 
 
 The crosses mark the sites the *particles* chose; the holes are where the
@@ -1571,13 +1524,11 @@ fig
 ```
 
 ```
-bows: 1.0791e10
-
- Msol   filament tube: 2.3211e9 Msol
+bows: 1.0791e10 Msol   filament tube: 2.3211e9 Msol
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_66_2.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_66_1.png)
 
 
 Every construct here remains a *measurement*: `msum` on any of them is
@@ -1631,21 +1582,17 @@ fig
 ```
 disc zone       gas [Msol]   stars [Msol]
 -----------------------------------------
-nucleus            5.937e9
-
-        1.873e9
+nucleus            5.937e9        1.873e9
 inner               3.95e9        1.153e9
 ring               8.032e9        1.661e9
-rim                4.915e9
-
-        4.586e8
+rim                4.915e9        4.586e8
 -----------------------------------------
 sum             2.28346e10      5.14581e9
 disc direct     2.28346e10      5.14581e9
 ```
 
 
-![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_69_3.png)
+![](03_hydro_Get_Subregions_files/03_hydro_Get_Subregions_69_1.png)
 
 
 The stellar column tiles exactly like the gas column — particles are
@@ -1682,12 +1629,8 @@ println("mass, reloaded: ", round(msum(back, :Msol), sigdigits=8), " Msol")
 
 ```
 working file  : 147.5 MB   (17957496 cells)
-mass, window  : 2.7966433e10
-
- Msol
-mass, reloaded: 2.7966433e10
-
- Msol
+mass, window  : 2.7966433e10 Msol
+mass, reloaded: 2.7966433e10 Msol
 ```
 
 
@@ -1744,12 +1687,8 @@ println("cut spans x ∈ ", round.(xr_c .* (gas.boxlen * kpc), sigdigits=4), " k
 ```
 
 ```
-classic cylinder (whole cells) : 2.29023e10
-
- Msol   +0.3 % vs split disc — whole boundary cells, as in §3
-cut spans x ∈ 
-
-[12.0, 36.0] kpc (absolute)
+classic cylinder (whole cells) : 2.29023e10 Msol   +0.3 % vs split disc — whole boundary cells, as in §3
+cut spans x ∈ [12.0, 36.0] kpc (absolute)
 ```
 
 

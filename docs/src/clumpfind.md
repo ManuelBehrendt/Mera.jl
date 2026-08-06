@@ -73,8 +73,6 @@ println("box length   : ", gas.boxlen, " kpc")
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -85,12 +83,9 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:31:57.365
 
-
 Code: RAMSES
 output [400] summary:
-mtime: 
-
-2018-09-05T09:51:55
+mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
 =======================================================
 simulation time: 594.98 [Myr]
@@ -103,9 +98,7 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -115,7 +108,6 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
-
 - Ndm:      2.547000e+03 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
@@ -133,14 +125,10 @@ patchfile:        true
 
 [Mera]: Get hydro data: 2026-08-03T11:31:59.803
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
 
-center: [0.5, 0.5, 0.5] 
-
-==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
+center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
 xmin::xmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
@@ -148,8 +136,6 @@ ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 
 📊 Processing Configuration:
-
-
    Total CPU files available: 2048
    Files to be processed: 1939
    Compute threads: 4
@@ -159,21 +145,15 @@ zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 1277874 cells, 7 variables
 Creating Table from 1277874 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 2.605 seconds
-
-Memory used for data table :107.2445936203003
-
- MB
+Memory used for data table :107.2445936203003 MB
 -------------------------------------------------------
 
 cells loaded : 1277874
@@ -198,7 +178,6 @@ println(cat)                       # ClumpCatalog summary
 number of clumps : 34
 
 ClumpCatalog: 34 clumps  [3D, field=rho ≥ 100.0 nH]
-
   mass Msol: total 6.712e9  max 2.034e9  median 4.058e7
   largest: 487 members, mass 2.034e9
 ```
@@ -219,8 +198,6 @@ println("largest clump:")
 ```
 largest clump:
 c1.id = 1
-
-
 c1.n_members = 487
 c1.mass = 2.0337645080962305e9
 c1.com = (22.061102887532154, 24.038745759498653, 24.05425590948421)
@@ -302,8 +279,6 @@ b1 = catb[1]
 
 ```
 b1.alpha_vir = 1.373366071452284
-
-
 b1.bound = true
 b1.e_grav = 7.214955930128814e56
 
@@ -367,7 +342,6 @@ println(cats)
 ```
 [Mera]: Get particle data: 2026-08-03T11:32:44.285
 
-
 Using threaded processing with 4 threads
 Key vars=(:level, :x, :y, :z, :id)
 Using var(s)=(1, 2, 3, 4, 5) = (:vx, :vy, :vz, :mass, :birth) 
@@ -381,14 +355,10 @@ zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 
 Processing 1939 CPU files using 4 threads
 Mode: Threaded processing
-
 Combining results from 4 thread(s)...
 Found 2.624670e+05 particles
-Memory used for data table :
-
-18.02324104309082 MB
+Memory used for data table :18.02324104309082 MB
 -------------------------------------------------------
-
 
 stellar groups found : 1
 ClumpCatalog: 1 clumps  [3D, field=mass ≥ 0.0 standard]
@@ -496,12 +466,8 @@ println("search meta       : ", cat.meta)
 
 ```
 mass range [Msol] : (2.306207938000301e6, 2.0337645080962305e9)
-table columns     : (
-
-:id, :n_members, :mass, :com_x, :com_y, :com_z, :radius, :peak)
-search meta       : (
-
-dim = Symbol("3D"), field = :rho, threshold = 100.0, threshold_unit = :nH, linking_length = 0.2, pos_unit = :kpc, mass_unit = :Msol, n_selected = 1889, boundedness = false, deblend = false, substructure = false, unbinding = false, hierarchy = false, finder = :ThresholdFoF)
+table columns     : (:id, :n_members, :mass, :com_x, :com_y, :com_z, :radius, :peak)
+search meta       : (dim = Symbol("3D"), field = :rho, threshold = 100.0, threshold_unit = :nH, linking_length = 0.2, pos_unit = :kpc, mass_unit = :Msol, n_selected = 1889, boundedness = false, deblend = false, substructure = false, unbinding = false, hierarchy = false, finder = :ThresholdFoF)
 ```
 
 
@@ -518,8 +484,6 @@ println("N(>= M_min)                   : ", first(Ngt))
 
 ```
 cumulative mass-function bins : 34
-
-
 N(>= M_min)                   : 34
 ```
 
@@ -547,7 +511,6 @@ fig
 ```
 [Mera]: 2026-08-03T11:33:11.854
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -556,25 +519,21 @@ ymin::ymax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 zmin::zmax: 0.3958333 :: 0.6041667  	==> 19.0 [kpc] :: 29.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 
 Effective resolution: 1024^2
-
 Map size: 214 x 214
 Pixel size: 46.875 [pc]
 Simulation min.: 46.875 [pc]
 
 Available threads: 4
-
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
 
-![](clumpfind_files/clumpfind_27_5.png)
+![](clumpfind_files/clumpfind_27_1.png)
 
 
 A [`ClumpCard`](@ref) runs `clumpfind` inside a [First-Look Report](report.md) (the full catalog is
@@ -600,7 +559,6 @@ length(cat2) > 0 && println("largest region   : ", cat2[1].n_members, " pixels, 
 ```
 [Mera]: 2026-08-03T11:33:28.425
 
-
 center: [0.5, 0.5, 0.5] ==> [24.0 [kpc] :: 24.0 [kpc] :: 24.0 [kpc]]
 
 domain:
@@ -620,9 +578,7 @@ Available threads: 4
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
-2D regions found : 
-
-26
+2D regions found : 26
 largest region   : 1178 pixels, mass 5962.0
 ```
 

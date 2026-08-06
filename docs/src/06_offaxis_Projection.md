@@ -53,8 +53,6 @@ println("threads      : ", Threads.nthreads())
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -63,10 +61,7 @@ println("threads      : ", Threads.nthreads())
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
 cells loaded : 590311
-
-
 box length   : 100.0 kpc
 levels       : 3 – 7
 threads      : 4
@@ -245,22 +240,15 @@ maprow(ladder, :sd, ["i = 0°", "i = 30°", "i = 60°", "i = 90°"]; crange=cr)
 
 ```
 max |ŵ_faceon − ŵ_inc0|     = 0.0
-angle(û_faceon, û_inc0)     = 
-
-90.0°
+angle(û_faceon, û_inc0)     = 90.0°
 max |Σ_faceon − Σ_inc0|     = 2407.1
-
 max |Σ_faceon − Σ_inc0,PA=-90| = 4.433786671143025e-11
-inclination + los         
-
-→ ArgumentError
-direction=:faceon + axis  
-
-→ ArgumentError
+inclination + los         → ArgumentError
+direction=:faceon + axis  → ArgumentError
 ```
 
 
-![](06_offaxis_Projection_files/06_offaxis_Projection_9_5.png)
+![](06_offaxis_Projection_files/06_offaxis_Projection_9_1.png)
 
 
 `direction=:faceon` and `inclination=0, axis=:angmom` are the **same line of sight** — the two `ŵ`
@@ -326,7 +314,6 @@ end
 
 ```
 [Mera] Hint: off-axis view with `xrange`/`yrange` but no `zrange`.
-
              These are WORLD-space bounds, so the camera frame is the bounding box of that
              region AFTER rotation: the full box depth folds into the image height, and the
              window's own faces show up as straight edges across the map. Pass `zrange` to
@@ -334,7 +321,6 @@ end
              frame (add aperture=:square for an identical frame at every angle).
              (shown once per session; verbose(false) silences Mera's messages)
 [Mera]: 2026-08-03T11:02:56.904
-
 
 center: [0.5, 0.5, 0.5] ==> [50.0 [kpc] :: 50.0 [kpc] :: 50.0 [kpc]]
 
@@ -344,15 +330,11 @@ ymin::ymax: 0.28 :: 0.72  	==> 28.0 [kpc] :: 72.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 100.0 [kpc]
 
 Selected var(s)=(:sd,) 
-
 Weighting      = :mass
 Off-axis LOS   = [0.8601, 0.0126, -0.51]  (binning=:overlap)
 Effective resolution: 334^2  →  map size: 162 x 371
 
-
-xrange/yrange ±22 kpc    frame 
-
-  (162, 371)   extent [kpc] = [-24.0, 24.5, -54.9, 56.2]
+xrange/yrange ±22 kpc    frame   (162, 371)   extent [kpc] = [-24.0, 24.5, -54.9, 56.2]
 fov=22 :square           frame   (147, 147)   extent [kpc] = [-22.0, 22.0, -21.9, 22.1]
 fov=22 :circle           frame   (156, 162)   extent [kpc] = [-23.4, 23.3, -24.2, 24.3]
 ```
@@ -495,19 +477,10 @@ end
 ```
 
 ```
-maps returned : Any
-
-[:
-
-T, :mass, :sd]
+maps returned : Any[:T, :mass, :sd]
 units         : DataStructures.SortedDict{Any, Any, Base.Order.ForwardOrdering}(:T => :K, :mass => :Msol, :sd => :standard)
-
 Σ(map) / msum(gas) − 1  =  0.0
-
-
-σx            
-
-projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
+σx            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σy            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σz            projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
 σ             projection: off-axis views (los/theta/phi/:faceon/:edgeon) do …
@@ -594,11 +567,8 @@ level 5.0:  cell 3.12  kpc  →  31.2 pixels per cell at pxsize = 0.1 kpc
 level 6.0:  cell 1.56  kpc  →  15.6 pixels per cell at pxsize = 0.1 kpc
 level 7.0:  cell 0.78  kpc  →  7.8 pixels per cell at pxsize = 0.1 kpc
 
-
 binning   empty px   time [s]  median |Δ| vs :exact [dex]
-ngp       64.4 %     
-
-0.007     1.3004
+ngp       64.4 %     0.007     1.3004
 cic       27.8 %     0.006     1.2898
 overlap   0.0 %      0.026     0.0005
 exact     0.0 %      0.094     0.0
@@ -763,10 +733,8 @@ end
 
 ```
 pxsize [kpc]   median σ_LOS    mean σ_LOS
-
 0.15           93.8            274.1
 0.6            94.3            275.4
-
 2.4            102.6           274.8
 ```
 
@@ -819,9 +787,7 @@ println("slice extent [kpc] = ", round.(sl.extent .* gas.scale.kpc, digits=1))
 ```
 slice frame      (120, 120)   0.0 % NaN
 projection frame (120, 120)
-slice extent [kpc] = 
-
-[-15.0, 15.0, -15.0, 15.0]
+slice extent [kpc] = [-15.0, 15.0, -15.0, 15.0]
 ```
 
 
@@ -956,8 +922,6 @@ println(".direction                     : ", fo.direction)
 
 ```
 camera survives the round trip : true
-
-
 .center (box fraction)         : [0.5, 0.5, 0.5]
 .maps_lmax off-axis            : empty (by design)
 .direction                     : offaxis
@@ -1014,10 +978,7 @@ println("          epot over filled pixels ", round.(extrema(filled), sigdigits=
 ```
 
 ```
-stars   : frame (
-
-107, 109)   los = [0.999, -0.002, -0.037]
-
+stars   : frame (107, 109)   los = [0.999, -0.002, -0.037]
 gravity : maps Any[:epot, :sd]
           epot over filled pixels (-0.5327, -0.03714)   (530 of 11448 pixels empty)
 ```
@@ -1134,20 +1095,13 @@ println("data_center ignored on off-axis hydro        : ",
 
 ```
 particle binning=:overlap falls back to :cic : true
-
-
 particle binning=:exact   falls back to :cic : true
-weighting=:sph off-axis (needs :volume)      : 
-
-ArgumentError
+weighting=:sph off-axis (needs :volume)      : ArgumentError
 weighting=:voronoi off-axis (needs :volume)  : ArgumentError
-fov works on particles                       : (
-
-30, 30)
+fov works on particles                       : (30, 30)
 slice(part, …)                               : MethodError
 particle nmax                                : MethodError
 particle max_threads                         : MethodError
-
 data_center ignored on off-axis hydro        : true
 ```
 

@@ -80,8 +80,6 @@ println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -90,15 +88,10 @@ println("box            : ", round(stars.boxlen * kpc, sigdigits=4), " kpc")
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-
-particles      : 508939
-
-   columns: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
+particles      : 508939   columns: (:level, :x, :y, :z, :id, :vx, :vy, :vz, :mass, :birth)
 with birth = 0 : 0 (dark matter, if any)
 total mass     : 5.8044e9 Msol
-particle mass  : 4910.0
-
- – 22700.0 Msol
+particle mass  : 4910.0 – 22700.0 Msol
 ages           : 0.0 – 531.0 Myr
 box            : 48.0 kpc
 ```
@@ -207,9 +200,7 @@ println("mass  residual : ", (msum(s_in, :Msol) + msum(s_out, :Msol)) / M - 1,
 ```
 
 ```
-all particles      : 508939   
-
-5.804426e9 Msol
+all particles      : 508939   5.804426e9 Msol
 inside  Sphere(10) : 419529   4.7852795e9
 outside Sphere(10) : 89410    1.0191465e9
 
@@ -295,9 +286,7 @@ fig
 ```
 
 ```
-shell [kpc]   N        
-
-M [Msol]     ≈ 1/√N
+shell [kpc]   N        M [Msol]     ≈ 1/√N
 ----------------------------------------------
 0.0 – 1.0     4861     5.524e7      1.4 %
 2.0 – 3.0     63583    7.246e8      0.4 %
@@ -315,7 +304,7 @@ thinnest bin, 0.25 kpc shells : N = 71  →  11.9 %
 ```
 
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_10_2.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_10_1.png)
 
 
 Inside 6 kpc each shell holds tens of thousands of particles and the mass is
@@ -380,24 +369,16 @@ fig
 ```
 
 ```
-Cuboid — a slab               413099   
-
-81.2 % of the stellar mass
-Cylinder(8, 2)                
-
-358054   70.3 % of the stellar mass
-Sphere(6)                     268097   
-
-52.6 % of the stellar mass
+Cuboid — a slab               413099   81.2 % of the stellar mass
+Cylinder(8, 2)                358054   70.3 % of the stellar mass
+Sphere(6)                     268097   52.6 % of the stellar mass
 SphericalShell(6, 10)         151432   29.8 % of the stellar mass
-CylindricalShell(6, 10, 2)    145216   
-
-28.6 % of the stellar mass
+CylindricalShell(6, 10, 2)    145216   28.6 % of the stellar mass
 Cylinder(8, 2) tilted 40°     229964   45.2 % of the stellar mass
 ```
 
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_13_5.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_13_1.png)
 
 
 Every panel is the same edge-on view of the same population; grey is
@@ -441,9 +422,7 @@ println("counts partition exactly : ",
 ```
 
 ```
-Sphere(15)                 : 502097   
-
-5.7267e9 Msol
+Sphere(15)                 : 502097   5.7267e9 Msol
   ∩ disc slab              : 489072   5.5788e9
   minus the slab (@region) : 13101    1.4881e8
 
@@ -495,9 +474,7 @@ println("region∘filter == filter∘region : ", length(young.data) == length(yo
 ```
 
 ```
-annulus 4–12 kpc, |z| < 2 : 286724   
-
-3.2728e9 Msol
+annulus 4–12 kpc, |z| < 2 : 286724   3.2728e9 Msol
   younger than 50 Myr    : 45119    5.2864e8
   older than 300 Myr        : 65342    7.4213e8
 
@@ -585,13 +562,11 @@ fig
 ```
 
 ```
-at 7.5 kpc :  young 191.2
-
- km/s (N=2396)   old 166.7 km/s (N=7878)
+at 7.5 kpc :  young 191.2 km/s (N=2396)   old 166.7 km/s (N=7878)
 ```
 
 
-![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_23_2.png)
+![](03_particles_Get_Subregions_files/03_particles_Get_Subregions_23_1.png)
 
 
 The gap between the two curves is the drift: about 25 km/s at 7.5 kpc, where
@@ -679,9 +654,7 @@ println("identical        : ", length(classic.data) == length(value_t.data) &&
 ```
 
 ```
-classic :sphere  : 419529   
-
-4.7852795e9
+classic :sphere  : 419529   4.7852795e9
 value-type Sphere: 419529   4.7852795e9
 identical        : true
 ```

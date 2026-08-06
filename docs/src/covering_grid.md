@@ -37,8 +37,6 @@ println("AMR cells loaded: ", length(gas.data))
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -49,10 +47,7 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:34:24.093
 
-
 Code: RAMSES
-
-
 output [400] summary:
 mtime: 2018-09-05T09:51:55
 ctime: 2025-06-29T20:06:45.267
@@ -67,9 +62,7 @@ amr:           true
 level(s): 6 - 14 --> cellsize(s): 750.0 [pc] - 2.93 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :thermal_pressure, :passive_scalar_1, :passive_scalar_2)
 γ: 1.6667
 -------------------------------------------------------
@@ -79,7 +72,6 @@ gravity-variables: (:epot, :ax, :ay, :az)
 particles:     true
 - Npart:    5.091500e+05 
 - Nstars:   5.066030e+05 
-
 - Ndm:      2.547000e+03 
 particle-variables: 5  --> (:vx, :vy, :vz, :mass, :birth)
 -------------------------------------------------------
@@ -97,20 +89,15 @@ patchfile:        true
 
 [Mera]: Get hydro data: 2026-08-03T11:34:26.561
 
-
 Key vars=(:level, :cx, :cy, :cz)
-
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :passive_scalar_1, :passive_scalar_2) 
 
 domain:
-
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 📊 Processing Configuration:
-
    Total CPU files available: 2048
    Files to be processed: 2048
    Compute threads: 4
@@ -119,21 +106,15 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 
 ✓ File processing complete! Combining results...
 ✓ Data combination complete!
-
 Final data size: 4879946 cells, 7 variables
 Creating Table from 4879946 cells with max 4 threads...
-
   Threading: 4 threads for 11 columns
-
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
 ✓ Table created in 7.492 seconds
-
-Memory used for data table :409.54250621795654
-
- MB
+Memory used for data table :409.54250621795654 MB
 -------------------------------------------------------
 
 AMR levels      : lmin 6 … lmax 10
@@ -163,7 +144,6 @@ println("blow-up x    : ", mem.blowup)
 
 ```
 covering_grid memory estimate:
-
   level 8  dims (256, 256, 256)  (16777216 cells × 2 var(s))
   per array : 134.2 MB
   result    : 268.4 MB
@@ -197,7 +177,6 @@ println("T    extrema   : ", extrema(filter(!isnan, cg[:T])))
 
 ```
 CoveringGridResult [covering_grid]  level 8  dims (256, 256, 256)
-
   vars: [:T, :rho]
   cellsize 0.1875 [standard]  extent [0.0, 48.0, 0.0, 48.0, 0.0, 48.0] [standard]
 CoveringGridResult [covering_grid]  level 8  dims (256, 256, 256)
@@ -206,12 +185,8 @@ CoveringGridResult [covering_grid]  level 8  dims (256, 256, 256)
 
 rho array size : (256, 256, 256)
 cellsize       : 0.1875 [standard]
-extent         : 
-
-[0.0, 48.0, 0.0, 48.0, 0.0, 48.0]
-n_H  extrema   : 
-
-(-0.008466240027971665, 3045.6332385438423)
+extent         : [0.0, 48.0, 0.0, 48.0, 0.0, 48.0]
+n_H  extrema   : (-0.008466240027971665, 3045.6332385438423)
 T    extrema   : (-6.486657006516816e10, 8.403483574667937e10)
 ```
 
@@ -231,7 +206,6 @@ println("sub-box rho  : ", extrema(filter(!isnan, cgsub[:rho])))
 
 ```
 CoveringGridResult [covering_grid]  level 9  dims (4, 4, 2)
-
   vars: [:rho]
   cellsize 0.09375 [standard]  extent [23.8, 24.2, 23.8, 24.2, 23.9, 24.1] [standard]
 sub-box dims : (4, 4, 2)
@@ -256,7 +230,6 @@ println("n_H extrema : ", extrema(filter(!isnan, sl[:rho])))
 
 ```
 CoveringGridResult [slice(z)]  level 9  dims (512, 512)
-
   vars: [:rho]
   cellsize 0.09375 [standard]  extent [0.0, 48.0, 0.0, 48.0, 24.0, 24.09] [standard]
 CoveringGridResult [slice(z)]  level 9  dims (512, 512)

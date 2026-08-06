@@ -35,8 +35,6 @@ println("ground-truth clumps : ", length(truth))
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -46,8 +44,6 @@ println("ground-truth clumps : ", length(truth))
 Mera v1.8.0
 
 gas cells      : 51514
-
-
 particles      : 2438
 ground-truth clumps : 8
 ```
@@ -101,9 +97,7 @@ end
 ```
 
 ```
-1     pos=
-
-(0.25, 0.25, 0.5)
+1     pos=(0.25, 0.25, 0.5)
 2     pos=(0.25, 0.75, 0.5)
 3     pos=(0.78, 0.22, 0.5)
 4     pos=(0.8, 0.8, 0.5)
@@ -145,26 +139,14 @@ end
 
 ```
 candidate cells above threshold : 51514
-
-
 ground-truth clumps             : 8
 
 finder            clumps  ARI     completeness  purity
-ThresholdFoF      
-
-7       0.953   1.0           0.927
-DensityWatershed  
-
-8       0.998   1.0           0.994
-Dendrogram        
-
-8       0.998   1.0           0.995
-PersistenceFinder 
-
-8       0.998   1.0           0.995
-HDBSCANFinder     
-
-7       0.953   1.0           0.927
+ThresholdFoF      7       0.953   1.0           0.927
+DensityWatershed  8       0.998   1.0           0.994
+Dendrogram        8       0.998   1.0           0.995
+PersistenceFinder 8       0.998   1.0           0.995
+HDBSCANFinder     7       0.953   1.0           0.927
 ```
 
 
@@ -201,9 +183,7 @@ println("a FoF clump with 2 bound subclumps : ",
 ```
 
 ```
-ThresholdFoF clumps near G1/G2     : 1
-
-   (merged)
+ThresholdFoF clumps near G1/G2     : 1   (merged)
 DensityWatershed clumps near G1/G2 : 2   (split)
 a FoF clump with 2 bound subclumps : true
 ```
@@ -230,11 +210,7 @@ println("Fhot removed                : ", bound.nclumps == cat.nclumps - 1)
 
 ```
 clumps (incl. unbound Fhot) : 7
-
-
-clumps after virial filter  : 
-
-6
+clumps after virial filter  : 6
 Fhot removed                : true
 ```
 
@@ -318,12 +294,8 @@ end
 
 ```
 ll=0.0078  -> 7 clumps
-ll=0.0156
-
-  -> 7 clumps
-ll=0.0391
-
-  -> 7 clumps
+ll=0.0156  -> 7 clumps
+ll=0.0391  -> 7 clumps
 ```
 
 
@@ -349,34 +321,27 @@ fig
 ```
 [Mera]: 2026-08-03T11:34:04.043
 
-
 domain:
-
 xmin::xmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 ymin::ymax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 zmin::zmax: 0.0 :: 1.0  	==> 0.0 [pc] :: 1000.0 [pc]
 
 Selected var(s)=(:sd,) 
-
-
 Weighting      = :mass
 
 Effective resolution: 128^2
-
-
 Map size: 128 x 128
 Pixel size: 7.812 [pc]
 Simulation min.: 7.812 [pc]
 
 Available threads: 4
-
 Requested max_threads: 4
 Variables: 1 (sd)
 Processing mode: Sequential (single thread)
 ```
 
 
-![](clumpfind_synthetic_files/clumpfind_synthetic_19_6.png)
+![](clumpfind_synthetic_files/clumpfind_synthetic_19_1.png)
 
 
 ## When to use which finder

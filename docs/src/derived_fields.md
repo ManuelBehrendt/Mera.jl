@@ -22,8 +22,6 @@ gas  = gethydro(info, verbose=false);
 
 ```
 *__   __ _______ ______   _______ 
-
-
 |  |_|  |       |    _ | |   _   |
 |       |    ___|   | || |  |_|  |
 |       |   |___|   |_||_|       |
@@ -34,17 +32,12 @@ Mera v1.8.0
 
 [Mera]: 2026-08-03T11:35:24.684
 
-
 Code: RAMSES
-
-
 output [300] summary:
 mtime: 2023-04-09T05:34:09
 ctime: 2025-06-21T18:31:24.020
 =======================================================
-simulation time: 445.89
-
- [Myr]
+simulation time: 445.89 [Myr]
 boxlen: 48.0 [kpc]
 ncpu: 640
 ndim: 3
@@ -54,9 +47,7 @@ amr:           true
 level(s): 6 - 10 --> cellsize(s): 750.0 [pc] - 46.88 [pc]
 -------------------------------------------------------
 hydro:         true
-hydro-variables:  
-
-7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
+hydro-variables:  7  --> (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01)
 hydro-descriptor: (:density, :velocity_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01)
 γ: 1.6667
 -------------------------------------------------------
@@ -65,17 +56,13 @@ gravity-variables: (:epot, :ax, :ay, :az)
 -------------------------------------------------------
 particles:     true
 - Nstars:   5.445150e+05 
-particle-variables: 
-
-7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
+particle-variables: 7  --> (:vx, :vy, :vz, :mass, :family, :tag, :birth)
 particle-descriptor: (:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time)
 -------------------------------------------------------
 rt:            false
 clumps:           false
 -------------------------------------------------------
-namelist-file: 
-
-("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
+namelist-file: ("&COOLING_PARAMS", "&SF_PARAMS", "&AMR_PARAMS", "&BOUNDARY_PARAMS", "&OUTPUT_PARAMS", "&POISSON_PARAMS", "&RUN_PARAMS", "&FEEDBACK_PARAMS", "&HYDRO_PARAMS", "&INIT_PARAMS", "&REFINE_PARAMS")
 -------------------------------------------------------
 timer-file:       true
 compilation-file: false
@@ -129,18 +116,10 @@ println("requirements [:sd,:T] : ", getvar_requirements(:hydro, [:sd, :T]))
 ```
 
 ```
-T [K] range           : (
-
-10.195354771220304, 2.3032126579487386e8)
-Mach range            : (
-
-0.0015019848658968961, 790.5001832586903)
+T [K] range           : (10.195354771220304, 2.3032126579487386e8)
+Mach range            : (0.0015019848658968961, 790.5001832586903)
 ekin [erg] (sum)      : 3.445146674042365e57
-
-
-requirements :ekin    : 
-
-[:rho, :vx, :vy, :vz]
+requirements :ekin    : [:rho, :vx, :vy, :vz]
 requirements [:sd,:T] : [:p, :rho]
 ```
 
@@ -166,13 +145,8 @@ println(":vmag2 projection map : ", size(m.maps[:vmag2]))
 ```
 
 ```
-:vmag2 via getvar     : (
-
-9.736562820569741e-6, 371.6168616499286)
-
-:vmag2 projection map : (
-
-1024, 1024)
+:vmag2 via getvar     : (9.736562820569741e-6, 371.6168616499286)
+:vmag2 projection map : (1024, 1024)
 ```
 
 
@@ -196,9 +170,7 @@ println(":mach_custom range    : ", extrema(getvar(gas, :mach_custom)))
 ```
 
 ```
-:mach_custom range    : (
-
-0.0015019848658968961, 790.5001832586903)
+:mach_custom range    : (0.0015019848658968961, 790.5001832586903)
 ```
 
 
