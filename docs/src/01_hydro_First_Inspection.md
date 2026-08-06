@@ -153,7 +153,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-06T10:42:25.069
+[Mera]: 2026-08-06T15:50:11.304
 
 Code: RAMSES
 output [300] summary:
@@ -323,6 +323,32 @@ First, let's reload the simulation information to reset any changes we made to t
 info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10", verbose=false); # here, used to overwrite the previous changes
 ```
 
+## What AMR means for your analysis
+
+RAMSES does not use one uniform grid. Where the flow demands resolution it splits a cell into
+eight, repeatedly — so each cell carries a `level`, and its size is `boxlen / 2^level`. In this
+simulation that spans **750 pc at level 6 down to 46.9 pc at level 10**, a factor of 16 in
+length and roughly 4000 in volume.
+
+Mera stores only **leaf cells** — the finest cell covering each point, never its parents. The
+rows therefore tile the box exactly once, with no double counting, which is why you can sum
+masses straight from the table.
+
+!!! warning "Rows are not equal-volume — never take a plain `mean()`"
+    Because a level-6 cell occupies ~4000× the volume of a level-10 cell, an unweighted
+    average over rows silently weights the coarse, mostly-empty regions as heavily as the
+    dense refined ones. `mean(getvar(gas, :rho))` is not the mean density of the box — on
+    this snapshot it comes out **6.1× too high**.
+
+    Use a weight that reflects what you are averaging over:
+
+    ```julia
+    wstat(getvar(gas, :T, :K), weight=getvar(gas, :mass))     # mass-weighted temperature
+    wstat(getvar(gas, :rho, :g_cm3), weight=getvar(gas, :volume))  # volume-weighted density
+    ```
+
+    The same applies to projections, which is why `weighting=[:mass]` is the default there.
+
 ### Loading Complete Hydro Dataset
 
 Now let's load the AMR and hydro data from all files. This will read:
@@ -350,7 +376,7 @@ gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-06T10:42:29.066
+[Mera]: Get hydro data: 2026-08-06T15:50:15.283
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -376,7 +402,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 37.787 seconds
+✓ Table created in 39.708 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```
@@ -494,7 +520,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-06T10:43:29.253
+[Mera]: Get hydro data: 2026-08-06T15:51:17.573
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -520,7 +546,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Available threads: 4
   Using parallel processing with 4 threads
   Creating IndexedTable with 11 columns...
-✓ Table created in 37.997 seconds
+✓ Table created in 39.274 seconds
 Memory used for data table :2.321086215786636 GB
 -------------------------------------------------------
 ```

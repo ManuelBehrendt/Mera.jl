@@ -73,7 +73,7 @@ grav = getgravity(info, verbose=false, show_progress=false);
 ```
 
 ```
-[Mera]: 2026-08-03T11:05:08.471
+[Mera]: 2026-08-06T15:38:36.221
 
 Code: RAMSES
 output [300] summary:
@@ -123,7 +123,7 @@ savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:36.247
+[Mera]: 2026-08-06T15:40:06.454
 
 
 Not existing file: output_00300.jld2
@@ -150,7 +150,7 @@ savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", fmode=:write);
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:37.669
+[Mera]: 2026-08-06T15:40:07.856
 
 
 Create file: output_00300.jld2
@@ -182,7 +182,7 @@ savedata(grav, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", fmode=:append);
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:46.007
+[Mera]: 2026-08-06T15:40:16.636
 
 
 Create file: output_00300.jld2
@@ -204,7 +204,7 @@ Memory size: 38.449 MB (uncompressed)
 Total file size: 1.306 GB
 -----------------------------------
 
-[Mera]: 2026-08-03T11:06:47.291
+[Mera]: 2026-08-06T15:40:17.890
 
 
 Create file: output_00300.jld2
@@ -237,7 +237,7 @@ vd = viewdata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/")
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:51.521
+[Mera]: 2026-08-06T15:40:22.730
 
 Mera-file output_00300.jld2 contains:
 
@@ -311,7 +311,7 @@ vd = viewdata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", showfull=true)
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:52.257
+[Mera]: 2026-08-06T15:40:23.437
 
 Mera-file output_00300.jld2 contains:
 
@@ -429,7 +429,7 @@ info = infodata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/");
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:52.439
+[Mera]: 2026-08-06T15:40:23.609
 
 Use datatype: hydro
 Code: RAMSES
@@ -479,7 +479,7 @@ info = infodata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :particles);
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:53.119
+[Mera]: 2026-08-06T15:40:24.297
 
 Use datatype: particles
 Code: RAMSES
@@ -531,7 +531,7 @@ gas = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :hydro);
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:53.216
+[Mera]: 2026-08-06T15:40:24.391
 
 Open Mera-file output_00300.jld2:
 
@@ -559,7 +559,7 @@ part = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :particles);
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:54.763
+[Mera]: 2026-08-06T15:40:26.565
 
 Open Mera-file output_00300.jld2:
 
@@ -594,7 +594,7 @@ gas = loaddata(300, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", :hydro,
 ```
 
 ```
-[Mera]: 2026-08-03T11:06:55.093
+[Mera]: 2026-08-06T15:40:26.886
 
 Open Mera-file output_00300.jld2:
 
@@ -621,7 +621,7 @@ cvd = convertdata(300, path="$MERA_EXAMPLES/RAMSES/mw_L10",
 ```
 
 ```
-[Mera]: 2026-08-03T11:07:40.154
+[Mera]: 2026-08-06T15:41:10.861
 
 Requested datatypes: [:hydro, :gravity, :particles, :clumps, :rt]
 Max threads: 4 of 4 available
@@ -656,7 +656,7 @@ Final Statistics:
 - compressed file size: 2.158 GB
 - compression ratio: 0.38
 - data reduction: 62.0%
-- total processing time: 99.19 seconds
+- total processing time: 93.06 seconds
 - effective threads: 4
 ```
 
@@ -690,13 +690,13 @@ cvd["TimerOutputs"]["reading"]
 ──────────────────────────────────────────────────────────────────────
                              Time                    Allocations      
                     ───────────────────────   ────────────────────────
- Tot / % measured:        100s /  77.4%            100GiB /  95.2%    
+ Tot / % measured:       93.5s /  88.5%            101GiB /  93.8%    
 
 Section     ncalls     time    %tot     avg     alloc    %tot      avg
 ──────────────────────────────────────────────────────────────────────
-hydro            1    60.5s   78.1%   60.5s   75.9GiB   79.8%  75.9GiB
-gravity          1    15.5s   19.9%   15.5s   17.5GiB   18.4%  17.5GiB
-particles        1    1.51s    1.9%   1.51s   1.71GiB    1.8%  1.71GiB
+hydro            1    63.9s   77.1%   63.9s   75.8GiB   79.9%  75.8GiB
+gravity          1    17.5s   21.1%   17.5s   17.3GiB   18.3%  17.3GiB
+particles        1    1.45s    1.7%   1.45s   1.70GiB    1.8%  1.70GiB
 ──────────────────────────────────────────────────────────────────────
 ```
 
@@ -709,13 +709,13 @@ cvd["TimerOutputs"]["writing"]
 ──────────────────────────────────────────────────────────────────────
                              Time                    Allocations      
                     ───────────────────────   ────────────────────────
- Tot / % measured:        100s /  21.2%            100GiB /   4.7%    
+ Tot / % measured:       93.5s /  10.5%            101GiB /   6.2%    
 
 Section     ncalls     time    %tot     avg     alloc    %tot      avg
 ──────────────────────────────────────────────────────────────────────
-gravity          1    16.2s   76.3%   16.2s   1.84GiB   38.8%  1.84GiB
-hydro            1    4.18s   19.7%   4.18s   2.85GiB   60.1%  2.85GiB
-particles        1    844ms    4.0%   844ms   53.8MiB    1.1%  53.8MiB
+hydro            1    6.40s   65.1%   6.40s   4.29GiB   69.0%  4.29GiB
+gravity          1    3.08s   31.3%   3.08s   1.88GiB   30.1%  1.88GiB
+particles        1    356ms    3.6%   356ms   53.2MiB    0.8%  53.2MiB
 ──────────────────────────────────────────────────────────────────────
 ```
 
@@ -737,7 +737,7 @@ end;
 ```
 
 ```
-[Mera]: 2026-08-03T11:09:20.987
+[Mera]: 2026-08-06T15:42:44.968
 
 Open Mera-file output_00300.jld2:
 
@@ -749,7 +749,7 @@ zmin::zmax: 0.0 :: 1.0  	==> 0.0 [kpc] :: 48.0 [kpc]
 Memory used for data table :2.3211064087226987 GB
 -------------------------------------------------------
 
-[Mera]: 2026-08-03T11:09:27.446
+[Mera]: 2026-08-06T15:42:50.272
 
 Open Mera-file output_00300.jld2:
 
@@ -771,13 +771,13 @@ to
 ────────────────────────────────────────────────────────────────────────
                                Time                    Allocations      
                       ───────────────────────   ────────────────────────
-  Tot / % measured:        7.20s /  91.4%           5.33GiB /  98.9%    
+  Tot / % measured:        5.90s /  91.9%           4.79GiB /  98.8%    
 
 Section       ncalls     time    %tot     avg     alloc    %tot      avg
 ────────────────────────────────────────────────────────────────────────
-MERA               1    6.58s  100.0%   6.58s   5.27GiB  100.0%  5.27GiB
-  hydro            1    6.46s   98.1%   6.46s   5.20GiB   98.5%  5.20GiB
-  particles        1    124ms    1.9%   124ms   80.9MiB    1.5%  80.9MiB
+MERA               1    5.42s  100.0%   5.42s   4.73GiB  100.0%  4.73GiB
+  hydro            1    5.30s   97.8%   5.30s   4.64GiB   98.1%  4.64GiB
+  particles        1    119ms    2.2%   119ms   92.9MiB    1.9%  92.9MiB
 ────────────────────────────────────────────────────────────────────────
 ```
 
@@ -828,7 +828,7 @@ cvd = convertdata(300, [:hydro, :particles],
 ```
 
 ```
-[Mera]: 2026-08-03T11:09:27.813
+[Mera]: 2026-08-06T15:42:50.607
 
 Requested datatypes: [:hydro, :particles]
 Max threads: 4 of 4 available
@@ -859,7 +859,7 @@ Final Statistics:
 - compressed file size: 1.306 GB
 - compression ratio: 0.326
 - data reduction: 77.0%
-- total processing time: 80.28 seconds
+- total processing time: 75.99 seconds
 - effective threads: 4
 ```
 
@@ -869,15 +869,26 @@ Final Statistics:
 ```
 
 ## Compression
-By default, the data is compressed by a standard compressor (CodecLz4). Therefore, if you want to use a different compression algorithm better suited to your needs, you can also directly pass a compressor. https://juliaio.github.io/JLD2.jl/stable/compression/
 
-|Library | Compressor| |
-|---|---|---|
-|CodecZlib.jl | ZlibCompressor | very widely used |
-|CodecBzip2.jl | Bzip2Compressor | For maximum compression size |
-|CodecLz4.jl | LZ4FrameCompressor | default - For maximum decompression speed (not compatible to the LZ4 shipped by HDF5) |
+Mera files are LZ4-compressed. This build runs on JLD2 0.6, whose compression is provided by
+JLD2Lz4 — **LZ4 is the only codec available**. Passing `compress=true` (or leaving it out)
+gives you LZ4; passing `compress=false` writes uncompressed.
 
-To use any of these, replace the compress = true argument with an instance of the compressor, e.g.
+!!! note "Other compressors are accepted but substituted"
+    For backwards compatibility, `ZlibCompressor` and `Bzip2Compressor` are still accepted as
+    arguments — but Mera warns and writes LZ4 instead, so do not choose one expecting a
+    smaller file. The cells below demonstrate exactly that: watch for the warning in the
+    output.
+
+| Argument | What you get |
+|---|---|
+| `compress=true` (or omitted) | LZ4 — the default |
+| `compress=false` | no compression |
+| `ZlibCompressor()` / `Bzip2Compressor()` | accepted, but **substituted with LZ4** and a warning |
+| any other JLD2-accepted filter | passed through to JLD2 unchanged |
+
+Passing a compressor Mera cannot use shows what happens — the call succeeds, the file is
+written, and the warning tells you the codec was swapped:
 
 ```julia
 using Mera.CodecZlib
@@ -887,7 +898,7 @@ cvd = convertdata(300, [:hydro, :particles], compress=ZlibCompressor(),
 ```
 
 ```
-[Mera]: 2026-08-03T11:10:48.418
+[Mera]: 2026-08-06T15:44:06.907
 
 Requested datatypes: [:hydro, :particles]
 Max threads: 4 of 4 available
@@ -921,7 +932,7 @@ Final Statistics:
 - compressed file size: 1.306 GB
 - compression ratio: 0.326
 - data reduction: 77.0%
-- total processing time: 68.02 seconds
+- total processing time: 67.41 seconds
 - effective threads: 4
 ```
 
@@ -932,7 +943,7 @@ savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/",
 ```
 
 ```
-[Mera]: 2026-08-03T11:11:56.467
+[Mera]: 2026-08-06T15:45:14.353
 
 
 Create file: output_00300.jld2
@@ -1001,7 +1012,7 @@ cvd = convertdata(300, [:hydro, :particles], comments=comment,
 ```
 
 ```
-[Mera]: 2026-08-03T11:12:04.698
+[Mera]: 2026-08-06T15:45:25.824
 
 Requested datatypes: [:hydro, :particles]
 Max threads: 4 of 4 available
@@ -1032,7 +1043,7 @@ Final Statistics:
 - compressed file size: 1.306 GB
 - compression ratio: 0.326
 - data reduction: 77.0%
-- total processing time: 69.57 seconds
+- total processing time: 79.06 seconds
 - effective threads: 4
 ```
 
@@ -1047,7 +1058,7 @@ savedata(gas, "$MERA_EXAMPLES/MERA-FILES/JLD2_files/", comments=comment, fmode=:
 ```
 
 ```
-[Mera]: 2026-08-03T11:13:14.298
+[Mera]: 2026-08-06T15:46:44.926
 
 
 Create file: output_00300.jld2
