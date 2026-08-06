@@ -149,7 +149,7 @@ clumps    = getclumps(info);
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-05T22:24:53.502
+[Mera]: 2026-08-06T10:34:42.146
 
 
 Code: RAMSES
@@ -197,7 +197,7 @@ makefile:         true
 patchfile:        true
 =======================================================
 
-[Mera]: Get hydro data: 2026-08-05T22:24:55.829
+[Mera]: Get hydro data: 2026-08-06T10:34:44.690
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -226,19 +226,19 @@ Final data size: 849332 cells, 4 variables
 Creating Table from 849332 cells with max 4 threads...
 
   Threading: 4 threads for 8 columns
+
   Max threads requested: 4
   Available threads: 4
   Using parallel processing with 4 threads
-
   Creating IndexedTable with 8 columns...
-✓ Table created in 0.928 seconds
+✓ Table created in 0.974 seconds
 
 Memory used for data table :51.839996337890625
 
  MB
 -------------------------------------------------------
 
-[Mera]: Get particle data: 2026-08-05T22:25:20.169
+[Mera]: Get particle data: 2026-08-06T10:35:08.090
 
 
 Using threaded processing with 4 threads
@@ -260,7 +260,7 @@ Memory used for data table :
 31.064148902893066 MB
 -------------------------------------------------------
 
-[Mera]: Get clump data: 2026-08-05T22:25:22.156
+[Mera]: Get clump data: 2026-08-06T10:35:10.082
 
 
 domain:
@@ -524,9 +524,7 @@ Gas COM:       (
 
 23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
-Clumps COM:    (
-
-23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
+Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
 
 
@@ -539,7 +537,9 @@ println( "Clumps COM:    ", center_of_mass(clumps, :kpc)    , " kpc" );
 ```
 
 ```
-Gas COM:       (23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
+Gas COM:       (
+
+23.258011243936238, 23.76594380898452, 23.972244037494438) kpc
 Particles COM: (22.891354761211396, 24.17414728268034, 24.003205056545642) kpc
 Clumps COM:    (23.135765457064572, 23.741712325649264, 24.0050127185862) kpc
 ```
@@ -748,7 +748,7 @@ methods( average_mweighted )
 Here, we only show the examples with the hydro-data:
 
 ```julia
-info = getinfo(1, "$MERA_EXAMPLES//manu_stable_2019", verbose=false);
+info = getinfo(1, "$MERA_EXAMPLES/RAMSES/manu_stable_2019", verbose=false);
 gas = gethydro(info, [:rho, :vx, :vy, :vz], verbose=false); 
 ```
 
@@ -1104,6 +1104,7 @@ related to a given center:
 
      -specific angular momentum-
 :h, :hx, :hy, :hz
+
 
      -angular momentum-
 :l, :lx, :ly, :lz (Cartesian components)

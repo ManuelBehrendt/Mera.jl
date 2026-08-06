@@ -155,7 +155,7 @@ info = getinfo(300, "$MERA_EXAMPLES/RAMSES/mw_L10");
 |_|   |_|_______|___|  |_|__| |__|
 Mera v1.8.0
 
-[Mera]: 2026-08-03T10:24:05.227
+[Mera]: 2026-08-06T10:42:25.069
 
 
 Code: RAMSES
@@ -280,10 +280,10 @@ hversion	= 1
 hydro
 
 	= [:density, :vel_x, :velocity_y, :velocity_z, :pressure, :scalar_00, :scalar_01]
-htypes	= ["d", "d", "d", "d", "d", "d",
+htypes	= ["d", "d", "d", "d", "d", "d", "d"]
+usehydro	= 
 
- "d"]
-usehydro	= false
+false
 hydrofile	= true
 pversion	= 1
 particles	= [:position_x, :position_y, :position_z, :velocity_x, :velocity_y, :velocity_z, :mass, :identity, :levelp, :family, :tag, :birth_time]
@@ -360,13 +360,14 @@ Now let's load the AMR and hydro data from all files. This will read:
     ```
 
     `usedmemory(gas)` reports what an object costs. See
+    [Load by Selection](02_hydro_Load_Selections.md).
 
 ```julia
 gas = gethydro(info);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-03T10:24:09.410
+[Mera]: Get hydro data: 2026-08-06T10:42:29.066
 
 
 Key vars=(:level, :cx, :cy, :cz)
@@ -401,7 +402,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 41.67 seconds
+✓ Table created in 37.787 seconds
 
 Memory used for data table :2.321086215786636
 
@@ -525,7 +526,7 @@ gas = gethydro(info, smallr=1e-11);
 ```
 
 ```
-[Mera]: Get hydro data: 2026-08-03T10:25:14.320
+[Mera]: Get hydro data: 2026-08-06T10:43:29.253
 
 Key vars=(:level, :cx, :cy, :cz)
 Using var(s)=(1, 2, 3, 4, 5, 6, 7) = (:rho, :vx, :vy, :vz, :p, :scalar_00, :scalar_01) 
@@ -554,7 +555,7 @@ Creating Table from 28320979 cells with max 4 threads...
   Using parallel processing with 4 threads
 
   Creating IndexedTable with 11 columns...
-✓ Table created in 42.273 seconds
+✓ Table created in 37.997 seconds
 
 Memory used for data table :2.321086215786636
 

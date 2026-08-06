@@ -79,7 +79,7 @@ MERA_EXAMPLES = get(ENV, "MERA_EXAMPLES", "/Volumes/FASTStorage/Simulations/Mera
 
 using Mera
 # use compressed Mera file
-path = "$MERA_EXAMPLES/AV5CDhr/";
+path = "$MERA_EXAMPLES/RAMSES/AV5CDhr/";
 info = infodata(600, path)
 particles = loaddata(600, path, :particles); # load full box
 ```
