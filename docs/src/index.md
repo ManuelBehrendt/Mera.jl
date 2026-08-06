@@ -27,6 +27,10 @@ rather than core work, because the analysis layer is code-blind, so
 
 ## Quick Start: Choose Your Path
 
+*Three ways in, depending on what you want right now: run something immediately
+(below), jump to a task you already have in mind ([Quick Navigation](#Quick-Navigation)),
+or work through it in order ([Learning Path](#Learning-Path-and-Documentation)).*
+
 !!! note "Run something now — no data needed"
     `synthetic_clumps()` builds real Mera objects in memory, so this works on a fresh
     install with nothing downloaded:
@@ -92,6 +96,9 @@ rather than core work, because the analysis layer is code-blind, so
     New to Julia itself? **[→ Julia for Python/MATLAB/IDL users](quickreference/02_migrators.md)**
 
 !!! tip "Quick Navigation"
+    *If you already know what you want to compute.* For a guided order instead, see
+    [Learning Path](#Learning-Path-and-Documentation) below.
+
     **Want to:** Make a density plot → [Projections](06_hydro_Projection.md) • Calculate stellar masses → [Basic Calculations](04_multi_Basic_Calculations.md) • Load specific regions → [Selections](02_hydro_Load_Selections.md) • Optimize performance → [Multi-Threading](multi-threading/multi-threading_intro.md)
 
 !!! note "How to Cite MERA"
@@ -175,6 +182,9 @@ projection(particles, :age) # → Stellar age distribution
 
 
 ## Learning Path & Documentation
+
+*The guided order, if you would rather build up than dive in. Each track assumes the one
+before it.*
 
 ### 🟢 **Beginner Track** (Start here!)
 | Section | Purpose | Time |

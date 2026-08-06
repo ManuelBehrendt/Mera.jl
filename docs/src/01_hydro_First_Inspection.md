@@ -348,6 +348,19 @@ Now let's load the AMR and hydro data from all files. This will read:
 - **All AMR levels** - Complete refinement hierarchy
 - **Cell positions** - Only leaf cells (actual data cells, not parent cells)
 
+!!! warning "This loads the whole box"
+    `gethydro(info)` with no keywords reads every leaf cell at every refinement level. That is
+    fine for the tutorial fixture, but a production output can exhaust memory. Cap the level or
+    the region and the selection happens *during* the read, so the memory is never allocated:
+
+    ```julia
+    gas = gethydro(info, lmax=10)                                  # cap refinement
+    gas = gethydro(info, xrange=[-10,10], yrange=[-10,10],
+                   zrange=[-2,2], center=[:bc], range_unit=:kpc)   # or a spatial window
+    ```
+
+    `usedmemory(gas)` reports what an object costs. See
+
 ```julia
 gas = gethydro(info);
 ```

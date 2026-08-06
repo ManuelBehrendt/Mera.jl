@@ -24,6 +24,20 @@ checkoutputs("/path/to/simulation")
 **Is the path the parent folder?** It should contain the `output_XXXXX` directories, not be
 one of them.
 
+**Are you pointing at non-RAMSES data?** Code detection falls back to RAMSES when it
+recognises nothing, so a PLUTO/Athena++/FLASH/GADGET folder that isn't detected produces this
+same RAMSES-shaped message about a missing `info_XXXXX.txt` — which is confusing, because your
+data has no such file and never should. Name the code explicitly to find out:
+
+```julia
+info = getinfo(path, code=:pluto)     # :pluto, :chombo, :athena, :flash, :gadget, :ramses
+```
+
+If that works, detection failed rather than the file being missing — please
+[report it](https://github.com/ManuelBehrendt/Mera.jl/issues) with your directory listing,
+since detection is meant to handle it. See [Multi-code support](multicode.md) for what each
+reader looks for.
+
 ## The tutorials point at a folder I don't have
 
 Every tutorial builds its paths from one variable, so you do not have to edit the cells:
