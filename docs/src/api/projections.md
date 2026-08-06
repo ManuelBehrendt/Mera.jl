@@ -92,11 +92,23 @@ Both data types support:
 - **Velocity projections** - Velocity fields and dispersion maps  
 - **Custom derived quantities** - Temperature, pressure, kinematic analysis
 
+## Drawing the AMR grid on a map
+
+Overlay the cell boundaries of a refinement level on a finished projection — useful for
+showing where resolution changes relative to a structure. `gridoverlay!` draws into an
+existing axis; `gridoverlay` returns the segments so you can draw them yourself.
+
+```@docs; canonical=false
+gridoverlay
+gridoverlay!
+```
+
 ## Performance & Threading
 
-- [`benchmark_projection_hydro`](@ref) - Benchmark projection performance
-- [`show_threading_info`](@ref) - Display threading information
-- Variable-based parallel processing for optimal performance
+```@docs; canonical=false
+benchmark_projection_hydro
+show_threading_info
+```
 
 ---
 *For complete function documentation, see the [Complete API Reference](../api.md).*
